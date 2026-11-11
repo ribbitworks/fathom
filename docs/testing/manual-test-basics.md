@@ -41,7 +41,7 @@ Run once, before the first test case.
 
 ### Restore the Seed Data
 
-Run after Start Fathom, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand. It cannot restore the seed data once its drafts have been approved; run Reset the Database then.
+Run after Start Fathom, before the first test case unless the test starts another way, and wherever a test case says so. Fathom keeps running. This removes the [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand. The seed data's own drafts that were approved since it was added are not made again; run Reset the Database to have them back.
 
 1. In the second terminal, run:
 
@@ -88,13 +88,22 @@ Run only where a test says so. This deletes every account and record in the deve
 - **Draft row and Live row:** a record with a draft is tinted light blue; under it, a light green row marked **Live** shows the record as it is now.
 - **Search for:** type the text in the search box above a table, so only the matching rows show.
 - **Views menu:** the menu that opens from the last of the buttons after the search box above a table. The button reads **Views**, or the name of the view applied.
-- **Draft menu:** the menu that opens from the **Draft** button above a table, beside the search box, or, on the **Org chart** page, just right of the finder, the box reading **Find a person or team**.
+- **Draft menu:** the menu that opens from the **Draft** button above a table, beside the search box, or, on the **Org chart** page, just right of the finder.
 - **Group by menu:** the menu that opens from the button above a table whose label starts **Group by:**, such as **Group by: Cycle**, naming the grouping in use.
 - **Group heading:** the full-width row above each group of rows in a grouped table, naming the group, with how many rows it holds at its right.
 - **Column menu:** the menu that opens when you select a column's name in a table's header.
 - **⋯ menu:** the menu that opens from a **⋯** button, such as the one at the end of a table row, beside a list's name at the top of its panel, or beside the Publish button.
 - **Details button:** the small button with an arrow out of a box at the right of a row's **Name** cell, shown while the row is pointed at.
-- **Side panel:** the panel on the right that opens from **Show details** in a row's ⋯ menu, or from the details button. Its close button, an **×**, is at its top right.
+- **Side panel:** the panel on the right that opens from **Show details** in a row's ⋯ menu, or from the details button. It is headed with the record's name, and its close button, an **×**, is at its top right.
 - **Change button:** a small pencil at the right of a value in a side panel, shown to accounts that may change it.
 - **Grid:** the table on the left of the role dialog, with an area in each row and the columns **View**, **Draft**, **Approve** and **Edit**.
+- **Chart:** on the **Org chart** page, the large panel under the heading that holds the cards.
+- **Finder:** the box reading **Find a person or team** at the top left of the **Org chart** page, above the chart.
+- **Teams switch:** the two-part switch reading **Reporting teams** and **Feature teams** at the top right of the **Org chart** page.
+- **Card:** the box for one person on the chart, showing their name, their position under it, and the team's name under that on the card of a reporting team's manager, when the team has a name, and on a feature team's first card.
+- **Band:** the strip of colour along the top edge of a card.
+- **Feature teams button:** the button reading **Feature teams** above the chart, at its right, once the chart shows feature teams.
+- **Team panel:** the panel titled **Feature team** that opens to the right of the chart, with a **Team** drop-down at its top.
+- **Mode switch:** the switch under the **Feature assignments** heading, reading **Teams** and **Allocations**.
+- **Team list:** the list of feature teams that opens below a month's cell on the **Feature assignments** page for editing, with a box to type in at its top.
 - **Dates:** steps type dates as digits, such as `2030-03-15`; tables and panels show them as the browser's language writes them, such as **15 Mar 2030** or **Mar 15, 2030**.

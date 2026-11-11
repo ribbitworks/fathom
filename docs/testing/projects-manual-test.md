@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-10"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Projects, Proposals, Customers and Milestones
@@ -15,86 +15,39 @@ Verifies the Projects page: its four tabs and their tables, a record's side pane
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place and the [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) added.
-- Roles as Fathom starts them: no change made to what any role grants in this clone's database.
-- A desktop web browser.
-- Two terminals open at the repository root: the first runs Fathom ([R0](#r0-start-fathom)), the second the data commands ([R1](#r1-restore-the-seed-data) and [R2](#r2-reset-the-database)).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 ## Test Accounts
 
-[R1](#r1-restore-the-seed-data) creates these accounts, so they exist once it has run. They share one password, which it prints when it finishes.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Product Manager account:** `product.manager@fathom.test`, shown in Fathom as **Product Manager**. It holds the Product Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Project Manager account:** `project.manager@fathom.test`, shown in Fathom as **Project Manager**. It holds the Project Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Team Member:** `team.member@fathom.test`
+- **Product Manager:** `product.manager@fathom.test`
+- **Project Manager:** `project.manager@fathom.test`
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at the address `pnpm dev` prints, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand, such as a customer added during the test.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
-
-### R2: Reset the Database
-
-Use only to run the test again after finishing it, since the records it adds stay once approved, and their names cannot be used twice. This deletes every account and record in the development database, including anything added by hand. Ask the owner before running it on a database others use.
-
-1. Stop Fathom: press Ctrl+C in the first terminal.
-2. In the second terminal, run:
-
-   ```sh
-   pnpm db:reset && pnpm db:seed
-   ```
-
-3. Confirm that the last line printed gives the shared password, with no error above it.
-4. Start Fathom again ([R0](#r0-start-fathom)).
-
-### P1: Publish
-
-1. Select the **Publish** button in the top bar, followed by the number of changes waiting, such as **Publish 4 changes**.
-2. Confirm that a notification says **Published**, and that the button is gone.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
 
 ## Terms
 
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Draft menu, the ⋯ menu, the side panel and dates. This test adds:
+
 - **Tabs:** **Projects**, **Proposals**, **Customers** and **Milestones**, in a row under the page's heading. The tab chosen is underlined.
-- **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft: added**, shown after a record's name. A hollow dot means the change is still unpublished.
-- **Draft row and live row:** a record with a draft is tinted light blue; under it, a light green row marked **Live** shows the record as it is now.
-- **⋯ menu:** the menu that opens from the **⋯** button at the end of a table row, or at the end of a milestone in a project's side panel.
-- **Draft menu:** the **Draft** button above the table, beside the search box.
-- **Side panel:** the panel on the right that opens from **Show details** in a row's ⋯ menu, or from the small button with an arrow out of a box at the right of a Name cell, shown while the row is pointed at. It is headed with the record's name, or with **New customer** or the like while adding one, and its close button, an **×**, is at its top right.
-- **Appearance menu:** in the account menu at the top right of the top bar.
-- **Dates:** the steps type dates as `2030-03-15`; the tables and the side panel show them as the browser's language writes them, such as **Mar 15, 2030**.
+- **Milestone ⋯ menu:** the menu that opens from the **⋯** button at the end of a milestone in a project's side panel.
+- **New record panel:** the side panel while a record is being added, headed **New customer** or the like.
 
 ## Test Cases
 
-Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1-restore-the-seed-data). Check each step whose expected result you see, and write anything else under its notes. To run the test again, start from [R2](#r2-reset-the-database).
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes. To run the test again after finishing it, start from Reset the Database, since the records it adds stay once approved, and their names cannot be used twice.
 
 ### PROJ-01: A Team Member Sees the Projects Read Only
 
 **Account:** Team Member, `team.member@fathom.test`; the first test case.
 
-**Preconditions:** [R1](#r1-restore-the-seed-data) run, then signed in with this account.
+**Preconditions:** Restore the Seed Data run, then signed in with this account.
 
-- [ ] **Step 1.** In the left-hand menu, select **Projects**.
+- [ ] **Step 1.** Select the **Projects** page in the left-hand menu.
   - **Expected:** The **Projects** page opens, with no **Later** tag beside **Projects** in the menu. The **Projects** tab is chosen. The table's columns are **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **First milestone**, **Last milestone** and **Next delivery**, with a row for each seeded project. There is no **New project** button.
   - **Notes:**
 
@@ -296,7 +249,7 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
   - **Expected:** **Go live** is listed after **Pilot**. In the panel, **First milestone** shows 2030-03-15, **Last milestone** 2030-06-30 and **Next delivery** 2030-03-15. The table's row for **Testing Project** shows the same three dates.
   - **Notes:**
 
-- [ ] **Step 20.** Publish ([P1](#p1-publish)).
+- [ ] **Step 20.** Run Publish.
   - **Expected:** The marks on the customer, proposal, project and both milestones are now solid yellow dots with **Draft: added**.
   - **Notes:**
 
@@ -342,7 +295,7 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
   - **Expected:** The **Projects** tab opens with **Testing Project**'s side panel, where **Last milestone** now shows 2030-09-01, and **Handover** is listed after **Go live**.
   - **Notes:**
 
-- [ ] **Step 10.** Publish ([P1](#p1-publish)).
+- [ ] **Step 10.** Run Publish.
   - **Expected:** **Handover**'s mark becomes a solid yellow dot.
   - **Notes:**
 
@@ -352,7 +305,7 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
 
 **Preconditions:** Signed in with this account. Run after PROJ-05.
 
-- [ ] **Step 1.** In the left-hand menu, select **Drafts**.
+- [ ] **Step 1.** Select the **Drafts** page in the left-hand menu.
   - **Expected:** The **Drafts** page opens.
   - **Notes:**
 
@@ -360,7 +313,7 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
   - **Expected:** An entry for each of **the customer Testing Customer**, **the proposal Testing Proposal**, **the project Testing Project**, and **the milestone Pilot of Testing Project**, **Go live** and **Handover** likewise, each saying **Product Manager** made it, with a box to select it.
   - **Notes:**
 
-- [ ] **Step 3.** In the left-hand menu, select **Projects**.
+- [ ] **Step 3.** Select the **Projects** page in the left-hand menu.
   - **Expected:** The **Projects** page opens on the **Projects** tab.
   - **Notes:**
 
@@ -446,7 +399,7 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
   - **Expected:** The menu offers **Discard draft**, and no **Remove project**. Its cells do not open for editing.
   - **Notes:**
 
-- [ ] **Step 7.** Publish ([P1](#p1-publish)).
+- [ ] **Step 7.** Run Publish.
   - **Expected:** The marks become solid yellow dots.
   - **Notes:**
 
@@ -536,7 +489,7 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
 
 **Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-10.
 
-**Preconditions:** Signed in with this account. [R1](#r1-restore-the-seed-data) run. **Projects** page open, **Projects** tab chosen.
+**Preconditions:** Signed in with this account. Restore the Seed Data run. **Projects** page open, **Projects** tab chosen.
 
 - [ ] **Step 1.** Look at the **Features** column.
   - **Expected:** Each project names the features it needs, separated by commas.

@@ -35,10 +35,6 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, marks and the Publish button. This test adds:
 
-- **Card:** the box for one person on the chart, showing their name, their position under it, and, for a manager whose team has a name, the team's name under that.
-- **Band:** the strip of colour along the top edge of a card.
-- **Chart:** the large panel under the **Org chart** heading that holds the cards.
-- **Finder:** the box reading **Find a person or team** at the top left of the page, above the chart.
 - **Date row:** the row between the page's heading and the chart, holding a **Date** box, a left arrow, a timeline, a right arrow and **Today**.
 
 ## Test Cases

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/feature-assignments-page*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "apps/web/src/allocation-months*", "apps/web/src/allocation-lines*", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-10"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Feature Assignments
@@ -15,68 +15,41 @@ Verifies the **Feature assignments** page: how the table of feature teams by mon
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser with a mouse or trackpad, and a keyboard.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
+
+- A mouse or trackpad, and a keyboard.
 
 ## Test Accounts
 
-R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Feature Lead account:** `feature.lead@fathom.test`, shown in Fathom as **Feature Lead**. It holds the Feature Lead role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Resource Planner:** `resource.planner@fathom.test`
+- **Engineering Director:** `engineering.director@fathom.test`
+- **Feature Lead:** `feature.lead@fathom.test`
+- **Team Member:** `team.member@fathom.test`
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use after R0, before the first test case. Fathom keeps running. This removes the seed data and every draft of it, then adds the seed data again; it keeps accounts and anything else added by hand.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data).
 
 ## Terms
 
-- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from the name and initials at the top right of every page.
-- **Group by menu:** the button above the table that starts **Group by:** and names the grouping in use.
-- **Draft menu:** the menu that opens from the **Draft** button above the table, next to the search box.
-- **Feature teams button:** on the **Org chart**, the button reading **Feature teams** above the chart, at its right, once the chart shows feature teams.
-- **Team panel:** on the **Org chart**, the panel titled **Feature team** that opens to the right of the chart.
-- **Team list:** the list of feature teams that opens below a month's cell for editing, with a box to type in at its top.
-- **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown beside a person's name.
-- **Mode switch:** the switch under the page's heading, reading **Teams** and **Allocations**.
-- **Publish button:** the button in the top bar, beside the name and initials, that reads **Publish** followed by a number of changes.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Mode switch, the Group by menu and the Publish button. This test adds:
+
 - **Total row:** in **Allocations**, a row in bold at the end of each group, headed **Total** in the **Person** column, and one at the foot of the table, headed **Organization**.
 
 ## Test Cases
+
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
 
 ### FA-01: The Page Opens at the Current Month
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
 
-**Preconditions:** R1 has been run. Signed in with this account.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account.
 
-- [ ] **Step 1.** Select **Feature assignments** in the left-hand menu.
+- [ ] **Step 1.** Select the **Feature assignments** page in the left-hand menu.
   - **Expected:** The page is headed **Feature assignments**. Above the table are the mode switch, with **Teams** chosen, then a search box, a **Draft** button, **Metrics**, and **Group by: Manager**. The table has a **Person** column on the left and a column for each month.
   - **Notes:**
 
@@ -214,7 +187,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
   - **Expected:** The people are listed under the **Search** group.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Org chart** in the left-hand menu.
+- [ ] **Step 2.** Select the **Org chart** page in the left-hand menu.
   - **Expected:** The **Org chart** page opens.
   - **Notes:**
 
@@ -278,7 +251,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 
 **Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Select **Feature assignments** in the left-hand menu.
+- [ ] **Step 1.** Select the **Feature assignments** page in the left-hand menu.
   - **Expected:** The button reads **Group by: Feature team**. There is no **Draft** button.
   - **Notes:**
 
@@ -290,7 +263,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FA-14.
 
-**Preconditions:** R1 has been run. Signed in with this account. **Light** selected in the Appearance menu. **Org chart** open, with **Feature teams** chosen in the switch at the top right, showing today.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. **Org chart** open, with **Feature teams** chosen in the switch at the top right, showing today.
 
 - [ ] **Step 1.** Select the left arrow, left of the timeline above the chart, once.
   - **Expected:** The **Date** box shows the first day of last month, and the text below the timeline ends **Changes take effect from this date.**
@@ -308,7 +281,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
   - **Expected:** A line reading the leaver's name and **leaving** is shown under the members, marked **Live**.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Feature assignments** in the left-hand menu. Select **None** in the Group by menu, and type the joiner's name in the search box.
+- [ ] **Step 5.** Select the **Feature assignments** page in the left-hand menu. Select **None** in the Group by menu, and type the joiner's name in the search box.
   - **Expected:** The joiner's row is tinted blue, with a hollow yellow dot and **Draft** beside their name, and a light green row under it marked **Live**.
   - **Notes:**
 
@@ -354,13 +327,13 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
   - **Expected:** The joiner and the leaver are both listed under **Platform reliability**, with the yellow cells, the struck-through label and the light green rows, as in FA-15.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### FA-17: A Month's Teams Change From That Month On
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, changed from FA-16.
 
-**Preconditions:** R1 has been run. Signed in with this account. **Light** selected in the Appearance menu. **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] **Step 1.** Note the name in the first row of the table: the person. Type it in the search box.
   - **Expected:** Only the person's row is listed.
@@ -382,7 +355,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
   - **Expected:** The row shows the change as in step 3.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Org chart** in the left-hand menu, select **Feature teams** in the switch at the top right, then select the Feature teams button and the new team.
+- [ ] **Step 6.** Select the **Org chart** page in the left-hand menu, select **Feature teams** in the switch at the top right, then select the Feature teams button and the new team.
   - **Expected:** The team panel opens for the new team, with the person listed among the members with a hollow yellow dot and **Draft**.
   - **Notes:**
 
@@ -410,13 +383,13 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
   - **Expected:** A notice reads that the draft of the new team already changes the person from another month, and to approve or discard that draft first. The cell still holds the new team's label.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### FA-20: Allocations Show Each Feature With Its Percentage
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, changed from FA-19.
 
-**Preconditions:** R1 has been run. Signed in with this account. **Light** selected in the Appearance menu. **Feature assignments** open, with **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. **Feature assignments** open, with **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] **Step 1.** Select **Allocations** in the mode switch.
   - **Expected:** The table opens at the current month again, still grouped by **Feature team**. Under the **Payments core** group, cells list features, each on a line of its own with its percentage at the right, such as **50%**.
@@ -458,11 +431,11 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 
 **Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
 
-- [ ] **Step 1.** Select **People** in the left-hand menu, type **Payments tester** in the search box, and note the month in the row's **Expected** column.
+- [ ] **Step 1.** Select the **People** page in the left-hand menu, type **Payments tester** in the search box, and note the month in the row's **Expected** column.
   - **Expected:** One row is listed, named **Payments tester**, with a month in **Expected**.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Feature assignments** in the left-hand menu, and type **Payments tester** in the search box.
+- [ ] **Step 2.** Select the **Feature assignments** page in the left-hand menu, and type **Payments tester** in the search box.
   - **Expected:** One row is listed, named **Payments tester**, with **Allocations** still chosen in the mode switch.
   - **Notes:**
 
@@ -532,7 +505,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FA-25. Step 3 signs in as another account, and step 4 signs in as this one again.
 
-**Preconditions:** R1 has been run. Signed in with this account. **People** open from the left-hand menu.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **People** open from the left-hand menu.
 
 - [ ] **Step 1.** Type **Samuel Richter** in the search box. Select the row's **Manager** cell, press Enter, type **Max**, and choose **Max Munk**. Select the row's **Manager since** cell, type the first day of the current month as digits alone, such as `20261101` in November 2026, and press Enter.
   - **Expected:** The **Manager** cell reads **Max Munk** and **Manager since** the date typed, both yellow.
@@ -542,12 +515,12 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
   - **Expected:** A notice starts **Published**, and the Publish button is gone from the top bar.
   - **Notes:**
 
-- [ ] **Step 3.** Sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts** in the left-hand menu and type **Samuel Richter** in the search box. Select the entry's checkbox, then **Approve 1 draft**, and **Approve** in the dialog.
+- [ ] **Step 3.** Sign in as the Engineering Director, `engineering.director@fathom.test`. Select the **Drafts** page in the left-hand menu and type **Samuel Richter** in the search box. Select the entry's checkbox, then **Approve 1 draft**, and **Approve** in the dialog.
   - **Expected:** A notice reads **Approved 1 draft.**
   - **Notes:**
 
-- [ ] **Step 4.** Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Select **Feature assignments** in the left-hand menu, **Allocations** in the mode switch and **Manager** in the Group by menu, and type **Samuel Richter** in the search box.
+- [ ] **Step 4.** Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Select the **Feature assignments** page in the left-hand menu, **Allocations** in the mode switch and **Manager** in the Group by menu, and type **Samuel Richter** in the search box.
   - **Expected:** Samuel Richter has a row under **Atmananda Ganaka** whose cells are empty from the current month on, and a row under **Max Munk** whose cells are empty before the current month. Each group ends with a total row.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.

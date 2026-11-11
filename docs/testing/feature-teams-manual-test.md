@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/org-chart*", "apps/web/src/feature-team*", "apps/server/src/data/feature-teams.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-10"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Feature Teams
@@ -15,65 +15,36 @@ Verifies feature teams on the **Org chart** page: switching the chart to feature
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser with a mouse or trackpad, and a keyboard.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
+
+- A mouse or trackpad, and a keyboard.
 
 ## Test Accounts
 
-R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Engineering Manager account:** `engineering.manager@fathom.test`, shown in Fathom as **Engineering Manager**. It holds the Engineering Manager role, which proposes feature teams, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, which edits feature teams.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, which approves feature teams.
-- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, which sees feature teams but does not change them.
+- **Engineering Manager:** `engineering.manager@fathom.test`, which proposes feature teams
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**, which edits feature teams
+- **Engineering Director:** `engineering.director@fathom.test`, which approves feature teams
+- **Resource Planner:** `resource.planner@fathom.test`, which sees feature teams but does not change them
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at `https://localhost:8443`, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use after R0, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data).
 
 ## Terms
 
-- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
-- **Teams switch:** the two-part switch reading **Reporting teams** and **Feature teams** at the top right of the **Org chart** page.
-- **Card:** the box for one person on the chart, showing their name, their position under it, and, on a team's first card, the team's name under that.
-- **Band:** the strip of colour along the top edge of a card.
-- **Feature teams button:** the button reading **Feature teams** above the chart, at its right, once the chart shows feature teams.
-- **Team panel:** the panel titled **Feature team** that opens to the right of the chart, with a **Team** drop-down at its top.
-- **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**.
-- **Publish button:** the button in the top bar, beside your name, that reads **Publish** followed by a number of changes.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms this test uses.
 
 ## Test Cases
 
-Run the test cases in order. Start with R0, then R1. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
 
 ### FT-01: The Chart Draws Feature Teams Under Their Leads
 
 **Account:** Resource Planner, `resource.planner@fathom.test`; the first test case.
 
-**Preconditions:** **Light** chosen in the Appearance menu. Signed in with this account. Select **Org chart** in the left-hand menu.
+**Preconditions:** **Light** chosen in the Appearance menu. Signed in with this account. Select the **Org chart** page in the left-hand menu.
 
 - [ ] **Step 1.** Choose **Feature teams** in the teams switch.
   - **Expected:** The chart is drawn again with four teams side by side. The first card of each names its team: **Mobile apps** on Sharda Varrier's card, **Payments core** on Gilda Effertz's, **Search** on Lorenza Thiel's, and a card named **Platform reliability** whose position reads **No feature lead**. The address bar now ends with `view=feature-teams`.
@@ -183,7 +154,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, changed from FT-03.
 
-**Preconditions:** Signed in with this account. Select **Drafts** in the left-hand menu.
+**Preconditions:** Signed in with this account. Select the **Drafts** page in the left-hand menu.
 
 - [ ] **Step 1.** Type **Platform reliability** in the search box.
   - **Expected:** One entry, **the feature team Platform reliability**, with lines for **Feature lead** set to Polly Smith and **Members** from Bilwa Iyer, Polly Smith, Thad Heidenreich to Bilwa Iyer, Polly Smith, Rosendo Champlin, each by Engineering Manager.
@@ -193,11 +164,11 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The dialog closes, and a notice begins **Approved**.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Org chart** in the left-hand menu, and choose **Feature teams** in the teams switch.
+- [ ] **Step 3.** Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch.
   - **Expected:** Platform reliability is led by Polly Smith, with Bilwa Iyer and Rosendo Champlin under her and no draft marks. Thad Heidenreich is not on the team.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Drafts** in the left-hand menu. Clear the search box, and type **Fictional analytics team**.
+- [ ] **Step 4.** Select the **Drafts** page in the left-hand menu. Clear the search box, and type **Fictional analytics team**.
   - **Expected:** One entry, **the feature team Fictional analytics team**, with lines for **Feature lead** Branson O'Keefe and **Members** Branson O'Keefe, Priscille Adam.
   - **Notes:**
 
@@ -219,13 +190,13 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The draft mark goes, and Rosendo Champlin is no longer listed.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### FT-06: The Org Chart Moves Through Time
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FT-05.
 
-**Preconditions:** R1 has been run. Signed in with this account. **Org chart** open, with **Feature teams** chosen in the teams switch.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Org chart** open, with **Feature teams** chosen in the teams switch.
 
 - [ ] **Step 1.** Look at the row between the page's heading and the chart.
   - **Expected:** A **Date** box shows today's date, written as year, month and day. Beside it are a left arrow, a timeline marked with one month in each year, such as **Nov 2024** and **Nov 2025**, a right arrow, and a **Today** button, which is greyed out.
@@ -295,11 +266,11 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The joiner is still listed in the team panel, now marked **Draft, from** and the first day of next month, such as **Draft, from Dec 1, 2026**.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Drafts** in the left-hand menu, and type **Platform reliability** in the search box.
+- [ ] **Step 4.** Select the **Drafts** page in the left-hand menu, and type **Platform reliability** in the search box.
   - **Expected:** The entry's **Joining and leaving dates** line gives the joiner and the first day of next month.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Org chart** in the left-hand menu, and choose **Feature teams** in the teams switch. Select the Feature teams button, then **Platform reliability**, and select **Discard draft**.
+- [ ] **Step 5.** Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch. Select the Feature teams button, then **Platform reliability**, and select **Discard draft**.
   - **Expected:** The draft mark goes, and the joiner is no longer listed.
   - **Notes:**
 
@@ -321,4 +292,4 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The text below the row ends **Changes take effect from this date.** The **Draft** menu is back, and the team's panel shows an **×** beside each member and an **Add member** box.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.

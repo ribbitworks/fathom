@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-10"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Feature Links
@@ -15,53 +15,26 @@ Verifies the projects and proposals that name a feature on the Features page: ho
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 ## Test Accounts
 
-R1 creates these accounts, with every other development account. They share one password, which R1 prints when it finishes.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Product Manager account:** `product.manager@fathom.test`, shown in Fathom as **Product Manager**. It holds the Product Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Feature Lead account:** `feature.lead@fathom.test`, shown in Fathom as **Feature Lead**. It holds the Feature Lead role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Product Manager:** `product.manager@fathom.test`
+- **Feature Lead:** `feature.lead@fathom.test`
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at `https://localhost:8443`, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use after R0, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data).
 
 ## Terms
 
-- **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown in a row's first cell.
-- **⋯ menu:** the menu that opens from the **⋯** button at the end of a row.
-- **Column menu:** the menu that opens when you select a column's name in the table's header.
-- **Side panel:** the panel on the right that opens from **Show details** in a row's **⋯** menu, headed with the record's name, with its close button, an **×**, at its top right.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms this test uses.
 
 ## Test Cases
 
-Run the test cases in order. Start with R0, then R1. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
 
 ### LINK-01: Projects and Proposals Name a Feature
 
@@ -129,11 +102,11 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The list closes, and the cell names **Transit Displays**, with **P-1984** in grey before it. **Bulk Import** has no mark.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Projects** in the left-hand menu.
+- [ ] **Step 3.** Select the **Projects** page in the left-hand menu.
   - **Expected:** **Transit Displays** has a hollow yellow dot and **Draft**. Its **Features** cell names **Bulk Import** and **Data Retention Controls**, and the light green **Live** row under it names **Data Retention Controls** alone.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Features** in the left-hand menu, then **New feature**.
+- [ ] **Step 4.** Select the **Features** page in the left-hand menu, then **New feature**.
   - **Expected:** The **New feature** panel has no **Projects** or **Proposals** row.
   - **Notes:**
 
@@ -141,13 +114,13 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The panel closes.
   - **Notes:**
 
-**Afterwards:** Run R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### LINK-04: Show Features Opens Features Filtered
 
 **Account:** Product Manager, `product.manager@fathom.test`, the same as LINK-03.
 
-**Preconditions:** R1 run after LINK-03. **Projects** page open, **Projects** tab chosen.
+**Preconditions:** Restore the Seed Data run after LINK-03. **Projects** page open, **Projects** tab chosen.
 
 - [ ] **Step 1.** In the **⋯** menu of **Crane Control**, select **Show features**.
   - **Expected:** The **Features** page opens showing only **Audit Export** and **Offline Sync**, with a pill above the table reading **Projects: P-2001 Crane Control**.
@@ -157,7 +130,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Every feature shows again.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Projects** in the left-hand menu, then the **Proposals** tab, and in the **⋯** menu of **Ore Sorting Study**, select **Show features**.
+- [ ] **Step 3.** Select the **Projects** page in the left-hand menu, then the **Proposals** tab, and in the **⋯** menu of **Ore Sorting Study**, select **Show features**.
   - **Expected:** The **Features** page opens showing only **Partner Portal**, with a pill reading **Proposals: Ore Sorting Study**.
   - **Notes:**
 

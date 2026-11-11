@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/product/decisions.md"]
-last_updated: "2026-11-07"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Release Streams, Cycles and Releases
@@ -15,49 +15,26 @@ Verifies the Releases page: how release streams, their cycles and their releases
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place and the [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) added.
-- Roles as Fathom starts them: no change made to what any role grants in this clone's database. [R2](#r2-start-from-an-empty-database) puts them back.
-- A desktop web browser.
-- Two terminals open at the repository root: the first runs Fathom ([R0](#r0-start-fathom)), the second the data commands ([R1](#r1-restore-the-seed-data) and [R2](#r2-start-from-an-empty-database)).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out. If a role was changed, Start From an Empty Database puts it back, in place of Reset the Database.
 
 ## Test Accounts
 
-[R2](#r2-start-from-an-empty-database) creates these accounts, with every other development account, so they exist once R2 has run. They share one password, which R2 prints when it finishes.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Product Manager account:** `product.manager@fathom.test`, shown in Fathom as **Product Manager**. It holds the Product Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Project Manager account:** `project.manager@fathom.test`, shown in Fathom as **Project Manager**. It holds the Project Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Product Manager:** `product.manager@fathom.test`
+- **Project Manager:** `project.manager@fathom.test`
+- **Team Member:** `team.member@fathom.test`
+
+Start From an Empty Database creates them, with every other development account.
 
 ## Common Procedures
 
-### R0: Start Fathom
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Publish](manual-test-basics.md#publish). It adds:
 
-1. In the first terminal, run:
+### Start From an Empty Database
 
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at the address `pnpm dev` prints, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand, such as a release stream added during the test.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
-
-### R2: Start From an Empty Database
-
-Use only where a test case says so. This deletes every account and record in the development database, including anything added by hand, and adds back only the development accounts, with no other data. Ask the owner before running it on a database others use.
+Use only where a test case says so. This deletes every account and record in the development database, including anything added by hand, puts every role back as Fathom starts it, and adds back only the development accounts, with no other data. Ask the owner before running it on a database others use.
 
 1. Stop Fathom: press Ctrl+C in the first terminal.
 2. In the second terminal, run:
@@ -67,26 +44,21 @@ Use only where a test case says so. This deletes every account and record in the
    ```
 
 3. Confirm that the last line printed gives the shared password, with no error above it.
-4. Start Fathom again ([R0](#r0-start-fathom)).
-
-### P1: Publish
-
-1. Select the **Publish** button in the top bar, followed by the number of changes waiting, such as **Publish 4 changes**.
-2. Confirm that a notification says **Published**, and that the button is gone.
+4. Run Start Fathom.
 
 ## Terms
 
-- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, marks and the Publish button. This test adds:
+
 - **Seeded dates:** the seed data is dated from the day it is added, as the [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) sets out, so its cycles and releases move with today, and the steps name them by where they fall. **This quarter** is the quarter today is in, and **the first half** is Platform's first half-year cycle, three quarters after this quarter. A cycle's name is the year it ends in and its number in that year, such as **26.4** or **P24.3**. The examples after "such as" are as the seed data is when added on 7 November 2026.
-- **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown after a record's name. A hollow dot means the change is still unpublished.
 - **Streams table:** the table on the Releases page, with a row for each release stream and the columns **Stream**, **Cycle schedule** and **Releases**. Selecting a row opens the stream in the side panel.
-- **Side panel:** the panel beside the streams table for the selected stream, which the table narrows to make room for, headed with its name, with the sections **Cycle schedule**, **Releases** and **Cycles**. Its close button, an **×**, is at its top right, and dragging its left edge resizes it.
+- **Side panel on Releases:** the panel beside the streams table for the selected stream, which the table narrows to make room for, with the sections **Cycle schedule**, **Releases** and **Cycles**. Dragging its left edge resizes it.
 - **Timeline:** the section headed **Timeline** below the streams table, with **Today**, **−** and **+** buttons and the zoom buttons **All**, **Year**, **6 months**, **Quarter**, **Month**, **Week** and **Days** at its top right. It has a row for each stream that is not retired, named on the left, with a lane of the stream's cycles above a lane of its releases, under an axis of two rows of dates. Hovering over a cycle or a release shows its name and dates.
-- **⋯ menu:** the menu that opens from a **⋯** button: beside the side panel's close button for the stream itself, when it has a draft, at the end of a row in the side panel for that change of cycles or release, or at the end of a row of the **Cycles** table for that cycle.
+- **⋯ menu on Releases:** a **⋯** button beside the side panel's close button acts on the stream itself, when it has a draft; one at the end of a row in the side panel acts on that change of cycles or release; one at the end of a row of the **Cycles** table acts on that cycle.
 
 ## Test Cases
 
-Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-start-from-an-empty-database). Part 1 starts from an empty database; REL-06 adds the seed data for Part 2; Part 3 changes what Parts 1 and 2 left; REL-18 restores the seed data for Part 4, and REL-22 restores it again for Part 5, which Part 6 follows. Check each step whose expected result you see, and write anything else under its notes. To run the test again, start again from [R2](#r2-start-from-an-empty-database).
+Run the test cases in order. Start with Start Fathom, then Start From an Empty Database. Part 1 starts from an empty database; REL-06 adds the seed data for Part 2; Part 3 changes what Parts 1 and 2 left; REL-18 restores the seed data for Part 4, and REL-22 restores it again for Part 5, which Part 6 follows. Check each step whose expected result you see, and write anything else under its notes. To run the test again, start again from Start From an Empty Database.
 
 ### Part 1: From an Empty Database
 
@@ -94,9 +66,9 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
 
-**Preconditions:** [R2](#r2-start-from-an-empty-database) run, then signed in with this account.
+**Preconditions:** Start From an Empty Database run, then signed in with this account.
 
-- [ ] **Step 1.** In the left-hand menu, in the **Plan** section, select **Releases**.
+- [ ] **Step 1.** Select the **Releases** page in the left-hand menu.
   - **Expected:** The **Releases** page opens with no table. It reads **No release streams yet.**, and a **New release stream** button is at the top right.
   - **Notes:**
 
@@ -136,7 +108,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Expected:** The dialog closes, and a notification says **Drafted the cycles.** Under **Cycle schedule**, a row reads **From 2027-01-04**, then **Every 2 weeks, named Sprint {#}** with a hollow yellow dot and **Draft: added**, and below it **Planned to** and a day two years after today, with a **Change…** button under it. Below **Releases**, a **Cycles** section, its count in brackets, lists the cycles from **Sprint 1** on. In the table, the **Cycle schedule** column of **Testing Stream** reads **Every 2 weeks, named Sprint {#}**.
   - **Notes:**
 
-- [ ] **Step 5.** Publish ([P1](#p1-publish)).
+- [ ] **Step 5.** Run Publish.
   - **Expected:** The marks after **Testing Stream** and after its cycles' row are now solid yellow dots with **Draft: added**.
   - **Notes:**
 
@@ -158,7 +130,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Expected:** A notification says **Drafted the new release.** Under **Releases** in the side panel, a row reads **Testing Release** with a hollow yellow dot and **Draft: added**, then **Sprint 1 to Sprint 2 · ships 2027-01-31**. In the table, the **Releases** column of **Testing Stream** reads **(1) Testing Release**.
   - **Notes:**
 
-- [ ] **Step 4.** Publish ([P1](#p1-publish)).
+- [ ] **Step 4.** Run Publish.
   - **Expected:** The mark after **Testing Release** is now a solid yellow dot with **Draft: added**.
   - **Notes:**
 
@@ -184,8 +156,8 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Preconditions:** Signed in with this account. Run after REL-05. **Releases** page open from the left-hand menu.
 
-- [ ] **Step 1.** Run [R1](#r1-restore-the-seed-data).
-  - **Expected:** [R1](#r1-restore-the-seed-data) finishes with no error. After the page reloads, the table shows **Testing Stream**, **Platform** and **Patches**, in that order, with no marks, and there is no **New release stream** button.
+- [ ] **Step 1.** Run Restore the Seed Data.
+  - **Expected:** Restore the Seed Data finishes with no error. After the page reloads, the table shows **Testing Stream**, **Platform** and **Patches**, in that order, with no marks, and there is no **New release stream** button.
   - **Notes:**
 
 - [ ] **Step 2.** Read the rows under **Releases** in the side panel.
@@ -254,7 +226,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Expected:** A notification says **Drafted retiring Patches.** The side panel shows **Retired** in grey, then a hollow yellow dot and **Draft: retired**, and its button now reads **Restore**. In the table, **Patches** is under a **Retired** heading, with the same yellow mark.
   - **Notes:**
 
-- [ ] **Step 2.** Publish ([P1](#p1-publish)).
+- [ ] **Step 2.** Run Publish.
   - **Expected:** The yellow mark is now a solid dot with **Draft: retired**.
   - **Notes:**
 
@@ -290,7 +262,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Expected:** A notification says **Drafted the change to the release.** The row reads **Harbor Three**, with a hollow yellow dot and **Draft**.
   - **Notes:**
 
-- [ ] **Step 3.** Publish ([P1](#p1-publish)).
+- [ ] **Step 3.** Run Publish.
   - **Expected:** The mark after **Harbor Three** is now a solid yellow dot with **Draft**.
   - **Notes:**
 
@@ -380,8 +352,8 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Preconditions:** Signed in with this account. Run after REL-17. **Releases** page open from the left-hand menu.
 
-- [ ] **Step 1.** Run [R1](#r1-restore-the-seed-data).
-  - **Expected:** [R1](#r1-restore-the-seed-data) finishes with no error. After the page reloads, the streams table shows **Testing Stream**, **Platform** and **Patches**, none under **Retired**.
+- [ ] **Step 1.** Run Restore the Seed Data.
+  - **Expected:** Restore the Seed Data finishes with no error. After the page reloads, the streams table shows **Testing Stream**, **Platform** and **Patches**, none under **Retired**.
   - **Notes:**
 
 - [ ] **Step 2.** Scroll below the streams table to the timeline, and select **Year**.
@@ -462,11 +434,11 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Expected:** A notification says **Drafted the change to the release.** The **Harbor 1** row has a hollow yellow dot and **Draft**, and its square is teal. On the timeline, **Harbor 1**'s span is teal, with a dashed edge.
   - **Notes:**
 
-- [ ] **Step 5.** Publish ([P1](#p1-publish)), then sign in as the Project Manager, `project.manager@fathom.test`, and open **Drafts** from the left-hand menu.
+- [ ] **Step 5.** Run Publish, then sign in as the Project Manager, `project.manager@fathom.test`, and open the **Drafts** page from the left-hand menu.
   - **Expected:** The draft of **the release Harbor 1 in Platform** lists **Colour from Sea to Teal**.
   - **Notes:**
 
-- [ ] **Step 6.** Approve the draft, then open **Releases** from the left-hand menu.
+- [ ] **Step 6.** Approve the draft, then open the **Releases** page from the left-hand menu.
   - **Expected:** **Harbor 1**'s span on the timeline is teal, with a solid edge.
   - **Notes:**
 
@@ -476,7 +448,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-21.
 
-**Preconditions:** Run after REL-21. Restore the seed data ([R1](#r1-restore-the-seed-data)). Signed in with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+**Preconditions:** Run after REL-21. Run Restore the Seed Data. Signed in with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** In the side panel's **Cycles** table, select the **⋯** button at the end of next quarter's cycle, such as **27.1**, then **Change length…**.
   - **Expected:** A dialog titled **Change the length of** that cycle opens. **Length** reads **3**, followed by **months**, with the cycle's dates under its label. Under **Later cycles**, **Move with it** is selected, and **Keep their dates** is offered. **New dates** lists that cycle, the next one and the first half, with their dates as now, such as **27.1**, **2027-01-01 to 2027-03-31**; **27.2**, **2027-04-01 to 2027-06-30**; and **27.3**, **2027-07-01 to 2027-12-31**.
@@ -490,7 +462,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Expected:** A notification says **Drafted the new length.** Under **Cycle schedule**, a row **From** the changed cycle's first day, **Every 2 months, named {YY}.{N}**, and a row **From** the next cycle's new first day, **Every 3 months, named {YY}.{N}**, each have a hollow yellow dot and **Draft: added**, and the first half's row, now **From** a month earlier, **Every 6 months, named {YY}.{N}**, has a hollow yellow dot and **Draft**, such as **From 2027-01-01**, **From 2027-03-01** and **From 2027-06-01**. The **Harbor 3** row has a hollow yellow dot and **Draft**, and ships on the first half's new last day, such as **27.1 to 27.3 · ships 2027-11-30**. In the **Cycles** table, the first half runs on its new dates, such as **27.3** from **2027-06-01** to **2027-11-30**.
   - **Notes:**
 
-- [ ] **Step 4.** Publish ([P1](#p1-publish)).
+- [ ] **Step 4.** Run Publish.
   - **Expected:** The dots on the three rows of the cycle schedule and on **Harbor 3** are filled.
   - **Notes:**
 
@@ -518,7 +490,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Expected:** **Length** is followed by **weeks**. **New dates** lists that cycle two weeks long, then a cycle from the next day to the end of the cycle after it, six weeks long, then the cycle after that as now, such as **P24.4**, **2026-11-30 to 2026-12-13**; **P25.1**, **2026-12-14 to 2027-01-24**; and **P25.2**, **2027-01-25 to 2027-02-21**. Below it, the dialog says the later patch release ships on that cycle's new last day, such as **Patch December ships 2026-12-13.**
   - **Notes:**
 
-- [ ] **Step 2.** Select **Change length**, then publish ([P1](#p1-publish)).
+- [ ] **Step 2.** Select **Change length**, then run Publish.
   - **Expected:** A notification says **Drafted the new length.** Under **Cycle schedule**, a row **From** each of the three cycles' first days, such as **From 2026-11-30**, **From 2026-12-14** and **From 2027-01-25**, has a yellow dot and **Draft: added**. The later patch release has no mark, and ships on the changed cycle's new last day, since it has no Ships on day of its own, such as **Patch December**, **P24.3 to P24.4 · ships 2026-12-13**.
   - **Notes:**
 
@@ -528,7 +500,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Preconditions:** Signed in with this account. Run after REL-24. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
 
-- [ ] **Step 1.** Select the **⋯** button at the end of the second of the three rows REL-24 added, such as **From 2026-12-14**, then **Discard draft**, and publish ([P1](#p1-publish)).
+- [ ] **Step 1.** Select the **⋯** button at the end of the second of the three rows REL-24 added, such as **From 2026-12-14**, then **Discard draft**, and run Publish.
   - **Expected:** A notification says **Discarded the draft.** The cycle schedule has only its first row, and the fourth cycle is four weeks long again, such as **P24.4** from **2026-11-30** to **2026-12-27**.
   - **Notes:**
 
