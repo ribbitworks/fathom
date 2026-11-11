@@ -1137,16 +1137,21 @@ describe("changing a feature team", () => {
     expect((await teamSeen(id))?.draft).toBeUndefined();
   });
 
-  it("is renamed by those who edit feature teams, but not by those who only propose them", async () => {
+  it("is renamed by those who propose feature teams", async () => {
+    const id = await liveTeam();
+    const manager = await test.signedIn("engineering-manager");
+    const name = unique("Fictional Renamed Team");
+
+    await changed(id, { name }, manager);
+
+    expect((await teamSeen(id))?.name).toBe(name);
+  });
+
+  it("is not renamed by those who only approve feature teams", async () => {
     const id = await liveTeam();
     const name = unique("Fictional Renamed Team");
 
-    expect((await change(id, { name }, proposer)).statusCode).toBe(403);
-    const manager = await test.signedIn("engineering-manager");
-    expect((await change(id, { name }, manager)).statusCode).toBe(403);
-    await changed(id, { name });
-
-    expect((await teamSeen(id))?.name).toBe(name);
+    expect((await change(id, { name }, projectManager)).statusCode).toBe(403);
   });
 
   it("is refused a name another team has", async () => {
@@ -1830,13 +1835,12 @@ describe("discarding and resubmitting a team's draft", () => {
     expect(refusal(response)).toBe("Only a rejected draft can be resubmitted");
   });
 
-  it("needs the right to edit teams to resend a draft renaming a live team", async () => {
+  it("is resent by a proposer when the draft renames a live team", async () => {
     const id = await liveTeam();
     await changed(id, { name: unique("Fictional Renamed Team") });
     await ok(await reject(id));
 
-    expect((await resubmit(id, proposer)).statusCode).toBe(403);
-    await ok(await resubmit(id));
+    await ok(await resubmit(id, proposer));
   });
 
   it("needs the right to edit teams to resend a draft removing a team", async () => {
@@ -2215,7 +2219,7 @@ describe("undoing a change to a team", () => {
     expect((await undo(changeSetId, maker)).statusCode).toBe(409);
   });
 
-  it("needs the right to edit teams to put back a team it drafted to remove, or to put back a name", async () => {
+  it("needs the right to edit teams to put back a team it drafted to remove, but not to put back a name", async () => {
     const maker = await test.signedIn("workforce-administrator");
     const id = await liveTeam();
     const { changeSetId } = await ok<{ changeSetId: string }>(
@@ -2241,7 +2245,7 @@ describe("undoing a change to a team", () => {
       "people:view",
       "feature-teams:propose",
     ]);
-    expect((await undo(changeSet, renaming)).statusCode).toBe(403);
+    await ok(await undo(changeSet, renaming));
   });
 
   it("needs the right to edit teams to bring back a removal that was discarded", async () => {

@@ -6,10 +6,15 @@
 // takes several, Enter adds or removes one and keeps the list open, with no choice highlighted, so
 // Enter again finishes, as it does in other cells. Tab picks the highlighted choice when something
 // has been typed, then moves on, Esc cancels, and leaving the cell keeps what was picked. Where
-// several can be picked, a check marks each one picked.
+// several can be picked, a check marks each one picked. A choice with a description shows it under
+// its name, and is found by it too. A value that takes one choice and need not have one offers its
+// word for none first, set apart by a line, until something is typed; nothing is highlighted then
+// until the arrow keys move, and Down goes first to the choice after none, so none is always in
+// sight but never what Enter picks unasked.
 
-import { CheckIcon, Combobox, Group, useCombobox } from "@mantine/core";
+import { CheckIcon, Combobox, Group, Text, useCombobox } from "@mantine/core";
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
+import comboboxClasses from "./combobox.module.css";
 import classes from "./pages.module.css";
 
 // How editing a cell ended: Enter, Tab or Shift+Tab, or leaving the cell.
@@ -18,12 +23,39 @@ export type Finish = "enter" | "next" | "previous" | "leave";
 export interface Option {
   value: string;
   label: string;
+  description?: string | undefined;
 }
+
+const descriptionOpacity = 0.75;
+
+// A choice's name, with its description, if any, on a smaller line under it, as every list of
+// choices shows them.
+export function OptionWords({
+  option,
+}: {
+  option: Pick<Option, "label" | "description">;
+}) {
+  return option.description === undefined ? (
+    <span>{option.label}</span>
+  ) : (
+    <div>
+      <span>{option.label}</span>
+      {/* The option's own colour, faded, so it reads on a highlighted option's fill too. */}
+      <Text size="xs" c="inherit" opacity={descriptionOpacity}>
+        {option.description}
+      </Text>
+    </div>
+  );
+}
+
+// What the choice of none is known by among the options, which no choice's identifier is.
+const noneValue = "";
 
 export function ChoicePicker({
   id,
   label,
   options,
+  none,
   multiple,
   initial,
   typed,
@@ -38,6 +70,8 @@ export function ChoicePicker({
   invalid?: boolean;
   describedBy?: string | undefined;
   options: Option[];
+  // The word for no choice, such as None, for a value that takes one choice and need not have one.
+  none?: string | undefined;
   multiple: boolean;
   initial: string[];
   // What was typed to start editing, which narrows the choices straight away.
@@ -48,22 +82,30 @@ export function ChoicePicker({
   const store = useCombobox({ opened: true });
   const [search, setSearch] = useState(typed);
   const [picked, setPicked] = useState(initial);
-  const shown = options.filter((option) =>
-    option.label.toLowerCase().includes(search.trim().toLowerCase()),
-  );
+  const wanted = search.trim().toLowerCase();
+  const noneShown = none !== undefined && !multiple && wanted === "";
+  const shown = [
+    ...(noneShown ? [{ value: noneValue, label: none }] : []),
+    ...options.filter(
+      (option) =>
+        option.label.toLowerCase().includes(wanted) ||
+        option.description?.toLowerCase().includes(wanted) === true,
+    ),
+  ];
 
   // Whether a choice was picked since anything was typed or the arrow keys moved, which leaves no
   // choice highlighted, so Enter finishes.
   const justPicked = useRef(false);
 
-  // The first choice that matches is highlighted, so Enter or Tab picks it.
+  // The first choice that matches is highlighted, so Enter or Tab picks it; with none offered,
+  // nothing is.
   useEffect(() => {
-    if (justPicked.current) {
+    if (justPicked.current || noneShown) {
       store.resetSelectedOption();
     } else {
       store.selectFirstOption();
     }
-  }, [search, store]);
+  }, [search, store, noneShown]);
 
   const toggled = (value: string) =>
     picked.includes(value)
@@ -74,7 +116,7 @@ export function ChoicePicker({
 
   const pick = (value: string) => {
     if (!multiple) {
-      onDone([value], "enter");
+      onDone(value === noneValue ? [] : [value], "enter");
       return;
     }
     justPicked.current = true;
@@ -84,10 +126,20 @@ export function ChoicePicker({
   };
 
   const highlighted = () => shown[store.getSelectedOptionIndex()]?.value;
+  const chosen = (value: string) =>
+    value === noneValue ? picked.length === 0 : picked.includes(value);
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       justPicked.current = false;
+      // The combobox moves on after this, so Down from nothing passes over none to the first choice.
+      if (
+        event.key === "ArrowDown" &&
+        noneShown &&
+        store.getSelectedOptionIndex() === -1
+      ) {
+        store.selectOption(0);
+      }
     } else if (event.key === "Escape") {
       event.preventDefault();
       onCancel();
@@ -146,8 +198,11 @@ export function ChoicePicker({
             <Combobox.Option
               key={option.value}
               value={option.value}
-              active={picked.includes(option.value)}
-              aria-selected={picked.includes(option.value)}
+              className={
+                option.value === noneValue ? comboboxClasses.none : undefined
+              }
+              active={chosen(option.value)}
+              aria-selected={chosen(option.value)}
             >
               {multiple ? (
                 <Group gap="xs" wrap="nowrap">
@@ -155,14 +210,12 @@ export function ChoicePicker({
                   <CheckIcon
                     size={12}
                     aria-hidden
-                    visibility={
-                      picked.includes(option.value) ? "visible" : "hidden"
-                    }
+                    visibility={chosen(option.value) ? "visible" : "hidden"}
                   />
-                  <span>{option.label}</span>
+                  <OptionWords option={option} />
                 </Group>
               ) : (
-                option.label
+                <OptionWords option={option} />
               )}
             </Combobox.Option>
           ))}

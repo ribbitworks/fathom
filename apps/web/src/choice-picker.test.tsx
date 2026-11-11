@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for picking choices in a cell: where several can be picked, a check marks each one picked,
-// and Enter after picking one finishes.
+// and Enter after picking one finishes; a choice's description shows under it and finds it; and a
+// value that need not have a choice offers none first, which Enter never picks unasked.
 
 import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
@@ -67,4 +68,106 @@ describe("picking choices", () => {
       expect(onDone).toHaveBeenCalledExactlyOnceWith(["a", "b"], "enter");
     },
   );
+});
+
+function renderOptional(
+  onDone: (values: string[], finish: string) => void = () => undefined,
+  multiple = false,
+  initial = ["a"],
+) {
+  render(
+    <MantineProvider theme={testTheme}>
+      <ChoicePicker
+        id="picker"
+        label="Site"
+        options={[
+          { value: "a", label: "Alpha" },
+          { value: "n", label: "Northmere", description: "The research site." },
+        ]}
+        none="No site"
+        multiple={multiple}
+        initial={initial}
+        typed=""
+        onDone={onDone}
+        onCancel={() => undefined}
+      />
+    </MantineProvider>,
+  );
+}
+
+const optionNames = () =>
+  screen.getAllByRole("option").map(({ textContent }) => textContent);
+
+describe("a choice's description", () => {
+  it("shows under the choice's name", () => {
+    renderOptional();
+
+    expect(optionNames()).toContain("NorthmereThe research site.");
+  });
+
+  it("finds the choice when typed", async () => {
+    renderOptional();
+
+    await userEvent.type(screen.getByLabelText("Site"), "research");
+
+    expect(optionNames()).toEqual(["NorthmereThe research site."]);
+  });
+});
+
+describe("choosing none", () => {
+  it("is offered first, and empties the value when picked", async () => {
+    const onDone = vi.fn();
+    renderOptional(onDone);
+
+    expect(optionNames()[0]).toBe("No site");
+    await userEvent.click(screen.getByRole("option", { name: "No site" }));
+
+    expect(onDone).toHaveBeenCalledExactlyOnceWith([], "enter");
+  });
+
+  it("is not offered once something is typed, when the first match is picked with Enter", async () => {
+    const onDone = vi.fn();
+    renderOptional(onDone);
+
+    await userEvent.type(screen.getByLabelText("Site"), "n{Enter}");
+
+    expect(onDone).toHaveBeenCalledExactlyOnceWith(["n"], "enter");
+  });
+
+  it("is not offered where several can be picked", () => {
+    renderOptional(undefined, true);
+
+    expect(optionNames()).not.toContain("No site");
+  });
+
+  it("highlights nothing as the list opens, so Enter and Tab change nothing", async () => {
+    const onDone = vi.fn();
+    renderOptional(onDone, false, ["n"]);
+
+    expect(
+      screen
+        .getAllByRole("option")
+        .some((option) => option.hasAttribute("data-combobox-selected")),
+    ).toBe(false);
+    await userEvent.click(screen.getByLabelText("Site"));
+    await userEvent.keyboard("{Enter}");
+
+    expect(onDone).toHaveBeenCalledExactlyOnceWith(["n"], "enter");
+  });
+
+  it("goes with Down to the first choice after none", async () => {
+    const onDone = vi.fn();
+    renderOptional(onDone, false, ["n"]);
+
+    await userEvent.click(screen.getByLabelText("Site"));
+    await userEvent.keyboard("{ArrowDown}");
+
+    expect(
+      screen
+        .getByRole("option", { name: "Alpha" })
+        .hasAttribute("data-combobox-selected"),
+    ).toBe(true);
+    await userEvent.keyboard("{Enter}");
+    expect(onDone).toHaveBeenCalledExactlyOnceWith(["a"], "enter");
+  });
 });

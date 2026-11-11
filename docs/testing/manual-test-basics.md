@@ -132,8 +132,8 @@ Run only where a test says so. This deletes every account and record in the deve
 - **Teams switch:** the two-part switch reading **Reporting teams** and **Feature teams** at the top right of the **Org chart** page.
 - **Card:** the box for one person on the chart, showing their name, their position under it, and the team's name under that on the card of a reporting team's manager, when the team has a name, and on a feature team's first card.
 - **Band:** the strip of colour along the top edge of a card.
-- **Feature teams button:** the button reading **Feature teams** above the chart, at its right, once the chart shows feature teams.
-- **Team panel:** the panel titled **Feature team** that opens to the right of the chart, with a **Team** drop-down at its top.
+- **Feature teams button:** the button reading **Feature teams** above the chart, at its left, just right of the finder and of the **Draft** button where that is shown, once the chart shows feature teams. It lists the feature teams, and **New feature team** to those who may add one.
+- **Team panel:** the panel that opens to the right of the chart when a feature team is chosen, titled with the team's name, with a **Details** section and a **Members** section.
 - **Mode switch:** the switch under the **Feature assignments** heading, reading **Teams** and **Allocations**.
 - **Team list:** the list of feature teams that opens below a month's cell on the **Feature assignments** page for editing, with a box to type in at its top.
 - **Seeded dates:** the seed data is dated from the day it is added, as [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) sets out, so its cycles and releases move with today, and steps name them by where they fall. A cycle's name is the year it ends in and its number in that year, such as **27.1**.

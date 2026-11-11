@@ -44,7 +44,7 @@ type TeamDraft = NonNullable<TeamMonths["drafts"]>[number];
 
 export type MonthLabel = MonthTeam & {
   drafted?: DraftedLabel;
-  addedBy?: DraftLike;
+  draftedBy?: DraftLike;
 };
 
 // A row of the monthly grid, in either mode.
@@ -412,11 +412,15 @@ function draftedLabels(
     ...drafted.map((team): MonthLabel =>
       liveIds.has(team.id)
         ? team
-        : { ...team, drafted: "added", addedBy: draft },
+        : { ...team, drafted: "added", draftedBy: draft },
     ),
     ...live
       .filter(({ id }) => !draftedIds.has(id))
-      .map((team): MonthLabel => ({ ...team, drafted: "removed" })),
+      .map((team): MonthLabel => ({
+        ...team,
+        drafted: "removed",
+        draftedBy: draft,
+      })),
   ].sort(byName);
 }
 

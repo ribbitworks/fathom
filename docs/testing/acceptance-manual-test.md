@@ -418,18 +418,26 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-13.
 
-**Preconditions:** Signed in with this account, acting as **Feature Lead**. **Org chart** page open, with **Feature teams** chosen in the teams switch.
+**Preconditions:** Signed in with this account, acting as **Feature Lead**. Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch.
 
 - [ ] **Step 1.** Select the Feature teams button, then **Platform reliability**.
-  - **Expected:** The team panel opens with **Team** reading **Platform reliability**, **Feature lead** reading **No lead**, and no **Rename** button.
+  - **Expected:**
+    - The team panel opens, titled **Platform reliability**.
+    - **Feature lead** reads **None**.
+    - **Name**, **Feature lead** and **Members** each have a change button.
   - **Notes:**
 
-- [ ] **Step 2.** In **Feature lead**, choose **Polly Smith**.
-  - **Expected:** A notice offers **Undo**. The panel shows a yellow dot and **Draft** under its title. On the chart, the team's first card is now Polly Smith's, named **Platform reliability**.
+- [ ] **Step 2.** Select the change button in the **Feature lead** row, type `Polly`, and press Enter.
+  - **Expected:**
+    - **Feature lead** reads **Polly Smith**, followed by a hollow yellow dot and **Draft**.
+    - On the chart, the card reading **Platform reliability** and **No feature lead** is gone. Polly Smith's card is at the top of the team in its place, with **Platform reliability** under her position, and the team's members under her.
   - **Notes:**
 
-- [ ] **Step 3.** In **Add member**, type `Rosendo`, and choose **Rosendo Champlin**.
-  - **Expected:** **Rosendo Champlin** is listed among the members with a yellow dot and **Draft**. On the chart, a card for him under Polly Smith is marked as a draft, and his card in **Mobile apps** stays.
+- [ ] **Step 3.** Select the change button in the **Members** row, type `Rosendo`, press Enter, and press Enter again.
+  - **Expected:**
+    - **Members** lists **Rosendo Champlin**, with a hollow yellow dot before his name.
+    - On the chart, a card for him is under Polly Smith, his name followed by a hollow yellow dot and **Draft**.
+    - His card in **Mobile apps** is still there.
   - **Notes:**
 
 - [ ] **Step 4.** Run Publish.
@@ -456,31 +464,46 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 #### ACC-16: A Member Joins a Feature Team From an Earlier Date
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-15. Step 5 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-15. Step 6 signs in as another account.
 
-**Preconditions:** Signed in with this account. **Org chart** page open, with **Feature teams** chosen in the teams switch, showing today.
+**Preconditions:** Signed in with this account. Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch; it shows today.
 
 - [ ] **Step 1.** Select the left arrow once.
-  - **Expected:** The date box shows the first day of last month. Below the row, text reads **Showing** with that day, then **Changes take effect from this date.**
+  - **Expected:**
+    - The **Date** box shows the first day of last month.
+    - Below the row, text reads **Showing** with that day, then **Changes take effect from this date.**
   - **Notes:**
 
-- [ ] **Step 2.** Select the Feature teams button, then **Search**. In **Add member**, type `Branson`, and choose **Branson O'Keefe**.
-  - **Expected:** **Branson O'Keefe** is listed among the members with a yellow dot and **Draft**, with no date after it.
+- [ ] **Step 2.** Select the Feature teams button, then **Search**.
+  - **Expected:** The team panel is titled **Search**.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Today**.
-  - **Expected:** The text below the row goes. In the team panel, **Branson O'Keefe** is now marked **Draft, from** and the first day of last month, such as **Draft, from Oct 1, 2026**.
+- [ ] **Step 3.** Select the change button in the **Members** row, type `Branson`, press Enter, and press Enter again.
+  - **Expected:** **Members** lists **Branson O'Keefe**, with a hollow yellow dot before his name and no date after it.
   - **Notes:**
 
-- [ ] **Step 4.** Run Publish.
+- [ ] **Step 4.** Select **Today**.
+  - **Expected:**
+    - The text below the row is gone.
+    - In the team panel, **Branson O'Keefe** has a hollow yellow dot before his name, followed in grey by **Draft, from** and the first day of last month, such as **Draft, from Oct 1, 2026**.
+  - **Notes:**
+
+- [ ] **Step 5.** Run Publish.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
-- [ ] **Step 5.** Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, and type `Branson` in the search box.
-  - **Expected:** One entry, **the feature team Search**, with lines for **Members** with **Branson O'Keefe** added, and **Joining and leaving dates** set to **Branson O'Keefe** and the first day of last month.
+- [ ] **Step 6.** Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
+  - **Expected:** The top bar's right end reads **Engineering Director**.
   - **Notes:**
 
-- [ ] **Step 6.** Select the entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog.
+- [ ] **Step 7.** Select the **Drafts** page in the left-hand menu, and type `Branson` in the search box.
+  - **Expected:**
+    - One entry is listed, **the feature team Search**.
+    - Its **Members** line adds **Branson O'Keefe**.
+    - Its **Joining and leaving dates** line gives **Branson O'Keefe** and the first day of last month.
+  - **Notes:**
+
+- [ ] **Step 8.** Select the entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog.
   - **Expected:** The dialog closes, and a notice begins **Approved**.
   - **Notes:**
 
@@ -540,7 +563,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-18.
 
-**Preconditions:** ACC-16 done. Signed in with this account, acting as **Engineering Manager**. **Light** chosen in the Appearance menu. **Feature assignments** open from the left-hand menu, with **Teams** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** ACC-16 done. Signed in with this account, acting as **Engineering Manager**. **Light** chosen in the Appearance menu. Select the **Feature assignments** page in the left-hand menu, with **Teams** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] **Step 1.** Type `Branson` in the search box.
   - **Expected:** Only **Branson O'Keefe**'s row is listed, with a **Search** label in the current month's cell.
@@ -551,11 +574,16 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 3.** Type `Payments`, and press Tab.
-  - **Expected:** The team list closes. The row is tinted blue, with a hollow yellow dot and **Draft** beside the name, and a light green row under it marked **Live**. The cells before the one selected are not yellow. From the cell selected on, each cell is yellow and holds a **Payments core** label with a hollow yellow dot inside it, beside the **Search** label.
+  - **Expected:**
+    - The team list closes.
+    - The row is tinted blue, with a hollow yellow dot and **Draft** beside the name.
+    - A light green row under it is marked **Live**.
+    - The cells before the one selected have no yellow.
+    - From the cell selected on, each cell is yellow and holds a **Payments core** label with a hollow yellow dot inside it, beside the **Search** label.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **Org chart** page in the left-hand menu, choose **Feature teams** in the teams switch, then select the Feature teams button and **Payments core**.
-  - **Expected:** The team panel lists **Branson O'Keefe** among the members, marked **Draft, from** and the first day of the month two months after the current one, such as **Draft, from Jan 1, 2027**.
+  - **Expected:** The team panel is titled **Payments core**, and **Branson O'Keefe** is in the **Members** row, with a hollow yellow dot before his name, followed in grey by **Draft, from** and the first day of the month two months after the current one, such as **Draft, from Jan 1, 2027**.
   - **Notes:**
 
 #### ACC-20: A Team Member Is Told Why Feature Assignments Is Missing
@@ -1355,82 +1383,175 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 #### ACC-53: Feature Teams Are Recorded From Six Months Ago
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-52. Step 10 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-52. Step 20 signs in as another account.
 
 **Preconditions:** ACC-48 done. Signed in with this account.
 
 - [ ] **Step 1.** Select the **Feature assignments** page in the left-hand menu, then **Feature team** in the Group by menu.
-  - **Expected:** Every person is listed under **No feature team**, and no cell in any month holds a label.
+  - **Expected:**
+    - Every person is listed under **No feature team**.
+    - No cell in any month holds a label.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Org chart**, and choose **Feature teams** in the teams switch. Clear the date box, type the first day of six months ago, such as `20260501`, and press Enter. Select the Feature teams button.
-  - **Expected:** Below the date row, text reads **Showing** and that day, such as **Showing May 1, 2026.**, then **Changes take effect from this date.** The menu reads **No feature teams yet**, then offers **New feature team**.
+- [ ] **Step 2.** Select the **Org chart** page in the left-hand menu, choose **Feature teams** in the teams switch, clear the **Date** box, type the first day of six months ago, such as `20260501`, and press Enter.
+  - **Expected:** Below the date row, text reads **Showing** and that day, such as **Showing May 1, 2026.**, then **Changes take effect from this date.**
   - **Notes:**
 
-- [ ] **Step 3.** Press Esc. Clear the date box, type the first day of six months ago, such as `20260501`, and press Enter.
-  - **Expected:** Below the row, text reads **Showing** and that day, such as **Showing May 1, 2026.**, then **Changes take effect from this date.**
+- [ ] **Step 3.** Select the Feature teams button.
+  - **Expected:**
+    - The menu reads **No feature teams yet**.
+    - Under it is **New feature team**.
   - **Notes:**
 
-- [ ] **Step 4.** Select the Feature teams button, then **New feature team**.
-  - **Expected:** A panel titled **New feature team** opens, with a **Name** box, the line **Name the team first; then add its members and choose its lead.**, and **Add feature team** greyed out.
+- [ ] **Step 4.** Select **New feature team**.
+  - **Expected:**
+    - A panel titled **New feature team** opens.
+    - A **Details** section has a **Name** row with an empty box.
+    - A **Members** section has the rows **Feature lead** and **Members**, each with a change button.
+    - **Cancel** and **Add** are at the foot.
   - **Notes:**
 
-- [ ] **Step 5.** Type `Tide team`, and press Enter.
-  - **Expected:** The panel's **Team** reads **Tide team**, with a hollow yellow dot and **Draft: added**, and **Members** reads **No members yet.** On the chart, a card named **Tide team** reads **No feature lead**.
+- [ ] **Step 5.** Type `Tide team` in the **Name** box.
+  - **Expected:** The **Name** box holds **Tide team**.
   - **Notes:**
 
-- [ ] **Step 6.** In **Add member**, choose **Ada Quill**, then **Bram Oakes**, then **Cleo Marsh**.
-  - **Expected:** The three are listed among the members, each with a yellow dot and **Draft: added**, with no date after it.
+- [ ] **Step 6.** Select the change button in the **Members** row, type `Ada`, press Enter, type `Bram`, press Enter, type `Cleo`, press Enter, and press Enter again.
+  - **Expected:** **Members** lists **Ada Quill**, **Bram Oakes** and **Cleo Marsh**, one to a line.
   - **Notes:**
 
-- [ ] **Step 7.** From the Feature teams button, select **New feature team**, type `Harbour team`, and press Enter. Add **Dara Finch** and **Emil Stone**, and choose **Dara Finch** in **Feature lead**.
-  - **Expected:** The members read **Dara Finch (lead)** and **Emil Stone**.
+- [ ] **Step 7.** Select **Add**.
+  - **Expected:**
+    - The panel is titled **Tide team**, followed by a hollow yellow dot and **Draft: added**.
+    - **Members** lists **Ada Quill**, **Bram Oakes** and **Cleo Marsh**, each with a hollow yellow dot before the name and no date after it.
+    - On the chart, a card named **Tide team** reads **No feature lead**.
   - **Notes:**
 
-- [ ] **Step 8.** Add a new feature team, `Beacon team`, the same way, with **Cleo Marsh** and **Freya Holt** as members and no lead.
-  - **Expected:** **Cleo Marsh** is offered in **Add member**, though she is on **Tide team** too. On the chart, a card for **Cleo Marsh** is under both **Tide team** and **Beacon team**.
+- [ ] **Step 8.** Select the Feature teams button, then **New feature team**, and type `Harbour team` in the **Name** box.
+  - **Expected:** The **Name** box holds **Harbour team**.
   - **Notes:**
 
-- [ ] **Step 9.** Select **Today**.
-  - **Expected:** The text below the row goes. The chart still draws **Tide team**, **Harbour team** and **Beacon team**, each with the same members.
+- [ ] **Step 9.** Select the change button in the **Members** row, type `Dara`, press Enter, type `Emil`, press Enter, and press Enter again.
+  - **Expected:** **Members** lists **Dara Finch** and **Emil Stone**, one to a line.
   - **Notes:**
 
-- [ ] **Step 10.** Run Publish. Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, tick **Select all waiting**, then select **Approve 3 drafts**, then **Approve** in the dialog.
+- [ ] **Step 10.** Select the change button in the **Feature lead** row, type `Dara`, and press Enter.
+  - **Expected:** **Feature lead** reads **Dara Finch**.
+  - **Notes:**
+
+- [ ] **Step 11.** Select **Add**.
+  - **Expected:**
+    - The panel is titled **Harbour team**, followed by a hollow yellow dot and **Draft: added**.
+    - **Feature lead** reads **Dara Finch**.
+    - **Members** lists **Dara Finch** and **Emil Stone**.
+  - **Notes:**
+
+- [ ] **Step 12.** Select the Feature teams button, then **New feature team**, and type `Beacon team` in the **Name** box.
+  - **Expected:** The **Name** box holds **Beacon team**.
+  - **Notes:**
+
+- [ ] **Step 13.** Select the change button in the **Members** row, and type `Cleo`.
+  - **Expected:** **Cleo Marsh** is listed.
+  - **Notes:**
+
+- [ ] **Step 14.** Press Enter, type `Freya`, press Enter, and press Enter again.
+  - **Expected:** **Members** lists **Cleo Marsh** and **Freya Holt**, one to a line.
+  - **Notes:**
+
+- [ ] **Step 15.** Select **Add**.
+  - **Expected:**
+    - The panel is titled **Beacon team**, followed by a hollow yellow dot and **Draft: added**.
+    - On the chart, a card for **Cleo Marsh** is under **Tide team**, and another under **Beacon team**.
+  - **Notes:**
+
+- [ ] **Step 16.** Select **Today**.
+  - **Expected:**
+    - The text below the row is gone.
+    - **Tide team** has **Ada Quill**, **Bram Oakes** and **Cleo Marsh** under its card.
+    - **Harbour team**'s first card is Dara Finch's, with **Emil Stone** under it.
+    - **Beacon team** has **Cleo Marsh** and **Freya Holt** under its card.
+  - **Notes:**
+
+- [ ] **Step 17.** Run Publish.
+  - **Expected:** The Publish button is gone.
+  - **Notes:**
+
+- [ ] **Step 18.** Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
+  - **Expected:** The top bar's right end reads **Engineering Director**.
+  - **Notes:**
+
+- [ ] **Step 19.** Select the **Drafts** page in the left-hand menu, and tick **Select all waiting**.
+  - **Expected:** A button reads **Approve 3 drafts**.
+  - **Notes:**
+
+- [ ] **Step 20.** Select **Approve 3 drafts**, then **Approve** in the dialog.
   - **Expected:** A notice reads **Approved 3 drafts.**
   - **Notes:**
 
 #### ACC-54: The Feature Lead, Acting as Engineering Manager, Plans Team Changes Months Ahead
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-53. Step 6 signs in as another account.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-53. Step 13 signs in as another account.
 
-**Preconditions:** ACC-53 done. Signed in with this account, acting as **Engineering Manager**. **Org chart** page open, with **Feature teams** chosen in the teams switch, showing today.
+**Preconditions:** ACC-53 done. Signed in with this account, acting as **Engineering Manager**. Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch; it shows today.
 
 - [ ] **Step 1.** Select the right arrow once.
   - **Expected:** Text below the row reads **Showing** with the first day of next month, such as **Showing Dec 1, 2026.**, then **Changes take effect from this date.**
   - **Notes:**
 
-- [ ] **Step 2.** Select the Feature teams button, then **Tide team**. Choose **Ada Quill** in **Feature lead**, and select the **×** at the right of **Bram Oakes**.
-  - **Expected:** The members read **Ada Quill (lead)** and **Cleo Marsh**, and a line under them reads **Bram Oakes, leaving**, marked **Live**.
+- [ ] **Step 2.** Select the Feature teams button, then **Tide team**.
+  - **Expected:** The team panel is titled **Tide team**.
   - **Notes:**
 
-- [ ] **Step 3.** Open **Harbour team** from the Feature teams button, and add **Bram Oakes**.
-  - **Expected:** **Bram Oakes** is listed among the members with a yellow dot and **Draft**.
-  - **Notes:**
-
-- [ ] **Step 4.** Select the right arrow twice. Open **Beacon team** from the Feature teams button, and select the **×** at the right of **Cleo Marsh**, then of **Freya Holt**.
+- [ ] **Step 3.** Select the change button in the **Feature lead** row, type `Ada`, and press Enter.
   - **Expected:**
-    - Text below the row reads **Showing** with the first day of the month three months from now, such as **Showing Feb 1, 2027.**
-    - No members are listed.
-    - Lines read **Cleo Marsh, leaving** and **Freya Holt, leaving**, each marked **Live**.
+    - **Feature lead** reads **Ada Quill**, followed by a hollow yellow dot and **Draft**.
+    - Under it, **None** is in grey, followed by a green dot and **Live**.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Today**, and open **Tide team** from the Feature teams button.
-  - **Expected:**
-    - The text below the row goes.
-    - The line for the member leaving gives the first day of next month, such as **Bram Oakes, leaving from Dec 1, 2026**.
+- [ ] **Step 4.** Select the change button in the **Members** row, type `Bram`, press Enter to untick **Bram Oakes**, and press Enter again.
+  - **Expected:** **Members** lists **Ada Quill**, **Bram Oakes** and **Cleo Marsh**, with a hollow yellow dot before **Bram Oakes**, who is struck through.
   - **Notes:**
 
-- [ ] **Step 6.** Run Publish. Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, tick **Select all waiting**, then select **Approve 3 drafts**, then **Approve** in the dialog.
+- [ ] **Step 5.** Select the Feature teams button, then **Harbour team**.
+  - **Expected:** The team panel is titled **Harbour team**.
+  - **Notes:**
+
+- [ ] **Step 6.** Select the change button in the **Members** row, type `Bram`, press Enter, and press Enter again.
+  - **Expected:** **Members** lists **Bram Oakes**, with a hollow yellow dot before his name.
+  - **Notes:**
+
+- [ ] **Step 7.** Select the right arrow twice.
+  - **Expected:** Text below the row reads **Showing** with the first day of the month three months from now, such as **Showing Feb 1, 2027.**
+  - **Notes:**
+
+- [ ] **Step 8.** Select the Feature teams button, then **Beacon team**.
+  - **Expected:** The team panel is titled **Beacon team**.
+  - **Notes:**
+
+- [ ] **Step 9.** Select the change button in the **Members** row, type `Cleo`, press Enter to untick **Cleo Marsh**, type `Freya`, press Enter to untick **Freya Holt**, and press Enter again.
+  - **Expected:** **Members** lists **Cleo Marsh** and **Freya Holt**, each with a hollow yellow dot before the name and struck through.
+  - **Notes:**
+
+- [ ] **Step 10.** Select **Today**.
+  - **Expected:** The text below the row is gone.
+  - **Notes:**
+
+- [ ] **Step 11.** Select the Feature teams button, then **Tide team**.
+  - **Expected:** In the **Members** row, **Bram Oakes** has a hollow yellow dot before his name and is struck through, followed in grey by **Draft, from** and the first day of next month, such as **Draft, from Dec 1, 2026**.
+  - **Notes:**
+
+- [ ] **Step 12.** Run Publish.
+  - **Expected:** The Publish button is gone.
+  - **Notes:**
+
+- [ ] **Step 13.** Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
+  - **Expected:** The top bar's right end reads **Engineering Director**.
+  - **Notes:**
+
+- [ ] **Step 14.** Select the **Drafts** page in the left-hand menu, and tick **Select all waiting**.
+  - **Expected:** A button reads **Approve 3 drafts**.
+  - **Notes:**
+
+- [ ] **Step 15.** Select **Approve 3 drafts**, then **Approve** in the dialog.
   - **Expected:** A notice reads **Approved 3 drafts.**
   - **Notes:**
 

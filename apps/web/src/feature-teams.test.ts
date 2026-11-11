@@ -10,6 +10,7 @@ import {
   featureTeamPeople,
   liveTeam,
   memberCardId,
+  membersChanged,
   teamCardId,
 } from "./feature-teams.ts";
 
@@ -330,5 +331,27 @@ describe("feature teams on the chart", () => {
         managerId: memberCardId("t1", "lead"),
       },
     ]);
+  });
+});
+
+describe("a choice of a team's members", () => {
+  const offered = new Set(["a", "b", "c"]);
+
+  it("adds those chosen and takes off those unticked", () => {
+    expect(membersChanged(["a", "b"], ["b", "c"], offered)).toEqual({
+      add: ["c"],
+      remove: ["a"],
+    });
+  });
+
+  it("keeps members the picker did not offer", () => {
+    expect(membersChanged(["a", "unseen"], ["a", "c"], offered)).toEqual({
+      add: ["c"],
+      remove: [],
+    });
+  });
+
+  it("is nothing when it changes no one, in whatever order", () => {
+    expect(membersChanged(["a", "b"], ["b", "a"], offered)).toBeUndefined();
   });
 });

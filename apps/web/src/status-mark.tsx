@@ -39,6 +39,13 @@ export function draftWords(draft: DraftLike): string {
   return "Draft";
 }
 
+// What a draft is, in words, leaving out a rejected draft's reason, for words that sit beside a part
+// of a record, such as when the draft takes effect, where the reason is given once elsewhere.
+export const draftWordsAlone = (draft: DraftLike): string =>
+  draft.state === "rejected"
+    ? rejectedWord
+    : draftWords({ ...draft, reason: undefined });
+
 const dotChars = 2;
 
 // How many characters a draft's mark takes in a table, with its dot.

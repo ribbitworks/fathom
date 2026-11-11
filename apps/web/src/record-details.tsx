@@ -149,19 +149,36 @@ export function RecordLinkList({
   );
 }
 
+// What a row's change button is, named Change and the row's label, for a row's own control, such as a
+// menu, that changes its value.
+export const changeButton = (label: string) =>
+  ({
+    variant: "subtle",
+    color: "gray",
+    size: "sm",
+    "aria-label": `Change ${label}`,
+    children: <Icon name="edit" />,
+  }) as const;
+
 export function Row({
   column,
   value,
   changed,
   editing,
   children,
+  action,
 }: {
   column: DetailColumn;
   value: CellValue;
-  // Beside live, what a draft changes here: the live value, and the draft to mark it with, if any.
-  changed?: { live: CellValue; draft?: DraftLike } | undefined;
+  // Beside live, what a draft changes here: the live value, the draft to mark it with, if any, and
+  // the day or month the change takes effect from, where that needs saying.
+  changed?:
+    | { live: CellValue; draft?: DraftLike; from?: string | undefined }
+    | undefined;
   editing?: Editing | undefined;
   children?: ReactNode;
+  // A control of its own at the row's right, in place of the change button, such as a menu.
+  action?: ReactNode;
 }) {
   const draft = changed?.draft;
   const start = editing?.open === true ? undefined : editing?.onStart;
@@ -203,20 +220,18 @@ export function Row({
               {checkbox
                 ? editing.editor
                 : (children ?? <Value column={column} value={value} />)}
-              {draft !== undefined && <DraftMark draft={draft} />}
+              {draft !== undefined && (
+                <DraftMark draft={draft} from={changed?.from} />
+              )}
             </Group>
             {start !== undefined && (
               <ActionIcon
                 id={changeId(column)}
-                variant="subtle"
-                color="gray"
-                size="sm"
-                aria-label={`Change ${column.label}`}
+                {...changeButton(column.label)}
                 onClick={start}
-              >
-                <Icon name="edit" />
-              </ActionIcon>
+              />
             )}
+            {action}
           </Group>
         )}
         {editing?.problem !== undefined && (

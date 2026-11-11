@@ -18,6 +18,7 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   bodyOf,
+  detailRow,
   fictionalUser,
   renderApp,
   serverAnswers,
@@ -179,8 +180,7 @@ function answers(
 
 const panel = (name: string) => screen.findByRole("region", { name });
 
-const row = (label: string) =>
-  screen.getByText(label, { selector: "dt" }).parentElement as HTMLElement;
+const row = (label: string) => detailRow(label);
 
 describe("a person's details", () => {
   it("shows the person, their manager, reports, details and columns beside People", async () => {
@@ -851,7 +851,7 @@ describe("a person's feature teams", () => {
   };
   const section = () => screen.getByRole("region", { name: "Feature teams" });
 
-  it("lists those they are on, with who leads each, linking to the team on the org chart", async () => {
+  it("lists those they lead, then those they are a member of with who leads each, linking to the team on the org chart", async () => {
     open(featureTeams);
     await panel("Sasha Fictional");
     await waitFor(() => {
@@ -860,12 +860,17 @@ describe("a person's feature teams", () => {
           ({ textContent }) => textContent,
         ),
       ).toEqual([
-        "Fictional BeaconLead",
+        "Fictional Beacon",
         "Fictional LighthouseLed by Robin Fictional",
         "Fictional PierLed by someone this role can't see",
         "Fictional QuayNo feature lead",
       ]);
     });
+    expect(
+      [...section().querySelectorAll("dt")].map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual(["Leads", "Member of"]);
     expect(
       within(section())
         .getByRole("link", { name: "Fictional Quay" })

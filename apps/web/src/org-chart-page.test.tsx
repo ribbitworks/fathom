@@ -16,13 +16,14 @@ import {
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { featureTeamPanelId } from "./feature-team-panel.tsx";
 import {
+  detailValue,
   fictionalUser,
   greeting,
   renderApp,
   serverAnswers,
   signedIn,
-  wholeText,
 } from "./test-support.tsx";
 
 const viewer = () =>
@@ -95,6 +96,15 @@ const peopleAnswers = {
 afterEach(() => {
   vi.unstubAllGlobals();
 });
+
+// A person's Live copy on the chart: the card holding their name with no link, since a copy opens
+// nothing.
+const liveCopyOf = (name: string) =>
+  [...document.querySelectorAll<HTMLElement>("div.react-flow__node")].find(
+    (node) =>
+      node.textContent.includes(name) &&
+      within(node).queryByRole("link", { name }) === null,
+  ) as HTMLElement;
 
 async function showLevels(choice: string) {
   await userEvent.click(
@@ -518,11 +528,9 @@ describe("the org chart", () => {
     );
     await screen.findByRole("link", { name: "Sasha Fictional" });
     expect(within(card("Sasha Fictional")).getByText("No name")).toBeDefined();
-    const copy = screen
-      .getAllByText("Uma Fictional")
-      .find((name) => name.tagName === "SPAN")
-      ?.closest("[data-coloured]");
-    expect(copy).not.toBeNull();
+    expect(
+      liveCopyOf("Uma Fictional").querySelector("[data-coloured]"),
+    ).not.toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Draft" }));
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Drafts applied" }),
@@ -1019,10 +1027,7 @@ describe("the org chart", () => {
     );
     await screen.findByRole("link", { name: "Uma Fictional" });
     expect(within(card("Uma Fictional")).getByText("Draft")).toBeDefined();
-    const copy = screen
-      .getAllByText("Uma Fictional")
-      .find((name) => name.tagName === "SPAN")
-      ?.closest("div.react-flow__node") as HTMLElement;
+    const copy = liveCopyOf("Uma Fictional");
     expect(within(copy).getByText("Live")).toBeDefined();
     const team = card("Sasha Fictional");
     expect(within(team).getByText("Fictional crew")).toBeDefined();
@@ -1683,7 +1688,28 @@ describe("feature teams on the org chart", () => {
           : (JSON.parse(init.body as string) as unknown),
       ]);
 
-  const teamPanel = () => screen.findByRole("region", { name: "Feature team" });
+  // The panel of the feature team open, titled with the team's name, found by its own id.
+  const teamPanel = async () => {
+    await waitFor(() => {
+      expect(document.getElementById(featureTeamPanelId)).not.toBeNull();
+    });
+    return document.getElementById(featureTeamPanelId) as HTMLElement;
+  };
+
+  // What a row of a panel reads, by its label.
+  const rowText = (panel: HTMLElement, label: string) =>
+    detailValue(label, panel);
+
+  // Ticks or unticks each person named in a team's Members row, then finishes.
+  async function changeMembers(panel: HTMLElement, names: RegExp[]) {
+    await userEvent.click(
+      within(panel).getByRole("button", { name: "Change Members" }),
+    );
+    for (const name of names) {
+      await userEvent.click(await screen.findByRole("option", { name }));
+    }
+    await userEvent.keyboard("{Enter}");
+  }
 
   async function openTeamPanel(name: string | RegExp) {
     await userEvent.click(
@@ -1788,10 +1814,7 @@ describe("feature teams on the org chart", () => {
       screen.getByRole("button", { name: "Fictional Lighthouse" }),
     );
     const panel = await teamPanel();
-    expect(
-      within(panel).getByRole<HTMLInputElement>("combobox", { name: "Team" })
-        .value,
-    ).toBe("Fictional Lighthouse");
+    expect(rowText(panel, "Name")).toBe("Fictional Lighthouse");
     expect(history.location.search).toContain(`featureTeam=${lighthouse}`);
     expect(
       card("Sasha Fictional").querySelector("[data-found]"),
@@ -1800,7 +1823,7 @@ describe("feature teams on the org chart", () => {
       within(panel).getByRole("button", { name: "Close feature team" }),
     );
     expect(history.location.search).not.toContain("featureTeam=");
-    expect(screen.queryByRole("region", { name: "Feature team" })).toBeNull();
+    expect(document.getElementById(featureTeamPanelId)).toBeNull();
   });
 
   it("opens a team with no lead from its own card", async () => {
@@ -1814,18 +1837,14 @@ describe("feature teams on the org chart", () => {
     expect(card("Fictional Quay").querySelector("[data-found]")).not.toBeNull();
   });
 
-  it("opens another team chosen in the panel", async () => {
+  it("opens another team chosen from the Feature teams button while one is open", async () => {
     const { history } = await openFeatureTeams({
       path: `/org-chart?view=feature-teams&featureTeam=${lighthouse}`,
     });
-    const panel = await teamPanel();
-    await userEvent.click(
-      within(panel).getByRole("combobox", { name: "Team" }),
-    );
-    await userEvent.click(
-      await screen.findByRole("option", { name: "Fictional Quay" }),
-    );
+    await teamPanel();
+    const panel = await openTeamPanel("Fictional Quay");
     expect(history.location.search).toContain(`featureTeam=${quay}`);
+    expect(rowText(panel, "Name")).toBe("Fictional Quay");
   });
 
   it("opens a person from their card, with their manager and feature teams in place of their reporting team", async () => {
@@ -1860,6 +1879,39 @@ describe("feature teams on the org chart", () => {
     );
     expect(await teamPanel()).toBeDefined();
     expect(screen.getByRole("region", { name: "Uma Fictional" })).toBeDefined();
+  });
+
+  it("lists the teams a person leads apart from those they are a member of", async () => {
+    await openFeatureTeams({
+      path: "/org-chart?view=feature-teams&open=FX-p4",
+      shown: [
+        featureTeam({
+          id: lighthouse,
+          name: "Fictional Lighthouse",
+          leadId: "p2",
+          members: ["p2", "p4"],
+        }),
+        featureTeam({
+          id: quay,
+          name: "Fictional Quay",
+          leadId: "p4",
+          members: ["p4", "p3"],
+        }),
+      ],
+    });
+    const details = await screen.findByRole("region", {
+      name: "Uma Fictional",
+    });
+    const memberships = within(details).getByRole("region", {
+      name: "Feature teams",
+    });
+    expect([
+      rowText(memberships, "Leads"),
+      rowText(memberships, "Member of"),
+    ]).toEqual([
+      "Fictional Quay",
+      "Fictional LighthouseLed by Sasha Fictional",
+    ]);
   });
 
   it("finds people with the feature team of their card, and a team with no lead as a team", async () => {
@@ -1900,11 +1952,9 @@ describe("feature teams on the org chart", () => {
       screen.getByRole("menuitem", { name: "Fictional Lighthouse" }),
     );
     const panel = await teamPanel();
+    expect(rowText(panel, "Feature lead")).toBe("Sasha Fictional");
     expect(
-      within(panel).getByText(wholeText("Feature lead Sasha Fictional")),
-    ).toBeDefined();
-    expect(
-      within(panel).queryByRole("combobox", { name: "Add member" }),
+      within(panel).queryByRole("button", { name: /^Change / }),
     ).toBeNull();
   });
 
@@ -1964,13 +2014,11 @@ describe("feature teams on the org chart", () => {
       within(form).getByRole("textbox", { name: "Name" }),
       "Fictional Beacon",
     );
-    await userEvent.click(
-      within(form).getByRole("button", { name: "Add feature team" }),
-    );
+    await userEvent.click(within(form).getByRole("button", { name: "Add" }));
     const panel = await teamPanel();
-    expect(
-      await within(panel).findByDisplayValue("Fictional Beacon"),
-    ).toBeDefined();
+    await waitFor(() => {
+      expect(rowText(panel, "Name")).toBe("Fictional Beacon");
+    });
     expect(history.location.search).toContain(`featureTeam=${beacon}`);
     expect(sent(fetch, "POST")).toEqual([
       [
@@ -1993,24 +2041,20 @@ describe("feature teams on the org chart", () => {
           Response.json({ error: "Down" }, { status: 500 }),
       },
     });
-    await screen.findByRole("link", { name: "Sasha Fictional" });
     await userEvent.click(
-      screen.getByRole("button", { name: "Fictional Lighthouse" }),
-    );
-    const panel = await teamPanel();
-    await userEvent.click(
-      within(panel).getByRole("combobox", { name: "Team" }),
+      await screen.findByRole("button", { name: "Feature teams" }),
     );
     await userEvent.click(
-      await screen.findByRole("option", { name: "New feature team…" }),
+      await screen.findByRole("menuitem", { name: "New feature team" }),
     );
     const form = await screen.findByRole("region", {
       name: "New feature team",
     });
     await userEvent.type(
       within(form).getByRole("textbox", { name: "Name" }),
-      "Fictional Beacon{Enter}",
+      "Fictional Beacon",
     );
+    await userEvent.click(within(form).getByRole("button", { name: "Add" }));
     expect(
       await screen.findByText("Fathom could not add Fictional Beacon."),
     ).toBeDefined();
@@ -2041,36 +2085,26 @@ describe("feature teams on the org chart", () => {
     });
     const panel = await openTeamPanel("Fictional Lighthouse");
     await userEvent.click(
-      within(panel).getByRole("button", { name: "Rename" }),
+      within(panel).getByRole("button", { name: "Change Name" }),
     );
     const name = within(panel).getByRole("textbox", { name: "Name" });
     await userEvent.clear(name);
     await userEvent.type(name, "Fictional Pier{Enter}");
-    const choose = async (box: string, option: RegExp) => {
-      await userEvent.click(within(panel).getByRole("combobox", { name: box }));
-      await userEvent.click(
-        await screen.findByRole("option", { name: option }),
-      );
-    };
-    const changeAll = async () => {
-      await choose("Feature lead", /^Uma Fictional/);
-      await choose("Add member", /^Robin Fictional/);
-      await userEvent.click(
-        within(panel).getByRole("button", {
-          name: "Remove Uma Fictional from Fictional Lighthouse",
-        }),
-      );
-    };
-    await changeAll();
+    await userEvent.click(
+      within(panel).getByRole("button", { name: "Change Feature lead" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("option", { name: /^Uma Fictional/ }),
+    );
+    await changeMembers(panel, [/^Robin Fictional/, /^Uma Fictional/]);
     await waitFor(() => {
-      expect(sent(fetch, "PATCH")).toHaveLength(4);
+      expect(sent(fetch, "PATCH")).toHaveLength(3);
     });
     expect(sent(fetch, "PATCH")).toEqual(
       [
         { name: "Fictional Pier" },
         { leadId: "p4" },
-        { add: ["p1"] },
-        { remove: ["p4"] },
+        { add: ["p1"], remove: ["p4"] },
       ].map((body) => [team, body]),
     );
   });
@@ -2107,7 +2141,7 @@ describe("feature teams on the org chart", () => {
       expect(screen.queryByRole("button", { name: /^Draft/ })).toBeNull();
       const panel = await openTeamPanel("Fictional Lighthouse");
       expect(
-        within(panel).queryByRole("combobox", { name: "Add member" }),
+        within(panel).queryByRole("button", { name: /^Change / }),
       ).toBeNull();
     });
 
@@ -2132,7 +2166,7 @@ describe("feature teams on the org chart", () => {
       expect(screen.getByRole("button", { name: /^Draft/ })).toBeDefined();
       const panel = await openTeamPanel("Fictional Lighthouse");
       expect(
-        within(panel).queryByRole("button", { name: "Rename" }),
+        within(panel).queryByRole("button", { name: "Change Name" }),
       ).toBeNull();
       expect(
         within(panel).queryByRole("button", { name: "Remove feature team" }),
@@ -2141,30 +2175,19 @@ describe("feature teams on the org chart", () => {
         within(panel).queryByRole("button", { name: /^Colour of/ }),
       ).toBeNull();
       await userEvent.click(
-        within(panel).getByRole("combobox", { name: "Feature lead" }),
+        within(panel).getByRole("button", { name: "Change Feature lead" }),
       );
       await userEvent.click(
         await screen.findByRole("option", { name: /^Uma Fictional/ }),
       );
-      await userEvent.click(
-        within(panel).getByRole("combobox", { name: "Add member" }),
-      );
-      await userEvent.click(
-        await screen.findByRole("option", { name: /^Robin Fictional/ }),
-      );
-      await userEvent.click(
-        within(panel).getByRole("button", {
-          name: "Remove Uma Fictional from Fictional Lighthouse",
-        }),
-      );
+      await changeMembers(panel, [/^Robin Fictional/, /^Uma Fictional/]);
       await waitFor(() => {
-        expect(sent(fetch, "PATCH")).toHaveLength(3);
+        expect(sent(fetch, "PATCH")).toHaveLength(2);
       });
       expect(sent(fetch, "PATCH")).toEqual(
         [
           { leadId: "p4", from: later },
-          { add: ["p1"], from: later },
-          { remove: ["p4"], from: later },
+          { add: ["p1"], remove: ["p4"], from: later },
         ].map((body) => [`/api/feature-teams/${lighthouse}`, body]),
       );
     });
@@ -2180,7 +2203,7 @@ describe("feature teams on the org chart", () => {
       ).toBeDefined();
       const panel = await openTeamPanel("Fictional Lighthouse");
       expect(
-        within(panel).getByRole("combobox", { name: "Add member" }),
+        within(panel).getByRole("button", { name: "Change Members" }),
       ).toBeDefined();
     });
 
@@ -2322,14 +2345,10 @@ describe("feature teams on the org chart", () => {
       },
     });
     const panel = await openTeamPanel("Fictional Lighthouse");
-    await userEvent.click(
-      within(panel).getByRole("button", {
-        name: "Remove Uma Fictional from Fictional Lighthouse",
-      }),
-    );
+    await changeMembers(panel, [/^Uma Fictional/]);
     expect(
       await screen.findByText(
-        "Fathom could not remove a member from Fictional Lighthouse.",
+        "Fathom could not change the members of Fictional Lighthouse.",
       ),
     ).toBeDefined();
   });
@@ -2405,9 +2424,7 @@ describe("feature teams on the org chart", () => {
     });
     const panel = await openTeamPanel("Fictional Lighthouse");
     await userEvent.click(
-      within(panel).getByRole("button", {
-        name: /^Colour of Fictional Lighthouse/,
-      }),
+      within(panel).getByRole("button", { name: "Change Colour" }),
     );
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Grape" }),

@@ -112,6 +112,21 @@ export function teamPersonNamer(
     someoneUnseen;
 }
 
+// Who a choice of a team's members adds and takes off, given its members now and those the picker
+// offered: someone it did not offer, such as a member the reader does not see, stays. Nothing, when
+// the choice changes no one.
+export function membersChanged(
+  current: readonly string[],
+  wanted: readonly string[],
+  offered: ReadonlySet<string>,
+): { add: string[]; remove: string[] } | undefined {
+  const add = wanted.filter((personId) => !current.includes(personId));
+  const remove = current.filter(
+    (personId) => offered.has(personId) && !wanted.includes(personId),
+  );
+  return add.length === 0 && remove.length === 0 ? undefined : { add, remove };
+}
+
 // A team as it is live: its draft's changes taken back, or none for one only drafted to be added.
 export function liveTeam(team: FeatureTeam): FeatureTeam | undefined {
   const { draft } = team;

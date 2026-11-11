@@ -1,0 +1,24 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* What every drop-down list shares through the theme: the option the keyboard is on, which Enter
+   would pick, is grey, as one pointed at is, rather than filled with the accent, so it never looks
+   like a choice already made. In light mode both are a step darker than Mantine's hover, which is
+   too faint to see on white. */
+
+:where([data-mantine-color-scheme="light"]) .option[data-combobox-selected],
+:where([data-mantine-color-scheme="light"]) .option:hover {
+  background-color: var(--mantine-color-gray-2);
+  color: inherit;
+}
+
+:where([data-mantine-color-scheme="dark"]) .option[data-combobox-selected] {
+  background-color: var(--mantine-color-dark-7);
+  color: inherit;
+}
+
+/* A picker's choice of none, first in its list, set apart from the choices under it by a line. */
+.none {
+  border-bottom: 1px solid var(--mantine-color-default-border);
+  border-radius: 0;
+  margin-bottom: calc(var(--mantine-spacing-xs) / 2);
+}

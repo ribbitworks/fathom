@@ -26,13 +26,13 @@ export function TeamLabels({
     name: string;
     colour: PaletteColour | null;
     drafted?: DraftedLabel | undefined;
-    // The draft adding the team, whose dot the label shows.
-    addedBy?: DraftLike | undefined;
+    // The draft adding or removing the team, whose dot the label shows.
+    draftedBy?: DraftLike | undefined;
   }[];
 }) {
   return (
     <div className={styles.labels}>
-      {teams.map(({ id, name, colour, drafted, addedBy }) => (
+      {teams.map(({ id, name, colour, drafted, draftedBy }) => (
         <span
           key={id}
           className={[
@@ -50,7 +50,7 @@ export function TeamLabels({
                 }
           }
         >
-          {addedBy !== undefined && <DraftDot draft={addedBy} />}
+          {draftedBy !== undefined && <DraftDot draft={draftedBy} />}
           {name}
           {drafted !== undefined && <DraftedWords drafted={drafted} />}
         </span>

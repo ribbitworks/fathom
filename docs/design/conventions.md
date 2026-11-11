@@ -16,8 +16,8 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **A removal:** A record a draft removes is struck through, marked Draft: removed, and can't be changed until the draft is discarded or decided.
   - **Drawn by:** `DraftMark`, with the struck-through row from the table or panel that holds it.
   - **Example:** the seeded person drafted to be removed, on People.
-- **A part a draft adds or removes:** A part of a record, such as a team in a month's cell, has a draft's dot before it when added, and is struck through when removed. Screen readers read "added", "removed" or "changed" after it, since the dot and the line are only seen.
-  - **Drawn by:** `DraftDot` and `DraftedWords` in `apps/web/src/status-mark.tsx`, as `TeamLabels` in `apps/web/src/team-labels.tsx` and `AllocationLines` in `apps/web/src/allocation-months.tsx` use them.
+- **A part a draft adds or removes:** A part of a record, such as a team in a month's cell or a member of a feature team, has the draft's dot before it whenever a draft adds, changes or removes it, in the draft's tone, so it says whether the draft is unpublished, waiting or rejected; a part being removed is also struck through. Screen readers read "added", "removed" or "changed" after it, since the dot and the line are only seen. Decided by the owner on 2026-11-11, replacing a removed part struck through without a dot.
+  - **Drawn by:** `DraftDot` and `DraftedWords` in `apps/web/src/status-mark.tsx`, as `TeamLabels` in `apps/web/src/team-labels.tsx`, `AllocationLines` in `apps/web/src/allocation-months.tsx` and a feature team's Members row in `apps/web/src/feature-team-panel.tsx` use them.
   - **Example:** on Feature assignments, choose a team in a person's month: its label gets a yellow dot.
 - **A change to a value:** A value a draft changes shows the drafted value, with the live value on a line under it, small, dimmed and marked Live after a green dot.
   - **Drawn by:** `LiveLine` in `apps/web/src/status-mark.tsx`; `Row` in `apps/web/src/record-details.tsx` draws the same with `StatusMark` in a details panel.
@@ -100,7 +100,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Details Panels
 
-- **Follow the Person panel:** Every record's details follow Person details: the record's name and draft mark at the top; headed sections of rows, each label beside its value while the panel is wide and over it once narrow; the columns an organization added under Columns. Each value that can be changed has a pencil at its right, named Change and the label, and a click on the value does the same.
+- **Follow the Person panel:** Every record's details follow Person details: the record's name and draft mark at the top; headed sections of rows, each label beside its value while the panel is wide and over it once narrow; the columns an organization added under Columns. Each value that can be changed has a pencil at its right, named Change and the label, and a click on the value does the same. A panel never mixes in another layout, such as labels over form fields. Decided by the owner on 2026-11-11.
   - **Drawn by:** `RecordSection`, `Row` and `RecordLink` in `apps/web/src/record-details.tsx`, with `useRecordEditing` in `apps/web/src/record-editing.tsx` for the pencils.
   - **Example:** any seeded person's details beside People.
 - **Columns follow the panel's order:** A table's default column order follows its details panel's sections and rows, and the other way round, defined once and used by both.
@@ -121,8 +121,11 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **A choice with a description:** In a picker, a choice's description shows dimmed under its name, and typing finds a choice by its description too.
   - **Drawn by:** `ChoicePicker` in `apps/web/src/choice-picker.tsx`, which the feature team change gives descriptions.
   - **Example:** a cell's choices on People, once that change is merged and a choice has a description.
+- **Choosing none:** A picker for a value that takes one choice and need not have one offers the column's word for an empty value, such as None, No manager or Later, as its first option, with a line under it, until something is typed. Nothing is highlighted until a key is pressed or an option pointed at, and once something is typed the first match is highlighted, so none is always in sight but Enter never picks it unasked. Choosing it empties the value. Decided by the owner on 2026-11-11.
+  - **Drawn by:** `ChoicePicker` in `apps/web/src/choice-picker.tsx`, given the word through `cellKinds` in `apps/web/src/cell-kinds.tsx` from the column's `emptyLabel`, which the feature team change adds.
+  - **Example:** on People, open a person's Manager cell: No manager is first.
 - **The keyboard's option in a drop-down list:** The option the keyboard is on, which Enter would pick, is light grey in light mode and a dark grey in dark mode, the same as an option pointed at; never the accent colour, which looks like a choice already made. Decided by the owner on 2026-11-11.
-  - **Drawn by:** the theme, through `Combobox.extend` in `apps/web/src/theme.ts` and `apps/web/src/combobox.module.css`, which the feature team change adds, so every drop-down list and table cell's choices follow it.
+  - **Drawn by:** the theme, through `Combobox.extend` and `Select.extend` in `apps/web/src/theme.ts`, both giving their options the class in `apps/web/src/combobox.module.css`, which the feature team change adds, so every drop-down list, Select and table cell's choices follow it. A new kind of drop-down list from Mantine, such as `MultiSelect`, needs the same class in the theme.
   - **Example:** on Features, once that change is merged, open a Status cell's choices and press the Down arrow.
 - **The chosen one ticked:** A group of choices in a menu ticks the one chosen.
   - **Drawn by:** `MenuChoices` in `apps/web/src/app-menu.tsx`.

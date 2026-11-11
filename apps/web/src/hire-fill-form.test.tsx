@@ -7,7 +7,12 @@
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fictionalUser, renderApp, serverAnswers } from "./test-support.tsx";
+import {
+  detailRow,
+  fictionalUser,
+  renderApp,
+  serverAnswers,
+} from "./test-support.tsx";
 
 const person = (id: string, name: string, details: object = {}) => ({
   id,
@@ -149,8 +154,7 @@ const fillNow = () =>
 const type = (label: string, text: string) =>
   userEvent.type(screen.getByRole("textbox", { name: label }), text);
 
-const row = (label: string) =>
-  screen.getByText(label, { selector: "dt" }).parentElement as HTMLElement;
+const row = (label: string) => detailRow(label);
 
 async function pick(label: string, name: RegExp | string) {
   await userEvent.click(

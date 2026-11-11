@@ -1,52 +1,65 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A feature team's details, beside the org chart: its name, colour, lead, and members, as its draft
-// makes them, with a drafted name's live one under it and members a draft adds or removes marked, as
-// managers' teams are, and when each change takes effect, where that is not the day shown. Those
-// who propose feature teams add and remove members and choose the lead, from the day the chart
-// shows, those who edit them also rename and remove the team. Each change is a draft, saved at once,
-// which can be undone from its notification. A new team is named first, then given members.
+// A feature team's details, beside the org chart, laid out as a person's are: its name and colour,
+// then its lead and members, as its draft makes them, each drafted value with its live one under it
+// and members a draft adds or removes marked, with when each change takes effect, where that is not
+// the day shown. Those who propose feature teams rename the team on today's chart, and change its
+// lead and members from the day the chart shows, choosing each person in a picker that describes
+// them by their position and reporting team; those who edit them also remove the team. Each change
+// is a draft, saved at once, which Cmd+Z or Ctrl+Z undoes. A new team is given its name, lead and
+// members at once.
 
 import {
+  type Choice,
   type FeatureTeam,
+  type FeatureTeamDraft,
   featureTeamLengths,
+  type FeatureTeamRequest,
   type OrgChartPerson,
   type PaletteColour,
   type Show,
 } from "@fathom/shared";
-import {
-  Button,
-  CloseButton,
-  type ComboboxItem,
-  type ComboboxParsedItem,
-  isOptionsGroup,
-  type OptionsFilter,
-  Group,
-  Select,
-  Stack,
-  Text,
-  TextInput,
-} from "@mantine/core";
-import { useState } from "react";
+import { Button, Group, Stack, Text } from "@mantine/core";
+import { type ReactNode, useMemo, useState } from "react";
+import { Swatch } from "./colour-swatch.tsx";
+import { colourWords } from "./colours.ts";
 import {
   featureTeamsQuery,
   liveTeam,
+  membersChanged,
   takesEffect,
   teamPersonNamer,
 } from "./feature-teams.ts";
+import { noOthers } from "./new-plan-record-panel.tsx";
+import { NewRecordPanel, newRecordId } from "./new-record-panel.tsx";
+import pages from "./pages.module.css";
+import { noRecordProblem } from "./project-grids.tsx";
+import classes from "./record-details.module.css";
+import { RecordSection, Row } from "./record-details.tsx";
+import {
+  type RecordEditingContext,
+  useRecordEditing,
+} from "./record-editing.tsx";
+import { type Column, fieldColumn } from "./record-grid.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
-import { DraftMark, LiveLine } from "./status-mark.tsx";
+import {
+  type DraftedPart,
+  DraftDot,
+  DraftedWords,
+  DraftMark,
+  draftWordsAlone,
+  HoldMarks,
+} from "./status-mark.tsx";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
 import { today } from "./today.ts";
 
 export const featureTeamPanelId = "feature-team-panel";
 const titleId = "feature-team-panel-title";
-// The picker's choice that starts a new team, which no team's id can be.
-const newTeam = "new";
 
 export const noFeatureTeamEdits: FeatureTeamEdits = {
   propose: false,
-  edit: false,
+  rename: false,
+  remove: false,
   colours: false,
   dates: false,
 };
@@ -54,25 +67,26 @@ export const noFeatureTeamEdits: FeatureTeamEdits = {
 export interface FeatureTeamEdits {
   // Adds teams, and changes their members and leads.
   propose: boolean;
-  // Also renames and removes teams.
-  edit: boolean;
+  // Renames teams, which takes no date, so only on today's chart.
+  rename: boolean;
+  // Removes teams.
+  remove: boolean;
   colours: boolean;
   // Changes teams from an earlier day than today.
   dates: boolean;
 }
 
 export interface FeatureTeamActions {
-  create: (name: string) => void;
+  create: (request: FeatureTeamRequest) => void;
   rename: (team: FeatureTeam, name: string) => void;
   lead: (
     team: FeatureTeam,
     leadId: string | null,
     from: string | undefined,
   ) => void;
-  add: (team: FeatureTeam, personId: string, from: string | undefined) => void;
-  remove: (
+  members: (
     team: FeatureTeam,
-    personId: string,
+    change: { add: string[]; remove: string[] },
     from: string | undefined,
   ) => void;
   removeTeam: (team: FeatureTeam) => void;
@@ -83,29 +97,113 @@ export interface FeatureTeamActions {
   ) => (colour: PaletteColour | null) => Promise<void>;
 }
 
+// A change made in one of the team's rows.
+type TeamChange = Partial<
+  Pick<FeatureTeamRequest, "name" | "leadId" | "members">
+>;
+
+// The team's own fields, so a panel holds no other kind of record.
+const onlyKind = "";
+
 const byName = new Intl.Collator(undefined, { sensitivity: "base" });
+
+// Everyone who may be chosen as a team's lead or member, by name, each described by their position
+// and reporting team.
+function teamChoices(people: readonly OrgChartPerson[]): Choice[] {
+  const byId = new Map(people.map((person) => [person.id, person]));
+  const aboutOf = (person: OrgChartPerson) => {
+    const manager =
+      person.managerId === null ? undefined : byId.get(person.managerId);
+    const team =
+      manager === undefined
+        ? undefined
+        : (manager.teamName ?? `${manager.preferredName}'s team`);
+    return [person.position, team].filter(Boolean).join(", ");
+  };
+  return people
+    .filter((person) => person.planned === undefined && person.left !== true)
+    .sort((a, b) => byName.compare(a.preferredName, b.preferredName))
+    .map((person) => ({
+      id: person.id,
+      label: person.preferredName,
+      description: aboutOf(person),
+      retired: false,
+    }));
+}
+
+// The rows the team's values are shown and changed in.
+function teamColumns(
+  choices: Choice[],
+  canRename: boolean,
+): Record<"name" | "leadId" | "members", Column<FeatureTeam, TeamChange>> {
+  return {
+    name: fieldColumn("name", "text", {
+      label: "Name",
+      required: true,
+      choices: [],
+      multiple: false,
+      maxLength: featureTeamLengths.name,
+      readOnly: !canRename,
+    }),
+    leadId: fieldColumn("leadId", "choice", {
+      label: "Feature lead",
+      required: false,
+      choices,
+      multiple: false,
+      emptyLabel: "None",
+    }),
+    members: {
+      ...fieldColumn<FeatureTeam, TeamChange>("members", "choice", {
+        label: "Members",
+        required: false,
+        choices,
+        multiple: true,
+        emptyLabel: "None",
+      }),
+      change: (value) => ({ members: value as string[] }),
+    },
+  };
+}
+
+// The team's colour, shown as its row, changed from its own menu, since a colour is no draft.
+const colourColumn = {
+  key: "colour",
+  label: "Colour",
+  kind: "text",
+  multiple: false,
+  choices: [],
+  required: false,
+} as const satisfies Parameters<typeof Row>[0]["column"];
+
+// A team's members by name, one to a line, each with what a draft does to them, if anything.
+function MemberList({
+  members,
+  nameOf,
+  markOf,
+}: {
+  members: readonly string[];
+  nameOf: (personId: string) => string;
+  markOf?: ((personId: string) => ReactNode) | undefined;
+}) {
+  return (
+    <ul className={classes.reports}>
+      {[...members]
+        .sort((a, b) => byName.compare(nameOf(a), nameOf(b)))
+        .map((personId) => (
+          <li key={personId}>{markOf?.(personId) ?? nameOf(personId)}</li>
+        ))}
+    </ul>
+  );
+}
 
 export function FeatureTeamPanel({
   team,
-  day,
-  people,
-  edits,
-  show,
-  narrow,
-  actions,
-  teams,
-  onTeam,
-  onNew,
-  onClose,
+  ...rest
 }: {
   // The team shown, or none for a new one.
   team: FeatureTeam | undefined;
   // The day the chart shows, which changes take effect from, or undefined for today.
   day: string | undefined;
-  // Every team, to choose another from.
-  teams: readonly FeatureTeam[];
-  onTeam: (id: string) => void;
-  onNew: () => void;
   // Everyone on the org chart, who may be named and chosen as members.
   people: readonly OrgChartPerson[];
   edits: FeatureTeamEdits;
@@ -114,340 +212,336 @@ export function FeatureTeamPanel({
   actions: FeatureTeamActions;
   onClose: () => void;
 }) {
-  const [name, setName] = useState(team?.name ?? "");
-  const [renaming, setRenaming] = useState(false);
-  const frame = (title: string, content: React.ReactNode) => (
-    <SidePanelFrame
-      id={featureTeamPanelId}
-      titleId={titleId}
-      title={title}
-      narrow={narrow}
-      close={{ label: "Close feature team", onClose }}
-    >
-      <div className={sidePanelScroll}>{content}</div>
-    </SidePanelFrame>
+  return team === undefined ? (
+    <NewFeatureTeamPanel {...rest} />
+  ) : (
+    <TeamDetails team={team} {...rest} />
   );
-  if (team === undefined) {
-    return frame(
-      "New feature team",
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (name.trim() !== "") actions.create(name.trim());
-        }}
-      >
-        <Stack gap="md">
-          <TextInput
-            label="Name"
-            data-autofocus
-            aria-required
-            maxLength={featureTeamLengths.name}
-            value={name}
-            onChange={(event) => {
-              setName(event.currentTarget.value);
-            }}
-          />
-          <Text size="sm" c="dimmed">
-            Name the team first; then add its members and choose its lead.
-          </Text>
-          <Group justify="flex-end">
-            <Button variant="default" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={name.trim() === ""}>
-              Add feature team
-            </Button>
-          </Group>
-        </Stack>
-      </form>,
-    );
-  }
+}
+
+// A new team's name, lead and members, added together.
+function NewFeatureTeamPanel({
+  day,
+  people,
+  narrow,
+  actions,
+  onClose,
+}: {
+  day: string | undefined;
+  people: readonly OrgChartPerson[];
+  narrow: boolean;
+  actions: FeatureTeamActions;
+  onClose: () => void;
+}) {
+  const [entered, setEntered] = useState<
+    Record<"name" | "leadId" | "members", string | string[]>
+  >({ name: "", leadId: [], members: [] });
+  const { editingOf, unfinished, withRefused, refuseEntered } =
+    useRecordEditing<FeatureTeam, TeamChange>();
+  const choices = useMemo(() => teamChoices(people), [people]);
+  const columns = teamColumns(choices, true);
+  const shownColumns = [columns.name, columns.leadId, columns.members];
+  const context: RecordEditingContext<FeatureTeam, TeamChange> = {
+    id: newRecordId,
+    kind: onlyKind,
+    values: entered,
+    adding: true,
+    others: noOthers,
+    recordProblem: noRecordProblem,
+    save: (_change, column, value) => {
+      setEntered((current) => ({ ...current, [column.key]: value }));
+    },
+  };
+  const editing = editingOf(context);
+  const members = entered.members as string[];
+  // Members are chosen from the choices, so each has a name there.
+  const labels = new Map(choices.map(({ id, label }) => [id, label]));
+  const nameOf = (personId: string) => String(labels.get(personId));
+  return (
+    <NewRecordPanel<FeatureTeam, TeamChange, FeatureTeamRequest>
+      panelId={featureTeamPanelId}
+      title="New feature team"
+      narrow={narrow}
+      saving={false}
+      table={{
+        recordProblem: noRecordProblem,
+        // Each value entered, as the panel holds it, rather than the changes each row makes.
+        request: () => ({
+          name: (entered.name as string).trim(),
+          leadId: (entered.leadId as string[])[0] ?? null,
+          members,
+          ...(day === undefined ? {} : { from: day }),
+        }),
+      }}
+      columns={shownColumns}
+      kind={onlyKind}
+      values={entered}
+      others={noOthers}
+      unfinished={unfinished(newRecordId)}
+      withRefused={(found) => withRefused(newRecordId, shownColumns, found)}
+      onRefused={(found) => {
+        refuseEntered(newRecordId, found, shownColumns);
+      }}
+      onAdd={actions.create}
+      onCancel={onClose}
+    >
+      <RecordSection id="new-feature-team-details" title="Details">
+        <Row
+          column={columns.name}
+          value={entered.name}
+          editing={editing(columns.name)}
+        />
+      </RecordSection>
+      <RecordSection id="new-feature-team-members" title="Members">
+        <Row
+          column={columns.leadId}
+          value={entered.leadId}
+          editing={editing(columns.leadId)}
+        />
+        <Row
+          column={columns.members}
+          value={members}
+          editing={editing(columns.members)}
+        >
+          {members.length === 0 ? undefined : (
+            <MemberList members={members} nameOf={nameOf} />
+          )}
+        </Row>
+      </RecordSection>
+    </NewRecordPanel>
+  );
+}
+
+function TeamDetails({
+  team,
+  day,
+  people,
+  edits,
+  show,
+  narrow,
+  actions,
+  onClose,
+}: {
+  team: FeatureTeam;
+  day: string | undefined;
+  people: readonly OrgChartPerson[];
+  edits: FeatureTeamEdits;
+  show: Show;
+  narrow: boolean;
+  actions: FeatureTeamActions;
+  onClose: () => void;
+}) {
+  const { closeStale, editingOf } = useRecordEditing<FeatureTeam, TeamChange>();
+  const choices = useMemo(() => teamChoices(people), [people]);
+  const offered = useMemo(
+    () => new Set(choices.map(({ id }) => id)),
+    [choices],
+  );
   const nameOf = teamPersonNamer(team, people);
   const shown = show === "live" ? (liveTeam(team) ?? team) : team;
   const live = liveTeam(team);
   const draft = show === "live" ? undefined : team.draft;
   const changes = edits.propose && show !== "live" && team.heldBy === undefined;
+  const columns = teamColumns(choices, edits.rename);
+  const save = (change: TeamChange) => {
+    if (change.name !== undefined) actions.rename(team, change.name);
+    if (change.leadId !== undefined) actions.lead(team, change.leadId, day);
+    if (change.members !== undefined) {
+      const changed = membersChanged(shown.members, change.members, offered);
+      if (changed !== undefined) actions.members(team, changed, day);
+    }
+  };
+  const context: RecordEditingContext<FeatureTeam, TeamChange> = {
+    id: team.id,
+    kind: onlyKind,
+    values: Object.fromEntries(
+      Object.values(columns).map((column) => [column.key, column.value(shown)]),
+    ),
+    save:
+      changes && draft?.action !== "deleted"
+        ? (change) => {
+            save(change);
+          }
+        : undefined,
+    others: noOthers,
+    recordProblem: noRecordProblem,
+  };
+  closeStale(context);
+  const editing = editingOf(context);
+  const from = (drafted: FeatureTeamDraft, personId: string | undefined) =>
+    takesEffect(drafted, personId, day ?? today());
+  const changedHere = (key: string) =>
+    draft?.action === "changed" && draft.changed.includes(key)
+      ? draft
+      : undefined;
   const wasMember = new Set(live?.members ?? []);
   const leaving =
     draft === undefined
       ? []
       : [...wasMember].filter((personId) => !shown.members.includes(personId));
-  const choices = people
-    .filter(
-      (person) =>
-        person.planned === undefined &&
-        person.left !== true &&
-        !shown.members.includes(person.id),
-    )
-    .sort((a, b) => byName.compare(a.preferredName, b.preferredName))
-    .map((person) => ({ value: person.id, label: person.preferredName }));
-  // Each person's position and reporting team, shown under their name and searched with it, so
-  // members are chosen knowing what they do and whose team they are on.
-  const aboutOf = (personId: string) => {
-    const person = people.find(({ id }) => id === personId);
-    const manager = people.find(({ id }) => id === person?.managerId);
-    const team =
-      manager === undefined
+  // Without a draft, the team shown is the live one, so no one is added or removed.
+  const draftedAs = (personId: string): DraftedPart | undefined =>
+    leaving.includes(personId)
+      ? "removed"
+      : wasMember.has(personId)
         ? undefined
-        : (manager.teamName ?? `${manager.preferredName}'s team`);
-    return [person?.position, team].filter(Boolean).join(", ");
+        : "added";
+  // A member a draft adds or takes off, with the draft's dot before them, struck through when taken
+  // off, as a record's parts are, and when the change takes effect, where that is not the day shown.
+  const memberMark = (personId: string, by: FeatureTeamDraft) => {
+    const drafted = draftedAs(personId);
+    if (drafted === undefined) return undefined;
+    const takesEffectOn = from(by, personId);
+    return (
+      <>
+        <DraftDot draft={by} />
+        <span className={drafted === "removed" ? pages.struck : undefined}>
+          {nameOf(personId)}
+        </span>
+        <DraftedWords drafted={drafted} />
+        {takesEffectOn !== undefined && (
+          <Text span c="dimmed" size="sm" ml={8}>
+            {draftWordsAlone(by)}, from {takesEffectOn}
+          </Text>
+        )}
+      </>
+    );
   };
-  const picking = {
-    searchable: true,
-    nothingFoundMessage: "Nobody by that name",
-    renderOption: ({
-      option,
-    }: {
-      option: { value: string; label: string };
-    }) => (
-      <div>
-        <Text size="sm">{option.label}</Text>
-        <Text size="xs" c="dimmed">
-          {aboutOf(option.value)}
-        </Text>
-      </div>
-    ),
-    filter: (({ options, search }) => {
-      const words = search.toLowerCase().split(/\s+/).filter(Boolean);
-      const fits = (item: ComboboxItem) => {
-        const text = `${item.label} ${aboutOf(item.value)}`.toLowerCase();
-        return words.every((word) => text.includes(word));
-      };
-      return options.flatMap((option): ComboboxParsedItem[] => {
-        if (isOptionsGroup(option)) {
-          const items = option.items.filter(fits);
-          return items.length === 0 ? [] : [{ ...option, items }];
-        }
-        return fits(option) ? [option] : [];
-      });
-    }) satisfies OptionsFilter,
-  };
-  const members = [...shown.members].sort((a, b) =>
-    byName.compare(nameOf(a), nameOf(b)),
-  );
-  const from = (personId: string | undefined) =>
-    draft === undefined
-      ? undefined
-      : takesEffect(draft, personId, day ?? today());
-  const leadFrom = from(undefined);
-  return frame(
-    "Feature team",
-    <Stack gap="lg">
-      {draft !== undefined && (
-        <Group gap="xs">
-          <DraftMark draft={draft} />
-          {team.heldBy !== undefined && (
-            <Text size="sm" c="dimmed">
-              {team.heldBy} is changing this team
-            </Text>
+  const members = [...shown.members, ...leaving];
+  const nameDraft = changedHere("name");
+  const leadDraft = changedHere("leadId");
+  return (
+    <SidePanelFrame
+      id={featureTeamPanelId}
+      titleId={titleId}
+      title={
+        <Group gap="xs" wrap="nowrap">
+          <span>{shown.name}</span>
+          {draft !== undefined && draft.action !== "changed" && (
+            <DraftMark draft={draft} />
           )}
+          <HoldMarks unpublished={false} heldBy={team.heldBy} />
         </Group>
-      )}
-      {draft?.state === "rejected" && draft.reason !== undefined && (
-        <Text size="sm">Reason: {draft.reason}</Text>
-      )}
-      <Stack gap={4}>
-        {renaming ? (
-          <TextInput
-            label="Name"
-            data-autofocus
-            maxLength={featureTeamLengths.name}
-            value={name}
-            onChange={(event) => {
-              setName(event.currentTarget.value);
-            }}
-            onBlur={() => {
-              setRenaming(false);
-              if (name.trim() !== "" && name.trim() !== shown.name) {
-                actions.rename(team, name.trim());
+      }
+      narrow={narrow}
+      close={{ label: "Close feature team", onClose }}
+    >
+      <div className={sidePanelScroll}>
+        <Stack gap="lg">
+          {draft?.state === "rejected" && draft.reason !== undefined && (
+            <Text size="sm">Reason: {draft.reason}</Text>
+          )}
+          <RecordSection id="feature-team-details" title="Details">
+            <Row
+              column={columns.name}
+              value={columns.name.value(shown)}
+              changed={
+                nameDraft === undefined
+                  ? undefined
+                  : { live: columns.name.live(nameDraft), draft: nameDraft }
               }
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") event.currentTarget.blur();
-              if (event.key === "Escape") {
-                event.preventDefault();
-                setName(shown.name);
-                setRenaming(false);
-              }
-            }}
-          />
-        ) : (
-          <Group gap="xs" align="flex-end" wrap="nowrap">
-            <Select
-              label="Team"
-              searchable
-              allowDeselect={false}
-              nothingFoundMessage="No team by that name"
-              data={[
-                ...teams.map((one) => ({ value: one.id, label: one.name })),
-                ...(edits.propose && show !== "live"
-                  ? [{ value: newTeam, label: "New feature team…" }]
-                  : []),
-              ]}
-              value={team.id}
-              onChange={(value) => {
-                if (value === newTeam) onNew();
-                else onTeam(String(value));
-              }}
-              style={{ flex: 1 }}
+              editing={editing(columns.name)}
             />
-            {changes && edits.edit && (
-              <Button
-                variant="default"
-                onClick={() => {
-                  setName(shown.name);
-                  setRenaming(true);
-                }}
-              >
-                Rename
-              </Button>
-            )}
-          </Group>
-        )}
-        {draft?.live.name !== undefined && (
-          <LiveLine>{draft.live.name}</LiveLine>
-        )}
-      </Stack>
-      {edits.colours && live !== undefined && (
-        <Group gap="xs">
-          <Text size="sm" fw={500}>
-            Colour
-          </Text>
-          <TeamColourMenu
-            teamId={team.id}
-            current={team.colour}
-            team={shown.name}
-            square
-            save={actions.colour(team)}
-            refreshes={featureTeamsQuery.queryKey}
-          />
-        </Group>
-      )}
-      <Stack gap={4}>
-        {changes ? (
-          <Select
-            label="Feature lead"
-            placeholder="No lead"
-            clearable
-            {...picking}
-            data={[
-              {
-                group: "Members",
-                items: members.map((personId) => ({
-                  value: personId,
-                  label: nameOf(personId),
-                })),
-              },
-              { group: "Anyone else, who will join the team", items: choices },
-            ]}
-            value={shown.leadId}
-            onChange={(leadId) => {
-              actions.lead(team, leadId, day);
-            }}
-          />
-        ) : (
-          <Text size="sm">
-            <Text span fw={500}>
-              Feature lead{" "}
-            </Text>
-            {shown.leadId === null ? "None" : nameOf(shown.leadId)}
-          </Text>
-        )}
-        {draft?.live.leadId !== undefined && (
-          <LiveLine>
-            {draft.live.leadId === null ? "None" : nameOf(draft.live.leadId)}
-            {leadFrom === undefined ? "" : `, until ${leadFrom}`}
-          </LiveLine>
-        )}
-      </Stack>
-      <Stack gap="xs">
-        <Text size="sm" fw={500}>
-          Members
-        </Text>
-        {members.length === 0 && leaving.length === 0 && (
-          <Text size="sm" c="dimmed">
-            No members yet.
-          </Text>
-        )}
-        {members.map((personId) => (
-          <Group key={personId} gap="xs" justify="space-between" wrap="nowrap">
-            <Group gap="xs" wrap="nowrap" miw={0}>
-              <Text size="sm" truncate>
-                {nameOf(personId)}
-                {personId === shown.leadId ? " (lead)" : ""}
-              </Text>
-              {draft !== undefined && !wasMember.has(personId) && (
-                <DraftMark draft={draft} from={from(personId)} />
+            <Row
+              column={colourColumn}
+              value={team.colour ?? ""}
+              action={
+                edits.colours &&
+                live !== undefined &&
+                draft?.action !== "deleted" && (
+                  <TeamColourMenu
+                    teamId={team.id}
+                    current={team.colour}
+                    team={shown.name}
+                    look="change"
+                    save={actions.colour(team)}
+                    refreshes={featureTeamsQuery.queryKey}
+                  />
+                )
+              }
+            >
+              {team.colour === null ? undefined : (
+                <Group gap={6} wrap="nowrap">
+                  <Swatch colour={team.colour} size={12} />
+                  <Text>{colourWords(team.colour)}</Text>
+                </Group>
+              )}
+            </Row>
+          </RecordSection>
+          <RecordSection id="feature-team-members" title="Members">
+            <Row
+              column={columns.leadId}
+              value={columns.leadId.value(shown)}
+              changed={
+                leadDraft === undefined
+                  ? undefined
+                  : {
+                      live: columns.leadId.live(leadDraft),
+                      draft: leadDraft,
+                      from: from(leadDraft, undefined),
+                    }
+              }
+              editing={editing(columns.leadId)}
+            >
+              {shown.leadId === null ? undefined : (
+                <Text>{nameOf(shown.leadId)}</Text>
+              )}
+            </Row>
+            <Row
+              column={columns.members}
+              value={columns.members.value(shown)}
+              editing={editing(columns.members)}
+            >
+              {members.length === 0 ? undefined : (
+                <MemberList
+                  members={members}
+                  nameOf={nameOf}
+                  markOf={
+                    draft === undefined
+                      ? undefined
+                      : (personId) => memberMark(personId, draft)
+                  }
+                />
+              )}
+            </Row>
+          </RecordSection>
+          {changes && (
+            <Group gap="xs">
+              {draft?.state === "rejected" && (
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    actions.resubmit(team);
+                  }}
+                >
+                  Resubmit
+                </Button>
+              )}
+              {draft !== undefined && (
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    actions.discard(team);
+                  }}
+                >
+                  Discard draft
+                </Button>
+              )}
+              {edits.remove && draft?.action !== "deleted" && (
+                <Button
+                  variant="outline"
+                  color="red"
+                  onClick={() => {
+                    actions.removeTeam(team);
+                  }}
+                >
+                  Remove feature team
+                </Button>
               )}
             </Group>
-            {changes && (
-              <CloseButton
-                size="sm"
-                aria-label={`Remove ${nameOf(personId)} from ${shown.name}`}
-                onClick={() => {
-                  actions.remove(team, personId, day);
-                }}
-              />
-            )}
-          </Group>
-        ))}
-        {leaving.map((personId) => {
-          const leaves = from(personId);
-          return (
-            <LiveLine key={personId}>
-              {nameOf(personId)}, leaving
-              {leaves === undefined ? "" : ` from ${leaves}`}
-            </LiveLine>
-          );
-        })}
-        {changes && (
-          <Select
-            aria-label="Add member"
-            placeholder="Add member"
-            {...picking}
-            data={choices}
-            value={null}
-            onChange={(personId) => {
-              actions.add(team, String(personId), day);
-            }}
-          />
-        )}
-      </Stack>
-      {edits.propose && show !== "live" && team.heldBy === undefined && (
-        <Group gap="xs">
-          {draft?.state === "rejected" && (
-            <Button
-              variant="default"
-              onClick={() => {
-                actions.resubmit(team);
-              }}
-            >
-              Resubmit
-            </Button>
           )}
-          {draft !== undefined && (
-            <Button
-              variant="default"
-              onClick={() => {
-                actions.discard(team);
-              }}
-            >
-              Discard draft
-            </Button>
-          )}
-          {edits.edit && draft?.action !== "deleted" && (
-            <Button
-              variant="outline"
-              color="red"
-              onClick={() => {
-                actions.removeTeam(team);
-              }}
-            >
-              Remove feature team
-            </Button>
-          )}
-        </Group>
-      )}
-    </Stack>,
+        </Stack>
+      </div>
+    </SidePanelFrame>
   );
 }

@@ -38,16 +38,12 @@ export function useFeatureTeamActions(
     });
   };
   return {
-    create: (name) => {
+    create: (request) => {
       saveTeam(async () => {
-        const { id, changeSetId } = await createFeatureTeam({
-          name,
-          leadId: null,
-          members: [],
-        });
+        const { id, changeSetId } = await createFeatureTeam(request);
         openTeam(id);
         return changeSetId;
-      }, `Fathom could not add ${name}.`);
+      }, `Fathom could not add ${request.name}.`);
     },
     rename: (team, name) => {
       saveTeam(
@@ -65,24 +61,15 @@ export function useFeatureTeamActions(
         `Fathom could not change the lead of ${team.name}.`,
       );
     },
-    add: (team, personId, from) => {
+    members: (team, { add, remove }, from) => {
       saveTeam(
         () =>
           updateFeatureTeam(team.id, {
-            add: [personId],
+            add,
+            remove,
             ...(from === undefined ? {} : { from }),
           }),
-        `Fathom could not add a member to ${team.name}.`,
-      );
-    },
-    remove: (team, personId, from) => {
-      saveTeam(
-        () =>
-          updateFeatureTeam(team.id, {
-            remove: [personId],
-            ...(from === undefined ? {} : { from }),
-          }),
-        `Fathom could not remove a member from ${team.name}.`,
+        `Fathom could not change the members of ${team.name}.`,
       );
     },
     removeTeam: (team) => {

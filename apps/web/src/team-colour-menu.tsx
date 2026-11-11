@@ -12,20 +12,24 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import { describeProblem } from "./api.ts";
 import { AppMenu } from "./app-menu.tsx";
 import { Swatch } from "./colour-swatch.tsx";
 import { colourWords } from "./colours.ts";
 import { Icon } from "./icons.tsx";
+import { changeButton } from "./record-details.tsx";
 import { changeMade, notifyFailure, notifyUndoable } from "./notices.tsx";
 import { orgChartQuery, setTeamColour } from "./org-chart.ts";
 import classes from "./org-chart.module.css";
+
+type ColourMenuLook = "dot" | "square" | "change";
 
 export function TeamColourMenu({
   teamId,
   current,
   team,
-  square = false,
+  look = "dot",
   save = (colour) => setTeamColour(teamId, colour),
   refreshes = orgChartQuery.queryKey,
 }: {
@@ -33,8 +37,9 @@ export function TeamColourMenu({
   teamId: string;
   current: PaletteColour | null;
   team: string;
-  // The dot in a button's square, where a bare dot would be missed.
-  square?: boolean;
+  // What opens the menu: the bare dot, as on a card; the dot in a button's square, where a bare dot
+  // would be missed; or a details panel's change button, beside the colour shown in words.
+  look?: ColourMenuLook;
   // Saves the colour chosen, a manager's team's unless given.
   save?: (colour: PaletteColour | null) => Promise<void>;
   // The data the colour is drawn from, reloaded once it is saved.
@@ -83,27 +88,32 @@ export function TeamColourMenu({
     ) : (
       <Swatch colour={current} size={8} />
     );
+  const title = "Change the team's colour";
+  const targets: Record<ColourMenuLook, ReactNode> = {
+    dot: (
+      <UnstyledButton
+        className={[classes.colourButton, "nodrag", "nopan"].join(" ")}
+        aria-label={label}
+        title={title}
+      >
+        {dot}
+      </UnstyledButton>
+    ),
+    square: (
+      <ActionIcon variant="default" size="md" aria-label={label} title={title}>
+        {dot}
+      </ActionIcon>
+    ),
+    change: <ActionIcon {...changeButton("Colour")} title={title} />,
+  };
   return (
     <AppMenu position="bottom-start" shadow="md">
       <AppMenu.Target>
-        {square ? (
-          <ActionIcon
-            variant="default"
-            size="md"
-            aria-label={label}
-            title="Change the team's colour"
-          >
-            {dot}
-          </ActionIcon>
-        ) : (
-          <UnstyledButton
-            className={[classes.colourButton, "nodrag", "nopan"].join(" ")}
-            aria-label={label}
-            title="Change the team's colour"
-          >
-            {dot}
-          </UnstyledButton>
-        )}
+        {
+          // The look is one of the fixed looks.
+          // eslint-disable-next-line security/detect-object-injection
+          targets[look]
+        }
       </AppMenu.Target>
       <AppMenu.Dropdown>
         <Menu.Label>Colour of {team}</Menu.Label>

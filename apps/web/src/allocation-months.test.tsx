@@ -586,7 +586,7 @@ describe("a month's cell", () => {
     ).toBe("Checkout");
   });
 
-  it("says aloud what a draft does to a feature, and dots what it adds or changes", () => {
+  it("says aloud what a draft does to a feature, and dots what it adds, changes or removes", () => {
     cell([
       allocation({ draft: draft() }),
       allocation({
@@ -603,7 +603,7 @@ describe("a month's cell", () => {
     ).not.toBeNull();
     expect(
       screen.getByText("Billing").querySelector('[aria-hidden="true"]'),
-    ).toBeNull();
+    ).not.toBeNull();
   });
 });
 

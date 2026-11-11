@@ -1176,7 +1176,7 @@ async function clearedTeamRejection(
 }
 
 // Drafts a change to a feature team: its name, lead, or members, who join or leave from the day
-// given, or from today. Renaming one needs the right to edit feature teams, not only to propose.
+// given, or from today. Proposing feature teams is enough to rename one, as it is to add one.
 export async function updateFeatureTeam(
   database: Database,
   actor: Actor,
@@ -1185,7 +1185,6 @@ export async function updateFeatureTeam(
   asOf?: string,
 ): Promise<string | null> {
   requireChanging(actor);
-  if (change.name !== undefined) requirePermission(actor, "feature-teams:edit");
   const today = asOf ?? (await readToday(database));
   const from = fromDay(actor, change.from, today);
   return database.transaction(async (transaction) => {
@@ -1630,7 +1629,6 @@ export async function resubmitFeatureTeamDraft(
     if (draft?.state !== "rejected") {
       throw new ConflictError("Only a rejected draft can be resubmitted");
     }
-    const fields = draftFields(before, draft);
     // A day before today needs the right to change Personal details, as choosing one does.
     if (
       [
@@ -1640,11 +1638,8 @@ export async function resubmitFeatureTeamDraft(
     ) {
       requirePermission(actor, "personal:edit");
     }
-    // Renaming or removing a team needs the right to edit teams, whoever first drafted it.
-    if (
-      draft.action === "deleted" ||
-      (before !== undefined && fields.includes("name"))
-    ) {
+    // Removing a team needs the right to edit teams, whoever first drafted it.
+    if (draft.action === "deleted") {
       requirePermission(actor, "feature-teams:edit");
     }
     const made = await clearedTeamRejection(
@@ -1865,9 +1860,9 @@ export async function rejectTeamsIn(
 // Puts back the drafts of the teams a change set changed in their drafts: the team it drafted
 // adding taken out, the one it drafted removing put back as it was, and the fields it changed put
 // back. A team's name must still be one no other has; a member who has left since is left out, and
-// a lead who has left leaves it with no lead. Renaming a team, removing one, or putting back the
-// removal of a live team needs the right to edit teams, not only to propose; bringing back a discarded
-// draft adding a team needs only the right to propose, as adding one does.
+// a lead who has left leaves it with no lead. Removing a team, or putting back the removal of a live
+// team, needs the right to edit teams, not only to propose; putting back a name, or bringing back a
+// discarded draft adding a team, needs only the right to propose, as renaming and adding one do.
 export async function undoTeamDrafts(
   transaction: Transaction,
   actor: Actor,
@@ -1885,9 +1880,8 @@ export async function undoTeamDrafts(
   const draftsNow = await readTeamDrafts(transaction, ids, actor.user.id);
   if (
     records.some(
-      ({ id, action, old }) =>
+      ({ id, action }) =>
         (action === "deleted" && live.has(id)) ||
-        (action === "changed" && old.has("name")) ||
         (action === "created" && live.has(id)),
     )
   ) {

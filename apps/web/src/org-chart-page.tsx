@@ -691,8 +691,15 @@ function Chart({
     keepCentred.current = keep;
     centredZoom.current = null;
   };
-  // Once the details close, the chart keeps its place after the panel has slid away.
-  const detailsOpen = search.open !== undefined;
+  // A feature team opened, from its card, its name, or the list of teams, stays in the middle as
+  // its panel opens, as a person opened from their card does.
+  const teamOpened = search.featureTeam;
+  useEffect(() => {
+    if (teamOpened !== undefined) keepCentred.current = true;
+  }, [teamOpened]);
+  // Once the details or the team close, the chart keeps its place after the panel has slid away.
+  const detailsOpen =
+    search.open !== undefined || search.featureTeam !== undefined;
   useEffect(() => {
     if (detailsOpen) return;
     const timer = setTimeout(() => {
@@ -864,7 +871,8 @@ function Chart({
 // do not.
 const undatedChangesLeftOut = (edits: FeatureTeamEdits): FeatureTeamEdits => ({
   ...edits,
-  edit: false,
+  rename: false,
+  remove: false,
   colours: false,
 });
 
@@ -1195,15 +1203,6 @@ export function OrgChartPage({
                         show={show}
                         narrow={narrow}
                         actions={teamActions}
-                        teams={(teamsQuery.data as FeatureTeams).teams}
-                        onTeam={openTeam}
-                        onNew={() => {
-                          onSearch(
-                            { ...search, featureTeam: undefined },
-                            false,
-                          );
-                          setCreating(true);
-                        }}
                         onClose={() => {
                           openTeam(undefined);
                         }}

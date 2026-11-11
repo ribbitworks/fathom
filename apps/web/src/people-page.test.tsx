@@ -17,6 +17,7 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   bodyOf,
+  detailRow,
   fictionalUser,
   greeting,
   renderApp,
@@ -3968,8 +3969,7 @@ describe("adding from New", () => {
 
   const form = (title: string) => screen.findByRole("region", { name: title });
 
-  const row = (label: string) =>
-    screen.getByText(label, { selector: "dt" }).parentElement as HTMLElement;
+  const row = (label: string) => detailRow(label);
 
   const field = (label: string) =>
     screen.getByRole<HTMLInputElement>("textbox", { name: label });

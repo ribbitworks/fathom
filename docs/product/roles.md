@@ -28,7 +28,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | People, teams, and reporting lines (General) | None | None | View | View | View | Edit | Edit | View | View | None |
 | The org chart: who reports to whom, with each person's name, position, and team; a card shows the person's details beside it only for those who see people | View | View | View | View | View | View | View | View | View | None |
 | Teams' colours on the org chart, for every team until accounts are linked to people, then for Engineering Managers only the teams below them | None | None | None | None | Edit | Edit | Edit | None | None | None |
-| Feature teams (General), seen with the org chart, where they are kept, and changed as drafts: Propose adds teams and changes their members and leads, from the days [Where feature teams are kept](decisions.md#workforce) allows, Edit also renames and removes them | View | View | Propose | Approve | Propose | Approve | Edit | View | View | None |
+| Feature teams (General), seen with the org chart, where they are kept, and changed as drafts: Propose adds and renames teams and changes their members and leads, from the days [Where feature teams are kept](decisions.md#workforce) allows, Edit also removes them | View | View | Propose | Approve | Propose | Approve | Edit | View | View | None |
 | Personal employee details | None | None | None | None | View | Edit | Edit | View | None | None |
 | Confidential data | None | None | None | None | None | Edit | Edit | View | None | None |
 | The hiring plan: every planned hire, with its target date, drafts, and history (decided by the owner on 2026-11-07) | None | None | None | View | View | Edit | Edit | View | None | None |

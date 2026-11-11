@@ -507,7 +507,8 @@ const orgChartRoute = createRoute({
     const featureTeamEdits = useMemo(
       () => ({
         propose: proposesFeatureTeams(permissions),
-        edit:
+        rename: proposesFeatureTeams(permissions),
+        remove:
           permissions.includes("people:view") &&
           permissions.includes("feature-teams:edit"),
         colours: permissions.includes("team-colours:edit"),

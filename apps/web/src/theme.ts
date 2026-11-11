@@ -3,14 +3,18 @@
 // Fathom's visual design as a Mantine theme: IBM Plex Sans, bundled with the front end; quiet
 // neutrals with one sea-blue accent for actions and the current place; colour otherwise only for
 // meaning, or as chosen for a release; light and dark modes that follow the computer's setting
-// unless the person chooses one; and tables that look alike, each header row staying in view.
+// unless the person chooses one; tables that look alike, each header row staying in view; and
+// drop-down lists whose keyboard place is light grey, as pointing is.
 
 import {
+  Combobox,
   type CSSVariablesResolver,
   createTheme,
   type MantineColorsTuple,
+  Select,
   Table,
 } from "@mantine/core";
+import comboboxClasses from "./combobox.module.css";
 import tableClasses from "./table.module.css";
 
 const sea: MantineColorsTuple = [
@@ -51,6 +55,13 @@ export const theme = createTheme({
   defaultRadius: "md",
   cursorType: "pointer",
   components: {
+    // Select styles its options under its own name, so it takes the same class.
+    Combobox: Combobox.extend({
+      classNames: { option: comboboxClasses.option },
+    }),
+    Select: Select.extend({
+      classNames: { option: comboboxClasses.option },
+    }),
     Table: Table.extend({
       classNames: { table: tableClasses.table },
       defaultProps: {

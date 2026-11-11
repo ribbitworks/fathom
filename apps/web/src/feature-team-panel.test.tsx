@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for a feature team's panel on its own, with what it asks to save recorded: naming a new
-// team, choosing another team, renaming, choosing the lead, adding and removing members, from the
-// day the chart shows, when each drafted change takes effect, each person shown with their position
-// and reporting team, a draft's marks and live values, its discard, resubmit and removal, and what
-// readers who may not propose, or who see the teams as they are live, are shown.
+// Tests for a feature team's panel on its own, with what it asks to save recorded: adding a team with
+// its name, lead and members, renaming it, choosing its lead or none, changing its members from the
+// day the chart shows, each person offered with their position and reporting team, the team's
+// colour, a draft's marks, live values and when each change takes effect, its discard, resubmit and
+// removal, and what readers who may not change teams, or who see them as they are live, are shown.
 
 import type { FeatureTeam, OrgChartPerson, Show } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -19,7 +19,7 @@ import {
   noFeatureTeamEdits,
 } from "./feature-team-panel.tsx";
 import { formatDay } from "./table-view.ts";
-import { testTheme, wholeText } from "./test-support.tsx";
+import { detailRow, detailValue, testTheme } from "./test-support.tsx";
 
 const person = (
   id: string,
@@ -76,7 +76,8 @@ const draft = (fields: Partial<NonNullable<FeatureTeam["draft"]>> = {}) => ({
 
 const everything: FeatureTeamEdits = {
   propose: true,
-  edit: true,
+  rename: true,
+  remove: true,
   colours: true,
   dates: true,
 };
@@ -86,8 +87,7 @@ const actions = () =>
     create: vi.fn(),
     rename: vi.fn(),
     lead: vi.fn(),
-    add: vi.fn(),
-    remove: vi.fn(),
+    members: vi.fn(),
     removeTeam: vi.fn(),
     discard: vi.fn(),
     resubmit: vi.fn(),
@@ -108,8 +108,6 @@ function openPanel({
   day?: string;
 } = {}) {
   const asked = actions();
-  const onTeam = vi.fn();
-  const onNew = vi.fn();
   const onClose = vi.fn();
   render(
     <QueryClientProvider client={new QueryClient()}>
@@ -117,9 +115,6 @@ function openPanel({
         <FeatureTeamPanel
           team={shown ?? undefined}
           day={day}
-          teams={[team(), team({ id: "t2", name: "Fictional Quay" })]}
-          onTeam={onTeam}
-          onNew={onNew}
           people={people}
           edits={edits}
           show={show}
@@ -130,11 +125,28 @@ function openPanel({
       </MantineProvider>
     </QueryClientProvider>,
   );
-  return { asked, onTeam, onNew, onClose };
+  return { asked, onClose };
 }
+
+// What a row of the panel reads, by its label: its value, and any marks and live value under it.
+const rowText = (label: string) => detailValue(label);
+
+// The members listed, each with what screen readers hear of a draft's change to them.
+const memberLines = () =>
+  within(detailRow("Members"))
+    .getAllByRole("listitem")
+    .map(({ textContent }) => textContent.trim());
 
 const optionNames = () =>
   screen.queryAllByRole("option").map(({ textContent }) => textContent);
+
+const changeButton = (label: string) =>
+  screen.queryByRole("button", { name: `Change ${label}` });
+
+async function pick(label: string, option: RegExp | string) {
+  await userEvent.click(changeButton(label) as HTMLElement);
+  await userEvent.click(await screen.findByRole("option", { name: option }));
+}
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
@@ -146,24 +158,44 @@ afterEach(() => {
 });
 
 describe("a new feature team", () => {
-  it("is added once named, with the name trimmed", async () => {
+  it("is added with its name, trimmed, its lead and its members", async () => {
     const { asked } = openPanel({ shown: null });
-    const add = screen.getByRole("button", { name: "Add feature team" });
-    expect(add).toHaveProperty("disabled", true);
     await userEvent.type(
       screen.getByRole("textbox", { name: "Name" }),
       "  Fictional Beacon ",
     );
-    await userEvent.click(add);
-    expect(asked.create).toHaveBeenCalledWith("Fictional Beacon");
+    await pick("Members", /^Blake Fictional/);
+    await userEvent.click(screen.getByRole("option", { name: /^Avery/ }));
+    await userEvent.keyboard("{Enter}");
+    await pick("Feature lead", /^Avery Fictional/);
+    await userEvent.click(screen.getByRole("button", { name: "Add" }));
+    expect(asked.create).toHaveBeenCalledWith({
+      name: "Fictional Beacon",
+      leadId: "m1",
+      members: ["m1", "m2"],
+    });
   });
 
-  it("is not added with a name of spaces alone", async () => {
+  it("is refused with no name, saying a name is needed", async () => {
     const { asked } = openPanel({ shown: null });
-    const name = screen.getByRole("textbox", { name: "Name" });
-    await userEvent.type(name, "   ");
-    fireEvent.submit(name.closest("form") as HTMLFormElement);
+    await userEvent.click(screen.getByRole("button", { name: "Add" }));
+    expect(await screen.findByText("Name needed")).toBeDefined();
     expect(asked.create).not.toHaveBeenCalled();
+  });
+
+  it("is added from the day the chart shows", async () => {
+    const { asked } = openPanel({ shown: null, day: "2027-05-01" });
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Name" }),
+      "Fictional Beacon",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Add" }));
+    expect(asked.create).toHaveBeenCalledWith({
+      name: "Fictional Beacon",
+      leadId: null,
+      members: [],
+      from: "2027-05-01",
+    });
   });
 
   it("closes on Cancel", async () => {
@@ -175,28 +207,34 @@ describe("a new feature team", () => {
 });
 
 describe("a feature team's panel", () => {
-  it("lists its members by name, marking the lead", () => {
+  it("is titled with the team's name, with its details and members in rows", () => {
     openPanel({ shown: team({ members: ["m2", "m1", "gone"] }) });
-    const panel = screen.getByRole("region", { name: "Feature team" });
     expect(
-      [...panel.querySelectorAll("p")]
-        .map(({ textContent }) => textContent)
-        .filter(
-          (text) =>
-            text.endsWith("Fictional") ||
-            text.includes("(lead)") ||
-            text === "Someone this role can't see",
-        ),
-    ).toEqual([
-      "Avery Fictional (lead)",
+      screen.getByRole("region", { name: "Fictional Lighthouse" }),
+    ).toBeDefined();
+    expect([
+      rowText("Name"),
+      rowText("Colour"),
+      rowText("Feature lead"),
+    ]).toEqual(["Fictional Lighthouse", "None", "Avery Fictional"]);
+    expect(memberLines()).toEqual([
+      "Avery Fictional",
       "Blake Fictional",
       "Someone this role can't see",
     ]);
   });
 
-  it("says when it has no members", () => {
+  it("names no members and no lead as None", () => {
     openPanel({ shown: team({ leadId: null, members: [] }) });
-    expect(screen.getByText("No members yet.")).toBeDefined();
+    expect([rowText("Feature lead"), rowText("Members")]).toEqual([
+      "None",
+      "None",
+    ]);
+  });
+
+  it("names its colour in words", () => {
+    openPanel({ shown: team({ colour: "teal" }) });
+    expect(rowText("Colour")).toBe("Teal");
   });
 
   it("closes from its close button", async () => {
@@ -207,115 +245,43 @@ describe("a feature team's panel", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it("opens another team chosen from the Team picker", async () => {
-    const { onTeam, onNew } = openPanel();
-    await userEvent.click(screen.getByRole("combobox", { name: "Team" }));
-    expect(optionNames()).toEqual([
-      "Fictional Lighthouse",
-      "Fictional Quay",
-      "New feature team…",
-    ]);
-    await userEvent.click(
-      screen.getByRole("option", { name: "Fictional Quay" }),
-    );
-    expect([onTeam.mock.calls, onNew.mock.calls]).toEqual([[["t2"]], []]);
-  });
-
-  it("starts a new team from the Team picker", async () => {
-    const { onTeam, onNew } = openPanel();
-    await userEvent.click(screen.getByRole("combobox", { name: "Team" }));
-    await userEvent.click(
-      screen.getByRole("option", { name: "New feature team…" }),
-    );
-    expect([onTeam.mock.calls, onNew.mock.calls]).toEqual([[], [[]]]);
-  });
-
-  it("renames the team with Enter, trimmed", async () => {
+  it("renames the team, trimmed", async () => {
     const { asked } = openPanel();
-    await userEvent.click(screen.getByRole("button", { name: "Rename" }));
+    await userEvent.click(changeButton("Name") as HTMLElement);
     const name = screen.getByRole("textbox", { name: "Name" });
     expect((name as HTMLInputElement).value).toBe("Fictional Lighthouse");
     await userEvent.clear(name);
     await userEvent.type(name, " Fictional Pier {Enter}");
     expect(asked.rename).toHaveBeenCalledWith(team(), "Fictional Pier");
-    expect(screen.getByRole("combobox", { name: "Team" })).toBeDefined();
   });
 
-  it("renames nothing on Esc, keeping the name", async () => {
+  it("renames nothing on Esc", async () => {
     const { asked } = openPanel();
-    await userEvent.click(screen.getByRole("button", { name: "Rename" }));
+    await userEvent.click(changeButton("Name") as HTMLElement);
     await userEvent.type(
       screen.getByRole("textbox", { name: "Name" }),
       " More{Escape}",
     );
     expect(asked.rename).not.toHaveBeenCalled();
-    expect(
-      screen.getByRole<HTMLInputElement>("combobox", { name: "Team" }).value,
-    ).toBe("Fictional Lighthouse");
+    expect(rowText("Name")).toBe("Fictional Lighthouse");
   });
 
-  it("renames nothing when the name is left unchanged or empty", async () => {
+  it("refuses an empty name, saying a name is needed", async () => {
     const { asked } = openPanel();
-    await userEvent.click(screen.getByRole("button", { name: "Rename" }));
-    await userEvent.click(screen.getByRole("textbox", { name: "Name" }));
-    await userEvent.tab();
-    await userEvent.click(screen.getByRole("button", { name: "Rename" }));
+    await userEvent.click(changeButton("Name") as HTMLElement);
     await userEvent.clear(screen.getByRole("textbox", { name: "Name" }));
-    await userEvent.tab();
-    expect(screen.getByRole("button", { name: "Rename" })).toBeDefined();
+    await userEvent.keyboard("{Enter}");
+    expect(await screen.findByText("Name needed")).toBeDefined();
     expect(asked.rename).not.toHaveBeenCalled();
   });
 
-  it("offers members, then others who would join, as lead", async () => {
-    const { asked } = openPanel();
-    await userEvent.click(
-      screen.getByRole("combobox", { name: "Feature lead" }),
-    );
-    const groups = screen.getAllByRole("group");
-    expect(
-      groups.map((group) => [
-        group.getAttribute("aria-label") ??
-          group.firstElementChild?.textContent,
-        within(group)
-          .getAllByRole("option")
-          .map(
-            (option) =>
-              option.firstElementChild?.firstElementChild?.textContent,
-          ),
-      ]),
-    ).toEqual([
-      ["Members", ["Avery Fictional", "Blake Fictional"]],
-      [
-        "Anyone else, who will join the team",
-        [
-          "Casey Fictional",
-          "Drew Fictional",
-          "Robin Fictional",
-          "Sasha Fictional",
-        ],
-      ],
-    ]);
-    await userEvent.click(
-      screen.getByRole("option", { name: /^Blake Fictional/ }),
-    );
-    expect(asked.lead).toHaveBeenCalledWith(team(), "m2", undefined);
-  });
-
-  it("takes the lead away when cleared", async () => {
-    const { asked } = openPanel();
-    const lead = screen.getByRole("combobox", { name: "Feature lead" });
-    await userEvent.click(
-      (lead.parentElement?.parentElement as HTMLElement).querySelector(
-        "button",
-      ) as HTMLElement,
-    );
-    expect(asked.lead).toHaveBeenCalledWith(team(), null, undefined);
-  });
-
-  it("shows each person with their position and reporting team", async () => {
+  it("offers None first, then each person who may lead, with their position and reporting team", async () => {
     openPanel();
-    await userEvent.click(screen.getByRole("combobox", { name: "Add member" }));
+    await userEvent.click(changeButton("Feature lead") as HTMLElement);
     expect(optionNames()).toEqual([
+      "None",
+      "Avery FictionalFictional Engineer, Fictional Harbour Crew",
+      "Blake FictionalFictional Designer, Fictional Harbour Crew",
       "Casey FictionalFictional Engineer, Sasha Fictional's team",
       "Drew Fictional",
       "Robin FictionalFictional Director",
@@ -323,91 +289,104 @@ describe("a feature team's panel", () => {
     ]);
   });
 
+  it("chooses the lead", async () => {
+    const { asked } = openPanel();
+    await pick("Feature lead", /^Blake Fictional/);
+    expect(asked.lead).toHaveBeenCalledWith(team(), "m2", undefined);
+  });
+
+  it("takes the lead away with None", async () => {
+    const { asked } = openPanel();
+    await pick("Feature lead", "None");
+    expect(asked.lead).toHaveBeenCalledWith(team(), null, undefined);
+  });
+
   it("finds people by their position and reporting team", async () => {
     openPanel();
-    const add = screen.getByRole("combobox", { name: "Add member" });
-    await userEvent.type(add, "sasha team");
+    await userEvent.click(changeButton("Members") as HTMLElement);
+    await userEvent.keyboard("harbour");
     expect(optionNames()).toEqual([
-      "Casey FictionalFictional Engineer, Sasha Fictional's team",
+      "Avery FictionalFictional Engineer, Fictional Harbour Crew",
+      "Blake FictionalFictional Designer, Fictional Harbour Crew",
     ]);
   });
 
-  it("finds members to lead by their position, leaving out groups with nobody found", async () => {
-    openPanel({ shown: team({ leadId: null }) });
-    await userEvent.type(
-      screen.getByRole("combobox", { name: "Feature lead" }),
-      "designer",
-    );
-    expect([screen.getAllByRole("group").length, optionNames()]).toEqual([
-      1,
-      ["Blake FictionalFictional Designer, Fictional Harbour Crew"],
-    ]);
-  });
-
-  it("says when nobody is found, offering no member again", async () => {
-    openPanel();
-    await userEvent.type(
-      screen.getByRole("combobox", { name: "Add member" }),
-      "harbour crew",
-    );
-    expect(await screen.findByText("Nobody by that name")).toBeDefined();
-    expect(optionNames()).toEqual([]);
-  });
-
-  it("adds a member from today, sending no day", async () => {
+  it("adds and removes members together, from today", async () => {
     const { asked } = openPanel();
-    await userEvent.click(screen.getByRole("combobox", { name: "Add member" }));
-    await userEvent.click(
-      screen.getByRole("option", { name: /^Casey Fictional/ }),
+    await userEvent.click(changeButton("Members") as HTMLElement);
+    await userEvent.click(screen.getByRole("option", { name: /^Casey/ }));
+    await userEvent.click(screen.getByRole("option", { name: /^Blake/ }));
+    await userEvent.keyboard("{Enter}");
+    expect(asked.members).toHaveBeenCalledWith(
+      team(),
+      { add: ["p1"], remove: ["m2"] },
+      undefined,
     );
-    expect(asked.add).toHaveBeenCalledWith(team(), "p1", undefined);
   });
 
-  it("makes each change from the day the chart shows", async () => {
-    const { asked } = openPanel({ day: "2027-05-01" });
-    await userEvent.click(screen.getByRole("combobox", { name: "Add member" }));
-    await userEvent.click(
-      screen.getByRole("option", { name: /^Casey Fictional/ }),
-    );
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: "Remove Blake Fictional from Fictional Lighthouse",
-      }),
-    );
-    await userEvent.click(
-      screen.getByRole("combobox", { name: "Feature lead" }),
-    );
-    await userEvent.click(
-      screen.getByRole("option", { name: /^Blake Fictional/ }),
-    );
-    expect(asked.add).toHaveBeenCalledWith(team(), "p1", "2027-05-01");
-    expect(asked.remove).toHaveBeenCalledWith(team(), "m2", "2027-05-01");
-    expect(asked.lead).toHaveBeenCalledWith(team(), "m2", "2027-05-01");
+  it("saves nothing when the members chosen are those already on the team", async () => {
+    const { asked } = openPanel();
+    await userEvent.click(changeButton("Members") as HTMLElement);
+    await userEvent.click(screen.getByRole("option", { name: /^Blake/ }));
+    await userEvent.click(screen.getByRole("option", { name: /^Blake/ }));
+    await userEvent.keyboard("{Enter}");
+    expect(asked.members).not.toHaveBeenCalled();
   });
 
-  it("offers no box for the day changes take effect from", () => {
-    openPanel();
-    expect(screen.queryByRole("textbox", { name: /Takes effect/ })).toBeNull();
-  });
-
-  it("names someone the org chart does not hold from the team's own names", () => {
-    openPanel({
+  it("keeps members it does not offer, such as someone the reader does not see", async () => {
+    const { asked } = openPanel({
       shown: team({
         members: ["m1", "starting"],
         names: { starting: "Ellis Fictional" },
       }),
     });
-    expect(
-      screen.getByRole("button", {
-        name: "Remove Ellis Fictional from Fictional Lighthouse",
-      }),
-    ).toBeDefined();
+    await userEvent.click(changeButton("Members") as HTMLElement);
+    await userEvent.click(screen.getByRole("option", { name: /^Casey/ }));
+    await userEvent.keyboard("{Enter}");
+    expect(asked.members).toHaveBeenCalledWith(
+      expect.anything(),
+      { add: ["p1"], remove: [] },
+      undefined,
+    );
   });
 
-  it("does not offer someone who has left as a member", async () => {
+  it("does not offer someone who has left, or a planned hire", async () => {
     openPanel();
-    await userEvent.click(screen.getByRole("combobox", { name: "Add member" }));
-    expect(optionNames().join()).not.toContain("Gale Fictional");
+    await userEvent.click(changeButton("Members") as HTMLElement);
+    expect(optionNames().join()).not.toMatch(/Gale|Ellis/);
+  });
+
+  it("makes changes from the day the chart shows", async () => {
+    const { asked } = openPanel({ day: "2027-05-01" });
+    await pick("Feature lead", /^Blake Fictional/);
+    await userEvent.click(changeButton("Members") as HTMLElement);
+    await userEvent.click(screen.getByRole("option", { name: /^Casey/ }));
+    await userEvent.keyboard("{Enter}");
+    expect(asked.lead).toHaveBeenCalledWith(team(), "m2", "2027-05-01");
+    expect(asked.members).toHaveBeenCalledWith(
+      team(),
+      { add: ["p1"], remove: [] },
+      "2027-05-01",
+    );
+  });
+
+  it("renames and colours nothing without the right to, as on another day", () => {
+    openPanel({ edits: { ...everything, rename: false, colours: false } });
+    expect([changeButton("Name"), changeButton("Colour")]).toEqual([
+      null,
+      null,
+    ]);
+  });
+
+  it("chooses the team's colour", async () => {
+    const { asked } = openPanel({ shown: team({ colour: "teal" }) });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change Colour" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Grape" }),
+    );
+    expect(asked.colour).toHaveBeenCalledWith(team({ colour: "teal" }));
   });
 
   it("removes the team", async () => {
@@ -418,27 +397,12 @@ describe("a feature team's panel", () => {
     expect(asked.removeTeam).toHaveBeenCalledWith(team());
   });
 
-  it("chooses the team's colour", async () => {
-    const { asked } = openPanel({ shown: team({ colour: "teal" }) });
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: /^Colour of Fictional Lighthouse/,
-      }),
-    );
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Grape" }),
-    );
-    expect(asked.colour).toHaveBeenCalledWith(team({ colour: "teal" }));
-  });
-
-  it("offers those who propose but do not edit feature teams no renaming or removing", () => {
-    openPanel({ edits: { ...everything, edit: false, dates: false } });
-    expect([
-      screen.queryByRole("button", { name: "Rename" }),
+  it("lets those who propose but do not edit feature teams rename, but not remove", () => {
+    openPanel({ edits: { ...everything, remove: false } });
+    expect(changeButton("Name")).not.toBeNull();
+    expect(
       screen.queryByRole("button", { name: "Remove feature team" }),
-      screen.queryByRole("textbox", { name: /Takes effect from/ }),
-    ]).toEqual([null, null, null]);
-    expect(screen.getByRole("combobox", { name: "Add member" })).toBeDefined();
+    ).toBeNull();
   });
 });
 
@@ -448,6 +412,7 @@ describe("a feature team's draft in its panel", () => {
     leadId: "m2",
     members: ["m2", "p1"],
     draft: draft({
+      changed: ["name", "leadId", "members"],
       live: {
         name: "Fictional Lighthouse",
         leadId: "m1",
@@ -456,18 +421,19 @@ describe("a feature team's draft in its panel", () => {
     }),
   });
 
-  it("marks the draft, with the live name and lead, members it adds, and those it removes", () => {
+  it("gives each drafted value with its live one, and marks the members it adds and removes", () => {
     openPanel({ shown: drafted });
-    const panel = screen.getByRole("region", { name: "Feature team" });
-    expect(within(panel).getAllByText("Draft").length).toBe(2);
-    expect(within(panel).getByText("Fictional Lighthouse")).toBeDefined();
-    expect(within(panel).getByText("Avery Fictional, leaving")).toBeDefined();
-    expect(
-      within(panel)
-        .getAllByText("Avery Fictional")
-        .map((line) => line.textContent),
-    ).toEqual(["Avery Fictional"]);
-    expect(within(panel).getAllByText("Live").length).toBe(3);
+    expect(rowText("Name")).toBe(
+      "Fictional Drafted DraftFictional Lighthouse Live",
+    );
+    expect(rowText("Feature lead")).toBe(
+      "Blake Fictional DraftAvery Fictional Live",
+    );
+    expect(memberLines()).toEqual([
+      "Avery Fictional, removed",
+      "Blake Fictional",
+      "Casey Fictional, added",
+    ]);
     expect(screen.getByRole("button", { name: "Discard draft" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Resubmit" })).toBeNull();
   });
@@ -484,34 +450,48 @@ describe("a feature team's draft in its panel", () => {
       } as FeatureTeam),
       day: "2027-05-01",
     });
-    const panel = screen.getByRole("region", { name: "Feature team" });
-    expect(within(panel).getAllByText("Draft").length).toBe(2);
-    expect(
-      within(panel).getByText(
-        `Avery Fictional, leaving from ${formatDay("2027-06-01")}`,
-      ),
-    ).toBeDefined();
-    expect(
-      within(panel).getByText(
-        `Avery Fictional, until ${formatDay("2027-04-01")}`,
-      ),
-    ).toBeDefined();
+    expect(memberLines()).toEqual([
+      `Avery Fictional, removedDraft, from ${formatDay("2027-06-01")}`,
+      "Blake Fictional",
+      "Casey Fictional, added",
+    ]);
+    expect(rowText("Feature lead")).toContain(
+      `Draft, from ${formatDay("2027-04-01")}`,
+    );
   });
 
-  it("gives the day of a change given no day, on another day shown, to readers who see days", () => {
+  it("gives the day of a change given no day, on another day shown", () => {
     openPanel({ shown: drafted, day: "2027-06-01" });
-    expect(
-      screen.getByText(
-        `Avery Fictional, leaving from ${formatDay("2027-03-10")}`,
-      ),
-    ).toBeDefined();
+    expect(memberLines()).toContain(
+      `Avery Fictional, removedDraft, from ${formatDay("2027-03-10")}`,
+    );
   });
 
   it("names no live lead as None", () => {
     openPanel({
-      shown: team({ draft: draft({ live: { leadId: null } }) }),
+      shown: team({
+        draft: draft({ changed: ["leadId"], live: { leadId: null } }),
+      }),
     });
-    expect(screen.getByText("None")).toBeDefined();
+    expect(rowText("Feature lead")).toBe("Avery Fictional DraftNone Live");
+  });
+
+  it("leaves a rejected draft's reason out of when a member's change takes effect", () => {
+    openPanel({
+      shown: team({
+        ...drafted,
+        draft: {
+          ...drafted.draft,
+          state: "rejected",
+          reason: "Fictional reason",
+          days: { m1: "2027-06-01" },
+        },
+      } as FeatureTeam),
+      day: "2027-05-01",
+    });
+    expect(memberLines()).toContain(
+      `Avery Fictional, removedRejected, from ${formatDay("2027-06-01")}`,
+    );
   });
 
   it("discards the draft", async () => {
@@ -538,77 +518,71 @@ describe("a feature team's draft in its panel", () => {
     expect(screen.getByRole("button", { name: "Resubmit" })).toBeDefined();
   });
 
-  it("offers no removing of a team the draft removes", () => {
+  it("offers no changes to a team the draft removes, marking it in the title", () => {
     openPanel({ shown: team({ draft: draft({ action: "deleted" }) }) });
     expect(screen.getByText("Draft: removed")).toBeDefined();
-    expect(
-      screen.queryByRole("button", { name: "Remove feature team" }),
-    ).toBeNull();
-  });
-
-  it("offers no colour for a team only drafted to be added", () => {
-    openPanel({ shown: team({ draft: draft({ action: "created" }) }) });
-    expect(screen.getAllByText("Draft: added").length).toBe(3);
-    expect(screen.queryByRole("button", { name: /^Colour of/ })).toBeNull();
-  });
-
-  it("says who is changing a team, offering no changes", () => {
-    openPanel({ shown: { ...drafted, heldBy: "Fictional Editor" } });
-    expect(
-      screen.getByText("Fictional Editor is changing this team"),
-    ).toBeDefined();
     expect([
-      screen.queryByRole("combobox", { name: "Feature lead" }),
-      screen.queryByRole("combobox", { name: "Add member" }),
-      screen.queryByRole("button", { name: "Rename" }),
+      screen.queryByRole("button", { name: "Remove feature team" }),
+      screen.queryByRole("button", { name: /^Change / }),
+      screen.queryByRole("button", { name: "Change Colour" }),
+    ]).toEqual([null, null, null]);
+  });
+
+  it("offers no colour for a team only drafted to be added, marking it in the title", () => {
+    openPanel({ shown: team({ draft: draft({ action: "created" }) }) });
+    expect(
+      within(
+        screen.getByRole("heading", { name: /^Fictional Lighthouse/ }),
+      ).getByText("Draft: added"),
+    ).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Change Colour" })).toBeNull();
+  });
+
+  it("offers no changes to a team someone else is changing, but for its colour, which is no draft", () => {
+    openPanel({ shown: { ...drafted, heldBy: "Fictional Editor" } });
+    expect([
+      screen.queryByRole("button", {
+        name: /^Change (Name|Feature lead|Members)$/,
+      }),
       screen.queryByRole("button", { name: "Discard draft" }),
       screen.queryByRole("button", { name: /^Remove / }),
-    ]).toEqual([null, null, null, null, null]);
-    expect(screen.getByText("Blake Fictional")).toBeDefined();
+    ]).toEqual([null, null, null]);
+    expect(memberLines()).toContain("Blake Fictional");
   });
 });
 
 describe("a feature team's panel read only", () => {
-  it("shows the team, its lead, and members, to those who may not propose", async () => {
+  it("shows the team's rows with nothing to change, to those who may not change teams", () => {
     openPanel({ edits: noFeatureTeamEdits });
-    expect(
-      screen.getByText(wholeText("Feature lead Avery Fictional")),
-    ).toBeDefined();
+    expect(rowText("Feature lead")).toBe("Avery Fictional");
     expect([
-      screen.queryByRole("combobox", { name: "Add member" }),
-      screen.queryByRole("button", { name: /^Colour of/ }),
+      screen.queryByRole("button", { name: /^Change / }),
+      screen.queryByRole("button", { name: "Change Colour" }),
       screen.queryByRole("button", { name: /^Remove / }),
     ]).toEqual([null, null, null]);
-    await userEvent.click(screen.getByRole("combobox", { name: "Team" }));
-    expect(optionNames()).toEqual(["Fictional Lighthouse", "Fictional Quay"]);
   });
 
-  it("names no lead as None", () => {
-    openPanel({ shown: team({ leadId: null }), edits: noFeatureTeamEdits });
-    expect(screen.getByText(wholeText("Feature lead None"))).toBeDefined();
-  });
-
-  it("shows the team as it is live with Live only, offering no changes", () => {
+  it("shows the team as it is live with Live only, offering no changes but for its colour", () => {
     openPanel({
       shown: team({
         name: "Fictional Drafted",
         members: ["m1", "p1"],
         draft: draft({
+          changed: ["name", "members"],
           live: { name: "Fictional Lighthouse", members: ["m1", "m2"] },
         }),
       }),
       show: "live",
     });
-    expect(
-      screen.getByRole<HTMLInputElement>("combobox", { name: "Team" }).value,
-    ).toBe("Fictional Lighthouse");
-    expect(screen.getByText("Blake Fictional")).toBeDefined();
+    expect(rowText("Name")).toBe("Fictional Lighthouse");
+    expect(memberLines()).toEqual(["Avery Fictional", "Blake Fictional"]);
     expect([
-      screen.queryByText("Casey Fictional"),
       screen.queryByText("Draft"),
-      screen.queryByRole("combobox", { name: "Add member" }),
+      screen.queryByRole("button", {
+        name: /^Change (Name|Feature lead|Members)$/,
+      }),
       screen.queryByRole("button", { name: "Discard draft" }),
-    ]).toEqual([null, null, null, null]);
+    ]).toEqual([null, null, null]);
   });
 
   it("shows a team only drafted to be added as drafted, with Live only", () => {
@@ -616,6 +590,6 @@ describe("a feature team's panel read only", () => {
       shown: team({ draft: draft({ action: "created" }) }),
       show: "live",
     });
-    expect(screen.getByText("Avery Fictional (lead)")).toBeDefined();
+    expect(memberLines()).toEqual(["Avery Fictional", "Blake Fictional"]);
   });
 });

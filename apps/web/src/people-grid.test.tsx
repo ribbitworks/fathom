@@ -813,13 +813,14 @@ describe("managers and teams", () => {
     expect(liveCells[keys.indexOf("team")]?.textContent).toBe("Harbour Crew");
   });
 
-  it("changes a person's manager, offering only those still employed, and clears it with Delete", async () => {
+  it("changes a person's manager, offering No manager first and only those still employed, and clears it with Delete", async () => {
     const update = vi.fn();
     render(grid({ actions: { ...actions, update } }));
     focus("p2", "managerId");
     await userEvent.keyboard("{Enter}");
     const options = await screen.findAllByRole("option");
     expect(options.map(({ textContent }) => textContent)).toEqual([
+      "No manager",
       "Fictional p1",
       "Fictional p2",
       "Fictional p4",

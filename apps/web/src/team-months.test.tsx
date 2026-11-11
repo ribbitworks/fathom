@@ -117,8 +117,8 @@ describe("a person's months as drafts change them", () => {
     const [record] = teamMonthRecords(data, undefined, "both");
 
     expect(record?.teamsIn.get("2027-04")).toEqual([
-      { ...mobile, drafted: "added", addedBy: { state: "rejected" } },
-      { ...search, drafted: "removed" },
+      { ...mobile, drafted: "added", draftedBy: { state: "rejected" } },
+      { ...search, drafted: "removed", draftedBy: { state: "rejected" } },
     ]);
     expect(record?.teamsIn.get("2027-03")).toEqual([search]);
     expect(record?.values).toEqual({
@@ -161,7 +161,7 @@ describe("a person's months as drafts change them", () => {
     const added = {
       ...mobile,
       drafted: "added",
-      addedBy: { state: "waiting" },
+      draftedBy: { state: "waiting" },
     };
     expect(record?.teamsIn.get("2027-03")).toEqual([added]);
     expect(record?.teamsIn.get("2027-04")).toEqual([added, search]);

@@ -50,7 +50,7 @@ import {
 
 type AnyColumn = Pick<
   TableColumn<never>,
-  "key" | "label" | "multiple" | "unit" | "places"
+  "key" | "label" | "multiple" | "unit" | "places" | "emptyLabel"
 > & {
   choices: readonly Choice[];
   // Whether a choice may be put in a cell, apart from being offered in its list: any may, unless
@@ -305,7 +305,11 @@ const pickable = (column: AnyColumn, option: Choice) =>
 const choicesFor = (column: AnyColumn, value: readonly string[]) =>
   column.choices
     .filter((option) => pickable(column, option) || value.includes(option.id))
-    .map((option) => ({ value: option.id, label: option.label }));
+    .map((option) => ({
+      value: option.id,
+      label: option.label,
+      ...(option.description === "" ? {} : { description: option.description }),
+    }));
 
 const chosen = (value: CellValue) => value as string[];
 
@@ -364,6 +368,7 @@ const choice: CellKind = {
       invalid={invalid}
       describedBy={describedBy}
       options={choicesFor(column, chosen(value))}
+      none={column.required ? undefined : (column.emptyLabel ?? "None")}
       multiple={column.multiple}
       initial={chosen(value)}
       typed={typed}

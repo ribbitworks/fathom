@@ -78,7 +78,7 @@ export function TeamsPanel({
                     teamId={person.id}
                     current={person.teamColour}
                     team={person.teamName}
-                    square
+                    look="square"
                   />
                 ) : (
                   person.teamColour !== null && (

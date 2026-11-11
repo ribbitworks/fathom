@@ -11,13 +11,13 @@ import {
   Group,
   Menu,
   Select,
-  Text,
   Tooltip,
 } from "@mantine/core";
 import type { OrgChartPerson } from "@fathom/shared";
 import { useReactFlow } from "@xyflow/react";
 import { type ReactNode, useMemo, useState } from "react";
 import { AppMenu } from "./app-menu.tsx";
+import { OptionWords } from "./choice-picker.tsx";
 import { Icon } from "./icons.tsx";
 import {
   findFieldId,
@@ -127,18 +127,20 @@ export function ChartControls({
             const lead = option.value.startsWith(teamPrefix)
               ? tree.people.get(option.value.slice(teamPrefix.length))
               : undefined;
+            const description =
+              lead === undefined
+                ? (tree.people.get(option.value)?.featureTeam ??
+                  livePosition(tree.people.get(option.value)))
+                : lead.teamCard === true
+                  ? "No feature lead"
+                  : `Led by ${lead.preferredName}`;
             return (
-              <div>
-                <Text size="sm">{option.label}</Text>
-                <Text size="xs" c="dimmed">
-                  {lead === undefined
-                    ? (tree.people.get(option.value)?.featureTeam ??
-                      livePosition(tree.people.get(option.value)))
-                    : lead.teamCard === true
-                      ? "No feature lead"
-                      : `Led by ${lead.preferredName}`}
-                </Text>
-              </div>
+              <OptionWords
+                option={{
+                  label: option.label,
+                  description: description ?? undefined,
+                }}
+              />
             );
           }}
           onChange={(value) => {

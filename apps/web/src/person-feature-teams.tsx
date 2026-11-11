@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The feature teams a person is on, in their details, read only: each team, with who leads it, or
-// marked when they do, opening it on the org chart's feature teams beside their details. Shown only
-// to readers who see the org chart, where feature teams are kept.
+// The feature teams a person is on, in their details, read only: those they lead, then those they
+// are a member of, each with who leads it, each opening on the org chart's feature teams beside their
+// details. Shown only to readers who see the org chart, where feature teams are kept.
 
+import type { FeatureTeam } from "@fathom/shared";
 import { Anchor, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { featureTeamsQuery, someoneUnseen } from "./feature-teams.ts";
 import { orgChartQuery } from "./org-chart.ts";
 import classes from "./record-details.module.css";
+import { RecordSection } from "./record-details.tsx";
 
 export function PersonFeatureTeams({
   personId,
@@ -30,45 +33,62 @@ export function PersonFeatureTeams({
   const teams = (query.data?.teams ?? []).filter(({ members }) =>
     members.includes(personId),
   );
-  return (
-    <section aria-labelledby="person-feature-teams">
-      <h3 className={classes.heading} id="person-feature-teams">
-        Feature teams
-      </h3>
-      {teams.length === 0 ? (
-        <Text c="dimmed" size="sm">
-          None
-        </Text>
-      ) : (
-        <ul className={classes.reports}>
-          {teams.map((team) => (
-            <li key={team.id}>
-              <Anchor
-                renderRoot={(props) => (
-                  <Link
-                    {...props}
-                    to="/org-chart"
-                    search={{
-                      view: "feature-teams",
-                      featureTeam: team.id,
-                      open: employeeId,
-                    }}
-                  />
-                )}
-              >
-                {team.name}
-              </Anchor>
-              <Text span c="dimmed" size="sm" ml={8}>
-                {team.leadId === personId
-                  ? "Lead"
-                  : team.leadId === null
-                    ? "No feature lead"
-                    : `Led by ${nameOf(team.leadId)}`}
-              </Text>
-            </li>
-          ))}
-        </ul>
+  const led = teams.filter(({ leadId }) => leadId === personId);
+  const others = teams.filter(({ leadId }) => leadId !== personId);
+  const teamLink = (team: FeatureTeam) => (
+    <Anchor
+      renderRoot={(props) => (
+        <Link
+          {...props}
+          to="/org-chart"
+          search={{
+            view: "feature-teams",
+            featureTeam: team.id,
+            open: employeeId,
+          }}
+        />
       )}
-    </section>
+    >
+      {team.name}
+    </Anchor>
+  );
+  const row = (label: string, content: ReactNode) => (
+    <div className={classes.row}>
+      <dt className={classes.label}>{label}</dt>
+      <dd className={classes.value}>{content}</dd>
+    </div>
+  );
+  return (
+    <RecordSection id="person-feature-teams" title="Feature teams">
+      {led.length > 0 &&
+        row(
+          "Leads",
+          <ul className={classes.reports}>
+            {led.map((team) => (
+              <li key={team.id}>{teamLink(team)}</li>
+            ))}
+          </ul>,
+        )}
+      {(others.length > 0 || led.length === 0) &&
+        row(
+          "Member of",
+          others.length === 0 ? (
+            <Text c="dimmed">None</Text>
+          ) : (
+            <ul className={classes.reports}>
+              {others.map((team) => (
+                <li key={team.id}>
+                  {teamLink(team)}
+                  <Text span c="dimmed" size="sm" ml={8}>
+                    {team.leadId === null
+                      ? "No feature lead"
+                      : `Led by ${nameOf(team.leadId)}`}
+                  </Text>
+                </li>
+              ))}
+            </ul>
+          ),
+        )}
+    </RecordSection>
   );
 }

@@ -147,9 +147,7 @@ export function AllocationLines({
           {...{ [tipAttribute]: name }}
         >
           <span className={styles.name}>
-            {draft !== undefined && drafted !== "removed" && (
-              <DraftDot draft={draft} />
-            )}
+            {draft !== undefined && <DraftDot draft={draft} />}
             {name}
           </span>
           <span>{percentage}%</span>

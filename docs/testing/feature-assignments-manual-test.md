@@ -275,7 +275,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FA-13.
 
-**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. **Org chart** open, with **Feature teams** chosen in the switch at the top right, showing today.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch; it shows today.
 
 - [ ] **Step 1.** Select the left arrow, left of the timeline above the chart, once.
   - **Expected:**
@@ -283,29 +283,30 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The text below the timeline ends **Changes take effect from this date.**
   - **Notes:**
 
-- [ ] **Step 2.** Select the Feature teams button, then **Platform reliability**.
+- [ ] **Step 2.** Select the Feature teams button, then **Platform reliability**. Note the first name in the **Members** row: the leaver.
   - **Expected:**
-    - The team panel opens with **Team** reading **Platform reliability**.
-    - Its members are listed.
+    - The team panel opens, titled **Platform reliability**.
+    - Its members are listed in the **Members** row.
   - **Notes:**
 
-- [ ] **Step 3.** Open **Add member** and choose the first person listed. Note their name: the joiner.
-  - **Expected:** The joiner is listed among the members with a hollow yellow dot and **Draft**.
+- [ ] **Step 3.** Select the change button in the **Members** row, press the Down arrow key until a person without a tick is highlighted, press Enter, and press Enter again. Note the person's name: the joiner.
+  - **Expected:** The joiner is in the list of members, with a hollow yellow dot before their name.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **×** at the right of the first member listed before step 3. Note their name: the leaver.
-  - **Expected:** A line reading the leaver's name and **leaving** is shown under the members, marked **Live**.
+- [ ] **Step 4.** Select the change button in the **Members** row, type the leaver's name, press Enter to untick them, and press Enter again.
+  - **Expected:** The leaver's name is still in the list of members, with a hollow yellow dot before it, struck through.
   - **Notes:**
 
 - [ ] **Step 5.** Select the **Feature assignments** page in the left-hand menu. Select **None** in the Group by menu, and type the joiner's name in the search box.
   - **Expected:**
-    - The joiner's row is tinted blue, with a hollow yellow dot and **Draft** beside their name.
+    - The joiner's row is tinted blue.
+    - A hollow yellow dot and **Draft** are beside their name.
     - A light green row under it is marked **Live**.
   - **Notes:**
 
 - [ ] **Step 6.** Look along the joiner's tinted row, from two months ago to the right.
   - **Expected:**
-    - The cell two months ago holds the same labels as the light green row under it, and is not yellow.
+    - The cell two months ago has no yellow, and holds the same labels as the light green row's cell under it.
     - From last month on, each cell is yellow and holds a **Platform reliability** label with a hollow yellow dot inside it, beside any other labels.
   - **Notes:**
 
@@ -318,7 +319,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 8.** Empty the search box and type the leaver's name.
   - **Expected:**
     - From last month on, the leaver's cells are yellow.
-    - The **Platform reliability** label in them is struck through.
+    - The **Platform reliability** label in them has a hollow yellow dot inside it and is struck through.
   - **Notes:**
 
 - [ ] **Step 9.** Select **Dark** in the Appearance menu, then **Light**.
@@ -367,7 +368,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from FA-15.
 
-**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. Select the **Feature assignments** page in the left-hand menu, and choose **None** in the Group by menu, with nothing in the search box and no filters.
 
 - [ ] **Step 1.** Note the name in the first row of the table: the person. Type it in the search box.
   - **Expected:** Only the person's row is listed.
@@ -382,24 +383,27 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The team list closes.
     - The person's row is tinted blue, with a hollow yellow dot and **Draft** beside their name.
     - A light green row under it is marked **Live**.
-    - The cells before the one selected are not yellow.
+    - The cells before the one selected have no yellow.
     - From the cell selected on, each cell is yellow and holds the new team's label with a hollow yellow dot inside it.
   - **Notes:**
 
 - [ ] **Step 4.** Press Cmd+Z, or Ctrl+Z outside a Mac.
   - **Expected:**
-    - The person's row is as it was in step 1.
-    - It has no **Draft** mark and no yellow cells.
+    - The person's row has no **Draft** mark.
+    - No light green row is under it.
+    - No cell is yellow.
   - **Notes:**
 
-- [ ] **Step 5.** Repeat steps 2 and 3, choosing the same new team.
-  - **Expected:** The row shows the change as in step 3.
-  - **Notes:**
-
-- [ ] **Step 6.** Select the **Org chart** page in the left-hand menu, select **Feature teams** in the switch at the top right, then select the Feature teams button and the new team.
+- [ ] **Step 5.** Select the person's cell two months after the current month, press Enter, type the first letters of the new team, and press Tab.
   - **Expected:**
-    - The team panel opens for the new team.
-    - The person is listed among the members with a hollow yellow dot and **Draft**.
+    - The person's row is tinted blue, with a hollow yellow dot and **Draft** beside their name, and a light green row under it marked **Live**.
+    - From the cell selected on, each cell is yellow and holds the new team's label with a hollow yellow dot inside it.
+  - **Notes:**
+
+- [ ] **Step 6.** Select the **Org chart** page in the left-hand menu, choose **Feature teams** in the teams switch, then select the Feature teams button and the new team.
+  - **Expected:**
+    - The team panel opens, titled with the new team's name.
+    - The person is in the **Members** row, with a hollow yellow dot before their name, followed in grey by **Draft, from** and the first day of the month two months after the current one, such as **Draft, from Jan 1, 2027**.
   - **Notes:**
 
 ### FA-17: The Current Month Changes From Today
@@ -411,7 +415,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 1.** Select a cell in the current month's column that holds one label, in a row with no **Draft** mark, and press Delete.
   - **Expected:**
     - The cell and every cell to its right are yellow.
-    - The label in them is struck through.
+    - The label in them has a hollow yellow dot inside it and is struck through.
   - **Notes:**
 
 - [ ] **Step 2.** Press Cmd+Z, or Ctrl+Z outside a Mac.

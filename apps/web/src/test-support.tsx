@@ -16,7 +16,7 @@ import { defaultPasswordSettings } from "@fathom/shared";
 import { mergeThemeOverrides } from "@mantine/core";
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory } from "@tanstack/react-router";
-import { render } from "@testing-library/react";
+import { render, within } from "@testing-library/react";
 import { vi } from "vitest";
 import { App } from "./app.tsx";
 import { theme } from "./theme.ts";
@@ -94,6 +94,22 @@ export const testTheme = mergeThemeOverrides(theme, {
 
 // Finds the element whose whole text matches, though parts of it, such as the values a change
 // names, are marked in elements of their own.
+// A row of a details panel, by its label, within the panel given or the whole page.
+export const detailRow = (
+  label: string,
+  container: HTMLElement = document.body,
+): HTMLElement =>
+  within(container).getByText(label, { selector: "dt" })
+    .parentElement as HTMLElement;
+
+// What a row of a details panel reads, by its label: its value, and any marks and live value under
+// it.
+export const detailValue = (
+  label: string,
+  container: HTMLElement = document.body,
+): string =>
+  (detailRow(label, container).querySelector("dd") as HTMLElement).textContent;
+
 export const wholeText =
   (expected: string | RegExp) =>
   (_content: string, element: Element | null): boolean => {
