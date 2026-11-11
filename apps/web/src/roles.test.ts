@@ -83,16 +83,16 @@ describe("what a role allows", () => {
   });
 
   it("warns of each permission, granted or brought by another, that does nothing without one the role lacks", () => {
-    expect(consequences(["restricted:edit"]).ineffective).toEqual([
-      "View Restricted details does nothing without View People.",
-      "Edit Restricted details does nothing without Edit People.",
+    expect(consequences(["personal:edit"]).ineffective).toEqual([
+      "View Personal details does nothing without View People.",
+      "Edit Personal details does nothing without Edit People.",
     ]);
   });
 
   it("gives no warning once the permission needed is granted, or brought by another", () => {
-    expect(
-      consequences(["restricted:view", "people:view"]).ineffective,
-    ).toEqual([]);
+    expect(consequences(["personal:view", "people:view"]).ineffective).toEqual(
+      [],
+    );
     expect(
       consequences(["confidential:edit", "people:edit"]).ineffective,
     ).toEqual([]);

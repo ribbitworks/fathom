@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the Org chart's date control: which day a chart is drawn as of, stepping by month, typing
-// a day for readers who see Restricted details, and what it says while the chart shows another day.
+// a day for readers who see Personal details, and what it says while the chart shows another day.
 
 import { MantineProvider } from "@mantine/core";
 import { fireEvent, render, screen } from "@testing-library/react";

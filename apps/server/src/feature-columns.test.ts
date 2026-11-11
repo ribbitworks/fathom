@@ -201,7 +201,7 @@ describe("the columns on Features", () => {
     expect(sent.map(({ id }) => id)).not.toContain(unused);
     await test.connection
       .update(lists)
-      .set({ visibility: "restricted" })
+      .set({ visibility: "personal" })
       .where(eq(lists.id, listId));
     try {
       const after = await columns(viewer.cookie);
@@ -238,7 +238,7 @@ describe("the columns on Features", () => {
   });
 
   it("refuses a list that is not General", async () => {
-    const { listId } = await addList("restricted");
+    const { listId } = await addList("personal");
     const response = await addColumn({ listId });
     expect(response.statusCode).toBe(400);
   });
@@ -520,7 +520,7 @@ describe("keeping columns on Features General", () => {
   it("refuses a link or note column that is not General", async () => {
     const response = await addColumn({
       type: "link",
-      visibility: "restricted",
+      visibility: "personal",
     });
     expect(response.statusCode).toBe(400);
   });
@@ -531,7 +531,7 @@ describe("keeping columns on Features General", () => {
       editor.cookie,
       "PUT",
       `/api/lists/${String(field.listId)}`,
-      { name: unique("Fictional Raised"), visibility: "restricted" },
+      { name: unique("Fictional Raised"), visibility: "personal" },
     );
     expect(response.statusCode).toBe(409);
     expect(errorOf(response)).toContain("must stay General");
@@ -544,7 +544,7 @@ describe("keeping columns on Features General", () => {
       editor.cookie,
       "PUT",
       `/api/lists/${listId}`,
-      { name: unique("Fictional Raised"), visibility: "restricted" },
+      { name: unique("Fictional Raised"), visibility: "personal" },
     );
     expect(response.statusCode).toBe(409);
   });
@@ -554,7 +554,7 @@ describe("keeping columns on Features General", () => {
     const { field } = (await addColumn({ listId })).json<{ field: Field }>();
     await test.connection
       .update(lists)
-      .set({ visibility: "restricted" })
+      .set({ visibility: "personal" })
       .where(eq(lists.id, listId));
     const response = await test.request(
       columnApprover.cookie,

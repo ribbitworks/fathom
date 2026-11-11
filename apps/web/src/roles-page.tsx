@@ -112,19 +112,19 @@ function impliedBy(
   );
 }
 
-// Text with the sensitivity tiers it names in their own colours, so Restricted and Confidential
+// Text with the sensitivity tiers it names in their own colours, so Personal and Confidential
 // stand out.
 function TierWords({ text }: { text: string }) {
   return (
     <>
-      {text.split(/\b(Restricted|Confidential)\b/u).map((part, index) =>
-        part === "Restricted" || part === "Confidential" ? (
+      {text.split(/\b(Personal|Confidential)\b/u).map((part, index) =>
+        part === "Personal" || part === "Confidential" ? (
           <span
             // Parts keep their place, since the text is split the same way each time.
             key={index}
             className={
-              part === "Restricted"
-                ? roleClasses.restricted
+              part === "Personal"
+                ? roleClasses.personal
                 : roleClasses.confidential
             }
           >

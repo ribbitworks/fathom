@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-10"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Features
@@ -342,7 +342,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Open the **List** box.
-  - **Expected:** **Complexity** is offered. No list marked **Restricted** or **Confidential** is offered.
+  - **Expected:**
+    - **Complexity** is offered.
+    - No list marked **Personal** or **Confidential** is offered.
   - **Notes:**
 
 - [ ] **Step 3.** Set **Type** to **Number**.

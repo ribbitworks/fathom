@@ -85,7 +85,7 @@ const sensitivityPermissions: Record<
   { view: Permission; edit: Permission }
 > = {
   general: { view: "people:view", edit: "people:edit" },
-  restricted: { view: "restricted:view", edit: "restricted:edit" },
+  personal: { view: "personal:view", edit: "personal:edit" },
   confidential: { view: "confidential:view", edit: "confidential:edit" },
   "hiring-plan": { view: "hiring-plan:view", edit: "hiring-plan:edit" },
 };
@@ -95,7 +95,7 @@ const permissionsOf = (sensitivity: Sensitivity) =>
   // eslint-disable-next-line security/detect-object-injection
   sensitivityPermissions[sensitivity];
 
-const tierRank: readonly Tier[] = ["general", "restricted", "confidential"];
+const tierRank: readonly Tier[] = ["general", "personal", "confidential"];
 
 // A tier as stored, or, for one the server no longer knows, the most sensitive, rather than trusted.
 export const storedTier = (value: unknown): Tier =>
@@ -121,11 +121,11 @@ export function seesSensitivity(
   return actor.permissions.includes(permissionsOf(sensitivity).view);
 }
 
-// Restricted details are details of people, so they show only with people, as the Roles page says;
+// Personal details are details of people, so they show only with people, as the Roles page says;
 // a role can be given them without people, but then they do nothing.
-export const seesRestrictedDetails = (actor: Actor): boolean =>
+export const seesPersonalDetails = (actor: Actor): boolean =>
   actor.permissions.includes("people:view") &&
-  seesSensitivity(actor, "restricted");
+  seesSensitivity(actor, "personal");
 
 export function requireSensitivityEdit(
   actor: Actor,

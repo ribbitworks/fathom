@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The Org chart's date control: a timeline to step through by month, and, for readers who see
-// Restricted details, a box for typing any day. Readers who do not see those details move by whole
-// months, since the exact days people join and leave are Restricted. While the chart shows another
+// Personal details, a box for typing any day. Readers who do not see those details move by whole
+// months, since the exact days people join and leave are Personal. While the chart shows another
 // date, the control says whether changes made there take effect from it, or nothing can be changed.
 
 import {

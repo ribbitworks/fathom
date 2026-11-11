@@ -70,7 +70,7 @@ export const defaultLineFrom = (
   typeof startDate === "string" && startDate > today ? startDate : today;
 
 // Whether a change, such as to a feature team, may take effect from a day: a day before today needs
-// the right to change Restricted details.
+// the right to change Personal details.
 export const mayDateChange = (
   changesDates: boolean,
   day: string,

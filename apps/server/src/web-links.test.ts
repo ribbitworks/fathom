@@ -127,11 +127,11 @@ async function linkRows(fieldId: string) {
 describe("adding web link columns", () => {
   it("adds one with a visibility of its own, and no list", async () => {
     const { cookie } = await editor();
-    const field = await linkColumn(cookie, { visibility: "restricted" });
+    const field = await linkColumn(cookie, { visibility: "personal" });
     expect(field).toMatchObject({
       type: "link",
       listId: null,
-      visibility: "restricted",
+      visibility: "personal",
       multiple: false,
     });
   });
@@ -471,7 +471,7 @@ describe("a web link column's settings over time", () => {
   it("puts a changed visibility back when the change is undone", async () => {
     const { cookie } = await editor();
     const field = await linkColumn(cookie);
-    const changeSetId = await setVisibility(cookie, field, "restricted");
+    const changeSetId = await setVisibility(cookie, field, "personal");
     const undone = await send(cookie, "POST", `/api/undo/${changeSetId}`);
     expect(undone.statusCode, undone.body).toBe(200);
     const column = (await readPeople(cookie)).fields.find(
@@ -483,7 +483,7 @@ describe("a web link column's settings over time", () => {
 
   it("brings a column drafted to be deleted back when the deletion is undone", async () => {
     const { cookie } = await editor();
-    const field = await linkColumn(cookie, { visibility: "restricted" });
+    const field = await linkColumn(cookie, { visibility: "personal" });
     const deleted = await send(
       cookie,
       "DELETE",
@@ -495,7 +495,7 @@ describe("a web link column's settings over time", () => {
     const column = (await readPeople(cookie)).fields.find(
       ({ id }) => id === field.id,
     );
-    expect(column).toMatchObject({ type: "link", visibility: "restricted" });
+    expect(column).toMatchObject({ type: "link", visibility: "personal" });
     expect(column?.draft).toBeUndefined();
   });
 
@@ -610,7 +610,7 @@ describe("undoing live changes", () => {
       async (transaction) => {
         await transaction
           .update(fields)
-          .set({ visibility: "restricted" })
+          .set({ visibility: "personal" })
           .where(eq(fields.id, field.id));
         return recordChanges(transaction, { userId, roleId: null }, [
           {
@@ -620,7 +620,7 @@ describe("undoing live changes", () => {
             field: "visibility",
             tier: "general",
             oldValue: "general",
-            newValue: "restricted",
+            newValue: "personal",
           },
         ]);
       },

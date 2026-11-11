@@ -42,7 +42,7 @@ beforeAll(async () => {
     "configuration:approve",
     "people:approve",
     "people:edit",
-    "restricted:edit",
+    "personal:edit",
     "confidential:edit",
     "configuration:edit",
   ]);
@@ -810,7 +810,7 @@ describe("undoing changes to lists saved before lists had drafts", () => {
     expect((await liveChoices(list.id)).at(-1)?.label).toBe("A");
     const restored = await legacy([
       field("list", list.id, "changed", "retired", true, false),
-      field("list", list.id, "changed", "visibility", "restricted", "general"),
+      field("list", list.id, "changed", "visibility", "personal", "general"),
     ]);
     expect((await undo(String(restored))).statusCode).toBe(200);
     expect(
@@ -818,7 +818,7 @@ describe("undoing changes to lists saved before lists had drafts", () => {
         .select({ visibility: lists.visibility, retired: lists.retired })
         .from(lists)
         .where(eq(lists.id, list.id)),
-    ).toEqual([{ visibility: "restricted", retired: true }]);
+    ).toEqual([{ visibility: "personal", retired: true }]);
   });
 
   it("refuses taking out a list that has choices, a choice a draft has, and a name taken since", async () => {

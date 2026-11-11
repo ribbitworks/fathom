@@ -10,6 +10,6 @@ ON CONFLICT DO NOTHING;
 --> statement-breakpoint
 -- Words the People Manager role's description more plainly, unless it has been changed since.
 UPDATE "fathom"."roles"
-SET "description" = 'Sees people, including everyone''s Restricted details, and proposes feature teams.'
+SET "description" = 'Sees people, including everyone''s Personal details, and proposes feature teams.'
 WHERE "key" = 'people-manager'
-  AND "description" = 'Proposes feature teams, and sees people, with Restricted details for everyone.';
+  AND "description" = 'Proposes feature teams, and sees people, with Personal details for everyone.';

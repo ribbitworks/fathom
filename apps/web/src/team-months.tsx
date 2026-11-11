@@ -143,7 +143,7 @@ const labelsShown = (labels: readonly MonthLabel[], show: Show) =>
     : labels;
 
 // Who may change a month's teams: those who may propose team changes, the current month and later,
-// and earlier months too for those who may change Restricted details.
+// and earlier months too for those who may change Personal details.
 export interface TeamMonthEdits {
   today: string;
   changesDates: boolean;

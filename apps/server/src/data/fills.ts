@@ -146,7 +146,7 @@ const inFill = (
 
 // The drafts asked for, with every published draft of the fills any of them belong to. A fill's
 // person, with a start date or a reporting line in their draft, is decided only by those who see
-// Restricted data.
+// Personal data.
 export async function withFills(
   reader: Reader,
   actor: Actor,
@@ -156,9 +156,9 @@ export async function withFills(
   const hires = new Set(asked.plannedHires);
   for (const fill of await readFills(reader)) {
     if (!inFill(fill, asked)) continue;
-    if (fill.people.length > 0 && !seesSensitivity(actor, "restricted")) {
+    if (fill.people.length > 0 && !seesSensitivity(actor, "personal")) {
       throw new ForbiddenError(
-        "A fill names who fills the hire, so an Approver who sees Restricted details must decide it",
+        "A fill names who fills the hire, so an Approver who sees Personal details must decide it",
       );
     }
     if (
@@ -183,7 +183,7 @@ const inAnyFill = (reader: Reader, personId: string) =>
 // The person asked to fill a hire, as the actor's drafts make them, refusing someone with a draft of
 // their own, so the fill's draft of them holds only the fill, someone who has left, and someone who
 // fills another hire, in anyone's draft, or live without having started. With no draft, they are as
-// they are live. An actor who does not see Restricted details has someone not started answered as
+// they are live. An actor who does not see Personal details has someone not started answered as
 // no one, as People hides them.
 async function fillingPerson(
   transaction: Transaction,
@@ -198,8 +198,8 @@ async function fillingPerson(
   const draft = (
     await readPersonDrafts(transaction, [personId], actor.user.id)
   ).get(personId);
-  const restricted = seesSensitivity(actor, "restricted");
-  if (live === undefined || (!restricted && notStarted(live, today))) {
+  const seesPersonal = seesSensitivity(actor, "personal");
+  if (live === undefined || (!seesPersonal && notStarted(live, today))) {
     throw new NotFoundError(noPerson);
   }
   const name = String(live.preferredName);

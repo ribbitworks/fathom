@@ -6,7 +6,7 @@
    in light mode and bright in dark, so it is seen in both. Without motion, both hold until they
    end. Something Fathom does not have yet is tagged, as the sidebar tags pages still to come. */
 
-.restricted {
+.personal {
   color: var(--mantine-color-orange-text);
   font-weight: 600;
 }

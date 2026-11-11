@@ -35,7 +35,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu and the account menu. This test adds:
 
 - **Summary:** the panel on the right of the role dialog, headed **Pages its holders see**, **Can** and **Cannot**.
-- **Tier colours:** the word **Restricted** in bold orange and the word **Confidential** in bold red.
+- **Tier colours:** the word **Personal** in bold orange and the word **Confidential** in bold red.
 
 ## Test Cases
 
@@ -43,7 +43,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 ### ROLE-01: Only Those Who May See Roles See the Roles Page
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case. Step 3 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case. Step 2 signs in as another account.
 
 **Preconditions:** Signed in with this account.
 
@@ -51,11 +51,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** There is no **Administration** section and no **Roles** page.
   - **Notes:**
 
-- [ ] **Step 2.** Change the browser's address to end in `/roles`, and press Enter.
-  - **Expected:** The page says **There is no page at this address.**
-  - **Notes:**
-
-- [ ] **Step 3.** Sign out, and sign in as the Administrator, `fathom.administrator@fathom.test`.
+- [ ] **Step 2.** Sign out, and sign in as the Administrator, `fathom.administrator@fathom.test`.
   - **Expected:** The left-hand menu shows **Accounts**, **Roles** and **Settings**.
   - **Notes:**
 
@@ -66,11 +62,27 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Signed in with this account. **Roles** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the **Role** and **Accounts** columns from top to bottom.
-  - **Expected:** Administrator 1, Engineering Director 1, Engineering Manager 1, Executive 1, Feature Lead 1, Product Manager 1, Project Manager 1, Resource Planner 1, Superuser 1, Team Member 1, Workforce Administrator 2. Each row ends with **Edit** and **Copy** buttons, and **New role** is at the top right.
+  - **Expected:**
+    - The **Role** and **Accounts** columns read, from top to bottom:
+      - Administrator 1
+      - Engineering Director 1
+      - Engineering Manager 2
+      - Executive 1
+      - Feature Lead 1
+      - Product Manager 1
+      - Project Manager 1
+      - Resource Planner 1
+      - Superuser 1
+      - Team Member 1
+      - Workforce Administrator 2
+    - Each row ends with **Edit** and **Copy** buttons.
+    - **New role** is at the top right.
   - **Notes:**
 
 - [ ] **Step 2.** Read the **What it is for** column.
-  - **Expected:** Engineering Manager reads **Edits the plan and allocations, sees people, with everyone's Restricted details and the hiring plan, colours teams on the org chart, and proposes feature teams.** Wherever **Restricted** or **Confidential** appears, it is in its tier colour, in light and dark mode alike.
+  - **Expected:**
+    - Engineering Manager reads **Edits the plan and allocations, sees people, with everyone's Personal details and the hiring plan, colours teams on the org chart, and proposes feature teams.**
+    - Wherever **Personal** or **Confidential** appears, it is in its tier colour, in light and dark mode alike.
   - **Notes:**
 
 ### ROLE-03: The Dialog Shows What a Role Grants
@@ -97,7 +109,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 2.** Read the **Area** column, and the lines under the grid.
-  - **Expected:** **Drafts** carries a small grey **Not built yet** tag. No other area is tagged. A line under the grid reads **Fathom doesn't have what is marked Not built yet. A role can grant it now, and it works once it is built.**
+  - **Expected:**
+    - **Drafts** carries a small grey **Not built yet** tag. No other area is tagged.
+    - A line under the grid reads **Fathom doesn't have what is marked Not built yet. A role can grant it now, and it works once it is built.**
   - **Notes:**
 
 - [ ] **Step 3.** Read the summary.
@@ -106,12 +120,14 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - **Can**, tagged **Not built yet:** making drafts of changes to the plan and allocations.
     - **Can**, not tagged: seeing the plan, changing the plan, approving drafts of the plan, changing features and estimates, approving drafts of releases, seeing allocations, approving drafts of allocations, seeing people, approving drafts of people, seeing the org chart, seeing the hiring plan, approving drafts of planned hires, approving feature teams, seeing configuration, approving drafts of configuration, and seeing the change history.
     - **Cannot**, not tagged: **Cannot change allocations.**, **Cannot propose feature teams.** and **Cannot change feature teams.**
-    - **Cannot** also includes, with the tier colours: **Restricted details are hidden wherever they appear, and people who haven't started yet aren't listed.** and **Confidential data is hidden wherever it appears.**
+    - **Cannot** also includes, with the tier colours: **Personal details are hidden wherever they appear, and people who haven't started yet aren't listed.** and **Confidential data is hidden wherever it appears.**
     - **Cannot** does not include **The People page does not appear.**
   - **Notes:**
 
 - [ ] **Step 4.** Look at the foot of the dialog.
-  - **Expected:** **Restore template** on the left, turned off, and **Cancel** and **Save** on the right.
+  - **Expected:**
+    - **Restore template** is on the left, turned off.
+    - **Cancel** and **Save** are on the right.
   - **Notes:**
 
 ### ROLE-04: Editing an Area Brings Viewing It
@@ -121,7 +137,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Signed in with this account. **Roles** page open, with the **Edit Project Manager** dialog still open, unsaved, as ROLE-03 left it.
 
 - [ ] **Step 1.** Tick **Edit** on the **Configuration** row.
-  - **Expected:** **View** on the **Configuration** row stays ticked, becomes greyed, and cannot be unticked.
+  - **Expected:**
+    - **View** on the **Configuration** row stays ticked.
+    - It becomes greyed, and cannot be unticked.
   - **Notes:**
 
 - [ ] **Step 2.** Untick **Edit** on the **Configuration** row.
@@ -135,15 +153,23 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Signed in with this account. **Roles** page open, with the **Edit Project Manager** dialog still open, unsaved, as ROLE-04 left it.
 
 - [ ] **Step 1.** Untick **View** on the **People** row, and watch the summary.
-  - **Expected:** **People** under **Pages its holders see**, and the sentence about seeing people under **Can**, are struck through in red and fade away over about three seconds, then go. Under **Cannot**, **The People page does not appear.** appears in bold teal, turning to plain text after about three seconds. A yellow box at the top of the summary reads **View Hiring plan does nothing without View People.**
+  - **Expected:**
+    - **People** under **Pages its holders see**, and the sentence about seeing people under **Can**, are struck through in red and fade away over about three seconds, then go.
+    - Under **Cannot**, **The People page does not appear.** appears in bold teal, turning to plain text after about three seconds.
+    - A yellow box at the top of the summary reads **View Hiring plan does nothing without View People.**
   - **Notes:**
 
 - [ ] **Step 2.** Tick **View** on the **People** row again.
-  - **Expected:** The lines taken out in Step 1 come back in bold teal; **The People page does not appear.** is struck through in red and fades away, and the yellow box goes.
+  - **Expected:**
+    - The lines taken out in Step 1 come back in bold teal.
+    - **The People page does not appear.** is struck through in red and fades away.
+    - The yellow box goes.
   - **Notes:**
 
 - [ ] **Step 3.** Untick **View** on the **Hiring plan** row.
-  - **Expected:** The sentence about seeing the hiring plan under **Can** is struck through in red and fades away; under **Cannot**, **Planned hires appear only as placeholders.** appears in bold teal.
+  - **Expected:**
+    - The sentence about seeing the hiring plan under **Can** is struck through in red and fades away.
+    - Under **Cannot**, **Planned hires appear only as placeholders.** appears in bold teal.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Cancel**, then open the **Project Manager** role again, as Open a Role describes.
@@ -157,7 +183,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Signed in with this account. **Roles** page open, with the **Edit Project Manager** dialog still open, unsaved, as ROLE-05 left it.
 
 - [ ] **Step 1.** Tick **View** on the **Access history** row, and select **Save**.
-  - **Expected:** The dialog says **This change affects 1 account.** and lists **Project Manager**, with its email address, and under **Gains**: **Sees the Access history page.** and a sentence about seeing the access history. **Back** is on the left, **Cancel** and **Save changes** on the right.
+  - **Expected:**
+    - The dialog says **This change affects 1 account.**
+    - It lists **Project Manager**, with its email address.
+    - Under **Gains**: **Sees the Access history page.** and a sentence about seeing the access history.
+    - **Back** is on the left, **Cancel** and **Save changes** on the right.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Back**.
@@ -165,7 +195,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 3.** Select **Save**, then **Save changes**.
-  - **Expected:** The dialog closes and a green banner says **The role has been changed.** The **Project Manager** row is unchanged in the list.
+  - **Expected:**
+    - The dialog closes.
+    - A green banner says **The role has been changed.**
+    - The **Project Manager** row is unchanged in the list.
   - **Notes:**
 
 - [ ] **Step 4.** Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
@@ -187,11 +220,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 2.** Select **Restore template**.
-  - **Expected:** **View** on **Access history** is unticked, the summary changes to match, and **Restore template** is turned off. Nothing is saved yet.
+  - **Expected:**
+    - **View** on **Access history** is unticked.
+    - The summary changes to match.
+    - **Restore template** is turned off.
+    - Nothing is saved yet.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Save**, then **Save changes**.
-  - **Expected:** The confirmation lists the same account, under **Loses** with **The Access history page no longer appears.**; once saved, the green banner says **The role has been changed.**
+  - **Expected:**
+    - The confirmation lists the same account, under **Loses** with **The Access history page no longer appears.**
+    - Once saved, the green banner says **The role has been changed.**
   - **Notes:**
 
 ### ROLE-08: A Starting Role's Summary Goes When What It Grants Changes
@@ -201,7 +240,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** **Roles** page open.
 
 - [ ] **Step 1.** Open the **Executive** role, as Open a Role describes, and tick **Edit** on the **Plan** row.
-  - **Expected:** **What it is for** is empty, with a line under it reading **What the role grants changed, so its old summary is gone.** **Restore template** is turned on.
+  - **Expected:**
+    - **What it is for** is empty, with a line under it reading **What the role grants changed, so its old summary is gone.**
+    - **Restore template** is turned on.
   - **Notes:**
 
 - [ ] **Step 2.** Untick **Edit** on the **Plan** row.
@@ -209,7 +250,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 3.** Tick **Edit** on the **Plan** row, then select **Restore template**.
-  - **Expected:** **What it is for** reads **Sees the plan, people, with their Restricted and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.**, **Edit** on **Plan** is unticked, and **Restore template** is turned off.
+  - **Expected:**
+    - **What it is for** reads **Sees the plan, people, with their Personal and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.**
+    - **Edit** on **Plan** is unticked.
+    - **Restore template** is turned off.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Cancel**.
@@ -223,19 +267,29 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** **Roles** page open, signed in with this account.
 
 - [ ] **Step 1.** Select **Copy** in the **Team Member** row.
-  - **Expected:** A dialog titled **Copy Team Member**, with the name **Copy of Team Member**, Team Member's description, and the same boxes ticked as Team Member: **View** on **Plan**, **Allocations** and **Org chart**. There is no **Restore template** button, and the main button is **Create role**.
+  - **Expected:**
+    - A dialog titled **Copy Team Member**, with the name **Copy of Team Member** and Team Member's description.
+    - The same boxes are ticked as Team Member: **View** on **Plan**, **Allocations** and **Org chart**.
+    - There is no **Restore template** button, and the main button is **Create role**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Create role**.
-  - **Expected:** The dialog closes, a green banner says **The role has been created.**, and **Copy of Team Member** is in the list with 0 accounts.
+  - **Expected:**
+    - The dialog closes.
+    - A green banner says **The role has been created.**
+    - **Copy of Team Member** is in the list with 0 accounts.
   - **Notes:**
 
 - [ ] **Step 3.** Open **Copy of Team Member**, as Open a Role describes, tick **View** on **People**, and select **Save**.
-  - **Expected:** The dialog closes with **The role has been changed.**, with no confirmation, since no account holds the role. There is no **Restore template** button.
+  - **Expected:**
+    - The dialog closes with **The role has been changed.**, with no confirmation, since no account holds the role.
+    - There is no **Restore template** button.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **Access history** page in the left-hand menu.
-  - **Expected:** The entry before the latest says **created the role** Copy of Team Member, granting View Plan, View Allocations, View Org chart. The latest says **changed the role** Copy of Team Member, granting View People.
+  - **Expected:**
+    - The entry before the latest says **created the role** Copy of Team Member, granting View Plan, View Allocations, View Org chart.
+    - The latest says **changed the role** Copy of Team Member, granting View People.
   - **Notes:**
 
 ### ROLE-10: Giving an Account a Role Made Later
@@ -245,11 +299,18 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Signed in with this account, after ROLE-09.
 
 - [ ] **Step 1.** Select the **Accounts** page in the left-hand menu, and read the **Roles** column.
-  - **Expected:** **Team Member** in the **Team Member** row, **Product Manager** in the **Product Manager** row, **Feature Lead (default)** and **Engineering Manager** in the **Feature Lead** row, and **Administrator** in the **Fathom Administrator** row.
+  - **Expected:**
+    - **Team Member** row: **Team Member**
+    - **Product Manager** row: **Product Manager**
+    - **Feature Lead** row: **Feature Lead (default)** and **Engineering Manager**
+    - **Fathom Administrator** row: **Administrator**
   - **Notes:**
 
 - [ ] **Step 2.** Select **Edit** in the **Team Member** row.
-  - **Expected:** A dialog titled **Edit Team Member**, with **Name**, **Email address**, and **Roles**. **Roles** lists every role in the order of the **Roles** page, **Copy of Team Member** among them, each with a tick box and its description under its name. Only **Team Member** is ticked.
+  - **Expected:**
+    - A dialog titled **Edit Team Member**, with **Name**, **Email address**, and **Roles**.
+    - **Roles** lists every role in the order of the **Roles** page, **Copy of Team Member** among them, each with a tick box and its description under its name.
+    - Only **Team Member** is ticked.
   - **Notes:**
 
 - [ ] **Step 3.** Tick **Copy of Team Member**, and untick **Team Member**.
@@ -257,7 +318,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 4.** Select **Save**.
-  - **Expected:** The dialog closes, a green banner says **Saved the account for Team Member.**, and the **Team Member** row shows **Copy of Team Member** in **Roles**.
+  - **Expected:**
+    - The dialog closes.
+    - A green banner says **Saved the account for Team Member.**
+    - The **Team Member** row shows **Copy of Team Member** in **Roles**.
   - **Notes:**
 
 - [ ] **Step 5.** Select the **Roles** page in the left-hand menu.
@@ -273,7 +337,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 8.** Select the **Roles** page under **Help** in the left-hand menu.
-  - **Expected:** The first row is **Copy of Team Member**, with a sea-blue check before its name, and its description beside it. No other row has a check.
+  - **Expected:**
+    - The first row is **Copy of Team Member**, with a sea-blue check before its name, and its description beside it.
+    - No other row has a check.
   - **Notes:**
 
 ### ROLE-11: Names Must Differ
@@ -283,7 +349,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** **Roles** page open, signed in with this account.
 
 - [ ] **Step 1.** Select **New role**.
-  - **Expected:** A dialog titled **New role**, with an empty name, no description, and nothing ticked. **Pages its holders see** says **None, apart from Help.**
+  - **Expected:**
+    - A dialog titled **New role**, with an empty name, no description, and nothing ticked.
+    - **Pages its holders see** says **None, apart from Help.**
   - **Notes:**
 
 - [ ] **Step 2.** Select **Create role** with the name empty.
@@ -305,7 +373,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** **Roles** page open, signed in with this account.
 
 - [ ] **Step 1.** Open the **Superuser** role, as Open a Role describes, untick **Edit** on **Roles**, and select **Save**.
-  - **Expected:** The confirmation says **This change affects 1 account.** It lists **Superuser**, under **Loses** with **The Roles page no longer appears.**
+  - **Expected:**
+    - The confirmation says **This change affects 1 account.**
+    - It lists **Superuser**, under **Loses** with **The Roles page no longer appears.**
   - **Notes:**
 
 - [ ] **Step 2.** Select **Save changes**.
@@ -313,7 +383,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 3.** Open the **Administrator** role, as Open a Role describes, untick **Edit** on **Roles**, and select **Save**.
-  - **Expected:** The confirmation says **This change affects 1 account.** It lists **Fathom Administrator**, marked **(this account)**, under **Loses** with **The Roles page no longer appears.**
+  - **Expected:**
+    - The confirmation says **This change affects 1 account.**
+    - It lists **Fathom Administrator**, marked **(this account)**, under **Loses** with **The Roles page no longer appears.**
   - **Notes:**
 
 - [ ] **Step 4.** Select **Save changes**.
@@ -326,20 +398,27 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 ### ROLE-13: Changing Fathom's Time Zone
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-12. Step 6 signs in as another account.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-12.
 
 **Preconditions:** Signed in with this account.
 
 - [ ] **Step 1.** Select the **Settings** page in the left-hand menu.
-  - **Expected:** The **Settings** page shows **Time zone** set to **America/Vancouver**, with the day and time there under it, such as **It is Thursday, November 5, 2026 at 6:06 AM there.**, matching a clock in Vancouver. **Save** is turned off.
+  - **Expected:**
+    - **Time zone** is set to **America/Vancouver**.
+    - Under it, the day and time there, such as **It is Thursday, November 5, 2026 at 6:06 AM there.**, matching a clock in Vancouver.
+    - **Save** is turned off.
   - **Notes:**
 
 - [ ] **Step 2.** Type `Kolkata` in **Time zone**, and choose the time zone for India from the list.
-  - **Expected:** The line under it shows the day and time in India, matching a clock there, and **Save** is turned on.
+  - **Expected:**
+    - The line under it shows the day and time in India, matching a clock there.
+    - **Save** is turned on.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Save**.
-  - **Expected:** A green banner says **Fathom's time zone is now** followed by the time zone chosen, and **Save** is turned off again.
+  - **Expected:**
+    - A green banner says **Fathom's time zone is now** followed by the time zone chosen.
+    - **Save** is turned off again.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **Access history** page in the left-hand menu.
@@ -350,13 +429,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** A green banner says **Fathom's time zone is now America/Vancouver.**
   - **Notes:**
 
-- [ ] **Step 6.** Sign out, sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`, and change the browser's address to end in `/settings`.
-  - **Expected:** The left-hand menu has no **Settings** page, and the page says **There is no page at this address.**
-  - **Notes:**
-
 ### ROLE-14: Put Every Role Back
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as the account ROLE-13 ended with. Step 1 signs in as another account.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as the account ROLE-13 ended with. Step 1 signs in again after the reset.
 
 **Preconditions:** All the test cases above run.
 

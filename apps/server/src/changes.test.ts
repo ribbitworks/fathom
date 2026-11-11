@@ -2,7 +2,7 @@
 
 // Tests for the change history, against a PostgreSQL server of its own: each change set saved, put
 // in terms of names rather than identifiers, newest first and older ones on request, holding only
-// the changes each reader's roles let them see, with Restricted and Confidential changes recorded in
+// the changes each reader's roles let them see, with Personal and Confidential changes recorded in
 // the access history. Resource Planners stand for readers who see people's General details only.
 
 import { accessHistory, recordChanges } from "@fathom/db";
@@ -277,7 +277,7 @@ describe("the change history", () => {
       name: "Theta places",
     });
     const sets = [name, date, choice, list];
-    // Whether each role sees the General, Restricted, and Confidential changes, and the configuration.
+    // Whether each role sees the General, Personal, and Confidential changes, and the configuration.
     const expected: [Role, boolean[]][] = [
       ["product-manager", [false, false, false, false]],
       ["feature-lead", [true, false, false, false]],
@@ -298,7 +298,7 @@ describe("the change history", () => {
     }
   });
 
-  it("shows someone added before they start only to readers who see Restricted details, until they start", async () => {
+  it("shows someone added before they start only to readers who see Personal details, until they start", async () => {
     // Given someone added to start in the future, and someone who has started
     const added = await send("POST", "/api/people", {
       people: [
@@ -324,7 +324,7 @@ describe("the change history", () => {
       return (entry?.records ?? []).map(({ name }) => name);
     };
 
-    // Then only readers who see Restricted details see the future starter
+    // Then only readers who see Personal details see the future starter
     expect(await named("workforce-administrator")).toEqual([
       "Kappa Starter",
       "Kappa Current",
@@ -332,7 +332,7 @@ describe("the change history", () => {
     expect(await named("resource-planner")).toEqual(["Kappa Current"]);
   });
 
-  it("finds no one who has not started for readers who do not see Restricted details, even someone never added", async () => {
+  it("finds no one who has not started for readers who do not see Personal details, even someone never added", async () => {
     // Given a future starter, and another drafted and then discarded before ever being added
     await send("POST", "/api/people", {
       people: [
@@ -358,7 +358,7 @@ describe("the change history", () => {
     await send("DELETE", `/api/people/${String(discardedId)}/draft`);
     const planner = (await test.signedIn("resource-planner")).cookie;
 
-    // Then neither is found by a reader who does not see Restricted details
+    // Then neither is found by a reader who does not see Personal details
     expect((await search(planner, "Lambda")).entries).toEqual([]);
     expect(
       (await search(admin.cookie, "Lambda")).entries.length,
@@ -393,7 +393,7 @@ describe("the change history", () => {
   });
 
   it("holds only the changes each reader's roles let them see", async () => {
-    const made = await makePersonWithColumn("Gamma", "restricted");
+    const made = await makePersonWithColumn("Gamma", "personal");
     const general = await send("PATCH", `/api/people/${made.personId}`, {
       preferredName: "Gamma Renamed",
     });
@@ -409,7 +409,7 @@ describe("the change history", () => {
     const project = await test.signedIn("product-manager");
 
     expect(await entryFor(planner.cookie, general.changeSetId)).toBeDefined();
-    // Only Restricted changes: the change set is left out altogether.
+    // Only Personal changes: the change set is left out altogether.
     expect(await entryFor(planner.cookie, dates.changeSetId)).toBeUndefined();
     expect(
       (await entryFor(planner.cookie, both.changeSetId))?.records[0]?.fields,
@@ -734,7 +734,7 @@ describe("the change history", () => {
     ]);
   });
 
-  it("records in the access history that a reader saw Restricted changes, and only then", async () => {
+  it("records in the access history that a reader saw Personal changes, and only then", async () => {
     const made = await makePersonWithColumn("Epsilon");
     await send("PATCH", `/api/people/${made.personId}`, {
       startDate: "2020-02-03",
@@ -746,7 +746,7 @@ describe("the change history", () => {
         .where(
           and(
             eq(accessHistory.actorId, actorId),
-            eq(accessHistory.action, "restricted-viewed"),
+            eq(accessHistory.action, "personal-viewed"),
           ),
         );
     const planner = await test.signedIn("resource-planner");
@@ -855,7 +855,7 @@ describe("the change history", () => {
     });
     await send("PUT", `/api/lists/${made.list.id}`, {
       name: "Omicron sites",
-      visibility: "restricted",
+      visibility: "personal",
     });
     await test.approveLists();
     const viewed = (actorId: string) =>
@@ -865,7 +865,7 @@ describe("the change history", () => {
         .where(
           and(
             eq(accessHistory.actorId, actorId),
-            eq(accessHistory.action, "restricted-viewed"),
+            eq(accessHistory.action, "personal-viewed"),
           ),
         );
     const planner = await test.signedIn("resource-planner");
@@ -933,7 +933,7 @@ describe("the change history", () => {
     // Not seeing configuration, so the change to the list is not the latest entry.
     const leader = await test.signedIn([
       "people:view",
-      "restricted:view",
+      "personal:view",
       "confidential:view",
       "changes:view",
     ]);
@@ -948,7 +948,7 @@ describe("the change history", () => {
         .where(
           and(
             eq(accessHistory.actorId, leader.id),
-            eq(accessHistory.action, "restricted-viewed"),
+            eq(accessHistory.action, "personal-viewed"),
           ),
         ),
     ).toHaveLength(1);

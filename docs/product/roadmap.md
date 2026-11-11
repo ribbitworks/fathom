@@ -1,7 +1,7 @@
 # Fathom: Roadmap
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-10
+**Last updated:** 2026-11-11
 
 A proposed order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. The principles, stage contents, and order are not yet agreed. The privacy approval gate is agreed.
 
@@ -34,7 +34,7 @@ Development uses fictional data only.
 Covers the owner's immediate needs. Each goal starts in its simplest useful form, and the first stage shows the plan in tables and simple charts rather than an interactive Gantt view.
 
 - **People and teams:** Includes feature teams and feature leads. Employee details are limited to the General tier plus start and end dates.
-- **Org structure:** People managers and their current direct reports, and the org chart of reporting lines, today or, for those who see Restricted details, on a chosen date, without planned changes. The owner brought the org chart forward from The Organization stage, as the [Decisions Log](decisions.md#workforce) records.
+- **Org structure:** People managers and their current direct reports, and the org chart of reporting lines, today or, for those who see Personal details, on a chosen date, without planned changes. The owner brought the org chart forward from The Organization stage, as the [Decisions Log](decisions.md#workforce) records.
 - **Change history:** Who changed what, and when, for the data each user may see.
 - **Plan approval:** Drafts and their approval, built on people first, so every later table follows the same pattern. Includes feature team approval, in which Engineering Managers' proposals are approved by an Approver.
 - **Projects, proposals, and feature teams:** Projects with their milestones, proposals, and feature teams, built before the roadmap's features, as the [Decisions Log](decisions.md#planning) sets out. Their links to features come with the roadmap view. Feature teams include planned membership changes and leads, a monthly grid of who is on which team, and the org chart on a chosen date, brought forward from The Organization stage by the owner on 2026-11-08, as the [Decisions Log](decisions.md#workforce) records.

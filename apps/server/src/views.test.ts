@@ -225,9 +225,7 @@ describe("saved views", () => {
       })
     ).json<Saved>();
     expect(
-      (await test.historyOf(view.id)).every(
-        ({ tier }) => tier === "restricted",
-      ),
+      (await test.historyOf(view.id)).every(({ tier }) => tier === "personal"),
     ).toBe(true);
     expect(
       (await viewsOf(viewer.cookie)).some(({ id }) => id === view.id),
@@ -247,7 +245,7 @@ describe("saved views", () => {
     expect(
       (await save(viewer.cookie, "Unknown", { sort: ["nothing"] })).statusCode,
     ).toBe(400);
-    // A maker who sees Restricted details without editing them may undo saving a view on them, but
+    // A maker who sees Personal details without editing them may undo saving a view on them, but
     // not once they no longer see them.
     const { changeSetId } = (
       await save(manager.cookie, "Leaving later", {
@@ -397,9 +395,7 @@ describe("saved views", () => {
       })
     ).json<Saved>();
     expect(
-      (await test.historyOf(view.id)).every(
-        ({ tier }) => tier === "restricted",
-      ),
+      (await test.historyOf(view.id)).every(({ tier }) => tier === "personal"),
     ).toBe(true);
     expect(
       (await viewsOf(viewer.cookie)).some(({ id }) => id === view.id),
@@ -547,7 +543,7 @@ describe("saved views", () => {
           `/api/lists/${list.id}`,
           {
             name: "Fictional Teams",
-            visibility: "restricted",
+            visibility: "personal",
           },
         )
       ).statusCode,
@@ -879,7 +875,7 @@ describe("built-in columns in saved views", () => {
     expect(response.statusCode).toBe(201);
   });
 
-  it("on Manager assigned are kept from readers who do not see Restricted details", async () => {
+  it("on Manager assigned are kept from readers who do not see Personal details", async () => {
     const administrator = await test.signedIn("workforce-administrator");
     const { view } = (
       await save(administrator.cookie, "Manager assigned", {
@@ -892,7 +888,7 @@ describe("built-in columns in saved views", () => {
     ).toBe(false);
   });
 
-  it("on Manager assigned are refused to readers who do not see Restricted details", async () => {
+  it("on Manager assigned are refused to readers who do not see Personal details", async () => {
     const viewer = await test.signedIn("resource-planner");
     expect(
       (await save(viewer.cookie, "Since", { sort: ["managerFrom"] })).json(),

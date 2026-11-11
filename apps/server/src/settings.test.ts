@@ -18,7 +18,7 @@ import {
   it,
   vi,
 } from "vitest";
-import { recordRestrictedView } from "./data/history.ts";
+import { recordPersonalView } from "./data/history.ts";
 import { changeTimeZone, readTimeZone, readToday } from "./data/settings.ts";
 import { actorFor } from "./access.ts";
 import { startTestApp, type TestApp } from "./test-app.ts";
@@ -163,18 +163,18 @@ describe.each([
     const actorId = randomUUID();
     await test.connection.insert(accessHistory).values({
       actorId,
-      action: "restricted-viewed",
+      action: "personal-viewed",
       subjectId: null,
       occurredAt,
     });
-    await recordRestrictedView(test.connection, actorId, timeZone);
+    await recordPersonalView(test.connection, actorId, timeZone);
     const [row] = await test.connection
       .select({ views: count() })
       .from(accessHistory)
       .where(
         and(
           eq(accessHistory.actorId, actorId),
-          eq(accessHistory.action, "restricted-viewed"),
+          eq(accessHistory.action, "personal-viewed"),
         ),
       );
     return Number(row?.views);

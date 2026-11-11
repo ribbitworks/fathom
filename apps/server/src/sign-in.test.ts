@@ -347,12 +347,12 @@ describe("signing in", () => {
     });
     // A change to what a role grants takes effect at the next request.
     await database.superuserQuery(
-      `INSERT INTO fathom.role_permissions (role_id, permission) SELECT id, 'restricted:edit' FROM fathom.roles WHERE name = 'Fictional Copied Role'`,
+      `INSERT INTO fathom.role_permissions (role_id, permission) SELECT id, 'personal:edit' FROM fathom.roles WHERE name = 'Fictional Copied Role'`,
     );
     expect((await session()).permissions).toEqual([
       "people:view",
-      "restricted:edit",
-      "restricted:view",
+      "personal:edit",
+      "personal:view",
     ]);
     await database.superuserQuery(
       `DELETE FROM fathom.role_permissions WHERE role_id = (SELECT id FROM fathom.roles WHERE name = 'Fictional Copied Role')`,

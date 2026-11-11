@@ -38,8 +38,8 @@ const auditors = {
   id: "00000000-0000-4000-8000-000000000002",
   key: null,
   name: "Fictional Auditors",
-  description: "Checks Restricted and Confidential data for audits.",
-  permissions: ["plan:view", "people:view", "restricted:view"],
+  description: "Checks Personal and Confidential data for audits.",
+  permissions: ["plan:view", "people:view", "personal:view"],
   accounts: 1,
   updatedAt: "2026-11-02T12:00:00.000Z",
 };
@@ -140,7 +140,7 @@ describe("the list of roles", () => {
         .map((cell) => cell.textContent),
     ).toEqual([
       "Fictional Auditors",
-      "Checks Restricted and Confidential data for audits.",
+      "Checks Personal and Confidential data for audits.",
       "1",
       "EditCopy",
     ]);
@@ -158,7 +158,7 @@ describe("the list of roles", () => {
     });
     renderApp("/roles");
     await screen.findByText("Fictional Auditors");
-    expect(screen.getByText("Restricted").className).toMatch(/restricted/);
+    expect(screen.getByText("Personal").className).toMatch(/personal/);
     expect(screen.getByText("Confidential").className).toMatch(/confidential/);
   });
 
@@ -368,9 +368,7 @@ describe("the grid of permissions", () => {
     const grid = within(dialog).getByRole("table", {
       name: "What the role grants",
     });
-    expect(within(grid).getByText("Restricted").className).toMatch(
-      /restricted/,
-    );
+    expect(within(grid).getByText("Personal").className).toMatch(/personal/);
     expect(within(grid).getByText("Confidential").className).toMatch(
       /confidential/,
     );
@@ -462,7 +460,7 @@ describe("the summary of what a role allows", () => {
     expect(summaryLines(dialog, "Can")).toEqual([
       permissionDescriptions["plan:view"].allows,
       permissionDescriptions["people:view"].allows,
-      permissionDescriptions["restricted:view"].allows,
+      permissionDescriptions["personal:view"].allows,
     ]);
     expect(summaryLines(dialog, "Cannot")).toContain(
       "The Accounts page does not appear.",
@@ -483,7 +481,7 @@ describe("the summary of what a role allows", () => {
     await userEvent.click(box(dialog, "View People"));
     expect(
       within(dialog).getByText(
-        "View Restricted details does nothing without View People.",
+        "View Personal details does nothing without View People.",
       ),
     ).toBeDefined();
   });
@@ -520,7 +518,7 @@ describe("the summary of what a role allows", () => {
     expect(summaryLines(dialog, "Can")).toEqual([
       permissionDescriptions["plan:view"].allows,
       `No longer: ${permissionDescriptions["people:view"].allows}`,
-      permissionDescriptions["restricted:view"].allows,
+      permissionDescriptions["personal:view"].allows,
     ]);
     expect(summaryLine(dialog, "People").className).toMatch(/removed/);
     const cannot = permissionDescriptions["people:view"].without;
@@ -614,8 +612,8 @@ describe("changing a role", () => {
           effects: [
             {
               account: self,
-              before: ["plan:view", "people:view", "restricted:view"],
-              after: ["plan:view", "restricted:view", "changes:view"],
+              before: ["plan:view", "people:view", "personal:view"],
+              after: ["plan:view", "personal:view", "changes:view"],
             },
             {
               account: planner,
@@ -671,7 +669,7 @@ describe("changing a role", () => {
         body: JSON.stringify({
           name: auditors.name,
           description: auditors.description,
-          permissions: ["plan:view", "restricted:view", "changes:view"],
+          permissions: ["plan:view", "personal:view", "changes:view"],
           updatedAt: auditors.updatedAt,
         }),
       }),

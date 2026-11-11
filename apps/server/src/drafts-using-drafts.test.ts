@@ -472,7 +472,7 @@ describe("approving a draft with the drafts it uses", () => {
     const peopleApprover = await test.signedIn([
       "people:approve",
       "people:view",
-      "restricted:view",
+      "personal:view",
       "confidential:view",
     ]);
     const { list, choices, field } = await addedColumn();

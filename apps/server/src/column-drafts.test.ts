@@ -287,7 +287,7 @@ describe("drafting columns", () => {
   });
 
   it("refuses removing a column that drafts of people change, and lets only those who may change its values remove it", async () => {
-    const { list, choices } = await liveList(["A"], "restricted");
+    const { list, choices } = await liveList(["A"], "personal");
     const field = await liveColumn(list.id);
     const drafted = await send("POST", "/api/people", {
       people: [
@@ -318,7 +318,7 @@ describe("drafting columns", () => {
     await expect(refusal).rejects.toBeInstanceOf(ForbiddenError);
   });
 
-  // An actor who may change configuration and see people, but not Restricted details, as no role
+  // An actor who may change configuration and see people, but not Personal details, as no role
   // grants today. It is the editor's own user, so it sees the editor's unpublished drafts.
   const generalOnly = (): Actor => ({
     user: { id: editor.id, name: "Fictional Editor", email: "" },
@@ -332,15 +332,15 @@ describe("drafting columns", () => {
 
   it("lets only someone who sees a column's visibility give it or change it", async () => {
     const people = createDataAccess(test.connection).people;
-    const restricted = (await liveList(["A"], "restricted")).list;
+    const personalList = (await liveList(["A"], "personal")).list;
     const general = (await liveList(["B"])).list;
     const before = await draftCount();
     const refusals = [
-      choice(restricted.id),
+      choice(personalList.id),
       fieldRequestSchema.parse({
         name: unique("Fictional Column"),
         type: "link",
-        visibility: "restricted",
+        visibility: "personal",
       }),
     ];
     for (const request of refusals) {
@@ -350,17 +350,17 @@ describe("drafting columns", () => {
     }
     expect(await draftCount()).toBe(before);
 
-    // A list only drafted to be added, and a General list drafted to become Restricted.
+    // A list only drafted to be added, and a General list drafted to become Personal.
     const draftedOnly = (
       await send("POST", "/api/lists", {
         name: unique("Fictional List"),
-        visibility: "restricted",
+        visibility: "personal",
       })
     ).json<{ list: List }>().list;
     const raised = (await liveList(["C"])).list;
     await send("PUT", `/api/lists/${raised.id}`, {
       name: raised.name,
-      visibility: "restricted",
+      visibility: "personal",
     });
     for (const list of [draftedOnly, raised]) {
       await expect(
@@ -378,13 +378,13 @@ describe("drafting columns", () => {
       people.updateField(
         generalOnly(),
         result.id,
-        choice(restricted.id, result.name),
+        choice(personalList.id, result.name),
       ),
     ).rejects.toBeInstanceOf(ForbiddenError);
     await send("DELETE", `/api/people/columns/${result.id}/draft`);
 
-    // Drafted to a General list, a Restricted column still holds Restricted values while live.
-    const hidden = await liveColumn(restricted.id);
+    // Drafted to a General list, a Personal column still holds Personal values while live.
+    const hidden = await liveColumn(personalList.id);
     await send("PUT", `/api/people/columns/${hidden.id}`, {
       name: hidden.name,
       listId: general.id,
@@ -406,7 +406,7 @@ describe("drafting columns", () => {
       lists.create(generalOnly(), {
         name: unique("Fictional List"),
         description: "",
-        visibility: "restricted",
+        visibility: "personal",
       }),
     ).rejects.toBeInstanceOf(ForbiddenError);
     expect(await draftCount()).toBe(before);
@@ -416,13 +416,13 @@ describe("drafting columns", () => {
       lists.update(generalOnly(), general.id, {
         name: general.name,
         description: "",
-        visibility: "restricted",
+        visibility: "personal",
       }),
     ).rejects.toThrow(/a visibility this role can see/);
-    const restricted = (await liveList(["B"], "restricted")).list;
+    const personalList = (await liveList(["B"], "personal")).list;
     await expect(
-      lists.update(generalOnly(), restricted.id, {
-        name: restricted.name,
+      lists.update(generalOnly(), personalList.id, {
+        name: personalList.name,
         description: "",
         visibility: "general",
       }),
@@ -440,7 +440,7 @@ describe("drafting columns", () => {
   });
 
   it("needs an Approver who sees the values a removal deletes", async () => {
-    const { list, choices } = await liveList(["A"], "restricted");
+    const { list, choices } = await liveList(["A"], "personal");
     const field = await liveColumn(list.id);
     await livePerson({ [field.id]: [String(choices[0]?.id)] });
     await send("DELETE", `/api/people/columns/${field.id}`);

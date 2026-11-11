@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for drafts on the org chart, against a PostgreSQL server of their own, so what the access
-// history records is down to each test's drafts alone: which drafts showing Restricted details are
+// history records is down to each test's drafts alone: which drafts showing Personal details are
 // recorded, the reader's own unpublished drafts, and who sees people drafted to start later.
 
 import { accessHistory, drafts } from "@fathom/db";
@@ -33,7 +33,7 @@ beforeAll(async () => {
   ({ cookie: approver } = await test.signedIn("engineering-director"));
 });
 
-// Each test starts with no drafts, so none is left to show another's Restricted details.
+// Each test starts with no drafts, so none is left to show another's Personal details.
 afterEach(async () => {
   await test.request(cookie, "POST", "/api/unpublished/discard");
   await test.connection.delete(drafts);
@@ -99,7 +99,7 @@ async function chart(as: string) {
   return { people: byId(read.people), drafted: byId(read.drafted) };
 }
 
-// Reads the chart as a new Executive, who sees Restricted details, and says whether the access
+// Reads the chart as a new Executive, who sees Personal details, and says whether the access
 // history recorded it.
 async function recordedForExecutive(): Promise<boolean> {
   const executive = await test.signedIn("executive");
@@ -110,14 +110,14 @@ async function recordedForExecutive(): Promise<boolean> {
     .where(
       and(
         eq(accessHistory.actorId, executive.id),
-        eq(accessHistory.action, "restricted-viewed"),
+        eq(accessHistory.action, "personal-viewed"),
       ),
     );
   return views.length > 0;
 }
 
 describe("drafts on the org chart", () => {
-  it("records nothing when no draft shows Restricted details", async () => {
+  it("records nothing when no draft shows Personal details", async () => {
     const manager = await person();
     await changed(manager, { teamName: unique("Fictional Team") });
     expect(await recordedForExecutive()).toBe(false);

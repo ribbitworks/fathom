@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-07"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Built-in Lists and Lists with Meanings
@@ -127,7 +127,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** LIST-06 done. Signed in with this account. **Lists** page open, with the **Positions** panel open.
 
-- [ ] **Step 1.** Select **Edit list**. Under **Visible to**, select **Restricted**, then select **Save**.
+- [ ] **Step 1.** Select **Edit list**. Under **Visible to**, select **Personal**, then select **Save**.
   - **Expected:** The dialog closes. **Positions** has a hollow yellow dot beside its name.
   - **Notes:**
 

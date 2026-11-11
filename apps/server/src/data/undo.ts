@@ -122,7 +122,7 @@ const planRecordTypes: ReadonlySet<string> = new Set(recordTypeSchema.options);
 const changedSince =
   "This has been changed since, so it can no longer be undone";
 
-// A feature team's joining, leaving and lead days are Restricted, yet those who only propose teams
+// A feature team's joining, leaving and lead days are Personal, yet those who only propose teams
 // may draft some of them, so undoing checks the days themselves, as drafting them does.
 const isTeamDay = ({ recordType, field }: StoredChange) =>
   recordType === "feature-team" &&

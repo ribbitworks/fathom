@@ -28,7 +28,7 @@ const session = (permissions: string[]) => () =>
 const viewer = session([
   "people:view",
   "org-chart:view",
-  "restricted:view",
+  "personal:view",
   "plan:view",
 ]);
 
@@ -721,8 +721,8 @@ describe("changing a manager beside the org chart on an earlier day", () => {
     "people:view",
     "people:edit",
     "org-chart:view",
-    "restricted:view",
-    "restricted:edit",
+    "personal:view",
+    "personal:edit",
     "plan:view",
   ];
 
@@ -810,8 +810,8 @@ describe("changing a manager beside the org chart on an earlier day", () => {
     expect(change("Manager")).toBeNull();
   });
 
-  it("offers no change to those who may not change Restricted details", async () => {
-    onDay(changesDates.filter((one) => one !== "restricted:edit"));
+  it("offers no change to those who may not change Personal details", async () => {
+    onDay(changesDates.filter((one) => one !== "personal:edit"));
     renderApp(`/org-chart?open=E3&day=${day}`);
     await panel("Uma Fictional");
     expect(change("Manager")).toBeNull();
@@ -896,7 +896,7 @@ describe("changing a person's details", () => {
     "people:view",
     "people:edit",
     "org-chart:view",
-    "restricted:view",
+    "personal:view",
     "plan:view",
   ]);
   const saved = "00000000-0000-4000-8000-0000000000c1";
@@ -1823,7 +1823,7 @@ describe("changing a planned hire's details", () => {
     "hiring-plan:view",
     "hiring-plan:edit",
     "org-chart:view",
-    "restricted:view",
+    "personal:view",
     "plan:view",
   ]);
   const peopleEditor = session([
@@ -1831,7 +1831,7 @@ describe("changing a planned hire's details", () => {
     "people:edit",
     "hiring-plan:view",
     "org-chart:view",
-    "restricted:view",
+    "personal:view",
     "plan:view",
   ]);
   const states = {

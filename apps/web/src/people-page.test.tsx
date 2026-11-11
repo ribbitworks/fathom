@@ -36,8 +36,8 @@ const editor = session([
   "people:edit",
   "people:view",
   "plan:view",
-  "restricted:edit",
-  "restricted:view",
+  "personal:edit",
+  "personal:view",
 ]);
 const hiringEditor = session([
   "configuration:view",
@@ -46,8 +46,8 @@ const hiringEditor = session([
   "people:edit",
   "people:view",
   "plan:view",
-  "restricted:edit",
-  "restricted:view",
+  "personal:edit",
+  "personal:view",
 ]);
 
 const choice = (id: string, label: string, retired = false) => ({
@@ -79,7 +79,7 @@ const roles = {
     choice("r1", "Team Lead"),
     choice("r2", "Design Authority"),
   ]),
-  visibility: "restricted",
+  visibility: "personal",
 };
 const old = list("l3", "Old List", [], true);
 // The built-in Positions list.
@@ -1280,7 +1280,7 @@ describe("drafts", () => {
         "hiring-plan:approve",
         "configuration:approve",
         "people:view",
-        "restricted:view",
+        "personal:view",
       ]),
       "GET /api/people": () =>
         Response.json({
@@ -1412,8 +1412,8 @@ describe("drafts", () => {
         "configuration:approve",
         "people:edit",
         "people:view",
-        "restricted:edit",
-        "restricted:view",
+        "personal:edit",
+        "personal:view",
       ]),
       "GET /api/people": () =>
         Response.json({
@@ -1577,7 +1577,7 @@ describe("columns", () => {
       within(listSelect)
         .getAllByRole("option")
         .map((option) => option.textContent),
-    ).toEqual(["", "Sites", "Roles on the team (Restricted)", "Positions"]);
+    ).toEqual(["", "Sites", "Roles on the team (Personal)", "Positions"]);
     await userEvent.selectOptions(listSelect, "Sites");
     await userEvent.click(within(dialog).getByLabelText("Several choices"));
     await userEvent.click(within(dialog).getByLabelText("Must be filled in"));
@@ -3120,7 +3120,7 @@ describe("drafts of columns", () => {
     "people:edit",
     "people:view",
     "plan:view",
-    "restricted:view",
+    "personal:view",
   ]);
   const waiting = {
     state: "waiting",
@@ -3575,7 +3575,7 @@ describe("unpublished and held changes", () => {
     "people:edit",
     "people:view",
     "plan:view",
-    "restricted:view",
+    "personal:view",
   ]);
   const holder = "Second Fictional Editor";
   const held = `Being changed by ${holder}. It can be changed once they publish or discard their changes.`;

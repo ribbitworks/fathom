@@ -25,7 +25,7 @@ interface User {
 let test: TestApp;
 // A Workforce Administrator, who changes people and the hiring plan.
 let editor: User;
-// An Engineering Director, who approves drafts of people and planned hires and sees Restricted data.
+// An Engineering Director, who approves drafts of people and planned hires and sees Personal data.
 let approver: User;
 let proposed: string;
 let open: string;
@@ -242,7 +242,7 @@ describe("filling a planned hire with a new person", () => {
     });
   });
 
-  it("names the person a draft fills a hire with only to those who see Restricted details", async () => {
+  it("names the person a draft fills a hire with only to those who see Personal details", async () => {
     const id = await hire();
     await filled(id, newPerson());
     const projectManager = await test.signedIn("project-manager");
@@ -371,7 +371,7 @@ describe("filling a planned hire with someone already in Fathom", () => {
     expect((await rowOf(starter))?.managerFrom).toBe("2099-01-01");
   });
 
-  it("answers someone who has not started as no one to an actor who does not see Restricted details", async () => {
+  it("answers someone who has not started as no one to an actor who does not see Personal details", async () => {
     const id = await hire();
     const starter = await person({ startDate: "2099-01-01", isManager: false });
     const actor = await test.signedIn([
@@ -721,8 +721,8 @@ describe("a fill's draft", () => {
     const peopleOnly = await test.signedIn([
       "people:view",
       "people:edit",
-      "restricted:view",
-      "restricted:edit",
+      "personal:view",
+      "personal:edit",
     ]);
 
     const response = await send(
@@ -744,7 +744,7 @@ describe("a fill's draft", () => {
     const added = String((await rowNamed(body.preferredName))?.id);
     const peopleApprover = await test.signedIn([
       "people:view",
-      "restricted:view",
+      "personal:view",
       "people:approve",
     ]);
 
@@ -757,7 +757,7 @@ describe("a fill's draft", () => {
     expect((await liveHire(id))?.filledBy).toBeNull();
   });
 
-  it("names a new person a fill adds in the change history only to those who see Restricted details", async () => {
+  it("names a new person a fill adds in the change history only to those who see Personal details", async () => {
     // Given a planned manager, with a hire reporting to it, filled with someone who starts later
     const id = await hire({ isManager: true });
     await hire({ managerId: id });
@@ -793,7 +793,7 @@ describe("a fill's draft", () => {
     expect(value(seen, "managerId")).toBeNull();
   });
 
-  it("names someone already in Fathom who fills a hire in the change history only to those who see Restricted details", async () => {
+  it("names someone already in Fathom who fills a hire in the change history only to those who see Personal details", async () => {
     const transfer = await person({ isManager: false });
     const changeSetId = await filled(await hire(), existing(transfer));
     const filler = async (who: User) => {
@@ -811,7 +811,7 @@ describe("a fill's draft", () => {
     expect(await filler(projectManager)).toBeNull();
   });
 
-  it("is not rejected by an Approver who does not see Restricted details", async () => {
+  it("is not rejected by an Approver who does not see Personal details", async () => {
     const id = await hire();
     await filled(id, newPerson());
     const projectManager = await test.signedIn("project-manager");
@@ -854,7 +854,7 @@ describe("a fill's draft", () => {
     expect(await rowNamed(body.preferredName)).toBeUndefined();
   });
 
-  it("needs an Approver who sees Restricted details, since it holds a start date or a reporting line", async () => {
+  it("needs an Approver who sees Personal details, since it holds a start date or a reporting line", async () => {
     const id = await hire();
     await filled(id, newPerson());
     const projectManager = await test.signedIn("project-manager");
@@ -863,7 +863,7 @@ describe("a fill's draft", () => {
 
     expect(response.statusCode).toBe(403);
     expect(refusal(response)).toBe(
-      "A fill names who fills the hire, so an Approver who sees Restricted details must decide it",
+      "A fill names who fills the hire, so an Approver who sees Personal details must decide it",
     );
     expect((await liveHire(id))?.filledBy).toBeNull();
   });
@@ -1072,7 +1072,7 @@ describe("a fill and other users' changes", () => {
     await filled(id, newPerson());
     const hiresApprover = await test.signedIn([
       "people:view",
-      "restricted:view",
+      "personal:view",
       "hiring-plan:view",
       "hiring-plan:approve",
     ]);

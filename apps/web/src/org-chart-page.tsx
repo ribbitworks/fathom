@@ -882,17 +882,17 @@ export function OrgChartPage({
   seesPeople: boolean;
   // Whether the reader may change people, in a person's details.
   canEdit?: boolean;
-  // Whether the reader may change Restricted details, which dating a change earlier needs.
+  // Whether the reader may change Personal details, which dating a change earlier needs.
   changesDates?: boolean;
-  // Whether the reader sees Restricted details, such as dates, in a person's details.
+  // Whether the reader sees Personal details, such as dates, in a person's details.
   showDates?: boolean;
   teamEdits: TeamEdits;
   onSearch: (search: ChartSearch, replace: boolean) => void;
 }) {
   const featureView = search.view === "feature-teams";
   const day = chartDay(search.day, featureView, showDates);
-  // Those who do not see Restricted details see feature teams on another day, with people as they
-  // are today, since reporting lines on another day are Restricted. Feature teams and reporting
+  // Those who do not see Personal details see feature teams on another day, with people as they
+  // are today, since reporting lines on another day are Personal. Feature teams and reporting
   // lines change from the day shown for those who may date changes then; people's other details
   // change only today.
   const dated = day !== undefined;

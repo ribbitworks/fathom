@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/shared/testing.md", "docs/standards/shared/typescript/typescript.md"]
-last_updated: "2026-11-10"
+last_updated: "2026-11-11"
 ---
 
 # Testing Standards
@@ -92,6 +92,7 @@ Rules:
 - **Must** keep each test case to one behavior, and make its preconditions enough to start it.
 - **Must** name, in every test case's **Account:** line, the account by its role and email address, and say whether it is the account the previous test case ended with or a change from it, such as "Resource Planner, `resource.planner@fathom.test`, changed from HIRE-06". A step that signs in as another account says so, naming the account the same way.
 - **Must** say exactly where to act and what to look for: which row when a record shows a draft row and a live row, which heading a button sits beside, what to type in a search box to find an entry on a long page, and each column of a table to check, in order.
+- **Must** put an **Expected:** result that names more than one thing to check in nested bullets under it, one thing per line, such as each row or column to read in order, each control's state, and each message, never in one long sentence or paragraph. A single short fact may stay on the **Expected:** line.
 - **Must** describe what is on screen as the tester sees it, such as "a yellow dot and **Draft**", not by the names the code or design documents use.
 - **Must** say only what to do and what to see: no explanations of why, design rationale, or history of fixes.
 - **Must Not** repeat facts other documents own, such as the contents of the seed data, or what [Manual Test Basics](../testing/manual-test-basics.md) holds for every test; link to them.

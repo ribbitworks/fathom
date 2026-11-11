@@ -79,12 +79,12 @@ const actionWords: Record<AccessAction, ActionWords> = {
     verb: "reactivated the account for",
     caution: false,
   },
-  "restricted-viewed": {
-    verb: "viewed people's Restricted or Confidential details",
+  "personal-viewed": {
+    verb: "viewed people's Personal or Confidential details",
     caution: false,
   },
-  "restricted-changed": {
-    verb: "changed the Restricted or Confidential details of",
+  "personal-changed": {
+    verb: "changed the Personal or Confidential details of",
     caution: false,
   },
   "hiring-plan-changed": {
@@ -152,7 +152,7 @@ export function subjectName({ action, subject }: HistoryEntry): string | null {
   ) {
     return null;
   }
-  if (action === "restricted-changed") {
+  if (action === "personal-changed") {
     // Unnamed for readers who may not see people, and for a person deleted since.
     return subject.name ?? "a person";
   }

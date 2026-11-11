@@ -21,7 +21,7 @@ describe("fieldRequestSchema", () => {
       fieldRequestSchema.parse({
         name: " Site ",
         listId,
-        visibility: "restricted",
+        visibility: "personal",
       }),
     ).toEqual({
       name: "Site",

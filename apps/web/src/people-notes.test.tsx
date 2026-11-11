@@ -571,7 +571,7 @@ describe("a Note column", () => {
       "Note",
     );
     expect(within(dialog).queryByRole("combobox", { name: "List" })).toBeNull();
-    fireEvent.click(within(dialog).getByText("Restricted"));
+    fireEvent.click(within(dialog).getByText("Personal"));
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Add column" }),
     );
@@ -580,7 +580,7 @@ describe("a Note column", () => {
         {
           name: "Reviews",
           type: "note",
-          visibility: "restricted",
+          visibility: "personal",
           multiple: false,
           required: false,
           onPlannedHires: true,

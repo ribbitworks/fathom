@@ -177,13 +177,13 @@ describe("changing a month's teams", () => {
     expect(screen.queryByRole("button", { name: /^Actions for/u })).toBeNull();
   });
 
-  it("lets those who may change Restricted details change earlier months", async () => {
+  it("lets those who may change Personal details change earlier months", async () => {
     await openEditing(
       session([
         "org-chart:view",
         "people:view",
         "feature-teams:propose",
-        "restricted:edit",
+        "personal:edit",
       ]),
     );
 

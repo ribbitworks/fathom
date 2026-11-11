@@ -1,7 +1,7 @@
 # Fathom: Implementation Plan
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-10
+**Last updated:** 2026-11-11
 
 A proposed way to build the first stage of the [Roadmap](../product/roadmap.md): groundwork first, then a sequence of thin vertical slices. Each slice goes through every layer (browser, server, database, deployment), follows the roadmap's [Guiding Principles](../product/roadmap.md#guiding-principles), the [Agent Workflow](../standards/shared/agent-workflow.md), and the [Data](../../AGENTS.md#data) rules.
 
@@ -21,7 +21,7 @@ These come before the first line of application code:
 Beyond the workflow, each slice:
 
 - Adds the [access control tests](../standards/testing.md#access-control-tests) for the data it introduces.
-- Records access history for any Restricted or Confidential data it introduces.
+- Records access history for any Personal or Confidential data it introduces.
 - Makes changes to the data it introduces drafts that need approval, once Draft and Approval is built.
 - Updates the threat model as the [Code Review Standards](../standards/code-review.md) require.
 
@@ -120,7 +120,7 @@ The additions to the org chart that the [Decisions Log](../product/decisions.md#
 
 1. **Team colours:** each team's colour, from the palette releases use, chosen on the org chart and changed at once rather than drafted, with a Team colours permission, which needs a migration; with it, naming teams on the chart as drafts, a Teams panel, and teams in the finder.
 2. **Drafts on the chart:** the Draft menu tables have, on the org chart: people drafted to a new manager drawn under them with a Live copy under their current one, drafted positions and team names, Drafts applied and Live only, as the [Decisions Log](../product/decisions.md#workforce) sets out.
-3. **Person details:** one person's details in a side panel, which the org chart's cards and People's rows open, as the [Decisions Log](../product/decisions.md#workforce) sets out. Restricted details shown there are recorded in the access history, as on People. Those who may change people change the person's details there, as on People.
+3. **Person details:** one person's details in a side panel, which the org chart's cards and People's rows open, as the [Decisions Log](../product/decisions.md#workforce) sets out. Personal details shown there are recorded in the access history, as on People. Those who may change people change the person's details there, as on People.
 4. **Chart fields, filters, and sort:** cards show fields chosen from People's columns, at the tiers the reader may see, kept apart from the card's own details, with filters and sort saved as People's views are.
 
 The [Projects and Feature Teams](#projects-and-feature-teams) slice adds a second chart, of feature teams, with their own colours, as the [Decisions Log](../product/decisions.md#workforce) records; its dotted lines to members' managers follow, as [Issues](../issues.md#people) records.

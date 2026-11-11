@@ -57,7 +57,7 @@ import {
 import {
   type Actor,
   mostSensitive,
-  seesRestrictedDetails,
+  seesPersonalDetails,
   seesSensitivity,
   type Sensitivity,
   storedTier,
@@ -143,7 +143,7 @@ type StoredChange = typeof changes.$inferSelect;
 export interface ReadChangeHistory {
   entries: ChangeEntry[];
   next: string | null;
-  // Whether any change shown is to Restricted or Confidential data, which the access history
+  // Whether any change shown is to Personal or Confidential data, which the access history
   // records.
   includedSensitive: boolean;
 }
@@ -461,7 +461,7 @@ function shown(
 
 // Whether the actor sees a change, by the rule of its kind of record. Feature teams' General details
 // are seen with the org chart, whether or not the reader sees people, but their drafts and
-// Restricted details, being details of people, only with people; a role can be given the rest
+// Personal details, being details of people, only with people; a role can be given the rest
 // without them. Changes to a saved view are kept from others as long as it is, or was then, personal.
 function seesRowOfKind(
   actor: Actor,
@@ -475,7 +475,7 @@ function seesRowOfKind(
   if (row.recordType === "feature-team") {
     return (
       (!row.draft || actor.permissions.includes("people:view")) &&
-      (tier === "general" || seesRestrictedDetails(actor))
+      (tier === "general" || seesPersonalDetails(actor))
     );
   }
   if (planKinds.includes(row.recordType as RecordType)) {
@@ -779,15 +779,15 @@ function recordsOf(
   names: Map<string, string>,
   listOf: Map<string, string>,
   hidden: ReadonlySet<string>,
-  restricted: boolean,
+  seesPersonal: boolean,
 ): ChangedRecord[] {
   const name = (id: string) => names.get(id);
   // People the reader does not see are named nowhere, such as a hire's manager. Who fills a hire is
-  // named only to readers who see Restricted details, since it tells of their reporting line to
+  // named only to readers who see Personal details, since it tells of their reporting line to
   // come.
   const valueName = (row: StoredChange) => (id: string) =>
     hidden.has(id) ||
-    (!restricted &&
+    (!seesPersonal &&
       row.recordType === "planned-hire" &&
       row.field === "filledBy")
       ? undefined
@@ -915,11 +915,11 @@ async function readBatch(
     [...facts.lists.values()].filter((id) => !facts.names.has(id)),
     facts,
   );
-  // Readers who do not see Restricted details see nobody who has not started, as People hides them:
+  // Readers who do not see Personal details see nobody who has not started, as People hides them:
   // neither a person's own changes, nor records about them, nor a hire's manager or filler naming
   // them.
-  const restricted = seesRestrictedDetails(actor);
-  const hidden = restricted
+  const seesPersonal = seesPersonalDetails(actor);
+  const hidden = seesPersonal
     ? new Set<string>()
     : await notStartedAmong(
         database,
@@ -992,7 +992,7 @@ async function readBatch(
                   facts.names,
                   facts.lists,
                   hidden,
-                  restricted,
+                  seesPersonal,
                 ),
               },
               sensitive: held.sensitive,

@@ -39,7 +39,7 @@ const approver = session([
   "hiring-plan:approve",
   "configuration:approve",
   "people:view",
-  "restricted:view",
+  "personal:view",
 ]);
 const reader = session(["people:view"]);
 

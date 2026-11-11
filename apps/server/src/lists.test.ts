@@ -383,11 +383,11 @@ describe("lists", () => {
     const response = await request(cookie, "PUT", `/api/lists/${created.id}`, {
       name: created.name,
       description: "A fictional description",
-      visibility: "restricted",
+      visibility: "personal",
     });
     expect(response.json<{ list: List }>().list).toMatchObject({
       description: "A fictional description",
-      visibility: "restricted",
+      visibility: "personal",
     });
     expect(
       (await historyOf(created.id))
@@ -400,7 +400,7 @@ describe("lists", () => {
         ]),
     ).toEqual([
       ["description", "", "A fictional description", id],
-      ["visibility", "general", "restricted", id],
+      ["visibility", "general", "personal", id],
     ]);
   });
 

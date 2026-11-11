@@ -230,7 +230,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The row is easy to read in both, and the timeline's month labels do not overlap each other or the chart.
   - **Notes:**
 
-### FT-07: Readers Without Restricted Details Move by Month
+### FT-07: Readers Without Personal Details Move by Month
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, changed from FT-06.
 

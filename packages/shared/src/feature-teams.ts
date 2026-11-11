@@ -3,8 +3,8 @@
 // Feature teams: the people working on a set of related features, apart from reporting lines, as
 // the Decisions Log sets out, seen and changed on the org chart. A team's name, lead, and members
 // are General, so everyone who sees the org chart sees them; the days members join and leave are
-// Restricted. Members are people the reader sees, so someone who has not started is left out for
-// readers who do not see Restricted details. Every change is a draft, a team's name, lead, and
+// Personal. Members are people the reader sees, so someone who has not started is left out for
+// readers who do not see Personal details. Every change is a draft, a team's name, lead, and
 // member changes making one draft; its colour is how the chart is drawn, so it changes at once.
 
 import { z } from "zod";
@@ -38,10 +38,10 @@ export const featureTeamDraftSchema = z.object({
     leadId: z.string().nullable().optional(),
     members: z.array(z.string()).optional(),
   }),
-  // The days the draft gives members joining or leaving, by person, for readers who see Restricted
+  // The days the draft gives members joining or leaving, by person, for readers who see Personal
   // details.
   days: z.record(z.string(), daySchema).optional(),
-  // The day the draft's change of lead takes effect, for readers who see Restricted details.
+  // The day the draft's change of lead takes effect, for readers who see Personal details.
   leadDay: daySchema.optional(),
   // The months of those days, for readers who do not see them.
   months: z.record(z.string(), monthSchema).optional(),
@@ -79,7 +79,7 @@ export type FeatureTeams = z.infer<typeof featureTeamsSchema>;
 const managerSchema = z.object({ id: z.string(), name: z.string() });
 
 // Who was on which team, month by month, as approved. Which teams someone was on in a month is
-// General; the months outside someone's employment are given only to readers who see Restricted
+// General; the months outside someone's employment are given only to readers who see Personal
 // details.
 export const teamMonthsSchema = z.object({
   months: z.array(monthSchema),
@@ -95,7 +95,7 @@ export const teamMonthsSchema = z.object({
       id: z.string(),
       preferredName: z.string(),
       manager: managerSchema.nullable(),
-      // For readers who see Restricted details: whom the person reported to each month.
+      // For readers who see Personal details: whom the person reported to each month.
       managers: z.record(monthSchema, managerSchema.nullable()).optional(),
       // Each month with a team, and the teams then, by identifier.
       teams: z.record(monthSchema, z.array(z.string())),
@@ -163,7 +163,7 @@ export function disbandedMonth(
 }
 
 // Adds a feature team, with its members and lead, who is one of them; members join from the day
-// given, today or later, or earlier for those who may change Restricted details, or from today.
+// given, today or later, or earlier for those who may change Personal details, or from today.
 export const featureTeamRequestSchema = z.object({
   name,
   leadId: z.uuid().nullable().default(null),
@@ -175,7 +175,7 @@ export type FeatureTeamRequest = z.infer<typeof featureTeamRequestSchema>;
 
 // Changes a feature team: renames it, chooses its lead or none, and adds and removes members, who
 // join or leave, and the lead changes, from the day given, today or later, or earlier for those who
-// may change Restricted details, or from today.
+// may change Personal details, or from today.
 export const featureTeamChangeSchema = z.object({
   name: name.optional(),
   leadId: z.uuid().nullable().optional(),

@@ -66,7 +66,7 @@ import {
   type Actor,
   requireAnyPermission,
   requirePermission,
-  seesRestrictedDetails,
+  seesPersonalDetails,
 } from "../access.ts";
 import { approveDrafts, rejectDrafts } from "./approvals.ts";
 import { changeEffortConversions, readEffortConversions } from "./effort.ts";
@@ -82,7 +82,7 @@ import * as hireData from "./hires.ts";
 import * as fills from "./fills.ts";
 import * as featureTeamData from "./feature-teams.ts";
 import { readTeamMonths } from "./team-months.ts";
-import { readHistory, recordRestrictedView } from "./history.ts";
+import { readHistory, recordPersonalView } from "./history.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./records.ts";
 import * as projectData from "./projects.ts";
 import type { PlanKind, PlanRecordRequest } from "./projects.ts";
@@ -149,7 +149,7 @@ export interface DataAccess {
   // The most recent entries in the access history.
   readHistory(actor: Actor): Promise<HistoryEntry[]>;
   // The change sets saved before the one named, or the latest, holding only the changes the actor
-  // may see, and every word of a search, if any. Seeing Restricted or Confidential changes is
+  // may see, and every word of a search, if any. Seeing Personal or Confidential changes is
   // recorded in the access history.
   readChanges(
     actor: Actor,
@@ -391,7 +391,7 @@ export interface ListAccess {
 
 export interface PeopleAccess {
   // Everyone the actor may see, with the columns whose values they may see, and the saved views
-  // they may see. Reading anyone's Restricted details is recorded in the access history.
+  // they may see. Reading anyone's Personal details is recorded in the access history.
   read(actor: Actor): Promise<{
     people: Person[];
     fields: Field[];
@@ -401,7 +401,7 @@ export interface PeopleAccess {
   }>;
   // Today's reporting lines as approved, with General details only, each person's draft of their
   // manager and team name beside, and the chart as drafts make it, as the reader may see them.
-  // Telling anyone that a manager has left, or showing them a draft's Restricted details, such as
+  // Telling anyone that a manager has left, or showing them a draft's Personal details, such as
   // its manager, its dates, or someone it adds, is recorded in the access history.
   readOrgChart(actor: Actor, on?: string): Promise<OrgChart>;
   // Sets the colour of a manager's named team, or removes it, at once rather than as a draft.
@@ -489,8 +489,8 @@ function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
   return {
     read: async (actor, on) => {
       const read = await featureTeamData.readFeatureTeams(database, actor, on);
-      // The days members join or leave are Restricted, so seeing them is recorded: those a draft
-      // gives, and those a reader who sees Restricted details can tell from teams on a chosen day, or
+      // The days members join or leave are Personal, so seeing them is recorded: those a draft
+      // gives, and those a reader who sees Personal details can tell from teams on a chosen day, or
       // from the month a team disbands, which may draw on end dates.
       const sawDays =
         on === undefined
@@ -498,11 +498,11 @@ function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
               ({ draft, disbandedFrom }) =>
                 draft?.days !== undefined ||
                 draft?.leadDay !== undefined ||
-                (disbandedFrom !== undefined && seesRestrictedDetails(actor)),
+                (disbandedFrom !== undefined && seesPersonalDetails(actor)),
             )
-          : seesRestrictedDetails(actor);
+          : seesPersonalDetails(actor);
       if (sawDays) {
-        await recordRestrictedView(
+        await recordPersonalView(
           database,
           actor.user.id,
           await readTimeZone(database),
@@ -512,9 +512,9 @@ function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
     },
     readMonths: async (actor, range) => {
       const read = await readTeamMonths(database, actor, range);
-      // Rows and shaded months follow employment dates, which are Restricted.
-      if (seesRestrictedDetails(actor)) {
-        await recordRestrictedView(
+      // Rows and shaded months follow employment dates, which are Personal.
+      if (seesPersonalDetails(actor)) {
+        await recordPersonalView(
           database,
           actor.user.id,
           await readTimeZone(database),
@@ -551,19 +551,19 @@ function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
 function createHireAccess(database: Database): HireAccess {
   return {
     read: async (actor) => {
-      const { includedRestricted, ...read } = await hireData.readHires(
+      const { includedPersonal, ...read } = await hireData.readHires(
         database,
         actor,
       );
       if (read.wholePlan && read.hires.length > 0) {
-        await recordRestrictedView(
+        await recordPersonalView(
           database,
           actor.user.id,
           await readTimeZone(database),
           "hiring-plan-viewed",
         );
-      } else if (includedRestricted) {
-        await recordRestrictedView(
+      } else if (includedPersonal) {
+        await recordPersonalView(
           database,
           actor.user.id,
           await readTimeZone(database),
@@ -871,15 +871,15 @@ function createPeopleAccess(database: Database): PeopleAccess {
     read: async (actor) => {
       requirePermission(actor, "people:view");
       const read = await peopleData.readPeople(database, actor);
-      if (read.includedRestricted) {
-        await recordRestrictedView(
+      if (read.includedPersonal) {
+        await recordPersonalView(
           database,
           actor.user.id,
           await readTimeZone(database),
         );
       }
       if (read.hiringPlanViewed) {
-        await recordRestrictedView(
+        await recordPersonalView(
           database,
           actor.user.id,
           await readTimeZone(database),
@@ -901,19 +901,19 @@ function createPeopleAccess(database: Database): PeopleAccess {
     },
     readOrgChart: async (actor, on) => {
       requirePermission(actor, "org-chart:view");
-      const { includedRestricted, includedHiringPlan, ...chart } = await (on ===
+      const { includedPersonal, includedHiringPlan, ...chart } = await (on ===
       undefined
         ? readOrgChart(database, actor)
         : readOrgChartOn(database, actor, on));
-      if (includedRestricted) {
-        await recordRestrictedView(
+      if (includedPersonal) {
+        await recordPersonalView(
           database,
           actor.user.id,
           await readTimeZone(database),
         );
       }
       if (includedHiringPlan) {
-        await recordRestrictedView(
+        await recordPersonalView(
           database,
           actor.user.id,
           await readTimeZone(database),
@@ -999,7 +999,7 @@ export function createDataAccess(database: Database): DataAccess {
       requirePermission(actor, "changes:view");
       const read = await readChangeHistory(database, actor, before, search);
       if (read.includedSensitive) {
-        await recordRestrictedView(
+        await recordPersonalView(
           database,
           actor.user.id,
           await readTimeZone(database),
@@ -1012,13 +1012,13 @@ export function createDataAccess(database: Database): DataAccess {
     projects: createProjectAccess(database),
     allocations: {
       read: async (actor) => {
-        const { includedRestricted, ...read } = await readAllocations(
+        const { includedPersonal, ...read } = await readAllocations(
           database,
           actor,
         );
-        // Allocations of someone who has not started tell of their start date, which is Restricted.
-        if (includedRestricted) {
-          await recordRestrictedView(
+        // Allocations of someone who has not started tell of their start date, which is Personal.
+        if (includedPersonal) {
+          await recordPersonalView(
             database,
             actor.user.id,
             await readTimeZone(database),

@@ -3,12 +3,12 @@
 // The org chart: today's reporting lines as approved, with each person's draft of their manager,
 // position and team's name beside, and the whole chart as drafts make it. It holds everyone current
 // today, and any manager they still report to whose end date has passed. Each person comes with
-// General details only, and a draft's manager and dates, which are Restricted, only to readers who
-// see Restricted details, and a drafted position only to readers who see the Positions list.
+// General details only, and a draft's manager and dates, which are Personal, only to readers who
+// see Personal details, and a drafted position only to readers who see the Positions list.
 // Planned hires join it as placeholders, to every reader, and their drafts only to readers who see
 // the hiring plan.
-// Whether a manager has left follows from their end date, which is Restricted, so only readers who
-// see Restricted details are told, and see the people above them. Other readers see such a manager
+// Whether a manager has left follows from their end date, which is Personal, so only readers who
+// see Personal details are told, and see the people above them. Other readers see such a manager
 // only as People names them, by name and team, at the top of their part of the chart.
 
 import { z } from "zod";
@@ -37,7 +37,7 @@ export type OrgChartDraft = z.infer<typeof orgChartDraftSchema>;
 export const orgChartPersonSchema = z.object({
   id: z.string(),
   preferredName: z.string(),
-  // Null for a manager who has left, to readers who do not see Restricted details, and for everyone
+  // Null for a manager who has left, to readers who do not see Personal details, and for everyone
   // to readers who do not see people.
   employeeId: z.string().nullable(),
   position: z.string().nullable(),
@@ -47,7 +47,7 @@ export const orgChartPersonSchema = z.object({
   teamColour: paletteColourSchema.nullable(),
   managerId: z.string().nullable(),
   left: z.boolean().optional(),
-  // A manager who has left, shown by name and team only to readers who do not see Restricted
+  // A manager who has left, shown by name and team only to readers who do not see Personal
   // details, who cannot be kept in the chart's address or have their team changed.
   nameOnly: z.boolean().optional(),
   // Set for a planned hire: the month it is expected, never the day, and, for one with no name of

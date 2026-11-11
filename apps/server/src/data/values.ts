@@ -60,7 +60,7 @@ export type PeopleColumns = readonly ColumnInfo[] & {
 };
 
 // The tier of each of the People table's built-in columns, by key, as readers are sent them: the
-// manager is General, though a drafted one is Restricted, since everyone is sent each live manager.
+// manager is General, though a drafted one is Personal, since everyone is sent each live manager.
 export function builtInColumnTiers(
   columns: Pick<PeopleColumns, "positionTier" | "stateTier">,
 ): Map<string, Tier> {
@@ -69,12 +69,12 @@ export function builtInColumnTiers(
     ["employeeId", "general"],
     ["positionId", columns.positionTier],
     ["stateId", columns.stateTier],
-    ["startDate", "restricted"],
+    ["startDate", "personal"],
     ["expected", "general"],
-    ["endDate", "restricted"],
+    ["endDate", "personal"],
     ["managerId", "general"],
     ["isManager", "general"],
-    ["managerFrom", "restricted"],
+    ["managerFrom", "personal"],
     ["team", "general"],
     ["teamName", "general"],
   ]);

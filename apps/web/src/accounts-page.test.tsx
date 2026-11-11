@@ -49,8 +49,8 @@ const auditorsRole = role(
   2,
   null,
   "Fictional Auditors",
-  "Checks Restricted data for audits.",
-  ["people:view", "restricted:view"],
+  "Checks Personal data for audits.",
+  ["people:view", "personal:view"],
 );
 const productManagerRole = role(
   3,

@@ -425,13 +425,13 @@ async function peopleNamed(
 // The hires the actor may see, by ID, for those who see people: the whole hiring plan, as drafts
 // make it, for those who also see the hiring plan, which does nothing without seeing people, and
 // otherwise the placeholders as they are live, without their drafts. A filled hire is left out once
-// its person is seen instead: by readers who see Restricted data, or by everyone once the person has
+// its person is seen instead: by readers who see Personal data, or by everyone once the person has
 // started.
 export async function readHires(
   database: Database,
   actor: Actor,
   asOf?: string,
-): Promise<Hires & { includedRestricted: boolean }> {
+): Promise<Hires & { includedPersonal: boolean }> {
   requirePermission(actor, "people:view");
   const today = asOf ?? (await readToday(database));
   return database.transaction(
@@ -445,7 +445,7 @@ export async function readHiresIn(
   transaction: Reader,
   actor: Actor,
   today: string,
-): Promise<Hires & { includedRestricted: boolean }> {
+): Promise<Hires & { includedPersonal: boolean }> {
   const wholePlan = seesSensitivity(actor, "hiring-plan");
   const live = await readLiveHires(transaction);
   const draftsNow = wholePlan
@@ -489,9 +489,9 @@ export async function readHiresIn(
     const hire = (drafted(before, draft) ?? before) as Recorded;
     return { id, before, draft, hire };
   });
-  // Readers who cannot see Restricted data see only people who have started, so a hire names its
+  // Readers who cannot see Personal data see only people who have started, so a hire names its
   // manager to them only once the manager has started, as People shows them.
-  const restricted = seesSensitivity(actor, "restricted");
+  const seesPersonal = seesSensitivity(actor, "personal");
   const named = await peopleNamed(
     transaction,
     versions.flatMap(({ hire, before }) =>
@@ -535,7 +535,7 @@ export async function readHiresIn(
     // only drafted as filled stays until the fill is approved.
     if (
       filledBy !== null &&
-      (restricted ||
+      (seesPersonal ||
         filler === undefined ||
         filler.startDate === null ||
         filler.startDate <= today)
@@ -547,7 +547,7 @@ export async function readHiresIn(
       managerId === null ? undefined : hireManagers.get(managerId);
     const manager = managerId === null ? undefined : named.get(managerId);
     const shownPerson =
-      manager !== undefined && (restricted || manager.started);
+      manager !== undefined && (seesPersonal || manager.started);
     const shown = managingHire !== undefined || shownPerson;
     const targetDate = text(hire.targetDate);
     return [
@@ -580,7 +580,7 @@ export async function readHiresIn(
     ];
   });
 
-  // Who a hire's draft fills it with, given only to readers who see Restricted data, who see the
+  // Who a hire's draft fills it with, given only to readers who see Personal data, who see the
   // person on People, since they may not have started.
   function draftedFiller(
     hire: Recorded,
@@ -588,7 +588,7 @@ export async function readHiresIn(
   ): Pick<Hire, "filler"> {
     const personId = text(hire.filledBy);
     if (personId === null || personId === filledBy) return {};
-    return { filler: restricted ? personId : null };
+    return { filler: seesPersonal ? personId : null };
   }
 
   // A hire's draft as the reader sees it, or none when it changes nothing they may see.
@@ -684,12 +684,12 @@ export async function readHiresIn(
   hires.sort((a, b) => byId.compare(shownId(a), shownId(b)));
   // Whether the placeholders shown hold a position, state, or column's values more sensitive than
   // General.
-  const includedRestricted =
+  const includedPersonal =
     hires.length > 0 &&
     ((seesPositions && tierOf("positionId") !== "general") ||
       (seesStates && tierOf("stateId") !== "general") ||
       shownColumns.some(({ tier }) => tier !== "general"));
-  return { hires, wholePlan, includedRestricted };
+  return { hires, wholePlan, includedPersonal };
 }
 
 // Changing planned hires needs the rights to edit people and the hiring plan, as the Decisions Log

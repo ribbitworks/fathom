@@ -90,7 +90,7 @@ describe("Help's Roles page", () => {
     }
     expect(sensitivities?.map(([name]) => name)).toEqual([
       "General",
-      "Restricted",
+      "Personal",
       "Confidential",
     ]);
   });
@@ -104,7 +104,7 @@ describe("Help's Roles page", () => {
             id: "00000000-0000-4000-8000-0000000000a3",
             key: null,
             name: "Fictional Auditors",
-            description: "Checks Restricted data for audits.",
+            description: "Checks Personal data for audits.",
           },
           permissions: ["people:view"],
         }),
@@ -114,7 +114,7 @@ describe("Help's Roles page", () => {
     expect(roles).toHaveLength(roleSchema.options.length + 1);
     expect(roles?.[0]).toEqual([
       "Current role: Fictional Auditors",
-      "Checks Restricted data for audits.",
+      "Checks Personal data for audits.",
     ]);
     expect(screen.getAllByText(/Current role/)).toHaveLength(1);
   });

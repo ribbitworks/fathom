@@ -45,9 +45,9 @@ describe("choice columns", () => {
   it("take their tier from their list", () => {
     expect(
       choice.tier(settings, (listId) =>
-        listId === "l1" ? "restricted" : "general",
+        listId === "l1" ? "personal" : "general",
       ),
-    ).toBe("restricted");
+    ).toBe("personal");
   });
 
   it.each([
@@ -143,19 +143,19 @@ describe("web link columns", () => {
 
 describe("note columns", () => {
   const { note } = columnTypes;
-  const settings = note.settings({ visibility: "restricted", listId: "l1" });
+  const settings = note.settings({ visibility: "personal", listId: "l1" });
 
   it("keep a visibility of their own, and no list", () => {
     expect(settings).toEqual({
       type: "note",
       listId: null,
-      visibility: "restricted",
+      visibility: "personal",
       multiple: false,
     });
   });
 
   it("take their tier from their visibility, or the most sensitive for one not known", () => {
-    expect(note.tier(settings, () => "general")).toBe("restricted");
+    expect(note.tier(settings, () => "general")).toBe("personal");
     expect(
       note.tier(note.settings({ visibility: "secret" }), () => "general"),
     ).toBe("confidential");
@@ -197,10 +197,10 @@ describe("number columns", () => {
   const settings = { listId: null, multiple: false };
 
   it("have a visibility of their own, as their tier", () => {
-    expect(number.settings({ visibility: "restricted" })).toEqual({
+    expect(number.settings({ visibility: "personal" })).toEqual({
       type: "number",
       listId: null,
-      visibility: "restricted",
+      visibility: "personal",
       multiple: false,
     });
   });

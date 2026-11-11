@@ -94,20 +94,25 @@ function recorded(
   recordId: string,
   action: SeededChange["action"],
   values: Record<string, unknown>,
-  restricted: readonly string[] = [],
+  personalFieldNames: readonly string[] = [],
 ): SeededChange[] {
   return recordedFields(
     recordType,
     recordId,
     action,
     filledIn(values),
-    (field) => (restricted.includes(field) ? "restricted" : "general"),
+    (field) => (personalFieldNames.includes(field) ? "personal" : "general"),
   );
 }
 
-// The fields of a person that are Restricted: their dates, and their manager, as the server records
+// The fields of a person that are Personal: their dates, and their manager, as the server records
 // them.
-const restrictedFields = ["startDate", "endDate", "managerId", "managerFrom"];
+const personalDetailFields = [
+  "startDate",
+  "endDate",
+  "managerId",
+  "managerFrom",
+];
 
 // A person's current line and their team's name, as the server records them.
 interface Reporting {
@@ -284,7 +289,7 @@ export async function seed(
             person,
             reportingOf(lineOf.get(person.id), teamOf.get(person.id)),
           ),
-          restrictedFields,
+          personalDetailFields,
         ),
       );
     }
@@ -519,7 +524,7 @@ export async function unseed(
             ),
             ...single,
           },
-          restrictedFields,
+          personalDetailFields,
         ),
       );
     }

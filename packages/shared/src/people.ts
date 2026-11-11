@@ -2,7 +2,7 @@
 
 // People and the columns people add to the People table. Every person has a preferred name, an
 // Employee ID, and a position, which are General, and may have start and end dates, which are
-// Restricted. A choice column draws on a list, and its values are choices from that list, as
+// Personal. A choice column draws on a list, and its values are choices from that list, as
 // sensitive as the list's visibility; a web link column holds one link for each person, a note
 // column one note, and a number column one number, as sensitive as the column's own visibility.
 // What a user receives leaves out what their role does not let them see.
@@ -176,18 +176,18 @@ export const personSchema = z.object({
   expected: monthSchema.optional(),
   // A choice in the built-in Positions list, left out for users who cannot see the list's tier.
   positionId: z.string().optional(),
-  // Left out for users who cannot see Restricted details; null when not set.
+  // Left out for users who cannot see Personal details; null when not set.
   startDate: day.nullable().optional(),
   endDate: day.nullable().optional(),
-  // Who the person reports to now, which is General, and since when, which is Restricted and left
+  // Who the person reports to now, which is General, and since when, which is Personal and left
   // out like the dates. Users who see only General details see the live manager, never a draft's;
-  // those who see Restricted details see the manager as drafted.
+  // those who see Personal details see the manager as drafted.
   manager: z
     .object({ id: z.string(), preferredName: z.string() })
     .nullable()
     .optional(),
   managerFrom: day.nullable().optional(),
-  // Set, for users who see Restricted details, when the manager's end date has passed.
+  // Set, for users who see Personal details, when the manager's end date has passed.
   managerLeft: z.boolean().optional(),
   // The name of the manager's team, the team the person is on; null while it has none, when it is
   // shown by its manager's name.

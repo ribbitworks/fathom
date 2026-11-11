@@ -89,7 +89,7 @@ export const hireSchema = z.object({
   // Left out for readers who cannot see the Positions list's tier.
   positionId: z.string().optional(),
   // A person, or a planned hire marked as a manager. None, too, for readers who cannot see
-  // Restricted data while the manager has not yet started.
+  // Personal data while the manager has not yet started.
   managerId: z.string().nullable(),
   managerName: z.string().nullable(),
   // Whether other planned hires can be named as reporting to the hire, which is General.
@@ -106,7 +106,7 @@ export const hireSchema = z.object({
   notes: notesSchema.default({}),
   numbers: numbersSchema.default({}),
   // Who the hire's draft fills it with, for those who see the hiring plan: the person, for those
-  // who see Restricted details, and otherwise null, since they may not have started.
+  // who see Personal details, and otherwise null, since they may not have started.
   filler: z.string().nullable().optional(),
   draft: hireDraftSchema.optional(),
   heldBy: heldBySchema,

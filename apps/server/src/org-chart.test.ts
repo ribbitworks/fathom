@@ -238,8 +238,8 @@ describe("the org chart on a chosen day", () => {
   });
 
   it.each([
-    ["people:edit", "restricted:view"],
-    ["restricted:edit", "restricted:view"],
+    ["people:edit", "personal:view"],
+    ["personal:edit", "personal:view"],
   ])(
     "shows an earlier day as approved, without drafts, to those with %s alone",
     async (...granted) => {
@@ -299,7 +299,7 @@ describe("the org chart on a chosen day", () => {
   });
 
   it("is refused without the org chart", async () => {
-    const reader = await test.signedIn(["restricted:view", "changes:view"]);
+    const reader = await test.signedIn(["personal:view", "changes:view"]);
 
     expect(
       (await test.request(reader.cookie, "GET", "/api/org-chart?on=2024-06-01"))
@@ -321,7 +321,7 @@ describe("the org chart on a chosen day", () => {
     ).toBe(400);
   });
 
-  it("is refused to readers who do not see Restricted details", async () => {
+  it("is refused to readers who do not see Personal details", async () => {
     const reader = await test.signedIn("resource-planner");
 
     const response = await test.request(
@@ -336,7 +336,7 @@ describe("the org chart on a chosen day", () => {
     );
   });
 
-  it("records a view of Restricted details", async () => {
+  it("records a view of Personal details", async () => {
     const reader = await test.signedIn("engineering-director");
 
     await chartOn("2024-06-01", reader.cookie);
@@ -348,7 +348,7 @@ describe("the org chart on a chosen day", () => {
         .where(
           and(
             eq(accessHistory.actorId, reader.id),
-            eq(accessHistory.action, "restricted-viewed"),
+            eq(accessHistory.action, "personal-viewed"),
           ),
         ),
     ).not.toEqual([]);
@@ -356,14 +356,14 @@ describe("the org chart on a chosen day", () => {
 });
 
 describe("the org chart", () => {
-  const restrictedViews = (actorId: string) =>
+  const personalViews = (actorId: string) =>
     test.connection
       .select({ id: accessHistory.id })
       .from(accessHistory)
       .where(
         and(
           eq(accessHistory.actorId, actorId),
-          eq(accessHistory.action, "restricted-viewed"),
+          eq(accessHistory.action, "personal-viewed"),
         ),
       );
 
@@ -421,7 +421,7 @@ describe("the org chart", () => {
     expect((await chart()).get(report)).not.toHaveProperty("draft");
   });
 
-  it("shows a drafted manager, which is Restricted, only to those who see Restricted details, and records it", async () => {
+  it("shows a drafted manager, which is Personal, only to those who see Personal details, and records it", async () => {
     const first = await person();
     const second = await person();
     const report = await person({ managerId: first, isManager: false });
@@ -433,12 +433,12 @@ describe("the org chart", () => {
       state: "waiting",
       unpublished: false,
     });
-    expect(await restrictedViews(executive.id)).toHaveLength(1);
+    expect(await personalViews(executive.id)).toHaveLength(1);
     const planner = await test.signedIn("resource-planner");
     const shown = (await chart(planner.cookie)).get(report);
     expect(shown?.managerId).toBe(first);
     expect(shown).not.toHaveProperty("draft");
-    expect(await restrictedViews(planner.id)).toHaveLength(0);
+    expect(await personalViews(planner.id)).toHaveLength(0);
   });
 
   it("shows a drafted team name, or its removal, to everyone who sees people", async () => {
@@ -467,7 +467,7 @@ describe("the org chart", () => {
       const reader = await test.signedIn(permissions);
       return {
         draft: (await chart(reader.cookie)).get(changing)?.draft,
-        recorded: (await restrictedViews(reader.id)).length > 0,
+        recorded: (await personalViews(reader.id)).length > 0,
       };
     };
     expect(await draftFor(["org-chart:view", "people:view"])).toEqual({
@@ -489,7 +489,7 @@ describe("the org chart", () => {
         draft: undefined,
         recorded: false,
       });
-      // A reader without Restricted details, so only the position can be what is recorded.
+      // A reader without Personal details, so only the position can be what is recorded.
       expect(
         await draftFor(["org-chart:view", "people:view", "confidential:view"]),
       ).toEqual({
@@ -644,7 +644,7 @@ describe("the org chart", () => {
         .update(lists)
         .set({ visibility })
         .where(eq(lists.builtIn, "positions"));
-    await setVisibility("restricted");
+    await setVisibility("personal");
     try {
       const planner = await test.signedIn("resource-planner");
       const shown = await drafted(planner.cookie);
@@ -671,7 +671,7 @@ describe("the org chart", () => {
     expect((await drafted()).get(report)?.managerId).toBe(first);
   });
 
-  it("applies drafts' managers and dates only for those who see Restricted details", async () => {
+  it("applies drafts' managers and dates only for those who see Personal details", async () => {
     const first = await person();
     const second = await person();
     const report = await person({ managerId: first, isManager: false });
@@ -686,10 +686,10 @@ describe("the org chart", () => {
     const forPlanner = await drafted(planner.cookie);
     expect(forPlanner.get(report)?.managerId).toBe(first);
     expect(forPlanner.has(ending)).toBe(true);
-    expect(await restrictedViews(planner.id)).toHaveLength(0);
+    expect(await personalViews(planner.id)).toHaveLength(0);
   });
 
-  it("shows managers who have left, up the chain, to those who see Restricted details, and records it", async () => {
+  it("shows managers who have left, up the chain, to those who see Personal details, and records it", async () => {
     const { top, middle, report } = await leftChain();
     const viewer = await test.signedIn("executive");
     const shown = await chart(viewer.cookie);
@@ -701,12 +701,12 @@ describe("the org chart", () => {
       left: true,
     });
     expect(shown.get(top)?.left).toBe(true);
-    expect(await restrictedViews(viewer.id)).toHaveLength(1);
+    expect(await personalViews(viewer.id)).toHaveLength(1);
   });
 
-  it("gives Restricted details on the chart only to those who also see people", async () => {
+  it("gives Personal details on the chart only to those who also see people", async () => {
     const { middle } = await leftChain();
-    const viewer = await test.signedIn(["org-chart:view", "restricted:view"]);
+    const viewer = await test.signedIn(["org-chart:view", "personal:view"]);
     const shown = await chart(viewer.cookie);
     expect(shown.get(middle)).toMatchObject({
       employeeId: null,
@@ -714,7 +714,7 @@ describe("the org chart", () => {
       nameOnly: true,
     });
     expect(shown.get(middle)?.left).toBeUndefined();
-    expect(await restrictedViews(viewer.id)).toHaveLength(0);
+    expect(await personalViews(viewer.id)).toHaveLength(0);
   });
 
   it("sends no drafts to those who see the chart but not people", async () => {
@@ -726,7 +726,7 @@ describe("the org chart", () => {
     await changed(first, { positionId: otherTestPosition });
     const leaving = await person({ isManager: false });
     await changed(leaving, { endDate: "2026-06-01" });
-    const viewer = await test.signedIn(["org-chart:view", "restricted:view"]);
+    const viewer = await test.signedIn(["org-chart:view", "personal:view"]);
     const response = await test.request(viewer.cookie, "GET", "/api/org-chart");
     const read = response.json<{
       people: OrgChartPerson[];
@@ -737,7 +737,7 @@ describe("the org chart", () => {
     expect(read.drafted.every(({ employeeId }) => employeeId === null)).toBe(
       true,
     );
-    expect(await restrictedViews(viewer.id)).toHaveLength(0);
+    expect(await personalViews(viewer.id)).toHaveLength(0);
   });
 
   it("shows anyone else only a report's own manager who has left, by name, at the top", async () => {
@@ -756,7 +756,7 @@ describe("the org chart", () => {
       nameOnly: true,
     });
     expect(shown.has(top)).toBe(false);
-    expect(await restrictedViews(planner.id)).toHaveLength(0);
+    expect(await personalViews(planner.id)).toHaveLength(0);
   });
 
   it("sends no drafted position for a manager shown by name alone", async () => {
@@ -791,21 +791,19 @@ describe("the org chart", () => {
       const { cookie: as } = await test.signedIn(permissions);
       return (await chart(as)).get(manager)?.position;
     };
-    const marked = (visibility: "general" | "restricted" | "confidential") =>
+    const marked = (visibility: "general" | "personal" | "confidential") =>
       test.connection
         .update(lists)
         .set({ visibility })
         .where(eq(lists.builtIn, "positions"));
     expect(await positionFor(["org-chart:view"])).not.toBeNull();
     try {
-      await marked("restricted");
+      await marked("personal");
       expect(await positionFor(["org-chart:view"])).toBeNull();
       expect(await positionFor(["org-chart:view", "people:view"])).toBeNull();
+      expect(await positionFor(["org-chart:view", "personal:view"])).toBeNull();
       expect(
-        await positionFor(["org-chart:view", "restricted:view"]),
-      ).toBeNull();
-      expect(
-        await positionFor(["org-chart:view", "people:view", "restricted:view"]),
+        await positionFor(["org-chart:view", "people:view", "personal:view"]),
       ).not.toBeNull();
       await marked("confidential");
       expect(
@@ -842,9 +840,9 @@ describe("the org chart", () => {
         expect(response.statusCode).toBe(200);
         const everyone = response.json<{ people: OrgChartPerson[] }>().people;
         const shown = everyone.find((one) => one.id === middle);
-        const restricted = rolesGranting("restricted:view").includes(role);
-        expect(shown?.left).toBe(restricted ? true : undefined);
-        expect(shown?.employeeId === null).toBe(!restricted);
+        const seesPersonal = rolesGranting("personal:view").includes(role);
+        expect(shown?.left).toBe(seesPersonal ? true : undefined);
+        expect(shown?.employeeId === null).toBe(!seesPersonal);
         // Those who do not see people see names, positions, and teams, but no Employee IDs.
         if (!rolesGranting("people:view").includes(role)) {
           expect(everyone.every((one) => one.employeeId === null)).toBe(true);
@@ -930,7 +928,7 @@ describe("planned hires on the chart", () => {
     const id = await hire();
     await test.connection
       .update(lists)
-      .set({ visibility: "restricted" })
+      .set({ visibility: "personal" })
       .where(eq(lists.builtIn, "positions"));
     try {
       const viewer = await test.signedIn(["org-chart:view"]);
@@ -1026,7 +1024,7 @@ describe("planned hires on the chart", () => {
     );
     expect(response.statusCode, response.body).toBe(200);
 
-    // Then a reader who sees the hiring plan but not Restricted details sees the planned manager
+    // Then a reader who sees the hiring plan but not Personal details sees the planned manager
     // still, its hire at the top rather than under the starter, and never the starter
     const manager = await test.signedIn("project-manager");
     const asDrafted = await drafted(manager.cookie);
@@ -1136,17 +1134,17 @@ describe("planned hires on the chart", () => {
     expect(await plansViewed(planReader.id)).toHaveLength(1);
   });
 
-  it("records a view of Restricted details when placeholders show positions more sensitive than General", async () => {
+  it("records a view of Personal details when placeholders show positions more sensitive than General", async () => {
     await hire();
     await test.connection
       .update(lists)
-      .set({ visibility: "restricted" })
+      .set({ visibility: "personal" })
       .where(eq(lists.builtIn, "positions"));
     try {
       const viewer = await test.signedIn([
         "org-chart:view",
         "people:view",
-        "restricted:view",
+        "personal:view",
       ]);
       await chart(viewer.cookie);
       const views = await test.connection
@@ -1155,7 +1153,7 @@ describe("planned hires on the chart", () => {
         .where(
           and(
             eq(accessHistory.actorId, viewer.id),
-            eq(accessHistory.action, "restricted-viewed"),
+            eq(accessHistory.action, "personal-viewed"),
           ),
         );
       expect(views).toHaveLength(1);
@@ -1167,7 +1165,7 @@ describe("planned hires on the chart", () => {
     }
   });
 
-  it("takes a rejected hire's draft back on the chart as drafts make it, and records no Restricted view for it", async () => {
+  it("takes a rejected hire's draft back on the chart as drafts make it, and records no Personal view for it", async () => {
     const first = await person();
     const second = await person();
     const moving = await hire({ managerId: first });
@@ -1196,7 +1194,7 @@ describe("planned hires on the chart", () => {
       .where(
         and(
           eq(accessHistory.actorId, viewer.id),
-          eq(accessHistory.action, "restricted-viewed"),
+          eq(accessHistory.action, "personal-viewed"),
         ),
       );
     expect(views).toHaveLength(0);

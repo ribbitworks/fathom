@@ -125,7 +125,7 @@ describe("seeding", () => {
       .select({ field: changes.field, tier: changes.tier })
       .from(changes)
       .where(eq(changes.recordId, String(person?.id)));
-    expect(history).toContainEqual({ field: "startDate", tier: "restricted" });
+    expect(history).toContainEqual({ field: "startDate", tier: "personal" });
     expect(organization.reportingLines.length).toBeGreaterThan(10);
     expect(await totalOf(reportingLines)).toBe(
       organization.reportingLines.length,
@@ -138,7 +138,7 @@ describe("seeding", () => {
       .where(eq(changes.recordId, String(line?.personId)));
     expect(lineHistory).toContainEqual({
       field: "managerId",
-      tier: "restricted",
+      tier: "personal",
     });
     expect(await seed(connection, organization)).toBe(false);
     expect(await totalOf(people)).toBe(20);

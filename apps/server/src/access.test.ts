@@ -88,7 +88,7 @@ const expected: [Role, Permission[]][] = [
       "people:view",
       "team-colours:edit",
       "feature-teams:propose",
-      "restricted:view",
+      "personal:view",
       "hiring-plan:view",
       "drafts:submit",
       "changes:view",
@@ -114,8 +114,8 @@ const expected: [Role, Permission[]][] = [
       "feature-teams:propose",
       "feature-teams:edit",
       "feature-teams:approve",
-      "restricted:view",
-      "restricted:edit",
+      "personal:view",
+      "personal:edit",
       "confidential:view",
       "confidential:edit",
       "hiring-plan:view",
@@ -143,8 +143,8 @@ const expected: [Role, Permission[]][] = [
       "people:edit",
       "team-colours:edit",
       "feature-teams:edit",
-      "restricted:view",
-      "restricted:edit",
+      "personal:view",
+      "personal:edit",
       "confidential:view",
       "confidential:edit",
       "hiring-plan:view",
@@ -162,7 +162,7 @@ const expected: [Role, Permission[]][] = [
       "allocations:view",
       "people:view",
       "org-chart:view",
-      "restricted:view",
+      "personal:view",
       "confidential:view",
       "hiring-plan:view",
       "configuration:view",
@@ -302,6 +302,6 @@ describe("the hiring plan's permissions", () => {
 
   it("cover data recorded as Confidential", () => {
     expect(tierOfSensitivity("hiring-plan")).toBe("confidential");
-    expect(tierOfSensitivity("restricted")).toBe("restricted");
+    expect(tierOfSensitivity("personal")).toBe("personal");
   });
 });

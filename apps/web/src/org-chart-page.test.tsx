@@ -1676,7 +1676,7 @@ describe("feature teams on the org chart", () => {
     "org-chart:view",
     "feature-teams:edit",
     "team-colours:edit",
-    "restricted:edit",
+    "personal:edit",
   ]);
   const saved =
     (changeSetId: string | null = changeSet) =>
@@ -2115,7 +2115,7 @@ describe("feature teams on the org chart", () => {
     const seesDetails = session([
       "people:view",
       "org-chart:view",
-      "restricted:view",
+      "personal:view",
       "feature-teams:edit",
     ]);
     const seesChart = session(["people:view", "org-chart:view"]);
@@ -2204,7 +2204,7 @@ describe("feature teams on the org chart", () => {
       );
     });
 
-    it("changes feature teams from an earlier day for those who may change Restricted details", async () => {
+    it("changes feature teams from an earlier day for those who may change Personal details", async () => {
       await openFeatureTeams({
         path: `/org-chart?view=feature-teams&day=${onDay}`,
         signedInAs: editor,
@@ -2235,7 +2235,7 @@ describe("feature teams on the org chart", () => {
       expect(screen.queryByRole("textbox", { name: "Date" })).toBeNull();
     });
 
-    it("ignores a day within a month for those who do not see Restricted details", async () => {
+    it("ignores a day within a month for those who do not see Personal details", async () => {
       const { fetch } = await openFeatureTeams({
         path: "/org-chart?view=feature-teams&day=2025-03-15",
         signedInAs: seesChart,
@@ -2254,7 +2254,7 @@ describe("feature teams on the org chart", () => {
       expect(urls(fetch).join(" ")).not.toContain("?on=");
     });
 
-    it("draws reporting teams on that day, read only, for those who see Restricted details", async () => {
+    it("draws reporting teams on that day, read only, for those who see Personal details", async () => {
       const { fetch } = await openFeatureTeams({
         path: `/org-chart?day=${onDay}`,
         signedInAs: seesDetails,
@@ -2269,15 +2269,15 @@ describe("feature teams on the org chart", () => {
       expect(screen.queryByRole("button", { name: /^Draft/ })).toBeNull();
     });
 
-    it("changes reporting lines from an earlier day for those who change people and Restricted details", async () => {
+    it("changes reporting lines from an earlier day for those who change people and Personal details", async () => {
       await openFeatureTeams({
         path: `/org-chart?day=${onDay}`,
         signedInAs: session([
           "people:view",
           "people:edit",
           "org-chart:view",
-          "restricted:view",
-          "restricted:edit",
+          "personal:view",
+          "personal:edit",
         ]),
         answers: chartOnDay,
       });
@@ -2293,7 +2293,7 @@ describe("feature teams on the org chart", () => {
       ).toBeNull();
     });
 
-    it("draws reporting teams on a later day read only, even for those who change Restricted details", async () => {
+    it("draws reporting teams on a later day read only, even for those who change Personal details", async () => {
       const later = "2099-03-01";
       await openFeatureTeams({
         path: `/org-chart?day=${later}`,
@@ -2301,8 +2301,8 @@ describe("feature teams on the org chart", () => {
           "people:view",
           "people:edit",
           "org-chart:view",
-          "restricted:view",
-          "restricted:edit",
+          "personal:view",
+          "personal:edit",
         ]),
         answers: { [`GET /api/org-chart?on=${later}`]: chartAnswer },
       });

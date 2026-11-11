@@ -37,13 +37,13 @@ let test: TestApp;
 let today: string;
 let current: string;
 type Account = { id: string; cookie: string };
-// Edits allocations without seeing Restricted details.
+// Edits allocations without seeing Personal details.
 let planner: Account;
-// Edits allocations, seeing Restricted details.
+// Edits allocations, seeing Personal details.
 let manager: Account;
-// Approves allocations, seeing Restricted details.
+// Approves allocations, seeing Personal details.
 let director: Account;
-// Approves allocations without seeing Restricted details.
+// Approves allocations without seeing Personal details.
 let projectManager: Account;
 let viewer: Account;
 
@@ -551,7 +551,7 @@ describe("unpublished changes", () => {
 });
 
 describe("employment dates", () => {
-  it("refuses, to an editor who sees Restricted details, months before someone's start", async () => {
+  it("refuses, to an editor who sees Personal details, months before someone's start", async () => {
     const personId = await addPerson({ startDate: dayIn(2) });
     const response = await change(
       {
@@ -568,7 +568,7 @@ describe("employment dates", () => {
     );
   });
 
-  it("refuses, to an editor who sees Restricted details, months after someone's end, and no end", async () => {
+  it("refuses, to an editor who sees Personal details, months after someone's end, and no end", async () => {
     const personId = await addPerson({ endDate: dayIn(3) });
     const featureId = await addFeature();
     const ongoing = await change(
@@ -585,7 +585,7 @@ describe("employment dates", () => {
     );
   });
 
-  it("does not tell an editor who does not see Restricted details of an end date still to come", async () => {
+  it("does not tell an editor who does not see Personal details of an end date still to come", async () => {
     const personId = await addPerson({ endDate: dayIn(3) });
     await changed({
       personId,
@@ -660,7 +660,7 @@ describe("reading", () => {
     });
   });
 
-  it("shows someone who has not started only to readers who see Restricted details", async () => {
+  it("shows someone who has not started only to readers who see Personal details", async () => {
     const personId = await addPerson({ startDate: dayIn(2) });
     const featureId = await addFeature();
     await changed(
@@ -675,7 +675,7 @@ describe("reading", () => {
         .where(
           and(
             eq(accessHistory.actorId, manager.id),
-            eq(accessHistory.action, "restricted-viewed"),
+            eq(accessHistory.action, "personal-viewed"),
           ),
         ),
     ).not.toEqual([]);
@@ -700,7 +700,7 @@ describe("approving", () => {
     );
   });
 
-  it("refuses, to an Approver who sees Restricted details, a draft past someone's end", async () => {
+  it("refuses, to an Approver who sees Personal details, a draft past someone's end", async () => {
     const personId = await addPerson();
     const featureId = await addFeature();
     await changed({ personId, featureId, percentage: 50, from: month(0) });
@@ -1022,7 +1022,7 @@ describe("the change history", () => {
     ).toContain(`${await nameOf(personId)} on ${String(project?.name)}`);
   });
 
-  it("hides the allocations of someone who has not started from readers who do not see Restricted details", async () => {
+  it("hides the allocations of someone who has not started from readers who do not see Personal details", async () => {
     const personId = await addPerson({ startDate: dayIn(2) });
     await changed(
       {

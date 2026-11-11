@@ -441,7 +441,7 @@ export function PeoplePage({
   const fill = (hire: Person, request: HireFill) => {
     setFilling((current) => current && { ...current, saving: true });
     save({
-      // Readers who see Restricted details are told who; the reload says for the rest.
+      // Readers who see Personal details are told who; the reload says for the rest.
       next: (data) => ({
         ...data,
         people: data.people.map((other) =>

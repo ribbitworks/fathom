@@ -382,15 +382,15 @@ describe("who is listed and what each user sees", () => {
   // Today in Fathom's time zone, which decides who is current.
   const today = () => dayIn(defaultTimeZone);
 
-  it("shows users who cannot see Restricted details everyone who has started, without dates or Restricted values", async () => {
+  it("shows users who cannot see Personal details everyone who has started, without dates or Personal values", async () => {
     const { cookie } = await editor();
     const general = await columnWith(cookie, ["Fictional General"]);
-    const restricted = await columnWith(cookie, ["Fictional Restricted"], {
-      visibility: "restricted",
+    const personalColumn = await columnWith(cookie, ["Fictional Personal"], {
+      visibility: "personal",
     });
     const values = {
       [general.field.id]: [String(general.choices[0]?.id)],
-      [restricted.field.id]: [String(restricted.choices[0]?.id)],
+      [personalColumn.field.id]: [String(personalColumn.choices[0]?.id)],
     };
     const { ids } = await addPeople(cookie, [
       { startDate: "2020-01-01", values },
@@ -413,7 +413,9 @@ describe("who is listed and what each user sees", () => {
       [general.field.id]: values[general.field.id],
     });
     expect(seen.fields.map(({ id }) => id)).toContain(general.field.id);
-    expect(seen.fields.map(({ id }) => id)).not.toContain(restricted.field.id);
+    expect(seen.fields.map(({ id }) => id)).not.toContain(
+      personalColumn.field.id,
+    );
     expect(await accessOf(viewer.id)).toEqual([]);
 
     const manager = await test.signedIn("engineering-manager");
@@ -426,11 +428,11 @@ describe("who is listed and what each user sees", () => {
       values,
     });
     expect(await accessOf(manager.id)).toEqual([
-      { action: "restricted-viewed", subjectId: null },
+      { action: "personal-viewed", subjectId: null },
     ]);
   });
 
-  it("records a view when the only Restricted details are in a column, and not when there is no one", async () => {
+  it("records a view when the only Personal details are in a column, and not when there is no one", async () => {
     const leadership = await test.signedIn("executive");
     const { cookie } = await editor();
     await columnWith(cookie, ["Fictional Confidential"], {
@@ -462,7 +464,7 @@ describe("adding people", () => {
     const { field, choices } = await columnWith(
       cookie,
       ["First", "Second", "Third"],
-      { multiple: true, visibility: "restricted" },
+      { multiple: true, visibility: "personal" },
     );
     const [first, , third] = choices.map(({ id }) => id);
     const { ids, changeSetId } = await addPeople(cookie, [
@@ -483,13 +485,13 @@ describe("adding people", () => {
       ["created", "preferredName", "general"],
       ["created", "employeeId", "general"],
       ["created", "positionId", "general"],
-      ["created", "startDate", "restricted"],
-      ["created", `value:${field.id}`, "restricted"],
+      ["created", "startDate", "personal"],
+      ["created", `value:${field.id}`, "personal"],
     ]);
     const access = await accessOf(editorId);
     expect(
-      access.filter(({ action }) => action === "restricted-changed"),
-    ).toEqual([{ action: "restricted-changed", subjectId: ids[0] }]);
+      access.filter(({ action }) => action === "personal-changed"),
+    ).toEqual([{ action: "personal-changed", subjectId: ids[0] }]);
   });
 
   it("refuses an Employee ID already used, ignoring letter case, saving none of the people sent with it", async () => {
@@ -737,10 +739,10 @@ describe("changing and deleting people", () => {
     ]);
     expect(
       (await accessOf(editorId)).find(
-        ({ action }) => action === "restricted-changed",
+        ({ action }) => action === "personal-changed",
       ),
     ).toEqual({
-      action: "restricted-changed",
+      action: "personal-changed",
       subjectId: id,
     });
   });
@@ -981,7 +983,7 @@ describe("columns", () => {
   it("deletes a column with its values once approved, recording them on each person", async () => {
     const { cookie } = await editor();
     const { field, choices } = await columnWith(cookie, ["A"], {
-      visibility: "restricted",
+      visibility: "personal",
     });
     const { id } = await addLivePerson(cookie, {
       values: { [field.id]: [String(choices[0]?.id)] },
@@ -1006,16 +1008,16 @@ describe("columns", () => {
     expect((await test.historyOf(id)).at(-1)).toMatchObject({
       action: "changed",
       field: `value:${field.id}`,
-      tier: "restricted",
+      tier: "personal",
       oldValue: [choices[0]?.id],
       newValue: null,
     });
     expect(
       (await accessOf(approver.id)).find(
-        ({ action }) => action === "restricted-changed",
+        ({ action }) => action === "personal-changed",
       ),
     ).toEqual({
-      action: "restricted-changed",
+      action: "personal-changed",
       subjectId: id,
     });
   });
@@ -1043,7 +1045,7 @@ describe("access history", () => {
       .map(({ action, subject }) => [action, subject]);
   }
 
-  it("records a view of Restricted details once a day, and names whose details changed only to readers who may see people", async () => {
+  it("records a view of Personal details once a day, and names whose details changed only to readers who may see people", async () => {
     const { cookie, id: editorId } = await editor();
     const name = unique("Fictional Named");
     const { id } = await addLivePerson(cookie, {
@@ -1054,14 +1056,14 @@ describe("access history", () => {
     await readPeople(cookie);
     const administrator = await test.signedIn("administrator");
     expect(await entriesBy(administrator.cookie, editorId)).toEqual([
-      ["restricted-viewed", null],
+      ["personal-viewed", null],
       // A person has no account, so no email address.
-      ["restricted-changed", { id, name: null, email: null }],
+      ["personal-changed", { id, name: null, email: null }],
     ]);
     const seesPeople = await test.signedIn(["history:view", "people:view"]);
     expect(await entriesBy(seesPeople.cookie, editorId)).toEqual([
-      ["restricted-viewed", null],
-      ["restricted-changed", { id, name, email: null }],
+      ["personal-viewed", null],
+      ["personal-changed", { id, name, email: null }],
     ]);
   });
 });
@@ -1522,7 +1524,7 @@ describe("undo", () => {
     });
     await send(cookie, "PUT", `/api/lists/${list.id}`, {
       name: list.name,
-      visibility: "restricted",
+      visibility: "personal",
     });
     await test.approveLists();
     const undone = await undo(
@@ -1531,10 +1533,10 @@ describe("undo", () => {
     );
     expect(undone.statusCode).toBe(200);
     expect((await test.historyOf(id)).at(-1)).toMatchObject({
-      tier: "restricted",
+      tier: "personal",
     });
     expect(await accessOf(editorId)).toContainEqual({
-      action: "restricted-changed",
+      action: "personal-changed",
       subjectId: id,
     });
   });
@@ -1567,7 +1569,7 @@ describe("undo", () => {
     expect(left).toEqual([]);
   });
 
-  it("records undoing Restricted changes in the access history", async () => {
+  it("records undoing Personal changes in the access history", async () => {
     const { cookie, id: editorId } = await editor();
     const { id } = await addPerson(cookie);
     const changed = await send(cookie, "PATCH", `/api/people/${id}`, {

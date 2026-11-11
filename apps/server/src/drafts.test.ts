@@ -222,7 +222,7 @@ describe("drafts as people see them", () => {
   });
 
   it("hides drafts, and reasons, that change only what a reader may not see", async () => {
-    const restricted = await columnWith(["Secret"], "restricted");
+    const personalColumn = await columnWith(["Secret"], "personal");
     const person = await livePerson({ startDate: "2020-01-01" });
     await saved("PATCH", `/api/people/${person.id}`, {
       endDate: "2031-01-01",
@@ -238,7 +238,9 @@ describe("drafts as people see them", () => {
     const other = await livePerson();
     await saved("PATCH", `/api/people/${other.id}`, {
       preferredName: unique("Fictional Renamed"),
-      values: { [restricted.field.id]: [String(restricted.choices[0]?.id)] },
+      values: {
+        [personalColumn.field.id]: [String(personalColumn.choices[0]?.id)],
+      },
     });
     expect((await reject([other.id], "Fictional reason")).statusCode).toBe(200);
     expect((await seen(planner.cookie, other.id))?.draft).toMatchObject({
@@ -288,7 +290,7 @@ describe("drafts as people see them", () => {
     );
   });
 
-  it("shows readers without Restricted details everyone who has started, as live dates say while a draft waits", async () => {
+  it("shows readers without Personal details everyone who has started, as live dates say while a draft waits", async () => {
     const starting = await draftPerson({ startDate: "2099-01-01" });
     const future = await livePerson({ startDate: "2099-02-01" });
     const leaving = await livePerson({ startDate: "2020-01-01" });
@@ -298,7 +300,7 @@ describe("drafts as people see them", () => {
     const planner = await test.signedIn("resource-planner");
     expect(await seen(planner.cookie, starting.id)).toBeUndefined();
     expect(await seen(planner.cookie, future.id)).toBeUndefined();
-    // A draft changing only Restricted dates shows no draft before it is approved.
+    // A draft changing only Personal dates shows no draft before it is approved.
     const left = await seen(planner.cookie, leaving.id);
     expect(left).toBeDefined();
     expect(left?.draft).toBeUndefined();
@@ -604,7 +606,7 @@ describe("approving and rejecting", () => {
     const manager = await test.signedIn([
       "people:approve",
       "people:view",
-      "restricted:view",
+      "personal:view",
     ]);
     expect((await approve([person.id], manager.cookie)).statusCode).toBe(200);
   });
@@ -614,7 +616,7 @@ describe("approving and rejecting", () => {
       "people:approve",
       "configuration:approve",
       "people:edit",
-      "restricted:edit",
+      "personal:edit",
       "confidential:edit",
       "configuration:edit",
     ] as const;
@@ -1321,7 +1323,7 @@ describe("live people", () => {
           recordId: person.id,
           action: "changed",
           field: "startDate",
-          tier: "restricted",
+          tier: "personal",
           oldValue: "2019-01-01",
           newValue: "2020-01-01",
         },
@@ -1330,7 +1332,7 @@ describe("live people", () => {
           recordId: person.id,
           action: "changed",
           field: "endDate",
-          tier: "restricted",
+          tier: "personal",
           oldValue: null,
           newValue: null,
         },

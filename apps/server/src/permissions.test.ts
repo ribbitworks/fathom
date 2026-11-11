@@ -417,9 +417,9 @@ const routes: Route[] = [
     })),
   ),
 
-  // Restricted details and former staff are left out for those who may not see them.
+  // Personal details and former staff are left out for those who may not see them.
   { method: "GET", pattern: "/api/people", needs: allOf("people:view") },
-  // Changing Restricted or Confidential details needs those tiers' edit permissions too, as the
+  // Changing Personal or Confidential details needs those tiers' edit permissions too, as the
   // people tests check; these requests change only General details.
   {
     method: "POST",
@@ -525,7 +525,7 @@ const routes: Route[] = [
   {
     method: "GET",
     pattern: "/api/org-chart",
-    // Restricted details, and Employee IDs for those who do not see people, are left out, which the
+    // Personal details, and Employee IDs for those who do not see people, are left out, which the
     // org chart tests check.
     needs: allOf("org-chart:view"),
   },

@@ -180,11 +180,11 @@ describe("a required note column", () => {
 describe("adding note columns", () => {
   it("adds one with a visibility of its own, and no list", async () => {
     const { cookie } = await editor();
-    const field = await noteColumn(cookie, { visibility: "restricted" });
+    const field = await noteColumn(cookie, { visibility: "personal" });
     expect(field).toMatchObject({
       type: "note",
       listId: null,
-      visibility: "restricted",
+      visibility: "personal",
       multiple: false,
     });
   });

@@ -2313,7 +2313,7 @@ describe("the Features page", () => {
       ...sizes,
       id: "10000000-0000-4000-8000-0000000000a2",
       name: "Fictional Hidden",
-      visibility: "restricted",
+      visibility: "personal",
     };
     const size = {
       id: "10000000-0000-4000-8000-0000000000c1",

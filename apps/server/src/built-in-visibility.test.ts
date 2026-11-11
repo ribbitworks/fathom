@@ -142,7 +142,7 @@ const viewsRecorded = async (who: User) =>
       .select({ action: accessHistory.action })
       .from(accessHistory)
       .where(eq(accessHistory.actorId, who.id))
-  ).filter(({ action }) => action === "restricted-viewed").length;
+  ).filter(({ action }) => action === "personal-viewed").length;
 
 describe("the visibility of a built-in list", () => {
   it("can be changed and approved like any list's", async () => {
@@ -151,14 +151,14 @@ describe("the visibility of a built-in list", () => {
       const changed = await send(editor, "PUT", `/api/lists/${list.id}`, {
         name: list.name,
         description: "",
-        visibility: "restricted",
+        visibility: "personal",
       });
       expect(changed.statusCode, changed.body).toBe(200);
       const approved = await send(approver, "POST", "/api/drafts/approval", {
         lists: [list.id],
       });
       expect(approved.statusCode, approved.body).toBe(200);
-      expect((await builtInList(key)).visibility).toBe("restricted");
+      expect((await builtInList(key)).visibility).toBe("personal");
     }
   });
 
@@ -173,7 +173,7 @@ describe("the Position column", () => {
     const id = await livePerson();
     const reader = await grantedOnly(["people:view"]);
     expect((await personSeen(reader, id))?.positionId).toBe(testPosition);
-    await setVisibility("positions", "restricted");
+    await setVisibility("positions", "personal");
     const unseen = await personSeen(reader, id);
     expect(unseen).toBeDefined();
     expect(unseen?.positionId).toBeUndefined();
@@ -200,7 +200,7 @@ describe("the Position column", () => {
     expect((await personSeen(reader, id))?.draft?.live.positionId).toBe(
       testPosition,
     );
-    await setVisibility("positions", "restricted");
+    await setVisibility("positions", "personal");
     const unseen = await personSeen(reader, id);
     expect(unseen?.positionId).toBeUndefined();
     expect(unseen?.draft).toBeUndefined();
@@ -240,7 +240,7 @@ describe("the Position column", () => {
         definition: { sort: ["positionId"] },
       });
     expect((await save()).statusCode).toBe(201);
-    await setVisibility("positions", "restricted");
+    await setVisibility("positions", "personal");
     const response = await save();
     expect(response.statusCode).toBe(400);
     expect(refusal(response)).toBe("Choose only columns this role can see");
@@ -250,7 +250,7 @@ describe("the Position column", () => {
     const id = await liveHire();
     const planner = await test.signedIn("resource-planner");
     expect((await hireSeen(planner, id))?.positionId).toBe(testPosition);
-    await setVisibility("positions", "restricted");
+    await setVisibility("positions", "personal");
     const unseen = await hireSeen(planner, id);
     expect(unseen).toBeDefined();
     expect(unseen?.positionId).toBeUndefined();
@@ -267,7 +267,7 @@ describe("the State column", () => {
         definition: { filters: { stateId: { empty: true } } },
       });
     expect((await save()).statusCode).toBe(201);
-    await setVisibility("hiring-states", "restricted");
+    await setVisibility("hiring-states", "personal");
     const response = await save();
     expect(response.statusCode).toBe(400);
     expect(refusal(response)).toBe("Choose only columns this role can see");
@@ -277,7 +277,7 @@ describe("the State column", () => {
     const id = await liveHire();
     const planner = await test.signedIn("resource-planner");
     expect((await hireSeen(planner, id))?.stateId).toBeDefined();
-    await setVisibility("hiring-states", "restricted");
+    await setVisibility("hiring-states", "personal");
     expect((await hireSeen(planner, id))?.stateId).toBeUndefined();
   });
 
@@ -285,8 +285,8 @@ describe("the State column", () => {
     const id = await liveHire();
     const someone = await livePerson();
     const planner = await test.signedIn("resource-planner");
-    await setVisibility("positions", "restricted");
-    await setVisibility("hiring-states", "restricted");
+    await setVisibility("positions", "personal");
+    await setVisibility("hiring-states", "personal");
     const read = await send(planner, "GET", "/api/people");
     const { people, order } = read.json<{
       people: Person[];
@@ -316,8 +316,8 @@ describe("the State column", () => {
       "stateId",
       "targetDate",
     ]);
-    await setVisibility("positions", "restricted");
-    await setVisibility("hiring-states", "restricted");
+    await setVisibility("positions", "personal");
+    await setVisibility("hiring-states", "personal");
     const seen = await hireSeen(plan, id);
     expect(seen?.positionId).toBeUndefined();
     expect(seen?.stateId).toBeUndefined();
@@ -328,7 +328,7 @@ describe("the State column", () => {
       positionId: otherTestPosition,
     });
     expect((await hireSeen(plan, onlyPosition))?.draft).toBeDefined();
-    await setVisibility("positions", "restricted");
+    await setVisibility("positions", "personal");
     expect((await hireSeen(plan, onlyPosition))?.draft).toBeUndefined();
     expect((await hireSeen(editor, id))?.draft?.changed.toSorted()).toEqual([
       "positionId",
@@ -346,7 +346,7 @@ describe("changes to positions and states", () => {
     });
     const { changeSetId } = changed.json<{ changeSetId: string }>();
     const reader = await grantedOnly(["people:view", "changes:view"]);
-    // Seeing Confidential data does not give Restricted, though Confidential is more sensitive.
+    // Seeing Confidential data does not give Personal, though Confidential is more sensitive.
     const confidential = await grantedOnly([
       "people:view",
       "confidential:view",
@@ -354,7 +354,7 @@ describe("changes to positions and states", () => {
     ]);
     expect(await entryFor(reader, changeSetId)).toBeDefined();
     expect(await entryFor(confidential, changeSetId)).toBeDefined();
-    await setVisibility("positions", "restricted");
+    await setVisibility("positions", "personal");
     expect(await entryFor(reader, changeSetId)).toBeUndefined();
     expect(await entryFor(confidential, changeSetId)).toBeUndefined();
     expect(await entryFor(editor, changeSetId)).toBeDefined();
@@ -375,7 +375,7 @@ describe("changes to positions and states", () => {
     const name = async () =>
       (await entryFor(plan, changeSetId))?.records[0]?.name;
     expect(await name()).toMatch(/^.+, TBD-\d+$/);
-    await setVisibility("positions", "restricted");
+    await setVisibility("positions", "personal");
     expect(await name()).toMatch(/^TBD-\d+$/);
     await send(editor, "DELETE", `/api/planned-hires/${id}/draft`);
   });
@@ -397,7 +397,7 @@ describe("changes to positions and states", () => {
       ],
     });
     const { changeSetId } = response.json<{ changeSetId: string }>();
-    await setVisibility("positions", "restricted");
+    await setVisibility("positions", "personal");
     const undone = await send(adder, "POST", `/api/undo/${changeSetId}`, {});
     expect(undone.statusCode).toBe(403);
     await setVisibility("positions", "general");
@@ -420,7 +420,7 @@ describe("changes to positions and states", () => {
       });
     const added = await add();
     expect(added.statusCode, added.body).toBe(201);
-    await setVisibility("hiring-states", "restricted");
+    await setVisibility("hiring-states", "personal");
     const unseenState = await add();
     expect(unseenState.statusCode).toBe(403);
     expect(refusal(unseenState)).toBe(
@@ -433,7 +433,7 @@ describe("changes to positions and states", () => {
       (await send(hireEditor, "DELETE", `/api/planned-hires/${addedId}/draft`))
         .statusCode,
     ).toBe(200);
-    await setVisibility("positions", "restricted");
+    await setVisibility("positions", "personal");
     const unseenPosition = await add();
     expect(refusal(unseenPosition)).toBe(
       "Every planned hire needs a position, and this role can't see positions",
@@ -451,7 +451,7 @@ describe("changes to positions and states", () => {
     );
     expect(movedSeen.statusCode, movedSeen.body).toBe(200);
     await send(hireEditor, "DELETE", `/api/planned-hires/${id}/draft`);
-    await setVisibility("positions", "restricted");
+    await setVisibility("positions", "personal");
     const dated = await send(hireEditor, "PATCH", `/api/planned-hires/${id}`, {
       targetDate: "2027-06-15",
     });
@@ -474,7 +474,7 @@ describe("changes to positions and states", () => {
       positionId: otherTestPosition,
     });
     expect(drafted.statusCode, drafted.body).toBe(200);
-    await setVisibility("positions", "restricted");
+    await setVisibility("positions", "personal");
     const unseeing = await grantedOnly([
       "people:view",
       "hiring-plan:view",
@@ -516,7 +516,7 @@ describe("changes to positions and states", () => {
     expect(await subjects()).toEqual([
       expect.stringMatching(/^the planned hire .+, TBD-\d+$/),
     ]);
-    await setVisibility("positions", "restricted");
+    await setVisibility("positions", "personal");
     expect(await subjects()).toEqual([
       expect.stringMatching(/^the planned hire TBD-\d+$/),
     ]);
@@ -534,11 +534,11 @@ describe("reading positions and states more sensitive than General", () => {
     await setVisibility("positions", "confidential");
     await send(planner, "GET", "/api/people");
     expect(await viewsRecorded(planner)).toBe(before + 1);
-    const placeholders = await grantedOnly(["people:view", "restricted:view"]);
+    const placeholders = await grantedOnly(["people:view", "personal:view"]);
     await setVisibility("positions", "general");
     await send(placeholders, "GET", "/api/planned-hires");
     expect(await viewsRecorded(placeholders)).toBe(0);
-    await setVisibility("hiring-states", "restricted");
+    await setVisibility("hiring-states", "personal");
     await send(placeholders, "GET", "/api/planned-hires");
     expect(await viewsRecorded(placeholders)).toBe(1);
   });
@@ -560,7 +560,7 @@ describe("changing a position", () => {
     const viewer = await grantedOnly([
       "people:view",
       "people:edit",
-      "restricted:view",
+      "personal:view",
     ]);
     const change = () =>
       send(viewer, "PATCH", `/api/people/${id}`, {
@@ -569,7 +569,7 @@ describe("changing a position", () => {
     const allowed = await change();
     expect(allowed.statusCode, allowed.body).toBe(200);
     await send(viewer, "DELETE", `/api/people/${id}/draft`);
-    await setVisibility("positions", "restricted");
+    await setVisibility("positions", "personal");
     expect((await personSeen(viewer, id))?.positionId).toBe(testPosition);
     expect((await change()).statusCode).toBe(403);
   });
@@ -596,7 +596,7 @@ describe("changing a position", () => {
       reason: "Fictional reason",
     });
     expect(rejected.statusCode, rejected.body).toBe(200);
-    await setVisibility("positions", "restricted");
+    await setVisibility("positions", "personal");
     const resubmit = () =>
       send(hireEditor, "DELETE", `/api/planned-hires/${id}/draft/rejection`);
     expect((await resubmit()).statusCode).toBe(403);

@@ -3,17 +3,17 @@
 // The org chart: today's reporting lines as approved, and the chart as drafts make it. Part of the
 // data access layer. Each person's draft of their manager, their position and their team's name
 // comes beside the approved chart, as People shows them: a draft's manager only to readers who see
-// Restricted details, since it is Restricted until approved, its position only beside a position
+// Personal details, since it is Personal until approved, its position only beside a position
 // the reader is shown, and the reader's own unpublished drafts in place of the published ones.
 // Everyone current today appears, with each manager they still report to, up the chain, even one
-// whose end date has passed, as People names them. A reader who does not see Restricted details
+// whose end date has passed, as People names them. A reader who does not see Personal details
 // sees no further up than such a manager, and only their name and team, as People shows them;
 // anything more would tell them who else has left. A reader who does not see people sees each
 // person's name, position, and team, but no Employee ID, which is a detail of People and would let
 // them look people up there. Positions show only as the positions list's tier allows, as on People,
 // except that a General one shows to every reader. Both charts follow these rules alike. Planned
 // hires join the chart as placeholders, to every reader, as People shows them: each hire not yet
-// filled, and, to readers who do not see Restricted details, each filled one whose person has not
+// filled, and, to readers who do not see Personal details, each filled one whose person has not
 // started; named by its name, or by its position and ID, under its manager, a person or a planned
 // manager, and with the month it is expected. Readers who see the hiring plan see its drafts too.
 
@@ -29,11 +29,7 @@ import {
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { ForbiddenError, NotFoundError } from "../errors.ts";
-import {
-  type Actor,
-  seesRestrictedDetails,
-  seesSensitivity,
-} from "../access.ts";
+import { type Actor, seesPersonalDetails, seesSensitivity } from "../access.ts";
 import {
   type Draft,
   drafted,
@@ -47,7 +43,7 @@ import {
   readLiveHires,
 } from "./hires.ts";
 import { inForceOn } from "./in-force.ts";
-import { currentOn, notStarted, restrictedPersonFields } from "./people.ts";
+import { currentOn, notStarted, personalDetailFields } from "./people.ts";
 import {
   changesLine,
   changesLineFields,
@@ -61,9 +57,9 @@ import { readToday } from "./settings.ts";
 import { builtInTier, choiceLabels } from "./values.ts";
 
 export interface OrgChartRead extends OrgChart {
-  // Whether the chart told anyone that a manager has left, showed them Restricted details of a
+  // Whether the chart told anyone that a manager has left, showed them Personal details of a
   // draft, or showed positions more sensitive than General, which the access history records.
-  includedRestricted: boolean;
+  includedPersonal: boolean;
   // Whether the chart showed anyone hires' drafts, part of the hiring plan, which the access history
   // records as a view of the hiring plan.
   includedHiringPlan: boolean;
@@ -100,19 +96,19 @@ type ChartRecord = PersonRecord | HireRecord;
 
 // What a reader of the chart may see.
 interface Reader {
-  restricted: boolean;
+  seesPersonal: boolean;
   seesPeople: boolean;
   seesPositions: boolean;
   today: string;
 }
 
 // The chart the records give: everyone current today, with each manager they still report to, up
-// the chain, even one whose end date has passed. A reader who does not see Restricted details sees
+// the chain, even one whose end date has passed. A reader who does not see Personal details sees
 // no further up than such a manager, and only their name and team.
 function chartOf(
   records: ReadonlyMap<string, ChartRecord>,
   colours: ReadonlyMap<string, string | null>,
-  { restricted, seesPeople, seesPositions, today }: Reader,
+  { seesPersonal, seesPeople, seesPositions, today }: Reader,
 ): OrgChartPerson[] {
   // Every person on the chart is among the records.
   const recordOf = (id: string) => records.get(id) as ChartRecord;
@@ -129,7 +125,7 @@ function chartOf(
     }
   };
   // Someone not current today, shown only as the manager of someone who is.
-  const hidden = (id: string) => !restricted && !current(recordOf(id));
+  const hidden = (id: string) => !seesPersonal && !current(recordOf(id));
   const shown = new Set<string>();
   for (const [first, record] of records) {
     if (!current(record)) continue;
@@ -175,28 +171,28 @@ function chartOf(
         record.teamName === null ? null : knownColour(colours.get(id)),
       managerId: hidden(id) ? null : record.managerId,
       ...(hidden(id) ? { nameOnly: true } : {}),
-      ...(restricted && gone ? { left: true } : {}),
+      ...(seesPersonal && gone ? { left: true } : {}),
     };
   };
   return [...shown].map((id) => card(id, recordOf(id)));
 }
 
-// The chart on a chosen day, for readers who see Restricted details, since past managers are
-// Restricted: as approved, without planned hires, which belong to today, and with drafts laid over
+// The chart on a chosen day, for readers who see Personal details, since past managers are
+// Personal: as approved, without planned hires, which belong to today, and with drafts laid over
 // it only for those who may change reporting lines from that day.
 export async function readOrgChartOn(
   database: Database,
   actor: Actor,
   day: string,
 ): Promise<OrgChartRead> {
-  if (!seesRestrictedDetails(actor)) {
+  if (!seesPersonalDetails(actor)) {
     throw new ForbiddenError(
       "This role can't see reporting lines on another date",
     );
   }
   return {
     ...(await readOrgChart(database, actor, { day })),
-    includedRestricted: true,
+    includedPersonal: true,
   };
 }
 
@@ -208,16 +204,12 @@ export async function readOrgChart(
   const today = await readToday(database);
   const shownDay = day ?? today;
   const seesPeople = actor.permissions.includes("people:view");
-  const restricted = seesRestrictedDetails(actor);
+  const seesPersonal = seesPersonalDetails(actor);
   const approvedOnly =
     day !== undefined &&
     !(
       actor.permissions.includes("people:edit") &&
-      mayDateLineChange(
-        actor.permissions.includes("restricted:edit"),
-        day,
-        today,
-      )
+      mayDateLineChange(actor.permissions.includes("personal:edit"), day, today)
     );
   const withHires = day === undefined;
   // Hires' drafts are part of the hiring plan, which does nothing without seeing people.
@@ -296,7 +288,7 @@ export async function readOrgChart(
     ]),
   );
   const reader: Reader = {
-    restricted,
+    seesPersonal,
     seesPeople,
     seesPositions:
       positionTier === "general" ||
@@ -348,7 +340,7 @@ export async function readOrgChart(
   const draftedChart = chartOf(
     new Map<string, ChartRecord>([
       ...draftedRecords(live, drafts, {
-        restricted,
+        seesPersonal,
         seesPosition: reader.seesPositions,
         labelOf,
         managerOn,
@@ -366,7 +358,7 @@ export async function readOrgChart(
         approved.get(person.id) as ChartRecord,
         person,
         drafts.get(person.id) ?? hireDrafts.get(person.id),
-        { restricted, labelOf, managerShown, managerOn },
+        { seesPersonal, labelOf, managerShown, managerOn },
       );
       return draft === undefined ? person : { ...person, draft };
     },
@@ -377,7 +369,7 @@ export async function readOrgChart(
   return {
     people: chart,
     drafted: draftedChart,
-    includedRestricted:
+    includedPersonal:
       chart.some(
         (person) =>
           person.left === true ||
@@ -388,13 +380,13 @@ export async function readOrgChart(
         [...chart, ...draftedChart].some(
           ({ position }) => position !== null,
         )) ||
-      (restricted &&
+      (seesPersonal &&
         (draftedChart.some((person) => person.left === true) ||
           [...drafts.values()].some(
             (draft) =>
               draft.state !== "rejected" &&
               (draft.action === "created" ||
-                restrictedPersonFields.some((field) => field in draft.fields)),
+                personalDetailFields.some((field) => field in draft.fields)),
           ))),
     includedHiringPlan:
       hireDraftsShown ||
@@ -428,7 +420,7 @@ function placeholderOf(
   startOf: ReadonlyMap<string, string | null>,
   managerShown: ManagerShown,
   labelOf: ReadonlyMap<string, string>,
-  { restricted, seesPositions, today }: Reader,
+  { seesPersonal, seesPositions, today }: Reader,
 ): Placeholder {
   return (hire) => {
     const filledBy = text(hire.filledBy);
@@ -436,7 +428,7 @@ function placeholderOf(
     // A filled hire gives way to its person once they have started, or to readers who see them.
     if (
       filledBy !== null &&
-      (restricted || !notStarted({ startDate: fillerStart }, today))
+      (seesPersonal || !notStarted({ startDate: fillerStart }, today))
     ) {
       return undefined;
     }
@@ -486,18 +478,18 @@ type ManagerOn = (
 ) => { managerId: string | null; from: string } | undefined;
 
 // Everyone as their drafts make them, as the reader may see them, with rejected drafts taken back:
-// a draft's manager, as on the day drawn, and dates only to readers who see Restricted details, and
+// a draft's manager, as on the day drawn, and dates only to readers who see Personal details, and
 // its position only to those who see the Positions list.
 function draftedRecords(
   live: ReadonlyMap<string, PersonRecord>,
   drafts: ReadonlyMap<string, Draft>,
   {
-    restricted,
+    seesPersonal,
     seesPosition,
     labelOf,
     managerOn,
   }: {
-    restricted: boolean;
+    seesPersonal: boolean;
     seesPosition: boolean;
     labelOf: ReadonlyMap<string, string>;
     managerOn: ManagerOn;
@@ -523,10 +515,10 @@ function draftedRecords(
         (seesPosition ? labelOf.get(positionId) : undefined) ??
         before?.position ??
         null,
-      ...(restricted || before === undefined
+      ...(seesPersonal || before === undefined
         ? { startDate: text(after.startDate), endDate: text(after.endDate) }
         : { startDate: before.startDate, endDate: before.endDate }),
-      managerId: !restricted
+      managerId: !seesPersonal
         ? (before?.managerId ?? null)
         : changesLine(draft)
           ? (managerOn(id, draft.fields)?.managerId ?? null)
@@ -538,11 +530,11 @@ function draftedRecords(
 }
 
 // What a draft is shown beside the approved chart with: a person's drafted manager, as on the day
-// drawn, only to readers who see Restricted details, a drafted position, by its label, only beside a
+// drawn, only to readers who see Personal details, a drafted position, by its label, only beside a
 // position shown, so never for a manager shown by name alone, and a hire under the manager the chart
 // would draw it under.
 interface BesideRules {
-  restricted: boolean;
+  seesPersonal: boolean;
   labelOf: ReadonlyMap<string, string>;
   managerShown: ManagerShown;
   managerOn: ManagerOn;
@@ -573,7 +565,7 @@ function changesBeside(
   before: ChartRecord,
   shown: OrgChartPerson,
   fields: Recorded,
-  { restricted, labelOf, managerShown, managerOn }: BesideRules,
+  { seesPersonal, labelOf, managerShown, managerOn }: BesideRules,
 ): Pick<OrgChartDraft, "managerId" | "managerFrom" | "position" | "teamName"> {
   const positionId = fields.positionId as string | undefined;
   const position =
@@ -590,7 +582,7 @@ function changesBeside(
         : undefined;
       const teamName = fields.teamName as string | null | undefined;
       return {
-        ...(restricted &&
+        ...(seesPersonal &&
         line !== undefined &&
         line.managerId !== before.managerId
           ? { managerId: line.managerId, managerFrom: line.from }

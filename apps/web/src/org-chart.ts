@@ -25,7 +25,7 @@ import { formatDay } from "./table-view.ts";
 import { today } from "./today.ts";
 
 // The chart as it is today, with drafts, or as approved on a chosen day, for readers who see
-// Restricted details, with drafts laid over it where reporting lines change from that day.
+// Personal details, with drafts laid over it where reporting lines change from that day.
 export const orgChartQueryOn = dayQuery(
   "org-chart",
   "/api/org-chart",
@@ -422,7 +422,7 @@ export interface ChartSearch {
   day?: string | undefined;
 }
 
-// The day the chart should be drawn as of, or undefined for today. Readers who do not see Restricted
+// The day the chart should be drawn as of, or undefined for today. Readers who do not see Personal
 // details see feature teams by whole months, and reporting lines only as they are today.
 export function chartDay(
   asked: string | undefined,

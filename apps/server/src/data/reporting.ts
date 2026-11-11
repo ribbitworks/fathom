@@ -3,7 +3,7 @@
 // Reporting lines and team names, with the rules the Decisions Log sets out. Part of the data access
 // layer. A person's current line and their own team's name are held as fields of the person, so
 // changing them is a person's draft, approved, undone, and recorded like any other: managerId and
-// managerFrom, Restricted in drafts and in the change history since they name past managers, and
+// managerFrom, Personal in drafts and in the change history since they name past managers, and
 // teamName, General. Approving writes the line, in force from its date until the person's next. A
 // team renamed keeps its colour, which is not part of any draft, and one whose name is removed
 // loses it.
@@ -187,8 +187,8 @@ export function draftedLines(
 }
 
 // Who a person reports to, and their team, as a reader sees them: the live manager for those who
-// see only General details, since a draft's manager is Restricted until approved, and, for those who
-// see Restricted details, since when, and whether the manager has left. Managers are found among
+// see only General details, since a draft's manager is Personal until approved, and, for those who
+// see Personal details, since when, and whether the manager has left. Managers are found among
 // everyone shown, as drafts make them.
 export function shownReporting(
   person: Recorded,
@@ -196,16 +196,16 @@ export function shownReporting(
   {
     everyone,
     live,
-    restricted,
+    seesPersonal,
     today,
   }: {
     everyone: ReadonlyMap<string, Recorded | undefined>;
     live: ReadonlyMap<string, Recorded>;
-    restricted: boolean;
+    seesPersonal: boolean;
     today: string;
   },
 ) {
-  const managerId = text(restricted ? person.managerId : before?.managerId);
+  const managerId = text(seesPersonal ? person.managerId : before?.managerId);
   const manager = managerId === null ? undefined : everyone.get(managerId);
   const managerEnd = managerId === null ? null : live.get(managerId)?.endDate;
   return {
@@ -215,7 +215,7 @@ export function shownReporting(
         : { id: managerId, preferredName: String(manager.preferredName) },
     team: text(manager?.teamName),
     teamName: text(person.teamName),
-    ...(restricted
+    ...(seesPersonal
       ? {
           managerFrom: text(person.managerFrom),
           ...(typeof managerEnd === "string" && managerEnd < today

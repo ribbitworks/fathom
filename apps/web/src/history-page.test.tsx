@@ -91,7 +91,7 @@ describe("who sees the History page", () => {
 });
 
 describe("the entries", () => {
-  it("say who viewed people's Restricted details, and whose they changed, by name", async () => {
+  it("say who viewed people's Personal details, and whose they changed, by name", async () => {
     serverAnswers({
       "GET /api/session": historyViewer,
       "GET /api/access-history": () =>
@@ -101,7 +101,7 @@ describe("the entries", () => {
               id: 7,
               occurredAt: "2026-10-30T17:00:00.000Z",
               actor: admin,
-              action: "restricted-changed",
+              action: "personal-changed",
               subject: { id: "p1", name: "Avery Fictional" },
               details: {},
             },
@@ -109,7 +109,7 @@ describe("the entries", () => {
               id: 6,
               occurredAt: "2026-10-30T16:30:00.000Z",
               actor: admin,
-              action: "restricted-changed",
+              action: "personal-changed",
               subject: { id: "p2", name: null },
               details: {},
             },
@@ -117,7 +117,7 @@ describe("the entries", () => {
               id: 5,
               occurredAt: "2026-10-30T16:00:00.000Z",
               actor: admin,
-              action: "restricted-viewed",
+              action: "personal-viewed",
               subject: null,
               details: {},
             },
@@ -131,9 +131,9 @@ describe("the entries", () => {
       ),
     );
     expect(lines).toEqual([
-      "Fictional Person changed the Restricted or Confidential details of Avery Fictional",
-      "Fictional Person changed the Restricted or Confidential details of a person",
-      "Fictional Person viewed people's Restricted or Confidential details",
+      "Fictional Person changed the Personal or Confidential details of Avery Fictional",
+      "Fictional Person changed the Personal or Confidential details of a person",
+      "Fictional Person viewed people's Personal or Confidential details",
     ]);
   });
 
@@ -318,7 +318,7 @@ describe("the entries", () => {
               role: "Fictional Checkers",
               previousName: "Fictional Auditors",
               granted: ["people:view", "changes:view"],
-              withdrawn: ["restricted:view"],
+              withdrawn: ["personal:view"],
             }),
             roleEntry(12, "role-changed", {
               role: "Fictional Checkers",
@@ -340,7 +340,7 @@ describe("the entries", () => {
       ),
     );
     expect(lines).toEqual([
-      "Worth checking: Fictional Person changed the role: Fictional Checkers, before named Fictional Auditors; granting View People, View Change history; withdrawing View Restricted details",
+      "Worth checking: Fictional Person changed the role: Fictional Checkers, before named Fictional Auditors; granting View People, View Change history; withdrawing View Personal details",
       "Worth checking: Fictional Person changed the role: Fictional Checkers",
       "Fictional Person created the role: Fictional Auditors; granting View Plan, retired:permission",
       "Fictional Person created the role: Fictional Empty",

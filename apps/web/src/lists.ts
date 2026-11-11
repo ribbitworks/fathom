@@ -24,7 +24,7 @@ import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
 // Every tier must be named, which the compiler checks.
 const visibilityNames: Record<Tier, string> = {
   general: "Everyone",
-  restricted: "Restricted",
+  personal: "Personal",
   confidential: "Confidential",
 };
 

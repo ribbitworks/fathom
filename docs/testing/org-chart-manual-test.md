@@ -155,7 +155,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** Only the team of **Lorenza Thiel** is shown again.
   - **Notes:**
 
-### ORG-08: Only Readers Who See Restricted Details Are Told a Manager Has Left
+### ORG-08: Only Readers Who See Personal Details Are Told a Manager Has Left
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, changed from ORG-07.
 
@@ -337,7 +337,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** Her details slide out in a panel on the right. **Draft** still has a dot after it, her card still ends with **Hide 7 reports**, and **Simone Jean** is not under her in **Direct reports** in the panel.
   - **Notes:**
 
-### ORG-15: Readers Who Do Not See Restricted Details See No Drafted Manager
+### ORG-15: Readers Who Do Not See Personal Details See No Drafted Manager
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, changed from ORG-14.
 

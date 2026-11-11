@@ -654,7 +654,7 @@ async function columnsAsAdded(
 // and the order of the columns they see: on People, those drafted to be added last, and on Features,
 // the order they were first added in. A column whose values are
 // more sensitive than the actor may see is left out, as are built-in dates for those without
-// Restricted details.
+// Personal details.
 export async function readColumnsOut(
   reader: Reader,
   actor: Actor,

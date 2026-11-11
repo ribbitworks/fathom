@@ -61,7 +61,7 @@ const skills = {
   id: "l2",
   name: "Skills",
   description: "",
-  visibility: "restricted",
+  visibility: "personal",
   retired: false,
   choices: [choice("c5", "Rust")],
 };
@@ -1485,7 +1485,7 @@ describe("creating and editing lists", () => {
       within(dialog).getByLabelText(/^Description/),
       "Parts of the product.",
     );
-    await userEvent.click(within(dialog).getByText("Restricted"));
+    await userEvent.click(within(dialog).getByText("Personal"));
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Create list" }),
     );
@@ -1493,7 +1493,7 @@ describe("creating and editing lists", () => {
       {
         name: "Product areas",
         description: "Parts of the product.",
-        visibility: "restricted",
+        visibility: "personal",
       },
     ]);
     await waitFor(() => {

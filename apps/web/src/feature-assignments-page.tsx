@@ -75,7 +75,7 @@ export function FeatureAssignmentsPage({
   seesPeople: boolean;
   seesAllocations: boolean;
   proposesTeams: boolean;
-  // Whether the reader may change Restricted details, and so months before the current one.
+  // Whether the reader may change Personal details, and so months before the current one.
   changesDates: boolean;
   mode: GridMode;
   onMode: (mode: GridMode, view: View) => void;

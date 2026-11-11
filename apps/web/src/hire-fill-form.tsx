@@ -69,7 +69,7 @@ const personKey = "fillPerson";
 const fromKey = "fillFrom";
 
 // A planned hire's Fill button, for those who may fill it now, or who is filling it, in a draft, by
-// name and ID. The server names who only to those who see Restricted details.
+// name and ID. The server names who only to those who see Personal details.
 export function HireFillAction({
   hire,
   people,

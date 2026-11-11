@@ -290,7 +290,7 @@ export function columnsFor(
       maxLength,
     });
   // Built-in columns only people have.
-  const personal = (column: Column): Column => ({
+  const onPeopleOnly = (column: Column): Column => ({
     ...column,
     offeredOn: peopleOnly,
   });
@@ -384,7 +384,10 @@ export function columnsFor(
       ...(showPosition ? [position] : []),
       ...(statesList === undefined ? [] : [state]),
       ...(showDates
-        ? [builtIn("startDate", "date"), personal(builtIn("endDate", "date"))]
+        ? [
+            builtIn("startDate", "date"),
+            onPeopleOnly(builtIn("endDate", "date")),
+          ]
         : []),
       // A planned hire's target date is part of the hiring plan, not a personal detail, so readers
       // who see the plan but not people's dates see it for hires alone.
@@ -400,7 +403,7 @@ export function columnsFor(
       ...(showDates
         ? [
             // Fathom takes today, or a new person's start date, when no date is given.
-            personal({
+            onPeopleOnly({
               ...builtIn("managerFrom", "date"),
               change: (value: CellValue) =>
                 value === "" ? {} : { managerFrom: value as string },
@@ -408,7 +411,7 @@ export function columnsFor(
           ]
         : []),
       team,
-      personal({
+      onPeopleOnly({
         ...builtIn("teamName", "text", false, personLengths.teamName),
         breaksDown: false,
       }),
@@ -475,7 +478,7 @@ function makeLivePeople(people: readonly Person[]): Person[] {
         ? undefined
         : byId.get(person.manager.id);
     if (manager === undefined) return person;
-    // Only readers who see Restricted details see when a line starts, and whether its manager left.
+    // Only readers who see Personal details see when a line starts, and whether its manager left.
     const withTeam = { ...person, team: manager.teamName ?? null };
     if (person.managerFrom === undefined) return withTeam;
     delete withTeam.managerLeft;

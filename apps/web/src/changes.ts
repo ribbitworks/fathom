@@ -57,7 +57,7 @@ export function madeByName({ madeBy, madeAs }: ChangeEntry): string {
 }
 
 const scopeNames: Record<ViewScope, string> = {
-  personal: "Personal",
+  personal: "Private",
   shared: "Shared",
 };
 

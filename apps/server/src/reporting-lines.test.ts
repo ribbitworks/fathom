@@ -591,7 +591,7 @@ describe("a reporting line", () => {
     expect(shown?.managerFrom).toBe("2024-03-01");
   });
 
-  it("warns those who see Restricted details when the manager's end date has passed", async () => {
+  it("warns those who see Personal details when the manager's end date has passed", async () => {
     const manager = await person();
     const report = await person();
     await reportsTo(report, manager, "2024-03-01");
@@ -866,11 +866,11 @@ describe("who sees reporting lines", () => {
   });
 
   it.each(rolesGranting("people:view"))(
-    "a %s, a role that sees people, sees the live manager, and the draft's manager and the date only if the role lets them see Restricted data",
+    "a %s, a role that sees people, sees the live manager, and the draft's manager and the date only if the role lets them see Personal data",
     async (role) => {
       const { cookie: reader } = await test.signedIn(role);
       const seen = await readPerson(report, reader);
-      const sees = rolesGranting("restricted:view").includes(role);
+      const sees = rolesGranting("personal:view").includes(role);
       expect(seen?.manager?.id).toBe(sees ? newManager : manager);
       expect(seen?.managerFrom).toBe(sees ? today : undefined);
       expect(seen?.draft?.changed).toEqual(
@@ -880,14 +880,14 @@ describe("who sees reporting lines", () => {
   );
 
   it.each(rolesGranting("changes:view"))(
-    "a %s, a role that sees the change history, sees changes of manager only if the role lets them see Restricted data",
+    "a %s, a role that sees the change history, sees changes of manager only if the role lets them see Personal data",
     async (role) => {
       const { cookie: reader } = await test.signedIn(role);
       const history = (
         await test.request(reader, "GET", "/api/changes")
       ).json<ChangeHistory>();
       const shown = JSON.stringify(history).includes('"managerId"');
-      expect(shown).toBe(rolesGranting("restricted:view").includes(role));
+      expect(shown).toBe(rolesGranting("personal:view").includes(role));
     },
   );
 

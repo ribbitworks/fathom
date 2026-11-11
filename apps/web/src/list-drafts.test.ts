@@ -197,7 +197,7 @@ describe("the live lists", () => {
         plain("l4", {
           name: "New name",
           description: "New",
-          visibility: "restricted",
+          visibility: "personal",
           retired: true,
           draft: {
             ...waiting,

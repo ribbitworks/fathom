@@ -52,7 +52,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 - **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20300315`.
 - **Months from today:** the steps name months by where they fall from the current month: **last month** is the one before it, **next month** the one after it, a number of **months ago**, such as **six months ago**, that many months before it, and **three months from now** the third month after it. The steps type a month's first day as digits; the examples after "such as" are for a run in November 2026, such as `20260501` for the first day of six months ago.
 - **Empty row:** the row at the end of a table, with blank cells, where a new record is typed or pasted.
-- **Date box:** the box labelled **Date** between the **Org chart** heading and the chart, before the left arrow, timeline, right arrow and **Today**. Accounts that don't see Restricted details have the arrows, timeline and **Today** without it.
+- **Date box:** the box labelled **Date** between the **Org chart** heading and the chart, before the left arrow, timeline, right arrow and **Today**. Accounts that don't see Personal details have the arrows, timeline and **Today** without it.
 
 ## Test Cases
 
@@ -90,7 +90,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** One hire row, with no mark, reading **REQ-5001** in **ID**, **SDET** in **Position** and **Request to hire** in **State**.
   - **Notes:**
 
-#### ACC-02: Someone Who Has Not Started Is Listed Only for Those Who See Restricted Details
+#### ACC-02: Someone Who Has Not Started Is Listed Only for Those Who See Personal Details
 
 **Account:** Project Manager, `project.manager@fathom.test`, the same as the account ACC-01 ended with. Step 2 signs in as another account.
 
@@ -1031,7 +1031,10 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 2.** Select **Restore template**.
-  - **Expected:** **What it is for** reads **Sees the plan, people, with their Restricted and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.**, **Edit** on **Plan** is unticked, and **Restore template** is turned off.
+  - **Expected:**
+    - **What it is for** reads **Sees the plan, people, with their Personal and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.**
+    - **Edit** on **Plan** is unticked.
+    - **Restore template** is turned off.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Cancel**.

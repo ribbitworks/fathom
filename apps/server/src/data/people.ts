@@ -5,9 +5,9 @@
 // data access layer, the only server code that queries the database. Every change is a draft, as
 // drafts.ts sets out, which reaches the live people only once approved, as approvals.ts sets out.
 // Every change is recorded in the change history, field by field, with each field's tier: a
-// person's name and Employee ID are General, their start and end dates Restricted, and their state
+// person's name and Employee ID are General, their start and end dates Personal, and their state
 // and each column's values as sensitive as their list. Users see and change only the tiers their
-// role allows, and changes to Restricted or Confidential details are also recorded in the access
+// role allows, and changes to Personal or Confidential details are also recorded in the access
 // history.
 
 import {
@@ -141,10 +141,10 @@ const detailFields = [
 ] as const;
 const personFields = [...detailFields, ...reportingFields];
 
-// The tier of each field of a person: dates are Restricted, and so are changes to their manager,
+// The tier of each field of a person: dates are Personal, and so are changes to their manager,
 // which name past managers, the position, state, and each column's values are as sensitive as their
 // list, and the rest is General. Every value field recorded is for one of the columns given.
-export const restrictedPersonFields = [
+export const personalDetailFields = [
   "startDate",
   "endDate",
   "managerId",
@@ -155,10 +155,7 @@ export function personTier(columns: PeopleColumns) {
   const tiers = new Map<string, Tier>([
     ["positionId", columns.positionTier],
     ["stateId", columns.stateTier],
-    ...restrictedPersonFields.map((field): [string, Tier] => [
-      field,
-      "restricted",
-    ]),
+    ...personalDetailFields.map((field): [string, Tier] => [field, "personal"]),
     ...columns.map((column): [string, Tier] => [
       valueField(column.id),
       column.tier,
@@ -323,7 +320,7 @@ function requireEdits(actor: Actor, made: readonly Change[]): void {
   }
 }
 
-// Records, in the access history, each person whose Restricted or Confidential details changed,
+// Records, in the access history, each person whose Personal or Confidential details changed,
 // live or in a draft.
 export async function recordSensitiveChanges(
   transaction: Pick<Database, "insert">,
@@ -341,7 +338,7 @@ export async function recordSensitiveChanges(
     transaction,
     [...changed].map((subjectId) => ({
       actorId,
-      action: "restricted-changed" as const,
+      action: "personal-changed" as const,
       subjectId,
     })),
   );
@@ -573,8 +570,8 @@ export async function readLive(
 export interface PeopleRead {
   people: Person[];
   columns: ColumnInfo[];
-  // Whether what was read included anyone's Restricted details, which the access history records.
-  includedRestricted: boolean;
+  // Whether what was read included anyone's Personal details, which the access history records.
+  includedPersonal: boolean;
   // Whether the actor cannot see the Positions list's tier, so the people read have no positions.
   positionHidden: boolean;
   // Whether what was read included planned hires' details beyond their placeholders, which the
@@ -616,7 +613,7 @@ export function currentOn(person: Recorded, today: string): boolean {
 // Everyone the actor may see, by preferred name, as their drafts make them, with the columns whose
 // values they may see, and each draft as they may see it, followed by the planned hires they see,
 // as readHires sets out, by ID. A person a draft removes is shown as they are, with the draft.
-// Users who cannot see Restricted details see only those who have started, current staff and those
+// Users who cannot see Personal details see only those who have started, current staff and those
 // who have left, so the list does not reveal anyone's start date before it arrives, and receive no
 // dates. Each person's state means Hired, or Left once their end date has passed.
 export async function readPeople(
@@ -638,7 +635,7 @@ async function readPeopleIn(
   actor: Actor,
   today: string,
 ): Promise<PeopleRead> {
-  const restricted = seesSensitivity(actor, "restricted");
+  const seesPersonal = seesSensitivity(actor, "personal");
   const allColumns = await columnsWithAdded(database, actor.user.id);
   const columns = allColumns.filter((column) =>
     seesSensitivity(actor, column.tier),
@@ -651,7 +648,7 @@ async function readPeopleIn(
     ...(seesSensitivity(actor, allColumns.stateTier) ? ["stateId"] : []),
     "teamName",
     "isManager",
-    ...(restricted ? ["startDate", "endDate", "managerId", "managerFrom"] : []),
+    ...(seesPersonal ? personalDetailFields : []),
     ...columns.map(({ id }) => valueField(id)),
   ]);
   const live = await readLive(database, allColumns, { asOf: today });
@@ -686,7 +683,7 @@ async function readPeopleIn(
     stateOf?.(
       {
         ...person,
-        endDate: (restricted ? person : (before ?? person)).endDate,
+        endDate: (seesPersonal ? person : (before ?? person)).endDate,
       },
       today,
     );
@@ -696,10 +693,10 @@ async function readPeopleIn(
     // A draft that removes someone shows them as they are; one that adds nobody is never kept.
     const person = drafted(before, draft) ?? before;
     // Who has started comes from the live dates while a draft waits, so a draft changing only
-    // Restricted dates reveals nothing. Those who have left are no longer kept from anyone.
+    // Personal dates reveals nothing. Those who have left are no longer kept from anyone.
     if (
       person === undefined ||
-      (!restricted && notStarted(before ?? person, today))
+      (!seesPersonal && notStarted(before ?? person, today))
     ) {
       return [];
     }
@@ -713,7 +710,7 @@ async function readPeopleIn(
           ? { positionId: String(person.positionId) }
           : {}),
         isManager: person.isManager === true,
-        ...(restricted
+        ...(seesPersonal
           ? {
               startDate: (person.startDate as string | null) ?? null,
               endDate: (person.endDate as string | null) ?? null,
@@ -722,7 +719,7 @@ async function readPeopleIn(
         ...shownReporting(person, before, {
           everyone,
           live,
-          restricted,
+          seesPersonal,
           today,
         }),
         values: Object.fromEntries(
@@ -848,14 +845,14 @@ async function readPeopleIn(
     ],
     columns,
     positionHidden: !shownFields.has("positionId"),
-    includedRestricted:
+    includedPersonal:
       (shown.length > 0 &&
-        (restricted ||
+        (seesPersonal ||
           columns.some(({ tier }) => tier !== "general") ||
           (shownFields.has("positionId") &&
             allColumns.positionTier !== "general") ||
           (seesStates && statesTier !== "general"))) ||
-      hiring.includedRestricted,
+      hiring.includedPersonal,
     hiringPlanViewed: hiring.wholePlan && hiring.hires.length > 0,
   };
 }
@@ -1107,7 +1104,7 @@ export async function draftPersonChange(
     // Those who see no dates are offered states from the live end date, so their choice is
     // checked against it, and a draft's end date is never revealed by a refusal; a state that
     // stops fitting once the draft is approved shows the first of the meaning instead.
-    const dates = seesSensitivity(actor, "restricted")
+    const dates = seesSensitivity(actor, "personal")
       ? after
       : (before ?? after);
     await checkState(

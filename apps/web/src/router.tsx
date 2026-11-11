@@ -466,7 +466,7 @@ const peopleRoute = createRoute({
         }
         approves={approvableKinds(permissions)}
         canEditColumns={permissions.includes("configuration:edit")}
-        showDates={permissions.includes("restricted:view")}
+        showDates={permissions.includes("personal:view")}
         showHireDates={permissions.includes("hiring-plan:view")}
         {...viewProps(search, (next, replace) => {
           void navigate({ search: { ...next, open }, replace });
@@ -509,16 +509,16 @@ const orgChartRoute = createRoute({
           permissions.includes("people:view") &&
           permissions.includes("feature-teams:edit"),
         colours: permissions.includes("team-colours:edit"),
-        dates: permissions.includes("restricted:edit"),
+        dates: permissions.includes("personal:edit"),
       }),
       [permissions],
     );
     return (
       <OrgChartPage
         seesPeople={permissions.includes("people:view")}
-        showDates={permissions.includes("restricted:view")}
+        showDates={permissions.includes("personal:view")}
         canEdit={permissions.includes("people:edit")}
-        changesDates={permissions.includes("restricted:edit")}
+        changesDates={permissions.includes("personal:edit")}
         teamEdits={teamEdits}
         featureTeamEdits={featureTeamEdits}
         search={orgChartRoute.useSearch()}
@@ -555,7 +555,7 @@ const featureAssignmentsRoute = createRoute({
         seesPeople={permissions.includes("people:view")}
         seesAllocations={seesAllocations}
         proposesTeams={proposesFeatureTeams(permissions)}
-        changesDates={permissions.includes("restricted:edit")}
+        changesDates={permissions.includes("personal:edit")}
         mode={mode}
         onMode={(next, nextView) => {
           void navigate({ search: { ...searchFor(nextView), ...kept(next) } });

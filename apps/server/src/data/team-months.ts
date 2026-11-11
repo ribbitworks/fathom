@@ -3,7 +3,7 @@
 // Who was on which feature team, month by month, as approved, for the monthly grid, and, for readers
 // who see drafts, as the team drafts they see would make it. Part of the data access layer. Each
 // month is read as of its first day, or today during the current month, so a draft's exact days
-// show only as the months they fall in. Readers who do not see Restricted details see only people
+// show only as the months they fall in. Readers who do not see Personal details see only people
 // current today, on every month, so no month reveals who has yet to start or an end date still to
 // come. Readers who do see them see everyone employed during the months asked for, which of those
 // months fall outside their employment, and whom each person reported to each month.
@@ -24,7 +24,7 @@ import {
 import {
   type Actor,
   requirePermission,
-  seesRestrictedDetails,
+  seesPersonalDetails,
 } from "../access.ts";
 import {
   type DraftedMembership,
@@ -100,7 +100,7 @@ export async function readTeamMonths(
   { from, to }: MonthRange,
 ): Promise<TeamMonths> {
   requirePermission(actor, "org-chart:view");
-  const restricted = seesRestrictedDetails(actor);
+  const seesPersonal = seesPersonalDetails(actor);
   const seesPeople = actor.permissions.includes("people:view");
   const today = await readToday(database);
   const months = monthsBetween(from, to);
@@ -148,7 +148,7 @@ export async function readTeamMonths(
       .map(({ teamId }) => teamId),
   );
   const shown = rows.filter((person) =>
-    restricted
+    seesPersonal
       ? months.some((month) => employedIn(person, month))
       : currentOn(person, today),
   );
@@ -173,7 +173,7 @@ export async function readTeamMonths(
     const outside = months.filter((month) => !employedIn(person, month));
     const shownMonths = months.flatMap((month) => {
       const day = dayReadingMonth(month, today);
-      return currentOn(person, restricted ? day : today)
+      return currentOn(person, seesPersonal ? day : today)
         ? [{ month, day }]
         : [];
     });
@@ -192,7 +192,7 @@ export async function readTeamMonths(
       id: person.id,
       preferredName: person.preferredName,
       manager: seesPeople ? managerOn(person.id, today) : null,
-      ...(restricted
+      ...(seesPersonal
         ? {
             managers: Object.fromEntries(
               months.map((month) => [
@@ -203,7 +203,7 @@ export async function readTeamMonths(
           }
         : {}),
       teams: Object.fromEntries(approved),
-      ...(restricted && outside.length > 0 ? { outside } : {}),
+      ...(seesPersonal && outside.length > 0 ? { outside } : {}),
       ...(drafted === undefined ? {} : { drafted }),
     };
   });

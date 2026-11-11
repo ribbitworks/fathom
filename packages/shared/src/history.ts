@@ -21,15 +21,15 @@ export const accessActionSchema = z.enum([
   "own-name-changed",
   "account-deactivated",
   "account-reactivated",
-  // Someone saw people's Restricted or Confidential details, such as start and end dates. Recorded
+  // Someone saw people's Personal or Confidential details, such as start and end dates. Recorded
   // at most once a day for each user, without naming whose, since a page shows many people at once.
-  "restricted-viewed",
-  // Someone changed a person's Restricted or Confidential details, naming the person to readers
+  "personal-viewed",
+  // Someone changed a person's Personal or Confidential details, naming the person to readers
   // who may see people.
-  "restricted-changed",
+  "personal-changed",
   // Someone changed the hiring plan, which is Confidential, without naming the planned hire.
   "hiring-plan-changed",
-  // Someone saw the whole hiring plan. Recorded at most once a day for each user, as Restricted
+  // Someone saw the whole hiring plan. Recorded at most once a day for each user, as Personal
   // views are.
   "hiring-plan-viewed",
   // Someone created a role, or changed a role's name, description, or what it grants, naming the
@@ -82,7 +82,7 @@ export const historyEntrySchema = z.object({
   // Null for the server's operators, such as when the account command created an account.
   actor: personSchema.nullable(),
   action: z.string(),
-  // Null when the entry names no one, as when Restricted details were viewed.
+  // Null when the entry names no one, as when Personal details were viewed.
   subject: personSchema.nullable(),
   details: historyDetailsSchema,
 });

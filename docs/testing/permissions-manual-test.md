@@ -117,7 +117,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 ### People
 
-#### PERM-04: View People Shows People Without Their Restricted Details
+#### PERM-04: View People Shows People Without Their Personal Details
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-03 ended with.
 
@@ -177,13 +177,13 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Afterwards:** Run Restore Team Member.
 
-### Restricted Details
+### Personal Details
 
-#### PERM-07: View Restricted Details Shows Dates and Former Staff
+#### PERM-07: View Personal Details Shows Dates and Former Staff
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-06 ended with.
 
-**Preconditions:** Team Member granted only **View** on **People** and **View** on **Restricted details** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Team Member granted only **View** on **People** and **View** on **Personal details** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
   - **Expected:** **Start**, **End** and **Manager assigned** are shown. There is no **New** button.
@@ -195,11 +195,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Afterwards:** Run Restore Team Member.
 
-#### PERM-08: Edit Restricted Details Changes Dates
+#### PERM-08: Edit Personal Details Changes Dates
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-07 ended with.
 
-**Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Restricted details** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Personal details** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
   - **Expected:** **Start**, **End** and **Manager assigned** are shown. **New** is at the top right, and there is no **New column** button.

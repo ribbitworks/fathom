@@ -84,7 +84,7 @@ function answers(
           "people:edit",
           "hiring-plan:view",
           "hiring-plan:edit",
-          "restricted:view",
+          "personal:view",
           "plan:view",
         ],
       }),
@@ -698,7 +698,7 @@ describe("a planned hire's details", () => {
         "people:view",
         "people:edit",
         "hiring-plan:view",
-        "restricted:view",
+        "personal:view",
         "plan:view",
       ],
     });
@@ -757,7 +757,7 @@ describe("after filling", () => {
             "people:edit",
             "hiring-plan:view",
             "hiring-plan:edit",
-            "restricted:view",
+            "personal:view",
             "plan:view",
           ],
         });

@@ -118,11 +118,11 @@ describe("a required number column", () => {
 describe("adding number columns", () => {
   it("adds one with a visibility of its own, and no list", async () => {
     const { cookie } = await editor();
-    const field = await numberColumn(cookie, { visibility: "restricted" });
+    const field = await numberColumn(cookie, { visibility: "personal" });
     expect(field).toMatchObject({
       type: "number",
       listId: null,
-      visibility: "restricted",
+      visibility: "personal",
     });
   });
 

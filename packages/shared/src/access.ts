@@ -46,8 +46,8 @@ export const permissionSchema = z.enum([
   "feature-teams:propose",
   "feature-teams:edit",
   "feature-teams:approve",
-  "restricted:view",
-  "restricted:edit",
+  "personal:view",
+  "personal:edit",
   "confidential:view",
   "confidential:edit",
   // The hiring plan is Confidential, but has a permission area of its own, apart from other
@@ -170,17 +170,17 @@ export const permissionDescriptions: Record<
     without: "Cannot approve feature teams.",
     needs: ["people:view"],
   },
-  "restricted:view": {
+  "personal:view": {
     allows:
-      "Sees people who haven't started yet, and Restricted details of the people the role sees, such as gender, start and end dates, and past managers.",
+      "Sees people who haven't started yet, and Personal details of the people the role sees, such as gender, start and end dates, and past managers.",
     without:
-      "Restricted details are hidden wherever they appear, and people who haven't started yet aren't listed.",
+      "Personal details are hidden wherever they appear, and people who haven't started yet aren't listed.",
     needs: ["people:view"],
   },
 
-  "restricted:edit": {
-    allows: "Changes Restricted details of people.",
-    without: "Cannot change Restricted details.",
+  "personal:edit": {
+    allows: "Changes Personal details of people.",
+    without: "Cannot change Personal details.",
     needs: ["people:edit"],
   },
 
@@ -312,7 +312,7 @@ export const draftingPermissions: readonly Permission[] = [
 export const unbuiltPermissions: readonly Permission[] = ["drafts:submit"];
 
 // The sensitivity tiers of Fathom's data. Roles grant access to tiers, not to screens.
-export const tierSchema = z.enum(["general", "restricted", "confidential"]);
+export const tierSchema = z.enum(["general", "personal", "confidential"]);
 
 export type Tier = z.infer<typeof tierSchema>;
 
@@ -323,7 +323,7 @@ export const impliedPermissions: Partial<Record<Permission, Permission>> = {
   "features:edit": "plan:view",
   "allocations:edit": "allocations:view",
   "people:edit": "people:view",
-  "restricted:edit": "restricted:view",
+  "personal:edit": "personal:view",
   "confidential:edit": "confidential:view",
   "hiring-plan:edit": "hiring-plan:view",
   "configuration:edit": "configuration:view",
@@ -395,8 +395,8 @@ export const permissionGrid: readonly {
   { area: "Org chart", actions: { view: "org-chart:view" } },
   { area: "Team colours", actions: { edit: "team-colours:edit" } },
   {
-    area: "Restricted details",
-    actions: { view: "restricted:view", edit: "restricted:edit" },
+    area: "Personal details",
+    actions: { view: "personal:view", edit: "personal:edit" },
   },
   {
     area: "Confidential data",
@@ -534,7 +534,7 @@ export const startingRoles: Record<
   "engineering-manager": {
     name: "Engineering Manager",
     description:
-      "Edits the plan and allocations, sees people, with everyone's Restricted details and the hiring plan, colours teams on the org chart, and proposes feature teams.",
+      "Edits the plan and allocations, sees people, with everyone's Personal details and the hiring plan, colours teams on the org chart, and proposes feature teams.",
     permissions: [
       "plan:edit",
       "features:edit",
@@ -543,7 +543,7 @@ export const startingRoles: Record<
       "people:view",
       "team-colours:edit",
       "feature-teams:propose",
-      "restricted:view",
+      "personal:view",
       "hiring-plan:view",
       "drafts:submit",
       "changes:view",
@@ -552,7 +552,7 @@ export const startingRoles: Record<
   "engineering-director": {
     name: "Engineering Director",
     description:
-      "Edits and approves the plan, features, allocations, people, feature teams, the hiring plan, and configuration, sees all Restricted and Confidential data, and sees accounts, roles, settings, and the access history without changing them.",
+      "Edits and approves the plan, features, allocations, people, feature teams, the hiring plan, and configuration, sees all Personal and Confidential data, and sees accounts, roles, settings, and the access history without changing them.",
     permissions: [
       "plan:edit",
       "plan:approve",
@@ -567,7 +567,7 @@ export const startingRoles: Record<
       "feature-teams:propose",
       "feature-teams:edit",
       "feature-teams:approve",
-      "restricted:edit",
+      "personal:edit",
       "confidential:edit",
       "hiring-plan:edit",
       "hiring-plan:approve",
@@ -585,7 +585,7 @@ export const startingRoles: Record<
   "workforce-administrator": {
     name: "Workforce Administrator",
     description:
-      "Sees the plan, maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Restricted and Confidential data.",
+      "Sees the plan, maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Personal and Confidential data.",
     permissions: [
       "plan:view",
       "allocations:view",
@@ -593,7 +593,7 @@ export const startingRoles: Record<
       "people:edit",
       "team-colours:edit",
       "feature-teams:edit",
-      "restricted:edit",
+      "personal:edit",
       "confidential:edit",
       "hiring-plan:edit",
       "configuration:edit",
@@ -603,13 +603,13 @@ export const startingRoles: Record<
   executive: {
     name: "Executive",
     description:
-      "Sees the plan, people, with their Restricted and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.",
+      "Sees the plan, people, with their Personal and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.",
     permissions: [
       "plan:view",
       "allocations:view",
       "people:view",
       "org-chart:view",
-      "restricted:view",
+      "personal:view",
       "confidential:view",
       "hiring-plan:view",
       "configuration:view",
@@ -620,7 +620,7 @@ export const startingRoles: Record<
       "changes:view",
     ],
   },
-  // Resource Planners see people, since they allocate them, but not their Restricted details.
+  // Resource Planners see people, since they allocate them, but not their Personal details.
   "resource-planner": {
     name: "Resource Planner",
     description:

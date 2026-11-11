@@ -258,7 +258,7 @@ describe("the months that can be changed", () => {
     ]);
   });
 
-  it("include earlier months for those who may change Restricted details", () => {
+  it("include earlier months for those who may change Personal details", () => {
     expect(readOnly(true)).toEqual([
       ["name", true],
       ["2027-02", false],

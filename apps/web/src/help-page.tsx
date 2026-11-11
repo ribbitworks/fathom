@@ -27,8 +27,8 @@ import classes from "./pages.module.css";
 import { StatusMark } from "./status-mark.tsx";
 
 const sensitivities: [string, string][] = [
-  ["General", "Everything not marked Restricted or Confidential."],
-  ["Restricted", "Start and end dates, and columns marked Restricted."],
+  ["General", "Everything not marked Personal or Confidential."],
+  ["Personal", "Start and end dates, and columns marked Personal."],
   ["Confidential", "Columns marked Confidential."],
 ];
 

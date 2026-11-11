@@ -316,8 +316,8 @@ describe("the hiring plan", () => {
     expect(forPlanner).toContain(waiting);
     expect(forPlanner).not.toContain(done);
     expect((await hireSeen(waiting, planner))?.expected).toBe("2099-01");
-    const restricted = await test.signedIn("engineering-manager");
-    expect(await hireSeen(waiting, restricted)).toBeUndefined();
+    const personalReader = await test.signedIn("engineering-manager");
+    expect(await hireSeen(waiting, personalReader)).toBeUndefined();
     expect(await hireSeen(waiting)).toBeUndefined();
   });
 
@@ -410,7 +410,7 @@ describe("the hiring plan", () => {
           ),
         );
     expect(await viewsBy(reader)).toEqual([
-      { action: "restricted-viewed" },
+      { action: "personal-viewed" },
       { action: "hiring-plan-viewed" },
     ]);
     expect(await viewsBy(placeholders)).toEqual([]);
@@ -1219,10 +1219,10 @@ describe("changes to the hiring plan in the change history", () => {
 });
 
 describe("each role's view of the hiring plan", () => {
-  it("shows those who see Restricted and Confidential data, but not the hiring plan, only placeholders and none of the plan's history", async () => {
+  it("shows those who see Personal and Confidential data, but not the hiring plan, only placeholders and none of the plan's history", async () => {
     const manager = await test.signedIn([
       "people:view",
-      "restricted:view",
+      "personal:view",
       "confidential:view",
       "changes:view",
     ]);
@@ -1343,7 +1343,7 @@ describe("each role's view of the hiring plan", () => {
     const approving = await test.signedIn([
       "hiring-plan:approve",
       "people:view",
-      "restricted:view",
+      "personal:view",
       "confidential:view",
     ]);
     const id = await liveHire();
@@ -1386,15 +1386,15 @@ describe("each role's view of the hiring plan", () => {
 });
 
 describe("a hire's manager", () => {
-  it("is shown to readers without Restricted data once the manager has started, so not one starting later", async () => {
+  it("is shown to readers without Personal data once the manager has started, so not one starting later", async () => {
     const starting = await person({ startDate: "2099-01-01" });
     const id = await liveHire({ managerId: starting });
     expect(await hireSeen(id, planner)).toMatchObject({
       managerId: null,
       managerName: null,
     });
-    const restricted = await test.signedIn("engineering-manager");
-    expect((await hireSeen(id, restricted))?.managerId).toBe(starting);
+    const personalReader = await test.signedIn("engineering-manager");
+    expect((await hireSeen(id, personalReader))?.managerId).toBe(starting);
     expect((await hireSeen(id))?.managerId).toBe(starting);
   });
 

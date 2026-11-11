@@ -15,6 +15,6 @@ SELECT "id", 'team-colours:edit' FROM "fathom"."roles" WHERE "key" = 'people-man
 ON CONFLICT DO NOTHING;
 --> statement-breakpoint
 UPDATE "fathom"."roles"
-SET "description" = 'Sees people, including everyone''s Restricted details, colours teams on the org chart, and proposes feature teams.'
+SET "description" = 'Sees people, including everyone''s Personal details, colours teams on the org chart, and proposes feature teams.'
 WHERE "key" = 'people-manager'
-  AND "description" = 'Sees people, including everyone''s Restricted details, and proposes feature teams.';
+  AND "description" = 'Sees people, including everyone''s Personal details, and proposes feature teams.';
