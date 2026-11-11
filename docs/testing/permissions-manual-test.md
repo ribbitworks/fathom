@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["packages/shared/src/access.ts", "apps/web/src/layout.tsx", "apps/web/src/router.tsx", "apps/web/src/*-page.tsx", "apps/server/src/access.ts", "apps/server/src/data/**", "apps/server/src/routes/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/testing/roles-manual-test.md"]
-last_updated: "2026-11-07"
+last_updated: "2026-11-10"
 ---
 
 # Manual Test: What Each Permission Allows
@@ -503,7 +503,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 2.** Select **New account**.
-  - **Expected:** A dialog titled **New account**, whose **Role** lists every role, each with its description, with **Team Member** chosen.
+  - **Expected:** A dialog titled **New account**, whose **Roles** lists every role, each with a tick box and its description, with only **Team Member** ticked.
   - **Notes:**
 
 - [ ] **Step 3.** Type `Test Account` in **Name** and `test.account@fathom.test` in **Email address**, and select **Create account**.
@@ -511,7 +511,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 4.** Select **Done**.
-  - **Expected:** A notice reads **Created the account for Test Account.** **Test Account** is in the table, with **Team Member** in its **Role** column.
+  - **Expected:** A notice reads **Created the account for Test Account.** **Test Account** is in the table, with **Team Member** in its **Roles** column.
   - **Notes:**
 
 **Afterwards:** P3.

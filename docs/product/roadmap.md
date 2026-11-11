@@ -1,7 +1,7 @@
 # Fathom: Roadmap
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-08
+**Last updated:** 2026-11-10
 
 A proposed order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. The principles, stage contents, and order are not yet agreed. The privacy approval gate is agreed.
 
@@ -45,6 +45,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 - **Note columns:** Added by the owner. A column on People holding one rich-text note for each person, and notes on releases, built on one shared note format.
 - **Number columns:** Added by the owner. A column on People and planned hires holding one number for each record, ahead of the other column types.
 - **Resource assignment** and **Capacity visibility**
+- **Project activities:** Added by the owner on 2026-11-10, built once allocations can be entered in the monthly resource grid, as the [Decisions Log](decisions.md#planning) sets out.
 - **Team composition:** Reports per manager compared with a target, without filters.
 - **Hiring plan:** Planned hires and ramp-up, without the role-controlled hiring workflow.
 - **Planned managers:** Added by the owner on 2026-11-07. A planned hire can be marked as a manager in People's Manager? column, as a person is, so other planned hires can report to it, and the org chart shows it heading its planned team. People keep reporting to people until planned reporting changes come in The Organization stage. Filling a planned manager moves the hires that report to it to the person who fills it. It follows the Left state.
@@ -81,7 +82,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 Goals the owner has added that are not yet placed in a stage:
 
 - **Pinned views:** A saved view kept visible as its own table, alongside the table's own view, until it is unpinned. Until then, pinning a view means applying it, as the [Decisions Log](decisions.md) records.
-- **Hiding columns:** Any column, built-in ones included, can be hidden from a table's view, and shown again, with hidden columns kept in saved views. Deleting an added column is offered in its column menu too, not only in its dialog.
+- **Hiding columns:** Any column, built-in ones included, can be hidden from a table's view, and shown again, with hidden columns kept in saved views. Deleting an added column is offered in its column menu too, not only in its dialog. Wanted after the product features, by the owner on 2026-11-09.
 - **Row timestamps:** Every database row records when it was created and last updated.
 - **Totals:** Sums and other totals of amounts over the rows shown, which follow the filters as they are added and removed, once the number and currency column types under Your Own Fields and Tables exist. Counts and shares of a column's values are already given by People's [metrics](decisions.md#configuration).
 - **Help:** More help, such as for Fathom's pages and terms, beyond Help's Roles and Drafts pages.

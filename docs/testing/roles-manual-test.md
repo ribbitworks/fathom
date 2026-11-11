@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/roles*.ts*", "apps/web/src/accounts-page.tsx", "apps/web/src/settings-page.tsx", "apps/server/src/data/settings.ts", "apps/server/src/data/role-administration.ts", "apps/server/src/routes/roles.ts", "packages/shared/src/access.ts", "packages/shared/src/roles.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-07"
+last_updated: "2026-11-10"
 ---
 
 # Manual Test: Editing Roles
@@ -273,20 +273,20 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Preconditions:** Signed in with this account, after ROLE-09.
 
-- [ ] **Step 1.** Select **Accounts** in the left-hand menu, and read the **Role** column.
-  - **Expected:** Each account shows one role: **Team Member** in the **Team Member** row, **Product Manager** in the **Product Manager** row, **Feature Lead** in the **Feature Lead** row, and **Administrator** in the **Fathom Administrator** row.
+- [ ] **Step 1.** Select **Accounts** in the left-hand menu, and read the **Roles** column.
+  - **Expected:** **Team Member** in the **Team Member** row, **Product Manager** in the **Product Manager** row, **Feature Lead (default)** and **Engineering Manager** in the **Feature Lead** row, and **Administrator** in the **Fathom Administrator** row.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Edit** in the **Team Member** row.
-  - **Expected:** A dialog titled **Edit Team Member**, with **Name**, **Email address**, and **Role**. **Role** lists every role in the order of the **Roles** page, **Copy of Team Member** among them, each with a round button and its description under its name. Only **Team Member** is chosen.
+  - **Expected:** A dialog titled **Edit Team Member**, with **Name**, **Email address**, and **Roles**. **Roles** lists every role in the order of the **Roles** page, **Copy of Team Member** among them, each with a tick box and its description under its name. Only **Team Member** is ticked.
   - **Notes:**
 
-- [ ] **Step 3.** Choose **Copy of Team Member**.
-  - **Expected:** **Copy of Team Member** is chosen, and **Team Member** no longer is.
+- [ ] **Step 3.** Tick **Copy of Team Member**, and untick **Team Member**.
+  - **Expected:** Only **Copy of Team Member** is ticked.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Save**.
-  - **Expected:** The dialog closes, a green banner says **Saved the account for Team Member.**, and the **Team Member** row shows **Copy of Team Member** as its role.
+  - **Expected:** The dialog closes, a green banner says **Saved the account for Team Member.**, and the **Team Member** row shows **Copy of Team Member** in **Roles**.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Roles** in the left-hand menu.
