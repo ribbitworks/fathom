@@ -112,7 +112,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Fields
 
-- **An × to empty a field:** Every field typed into shows an × at its right to empty it while it holds any text, except those for passwords and on the Sign in page. Choosing the × keeps focus in the field. Decided by the owner on 2026-11-07. A table's cells aren't fields: Delete or Backspace empties one, so they show no ×. Decided by the owner on 2026-11-11. The fields that still have none are listed in [Issues](../issues.md#development).
+- **An × to empty a field:** Every field typed into shows an × at its right to empty it while it holds any text, except those for passwords and on the Sign in page. Choosing the × keeps focus in the field. Decided by the owner on 2026-11-07. A table's cells aren't fields: Delete or Backspace empties one, so they show no ×, and neither do the choices in a list's panel, where Delete removes a choice. Decided by the owner on 2026-11-11. The fields that still have none are listed in [Issues](../issues.md#development).
   - **Drawn by:** `ClearableInput` in `apps/web/src/clearable-input.tsx`.
   - **Example:** Name in Offline Sync's details, once its pencil opens it.
 
@@ -127,7 +127,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **The keyboard's option in a drop-down list:** The option the keyboard is on, which Enter would pick, is light grey in light mode and a dark grey in dark mode, the same as an option pointed at; never the accent colour, which looks like a choice already made. Decided by the owner on 2026-11-11.
   - **Drawn by:** the theme, through `Combobox.extend` and `Select.extend` in `apps/web/src/theme.ts`, both giving their options the class in `apps/web/src/combobox.module.css`, which the feature team change adds, so every drop-down list, Select and table cell's choices follow it. A new kind of drop-down list from Mantine, such as `MultiSelect`, needs the same class in the theme.
   - **Example:** on Features, once that change is merged, open a Status cell's choices and press the Down arrow.
-- **The chosen one ticked:** A group of choices in a menu ticks the one chosen.
+- **The chosen one ticked:** A group of choices in a menu ticks the one chosen, read aloud as chosen, as in the Views menu's applied view. Decided by the owner on 2026-11-11.
   - **Drawn by:** `MenuChoices` in `apps/web/src/app-menu.tsx`.
   - **Example:** Hours ticked under Show in, in Effort's column menu.
 
@@ -142,7 +142,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Words
 
-- **The principles:** Every word on screen follows Visual Design's [Principles](visual-design.md#principles): words people say, never the second person, and no instructional text. The rule against instructions is for text always on screen: a refusal may say what to do next, such as Choose a manager, or leave Manager assigned empty. On top of those, use the plain verb: added, removed, changed, retired, restored, never "comes off" or "taking off". A naming pattern reads in words, such as named by year and number, like 27.1, never as the pattern typed, such as {YY}.{N}. Decided by the owner on 2026-11-11.
+- **The principles:** Every word on screen follows Visual Design's [Principles](visual-design.md#principles): words people say, never the second person, and no instructional text. The rule against instructions is for text always on screen: a refusal may say what to do next, such as Choose a manager, or leave Manager assigned empty. On top of those, use the plain verb: added, removed, changed, retired, restored, never "comes off" or "taking off". Records and their drafts are removed, never deleted; delete is for what isn't a record, such as a saved view. A naming pattern reads in words, such as named by year and number, like 27.1, never as the pattern typed, such as {YY}.{N}. Decided by the owner on 2026-11-11.
   - **Drawn by:** the words themselves, with `draftWords` and `DraftedWords` in `apps/web/src/status-mark.tsx` for drafts.
   - **Example:** Draft: removed.
 
@@ -163,19 +163,22 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Saving and Undo
 
-- **Saved at once:** Changes save at once, without asking. The latest can be undone with Cmd+Z or Ctrl+Z, except in a field with something typed in it, the note editor included, where the keys undo the typing alone. Undo covers every kind of record, the plan's included, checked by the same rules approving uses. Changes seen in place show no notification. A change that takes something out of view, such as discarding the draft of a record only drafted to be added, or deleting a saved view, shows a notification at the top right offering Undo, which closes after a few seconds or when a newer change is made. Sharing a view, or taking it back, shows one too, since nothing changes in view and it affects others. So does a change that takes a part of a record out of view, such as a team label a draft removes while Drafts applied is shown. The plan's records, sharing a view and parts leaving view decided by the owner on 2026-11-11.
+- **Saved at once:** Changes save at once, without asking. The latest can be undone with Cmd+Z or Ctrl+Z, except in a field with something typed in it, the note editor included, where the keys undo the typing alone. Undo covers every kind of record, the plan's included, checked by the same rules approving uses. Changes seen in place show no notification. A change that takes something out of view, such as discarding the draft of a record only drafted to be added, or deleting a saved view, shows a notification at the top right offering Undo, which closes after a few seconds or when a newer change is made. Sharing a view, or taking it back, shows one too, since nothing changes in view and it affects others. So does a change that takes a part of a record out of view, such as a team label a draft removes while Drafts applied is shown. Settings, which change Fathom for everyone, keep a Save button; once saved, the change shows in place with no notification, Cmd+Z or Ctrl+Z undoes it, and leaving with a change unsaved asks first. The plan's records, sharing a view, parts leaving view and settings decided by the owner on 2026-11-11.
   - **Drawn by:** `useSaving` and `isUndo` in `apps/web/src/saving.ts`, and `notifyUndoable` in `apps/web/src/notices.tsx`.
   - **Example:** on People, save a view, then delete it.
-- **Asking first:** Only approving and rejecting drafts ask first, since they can't be undone.
+- **Asking first:** Of the changes themselves, only approving drafts, rejecting them, and Discard all… ask first, since they can't be undone; leaving unsaved work asks too, as [Leaving Unsaved Work](#leaving-unsaved-work) sets out. Each confirms what was done in a notification without Undo, such as Approved 3 drafts, since it takes drafts out of view. Decided by the owner on 2026-11-11.
   - **Drawn by:** `DecisionModal` in `apps/web/src/decision-dialog.tsx`.
   - **Example:** Approve… in a seeded person's draft menu on People.
 - **Failures:** A change that fails says so in plain words, saying what to do next, never as a raw error, and its notification stays until closed. The record goes back to how it was.
   - **Drawn by:** `notifyFailure` in `apps/web/src/notices.tsx`, with the words from `describeProblem` in `apps/web/src/api.ts`.
   - **Example:** none in the seed data; a lost connection while saving shows one.
+- **A page that can't load:** A page, or a part of one, whose data can't be loaded says so in plain words in its place, with Try again. Decided by the owner on 2026-11-11.
+  - **Drawn by:** `LoadProblem` in `apps/web/src/load-problem.tsx`.
+  - **Example:** none in the seed data; stopping the server while a page loads shows one.
 
 ## Leaving Unsaved Work
 
-- **Asking before discarding:** Leaving a form or a note with anything changed in it, by Cancel, the close button, another tab or another record, asks first, such as Discard the new customer? with Keep adding and Discard, or Discard changes to the note? with Keep writing and Discard. The question always starts with Discard and names what is lost, such as Discard the fill of TBD-3? A dialog with anything typed in it is a form here. Decided by the owner on 2026-11-11. A form can't be left while its record is being added, and a dialog can't be closed while a change is being saved.
+- **Asking before discarding:** Leaving a form, a note, or a Settings panel with anything changed in it, by Cancel, the close button, another tab or another record, asks first, such as Discard the new customer? with Keep adding and Discard, or Discard changes to the note? with Keep writing and Discard. The question always starts with Discard and names what is lost, such as Discard the fill of TBD-3? A dialog with anything typed in it is a form here. Decided by the owner on 2026-11-11. A form can't be left while its record is being added, and a dialog can't be closed while a change is being saved.
   - **Drawn by:** `useDiscardQuestion` and `newRecordQuestion` in `apps/web/src/discard-question.tsx`.
   - **Example:** on Projects' Customers tab, select New customer, type a name, then Cancel.
 
@@ -196,7 +199,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## The Address
 
-- **Kept in the address:** Everything a page shows is kept in its address: the tab, the mode, the view (its search, filters, sort, grouping, metrics, frozen columns, column order, widths and units), the record shown in a panel, an open form, such as New or Fill, a note's panel, and the date shown. So reloading shows the same, a link shared shows it to others who may see it, and the browser's Back goes back through what was shown. A dialog isn't kept. A page opened from the menu starts afresh. Changing the date shown adds to Back's history, as moving to another page does; a chart's zoom and pan aren't kept. Forms, notes, dialogs, the date and zoom decided by the owner on 2026-11-11.
+- **Kept in the address:** Everything a page shows is kept in its address: the tab, the mode, the view (its search, filters, sort, grouping, metrics, frozen columns, column order, widths and units), the record shown in a panel, an open form, such as New or Fill, a note's panel, and the date shown. So reloading shows the same, a link shared shows it to others who may see it, and the browser's Back goes back through what was shown. A dialog isn't kept. A page opened from the menu starts afresh. Changing the date shown adds to Back's history, as moving to another page does, and so does any other choice of what to show, such as a switch or Show retired; typing in a search replaces it. A chart's zoom and pan aren't kept, and neither is a selection of rows, such as drafts chosen to approve. Forms, notes, dialogs, the date, zoom, switches and selections decided by the owner on 2026-11-11.
   - **Drawn by:** each page's search parameters in `apps/web/src/router.tsx`, with a table's view in `apps/web/src/table-view.ts`.
   - **Example:** on Projects, select the Customers tab and reload.
 - **Back to another page:** The browser's Back is the way back. A Back to button is offered only where Fathom itself jumps to another page.
@@ -217,7 +220,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Publishing
 
-- **Private until published:** A person's changes are theirs alone until they publish them. While they have any, the top bar shows Publish with how many, such as Publish 3 changes, which publishes them all, beside a menu listing them, with Discard all…, which asks first. A record someone else is changing is held, as [Drafts](#drafts) sets out.
+- **Private until published:** A person's changes are theirs alone until they publish them. While they have any, the top bar shows Publish with how many, such as Publish 3 changes, which publishes them all and confirms it in a notification without Undo, such as Published 3 changes., beside a menu listing them, with Discard all…, which asks first. Decided by the owner on 2026-11-11. A record someone else is changing is held, as [Drafts](#drafts) sets out.
   - **Drawn by:** `UnpublishedControl` in `apps/web/src/unpublished.tsx`.
   - **Example:** change any value on Features: Publish 1 change shows in the top bar.
 

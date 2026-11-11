@@ -17,7 +17,7 @@ Every change to the plan and its people is a draft until an approver approves it
 
 ## What Happens to a Draft
 
-- **Saved:** Nobody else sees it until it's published with **Publish** at the top of the page.
+- **Saved:** Nobody else sees it until it's published. **Publish** in the top bar says how many changes are waiting, such as **Publish 3 changes**, and publishes them all; the menu beside it lists them, and **Discard all…** discards them, asking first.
 - **Published:** It waits for an approver. If someone changes it, only they see their changes until they publish them.
 - **Approved:** The change goes live. Any new list, column, or choice it depends on is approved with it. This can't be undone.
 - **Rejected:** It goes back to the person who made it, who can change it, resubmit it, or discard it. Drafts that depend on it wait. Rejecting a new list, column, or choice also rejects the drafts that depend on it.
