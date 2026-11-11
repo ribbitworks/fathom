@@ -79,7 +79,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **A record with an ID:** Wherever a project or proposal is named, in a cell, a link, a picker or a filter, its ID comes first, dimmed in cells and links, then its name, so records with similar names are told apart.
   - **Drawn by:** `RecordName` in `apps/web/src/project-grids.tsx`.
   - **Example:** P-2001 Crane Control.
-- **Following a link:** A record named in a details panel is a link that opens that record's details, on its own page or tab, and the browser's back button goes back.
+- **Following a link:** A record named in a details panel is a link that opens that record's details, on its own page or tab, and the browser's back button goes back. A link from one page to a record on another, such as Show in People on the Org chart, opens that page with the record's details open, not only a search for it. Decided by the owner on 2026-11-11.
   - **Drawn by:** `RecordLink` in `apps/web/src/record-details.tsx`.
   - **Example:** a customer in Offline Sync's details opens Projects' Customers tab with that customer's details.
 - **Several records in a cell:** A cell naming several records lists them in one line, cut short where they don't fit, with every name in its tooltip, one to a line; a details panel lists them one to a line.
@@ -112,7 +112,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Fields
 
-- **An × to empty a field:** Every field typed into shows an × at its right to empty it while it holds any text, except those for passwords and on the Sign in page. Choosing the × keeps focus in the field. Decided by the owner on 2026-11-07. The fields that still have none are listed in [Issues](../issues.md#development).
+- **An × to empty a field:** Every field typed into shows an × at its right to empty it while it holds any text, except those for passwords and on the Sign in page. Choosing the × keeps focus in the field. Decided by the owner on 2026-11-07. A table's cells aren't fields: Delete or Backspace empties one, so they show no ×. Decided by the owner on 2026-11-11. The fields that still have none are listed in [Issues](../issues.md#development).
   - **Drawn by:** `ClearableInput` in `apps/web/src/clearable-input.tsx`.
   - **Example:** Name in Offline Sync's details, once its pencil opens it.
 
@@ -139,7 +139,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Words
 
-- **The principles:** Every word on screen follows Visual Design's [Principles](visual-design.md#principles): words people say, never the second person, and no instructional text. On top of those, use the plain verb: added, removed, changed, retired, restored, never "comes off" or "taking off".
+- **The principles:** Every word on screen follows Visual Design's [Principles](visual-design.md#principles): words people say, never the second person, and no instructional text. The rule against instructions is for text always on screen: a refusal may say what to do next, such as Choose a manager, or leave Manager assigned empty. Decided by the owner on 2026-11-11. On top of those, use the plain verb: added, removed, changed, retired, restored, never "comes off" or "taking off".
   - **Drawn by:** the words themselves, with `draftWords` and `DraftedWords` in `apps/web/src/status-mark.tsx` for drafts.
   - **Example:** Draft: removed.
 
@@ -160,7 +160,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Saving and Undo
 
-- **Saved at once:** Changes save at once, without asking. The latest can be undone with Cmd+Z or Ctrl+Z, except in a field with something typed in it, the note editor included, where the keys undo the typing alone. Changes seen in place show no notification. A change that takes something out of view, such as retiring or removing it, shows a notification at the top right offering Undo, which closes after a few seconds or when a newer change is made.
+- **Saved at once:** Changes save at once, without asking. The latest can be undone with Cmd+Z or Ctrl+Z, except in a field with something typed in it, the note editor included, where the keys undo the typing alone. Changes seen in place show no notification. A change that takes something out of view, such as retiring or removing it, shows a notification at the top right offering Undo, which closes after a few seconds or when a newer change is made. Sharing a view, or taking it back, shows one too, since nothing changes in view and it affects others. Decided by the owner on 2026-11-11.
   - **Drawn by:** `useSaving` and `isUndo` in `apps/web/src/saving.ts`, and `notifyUndoable` in `apps/web/src/notices.tsx`.
   - **Example:** on the Lists page, retire a choice of Sites.
 - **Asking first:** Only approving and rejecting drafts ask first, since they can't be undone.
@@ -172,16 +172,16 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Leaving Unsaved Work
 
-- **Asking before discarding:** Leaving a form or a note with anything changed in it, by Cancel, the close button, another tab or another record, asks first, such as Discard the new customer? with Keep adding and Discard, or Discard changes to the note? with Keep writing and Discard. A form can't be left while its record is being added, and a dialog can't be closed while a change is being saved.
+- **Asking before discarding:** Leaving a form or a note with anything changed in it, by Cancel, the close button, another tab or another record, asks first, such as Discard the new customer? with Keep adding and Discard, or Discard changes to the note? with Keep writing and Discard. The question always starts with Discard and names what is lost, such as Discard the fill of TBD-3? Decided by the owner on 2026-11-11. A form can't be left while its record is being added, and a dialog can't be closed while a change is being saved.
   - **Drawn by:** `useDiscardQuestion` and `newRecordQuestion` in `apps/web/src/discard-question.tsx`.
   - **Example:** on Projects' Customers tab, select New customer, type a name, then Cancel.
 
 ## Refusals
 
-- **A value refused:** A value refused when saved keeps its editor open, outlined in red, with the reason in red under it; in a table, the reason is under the row, in its first cell. Esc leaves the value as it was. Where a cell puts its old value back instead, as when Delete or leaving the cell is refused, the row is as it was and names nothing.
+- **A value refused:** A value refused when saved, by the page or by the server, keeps its editor open with what was typed, outlined in red, with the reason in red under it, so nothing is lost, in tables and panels alike; in a table, the reason is under the row, in its first cell. Esc leaves the value as it was. Decided by the owner on 2026-11-11.
   - **Drawn by:** `useRecordEditing` in `apps/web/src/record-editing.tsx` for a panel, and `RecordGrid` in `apps/web/src/record-grid.tsx` for a table.
   - **Example:** type 203013 in a Needed by cell on Features: Needed by: use a month such as 2027-03.
-- **Controls turned off:** A control for a change the server would refuse is turned off, with a line saying why wherever the reason isn't plain to see.
+- **Controls turned off:** A control for a change the server would refuse is turned off, with a line saying why wherever the reason isn't plain to see. A control the reader might expect, such as Fill on a planned hire or New under Live only, is turned off with its reason rather than hidden; a control is hidden only when the role can never use it. Decided by the owner on 2026-11-11.
   - **Drawn by:** each page; no shared piece yet.
   - **Example:** in a list with meanings, such as Feature statuses, Retire and Remove are greyed out on the only choice that means Possible, with a line saying why.
 
@@ -193,7 +193,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## The Address
 
-- **Kept in the address:** Everything a page shows is kept in its address: the tab, the mode, the view (its search, filters, sort, grouping, metrics, frozen columns, column order, widths and units), the record shown in a panel, and the date shown. So reloading shows the same, a link shared shows it to others who may see it, and the browser's Back goes back through what was shown. A page opened from the menu starts afresh.
+- **Kept in the address:** Everything a page shows is kept in its address: the tab, the mode, the view (its search, filters, sort, grouping, metrics, frozen columns, column order, widths and units), the record shown in a panel, an open form, such as New or Fill, a note's panel, and the date shown. So reloading shows the same, a link shared shows it to others who may see it, and the browser's Back goes back through what was shown. A dialog isn't kept. A page opened from the menu starts afresh. Decided by the owner on 2026-11-11 for forms, notes and dialogs.
   - **Drawn by:** each page's search parameters in `apps/web/src/router.tsx`, with a table's view in `apps/web/src/table-view.ts`.
   - **Example:** on Projects, select the Customers tab and reload.
 - **Back to another page:** The browser's Back is the way back. A Back to button is offered only where Fathom itself jumps to another page.

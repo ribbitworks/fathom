@@ -38,7 +38,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Tick each step whose expected result is seen, and write anything else under its notes.
 
 ### FT-01: The Chart Draws Feature Teams Under Their Leads
 
@@ -47,15 +47,27 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **Light** chosen in the Appearance menu. Signed in with this account. Select the **Org chart** page in the left-hand menu.
 
 - [ ] **Step 1.** Choose **Feature teams** in the teams switch.
-  - **Expected:** The chart is drawn again with four teams side by side. The first card of each names its team: **Mobile apps** on Sharda Varrier's card, **Payments core** on Gilda Effertz's, **Search** on Lorenza Thiel's, and a card named **Platform reliability** whose position reads **No feature lead**. The address bar now ends with `view=feature-teams`.
+  - **Expected:**
+    - The chart is drawn again with four teams side by side.
+    - The first card of each names its team:
+      - **Mobile apps** on Sharda Varrier's card
+      - **Payments core** on Gilda Effertz's
+      - **Search** on Lorenza Thiel's
+      - **Platform reliability** on a card whose position reads **No feature lead**
+    - The address bar now ends with `view=feature-teams`.
   - **Notes:**
 
 - [ ] **Step 2.** Look at the bands of the teams' cards.
-  - **Expected:** Mobile apps' cards have an orange band, Payments core's teal, and Search's indigo. Platform reliability's cards have none.
+  - **Expected:**
+    - Mobile apps' cards have an orange band.
+    - Payments core's have a teal band.
+    - Search's have an indigo band.
+    - Platform reliability's cards have none.
   - **Notes:**
 
 - [ ] **Step 3.** Type **Lorenza** in the box reading **Find a person or team** at the top left of the chart.
-  - **Expected:** Under **People**, two entries read **Lorenza Thiel**, one with **Payments core** under it and one with **Search**: her card under Gilda Effertz, and her card leading Search.
+  - **Expected:**
+    - Under **People**, two entries read **Lorenza Thiel**: her card under Gilda Effertz, with **Payments core** under it, and her card leading Search, with **Search** under it.
   - **Notes:**
 
 - [ ] **Step 4.** Choose **Dark** in the Appearance menu, and look over the chart.
@@ -67,23 +79,37 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 6.** Click Nicole Grüner's card, under Lorenza Thiel in Search.
-  - **Expected:** Nicole Grüner's details open beside the chart. Under **Reporting**, only **Manager** is shown. Under it, a **Feature teams** section lists **Search**, with **Led by Lorenza Thiel** beside it.
+  - **Expected:**
+    - Nicole Grüner's details open beside the chart.
+    - Under **Reporting**, only **Manager** is shown.
+    - Under it, a **Feature teams** section lists **Search**, with **Led by Lorenza Thiel** beside it.
   - **Notes:**
 
 - [ ] **Step 7.** Close the details, and click the card named **Platform reliability**.
-  - **Expected:** The team panel opens, titled **Feature team**, with **Team** reading Platform reliability and **Feature lead** None. There is no **Rename** button, no **Add member** box, and no **×** beside any member.
+  - **Expected:**
+    - The team panel opens, titled **Feature team**.
+    - **Team** reads Platform reliability, and **Feature lead** None.
+    - There is no **Rename** button, no **Add member** box, and no **×** beside any member.
   - **Notes:**
 
 - [ ] **Step 8.** Open the **Team** drop-down, and look at its choices, then choose **Search**.
-  - **Expected:** The choices are the four teams, with no **New feature team…**. Once Search is chosen, the panel shows **Feature lead** Lorenza Thiel, and the members Lorenza Thiel (lead), Nicole Grüner, Yara Habel and 杨治涛.
+  - **Expected:**
+    - The choices are the four teams, with no **New feature team…**.
+    - Once Search is chosen, the panel shows **Feature lead** Lorenza Thiel.
+    - The members are Lorenza Thiel (lead), Nicole Grüner, Yara Habel and 杨治涛.
   - **Notes:**
 
 - [ ] **Step 9.** Close the panel, and select **Payments core**, the team name under Gilda Effertz's position on her card.
-  - **Expected:** The team panel opens with **Team** reading Payments core and **Feature lead** Gilda Effertz. The team name on the card is a link, with no box to rename it.
+  - **Expected:**
+    - The team panel opens with **Team** reading Payments core and **Feature lead** Gilda Effertz.
+    - The team name on the card is a link, with no box to rename it.
   - **Notes:**
 
 - [ ] **Step 10.** Close the panel, choose **Reporting teams** in the teams switch, and click Lorenza Thiel's card.
-  - **Expected:** The chart shows managers' teams again, and Lorenza Thiel's details open beside it. Under **Reporting**, the rows read **Manager**, **Reporting team**, **Reporting team name** and **Direct reports**. A **Feature teams** section lists **Payments core**, **Led by Gilda Effertz**, and **Search**, **Lead**.
+  - **Expected:**
+    - The chart shows managers' teams again, and Lorenza Thiel's details open beside it.
+    - Under **Reporting**, the rows read **Manager**, **Reporting team**, **Reporting team name** and **Direct reports**.
+    - A **Feature teams** section lists **Payments core**, **Led by Gilda Effertz**, and **Search**, **Lead**.
   - **Notes:**
 
 - [ ] **Step 11.** Select **Search** in the **Feature teams** section.
@@ -97,19 +123,31 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Org chart** open, with **Feature teams** chosen in the teams switch.
 
 - [ ] **Step 1.** Select the Feature teams button, then **Platform reliability**.
-  - **Expected:** The team panel opens with **Team** reading Platform reliability, **Feature lead** empty, reading **No lead**, and no **Rename** button.
+  - **Expected:**
+    - The team panel opens with **Team** reading Platform reliability.
+    - **Feature lead** is empty, reading **No lead**.
+    - There is no **Rename** button.
   - **Notes:**
 
 - [ ] **Step 2.** In **Feature lead**, choose **Polly Smith**.
-  - **Expected:** A notice offers **Undo**. The panel shows a yellow dot and **Draft** under its title, and a line reading **None** under Feature lead, marked Live. On the chart, Platform reliability's first card is now Polly Smith's, named **Platform reliability**.
+  - **Expected:**
+    - The panel shows a yellow dot and **Draft** under its title.
+    - A line reading **None** under Feature lead is marked Live.
+    - On the chart, Platform reliability's first card is now Polly Smith's, named **Platform reliability**.
   - **Notes:**
 
 - [ ] **Step 3.** In **Add member**, type **Rosendo**, and choose **Rosendo Champlin**.
-  - **Expected:** Rosendo Champlin is listed among the members with a yellow dot and **Draft**. On the chart, a new card for Rosendo Champlin under Polly Smith is marked as drafted, while his card in Mobile apps stays.
+  - **Expected:**
+    - Rosendo Champlin is listed among the members with a yellow dot and **Draft**.
+    - On the chart, a new card for Rosendo Champlin under Polly Smith is marked as drafted.
+    - His card in Mobile apps stays.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **×** at the right of **Thad Heidenreich** in the members.
-  - **Expected:** Thad Heidenreich is no longer listed as a member; a line reading **Thad Heidenreich, leaving** is shown under the members, marked Live. On the chart, his card under Polly Smith is drawn faded, marked **Live**.
+  - **Expected:**
+    - Thad Heidenreich is no longer listed as a member.
+    - A line reading **Thad Heidenreich, leaving** is shown under the members, marked Live.
+    - On the chart, his card under Polly Smith is drawn faded, marked **Live**.
   - **Notes:**
 
 - [ ] **Step 5.** Select the Publish button.
@@ -123,15 +161,22 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Org chart** open, with **Feature teams** chosen in the teams switch.
 
 - [ ] **Step 1.** Select the Feature teams button, then **Search**. In the team panel, open **Team** and choose **New feature team…**.
-  - **Expected:** A panel titled **New feature team** opens, with a **Name** box holding the cursor, and **Add feature team** greyed out until a name is typed.
+  - **Expected:**
+    - A panel titled **New feature team** opens, with a **Name** box holding the cursor.
+    - **Add feature team** is greyed out until a name is typed.
   - **Notes:**
 
 - [ ] **Step 2.** Type **Fictional data team** and press Enter.
-  - **Expected:** A notice offers **Undo**. The panel's **Team** reads **Fictional data team**, marked with a yellow dot and **Draft**, and says **No members yet.** A card named **Fictional data team** with **No feature lead** appears on the chart.
+  - **Expected:**
+    - The panel's **Team** reads **Fictional data team**, marked with a yellow dot and **Draft**.
+    - The panel says **No members yet.**
+    - A card named **Fictional data team** with **No feature lead** appears on the chart.
   - **Notes:**
 
 - [ ] **Step 3.** In **Add member**, choose **Branson O'Keefe**, then **Priscille Adam**. Choose **Branson O'Keefe** in **Feature lead**.
-  - **Expected:** Both are listed as members, Branson O'Keefe with **(lead)**. On the chart, the team's first card is Branson O'Keefe's, named Fictional data team, with Priscille Adam under it.
+  - **Expected:**
+    - Both are listed as members, Branson O'Keefe with **(lead)**.
+    - On the chart, the team's first card is Branson O'Keefe's, named Fictional data team, with Priscille Adam under it.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Rename**, change the name to **Fictional analytics team**, and press Enter.
@@ -139,11 +184,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 5.** Select **Search** from the Feature teams button, then **Remove feature team**.
-  - **Expected:** The panel marks Search with a yellow dot and **Draft**, and the **Remove feature team** button is gone.
+  - **Expected:**
+    - The panel marks Search with a yellow dot and **Draft**.
+    - The **Remove feature team** button is gone.
   - **Notes:**
 
 - [ ] **Step 6.** Select **Discard draft**.
-  - **Expected:** The draft mark goes, and Search is shown as before.
+  - **Expected:**
+    - The draft mark goes.
+    - Search is shown as before.
   - **Notes:**
 
 - [ ] **Step 7.** Select the Publish button.
@@ -157,19 +206,28 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. Select the **Drafts** page in the left-hand menu.
 
 - [ ] **Step 1.** Type **Platform reliability** in the search box.
-  - **Expected:** One entry, **the feature team Platform reliability**, with lines for **Feature lead** set to Polly Smith and **Members** from Bilwa Iyer, Polly Smith, Thad Heidenreich to Bilwa Iyer, Polly Smith, Rosendo Champlin, each by Engineering Manager.
+  - **Expected:** One entry, **the feature team Platform reliability**, with these lines, each by Engineering Manager:
+    - **Feature lead** set to Polly Smith
+    - **Members** from Bilwa Iyer, Polly Smith, Thad Heidenreich to Bilwa Iyer, Polly Smith, Rosendo Champlin
   - **Notes:**
 
 - [ ] **Step 2.** Select the entry's checkbox, then **Approve**, and **Approve** in the dialog.
-  - **Expected:** The dialog closes, and a notice begins **Approved**.
+  - **Expected:**
+    - The dialog closes.
+    - A notice begins **Approved**.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch.
-  - **Expected:** Platform reliability is led by Polly Smith, with Bilwa Iyer and Rosendo Champlin under her and no draft marks. Thad Heidenreich is not on the team.
+  - **Expected:**
+    - Platform reliability is led by Polly Smith, with Bilwa Iyer and Rosendo Champlin under her.
+    - No card has a draft mark.
+    - Thad Heidenreich is not on the team.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **Drafts** page in the left-hand menu. Clear the search box, and type **Fictional analytics team**.
-  - **Expected:** One entry, **the feature team Fictional analytics team**, with lines for **Feature lead** Branson O'Keefe and **Members** Branson O'Keefe, Priscille Adam.
+  - **Expected:** One entry, **the feature team Fictional analytics team**, with these lines:
+    - **Feature lead** Branson O'Keefe
+    - **Members** Branson O'Keefe, Priscille Adam
   - **Notes:**
 
 ### FT-05: A Team's Panel Works From the Keyboard
@@ -179,7 +237,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Org chart** open, with **Feature teams** chosen in the teams switch. Select the Feature teams button, then **Search**.
 
 - [ ] **Step 1.** Select the **Add member** box, type **Rosendo**, press the Down Arrow key, and press Enter.
-  - **Expected:** Rosendo Champlin is listed among the members with a yellow dot and **Draft**. A notice offers **Undo**.
+  - **Expected:** Rosendo Champlin is listed among the members with a yellow dot and **Draft**.
   - **Notes:**
 
 - [ ] **Step 2.** Select the **Add member** box again, and press Tab repeatedly.
@@ -187,7 +245,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Press Shift and Tab together to return to **Discard draft**, and press Enter.
-  - **Expected:** The draft mark goes, and Rosendo Champlin is no longer listed.
+  - **Expected:**
+    - The draft mark goes.
+    - Rosendo Champlin is no longer listed.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -199,35 +259,61 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Org chart** open, with **Feature teams** chosen in the teams switch.
 
 - [ ] **Step 1.** Look at the row between the page's heading and the chart.
-  - **Expected:** A **Date** box shows today's date, written as year, month and day. Beside it are a left arrow, a timeline marked with one month in each year, such as **Nov 2024** and **Nov 2025**, a right arrow, and a **Today** button, which is greyed out.
+  - **Expected:**
+    - A **Date** box shows today's date, written as year, month and day.
+    - Beside it, in order:
+      - a left arrow
+      - a timeline marked with one month in each year, such as **Nov 2024** and **Nov 2025**
+      - a right arrow
+      - a **Today** button, greyed out
   - **Notes:**
 
 - [ ] **Step 2.** Select the left arrow once.
-  - **Expected:** The **Date** box shows the first day of last month. Below the row, text reads **Showing** with that date, then **Changes take effect from this date.** The chart redraws without the page going blank, and the **Draft** menu stays.
+  - **Expected:**
+    - The **Date** box shows the first day of last month.
+    - Below the row, text reads **Showing** with that date, then **Changes take effect from this date.**
+    - The chart redraws without the page going blank.
+    - The **Draft** menu stays.
   - **Notes:**
 
 - [ ] **Step 3.** Open the Feature teams button and choose any team.
-  - **Expected:** The team's panel shows its members with an **×** beside each, and an **Add member** box, but no **Rename** or **Remove feature team** button.
+  - **Expected:**
+    - The team's panel shows its members with an **×** beside each, and an **Add member** box.
+    - There is no **Rename** or **Remove feature team** button.
   - **Notes:**
 
 - [ ] **Step 4.** Drag the timeline's handle well to the left, and let go.
-  - **Expected:** While dragging, a label shows the month under the handle. The handle stays where you let it go. The chart redraws once, showing only the teams with members or a draft that month, which may be none, and the **Date** box shows the first day of that month.
+  - **Expected:**
+    - While dragging, a label shows the month under the handle.
+    - The handle stays where it was let go.
+    - The chart redraws once, showing only the teams with members or a draft that month, which may be none.
+    - The **Date** box shows the first day of that month.
   - **Notes:**
 
 - [ ] **Step 5.** Clear the **Date** box, and type a date in the middle of a month, as digits alone, such as 20250315.
-  - **Expected:** Below the row, text reads **Showing Mar 15, 2025. Changes take effect from this date.**, and the timeline's handle moves to March 2025.
+  - **Expected:**
+    - Below the row, text reads **Showing Mar 15, 2025. Changes take effect from this date.**
+    - The timeline's handle moves to March 2025.
   - **Notes:**
 
 - [ ] **Step 6.** Select **Reporting teams** in the teams switch.
-  - **Expected:** The date stays. The chart shows managers and their reports as of that date, and the text below the row still ends **Changes take effect from this date.**
+  - **Expected:**
+    - The date stays.
+    - The chart shows managers and their reports as of that date.
+    - The text below the row still ends **Changes take effect from this date.**
   - **Notes:**
 
 - [ ] **Step 7.** Select **Today**.
-  - **Expected:** The text below the row goes, **Today** is greyed out, and the **Date** box shows today's date.
+  - **Expected:**
+    - The text below the row goes.
+    - **Today** is greyed out.
+    - The **Date** box shows today's date.
   - **Notes:**
 
 - [ ] **Step 8.** Switch Fathom between light and dark mode.
-  - **Expected:** The row is easy to read in both, and the timeline's month labels do not overlap each other or the chart.
+  - **Expected:**
+    - The row is easy to read in both.
+    - The timeline's month labels do not overlap each other or the chart.
   - **Notes:**
 
 ### FT-07: Readers Without Personal Details Are Told Why There Is No Other Date
@@ -253,11 +339,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Org chart** open, with **Feature teams** chosen in the teams switch, showing today.
 
 - [ ] **Step 1.** Select the right arrow once.
-  - **Expected:** The **Date** box shows the first day of next month, and the text below the row ends **Changes take effect from this date.**
+  - **Expected:**
+    - The **Date** box shows the first day of next month.
+    - The text below the row ends **Changes take effect from this date.**
   - **Notes:**
 
 - [ ] **Step 2.** Select the Feature teams button, then **Platform reliability**. In **Add member**, choose the first person listed. Note their name: the joiner.
-  - **Expected:** A notice offers **Undo**. The joiner is listed among the members with a yellow dot and **Draft**, with no date after it, and a card for them appears under the team on the chart.
+  - **Expected:**
+    - The joiner is listed among the members with a yellow dot and **Draft**, with no date after it.
+    - A card for them appears under the team on the chart.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Today**.
@@ -269,7 +359,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 5.** Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch. Select the Feature teams button, then **Platform reliability**, and select **Discard draft**.
-  - **Expected:** The draft mark goes, and the joiner is no longer listed.
+  - **Expected:**
+    - The draft mark goes.
+    - The joiner is no longer listed.
   - **Notes:**
 
 ### FT-09: An Earlier Date Is Read Only Without the Right to Change Dates
@@ -279,15 +371,22 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Org chart** open, with **Feature teams** chosen in the teams switch, showing today.
 
 - [ ] **Step 1.** Select the left arrow once.
-  - **Expected:** The text below the row ends **Nothing can be changed on this date.** The **Draft** menu is gone.
+  - **Expected:**
+    - The text below the row ends **Nothing can be changed on this date.**
+    - The **Draft** menu is gone.
   - **Notes:**
 
 - [ ] **Step 2.** Select the Feature teams button, then any team.
-  - **Expected:** The team's panel shows its members with no **×** beside them, and no **Add member** box.
+  - **Expected:**
+    - The team's panel shows its members with no **×** beside them.
+    - There is no **Add member** box.
   - **Notes:**
 
 - [ ] **Step 3.** Select the right arrow twice.
-  - **Expected:** The text below the row ends **Changes take effect from this date.** The **Draft** menu is back, and the team's panel shows an **×** beside each member and an **Add member** box.
+  - **Expected:**
+    - The text below the row ends **Changes take effect from this date.**
+    - The **Draft** menu is back.
+    - The team's panel shows an **×** beside each member and an **Add member** box.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Today**, then choose **Reporting teams** in the teams switch.
