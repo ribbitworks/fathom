@@ -1,0 +1,36 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* A month's allocations in a table's cell: a line for each feature with its percentage, and the
+   month's total, marked when over or under a whole month. */
+
+.lines {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--mantine-font-size-xs);
+  line-height: var(--mantine-line-height);
+}
+
+.line {
+  display: flex;
+  gap: 4px;
+  justify-content: space-between;
+  white-space: nowrap;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.total {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.over {
+  font-weight: 600;
+  color: var(--mantine-color-red-text);
+}
+
+.under {
+  color: var(--mantine-color-dimmed);
+}

@@ -67,6 +67,24 @@ export function DraftDot({ draft }: { draft: DraftLike }) {
   );
 }
 
+// What a draft does to a part of a record, such as a feature team or feature in a month's cell.
+export type DraftedPart = "added" | "removed" | "changed";
+
+const draftedPartWords: Record<DraftedPart, string> = {
+  added: ", added",
+  removed: ", removed",
+  changed: ", changed",
+};
+
+// What a draft does to a part, read aloud after it, since the dot and the line through it are seen.
+export function DraftedWords({ drafted }: { drafted: DraftedPart }) {
+  return (
+    // The key is one of the union's own.
+    // eslint-disable-next-line security/detect-object-injection
+    <VisuallyHidden>{draftedPartWords[drafted]}</VisuallyHidden>
+  );
+}
+
 export function DraftMark({ draft }: { draft: DraftLike }) {
   const rejected = draft.state === "rejected";
   const unpublished = draft.unpublished === true;

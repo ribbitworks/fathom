@@ -124,6 +124,7 @@ import {
   valueOrStandIn,
   type View,
   orderAfterMove,
+  withoutFilters,
 } from "./table-view.ts";
 import { AppMenu, closesOnBlankClick } from "./app-menu.tsx";
 import { metricsButtonId, metricsPanelId } from "./metrics.ts";
@@ -1113,12 +1114,8 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   withDrafts?: boolean;
 }
 
-const withoutDraftFilter = (view: View): View => ({
-  ...view,
-  filters: Object.fromEntries(
-    Object.entries(view.filters).filter(([key]) => key !== draftFilterKey),
-  ),
-});
+const withoutDraftFilter = (view: View): View =>
+  withoutFilters(view, (key) => key !== draftFilterKey);
 
 // Each row's group as the view last placed it, so a row keeps its heading while it is edited, as
 // it keeps its place; a row added since is placed by what it holds now.

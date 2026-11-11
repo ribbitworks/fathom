@@ -4,7 +4,8 @@
 // row for each person and a column for each month, with the months team drafts change shown as a
 // draft of the person's row. Grouped by feature team, someone who was on two teams has a row under
 // each. Those who may propose team changes change a month's teams, drafted on each team from that
-// month on.
+// month on. The table, its groupings and its read-only actions are shared with the grid's other
+// mode, allocations.
 
 import {
   addToMonth,
@@ -20,6 +21,7 @@ import {
 } from "@fathom/shared";
 import { VisuallyHidden } from "@mantine/core";
 import { queryOptions } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import { getJson } from "./api.ts";
 import type { CellChange } from "./cell-kinds.tsx";
 import { noDrafts } from "./drafts.ts";
@@ -45,14 +47,18 @@ export type MonthLabel = MonthTeam & {
   addedBy?: DraftLike;
 };
 
-export interface PersonMonths extends CellRecord {
+// A row of the monthly grid, in either mode.
+export interface MonthRow extends CellRecord {
   personId: string;
   name: string;
   manager: TeamMonths["people"][number]["manager"];
   // The feature team this row is grouped under, when grouped by feature team.
   group?: MonthTeam | undefined;
-  teamsIn: ReadonlyMap<string, MonthLabel[]>;
   outside: ReadonlySet<string>;
+}
+
+export interface PersonMonths extends MonthRow {
+  teamsIn: ReadonlyMap<string, MonthLabel[]>;
   // The person as approved, when a draft changes their months.
   live?: PersonMonths | undefined;
 }
@@ -86,13 +92,12 @@ const lastRank = Number.MAX_SAFE_INTEGER;
 const managerGrouping = "manager";
 export const featureTeamGrouping = "feature-team";
 
-const groupedByManager = (data: TeamMonths): RowGrouping<PersonMonths> => {
+// Grouped by manager, under each manager given, by name, and then those with none.
+function groupedByManager<Rec extends Pick<MonthRow, "manager">>(
+  managersGiven: readonly { id: string; name: string }[],
+): RowGrouping<Rec> {
   const managers = [
-    ...new Map(
-      data.people.flatMap(({ manager }) =>
-        manager === null ? [] : [[manager.id, manager] as const],
-      ),
-    ).values(),
+    ...new Map(managersGiven.map((manager) => [manager.id, manager])).values(),
   ].sort(byName);
   const ranks = new Map(managers.map(({ id }, rank) => [id, rank]));
   return {
@@ -104,13 +109,15 @@ const groupedByManager = (data: TeamMonths): RowGrouping<PersonMonths> => {
         : {
             key: manager.id,
             label: manager.name,
-            // Every manager in the data is ranked above.
+            // Every manager of a row is given above.
             rank: ranks.get(manager.id) as number,
           },
   };
-};
+}
 
-const groupedByFeatureTeam = (data: TeamMonths): RowGrouping<PersonMonths> => {
+function groupedByFeatureTeam<Rec extends Pick<MonthRow, "group">>(
+  data: TeamMonths,
+): RowGrouping<Rec> {
   const ranks = new Map(
     [...data.teams].sort(byName).map(({ id }, rank) => [id, rank]),
   );
@@ -127,7 +134,7 @@ const groupedByFeatureTeam = (data: TeamMonths): RowGrouping<PersonMonths> => {
             rank: ranks.get(group.id) as number,
           },
   };
-};
+}
 
 // With drafts applied, a team a draft takes someone off is gone, rather than struck through.
 const labelsShown = (labels: readonly MonthLabel[], show: Show) =>
@@ -147,60 +154,70 @@ const editableMonth = (
   { today, changesDates }: TeamMonthEdits,
 ) => mayDateTeamChange(changesDates, dayReadingMonth(month, today), today);
 
-export function teamMonthsTable(
-  data: TeamMonths,
-  seesPeople: boolean,
-  show: Show,
-  edits: TeamMonthEdits,
-): Table {
-  const choices = [...data.teams].sort(byName).map(({ id, name }) => ({
+// The table of the monthly grid: a row's name, frozen on the left, then a column for each month,
+// whose cells show what the content gives, shaded outside someone's employment.
+export function monthGridTable<
+  Rec extends MonthRow & { live?: Rec | undefined },
+>({
+  months,
+  label,
+  choices,
+  content,
+  readOnly,
+  standIn,
+  groupings,
+}: {
+  months: readonly string[];
+  label: string;
+  choices: readonly { id: string; name: string }[];
+  content: (record: Rec, month: string) => ReactNode;
+  readOnly: (month: string) => boolean;
+  standIn?: (record: Rec) => string;
+  groupings: readonly RowGrouping<Rec>[];
+}): RecordTable<Rec, CellChange, CellChange> {
+  const monthChoices = [...choices].sort(byName).map(({ id, name }) => ({
     id,
     label: name,
     description: "",
     retired: false,
   }));
-  const monthColumns = data.months.map(
-    (month): Column<PersonMonths, CellChange> => ({
-      ...cellColumn<PersonMonths, CellChange>(month, "choice", {
-        label: formatMonth(month),
-        required: false,
-        choices,
-        multiple: true,
-      }),
-      content: (person) => (
-        <TeamLabels
-          teams={labelsShown(person.teamsIn.get(month) ?? [], show)}
-        />
-      ),
-      shaded: (person) => person.outside.has(month),
-      mark: (person) =>
-        person.outside.has(month) ? (
-          <VisuallyHidden>Not employed</VisuallyHidden>
-        ) : undefined,
-      cellChars: monthCellChars,
-      headingCentred: true,
-      readOnly: !editableMonth(month, edits),
+  const monthColumns = months.map((month): Column<Rec, CellChange> => ({
+    ...cellColumn<Rec, CellChange>(month, "choice", {
+      label: formatMonth(month),
+      required: false,
+      choices: monthChoices,
+      multiple: true,
     }),
-  );
+    content: (record) => content(record, month),
+    shaded: (record) => record.outside.has(month),
+    mark: (record) =>
+      record.outside.has(month) ? (
+        <VisuallyHidden>Not employed</VisuallyHidden>
+      ) : undefined,
+    cellChars: monthCellChars,
+    headingCentred: true,
+    readOnly: readOnly(month),
+  }));
   const columns = [
     {
-      ...cellColumn<PersonMonths, CellChange>("name", "text", {
+      ...cellColumn<Rec, CellChange>("name", "text", {
         label: "Person",
         required: true,
         choices: [],
         multiple: false,
       }),
       readOnly: true,
+      ...(standIn === undefined ? {} : { standIn }),
     },
     ...monthColumns,
   ];
   return {
-    label: "Feature teams by month",
+    label,
     one: "person",
     noun: "people",
     newRowLabel: () => "",
     removeLabel: () => "",
-    nameOf: ({ name }) => name,
+    nameOf: (record) => record.name || (standIn?.(record) ?? ""),
     countedAs: ({ personId }) => personId,
     columnsFor: () => columns,
     liveRecords: (records) => records.map((record) => record.live ?? record),
@@ -208,11 +225,41 @@ export function teamMonthsTable(
     recordProblem: () => undefined,
     request: () => ({}),
     drafts: () => noDrafts(),
-    groupings: [
-      ...(seesPeople ? [groupedByManager(data)] : []),
-      groupedByFeatureTeam(data),
-    ],
+    groupings,
   };
+}
+
+export function teamMonthsTable(
+  data: TeamMonths,
+  seesPeople: boolean,
+  show: Show,
+  edits: TeamMonthEdits,
+): Table {
+  return monthGridTable<PersonMonths>({
+    months: data.months,
+    label: "Feature teams by month",
+    choices: data.teams,
+    content: (person, month) => (
+      <TeamLabels teams={labelsShown(person.teamsIn.get(month) ?? [], show)} />
+    ),
+    readOnly: (month) => !editableMonth(month, edits),
+    groupings: monthGroupings(seesPeople, peopleManagers(data), data),
+  });
+}
+
+export const peopleManagers = (data: TeamMonths) =>
+  data.people.flatMap(({ manager }) => (manager === null ? [] : [manager]));
+
+// The ways the grid's rows group: by manager, for those who see people, and by feature team.
+export function monthGroupings<Rec extends MonthRow>(
+  seesPeople: boolean,
+  managers: readonly { id: string; name: string }[],
+  data: TeamMonths,
+): RowGrouping<Rec>[] {
+  return [
+    ...(seesPeople ? [groupedByManager<Rec>(managers)] : []),
+    groupedByFeatureTeam<Rec>(data),
+  ];
 }
 
 const nothing = () => undefined;
@@ -285,7 +332,7 @@ export function withMonthChange(
 
 // The table never adds, removes or decides on whole records, so these are never called.
 export const noWholeRecordActions: Omit<
-  RecordActions<PersonMonths, CellChange, CellChange>,
+  RecordActions<MonthRow, CellChange, CellChange>,
   "update"
 > = {
   add: nothing,
@@ -297,6 +344,13 @@ export const noWholeRecordActions: Omit<
   discardColumn: nothing,
   resubmitColumn: nothing,
 };
+
+// A mode of the grid that changes nothing never calls these.
+export const readOnlyMonthActions: RecordActions<
+  MonthRow,
+  CellChange,
+  CellChange
+> = { ...noWholeRecordActions, update: nothing };
 
 // Changing a month's teams, shown at once and saved as the team drafts, which can be undone; the
 // table changes nothing else.
@@ -330,10 +384,10 @@ export function useTeamMonthActions(
   };
 }
 
-// The draft a person's row shows for the team drafts changing their months: rejected while any is,
+// The draft a person's row shows for the drafts changing their months: rejected while any is,
 // so it is seen to, otherwise the reader's own while any holds their unpublished changes.
 export function personDraft(
-  drafts: readonly TeamDraft[],
+  drafts: readonly Pick<TeamDraft, "state" | "unpublished">[],
 ): Pick<TeamDraft, "state" | "unpublished"> {
   return {
     state: drafts.some(({ state }) => state === "rejected")

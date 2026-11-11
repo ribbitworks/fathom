@@ -2,10 +2,15 @@
 
 // Tests for the Feature assignments page: people as rows and months as columns, their teams shown as
 // labels, the three ways of grouping them, each person counted once, months outside someone's
-// employment, a label's tooltip, drafts and the Draft menu, changing a month's teams, and what it
-// shows when it cannot load.
+// employment, a label's tooltip, drafts and the Draft menu, changing a month's teams, what it shows
+// when it cannot load, and the Allocations mode: its cells, the switch and the mode in the address.
 
-import { monthsBetween, type TeamMonths } from "@fathom/shared";
+import {
+  type Allocations,
+  monthsBetween,
+  type OrgChart,
+  type TeamMonths,
+} from "@fathom/shared";
 import {
   act,
   fireEvent,
@@ -437,5 +442,202 @@ describe("the Feature assignments page", () => {
     expect(
       await screen.findByText("There is no page at this address."),
     ).toBeDefined();
+  });
+});
+
+describe("the Allocations mode", () => {
+  const allocations: Allocations = {
+    allocations: [
+      {
+        id: "a-1",
+        personId: "p-casey",
+        plannedHireId: null,
+        featureId: "f-checkout",
+        months: { "2027-03": 50, "2027-05": null },
+      },
+      {
+        id: "a-2",
+        personId: null,
+        plannedHireId: "h-tester",
+        featureId: "f-checkout",
+        months: { "2027-04": 100 },
+      },
+    ],
+    features: [{ id: "f-checkout", name: "Checkout", meaning: "in-progress" }],
+  };
+  const chart: OrgChart = {
+    people: [
+      {
+        id: "p-blair",
+        preferredName: "Blair Fictional",
+        employeeId: null,
+        position: null,
+        teamName: null,
+        teamColour: null,
+        managerId: null,
+      },
+      {
+        id: "h-tester",
+        preferredName: "Payments tester",
+        employeeId: null,
+        position: null,
+        teamName: null,
+        teamColour: null,
+        managerId: "p-blair",
+        planned: { expected: "2027-04" },
+      },
+    ],
+    drafted: [],
+  };
+  const seesAllocations = session([
+    "org-chart:view",
+    "people:view",
+    "allocations:view",
+  ]);
+
+  function openAllocations(
+    search = "?mode=allocations",
+    answers: { allocations?: () => Response } = {},
+  ) {
+    serverAnswers({
+      "GET /api/session": seesAllocations,
+      [monthsUrl]: () => Response.json(months),
+      "GET /api/allocations":
+        answers.allocations ?? (() => Response.json(allocations)),
+      "GET /api/org-chart": () => Response.json(chart),
+    });
+    return renderApp(`/feature-assignments${search}`);
+  }
+
+  const address = (history: ReturnType<typeof renderApp>) =>
+    decodeURIComponent(history.location.search);
+
+  it("shows each person's and planned hire's features with their percentages", async () => {
+    // Given Casey on Checkout at 50% in March and April 2027, and Payments tester at 100% from
+    // April 2027, the month it is expected
+    openAllocations();
+    await screen.findByRole("grid", { name: "Allocations by month" });
+
+    // Then Casey's two months show the feature, and every month from the current one on, March
+    // 2027, is under a whole month, the empty ones included
+    const casey = within(rowOf("Casey Fictional"));
+    expect(casey.getAllByText("Checkout")).toHaveLength(2);
+    expect(casey.getAllByText("Under")).toHaveLength(
+      monthsBetween("2027-03", "2028-02").length,
+    );
+    // And the planned hire shows a whole month from April 2027 to February 2028, the last shown
+    const monthsFromApril = monthsBetween("2027-04", "2028-02").length;
+    expect(within(rowOf("Payments tester")).getAllByText("100%")).toHaveLength(
+      monthsFromApril,
+    );
+  });
+
+  it("switches modes, keeping the view in the address but not the months' filters", async () => {
+    const history = openAllocations(
+      '?grouping=feature-team&filters={"2027-03":{"any":["t-mobile"]}}',
+    );
+    await screen.findByRole("grid", { name: "Feature teams by month" });
+
+    await userEvent.click(screen.getByText("Allocations"));
+    await screen.findByRole("grid", { name: "Allocations by month" });
+    expect(address(history)).toBe("?grouping=feature-team&mode=allocations");
+
+    await userEvent.click(screen.getByText("Teams"));
+    await screen.findByRole("grid", { name: "Feature teams by month" });
+    expect(address(history)).toBe("?grouping=feature-team");
+  });
+
+  it("keeps the mode as the view changes", async () => {
+    const history = openAllocations();
+    await screen.findByRole("grid", { name: "Allocations by month" });
+
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Search people" }),
+      "Casey",
+    );
+
+    await waitFor(() => {
+      expect(address(history)).toBe("?search=Casey&mode=allocations");
+    });
+  });
+
+  it("offers the Draft menu to those who see allocations but not people", async () => {
+    serverAnswers({
+      "GET /api/session": session(["org-chart:view", "allocations:view"]),
+      [monthsUrl]: () => Response.json(months),
+      "GET /api/allocations": () => Response.json(allocations),
+      "GET /api/org-chart": () => Response.json(chart),
+    });
+    renderApp("/feature-assignments?mode=allocations");
+    await screen.findByRole("grid", { name: "Allocations by month" });
+
+    expect(screen.getByRole("button", { name: /^Draft/u })).toBeDefined();
+  });
+
+  it("greys out Allocations, saying why, for those who do not see allocations", async () => {
+    await openPage("?mode=allocations");
+
+    expect(
+      screen
+        .getByRole("radio", {
+          name: "Allocations. This role doesn't see allocations",
+        })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+    fireEvent.mouseEnter(screen.getByText("Allocations"));
+    expect((await screen.findByRole("tooltip")).textContent).toBe(
+      "This role doesn't see allocations",
+    );
+  });
+
+  it("says when the allocations could not load, and tries again", async () => {
+    let answers = 0;
+    openAllocations("?mode=allocations", {
+      allocations: () => {
+        answers += 1;
+        return answers === 1
+          ? Response.json({}, { status: 500 })
+          : Response.json(allocations);
+      },
+    });
+
+    await screen.findByText("Fathom could not load the feature assignments.");
+    await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+
+    expect(
+      await screen.findByRole("grid", { name: "Allocations by month" }),
+    ).toBeDefined();
+  });
+
+  it("opens no cell for editing", async () => {
+    openAllocations();
+    await screen.findByRole("grid", { name: "Allocations by month" });
+
+    expect(
+      document
+        .getElementById("cell-p-casey-2027-03")
+        ?.getAttribute("aria-readonly"),
+    ).toBe("true");
+  });
+
+  it("keeps no mode in the address for those who do not see allocations", async () => {
+    // Given an address asking for allocations, from a role that sees only Teams
+    serverAnswers({
+      "GET /api/session": seesPeople,
+      [monthsUrl]: () => Response.json(months),
+    });
+    const history = renderApp("/feature-assignments?mode=allocations");
+    await screen.findByRole("grid", { name: "Feature teams by month" });
+
+    // When the view changes
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Search people" }),
+      "Casey",
+    );
+
+    // Then the address holds the view alone
+    await waitFor(() => {
+      expect(address(history)).toBe("?search=Casey");
+    });
   });
 });

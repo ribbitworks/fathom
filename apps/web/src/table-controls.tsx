@@ -62,6 +62,7 @@ import {
   type TableColumn,
   type View,
   viewFrom,
+  withoutFilters,
   withPlaces,
   withUnit,
 } from "./table-view.ts";
@@ -137,9 +138,7 @@ function withPart<Part extends keyof Filter>(
 }
 
 function withFilter(view: View, key: string, filter: Filter | undefined): View {
-  const filters = Object.fromEntries(
-    Object.entries(view.filters).filter(([other]) => other !== key),
-  );
+  const { filters } = withoutFilters(view, (other) => other !== key);
   return {
     ...view,
     filters:

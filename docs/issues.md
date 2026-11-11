@@ -1,4 +1,4 @@
-# Fathom — Issues
+# Fathom: Issues
 
 **Status:** Working list
 **Last updated:** 2026-11-10
@@ -41,6 +41,9 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 - **Allocations named only by their feature:** A user's list of unpublished changes names a change to an allocation as "an allocation to the feature …", without who is allocated, since the plan's records are named from the plan alone. To be settled with allocating from the grid, which brings allocation drafts to the screens. Found on 2026-11-09.
 - **"You" in refusals to approve:** Approving or rejecting drafts of an area the role does not approve is refused with "Your role doesn't let you approve drafts of …", which breaks the rule that nothing on screen says "you" or "your". Found while building allocations on 2026-11-09.
 - **Every plan change loads every allocation:** `readRecordsState` in `apps/server/src/data/records.ts` loads the whole allocations table, and every allocation draft, whenever any of the plan's records is read, drafted, published, approved or rejected, since the rules for removing a feature or project read allocations from the same state. Allocations will outnumber every other kind of record, so plan changes slow as they grow. Loading them only for the features, projects or people a change touches must keep those rules whole. Accepted by the owner on 2026-11-10 as a concern to revisit.
+- **Allocations of people who have left, for readers without Restricted details:** The Allocations mode of Feature assignments has the rows the Teams mode has, so these readers see only people employed today, and not the past months of those who have left, which [Capacity views](product/decisions.md#planning) counts. To be settled with the capacity total rows, which need them. Found while building the Allocations mode on 2026-11-10.
+- **Planned hires counted as people in Allocations:** Metrics on Feature assignments, in the Allocations mode, counts planned hires as people, such as "40 people" with a planned hire among them, where People says "150 people and 6 planned hires". Deferred by the owner on 2026-11-10 to the capacity total rows, which count planned hires apart.
+- **Allocation drafts have no manual test yet:** Nothing on screen makes an allocation draft until allocating from a cell is built, and the seed holds none, so [Feature Assignments](testing/feature-assignments-manual-test.md) has no case for how they show; automated tests cover them until then. Found while building the Allocations mode on 2026-11-10.
 
 - **Copies of capitalizing a sentence:** `capitalized` in `packages/shared/src/text.ts` is the shared helper, but six earlier copies remain: in `apps/web/src/change-history-page.tsx`, `metrics-panel.tsx`, `password-settings.tsx`, `table-controls.tsx` and `colours.ts`, and in `packages/shared/src/passwords.ts`. Found in review on 2026-11-09.
 - **Days in feature team refusals:** A refusal that a team change is out of order names the day as kept, such as 2027-01-01, rather than in words. Found in review on 2026-11-09.

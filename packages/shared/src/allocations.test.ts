@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for allocations kept from a month: the percentage in force, what a change makes of the
-// months, the runs of months two versions differ in, and which changes a request may ask for.
+// months, the runs of months two versions differ in, which changes a request may ask for, a
+// month's total, and how it is marked.
 
 import { describe, expect, it } from "vitest";
 import {
   allocationChangeSchema,
   allocationMonthsSchema,
+  allocatedTotal,
   changedSpans,
+  loadMark,
   percentageIn,
   tidiedMonths,
   withChange,
@@ -174,5 +177,84 @@ describe("allocationChangeSchema", () => {
     ["a feature that is not an identifier", { ...change, featureId: "x" }],
   ])("rejects %s", (_, asked) => {
     expect(allocationChangeSchema.safeParse(asked).success).toBe(false);
+  });
+});
+
+describe("allocatedTotal", () => {
+  it("adds up a month's allocations, leaving out Possible features", () => {
+    expect(
+      allocatedTotal([
+        { percentage: 50, meaning: "in-progress" },
+        { percentage: 25, meaning: "possible" },
+        { percentage: 10, meaning: null },
+      ]),
+    ).toBe(60);
+  });
+
+  it("counts done and cancelled features, whose allocations are time spent", () => {
+    expect(
+      allocatedTotal([
+        { percentage: 75, meaning: "done" },
+        { percentage: 50, meaning: "cancelled" },
+      ]),
+    ).toBe(125);
+  });
+
+  it("is nothing for a month with no allocations", () => {
+    expect(allocatedTotal([])).toBe(0);
+  });
+});
+
+describe("loadMark", () => {
+  const current = { month: "2027-03", currentMonth: "2027-03" };
+
+  it("marks a total over a whole month as over", () => {
+    expect(loadMark({ ...current, total: 125, allocatable: true })).toBe(
+      "over",
+    );
+  });
+
+  it("marks over even in a month someone cannot be allocated in", () => {
+    expect(loadMark({ ...current, total: 110, allocatable: false })).toBe(
+      "over",
+    );
+  });
+
+  it("marks a total under a whole month as under, nothing allocated included", () => {
+    expect(loadMark({ ...current, total: 75, allocatable: true })).toBe(
+      "under",
+    );
+    expect(loadMark({ ...current, total: 0, allocatable: true })).toBe("under");
+  });
+
+  it("leaves a whole month unmarked", () => {
+    expect(
+      loadMark({ ...current, total: 100, allocatable: true }),
+    ).toBeUndefined();
+  });
+
+  it("leaves a month someone cannot be allocated in unmarked when under", () => {
+    expect(
+      loadMark({ ...current, total: 0, allocatable: false }),
+    ).toBeUndefined();
+  });
+
+  it("marks later months, and leaves past months unmarked", () => {
+    expect(
+      loadMark({
+        total: 150,
+        month: "2027-04",
+        currentMonth: "2027-03",
+        allocatable: true,
+      }),
+    ).toBe("over");
+    expect(
+      loadMark({
+        total: 150,
+        month: "2027-02",
+        currentMonth: "2027-03",
+        allocatable: true,
+      }),
+    ).toBeUndefined();
   });
 });

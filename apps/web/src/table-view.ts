@@ -205,6 +205,17 @@ export function withWidth(
   return { ...view, widths: withEntry(view.widths, key, width) };
 }
 
+// The view with only the filters whose keys it keeps.
+export const withoutFilters = (
+  view: View,
+  keep: (key: string) => boolean,
+): View => ({
+  ...view,
+  filters: Object.fromEntries(
+    Object.entries(view.filters).filter(([key]) => keep(key)),
+  ),
+});
+
 // The view with a column's numbers shown to a number of decimal places, or, given none, to as many
 // as it starts with.
 export function withPlaces(

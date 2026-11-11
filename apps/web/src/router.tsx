@@ -35,7 +35,11 @@ import { Home } from "./home.tsx";
 import { firstPage, Layout } from "./layout.tsx";
 import { ListsPage } from "./lists-page.tsx";
 import { listKindSchema } from "./lists.ts";
-import { FeatureAssignmentsPage } from "./feature-assignments-page.tsx";
+import {
+  FeatureAssignmentsPage,
+  type GridMode,
+  gridModeSchema,
+} from "./feature-assignments-page.tsx";
 import { OrgChartPage } from "./org-chart-page.tsx";
 import { SettingsPage } from "./settings-page.tsx";
 import { setTimeZone } from "./today.ts";
@@ -47,7 +51,7 @@ import { PageNotFound, ServerProblem } from "./problems.tsx";
 import { RolesPage } from "./roles-page.tsx";
 import { sessionQuery } from "./session.ts";
 import { SignIn } from "./sign-in.tsx";
-import { viewProps, viewSearchSchema } from "./table-view.ts";
+import { searchFor, viewProps, viewSearchSchema } from "./table-view.ts";
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   notFoundComponent: PageNotFound,
@@ -508,25 +512,36 @@ const orgChartRoute = createRoute({
   },
 });
 
+// The Feature assignments page's address adds the grid's mode, Teams unless Allocations is named.
+const featureAssignmentsSearch = viewSearchSchema.extend({
+  mode: gridModeSchema.optional().catch(undefined),
+});
+
 const featureAssignmentsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/feature-assignments",
-  validateSearch: viewSearchSchema,
+  validateSearch: featureAssignmentsSearch,
   beforeLoad: requiring("org-chart:view"),
   component: function FeatureAssignments() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = featureAssignmentsRoute.useNavigate();
-    const { view, onView } = viewProps(
-      featureAssignmentsRoute.useSearch(),
-      (search, replace) => {
-        void navigate({ search, replace });
-      },
-    );
+    const { mode = "teams", ...search } = featureAssignmentsRoute.useSearch();
+    const seesAllocations = permissions.includes("allocations:view");
+    const kept = (next: GridMode) =>
+      seesAllocations && next === "allocations" ? { mode: next } : {};
+    const { view, onView } = viewProps(search, (next, replace) => {
+      void navigate({ search: { ...next, ...kept(mode) }, replace });
+    });
     return (
       <FeatureAssignmentsPage
         seesPeople={permissions.includes("people:view")}
+        seesAllocations={seesAllocations}
         proposesTeams={proposesFeatureTeams(permissions)}
         changesDates={permissions.includes("restricted:edit")}
+        mode={mode}
+        onMode={(next, nextView) => {
+          void navigate({ search: { ...searchFor(nextView), ...kept(next) } });
+        }}
         view={view}
         onView={onView}
       />

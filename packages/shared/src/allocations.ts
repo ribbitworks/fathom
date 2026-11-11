@@ -9,7 +9,7 @@ import { z } from "zod";
 import { addToMonth } from "./cycles.ts";
 import { monthSchema } from "./days.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
-import { meaningSchema } from "./lists.ts";
+import { type Meaning, meaningSchema } from "./lists.ts";
 
 // The percentages of a month offered when allocating; filling a planned hire can make others, such
 // as 35%, by adding two together.
@@ -129,6 +129,36 @@ export function changedSpans(
         : { from, to: addToMonth(next, -1), percentage },
     ];
   });
+}
+
+// A month's allocations added up. Possible features may never be worked on, so their allocations
+// take up no time; done and cancelled ones still do, since their allocations are time spent.
+export function allocatedTotal(
+  allocations: readonly { percentage: number; meaning: Meaning | null }[],
+): number {
+  return allocations
+    .filter(({ meaning }) => meaning !== "possible")
+    .reduce((total, { percentage }) => total + percentage, 0);
+}
+
+export type LoadMark = "over" | "under";
+
+// How a month's total reads from the current month on: over a whole month, or, in a month the
+// person or planned hire can be allocated in, under it. Past months are shown unmarked.
+export function loadMark({
+  total,
+  month,
+  currentMonth,
+  allocatable,
+}: {
+  total: number;
+  month: string;
+  currentMonth: string;
+  allocatable: boolean;
+}): LoadMark | undefined {
+  if (month < currentMonth) return undefined;
+  if (total > wholeMonth) return "over";
+  return allocatable && total < wholeMonth ? "under" : undefined;
 }
 
 // A feature as allocations name it: a project's general feature by its project's name, and the

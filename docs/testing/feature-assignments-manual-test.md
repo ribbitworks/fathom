@@ -2,7 +2,7 @@
 title: "Manual Test: Feature Assignments"
 category: "How-To"
 audience: "AI Coding Assistant"
-applies_to: ["apps/web/src/feature-assignments-page*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "packages/seed/src/**", "packages/fixtures/src/**"]
+applies_to: ["apps/web/src/feature-assignments-page*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "apps/web/src/allocation-months*", "apps/web/src/allocation-lines*", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
 last_updated: "2026-11-10"
 ---
@@ -11,7 +11,7 @@ last_updated: "2026-11-10"
 
 ## Scope
 
-Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls in light and dark mode, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, what a reader without Restricted details or without people sees, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls in light and dark mode, how the table of allocations by month reads, with its over- and under-allocated months and planned hires, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, what a reader without Restricted details or without people sees, and moving around it from the keyboard. The seeded feature teams and allocations are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -63,6 +63,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 - **Team panel:** on the **Org chart**, the panel titled **Feature team** that opens to the right of the chart.
 - **Team list:** the list of feature teams that opens below a month's cell for editing, with a box to type in at its top.
 - **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown beside a person's name.
+- **Mode switch:** the switch under the page's heading, reading **Teams** and **Allocations**.
 
 ## Test Cases
 
@@ -73,7 +74,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 **Preconditions:** R1 has been run. Signed in with this account.
 
 - [ ] **Step 1.** Select **Feature assignments** in the left-hand menu.
-  - **Expected:** The page is headed **Feature assignments**. Above the table are a switch reading **Teams** and a greyed-out **Allocations, later**, then a search box, a **Draft** button, **Metrics**, and **Group by: Manager**. The table has a **Person** column on the left and a column for each month.
+  - **Expected:** The page is headed **Feature assignments**. Above the table are the mode switch, with **Teams** chosen, then a search box, a **Draft** button, **Metrics**, and **Group by: Manager**. The table has a **Person** column on the left and a column for each month.
   - **Notes:**
 
 - [ ] **Step 2.** Look at the month headings without scrolling.
@@ -407,3 +408,69 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
   - **Notes:**
 
 **Afterwards:** R1.
+
+### FA-20: Allocations Show Each Feature With Its Percentage
+
+**Account:** Resource Planner, `resource.planner@fathom.test`, changed from FA-19.
+
+**Preconditions:** R1 has been run. Signed in with this account. **Light** selected in the Appearance menu. **Feature assignments** open, with **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] **Step 1.** Select **Allocations** in the mode switch.
+  - **Expected:** The table opens at the current month again, still grouped by **Feature team**. Under the **Payments core** group, cells list features, each on a line of its own with its percentage at the right, such as **50%**.
+  - **Notes:**
+
+- [ ] **Step 2.** Hold the pointer over a feature's name in a cell.
+  - **Expected:** After a moment, a tooltip shows the feature's whole name.
+  - **Notes:**
+
+- [ ] **Step 3.** Under the **Payments core** group, find the first cell in the current month's column that lists two features.
+  - **Expected:** Under the two features, set off by a thin line above it, a last line gives the two percentages added up, at the right.
+  - **Notes:**
+
+- [ ] **Step 4.** Reload the page.
+  - **Expected:** **Allocations** is still chosen in the mode switch, with **Group by: Feature team**.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Teams** in the mode switch.
+  - **Expected:** The cells show feature teams as labels again, still grouped by **Feature team**.
+  - **Notes:**
+
+### FA-21: Over- and Under-Allocated Months Stand Out
+
+**Account:** Resource Planner, `resource.planner@fathom.test`, the same as FA-20.
+
+**Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] **Step 1.** In the current month's column, find a cell whose last line reads **Over**, and one whose last line reads **Under**.
+  - **Expected:** **Over** and its percentage are red and bold. **Under** and its percentage are grey.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Dark** in the Appearance menu, then **Light**.
+  - **Expected:** In both modes the feature names, the percentages, and the **Over** and **Under** lines are easy to read and to tell apart.
+  - **Notes:**
+
+### FA-22: Planned Hires Have Rows of Their Own
+
+**Account:** Resource Planner, `resource.planner@fathom.test`, the same as FA-21.
+
+**Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] **Step 1.** Select **People** in the left-hand menu, type **Payments tester** in the search box, and note the month in the row's **Expected** column.
+  - **Expected:** One row is listed, named **Payments tester**, with a month in **Expected**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Feature assignments** in the left-hand menu, and type **Payments tester** in the search box.
+  - **Expected:** One row is listed, named **Payments tester**, with **Allocations** still chosen in the mode switch.
+  - **Notes:**
+
+- [ ] **Step 3.** Look along the row from 12 months ago to the right.
+  - **Expected:** The cells before the month noted in step 1 are empty. From that month on, cells list a feature with **100%**.
+  - **Notes:**
+
+- [ ] **Step 4.** Empty the search box. Select **Manager** in the Group by menu, and type **TBD** in the search box.
+  - **Expected:** Planned hires with no name and a temporary ID are listed by their position and ID, such as **SDET, TBD-** and a number, in grey, under their managers.
+  - **Notes:**
+
+- [ ] **Step 5.** Empty the search box and select **Teams** in the mode switch. Type **Payments tester** in the search box.
+  - **Expected:** No rows are listed.
+  - **Notes:**

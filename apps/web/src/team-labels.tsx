@@ -4,20 +4,19 @@
 // the table's one tooltip, in table-tips.tsx.
 
 import type { PaletteColour } from "@fathom/shared";
-import { VisuallyHidden } from "@mantine/core";
 import { colourVariable } from "./colours.ts";
 import pages from "./pages.module.css";
-import { DraftDot, type DraftLike } from "./status-mark.tsx";
+import {
+  DraftDot,
+  type DraftedPart,
+  DraftedWords,
+  type DraftLike,
+} from "./status-mark.tsx";
 import { tipAttribute } from "./table-tips.tsx";
 import styles from "./team-labels.module.css";
 
 // Whether a draft adds someone to a team or takes them off it, when it does either.
-export type DraftedLabel = "added" | "removed";
-
-const draftedWords = new Map<DraftedLabel, string>([
-  ["added", ", added"],
-  ["removed", ", removed"],
-]);
+export type DraftedLabel = Exclude<DraftedPart, "changed">;
 
 export function TeamLabels({
   teams,
@@ -53,9 +52,7 @@ export function TeamLabels({
         >
           {addedBy !== undefined && <DraftDot draft={addedBy} />}
           {name}
-          {drafted !== undefined && (
-            <VisuallyHidden>{draftedWords.get(drafted)}</VisuallyHidden>
-          )}
+          {drafted !== undefined && <DraftedWords drafted={drafted} />}
         </span>
       ))}
     </div>

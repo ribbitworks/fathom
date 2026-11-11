@@ -31,6 +31,7 @@ import {
   widthWithin,
   withPlaces,
   withUnit,
+  withoutFilters,
   withWidth,
   orderAfterMove,
 } from "./table-view.ts";
@@ -432,6 +433,17 @@ describe("the view in the page address", () => {
       widths: { name: 240 },
     });
     expect(sameView(view({ widths: { name: 240 } }), emptyView)).toBe(false);
+  });
+
+  it("leaves out the filters it does not keep, keeping the rest of the view", () => {
+    const filtered = view({
+      search: "Avery",
+      filters: { name: { contains: "A" }, level: { any: ["l1"] } },
+    });
+
+    expect(withoutFilters(filtered, (key) => key !== "level")).toEqual(
+      view({ search: "Avery", filters: { name: { contains: "A" } } }),
+    );
   });
 
   it("sets a column's width, keeping the others, and leaves it to fit its cells again", () => {

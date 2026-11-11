@@ -60,25 +60,23 @@ describe("the table", () => {
       "Avery Fictional",
     );
   });
+
+  it("names a row with no name by nothing, having no stand-in", () => {
+    expect(table.nameOf({ name: "" } as never)).toBe("");
+  });
 });
 
 describe("the draft of a person's row", () => {
-  const waiting = {
-    teamId: "t1",
-    action: "changed" as const,
-    state: "waiting" as const,
-  };
+  const waiting = { state: "waiting" as const };
 
   it("waits while every team draft does", () => {
-    expect(personDraft([waiting, { ...waiting, teamId: "t2" }])).toEqual({
-      state: "waiting",
-    });
+    expect(personDraft([waiting, waiting])).toEqual({ state: "waiting" });
   });
 
   it("is rejected while any team draft is", () => {
-    expect(
-      personDraft([waiting, { ...waiting, teamId: "t2", state: "rejected" }]),
-    ).toEqual({ state: "rejected" });
+    expect(personDraft([waiting, { state: "rejected" }])).toEqual({
+      state: "rejected",
+    });
   });
 
   it("is the reader's own while any team draft holds their unpublished changes", () => {
