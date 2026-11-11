@@ -16,7 +16,7 @@ import { type Meaning, meaningSchema } from "./lists.ts";
 export const allocationPercentages = [10, 25, 50, 75, 90, 100] as const;
 
 // A whole month, the most one allocation can hold.
-const wholeMonth = 100;
+export const wholeMonth = 100;
 
 const keptPercentage = z.number().int().min(1).max(wholeMonth);
 
@@ -160,6 +160,35 @@ export function loadMark({
   if (total > wholeMonth) return "over";
   return allocatable && total < wholeMonth ? "under" : undefined;
 }
+
+// Capacity, in hundredths of a person-month: what is allocated against what is available.
+export interface Capacity {
+  allocated: number;
+  available: number;
+}
+
+const noCapacity: Capacity = { allocated: 0, available: 0 };
+
+// A month of one person or planned hire: a whole month available, with its total allocated, when
+// they can be allocated in it, and otherwise nothing, since allocations left outside employment do
+// not count.
+export const monthCapacity = ({
+  total,
+  allocatable,
+}: {
+  total: number;
+  allocatable: boolean;
+}): Capacity =>
+  allocatable ? { allocated: total, available: wholeMonth } : noCapacity;
+
+export const summedCapacity = (capacities: readonly Capacity[]): Capacity =>
+  capacities.reduce(
+    (sum, { allocated, available }) => ({
+      allocated: sum.allocated + allocated,
+      available: sum.available + available,
+    }),
+    noCapacity,
+  );
 
 // A feature as allocations name it: a project's general feature by its project's name, and the
 // meaning of its status, which decides whether it counts toward over-allocation.

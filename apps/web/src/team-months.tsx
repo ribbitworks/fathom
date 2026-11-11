@@ -89,7 +89,7 @@ export const teamMonthsQuery = ({ from, to }: MonthRange) =>
   });
 
 const lastRank = Number.MAX_SAFE_INTEGER;
-const managerGrouping = "manager";
+export const managerGrouping = "manager";
 export const featureTeamGrouping = "feature-team";
 
 // Grouped by manager, under each manager given, by name, and then those with none.
@@ -453,6 +453,28 @@ function draftOf(
   };
 }
 
+// A row's identifier under a group, since someone may have a row under each of several.
+export const groupedRowId = (groupKey: string, personId: string) =>
+  `${groupKey} ${personId}`;
+
+// The teams in any of someone's months, by name, each with the months they are on it.
+export function teamsAcross(
+  teamsIn: ReadonlyMap<string, readonly MonthTeam[]>,
+): { team: MonthTeam; months: string[] }[] {
+  const each = new Map<string, { team: MonthTeam; months: string[] }>();
+  for (const [month, teams] of teamsIn) {
+    for (const team of teams) {
+      const { id, name, colour } = team;
+      const held = each.get(id) ?? { team: { id, name, colour }, months: [] };
+      held.months.push(month);
+      each.set(id, held);
+    }
+  }
+  return [...each.values()].sort((first, second) =>
+    byName(first.team, second.team),
+  );
+}
+
 // A row for each person by name, or, grouped by feature team, one under each team they were on in
 // the months shown, as the Draft menu shows them, and one under none for those on no team.
 export function teamMonthRecords(
@@ -491,30 +513,24 @@ export function teamMonthRecords(
     const record: PersonMonths =
       drafted === undefined ? live : draftOf(live, drafted, teamsOf, drafts);
     if (grouping !== featureTeamGrouping) return [record];
-    const teamsInAnyMonth = [
-      ...new Map(
-        [...(show === "live" ? live : record).teamsIn.values()]
-          .flatMap((labels) => labelsShown(labels, show))
-          .map((team) => [team.id, team]),
-      ).values(),
-    ].sort(byName);
+    const teamsInAnyMonth = teamsAcross(
+      new Map(
+        [...(show === "live" ? live : record).teamsIn].map(
+          ([month, labels]) => [month, labelsShown(labels, show)],
+        ),
+      ),
+    );
     return teamsInAnyMonth.length === 0
       ? [record]
-      : teamsInAnyMonth.map(({ id, name, colour }) => {
-          const group = { id, name, colour };
+      : teamsInAnyMonth.map(({ team: group }) => {
+          const id = groupedRowId(group.id, person.id);
           return {
             ...record,
-            id: `${id} ${person.id}`,
+            id,
             group,
             ...(record.live === undefined
               ? {}
-              : {
-                  live: {
-                    ...record.live,
-                    id: `${id} ${person.id}`,
-                    group,
-                  },
-                }),
+              : { live: { ...record.live, id, group } }),
           };
         });
   });

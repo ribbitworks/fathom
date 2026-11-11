@@ -11,6 +11,8 @@ import {
   allocatedTotal,
   changedSpans,
   loadMark,
+  monthCapacity,
+  summedCapacity,
   percentageIn,
   tidiedMonths,
   withChange,
@@ -256,5 +258,36 @@ describe("loadMark", () => {
         allocatable: true,
       }),
     ).toBeUndefined();
+  });
+});
+
+describe("monthCapacity", () => {
+  it("holds a whole month with its total when someone can be allocated in it", () => {
+    expect(monthCapacity({ total: 75, allocatable: true })).toEqual({
+      allocated: 75,
+      available: 100,
+    });
+  });
+
+  it("holds nothing, not even its allocations, when they cannot be", () => {
+    expect(monthCapacity({ total: 50, allocatable: false })).toEqual({
+      allocated: 0,
+      available: 0,
+    });
+  });
+});
+
+describe("summedCapacity", () => {
+  it("adds up what is allocated and what is available", () => {
+    expect(
+      summedCapacity([
+        { allocated: 75, available: 100 },
+        { allocated: 120, available: 100 },
+      ]),
+    ).toEqual({ allocated: 195, available: 200 });
+  });
+
+  it("is nothing for no months", () => {
+    expect(summedCapacity([])).toEqual({ allocated: 0, available: 0 });
   });
 });

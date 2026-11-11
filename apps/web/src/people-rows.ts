@@ -5,6 +5,7 @@
 // a planned hire with none, by its position and ID, such as "Software Engineer, TBD-7", or by its
 // ID alone to those who cannot see positions.
 
+import { count } from "./numbers.ts";
 import {
   hireCalled,
   type List,
@@ -64,4 +65,29 @@ export function addedNames(requests: readonly RowRequest[]): string {
   return hires === requests.length
     ? "the planned hires"
     : "the people and planned hires";
+}
+
+// How Metrics and the count above a table call rows of people and planned hires together, and how
+// many of each some rows are, such as "150 people and 6 planned hires".
+export function peopleAndHires<Row>(isPlanned: (row: Row) => boolean): {
+  noun: string;
+  counted: (rows: readonly Row[]) => string;
+} {
+  return {
+    noun: "people and planned hires",
+    counted: (rows) => {
+      const hires = rows.filter(isPlanned).length;
+      const people = rows.length - hires;
+      return [
+        ...(people > 0 || hires === 0
+          ? [`${count(people)} ${people === 1 ? "person" : "people"}`]
+          : []),
+        ...(hires > 0
+          ? [
+              `${count(hires)} ${hires === 1 ? "planned hire" : "planned hires"}`,
+            ]
+          : []),
+      ].join(" and ");
+    },
+  };
 }

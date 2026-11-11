@@ -43,13 +43,13 @@ import { StatusMark } from "./status-mark.tsx";
 import { flagChoice } from "./cell-kinds.tsx";
 import {
   isHire,
+  peopleAndHires,
   type RowChange,
   rowName,
   type RowRequest,
   stateMeaning,
 } from "./people-rows.ts";
 import { type CellValue, formatMonth } from "./table-view.ts";
-import { count } from "./numbers.ts";
 import { today } from "./today.ts";
 
 export type PeopleActions = RecordActions<Person, RowChange, RowRequest>;
@@ -641,23 +641,7 @@ function peopleTable(
     label: "People",
     one: "person",
     noun: "people",
-    counted: {
-      noun: "people and planned hires",
-      counted: (rows) => {
-        const hires = rows.filter(isHire).length;
-        const people = rows.length - hires;
-        return [
-          ...(people > 0 || hires === 0
-            ? [`${count(people)} ${people === 1 ? "person" : "people"}`]
-            : []),
-          ...(hires > 0
-            ? [
-                `${count(hires)} ${hires === 1 ? "planned hire" : "planned hires"}`,
-              ]
-            : []),
-        ].join(" and ");
-      },
-    },
+    counted: peopleAndHires(isHire),
     kinds: [personKind, hireKind],
     kindOf,
     newRowLabel: (kind) =>

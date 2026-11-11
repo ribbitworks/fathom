@@ -351,6 +351,16 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // The ways the rows can be grouped under headings, the first of which is the table's own, for a
   // table that groups them.
   groupings?: readonly RowGrouping<Rec>[];
+  // For a table that sums its rows: a total row ending each group, headed with the label, and one
+  // for all the rows shown, kept in view at the foot, headed with the overall label; each column's
+  // total is drawn from the rows it sums.
+  totals?: RowTotals<Rec>;
+}
+
+export interface RowTotals<Rec> {
+  label: string;
+  overall: string;
+  cell: (records: readonly Rec[], columnKey: string) => ReactNode;
 }
 
 // The group a row is in: the groups follow in order of rank, and each is headed with its label.
@@ -1304,6 +1314,42 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       )
     );
   };
+  // Total rows are not among the rows, so keyboard moves pass over them.
+  const totalRow = (
+    key: string,
+    totals: RowTotals<Rec>,
+    label: string,
+    summed: readonly Rec[],
+  ) => (
+    <Table.Tr key={key} className={classes.recordTotalRow}>
+      {columns.flatMap((column, columnIndex) => {
+        const frozenAt = frozenCell(columnIndex);
+        const className = [classes.recordCell, frozenAt.className].join(" ");
+        return [
+          columnIndex === 0 ? (
+            <Table.Th
+              key={column.key}
+              scope="row"
+              className={className}
+              style={frozenAt.style}
+            >
+              {label}
+            </Table.Th>
+          ) : (
+            <Table.Td
+              key={column.key}
+              className={className}
+              style={frozenAt.style}
+            >
+              {totals.cell(summed, column.key)}
+            </Table.Td>
+          ),
+          liveCellBeside(undefined, column, columnIndex),
+        ];
+      })}
+      {withActions && <Table.Td className={classes.recordCell} />}
+    </Table.Tr>
+  );
   // A column with a draft is tinted, as a row with one is, and one a draft removes is struck through.
   const columnTint = (column: Column<Rec, Change>) => {
     const draft = column.field?.draft;
@@ -1357,25 +1403,30 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const groupRuns: {
     key: string;
     first: string;
+    last: string;
     label: string;
-    count: number;
+    records: Rec[];
   }[] = [];
   if (groupOf !== undefined) {
     for (const record of shownRecords) {
       const group = groupOf(record);
       const run = groupRuns.at(-1);
-      if (run?.key === group.key) run.count += 1;
-      else {
+      if (run?.key === group.key) {
+        run.records.push(record);
+        run.last = stableId(record);
+      } else {
         groupRuns.push({
           key: group.key,
           first: stableId(record),
+          last: stableId(record),
           label: group.label,
-          count: 1,
+          records: [record],
         });
       }
     }
   }
   const headings = new Map(groupRuns.map((run) => [run.first, run]));
+  const runEnds = new Map(groupRuns.map((run) => [run.last, run.records]));
   const [newRows, setNewRows] = useState<NewRow[]>([{ key: 0, values: {} }]);
   const [nextKey, setNextKey] = useState(1);
   // The selected cell and the cell being edited, by row and column key rather than position, so they
@@ -2867,6 +2918,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   ].join(" ");
                 }
                 const heading = headings.get(key);
+                const runEnded = runEnds.get(key);
                 return [
                   heading !== undefined && (
                     <Table.Tr key={`group-${key}`}>
@@ -2880,9 +2932,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                         <span className={classes.recordGroupLabel}>
                           {heading.label}
                           <Text component="span" fz="sm" c="dimmed" ml="xs">
-                            {heading.count}
+                            {heading.records.length}
                             <VisuallyHidden>
-                              {` ${heading.count === 1 ? table.one : table.noun}`}
+                              {` ${heading.records.length === 1 ? table.one : table.noun}`}
                             </VisuallyHidden>
                           </Text>
                         </span>
@@ -3123,9 +3175,27 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                         )}
                       </Table.Tr>
                     ),
+                  table.totals !== undefined &&
+                    runEnded !== undefined &&
+                    totalRow(
+                      `total-${key}`,
+                      table.totals,
+                      table.totals.label,
+                      runEnded,
+                    ),
                 ];
               })}
             </Table.Tbody>
+            {table.totals !== undefined && (
+              <Table.Tfoot className={classes.recordTotalFoot}>
+                {totalRow(
+                  "total",
+                  table.totals,
+                  table.totals.overall,
+                  shownRecords,
+                )}
+              </Table.Tfoot>
+            )}
           </Table>
         </div>
         {frozen.frozen > 0 && (

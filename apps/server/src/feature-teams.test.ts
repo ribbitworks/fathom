@@ -3317,6 +3317,24 @@ describe("feature teams month by month", () => {
       expect(await rowOf(gone, "2025-01", "2025-02")).toBeUndefined();
     });
 
+    it("names whom someone reported to each month", async () => {
+      const first = await person({ isManager: true });
+      const second = await person({ isManager: true });
+      const report = await person({
+        managerId: first,
+        managerFrom: "2024-03-01",
+      });
+      await personChanged(report, {
+        managerId: second,
+        managerFrom: "2025-02-10",
+      });
+
+      const managers = (await rowOf(report, "2025-02", "2025-03"))?.managers;
+
+      expect(managers?.["2025-02"]?.id).toBe(first);
+      expect(managers?.["2025-03"]?.id).toBe(second);
+    });
+
     it("records viewing them in the access history", async () => {
       const reader = await test.signedIn("workforce-administrator");
 
@@ -3333,9 +3351,10 @@ describe("feature teams month by month", () => {
     const report = await person({ managerId: manager });
     const reader = await test.signedIn(["org-chart:view"]);
 
-    expect(
-      (await rowOf(report, "2025-01", "2025-01", reader))?.manager,
-    ).toBeNull();
+    const row = await rowOf(report, "2025-01", "2025-01", reader);
+
+    expect(row?.manager).toBeNull();
+    expect(row?.managers).toBeUndefined();
   });
 
   describe("for readers given Restricted details without people", () => {
@@ -3348,9 +3367,9 @@ describe("feature teams month by month", () => {
       const read = await monthsOf("2025-01", "2025-03", reader);
 
       expect(read.people.some(({ id }) => id === gone)).toBe(false);
-      expect(
-        read.people.find(({ id }) => id === startsLater)?.outside,
-      ).toBeUndefined();
+      const later = read.people.find(({ id }) => id === startsLater);
+      expect(later?.outside).toBeUndefined();
+      expect(later?.managers).toBeUndefined();
       expect(await accessRecords("restricted-viewed", reader.id)).toEqual([]);
     });
   });
@@ -3384,6 +3403,16 @@ describe("feature teams month by month", () => {
       expect(
         (await rowOf(member, "2099-01", "2099-03", planner))?.outside,
       ).toBeUndefined();
+    });
+
+    it("names only today's manager, in no month", async () => {
+      const manager = await person({ isManager: true });
+      const report = await person({ managerId: manager });
+
+      const row = await rowOf(report, "2025-01", "2025-01", planner);
+
+      expect(row?.manager?.id).toBe(manager);
+      expect(row?.managers).toBeUndefined();
     });
 
     it("records nothing in the access history", async () => {

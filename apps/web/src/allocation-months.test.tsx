@@ -23,6 +23,8 @@ import {
   allocationMonthsTable,
   type AllocationRow,
   allocationManagers,
+  CapacityTotal,
+  capacityOf,
   monthTotal,
 } from "./allocation-months.tsx";
 import { featureTeamGrouping } from "./team-months.tsx";
@@ -139,11 +141,61 @@ describe("a person's allocations", () => {
     expect(casey(rowsOf([])).outside).toEqual(new Set(["2027-02"]));
   });
 
-  it("gives someone on a feature team a row under it, grouped by feature team", () => {
-    const [row] = rowsOf([allocation()], { grouping: featureTeamGrouping });
+  it("gives someone a row under each feature team and under none, holding only those months, grouped by feature team", () => {
+    const rows = rowsOf([allocation({ months: { "2027-03": 50 } })], {
+      grouping: featureTeamGrouping,
+    });
+    const onSearch = rows.find(({ group }) => group?.id === search.id);
+    const onNone = rows.find(({ group }) => group === undefined);
 
-    expect(row?.group).toEqual(search);
-    expect(linesIn(row as AllocationRow, "2027-03")).toEqual(["Checkout 50%"]);
+    expect(onSearch?.holds).toEqual(new Set(["2027-03", "2027-02"]));
+    expect(linesIn(onSearch as AllocationRow, "2027-03")).toEqual([
+      "Checkout 50%",
+    ]);
+    expect(onNone?.holds).toEqual(new Set(["2027-04", "2027-02"]));
+    expect(linesIn(onNone as AllocationRow, "2027-03")).toEqual([]);
+    expect(new Set(rows.map(({ id }) => id)).size).toBe(2);
+  });
+
+  describe("grouped by manager", () => {
+    const dana = { id: "p-dana", name: "Dana Fictional" };
+    const blair = { id: "p-blair", name: "Blair Fictional" };
+    const withManagers = (
+      managers: TeamMonths["people"][number]["managers"],
+    ): TeamMonths => ({
+      ...teamMonths,
+      people: teamMonths.people.map((person) => ({ ...person, managers })),
+    });
+    const byManager = (data: TeamMonths) =>
+      allocationMonthRecords({
+        teamMonths: data,
+        allocations: { allocations: [allocation()], features },
+        chart: noHires,
+        grouping: "manager",
+        show: "both",
+      });
+
+    it("gives someone a row under each manager they reported to, holding that line's months", () => {
+      const rows = byManager(
+        withManagers({ "2027-02": blair, "2027-03": blair, "2027-04": dana }),
+      );
+
+      expect(
+        rows.map(({ manager, holds }) => [manager?.id, holds && [...holds]]),
+      ).toEqual([
+        ["p-blair", ["2027-03", "2027-02"]],
+        ["p-dana", ["2027-04", "2027-02"]],
+      ]);
+    });
+
+    it("lists every month's managers, for grouping by them", () => {
+      expect(
+        allocationManagers(
+          withManagers({ "2027-03": null, "2027-04": dana }),
+          noHires,
+        ),
+      ).toEqual([blair, dana]);
+    });
   });
 });
 
@@ -314,6 +366,64 @@ describe("planned hires' allocations", () => {
       madeName: "SDET, TBD-7",
       manager: null,
     });
+  });
+});
+
+describe("capacityOf", () => {
+  const row = (fields: Partial<AllocationRow>): AllocationRow => ({
+    ...casey(rowsOf([allocation({ months: { "2027-03": 50 } })])),
+    ...fields,
+  });
+
+  it("adds up each row's month, counting someone with rows under two groups once", () => {
+    const first = row({ id: "one" });
+    const hire = row({ id: "hire", personId: "h-tester" });
+
+    expect(
+      capacityOf([first, row({ id: "two" }), hire], "2027-03", "both"),
+    ).toEqual({ allocated: 100, available: 200 });
+  });
+
+  it("counts drafts only with drafts applied", () => {
+    const drafted = casey(
+      rowsOf([allocation({ months: { "2027-03": 50 }, draft: draft() })]),
+    );
+
+    expect(capacityOf([drafted], "2027-03", "drafts").allocated).toBe(75);
+    expect(capacityOf([drafted], "2027-03", "both").allocated).toBe(50);
+  });
+
+  it("leaves out months outside employment, with their allocations", () => {
+    expect(
+      capacityOf([row({ outside: new Set(["2027-03"]) })], "2027-03", "both"),
+    ).toEqual({ allocated: 0, available: 0 });
+  });
+
+  it("leaves out months a row does not hold", () => {
+    expect(
+      capacityOf([row({ holds: new Set(["2027-04"]) })], "2027-03", "both"),
+    ).toEqual({ allocated: 0, available: 0 });
+  });
+});
+
+describe("a capacity total", () => {
+  const renderTotal = (allocated: number, available: number) =>
+    render(
+      <MantineProvider theme={testTheme}>
+        <CapacityTotal allocated={allocated} available={available} />
+      </MantineProvider>,
+    );
+
+  it("gives person-months allocated of those available, and that as a share", () => {
+    renderTotal(750, 900);
+
+    expect(screen.getByText("7.5 of 9").nextSibling?.textContent).toBe("83.3%");
+  });
+
+  it("shows nothing when no one can be allocated", () => {
+    renderTotal(0, 0);
+
+    expect(screen.queryByText(/ of /)).toBeNull();
   });
 });
 
@@ -513,6 +623,29 @@ describe("the table", () => {
     expect(tableFor(false).groupings?.map(({ label }) => label)).toEqual([
       "Feature team",
     ]);
+  });
+
+  it("counts people and planned hires apart", () => {
+    expect(
+      table.counted?.counted([
+        casey(rows),
+        { ...casey(rows), plannedHire: true },
+      ]),
+    ).toBe("1 person and 1 planned hire");
+  });
+
+  it("totals each group and the organization, in person-months", () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        {table.totals?.cell([casey(rows)], "2027-03")}
+      </MantineProvider>,
+    );
+
+    expect(table.totals).toMatchObject({
+      label: "Total",
+      overall: "Organization",
+    });
+    expect(screen.getByText("0.5 of 1")).toBeTruthy();
   });
 
   it("names a row by its name, or a planned hire with none by its position and ID", () => {

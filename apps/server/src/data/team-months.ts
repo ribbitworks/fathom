@@ -5,8 +5,8 @@
 // month is read as of its first day, or today during the current month, so a draft's exact days
 // show only as the months they fall in. Readers who do not see Restricted details see only people
 // current today, on every month, so no month reveals who has yet to start or an end date still to
-// come. Readers who do see them see everyone employed during the months asked for, and which of
-// those months fall outside their employment.
+// come. Readers who do see them see everyone employed during the months asked for, which of those
+// months fall outside their employment, and whom each person reported to each month.
 
 import {
   type Database,
@@ -152,6 +152,14 @@ export async function readTeamMonths(
       ? months.some((month) => employedIn(person, month))
       : currentOn(person, today),
   );
+  const managerOn = (personId: string, day: string) => {
+    const managerId =
+      currentRecordOn(lines.get(personId) ?? [], day)?.managerId ?? null;
+    // A reporting line always names a person who exists.
+    return managerId === null
+      ? null
+      : { id: managerId, name: nameOf.get(managerId) as string };
+  };
   const draftedBy = new Set<string>();
   const shownPeople = shown.map((person) => {
     const records = recordsOf.get(person.id) ?? [];
@@ -162,9 +170,6 @@ export async function readTeamMonths(
       !records.some(({ teamId }) => removed.has(teamId))
         ? undefined
         : withDrafted(records, draftedRecords, removed);
-    const managerId = seesPeople
-      ? (currentRecordOn(lines.get(person.id) ?? [], today)?.managerId ?? null)
-      : null;
     const outside = months.filter((month) => !employedIn(person, month));
     const shownMonths = months.flatMap((month) => {
       const day = dayReadingMonth(month, today);
@@ -186,11 +191,17 @@ export async function readTeamMonths(
     return {
       id: person.id,
       preferredName: person.preferredName,
-      // A reporting line always names a person who exists.
-      manager:
-        managerId === null
-          ? null
-          : { id: managerId, name: nameOf.get(managerId) as string },
+      manager: seesPeople ? managerOn(person.id, today) : null,
+      ...(restricted
+        ? {
+            managers: Object.fromEntries(
+              months.map((month) => [
+                month,
+                managerOn(person.id, dayReadingMonth(month, today)),
+              ]),
+            ),
+          }
+        : {}),
       teams: Object.fromEntries(approved),
       ...(restricted && outside.length > 0 ? { outside } : {}),
       ...(drafted === undefined ? {} : { drafted }),

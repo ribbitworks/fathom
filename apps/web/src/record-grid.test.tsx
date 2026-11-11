@@ -39,7 +39,7 @@ import {
   RecordGrid,
   type RecordTable,
 } from "./record-grid.tsx";
-import { emptyView, formatDay, type View } from "./table-view.ts";
+import { emptyView, formatDay, notGrouped, type View } from "./table-view.ts";
 import { testTheme } from "./test-support.tsx";
 
 interface Gadget extends CellRecord {
@@ -1488,6 +1488,100 @@ describe("the problems with a new record", () => {
         { message: "Not unique", column: "name" },
       ),
     ).toEqual([{ message: "Name needed", column: "name" }]);
+  });
+});
+
+describe("total rows", () => {
+  const totalled: RecordTable<Gadget, GadgetChange, GadgetChange> = {
+    ...gadgetTable(),
+    groupings: [
+      {
+        key: "code",
+        label: "Code",
+        of: ({ code }) => ({ key: code, label: `Group ${code}`, rank: 0 }),
+      },
+    ],
+    totals: {
+      label: "Total",
+      overall: "All gadgets",
+      cell: (records, columnKey) =>
+        `${columnKey} ${records.map(({ id }) => id).join(" ")}`,
+    },
+  };
+  const gadgets = [
+    gadget("a", { code: "X" }),
+    gadget("b", { code: "X" }),
+    gadget("c", { code: "Y" }),
+  ];
+  const totalHeaders = () =>
+    screen
+      .queryAllByRole("rowheader")
+      .map((header) => header.textContent)
+      .filter((text) => !text.startsWith("Group"));
+  const totalRows = () =>
+    screen
+      .getAllByRole("row")
+      .filter((row) => within(row).queryAllByRole("cell").length > 0)
+      .filter((row) => within(row).queryByRole("rowheader") !== null)
+      .map((row) =>
+        within(row)
+          .getAllByRole("cell")
+          .map((cell) => cell.textContent),
+      );
+
+  it("ends each group with its total, and the table with all the rows' total", () => {
+    renderGadgets({ gadgets, table: totalled });
+
+    expect(totalHeaders()).toEqual(["Total", "Total", "All gadgets"]);
+    expect(totalRows().map((cells) => cells.at(0))).toEqual([
+      "code a b",
+      "code c",
+      "code a b c",
+    ]);
+  });
+
+  it("draws only the whole table's total when the rows are not grouped", () => {
+    renderGadgets({
+      gadgets,
+      table: totalled,
+      view: { ...emptyView, grouping: notGrouped },
+    });
+
+    expect(totalHeaders()).toEqual(["All gadgets"]);
+  });
+
+  it("leaves total rows out of the count above the table", () => {
+    renderGadgets({ gadgets, table: totalled });
+
+    expect(screen.getByRole("status").textContent).toBe("3 gadgets");
+  });
+
+  it("totals only the rows the search leaves", () => {
+    renderGadgets({
+      gadgets,
+      table: totalled,
+      view: { ...emptyView, search: "Gadget c", grouping: notGrouped },
+    });
+
+    expect(totalRows().map((cells) => cells.at(0))).toEqual(["code c"]);
+  });
+
+  it("moves from a group's last row past its total to the next group's first", async () => {
+    renderGadgets({ gadgets, table: totalled });
+    const [last] = screen.getAllByRole("gridcell", { name: /Gadget b/ });
+    act(() => {
+      last?.focus();
+    });
+
+    await userEvent.keyboard("{ArrowDown}");
+
+    expect(document.activeElement?.textContent).toContain("Gadget c");
+  });
+
+  it("draws no total rows for a table that does not total", () => {
+    renderGadgets({ gadgets });
+
+    expect(totalHeaders()).toEqual([]);
   });
 });
 

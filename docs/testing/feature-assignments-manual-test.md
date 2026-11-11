@@ -11,7 +11,7 @@ last_updated: "2026-11-10"
 
 ## Scope
 
-Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls in light and dark mode, how the table of allocations by month reads, with its over- and under-allocated months and planned hires, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, what a reader without Restricted details or without people sees, and moving around it from the keyboard. The seeded feature teams and allocations are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls in light and dark mode, how the table of allocations by month reads, with its over- and under-allocated months, planned hires, and the capacity totals of each group and of the organization, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, what a reader without Restricted details or without people sees, and moving around it from the keyboard. The seeded feature teams and allocations are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -25,6 +25,7 @@ R1 creates these accounts, with every other development account, so they exist o
 
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Feature Lead account:** `feature.lead@fathom.test`, shown in Fathom as **Feature Lead**. It holds the Feature Lead role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out.
 
@@ -64,6 +65,8 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 - **Team list:** the list of feature teams that opens below a month's cell for editing, with a box to type in at its top.
 - **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown beside a person's name.
 - **Mode switch:** the switch under the page's heading, reading **Teams** and **Allocations**.
+- **Publish button:** the button in the top bar, beside the name and initials, that reads **Publish** followed by a number of changes.
+- **Total row:** in **Allocations**, a row in bold at the end of each group, headed **Total** in the **Person** column, and one at the foot of the table, headed **Organization**.
 
 ## Test Cases
 
@@ -474,3 +477,77 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 - [ ] **Step 5.** Empty the search box and select **Teams** in the mode switch. Type **Payments tester** in the search box.
   - **Expected:** No rows are listed.
   - **Notes:**
+
+### FA-23: Each Group and the Organization Total Their Capacity
+
+**Account:** Resource Planner, `resource.planner@fathom.test`, the same as FA-22.
+
+**Preconditions:** **Light** selected in the Appearance menu. **Feature assignments** open, with **Allocations** chosen in the mode switch, **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] **Step 1.** Scroll down to the end of the **Payments core** group.
+  - **Expected:** The group ends with a total row. Each of its month cells reads two numbers, such as **7.5 of 9**, with a percentage under it, such as **83.3%**, in bold.
+  - **Notes:**
+
+- [ ] **Step 2.** Look at the foot of the table, then scroll the table down and sideways.
+  - **Expected:** A total row headed **Organization** stays at the foot of the table as the rows scroll under it, with nothing showing through it. **Organization** stays on the left while the months scroll sideways.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Dark** in the Appearance menu, then **Light**.
+  - **Expected:** In both modes the total rows are easy to read and to tell apart from the rows above them.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **None** in the Group by menu.
+  - **Expected:** No group ends with a total row; the **Organization** row is still at the foot.
+  - **Notes:**
+
+### FA-24: The Totals Count Only the Rows Shown
+
+**Account:** Resource Planner, `resource.planner@fathom.test`, the same as FA-23.
+
+**Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] **Step 1.** Select **Metrics**.
+  - **Expected:** The Metrics panel gives a number of people and a number of planned hires, such as **150 people and 8 planned hires**.
+  - **Notes:**
+
+- [ ] **Step 2.** Close the Metrics panel, and type **Payments tester** in the search box.
+  - **Expected:** One row is listed, named **Payments tester**. In the **Organization** row, the cells before the month its allocations start are empty, and from that month on each reads **1 of 1** and **100%**.
+  - **Notes:**
+
+### FA-25: Someone Who Left a Team Has a Row for Each Part
+
+**Account:** Resource Planner, `resource.planner@fathom.test`, the same as FA-24.
+
+**Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] **Step 1.** Select **Teams** in the mode switch. Under the **Mobile apps** group, find the person whose **Mobile apps** labels stop before the current month, and note their name and the last month with the label.
+  - **Expected:** One person under **Mobile apps** has no **Mobile apps** label in the current month.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Allocations** in the mode switch, and type the name noted in step 1 in the search box.
+  - **Expected:** The person has a row under **Mobile apps** and a row under another group, or **No feature team**, each followed by a total row. The total row under **Mobile apps** has figures only in the months the person was on **Mobile apps**, up to the month noted; the other total row has figures only in the months before and after those. The person has no allocations, so each figure reads **0 of 1** and **0%**.
+  - **Notes:**
+
+### FA-26: Someone Has a Row Under Each Manager They Reported To
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FA-25. Step 3 signs in as another account, and step 4 signs in as this one again.
+
+**Preconditions:** R1 has been run. Signed in with this account. **People** open from the left-hand menu.
+
+- [ ] **Step 1.** Type **Samuel Richter** in the search box. Select the row's **Manager** cell, press Enter, type **Max**, and choose **Max Munk**. Select the row's **Manager since** cell, type the first day of the current month as digits alone, such as `20261101` in November 2026, and press Enter.
+  - **Expected:** The **Manager** cell reads **Max Munk** and **Manager since** the date typed, both yellow.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the Publish button.
+  - **Expected:** A notice starts **Published**, and the Publish button is gone from the top bar.
+  - **Notes:**
+
+- [ ] **Step 3.** Sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts** in the left-hand menu and type **Samuel Richter** in the search box. Select the entry's checkbox, then **Approve 1 draft**, and **Approve** in the dialog.
+  - **Expected:** A notice reads **Approved 1 draft.**
+  - **Notes:**
+
+- [ ] **Step 4.** Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Select **Feature assignments** in the left-hand menu, **Allocations** in the mode switch and **Manager** in the Group by menu, and type **Samuel Richter** in the search box.
+  - **Expected:** Samuel Richter has a row under **Atmananda Ganaka** whose cells are empty from the current month on, and a row under **Max Munk** whose cells are empty before the current month. Each group ends with a total row.
+  - **Notes:**
+
+**Afterwards:** R1.

@@ -557,6 +557,30 @@ th[data-centred] .recordHeadButton {
   font-weight: 600;
 }
 
+/* A row summing the rows above it, such as a group's, set apart from them. */
+.recordTotalRow > :is(td, th) {
+  border-top: var(--record-row-line-width) solid var(--table-border-color);
+  font-weight: 600;
+  vertical-align: top;
+}
+
+.recordTotalRow > th.frozen {
+  position: sticky;
+  background: var(--mantine-color-body);
+}
+
+/* The whole table's total stays in view at the foot while the rows scroll under it. */
+.recordTotalFoot > tr > :is(td, th) {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  background: var(--mantine-color-body);
+}
+
+.recordTotalFoot > tr > .frozen {
+  z-index: 2;
+}
+
 /* A heading stays in view while the table scrolls sideways. */
 .recordGroupLabel {
   position: sticky;

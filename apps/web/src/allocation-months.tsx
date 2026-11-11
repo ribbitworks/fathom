@@ -4,7 +4,10 @@
 // records: the people of the feature teams' grid, with the planned hires the org chart draws, each
 // month's cell listing the features someone is allocated to with their percentages, and the month's
 // total, marked over or under a whole month as the Decisions Log sets out. The months allocation
-// drafts change are shown as a draft of the row, as team drafts are on the Teams grid.
+// drafts change are shown as a draft of the row, as team drafts are on the Teams grid. Grouped by
+// manager or feature team, someone has a row under each manager they reported to, or team they
+// were on, holding only those months, and each group, and the whole organization, ends with the
+// person-months allocated against those available.
 
 import {
   type AllocatedFeature,
@@ -12,23 +15,31 @@ import {
   type AllocationDraft,
   allocatedTotal,
   type Allocations,
+  type Capacity,
   allocationsSchema,
   byName,
   loadMark,
   type LoadMark,
   type Meaning,
+  monthCapacity,
   type OrgChart,
   type OrgChartPerson,
   percentageIn,
   type Show,
+  summedCapacity,
   type TeamMonths,
+  wholeMonth,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import styles from "./allocation-lines.module.css";
+import { groupedRows, type HeldRow } from "./allocation-groups.ts";
 import { getJson } from "./api.ts";
+import { share } from "./metrics.ts";
+import { decimal } from "./numbers.ts";
+import { peopleAndHires } from "./people-rows.ts";
 import type { CellChange } from "./cell-kinds.tsx";
 import pages from "./pages.module.css";
-import type { RecordTable } from "./record-grid.tsx";
+import type { RecordTable, RowTotals } from "./record-grid.tsx";
 import {
   DraftDot,
   type DraftedPart,
@@ -62,12 +73,13 @@ export interface AllocationLine {
   draft?: DraftLike;
 }
 
-export interface AllocationRow extends MonthRow {
+export interface AllocationRow extends HeldRow {
   allocated: ReadonlyMap<string, AllocationLine[]>;
   // For a planned hire: the month it is expected, the first it can be allocated in.
   allocatableFrom?: string;
   // For a planned hire with no name: its position and ID, shown in grey in place of a name.
   madeName?: string;
+  plannedHire?: true;
   live?: AllocationRow | undefined;
 }
 
@@ -93,8 +105,12 @@ export function monthTotal(
   );
 }
 
+const holdsMonth = (row: Pick<AllocationRow, "holds">, month: string) =>
+  row.holds === undefined || row.holds.has(month);
+
 export function allocatableIn(row: AllocationRow, month: string): boolean {
   return (
+    holdsMonth(row, month) &&
     !row.outside.has(month) &&
     (row.allocatableFrom === undefined || row.allocatableFrom <= month)
   );
@@ -237,12 +253,13 @@ const linesByMonth = (
 // with the row as approved kept for the Live row. Rejected drafts are with their makers, so drafts
 // applied leaves them out.
 function withAllocations(
-  base: MonthRow & Pick<AllocationRow, "allocatableFrom" | "madeName">,
+  base: BaseRow,
   allocations: readonly Allocation[],
   features: ReadonlyMap<string, AllocatedFeature>,
-  months: readonly string[],
+  allMonths: readonly string[],
   show: Show,
 ): AllocationRow {
+  const months = allMonths.filter((month) => holdsMonth(base, month));
   const liveIn = linesByMonth(months, (month) =>
     liveLines(allocations, features, month),
   );
@@ -288,6 +305,9 @@ function withAllocations(
   };
 }
 
+type BaseRow = MonthRow &
+  Pick<AllocationRow, "allocatableFrom" | "madeName" | "plannedHire" | "holds">;
+
 const plannedHires = (chart: OrgChart) =>
   chart.people.flatMap((card) =>
     card.planned === undefined ? [] : [{ ...card, planned: card.planned }],
@@ -306,16 +326,17 @@ function hireManager(
   return { id: managerId, name: manager.preferredName };
 }
 
-// Everyone the grid's rows report to: people's managers and planned hires'.
+// Everyone the grid's rows report to: people's managers, in any month, and planned hires'.
 export const allocationManagers = (teamMonths: TeamMonths, chart: OrgChart) => [
   ...peopleManagers(teamMonths),
+  ...teamMonths.people.flatMap(({ managers }) =>
+    Object.values(managers ?? {}).flatMap((manager) => manager ?? []),
+  ),
   ...plannedHires(chart).flatMap((card) => hireManager(chart, card) ?? []),
 ];
 
 // The planned hires the org chart draws, as rows under their managers and under no feature team.
-function hireRows(
-  chart: OrgChart,
-): (MonthRow & Pick<AllocationRow, "allocatableFrom" | "madeName">)[] {
+function hireRows(chart: OrgChart): BaseRow[] {
   return plannedHires(chart).map((card) => {
     const unnamed = card.planned.shownId !== undefined;
     return {
@@ -328,6 +349,7 @@ function hireRows(
       links: {},
       outside: new Set<string>(),
       allocatableFrom: card.planned.expected,
+      plannedHire: true,
     };
   });
 }
@@ -367,25 +389,32 @@ export function allocationMonthRecords({
     allocations.features.map((feature) => [feature.id, feature]),
   );
   const { ofPeople, ofHires } = byAssignee(allocations.allocations);
-  const people = teamMonthRecords(teamMonths, grouping, "live").map(
-    (record): MonthRow => {
+  const managersOf = new Map(
+    teamMonths.people.map(({ id, managers }) => [id, managers]),
+  );
+  const people = teamMonthRecords(teamMonths, undefined, "live").flatMap(
+    (record) => {
       const person = record.live ?? record;
-      return {
-        id: person.id,
-        personId: person.personId,
-        name: person.name,
-        manager: person.manager,
-        ...(person.group === undefined ? {} : { group: person.group }),
-        values: {},
-        links: {},
-        outside: person.outside,
-      };
+      return groupedRows<BaseRow>(
+        {
+          id: person.id,
+          personId: person.personId,
+          name: person.name,
+          manager: person.manager,
+          values: {},
+          links: {},
+          outside: person.outside,
+        },
+        {
+          teamsIn: person.teamsIn,
+          managers: managersOf.get(person.personId),
+          months: teamMonths.months,
+          grouping,
+        },
+      );
     },
   );
-  const row = (
-    base: MonthRow & Pick<AllocationRow, "allocatableFrom" | "madeName">,
-    of: ReadonlyMap<string, Allocation[]>,
-  ) =>
+  const row = (base: BaseRow, of: ReadonlyMap<string, Allocation[]>) =>
     withAllocations(
       base,
       of.get(base.personId) ?? [],
@@ -414,21 +443,67 @@ export function allocationMonthsTable({
   currentMonth: string;
   show: Show;
 }): RecordTable<AllocationRow, CellChange, CellChange> {
-  return monthGridTable<AllocationRow>({
-    months: teamMonths.months,
-    label: "Allocations by month",
-    choices: features,
-    content: (row, month) => (
-      <AllocationLines
-        lines={row.allocated.get(month) ?? []}
-        month={month}
-        currentMonth={currentMonth}
-        allocatable={allocatableIn(row, month)}
-        show={show}
-      />
-    ),
-    readOnly: () => true,
-    standIn: ({ madeName }) => madeName ?? "",
-    groupings: monthGroupings(seesPeople, managers, teamMonths),
+  return {
+    ...monthGridTable<AllocationRow>({
+      months: teamMonths.months,
+      label: "Allocations by month",
+      choices: features,
+      content: (row, month) =>
+        holdsMonth(row, month) && (
+          <AllocationLines
+            lines={row.allocated.get(month) ?? []}
+            month={month}
+            currentMonth={currentMonth}
+            allocatable={allocatableIn(row, month)}
+            show={show}
+          />
+        ),
+      readOnly: () => true,
+      standIn: ({ madeName }) => madeName ?? "",
+      groupings: monthGroupings(seesPeople, managers, teamMonths),
+    }),
+    counted: peopleAndHires((row) => row.plannedHire === true),
+    totals: capacityTotals(show),
+  };
+}
+
+const rowCapacity = (row: AllocationRow, month: string, show: Show) =>
+  monthCapacity({
+    total: monthTotal(row.allocated.get(month) ?? [], show),
+    allocatable: allocatableIn(row, month),
   });
+
+// A month's capacity over some rows, counting each person's month once, though they have a row
+// under each of several groups.
+export function capacityOf(
+  rows: readonly AllocationRow[],
+  month: string,
+  show: Show,
+): Capacity {
+  const once = new Map(
+    rows
+      .filter((row) => allocatableIn(row, month))
+      .map((row) => [row.personId, rowCapacity(row, month, show)]),
+  );
+  return summedCapacity([...once.values()]);
+}
+
+export function CapacityTotal({ allocated, available }: Capacity) {
+  if (available === 0) return null;
+  return (
+    <div className={styles.lines}>
+      <span>
+        {decimal(allocated / wholeMonth)} of {decimal(available / wholeMonth)}
+      </span>
+      <span>{share(allocated, available)}</span>
+    </div>
+  );
+}
+
+function capacityTotals(show: Show): RowTotals<AllocationRow> {
+  return {
+    label: "Total",
+    overall: "Organization",
+    cell: (rows, month) => <CapacityTotal {...capacityOf(rows, month, show)} />,
+  };
 }
