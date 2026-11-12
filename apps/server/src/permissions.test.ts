@@ -356,6 +356,21 @@ const routes: Route[] = [
     pattern: "/api/access-history",
     needs: allOf("administration:view"),
   },
+  // Refusing a column the role can't see is left to the exports tests.
+  {
+    method: "POST",
+    pattern: "/api/exports",
+    variant: "people",
+    needs: allOf("people:view"),
+    body: () => ({ table: "people", columns: ["preferredName"] }),
+  },
+  {
+    method: "POST",
+    pattern: "/api/exports",
+    variant: "features",
+    needs: allOf("features:view"),
+    body: () => ({ table: "features", columns: ["name"] }),
+  },
   // Holds only changes to data the reader sees, as the change history tests check.
   {
     method: "GET",

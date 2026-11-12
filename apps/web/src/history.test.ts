@@ -176,6 +176,39 @@ describe("describeDetails", () => {
     );
   });
 
+  it("names the table exported and its classified columns, most sensitive first", () => {
+    const exported = entry("data-exported", {
+      exported: "People",
+      personalColumns: ["Start", "End"],
+      confidentialColumns: ["Future manager"],
+    });
+    expect(describeAction("data-exported")).toEqual({
+      verb: "exported",
+      caution: false,
+    });
+    expect(describeDetails(exported)).toBe(
+      "People with Confidential data (Future manager) and Personal data (Start, End)",
+    );
+  });
+
+  it("names only the classes an export held", () => {
+    const exported = entry("data-exported", {
+      exported: "People",
+      personalColumns: ["Start"],
+    });
+    expect(describeDetails(exported)).toBe("People with Personal data (Start)");
+  });
+
+  it("names an export holding only Confidential data", () => {
+    const exported = entry("data-exported", {
+      exported: "People",
+      confidentialColumns: ["Future manager"],
+    });
+    expect(describeDetails(exported)).toBe(
+      "People with Confidential data (Future manager)",
+    );
+  });
+
   it("says a class was not recorded when an entry lacks it", () => {
     const moved = entry("data-class-moved", {
       moved: "End date",

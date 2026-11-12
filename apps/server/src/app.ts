@@ -32,6 +32,7 @@ import { greetingRoutes } from "./routes/greeting.ts";
 import { settingsRoutes } from "./routes/settings.ts";
 import { allocationRoutes } from "./routes/allocations.ts";
 import { planningSettingsRoutes } from "./routes/planning-settings.ts";
+import { exportRoutes } from "./routes/exports.ts";
 import { historyRoutes } from "./routes/history.ts";
 import { listRoutes } from "./routes/lists.ts";
 import { peopleRoutes } from "./routes/people.ts";
@@ -199,6 +200,7 @@ export async function buildApp(options: AppOptions) {
   );
   await app.register(roleRoutes(createRoleAdministration(options.database)));
   await app.register(historyRoutes(options.data));
+  await app.register(exportRoutes(options.data));
   await app.register(listRoutes(options.data.lists));
   await app.register(draftRoutes(options.data.drafts));
   await app.register(peopleRoutes(options.data.people));

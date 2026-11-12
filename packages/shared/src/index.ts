@@ -432,6 +432,21 @@ export {
 } from "./views.ts";
 export { allOf, eitherOf } from "./words.ts";
 export {
+  type ClassifiedColumns,
+  type ClassifiedTier,
+  classifiedData,
+  classifiedDataWords,
+  type ExportedTable,
+  exportedTableSchema,
+  type ExportRecorded,
+  exportRecordedSchema,
+  type ExportRequest,
+  exportRequestSchema,
+  heldClassNames,
+  heldData,
+  heldTiers,
+} from "./exports.ts";
+export {
   isNumberValue,
   numberDigits,
   numberProblem,

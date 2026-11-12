@@ -18,6 +18,8 @@ import {
   lists,
 } from "@fathom/db";
 import {
+  builtInColumnNames,
+  builtInColumnTiers,
   type BuiltInTiers,
   type ColumnTable,
   isLink,
@@ -119,6 +121,25 @@ export async function readColumns(
     listRetired: retired ?? false,
   }));
   return Object.assign(columns, await readBuiltInTiers(reader));
+}
+
+// Each of People's columns, built-in and added, by key, with its name and the class of its values.
+export function columnClasses(
+  columns: PeopleColumns,
+): Map<string, { name: string; tier: Tier }> {
+  return new Map([
+    ...[...builtInColumnTiers(columns)].map(
+      ([key, tier]): [string, { name: string; tier: Tier }] => [
+        key,
+        // Every built-in column of People is named.
+        { name: String(builtInColumnNames.get(key)), tier },
+      ],
+    ),
+    ...columns.map((column): [string, { name: string; tier: Tier }] => [
+      column.id,
+      { name: column.name, tier: column.tier },
+    ]),
+  ]);
 }
 
 // A live column's tier, given the visibility of its own list, read with it.

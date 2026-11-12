@@ -31,6 +31,8 @@ import type {
   HireFill,
   HireRequest,
   Hires,
+  ExportRequest,
+  ExportRecorded,
   HistoryEntry,
   List,
   ListRequest,
@@ -95,6 +97,7 @@ import * as hireData from "./hires.ts";
 import * as fills from "./fills.ts";
 import * as featureTeamData from "./feature-teams.ts";
 import { readTeamMonths } from "./team-months.ts";
+import { recordExport } from "./exports.ts";
 import { readHistory, recordPersonalView } from "./history.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./records.ts";
 import * as projectData from "./projects.ts";
@@ -172,6 +175,9 @@ export interface DataAccess {
   ): Promise<Saved<PlanningSettings>>;
   // The most recent entries in the access history.
   readHistory(actor: Actor): Promise<HistoryEntry[]>;
+  // Records an export holding Personal or Confidential data in the access history, refusing one
+  // holding a column the actor can't see.
+  recordExport(actor: Actor, request: ExportRequest): Promise<ExportRecorded>;
   // The change sets saved before the one named, or the latest, holding only the changes the actor
   // may see, and every word of a search, if any. Seeing Personal or Confidential changes is
   // recorded in the access history.
@@ -1077,6 +1083,8 @@ export function createDataAccess(database: Database): DataAccess {
       switchRole(database, actor.user.id, sessionId, roleId),
     keepSessionRole: (token, roleId) =>
       keepSessionRole(database, token, roleId),
+    recordExport: async (actor, request) =>
+      recordExport(database, actor, request),
     readHistory: async (actor) => {
       requirePermission(actor, "administration:view");
       return readHistory(database, actor.permissions.includes("people:view"));

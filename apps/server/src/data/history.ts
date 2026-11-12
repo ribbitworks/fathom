@@ -102,6 +102,9 @@ const storedDetailsSchema = z
     moved: z.string().optional(),
     dataClass: z.string().optional(),
     previousDataClass: z.string().optional(),
+    exported: z.string().optional(),
+    personalColumns: z.array(z.string()).optional(),
+    confidentialColumns: z.array(z.string()).optional(),
   })
   .catch({});
 

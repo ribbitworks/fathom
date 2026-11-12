@@ -314,20 +314,31 @@ const heldAlone = {
 // The tables that can have columns added.
 export type ColumnTable = "people" | "features";
 
-// What sets each table's added columns apart: whether planned hires are offered them, whether they
-// must be General, and what removing one needs besides changing configuration.
+// What sets each table apart: its name, what reading it needs, whether planned hires are offered
+// its added columns, whether they must be General, and what removing one needs besides changing
+// configuration.
 export const columnTablePolicies: Readonly<
   Record<
     ColumnTable,
-    { onPlannedHires: boolean; generalOnly: boolean; removalNeeds: Permission }
+    {
+      name: string;
+      viewNeeds: Permission;
+      onPlannedHires: boolean;
+      generalOnly: boolean;
+      removalNeeds: Permission;
+    }
   >
 > = {
   people: {
+    name: "People",
+    viewNeeds: "people:view",
     onPlannedHires: true,
     generalOnly: false,
     removalNeeds: "people:edit",
   },
   features: {
+    name: "Features",
+    viewNeeds: "features:view",
     onPlannedHires: false,
     generalOnly: true,
     removalNeeds: "features:edit",

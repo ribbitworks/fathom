@@ -8,6 +8,7 @@ import {
   type AccessAction,
   accessActionSchema,
   characterKinds,
+  classifiedDataWords,
   classNames,
   type HistoryEntry,
   historyListSchema,
@@ -120,6 +121,10 @@ const actionWords: Record<AccessAction, ActionWords> = {
   "data-class-moved": {
     verb: "moved",
     caution: true,
+  },
+  "data-exported": {
+    verb: "exported",
+    caution: false,
   },
 };
 
@@ -264,6 +269,12 @@ export function describeDetails({ action, details }: HistoryEntry): string {
     details.previousPasswords !== undefined
   ) {
     return describePasswords(details.passwords, details.previousPasswords);
+  }
+  if (details.exported !== undefined) {
+    return `${details.exported} with ${classifiedDataWords({
+      personal: details.personalColumns ?? [],
+      confidential: details.confidentialColumns ?? [],
+    })}`;
   }
   if (details.moved !== undefined) {
     return `${details.moved} from ${className(details.previousDataClass)} to ${className(details.dataClass)}`;

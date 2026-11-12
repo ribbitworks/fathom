@@ -12,7 +12,6 @@
 
 import { changes, type Database, inChunks, savedViews } from "@fathom/db";
 import {
-  builtInColumnTiers,
   type SavedView,
   type SavedViewChange,
   type SavedViewRequest,
@@ -36,7 +35,7 @@ import {
   type Saved,
   type Transaction,
 } from "./changes.ts";
-import { readColumns } from "./values.ts";
+import { columnClasses, readColumns } from "./values.ts";
 
 const table = "people";
 const noView = "There is no such view";
@@ -62,11 +61,12 @@ const viewFields = [
 
 // The tier of each of the People table's columns, by key.
 async function columnTiers(reader: Reader): Promise<Map<string, Tier>> {
-  const columns = await readColumns(reader);
-  return new Map<string, Tier>([
-    ...builtInColumnTiers(columns),
-    ...columns.map((column): [string, Tier] => [column.id, column.tier]),
-  ]);
+  return new Map(
+    [...columnClasses(await readColumns(reader))].map(([key, { tier }]) => [
+      key,
+      tier,
+    ]),
+  );
 }
 
 // A view as stored, read back through the same checks as the page address.

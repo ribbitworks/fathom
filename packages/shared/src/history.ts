@@ -43,6 +43,9 @@ export const accessActionSchema = z.enum([
   // Someone moved a built-in detail, a list, or a column to another class, naming it and its class
   // before and after.
   "data-class-moved",
+  // Someone exported a table holding Personal or Confidential data, naming the table and its
+  // classified columns.
+  "data-exported",
 ]);
 
 export type AccessAction = z.infer<typeof accessActionSchema>;
@@ -68,6 +71,10 @@ export const historyDetailsSchema = z.object({
   moved: z.string().optional(),
   dataClass: z.string().optional(),
   previousDataClass: z.string().optional(),
+  // For an export: the table and its classified columns and details, as the server names them.
+  exported: z.string().optional(),
+  personalColumns: z.array(z.string()).optional(),
+  confidentialColumns: z.array(z.string()).optional(),
 });
 
 export type HistoryDetails = z.infer<typeof historyDetailsSchema>;
