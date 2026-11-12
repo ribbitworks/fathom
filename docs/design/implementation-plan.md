@@ -51,6 +51,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Cycles and Releases | In progress: schema, server, seed, the Releases page and its timeline, a colour for each release, and changing one cycle's length |
 | Hiring Plan | In progress: schema and server, with Position and the hiring states built in and hires known by requisition or temporary ID; lists with meanings edited on the Lists page, which marks built-in lists; planned hires as rows of People, with optional names, the Hired state for people, the seed's planned hires, and a manual test; planned hires' values in People's added columns, each offered on them unless switched off; the Left state, with each person's own state of the meaning their end date gives, and those who have left listed for everyone who sees people; planned managers, with planned hires reporting to them on People and drawn as placeholders on the org chart; filling a planned hire as one draft, from its details panel |
 | Editable Roles | In progress: schema, the server reading roles from the database, the Roles page, several roles for each account, chosen from every role on the Accounts page, with a default, acting as one at a time and switching from the account menu, each change recording the role it was made as, the Hiring plan permission area, with viewing and editing, approving split by area, the starting roles rewritten for the personas, and viewing accounts, roles, and settings apart from changing them |
+| Exports | In progress: the CSV and TSV file of what a view shows, drafts and Live rows included, from an Export icon in the page's heading on People, Features and each Projects tab, the question asked before exporting Personal or Confidential data, and recording such an export in the access history; next the remaining tables, then the grids and the Org chart |
 
 ### Hello Fathom
 
@@ -211,6 +212,10 @@ flowchart TD
 ### Overview
 
 The Overview page as a page of links to what needs attention, as [The Overview page](../product/decisions.md#planning) sets out, built after the steps of [The Roadmap and the Plan](#features-and-the-roadmap), since it shows which features are Late, Not staffed or Critical, and how much capacity is used.
+
+### Exports
+
+Exporting what a view shows as a CSV or TSV file, as the [Decisions Log](../product/decisions.md#platform-and-operations) sets out, brought forward from the [Snapshots, Exports, and Hiring](../product/roadmap.md#stage-snapshots-exports-and-hiring) stage by the owner on 2026-11-11. It is built in this order, each step its own pull request: first recording an export holding Personal or Confidential data in the access history; then the file, the Export icon in the page's heading, which the shared table offers on People, Features and each Projects tab, and the question asked before exporting Personal or Confidential data; then the remaining tables; then the table forms of the grids, Feature assignments and the allocations, and the Org chart.
 
 ### Project Manager Input
 

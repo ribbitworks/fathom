@@ -21,6 +21,7 @@ import {
   fictionalUser,
   greeting,
   renderApp,
+  savedFiles,
   serverAnswers,
   wholeText,
 } from "./test-support.tsx";
@@ -3868,6 +3869,60 @@ describe("planned hires", () => {
     await userEvent.click(await screen.findByRole("menuitem", { name: item }));
   }
 
+  it("asks before exporting the hiring plan and Personal dates, then records the export and saves the file", async () => {
+    // Given People with planned hires, read by someone who sees the hiring plan and Personal details
+    const files = savedFiles();
+    const fetch = await openHires({
+      "POST /api/exports": () => Response.json({ recorded: true }),
+    });
+
+    // When People is exported as a TSV file
+    await userEvent.click(screen.getByRole("button", { name: "Export" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "TSV file" }),
+    );
+
+    // Then the question names the hiring plan the hires' rows are, and the Personal column
+    const dialog = await screen.findByRole("dialog", {
+      name: "Export Confidential and Personal data?",
+    });
+    expect(dialog.textContent).toContain(
+      "This file holds Confidential data (Hiring plan) and Personal data (",
+    );
+    expect(files).toHaveLength(0);
+
+    // When Export is chosen
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Export" }),
+    );
+
+    // Then the export is recorded, then the file saved
+    await waitFor(() => {
+      expect(files).toHaveLength(1);
+    });
+    expect(bodyOf(fetch, "POST", "/api/exports")).toEqual([
+      {
+        table: "people",
+        columns: [
+          "preferredName",
+          "employeeId",
+          "positionId",
+          "stateId",
+          "startDate",
+          "expected",
+          "endDate",
+          "managerId",
+          "isManager",
+          "managerFrom",
+          "team",
+          "teamName",
+        ],
+        details: ["hiringPlan"],
+      },
+    ]);
+    expect(files[0]?.name).toMatch(/\.tsv$/u);
+  });
+
   it("offers a person the states of their meaning, and a hire only Proposed or Open", async () => {
     await openHires();
     focusCell("p1", "stateId");
@@ -4471,5 +4526,72 @@ describe("adding from New", () => {
         "Start was cleared, since a person doesn't have it.",
       ),
     ).toBeDefined();
+  });
+});
+
+describe("exporting People", () => {
+  it("asks before exporting Personal data, without the hiring plan when no planned hire is shown", async () => {
+    await openPeople();
+    await userEvent.click(screen.getByRole("button", { name: "Export" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "CSV file" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Export Personal data?",
+    });
+    expect(dialog.textContent).not.toContain("Hiring plan");
+  });
+
+  it("names past managers for a drafted change of manager", async () => {
+    // Given a person drafted to another manager
+    const moved = {
+      ...blake,
+      manager: { id: "p1", preferredName: "Avery Fictional" },
+      draft: {
+        action: "changed",
+        changed: ["managerId"],
+        live: { managerId: null, values: {}, links: {} },
+        state: "waiting",
+        madeBy: null,
+        madeAt: null,
+      },
+    };
+    await openPeople({
+      "GET /api/people": () =>
+        Response.json({
+          people: [avery, moved],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+    });
+
+    // When People is exported beside live
+    await userEvent.click(screen.getByRole("button", { name: "Export" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "CSV file" }),
+    );
+
+    // Then the question names past managers, Personal by default
+    const dialog = await screen.findByRole("dialog", {
+      name: "Export Personal data?",
+    });
+    expect(dialog.textContent).toContain("Past managers");
+
+    // When it is exported live only, holding only the live manager
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Cancel" }),
+    );
+    await chooseInDraftMenu("Live only");
+    await userEvent.click(screen.getByRole("button", { name: "Export" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "CSV file" }),
+    );
+
+    // Then past managers aren't named
+    expect(
+      (await screen.findByRole("dialog", { name: "Export Personal data?" }))
+        .textContent,
+    ).not.toContain("Past managers");
   });
 });

@@ -234,7 +234,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **Saved at once:** Changes save at once, without asking. The latest can be undone with Cmd+Z or Ctrl+Z, except in a field with something typed in it, the note editor included, where the keys undo the typing alone. Undo covers every kind of record, the plan's included, checked by the same rules approving uses. Changes seen in place show no notification. A change that takes something out of view, such as discarding the draft of a record only drafted to be added, or deleting a saved view, shows a notification at the top right offering Undo, which closes after a few seconds or when a newer change is made. Sharing a view, or taking it back, shows one too, since nothing changes in view and it affects others. So does a change that takes a part of a record out of view, such as a team label a draft removes while Drafts applied is shown. Settings, which change Fathom for everyone, keep a Save button; once saved, the change shows in place with no notification, Cmd+Z or Ctrl+Z undoes it, and leaving with a change unsaved asks first. The planning settings on Capacity are the exception: each saves at once from its pencil, as a details panel's values do, decided by the owner on 2026-11-11. The plan's records, sharing a view, parts leaving view and settings decided by the owner on 2026-11-11.
   - **Drawn by:** `useSaving` and `isUndo` in `apps/web/src/saving.ts`, and `notifyUndoable` in `apps/web/src/notices.tsx`.
   - **Example:** on People, save a view, then delete it.
-- **Asking first:** Of the changes themselves, only approving drafts, rejecting them, and Discard all… ask first, since they can't be undone; leaving unsaved work asks too, as [Leaving Unsaved Work](#leaving-unsaved-work) sets out. Each confirms what was done in a notification without Undo, such as Approved 3 drafts, since it takes drafts out of view. Decided by the owner on 2026-11-11.
+- **Asking first:** Of the changes themselves, only approving drafts, rejecting them, and Discard all… ask first, since they can't be undone; leaving unsaved work asks too, as [Leaving Unsaved Work](#leaving-unsaved-work) sets out, and so does exporting Personal or Confidential data, as [Exporting](#exporting) sets out. Each confirms what was done in a notification without Undo, such as Approved 3 drafts, since it takes drafts out of view. Decided by the owner on 2026-11-11.
   - **Drawn by:** `DecisionModal` in `apps/web/src/decision-dialog.tsx`.
   - **Example:** Approve… in a seeded person's draft menu on People.
 - **Failures:** A change that fails says so in plain words, saying what to do next, never as a raw error, and its notification stays until closed. The record goes back to how it was.
@@ -291,6 +291,12 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **Private until published:** A person's changes are theirs alone until they publish them. While they have any, the top bar shows Publish with how many, such as Publish 3 changes, which publishes them all and confirms it in a notification without Undo, such as Published 3 changes., beside a menu listing them, with Discard all…, which asks first. Decided by the owner on 2026-11-11. A record someone else is changing is held, as [Drafts](#drafts) sets out.
   - **Drawn by:** `UnpublishedControl` in `apps/web/src/unpublished.tsx`.
   - **Example:** change any value on Features: Publish 1 change shows in the top bar.
+
+## Exporting
+
+- **Exporting what a table shows:** A page whose table can be exported has an Export icon in its heading, before its main action, opening CSV file and TSV file. The file holds what the view shows, drafts and their Live rows included, as the [Decisions Log](../product/decisions.md#platform-and-operations) sets out. An export holding Personal or Confidential data asks first, naming each class in its colour and its columns, and is recorded once confirmed. Decided by the owner on 2026-11-11.
+  - **Drawn by:** `PageExportMenu` and `useOfferedExport` in `apps/web/src/page-export.tsx`, the table's `exported` in `apps/web/src/record-grid.tsx`, `ExportQuestion` in `apps/web/src/export-question.tsx`, and the file from `apps/web/src/exports.ts`.
+  - **Example:** on People, as the Engineering Director, choose the Export icon, then CSV file.
 
 ## Search
 

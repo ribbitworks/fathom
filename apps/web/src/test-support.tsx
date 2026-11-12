@@ -208,3 +208,30 @@ export const fictionalStream = (
   releases: [],
   ...fields,
 });
+
+// Catches each file the browser is handed to save, by name, with its text, in place of the
+// browser's download. The page needs no Save dialog of the browser's own, as jsdom offers none.
+export function savedFiles(): { name: string; text: () => Promise<string> }[] {
+  const blobs = new Map<string, Blob>();
+  const files: { name: string; text: () => Promise<string> }[] = [];
+  vi.stubGlobal(
+    "URL",
+    class extends URL {
+      static override createObjectURL = (blob: Blob) => {
+        const url = `blob:fictional-${String(blobs.size)}`;
+        blobs.set(url, blob);
+        return url;
+      };
+      static override revokeObjectURL = () => undefined;
+    },
+  );
+  vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    const blob = blobs.get(this.href);
+    if (blob !== undefined) {
+      files.push({ name: this.download, text: async () => blob.text() });
+    }
+  });
+  return files;
+}

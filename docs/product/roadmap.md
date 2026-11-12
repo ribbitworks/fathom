@@ -59,7 +59,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 
 - **Hiring workflow:** Moving planned hires between states, controlled by role.
 - **Snapshots**
-- **Exports**
+- **Exports:** CSV and TSV first, begun by the owner on 2026-11-11, as the [Implementation Plan](../design/implementation-plan.md#exports) sets out; PNG and PDF of timelines, Feature boards and Org charts later.
 - **People and teams:** Gender.
 
 ## Stage: Your Own Fields and Tables

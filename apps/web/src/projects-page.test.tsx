@@ -8,6 +8,7 @@ import type { ProjectPlan } from "@fathom/shared";
 import { projectLengths, startingEffortConversions } from "@fathom/shared";
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+import { unsavedExport } from "./exports.ts";
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -17,6 +18,7 @@ import {
   noFeatureColumns,
   recordDraft,
   renderApp,
+  savedFiles,
   serverAnswers,
 } from "./test-support.tsx";
 import { formatDay } from "./table-view.ts";
@@ -3561,5 +3563,50 @@ describe("the Features page", () => {
     healthy = true;
     await userEvent.click(again);
     expect(await screen.findByRole("grid")).not.toBeNull();
+  });
+});
+
+describe("exporting a plan table", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("says the file couldn't be saved when the browser's Save dialog fails", async () => {
+    vi.stubGlobal(
+      "showSaveFilePicker",
+      vi.fn(async () => Promise.reject(new Error("No place"))),
+    );
+    await openPage("/projects", plan());
+    await userEvent.click(screen.getByRole("button", { name: "Export" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "TSV file" }),
+    );
+    expect(await screen.findByText(unsavedExport)).not.toBeNull();
+  });
+
+  it("saves what the Projects tab shows at once, asking nothing, since the plan is General", async () => {
+    // Given the Projects tab
+    const files = savedFiles();
+    await openPage("/projects", plan());
+
+    // When it is exported as a CSV file from the page's heading
+    await userEvent.click(screen.getByRole("button", { name: "Export" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "CSV file" }),
+    );
+
+    // Then no question is asked, and the file holds the project, after the Row and Change columns
+    await waitFor(() => {
+      expect(files).toHaveLength(1);
+    });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    const [file] = files;
+    expect(file?.name).toMatch(
+      /^fathom_projects_fictional-person_drafts-and-live_\d{4}-\d{2}-\d{2}\.csv$/u,
+    );
+    const lines = (await file?.text())?.split("\r\n") ?? [];
+    // Reading the file as text takes off its byte order mark.
+    expect(lines[0]).toMatch(/^Row,Change,Name,/u);
+    expect(lines.some((line) => line.includes("Fictional Project"))).toBe(true);
   });
 });

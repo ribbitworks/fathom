@@ -40,7 +40,7 @@ import type {
   Show,
   Tier,
 } from "@fathom/shared";
-import { draftFilterKey } from "@fathom/shared";
+import { draftFilterKey, type ExportedTable } from "@fathom/shared";
 import {
   ActionIcon,
   Menu,
@@ -129,6 +129,8 @@ import {
   withoutFilters,
 } from "./table-view.ts";
 import { AppMenu, closesOnBlankClick } from "./app-menu.tsx";
+import type { HeldDetail } from "./exports.ts";
+import { useTableExport } from "./table-export.tsx";
 import { metricsButtonId, metricsPanelId } from "./metrics.ts";
 import { type CountedRows, MetricsPanel } from "./metrics-panel.tsx";
 import classes from "./pages.module.css";
@@ -367,6 +369,13 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // The ways the rows can be grouped under headings, the first of which is the table's own, for a
   // table that groups them.
   groupings?: readonly RowGrouping<Rec>[];
+  // For a table that can be exported: the table the server records an export holding Personal or
+  // Confidential data as, and the classified details its rows hold apart from their columns, such
+  // as the hiring plan, which planned hires' rows are. A table without it offers no export.
+  exported?: {
+    recordedAs?: ExportedTable;
+    held?: (rows: readonly Rec[], show: Show) => readonly HeldDetail[];
+  };
   // For a table that sums its rows: a total row ending each group, headed with the label, and one
   // for all the rows shown, kept in view at the foot, headed with the overall label; each column's
   // total is drawn from the rows it sums.
@@ -2911,6 +2920,15 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         ]),
   ];
 
+  const exportQuestion = useTableExport({
+    table,
+    show: known.show,
+    shown: shownRecords,
+    everyone,
+    columns,
+    liveColumn,
+    saved,
+  });
   // Menus and choices stay shown beside their cell however the table scrolls, so they are not hidden
   // when the cell is partly out of view.
   return (
@@ -3482,6 +3500,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
           )}
         </Paper>
       </WithSidePanel>
+      {exportQuestion}
     </DraftView>
   );
 }

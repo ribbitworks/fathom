@@ -22,6 +22,7 @@ import type {
   Show,
 } from "@fathom/shared";
 import {
+  classifiedFieldNames,
   builtInColumnNames,
   builtInColumnTiers,
   defaultClasses,
@@ -668,6 +669,33 @@ function peopleTable(
   const hireIds = new Set(people.filter(isHire).map(({ id }) => id));
   return {
     label: "People",
+    exported: {
+      recordedAs: "people",
+      // Planned hires' rows are the hiring plan, whatever columns are exported.
+      held: (rows, show) => [
+        ...(rows.some(isHire)
+          ? [
+              {
+                field: "hiringPlan" as const,
+                name: classifiedFieldNames.hiringPlan,
+                dataClass: dataClasses.hiringPlan,
+              },
+            ]
+          : []),
+        // A drafted manager is a past manager to come, so is as past managers are, though live
+        // managers are General.
+        ...(show !== "live" &&
+        rows.some((row) => row.draft?.changed.includes("managerId") === true)
+          ? [
+              {
+                field: "managerHistory" as const,
+                name: classifiedFieldNames.managerHistory,
+                dataClass: dataClasses.managerHistory,
+              },
+            ]
+          : []),
+      ],
+    },
     one: "person",
     noun: "people",
     counted: peopleAndHires(isHire),

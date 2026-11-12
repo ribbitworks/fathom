@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The heading of a page: its title and the page's main action.
+// The heading of a page: its title, the Export icon while a table on the page offers its export,
+// and the page's main action.
 
 import { Group, Title } from "@mantine/core";
 import type { ReactNode } from "react";
+import { PageExportMenu } from "./page-export.tsx";
 
 export function PageHeader({
   title,
@@ -17,7 +19,10 @@ export function PageHeader({
       <Title order={1} fz={22}>
         {title}
       </Title>
-      {action}
+      <Group gap="xs">
+        <PageExportMenu />
+        {action}
+      </Group>
     </Group>
   );
 }

@@ -17,6 +17,7 @@ export function DialogActions({
   others,
   beforeCancel,
   removes = false,
+  failure = "Fathom could not make this change. Try again in a moment.",
 }: {
   error: Error | null;
   pending: boolean;
@@ -27,15 +28,14 @@ export function DialogActions({
   beforeCancel?: ReactNode;
   // Whether the change deletes or deactivates something, which is shown in red.
   removes?: boolean;
+  // What a failure says when the server gives no reason, for a dialog that changes nothing.
+  failure?: string;
 }) {
   return (
     <>
       {error && (
         <Alert color="red" role="alert">
-          {describeProblem(
-            error,
-            "Fathom could not make this change. Try again in a moment.",
-          )}
+          {describeProblem(error, failure)}
         </Alert>
       )}
       <Group justify="space-between" wrap="nowrap">

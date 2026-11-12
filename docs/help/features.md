@@ -37,6 +37,14 @@ Choose a team in **Feature team**.
 1. Select **Group by**.
 1. Choose **Cycle**, **Release**, **Needed by** or **None**.
 
+### Export Features
+
+1. Choose the **Export** button, the arrow down onto a line, at the right of the page's heading.
+1. Choose **CSV file** or **TSV file**.
+1. Choose where to save it, if the browser asks.
+
+The file holds what the table shows: the rows the search and filters leave, in their order, and the columns in theirs. While drafts show beside live, each changed row comes as its draft and then its live row, and the **Row** column says which, so a spreadsheet's filter can leave out either; the **Change** column says what each draft does. The file is named after the page, the saved view, who exported it and the day, such as **fathom_features_product-manager_drafts-and-live_2027-03-31.csv**.
+
 ### Remove a Feature
 
 Select **Remove feature** in the feature's **⋯** menu. Fathom refuses while a project or proposal names the feature. It also refuses once people are allocated to the feature, since that time was spent; choose a status that means Cancelled instead.

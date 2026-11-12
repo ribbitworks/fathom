@@ -1,7 +1,7 @@
 # Fathom — Supported Platforms
 
 **Status:** Draft
-**Last updated:** 2026-10-27
+**Last updated:** 2026-11-11
 
 Fathom runs as Linux containers for the x86-64 architecture (linux/amd64), managed with Docker Compose. Any host that can run those containers can in principle run Fathom. This document lists the platforms Fathom is tested on and supported on, and what each needs.
 
@@ -35,4 +35,4 @@ Container files must not depend on features of a particular container runtime. P
 
 ## Browsers
 
-Which browsers and versions are supported is to be decided.
+Fathom supports Chrome, Edge, Safari and Firefox, and browsers built on them, such as Brave or Arc, decided by the owner on 2026-11-11. Which versions are supported is to be decided. Saving an export opens the browser's Save dialog where the browser offers one to web pages, as Chrome, Edge and others built on Chromium do; Safari and Firefox save it as their own download settings say, as [Exports](../product/decisions.md#platform-and-operations) sets out.

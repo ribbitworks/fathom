@@ -53,6 +53,16 @@ Select a cell in a **Note** column, and press Enter. The note opens beside the t
 
 Select **Metrics**, then choose a column under **Break down by**. Choose a second column under **and by** to cross the two. The figures count only the rows shown.
 
+### Export People
+
+1. Choose the **Export** button, the arrow down onto a line, at the right of the page's heading.
+1. Choose **CSV file** or **TSV file**.
+1. Choose where to save it, if the browser asks.
+
+The file holds what the table shows: the rows the search and filters leave, in their order, and the columns in theirs. While drafts show beside live, each changed row comes as its draft and then its live row, and the **Row** column says which, so a spreadsheet's filter can leave out either; the **Change** column says what each draft does. The file is named after the page, the saved view, who exported it and the day, such as **fathom_people_engineering-director_drafts-and-live_2027-03-31.csv**.
+
+A file holding Personal or Confidential data, such as start dates or planned hires, asks first, naming what it holds. Once **Export** is chosen, the export is recorded in the access history.
+
 ### Remove a Person or Planned Hire
 
 Select **Remove person** or **Remove planned hire** in the row's **⋯** menu. Fathom refuses while any of their allocations has a draft. A person who leaves the organization keeps their row: give them an **End** date instead.

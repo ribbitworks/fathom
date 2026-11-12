@@ -91,7 +91,10 @@ export const fieldLabel = ({
   unit === undefined ? label : `${label} in ${unit.name}`;
 
 // A row's value in a column, or, when empty, what stands in for it.
-export function valueOrStandIn<Row>(column: TableColumn<Row>, row: Row) {
+export function valueOrStandIn<Row>(
+  column: Pick<TableColumn<Row>, "value" | "standIn">,
+  row: Row,
+) {
   const value = column.value(row);
   return value === "" && column.standIn !== undefined
     ? column.standIn(row)
@@ -509,7 +512,7 @@ export function formatMonth(value: string): string {
 
 // Each kind's values are of one type: text and dates are strings, choices are lists, and links are
 // links or null.
-const asText = (value: CellValue) => value as string;
+export const asText = (value: CellValue) => value as string;
 const asChoices = (value: CellValue) => value as string[];
 const asLink = (value: CellValue) => value as Link | null;
 

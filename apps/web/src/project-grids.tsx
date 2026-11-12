@@ -251,6 +251,9 @@ function planTable<Rec extends PlanRecord, Request>({
     label,
     one,
     noun,
+    // The plan's records are General, and so are Features' added columns, so exporting them asks
+    // nothing; Features is named for recording all the same, so no classified column escapes it.
+    exported: type === "feature" ? { recordedAs: "features" } : {},
     ...(kinds === undefined ? {} : { kinds, kindOf: () => savedKind }),
     ...(groupings === undefined ? {} : { groupings }),
     newRowLabel: () => `New ${one}`,

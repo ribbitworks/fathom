@@ -49,6 +49,14 @@ Open its details. **Scope history**, at the end, lists each feature added or rem
 - **Show features** in a project's or proposal's **⋯** menu opens **Features**, showing only the features it names.
 - **Show project** in a milestone's **⋯** menu opens its project's details.
 
+### Export a Tab
+
+1. Choose the **Export** button, the arrow down onto a line, at the right of the page's heading.
+1. Choose **CSV file** or **TSV file**.
+1. Choose where to save it, if the browser asks.
+
+The file holds what the tab shows: the rows the search and filters leave, in their order, and the columns in theirs. While drafts show beside live, each changed row comes as its draft and then its live row, and the **Row** column says which, so a spreadsheet's filter can leave out either; the **Change** column says what each draft does. The file is named after the page, the saved view, who exported it and the day, such as **fathom_projects_project-manager_drafts-and-live_2027-03-31.csv**.
+
 ### Remove a Record
 
 Select **Remove** and the record's kind, such as **Remove project**, in its **⋯** menu. The row is struck through until the removal is approved, and a project takes its milestones with it. Fathom refuses to remove a customer or proposal that another record still names, and a project once people are allocated to it.

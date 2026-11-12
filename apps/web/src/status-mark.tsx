@@ -40,7 +40,7 @@ const rejectedWord = "Rejected";
 type ChangeWord =
   "moved" | "added" | "removed" | "reordered" | "retired" | "restored";
 
-function changeWord(draft: DraftLike): ChangeWord | undefined {
+export function changeWord(draft: DraftLike): ChangeWord | undefined {
   if (draft.moved === true) return "moved";
   if (draft.action === "created") return "added";
   if (draft.action === "deleted") return "removed";
@@ -61,17 +61,21 @@ const waitingChanges: Record<ChangeWord, string> = {
   restored: "Its restoration",
 };
 
-// Live's words where the view shows only what is live, saying what kind of change waits, so the
-// change is named without showing it.
-export function liveWaitingWords(draft: DraftLike): string {
-  if (draft.unpublished === true) return "Live. A change isn't published yet.";
+// What kind of change waits for an item, where the view shows only what is live, so the change is
+// named without showing it, as Live's tip and an exported file say it.
+export function waitingWords(draft: DraftLike): string {
+  if (draft.unpublished === true) return "A change isn't published yet.";
   const change = changeWord(draft);
   const waiting =
     // The key is one of the union's own.
     // eslint-disable-next-line security/detect-object-injection
     change === undefined ? "A change" : waitingChanges[change];
-  return `Live. ${waiting} is waiting for approval.`;
+  return `${waiting} is waiting for approval.`;
 }
+
+// Live's words where the view shows only what is live.
+export const liveWaitingWords = (draft: DraftLike): string =>
+  `Live. ${waitingWords(draft)}`;
 
 // What a draft is, in words, naming what it does, so a rejected one still says what was rejected.
 export function draftWords(draft: DraftLike): string {

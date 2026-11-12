@@ -44,6 +44,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Brand } from "./brand.tsx";
+import { PageExportProvider } from "./page-export.tsx";
 import { DevBadge, devLabel } from "./dev-label.tsx";
 import { Icon, type IconName } from "./icons.tsx";
 import { useSignOutWhenIdle } from "./idle.ts";
@@ -661,7 +662,9 @@ export function Layout({
             {problem}
           </Alert>
         )}
-        <Outlet />
+        <PageExportProvider person={user.name}>
+          <Outlet />
+        </PageExportProvider>
       </AppShell.Main>
       <ChangeNameDialog
         name={user.name}
