@@ -599,10 +599,14 @@ describe("a month's cell", () => {
     expect(screen.getByText(", changed")).toBeDefined();
     expect(screen.getByText(", removed")).toBeDefined();
     expect(
-      screen.getByText("Checkout").querySelector('[aria-hidden="true"]'),
+      screen
+        .getByText("Checkout")
+        .parentElement?.querySelector('[aria-hidden="true"]'),
     ).not.toBeNull();
     expect(
-      screen.getByText("Billing").querySelector('[aria-hidden="true"]'),
+      screen
+        .getByText("Billing")
+        .parentElement?.querySelector('[aria-hidden="true"]'),
     ).not.toBeNull();
   });
 });

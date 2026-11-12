@@ -61,13 +61,9 @@
   font-style: italic;
 }
 
-/* A card with a draft is tinted as a row with one is on tables. */
-.card[data-draft] {
-  background: var(--mantine-color-sea-0);
-}
-
-:global([data-mantine-color-scheme="dark"]) .card[data-draft] {
-  background: var(--mantine-color-sea-light);
+/* A card with a draft is tinted as a row with one is on tables, while drafts are shown beside live. */
+.chart[data-tinted] .card[data-draft] {
+  background: var(--fathom-draft-tint);
 }
 
 /* The copy of a person drafted to another manager, under the one they report to now: light green,
@@ -85,9 +81,16 @@
   background: color-mix(in srgb, var(--mantine-color-green-5) 6%, transparent);
 }
 
-/* A team's live name, under its drafted one, lined up with the name rather than the colour's dot. */
+/* A team's colour before its name takes a swatch's width and a mark's gap, whether a plain swatch or
+   the button around one, so its name, and the live name under it, start at the same place. */
+.card {
+  --swatch-room: calc(11px + 6px);
+}
+
+/* A team's live name, under its drafted one, lined up with the drafted name, its dot under the
+   drafted name's dot, when a colour comes before the name. */
 .liveName {
-  padding-left: 14px;
+  padding-left: var(--swatch-room);
 }
 
 .card[data-found] {
@@ -102,7 +105,7 @@
 
 .name {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   min-width: 0;
   font-weight: 600;
 }
@@ -140,17 +143,21 @@
 }
 
 .team {
+  align-self: center;
   margin-left: auto;
   flex-shrink: 0;
 }
 
 .colourButton {
   display: inline-flex;
+  align-self: center;
   align-items: center;
   justify-content: center;
   width: 16px;
   height: 16px;
-  margin: -4px;
+  /* Drawn over the room around its 11px swatch, the swatch's left edge where a plain swatch's is,
+     and the name after it where a plain swatch's name is. */
+  margin: -4px calc(var(--swatch-room) - 16px + 2.5px) -4px -2.5px;
   border-radius: 50%;
 }
 
@@ -162,10 +169,10 @@
 /* A named team with no colour yet, whose colour can be chosen. */
 .noColour {
   box-sizing: border-box;
-  width: 8px;
-  height: 8px;
+  width: 11px;
+  height: 11px;
   border: 1px dashed var(--mantine-color-dimmed);
-  border-radius: 50%;
+  border-radius: 2px;
 }
 
 /* A team's name that opens its editor is underlined, as anything that opens something is. */

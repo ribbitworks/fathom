@@ -13,7 +13,13 @@
 // sight but never what Enter picks unasked.
 
 import { CheckIcon, Combobox, Group, Text, useCombobox } from "@mantine/core";
-import { type KeyboardEvent, useEffect, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import comboboxClasses from "./combobox.module.css";
 import classes from "./pages.module.css";
 
@@ -32,14 +38,18 @@ const descriptionOpacity = 0.75;
 // choices shows them.
 export function OptionWords({
   option,
+  name,
 }: {
   option: Pick<Option, "label" | "description">;
+  // The option's label as drawn, where it carries marks, such as a draft's dot.
+  name?: ReactNode;
 }) {
+  const label = name ?? option.label;
   return option.description === undefined ? (
-    <span>{option.label}</span>
+    <span>{label}</span>
   ) : (
     <div>
-      <span>{option.label}</span>
+      <span>{label}</span>
       {/* The option's own colour, faded, so it reads on a highlighted option's fill too. */}
       <Text size="xs" c="inherit" opacity={descriptionOpacity}>
         {option.description}

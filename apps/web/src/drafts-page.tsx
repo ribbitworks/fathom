@@ -81,7 +81,7 @@ import { isHire, rowName } from "./people-rows.ts";
 import classes from "./pages.module.css";
 import { type Phrase, PhraseList, phraseText } from "./phrase.tsx";
 import { formatDay } from "./table-view.ts";
-import { draftWords, HoldMarks, StatusMark } from "./status-mark.tsx";
+import { DraftedItem, draftWords } from "./status-mark.tsx";
 
 interface Drafted {
   person: Person;
@@ -116,12 +116,15 @@ function verb(action: PersonDraft["action"] | undefined): string {
 interface Entry {
   key: string;
   madeAt: string | null;
+  // What the draft does, as its dot's tip says; none for a new order.
+  action: PersonDraft["action"] | undefined;
   state: DraftState;
   who: string;
   verb: string;
   subject: string;
   details: Phrase[];
-  rejected: string;
+  // Why a rejected draft was rejected, when it says.
+  reason: string | undefined;
   // The user's own changes, which nobody may decide until they publish them.
   unpublished: boolean;
   // Who else has unpublished changes to the record, which hold it.
@@ -152,17 +155,19 @@ function entry(
 ): Entry {
   // Everyone who changed the draft, since several people's changes to one record make one draft.
   const who = joinedNames(makerNames(draft));
+  const reason = draft.state === "rejected" ? draft.reason : undefined;
   const rejected = draft.state === "rejected" ? draftWords(draft) : "";
   const did = verb(draft.action);
   return {
     key,
     madeAt: draft.madeAt,
+    action: draft.action,
     state: draft.state,
     who,
     verb: did,
     subject,
     details,
-    rejected,
+    reason,
     unpublished: draft.unpublished === true,
     heldBy,
     needsOtherApprover: draft.needsOtherApprover === true,
@@ -536,32 +541,38 @@ function DraftEntry({
       }
     >
       <Text fz="sm">
-        <Text span inherit fw={600}>
-          {shown.who}
-        </Text>{" "}
-        {shown.verb}{" "}
-        <Text span inherit fw={600}>
-          {shown.subject}
-        </Text>
-        {shown.details.length > 0 && (
-          <EntryDetails>
-            <PhraseList phrases={shown.details} />
-          </EntryDetails>
-        )}
+        <DraftedItem
+          // The reason has a line of its own under the sentence, so the dot leaves it out.
+          draft={{
+            action: shown.action,
+            state: shown.state,
+            unpublished: shown.unpublished,
+          }}
+          heldBy={shown.heldBy}
+          slot
+        >
+          <Text span inherit fw={600}>
+            {shown.who}
+          </Text>{" "}
+          {shown.verb}{" "}
+          <Text span inherit fw={600}>
+            {shown.subject}
+          </Text>
+          {shown.details.length > 0 && (
+            <EntryDetails>
+              <PhraseList phrases={shown.details} />
+            </EntryDetails>
+          )}
+        </DraftedItem>
       </Text>
-      {shown.rejected !== "" && (
-        <Text className={classes.markGap}>
-          <StatusMark tone="rejected">{shown.rejected}</StatusMark>
+      {shown.reason !== undefined && (
+        <Text fz="xs" c="dimmed">
+          Reason: {shown.reason}
         </Text>
       )}
       {waits && (
         <Text fz="xs" c="dimmed">
           Waiting for a rejected draft to be resubmitted
-        </Text>
-      )}
-      {(shown.unpublished || shown.heldBy !== undefined) && (
-        <Text className={classes.markGap}>
-          <HoldMarks unpublished={shown.unpublished} heldBy={shown.heldBy} />
         </Text>
       )}
     </EntryRow>

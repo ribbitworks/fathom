@@ -16,16 +16,17 @@ import type {
   Cycle,
   CyclePattern,
   DraftKind,
+  RecordDraft,
   RecordRef,
   Release,
   ReleaseStream,
+  Show,
 } from "@fathom/shared";
 import {
   ActionIcon,
   Alert,
   Anchor,
   Button,
-  ColorSwatch,
   FocusTrap,
   Group,
   Loader,
@@ -46,11 +47,10 @@ import { type Decision, decisionFor, noDrafts } from "./drafts.ts";
 import { focusSoon } from "./focus.ts";
 import { Icon } from "./icons.tsx";
 import { NotePanel } from "./note-editor.tsx";
-import { draftRowClass } from "./list-drafts.tsx";
 import { notifyFailure, notifySuccess } from "./notices.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
-import type { RecordNode } from "./record-drafts.ts";
+import { originalOf, type RecordNode } from "./record-drafts.ts";
 import {
   CycleLengthDialog,
   CyclesUntilDialog,
@@ -60,6 +60,13 @@ import {
 } from "./release-dialogs.tsx";
 import {
   discardRecordDraft,
+  draftedStreams,
+  markedDraft,
+  patternRowFields,
+  releaseRowFields,
+  slotDraft,
+  streamRowFields,
+  liveStreams,
   recordNodes,
   includesCycle,
   keptReleases,
@@ -74,10 +81,31 @@ import {
   saveReleaseNote,
   setStreamRetired,
 } from "./releases.ts";
-import { colourVariable } from "./colours.ts";
+import { Swatch } from "./colour-swatch.tsx";
 import { ReleasesTimeline } from "./releases-timeline.tsx";
 import { sidePanelScroll, useNarrow, WithSidePanel } from "./side-panel.tsx";
-import { DraftMark, HoldMarks } from "./status-mark.tsx";
+import { retiredLive } from "./lists.ts";
+import { undoDrafts } from "./record-grid.tsx";
+import {
+  DraftedItem,
+  DraftedValue,
+  DraftView,
+  LiveRowMarks,
+  LiveValue,
+  MarkedItem,
+  partsMark,
+  RowMarks,
+  useBesideLive,
+} from "./status-mark.tsx";
+import {
+  LivePartsCell,
+  LiveSummaryName,
+  PartsCell,
+  RowWithLive,
+  SummaryName,
+  SummaryRow,
+} from "./summary-row.tsx";
+import { DraftMenu } from "./table-controls.tsx";
 import { unpublishedQuery } from "./unpublished.tsx";
 import { today } from "./today.ts";
 import { planNodes, projectPlanQuery } from "./projects.ts";
@@ -169,6 +197,11 @@ function patternNow(stream: ReleaseStream): CyclePattern | undefined {
 
 // What can be done on the page, for the menus to offer.
 interface Actions extends RecordMenuActions {
+  // A record's draft, whatever the view, which its marks are worked out from, so the Draft view
+  // decides how they show.
+  draftOf: (id: string) => RecordDraft | undefined;
+  // The page address's search, kept as streams are opened.
+  search: { show?: Show };
   canEditStreams: boolean;
   canEditReleases: boolean;
   open: (dialog: Dialog) => void;
@@ -185,22 +218,26 @@ const nodeOf = (
     ({ ref }) => ref.type === type && ref.id === id,
   ) as RecordNode;
 
-// A record's draft and hold marks, beside its name, saying when a stream's draft retires or
-// restores it.
-function Marks({ node, retired }: { node: RecordNode; retired?: boolean }) {
-  const retiring =
-    retired !== undefined &&
-    node.draft?.state === "waiting" &&
-    node.draft.action === "changed" &&
-    node.draft.changed.length === 1 &&
-    node.draft.changed[0] === "retired"
-      ? { retiring: retired }
-      : {};
+// A row of a panel's section, with, beside live, the record as it is live in a row under it, while a
+// draft changes it.
+function PanelRow({
+  draft,
+  liveRow,
+  children,
+}: {
+  draft: RecordDraft | undefined;
+  liveRow: ReactNode;
+  children: ReactNode;
+}) {
   return (
-    <>
-      {node.draft && <DraftMark draft={{ ...node.draft, ...retiring }} />}
-      <HoldMarks unpublished={false} heldBy={node.heldBy} />
-    </>
+    <RowWithLive
+      className={classes.recordRow}
+      liveClassName={classes.recordRow}
+      tint={draft}
+      liveCells={draft?.action === "changed" ? liveRow : undefined}
+    >
+      {children}
+    </RowWithLive>
   );
 }
 
@@ -262,56 +299,90 @@ function Patterns({
           No cycles yet.
         </Text>
       )}
-      {stream.patterns.map((pattern) => {
-        const node = nodeOf(actions, "cycle-pattern", pattern.id);
-        const changeable =
-          actions.canEditStreams &&
-          pattern.heldBy === undefined &&
-          pattern.draft?.action !== "deleted";
-        return (
-          <div
-            key={pattern.id}
-            className={[classes.recordRow, draftRowClass(pattern.draft)].join(
-              " ",
-            )}
-          >
-            <span className={classes.figures}>From {pattern.startsOn}</span>
-            <span>
-              {patternWords(pattern)}
-              <Marks node={node} />
-            </span>
-            <RecordMenu
-              title={`Cycles from ${pattern.startsOn}`}
-              node={node}
-              canEditDraft={actions.canEditStreams}
-              actions={actions}
+      <div className={classes.recordRows}>
+        {stream.patterns.map((pattern) => {
+          const node = nodeOf(actions, "cycle-pattern", pattern.id);
+          const changeable =
+            actions.canEditStreams &&
+            pattern.heldBy === undefined &&
+            pattern.draft?.action !== "deleted";
+          const draft = actions.draftOf(pattern.id);
+          const slot = slotDraft(draft, patternRowFields);
+          const [live] = undoDrafts([pattern], () => true);
+          return (
+            <PanelRow
+              key={pattern.id}
+              draft={pattern.draft}
+              liveRow={
+                live && (
+                  <>
+                    <span className={classes.figures}>
+                      <LiveRowMarks marked={slot !== undefined}>
+                        <LiveValue draft={pattern.draft} fields={["startsOn"]}>
+                          From {live.startsOn}
+                        </LiveValue>
+                      </LiveRowMarks>
+                    </span>
+                    <span>
+                      <LiveValue
+                        draft={pattern.draft}
+                        fields={["length", "unit", "naming"]}
+                      >
+                        {patternWords(live)}
+                      </LiveValue>
+                    </span>
+                  </>
+                )
+              }
             >
-              {changeable ? (
-                <>
-                  <Menu.Item
-                    onClick={() => {
-                      actions.open({ kind: "pattern", stream, pattern });
-                    }}
-                  >
-                    Change…
-                  </Menu.Item>
-                  <Menu.Item
-                    onClick={() => {
-                      actions.run(
-                        () =>
-                          removeFromStream(stream.id, "patterns", pattern.id),
-                        `Drafted removing the cycles from ${pattern.startsOn}.`,
-                      );
-                    }}
-                  >
-                    Remove
-                  </Menu.Item>
-                </>
-              ) : undefined}
-            </RecordMenu>
-          </div>
-        );
-      })}
+              <span className={classes.figures}>
+                <RowMarks mark={slot} heldBy={pattern.heldBy}>
+                  <DraftedValue draft={draft} fields={["startsOn"]}>
+                    From {pattern.startsOn}
+                  </DraftedValue>
+                </RowMarks>
+              </span>
+              <span>
+                <DraftedValue
+                  draft={draft}
+                  fields={["length", "unit", "naming"]}
+                >
+                  {patternWords(pattern)}
+                </DraftedValue>
+              </span>
+              <RecordMenu
+                title={`Cycles from ${pattern.startsOn}`}
+                node={node}
+                canEditDraft={actions.canEditStreams}
+                actions={actions}
+              >
+                {changeable ? (
+                  <>
+                    <Menu.Item
+                      onClick={() => {
+                        actions.open({ kind: "pattern", stream, pattern });
+                      }}
+                    >
+                      Change…
+                    </Menu.Item>
+                    <Menu.Item
+                      onClick={() => {
+                        actions.run(
+                          () =>
+                            removeFromStream(stream.id, "patterns", pattern.id),
+                          `Drafted removing the cycles from ${pattern.startsOn}.`,
+                        );
+                      }}
+                    >
+                      Remove
+                    </Menu.Item>
+                  </>
+                ) : undefined}
+              </RecordMenu>
+            </PanelRow>
+          );
+        })}
+      </div>
       <Group gap="xs" mih={36}>
         <Text fz="sm">
           Planned to{" "}
@@ -373,102 +444,139 @@ function Releases({
           No releases yet.
         </Text>
       )}
-      {stream.releases.map((release) => {
-        const node = nodeOf(actions, "release", release.id);
-        const changeable =
-          actions.canEditReleases &&
-          release.heldBy === undefined &&
-          release.draft?.action !== "deleted";
-        return (
-          <div
-            key={release.id}
-            className={[classes.recordRow, draftRowClass(release.draft)].join(
-              " ",
-            )}
-          >
-            <span>
-              <ColorSwatch
-                component="span"
-                color={colourVariable(shownColour(release.colour), "filled")}
-                size={10}
-                withShadow={false}
-                mr={6}
-                display="inline-block"
-                aria-hidden
-              />
-              {release.note === null ? (
-                release.name
-              ) : (
-                <Anchor
-                  component="button"
-                  id={noteButtonId(release)}
-                  className={classes.noteLink}
-                  fz="inherit"
-                  c="inherit"
-                  aria-label={`${release.name} note`}
-                  onClick={() => {
-                    actions.openNote(stream, release);
-                  }}
-                >
-                  {release.name}
-                </Anchor>
-              )}
-              <Marks node={node} />
-            </span>
-            <span>
-              {releaseCycles(stream, release)}
+      <div className={classes.recordRows}>
+        {stream.releases.map((release) => {
+          const node = nodeOf(actions, "release", release.id);
+          const changeable =
+            actions.canEditReleases &&
+            release.heldBy === undefined &&
+            release.draft?.action !== "deleted";
+          const draft = actions.draftOf(release.id);
+          const slot = slotDraft(draft, releaseRowFields);
+          const [live] = undoDrafts([release], () => true);
+          const when = (shown: Release) => (
+            <>
+              {releaseCycles(stream, shown)}
               <Text span c="dimmed" fz="sm" className={classes.figures}>
                 {" "}
-                · ships {releaseDate(stream, release) ?? ""}
-                {shipsOffCycle(stream, release) !== undefined && (
+                · ships {releaseDate(stream, shown) ?? ""}
+                {shipsOffCycle(stream, shown) !== undefined && (
                   <Text span inherit fw={700}>
-                    , {shipsOffCycle(stream, release)}
+                    , {shipsOffCycle(stream, shown)}
                   </Text>
                 )}
               </Text>
-            </span>
-            <RecordMenu
-              id={menuId(release)}
-              title={release.name}
-              node={node}
-              canEditDraft={actions.canEditReleases}
-              actions={actions}
+            </>
+          );
+          return (
+            <PanelRow
+              key={release.id}
+              draft={release.draft}
+              liveRow={
+                live && (
+                  <>
+                    <span>
+                      <LiveRowMarks marked={slot !== undefined}>
+                        <LiveValue
+                          draft={release.draft}
+                          fields={["name", "colour"]}
+                        >
+                          <Swatch colour={shownColour(live.colour)} size={12} />
+                          {live.name}
+                        </LiveValue>
+                      </LiveRowMarks>
+                    </span>
+                    <span>
+                      <LiveValue
+                        draft={release.draft}
+                        fields={["firstCycle", "lastCycle", "shipsOn"]}
+                      >
+                        {when(live)}
+                      </LiveValue>
+                    </span>
+                  </>
+                )
+              }
             >
-              {changeable ? (
-                <>
-                  <Menu.Item
-                    onClick={() => {
-                      actions.open({ kind: "release", stream, release });
-                    }}
+              <span>
+                <RowMarks mark={slot} heldBy={release.heldBy}>
+                  <DraftedValue
+                    draft={draft}
+                    fields={["name", "colour"]}
+                    named="Name"
                   >
-                    Change…
-                  </Menu.Item>
-                  {release.note === null && (
+                    <Swatch colour={shownColour(release.colour)} size={12} />
+                    {release.note === null ? (
+                      release.name
+                    ) : (
+                      <Anchor
+                        component="button"
+                        id={noteButtonId(release)}
+                        className={classes.noteLink}
+                        fz="inherit"
+                        c="inherit"
+                        aria-label={`${release.name} note`}
+                        onClick={() => {
+                          actions.openNote(stream, release);
+                        }}
+                      >
+                        {release.name}
+                      </Anchor>
+                    )}
+                  </DraftedValue>
+                </RowMarks>
+              </span>
+              <span>
+                <DraftedValue
+                  draft={draft}
+                  fields={["firstCycle", "lastCycle", "shipsOn"]}
+                >
+                  {when(release)}
+                </DraftedValue>
+              </span>
+              <RecordMenu
+                id={menuId(release)}
+                title={release.name}
+                node={node}
+                canEditDraft={actions.canEditReleases}
+                actions={actions}
+              >
+                {changeable ? (
+                  <>
                     <Menu.Item
                       onClick={() => {
-                        actions.openNote(stream, release);
+                        actions.open({ kind: "release", stream, release });
                       }}
                     >
-                      Add note…
+                      Change…
                     </Menu.Item>
-                  )}
-                  <Menu.Item
-                    onClick={() => {
-                      actions.run(
-                        () =>
-                          removeFromStream(stream.id, "releases", release.id),
-                        `Drafted removing ${release.name}.`,
-                      );
-                    }}
-                  >
-                    Remove
-                  </Menu.Item>
-                </>
-              ) : undefined}
-            </RecordMenu>
-          </div>
-        );
-      })}
+                    {release.note === null && (
+                      <Menu.Item
+                        onClick={() => {
+                          actions.openNote(stream, release);
+                        }}
+                      >
+                        Add note…
+                      </Menu.Item>
+                    )}
+                    <Menu.Item
+                      onClick={() => {
+                        actions.run(
+                          () =>
+                            removeFromStream(stream.id, "releases", release.id),
+                          `Drafted removing ${release.name}.`,
+                        );
+                      }}
+                    >
+                      Remove
+                    </Menu.Item>
+                  </>
+                ) : undefined}
+              </RecordMenu>
+            </PanelRow>
+          );
+        })}
+      </div>
     </Section>
   );
 }
@@ -605,17 +713,36 @@ function StreamPanel({
         <div className={classes.panelHead}>
           <div className={classes.panelTitle}>
             <div className={classes.panelNameBlock}>
-              <h2 id={panelTitleId} className={classes.panelName} tabIndex={-1}>
-                {stream.name}
-              </h2>
-              <span>
-                {stream.retired && (
+              <DraftedItem
+                draft={slotDraft(
+                  actions.draftOf(stream.id),
+                  streamRowFields,
+                  stream.retired,
+                )}
+                heldBy={stream.heldBy}
+              >
+                <DraftedValue
+                  draft={actions.draftOf(stream.id)}
+                  fields={["name"]}
+                  named="Name"
+                >
+                  <h2
+                    id={panelTitleId}
+                    className={classes.panelName}
+                    tabIndex={-1}
+                  >
+                    {stream.name}
+                  </h2>
+                </DraftedValue>
+              </DraftedItem>
+              {/* A draft retiring the stream says so in its own box. */}
+              {stream.retired &&
+                markedDraft(stream.draft, stream.retired)?.retiring ===
+                  undefined && (
                   <Text span fz="xs" fw={600} c="dimmed" mr={6}>
                     Retired
                   </Text>
                 )}
-                <Marks node={node} retired={stream.retired} />
-              </span>
             </div>
             {editable && (
               <>
@@ -677,63 +804,104 @@ const hasDrafts = (stream: ReleaseStream) =>
     ({ draft }) => draft !== undefined,
   );
 
+const draftsOf = (records: readonly { draft?: RecordDraft | undefined }[]) =>
+  records.map(({ draft }) => draft);
+
 // Every stream: its name and marks, how its cycles are made now, and its releases, with retired
 // streams after the rest.
 function StreamTable({
   streams,
   actions,
   selected,
+  originalOf,
   onOpen,
 }: {
   streams: readonly ReleaseStream[];
   actions: Actions;
   selected: string | undefined;
+  // The stream with every draft, whatever the view, which its marks are worked out from, so the
+  // Draft view decides how they show.
+  originalOf: (stream: ReleaseStream) => ReleaseStream;
   onOpen: (stream: ReleaseStream) => void;
 }) {
-  const current = streams.filter(({ retired }) => !retired);
-  const retired = streams.filter((stream) => stream.retired);
+  // Beside live, a stream a draft retires or restores stays where it is live until approved.
+  const showLive = useBesideLive();
+  const isRetired = (stream: ReleaseStream) =>
+    showLive ? retiredLive(stream) : stream.retired;
+  const current = streams.filter((stream) => !isRetired(stream));
+  const retired = streams.filter(isRetired);
   const row = (stream: ReleaseStream) => {
-    const node = nodeOf(actions, "release-stream", stream.id);
     const now = patternNow(stream);
-    const releases = stream.releases.filter(
-      ({ draft }) => draft?.action !== "deleted",
-    );
+    const original = originalOf(stream);
+    const slot = slotDraft(original.draft, streamRowFields, stream.retired);
+    const patternsMark = partsMark(draftsOf(original.patterns));
+    const releasesMark = partsMark(draftsOf(original.releases));
+    const [live] = liveStreams([stream]);
+    const liveNow = live && patternNow(live);
+    const kept = live?.releases ?? [];
     return (
-      <div
+      <SummaryRow
         key={stream.id}
-        role="row"
-        aria-current={stream.id === selected ? "true" : undefined}
-        className={[
-          classes.listRow,
-          stream.id === selected ? classes.listRowSelected : "",
-          stream.retired ? classes.listRowRetired : "",
+        selected={stream.id === selected}
+        retired={stream.retired}
+        tint={
           hasDrafts(stream)
-            ? draftRowClass(stream.draft ?? { action: "changed" })
-            : "",
-        ].join(" ")}
-        onClick={() => {
+            ? (stream.draft ?? { action: "changed" })
+            : undefined
+        }
+        onOpen={() => {
           onOpen(stream);
         }}
+        liveCells={
+          live !== undefined &&
+          hasDrafts(stream) &&
+          stream.draft?.action !== "deleted" && (
+            <>
+              <LiveSummaryName marked={slot !== undefined} draft={stream.draft}>
+                {live.name}
+              </LiveSummaryName>
+              <span role="cell" className={classes.listCellDim}>
+                <MarkedItem
+                  tone={patternsMark === undefined ? undefined : "live"}
+                >
+                  {liveNow === undefined
+                    ? "No cycles yet"
+                    : patternWords(liveNow)}
+                </MarkedItem>
+              </span>
+              <LivePartsCell
+                marked={releasesMark !== undefined}
+                names={kept.map(({ name }) => name)}
+              />
+            </>
+          )
+        }
       >
-        <span role="cell" className={classes.listCellName}>
+        <SummaryName mark={slot} draft={original.draft} heldBy={stream.heldBy}>
           <Link
             id={linkId(stream)}
             to="/releases/{-$streamId}"
             params={{ streamId: stream.id }}
+            search={actions.search}
             className={classes.listLink}
           >
             {stream.name}
           </Link>
-          <Marks node={node} retired={stream.retired} />
-        </span>
+        </SummaryName>
         <span role="cell" className={classes.listCellDim}>
-          {now === undefined ? "No cycles yet" : patternWords(now)}
+          <DraftedItem draft={patternsMark}>
+            {now === undefined ? "No cycles yet" : patternWords(now)}
+          </DraftedItem>
         </span>
-        <span role="cell" className={classes.listCell}>
-          <span className={classes.listCount}>({releases.length})</span>{" "}
-          {releases.map(({ name }) => name).join(", ")}
-        </span>
-      </div>
+        <PartsCell
+          mark={releasesMark}
+          parts={stream.releases.map((release) => ({
+            id: release.id,
+            name: release.name,
+            removed: release.draft?.action === "deleted",
+          }))}
+        />
+      </SummaryRow>
     );
   };
   return (
@@ -767,12 +935,18 @@ function StreamTable({
 export function ReleasesPage({
   streamId,
   approves,
+  show = "both",
+  onShow,
 }: {
   // The stream open in the side panel, if any.
   streamId?: string | undefined;
   // The kinds of draft the user's role approves and rejects.
   approves: readonly DraftKind[];
+  show?: Show;
+  onShow?: (show: Show) => void;
 }) {
+  // What to show stays in the address as streams are opened and closed.
+  const search = show === "both" ? {} : { show };
   const queryClient = useQueryClient();
   const query = useQuery(releaseStreamsQuery);
   // Drafts of features move with cycles; those who see only configuration are sent none.
@@ -806,6 +980,7 @@ export function ReleasesPage({
     void navigate({
       to: "/releases/{-$streamId}",
       params: { streamId: stream.id },
+      search,
     });
   };
   const closePanel = (stream: ReleaseStream) => {
@@ -813,6 +988,7 @@ export function ReleasesPage({
     void navigate({
       to: "/releases/{-$streamId}",
       params: { streamId: undefined },
+      search,
     });
   };
 
@@ -837,9 +1013,25 @@ export function ReleasesPage({
     );
   }
 
-  const { streams, canEditStreams, canEditReleases } = query.data;
+  const { streams: all, canEditStreams, canEditReleases } = query.data;
+  const allById = new Map(all.map((stream) => [stream.id, stream]));
+  const streams =
+    show === "live"
+      ? liveStreams(all)
+      : show === "drafts"
+        ? draftedStreams(all)
+        : all;
+  // Each record's draft, whatever the view, by its record, for its marks.
+  const drafts = new Map(
+    all.flatMap((stream) =>
+      [stream, ...stream.patterns, ...stream.releases].flatMap(
+        ({ id, draft }): [string, RecordDraft][] =>
+          draft === undefined ? [] : [[id, draft]],
+      ),
+    ),
+  );
   const nodes = [
-    ...recordNodes(streams),
+    ...recordNodes(all),
     ...(plan.data === undefined ? [] : planNodes(plan.data)),
   ];
   const open = streams.find(({ id }) => id === streamId);
@@ -850,8 +1042,10 @@ export function ReleasesPage({
       : undefined;
   const writing = writingNote && noted !== undefined;
   const actions: Actions = {
-    canEditStreams,
-    canEditReleases,
+    draftOf: (id) => drafts.get(id),
+    search,
+    canEditStreams: canEditStreams && show !== "live",
+    canEditReleases: canEditReleases && show !== "live",
     approves,
     nodes,
     open: setDialog,
@@ -999,50 +1193,58 @@ export function ReleasesPage({
           )
         }
       />
-      <WithSidePanel
-        storageKey="fathom-record-panel-width"
-        panels={
-          open
-            ? [
-                ...notePanel,
-                {
-                  key: "stream",
-                  id: panelId,
-                  name: "the stream's panel",
-                  node: (
-                    <StreamPanel
-                      key={open.id}
-                      stream={open}
-                      actions={actions}
-                      narrow={narrow}
-                      waiting={writing}
-                      onClose={() => {
-                        closePanel(open);
-                      }}
-                    />
-                  ),
-                },
-              ]
-            : []
-        }
-      >
-        {streams.length === 0 ? (
-          <Text fz="sm" c="dimmed">
-            No release streams yet.
-          </Text>
-        ) : (
-          // While a note is being changed, the streams wait, as a table waits for a note's panel.
-          <Stack gap="lg" className={sidePanelScroll} inert={writing}>
-            <StreamTable
-              streams={streams}
-              actions={actions}
-              selected={open?.id}
-              onOpen={openStream}
-            />
-            <ReleasesTimeline streams={streams} today={today()} />
-          </Stack>
-        )}
-      </WithSidePanel>
+      <DraftView show={show}>
+        <WithSidePanel
+          storageKey="fathom-record-panel-width"
+          panels={
+            open
+              ? [
+                  ...notePanel,
+                  {
+                    key: "stream",
+                    id: panelId,
+                    name: "the stream's panel",
+                    node: (
+                      <StreamPanel
+                        key={open.id}
+                        stream={open}
+                        actions={actions}
+                        narrow={narrow}
+                        waiting={writing}
+                        onClose={() => {
+                          closePanel(open);
+                        }}
+                      />
+                    ),
+                  },
+                ]
+              : []
+          }
+        >
+          {streams.length === 0 ? (
+            <Text fz="sm" c="dimmed">
+              No release streams yet.
+            </Text>
+          ) : (
+            // While a note is being changed, the streams wait, as a table waits for a note's panel.
+            <Stack gap="lg" className={sidePanelScroll} inert={writing}>
+              {onShow && (
+                <Group gap="sm">
+                  <DraftMenu show={show} onShow={onShow} />
+                </Group>
+              )}
+              <StreamTable
+                streams={streams}
+                actions={actions}
+                selected={open?.id}
+                originalOf={(stream) => originalOf(allById, stream)}
+                onOpen={openStream}
+              />
+              <ReleasesTimeline streams={streams} today={today()} />
+            </Stack>
+          )}
+        </WithSidePanel>
+      </DraftView>
       <Modal
         opened={dialog !== undefined}
         onClose={() => {

@@ -78,6 +78,7 @@ import {
   draftsUse,
   everything,
   type Held,
+  heldByOf,
   heldMessage,
   lockDrafts,
   type Maker,
@@ -821,12 +822,6 @@ function draftOut<Live extends Record<string, unknown>>(
 // Marks a draft holding the viewer's own changes, not yet published.
 export const unpublishedMark = (draft: Draft) =>
   draft.unpublished === true ? { unpublished: true } : {};
-
-// Who holds a record, when someone other than the viewer does.
-export const heldByOf = (held: ReadonlyMap<string, Held>, id: string) => {
-  const holder = held.get(id)?.holder;
-  return holder === undefined ? {} : { heldBy: holder };
-};
 
 const shownChoiceFields = [
   "label",

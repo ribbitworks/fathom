@@ -95,6 +95,7 @@ const peopleAnswers = {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 // A person's Live copy on the chart: the card holding their name with no link, since a copy opens
@@ -498,9 +499,9 @@ describe("the org chart", () => {
     await userEvent.click(screen.getByRole("button", { name: "Teams" }));
     const panel = await screen.findByRole("dialog", { name: "Teams" });
     expect(within(panel).getByText("Fictional crew")).toBeDefined();
-    expect(within(panel).getByText("Draft")).toBeDefined();
+    expect(within(panel).getByText(", Draft")).toBeDefined();
     expect(within(panel).getByText("Fictional team")).toBeDefined();
-    expect(within(panel).getByText("Live")).toBeDefined();
+    expect(within(panel).getByText(", live")).toBeDefined();
   });
 
   it("shows those who may only colour teams a name drafted to come off, and a Live copy in its team's colour, and goes back to drafts beside live", async () => {
@@ -572,7 +573,7 @@ describe("the org chart", () => {
     const panel = await screen.findByRole("dialog", { name: "Teams" });
     expect(within(panel).getByText("No name")).toBeDefined();
     expect(within(panel).getByText("Fictional team")).toBeDefined();
-    expect(within(panel).getByText("Live")).toBeDefined();
+    expect(within(panel).getByText(", live")).toBeDefined();
   });
 
   it("lets those who may only colour teams, such as Engineering Managers, colour them without renaming", async () => {
@@ -1026,18 +1027,21 @@ describe("the org chart", () => {
       }),
     );
     await screen.findByRole("link", { name: "Uma Fictional" });
-    expect(within(card("Uma Fictional")).getByText("Draft")).toBeDefined();
+    expect(
+      within(card("Uma Fictional")).getByText(", Draft: moved"),
+    ).toBeDefined();
+    expect(within(card("Uma Fictional")).getByText("Moved")).toBeDefined();
     const copy = liveCopyOf("Uma Fictional");
-    expect(within(copy).getByText("Live")).toBeDefined();
+    expect(within(copy).getByText(", live")).toBeDefined();
     const team = card("Sasha Fictional");
     expect(within(team).getByText("Fictional crew")).toBeDefined();
-    expect(within(team).getByText("Rejected")).toBeDefined();
+    expect(within(team).getByText(", Rejected")).toBeDefined();
     expect(within(team).getByText("Fictional team")).toBeDefined();
     const top = card("Robin Fictional");
     expect(within(top).getByText("Fictional Chief")).toBeDefined();
-    expect(within(top).getByText("Draft")).toBeDefined();
+    expect(within(top).getByText(", Draft")).toBeDefined();
     expect(within(top).getByText("Fictional Director")).toBeDefined();
-    expect(within(top).getByText("Live")).toBeDefined();
+    expect(within(top).getByText(", live")).toBeDefined();
     await userEvent.type(
       screen.getByRole("combobox", { name: "Find a person or team" }),
       "Robin",
@@ -1063,10 +1067,15 @@ describe("the org chart", () => {
       await screen.findByRole("menuitem", { name: "Live only" }),
     );
     await screen.findByRole("link", { name: "Uma Fictional" });
-    expect(within(card("Uma Fictional")).queryByText("Draft")).toBeNull();
+    expect(within(card("Uma Fictional")).queryByText(/, Draft/)).toBeNull();
+    expect(
+      within(card("Uma Fictional")).getByText(
+        ", Live. A move is waiting for approval.",
+      ),
+    ).toBeDefined();
     expect(screen.queryByText("Fictional crew")).toBeNull();
     expect(screen.queryByText("Fictional Chief")).toBeNull();
-    expect(screen.queryByText("Live")).toBeNull();
+    expect(screen.queryByText(", live")).toBeNull();
   });
 
   it("opens with the top two levels shown, and shows the levels chosen", async () => {
@@ -1152,6 +1161,52 @@ describe("the org chart", () => {
     await userEvent.click(uma);
     resize(600);
     expect(transform()).toContain(scale);
+  });
+
+  it.each([
+    [
+      "fits them and their Live copy to the screen when both can be read",
+      2000,
+      false,
+    ],
+    [
+      "centres them alone when fitting both would make the cards too small",
+      300,
+      true,
+    ],
+  ])("finding someone a draft moves %s", async (_, room, zoomedIn) => {
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(room);
+    vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(
+      room,
+    );
+    await openChart(() =>
+      chartJson({
+        people: people.map((one) =>
+          one.id === "p4"
+            ? {
+                ...one,
+                draft: {
+                  managerId: "p2",
+                  state: "waiting",
+                  unpublished: false,
+                },
+              }
+            : one,
+        ),
+      }),
+    );
+    const viewport = document.querySelector(
+      ".react-flow__viewport",
+    ) as HTMLElement;
+    await userEvent.click(screen.getByRole("button", { name: "Zoom out" }));
+    await settled();
+    expect(viewport.style.transform).not.toContain("scale(1)");
+    await userEvent.click(
+      await screen.findByRole("link", { name: "Uma Fictional" }),
+    );
+    await screen.findByRole("region", { name: "Uma Fictional" });
+    await settled();
+    expect(viewport.style.transform.includes("scale(1)")).toBe(zoomedIn);
   });
 
   it("stops keeping the person centred once the chart is moved by hand", async () => {
@@ -1983,6 +2038,60 @@ describe("feature teams on the org chart", () => {
     expect(
       screen.queryByRole("menuitem", { name: "New feature team" }),
     ).toBeNull();
+  });
+
+  it("lists with Live only no team a draft only adds", async () => {
+    await openFeatureTeams({
+      path: "/org-chart?view=feature-teams&show=live",
+      shown: [
+        ...teams,
+        featureTeam({
+          id: "f0000000-0000-4000-8000-0000000000b1",
+          name: "Fictional Beacon",
+          draft: {
+            action: "created",
+            changed: [],
+            live: {},
+            state: "waiting",
+            madeBy: "Fictional Editor",
+            madeAt: "2026-10-30T15:00:00.000Z",
+          },
+        }),
+      ],
+    });
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Feature teams" }),
+    );
+    await screen.findByRole("menuitem", { name: "Fictional Quay" });
+    expect(
+      screen.queryByRole("menuitem", { name: /Fictional Beacon/ }),
+    ).toBeNull();
+  });
+
+  it("marks with Live only a member a waiting draft takes off the team", async () => {
+    await openFeatureTeams({
+      path: "/org-chart?view=feature-teams&show=live",
+      shown: [
+        {
+          ...teams[0],
+          members: ["p2"],
+          draft: {
+            action: "changed",
+            changed: ["members"],
+            live: { members: ["p2", "p4"] },
+            state: "waiting",
+            madeBy: "Fictional Editor",
+            madeAt: "2026-10-30T15:00:00.000Z",
+          },
+        },
+      ],
+    });
+    const uma = await screen.findByRole("link", { name: "Uma Fictional" });
+    expect(
+      within(uma.closest("div.react-flow__node") as HTMLElement).getByText(
+        /Live\. Its removal is waiting for approval\./,
+      ),
+    ).toBeDefined();
   });
 
   it("adds a team, opening it, and undoes it with Cmd+Z", async () => {

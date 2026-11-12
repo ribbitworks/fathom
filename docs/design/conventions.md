@@ -7,53 +7,74 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Drafts
 
-- **A record's draft:** A record with a draft is tinted light blue and marked after a dot: Draft, Draft: added, Draft: removed, Draft: retired, Draft: restored, Draft: moved, or Draft: reordered, with a yellow dot, or Rejected, with a red one, its reason read aloud and shown in the record's menu. Each tint has a darker version in the dark scheme, so text on it stays readable.
-  - **Drawn by:** `DraftMark` and `StatusMark` in `apps/web/src/status-mark.tsx`, with the words from `draftWords`.
-  - **Example:** the seeded newcomers on People, marked Draft: added, and the seeded rejected drafts, marked Rejected.
-- **Unpublished and held:** The user's own unpublished draft has a hollow yellow dot, read aloud as unpublished; where no other mark says so, as for a rejected draft, it's marked Unpublished after a hollow dot. A record someone else has unpublished changes to is marked Being changed after a grey dot, and read only. Its menu names who, as Being changed by and their name, and says it can be changed once they publish or discard their changes; the mark itself names them only to screen readers.
-  - **Drawn by:** `DraftMark` and `HoldMarks` in `apps/web/src/status-mark.tsx`, with the menu's words from `apps/web/src/draft-details.tsx`.
-  - **Example:** the seeded person whose site the Engineering Operations Manager changed without publishing, marked Being changed for everyone else.
-- **A removal:** A record a draft removes is struck through, marked Draft: removed, and can't be changed until the draft is discarded or decided.
-  - **Drawn by:** `DraftMark`, with the struck-through row from the table or panel that holds it.
-  - **Example:** the seeded person drafted to be removed, on People.
-- **A part a draft adds or removes:** A part of a record, such as a team in a month's cell or a member of a feature team, has the draft's dot before it whenever a draft adds, changes or removes it, in the draft's tone, so it says whether the draft is unpublished, waiting or rejected; a part being removed is also struck through. Screen readers read "added", "removed" or "changed" after it, since the dot and the line are only seen. Decided by the owner on 2026-11-11, replacing a removed part struck through without a dot.
-  - **Drawn by:** `DraftDot` and `DraftedWords` in `apps/web/src/status-mark.tsx`, as `TeamLabels` in `apps/web/src/team-labels.tsx`, `AllocationLines` in `apps/web/src/allocation-months.tsx` and a feature team's Members row in `apps/web/src/feature-team-panel.tsx` use them.
-  - **Example:** on Feature assignments, choose a team in a person's month: its label gets a yellow dot.
-- **A change to a value:** A value a draft changes shows the drafted value, with the live value on a line under it, small, dimmed and marked Live after a green dot.
-  - **Drawn by:** `LiveLine` in `apps/web/src/status-mark.tsx`; `Row` in `apps/web/src/record-details.tsx` draws the same with `StatusMark` in a details panel.
-  - **Example:** the seeded choice Northmere, drafted to be Northmere Labs, on the Lists page.
-- **A draft in a table edited like a spreadsheet:** Each cell a draft changes is yellow, or soft red once rejected. Under the draft row is the record's live row, light green, dimmed and marked Live: read only, skipped when moving between cells, and with each changed cell's live value read aloud. Tables that aren't edited like a spreadsheet, such as the Lists page, tint the row, never a single cell.
+- **A draft's dot:** A draft is marked by its dot alone, always before the record, value or part it marks: yellow while it waits for approval, hollow while it holds the user's own unpublished changes, and red in a ring once rejected, so it's told apart by its shape as well as its colour. No words such as Draft or Draft: added sit beside it. Its tip, also read aloud, says what the draft does, such as Draft: added, what a value was, when it takes effect and who made it, where those are known, and a rejection's reason last, such as Rejected, added: and the reason. A record's menu is the one place the draft's words follow its dot, as the heading of the draft's details. Decided by the owner on 2026-11-11.
+  - **Drawn by:** `DraftedItem` in `apps/web/src/status-mark.tsx`, with the words from `draftWords` and `draftTip`, and the menu's heading from `apps/web/src/draft-details.tsx`.
+  - **Example:** Vianney Rousseau, drafted to be added, and Ophélie Roussel, whose addition was rejected, on People.
+- **What a dot can't say:** Moved, Reordered, Retired and Restored are a small yellow box after the item, on a draft still waiting. A fact about an item is a box after it too: grey for Built in and for Planned, expected and its month, and red for a warning, such as Left or No team. Facts come before the draft's box, since a fact says what the item is and the draft's box what is about to happen to it. A dot always means a draft's state, never a fact.
+  - **Drawn by:** `DraftedItem`, `FactBox` and `MarkedItem` in `apps/web/src/status-mark.tsx`.
+  - **Example:** Languages on the Lists page, then its Retired box; Viktoria Holmberg's Left on People.
+- **The lock:** A record someone else has unpublished changes to has a grey lock before it, its tip Being changed by and their name, and is read only until they publish or discard them. Its menu says the same, and that it can be changed once they do.
+  - **Drawn by:** `DraftedItem`'s `heldBy` in `apps/web/src/status-mark.tsx`, with the menu's words from `apps/web/src/draft-details.tsx`.
+  - **Example:** Viktoria Holmberg on People, held by the second Engineering Operations Manager.
+- **A summary row:** A table of records with few columns, such as the Lists page's lists or the Releases page's streams, draws each record's row, its Live row under it beside live, and a cell naming its parts, such as a list's choices, the same way.
+  - **Drawn by:** `SummaryRow`, `PartsCell` and `LivePartsCell` in `apps/web/src/summary-row.tsx`.
+  - **Example:** Sites on the Lists page.
+- **A row's slot:** Each row of a table, of the Lists page, of a list's panel, of Releases and of the Drafts page starts with a slot of two places, kept even when empty: the record's own mark first, then the dot of its first value where a draft changes that, which hangs back into the slot, so every row's first value starts at the same place and a changed name never looks set in under the row above. The record's own mark shows only where its draft changes something the row doesn't show, such as adding, removing, retiring or moving it; a draft that changes only values the row shows leaves the slot empty, since each of those values has its own dot, so two dots never sit side by side. Decided by the owner on 2026-11-11.
+  - **Drawn by:** `RowMarks` and `DraftedItem`'s `slot` in `apps/web/src/status-mark.tsx`, with `recordMark`; the sizes are the theme's `--fathom-dot-size`, `--fathom-mark-gap` and `--fathom-ring-room` in `apps/web/src/theme.ts`.
+  - **Example:** on Projects' Milestones tab, Second crane live, drafted to be added, beside Final handover, drafted to be renamed.
+- **A changed value:** Each value a draft changes has the draft's dot before it, and is in semibold while drafts show beside live. Where a draft empties a value, or fills one that was empty, the empty side shows its words for none in grey italics, such as No start.
+  - **Drawn by:** `DraftedValue`, `changedValue` and `EmptiedValue` in `apps/web/src/status-mark.tsx`; `RecordGrid` in `apps/web/src/record-grid.tsx` in a table, and `Row` in `apps/web/src/record-details.tsx` in a panel.
+  - **Example:** 西尾 亮's End and Grade on People.
+- **A removal:** A record a draft removes is struck through after its dot, and can't be changed until the draft is discarded or decided.
+  - **Drawn by:** `draftRowClass` in `apps/web/src/list-drafts.tsx`, with the row of the table or panel that holds it.
+  - **Example:** Salvador Quiñones Méndez on People.
+- **A part a draft adds or removes:** A part of a record, such as a feature team's member, a manager's direct report or a team in a month's cell, has the draft's dot before it, struck through when the draft takes it away. Screen readers read added, removed or changed after it, since the dot and the line are only seen. A record whose parts have drafts, such as a list and its choices, has one dot before its parts, waiting while any part's draft waits, and rejected only once every one was.
+  - **Drawn by:** `DraftedPartItem` and `partsMark` in `apps/web/src/status-mark.tsx`, as `TeamLabels` in `apps/web/src/team-labels.tsx`, `AllocationLines` in `apps/web/src/allocation-months.tsx`, `PartsCell` in `apps/web/src/summary-row.tsx`, and the Person and feature team panels use them. Feature assignments doesn't yet show Live only's green dots, as [Issues](../issues.md#people) records.
+  - **Example:** Mobile apps on the Org chart's feature teams: Atmananda Ganaka added, Priscille Adam taken away.
+- **A move:** A moved item has its dot and the Moved box, with a dimmed copy in its old place after a green dot. On the org chart, a person drafted to another manager is drawn under them, with a Live copy under the manager they report to now.
+  - **Drawn by:** the list's panel in `apps/web/src/list-panel.tsx`, and `chartPeople` in `apps/web/src/org-chart.ts`.
+  - **Example:** Co-op in the panel of Levels on the Lists page; Simone Jean on the Org chart.
+- **Retiring:** A list, choice or stream drafted to be retired or restored stays where it is until approved, with its dot and a Retired or Restored box. Retired records show only when asked for. Drafting a retirement or a restore is a change seen in place, so it shows no notification, and Cmd+Z or Ctrl+Z undoes it. Decided by the owner on 2026-11-11.
+  - **Drawn by:** `DraftedItem`, with `retiring` set on the draft.
+  - **Example:** Patches on the Releases page.
+- **Live:** Beside live, a record or value as it is now is drawn under its draft after a green dot, its tip Live: a light green Live row under a table's row, a Live line under a value in a panel or a column's name, and a Live card on the org chart. A Live row is read only, skipped when moving between cells, and marks each live value under a changed one, rejected drafts' included.
+  - **Drawn by:** `LiveRowMarks`, `LiveValue` and `LiveLine` in `apps/web/src/status-mark.tsx`, and `RecordGrid` in `apps/web/src/record-grid.tsx`.
+  - **Example:** the Live row under 西尾 亮 on People.
+- **A column's draft:** A column a draft adds, removes or changes has its dot before its name. A draft that changes only its heading, such as its name, keeps one column, with the live name on a Live line under the drafted one; a draft that changes what its cells show has the live column beside it.
   - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx`.
-  - **Example:** the seeded people with drafts on People.
-- **A record made of parts:** A record whose parts have drafts, such as a list and its choices, is marked Draft while anything in it waits, Draft: reordered when only its order does, and Rejected only once everything drafted in it was rejected. A part drafted to be removed is struck through and not counted. In the record's panel, each part with a draft is tinted and marked, with its live row under it.
-  - **Drawn by:** `DraftItems` in `apps/web/src/list-drafts.tsx` and the list's panel in `apps/web/src/list-panel.tsx`.
-  - **Example:** the seeded list Sites, whose choice Northmere is drafted to be Northmere Labs.
-- **A move:** A moved item is marked Draft: moved, with a dimmed copy in its old place marked Live.
-  - **Drawn by:** the list's panel in `apps/web/src/list-panel.tsx`.
-  - **Example:** on the Lists page, move a choice of Sites to another place.
-- **Retiring:** A list, choice or stream drafted to be retired or restored stays where it is until approved, marked Draft: retired or Draft: restored. Retired records show only when asked for. Drafting a retirement or a restore is a change seen in place, so it shows no notification, and Cmd+Z or Ctrl+Z undoes it. Decided by the owner on 2026-11-11.
-  - **Drawn by:** `DraftMark`, with `retiring` set on the draft.
-  - **Example:** on the Releases page, select Patches, then Retire.
-- **A draft from another day:** Where a draft takes effect from a day other than the one shown, its mark says so in the same words everywhere, such as Draft, from Dec 1, 2026. Where there's little room, such as on an org chart card, the words may sit on a line of their own. The org chart card still reads From Oct 1, 2026, as [Issues](../issues.md#people) records. Decided by the owner on 2026-11-11.
-  - **Drawn by:** the `from` of `DraftMark`.
+  - **Example:** Grade on People, with Level under it.
+- **Tints:** Beside live only, a row, column or org chart card with a draft is faint yellow, or faint red once rejected, and a Live row is light green. Each has a darker version in the dark scheme, so text on it stays readable.
+  - **Drawn by:** `draftRowClass` in `apps/web/src/list-drafts.tsx`, `RecordGrid`, and the org chart's cards, with the colours from `apps/web/src/theme.ts`.
+  - **Example:** Vianney Rousseau's row on People.
+- **The three Draft views:** The Draft menu's choice decides every mark on the page, in one place. Drafts beside live shows everything above. Drafts applied shows the dots and strike-throughs, leaving out rejected drafts, which it shows taken back, with no tints, semibold or Live rows. Live only shows no draft dots or tints, but a green dot on each record, value or part a waiting draft would change, its tip naming the change, such as "Live. A change is waiting for approval." A rejected draft gets none. Locks and warnings show in every view. Each mark is given its item's own draft, whatever the view. Decided by the owner on 2026-11-11.
+  - **Drawn by:** `DraftView` and `DraftedItem` in `apps/web/src/status-mark.tsx`, with `viewedDraft` and `liveWaitingWords`; each page sets its view once.
+  - **Example:** on People, choose Live only in the Draft menu: the Level column's name has a green dot.
+- **A selected row:** A selected row, such as the list whose panel is open, has the hover grey with a thin accent bar at its left edge, never the accent's fill, since a row's fill says its draft's state. Decided by the owner on 2026-11-11.
+  - **Drawn by:** `selectedRow` in `apps/web/src/pages.module.css`.
+  - **Example:** select Sites on the Lists page.
+- **Centring:** Every mark, dot, lock or box, and a colour's swatch beside text, is centred on the centreline of its text's capitals, and a line holding them lines them up on its text's baseline, with the marks' own spacing the only spacing. A swatch alone, such as a menu item's icon, is centred in its place instead.
+  - **Drawn by:** `dotPlace`, `kind` and `swatchPlace` in `apps/web/src/status-mark.module.css`, `MarkRow` in `apps/web/src/status-mark.tsx`, and `Swatch` in `apps/web/src/colour-swatch.tsx`.
+  - **Example:** any dot before a name on People.
+- **A draft from another day:** Where a draft takes effect from a day other than the one shown, the item is followed in grey by from and the day, such as from Dec 1, 2026. An org chart card has too little room, so its From and the day sit on a line of their own under the name, a recorded exception. Decided by the owner on 2026-11-11.
+  - **Drawn by:** the `from` of `DraftedItem`, and the card in `apps/web/src/org-chart-page.tsx`.
   - **Example:** on the Org chart, move to next month and add someone to a feature team.
 
 ## Values
 
-- **Live values:** Live means approved. A live value shown beside its draft is dimmed, marked Live, and opens nothing.
-  - **Drawn by:** `LiveLine`, and `StatusMark` with the `live` tone, in `apps/web/src/status-mark.tsx`.
+- **Live values:** Live means approved. A live value shown beside its draft is dimmed, after a green dot, and opens nothing, as [Drafts](#drafts) sets out.
+  - **Drawn by:** `LiveLine` and `LiveValue` in `apps/web/src/status-mark.tsx`.
   - **Example:** the light green Live row under a seeded person's drafted change on People.
 - **Read-only values:** A value that follows from another is read only, shows no pencil, and ignores what is pasted into it. Those who may not change a record see its values with no pencils and no empty row.
   - **Drawn by:** a column's `readOnly` in `apps/web/src/record-grid.tsx`, and `Row` without `editing` in `apps/web/src/record-details.tsx`.
   - **Example:** Release on Features, which follows from Target cycle.
-- **Empty values:** An empty cell is blank. In a details panel, an empty value reads None, dimmed, or the column's own word for empty, and so does an empty list in a panel, such as a project with no milestones. Decided by the owner on 2026-11-11.
+- **Empty values:** An empty cell is blank. In a details panel, an empty value reads None, dimmed, or the column's own word for empty, and so does an empty list in a panel, such as a project with no milestones. Decided by the owner on 2026-11-11. Where a draft empties a value, or fills an empty one, the empty side reads its words for none in grey italics, such as No start, in tables and panels alike.
   - **Drawn by:** `Row` in `apps/web/src/record-details.tsx`, with the column's `emptyLabel`.
   - **Example:** Voice Notes' Target cycle reads Later in its details.
 - **Values Fathom fills in:** An empty cell Fathom fills in from other values shows that text in grey italics, and editing it starts empty.
   - **Drawn by:** `apps/web/src/record-grid.tsx`, with the org chart and the Teams panel drawing their own; no shared piece yet.
   - **Example:** a seeded planned hire with no name, named by its position and ID on People.
-- **Warnings on a value:** A warning about a value is marked after a red dot in its cell, in words, and read aloud with why. A status a value is in, such as Over and Under on Feature assignments, isn't a warning: it shows in words, with its figures in a tooltip, and no red dot, which marks a rejected draft. Decided by the owner on 2026-11-11.
-  - **Drawn by:** `StatusMark` with the `warning` tone.
+- **Warnings on a value:** A warning about a value is a red box after it, in words, such as Left, read aloud with why. It shows in every Draft view. A status a value is in, such as Over and Under on Feature assignments, isn't a warning: it shows in words, with its figures in a tooltip, and no red box. Decided by the owner on 2026-11-11.
+  - **Drawn by:** `MarkedItem` with the `warning` tone, in `apps/web/src/status-mark.tsx`.
   - **Example:** No team, in Scheduler API's Feature team cell.
 - **Values in units:** An amount shows its unit's code in a table, such as 2.5 PD, and spells the unit out in a panel, such as 2.5 person-days (20 hours). Totals of one unit, such as Feature assignments' capacity totals, name it once, in their heading. Decided by the owner on 2026-11-11.
   - **Drawn by:** `EffortCell` in `apps/web/src/effort-cell.tsx`, and `inUnitsWords` in `apps/web/src/record-details.tsx`.
@@ -94,7 +115,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **A change in words:** Wherever a change is described, in a record's menu, on the Drafts page or in the change history, the field is in semibold and each value is set apart on a light ground, as a value is in code.
   - **Drawn by:** `PhraseText` and `PhraseList` in `apps/web/src/phrase.tsx`.
   - **Example:** the seeded draft of the Level column, Name from Level to Grade, on the Drafts page.
-- **A record's own history:** A history inside a record's details has a row for each change, newest first, a draft's first, marked Draft, each dated the day it was drafted, a date it keeps once approved. A row is never removed or struck through, since history is not undone.
+- **A record's own history:** A history inside a record's details has a row for each change, newest first, a draft's first, after the draft's dot, each dated the day it was drafted, a date it keeps once approved. A row is never removed or struck through, since history is not undone.
   - **Drawn by:** `ScopeHistory` in `apps/web/src/scope-history.tsx`.
   - **Example:** Fleet Tracking Bid's scope history, where Report Builder was removed with a reason.
 
@@ -154,7 +175,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **Like a spreadsheet:** Tables where many records are entered work like a spreadsheet. Arrow keys, Home, End and Tab move between cells, and Ctrl+Home and Ctrl+End go to the first and last. Enter, F2 or typing edits a cell; Enter saves and moves down, Tab saves and moves across, Esc cancels, and Delete clears. Pasting rows copied from a spreadsheet into an empty row adds one record for each.
   - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx`.
   - **Example:** People, Features, and each table on Projects.
-- **The empty row:** Empty rows at the end take new records, their cells blank until something is typed in one, so they aren't taken for records. A row being filled in is tinted as the draft it will be and marked New, not saved yet, after an open dot, naming in red what is wrong so far, or in grey any required column still empty. Its menu, also opened with Shift+F10, offers Clear row, which takes the row and what it holds away.
+- **The empty row:** Empty rows at the end take new records, their cells blank until something is typed in one, so they aren't taken for records. A row being filled in is tinted as the draft it will be and marked by a hollow dot in its slot, whose tip and spoken words say New, not saved yet, and what is wrong so far or which required columns are still empty; what is wrong also shows in red after its first value. Its menu, also opened with Shift+F10, offers Clear row, which takes the row and what it holds away.
   - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx`.
   - **Example:** type a name in the empty row at the end of Features.
 - **Moving items:** Where people set an order, items have a grip for dragging on wide screens, shown on hover or focus, and Alt with the arrow keys moves the selected one. Its menu offers the same moves and shows each one's keys.

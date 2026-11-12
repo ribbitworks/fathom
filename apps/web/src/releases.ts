@@ -16,6 +16,7 @@ import {
   movedReleases,
   patternsForLength,
   planSubjects,
+  type RecordDraft,
   type RecordRef,
   type Release,
   knownColour,
@@ -32,6 +33,9 @@ import { z } from "zod";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
 import { colourVariable, colourWords } from "./colours.ts";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
+import { withRetiring } from "./lists.ts";
+import { undoDrafts } from "./record-grid.tsx";
+import { recordMark } from "./status-mark.tsx";
 
 export const releaseStreamsQuery = queryOptions({
   queryKey: ["release-streams"],
@@ -245,6 +249,78 @@ export async function resubmitRecordDraft(
   return (await sendDeleteFor(`${draftPath(ref)}/rejection`, savedSchema))
     .changeSetId;
 }
+
+// What each row shows of its record, each marked by its own dot where a draft changes it.
+export const streamRowFields = new Set(["name"]);
+export const patternRowFields = new Set([
+  "startsOn",
+  "length",
+  "unit",
+  "naming",
+]);
+export const releaseRowFields = new Set([
+  "name",
+  "colour",
+  "firstCycle",
+  "lastCycle",
+  "shipsOn",
+]);
+
+const movedFields = ["firstCycle", "lastCycle"];
+
+// A record's draft as its marks show it: saying when it retires or restores a stream, as a list's
+// does, or, when it changes only a release's first and last cycles, that it moves the release.
+export function markedDraft(
+  draft: RecordDraft | undefined,
+  retired?: boolean,
+): (RecordDraft & { retiring?: boolean; moved?: boolean }) | undefined {
+  if (draft === undefined) return undefined;
+  const moves =
+    draft.action === "changed" &&
+    draft.changed.length === movedFields.length &&
+    movedFields.every((field) => draft.changed.includes(field));
+  if (moves) return { ...draft, moved: true };
+  return retired === undefined ? draft : withRetiring({ retired, draft });
+}
+
+// A record's own mark, in its row's slot: its draft, unless the draft only changes values the row
+// shows, other than a release's move, which its Moved box says.
+export function slotDraft(
+  draft: RecordDraft | undefined,
+  shown: ReadonlySet<string>,
+  retired?: boolean,
+) {
+  const marked = markedDraft(draft, retired);
+  return marked?.moved === true ? marked : recordMark(marked, shown);
+}
+
+const everyDraft = () => true;
+const rejected = ({ state }: { state: string }) => state === "rejected";
+const kept = <Drafted extends { draft?: { action: string } | undefined }>(
+  records: readonly Drafted[],
+) => records.filter(({ draft }) => draft?.action !== "deleted");
+
+// Every stream as it is live, without drafts, as Live only shows them.
+export const liveStreams = (
+  streams: readonly ReleaseStream[],
+): ReleaseStream[] =>
+  undoDrafts(streams, everyDraft).map((stream) => ({
+    ...stream,
+    patterns: undoDrafts(stream.patterns, everyDraft),
+    cycles: stream.liveCycles ?? stream.cycles,
+    releases: undoDrafts(stream.releases, everyDraft),
+  }));
+
+// The streams as their drafts will make them once approved, as Drafts applied shows them: rejected
+// drafts taken back, and what drafts remove left out.
+export const draftedStreams = (
+  streams: readonly ReleaseStream[],
+): ReleaseStream[] =>
+  kept(undoDrafts(streams, rejected)).map((stream) => ({
+    ...stream,
+    patterns: kept(undoDrafts(stream.patterns, rejected)),
+    releases: kept(undoDrafts(stream.releases, rejected)),
+  }));
 
 // The cycle that starts on a day, by name, or the day itself when the stream has no such cycle.
 export function cycleNamed(stream: ReleaseStream, startsOn: string): string {

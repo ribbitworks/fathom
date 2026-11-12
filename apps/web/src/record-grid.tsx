@@ -133,11 +133,18 @@ import classes from "./pages.module.css";
 import type { Phrase } from "./phrase.tsx";
 import { type SidePanel, WithSidePanel } from "./side-panel.tsx";
 import {
+  besideLive,
+  changedValue,
+  DraftedItem,
   type DraftLike,
   draftMarkChars,
-  DraftMark,
-  HoldMarks,
-  StatusMark,
+  DraftView,
+  emptiedWords,
+  LiveLine,
+  MarkedItem,
+  marksIn,
+  recordMark,
+  wasWords,
 } from "./status-mark.tsx";
 
 // A record's draft, as the table shows it: what it does, the columns it changes, by key, and who
@@ -220,8 +227,10 @@ export interface Column<
   headingCentred?: boolean;
   live: (draft: DraftOf<Rec>) => CellValue;
   change: (value: CellValue) => Change;
-  // Shown after a record's value, such as a warning about it.
+  // Shown after a record's value, such as a button that opens it.
   mark?: (record: Rec) => ReactNode;
+  // A warning about a record's value, its dot before the value and its words after it.
+  status?: (record: Rec) => { words: string; spoken?: string } | undefined;
   // For a table with several kinds of record: whether a kind has the column, which is otherwise
   // empty and read only on its rows, and whether it needs a value there. Every kind has it, and
   // needs a value when the column is required, unless told otherwise.
@@ -459,7 +468,17 @@ export function inOrder<Col extends { key: string }>(
 
 // Records as they are live, without drafts: those only drafted to be added are left out, and each
 // built-in detail, by the keys given, and each added column a draft changes has its live value back.
-export function liveRecordsBy<Rec extends GridRecord>(
+// A record with a draft that can be undone: what it does, and the fields it changes.
+interface Undoable {
+  draft?:
+    | {
+        action: "created" | "changed" | "deleted";
+        changed: readonly string[];
+      }
+    | undefined;
+}
+
+export function liveRecordsBy<Rec extends Undoable>(
   records: readonly Rec[],
   whenChanged: (
     record: Rec,
@@ -474,6 +493,34 @@ export function liveRecordsBy<Rec extends GridRecord>(
     if (draft.action === "deleted") return [rest as Rec];
     return [whenChanged(record, draft, rest as Rec)];
   });
+}
+
+// A record with each field its draft changes put back as the draft keeps it live, by the field's name.
+export const withLiveFields = <
+  Rec extends Undoable & { draft?: { live: object } | undefined },
+>(
+  _record: Rec,
+  draft: NonNullable<Rec["draft"]>,
+  withoutDraft: Rec,
+): Rec => ({
+  ...withoutDraft,
+  ...Object.fromEntries(
+    Object.entries(draft.live).filter(([key]) => draft.changed.includes(key)),
+  ),
+});
+
+// Records with the drafts chosen undone, each as it is live, and those the drafts add left out.
+export function undoDrafts<
+  Rec extends Undoable & { draft?: { live: object } | undefined },
+>(
+  records: readonly Rec[],
+  undone: (draft: NonNullable<Rec["draft"]>) => boolean,
+): Rec[] {
+  return records.flatMap((record) =>
+    record.draft !== undefined && undone(record.draft)
+      ? liveRecordsBy([record], withLiveFields)
+      : [record],
+  );
 }
 
 // A record's values of one sort, with those a draft changes put back as they are live.
@@ -703,6 +750,23 @@ function draftChanges(
   return draft.action === "created" || changedIn(draft, column);
 }
 
+// The draft a value in a column is marked with, when the record's draft changes it.
+const cellDraft = (
+  draft: GridDraft | undefined,
+  column: { key: string; changesWith?: string | undefined },
+) => changedValue(draft, column.key, column.changesWith);
+
+// Who changed a value a draft changes, as the draft names them.
+function changedBy(
+  draft: GridDraft | undefined,
+  column: { key: string; changesWith?: string | undefined },
+): string | undefined {
+  const by = new Map(Object.entries(draft?.changedBy ?? {}));
+  const key = by.has(column.key) ? column.key : column.changesWith;
+  if (key === undefined || !by.has(key)) return undefined;
+  return by.get(key) ?? "Fathom";
+}
+
 // The records the metrics count, as the Draft menu shows them. With drafts beside live, they count
 // as drafted, leaving out those drafted to be removed, and as they are live, which `liveRecords`
 // gives, by each column's live copy, which `liveOf` gives; otherwise they count as shown.
@@ -753,6 +817,10 @@ function ariaSort(view: View, key: string) {
 
 const widestChars = 30;
 
+// How many characters a row's slot takes before its first value: the record's marks, then the first
+// value's dot, which hangs back into it.
+const slotChars = 2 + draftMarkChars;
+
 // How many characters a column fits in its cells and in its header, which CSS turns into its width.
 export function columnWidth(
   column: AnyColumn,
@@ -766,8 +834,8 @@ export function columnWidth(
     ),
     header: Math.min(
       Math.max(
-        column.label.length,
-        column.field?.draft ? draftMarkChars(column.field.draft) : 0,
+        column.label.length + (column.field?.draft ? draftMarkChars : 0),
+        (liveName(column, "both")?.length ?? 0) + draftMarkChars,
       ),
       widestChars,
     ),
@@ -802,14 +870,18 @@ function longestTexts<Rec extends GridRecord>(
       .filter((column) => kindOf(column).measured)
       .map((column) => [
         column.key,
-        records.reduce(
-          (longest, record) =>
-            Math.max(
-              longest,
-              shown(column, valueOrStandIn(column, record)).length,
-            ),
-          0,
-        ),
+        (column === columns[0] ? slotChars : 0) +
+          records.reduce(
+            (longest, record) =>
+              Math.max(
+                longest,
+                shown(column, valueOrStandIn(column, record)).length +
+                  (column !== columns[0] && cellDraft(record.draft, column)
+                    ? draftMarkChars
+                    : 0),
+              ),
+            0,
+          ),
       ]),
   );
 }
@@ -948,6 +1020,21 @@ export function droppedAfter(
   return others[at - 1] ?? null;
 }
 
+// What a column's draft may change while its cells stay as they are.
+const headingOnly = new Set(["name", "required"]);
+
+// A column's live name, shown under its drafted one, when its draft renames it and changes nothing
+// its cells show, and drafts are shown beside live.
+function liveName(column: AnyColumn, show: View["show"]): string | undefined {
+  const draft = column.field?.draft;
+  return besideLive(show) &&
+    draft?.action === "changed" &&
+    draft.changed.includes("name") &&
+    draft.changed.every((key) => headingOnly.has(key))
+    ? draft.live.name
+    : undefined;
+}
+
 // What a table is filtered by besides its columns: whether each record has a draft, waiting or
 // rejected.
 export const draftColumn: TableColumn<GridRecord> = {
@@ -963,37 +1050,25 @@ export const draftColumn: TableColumn<GridRecord> = {
   value: (record) => (record.draft === undefined ? [] : [record.draft.state]),
 };
 
-// The mark beside a new row being filled in, until its record is added, naming what is wrong with
-// it so far, or otherwise the required columns still empty. The whole mark shows on hover too, since
-// a narrow first column can cut it short.
-function NewMark({
-  missing,
-  wrong,
-  id,
-}: {
-  missing: readonly string[];
-  wrong?: string | undefined;
-  // What names what is wrong, which the editor of the cell it is in is described by.
-  id: string;
-}) {
+// What the mark of a new row being filled in says, until its record is added: that it is new, and
+// what is wrong with it so far, or otherwise the required columns still empty.
+function newRowWords(missing: readonly string[], wrong: string | undefined) {
   const status = "New, not saved yet";
   const detail =
     wrong ?? (missing.length > 0 ? `${missing.join(", ")} needed` : undefined);
-  const words = detail === undefined ? status : `${status}: ${detail}`;
+  return detail === undefined ? status : `${status}: ${detail}`;
+}
+
+// What is wrong with a new row so far, in red after its value, announced as it is found, since it
+// is a problem to fix rather than a mark's words.
+function NewRowWrong({ wrong, id }: { wrong: string | undefined; id: string }) {
   return (
-    <span className={classes.newMark} title={words}>
-      <span className={classes.statusDot} aria-hidden="true" /> {status}
-      {detail !== undefined && ": "}
-      {wrong === undefined && detail}
-      {/* Only what is wrong is red, and announced as it is found; the row's status, and what it
-          still needs, are not. */}
-      <span aria-live="polite">
-        {wrong !== undefined && (
-          <span id={id} className={classes.newMarkWrong}>
-            {wrong}
-          </span>
-        )}
-      </span>
+    <span aria-live="polite">
+      {wrong !== undefined && (
+        <span id={id} className={classes.newMarkWrong}>
+          {wrong}
+        </span>
+      )}
     </span>
   );
 }
@@ -1059,9 +1134,17 @@ export function recordsAsShown<Rec extends GridRecord>(
   liveRecords: (records: readonly Rec[]) => Rec[],
 ): Rec[] {
   if (show === "live") return liveRecords(records);
-  if (show === "both") return [...records];
+  if (besideLive(show)) return [...records];
+  // Made from every record, since a record's live form can depend on others, such as its live
+  // manager's end date.
+  const live = new Map(
+    liveRecords(records).map((record) => [record.id, record]),
+  );
   return records.flatMap((record) => {
-    if (record.draft?.state === "rejected") return liveRecords([record]);
+    if (record.draft?.state === "rejected") {
+      const taken = live.get(record.id);
+      return taken === undefined ? [] : [taken];
+    }
     return record.draft?.action === "deleted" ? [] : [record];
   });
 }
@@ -1232,19 +1315,49 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     };
   }
   const records = recordsAsShown(known.show, everyone, table.liveRecords);
+  // A record's own mark, in its row's slot, unless its draft only changes values the row shows,
+  // each marked by its own dot, so the slot would only repeat them.
+  const shownKeys = new Set(
+    columns.flatMap((column) =>
+      column.changesWith === undefined
+        ? [column.key]
+        : [column.key, column.changesWith],
+    ),
+  );
+  const recordDraft = (draft: GridDraft | undefined) =>
+    recordMark(draft, shownKeys);
+  // Each record as it is live, made from everyone, since a record's live form can depend on others,
+  // such as its live manager's end date.
+  const liveById = new Map(
+    table.liveRecords(everyone).map((record) => [record.id, record]),
+  );
+  // Each record's draft, whatever the view, which its marks are worked out from, so the Draft view
+  // decides how they show.
+  const draftById = new Map(
+    everyone.flatMap((record) =>
+      record.draft === undefined ? [] : [[record.id, record.draft]],
+    ),
+  );
   const canEdit = mayEdit && !liveOnly;
   const approves = liveOnly ? [] : mayApprove;
   // Whether the user's role approves a record's draft, and those it decides with it.
   const approvesRecord = (record: Rec) =>
     mayDecide(approves, table.drafts([record.id]));
-  // Beside a column whose draft changes it, the column as it is live, to compare, as a record's live
-  // row is shown under their draft.
+  // Beside a column whose draft changes what its cells show, the column as it is live, to compare,
+  // as a record's live row is shown under their draft. A draft that changes only the column's
+  // heading, such as its name, shows the live name under the drafted one instead, since the cells
+  // would be the same.
   const fieldsLive = new Map(
     liveFields(draftedFields).map((field) => [field.id, field]),
   );
   const liveCopies = new Map(
     columns.flatMap((column): [string, Column<Rec, Change>][] => {
-      if (view.show !== "both" || column.field?.draft?.action !== "changed") {
+      const draft = column.field?.draft;
+      if (
+        view.show !== "both" ||
+        draft?.action !== "changed" ||
+        draft.changed.every((key) => headingOnly.has(key))
+      ) {
         return [];
       }
       // A column only changed by its draft is live.
@@ -1267,17 +1380,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   );
   const liveBeside = (column: Column<Rec, Change>) =>
     liveCopies.get(column.key);
+  const renamedFrom = (column: Column<Rec, Change>) =>
+    liveName(column, view.show);
   const besides = columns.filter((column) => liveCopies.has(column.key));
-  // The most lines of marks under any column's name, which the header grows to hold.
-  const markLines = Math.max(
-    0,
-    ...columns.map(
-      (column) =>
-        (column.field?.draft === undefined ? 0 : 1) +
-        (column.field?.draft?.unpublished === true ? 1 : 0) +
-        (column.field?.heldBy === undefined ? 0 : 1),
-    ),
-  );
   // A record's value in a column as it is live, for the column's live copy: none for one only
   // drafted to be added, or for a new row.
   const liveCell = (record: Rec | undefined, column: Column<Rec, Change>) => {
@@ -1350,13 +1455,17 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       {withActions && <Table.Td className={classes.recordCell} />}
     </Table.Tr>
   );
-  // A column with a draft is tinted, as a row with one is, and one a draft removes is struck through.
+  // A column with a draft is tinted, as a row with one is, while drafts are shown beside live, and
+  // one a draft removes is struck through.
   const columnTint = (column: Column<Rec, Change>) => {
     const draft = column.field?.draft;
     if (draft === undefined) return "";
-    return draft.action === "deleted"
-      ? [classes.draftColumn, classes.removedColumn].join(" ")
-      : classes.draftColumn;
+    const tinted = besideLive(view.show);
+    return [
+      tinted ? classes.draftColumn : "",
+      tinted && draft.state === "rejected" ? classes.rejectedColumn : "",
+      draft.action === "deleted" ? classes.removedColumn : "",
+    ].join(" ");
   };
   // No width follows what is typed, so editing never moves the table.
   const [longestText] = useState(() => longestTexts(columns, records));
@@ -1593,19 +1702,28 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       ? emptyValue(column)
       : valueAt(row, column);
   // What an empty cell of a record shows in grey, if anything.
-  const standInAt = (row: Row<Rec>, column: Column<Rec, Change>) =>
-    row.newRow || column.standIn === undefined || valueAt(row, column) !== ""
-      ? undefined
-      : column.standIn(row.record);
+  const standInAt = (row: Row<Rec>, column: Column<Rec, Change>) => {
+    if (row.newRow || !isEmpty(valueAt(row, column))) return undefined;
+    return (
+      column.standIn?.(row.record) ??
+      // A draft emptying the value, or filling it, says so wherever the view marks that draft.
+      (marksIn(cellDraft(draftById.get(row.record.id), column), known.show)
+        ? emptiedWords(column.label, column.emptyLabel)
+        : undefined)
+    );
+  };
 
   // What an empty cell of a record's Live row shows in grey, worked out from the record as it is
   // live, so a stand-in made from other cells uses their live values too.
   const liveStandIn = (record: Rec, column: Column<Rec, Change>) => {
-    if (column.standIn === undefined) return undefined;
-    const [live] = table.liveRecords([record]);
-    return live === undefined || column.value(live) !== ""
-      ? undefined
-      : column.standIn(live);
+    const live = liveById.get(record.id);
+    if (live === undefined || !isEmpty(column.value(live))) return undefined;
+    return (
+      column.standIn?.(live) ??
+      (cellDraft(record.draft, column)
+        ? emptiedWords(column.label, column.emptyLabel)
+        : undefined)
+    );
   };
 
   // Focuses a cell of a new row by its key, since the row may not be drawn yet.
@@ -2183,12 +2301,23 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   }
                 }}
               >
-                <span className={classes.headerName}>
-                  <span className={classes.headerLabel}>{column.label}</span>
-                  {field?.draft && !liveOnly && (
-                    <DraftMark draft={field.draft} />
+                <span className={classes.headerNames}>
+                  <span className={classes.headerName}>
+                    <DraftedItem
+                      slot={index === 0}
+                      draft={
+                        draftedFields.find(({ id }) => id === field?.id)?.draft
+                      }
+                      heldBy={field?.heldBy}
+                    >
+                      <span className={classes.headerLabel}>
+                        {column.label}
+                      </span>
+                    </DraftedItem>
+                  </span>
+                  {renamedFrom(column) !== undefined && (
+                    <LiveLine>{renamedFrom(column)}</LiveLine>
                   )}
-                  {field && !liveOnly && <HoldMarks heldBy={field.heldBy} />}
                 </span>
                 <HeaderMarks column={column} view={view} />
               </button>
@@ -2746,467 +2875,574 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // Menus and choices stay shown beside their cell however the table scrolls, so they are not hidden
   // when the cell is partly out of view.
   return (
-    <WithSidePanel panels={sidePanels} storageKey="fathom-table-panel-width">
-      <ViewBar
-        one={table.one}
-        noun={table.noun}
-        columns={columns}
-        draftFilter={draftColumn}
-        view={view}
-        onView={onView}
-        shown={countedOnce(shownRecords).length}
-        total={countedOnce(records).length}
-        counted={table.counted?.counted(countedOnce(records))}
-        groupings={table.groupings}
-        withDrafts={withDrafts}
-        onLeave={() => {
-          moveTo(active.row, active.column);
-        }}
-        saved={saved}
-        draftItems={
-          <>
-            {waitingTotal > 0 && (
-              <DecideAllItems
-                total={waitingTotal}
-                everywhere={
-                  everyone.filter(({ draft }) => draft?.state === "waiting")
-                    .length +
-                  draftedFields.filter(
-                    ({ draft }) => draft?.state === "waiting",
-                  ).length
-                }
-                disabled={saving}
-                onDecide={(asking) => {
-                  actions.decide(asking, waitingShown);
-                }}
-              />
-            )}
-          </>
-        }
-      />
-      <Paper
-        ref={panelRef}
-        withBorder
-        className={classes.tableScrollPanel}
-        style={frozenVariables(frozen)}
-      >
-        <div
-          ref={scrollRef}
-          className={classes.tableScroll}
-          // Cells reached from the keyboard scroll clear of the header, however many lines of marks
-          // it has under the columns' names, and of the frozen columns.
-          style={{
-            scrollPaddingTop: `max(var(--fathom-table-head-height), ${String(
-              markLines + 1,
-            )} * ${headerLineHeight} + ${headerPadding})`,
+    <DraftView show={known.show}>
+      <WithSidePanel panels={sidePanels} storageKey="fathom-table-panel-width">
+        <ViewBar
+          one={table.one}
+          noun={table.noun}
+          columns={columns}
+          draftFilter={draftColumn}
+          view={view}
+          onView={onView}
+          shown={countedOnce(shownRecords).length}
+          total={countedOnce(records).length}
+          counted={table.counted?.counted(countedOnce(records))}
+          groupings={table.groupings}
+          withDrafts={withDrafts}
+          onLeave={() => {
+            moveTo(active.row, active.column);
           }}
-          onScroll={(event) => {
-            setScrolled(event.currentTarget.scrollLeft > 0);
-          }}
+          saved={saved}
+          draftItems={
+            <>
+              {waitingTotal > 0 && (
+                <DecideAllItems
+                  total={waitingTotal}
+                  everywhere={
+                    everyone.filter(({ draft }) => draft?.state === "waiting")
+                      .length +
+                    draftedFields.filter(
+                      ({ draft }) => draft?.state === "waiting",
+                    ).length
+                  }
+                  disabled={saving}
+                  onDecide={(asking) => {
+                    actions.decide(asking, waitingShown);
+                  }}
+                />
+              )}
+            </>
+          }
+        />
+        <Paper
+          ref={panelRef}
+          withBorder
+          className={classes.tableScrollPanel}
+          style={frozenVariables(frozen)}
         >
-          <Table
-            role="grid"
-            aria-label={table.label}
-            className={classes.recordTable}
-            layout="fixed"
-            tabularNums
+          <div
+            ref={scrollRef}
+            className={classes.tableScroll}
+            // Cells reached from the keyboard scroll clear of the header, with its second line when a
+            // column's draft renames it, and of the frozen columns.
+            style={{
+              scrollPaddingTop: `max(var(--fathom-table-head-height), ${String(
+                columns.some((column) => renamedFrom(column) !== undefined)
+                  ? 2
+                  : 1,
+              )} * ${headerLineHeight} + ${headerPadding})`,
+            }}
+            onScroll={(event) => {
+              setScrolled(event.currentTarget.scrollLeft > 0);
+            }}
           >
-            <colgroup>
-              {columns.flatMap((column, columnIndex) => {
-                const live = liveBeside(column);
-                return [
-                  <col
-                    key={column.key}
-                    data-column={column.key}
-                    className={
-                      columnIndex === 0
-                        ? classes.recordColFirst
-                        : classes.recordCol
-                    }
-                    style={widthStyle(
-                      columnWidth(column, longestText),
-                      widths.setWidthOf(column.key),
-                    )}
-                  />,
-                  live && (
-                    <col
-                      key={`${column.key}-live`}
-                      data-column={column.key}
-                      className={classes.recordCol}
-                      style={widthStyle(
-                        columnWidth(live, longestText),
-                        widths.setWidthOf(column.key),
-                      )}
-                    />
-                  ),
-                ];
-              })}
-              {withActions && <col className={classes.recordColActions} />}
-            </colgroup>
-            <Table.Thead>
-              <Table.Tr>
+            <Table
+              role="grid"
+              aria-label={table.label}
+              className={classes.recordTable}
+              layout="fixed"
+              tabularNums
+            >
+              <colgroup>
                 {columns.flatMap((column, columnIndex) => {
                   const live = liveBeside(column);
-                  const liveAt = frozenCell(columnIndex, 1);
                   return [
-                    header(column, columnIndex),
+                    <col
+                      key={column.key}
+                      data-column={column.key}
+                      className={
+                        columnIndex === 0
+                          ? classes.recordColFirst
+                          : classes.recordCol
+                      }
+                      style={widthStyle(
+                        columnWidth(column, longestText),
+                        widths.setWidthOf(column.key),
+                      )}
+                    />,
                     live && (
-                      <Table.Th
+                      <col
                         key={`${column.key}-live`}
-                        scope="col"
-                        aria-hidden="true"
-                        className={[classes.liveColumn, liveAt.className].join(
-                          " ",
+                        data-column={column.key}
+                        className={classes.recordCol}
+                        style={widthStyle(
+                          columnWidth(live, longestText),
+                          widths.setWidthOf(column.key),
                         )}
-                        style={liveAt.style}
-                      >
-                        <span className={classes.recordHeadButton}>
-                          <span className={classes.headerName}>
-                            <span className={classes.headerLabel}>
-                              {live.label}
-                            </span>
-                            <StatusMark tone="live" spaced>
-                              Live
-                            </StatusMark>
-                          </span>
-                        </span>
-                      </Table.Th>
+                      />
                     ),
                   ];
                 })}
-                {withActions && (
-                  <Table.Th scope="col">
-                    <VisuallyHidden>Actions</VisuallyHidden>
-                  </Table.Th>
-                )}
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {shownRecords.length === 0 && narrows(view) && (
+                {withActions && <col className={classes.recordColActions} />}
+              </colgroup>
+              <Table.Thead>
                 <Table.Tr>
-                  <Table.Td
-                    colSpan={
-                      columns.length + besides.length + Number(withActions)
-                    }
-                    className={classes.recordNone}
-                  >
-                    <Text component="span" fz="sm" c="dimmed">
-                      No matching {table.noun}
-                    </Text>
-                  </Table.Td>
-                </Table.Tr>
-              )}
-              {rows.map((row, rowIndex) => {
-                const key = rowKey(row);
-                const rowProblem =
-                  problem?.row === key ? problem.message : row.newRow?.problem;
-                const record = row.record;
-                const draft = record?.draft as DraftOf<Rec> | undefined;
-                const liveRecord =
-                  record && draft?.action === "changed"
-                    ? table.liveRecords([record])[0]
-                    : undefined;
-                // A row with a draft is tinted, and one a draft removes is struck through too.
-                let rowClass: string | undefined;
-                const filling = row.newRow && !emptyNewRow(row.newRow);
-                if (row.newRow) {
-                  rowClass = filling ? classes.recordFillingRow : undefined;
-                } else if (draft) {
-                  rowClass = [
-                    classes.draftRow,
-                    draft.action === "deleted" ? classes.recordRemovedRow : "",
-                  ].join(" ");
-                }
-                const heading = headings.get(key);
-                const runEnded = runEnds.get(key);
-                return [
-                  heading !== undefined && (
-                    <Table.Tr key={`group-${key}`}>
-                      <Table.Th
-                        scope="row"
-                        colSpan={
-                          columns.length + besides.length + Number(withActions)
-                        }
-                        className={classes.recordGroup}
-                      >
-                        <span className={classes.recordGroupLabel}>
-                          {heading.label}
-                          <Text component="span" fz="sm" c="dimmed" ml="xs">
-                            {heading.records.length}
-                            <VisuallyHidden>
-                              {` ${heading.records.length === 1 ? table.one : table.noun}`}
-                            </VisuallyHidden>
-                          </Text>
-                        </span>
-                      </Table.Th>
-                    </Table.Tr>
-                  ),
-                  <Table.Tr
-                    key={key}
-                    className={rowClass}
-                    aria-label={
-                      row.newRow ? table.newRowLabel(rowKind(row)) : undefined
-                    }
-                  >
-                    {columns.flatMap((column, columnIndex) => {
-                      const cell = { row: rowIndex, column: columnIndex };
-                      const has = offered(column, rowKind(row));
-                      const editingHere =
-                        editing?.row === rowIndex &&
-                        editing.column === columnIndex &&
-                        inPanel === undefined;
-                      const isActive =
-                        active.row === rowIndex &&
-                        active.column === columnIndex;
-                      const changes = draftChanges(draft, column);
-                      const frozenAt = frozenCell(columnIndex);
-                      const live =
-                        changes && draft?.action === "changed"
-                          ? shown(liveColumn(column), column.live(draft)) ||
-                            "empty"
-                          : undefined;
-                      return [
-                        <Table.Td
-                          key={column.key}
-                          id={cellId(rowIndex, columnIndex)}
-                          role="gridcell"
-                          tabIndex={isActive ? 0 : -1}
-                          aria-invalid={
-                            (columnIndex === 0 && rowProblem !== undefined) ||
-                            problemIn(cell) !== undefined
-                              ? true
-                              : undefined
-                          }
+                  {columns.flatMap((column, columnIndex) => {
+                    const live = liveBeside(column);
+                    const liveAt = frozenCell(columnIndex, 1);
+                    return [
+                      header(column, columnIndex),
+                      live && (
+                        <Table.Th
+                          key={`${column.key}-live`}
+                          scope="col"
+                          aria-hidden="true"
                           className={[
-                            classes.recordCell,
-                            columnTint(column),
-                            changes
-                              ? draft?.state === "rejected"
-                                ? classes.rejectedCell
-                                : classes.draftCell
-                              : "",
-                            // While edited, the editor is marked instead.
-                            problemIn(cell) === undefined || editingHere
-                              ? ""
-                              : classes.recordProblemCell,
-                            frozenAt.className,
+                            classes.liveColumn,
+                            liveAt.className,
                           ].join(" ")}
-                          style={frozenAt.style}
-                          data-shaded={
-                            (row.record && column.shaded?.(row.record)) ||
-                            undefined
-                          }
-                          aria-readonly={
-                            readOnlyFor(column, rowKind(row)) ||
-                            (row.record &&
-                              table.readOnlyRecord?.(row.record)) ||
-                            draft?.action === "deleted" ||
-                            row.record?.heldBy !== undefined ||
-                            (row.record && isPending(row.record))
-                              ? true
-                              : undefined
-                          }
-                          onKeyDown={(event) => {
-                            onCellKey(event, cell);
-                          }}
-                          onPaste={(event) => {
-                            onPaste(event, cell);
-                          }}
-                          onFocus={(event) => {
-                            if (event.target === event.currentTarget) {
-                              setActive(cell);
-                            }
-                          }}
-                          onClick={() => {
-                            const kind = kindOf(column);
-                            if (
-                              kind.toggled !== undefined ||
-                              kind.inPanel === true
-                            ) {
-                              startEdit(cell);
-                            }
-                          }}
-                          onDoubleClick={() => {
-                            if (kindOf(column).toggled === undefined) {
-                              startEdit(cell);
-                            }
-                          }}
+                          style={liveAt.style}
                         >
-                          {editingHere
-                            ? editor(
-                                cell,
-                                onRow(column, row.record, rowKind(row)),
-                                valueAt(row, column),
-                              )
-                            : has &&
-                              (standInAt(row, column) === undefined ? (
-                                row.record && column.content ? (
-                                  column.content(row.record)
-                                ) : (
-                                  cellContent(column, shownAt(row, column))
-                                )
-                              ) : (
-                                <Text
-                                  component="span"
-                                  inherit
-                                  c="dimmed"
-                                  fs="italic"
-                                >
-                                  {standInAt(row, column)}
-                                </Text>
-                              ))}
-                          {row.record &&
-                            !editingHere &&
-                            column.mark?.(row.record)}
-                          {changes && !editingHere && (
-                            <VisuallyHidden>
-                              {live === undefined
-                                ? ", draft"
-                                : `, draft, live ${live}`}
-                            </VisuallyHidden>
-                          )}
-                          {columnIndex === 0 && draft && !editingHere && (
-                            <DraftMark draft={draft} />
-                          )}
-                          {columnIndex === 0 && row.record && !editingHere && (
-                            <HoldMarks heldBy={row.record.heldBy} />
-                          )}
-                          {columnIndex === 0 &&
-                            row.newRow &&
-                            filling &&
-                            rowProblem === undefined &&
-                            !editingHere && (
-                              <NewMark
-                                wrong={row.newRow.soFar?.message}
-                                id={`${cellId(rowIndex, 0)}-problem`}
-                                missing={columnsOn(columns, rowKind(row))
-                                  .filter(
-                                    (other) =>
-                                      other.required &&
-                                      isEmpty(newValue(row.newRow, other)),
-                                  )
-                                  .map(({ label }) => label)}
-                              />
-                            )}
-                          {columnIndex === 0 && rowProblem !== undefined && (
-                            <span
-                              id={`${cellId(rowIndex, 0)}-problem`}
-                              className={classes.recordProblem}
-                              role="alert"
-                            >
-                              {rowProblem}
+                          <span className={classes.recordHeadButton}>
+                            <span className={classes.headerName}>
+                              <MarkedItem tone="live">
+                                <span className={classes.headerLabel}>
+                                  {live.label}
+                                </span>
+                              </MarkedItem>
                             </span>
-                          )}
-                        </Table.Td>,
-                        liveCellBeside(row.record, column, columnIndex),
-                      ];
-                    })}
-                    {withActions && (
-                      <Table.Td
-                        className={[
-                          classes.recordCell,
-                          classes.recordActionsCell,
-                        ].join(" ")}
-                      >
-                        {row.record &&
-                          hasMenu(row.record) &&
-                          rowMenu(row.record)}
-                        {row.newRow &&
-                          clearable(row.newRow) &&
-                          newRowMenu({ newRow: row.newRow })}
-                      </Table.Td>
-                    )}
-                  </Table.Tr>,
-                  // Under a record whose draft changes it, the record as it is live, to compare.
-                  // Assistive technology hears each changed cell's live value instead.
-                  record !== undefined &&
-                    draft?.action === "changed" &&
-                    view.show === "both" && (
-                      <Table.Tr
-                        key={`${key}-live`}
-                        className={classes.recordLiveRow}
-                        aria-hidden="true"
-                      >
-                        {columns.flatMap((column, columnIndex) => {
-                          const standIn = liveStandIn(record, column);
-                          const frozenAt = frozenCell(columnIndex);
-                          return [
-                            <Table.Td
-                              key={column.key}
-                              className={[
-                                classes.recordCell,
-                                frozenAt.className,
-                              ].join(" ")}
-                              style={frozenAt.style}
-                            >
-                              {standIn === undefined ? (
-                                // Drawn only under a record whose draft changes it, which the
-                                // table gives a live record for.
-                                (liveColumn(column).content?.(
-                                  liveRecord as Rec,
-                                ) ??
-                                liveContent(
-                                  liveColumn(column),
-                                  changedIn(draft, column)
-                                    ? column.live(draft)
-                                    : column.value(record),
-                                ))
-                              ) : (
-                                <Text
-                                  component="span"
-                                  inherit
-                                  c="dimmed"
-                                  fs="italic"
-                                >
-                                  {standIn}
-                                </Text>
-                              )}
-                              {columnIndex === 0 && (
-                                <StatusMark tone="live" spaced>
-                                  Live
-                                </StatusMark>
-                              )}
-                            </Table.Td>,
-                            liveCellBeside(row.record, column, columnIndex),
-                          ];
-                        })}
-                        {withActions && (
-                          <Table.Td className={classes.recordCell} />
-                        )}
+                          </span>
+                        </Table.Th>
+                      ),
+                    ];
+                  })}
+                  {withActions && (
+                    <Table.Th scope="col">
+                      <VisuallyHidden>Actions</VisuallyHidden>
+                    </Table.Th>
+                  )}
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {shownRecords.length === 0 && narrows(view) && (
+                  <Table.Tr>
+                    <Table.Td
+                      colSpan={
+                        columns.length + besides.length + Number(withActions)
+                      }
+                      className={classes.recordNone}
+                    >
+                      <Text component="span" fz="sm" c="dimmed">
+                        No matching {table.noun}
+                      </Text>
+                    </Table.Td>
+                  </Table.Tr>
+                )}
+                {rows.map((row, rowIndex) => {
+                  const key = rowKey(row);
+                  const rowProblem =
+                    problem?.row === key
+                      ? problem.message
+                      : row.newRow?.problem;
+                  const record = row.record;
+                  const draft = record?.draft as DraftOf<Rec> | undefined;
+                  // The record's draft whatever the view, for its marks.
+                  const marked =
+                    record === undefined
+                      ? draft
+                      : (draftById.get(record.id) as DraftOf<Rec> | undefined);
+                  const liveRecord =
+                    record && draft?.action === "changed"
+                      ? liveById.get(record.id)
+                      : undefined;
+                  // A warning about a live value, such as a manager who has left, shown in the Live
+                  // row as in any other.
+                  // Asked only in the Live row, which a record has only when the table gives a live
+                  // record for it.
+                  const liveWarning = (column: Column<Rec, Change>) =>
+                    column.status?.(liveRecord as Rec);
+                  // A row with a draft is tinted, and one a draft removes is struck through too.
+                  let rowClass: string | undefined;
+                  const filling = row.newRow && !emptyNewRow(row.newRow);
+                  if (row.newRow) {
+                    rowClass = filling ? classes.recordFillingRow : undefined;
+                  } else if (draft) {
+                    rowClass = [
+                      besideLive(view.show) ? classes.draftRow : "",
+                      besideLive(view.show) && draft.state === "rejected"
+                        ? classes.rejectedRow
+                        : "",
+                      draft.action === "deleted"
+                        ? classes.recordRemovedRow
+                        : "",
+                    ].join(" ");
+                  }
+                  const heading = headings.get(key);
+                  const runEnded = runEnds.get(key);
+                  return [
+                    heading !== undefined && (
+                      <Table.Tr key={`group-${key}`}>
+                        <Table.Th
+                          scope="row"
+                          colSpan={
+                            columns.length +
+                            besides.length +
+                            Number(withActions)
+                          }
+                          className={classes.recordGroup}
+                        >
+                          <span className={classes.recordGroupLabel}>
+                            {heading.label}
+                            <Text component="span" fz="sm" c="dimmed" ml="xs">
+                              {heading.records.length}
+                              <VisuallyHidden>
+                                {` ${heading.records.length === 1 ? table.one : table.noun}`}
+                              </VisuallyHidden>
+                            </Text>
+                          </span>
+                        </Table.Th>
                       </Table.Tr>
                     ),
-                  table.totals !== undefined &&
-                    runEnded !== undefined &&
-                    totalRow(
-                      `total-${key}`,
-                      table.totals,
-                      table.totals.label,
-                      runEnded,
-                    ),
-                ];
-              })}
-            </Table.Tbody>
-            {table.totals !== undefined && (
-              <Table.Tfoot className={classes.recordTotalFoot}>
-                {totalRow(
-                  "total",
-                  table.totals,
-                  table.totals.overall,
-                  shownRecords,
-                )}
-              </Table.Tfoot>
-            )}
-          </Table>
-        </div>
-        {frozen.frozen > 0 && (
-          <div
-            aria-hidden="true"
-            className={classes.frozenEdge}
-            data-scrolled={scrolled || undefined}
-            style={{ height: measured.height }}
-          />
-        )}
-      </Paper>
-    </WithSidePanel>
+                    <Table.Tr
+                      key={key}
+                      className={rowClass}
+                      aria-label={
+                        row.newRow ? table.newRowLabel(rowKind(row)) : undefined
+                      }
+                    >
+                      {columns.flatMap((column, columnIndex) => {
+                        const cell = { row: rowIndex, column: columnIndex };
+                        const has = offered(column, rowKind(row));
+                        const editingHere =
+                          editing?.row === rowIndex &&
+                          editing.column === columnIndex &&
+                          inPanel === undefined;
+                        const isActive =
+                          active.row === rowIndex &&
+                          active.column === columnIndex;
+                        // A new row being filled in is marked in its first cell's slot until added.
+                        const newRowMarked =
+                          columnIndex === 0 &&
+                          filling === true &&
+                          rowProblem === undefined &&
+                          !editingHere;
+                        const warning =
+                          record === undefined || editingHere
+                            ? undefined
+                            : column.status?.(record);
+                        const changes = draftChanges(draft, column);
+                        const frozenAt = frozenCell(columnIndex);
+                        const live =
+                          changes && draft?.action === "changed"
+                            ? shown(liveColumn(column), column.live(draft)) ||
+                              "empty"
+                            : undefined;
+                        return [
+                          <Table.Td
+                            key={column.key}
+                            id={cellId(rowIndex, columnIndex)}
+                            role="gridcell"
+                            tabIndex={isActive ? 0 : -1}
+                            aria-invalid={
+                              (columnIndex === 0 && rowProblem !== undefined) ||
+                              problemIn(cell) !== undefined
+                                ? true
+                                : undefined
+                            }
+                            className={[
+                              classes.recordCell,
+                              columnTint(column),
+                              changes && besideLive(view.show)
+                                ? draft?.state === "rejected"
+                                  ? classes.rejectedCell
+                                  : classes.draftCell
+                                : "",
+                              // While edited, the editor is marked instead.
+                              problemIn(cell) === undefined || editingHere
+                                ? ""
+                                : classes.recordProblemCell,
+                              frozenAt.className,
+                            ].join(" ")}
+                            style={frozenAt.style}
+                            data-shaded={
+                              (row.record && column.shaded?.(row.record)) ||
+                              undefined
+                            }
+                            aria-readonly={
+                              readOnlyFor(column, rowKind(row)) ||
+                              (row.record &&
+                                table.readOnlyRecord?.(row.record)) ||
+                              draft?.action === "deleted" ||
+                              row.record?.heldBy !== undefined ||
+                              (row.record && isPending(row.record))
+                                ? true
+                                : undefined
+                            }
+                            onKeyDown={(event) => {
+                              onCellKey(event, cell);
+                            }}
+                            onPaste={(event) => {
+                              onPaste(event, cell);
+                            }}
+                            onFocus={(event) => {
+                              if (event.target === event.currentTarget) {
+                                setActive(cell);
+                              }
+                            }}
+                            onClick={() => {
+                              const kind = kindOf(column);
+                              if (
+                                kind.toggled !== undefined ||
+                                kind.inPanel === true
+                              ) {
+                                startEdit(cell);
+                              }
+                            }}
+                            onDoubleClick={() => {
+                              if (kindOf(column).toggled === undefined) {
+                                startEdit(cell);
+                              }
+                            }}
+                          >
+                            <DraftedItem
+                              slot={columnIndex === 0 && !editingHere}
+                              draft={
+                                columnIndex === 0 && !editingHere
+                                  ? recordDraft(marked)
+                                  : undefined
+                              }
+                              heldBy={
+                                columnIndex === 0 && !editingHere
+                                  ? row.record?.heldBy
+                                  : undefined
+                              }
+                              unpublished={
+                                newRowMarked &&
+                                newRowWords(
+                                  columnsOn(columns, rowKind(row))
+                                    .filter(
+                                      (other) =>
+                                        other.required &&
+                                        isEmpty(newValue(row.newRow, other)),
+                                    )
+                                    .map(({ label }) => label),
+                                  row.newRow.soFar?.message,
+                                )
+                              }
+                            >
+                              <DraftedItem
+                                draft={
+                                  editingHere
+                                    ? undefined
+                                    : cellDraft(marked, column)
+                                }
+                                by={
+                                  editingHere
+                                    ? undefined
+                                    : changedBy(draft, column)
+                                }
+                                was={
+                                  !editingHere &&
+                                  draft !== undefined &&
+                                  cellDraft(draft, column) !== undefined
+                                    ? wasWords(
+                                        shown(
+                                          liveColumn(column),
+                                          column.live(draft),
+                                        ),
+                                        column.label,
+                                        column.emptyLabel,
+                                      )
+                                    : undefined
+                                }
+                              >
+                                <MarkedItem
+                                  tone={
+                                    warning === undefined
+                                      ? undefined
+                                      : "warning"
+                                  }
+                                  words={warning?.words}
+                                  spoken={warning?.spoken}
+                                >
+                                  {editingHere
+                                    ? editor(
+                                        cell,
+                                        onRow(column, row.record, rowKind(row)),
+                                        valueAt(row, column),
+                                      )
+                                    : has &&
+                                      (standInAt(row, column) === undefined ? (
+                                        row.record && column.content ? (
+                                          column.content(row.record)
+                                        ) : (
+                                          cellContent(
+                                            column,
+                                            shownAt(row, column),
+                                          )
+                                        )
+                                      ) : (
+                                        <Text
+                                          component="span"
+                                          inherit
+                                          c="dimmed"
+                                          fs="italic"
+                                        >
+                                          {standInAt(row, column)}
+                                        </Text>
+                                      ))}
+                                </MarkedItem>
+                              </DraftedItem>
+                            </DraftedItem>
+                            {row.record &&
+                              !editingHere &&
+                              column.mark?.(row.record)}
+                            {changes && !editingHere && (
+                              <VisuallyHidden>
+                                {live === undefined
+                                  ? ", draft"
+                                  : `, draft, live ${live}`}
+                              </VisuallyHidden>
+                            )}
+                            {newRowMarked && (
+                              <NewRowWrong
+                                wrong={row.newRow.soFar?.message}
+                                id={`${cellId(rowIndex, 0)}-problem`}
+                              />
+                            )}
+                            {columnIndex === 0 && rowProblem !== undefined && (
+                              <span
+                                id={`${cellId(rowIndex, 0)}-problem`}
+                                className={classes.recordProblem}
+                                role="alert"
+                              >
+                                {rowProblem}
+                              </span>
+                            )}
+                          </Table.Td>,
+                          liveCellBeside(row.record, column, columnIndex),
+                        ];
+                      })}
+                      {withActions && (
+                        <Table.Td
+                          className={[
+                            classes.recordCell,
+                            classes.recordActionsCell,
+                          ].join(" ")}
+                        >
+                          {row.record &&
+                            hasMenu(row.record) &&
+                            rowMenu(row.record)}
+                          {row.newRow &&
+                            clearable(row.newRow) &&
+                            newRowMenu({ newRow: row.newRow })}
+                        </Table.Td>
+                      )}
+                    </Table.Tr>,
+                    // Under a record whose draft changes it, the record as it is live, to compare.
+                    // Assistive technology hears each changed cell's live value instead.
+                    record !== undefined &&
+                      draft?.action === "changed" &&
+                      besideLive(view.show) && (
+                        <Table.Tr
+                          key={`${key}-live`}
+                          className={classes.recordLiveRow}
+                          aria-hidden="true"
+                        >
+                          {columns.flatMap((column, columnIndex) => {
+                            const standIn = liveStandIn(record, column);
+                            const frozenAt = frozenCell(columnIndex);
+                            return [
+                              <Table.Td
+                                key={column.key}
+                                className={[
+                                  classes.recordCell,
+                                  frozenAt.className,
+                                ].join(" ")}
+                                style={frozenAt.style}
+                              >
+                                <MarkedItem
+                                  slot={columnIndex === 0}
+                                  tone={
+                                    columnIndex === 0 &&
+                                    recordDraft(draft) !== undefined
+                                      ? "live"
+                                      : undefined
+                                  }
+                                >
+                                  <MarkedItem
+                                    tone={
+                                      cellDraft(draft, column) === undefined
+                                        ? undefined
+                                        : "live"
+                                    }
+                                  >
+                                    <MarkedItem
+                                      tone={
+                                        liveWarning(column) === undefined
+                                          ? undefined
+                                          : "warning"
+                                      }
+                                      words={liveWarning(column)?.words}
+                                      spoken={liveWarning(column)?.spoken}
+                                    >
+                                      {standIn === undefined ? (
+                                        // Drawn only under a record whose draft changes it, which the
+                                        // table gives a live record for.
+                                        (liveColumn(column).content?.(
+                                          liveRecord as Rec,
+                                        ) ??
+                                        liveContent(
+                                          liveColumn(column),
+                                          changedIn(draft, column)
+                                            ? column.live(draft)
+                                            : column.value(record),
+                                        ))
+                                      ) : (
+                                        <Text
+                                          component="span"
+                                          inherit
+                                          c="dimmed"
+                                          fs="italic"
+                                        >
+                                          {standIn}
+                                        </Text>
+                                      )}
+                                    </MarkedItem>
+                                  </MarkedItem>
+                                </MarkedItem>
+                              </Table.Td>,
+                              liveCellBeside(row.record, column, columnIndex),
+                            ];
+                          })}
+                          {withActions && (
+                            <Table.Td className={classes.recordCell} />
+                          )}
+                        </Table.Tr>
+                      ),
+                    table.totals !== undefined &&
+                      runEnded !== undefined &&
+                      totalRow(
+                        `total-${key}`,
+                        table.totals,
+                        table.totals.label,
+                        runEnded,
+                      ),
+                  ];
+                })}
+              </Table.Tbody>
+              {table.totals !== undefined && (
+                <Table.Tfoot className={classes.recordTotalFoot}>
+                  {totalRow(
+                    "total",
+                    table.totals,
+                    table.totals.overall,
+                    shownRecords,
+                  )}
+                </Table.Tfoot>
+              )}
+            </Table>
+          </div>
+          {frozen.frozen > 0 && (
+            <div
+              aria-hidden="true"
+              className={classes.frozenEdge}
+              data-scrolled={scrolled || undefined}
+              style={{ height: measured.height }}
+            />
+          )}
+        </Paper>
+      </WithSidePanel>
+    </DraftView>
   );
 }

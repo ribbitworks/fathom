@@ -51,8 +51,8 @@
 
 .statusDot {
   display: inline-block;
-  width: 7px;
-  height: 7px;
+  width: var(--fathom-dot-size);
+  height: var(--fathom-dot-size);
   border-radius: 50%;
   background: currentColor;
 }
@@ -121,8 +121,20 @@
   background: var(--mantine-color-default-hover);
 }
 
-.listRowSelected {
-  background: var(--mantine-primary-color-light);
+/* Every selected row, in tables, on the Lists page and in list panels: the hover grey with the
+   accent's bar at its left edge, never the accent's fill, since a row's fill says its draft's state.
+   A draft's tint, set later in this file, stays under the bar. */
+.selectedRow {
+  --selected-bar-colour: var(--mantine-primary-color-filled);
+
+  background: var(--mantine-color-default-hover);
+  box-shadow: inset var(--fathom-selected-bar-width) 0 0
+    var(--selected-bar-colour);
+}
+
+/* The filled shade is too dark to see on the dark panel. */
+:global([data-mantine-color-scheme="dark"]) .selectedRow {
+  --selected-bar-colour: var(--mantine-color-sea-4);
 }
 
 .listRowRetired .listCell,
@@ -210,24 +222,28 @@
   gap: 8px;
 }
 
-/* The list's name, with its drafts' marks under it, as a column's are under its name. */
+/* A panel's name with its marks on one line, on the name's baseline and in its size, so its dot is
+   centred on its capitals and its boxes follow it, as every item's marks do. */
 .panelNameBlock {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex-wrap: wrap;
+  align-items: baseline;
   min-width: 0;
+  font-size: var(--fathom-panel-name-size);
+  line-height: var(--fathom-panel-name-line);
 }
 
-.panelNameBlock .markGap {
-  margin-left: 0;
+.panelNameBlock .panelName {
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .panelName {
   flex: 1;
   margin: 0;
-  font-size: 18px;
-  line-height: 28px;
+  font-size: var(--fathom-panel-name-size);
+  line-height: var(--fathom-panel-name-line);
   font-weight: 600;
 }
 
@@ -262,13 +278,9 @@
   background: var(--mantine-color-default-hover);
 }
 
-.choiceSelected,
-.choiceSelected:hover {
-  background: var(--mantine-primary-color-light);
-}
-
 .choice:focus-visible {
-  box-shadow: inset 2px 0 0 var(--mantine-primary-color-filled);
+  box-shadow: inset var(--fathom-selected-bar-width) 0 0
+    var(--mantine-primary-color-filled);
 }
 
 .choiceLifted {
@@ -323,7 +335,7 @@
 }
 
 .choice:hover .grip,
-.choiceSelected .grip {
+.choice.selectedRow .grip {
   opacity: 1;
 }
 
@@ -512,16 +524,18 @@ th[data-centred] .recordHeadButton {
   width: 100%;
 }
 
-/* A column's name, with any draft's mark under it, so the mark does not widen the column. */
-.headerName {
+/* A column's name, with the live name under it when its draft renames it. */
+.headerNames {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   min-width: 0;
 }
 
-.headerName .markGap {
-  margin-left: 0;
+/* A column's name, after any mark's dot, shortened rather than wrapped when the column is narrow. */
+.headerName {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
 }
 
 /* Which way a column is sorted, and whether it is filtered, beside its name. */
@@ -613,22 +627,9 @@ th[data-centred] .recordHeadButton {
   min-width: 12rem;
 }
 
-.newMark {
-  margin-left: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--mantine-color-dimmed);
-}
-
-/* A new row's mark naming something wrong, rather than only what is still needed. */
+/* What is wrong with a new row so far, after its value. */
 .newMarkWrong {
   color: var(--mantine-color-error);
-}
-
-/* An open dot: nothing is saved yet. */
-.newMark .statusDot {
-  background: transparent;
-  border: 1.5px solid currentColor;
 }
 
 .recordCell {
@@ -667,60 +668,43 @@ th[data-centred] .recordHeadButton {
   line-height: var(--mantine-line-height);
 }
 
-/* A cell a draft changes, and the mark beside a person with a draft: yellow, or red once
-   rejected. A person a draft removes is struck through. */
-/* A row with a draft is tinted in the theme's blue, so it stands apart from the live row under it,
-   and each cell the draft changes is yellow. */
-/* A new row being filled in is tinted as the draft it will be. */
+/* A row or column with a draft is tinted in its dot's colour, faintly: yellow, or red once
+   rejected, as a live row is green. Each value the draft changes has its own dot and is in
+   semibold, so it stands out in its row even where colour is not seen. A new row being filled in
+   is tinted as the draft it will be. A record or part a draft removes is struck through. */
 .draftRow,
 .recordFillingRow {
-  --row-tint: var(--mantine-color-sea-0);
+  --row-tint: var(--fathom-draft-tint);
 
   background: var(--row-tint);
 }
 
-/* A column with a draft is tinted as a row with one is, before the colours of the cells a draft
-   changes, so they show over it. */
 .draftColumn {
-  --column-tint: var(--mantine-color-sea-0);
+  --column-tint: var(--fathom-draft-tint);
 
   background: var(--column-tint);
 }
 
-:global([data-mantine-color-scheme="dark"]) .draftColumn {
-  --column-tint: var(--mantine-color-sea-light);
+.rejectedRow {
+  --row-tint: var(--fathom-rejected-tint);
+}
+
+.rejectedColumn {
+  --column-tint: var(--fathom-rejected-tint);
 }
 
 .draftCell {
-  --cell-tint: var(--mantine-color-yellow-1);
+  --cell-tint: var(--fathom-draft-cell-tint);
 
   background: var(--cell-tint);
+  font-weight: 600;
 }
 
-/* A cell a rejected draft changes is a soft red instead. */
 .rejectedCell {
-  --cell-tint: var(--mantine-color-red-1);
+  --cell-tint: var(--fathom-rejected-cell-tint);
 
   background: var(--cell-tint);
-}
-
-/* In the dark scheme, the same colours as faint tints over the dark background, so they mark a
-   change without shouting, and light text stays readable on them. */
-:global([data-mantine-color-scheme="dark"]) .draftRow,
-:global([data-mantine-color-scheme="dark"]) .recordFillingRow {
-  --row-tint: var(--mantine-color-sea-light);
-}
-
-:global([data-mantine-color-scheme="dark"]) .draftCell {
-  --cell-tint: color-mix(
-    in srgb,
-    var(--mantine-color-yellow-5) 12%,
-    transparent
-  );
-}
-
-:global([data-mantine-color-scheme="dark"]) .rejectedCell {
-  --cell-tint: color-mix(in srgb, var(--mantine-color-red-5) 14%, transparent);
+  font-weight: 600;
 }
 
 /* A list or choice a draft removes is struck through, as a removed person is. */
@@ -806,11 +790,7 @@ th[data-centred] .recordHeadButton {
   font-weight: 500;
 }
 
-.markGap {
-  margin-left: 8px;
-}
-
-/* The words are in the text colour, for contrast, after a dot in yellow, or red once rejected. */
+/* A draft's dot: yellow, or red once rejected. */
 .draftMark .statusDot {
   color: var(--mantine-color-yellow-6);
 }
@@ -825,13 +805,8 @@ th[data-centred] .recordHeadButton {
   border: 1.5px solid var(--mantine-color-yellow-6);
 }
 
-/* Someone else's unpublished changes hold the record, in grey, since nothing waits on the user. */
-.heldMark .statusDot {
-  color: var(--mantine-color-gray-6);
-}
-
-/* A person's live row, under their draft row: light green, dimmed, marked Live like the Draft mark
-   above it, and joined to the draft row. */
+/* A person's live row, under their draft row: light green, dimmed, after a green dot, and joined to
+   the draft row. */
 .recordTable .draftRow:has(+ .recordLiveRow) > td {
   border-bottom-style: dashed;
 }
@@ -884,12 +859,6 @@ th.liveColumn {
 
 .liveMark {
   color: var(--mantine-color-text);
-}
-
-/* A planned hire, not yet a person: a hollow grey dot, as it is a place still to fill. */
-.plannedMark .statusDot {
-  background: transparent;
-  border: 1.5px solid var(--mantine-color-gray-6);
 }
 
 .liveMark .statusDot {
@@ -1104,10 +1073,18 @@ th.liveColumn {
   border-top: 1px solid var(--mantine-color-default-border);
 }
 
-.recordRow {
+/* A panel section's rows: one grid whose rows share its columns, so a mark or box in one row's first
+   value moves every row's second value alike. */
+.recordRows {
   display: grid;
   grid-template-columns: minmax(7rem, max-content) 1fr 28px;
-  gap: 16px;
+  column-gap: 16px;
+}
+
+.recordRow {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
   align-items: center;
   min-height: 36px;
   padding: 2px 0;

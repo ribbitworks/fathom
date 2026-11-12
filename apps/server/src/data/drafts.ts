@@ -281,6 +281,15 @@ export interface Held {
   draft: Draft;
 }
 
+// Who holds a record, to add to it, when someone does.
+export const heldByOf = (
+  held: ReadonlyMap<string, Held>,
+  id: string,
+): { heldBy?: string } => {
+  const holder = held.get(id)?.holder;
+  return holder === undefined ? {} : { heldBy: holder };
+};
+
 // The records of one kind given, or of every record of that kind, that users other than the viewer
 // hold, or that anyone holds when there is no viewer, by record.
 export async function readHeld(

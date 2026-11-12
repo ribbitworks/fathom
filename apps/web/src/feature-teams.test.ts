@@ -53,11 +53,11 @@ const draft = (fields: Partial<NonNullable<FeatureTeam["draft"]>> = {}) => ({
 
 const cards = (teams: FeatureTeam[], show: "both" | "drafts" | "live") =>
   featureTeamPeople(teams, everyone, show).map(
-    ({ id, preferredName, managerId, moved, liveCopyOf }) => ({
+    ({ id, preferredName, managerId, added, liveCopyOf }) => ({
       id,
       preferredName,
       managerId,
-      ...(moved === undefined ? {} : { moved }),
+      ...(added === undefined ? {} : { added }),
       ...(liveCopyOf === undefined ? {} : { liveCopyOf }),
     }),
   );
@@ -203,8 +203,7 @@ describe("feature teams on the chart", () => {
           id: memberCardId("t1", "m2"),
           preferredName: "Blake Fictional",
           managerId: memberCardId("t1", "lead"),
-          moved: {
-            managerId: memberCardId("t1", "lead"),
+          added: {
             state: "rejected",
             unpublished: true,
           },
@@ -232,8 +231,7 @@ describe("feature teams on the chart", () => {
         everyone,
         "both",
       );
-      expect(added?.moved).toEqual({
-        managerId: memberCardId("t1", "lead"),
+      expect(added?.added).toEqual({
         state: "waiting",
         unpublished: false,
       });
@@ -275,14 +273,90 @@ describe("feature teams on the chart", () => {
         everyone,
         "both",
       );
-      expect([own?.approvedTeamName, member?.moved?.state]).toEqual([
+      expect([own?.approvedTeamName, member?.added?.state]).toEqual([
         null,
         "waiting",
       ]);
     });
   });
 
-  it("draws the drafts applied, with nothing marked", () => {
+  describe("with a draft renaming a team", () => {
+    const renamed = team({
+      name: "Fictional Drafted",
+      draft: draft({
+        changed: ["name"],
+        unpublished: true,
+        live: { name: "Fictional Harbour" },
+      }),
+    });
+
+    it("marks the team's card with the drafted name, and the live name beside live", () => {
+      const [lead] = featureTeamPeople([renamed], everyone, "both");
+      expect(lead?.renamed).toEqual({
+        live: "Fictional Harbour",
+        draft: {
+          teamName: "Fictional Drafted",
+          state: "waiting",
+          unpublished: true,
+        },
+      });
+    });
+
+    it("marks the drafted name without the live name when the drafts are applied", () => {
+      const [lead] = featureTeamPeople([renamed], everyone, "drafts");
+      expect(lead?.renamed).toEqual({
+        live: null,
+        draft: {
+          teamName: "Fictional Drafted",
+          state: "waiting",
+          unpublished: true,
+        },
+      });
+    });
+
+    it("marks a published renaming as published", () => {
+      const [lead] = featureTeamPeople(
+        [
+          team({
+            draft: draft({
+              changed: ["name"],
+              live: { name: "Fictional Old" },
+            }),
+          }),
+        ],
+        everyone,
+        "both",
+      );
+      expect(lead?.renamed?.draft).toMatchObject({ unpublished: false });
+    });
+  });
+
+  it("marks no renaming for a draft that changes only the members", () => {
+    const [lead] = featureTeamPeople(
+      [
+        team({
+          draft: draft({ changed: ["members"], live: { members: ["lead"] } }),
+        }),
+      ],
+      everyone,
+      "both",
+    );
+    expect(lead?.renamed).toBeUndefined();
+  });
+
+  it("names who holds a team on its card", () => {
+    const [lead, member] = featureTeamPeople(
+      [team({ heldBy: "Fictional Editor" })],
+      everyone,
+      "both",
+    );
+    expect([lead?.teamHeldBy, member?.teamHeldBy]).toEqual([
+      "Fictional Editor",
+      undefined,
+    ]);
+  });
+
+  it("draws the drafts applied, marking who the draft adds, with no Live copies", () => {
     expect(
       cards(
         [
@@ -303,8 +377,26 @@ describe("feature teams on the chart", () => {
         id: memberCardId("t1", "m2"),
         preferredName: "Blake Fictional",
         managerId: memberCardId("t1", "lead"),
+        added: { state: "waiting", unpublished: false },
       },
     ]);
+  });
+
+  it("marks, live only, each live member a waiting draft takes off the team", () => {
+    const [, leaving] = featureTeamPeople(
+      [
+        team({
+          members: ["lead", "m2"],
+          draft: draft({ live: { members: ["lead", "m1"] } }),
+        }),
+      ],
+      everyone,
+      "live",
+    );
+    expect(leaving).toMatchObject({
+      id: memberCardId("t1", "m1"),
+      leaving: { state: "waiting", unpublished: false },
+    });
   });
 
   it("draws each team as it is live with Live only, leaving out one only drafted to be added", () => {

@@ -286,7 +286,9 @@ describe("a Number column", () => {
       },
       "/people?show=live",
     );
-    expect(cell("p1").textContent).toBe("5");
+    expect(cell("p1").textContent).toBe(
+      "5, Live. A change is waiting for approval.",
+    );
   });
 
   it("names the limit when a number has too many digits", async () => {

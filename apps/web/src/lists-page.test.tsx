@@ -498,7 +498,7 @@ describe("the table of lists", () => {
     ]);
   });
 
-  it("marks a list waiting while anything in it waits, and rejected only once everything drafted in it was", async () => {
+  it("marks a list's choices waiting while any of them, or their order, waits, and rejected only once every one was", async () => {
     const drafted = (state: string, more: object) => ({
       ...removal,
       state,
@@ -534,6 +534,15 @@ describe("the table of lists", () => {
             {
               ...skills,
               description: "What people know.",
+              choices: [
+                choice("c5", "Rust", {
+                  draft: drafted("rejected", {
+                    action: "changed",
+                    changed: ["label"],
+                    live: { label: "Go" },
+                  }),
+                }),
+              ],
               draft: drafted("rejected", described),
             },
             {
@@ -547,27 +556,45 @@ describe("the table of lists", () => {
           ],
         }),
     });
-    const names = async () =>
+    const rows = async () =>
       within(await screen.findByRole("table", { name: "Lists" }))
         .getAllByRole("row")
         .slice(1)
-        .map((tableRow) => tableRow.firstElementChild?.textContent);
+        .map((tableRow) =>
+          [...tableRow.children].map((cell) => cell.textContent),
+        );
     const history = renderApp("/lists");
-    expect(await names()).toEqual([
-      "Locations Draft: reordered",
-      "Skills Rejected",
-      "Empty List Draft",
+    expect(await rows()).toEqual([
+      [
+        "Locations",
+        "Offices and labs.",
+        "(4) Fenwick, Kestrel Bay, Northmere, Corran QuayReordered, Draft: reordered",
+      ],
+      [
+        "Skills",
+        "What people know., Rejected, changed from no description: Not yet",
+        "(1) Rust, Rejected",
+      ],
+      [
+        "Empty List",
+        "Kept empty., Rejected, changed from no description: Not yet",
+        "(0) Spare, Draft",
+      ],
     ]);
     act(() => {
       history.push("/lists?show=drafts");
     });
     await waitFor(async () => {
-      expect(await names()).toContain("Skills");
+      expect((await rows())[1]?.[1]).toBe("No description");
     });
-    expect(await names()).toEqual([
-      "Locations Draft: reordered",
-      "Skills",
-      "Empty List Draft",
+    expect(await rows()).toEqual([
+      [
+        "Locations",
+        "Offices and labs.",
+        "(3) Kestrel Bay, Northmere, Corran QuayReordered, Draft: reordered",
+      ],
+      ["Skills", "No description", "(1) Go"],
+      ["Empty List", "No description", "(0) , Draft"],
     ]);
   });
 
@@ -591,7 +618,7 @@ describe("the table of lists", () => {
     const [drafted] = within(table).getAllByRole("row").slice(1);
     const choices = within(drafted as HTMLElement).getAllByRole("cell")[2];
     expect(choices?.textContent).toBe(
-      "(2) Kestrel Bay, Northmere, Corran Quay",
+      "(2) Kestrel Bay, Northmere, Corran Quay, Draft",
     );
     expect(
       within(choices as HTMLElement).getByText("Northmere").className,
@@ -630,21 +657,21 @@ describe("the table of lists", () => {
         .slice(1)
         .map((tableRow) => tableRow.firstElementChild?.textContent);
     const history = renderApp("/lists");
-    expect(await names()).toEqual(["Locations Draft: retired"]);
+    expect(await names()).toEqual(["LocationsRetired, Draft: retired"]);
     await userEvent.click(
       screen.getByRole("button", { name: "Show retired (1)" }),
     );
     expect(await names()).toEqual([
-      "Locations Draft: retired",
+      "LocationsRetired, Draft: retired",
       "Retired",
-      "Regions Draft: restored",
+      "RegionsRestored, Draft: restored",
     ]);
     await userEvent.click(screen.getByRole("link", { name: "Locations" }));
     const opened = await screen.findByRole("region", { name: /./ });
-    expect(within(opened).getAllByText("Draft: retired")).toHaveLength(2);
+    expect(within(opened).getAllByText(/Draft: retired/)).toHaveLength(2);
     expect(
       within(document.getElementById("choice-c2") as HTMLElement).getAllByText(
-        "Draft: retired",
+        /Draft: retired/,
       ).length,
     ).toBeGreaterThan(0);
     act(() => {
@@ -652,9 +679,9 @@ describe("the table of lists", () => {
     });
     await waitFor(async () => {
       expect(await names()).toEqual([
-        "Regions Draft: restored",
+        "RegionsRestored, Draft: restored",
         "Retired",
-        "Locations Draft: retired",
+        "LocationsRetired, Draft: retired",
       ]);
     });
   });
@@ -1381,7 +1408,7 @@ describe("removing choices", () => {
     });
     focusRow("c3");
     await userEvent.keyboard("{Delete}");
-    expect(await within(row("c3")).findByText("Draft: removed")).toBeDefined();
+    expect(await within(row("c3")).findByText(/Draft: removed/)).toBeDefined();
     await waitFor(() => {
       expect(document.activeElement).toBe(row("c2"));
     });
@@ -1678,7 +1705,7 @@ describe("creating and editing lists", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Delete list" }),
     );
-    expect(await within(panel()).findByText("Draft: removed")).toBeDefined();
+    expect(await within(panel()).findByText(/Draft: removed/)).toBeDefined();
     expect(
       within(panel()).queryByRole("button", { name: "Edit list" }),
     ).toBeNull();
@@ -2148,8 +2175,7 @@ describe("drafts on the Lists page", () => {
     });
     renderApp("/lists");
     const table = await screen.findByRole("table", { name: "Lists" });
-    expect(within(table).getByText("Draft: added")).toBeDefined();
-    expect(within(table).getByText(", unpublished")).toBeDefined();
+    expect(within(table).getByText(/Draft: added, unpublished/)).toBeDefined();
     expect(within(table).queryByText("Unpublished")).toBeNull();
   });
 
@@ -2160,13 +2186,13 @@ describe("drafts on the Lists page", () => {
     });
     renderApp("/lists/l5");
     const table = await screen.findByRole("table", { name: "Lists" });
-    expect(within(table).getByText("Draft: added")).toBeDefined();
+    expect(within(table).getByText(/Draft: added/)).toBeDefined();
     const opened = await screen.findByRole("heading", {
       name: "Teams",
       level: 2,
     });
     expect(opened).toBeDefined();
-    expect(within(row("c8")).getByText("Draft: added")).toBeDefined();
+    expect(within(row("c8")).getByText(/Draft: added/)).toBeDefined();
     // Viewers see the drafts, but nothing to do with them.
     expect(screen.queryByRole("button", { name: "Discard draft" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
@@ -2266,7 +2292,7 @@ describe("drafts on the Lists page", () => {
     });
     renderApp("/lists/l1");
     await screen.findByRole("heading", { name: "Locations", level: 2 });
-    expect(within(panel()).getByText("Draft: reordered")).toBeDefined();
+    expect(within(row("c1")).getByText(/Draft: moved/)).toBeDefined();
     // A click on a draft's details closes the menu.
     await userEvent.click(
       within(await listMenu("Locations")).getByText(
@@ -2391,7 +2417,7 @@ describe("drafts on the Lists page", () => {
     await userEvent.click(
       within(panel()).getByRole("button", { name: "Show retired (1)" }),
     );
-    expect(within(row("c2")).getByText("Rejected: moved")).toBeDefined();
+    expect(within(row("c2")).getByText(/Rejected, moved/)).toBeDefined();
     focusRow("c4");
     await userEvent.keyboard("{Enter}r{Delete}{Alt>}{ArrowUp}{/Alt}");
     expect(screen.queryByLabelText("name")).toBeNull();
@@ -2419,7 +2445,7 @@ describe("drafts on the Lists page", () => {
     renderApp("/lists/l2");
     const table = await screen.findByRole("table", { name: "Lists" });
     // Under the renamed list, and under the list whose choices have drafts.
-    expect(within(table).getAllByText("Live")).toHaveLength(2);
+    expect(within(table).getAllByText(", live")).toHaveLength(2);
     const menu = await listMenu("Talents");
     expect(within(menu).getByText("Reason: Keep Skills")).toBeDefined();
     await userEvent.click(
@@ -3229,8 +3255,8 @@ describe("drafts on the Lists page", () => {
     });
     renderApp("/lists/l1?show=drafts");
     await screen.findByRole("heading", { name: "Locations", level: 2 });
-    expect(within(panel()).queryByText("Live")).toBeNull();
-    expect(within(row("c1")).getByText("Draft: moved")).toBeDefined();
+    expect(within(panel()).queryByText(", live")).toBeNull();
+    expect(within(row("c1")).getByText(/Draft: moved/)).toBeDefined();
   });
 
   it("leaves out lists and choices drafted to be removed when showing the drafts applied", async () => {
@@ -3406,9 +3432,9 @@ describe("unpublished and held changes on the Lists page", () => {
       },
     ]);
     const table = screen.getByRole("table", { name: "Lists" });
-    expect(within(table).getByText("Being changed")).toBeDefined();
+    expect(within(table).getByText(/being changed by/)).toBeDefined();
     expect(
-      within(panel()).getAllByText("Being changed").length,
+      within(panel()).getAllByText(/being changed by/).length,
     ).toBeGreaterThan(1);
     expect(screen.queryByRole("button", { name: "Edit list" })).toBeNull();
     let menu = await menuOf("Drafts of Locations");
@@ -3461,13 +3487,13 @@ describe("unpublished and held changes on the Lists page", () => {
     ]);
     // Each draft's own mark says it is unpublished, with no second mark beside it.
     expect(
-      within(panel()).getAllByText(", unpublished").length,
+      within(panel()).getAllByText(/, unpublished/).length,
     ).toBeGreaterThan(1);
     expect(within(panel()).queryByText("Unpublished")).toBeNull();
     let menu = await menuOf("Drafts of Locations");
     expect(within(menu).getAllByText(mine)).toHaveLength(2);
     // The menu's headings mark the drafts as the table does.
-    expect(within(menu).getAllByText(", unpublished")).toHaveLength(2);
+    expect(menu.querySelectorAll('[class*="unpublishedMark"]')).toHaveLength(2);
     expect(
       within(menu).queryByRole("menuitem", { name: "Approve…" }),
     ).toBeNull();
@@ -3490,6 +3516,27 @@ describe("unpublished and held changes on the Lists page", () => {
     expect(
       within(await screen.findByRole("menu")).queryByText("Waiting drafts"),
     ).toBeNull();
+  });
+
+  it("marks a rejected draft holding one's own unpublished changes with a red dot and a hollow one in its menu", async () => {
+    await open([
+      {
+        ...locations,
+        draft: draftOf({
+          state: "rejected",
+          reason: "Not yet",
+          unpublished: true,
+        }),
+      },
+    ]);
+    const menu = await menuOf("Drafts of Locations");
+    const heading = within(menu).getByText("Rejected").closest("div");
+    expect(heading?.querySelectorAll('[class*="draftRejected"]')).toHaveLength(
+      1,
+    );
+    expect(
+      heading?.querySelectorAll('[class*="unpublishedMark"]'),
+    ).toHaveLength(1);
   });
 });
 
@@ -3657,6 +3704,39 @@ describe("built-in lists and lists with meanings", () => {
     const meaning = screen.getByLabelText<HTMLSelectElement>("meaning");
     expect(meaning.value).toBe("");
     expect(meaning.selectedOptions[0]?.textContent).toBe("Choose a meaning");
+  });
+
+  it("says a draft empties a list's description, with the live description under it beside live", async () => {
+    serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...locations,
+              description: "",
+              draft: {
+                action: "changed",
+                changed: ["description"],
+                live: { description: "Offices and labs." },
+                state: "waiting",
+                madeBy: "Fictional Editor",
+                madeAt: "2026-11-01T10:00:00.000Z",
+              },
+            },
+          ],
+        }),
+    });
+    renderApp("/lists/l1");
+    const panel = (
+      await screen.findByRole("heading", { name: "Locations", level: 2 })
+    ).closest("[data-list-panel]") as HTMLElement;
+    const drafted = within(panel).getByText("No description");
+    expect(drafted.parentElement?.textContent).toContain(
+      "Draft: changed from “Offices and labs.”",
+    );
+    const live = within(panel).getByText("Offices and labs.");
+    expect(live.parentElement?.textContent).toContain("live");
   });
 
   it("edits the name of the only choice for a meaning when its meaning is clicked, and saves it with Tab from the description", async () => {

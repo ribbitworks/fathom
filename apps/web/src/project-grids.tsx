@@ -33,7 +33,7 @@ import {
   startingEffortConversions,
   typedNumber,
 } from "@fathom/shared";
-import { Menu, Text, VisuallyHidden } from "@mantine/core";
+import { Menu, Text } from "@mantine/core";
 import { Fragment, type ReactNode } from "react";
 import {
   addedColumn,
@@ -61,12 +61,12 @@ import {
   targetOf,
 } from "./projects.ts";
 import { ShowDetailsButton } from "./show-details-button.tsx";
-import { StatusMark } from "./status-mark.tsx";
 import { tipAttribute } from "./table-tips.tsx";
 import {
   fieldColumn,
   inOrder,
   liveRecordsBy,
+  withLiveFields,
   liveRecordsOf,
   type Column,
   isPending,
@@ -102,14 +102,7 @@ export function livePlanRecords<Rec extends PlanRecord>(
   return records.flatMap((record) =>
     isFeature(record)
       ? (liveRecordsOf([record], featureDetailKeys) as Rec[])
-      : liveRecordsBy([withLiveDates(record)], (_record, draft, rest) => ({
-          ...rest,
-          ...Object.fromEntries(
-            Object.entries(draft.live as object).filter(([key]) =>
-              draft.changed.includes(key),
-            ),
-          ),
-        })),
+      : liveRecordsBy([withLiveDates(record)], withLiveFields),
   );
 }
 
@@ -767,16 +760,10 @@ export function featureColumns(
         choices: choices.featureTeams,
         emptyLabel: "No feature team",
       }),
-      mark: (feature) =>
-        needsFeatureTeam(
-          meaningOf.get(feature.statusId),
-          feature.featureTeamId,
-        ) && (
-          <StatusMark tone="warning">
-            No team
-            <VisuallyHidden>: it needs a feature team to own it</VisuallyHidden>
-          </StatusMark>
-        ),
+      status: (feature) =>
+        needsFeatureTeam(meaningOf.get(feature.statusId), feature.featureTeamId)
+          ? { words: "No team", spoken: "it needs a feature team to own it" }
+          : undefined,
     },
   ];
   const inGroups = [...builtIn].sort(

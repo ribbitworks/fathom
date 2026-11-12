@@ -778,16 +778,16 @@ describe("adding people", () => {
     await userEvent.keyboard("Casey{Tab}E9{Tab}");
     await waitFor(() => {
       expect(newCell("Name").textContent).toBe(
-        "Casey New, not saved yet: Position, Site needed",
+        "Casey, New, not saved yet: Position, Site needed",
       );
     });
     await userEvent.keyboard("eng{Tab}har{Tab}");
     await waitFor(() => {
-      expect(newCell("Name").textContent).toBe("Casey New, not saved yet");
+      expect(newCell("Name").textContent).toBe("Casey, New, not saved yet");
     });
     await userEvent.keyboard("{Escape}{Enter}");
     // Shown at once, as a draft adding them, which cannot be changed until saved.
-    const added = await screen.findByText("Draft: added");
+    const added = await screen.findByText(/^, Draft: added/);
     const row = added.closest("tr") as HTMLElement;
     expect(inRow(row, "Name").textContent).toContain("Casey");
     expect(inRow(row, "ID").getAttribute("aria-readonly")).toBe("true");
@@ -838,7 +838,7 @@ describe("adding people", () => {
     });
     await userEvent.keyboard("Casey{Tab}E9{Tab}eng{Tab}har{Tab}");
     await userEvent.keyboard("{Escape}{Enter}");
-    expect(await screen.findByText("Draft: added")).toBeDefined();
+    expect(await screen.findByText(/^, Draft: added/)).toBeDefined();
     await userEvent.keyboard("Dee{Tab}{Escape}");
     answer(Response.json({ error: "Fictional failure" }, { status: 500 }));
     expect(
@@ -846,11 +846,11 @@ describe("adding people", () => {
         "Fathom could not add the person. Try again in a moment.",
       ),
     ).toBeDefined();
-    expect(screen.queryByText("Draft: added")).toBeNull();
+    expect(screen.queryByText(/^, Draft: added/)).toBeNull();
     const rows = screen.getAllByRole("row", { name: "New person" });
     expect(rows.map((row) => inRow(row, "Name").textContent)).toEqual([
-      "Casey New, not saved yet",
-      "Dee New, not saved yet: ID, Position, Site needed",
+      "Casey, New, not saved yet",
+      "Dee, New, not saved yet: ID, Position, Site needed",
     ]);
   });
 
@@ -1202,14 +1202,18 @@ describe("drafts", () => {
           views: [],
         }),
     });
-    expect(cell("p1", "f1").textContent).toBe("Harbour, draft, live Northmere");
+    expect(cell("p1", "f1").textContent).toBe(
+      "Harbour, Draft: changed from “Northmere”, draft, live Northmere",
+    );
     expect(cell("p1", "positionId").textContent).toBe(
-      "Engineer, draft, live Tester",
+      "Engineer, Draft: changed from “Tester”, draft, live Tester",
     );
     expect(cell("p1", "startDate").textContent).toBe(
-      "Mar 1, 2024, draft, live empty",
+      "Mar 1, 2024, Draft: changed from no start, draft, live empty",
     );
-    expect(cell("p1", "f2").textContent).toContain(", draft, live empty");
+    expect(cell("p1", "f2").textContent).toContain(
+      ", Draft: changed from no role on team, draft, live empty",
+    );
     expect(cell("p1", "employeeId").textContent).toBe("E1");
     // Under the draft row, the person as they are live, which only sighted users need.
     const liveRow = cell("p1", "f1").closest("tr")?.nextElementSibling;
@@ -1219,12 +1223,12 @@ describe("drafts", () => {
         ({ textContent }) => textContent,
       ),
     ).toEqual([
-      "Avery Fictional Live",
+      "Avery Fictional",
       "E1",
-      "Tester",
-      "Northmere",
-      "",
-      "",
+      "Tester, live",
+      "Northmere, live",
+      "No role on team, live",
+      "No start, live",
       "",
       "",
       "",
@@ -1238,12 +1242,14 @@ describe("drafts", () => {
     focusCell("p1", "employeeId");
     await userEvent.keyboard("{ArrowDown}");
     expect(document.activeElement).toBe(cell("p2", "employeeId"));
-    expect(cell("p1", "preferredName").textContent).toContain("Draft");
+    expect(cell("p1", "preferredName").textContent).toBe("Avery Fictional");
     expect(cell("p2", "f1").textContent).toBe("Old Mill, draft");
     expect(cell("p2", "preferredName").textContent).toContain(
-      "Rejected: Fictional reason",
+      "Rejected, added: Fictional reason",
     );
-    expect(cell("p3", "preferredName").textContent).toContain("Rejected");
+    expect(cell("p3", "preferredName").textContent).toContain(
+      "Rejected, removed",
+    );
     // A rejected draft's changes are marked apart from those waiting, with its reason in the menu.
     expect(cell("p2", "f1").className).not.toBe(cell("p1", "f1").className);
     focusCell("p2", "employeeId");
@@ -2264,7 +2270,7 @@ describe("searching, sorting, and filtering", () => {
         }),
     });
     const names = () =>
-      shownNames().map((name) => name.replace(/\s*(Draft|Rejected).*/, ""));
+      shownNames().map((name) => name.replace(/,? (Draft|Rejected).*/, ""));
     const button = screen.getByRole("button", { name: "Draft" });
     await userEvent.click(button);
     const item = async (name: string) =>
@@ -2379,7 +2385,8 @@ describe("searching, sorting, and filtering", () => {
           views: [],
         }),
     });
-    const liveRows = () => screen.queryAllByText("Live").length;
+    const liveRows = () =>
+      document.querySelectorAll("tr[aria-hidden='true']").length;
     await screen.findByText("Avery Drafted");
     expect(liveRows()).toBe(1);
     const choose = async (name: string) => {
@@ -3155,6 +3162,17 @@ describe("drafts of columns", () => {
       changedBy: { name: "Second Fictional Editor" },
     },
   };
+  // A draft that changes what the column's cells hold, as well as its name, so the column as it is
+  // live is shown beside it.
+  const remade = {
+    ...renamed,
+    multiple: false,
+    draft: {
+      ...renamed.draft,
+      changed: ["name", "multiple"],
+      live: { name: "Role on team", multiple: true },
+    },
+  };
   const draftedOrder = [
     "preferredName",
     "f2",
@@ -3193,26 +3211,28 @@ describe("drafts of columns", () => {
         name: (shown) => shown.startsWith(`${name} column`),
       });
     expect(
-      within(header("Previous site")).getByText("Draft: added"),
+      within(header("Previous site")).getByText(", Draft: added"),
     ).toBeDefined();
-    expect(within(header("Team roles")).getByText("Rejected")).toBeDefined();
-    // The renamed column is tinted, with the column as it is live beside it, hidden from assistive
-    // technology as a live row is.
+    expect(
+      within(header("Team roles")).getByText(", Rejected: Keep the name"),
+    ).toBeDefined();
+    // The renamed column is tinted, and stays one column, with its live name on a Live line under
+    // its name.
     expect(header("Team roles").closest("th")?.className).toMatch(
       /draftColumn/,
     );
-    const liveCopy = screen.getByText("Role on team").closest("th");
-    expect(liveCopy?.getAttribute("aria-hidden")).toBe("true");
-    expect(within(liveCopy as HTMLElement).getByText("Live")).toBeDefined();
     expect(
-      screen.queryByRole("columnheader", { name: /Role on team/ }),
-    ).toBeNull();
+      screen.getAllByText("Role on team").map((name) => name.closest("th")),
+    ).toEqual([header("Team roles").closest("th")]);
+    expect(within(header("Team roles")).getByText(", live")).toBeDefined();
     await userEvent.click(header("Team roles"));
     const menu = await screen.findByRole("menu");
     expect(within(menu).getByText("Reason: Keep the name")).toBeDefined();
     // The draft's section is headed by its own mark, red once rejected.
     expect(
-      within(menu).getByText("Rejected").closest("[class*=draftRejected]"),
+      within(menu)
+        .getByText("Rejected")
+        .querySelector("[class*=draftRejected]"),
     ).not.toBeNull();
     expect(
       within(menu).getByText(
@@ -3282,7 +3302,7 @@ describe("drafts of columns", () => {
       screen.getByRole("button", {
         name: (shown) => shown.startsWith(`${name} column`),
       });
-    expect(within(header("Site")).getByText("Draft: removed")).toBeDefined();
+    expect(within(header("Site")).getByText(", Draft: removed")).toBeDefined();
     expect(header("Site").closest("th")?.className).toMatch(/removedColumn/);
     await userEvent.click(header("Role on team"));
     const menu = await screen.findByRole("menu");
@@ -3326,7 +3346,7 @@ describe("drafts of columns", () => {
             { ...blake, id: "p3", draft: draftOf({ action: "created" }) },
             blake,
           ],
-          fields: [site, renamed],
+          fields: [site, remade],
           order,
           views: [],
         }),
@@ -3442,7 +3462,13 @@ describe("drafts of columns", () => {
   it("shows a changed column's live copy before its live list has loaded", async () => {
     await openPeople({
       "GET /api/session": approverEditor,
-      "GET /api/people": peopleWithDrafts,
+      "GET /api/people": () =>
+        Response.json({
+          people: [avery, blake],
+          fields: [site, remade],
+          order,
+          views: [],
+        }),
       "GET /api/lists": () => Response.json({ lists: [sites] }),
     });
     const liveCopy = screen.getByText("Role on team").closest("th");
@@ -3632,17 +3658,15 @@ describe("unpublished and held changes", () => {
           views: [],
         }),
     });
-    expect(
-      within(cell("p1", "preferredName")).getByText(
-        wholeText(new RegExp(`Being changed by ${holder}$`)),
-      ),
-    ).toBeDefined();
+    expect(cell("p1", "preferredName").textContent).toContain(
+      `, being changed by ${holder}`,
+    );
     expect(cell("p1", "preferredName").getAttribute("aria-readonly")).toBe(
       "true",
     );
-    expect(
-      within(cell("p2", "preferredName")).getByText(", unpublished"),
-    ).toBeDefined();
+    expect(cell("p2", "preferredName").textContent).toContain(
+      "“Blake Before”, unpublished",
+    );
     expect(
       within(cell("p2", "preferredName")).queryByText("Unpublished"),
     ).toBeNull();
@@ -3692,9 +3716,11 @@ describe("unpublished and held changes", () => {
           views: [],
         }),
     });
-    expect(within(header("Site")).getByText("Being changed")).toBeDefined();
     expect(
-      within(header("Role on team")).getByText(", unpublished"),
+      within(header("Site")).getByText(`, Draft, being changed by ${holder}`),
+    ).toBeDefined();
+    expect(
+      within(header("Role on team")).getByText(", Draft, unpublished"),
     ).toBeDefined();
     let menu = await menuOf(header("Site"));
     expect(within(menu).getAllByText(held)).toHaveLength(1);

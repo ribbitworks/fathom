@@ -38,6 +38,8 @@ import {
 import {
   type Draft,
   drafted,
+  heldByOf,
+  readHeld,
   readPersonDrafts,
   type Recorded,
 } from "./drafts.ts";
@@ -231,6 +233,7 @@ export async function readOrgChart(
     hireDrafts,
     positionTier,
     labelOf,
+    held,
   } = await database.transaction(
     async (transaction) => {
       // Drafts are details of people, so those who do not see people are sent none.
@@ -275,6 +278,15 @@ export async function readOrgChart(
         drafts,
         positionTier: await builtInTier(transaction, "positions"),
         labelOf: await choiceLabels(transaction, draftedPositions),
+        // Who holds each person or planned hire by unpublished changes, to those sent their drafts.
+        held: new Map([
+          ...(seesPeople && !approvedOnly
+            ? await readHeld(transaction, "person", actor.user.id)
+            : []),
+          ...(wholePlan
+            ? await readHeld(transaction, "planned-hire", actor.user.id)
+            : []),
+        ]),
       };
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
@@ -356,6 +368,24 @@ export async function readOrgChart(
     colours,
     reader,
   );
+  // Someone only a draft adds is on the drafted chart alone, so it carries the draft's state there,
+  // for their card's mark.
+  const withAddedDraft = (person: OrgChartPerson): OrgChartPerson => {
+    const draft = drafts.get(person.id) ?? hireDrafts.get(person.id);
+    return draft?.action === "created"
+      ? {
+          ...person,
+          draft: {
+            state: draft.state,
+            unpublished: draft.unpublished === true,
+          },
+        }
+      : person;
+  };
+  const heldOf = (person: OrgChartPerson): OrgChartPerson => ({
+    ...person,
+    ...heldByOf(held, person.id),
+  });
   const approved = new Map<string, ChartRecord>([...live, ...liveHires]);
   const chart = chartOf(approved, colours, reader).map(
     (person): OrgChartPerson => {
@@ -366,7 +396,7 @@ export async function readOrgChart(
         drafts.get(person.id) ?? hireDrafts.get(person.id),
         { seesPersonal, labelOf, managerShown, managerOn },
       );
-      return draft === undefined ? person : { ...person, draft };
+      return heldOf(draft === undefined ? person : { ...person, draft });
     },
   );
   const hireDraftsShown = chart.some(
@@ -374,7 +404,7 @@ export async function readOrgChart(
   );
   return {
     people: chart,
-    drafted: draftedChart,
+    drafted: draftedChart.map((person) => heldOf(withAddedDraft(person))),
     includedPersonal:
       chart.some(
         (person) =>

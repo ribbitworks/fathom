@@ -20,7 +20,6 @@ import {
 } from "@fathom/shared";
 import {
   Button,
-  ColorSwatch,
   Group,
   Menu,
   Popover,
@@ -45,7 +44,8 @@ import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import { Icon } from "./icons.tsx";
 import { useLinkForm } from "./link-field.tsx";
-import { colourVariable, colourWords } from "./colours.ts";
+import { Swatch } from "./colour-swatch.tsx";
+import { colourWords } from "./colours.ts";
 import { docToNote, noteToDoc } from "./note-markdown.ts";
 import classes from "./note-editor.module.css";
 import {
@@ -68,12 +68,7 @@ function ColourControl({ editor }: { editor: Editor }) {
     <Menu position="bottom-start" withinPortal>
       <Menu.Target>
         <RichTextEditor.Control aria-label="Colour" title="Colour">
-          <ColorSwatch
-            component="span"
-            color={colourVariable("gray", "filled")}
-            size={14}
-            withShadow={false}
-          />
+          <Swatch colour="gray" alone />
         </RichTextEditor.Control>
       </Menu.Target>
       <Menu.Dropdown>
@@ -81,13 +76,7 @@ function ColourControl({ editor }: { editor: Editor }) {
           <Menu.Item
             key={colour}
             leftSection={
-              <ColorSwatch
-                component="span"
-                color={colourText(colour)}
-                size={14}
-                withShadow={false}
-                aria-hidden
-              />
+              <Swatch colour={colour} shown={colourText(colour)} alone />
             }
             onClick={() => {
               choose(colour);

@@ -2,9 +2,10 @@
 
 // Feature teams, through the server's API, and the chart they make: each team under its feature
 // lead, or under a card naming the team while it has none, with its members below, so someone on
-// two teams is drawn under each. A team is drawn as its draft makes it, with a member a draft adds
-// marked Draft and one it removes drawn where they were, marked Live, as people moved on the org
-// chart are; or, when only the approved chart is shown, as it is live.
+// two teams is drawn under each. Each card carries the team's draft, which the Draft view marks: a
+// member a draft adds, and, beside live, one it removes drawn where they were after Live's green
+// dot, as people moved on the org chart are; or, live only, the team as it is live, with a member a
+// draft would take off marked.
 
 import {
   type FeatureTeam,
@@ -20,9 +21,10 @@ import {
 } from "@fathom/shared";
 import { z } from "zod";
 import { dayQuery, sendDeleteFor, sendJson, sendJsonFor } from "./api.ts";
-import { type ChartPerson, dayUnlessShown } from "./org-chart.ts";
+import { type ChartPerson, dayUnlessShown, liveCopyId } from "./org-chart.ts";
 import { formatDay } from "./table-view.ts";
 import { today } from "./today.ts";
+import { besideLive } from "./status-mark.tsx";
 
 // The teams on a day, today unless another is given, with drafts for those who see them.
 export const featureTeamsQueryOn = dayQuery(
@@ -183,11 +185,17 @@ export function featureTeamPeople(
     const shown = show === "live" ? liveTeam(team) : team;
     if (shown === undefined) return [];
     const live = liveTeam(team);
-    const draft = show === "both" ? team.draft : undefined;
+    const liveName = live?.name ?? null;
+    // The team's draft, whatever the view, for its marks, which the Draft view decides.
+    const draft = team.draft;
+    const marked =
+      draft === undefined
+        ? undefined
+        : { state: draft.state, unpublished: draft.unpublished === true };
     const lead = shown.leadId === null ? undefined : byId.get(shown.leadId);
     const rootId =
       lead === undefined ? teamCardId(team.id) : memberCardId(team.id, lead.id);
-    const root: ChartPerson =
+    const card: ChartPerson =
       lead === undefined
         ? {
             id: rootId,
@@ -197,7 +205,7 @@ export function featureTeamPeople(
             teamName: shown.name,
             teamColour: team.colour,
             managerId: null,
-            approvedTeamName: live?.name ?? null,
+            approvedTeamName: liveName,
             featureTeam: shown.name,
             featureTeamId: team.id,
             teamCard: true,
@@ -208,10 +216,32 @@ export function featureTeamPeople(
             teamName: shown.name,
             teamColour: team.colour,
             managerId: null,
-            approvedTeamName: live?.name ?? null,
+            approvedTeamName: liveName,
             featureTeam: shown.name,
             featureTeamId: team.id,
           };
+    // A draft renaming the team, in any Draft view, which decides how it shows, with the live name
+    // drawn under it beside live, and who holds the team, all marked on its root card's team name.
+    const renaming =
+      team.draft?.action === "changed" && team.draft.changed.includes("name")
+        ? team.draft
+        : undefined;
+    const teamMarks: Partial<ChartPerson> = {
+      ...(renaming === undefined
+        ? {}
+        : {
+            renamed: {
+              live: besideLive(show) ? liveName : null,
+              draft: {
+                teamName: shown.name,
+                state: renaming.state,
+                unpublished: renaming.unpublished === true,
+              },
+            },
+          }),
+      ...(team.heldBy === undefined ? {} : { teamHeldBy: team.heldBy }),
+    };
+    const root: ChartPerson = { ...card, ...teamMarks };
     const wasMember = new Set(live?.members ?? []);
     const members = shown.members.flatMap((personId): ChartPerson[] => {
       const person = byId.get(personId);
@@ -225,21 +255,19 @@ export function featureTeamPeople(
           managerId: rootId,
           featureTeam: shown.name,
           featureTeamId: team.id,
-          ...(draft !== undefined && !wasMember.has(personId)
-            ? {
-                moved: {
-                  managerId: rootId,
-                  state: draft.state,
-                  unpublished: draft.unpublished === true,
-                },
-              }
+          ...(marked !== undefined && !wasMember.has(personId)
+            ? { added: marked }
+            : {}),
+          // Live only, a member the draft takes off the team is drawn where they are, marked.
+          ...(marked !== undefined && !team.members.includes(personId)
+            ? { leaving: marked }
             : {}),
         },
       ];
     });
     // Members a draft takes off the team are drawn where they were, marked Live.
     const leaving =
-      draft === undefined
+      draft === undefined || show !== "both"
         ? []
         : [...wasMember].flatMap((personId): ChartPerson[] => {
             const person = byId.get(personId);
@@ -253,7 +281,7 @@ export function featureTeamPeople(
             return [
               {
                 ...person,
-                id: `${memberCardId(team.id, personId)} live`,
+                id: liveCopyId(memberCardId(team.id, personId)),
                 employeeId: null,
                 teamName: null,
                 teamColour: null,

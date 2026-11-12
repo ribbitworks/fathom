@@ -61,6 +61,7 @@ import {
   draftFields,
   draftMakers,
   fitsColumns,
+  heldByOf,
   lockDrafts,
   otherApprover,
   readHeld,
@@ -756,7 +757,7 @@ async function readPeopleIn(
           ),
         ),
         ...(seen ? { draft: seen } : {}),
-        ...(held.has(id) ? { heldBy: held.get(id)?.holder } : {}),
+        ...heldByOf(held, id),
       },
     ];
   });

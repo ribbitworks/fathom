@@ -36,6 +36,9 @@ export const orgChartQuery = orgChartQueryOn(undefined);
 // Fitting a small chart to the screen never enlarges its cards past their own size.
 export const fitOptions = { maxZoom: 1 };
 
+// The card of a person's Live copy, drawn under their live manager while a draft moves them.
+export const liveCopyId = (id: string) => `${id} live`;
+
 export const findFieldId = "org-chart-find";
 
 export const cardWidth = 240;
@@ -56,9 +59,15 @@ export interface ChartPerson extends OrgChartPerson {
   moved?: OrgChartDraft;
   // The day that move takes effect from, unless it is the day shown.
   movedFrom?: string;
-  // The person's live position, with the draft giving them another.
-  repositioned?: { live: string; draft: OrgChartDraft };
-  // The team's live name, with the draft naming it otherwise.
+  // The draft giving the person another position, with the live one, drawn under it beside live.
+  repositioned?: { live?: string; draft: OrgChartDraft };
+  // The draft adding the person, who is on no approved chart, or, live only on the feature team
+  // chart, taking them off the team.
+  added?: OrgChartDraft;
+  leaving?: OrgChartDraft;
+  // On the feature team chart: who holds the team by unpublished changes, other than the reader.
+  teamHeldBy?: string;
+  // The draft naming the team otherwise, with the live name, drawn under it beside live.
   renamed?: { live: string | null; draft: OrgChartDraft };
   // The team's approved name, which only a team with one can be coloured by, as the chart shows the
   // drafted one.
@@ -70,22 +79,49 @@ export interface ChartPerson extends OrgChartPerson {
   teamCard?: true;
 }
 
-// The people as the Draft menu's choice draws them: the approved chart, with each person's draft,
-// which it draws nowhere else, aside; the chart as drafts make it, as the server applies them; or
-// the approved chart with drafts of managers, positions and team names beside, rejected ones
-// included, marked, with the day each move takes effect from when it is not the day shown.
+// A card with what a person's draft changes, so its marks show in the Draft view, which decides how:
+// a move, a position and a team name, with no live position or name under them, which only drafts
+// beside live draw.
+function markedBy(
+  person: ChartPerson,
+  draft: OrgChartDraft | undefined,
+): ChartPerson {
+  if (draft === undefined) return person;
+  return {
+    ...person,
+    ...(draft.managerId === undefined ? {} : { moved: draft }),
+    ...(draft.position === undefined ? {} : { repositioned: { draft } }),
+    ...(draft.teamName === undefined ? {} : { renamed: { live: null, draft } }),
+  };
+}
+
+// The people as the Draft menu's choice draws them, each card carrying its draft's marks: the
+// approved chart; the chart as drafts make it, as the server applies them; or the approved chart
+// with drafts of managers, positions and team names beside, the live position and name under them,
+// with the day each move takes effect from when it is not the day shown.
 export function chartPeople(
   chart: OrgChart,
   show: Show,
   shownDay: string,
 ): ChartPerson[] {
-  if (show === "live") return [...chart.people];
+  if (show === "live") {
+    return chart.people.map((person) => markedBy(person, person.draft));
+  }
   if (show === "drafts") {
     const live = new Map(chart.people.map((person) => [person.id, person]));
-    return chart.drafted.map((person) => ({
-      ...person,
-      approvedTeamName: live.get(person.id)?.teamName ?? null,
-    }));
+    return chart.drafted.map((person): ChartPerson => {
+      const before = live.get(person.id);
+      const shown: ChartPerson = {
+        ...person,
+        approvedTeamName: before?.teamName ?? null,
+      };
+      if (before === undefined) {
+        return person.draft === undefined
+          ? shown
+          : { ...shown, added: person.draft };
+      }
+      return markedBy(shown, before.draft);
+    });
   }
   return chart.people.flatMap((person): ChartPerson[] => {
     const { draft } = person;
@@ -108,7 +144,7 @@ export function chartPeople(
       shown,
       {
         ...person,
-        id: `${person.id} live`,
+        id: liveCopyId(person.id),
         employeeId: null,
         teamName: null,
         teamColour: null,

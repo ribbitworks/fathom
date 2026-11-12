@@ -332,13 +332,25 @@ const listsRoute = createRoute({
 const releasesRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/releases/{-$streamId}",
+  validateSearch: z.object({
+    show: showSchema.optional().catch(undefined),
+  }),
   beforeLoad: requiring("plan:view", "configuration:view"),
   component: function Releases() {
     const { permissions } = signedIn.useRouteContext();
+    const navigate = releasesRoute.useNavigate();
+    const { show } = releasesRoute.useSearch();
     return (
       <ReleasesPage
         streamId={releasesRoute.useParams().streamId}
         approves={approvableKinds(permissions)}
+        show={show ?? "both"}
+        onShow={(next) => {
+          void navigate({
+            search: { show: next === "both" ? undefined : next },
+            replace: true,
+          });
+        }}
       />
     );
   },

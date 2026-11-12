@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // A project's or proposal's scope history, in its details: a row for each feature given or removed,
-// a draft's first, marked Draft and dated when drafted, then each as approved, newest first,
+// a draft's first, after its dot and dated when drafted, then each as approved, newest first,
 // with the reason given for removing a feature from a proposal. A row is never removed.
 
 import type {
@@ -11,14 +11,14 @@ import type {
   RecordDraft,
   Show,
 } from "@fathom/shared";
-import { Button, Group, Stack, Text } from "@mantine/core";
+import { Button, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { LoadProblem } from "./load-problem.tsx";
 import { livePlanRecords } from "./project-grids.tsx";
 import { scopeHistoryQuery } from "./projects.ts";
 import { RecordLink } from "./record-details.tsx";
 import details from "./record-details.module.css";
-import { DraftMark } from "./status-mark.tsx";
+import { DraftedItem } from "./status-mark.tsx";
 import { formatMomentDay } from "./table-view.ts";
 
 type Scoped = Project | Proposal;
@@ -136,10 +136,11 @@ export function ScopeHistory({
               className={[details.row, details.itemRow].join(" ")}
             >
               <div>
-                <Group gap="xs" wrap="nowrap">
-                  {draft !== undefined && <DraftMark draft={draft} />}
-                  <Text fz="sm">{nameOf(row.featureId, row.name)}</Text>
-                </Group>
+                <Text fz="sm">
+                  <DraftedItem draft={draft}>
+                    {nameOf(row.featureId, row.name)}
+                  </DraftedItem>
+                </Text>
                 <Text fz="xs" c="dimmed">
                   {rowWords(row)}
                 </Text>

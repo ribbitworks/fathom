@@ -8,6 +8,7 @@
 
 import { NativeSelect, SegmentedControl, Table, Text } from "@mantine/core";
 import { useState } from "react";
+import { MarkedItem } from "./status-mark.tsx";
 import classes from "./metrics.module.css";
 import {
   type Counts,
@@ -28,14 +29,14 @@ export interface CountedRows<Row> {
   columns: readonly TableColumn<Row>[];
 }
 
-// A figure, with the live one beside it when it differs.
+// A figure, with the live one beside it when it differs, after Live's green dot.
 function Figure({ now, live }: { now: string; live: string | undefined }) {
   return (
     <>
       {now}
       {live !== undefined && live !== now && (
         <Text component="span" fz="xs" c="dimmed" className={classes.live}>
-          Live {live}
+          <MarkedItem tone="live">{live}</MarkedItem>
         </Text>
       )}
     </>

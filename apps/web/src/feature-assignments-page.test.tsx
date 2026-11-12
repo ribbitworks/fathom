@@ -235,10 +235,12 @@ describe("the Feature assignments page", () => {
   it("colours a team's label, and leaves a team with no colour neutral", async () => {
     await openPage();
 
-    expect(screen.getByText("Mobile apps").style.background).toBe(
+    // The label is the name's box, around it.
+    const label = (name: string) => screen.getByText(name).parentElement;
+    expect(label("Mobile apps")?.style.background).toBe(
       "var(--mantine-color-teal-light)",
     );
-    expect(screen.getByText("Platform reliability").style.background).toBe("");
+    expect(label("Platform reliability")?.style.background).toBe("");
   });
 
   it("offers the Draft menu", async () => {
@@ -293,7 +295,7 @@ describe("the Feature assignments page", () => {
       });
 
       const row = draftRow();
-      expect(within(row).getByText("Draft")).toBeDefined();
+      expect(row.className).toContain("draftRow");
       expect(within(row).getByText(", added")).toBeDefined();
       expect(within(row).getByText(", removed")).toBeDefined();
     });

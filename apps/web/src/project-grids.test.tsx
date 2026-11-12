@@ -189,15 +189,18 @@ describe("the Features table", () => {
   });
 
   it("marks a planned feature with no feature team", () => {
-    expect(team?.mark?.(feature({ featureTeamId: null }))).toBeTruthy();
+    expect(team?.status?.(feature({ featureTeamId: null }))).toEqual({
+      words: "No team",
+      spoken: "it needs a feature team to own it",
+    });
   });
 
   it("does not mark a possible feature with no feature team", () => {
     expect(
-      team?.mark?.(
+      team?.status?.(
         feature({ statusId: "possible-first", featureTeamId: null }),
       ),
-    ).toBe(false);
+    ).toBeUndefined();
   });
 
   it("starts its columns in the order a feature's details group them", () => {

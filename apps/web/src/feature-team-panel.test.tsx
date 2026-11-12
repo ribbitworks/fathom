@@ -18,6 +18,7 @@ import {
   FeatureTeamPanel,
   noFeatureTeamEdits,
 } from "./feature-team-panel.tsx";
+import { DraftView } from "./status-mark.tsx";
 import { formatDay } from "./table-view.ts";
 import { detailRow, detailValue, testTheme } from "./test-support.tsx";
 
@@ -112,16 +113,18 @@ function openPanel({
   render(
     <QueryClientProvider client={new QueryClient()}>
       <MantineProvider theme={testTheme}>
-        <FeatureTeamPanel
-          team={shown ?? undefined}
-          day={day}
-          people={people}
-          edits={edits}
-          show={show}
-          narrow={false}
-          actions={asked}
-          onClose={onClose}
-        />
+        <DraftView show={show}>
+          <FeatureTeamPanel
+            team={shown ?? undefined}
+            day={day}
+            people={people}
+            edits={edits}
+            show={show}
+            narrow={false}
+            actions={asked}
+            onClose={onClose}
+          />
+        </DraftView>
       </MantineProvider>
     </QueryClientProvider>,
   );
@@ -424,10 +427,10 @@ describe("a feature team's draft in its panel", () => {
   it("gives each drafted value with its live one, and marks the members it adds and removes", () => {
     openPanel({ shown: drafted });
     expect(rowText("Name")).toBe(
-      "Fictional Drafted DraftFictional Lighthouse Live",
+      "Fictional Drafted, Draft: changed from “Fictional Lighthouse”Fictional Lighthouse, live",
     );
     expect(rowText("Feature lead")).toBe(
-      "Blake Fictional DraftAvery Fictional Live",
+      "Blake Fictional, Draft: changed from “Avery Fictional”Avery Fictional, live",
     );
     expect(memberLines()).toEqual([
       "Avery Fictional, removed",
@@ -451,19 +454,19 @@ describe("a feature team's draft in its panel", () => {
       day: "2027-05-01",
     });
     expect(memberLines()).toEqual([
-      `Avery Fictional, removedDraft, from ${formatDay("2027-06-01")}`,
+      `Avery Fictionalfrom ${formatDay("2027-06-01")}, removed`,
       "Blake Fictional",
       "Casey Fictional, added",
     ]);
     expect(rowText("Feature lead")).toContain(
-      `Draft, from ${formatDay("2027-04-01")}`,
+      `Draft: changed from “Avery Fictional”, from ${formatDay("2027-04-01")}`,
     );
   });
 
   it("gives the day of a change given no day, on another day shown", () => {
     openPanel({ shown: drafted, day: "2027-06-01" });
     expect(memberLines()).toContain(
-      `Avery Fictional, removedDraft, from ${formatDay("2027-03-10")}`,
+      `Avery Fictionalfrom ${formatDay("2027-03-10")}, removed`,
     );
   });
 
@@ -473,7 +476,9 @@ describe("a feature team's draft in its panel", () => {
         draft: draft({ changed: ["leadId"], live: { leadId: null } }),
       }),
     });
-    expect(rowText("Feature lead")).toBe("Avery Fictional DraftNone Live");
+    expect(rowText("Feature lead")).toBe(
+      "Avery Fictional, Draft: changed from noneNone, live",
+    );
   });
 
   it("leaves a rejected draft's reason out of when a member's change takes effect", () => {
@@ -490,7 +495,7 @@ describe("a feature team's draft in its panel", () => {
       day: "2027-05-01",
     });
     expect(memberLines()).toContain(
-      `Avery Fictional, removedRejected, from ${formatDay("2027-06-01")}`,
+      `Avery Fictionalfrom ${formatDay("2027-06-01")}, removed, rejected`,
     );
   });
 
@@ -520,7 +525,11 @@ describe("a feature team's draft in its panel", () => {
 
   it("offers no changes to a team the draft removes, marking it in the title", () => {
     openPanel({ shown: team({ draft: draft({ action: "deleted" }) }) });
-    expect(screen.getByText("Draft: removed")).toBeDefined();
+    expect(
+      screen.getByRole("heading", {
+        name: "Fictional Lighthouse, Draft: removed",
+      }),
+    ).toBeDefined();
     expect([
       screen.queryByRole("button", { name: "Remove feature team" }),
       screen.queryByRole("button", { name: /^Change / }),
@@ -531,9 +540,9 @@ describe("a feature team's draft in its panel", () => {
   it("offers no colour for a team only drafted to be added, marking it in the title", () => {
     openPanel({ shown: team({ draft: draft({ action: "created" }) }) });
     expect(
-      within(
-        screen.getByRole("heading", { name: /^Fictional Lighthouse/ }),
-      ).getByText("Draft: added"),
+      screen.getByRole("heading", {
+        name: "Fictional Lighthouse, Draft: added",
+      }),
     ).toBeDefined();
     expect(screen.queryByRole("button", { name: "Change Colour" })).toBeNull();
   });
@@ -574,10 +583,12 @@ describe("a feature team's panel read only", () => {
       }),
       show: "live",
     });
-    expect(rowText("Name")).toBe("Fictional Lighthouse");
+    expect(rowText("Name")).toBe(
+      "Fictional Lighthouse, Live. A change is waiting for approval.",
+    );
     expect(memberLines()).toEqual(["Avery Fictional", "Blake Fictional"]);
     expect([
-      screen.queryByText("Draft"),
+      screen.queryByText(/Draft/),
       screen.queryByRole("button", {
         name: /^Change (Name|Feature lead|Members)$/,
       }),

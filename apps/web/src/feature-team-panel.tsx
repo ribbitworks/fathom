@@ -32,7 +32,6 @@ import {
 } from "./feature-teams.ts";
 import { noOthers } from "./new-plan-record-panel.tsx";
 import { NewRecordPanel, newRecordId } from "./new-record-panel.tsx";
-import pages from "./pages.module.css";
 import { noRecordProblem } from "./project-grids.tsx";
 import classes from "./record-details.module.css";
 import { RecordSection, Row } from "./record-details.tsx";
@@ -43,12 +42,10 @@ import {
 import { type Column, fieldColumn } from "./record-grid.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {
+  DraftedItem,
   type DraftedPart,
-  DraftDot,
-  DraftedWords,
-  DraftMark,
-  draftWordsAlone,
-  HoldMarks,
+  DraftedPartItem,
+  MarkRow,
 } from "./status-mark.tsx";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
 import { today } from "./today.ts";
@@ -341,6 +338,13 @@ function TeamDetails({
   const shown = show === "live" ? (liveTeam(team) ?? team) : team;
   const live = liveTeam(team);
   const draft = show === "live" ? undefined : team.draft;
+  // The team's draft, whatever the view, which marks it and the values it changes, so the Draft view
+  // decides how they show.
+  const ownDraft = team.draft;
+  const markedHere = (key: string) =>
+    ownDraft?.action === "changed" && ownDraft.changed.includes(key)
+      ? ownDraft
+      : undefined;
   const changes = edits.propose && show !== "live" && team.heldBy === undefined;
   const columns = teamColumns(choices, edits.rename);
   const save = (change: TeamChange) => {
@@ -370,10 +374,6 @@ function TeamDetails({
   const editing = editingOf(context);
   const from = (drafted: FeatureTeamDraft, personId: string | undefined) =>
     takesEffect(drafted, personId, day ?? today());
-  const changedHere = (key: string) =>
-    draft?.action === "changed" && draft.changed.includes(key)
-      ? draft
-      : undefined;
   const wasMember = new Set(live?.members ?? []);
   const leaving =
     draft === undefined
@@ -391,37 +391,30 @@ function TeamDetails({
   const memberMark = (personId: string, by: FeatureTeamDraft) => {
     const drafted = draftedAs(personId);
     if (drafted === undefined) return undefined;
-    const takesEffectOn = from(by, personId);
     return (
-      <>
-        <DraftDot draft={by} />
-        <span className={drafted === "removed" ? pages.struck : undefined}>
-          {nameOf(personId)}
-        </span>
-        <DraftedWords drafted={drafted} />
-        {takesEffectOn !== undefined && (
-          <Text span c="dimmed" size="sm" ml={8}>
-            {draftWordsAlone(by)}, from {takesEffectOn}
-          </Text>
-        )}
-      </>
+      <DraftedPartItem draft={by} part={drafted} from={from(by, personId)}>
+        {nameOf(personId)}
+      </DraftedPartItem>
     );
   };
   const members = [...shown.members, ...leaving];
-  const nameDraft = changedHere("name");
-  const leadDraft = changedHere("leadId");
+  const nameDraft = markedHere("name");
+  const leadDraft = markedHere("leadId");
+  // Its members are marked one by one, except live only, where they are not drawn as parts.
+  const membersDraft = show === "live" ? markedHere("members") : undefined;
   return (
     <SidePanelFrame
       id={featureTeamPanelId}
       titleId={titleId}
       title={
-        <Group gap="xs" wrap="nowrap">
-          <span>{shown.name}</span>
-          {draft !== undefined && draft.action !== "changed" && (
-            <DraftMark draft={draft} />
-          )}
-          <HoldMarks unpublished={false} heldBy={team.heldBy} />
-        </Group>
+        <span>
+          <DraftedItem
+            draft={ownDraft?.action === "changed" ? undefined : ownDraft}
+            heldBy={team.heldBy}
+          >
+            {shown.name}
+          </DraftedItem>
+        </span>
       }
       narrow={narrow}
       close={{ label: "Close feature team", onClose }}
@@ -461,10 +454,10 @@ function TeamDetails({
               }
             >
               {team.colour === null ? undefined : (
-                <Group gap={6} wrap="nowrap">
-                  <Swatch colour={team.colour} size={12} />
+                <MarkRow>
+                  <Swatch colour={team.colour} size={14} />
                   <Text>{colourWords(team.colour)}</Text>
-                </Group>
+                </MarkRow>
               )}
             </Row>
           </RecordSection>
@@ -490,6 +483,9 @@ function TeamDetails({
             <Row
               column={columns.members}
               value={columns.members.value(shown)}
+              changed={
+                membersDraft === undefined ? undefined : { draft: membersDraft }
+              }
               editing={editing(columns.members)}
             >
               {members.length === 0 ? undefined : (

@@ -19,9 +19,10 @@ import {
   personLengths,
   temporaryIdPrefix,
 } from "@fathom/shared";
-import { Menu, VisuallyHidden } from "@mantine/core";
+import { Menu } from "@mantine/core";
 import { addedColumn, cellRequest } from "./added-columns.ts";
 import { notShown, personDraftFields } from "./draft-details.tsx";
+import { leftWarning } from "./status-mark.tsx";
 import { canFill } from "./hire-fill.ts";
 import { noDrafts } from "./drafts.ts";
 import { choice, offered, sameName } from "./lists.ts";
@@ -39,7 +40,6 @@ import {
   type RowProblem,
   recordsAsShown,
 } from "./record-grid.tsx";
-import { StatusMark } from "./status-mark.tsx";
 import { flagChoice } from "./cell-kinds.tsx";
 import {
   isHire,
@@ -171,15 +171,6 @@ const markedChoice = choice(flagChoice, "Yes", false);
 export const chosen = (id: string | null | undefined): string[] =>
   typeof id === "string" ? [id] : [];
 
-// Gone by today while someone still reports to them, for readers who may see when people leave.
-function LeftMark({ person }: { person: Person }) {
-  return person.managerLeft === true ? (
-    <StatusMark tone="warning" spaced>
-      Left<VisuallyHidden>: their end date has passed</VisuallyHidden>
-    </StatusMark>
-  ) : null;
-}
-
 // The columns made for each set of people, which stays the same while the page shows it, so the
 // choices are not made again each time the table is drawn.
 const madeFor = new WeakMap<
@@ -228,7 +219,9 @@ function makeReportingColumns(
   return [
     {
       ...manager,
-      mark: (person) => <LeftMark person={person} />,
+      // Gone by today while someone still reports to them, for readers who may see when people leave.
+      status: (person) =>
+        person.managerLeft === true ? leftWarning : undefined,
     },
     {
       ...manager,
@@ -455,13 +448,18 @@ function makeLivePeople(people: readonly Person[]): Person[] {
   const nameOf = new Map(
     people.map(({ id, preferredName }) => [id, preferredName]),
   );
+  const endOf = new Map(people.map(({ id, endDate }) => [id, endDate]));
+  const now = today();
   const live = liveRecordsOf(people, detailKeys).map((person): Person => {
     const draft = drafted.get(person.id);
     if (draft?.action !== "changed" || !draft.changed.includes("managerId")) {
       return person;
     }
     const id = draft.live.managerId;
-    return {
+    // Whether the manager has left is sent of the drafted manager, so the live one's is worked out
+    // here, from their end date, which only those who see Personal details are sent.
+    const end = typeof id === "string" ? endOf.get(id) : undefined;
+    const livePerson: Person = {
       ...person,
       manager:
         typeof id === "string"
@@ -469,9 +467,11 @@ function makeLivePeople(people: readonly Person[]): Person[] {
             { id, preferredName: nameOf.get(id) ?? (named.get(id) as string) }
           : null,
     };
+    if (typeof end === "string" && end < now) livePerson.managerLeft = true;
+    else delete livePerson.managerLeft;
+    return livePerson;
   });
   const byId = new Map(live.map((person) => [person.id, person]));
-  const now = today();
   return live.map((person) => {
     const manager =
       person.manager === undefined || person.manager === null

@@ -95,14 +95,35 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-small-button-size": "calc(1.375rem * var(--mantine-scale))",
     // Room for a focus ring, which Mantine draws 2px out with a 2px outline, inside an edge that clips.
     "--fathom-focus-room": "4px",
+    "--fathom-selected-bar-width": "3px",
+    // A draft's dot, the gap after a mark, and the room a rejected dot's ring takes around it.
+    "--fathom-dot-size": "7px",
+    "--fathom-mark-gap": "6px",
+    "--fathom-ring-room": "3px",
+    // A side panel's name, at its top, and the line it and its marks stand on.
+    "--fathom-panel-name-size": "18px",
+    "--fathom-panel-name-line": "28px",
   },
   light: {
     "--mantine-color-body": "#ffffff",
     "--fathom-canvas": "#f4f6f8",
     "--mantine-color-dimmed": mantine.colors.gray[7],
+    // A row, column or card with a draft, faintly in its dot's colour: yellow, or red once rejected.
+    // A cell the draft changes is tinted as its row is, since its dot and semibold value mark it.
+    "--fathom-draft-tint": "var(--mantine-color-yellow-0)",
+    "--fathom-draft-cell-tint": "var(--fathom-draft-tint)",
+    "--fathom-rejected-tint": "var(--mantine-color-red-0)",
+    "--fathom-rejected-cell-tint": "var(--fathom-rejected-tint)",
   },
   dark: {
     "--mantine-color-body": "#17212a",
     "--fathom-canvas": "#0f161c",
+    // The same colours as faint washes over the dark background, so light text stays readable.
+    "--fathom-draft-tint":
+      "color-mix(in srgb, var(--mantine-color-yellow-5) 5%, transparent)",
+    "--fathom-draft-cell-tint": "transparent",
+    "--fathom-rejected-tint":
+      "color-mix(in srgb, var(--mantine-color-red-5) 6%, transparent)",
+    "--fathom-rejected-cell-tint": "transparent",
   },
 });

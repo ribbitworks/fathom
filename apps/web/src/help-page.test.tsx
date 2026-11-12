@@ -149,20 +149,17 @@ describe("Help's Drafts page", () => {
     renderApp("/help/drafts");
     const [, lifecycle, views] = await tables("Drafts");
     const names = [
-      "Draft",
-      "Draft: added",
-      "Draft: removed",
-      "Draft: moved",
-      "Draft: reordered",
-      "Draft: retired",
-      "Rejected",
-      "Unpublished",
-      "Being changed",
-      "Live",
+      "Example, Draft",
+      "Example, Draft: removed",
+      "Example, Draft, unpublished",
+      "Example, Rejected",
+      "Example, being changed by Someone",
+      "Example, Draft: moved",
+      "Example, Draft, from Dec 1, 2026",
+      "Example, live",
     ];
-    // The marks come first; "Rejected" also names a row of the second table.
     expect(screen.getAllByRole("rowheader").slice(0, names.length)).toEqual(
-      names.map((name) => screen.getAllByRole("rowheader", { name })[0]),
+      names.map((name) => screen.getByRole("rowheader", { name })),
     );
     expect(lifecycle?.map(([state]) => state)).toEqual([
       "Saved",

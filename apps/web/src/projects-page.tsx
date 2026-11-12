@@ -171,7 +171,7 @@ import {
   sidePanelScroll,
   useNarrow,
 } from "./side-panel.tsx";
-import { DraftMark, HoldMarks } from "./status-mark.tsx";
+import { besideLive, DraftedItem, MarkRow } from "./status-mark.tsx";
 import type { ChangeView } from "./table-controls.tsx";
 import { type CellValue, formatDay, type View } from "./table-view.ts";
 
@@ -1112,7 +1112,12 @@ function recordPanel({
     columns: () => readonly Column<never, PlanChange>[],
   ) => {
     const record = asShown(records).find(({ id }) => id === open);
-    return record === undefined ? undefined : { type, record, columns };
+    // The record's draft, whatever the view, which marks it and the values it changes, so the Draft
+    // view decides how they show.
+    const ownDraft = records.find(({ id }) => id === open)?.draft;
+    return record === undefined
+      ? undefined
+      : { type, record, columns, ownDraft };
   };
   const shownFrom: Readonly<
     Record<DetailTab, () => ReturnType<typeof shownOf>>
@@ -1143,7 +1148,7 @@ function recordPanel({
     )
     .find((one) => one !== undefined);
   if (found === undefined) return undefined;
-  const { type, record: shown } = found;
+  const { type, record: shown, ownDraft } = found;
   const columns = found.columns();
   const canEdit = editsKind(type);
   const identified = new Map<string, Identified>(
@@ -1195,11 +1200,11 @@ function recordPanel({
         titleId={panelTitleId}
         narrow={narrow}
         title={
-          <Group gap="xs" wrap="nowrap">
-            <span>{shown.name}</span>
-            {shown.draft && <DraftMark draft={shown.draft} />}
-            <HoldMarks unpublished={false} heldBy={shown.heldBy} />
-          </Group>
+          <span>
+            <DraftedItem draft={ownDraft} heldBy={shown.heldBy}>
+              {shown.name}
+            </DraftedItem>
+          </span>
         }
         close={{ label: "Close details", onClose }}
       >
@@ -1210,7 +1215,7 @@ function recordPanel({
             columns={columns}
             units={units}
             record={shown}
-            beside={show === "both"}
+            ownDraft={ownDraft}
             canEdit={canEdit}
             identified={identified}
             follow={follow}
@@ -1291,7 +1296,7 @@ function PlanRecordDetails({
   columns,
   units,
   record,
-  beside,
+  ownDraft,
   canEdit,
   identified,
   follow,
@@ -1302,7 +1307,8 @@ function PlanRecordDetails({
   columns: readonly Column<never, PlanChange>[];
   units: Pick<View, "units" | "places">;
   record: PlanRecord;
-  beside: boolean;
+  // The record's draft, whatever the Draft view, which decides how its marks show.
+  ownDraft: PlanRecord["draft"] | undefined;
   canEdit: boolean;
   identified: IdentifiedRecords;
   follow: Follow;
@@ -1354,7 +1360,7 @@ function PlanRecordDetails({
       units={units}
       record={record}
       value={column.value(record as never)}
-      beside={beside}
+      ownDraft={ownDraft}
       editing={editing(edited)}
       identified={identified}
       follow={follow}
@@ -1394,7 +1400,7 @@ function DetailRow({
   units,
   record,
   value,
-  beside,
+  ownDraft,
   editing,
   identified,
   follow,
@@ -1404,14 +1410,15 @@ function DetailRow({
   units: Pick<View, "units" | "places">;
   record: PlanRecord;
   value: CellValue;
-  beside: boolean;
+  ownDraft: PlanRecord["draft"] | undefined;
   editing: Editing | undefined;
   identified: IdentifiedRecords;
   follow: Follow;
 }) {
-  const draft = record.draft;
-  const changed =
-    beside && draft?.action === "changed" && draft.changed.includes(column.key);
+  const draft =
+    ownDraft?.action === "changed" && ownDraft.changed.includes(column.key)
+      ? ownDraft
+      : undefined;
   const linkedPage = linkedPages.get(column.key);
   const also = inUnitsWords(column, units, record);
   const shown =
@@ -1431,7 +1438,11 @@ function DetailRow({
     <Row
       column={column}
       value={value}
-      changed={changed ? { live: column.live(draft as never) } : undefined}
+      changed={
+        draft === undefined
+          ? undefined
+          : { live: column.live(draft as never), draft }
+      }
       editing={editing}
     >
       {shown}
@@ -1467,7 +1478,7 @@ function ProjectExtras({
         {projectDateColumns.map(([key, label]) => {
           const column = projectDateColumn(key, label);
           const live =
-            show === "both" && project.draft?.action !== "created"
+            besideLive(show) && project.draft?.action !== "created"
               ? // The key is always one of the fixed dates.
                 // eslint-disable-next-line security/detect-object-injection
                 project.liveDates?.[key]
@@ -1514,20 +1525,23 @@ function ProjectExtras({
               className={[details.row, details.itemRow].join(" ")}
             >
               <div>
-                <Group gap="xs" wrap="nowrap">
-                  <Text
-                    fz="sm"
-                    td={
-                      milestone.draft?.action === "deleted"
-                        ? "line-through"
-                        : undefined
-                    }
+                <MarkRow>
+                  <DraftedItem
+                    draft={milestone.draft}
+                    heldBy={milestone.heldBy}
                   >
-                    {milestone.name}
-                  </Text>
-                  {milestone.draft && <DraftMark draft={milestone.draft} />}
-                  <HoldMarks unpublished={false} heldBy={milestone.heldBy} />
-                </Group>
+                    <Text
+                      fz="sm"
+                      td={
+                        milestone.draft?.action === "deleted"
+                          ? "line-through"
+                          : undefined
+                      }
+                    >
+                      {milestone.name}
+                    </Text>
+                  </DraftedItem>
+                </MarkRow>
                 <Text fz="xs" c="dimmed">
                   {formatDay(milestone.date)}
                   {milestone.customerDelivery && ", customer delivery"}

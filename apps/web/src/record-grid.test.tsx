@@ -632,8 +632,8 @@ describe("frozen columns", () => {
       madeBy: null,
       madeAt: null,
       action: "changed",
-      changed: ["name"],
-      live: { name: "Hue" },
+      changed: ["name", "multiple"],
+      live: { name: "Hue", multiple: true },
     },
   };
 
@@ -852,8 +852,8 @@ describe("column widths", () => {
             madeBy: null,
             madeAt: null,
             action: "changed",
-            changed: ["name"],
-            live: { name: "Hue" },
+            changed: ["name", "multiple"],
+            live: { name: "Hue", multiple: true },
           },
         },
       ],
@@ -1293,7 +1293,9 @@ describe("the mark of a new row being filled in", () => {
       document.getElementById("cell-new-0-name")?.focus();
     });
     await userEvent.keyboard("Far too long a name{Tab}{Escape}");
-    expect(screen.getByTitle("New, not saved yet: Name too long")).toBeTruthy();
+    expect(
+      screen.getByText(", New, not saved yet: Name too long"),
+    ).toBeDefined();
     act(() => {
       document.getElementById("cell-new-0-name")?.focus();
     });
@@ -1302,7 +1304,7 @@ describe("the mark of a new row being filled in", () => {
       document.getElementById("cell-new-0-code")?.focus();
     });
     await userEvent.keyboard("W1{Tab}{Escape}");
-    expect(screen.getByText("New, not saved yet: Name needed")).toBeTruthy();
+    expect(screen.getByText(", New, not saved yet: Name needed")).toBeTruthy();
   });
 
   it("marks no cell for a problem with the whole row that names no column", async () => {

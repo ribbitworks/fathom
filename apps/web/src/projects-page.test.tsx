@@ -520,7 +520,7 @@ describe("the side panel", () => {
     ).toBe("First milestoneNone");
   });
 
-  it("shows None as the live date of one only its drafts give", async () => {
+  it("words an empty live date as none, for one only its drafts give", async () => {
     await openPage(
       `/projects?open=${projectId}`,
       plan({
@@ -536,7 +536,7 @@ describe("the side panel", () => {
     await screen.findByRole("heading", { name: /Fictional Project/ });
     const row = within(sidePanel()).getByText("First milestone").closest("div");
     expect(row?.textContent).toContain("Mar 15, 2030");
-    expect(row?.textContent).toMatch(/None\s*Live/);
+    expect(row?.textContent).toContain("No first milestone, live");
   });
 
   it("shows no live dates for a project only drafted to be added", async () => {
@@ -553,7 +553,7 @@ describe("the side panel", () => {
       }),
     );
     await screen.findByRole("heading", { name: /Fictional Project/ });
-    expect(screen.queryByText("Live")).toBeNull();
+    expect(screen.queryByText(", live")).toBeNull();
   });
 
   it("opens nothing for a record that is not there", async () => {
@@ -1103,7 +1103,7 @@ describe("the page around its tables", () => {
     ).toBe("https://example.test/rfp");
   });
 
-  it("shows a value a draft filled in as having been None", async () => {
+  it("shows a value a draft filled in as having been empty, in the words for none", async () => {
     await openPage(
       `/projects?tab=proposals&open=${proposalId}`,
       plan({
@@ -1121,7 +1121,7 @@ describe("the page around its tables", () => {
     await screen.findByRole("heading", { name: /Fictional Proposal/ });
     expect(
       within(sidePanel()).getByText("NEW-1").closest("dd")?.textContent,
-    ).toContain("None");
+    ).toContain("No proposal ID, live");
   });
 });
 

@@ -283,9 +283,57 @@ describe("a person's details", () => {
     await panel("Sasha Fictional");
     const team = row("Reporting team name");
     expect(within(team).getByText("Fictional crew")).toBeDefined();
-    expect(within(team).getByText("Draft")).toBeDefined();
-    expect(within(team).getByText("Live")).toBeDefined();
+    expect(
+      within(team).getByText(", Draft: changed from no reporting team name"),
+    ).toBeDefined();
+    expect(within(team).getByText(", live")).toBeDefined();
   });
+
+  it.each([
+    [
+      "note",
+      "Background",
+      "f1",
+      { notes: { f1: "Moved from the data team" } },
+      "Moved from the data team",
+    ],
+    [
+      "link",
+      "Profile",
+      "f2",
+      {
+        links: {
+          f2: { address: "https://example.com/old", text: "Old profile" },
+        },
+      },
+      "Old profile",
+    ],
+  ])(
+    "marks a drafted %s without its live words in the dot's words, showing them under it beside live",
+    async (_, label, key, live, liveWords) => {
+      answers([
+        robin,
+        {
+          ...(sasha as Record<string, unknown>),
+          draft: {
+            action: "changed",
+            changed: [key],
+            live: { values: {}, links: {}, ...live },
+            state: "waiting",
+            madeBy: null,
+            madeAt: null,
+          },
+        },
+        uma,
+      ]);
+      renderApp("/people?open=E2");
+      await panel("Sasha Fictional");
+      const drafted = row(label);
+      expect(within(drafted).getByText(", Draft")).toBeDefined();
+      expect(within(drafted).getByText(liveWords)).toBeDefined();
+      expect(within(drafted).getByText(", live")).toBeDefined();
+    },
+  );
 
   it("follows the Draft menu of the page beside it", async () => {
     answers();
@@ -382,9 +430,7 @@ describe("a person's details", () => {
     it("marks someone drafted to be added beside live", async () => {
       answers(everyone);
       renderApp("/people?open=E8");
-      expect(
-        within(await panel("Xan Fictional")).getByText("Draft: added"),
-      ).toBeDefined();
+      expect(await panel("Xan Fictional, Draft: added")).toBeDefined();
     });
 
     it("says who is not live yet with Live only", async () => {
@@ -529,7 +575,7 @@ describe("a person's details", () => {
     expect(history.location.search).not.toContain("open=");
   });
 
-  it("marks reports drafted in and away beside live", async () => {
+  it("marks reports drafted in and away beside live, as added and removed", async () => {
     const moving = (
       id: string,
       name: string,
@@ -562,8 +608,8 @@ describe("a person's details", () => {
     const reports = row("Direct reports");
     const item = (name: string) =>
       within(reports).getByText(name).closest("li") as HTMLElement;
-    expect(within(item("Yan Fictional")).getByText("Draft")).toBeDefined();
-    expect(within(item("Uma Fictional")).getByText("Live")).toBeDefined();
+    expect(within(item("Yan Fictional")).getByText(", added")).toBeDefined();
+    expect(within(item("Uma Fictional")).getByText(", removed")).toBeDefined();
   });
 
   it("marks a manager who has left", async () => {
@@ -578,6 +624,37 @@ describe("a person's details", () => {
     renderApp("/people?open=E2");
     await panel("Sasha Fictional");
     expect(within(row("Manager")).getByText("Left")).toBeDefined();
+  });
+
+  it("marks a live manager who has left on the live line under a drafted move", async () => {
+    answers([
+      robin,
+      person("4", "Tatum Fictional", {
+        isManager: true,
+        endDate: "2020-06-30",
+        manager: { id: "1", preferredName: "Robin Fictional" },
+      }),
+      person("2", "Sasha Fictional", {
+        manager: { id: "1", preferredName: "Robin Fictional" },
+        draft: {
+          action: "changed",
+          changed: ["managerId"],
+          live: { managerId: "4", values: {}, links: {} },
+          state: "waiting",
+          madeBy: null,
+          madeAt: null,
+        },
+      }),
+    ]);
+    renderApp("/people?open=E2");
+    await panel("Sasha Fictional");
+    const manager = row("Manager");
+    expect(within(manager).getByText("Robin Fictional")).toBeDefined();
+    const liveLine = within(manager).getByText("Tatum Fictional")
+      .parentElement as HTMLElement;
+    expect(within(liveLine).getByText(", live")).toBeDefined();
+    expect(within(liveLine).getByText("Left")).toBeDefined();
+    expect(within(manager).getAllByText("Left")).toHaveLength(1);
   });
 
   it("draws the team's colour before its name", async () => {
@@ -1004,7 +1081,7 @@ describe("changing a person's details", () => {
       ]),
     });
     renderApp("/people?open=E1");
-    await panel("Robin Fictional");
+    await screen.findByRole("region", { name: /^Robin Fictional/ });
     expect(screen.queryByRole("button", { name: "Change Name" })).toBeNull();
     expect(screen.queryByRole("checkbox", { name: /Manager\?/ })).toBeNull();
   });
@@ -1238,8 +1315,10 @@ describe("changing a person's details", () => {
     expect(
       within(manager).getByRole<HTMLInputElement>("checkbox").checked,
     ).toBe(false);
-    expect(within(manager).getByText("Draft")).toBeDefined();
-    expect(within(manager).getByText("Live")).toBeDefined();
+    expect(
+      within(manager).getByText(", Draft: changed from “Yes”"),
+    ).toBeDefined();
+    expect(within(manager).getByText(", live")).toBeDefined();
   });
 
   it("names the problem under a value whose editor does not name it", async () => {

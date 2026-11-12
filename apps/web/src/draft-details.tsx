@@ -22,7 +22,7 @@ import { nameAs } from "./names.ts";
 import type { DetailKey } from "./people-grid.tsx";
 import classes from "./pages.module.css";
 import { type Phrase, PhraseText, phraseText } from "./phrase.tsx";
-import { type DraftLike, DraftMark } from "./status-mark.tsx";
+import { type DraftLike, DraftDot, draftWords } from "./status-mark.tsx";
 
 export interface DraftField {
   // The field's key, as the draft names it: a detail's name or a column's identifier.
@@ -298,7 +298,8 @@ export function MenuDraftLines({
   return (
     <>
       <Menu.Label className={classes.draftHeading}>
-        <DraftMark draft={{ ...draft, reason: undefined }} />
+        <DraftDot draft={{ ...draft, reason: undefined }} />
+        {draftWords({ ...draft, reason: undefined })}
       </Menu.Label>
       {draft.state === "rejected" && draft.reason !== undefined && (
         <Text fz="xs" px="sm" pb={4} className={classes.rejectedReason}>

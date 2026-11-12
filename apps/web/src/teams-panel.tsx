@@ -6,18 +6,18 @@
 
 import { Button, Drawer, Group, Stack, Text } from "@mantine/core";
 import { useState } from "react";
-import { Swatch } from "./colour-swatch.tsx";
+import { Swatch, teamSwatchSize } from "./colour-swatch.tsx";
 import {
   hasApprovedName,
   type ChartPerson,
-  changeOf,
   type OrgTree,
   type TeamEdits,
 } from "./org-chart.ts";
 import classes from "./org-chart.module.css";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
 import { TeamNameEditor } from "./team-name-editor.tsx";
-import { DraftMark, LiveLine } from "./status-mark.tsx";
+import { LiveLine, MarkRow } from "./status-mark.tsx";
+import { TeamMarks } from "./org-chart-marks.tsx";
 
 const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 
@@ -82,32 +82,35 @@ export function TeamsPanel({
                   />
                 ) : (
                   person.teamColour !== null && (
-                    <Swatch colour={person.teamColour} size={8} />
+                    <Swatch
+                      colour={person.teamColour}
+                      size={teamSwatchSize}
+                      alone
+                    />
                   )
                 )}
               </span>
               <Stack gap={0} miw={0}>
-                <Group gap={6} wrap="nowrap">
-                  {edits.names ? (
-                    <TeamNameEditor
-                      managerId={person.id}
-                      managerName={person.preferredName}
-                      name={person.teamName}
-                      size="sm"
-                    />
-                  ) : (
-                    <Text
-                      size="sm"
-                      fs={person.teamName === null ? "italic" : undefined}
-                      truncate
-                    >
-                      {person.teamName ?? "No name"}
-                    </Text>
-                  )}
-                  {person.renamed !== undefined && (
-                    <DraftMark draft={changeOf(person.renamed.draft)} />
-                  )}
-                </Group>
+                <MarkRow>
+                  <TeamMarks person={person}>
+                    {edits.names ? (
+                      <TeamNameEditor
+                        managerId={person.id}
+                        managerName={person.preferredName}
+                        name={person.teamName}
+                        size="sm"
+                      />
+                    ) : (
+                      <Text
+                        size="sm"
+                        fs={person.teamName === null ? "italic" : undefined}
+                        truncate
+                      >
+                        {person.teamName ?? "No name"}
+                      </Text>
+                    )}
+                  </TeamMarks>
+                </MarkRow>
                 {person.renamed !== undefined &&
                   person.renamed.live !== null && (
                     <LiveLine>{person.renamed.live}</LiveLine>

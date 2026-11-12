@@ -1,9 +1,10 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
 /* The buttons over a record's Name cell: showing its details, shown while the row is pointed at or
-   one of its cells has focus, and filling a planned hire. They sit over the cell rather than beside
-   its text, so a narrow column cuts the name short instead of moving a button under it, and the text
-   makes room for them while they show. A frozen cell is placed already. */
+   the Name cell itself has focus, so only one row shows it while another is pointed at, and filling
+   a planned hire. They sit over the cell rather than beside its text, so a narrow column cuts the
+   name short instead of moving a button under it, and the text makes room for them while they
+   show. A frozen cell is placed already. */
 
 .showDetails,
 .fillHire {
@@ -28,13 +29,13 @@ td:has(> .showDetails) {
 }
 
 tr:hover .showDetails,
-tr:focus-within .showDetails,
+td:focus-within > .showDetails,
 .showDetails:focus-visible {
   opacity: 1;
 }
 
 tr:hover td:has(> .showDetails),
-tr:focus-within td:has(> .showDetails),
+td:focus-within:has(> .showDetails),
 td:has(> .fillHire) {
   padding-right: calc(
     var(--table-horizontal-spacing, var(--mantine-spacing-sm)) +

@@ -58,7 +58,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Swatch } from "./colour-swatch.tsx";
+import { Swatch, teamSwatchSize } from "./colour-swatch.tsx";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
 import { TeamNameEditor } from "./team-name-editor.tsx";
 import { TeamsPanel } from "./teams-panel.tsx";
@@ -74,6 +74,7 @@ import { featureTeamPeople, featureTeamsQueryOn } from "./feature-teams.ts";
 import { colourVariable } from "./colours.ts";
 import { Icon } from "./icons.tsx";
 import { ChartControls } from "./org-chart-controls.tsx";
+import { PersonMarks, TeamMarks } from "./org-chart-marks.tsx";
 import { OrgChartDate } from "./org-chart-date.tsx";
 import {
   hasApprovedName,
@@ -82,6 +83,7 @@ import {
   chartPeople,
   type ChartPerson,
   fitOptions,
+  liveCopyId,
   heightOf,
   stackIndent,
   type ChartSearch,
@@ -112,7 +114,15 @@ import { PersonPanel, personPanelId } from "./person-panel.tsx";
 import { type PeopleData, peopleQuery } from "./people.ts";
 import { useSaving } from "./saving.ts";
 import { motionLasts, useNarrow, WithSidePanel } from "./side-panel.tsx";
-import { DraftMark, LiveLine, StatusMark } from "./status-mark.tsx";
+import {
+  besideLive,
+  DraftedItem,
+  DraftView,
+  leftWarning,
+  LiveLine,
+  MarkedItem,
+  MarkRow,
+} from "./status-mark.tsx";
 import { formatMonth } from "./table-view.ts";
 import { DraftMenu } from "./table-controls.tsx";
 import { today } from "./today.ts";
@@ -143,6 +153,11 @@ interface CardData extends Record<string, unknown> {
 
 type CardNode = Node<CardData, "person">;
 
+// The least zoom at which a card can still be read, below which a person found is centred alone
+// rather than fitted to the screen with their Live copy, and the room left around cards fitted.
+const readableZoom = 0.6;
+const fitMargin = 40;
+
 // A plain click shows the person's details beside the chart; any other, such as one opening a new
 // tab, is left to the browser.
 const plainClick = (event: MouseEvent) =>
@@ -167,12 +182,14 @@ function TeamRow({
 }) {
   const { renamed } = person;
   if (person.teamName === null && renamed === undefined) return null;
+  const colourChosen =
+    teamEdits.colours && person.teamName !== null && hasApprovedName(person);
+  // Whether a colour, or the button to choose one, comes before the name.
+  const swatched = colourChosen || person.teamColour !== null;
   return (
     <>
-      <Group gap={6} wrap="nowrap">
-        {teamEdits.colours &&
-        person.teamName !== null &&
-        hasApprovedName(person) ? (
+      <MarkRow small>
+        {colourChosen && person.teamName !== null ? (
           <TeamColourMenu
             teamId={person.id}
             current={person.teamColour}
@@ -180,38 +197,42 @@ function TeamRow({
           />
         ) : (
           person.teamColour !== null && (
-            <Swatch colour={person.teamColour} size={8} />
+            <Swatch colour={person.teamColour} size={teamSwatchSize} />
           )
         )}
-        {onFeatureTeam !== undefined && person.teamName !== null ? (
-          <Anchor
-            component="button"
-            size="xs"
-            className={["nodrag", "nopan"].join(" ")}
-            onClick={onFeatureTeam}
-          >
-            {person.teamName}
-          </Anchor>
-        ) : teamEdits.names ? (
-          <TeamNameEditor
-            managerId={person.id}
-            managerName={person.preferredName}
-            name={person.teamName}
-          />
-        ) : (
-          <Text
-            size="xs"
-            c="dimmed"
-            fs={person.teamName === null ? "italic" : undefined}
-            truncate
-          >
-            {person.teamName ?? "No name"}
-          </Text>
-        )}
-        {renamed !== undefined && <DraftMark draft={changeOf(renamed.draft)} />}
-      </Group>
+        {/* A feature team's own card names the team, and marks it there, not again here. */}
+        <TeamMarks person={person} plain={person.teamCard === true}>
+          {onFeatureTeam !== undefined && person.teamName !== null ? (
+            <Anchor
+              component="button"
+              size="xs"
+              className={["nodrag", "nopan"].join(" ")}
+              onClick={onFeatureTeam}
+            >
+              {person.teamName}
+            </Anchor>
+          ) : teamEdits.names ? (
+            <TeamNameEditor
+              managerId={person.id}
+              managerName={person.preferredName}
+              name={person.teamName}
+            />
+          ) : (
+            <Text
+              size="xs"
+              c="dimmed"
+              fs={person.teamName === null ? "italic" : undefined}
+              truncate
+            >
+              {person.teamName ?? "No name"}
+            </Text>
+          )}
+        </TeamMarks>
+      </MarkRow>
       {renamed !== undefined && renamed.live !== null && (
-        <LiveLine className={classes.liveName}>{renamed.live}</LiveLine>
+        <LiveLine className={swatched ? classes.liveName : undefined}>
+          {renamed.live}
+        </LiveLine>
       )}
     </>
   );
@@ -248,10 +269,9 @@ function LiveCopyCard({ data }: { data: CardData }) {
         className={classes.handle}
       />
       <div className={classes.name}>
-        <span className={classes.label}>{person.preferredName}</span>
-        <StatusMark tone="live" spaced>
-          Live
-        </StatusMark>
+        <MarkedItem tone="live">
+          <span className={classes.label}>{person.preferredName}</span>
+        </MarkedItem>
       </div>
       {person.position !== null && (
         <Text size="sm" c="dimmed" truncate>
@@ -268,15 +288,22 @@ function PositionRow({ person }: { person: ChartPerson }) {
   if (person.position === null) return null;
   return (
     <>
-      <Group gap={6} wrap="nowrap">
-        <Text size="sm" c="dimmed" truncate>
-          {person.position}
-        </Text>
-        {repositioned !== undefined && (
-          <DraftMark draft={changeOf(repositioned.draft)} />
-        )}
-      </Group>
-      {repositioned !== undefined && <LiveLine>{repositioned.live}</LiveLine>}
+      <MarkRow>
+        <DraftedItem
+          draft={
+            repositioned === undefined
+              ? undefined
+              : changeOf(repositioned.draft)
+          }
+        >
+          <Text size="sm" c="dimmed" truncate>
+            {person.position}
+          </Text>
+        </DraftedItem>
+      </MarkRow>
+      {repositioned?.live !== undefined && (
+        <LiveLine>{repositioned.live}</LiveLine>
+      )}
     </>
   );
 }
@@ -310,6 +337,7 @@ function PersonCard({ data }: NodeProps<CardNode>) {
       data-planned={planned === undefined ? undefined : true}
       data-draft={
         person.moved !== undefined ||
+        person.added !== undefined ||
         person.repositioned !== undefined ||
         person.renamed !== undefined ||
         undefined
@@ -338,40 +366,44 @@ function PersonCard({ data }: NodeProps<CardNode>) {
         className={classes.handle}
       />
       <div className={classes.name}>
-        {(person.employeeId === null && person.teamCard !== true) ||
-        onOpen === undefined ? (
-          <span
-            className={[classes.label, madeName ? classes.madeName : ""].join(
-              " ",
-            )}
+        <PersonMarks person={person}>
+          <MarkedItem
+            tone={person.left === true ? "warning" : undefined}
+            words={leftWarning.words}
+            spoken={leftWarning.spoken}
           >
-            {cardName}
-          </span>
-        ) : (
-          <Link
-            id={cardLinkId(person.id)}
-            to="/org-chart"
-            search={opened}
-            className={[classes.label, classes.link, "nodrag", "nopan"].join(
-              " ",
+            {(person.employeeId === null && person.teamCard !== true) ||
+            onOpen === undefined ? (
+              <span
+                className={[
+                  classes.label,
+                  madeName ? classes.madeName : "",
+                ].join(" ")}
+              >
+                {cardName}
+              </span>
+            ) : (
+              <Link
+                id={cardLinkId(person.id)}
+                to="/org-chart"
+                search={opened}
+                className={[
+                  classes.label,
+                  classes.link,
+                  "nodrag",
+                  "nopan",
+                ].join(" ")}
+                onClick={(event) => {
+                  if (!plainClick(event)) return;
+                  event.preventDefault();
+                  onOpen();
+                }}
+              >
+                {person.preferredName}
+              </Link>
             )}
-            onClick={(event) => {
-              if (!plainClick(event)) return;
-              event.preventDefault();
-              onOpen();
-            }}
-          >
-            {person.preferredName}
-          </Link>
-        )}
-        {person.moved !== undefined && (
-          <DraftMark draft={changeOf(person.moved)} />
-        )}
-        {person.left === true && (
-          <StatusMark tone="warning" spaced>
-            Left<VisuallyHidden>: their end date has passed</VisuallyHidden>
-          </StatusMark>
-        )}
+          </MarkedItem>
+        </PersonMarks>
         {onTeam !== undefined && (
           <Tooltip label="Show only this team">
             <ActionIcon
@@ -394,9 +426,10 @@ function PersonCard({ data }: NodeProps<CardNode>) {
         </Text>
       )}
       {planned !== undefined && (
-        <StatusMark tone="planned">
-          Planned, expected {formatMonth(planned.expected)}
-        </StatusMark>
+        <MarkedItem
+          tone="planned"
+          words={`Planned, expected ${formatMonth(planned.expected)}`}
+        />
       )}
       <TeamRow
         person={person}
@@ -531,11 +564,18 @@ function Chart({
     );
   }
   // Shows the person found, whether from the finder or the address, by showing the managers above
-  // them, once each time someone new is found.
+  // them, and above their Live copy, when a draft moves them, so both places they are drawn show,
+  // once each time someone new is found.
   const [shownFor, setShownFor] = useState<string | null>(null);
   if (found !== shownFor) {
     setShownFor(found);
-    const above = found === null ? [] : managersAbove(tree, found);
+    const above =
+      found === null
+        ? []
+        : [
+            ...managersAbove(tree, found),
+            ...managersAbove(tree, liveCopyId(found)),
+          ];
     if (above.some((managerId) => collapsed.has(managerId))) {
       setCollapsed(
         new Set([...collapsed].filter((one) => !above.includes(one))),
@@ -748,6 +788,31 @@ function Chart({
     const card = layout.cards.find(({ id }) => id === found) as Placed;
     centred.current = found;
     const height = heightOf(tree.people.get(card.id));
+    // A person a draft moves is shown with their Live copy too, both fitted to the screen, no closer
+    // than finding anyone else brings the chart, unless fitting both would make the cards too small
+    // to read, when the person is centred alone, as anyone found is.
+    const copy = layout.cards.find(({ id }) => id === liveCopyId(card.id));
+    const area = chartArea.current;
+    const bothFit =
+      copy !== undefined &&
+      area !== null &&
+      Math.min(
+        area.clientWidth /
+          (Math.abs(card.x - copy.x) + cardWidth + 2 * fitMargin),
+        area.clientHeight /
+          (Math.abs(card.y - copy.y) +
+            Math.max(height, heightOf(tree.people.get(copy.id))) +
+            2 * fitMargin),
+      ) >= readableZoom;
+    if (copy !== undefined && bothFit) {
+      centredZoom.current = null;
+      void flow.fitView({
+        ...fitOptions,
+        nodes: [{ id: card.id }, { id: copy.id }],
+        duration: 300,
+      });
+      return;
+    }
     const zoom = Math.max(flow.getZoom(), 1);
     centredZoom.current = zoom;
     void flow.setCenter(card.x + cardWidth / 2, card.y + height / 2, {
@@ -823,7 +888,12 @@ function Chart({
           centreOnSpace(false);
         }}
       />
-      <Paper withBorder className={classes.chart} ref={chartArea}>
+      <Paper
+        withBorder
+        className={classes.chart}
+        ref={chartArea}
+        data-tinted={besideLive(show) || undefined}
+      >
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -1010,7 +1080,7 @@ export function OrgChartPage({
     [everyone],
   );
   return (
-    <>
+    <DraftView show={show}>
       <PageHeader
         title="Org chart"
         action={
@@ -1232,6 +1302,7 @@ export function OrgChartPage({
                     teamsList: (
                       <FeatureTeamsList
                         teams={(teamsQuery.data as FeatureTeams).teams}
+                        show={show}
                         canAdd={featureTeamEdits.propose && show !== "live"}
                         onOpen={openTeam}
                         onNew={() => {
@@ -1247,6 +1318,6 @@ export function OrgChartPage({
         </WithSidePanel>
       )}
       {question.dialog}
-    </>
+    </DraftView>
   );
 }

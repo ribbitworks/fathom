@@ -4,16 +4,16 @@ Every change to the plan and its people is a draft until an approver approves it
 
 ## Marks
 
-- **Draft** marks a change waiting for approval.
-- **Draft: added** means the record is added once approved.
-- **Draft: removed** means the record is removed once approved.
-- **Draft: moved** marks a moved choice, waiting for approval.
-- **Draft: reordered** marks a list whose choices are in a new order, waiting for approval.
-- **Draft: retired** means the record is retired once approved. **Draft: restored** means it's brought back once approved.
-- **Rejected** means the draft was rejected. The reason is in the record's menu.
-- **Unpublished** marks a change not yet published, which nobody else sees. Other marks show it with a hollow dot, such as **Draft: added**.
-- **Being changed** means someone else has unpublished changes to this. It can't be changed until they publish or discard them.
-- **Live** marks the current record, without the draft's changes.
+- A yellow dot marks a change waiting for approval. It comes before what changed: at the start of a row for a record that's added, removed or moved, or before each value that changed. Pointing at the dot says what the change is and what the value was.
+- A name struck through after its dot is removed once approved.
+- A hollow dot marks a change not yet published, which nobody else sees.
+- A red dot in a ring means the draft was rejected. Pointing at it shows what was rejected and why; the reason is in the record's menu too.
+- A grey lock means someone else has unpublished changes to this. Pointing at it says who. It can't be changed until they publish or discard them.
+- **Moved**, **Reordered**, **Retired** or **Restored** in a yellow box after the name says what a dot can't.
+- A grey or red box after a name is a fact about it, not a draft: **Built in**, **Planned, expected** and a month, or a warning such as **Left**.
+- A date after the name, such as **from Dec 1, 2026**, says when a change takes effect, where that's not the date shown.
+- A green dot marks the current value or record, as it is without the draft, in the light green row or line under the draft.
+- While drafts are shown beside live, a row, column or card with a draft is faintly yellow, or faintly red once rejected, and changed values are in bold.
 
 ## What Happens to a Draft
 
@@ -30,5 +30,5 @@ Cmd+Z on a Mac, or Ctrl+Z elsewhere, undoes the latest change. In a field with s
 ## What the Draft Menu Shows
 
 - **Drafts beside live** shows each draft next to how the record is now.
-- **Drafts applied** shows everything as it will be once the waiting drafts are approved.
-- **Live only** shows everything as it is now.
+- **Drafts applied** shows everything as it will be once the waiting drafts are approved, with their dots but no tints, bold or Live rows.
+- **Live only** shows everything as it is now. A green dot marks each record or value a waiting draft would change; pointing at it says what kind of change waits.

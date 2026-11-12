@@ -5,11 +5,9 @@
 
 import type { PaletteColour } from "@fathom/shared";
 import { colourVariable } from "./colours.ts";
-import pages from "./pages.module.css";
 import {
-  DraftDot,
+  DraftedPartItem,
   type DraftedPart,
-  DraftedWords,
   type DraftLike,
 } from "./status-mark.tsx";
 import { tipAttribute } from "./table-tips.tsx";
@@ -38,7 +36,6 @@ export function TeamLabels({
           className={[
             styles.label,
             colour === null ? styles.labelNoColour : "",
-            drafted === "removed" ? pages.struck : "",
           ].join(" ")}
           {...{ [tipAttribute]: name }}
           style={
@@ -50,9 +47,9 @@ export function TeamLabels({
                 }
           }
         >
-          {draftedBy !== undefined && <DraftDot draft={draftedBy} />}
-          {name}
-          {drafted !== undefined && <DraftedWords drafted={drafted} />}
+          <DraftedPartItem draft={draftedBy} part={drafted}>
+            {name}
+          </DraftedPartItem>
         </span>
       ))}
     </div>

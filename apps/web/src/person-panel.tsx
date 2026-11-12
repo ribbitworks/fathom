@@ -22,7 +22,7 @@ import { Alert, Button, Group, Loader, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useEffectEvent } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
-import { Swatch } from "./colour-swatch.tsx";
+import { Swatch, teamSwatchSize } from "./colour-swatch.tsx";
 import { focusSoon } from "./focus.ts";
 import { listsQuery } from "./lists.ts";
 import { PersonFeatureTeams } from "./person-feature-teams.tsx";
@@ -49,7 +49,14 @@ import classes from "./record-details.module.css";
 import { RecordLink, RecordSection, Row } from "./record-details.tsx";
 import { heldBack, onRow, shownSchema } from "./record-grid.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
-import { DraftMark, StatusMark } from "./status-mark.tsx";
+import {
+  besideLive,
+  DraftedItem,
+  DraftedPartItem,
+  leftWarning,
+  MarkedItem,
+  MarkRow,
+} from "./status-mark.tsx";
 import { type CellValue, formatDay, formatMonth } from "./table-view.ts";
 import { today } from "./today.ts";
 
@@ -160,7 +167,7 @@ export function PersonPanel({
   useEffect(() => {
     focusSoon(titleId);
   }, [shown]);
-  const frame = (title: string, content: ReactNode) => (
+  const frame = (title: ReactNode, content: ReactNode) => (
     <SidePanelFrame
       id={personPanelId}
       titleId={titleId}
@@ -252,9 +259,23 @@ export function PersonPanel({
   const shownIds = new Set(reportsAmong(asShown).map(({ id }) => id));
   // Beside live, a report drafted in is marked as a draft, and one drafted away stays, dimmed and
   // marked Live, as a drafted value is.
-  const liveReports =
-    show === "both" ? reportsAmong(livePeople(query.data.people)) : [];
-  const liveIds = new Set(liveReports.map(({ id }) => id));
+  const allLiveReports = reportsAmong(livePeople(query.data.people));
+  const liveReports = besideLive(show) ? allLiveReports : [];
+  const liveIds = new Set(allLiveReports.map(({ id }) => id));
+  const draftedIds = new Set(
+    reportsAmong(query.data.people).map(({ id }) => id),
+  );
+  // A report a draft brings in, or takes away to another manager, as a part of the person a draft
+  // adds or removes, in any Draft view, which decides how it shows.
+  const draftOf = new Map(
+    query.data.people.map(({ id, draft }) => [id, draft]),
+  );
+  const partOf = (id: string) =>
+    !draftedIds.has(id)
+      ? ("removed" as const)
+      : !liveIds.has(id)
+        ? ("added" as const)
+        : undefined;
   const reports = [
     ...reportsAmong(asShown),
     ...liveReports.filter(({ id }) => !shownIds.has(id)),
@@ -301,35 +322,39 @@ export function PersonPanel({
   };
   closeStale(context);
   const editing = editingOf(context);
+  // The person's draft, whatever the view, which marks them and the values it changes, so the Draft
+  // view decides how they show.
+  // The person shown is found by the drafted person's id, so is always one.
+  const ownDraft = (drafted as Person).draft;
   const rowOf = (column: Column) => {
     const special =
       column.key === "managerId" && manager !== undefined ? (
         <>
-          <RecordLink
-            name={nameOf(manager)}
-            onShow={() => {
-              onPerson(manager.employeeId);
-            }}
-          />
-          {person.managerLeft === true && (
-            <StatusMark tone="warning" spaced>
-              Left
-            </StatusMark>
-          )}
+          <MarkedItem
+            tone={person.managerLeft === true ? "warning" : undefined}
+            words={leftWarning.words}
+            spoken={leftWarning.spoken}
+          >
+            <RecordLink
+              name={nameOf(manager)}
+              onShow={() => {
+                onPerson(manager.employeeId);
+              }}
+            />
+          </MarkedItem>
         </>
       ) : column.key === "teamName" &&
         colour !== null &&
         typeof person.teamName === "string" ? (
-        <Group gap={6} wrap="nowrap">
-          <Swatch colour={colour} size={8} />
+        <MarkRow>
+          <Swatch colour={colour} size={teamSwatchSize} />
           <Text>{person.teamName}</Text>
-        </Group>
+        </MarkRow>
       ) : undefined;
     const draft =
-      show === "both" &&
-      person.draft?.action === "changed" &&
-      person.draft.changed.includes(column.changesWith ?? column.key)
-        ? person.draft
+      ownDraft?.action === "changed" &&
+      ownDraft.changed.includes(column.changesWith ?? column.key)
+        ? ownDraft
         : undefined;
     return (
       <Row
@@ -337,7 +362,16 @@ export function PersonPanel({
         column={column}
         value={column.value(person)}
         changed={
-          draft === undefined ? undefined : { live: column.live(draft), draft }
+          draft === undefined
+            ? undefined
+            : {
+                live: column.live(draft),
+                draft,
+                warning:
+                  column.key === "managerId" && live?.managerLeft === true
+                    ? leftWarning
+                    : undefined,
+              }
         }
         editing={
           changesFrom === undefined || column.key === datedKey
@@ -353,30 +387,35 @@ export function PersonPanel({
     ? hireFill?.(person, asShown, allColumns)
     : undefined;
   return frame(
-    nameOf(person),
+    <DraftedItem draft={ownDraft?.action === "changed" ? undefined : ownDraft}>
+      {nameOf(person)}
+    </DraftedItem>,
     <Stack gap="lg">
       <div>
         <Group gap={0} align="baseline">
-          {position !== undefined && (
-            <Text c="dimmed">
-              {cellKinds.choice.inWords(position, position.value(person))}
-            </Text>
-          )}
-          {show === "both" &&
-            person.draft !== undefined &&
-            person.draft.action !== "changed" && (
-              <DraftMark draft={person.draft} />
+          <MarkedItem
+            tone={
+              left
+                ? "warning"
+                : person.expected === undefined
+                  ? undefined
+                  : "planned"
+            }
+            words={
+              left
+                ? leftWarning.words
+                : person.expected === undefined
+                  ? undefined
+                  : `Planned, expected ${formatMonth(person.expected)}`
+            }
+            spoken={left ? leftWarning.spoken : undefined}
+          >
+            {position !== undefined && (
+              <Text c="dimmed">
+                {cellKinds.choice.inWords(position, position.value(person))}
+              </Text>
             )}
-          {left && (
-            <StatusMark tone="warning" spaced>
-              Left
-            </StatusMark>
-          )}
-          {person.expected !== undefined && (
-            <StatusMark tone="planned" spaced>
-              Planned, expected {formatMonth(person.expected)}
-            </StatusMark>
-          )}
+          </MarkedItem>
         </Group>
         {elsewhere(person)}
         {fill?.action}
@@ -399,34 +438,24 @@ export function PersonPanel({
                   ) : (
                     <ul className={classes.reports}>
                       {reports.map((report) => (
-                        <li
-                          key={report.id}
-                          className={
-                            shownIds.has(report.id) ? undefined : classes.live
-                          }
-                        >
-                          <RecordLink
-                            name={nameOf(report)}
-                            onShow={() => {
-                              onPerson(report.employeeId);
-                            }}
-                          />
+                        <li key={report.id}>
+                          <DraftedPartItem
+                            draft={draftOf.get(report.id)}
+                            part={partOf(report.id)}
+                          >
+                            <RecordLink
+                              name={nameOf(report)}
+                              onShow={() => {
+                                onPerson(report.employeeId);
+                              }}
+                            />
+                          </DraftedPartItem>
                           {typeof report.startDate === "string" &&
                             report.startDate > day && (
                               <Text span c="dimmed" size="sm" ml={8}>
                                 Starts {formatDay(report.startDate)}
                               </Text>
                             )}
-                          {show === "both" &&
-                            !liveIds.has(report.id) &&
-                            report.draft !== undefined && (
-                              <DraftMark draft={report.draft} />
-                            )}
-                          {!shownIds.has(report.id) && (
-                            <StatusMark tone="live" spaced>
-                              Live
-                            </StatusMark>
-                          )}
                         </li>
                       ))}
                     </ul>

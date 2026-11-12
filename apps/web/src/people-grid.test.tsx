@@ -188,14 +188,14 @@ describe("how wide each column is", () => {
     const { rerender } = render(
       grid([person("p1", "Hana Fictional"), person("p2", "Ian")]),
     );
-    expect(nameChars()).toBe("14");
+    expect(nameChars()).toBe("18");
     rerender(
       grid([
         person("p1", "Hana Fictional With A Much Longer Name"),
         person("p2", "Ian"),
       ]),
     );
-    expect(nameChars()).toBe("14");
+    expect(nameChars()).toBe("18");
   });
 
   it("fits a column drawing on a list to its longest choice, retired ones included, however many a cell may hold", () => {
@@ -226,7 +226,7 @@ describe("how wide each column is", () => {
     expect(width?.header).toBe(5);
   });
 
-  it("fits a header to its draft's mark when that is longer than the name", () => {
+  it("fits a header to its name and its draft's dot, however long the draft's reason", () => {
     const column = (draft: object) =>
       columnsFor(
         [
@@ -250,7 +250,7 @@ describe("how wide each column is", () => {
       return found && columnWidth(found, new Map()).header;
     };
     expect(header({ action: "created", state: "waiting" })).toBe(
-      "Draft: added".length + 2,
+      "Score".length + 2,
     );
     expect(
       header({
@@ -258,7 +258,7 @@ describe("how wide each column is", () => {
         state: "rejected",
         reason: "Too long ".repeat(9),
       }),
-    ).toBe("Rejected".length + 2);
+    ).toBe("Score".length + 2);
   });
 
   it("fits a text column with no values to its header", () => {
@@ -450,12 +450,12 @@ describe("adding someone with an Employee ID already taken", () => {
       document.getElementById("cell-new-0-employeeId")?.focus();
     });
     await userEvent.keyboard("e1{Tab}{Escape}");
-    // Named in the row's mark as it is filled in, before what is still needed.
-    const mark = screen.getByTitle(
-      "New, not saved yet: Someone already has that ID",
-    );
-    expect(mark.className).not.toContain("newMarkWrong");
-    const wrong = within(mark).getByText("Someone already has that ID");
+    // Named in the row's mark's words as it is filled in, before what is still needed, and in red
+    // after the value.
+    expect(
+      screen.getByText(", New, not saved yet: Someone already has that ID"),
+    ).toBeDefined();
+    const wrong = screen.getByText("Someone already has that ID");
     expect(wrong.className).toContain("newMarkWrong");
     expect(wrong.parentElement?.getAttribute("aria-live")).toBe("polite");
     // The Employee ID itself is marked, not the name still needed.
@@ -690,11 +690,45 @@ describe("managers and teams", () => {
       }),
     );
     expect(text("p2", "team")).toBe("Harbour Crew");
-    expect(text("p1", "teamName")).toBe("Harbour Crew");
-    expect(text("p4", "managerId")).toBe(
-      "Fictional p3 Left: their end date has passed",
+    expect(text("p1", "teamName")).toBe(
+      "Harbour Crew, Live. A change is waiting for approval.",
     );
-    expect(text("p4", "team")).toBe("Fictional p3");
+    expect(text("p4", "managerId")).toBe(
+      "Fictional p3Left, their end date has passed, Live. A change is waiting for approval.",
+    );
+    expect(text("p4", "team")).toBe(
+      "Fictional p3, Live. A change is waiting for approval.",
+    );
+  });
+
+  it("marks a live manager who has left in the Live row under a drafted move", () => {
+    render(
+      grid({
+        people: [
+          person("p1", { teamName: "Harbour Crew", manager: null }),
+          person("p3", { endDate: "2025-01-01", manager: lead("p1") }),
+          person("p4", {
+            manager: lead("p1"),
+            team: "Harbour Crew",
+            draft: {
+              state: "waiting",
+              madeBy: null,
+              madeAt: null,
+              action: "changed",
+              changed: ["managerId"],
+              live: { managerId: "p3", values: {}, links: {} },
+            },
+          }),
+        ],
+      }),
+    );
+    expect(text("p4", "managerId")).not.toContain("Left");
+    const liveRow = document
+      .getElementById("cell-p4-managerId")
+      ?.closest("tr")?.nextElementSibling;
+    expect(liveRow?.textContent).toContain(
+      "Fictional p3Left, their end date has passed",
+    );
   });
 
   it("names each team by its name, or by its manager's while it has none, and shows only the managers' teams", () => {
@@ -774,7 +808,7 @@ describe("managers and teams", () => {
     expect(text("p1", "teamName")).toBe("Harbour Crew");
     expect(text("p1", "managerId")).toBe("");
     expect(text("p4", "managerId")).toBe(
-      "Fictional p3 Left: their end date has passed",
+      "Fictional p3Left, their end date has passed",
     );
     expect(text("p4", "team")).toBe("Fictional p3");
     expect(text("p5", "managerId")).toBe("Fictional p9");
@@ -799,18 +833,22 @@ describe("managers and teams", () => {
       }),
     );
     expect(text("p2", "managerId")).toBe(
-      "Fictional p4, draft, live Fictional p1",
+      "Fictional p4, Draft: changed from “Fictional p1”, draft, live Fictional p1",
     );
-    expect(text("p2", "team")).toBe("Fictional p4, draft, live Harbour Crew");
+    expect(text("p2", "team")).toBe(
+      "Fictional p4, Draft: changed from “Harbour Crew”, draft, live Harbour Crew",
+    );
     const liveRow = document
       .getElementById("cell-p2-team")
       ?.closest("tr")?.nextElementSibling;
     const keys = columnsFor([], [], [], true).map(({ key }) => key);
     const liveCells = [...(liveRow?.querySelectorAll("td") ?? [])];
     expect(liveCells[keys.indexOf("managerId")]?.textContent).toBe(
-      "Fictional p1",
+      "Fictional p1, live",
     );
-    expect(liveCells[keys.indexOf("team")]?.textContent).toBe("Harbour Crew");
+    expect(liveCells[keys.indexOf("team")]?.textContent).toBe(
+      "Harbour Crew, live",
+    );
   });
 
   it("changes a person's manager, offering No manager first and only those still employed, and clears it with Delete", async () => {
@@ -926,8 +964,12 @@ describe("managers and teams", () => {
         ],
       }),
     );
-    expect(text("p1", "isManager")).toBe("No, draft, live Yes");
-    expect(text("p2", "isManager")).toBe("Yes, draft, live No");
+    expect(text("p1", "isManager")).toBe(
+      "No, Draft: changed from “Yes”, draft, live Yes",
+    );
+    expect(text("p2", "isManager")).toBe(
+      "Yes, Draft: changed from “No”, draft, live No",
+    );
   });
 
   it("adds people pasted as managers or not, and refuses a Manager? that is neither", async () => {
@@ -1375,7 +1417,7 @@ describe("planned hires beside people", () => {
     ).toContain("Fictional test lead");
     const liveRow = document.querySelector("tr[aria-hidden='true']");
     expect(liveRow?.querySelector("td")?.textContent).toBe(
-      "Fictional Engineer, TBD-1 Live",
+      "Fictional Engineer, TBD-1, live",
     );
   });
 

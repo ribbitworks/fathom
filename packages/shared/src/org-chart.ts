@@ -13,7 +13,7 @@
 
 import { z } from "zod";
 import { daySchema, monthSchema } from "./days.ts";
-import { draftStateSchema } from "./drafts.ts";
+import { draftStateSchema, heldBySchema } from "./drafts.ts";
 import { paletteColourSchema } from "./palette.ts";
 
 // What a person's draft changes on the chart, as the reader may see it: their manager, or none,
@@ -54,6 +54,9 @@ export const orgChartPersonSchema = z.object({
     .object({ expected: monthSchema, shownId: z.string().optional() })
     .optional(),
   draft: orgChartDraftSchema.optional(),
+  // Who holds the person by having unpublished changes to them, when it is someone other than the
+  // reader, to readers who are sent drafts.
+  heldBy: heldBySchema,
 });
 
 export type OrgChartPerson = z.infer<typeof orgChartPersonSchema>;
@@ -62,7 +65,8 @@ export const orgChartSchema = z.object({
   people: z.array(orgChartPersonSchema),
   // The chart as it will be once the drafts are approved, with rejected drafts taken back, as the
   // reader may see it: people added and removed, and their details, dates, managers and team names
-  // changed, each as People shows them to the reader.
+  // changed, each as People shows them to the reader. Someone a draft adds carries the draft's state,
+  // since they are on no other chart.
   drafted: z.array(orgChartPersonSchema),
 });
 

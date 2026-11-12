@@ -15,7 +15,7 @@ import {
 import type { ReactNode } from "react";
 import { describeProblem } from "./api.ts";
 import { AppMenu } from "./app-menu.tsx";
-import { Swatch } from "./colour-swatch.tsx";
+import { Swatch, teamSwatchSize } from "./colour-swatch.tsx";
 import { colourWords } from "./colours.ts";
 import { Icon } from "./icons.tsx";
 import { changeButton } from "./record-details.tsx";
@@ -86,7 +86,7 @@ export function TeamColourMenu({
     current === null ? (
       <span className={classes.noColour} />
     ) : (
-      <Swatch colour={current} size={8} />
+      <Swatch colour={current} size={teamSwatchSize} alone />
     );
   const title = "Change the team's colour";
   const targets: Record<ColourMenuLook, ReactNode> = {
@@ -120,7 +120,7 @@ export function TeamColourMenu({
         {paletteColours.map((colour) => (
           <Menu.Item
             key={colour}
-            leftSection={<Swatch colour={colour} size={12} />}
+            leftSection={<Swatch colour={colour} size={14} alone />}
             rightSection={ticked(colour)}
             onClick={() => {
               choose(colour);

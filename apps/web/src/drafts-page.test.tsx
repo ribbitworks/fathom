@@ -163,10 +163,10 @@ describe("the Drafts page", () => {
   it("puts each draft in words, newest first, with what it changes", async () => {
     await openDrafts();
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to Avery Fictional: Start set to Nov 2, 2026; Site from Northmere to Harbour; A deleted column changed",
-      "Fictional Editor drafted adding Blake Fictional: ID set to E-p2; Site set to Harbour",
-      "Fathom drafted removing Casey Fictional",
-      "Fictional Editor drafted changes to Drew Fictional: Name from Drew Before to Drew Fictional Rejected: Fictional reason",
+      "Fictional Editor drafted changes to Avery Fictional: Start set to Nov 2, 2026; Site from Northmere to Harbour; A deleted column changed, Draft",
+      "Fictional Editor drafted adding Blake Fictional: ID set to E-p2; Site set to Harbour, Draft: added",
+      "Fathom drafted removing Casey Fictional, Draft: removed",
+      "Fictional Editor drafted changes to Drew Fictional: Name from Drew Before to Drew Fictional, RejectedReason: Fictional reason",
     ]);
   });
 
@@ -222,15 +222,17 @@ describe("the Drafts page", () => {
     });
     const shown = await entries();
     expect(shown).toContain(
-      "Fictional Editor drafted changes to the list Sites: Description set to Our offices",
+      "Fictional Editor drafted changes to the list Sites: Description set to Our offices, Draft",
     );
     expect(shown).toContain(
-      "Fictional Editor drafted changes to the choice Northmere Labs in Sites: Name from Northmere to Northmere Labs; gone changed",
+      "Fictional Editor drafted changes to the choice Northmere Labs in Sites: Name from Northmere to Northmere Labs; gone changed, Draft",
     );
     expect(shown).toContain(
-      "Fictional Editor drafted a new order for Sites: From Harbour, Northmere, a removed choice to Northmere Labs, Harbour Rejected: Keep the order",
+      "Fictional Editor drafted a new order for Sites: From Harbour, Northmere, a removed choice to Northmere Labs, Harbour, Rejected, reorderedReason: Keep the order",
     );
-    expect(shown).toContain("Fictional Editor drafted adding the list Teams");
+    expect(shown).toContain(
+      "Fictional Editor drafted adding the list Teams, Draft: added",
+    );
     await userEvent.click(
       screen.getByRole("checkbox", {
         name: "Select the draft of the choice Platform in Teams",
@@ -788,7 +790,7 @@ describe("the Drafts page", () => {
     });
     renderApp("/drafts");
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the release Fictional One in Fictional Majors: Note from Scope open to Scope frozen",
+      "Fictional Editor drafted changes to the release Fictional One in Fictional Majors: Note from Scope open to Scope frozen, Draft",
     ]);
   });
 
@@ -841,9 +843,9 @@ describe("the Drafts page", () => {
     });
     renderApp("/drafts");
     expect(await entries()).toEqual([
-      "Fictional Editor drafted adding the release stream Fictional Majors",
-      "Fictional Editor drafted changes to the cycles of Fictional Majors from 2027-01-01: Length from 2 to 3",
-      "Fictional Editor drafted adding the release Fictional One in Fictional Majors",
+      "Fictional Editor drafted adding the release stream Fictional Majors, Draft: added",
+      "Fictional Editor drafted changes to the cycles of Fictional Majors from 2027-01-01: Length from 2 to 3, Draft",
+      "Fictional Editor drafted adding the release Fictional One in Fictional Majors, Draft: added",
     ]);
     await userEvent.click(
       screen.getByRole("checkbox", {
@@ -889,8 +891,8 @@ describe("the Drafts page", () => {
       ]),
     });
     expect(await entries()).toEqual([
-      "Ann Fictional, Fathom and Ben Fictional drafted removing Finley Fictional",
-      "Ann Fictional drafted removing Gray Fictional",
+      "Ann Fictional, Fathom and Ben Fictional drafted removing Finley Fictional, Draft: removed",
+      "Ann Fictional drafted removing Gray Fictional, Draft: removed",
     ]);
   });
 
@@ -931,8 +933,8 @@ describe("the Drafts page", () => {
         }),
     });
     expect(await entries()).toEqual([
-      "Ann Fictional and Ben Fictional drafted changes to Hollis Fictional: Name from Hollis Before to Hollis Fictional (Ann Fictional); Start set to Nov 2, 2026; Site from Northmere to Harbour (Fathom)",
-      "Ann Fictional and Ben Fictional drafted changes to the list Sites: Description set to Offices",
+      "Ann Fictional and Ben Fictional drafted changes to Hollis Fictional: Name from Hollis Before to Hollis Fictional (Ann Fictional); Start set to Nov 2, 2026; Site from Northmere to Harbour (Fathom), Draft",
+      "Ann Fictional and Ben Fictional drafted changes to the list Sites: Description set to Offices, Draft",
     ]);
   });
 
@@ -1086,7 +1088,7 @@ describe("the Drafts page", () => {
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the planned hire Engineer, REQ-7: State from Request to hire to Approved to hire",
+      "Fictional Editor drafted changes to the planned hire Engineer, REQ-7: State from Request to hire to Approved to hire, Draft",
     ]);
     await userEvent.click(
       screen.getByRole("checkbox", {
@@ -1403,7 +1405,7 @@ describe("the Drafts page", () => {
       ]),
     });
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to Fin Fictional: Start changed",
+      "Fictional Editor drafted changes to Fin Fictional: Start changed, Draft",
     ]);
   });
 
@@ -1460,7 +1462,9 @@ describe("the Drafts page", () => {
         textContent.startsWith("Time not recorded"),
       ),
     ).toEqual([false, true, true]);
-    expect(items[2]?.textContent).toMatch(/Hollis Fictional\s*Rejected$/);
+    expect(items[2]?.textContent).toMatch(
+      /Hollis Fictional, Rejected, removed$/,
+    );
   });
 
   it("counts drafts in words", () => {
@@ -1528,7 +1532,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Name from Fictional Quay to Fictional Pier; Feature lead from Blake Fictional to Avery Fictional; Members from Avery Fictional to Avery Fictional, Blake Fictional, Someone this role can't see; Joining and leaving dates set to Avery Fictional, Jan 5, 2026; Blake Fictional, Jan 6, 2026; Someone this role can't see, Jan 7, 2026",
+      "Fictional Editor drafted changes to the feature team Fictional Pier: Name from Fictional Quay to Fictional Pier; Feature lead from Blake Fictional to Avery Fictional; Members from Avery Fictional to Avery Fictional, Blake Fictional, Someone this role can't see; Joining and leaving dates set to Avery Fictional, Jan 5, 2026; Blake Fictional, Jan 6, 2026; Someone this role can't see, Jan 7, 2026, Draft",
     ]);
   });
 
@@ -1546,7 +1550,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Members set to Ellis Fictional; Joining and leaving dates set to Ellis Fictional, Jan 5, 2026",
+      "Fictional Editor drafted changes to the feature team Fictional Pier: Members set to Ellis Fictional; Joining and leaving dates set to Ellis Fictional, Jan 5, 2026, Draft",
     ]);
   });
 
@@ -1564,7 +1568,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Feature lead from Blake Fictional to Avery Fictional; Date the feature lead changes set to Jan 5, 2026",
+      "Fictional Editor drafted changes to the feature team Fictional Pier: Feature lead from Blake Fictional to Avery Fictional; Date the feature lead changes set to Jan 5, 2026, Draft",
     ]);
   });
 
@@ -1575,7 +1579,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Date the feature lead changes changed",
+      "Fictional Editor drafted changes to the feature team Fictional Pier: Date the feature lead changes changed, Draft",
     ]);
   });
 
@@ -1604,7 +1608,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Nothing is left to change, since the people it named have left",
+      "Fictional Editor drafted changes to the feature team Fictional Pier: Nothing is left to change, since the people it named have left, Draft",
     ]);
   });
 
@@ -1615,7 +1619,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Joining and leaving dates changed",
+      "Fictional Editor drafted changes to the feature team Fictional Pier: Joining and leaving dates changed, Draft",
     ]);
   });
 
@@ -1630,7 +1634,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Name set to Fictional Pier; Feature lead changed; Members changed",
+      "Fictional Editor drafted changes to the feature team Fictional Pier: Name set to Fictional Pier; Feature lead changed; Members changed, Draft",
     ]);
   });
 
@@ -1652,8 +1656,8 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted adding the feature team Fictional Beacon: Feature lead Avery Fictional; Members Avery Fictional, Blake Fictional; Joining and leaving dates set to Blake Fictional, Jan 6, 2026",
-      "Fictional Editor drafted removing the feature team Fictional Wharf: Members Avery Fictional",
+      "Fictional Editor drafted adding the feature team Fictional Beacon: Feature lead Avery Fictional; Members Avery Fictional, Blake Fictional; Joining and leaving dates set to Blake Fictional, Jan 6, 2026, Draft: added",
+      "Fictional Editor drafted removing the feature team Fictional Wharf: Members Avery Fictional, Draft: removed",
     ]);
   });
 
@@ -1671,8 +1675,8 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted adding the feature team Fictional Beacon",
-      "Fictional Editor drafted removing the feature team Fictional Wharf",
+      "Fictional Editor drafted adding the feature team Fictional Beacon, Draft: added",
+      "Fictional Editor drafted removing the feature team Fictional Wharf, Draft: removed",
     ]);
   });
 
@@ -1755,10 +1759,13 @@ describe("unpublished and held drafts on the Drafts page", () => {
     const box = (name: string) =>
       screen.getByRole("checkbox", { name: `Select the draft of ${name}` });
     await screen.findByRole("checkbox", { name: "Select all waiting" });
-    expect(
-      screen.getByText(wholeText(/Being changed by Second Fictional Editor$/)),
-    ).toBeDefined();
-    expect(screen.getByText("Unpublished")).toBeDefined();
+    const shown = await entries();
+    expect(shown.find((text) => text.includes("Avery Fictional"))).toMatch(
+      /, Draft, being changed by Second Fictional Editor$/,
+    );
+    expect(shown.find((text) => text.includes("Blake Fictional"))).toMatch(
+      /, Draft: added, unpublished$/,
+    );
     expect(box("Avery Fictional")).toHaveProperty("disabled", true);
     expect(box("Blake Fictional")).toHaveProperty("disabled", true);
     await userEvent.click(

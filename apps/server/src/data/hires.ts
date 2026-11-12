@@ -83,6 +83,7 @@ import {
   draftMakers,
   draftTier,
   fitsColumns,
+  heldByOf,
   lockDrafts,
   otherApprover,
   readDrafts,
@@ -574,7 +575,7 @@ export async function readHiresIn(
               targetDate,
               ...draftedFiller(hire, filledBy),
               ...shownDraft(id, before, draft),
-              ...(held.has(id) ? { heldBy: held.get(id)?.holder } : {}),
+              ...heldByOf(held, id),
             }
           : {}),
       },

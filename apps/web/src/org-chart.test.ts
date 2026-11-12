@@ -340,4 +340,38 @@ describe("the people the Draft menu draws", () => {
     expect(live.find(({ id }) => id === "r1")?.managerId).toBe("m1");
     expect(live.some(({ id }) => id === "r1 live")).toBe(false);
   });
+
+  it("keeps each card's draft live only, in place, with no Live lines, so its marks show", () => {
+    const live = chartPeople(chart, "live", shownDay);
+    const card = (id: string) => live.find((one) => one.id === id);
+    expect(card("r1")?.moved).toEqual({ ...draft, managerId: "m2" });
+    expect(card("r2")?.position).toBe("Fictional Engineer");
+    expect(card("r2")?.repositioned).toEqual({
+      draft: { ...draft, position: "Fictional Lead" },
+    });
+    expect(card("m3")?.teamName).toBe("Fictional team");
+    expect(card("m3")?.renamed?.live).toBeNull();
+    expect(heightOf(card("m4"))).toBe(cardHeight);
+  });
+
+  it("keeps each card's draft with the drafts applied, and marks someone a draft adds", () => {
+    const applied = chartPeople(
+      {
+        people: chart.people,
+        drafted: [
+          person("m1", null, "Blake"),
+          person("m2", null, "Avery"),
+          person("r1", "m2", "Drew"),
+          { ...person("new", "m1", "Ellis"), draft },
+        ],
+      },
+      "drafts",
+      shownDay,
+    );
+    const card = (id: string) => applied.find((one) => one.id === id);
+    expect(card("r1")?.moved).toEqual({ ...draft, managerId: "m2" });
+    expect(card("new")?.added).toEqual(draft);
+    expect(card("m1")?.moved).toBeUndefined();
+    expect(heightOf(card("r1"))).toBe(cardHeight);
+  });
 });

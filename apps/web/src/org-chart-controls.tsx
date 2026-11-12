@@ -20,12 +20,14 @@ import { AppMenu } from "./app-menu.tsx";
 import { OptionWords } from "./choice-picker.tsx";
 import { Icon } from "./icons.tsx";
 import {
+  type ChartPerson,
   findFieldId,
   fitOptions,
   livePosition,
   nothingFound,
   type OrgTree,
 } from "./org-chart.ts";
+import { PersonMarks, TeamMarks } from "./org-chart-marks.tsx";
 
 const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 
@@ -134,12 +136,23 @@ export function ChartControls({
                 : lead.teamCard === true
                   ? "No feature lead"
                   : `Led by ${lead.preferredName}`;
+            // Every option is made from someone on the chart.
+            const marked = tree.people.get(
+              lead === undefined ? option.value : lead.id,
+            ) as ChartPerson;
             return (
               <OptionWords
                 option={{
                   label: option.label,
                   description: description ?? undefined,
                 }}
+                name={
+                  lead === undefined ? (
+                    <PersonMarks person={marked}>{option.label}</PersonMarks>
+                  ) : (
+                    <TeamMarks person={marked}>{option.label}</TeamMarks>
+                  )
+                }
               />
             );
           }}

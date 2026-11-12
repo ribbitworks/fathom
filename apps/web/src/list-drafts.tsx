@@ -23,7 +23,7 @@ import { makerNames } from "./names.ts";
 import { withRetiring } from "./lists.ts";
 import { closesOnBlankClick } from "./app-menu.tsx";
 import classes from "./pages.module.css";
-import type { DraftLike } from "./status-mark.tsx";
+import { type DraftLike, partsMark } from "./status-mark.tsx";
 
 // What can be done with drafts on the Lists page; each names the draft it acts on.
 export interface ListDraftActions {
@@ -57,11 +57,17 @@ export function draftName(what: DraftOn): string {
     : what.list.name;
 }
 
-// The classes of a row with a draft: tinted, and struck through once a draft removes it.
-export function draftRowClass(draft: { action: string } | undefined): string {
+// The classes of a row with a draft: tinted as its dot is, while drafts are shown beside live, and
+// struck through once a draft removes it. Shown alone, drafts or live rows are left untinted, so the
+// view stays clean while its dots still show the changes.
+export function draftRowClass(
+  draft: { action: string; state?: string } | undefined,
+  tinted = true,
+): string {
   if (draft === undefined) return "";
   return [
-    classes.draftRow,
+    tinted ? classes.draftRow : "",
+    tinted && draft.state === "rejected" ? classes.rejectedRow : "",
     draft.action === "deleted" ? classes.removedRow : "",
   ].join(" ");
 }
@@ -179,12 +185,14 @@ export function listMark(
   ];
   const drafts = found.filter(counted);
   const waiting = drafts.filter(({ state }) => state === "waiting");
-  if (waiting.length > 0) {
-    return waiting.length === 1 && waiting[0] === list.orderDraft
-      ? { state: "waiting" }
-      : { action: "changed", state: "waiting" };
-  }
-  return drafts.length > 0 ? { state: "rejected" } : undefined;
+  // A new order alone, waiting or rejected, is marked as one, so its words say reordered.
+  const orderAlone =
+    waiting.length > 0
+      ? waiting.length === 1 && waiting[0] === list.orderDraft
+      : drafts.length === 1 && drafts[0] === list.orderDraft;
+  return orderAlone && list.orderDraft !== undefined
+    ? { state: list.orderDraft.state }
+    : partsMark(found, leaveOutRejected);
 }
 
 // The menu of a list's drafts, beside its name in the panel, laid out as a record's menu on the

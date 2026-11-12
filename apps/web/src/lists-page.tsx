@@ -31,7 +31,7 @@ import {
 import { useMediaQuery } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Fragment, type MouseEvent, type ReactNode, useState } from "react";
+import { type MouseEvent, type ReactNode, useState } from "react";
 import { DecisionModal } from "./decision-dialog.tsx";
 import {
   approvesAll,
@@ -49,7 +49,6 @@ import {
   drafting,
   draftName,
   type DraftOn,
-  draftRowClass,
   listMark,
   type ListDraftActions,
   selectionOf,
@@ -89,11 +88,21 @@ import classes from "./pages.module.css";
 import { useSaving } from "./saving.ts";
 import { count } from "./numbers.ts";
 import {
-  type DraftLike,
-  DraftMark,
-  HoldMarks,
-  StatusMark,
+  besideLive,
+  DraftedValue,
+  DraftView,
+  LiveValue,
+  recordMark,
+  useBesideLive,
 } from "./status-mark.tsx";
+import {
+  LivePartsCell,
+  LiveSummaryName,
+  PartsCell,
+  SummaryName,
+  SummaryRow,
+} from "./summary-row.tsx";
+import { originalOf } from "./record-drafts.ts";
 import { DecideAllItems, DraftMenu, TableSearch } from "./table-controls.tsx";
 
 const newListId = "list-new";
@@ -153,25 +162,27 @@ function reordered(
   return [...others.slice(0, at), choice, ...others.slice(at)];
 }
 
+// What a list's row shows of the list itself, each marked by its own dot where a draft changes it.
+const listRowFields = new Set(["name", "description"]);
+
 function ListsTable({
   lists,
   selected,
-  showLive,
   search: address,
-  markOf,
+  originalOf,
   onOpen,
 }: {
   lists: List[];
   selected: string | undefined;
   // The page address's search, kept as lists are opened.
   search: { show?: Show; search?: string };
-  // Whether a list a draft changes shows its live row under it.
-  showLive: boolean;
-  // The mark beside a list, worked out from its drafts before any are taken back or left out.
-  markOf: (list: List) => DraftLike | undefined;
+  // The list with every draft, whatever the view, which its marks are worked out from, so the Draft
+  // view decides how they show.
+  originalOf: (list: List) => List;
   onOpen: (list: List) => void;
 }) {
   const [showRetired, setShowRetired] = useState(false);
+  const showLive = useBesideLive();
   // Beside live, a list a draft retires or restores stays where it is live until approved, as one a
   // draft removes stays, struck through.
   const isRetired = (list: List) =>
@@ -183,107 +194,108 @@ function ListsTable({
     choice.draft?.action === "deleted";
   const row = (list: List) => {
     const offered = list.choices.filter((choice) => !choice.retired);
-    const mark = markOf(list);
+    const original = originalOf(list);
+    const mark = listMark(original);
     // The list as it is live, under a list whose draft, or whose choices' drafts, change it, as a
     // person's live row is under their draft row: every cell, so like is compared with like.
     const [live] = liveLists([list]);
     const liveOffered = (live?.choices ?? []).filter(
       (choice) => !choice.retired,
     );
-    const liveRow =
-      showLive &&
-      live !== undefined &&
-      mark !== undefined &&
-      list.draft?.action !== "deleted" ? (
-        <div
-          key={`live-${list.id}`}
-          role="row"
-          aria-hidden="true"
-          className={[classes.listRow, classes.listLiveRow].join(" ")}
-        >
-          <span role="cell" className={classes.listCellName}>
-            {live.name}
-            <StatusMark tone="live" spaced>
-              Live
-            </StatusMark>
-          </span>
-          <span role="cell" className={classes.listCellDim}>
-            {live.description}
-          </span>
-          <span role="cell" className={classes.listCell}>
-            <span className={classes.listCount}>({liveOffered.length})</span>{" "}
-            {liveOffered.map((choice) => choice.label).join(", ")}
-          </span>
-        </div>
-      ) : null;
+    // The list's own draft, marked in the row's slot only where it changes what the row does not
+    // show, such as retiring the list, and its choices' and order's drafts, marked before the
+    // choices, so each mark is before what changed.
+    const slotMark =
+      recordMark(original.draft, listRowFields) === undefined
+        ? undefined
+        : listMark({
+            ...original,
+            orderDraft: undefined,
+            choices: original.choices.map((choice) => ({
+              ...choice,
+              draft: undefined,
+            })),
+          });
+    const choicesChanged = listMark({ ...original, draft: undefined });
+    const choiceParts = offered.map((choice) => ({
+      id: choice.id,
+      name: choice.label,
+      removed: removed(choice),
+    }));
     return (
-      <Fragment key={list.id}>
-        <div
-          key={list.id}
-          role="row"
-          data-list-row
-          aria-current={list.id === selected ? "true" : undefined}
-          className={[
-            classes.listRow,
-            list.id === selected ? classes.listRowSelected : "",
-            list.retired ? classes.listRowRetired : "",
-            mark === undefined
-              ? ""
-              : draftRowClass(list.draft ?? { action: "changed" }),
-          ].join(" ")}
-          onClick={() => {
-            onOpen(list);
-          }}
-        >
-          <span role="cell" className={classes.listCellName}>
-            <Link
-              id={linkId(list)}
-              to="/lists/{-$listId}"
-              params={{ listId: list.id }}
-              search={address}
-              className={classes.listLink}
-            >
-              {list.name}
-            </Link>
-            {list.builtIn && (
-              <span className={classes.markGap}>
-                <BuiltInMark />
+      <SummaryRow
+        key={list.id}
+        selected={list.id === selected}
+        retired={list.retired}
+        tint={
+          mark === undefined ? undefined : (list.draft ?? { action: "changed" })
+        }
+        rowProps={{ "data-list-row": "" }}
+        onOpen={() => {
+          onOpen(list);
+        }}
+        liveCells={
+          live !== undefined &&
+          mark !== undefined &&
+          list.draft?.action !== "deleted" && (
+            <>
+              <LiveSummaryName
+                marked={slotMark !== undefined}
+                draft={list.draft}
+              >
+                {live.name}
+              </LiveSummaryName>
+              <span role="cell" className={classes.listCellDim}>
+                <LiveValue
+                  draft={list.draft}
+                  fields={["description"]}
+                  emptied={live.description === "" ? "Description" : undefined}
+                >
+                  {live.description}
+                </LiveValue>
               </span>
-            )}
-            {/* The row's mark sums up the list and its choices, so it carries the list's own
-                unpublished changes; without one, as when Drafts only leaves out a rejected
-                draft, they are marked on their own. */}
-            {mark && (
-              <DraftMark
-                draft={{ ...mark, unpublished: list.draft?.unpublished }}
+              <LivePartsCell
+                marked={choicesChanged !== undefined}
+                names={liveOffered.map((choice) => choice.label)}
               />
-            )}
-            <HoldMarks
-              unpublished={mark === undefined && list.draft?.unpublished}
-              heldBy={list.heldBy}
-            />
-          </span>
-          <span role="cell" className={classes.listCellDim}>
+            </>
+          )
+        }
+      >
+        <SummaryName
+          mark={
+            slotMark && {
+              ...slotMark,
+              unpublished: original.draft?.unpublished,
+            }
+          }
+          draft={original.draft}
+          unpublished={mark === undefined && original.draft?.unpublished}
+          heldBy={list.heldBy}
+          facts={list.builtIn && <BuiltInMark />}
+        >
+          <Link
+            id={linkId(list)}
+            to="/lists/{-$listId}"
+            params={{ listId: list.id }}
+            search={address}
+            className={classes.listLink}
+          >
+            {list.name}
+          </Link>
+        </SummaryName>
+        <span role="cell" className={classes.listCellDim}>
+          <DraftedValue
+            draft={original.draft}
+            fields={["description"]}
+            named="Description"
+            emptied={list.description === "" ? "Description" : undefined}
+          >
             {list.description}
-          </span>
-          <span role="cell" className={classes.listCell}>
-            <span className={classes.listCount}>
-              ({offered.filter((choice) => !removed(choice)).length})
-            </span>{" "}
-            {offered.map((choice, index) => (
-              <Fragment key={choice.id}>
-                {index > 0 && ", "}
-                {removed(choice) ? (
-                  <span className={classes.struck}>{choice.label}</span>
-                ) : (
-                  choice.label
-                )}
-              </Fragment>
-            ))}
-          </span>
-        </div>
-        {liveRow}
-      </Fragment>
+          </DraftedValue>
+        </span>
+        <PartsCell mark={choicesChanged} parts={choiceParts} />
+      </SummaryRow>
     );
   };
   return (
@@ -801,13 +813,8 @@ export function ListsPage({
           <ListsTable
             lists={shownLists}
             selected={listId}
-            showLive={show === "both"}
             search={showSearch}
-            markOf={(list) =>
-              show === "live"
-                ? undefined
-                : listMark(drafted.get(list.id) as List, show === "drafts")
-            }
+            originalOf={(list) => originalOf(drafted, list)}
             onOpen={openList}
           />
         </div>
@@ -834,49 +841,52 @@ export function ListsPage({
           </Group>
         }
       />
-      <WithSidePanel
-        storageKey="fathom-record-panel-width"
-        panels={
-          open
-            ? [
-                {
-                  key: "list",
-                  id: listPanelId,
-                  name: "the list's panel",
-                  node: (
-                    <div
-                      data-list-panel
-                      id={listPanelId}
-                      className={classes.panelSlot}
-                    >
-                      <ListPanel
-                        key={open.id}
-                        list={open}
-                        canEdit={canEdit}
-                        canApprove={canApprove}
-                        showLive={show === "both"}
-                        waits={(selection) =>
-                          waitsForRejected(selection, all, people.data)
-                        }
-                        draftActions={draftActions}
-                        narrow={narrow}
-                        actions={choiceActions(open)}
-                        onClose={() => {
-                          closePanel(open);
-                        }}
-                        onEditList={() => {
-                          openDialog({ kind: "edit", list: open });
-                        }}
-                      />
-                    </div>
-                  ),
-                },
-              ]
-            : []
-        }
-      >
-        {content}
-      </WithSidePanel>
+      <DraftView show={show}>
+        <WithSidePanel
+          storageKey="fathom-record-panel-width"
+          panels={
+            open
+              ? [
+                  {
+                    key: "list",
+                    id: listPanelId,
+                    name: "the list's panel",
+                    node: (
+                      <div
+                        data-list-panel
+                        id={listPanelId}
+                        className={classes.panelSlot}
+                      >
+                        <ListPanel
+                          key={open.id}
+                          list={open}
+                          canEdit={canEdit}
+                          canApprove={canApprove}
+                          showLive={besideLive(show)}
+                          drafted={originalOf(drafted, open)}
+                          waits={(selection) =>
+                            waitsForRejected(selection, all, people.data)
+                          }
+                          draftActions={draftActions}
+                          narrow={narrow}
+                          actions={choiceActions(open)}
+                          onClose={() => {
+                            closePanel(open);
+                          }}
+                          onEditList={() => {
+                            openDialog({ kind: "edit", list: open });
+                          }}
+                        />
+                      </div>
+                    ),
+                  },
+                ]
+              : []
+          }
+        >
+          {content}
+        </WithSidePanel>
+      </DraftView>
       <DecisionModal
         decision={decision}
         opened={deciding}

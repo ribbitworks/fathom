@@ -41,9 +41,8 @@ import type { CellChange } from "./cell-kinds.tsx";
 import pages from "./pages.module.css";
 import type { RecordTable, RowTotals } from "./record-grid.tsx";
 import {
-  DraftDot,
+  DraftedPartItem,
   type DraftedPart,
-  DraftedWords,
   type DraftLike,
 } from "./status-mark.tsx";
 import { tipAttribute } from "./table-tips.tsx";
@@ -147,11 +146,11 @@ export function AllocationLines({
           {...{ [tipAttribute]: name }}
         >
           <span className={styles.name}>
-            {draft !== undefined && <DraftDot draft={draft} />}
-            {name}
+            <DraftedPartItem draft={draft} part={drafted}>
+              {name}
+            </DraftedPartItem>
           </span>
           <span>{percentage}%</span>
-          {drafted !== undefined && <DraftedWords drafted={drafted} />}
         </div>
       ))}
       {withTotal && (

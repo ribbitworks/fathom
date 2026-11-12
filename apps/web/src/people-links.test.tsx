@@ -190,7 +190,7 @@ describe("a web link column", () => {
     await userEvent.keyboard("Casey{Tab}E9{Tab}");
     await waitFor(() => {
       expect(name.textContent).toBe(
-        "Casey New, not saved yet: Profile, Position needed",
+        "Casey, New, not saved yet: Profile, Position needed",
       );
     });
   });

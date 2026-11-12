@@ -8,7 +8,13 @@ import {
   createStream,
   cycleNamed,
   discardRecordDraft,
+  draftedStreams,
   lastCycleEnd,
+  liveStreams,
+  markedDraft,
+  releaseRowFields,
+  slotDraft,
+  streamRowFields,
   recordNodes,
   releaseDate,
   removeFromStream,
@@ -265,5 +271,105 @@ describe("the records of release streams", () => {
         heldBy: undefined,
       },
     ]);
+  });
+});
+
+describe("streams as each Draft view shows them", () => {
+  const renamed = fictionalRelease({
+    id: "release-renamed",
+    name: "Fictional 2 LTS",
+    draft: recordDraft({ changed: ["name"], live: { name: "Fictional 2" } }),
+  });
+  const added = fictionalRelease({
+    id: "release-added",
+    name: "Fictional 4",
+    draft: recordDraft({ action: "created" }),
+  });
+  const removed = fictionalRelease({
+    id: "release-removed",
+    name: "Fictional 1",
+    draft: recordDraft({ action: "deleted" }),
+  });
+  const refused = fictionalRelease({
+    id: "release-refused",
+    name: "Fictional 3 Teal",
+    draft: recordDraft({
+      state: "rejected",
+      changed: ["name"],
+      live: { name: "Fictional 3" },
+    }),
+  });
+  const liveCycles = stream.cycles.slice(0, 2);
+  const drafted = fictionalStream({
+    name: "Fictional Majors Renamed",
+    draft: recordDraft({
+      changed: ["name"],
+      live: { name: "Fictional Majors" },
+    }),
+    liveCycles,
+    releases: [renamed, added, removed, refused],
+  });
+
+  it("shows every stream, release and cycle as it is live, live only", () => {
+    const [live] = liveStreams([drafted]);
+    expect(live?.name).toBe("Fictional Majors");
+    expect(live).not.toHaveProperty("draft");
+    expect(live?.cycles).toEqual(liveCycles);
+    expect(live?.releases.map(({ name }) => name)).toEqual([
+      "Fictional 2",
+      "Fictional 1",
+      "Fictional 3",
+    ]);
+  });
+
+  it("keeps a stream's cycles when no draft changes them, live only", () => {
+    const [live] = liveStreams([fictionalStream()]);
+    expect(live?.cycles).toEqual(stream.cycles);
+  });
+
+  it("takes back rejected drafts and leaves out removals, with the drafts applied", () => {
+    const [shown] = draftedStreams([drafted]);
+    expect(shown?.name).toBe("Fictional Majors Renamed");
+    expect(shown?.releases.map(({ name }) => name)).toEqual([
+      "Fictional 2 LTS",
+      "Fictional 4",
+      "Fictional 3",
+    ]);
+  });
+
+  it("leaves out a stream drafted to be removed, with the drafts applied", () => {
+    expect(
+      draftedStreams([
+        fictionalStream({ draft: recordDraft({ action: "deleted" }) }),
+      ]),
+    ).toEqual([]);
+  });
+});
+
+describe("a release record's own mark", () => {
+  const moving = recordDraft({ changed: ["firstCycle", "lastCycle"] });
+
+  it("says a release moves when its draft changes only its cycles", () => {
+    expect(markedDraft(moving)?.moved).toBe(true);
+    expect(
+      markedDraft(recordDraft({ changed: ["firstCycle"] }))?.moved,
+    ).toBeUndefined();
+  });
+
+  it("says whether a stream's draft retires or restores it", () => {
+    const retiring = recordDraft({ changed: ["retired"] });
+    expect(markedDraft(retiring, true)?.retiring).toBe(true);
+    expect(markedDraft(retiring, false)?.retiring).toBe(false);
+    expect(markedDraft(retiring)?.retiring).toBeUndefined();
+    expect(markedDraft(undefined, true)).toBeUndefined();
+  });
+
+  it("leaves the slot empty for values the row shows, but marks a move there", () => {
+    const renamed = recordDraft({ changed: ["name"] });
+    expect(slotDraft(renamed, streamRowFields)).toBeUndefined();
+    expect(slotDraft(moving, releaseRowFields)?.moved).toBe(true);
+    expect(
+      slotDraft(recordDraft({ action: "created" }), releaseRowFields),
+    ).toBeDefined();
   });
 });

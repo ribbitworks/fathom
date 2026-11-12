@@ -24,7 +24,7 @@ import type { ReactNode } from "react";
 import { Icon } from "./icons.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
-import { StatusMark } from "./status-mark.tsx";
+import { DraftedItem, MarkedItem } from "./status-mark.tsx";
 
 const sensitivities: [string, string][] = [
   ["General", "Everything not marked Personal or Confidential."],
@@ -32,56 +32,91 @@ const sensitivities: [string, string][] = [
   ["Confidential", "Columns marked Confidential."],
 ];
 
+// An example name, as each mark draws it.
+const example = "Example";
+
 const marks: [string, ReactNode, string][] = [
   [
     "draft",
-    <StatusMark tone="draft">Draft</StatusMark>,
-    "A change waiting for approval.",
-  ],
-  [
-    "added",
-    <StatusMark tone="draft">Draft: added</StatusMark>,
-    "Added once approved.",
+    <DraftedItem slot draft={{ action: "changed", state: "waiting" }}>
+      {example}
+    </DraftedItem>,
+    "A change waiting for approval, before what changed: a row added, removed or moved, or each value changed. Point at the dot to see what it is.",
   ],
   [
     "removed",
-    <StatusMark tone="draft">Draft: removed</StatusMark>,
-    "Removed once approved.",
-  ],
-  [
-    "moved",
-    <StatusMark tone="draft">Draft: moved</StatusMark>,
-    "A moved choice, waiting for approval.",
-  ],
-  [
-    "reordered",
-    <StatusMark tone="draft">Draft: reordered</StatusMark>,
-    "A list whose choices are in a new order, waiting for approval.",
-  ],
-  [
-    "retired",
-    <StatusMark tone="draft">Draft: retired</StatusMark>,
-    "Retired once approved. Draft: restored means brought back once approved.",
-  ],
-  [
-    "rejected",
-    <StatusMark tone="rejected">Rejected</StatusMark>,
-    "The draft was rejected. The reason is in the record's menu.",
+    <DraftedItem slot draft={{ action: "deleted", state: "waiting" }}>
+      <span className={classes.struck}>{example}</span>
+    </DraftedItem>,
+    "Struck through when the change removes it.",
   ],
   [
     "unpublished",
-    <StatusMark tone="unpublished">Unpublished</StatusMark>,
-    "A change not yet published, which nobody else sees. Other marks show it with a hollow dot, such as Draft: added.",
+    <DraftedItem
+      slot
+      draft={{ action: "changed", state: "waiting", unpublished: true }}
+    >
+      {example}
+    </DraftedItem>,
+    "A hollow dot: a change not yet published, which nobody else sees.",
+  ],
+  [
+    "rejected",
+    <DraftedItem slot draft={{ action: "changed", state: "rejected" }}>
+      {example}
+    </DraftedItem>,
+    "A red dot in a ring: the draft was rejected. Point at the dot to see what was rejected and why.",
   ],
   [
     "held",
-    <StatusMark tone="held">Being changed</StatusMark>,
-    "Someone else has unpublished changes to this. It can't be changed until they publish or discard them.",
+    <DraftedItem slot heldBy="Someone">
+      {example}
+    </DraftedItem>,
+    "A grey lock: someone else has unpublished changes to this. Point at it to see who. It can't be changed until they publish or discard them.",
+  ],
+  [
+    "kind",
+    <DraftedItem
+      slot
+      draft={{ action: "changed", state: "waiting", moved: true }}
+    >
+      {example}
+    </DraftedItem>,
+    "What a dot can't say, in a yellow box after the name: Moved, Reordered, Retired or Restored.",
+  ],
+  [
+    "from",
+    <DraftedItem
+      slot
+      draft={{ action: "changed", state: "waiting" }}
+      from="Dec 1, 2026"
+    >
+      {example}
+    </DraftedItem>,
+    "When a change takes effect, where that's not the date shown.",
   ],
   [
     "live",
-    <StatusMark tone="live">Live</StatusMark>,
-    "The current record, without the draft's changes.",
+    <MarkedItem slot tone="live">
+      {example}
+    </MarkedItem>,
+    "A green dot: the current record or value, without the draft's changes.",
+  ],
+  [
+    "fact",
+    <MarkedItem slot tone="warning" words="Left">
+      {example}
+    </MarkedItem>,
+    "A grey or red box after a name: a fact about it, not a draft, such as Built in, Planned, expected and a month, or a warning such as Left.",
+  ],
+  [
+    "tint",
+    <span className={classes.draftRow}>
+      <MarkedItem slot tone={undefined}>
+        {example}
+      </MarkedItem>
+    </span>,
+    "A faint yellow row, column or card, or faint red once rejected: it has a draft. Shown only with drafts beside live, where changed values are in bold too.",
   ],
 ];
 

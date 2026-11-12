@@ -203,7 +203,7 @@ describe("the Metrics panel", () => {
     expect(figures("P4")).toEqual(["1", share(1, 3)]);
   });
 
-  it("counts people as drafted, with the live figure beside where it differs, unless drafts are applied or live only", () => {
+  it("counts people as drafted, with the live figure under it where it differs, unless drafts are applied or live only", () => {
     const draft = {
       state: "waiting" as const,
       madeBy: null,
@@ -235,12 +235,12 @@ describe("the Metrics panel", () => {
     );
     expect(panel().textContent).toContain("6 people with drafts");
     expect(figures("P4")).toEqual([
-      `4Live 2`,
-      `${share(4, 6)}Live ${share(2, 6)}`,
+      `42, live`,
+      `${share(4, 6)}${share(2, 6)}, live`,
     ]);
     expect(figures("P3")).toEqual([
-      "1Live 3",
-      `${share(1, 6)}Live ${share(3, 6)}`,
+      "13, live",
+      `${share(1, 6)}${share(3, 6)}, live`,
     ]);
     unmount();
 

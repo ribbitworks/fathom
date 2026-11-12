@@ -1,0 +1,152 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* A draft's dot, set before what it marks, and the box after an item for what a dot cannot say. */
+
+/* Every mark, a dot, a lock or a box, and a colour's swatch, is centred the same way: its centre
+   sits on its text's centreline, half the height of a capital above the baseline the letters stand
+   on. The mark stands on that baseline, as a letter would, by an empty first part as tall as the
+   mark, whose foot is the mark's baseline whatever the mark holds, and is raised by half a capital
+   less half its own height. A row of boxes holding marks lines them up on that baseline too. Each
+   mark sets its own height as --mark-size. */
+.dotPlace,
+.kind,
+.swatchPlace {
+  --mark-size: var(--fathom-dot-size);
+
+  display: inline-flex;
+  position: relative;
+  bottom: calc(0.5cap - var(--mark-size) / 2);
+  flex: none;
+  align-items: center;
+}
+
+.dotPlace::before,
+.kind::before,
+.swatchPlace::before {
+  align-self: stretch;
+  content: "";
+}
+
+.dotPlace {
+  margin-right: var(--fathom-mark-gap);
+}
+
+/* A swatch followed by what it colours, in a row with no gap of its own. */
+.swatchSpaced {
+  margin-right: var(--fathom-mark-gap);
+}
+
+/* A line holding marks and what they mark, on one baseline, with no gap of its own between them, so
+   the marks' own spacing is the only spacing, as everywhere. It is a span, so it may sit in a
+   button, such as a column's heading. */
+.markRow {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+}
+
+/* Small, as a team's name on a card is, so its marks are centred on its capitals. */
+.smallRow {
+  font-size: var(--mantine-font-size-xs);
+}
+
+/* A live value on its own line under its draft, small, kept to one line. */
+.liveLine {
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 400;
+}
+
+/* Someone else's unpublished changes lock the record, in grey, since nothing waits on the user. */
+.held {
+  /* As lockSize in status-mark.tsx. */
+  --mark-size: 12px;
+
+  color: var(--mantine-color-gray-6);
+}
+
+/* A rejected draft's dot sits inside a thin ring, with a gap of the page's colour between. */
+.ringed {
+  margin-left: var(--fathom-ring-room);
+  box-shadow:
+    0 0 0 calc(var(--fathom-ring-room) / 2) var(--mantine-color-body),
+    0 0 0 var(--fathom-ring-room) currentColor;
+}
+
+/* Its ring reaches past its dot, so it is set in from the start of a line, where it would be cut
+   off; in a row's slot, and in the place a first value's dot hangs into, the slot is set in
+   instead, so every row's dots, and what follows them, line up. */
+.slot .ringed,
+.slot + .dotPlace .ringed {
+  margin-left: 0;
+}
+
+/* A row's slot, before its first value, with two places: the record's own marks first, set in by a
+   ring's room so a ringed dot lines up with the rest, then the dot of its first value where a draft
+   changes that, which hangs back into the slot. So every row's first values start at the same
+   place, whether or not they have a dot, and a changed name never looks set in under the row above.
+   An empty slot is as wide as a full one. A row with a dot and a lock too, which is rare, widens
+   it. */
+.slot {
+  display: inline-flex;
+  flex: none;
+  padding-left: var(--fathom-ring-room);
+  min-width: calc(
+    var(--fathom-ring-room) + 2 *
+      (var(--fathom-dot-size) + var(--fathom-mark-gap))
+  );
+  vertical-align: baseline;
+}
+
+.slot + .dotPlace {
+  margin-left: calc(-1 * (var(--fathom-dot-size) + var(--fathom-mark-gap)));
+}
+
+/* Moved, Reordered, Retired or Restored, on a draft still waiting: a small box outlined in the
+   draft's yellow, its word in a darker yellow, so it stays readable in both schemes. The box keeps
+   the item's text size, so its centring measures the item's capitals, and its word is smaller
+   inside it. */
+.kind {
+  --mark-size: 16px;
+
+  box-sizing: border-box;
+  height: var(--mark-size);
+  margin-left: 4px;
+  padding: 0 4px;
+  border: 1px solid var(--mantine-color-yellow-6);
+  border-radius: var(--mantine-radius-sm);
+  color: var(--mantine-color-yellow-9);
+  white-space: nowrap;
+}
+
+.kindWords {
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 500;
+  line-height: 1;
+}
+
+:where([data-mantine-color-scheme="dark"]) .kind {
+  color: var(--mantine-color-yellow-4);
+}
+
+/* A warning about an item, such as Left or No team: the same box outlined in red, since it is a
+   fact about the item, not a draft's state, which a dot shows. */
+.warningKind {
+  border-color: var(--mantine-color-red-6);
+  color: var(--mantine-color-red-8);
+}
+
+:where([data-mantine-color-scheme="dark"]) .warningKind {
+  color: var(--mantine-color-red-4);
+}
+
+/* A fact about an item, such as Built in or a planned place still to fill: the same box outlined in
+   grey. */
+.plannedKind {
+  border-color: var(--mantine-color-gray-5);
+  color: var(--mantine-color-dimmed);
+}
+
+/* A box with no item before it, such as a line saying a place is planned. */
+.alone {
+  margin-left: 0;
+}

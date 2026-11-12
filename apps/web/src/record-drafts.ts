@@ -122,3 +122,10 @@ export const recordsJoined = (
   first: readonly RecordRef[],
   second: readonly RecordRef[],
 ): RecordRef[] => [...first, ...recordsWithout(second, first)];
+
+// A record as it is with every draft, by its id, from the records a Draft view's records are made
+// from, for its marks, which the view decides; the record shown, should it have none there.
+export const originalOf = <Rec extends { id: string }>(
+  originals: ReadonlyMap<string, Rec>,
+  shown: Rec,
+): Rec => originals.get(shown.id) ?? shown;

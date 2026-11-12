@@ -129,6 +129,7 @@ describe("the mark beside a list", () => {
       state: "waiting",
     });
     expect(listMark(plain("l1", { draft: described }))).toEqual({
+      action: "changed",
       state: "rejected",
     });
     expect(listMark(plain("l1", { draft: described }), true)).toBeUndefined();

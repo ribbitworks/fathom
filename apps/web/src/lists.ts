@@ -282,7 +282,8 @@ export const retiredLive = (record: Retirable): boolean =>
     ? !record.retired
     : record.retired;
 
-// A list's or choice's draft, saying whether it retires or restores the record when it does either.
+// A record's draft, such as a list's, a choice's or a release stream's, saying whether it retires or
+// restores the record when it does either.
 export function withRetiring<D extends { action: string; changed: string[] }>(
   record: Retirable & { draft: D },
 ): D & { retiring?: boolean } {

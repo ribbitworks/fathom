@@ -54,6 +54,7 @@ import {
   draftsUse,
   everything,
   type Held,
+  heldByOf,
   heldMessage,
   lockDrafts,
   type Maker,
@@ -69,7 +70,6 @@ import { typeOf } from "./column-types.ts";
 import { checkValuesFit, fieldChanges, fieldFields } from "./fields.ts";
 import {
   draftedList,
-  heldByOf,
   listExists,
   type ListsState,
   listTier,

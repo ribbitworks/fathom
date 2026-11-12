@@ -40,6 +40,7 @@ import {
   draftFields,
   draftMakers,
   everything,
+  heldByOf,
   heldMessage,
   lockDrafts,
   type Maker,
@@ -334,10 +335,7 @@ export const recordHeldBy = (
   state: RecordsState,
   type: RecordType,
   id: string,
-): { heldBy?: string } => {
-  const holder = stateOf(state, type).held.get(id)?.holder;
-  return holder === undefined ? {} : { heldBy: holder };
-};
+): { heldBy?: string } => heldByOf(stateOf(state, type).held, id);
 
 // A record's note as it is kept: null when empty, refusing one a note may not hold.
 export function keptNote(note: string | null): string | null {

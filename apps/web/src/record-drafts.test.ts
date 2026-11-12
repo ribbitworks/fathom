@@ -6,8 +6,9 @@
 import type { RecordRef } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
-  type RecordNode,
+  originalOf,
   recordNames,
+  type RecordNode,
   recordsJoined,
   recordsWithout,
   rejectedRecords,
@@ -126,5 +127,18 @@ describe("the plan's records named and combined", () => {
     expect(recordsJoined([stream, pattern], [{ ...pattern }, release])).toEqual(
       [stream, pattern, release],
     );
+  });
+});
+
+describe("a record as it is with every draft", () => {
+  const shown = { id: "r1", name: "Fictional Live" };
+  const original = { id: "r1", name: "Fictional Drafted" };
+
+  it("is the record of the same id the view was made from", () => {
+    expect(originalOf(new Map([["r1", original]]), shown)).toBe(original);
+  });
+
+  it("is the record shown when the view was made from none of its id", () => {
+    expect(originalOf(new Map(), shown)).toBe(shown);
   });
 });

@@ -7,6 +7,7 @@
 // that no other release includes, shipping at the end of its last cycle or on a day of its own.
 // Each saves its change as a draft, and cannot be closed while it saves.
 
+import { MarkRow } from "./status-mark.tsx";
 import {
   addDays,
   addMonths,
@@ -754,12 +755,12 @@ export function ReleaseDialog({
           data={colourChoices}
           value={shownColour(colour)}
           allowDeselect={false}
-          leftSection={<Swatch colour={shownColour(colour)} />}
+          leftSection={<Swatch colour={shownColour(colour)} alone />}
           renderOption={({ option }) => (
-            <Group gap="xs" wrap="nowrap">
+            <MarkRow>
               <Swatch colour={option.value} />
               {option.label}
-            </Group>
+            </MarkRow>
           )}
           onChange={(value) => {
             setColour(

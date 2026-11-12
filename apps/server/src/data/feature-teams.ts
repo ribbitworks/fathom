@@ -75,6 +75,7 @@ import {
   draftMakers,
   draftTier,
   type Held,
+  heldByOf,
   lockDrafts,
   otherApprover,
   readDrafts,
@@ -665,7 +666,7 @@ export async function readFeatureTeams(
                 ? { disbandedFrom: disbanded.get(id) }
                 : {}),
               ...withDraft,
-              ...(held.has(id) ? { heldBy: held.get(id)?.holder } : {}),
+              ...heldByOf(held, id),
             },
           ];
         },

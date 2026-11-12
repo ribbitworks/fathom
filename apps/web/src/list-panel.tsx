@@ -35,7 +35,6 @@ import {
 } from "@fathom/shared";
 import {
   ActionIcon,
-  Badge,
   Button,
   FocusTrap,
   Menu,
@@ -70,9 +69,21 @@ import {
   OtherApproverNote,
   WaitingNote,
 } from "./draft-details.tsx";
+import { originalOf } from "./record-drafts.ts";
 import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
-import { DraftMark, HoldMarks, StatusMark } from "./status-mark.tsx";
-import { retiredLive, sameName, withRetiring } from "./lists.ts";
+import {
+  changedValue,
+  DraftedItem,
+  DraftedValue,
+  emptiedWords,
+  FactBox,
+  LiveLine,
+  LiveRowMarks,
+  LiveValue,
+  MarkRow,
+  recordMark,
+} from "./status-mark.tsx";
+import { liveLists, retiredLive, sameName, withRetiring } from "./lists.ts";
 import { closesOnBlankClick } from "./app-menu.tsx";
 import classes from "./pages.module.css";
 import { count } from "./numbers.ts";
@@ -163,17 +174,19 @@ function builtInNote(key: BuiltInList, mayChange: boolean): string {
 
 // Marks a list Fathom builds in, which cannot be retired or removed.
 export function BuiltInMark() {
-  return (
-    <Badge variant="default" radius="sm" tt="none" fw={400} size="sm">
-      Built in
-    </Badge>
-  );
+  return <FactBox>Built in</FactBox>;
 }
 
 // A choice's meaning in words, or nothing for one the server no longer knows, which it sends
 // without one.
 const meaningText = (meaning: Meaning | undefined) =>
   meaning === undefined ? "" : meaningName(meaning);
+
+// What a list's panel shows of the list, each marked before it where a draft changes it.
+const listFields = new Set(["name", "description"]);
+
+// What a choice's row shows of the choice, each marked by its own dot where a draft changes it.
+const choiceRowFields = new Set(["label", "description"]);
 
 const removedChoice = (choice: Choice) => choice.draft?.action === "deleted";
 
@@ -354,6 +367,7 @@ export function ListPanel({
   canEdit: mayEdit,
   canApprove,
   showLive = true,
+  drafted,
   waits,
   narrow,
   actions,
@@ -366,6 +380,9 @@ export function ListPanel({
   canApprove: boolean;
   // Whether a choice a draft changes or moves shows its live row too.
   showLive?: boolean;
+  // The list with every draft, whatever the view, which the marks are worked out from, so the Draft
+  // view decides how they show.
+  drafted: List;
   // Whether drafts wait for a rejected draft they depend on, which takes every list to tell, as the
   // list shown may have its rejected drafts taken back.
   waits: (selection: DraftSelection) => boolean;
@@ -386,6 +403,13 @@ export function ListPanel({
   const empty: Draft = { label: "", description: "", meaning: firstMeaning };
   // The choices a draft of the order moves, with their live places.
   const moved = movedChoices(list);
+  const original = drafted;
+  // The list's description as it is live, which a list only drafted to be added has none of.
+  const liveDescription = liveLists([original])[0]?.description ?? "";
+  const originalChoices = new Map(
+    original.choices.map((choice) => [choice.id, choice]),
+  );
+  const movedInDraft = movedChoices(original);
   // A choice a draft removes cannot be changed either.
   const removed = removedChoice;
   // Beside live, a choice a draft retires or restores stays where it is live until approved.
@@ -881,6 +905,7 @@ export function ListPanel({
   };
 
   const row = (choice: Choice, index: number) => {
+    const originalChoice = originalOf(originalChoices, choice);
     const isEditing = editing === choice.id;
     const isSelected = selected === choice.id;
     const draggable =
@@ -920,27 +945,36 @@ export function ListPanel({
               role={cellRole}
               data-field="label"
             >
-              {choice.label}
-              {choice.draft && (
-                <DraftMark
-                  draft={withRetiring({ ...choice, draft: choice.draft })}
-                />
-              )}
-              <HoldMarks heldBy={choice.heldBy} />
-              {moved.has(choice.id) && (
-                <StatusMark
-                  tone={
-                    list.orderDraft?.state === "rejected" ? "rejected" : "draft"
-                  }
-                  spaced
+              <DraftedItem
+                // The choice's own draft where it changes what the row doesn't show; otherwise a
+                // new order moving it, marked as the order's draft, whose state and reason it is.
+                draft={
+                  originalChoice.draft !== undefined &&
+                  recordMark(originalChoice.draft, choiceRowFields) !==
+                    undefined
+                    ? withRetiring({
+                        ...originalChoice,
+                        draft: originalChoice.draft,
+                      })
+                    : movedInDraft.has(choice.id) && original.orderDraft
+                      ? { ...original.orderDraft, moved: true }
+                      : undefined
+                }
+                heldBy={choice.heldBy}
+                slot
+              >
+                <DraftedValue
+                  draft={originalChoice.draft}
+                  fields={["label"]}
+                  named="Name"
                 >
-                  {list.orderDraft?.state === "rejected"
-                    ? "Rejected: moved"
-                    : "Draft: moved"}
-                  <VisuallyHidden>
-                    , live place {ordinal(moved.get(choice.id) as number)}
-                  </VisuallyHidden>
-                </StatusMark>
+                  {choice.label}
+                </DraftedValue>
+              </DraftedItem>
+              {moved.has(choice.id) && (
+                <VisuallyHidden>
+                  , live place {ordinal(moved.get(choice.id) as number)}
+                </VisuallyHidden>
               )}
             </span>
             <span
@@ -948,7 +982,14 @@ export function ListPanel({
               role={cellRole}
               data-field="description"
             >
-              {choice.description}
+              <DraftedValue
+                draft={originalChoice.draft}
+                fields={["description"]}
+                named="Description"
+                emptied={choice.description === "" ? "Description" : undefined}
+              >
+                {choice.description}
+              </DraftedValue>
             </span>
             {meanings.length > 0 && (
               <span
@@ -975,10 +1016,11 @@ export function ListPanel({
         classes.choice,
         meanings.length > 0 ? classes.choiceWithMeaning : "",
         choice.retired ? classes.choiceRetired : "",
-        isSelected || isEditing ? classes.choiceSelected : "",
+        isSelected || isEditing ? classes.selectedRow : "",
         draftRowClass(
           choice.draft ??
             (moved.has(choice.id) ? { action: "changed" } : undefined),
+          showLive,
         ),
       ].join(" "),
       ...(canEdit
@@ -1061,13 +1103,29 @@ export function ListPanel({
         aria-hidden="true"
       >
         <span className={classes.choiceName}>
-          {choice.draft?.live.label ?? choice.label}
-          <StatusMark tone="live" spaced>
-            Live
-          </StatusMark>
+          <LiveRowMarks
+            marked={
+              moved.has(choice.id) ||
+              recordMark(choice.draft, choiceRowFields) !== undefined
+            }
+          >
+            <LiveValue draft={choice.draft} fields={["label"]}>
+              {choice.draft?.live.label ?? choice.label}
+            </LiveValue>
+          </LiveRowMarks>
         </span>
         <span className={classes.choiceDescription}>
-          {choice.draft?.live.description ?? choice.description}
+          <LiveValue
+            draft={choice.draft}
+            fields={["description"]}
+            emptied={
+              (choice.draft?.live.description ?? choice.description) === ""
+                ? "Description"
+                : undefined
+            }
+          >
+            {choice.draft?.live.description ?? choice.description}
+          </LiveValue>
         </span>
         {meanings.length > 0 && (
           <span className={classes.choiceMeaning}>
@@ -1115,24 +1173,37 @@ export function ListPanel({
         <div className={classes.panelHead}>
           <div className={classes.panelTitle}>
             <div className={classes.panelNameBlock}>
-              <h2
-                id={titleId}
-                className={[
-                  classes.panelName,
-                  listRemoved ? classes.struck : "",
-                ].join(" ")}
-                tabIndex={-1}
+              {/* The list's own mark, unless its draft only changes its name or description, each
+                  marked before it; a new order is marked on each choice it moves. */}
+              <DraftedItem
+                draft={
+                  recordMark(original.draft, listFields) === undefined
+                    ? undefined
+                    : withRetiring({
+                        ...original,
+                        draft: original.draft as NonNullable<List["draft"]>,
+                      })
+                }
+                heldBy={list.heldBy ?? list.orderHeldBy}
+                facts={list.builtIn && <BuiltInMark />}
               >
-                {list.name}
-              </h2>
-              {list.builtIn && <BuiltInMark />}
-              {list.draft && (
-                <DraftMark
-                  draft={withRetiring({ ...list, draft: list.draft })}
-                />
-              )}
-              {list.orderDraft && <DraftMark draft={list.orderDraft} />}
-              <HoldMarks heldBy={list.heldBy ?? list.orderHeldBy} />
+                <DraftedValue
+                  draft={original.draft}
+                  fields={["name"]}
+                  named="Name"
+                >
+                  <h2
+                    id={titleId}
+                    className={[
+                      classes.panelName,
+                      listRemoved ? classes.struck : "",
+                    ].join(" ")}
+                    tabIndex={-1}
+                  >
+                    {list.name}
+                  </h2>
+                </DraftedValue>
+              </DraftedItem>
             </div>
             {canEdit && (
               <Button variant="default" size="compact-sm" onClick={onEditList}>
@@ -1157,9 +1228,27 @@ export function ListPanel({
               <Icon name="close" />
             </ActionIcon>
           </div>
-          {list.description && (
-            <Text fz="sm" c="dimmed" mt={4}>
-              {list.description}
+          {(list.description !== "" ||
+            changedValue(original.draft, "description") !== undefined) && (
+            <Text fz="sm" c="dimmed" mt={4} component="div">
+              <MarkRow>
+                <DraftedValue
+                  draft={original.draft}
+                  fields={["description"]}
+                  named="Description"
+                  emptied={list.description === "" ? "Description" : undefined}
+                >
+                  {list.description}
+                </DraftedValue>
+              </MarkRow>
+              {showLive &&
+                changedValue(list.draft, "description") !== undefined && (
+                  <LiveLine>
+                    {liveDescription === ""
+                      ? emptiedWords("Description")
+                      : liveDescription}
+                  </LiveLine>
+                )}
             </Text>
           )}
         </div>

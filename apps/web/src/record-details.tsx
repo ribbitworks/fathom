@@ -20,7 +20,15 @@ import {
 import classes from "./record-details.module.css";
 import { roundedUpTo } from "@fathom/shared";
 import { type Column, shownInView } from "./record-grid.tsx";
-import { type DraftLike, DraftMark, StatusMark } from "./status-mark.tsx";
+import {
+  DraftedItem,
+  type DraftLike,
+  emptiedWords,
+  MarkedItem,
+  MarkRow,
+  useBesideLive,
+  wasWords,
+} from "./status-mark.tsx";
 import {
   type CellValue,
   type ColumnUnit,
@@ -33,18 +41,43 @@ type DetailColumn = Pick<
   "key" | "label" | "kind" | "multiple" | "choices" | "required" | "emptyLabel"
 >;
 
-function Value({ column, value }: { column: DetailColumn; value: unknown }) {
+// A value as it was before a draft changed it, for its draft's tip; none for a note or a link,
+// whose words a tip cannot hold.
+function liveWords(column: DetailColumn, value: unknown): string | undefined {
+  if (column.kind === "note" || column.kind === "link") return undefined;
   const kind = cellKinds[column.kind];
+  return wasWords(
+    kind.inWords(column, value as Parameters<typeof kind.inWords>[1]),
+    column.label,
+    column.emptyLabel,
+  );
+}
+
+// A value, or, when empty, None or the column's own word for it, dimmed; where a draft empties the
+// value, or fills it, the words for none in grey italics, as a table's cell shows them.
+function Value({
+  column,
+  value,
+  drafted = false,
+}: {
+  column: DetailColumn;
+  value: unknown;
+  drafted?: boolean;
+}) {
+  const kind = cellKinds[column.kind];
+  const none = drafted ? (
+    <Text c="dimmed" fs="italic">
+      {emptiedWords(column.label, column.emptyLabel)}
+    </Text>
+  ) : (
+    <Text c="dimmed">{column.emptyLabel ?? "None"}</Text>
+  );
   if (column.kind === "note") {
-    return value === "" ? (
-      <Text c="dimmed">None</Text>
-    ) : (
-      <NoteView note={value as string} />
-    );
+    return value === "" ? none : <NoteView note={value as string} />;
   }
   if (column.kind === "link") {
     return value === null ? (
-      <Text c="dimmed">None</Text>
+      none
     ) : (
       <LinkCell link={value as WebLink} inTable={false} />
     );
@@ -53,11 +86,7 @@ function Value({ column, value }: { column: DetailColumn; value: unknown }) {
     column,
     value as Parameters<typeof kind.inWords>[1],
   );
-  return words === "" ? (
-    <Text c="dimmed">{column.emptyLabel ?? "None"}</Text>
-  ) : (
-    <Text>{words}</Text>
-  );
+  return words === "" ? none : <Text>{words}</Text>;
 }
 
 // A value with a unit in words, the unit spelled out, as a panel has room to, such as 1 person-week,
@@ -170,10 +199,17 @@ export function Row({
 }: {
   column: DetailColumn;
   value: CellValue;
-  // Beside live, what a draft changes here: the live value, the draft to mark it with, if any, and
-  // the day or month the change takes effect from, where that needs saying.
+  // What a draft changes here, whatever the Draft view, which decides how it shows: the live value,
+  // shown under the drafted one beside live where given, the draft to mark it with, if any, and the
+  // day or month the change takes effect from, where that needs saying.
   changed?:
-    | { live: CellValue; draft?: DraftLike; from?: string | undefined }
+    | {
+        live?: CellValue;
+        draft?: DraftLike;
+        from?: string | undefined;
+        // A warning about the live value, such as a manager who has left.
+        warning?: { words: string; spoken?: string } | undefined;
+      }
     | undefined;
   editing?: Editing | undefined;
   children?: ReactNode;
@@ -181,6 +217,10 @@ export function Row({
   action?: ReactNode;
 }) {
   const draft = changed?.draft;
+  const liveUnder =
+    useBesideLive() && changed?.live !== undefined
+      ? { ...changed, live: changed.live }
+      : undefined;
   const start = editing?.open === true ? undefined : editing?.onStart;
   // A click on the value, but not on a link in it, opens its editor, as the button beside it does.
   const onClick =
@@ -216,14 +256,27 @@ export function Row({
             justify="space-between"
             align="flex-start"
           >
-            <Group gap={6} wrap="nowrap" align="baseline">
-              {checkbox
-                ? editing.editor
-                : (children ?? <Value column={column} value={value} />)}
-              {draft !== undefined && (
-                <DraftMark draft={draft} from={changed?.from} />
-              )}
-            </Group>
+            <MarkRow>
+              <DraftedItem
+                draft={draft}
+                from={changed?.from}
+                was={
+                  changed?.live === undefined
+                    ? undefined
+                    : liveWords(column, changed.live)
+                }
+              >
+                {checkbox
+                  ? editing.editor
+                  : (children ?? (
+                      <Value
+                        column={column}
+                        value={value}
+                        drafted={draft !== undefined}
+                      />
+                    ))}
+              </DraftedItem>
+            </MarkRow>
             {start !== undefined && (
               <ActionIcon
                 id={changeId(column)}
@@ -239,16 +292,18 @@ export function Row({
             {editing.problem}
           </Text>
         )}
-        {changed !== undefined && (
-          <Group
-            gap={6}
-            wrap="nowrap"
-            align="baseline"
-            className={classes.live}
-          >
-            <Value column={column} value={changed.live} />
-            <StatusMark tone="live">Live</StatusMark>
-          </Group>
+        {liveUnder !== undefined && (
+          <MarkRow className={classes.live}>
+            <MarkedItem tone="live">
+              <MarkedItem
+                tone={liveUnder.warning === undefined ? undefined : "warning"}
+                words={liveUnder.warning?.words}
+                spoken={liveUnder.warning?.spoken}
+              >
+                <Value column={column} value={liveUnder.live} drafted />
+              </MarkedItem>
+            </MarkedItem>
+          </MarkRow>
         )}
       </dd>
     </div>

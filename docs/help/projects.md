@@ -34,7 +34,7 @@ Removing a feature from a proposal, here or on **Features**, asks for a **Reason
 
 ### See How a Project's or Proposal's Scope Changed
 
-Open its details. **Scope history**, at the end, lists each feature added or removed, newest first, with the day the change was drafted and any reason for a removal. A change still waiting for approval is marked **Draft**.
+Open its details. **Scope history**, at the end, lists each feature added or removed, newest first, with the day the change was drafted and any reason for a removal. A change still waiting for approval has a yellow dot before it.
 
 ### Add a Milestone to a Project
 
