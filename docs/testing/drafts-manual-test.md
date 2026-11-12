@@ -67,7 +67,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** As DRAFT-01.
 
 - [ ] **Step 1.** Select the **Grade** column name to open its column menu.
-  - **Expected:** Under **Grade** and a divider, a yellow dot and **Draft** heads two lines: **Name** from **Level** to **Grade**, by Engineering Operations Manager; **Required** from **No** to **Yes**, by Second Engineering Operations Manager.
+  - **Expected:** Under **Grade** and a divider, a yellow dot and **Draft** heads two lines:
+    - **Name** from **Level** to **Grade**, by Engineering Operations Manager
+    - **Required** from **No** to **Yes**, by Second Engineering Operations Manager
   - **Notes:**
 
 - [ ] **Step 2.** Look at the actions in the menu.
@@ -95,7 +97,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** As DRAFT-01.
 
 - [ ] **Step 1.** Open the Draft menu, and select **Drafts applied**.
-  - **Expected:** The columns are Name, ID, Position, Site, Grade, Onboarding, State, Start, Expected, End, Manager, Manager?, Manager assigned, Team, Team name, Skills.
+  - **Expected:** The columns are, from the left:
+    - Name
+    - ID
+    - Position
+    - Site
+    - Grade
+    - Onboarding
+    - State
+    - Start
+    - Expected
+    - End
+    - Manager
+    - Manager?
+    - Manager assigned
+    - Team
+    - Team name
+    - Skills
   - **Notes:**
 
 - [ ] **Step 2.** Select **Drafts beside live**.
@@ -109,7 +127,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** As DRAFT-01.
 
 - [ ] **Step 1.** Open the Draft menu, and select **Live only**.
-  - **Expected:** The columns are Name, ID, Position, Site, Level, Role on team, Onboarding, State, Start, Expected, End, Manager, Manager?, Manager assigned, Team, Team name.
+  - **Expected:** The columns are, from the left:
+    - Name
+    - ID
+    - Position
+    - Site
+    - Level
+    - Role on team
+    - Onboarding
+    - State
+    - Start
+    - Expected
+    - End
+    - Manager
+    - Manager?
+    - Manager assigned
+    - Team
+    - Team name
   - **Notes:**
 
 - [ ] **Step 2.** Look at the filter section of the Draft menu, which stays open.
@@ -194,7 +228,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 2.** Select the **⋯** button beside **Sites** at the top of the panel.
   - **Expected:**
     - The menu shows **Sites**, a divider, a yellow dot and **Draft: reordered**, and **Reordered by Engineering Operations Manager**.
-    - **Approve…** is greyed out, with **Waiting for a rejected draft to be resubmitted** under it.
+    - **Approve…** is greyed out.
+    - **Waiting for a rejected draft to be resubmitted** is under it.
     - **Reject…** can be selected.
   - **Notes:**
 
@@ -214,8 +249,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Select **Positions** in its row, not its Live row.
   - **Expected:**
-    - A panel opens with **Positions** at the top, and a red dot in a ring before the description under it.
-    - One choice has a red dot in a ring before it, with no box.
+    - A panel opens with **Positions** at the top.
+    - A red dot in a ring is before the description under it.
+    - One choice has a red dot in a ring before it.
+    - That choice has no box.
     - **Architect**: a yellow dot, then its name struck through.
   - **Notes:**
 
@@ -233,7 +270,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The count beside the search box reads **9 lists**.
     - Certifications and Languages are not in the table.
-    - No Live rows, and no green dots.
+    - No Live rows.
+    - No green dots.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Drafts beside live**.
@@ -247,14 +285,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Drafts** page open from the left-hand menu.
 
 - [ ] **Step 1.** Type **new order** in the search box.
-  - **Expected:** Three entries are shown: **drafted a new order for Levels**, **drafted a new order for Positions** and **drafted a new order for Sites**.
+  - **Expected:** Three entries are shown:
+    - **drafted a new order for Levels**
+    - **drafted a new order for Positions**
+    - **drafted a new order for Sites**
   - **Notes:**
 
 - [ ] **Step 2.** Read the **Sites** entry.
   - **Expected:**
     - It names the order **Kestrel Bay, Northmere, Ashgrove, Corran Quay**.
     - After it, it names the new order **Harbourside, Kestrel Bay, Northmere Labs, Ashgrove, Corran Quay**.
-    - Its checkbox is greyed out, with **Waiting for a rejected draft to be resubmitted** under it.
+    - Its checkbox is greyed out.
+    - **Waiting for a rejected draft to be resubmitted** is under it.
   - **Notes:**
 
 - [ ] **Step 3.** Clear the search box.
@@ -366,7 +408,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 2.** Select that person's **ID** cell, type **E20002**, and press Enter.
   - **Expected:**
-    - The cell reads **E20002**, with a hollow yellow dot before it.
+    - The cell reads **E20002**.
+    - A hollow yellow dot is before it.
     - The cell is yellow.
     - The top bar shows **Publish 4 changes**.
   - **Notes:**
@@ -585,7 +628,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Run Reset the Database first. Signed in with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the streams table.
 
 - [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
-  - **Expected:** A dialog titled **Change Harbor 1** opens, with **Harbor 1** in **Name**.
+  - **Expected:**
+    - A dialog titled **Change Harbor 1** opens.
+    - **Name** holds **Harbor 1**.
   - **Notes:**
 
 - [ ] **Step 2.** Replace the name with `Harbor One`.
@@ -605,7 +650,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 5.** Select the **⋯** button at the end of the **Harbor One** row.
   - **Expected:**
-    - **Approve…** is greyed out, with **Changed by this account, so another approver must approve it** under it, easy to read.
+    - **Approve…** is greyed out.
+    - **Changed by this account, so another approver must approve it** is under it, easy to read.
     - **Reject…** is not greyed out.
   - **Notes:**
 
@@ -637,7 +683,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 12.** Select **Approve 1 draft**.
-  - **Expected:** A dialog opens, with an **Approve** button.
+  - **Expected:**
+    - A dialog opens.
+    - It has an **Approve** button.
   - **Notes:**
 
 - [ ] **Step 13.** Select **Approve** in the dialog.
@@ -660,5 +708,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Scroll the table all the way to the right, and read the end of that row.
-  - **Expected:** The row ends with one **⋯** button, with nothing beside it.
+  - **Expected:**
+    - The row ends with one **⋯** button.
+    - Nothing is beside it.
   - **Notes:**

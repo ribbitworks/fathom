@@ -51,9 +51,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 1.** On the card at the top of the chart, select the name **Silje Holm-Schrøder**.
   - **Expected:**
     - The details panel slides out on the right, headed **Silje Holm-Schrøder**.
-    - **Engineering Manager** is under the heading, and the link **Show in People** under that.
+    - **Engineering Manager** is under the heading.
+    - The link **Show in People** is under that.
     - The chart narrows to make room.
-    - Her card, with a blue ring around it, stays in the middle of the space left beside the panel.
+    - Her card stays in the middle of the space left beside the panel.
+    - Her card has a blue ring around it.
   - **Notes:**
 
 - [ ] **Step 2.** Read the **Reporting** section.
@@ -123,7 +125,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 3.** Read **Team** in the same section.
   - **Expected:**
-    - It reads **Platform team**, with a yellow dot before it.
+    - It reads **Platform team**.
+    - A yellow dot is before it.
     - Under it, a green dot, then **Search team** in grey.
   - **Notes:**
 
@@ -134,38 +137,48 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **Org chart** page open, with **Simone Jean** in the details panel, as DETAILS-02 ends.
 
 - [ ] **Step 1.** Select **Draft** above the chart, then **Drafts applied**.
-  - **Expected:** The Draft menu stays open, with a tick before **Drafts applied**.
+  - **Expected:**
+    - The Draft menu stays open.
+    - A tick is before **Drafts applied**.
   - **Notes:**
 
 - [ ] **Step 2.** Press Esc.
   - **Expected:**
     - The Draft menu closes.
-    - In the panel, **Manager** reads **Silje Holm-Schrøder**, with a yellow dot before it.
+    - In the panel, **Manager** reads **Silje Holm-Schrøder**.
+    - A yellow dot is before it.
     - Nothing is under **Silje Holm-Schrøder**.
     - No value has a green dot.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Draft**, then **Live only**.
-  - **Expected:** The Draft menu stays open, with a tick before **Live only**.
+  - **Expected:**
+    - The Draft menu stays open.
+    - A tick is before **Live only**.
   - **Notes:**
 
 - [ ] **Step 4.** Press Esc.
   - **Expected:**
     - The Draft menu closes.
-    - In the panel, **Manager** reads **Viktoria Holmberg**, with a green dot before it.
+    - In the panel, **Manager** reads **Viktoria Holmberg**.
+    - A green dot is before it.
     - A red **Left** box follows **Viktoria Holmberg**.
-    - **Team** reads **Search team**, with a green dot before it.
+    - **Team** reads **Search team**.
+    - A green dot is before it.
     - No value has a yellow dot.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Draft**, then **Drafts beside live**.
-  - **Expected:** The Draft menu stays open, with a tick before **Drafts beside live**.
+  - **Expected:**
+    - The Draft menu stays open.
+    - A tick is before **Drafts beside live**.
   - **Notes:**
 
 - [ ] **Step 6.** Press Esc.
   - **Expected:**
     - The Draft menu closes.
-    - In the panel, **Manager** reads **Silje Holm-Schrøder**, with a yellow dot before it again.
+    - In the panel, **Manager** reads **Silje Holm-Schrøder**.
+    - A yellow dot is before it.
     - **Viktoria Holmberg** is under it.
   - **Notes:**
 
@@ -210,7 +223,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 6.** Let go of the mouse button.
   - **Expected:**
-    - The details panel slides out on the right, headed **Lorenza Thiel**, with the link **Show on org chart** under her position.
+    - The details panel slides out on the right, headed **Lorenza Thiel**.
+    - The link **Show on org chart** is under her position.
     - The table narrows to make room.
     - **Details** shows no **Start** or **End**.
     - **Reporting** shows no **Manager assigned**.
@@ -262,7 +276,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Read the panel.
   - **Expected:**
-    - Labels are in grey on the left and values on the right, each row ruled off from the next.
+    - Labels are in grey on the left and values on the right.
+    - Each row is ruled off from the next.
     - Every word is easy to read.
   - **Notes:**
 
@@ -288,23 +303,28 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 5.** Select **Metrics** above the table.
   - **Expected:**
-    - The **Metrics** panel opens under the details panel, the two sharing the height.
+    - The **Metrics** panel opens under the details panel.
+    - The two panels share the height.
     - Lorenza's details stay open.
   - **Notes:**
 
 - [ ] **Step 6.** Drag the edge between the two panels up.
-  - **Expected:** The edge moves the share between them: the details panel gets shorter and the **Metrics** panel taller.
+  - **Expected:**
+    - The details panel gets shorter.
+    - The **Metrics** panel gets taller.
   - **Notes:**
 
 - [ ] **Step 7.** Drag the edge between the two panels down.
   - **Expected:**
-    - The details panel gets taller and the **Metrics** panel shorter.
+    - The details panel gets taller.
+    - The **Metrics** panel gets shorter.
     - Lorenza's details stay open.
   - **Notes:**
 
 - [ ] **Step 8.** Make the browser window as narrow as it goes.
   - **Expected:**
-    - The panel covers the whole window, with each label above its value.
+    - The panel covers the whole window.
+    - Each label is above its value.
     - Nothing is cut off or overlapping.
   - **Notes:**
 
@@ -313,7 +333,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 10.** Choose **Light** in the Appearance menu.
-  - **Expected:** The page is light again.
+  - **Expected:** The page is light.
   - **Notes:**
 
 ### DETAILS-08: Changing a Person's Details Beside People
@@ -335,7 +355,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 3.** Select **Kestrel Bay**.
   - **Expected:**
-    - **Site** reads **Kestrel Bay**, with a hollow yellow dot before it.
+    - **Site** reads **Kestrel Bay**.
+    - A hollow yellow dot is before it.
     - Under it, a green dot, then **Corran Quay** in grey.
     - Her **Site** cell in the table reads **Kestrel Bay** too.
     - Focus is on the change button beside **Site**.
@@ -344,8 +365,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 4.** Press Cmd+Z on a Mac, or Ctrl+Z otherwise.
   - **Expected:**
-    - **Site** in the panel reads **Corran Quay** again, with no dot.
-    - Her **Site** cell in the table reads **Corran Quay** again, with no dot.
+    - **Site** in the panel reads **Corran Quay** again.
+    - **Site** in the panel has no dot.
+    - Her **Site** cell in the table reads **Corran Quay** again.
+    - Her **Site** cell has no dot.
   - **Notes:**
 
 - [ ] **Step 5.** Select the word **None** beside **Team name**.
@@ -354,7 +377,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 6.** Type **Harbour team**, and press Enter.
   - **Expected:**
-    - **Team name** reads **Harbour team**, with a hollow yellow dot before it.
+    - **Team name** reads **Harbour team**.
+    - A hollow yellow dot is before it.
     - Under it, a green dot, then **None** in grey.
   - **Notes:**
 
@@ -370,7 +394,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 9.** Press Esc.
   - **Expected:**
-    - The field closes, and **End** shows no date.
+    - The field closes.
+    - **End** shows no date.
     - The red line has gone.
     - The panel stays open.
   - **Notes:**
@@ -390,7 +415,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 13.** Press Enter.
   - **Expected:**
     - The list closes.
-    - **Position** reads **SDET**, with a hollow yellow dot before it.
+    - **Position** reads **SDET**.
+    - A hollow yellow dot is before it.
     - **SDET** under the heading at the top of the panel follows it.
   - **Notes:**
 
@@ -412,11 +438,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 17.** Choose **Light** in the Appearance menu.
-  - **Expected:** The page is light again.
+  - **Expected:** The page is light.
   - **Notes:**
 
 - [ ] **Step 18.** Select **Draft** above the table, then **Live only**.
-  - **Expected:** The Draft menu stays open, with a tick before **Live only**.
+  - **Expected:**
+    - The Draft menu stays open.
+    - A tick is before **Live only**.
   - **Notes:**
 
 - [ ] **Step 19.** Press Esc.
@@ -427,7 +455,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 20.** Select **Draft**, then **Drafts beside live**.
-  - **Expected:** The Draft menu stays open, with a tick before **Drafts beside live**.
+  - **Expected:**
+    - The Draft menu stays open.
+    - A tick is before **Drafts beside live**.
   - **Notes:**
 
 - [ ] **Step 21.** Press Esc.
@@ -449,7 +479,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 2.** Select her name on her card.
   - **Expected:**
     - The details panel shows **Lorenza Thiel**.
-    - **Team name** reads **Harbour team**, with a hollow yellow dot before it.
+    - **Team name** reads **Harbour team**.
+    - A hollow yellow dot is before it.
     - Her card shows **Harbour team** too.
   - **Notes:**
 
@@ -459,14 +490,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 4.** Replace the text with **Quayside team**, and press Enter.
   - **Expected:**
-    - In the panel, **Team name** reads **Quayside team**, with a hollow yellow dot before it.
+    - In the panel, **Team name** reads **Quayside team**.
+    - A hollow yellow dot is before it.
     - Within a moment, her card shows **Quayside team** as well.
   - **Notes:**
 
 - [ ] **Step 5.** Select the change button beside **Onboarding**, under **Columns**.
   - **Expected:**
-    - A second panel opens under her details, headed **Onboarding for Lorenza Thiel**, with **Clear**, **Cancel** and **Save** buttons.
-    - Her details stay above it, the two sharing the height.
+    - A second panel opens under her details, headed **Onboarding for Lorenza Thiel**.
+    - The second panel has **Clear**, **Cancel** and **Save** buttons.
+    - Her details stay above it.
+    - The two panels share the height.
   - **Notes:**
 
 - [ ] **Step 6.** Type **Laptop ready** in the note.
@@ -476,7 +510,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 7.** Press Cmd+Z on a Mac, or Ctrl+Z otherwise.
   - **Expected:**
     - **Laptop ready** goes from the note.
-    - **Team name** still reads **Quayside team**, with a hollow yellow dot before it.
+    - **Team name** still reads **Quayside team**.
+    - A hollow yellow dot is before it.
     - Her card still shows **Quayside team**.
   - **Notes:**
 
@@ -486,7 +521,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 9.** Select the name on the card for **Silje Holm-Schrøder**.
   - **Expected:**
-    - A box asks **Discard changes to the note?**, with **Keep writing** and **Discard**.
+    - A box asks **Discard changes to the note?**
+    - It offers **Keep writing** and **Discard**.
     - The details behind it still show **Lorenza Thiel**.
   - **Notes:**
 
@@ -512,7 +548,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 14.** Select the change button beside **Onboarding**.
-  - **Expected:** Tanushree's note opens under her details, headed **Onboarding for Tanushree Patel-Singh** and showing her checklist.
+  - **Expected:**
+    - Tanushree's note opens under her details, headed **Onboarding for Tanushree Patel-Singh**.
+    - The note shows her checklist.
   - **Notes:**
 
 - [ ] **Step 15.** Without changing the note, select **Silje Holm-Schrøder** beside **Manager**.
@@ -577,7 +615,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 6.** Type **Fictional test lead**, and press Enter.
   - **Expected:**
-    - **Name** reads **Fictional test lead**, with a hollow yellow dot before it.
+    - **Name** reads **Fictional test lead**.
+    - A hollow yellow dot is before it.
     - The heading reads **Fictional test lead**.
     - Its row in the table reads **Fictional test lead** too.
   - **Notes:**
@@ -593,7 +632,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 1.** Select **New** at the top right of the page.
   - **Expected:**
     - The details panel opens, headed **New person**.
-    - Its first row is **State**, reading **Hired**, with a change button.
+    - Its first row is **State**, reading **Hired**.
+    - **State** has a change button.
     - **Name**, **ID**, **Start**, **End**, **Manager assigned** and **Team name** are empty boxes to type in.
     - **Manager?** is an empty checkbox.
     - The other values have change buttons.
@@ -634,9 +674,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 8.** Select **Add**.
   - **Expected:**
-    - The panel's heading: a hollow yellow dot, then **Fictional Newcomer**, with **Software Engineer** under it.
+    - The panel's heading: a hollow yellow dot, then **Fictional Newcomer**.
+    - **Software Engineer** is under the heading.
     - Change buttons show beside its values.
-    - Her row is in the table, with a hollow yellow dot in its slot.
+    - Her row is in the table.
+    - Her row has a hollow yellow dot in its slot.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -682,7 +724,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 8.** Type **REQ-4100** in **ID**, and press Tab.
-  - **Expected:** The **Name** box is empty, showing **SDET, REQ-4100** in grey.
+  - **Expected:**
+    - The **Name** box is empty.
+    - The **Name** box shows **SDET, REQ-4100** in grey.
   - **Notes:**
 
 - [ ] **Step 9.** Choose **Dark** in the Appearance menu, and read the panel.
@@ -692,17 +736,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 10.** Choose **Light** in the Appearance menu.
-  - **Expected:** The page is light again.
+  - **Expected:** The page is light.
   - **Notes:**
 
 - [ ] **Step 11.** Select the **×** at the top right of the panel.
-  - **Expected:** A box asks **Discard the new planned hire?**, with **Keep adding** and **Discard**.
+  - **Expected:**
+    - A box asks **Discard the new planned hire?**
+    - It offers **Keep adding** and **Discard**.
   - **Notes:**
 
 - [ ] **Step 12.** Select **Keep adding**.
   - **Expected:**
     - The box closes.
-    - The panel still shows **New planned hire**, with **SDET, REQ-4100** in grey in **Name**.
+    - The panel still shows **New planned hire**.
+    - **Name** shows **SDET, REQ-4100** in grey.
   - **Notes:**
 
 - [ ] **Step 13.** Select **Cancel** at the foot of the panel.

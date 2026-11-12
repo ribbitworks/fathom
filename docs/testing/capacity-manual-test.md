@@ -149,7 +149,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] **Step 2.** Replace **80** with **0**, and press Enter.
   - **Expected:**
-    - The field stays open, holding **0**, outlined in red.
+    - The field stays open.
+    - It holds **0**.
+    - It is outlined in red.
     - Under it, in red, reads **Default focus: use 1% to 100%**.
   - **Notes:**
 
@@ -193,7 +195,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
       - **Month 2**: **75%**
       - **From month 3**: **100%**
     - The × button of **Month 2** has focus.
-    - A notification at the top right reads **Removed month 3 of ramp-up.**, with **Undo**.
+    - A notification at the top right reads **Removed month 3 of ramp-up.**
+    - It offers **Undo**.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Undo** in the notification.

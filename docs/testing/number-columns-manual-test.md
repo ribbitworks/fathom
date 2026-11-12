@@ -54,7 +54,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] **Step 3.** Choose **Number**.
   - **Expected:**
     - **List** and **Several choices** are gone.
-    - **Class** is shown, with **General** chosen.
+    - **Class** is shown.
+    - **General** is chosen.
   - **Notes:**
 
 - [ ] **Step 4.** Type `Score` in **Name**.
@@ -64,7 +65,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] **Step 5.** Select **Add column**.
   - **Expected:**
     - The dialog closes.
-    - A **Score** column with empty cells is at the right end of the table.
+    - A **Score** column is at the right end of the table.
+    - Its cells are empty.
     - A hollow yellow dot is before **Score** in the header.
   - **Notes:**
 
@@ -94,7 +96,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] **Step 4.** In the fourth row's Score cell, type `abc` and press Enter.
   - **Expected:**
-    - The cell stays open, outlined in red.
+    - The cell stays open.
+    - It is outlined in red.
     - **Score: use a number such as 1234.5** shows in red under the row, in its first cell.
   - **Notes:**
 
@@ -136,7 +139,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] **Step 3.** Select the **Score** header, then **Filter…**.
   - **Expected:**
-    - The filter shows **At least** and **At most** fields, with **At least** ready to type in.
+    - The filter shows **At least** and **At most** fields.
+    - **At least** is ready to type in.
     - A **No number** checkbox is under them.
     - A field holding text shows an × at its right end.
   - **Notes:**
@@ -150,7 +154,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] **Step 5.** Type `abc` in **At most**.
   - **Expected:**
     - **Use a number such as 1234.5** shows in red under **At most**.
-    - The rows shown do not change.
+    - Rows reading **1,234.5** and **0** are shown.
+    - No row reading **-7** is shown.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

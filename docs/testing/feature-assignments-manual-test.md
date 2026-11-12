@@ -67,11 +67,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **Feature assignments** open.
 
 - [ ] **Step 1.** Scroll the table sideways.
-  - **Expected:** The **Person** column stays on the left, with nothing showing through it.
+  - **Expected:**
+    - The **Person** column stays on the left.
+    - Nothing shows through it.
   - **Notes:**
 
 - [ ] **Step 2.** Scroll the table down.
-  - **Expected:** The month headings stay at the top, with nothing showing through them.
+  - **Expected:**
+    - The month headings stay at the top.
+    - Nothing shows through them.
   - **Notes:**
 
 ### FA-03: Labels Name Each Team in Its Colour
@@ -215,7 +219,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 4.** Select the left arrow beside the timeline once.
   - **Expected:**
-    - A card names **Search and discovery**, with a yellow dot before it.
+    - A card names **Search and discovery**.
+    - A yellow dot is before it.
     - The lead and the members stacked under that card are the same people as noted in step 1.
   - **Notes:**
 
@@ -240,7 +245,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 1.** Select the **Feature assignments** page in the left-hand menu.
   - **Expected:**
     - Under the **Feature assignments** heading, a line in grey reads **Feature assignments needs Personal access.**
-    - There is no table, no **Teams** and **Allocations** switch, and no **Draft** button.
+    - There is no table.
+    - There is no **Teams** and **Allocations** switch.
+    - There is no **Draft** button.
   - **Notes:**
 
 ### FA-13: The Table Works From the Keyboard
@@ -256,13 +263,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 2.** Press the right arrow key.
   - **Expected:**
     - The outline moves one cell right.
-    - The table scrolls to keep it in view, with the **Person** column staying in place.
+    - The table scrolls to keep it in view.
+    - The **Person** column stays in place.
   - **Notes:**
 
 - [ ] **Step 3.** Press the down arrow key.
   - **Expected:**
     - The outline moves one cell down.
-    - The table scrolls to keep it in view, with the month headings staying in place.
+    - The table scrolls to keep it in view.
+    - The month headings stay in place.
   - **Notes:**
 
 - [ ] **Step 4.** Press Enter.
@@ -292,7 +301,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Select the change button in the **Members** row.
-  - **Expected:** A list of people opens under the row, with the cursor in a box above it.
+  - **Expected:**
+    - A list of people opens under the row.
+    - The cursor is in a box above it.
   - **Notes:**
 
 - [ ] **Step 4.** Press the Down arrow key until a person without a tick is highlighted.
@@ -304,11 +315,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 6.** Press Enter.
-  - **Expected:** The joiner is in the list of members, with a hollow yellow dot before their name.
+  - **Expected:**
+    - The joiner is in the list of members.
+    - A hollow yellow dot is before their name.
   - **Notes:**
 
 - [ ] **Step 7.** Select the change button in the **Members** row.
-  - **Expected:** A list of people opens under the row, with the cursor in a box above it.
+  - **Expected:**
+    - A list of people opens under the row.
+    - The cursor is in a box above it.
   - **Notes:**
 
 - [ ] **Step 8.** Type the leaver's name, and press Enter.
@@ -316,7 +331,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 9.** Press Enter.
-  - **Expected:** The leaver's name is still in the list of members, with a hollow yellow dot before it, struck through.
+  - **Expected:**
+    - The leaver's name is still in the list of members.
+    - A hollow yellow dot is before it.
+    - The leaver's name is struck through.
   - **Notes:**
 
 - [ ] **Step 10.** Select the **Feature assignments** page in the left-hand menu.
@@ -335,9 +353,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 13.** Look along the joiner's row, from two months ago to the right.
   - **Expected:**
-    - The cell two months ago holds the same labels as the Live row's cell under it.
+    - The cell two months ago holds no **Payments core** label.
     - The labels in the cell two months ago have no dot.
-    - From last month on, each cell holds a **Payments core** label with a hollow yellow dot inside it, before the name, beside any other labels.
+    - From last month on, each cell holds a **Payments core** label, beside any other labels.
+    - Each of those **Payments core** labels has a hollow yellow dot inside it, before the name.
   - **Notes:**
 
 - [ ] **Step 14.** Look along the light green row under it.
@@ -379,7 +398,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The leaver's row has no tint.
     - The leaver's labels have no dots.
     - No light green row is under the leaver's row.
-    - **Payments core** is in every month it was in before FA-14.
+    - The leaver's cells hold a **Payments core** label in every month they held one before FA-14, from the earliest such month on.
     - Nothing is struck through.
   - **Notes:**
 
@@ -411,7 +430,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The joiner and the leaver are both listed under **Payments core**.
     - The joiner's **Payments core** labels from last month on have a hollow yellow dot inside them.
-    - The leaver's **Payments core** labels from last month on have a hollow yellow dot inside them, and their name is struck through.
+    - The leaver's **Payments core** labels from last month on have a hollow yellow dot inside them.
+    - The leaver's name is struck through.
     - Each of their rows has a light green Live row under it.
   - **Notes:**
 
@@ -444,7 +464,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 6.** Press Enter.
-  - **Expected:** The team list opens, with no team shown as chosen.
+  - **Expected:**
+    - The team list opens.
+    - No team is shown as chosen.
   - **Notes:**
 
 - [ ] **Step 7.** Type `Pay`, then press Tab.
@@ -512,7 +534,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Press Cmd+Z, or Ctrl+Z outside a Mac.
-  - **Expected:** The row is as it was before step 2.
+  - **Expected:**
+    - The row has no tint.
+    - In the cell and every cell to its right, the **Payments core** label has no dot.
+    - The label's name is not struck through.
   - **Notes:**
 
 ### FA-18: A Change the Draft Can't Hold Is Explained
@@ -526,7 +551,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Press Enter.
-  - **Expected:** The team list opens, with **Payments core** shown as chosen.
+  - **Expected:**
+    - The team list opens.
+    - **Payments core** is shown as chosen.
   - **Notes:**
 
 - [ ] **Step 3.** Type `Pay`, and press Enter.
@@ -549,7 +576,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Select **Allocations** in the mode switch.
   - **Expected:**
-    - The table opens at the current month again, still grouped by **Feature team**.
+    - The table opens at the current month again.
+    - The rows are still grouped by **Feature team**.
     - Under the **Payments core** group, cells list features, each on a line of its own with its percentage at the right, such as **50%**.
   - **Notes:**
 
@@ -558,7 +586,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Under the **Payments core** group, find the first cell in the current month's column that lists two features.
-  - **Expected:** Under the two features, set off by a thin line above it, a last line gives the two percentages added up, at the right.
+  - **Expected:**
+    - Under the two features, a last line gives the two percentages added up, at the right.
+    - A thin line above it sets it off.
   - **Notes:**
 
 - [ ] **Step 4.** Reload the page.
@@ -666,13 +696,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 1.** Scroll down to the end of the **Payments core** group.
   - **Expected:**
     - The group ends with a total row.
-    - Each of its month cells reads two numbers, such as **7.5 of 9**, with a percentage under it, such as **83.3%**, in bold.
+    - Each of its month cells reads two numbers, such as **7.5 of 9**.
+    - Under them is a percentage, such as **83.3%**, in bold.
   - **Notes:**
 
 - [ ] **Step 2.** Scroll the table down.
   - **Expected:**
     - A total row headed **Organization** is at the foot of the table.
-    - It stays there as the rows scroll under it, with nothing showing through it.
+    - It stays there as the rows scroll under it.
+    - Nothing shows through it.
   - **Notes:**
 
 - [ ] **Step 3.** Scroll the table sideways.
@@ -734,7 +766,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 4.** Type the name noted in step 2 in the search box.
   - **Expected:**
-    - The person has a row under **Mobile apps** and a row under another group, or **No feature team**, each followed by a total row.
+    - The person has a row under **Mobile apps** and a row under another group, or **No feature team**.
+    - Each of those rows is followed by a total row.
     - The total row under **Mobile apps** has figures only in the months the person was on **Mobile apps**, up to the month noted.
     - The other total row has figures only in the months before and after those.
     - Each figure reads **0 of 1** and **0%**.
@@ -759,7 +792,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Type **Max**, and choose **Max Munk**.
-  - **Expected:** The **Manager** cell reads **Max Munk**, with a hollow yellow dot before it.
+  - **Expected:**
+    - The **Manager** cell reads **Max Munk**.
+    - A hollow yellow dot is before it.
   - **Notes:**
 
 - [ ] **Step 5.** Select the row's **Manager assigned** cell.
@@ -767,7 +802,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 6.** Type the first day of the current month as digits alone, such as `20261101` in November 2026, and press Enter.
-  - **Expected:** The **Manager assigned** cell reads the date typed, with a hollow yellow dot before it.
+  - **Expected:**
+    - The **Manager assigned** cell reads the date typed.
+    - A hollow yellow dot is before it.
   - **Notes:**
 
 - [ ] **Step 7.** Select the Publish button.
@@ -793,7 +830,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 12.** Select **Approve 1 draft**.
-  - **Expected:** A dialog opens with an **Approve** button.
+  - **Expected:**
+    - A dialog opens.
+    - It has an **Approve** button.
   - **Notes:**
 
 - [ ] **Step 13.** Select **Approve** in the dialog.

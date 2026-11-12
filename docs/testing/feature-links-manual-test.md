@@ -44,15 +44,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Find the row **Offline Sync**, and look at its **Projects** cell.
   - **Expected:**
-    - It names **Clinic Booking Rollout** first, with no ID before it.
-    - Then **Crane Control**, with **P-2001** in grey before it.
+    - It names **Clinic Booking Rollout** first.
+    - No ID is before **Clinic Booking Rollout**.
+    - Then **Crane Control**.
+    - **P-2001** is in grey before **Crane Control**.
     - A comma separates the two.
   - **Notes:**
 
 - [ ] **Step 2.** Look at the **Proposals** cell of **Offline Sync**.
   - **Expected:**
-    - It names **Clinic Scheduling Pilot** first, with **PR-102** in grey before it.
-    - Then **Harbour Cranes Upgrade**, with **PR-101** in grey before it.
+    - It names **Clinic Scheduling Pilot** first.
+    - **PR-102** is in grey before **Clinic Scheduling Pilot**.
+    - Then **Harbour Cranes Upgrade**.
+    - **PR-101** is in grey before **Harbour Cranes Upgrade**.
   - **Notes:**
 
 - [ ] **Step 3.** Point at the **Projects** cell of **Offline Sync**.
@@ -70,7 +74,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 6.** Choose **Light** in the Appearance menu.
-  - **Expected:** The page turns light.
+  - **Expected:** The page is light.
   - **Notes:**
 
 - [ ] **Step 7.** Look at the **Projects** and **Proposals** cells of **Offline Sync**.
@@ -89,12 +93,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The side panel lists **Clinic Booking Rollout** and **Crane Control** under **Projects**.
     - It lists **Clinic Scheduling Pilot** and **Harbour Cranes Upgrade** under **Proposals**.
-    - Each name is a link on a line of its own, with its ID in grey before it where it has one.
+    - Each name is a link on a line of its own.
+    - Each name has its ID in grey before it, where it has one.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Crane Control** under **Projects**.
   - **Expected:**
-    - The page is still titled **Features**, with the table of features in view.
+    - The page is still titled **Features**.
+    - The table of features is in view.
     - The side panel is headed **Crane Control**.
     - The side panel lists, from the top:
       - Name
@@ -151,7 +157,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Select the **Projects** cell of **Bulk Import**, and press Enter.
   - **Expected:**
-    - A list of projects opens, with a search box.
+    - A list of projects opens.
+    - It has a search box.
     - Each project is named by its ID, where it has one, then its name, such as **P-2001 Crane Control**.
     - None is picked.
   - **Notes:**
@@ -192,7 +199,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** In the **⋯** menu of **Crane Control**, select **Show features**.
   - **Expected:**
-    - The **Features** page opens, showing only **Audit Export** and **Offline Sync**.
+    - The **Features** page opens.
+    - Only **Audit Export** and **Offline Sync** show.
     - A pill above the table reads **Projects: P-2001 Crane Control**.
   - **Notes:**
 
@@ -205,12 +213,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Select the **Proposals** tab.
-  - **Expected:** The table lists proposals, among them **Ore Sorting Study**.
+  - **Expected:**
+    - The table lists proposals.
+    - **Ore Sorting Study** is among them.
   - **Notes:**
 
 - [ ] **Step 5.** In the **⋯** menu of **Ore Sorting Study**, select **Show features**.
   - **Expected:**
-    - The **Features** page opens, showing only **Partner Portal**.
+    - The **Features** page opens.
+    - Only **Partner Portal** shows.
     - A pill reads **Proposals: Ore Sorting Study**.
   - **Notes:**
 
@@ -219,7 +230,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 7.** Open the column menu of **Proposals**, and select **Filter…**.
-  - **Expected:** A list of the proposals opens, each named by its ID, where it has one, then its name.
+  - **Expected:**
+    - A list of the proposals opens.
+    - Each is named by its ID, where it has one, then its name.
   - **Notes:**
 
 - [ ] **Step 8.** Select **PR-097 Fleet Tracking Bid**.

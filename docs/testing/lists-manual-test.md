@@ -55,13 +55,15 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] **Step 2.** Select **Positions**.
   - **Expected:**
-    - The panel opens with **Positions** at the top and a grey **Built in** box after it.
+    - The panel opens with **Positions** at the top.
+    - A grey **Built in** box is after it.
     - Under the choices, in grey, a line reads **Every person and planned hire has one of these positions.**
   - **Notes:**
 
 - [ ] **Step 3.** Select **Hiring states**.
   - **Expected:**
-    - The panel opens with **Hiring states** at the top and a grey **Built in** box after it.
+    - The panel opens with **Hiring states** at the top.
+    - A grey **Built in** box is after it.
     - No description is shown under the name.
     - Under the choices, in grey, a line reads **Proposed: the request to hire is not yet approved.**
     - Under it, in grey, a line reads **Open: the request to hire is approved.**
@@ -91,8 +93,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] **Step 2.** Type **Fictional Interviewing** in the empty row's **Name** box and press Enter.
   - **Expected:**
-    - A row **Fictional Interviewing** appears above the empty row, with a hollow yellow dot in its slot, and **Open** at the end of the row
-    - The empty row is empty again, and its meaning menu still reads **Open**
+    - A row **Fictional Interviewing** appears above the empty row
+    - It has a hollow yellow dot in its slot
+    - It has **Open** at the end of the row
+    - The empty row is empty again
+    - Its meaning menu still reads **Open**
   - **Notes:**
 
 ### LIST-04: The Last Choice for a Meaning Is Kept
@@ -102,7 +107,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 **Preconditions:** As LIST-03.
 
 - [ ] **Step 1.** Select the **⋯** button at the end of the **Request to hire** row.
-  - **Expected:** **Retire** and **Remove** are greyed out, with **Needed for Proposed** under them.
+  - **Expected:**
+    - **Retire** and **Remove** are greyed out.
+    - **Needed for Proposed** is under them.
   - **Notes:**
 
 ### LIST-05: A Choice Can Be Retired When Another Has the Same Meaning
@@ -139,7 +146,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] **Step 2.** Select **Approve**.
-  - **Expected:** The dialog stays open and reads **This would leave Hiring states with no choice that means Open.**
+  - **Expected:**
+    - The dialog stays open.
+    - It reads **This would leave Hiring states with no choice that means Open.**
   - **Notes:**
 
 - [ ] **Step 3.** Select **Cancel**.
@@ -156,7 +165,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 **Preconditions:** LIST-06 done. Signed in with this account. **Lists** page open, with the **Positions** panel open.
 
 - [ ] **Step 1.** Select **Edit list**.
-  - **Expected:** A dialog opens, with no **Class** choice in it.
+  - **Expected:**
+    - A dialog opens.
+    - It has no **Class** choice in it.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Cancel**.
@@ -167,7 +178,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - A dialog titled **Change the class of Positions** opens
     - **General** is chosen
-    - **Personal** and **Confidential** can each be chosen, each with a line saying what it holds
+    - **Personal** and **Confidential** can each be chosen
+    - **Personal** and **Confidential** each have a line saying what it holds
   - **Notes:**
 
 - [ ] **Step 4.** Select **Personal**.
@@ -202,7 +214,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] **Step 10.** Run Reset the Database.
-  - **Expected:** The last line printed gives the shared password, with no error above it.
+  - **Expected:**
+    - The last line printed gives the shared password.
+    - No error is above it.
   - **Notes:**
 
 ### LIST-08: The Lists Shown Can Be Narrowed to Built-in or Custom Ones

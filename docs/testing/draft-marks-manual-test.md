@@ -90,8 +90,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 8.** Type **우아현** in the search box.
   - **Expected:** In 우아현's row:
     - Nothing in the slot
-    - A red dot in a ring before the **Position** value, which is in semibold
-    - **Manager:** **Viktoria Holmberg**, then a red **Left** box, with no dot
+    - A red dot in a ring before the **Position** value
+    - The **Position** value in semibold
+    - **Manager:** **Viktoria Holmberg**, then a red **Left** box
+    - No dot before the **Manager** value
     - The row faintly red
   - **Notes:**
 
@@ -140,7 +142,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The card titled **Search and discovery**: a yellow dot before the title
     - Under **Mobile apps**, a yellow dot before **Atmananda Ganaka**
-    - Under **Mobile apps**, a yellow dot before **Priscille Adam**, her name struck through
+    - Under **Mobile apps**, a yellow dot before **Priscille Adam**
+    - **Priscille Adam** struck through
     - The card titled **Platform reliability**: the grey lock before the title
   - **Notes:**
 
@@ -165,15 +168,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 3.** Type **Sites** in the search box.
   - **Expected:**
     - In Sites' row, a yellow dot before its choices
-    - Under it, a light green Live row with a green dot before its choices
+    - Under it, a light green Live row
+    - A green dot before the Live row's choices
   - **Notes:**
 
 - [ ] **Step 4.** Select **Sites** in its row, not its Live row.
   - **Expected:**
     - Sites' row has a thin blue bar at its left edge
-    - In the panel, **Harbourside**: a red dot in a ring in its slot, and no dot before its name
-    - **Northmere Labs**: nothing in its slot, and a yellow dot before the name and before the new description
-    - Under Northmere Labs, a light green Live row: a green dot before **Northmere** and before the live description
+    - In the panel, **Harbourside**: a red dot in a ring in its slot
+    - **Harbourside**: no dot before its name
+    - **Northmere Labs**: nothing in its slot
+    - **Northmere Labs**: a yellow dot before the name
+    - **Northmere Labs**: a yellow dot before the new description
+    - Under Northmere Labs, a light green Live row
+    - In that Live row, a green dot before **Northmere**
+    - In that Live row, a green dot before the live description
   - **Notes:**
 
 ### MARK-05: The Drafts Page Starts Each Entry With Its Mark
@@ -204,7 +213,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No red dots in a ring
     - No row or column tinted
     - No value in semibold
-    - No Live rows and no green dots
+    - No Live rows
+    - No green dots
   - **Notes:**
 
 - [ ] **Step 2.** Select the **Org chart** page in the left-hand menu.
@@ -215,7 +225,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - Yellow dots still show
     - No card tinted
-    - No Live cards and no green dots
+    - No Live cards
+    - No green dots
   - **Notes:**
 
 ### MARK-07: Live Only Marks What a Waiting Draft Would Change
@@ -226,7 +237,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Choose **Live only** in the Draft menu.
   - **Expected:**
-    - No yellow dots and no red dots in a ring
+    - No yellow dots
+    - No red dots in a ring
     - No card tinted
   - **Notes:**
 
@@ -246,7 +258,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 5.** Choose **Live only** in the Draft menu.
   - **Expected:**
-    - No yellow dots and no red dots in a ring
+    - No yellow dots
+    - No red dots in a ring
     - No row or column tinted
     - A green dot before **Level** in its column's header
   - **Notes:**
@@ -305,7 +318,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 7.** Choose **Light** in the Appearance menu.
-  - **Expected:** The page turns light.
+  - **Expected:** The page is light.
   - **Notes:**
 
 ### MARK-09: Marks Sit on the Centreline of Their Text

@@ -82,7 +82,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] **Step 6.** Choose **Light** in the Appearance menu.
-  - **Expected:** The page returns to its light colours.
+  - **Expected:** The page is light.
   - **Notes:**
 
 - [ ] **Step 7.** Sign out, and sign in as the Engineering Manager, `engineering.manager@fathom.test`.
@@ -206,7 +206,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] **Step 6.** Open the **Portfolio** column menu, and select **Approve…**.
-  - **Expected:** A dialog opens, with an **Approve** button.
+  - **Expected:**
+    - A dialog opens
+    - It has an **Approve** button
   - **Notes:**
 
 - [ ] **Step 7.** Select **Approve**.
@@ -231,7 +233,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] **Step 11.** Open the column menu of **Site**, which draws on a list.
-  - **Expected:** **Change class…** is greyed out, with **Takes the class of its list** under it.
+  - **Expected:**
+    - **Change class…** is greyed out
+    - **Takes the class of its list** is under it
   - **Notes:**
 
 - [ ] **Step 12.** Select the **Data classes** page in the left-hand menu.

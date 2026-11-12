@@ -46,7 +46,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the column headers from left to right.
-  - **Expected:** After **Manager**, in order: **Manager?**, **Manager assigned**, **Team** and **Team name**.
+  - **Expected:** After **Manager**, in order:
+    - **Manager?**
+    - **Manager assigned**
+    - **Team**
+    - **Team name**
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**.
@@ -66,7 +70,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Select the row's **Manager** cell and press Enter.
-  - **Expected:** The Manager picker opens, with **Atmananda Ganaka** chosen.
+  - **Expected:**
+    - The Manager picker opens.
+    - **Atmananda Ganaka** is chosen.
   - **Notes:**
 
 - [ ] **Step 3.** Type **Max**.
@@ -95,7 +101,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 2.** Click once in the row's **Manager?** cell.
   - **Expected:**
-    - The box is checked, with a hollow yellow dot before it.
+    - The box is checked.
+    - A hollow yellow dot is before it.
     - The cell turns yellow.
   - **Notes:**
 
@@ -120,7 +127,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Select **Approve 1 draft**.
-  - **Expected:** A dialog headed **Approve 1 draft?** opens, with an **Approve** button.
+  - **Expected:**
+    - A dialog headed **Approve 1 draft?** opens.
+    - It has an **Approve** button.
   - **Notes:**
 
 - [ ] **Step 4.** In the dialog, select **Approve**.
@@ -164,7 +173,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Search for **Max Munk**.
-  - **Expected:** The **Max Munk** row is shown, with a checked **Manager?** box.
+  - **Expected:**
+    - The **Max Munk** row is shown.
+    - Its **Manager?** box is checked.
   - **Notes:**
 
 - [ ] **Step 2.** Click once in the row's **Manager?** cell.
@@ -192,9 +203,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 3.** Type **Max**, and choose **Max Munk**.
   - **Expected:**
-    - The **Manager** cell reads **Max Munk**, in yellow.
+    - The **Manager** cell reads **Max Munk**.
+    - The **Manager** cell is yellow.
     - A hollow yellow dot is before **Max Munk**.
-    - The **Team** cell reads **Mobile team**, in yellow.
+    - The **Team** cell reads **Mobile team**.
+    - The **Team** cell is yellow.
     - The **Manager assigned** cell holds today's date.
   - **Notes:**
 
@@ -211,12 +224,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** As MGR-05.
 
 - [ ] **Step 1.** Search for **Lorenza Thiel**.
-  - **Expected:** The **Lorenza Thiel** row is shown, with an empty **Team name** cell.
+  - **Expected:**
+    - The **Lorenza Thiel** row is shown.
+    - Its **Team name** cell is empty.
   - **Notes:**
 
 - [ ] **Step 2.** Select the row's **Team name** cell, type **Fictional Crew**, and press Enter.
   - **Expected:**
-    - The **Team name** cell reads **Fictional Crew**, in yellow.
+    - The **Team name** cell reads **Fictional Crew**.
+    - The **Team name** cell is yellow.
     - A hollow yellow dot is before **Fictional Crew**.
   - **Notes:**
 
@@ -295,7 +311,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**.
-  - **Expected:** The **Max Munk** row is shown, with a checked **Manager?** box.
+  - **Expected:**
+    - The **Max Munk** row is shown.
+    - Its **Manager?** box is checked.
   - **Notes:**
 
 - [ ] **Step 3.** Click once in the row's **Manager?** cell.
@@ -305,5 +323,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Search for **西尾 亮**.
-  - **Expected:** In **西尾 亮**'s row, the **Manager** cell reads **Viktoria Holmberg**, with no **Left** box.
+  - **Expected:**
+    - In **西尾 亮**'s row, the **Manager** cell reads **Viktoria Holmberg**.
+    - The cell has no **Left** box.
   - **Notes:**

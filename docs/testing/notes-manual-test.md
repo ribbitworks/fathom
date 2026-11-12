@@ -66,7 +66,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] **Step 4.** Select **Add column**.
   - **Expected:**
     - The dialog closes.
-    - A **Background** column is at the end of the table, with a hollow yellow dot before its name.
+    - A **Background** column is at the end of the table.
+    - A hollow yellow dot is before its name.
   - **Notes:**
 
 - [ ] **Step 5.** Run Publish.
@@ -93,10 +94,13 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] **Step 1.** Select Max Munk's **Background** cell.
   - **Expected:**
-    - The panel slides in smoothly from the right over the table, which then has room beside it, with no jump.
+    - The panel slides in smoothly from the right over the table, with no jump.
+    - The table then has room beside it.
     - It is headed **Background**.
-    - **Note**, **Editor** and **Markdown** are at the top, with **Editor** chosen.
-    - The note's text is under them, and the toolbar under the text.
+    - **Note**, **Editor** and **Markdown** are at the top.
+    - **Editor** is chosen.
+    - The note's text is under them.
+    - The toolbar is under the text.
     - **Clear**, **Cancel** and **Save** are at the bottom.
   - **Notes:**
 
@@ -159,7 +163,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] **Step 15.** Select the link button in the toolbar.
-  - **Expected:** A form opens under the button, with **Address** and **Text to show**.
+  - **Expected:**
+    - A form opens under the button.
+    - It has **Address** and **Text to show**.
   - **Notes:**
 
 - [ ] **Step 16.** Type `wiki.example.test/lilian` in **Address**, and press Enter.
@@ -171,7 +177,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] **Step 18.** Select the link button in the toolbar.
-  - **Expected:** The form opens again under the button, with **Address** and **Text to show**.
+  - **Expected:**
+    - The form opens again under the button.
+    - It has **Address** and **Text to show**.
   - **Notes:**
 
 - [ ] **Step 19.** Replace the text in **Text to show** with `Lilian Lang`, and press Enter.
@@ -183,7 +191,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] **Step 21.** Press Enter twice.
-  - **Expected:** The list ends, and the cursor is on a line with no bullet.
+  - **Expected:**
+    - The list ends.
+    - The cursor is on a line with no bullet.
   - **Notes:**
 
 - [ ] **Step 22.** Type `Plans`.
@@ -219,19 +229,37 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] **Step 29.** Select **Note** at the top of the panel.
   - **Expected:**
     - The text starts in the same place in the panel, so nothing jumps.
-    - The note reads the same.
+    - The note reads, from the top:
+      - **Joined from the platform team**, with **Joined** in bold and **platform** in teal
+      - a bullet **Mentor: Lilian Lang**, with **Lilian Lang** a link
+      - a bullet **Speaks Japanese**
+      - the heading **Plans**
+      - a ticked checkbox **Meet the team**
+      - a checkbox **Set goals**
   - **Notes:**
 
 - [ ] **Step 30.** Select **Markdown**.
   - **Expected:**
     - The text starts in the same place in the panel, so nothing jumps.
-    - The note reads the same.
+    - The note shows as Markdown text, reading, from the top:
+      - **Joined from the platform team**, with bold markup around **Joined** and colour markup around **platform**
+      - a bullet **Mentor: Lilian Lang**, with link markup around **Lilian Lang**
+      - a bullet **Speaks Japanese**
+      - **Plans**, with heading markup before it
+      - **Meet the team**, with checkbox markup before it marking it ticked
+      - **Set goals**, with checkbox markup before it
   - **Notes:**
 
 - [ ] **Step 31.** Select **Editor**.
   - **Expected:**
     - The text starts in the same place in the panel, so nothing jumps.
-    - The note reads the same.
+    - The note reads, from the top:
+      - **Joined from the platform team**, with **Joined** in bold and **platform** in teal
+      - a bullet **Mentor: Lilian Lang**, with **Lilian Lang** a link
+      - a bullet **Speaks Japanese**
+      - the heading **Plans**
+      - a ticked checkbox **Meet the team**
+      - a checkbox **Set goals**
   - **Notes:**
 
 - [ ] **Step 32.** Select **Note**.
@@ -244,17 +272,28 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] **Step 34.** Back on the Fathom tab, select **Save**.
   - **Expected:**
-    - The panel slides out smoothly to the right over the table, which is already full width, with no jump.
+    - The panel slides out smoothly to the right over the table, with no jump.
+    - The table is already full width.
     - The cell shows the note's words on one line, cut short where they do not fit.
     - A hollow yellow dot is before the cell's words.
   - **Notes:**
 
 - [ ] **Step 35.** Select Max Munk's **Background** cell again.
-  - **Expected:** The panel opens, showing the note as saved.
+  - **Expected:**
+    - The panel opens.
+    - It shows the note, reading, from the top:
+      - **Joined from the platform team**, with **Joined** in bold and **platform** in teal
+      - a bullet **Mentor: Lilian Lang**, with **Lilian Lang** a link
+      - a bullet **Speaks Japanese**
+      - the heading **Plans**
+      - a ticked checkbox **Meet the team**
+      - a checkbox **Set goals**
   - **Notes:**
 
 - [ ] **Step 36.** Select **Editor**.
-  - **Expected:** **Editor** is chosen, with the toolbar under the text.
+  - **Expected:**
+    - **Editor** is chosen.
+    - The toolbar is under the text.
   - **Notes:**
 
 - [ ] **Step 37.** Click at the end of `Set goals`.
@@ -268,7 +307,12 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] **Step 39.** Press Cmd+Z on a Mac, or Ctrl+Z otherwise.
   - **Expected:**
     - Only the space and **again** go, leaving **Set goals**.
-    - The rest of the note is as saved.
+    - The rest of the note reads, from the top:
+      - **Joined from the platform team**, with **Joined** in bold and **platform** in teal
+      - a bullet **Mentor: Lilian Lang**, with **Lilian Lang** a link
+      - a bullet **Speaks Japanese**
+      - the heading **Plans**
+      - a ticked checkbox **Meet the team**
   - **Notes:**
 
 - [ ] **Step 40.** Select **Cancel**.
@@ -289,7 +333,11 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] **Step 2.** Select Lilian Lang's **Background** cell.
-  - **Expected:** The panel opens, headed **Background**, with **Editor** chosen and an empty note.
+  - **Expected:**
+    - The panel opens.
+    - It is headed **Background**.
+    - **Editor** is chosen.
+    - The note is empty.
   - **Notes:**
 
 - [ ] **Step 3.** Paste the passage into the editor.
@@ -327,7 +375,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] **Step 3.** Press Tab until **Note** has focus.
-  - **Expected:** Tab reaches **Note**, **Editor** and **Markdown**, with focus on **Note**.
+  - **Expected:**
+    - Tab reaches **Note**, **Editor** and **Markdown**.
+    - Focus is on **Note**.
   - **Notes:**
 
 - [ ] **Step 4.** Press the Right arrow key.
@@ -351,7 +401,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] **Step 8.** Choose **Light** in the Appearance menu.
-  - **Expected:** The panel returns to its light colours.
+  - **Expected:** The panel is light.
   - **Notes:**
 
 - [ ] **Step 9.** Press Tab until **Cancel** has focus.
@@ -372,16 +422,22 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The panels keep their width as the note opens.
     - The note grows in above the Metrics panel, with Metrics moving smoothly to make room.
-    - The note shows on **Note**, with a close button and no **Clear**, **Cancel** or **Save**.
+    - The note shows on **Note**.
+    - It has a close button.
+    - It has no **Clear**, **Cancel** or **Save**.
     - Each panel is easy to read and scrolls on its own.
   - **Notes:**
 
 - [ ] **Step 13.** Drag the edge between the two panels up.
-  - **Expected:** The edge shares the height between them: the note gets shorter and the Metrics panel taller.
+  - **Expected:**
+    - The note gets shorter.
+    - The Metrics panel gets taller.
   - **Notes:**
 
 - [ ] **Step 14.** Drag the edge between the two panels down.
-  - **Expected:** The note gets taller and the Metrics panel shorter.
+  - **Expected:**
+    - The note gets taller.
+    - The Metrics panel gets shorter.
   - **Notes:**
 
 - [ ] **Step 15.** Select the note's close button.
@@ -401,11 +457,13 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] **Step 18.** Select Lilian Lang's **Background** cell.
-  - **Expected:** Lilian Lang's empty note replaces Max Munk's, open in **Editor**.
+  - **Expected:**
+    - Lilian Lang's empty note replaces Max Munk's.
+    - It is open in **Editor**.
   - **Notes:**
 
 - [ ] **Step 19.** Select the note's close button.
-  - **Expected:** The Metrics panel fills the place again.
+  - **Expected:** The Metrics panel fills the height beside the table.
   - **Notes:**
 
 - [ ] **Step 20.** Select the Metrics panel's close button.
@@ -441,7 +499,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] **Step 28.** Select the panel's close button.
-  - **Expected:** The panel closes, showing the table.
+  - **Expected:**
+    - The panel closes.
+    - The table shows.
   - **Notes:**
 
 - [ ] **Step 29.** Widen the window again.
@@ -456,7 +516,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] **Step 1.** Select Max Munk's **Background** cell.
   - **Expected:**
-    - The panel shows the note as it reads, with a close button.
+    - The panel shows the note as it reads.
+    - It has a close button.
     - Nothing in it changes the note.
   - **Notes:**
 

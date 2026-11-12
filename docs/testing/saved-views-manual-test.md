@@ -67,7 +67,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Type `Fictional planner view` in **Name**.
-  - **Expected:** The name shows in **Name**, with no message under it.
+  - **Expected:**
+    - The name shows in **Name**.
+    - No message is under it.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Save view** in the dialog.
@@ -89,7 +91,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 8.** In the second window, select the **People** page in the left-hand menu.
-  - **Expected:** The People table shows, with no view applied.
+  - **Expected:**
+    - The People table shows.
+    - No view is applied.
   - **Notes:**
 
 - [ ] **Step 9.** In the second window, type `an` in the search box above the table.
@@ -121,7 +125,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Type `Fictional team view` in **Name**.
-  - **Expected:** The name shows in **Name**, with no message under it.
+  - **Expected:**
+    - The name shows in **Name**.
+    - No message is under it.
   - **Notes:**
 
 - [ ] **Step 5.** Tick **Share with everyone who sees this table**.
@@ -186,7 +192,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Type `Fictional passed round` in **Name**.
-  - **Expected:** The name shows in **Name**, with no message under it.
+  - **Expected:**
+    - The name shows in **Name**.
+    - No message is under it.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Save view** in the dialog.
@@ -261,7 +269,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Type `Fictional team view` in **Name**.
-  - **Expected:** The name shows in **Name**, with no message under it.
+  - **Expected:**
+    - The name shows in **Name**.
+    - No message is under it.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Save view** in the dialog.
@@ -272,7 +282,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 6.** Open the Views menu.
   - **Expected:**
-    - **Fictional team view** is listed under **My views**, with a check mark.
+    - **Fictional team view** is listed under **My views**.
+    - It has a check mark.
     - **Fictional team view** is listed under **Shared views**.
   - **Notes:**
 
@@ -317,7 +328,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 7.** Choose **Light** in the Appearance menu.
-  - **Expected:** Fathom turns light.
+  - **Expected:** The page is light.
   - **Notes:**
 
 ### VIEW-06: The Menu and Dialog Work by Keyboard
@@ -339,7 +350,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Press the Down arrow key several times.
-  - **Expected:** Focus moves through the views and skips the headings **My views** and **Shared views**.
+  - **Expected:**
+    - Focus moves through the views.
+    - Focus skips the headings **My views** and **Shared views**.
   - **Notes:**
 
 - [ ] **Step 5.** Press Esc.
@@ -347,7 +360,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 6.** Open the Views menu and select **Save view…**.
-  - **Expected:** The dialog opens with focus in **Name**.
+  - **Expected:**
+    - The dialog opens.
+    - Focus is in **Name**.
   - **Notes:**
 
 - [ ] **Step 7.** Press Tab.
@@ -383,7 +398,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Open the Views menu.
-  - **Expected:** **Columns moved** is listed, with an × at its right.
+  - **Expected:**
+    - **Columns moved** is listed.
+    - An × is at its right.
   - **Notes:**
 
 - [ ] **Step 4.** Press Esc to close the menu.
@@ -421,7 +438,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Type `Fictional moved columns` in **Name**.
-  - **Expected:** The name shows in **Name**, with no message under it.
+  - **Expected:**
+    - The name shows in **Name**.
+    - No message is under it.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Save view** in the dialog.

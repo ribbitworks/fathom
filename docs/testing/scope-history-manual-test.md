@@ -47,7 +47,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Select **Show details** in the **⋯** menu of **Offline Sync**.
   - **Expected:**
-    - The side panel's sections are as [Features](features-manual-test.md) checks them.
+    - Under the heading **Details**, the rows read, from the top:
+      - Name
+      - Status
+      - Description
+      - Notes
+    - Under the heading **Customers and commitments**, the rows read, from the top:
+      - Customers
+      - Projects
+      - Proposals
+    - Under the heading **Planning**, the rows read, from the top:
+      - Needed by
+      - Effort
+      - Release
+      - Target cycle
+      - Feature team
+    - Under the heading **Columns**, the rows read, from the top:
+      - Complexity
     - **Customers** lists these links, each on a line of its own, from the top:
       - Bluefin Harbour Authority
       - Cedar Valley Clinics
@@ -74,7 +90,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 6.** Close the **Notes for Offline Sync** panel.
-  - **Expected:** The **Notes for Offline Sync** panel closes, and the side panel stays open.
+  - **Expected:**
+    - The **Notes for Offline Sync** panel closes.
+    - The side panel stays open.
   - **Notes:**
 
 - [ ] **Step 7.** Choose **Dark** in the Appearance menu.
@@ -173,7 +191,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 5.** Select **Cancel**.
   - **Expected:**
     - The dialog closes.
-    - The **Proposals** cell of **Offline Sync** still names both proposals.
+    - The **Proposals** cell of **Offline Sync** still names **Harbour Cranes Upgrade** and **Clinic Scheduling Pilot**.
   - **Notes:**
 
 - [ ] **Step 6.** Select the **Proposals** cell of **Offline Sync**.
@@ -181,7 +199,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 7.** Press Enter.
-  - **Expected:** The list of proposals opens, with both picked.
+  - **Expected:**
+    - The list of proposals opens.
+    - **PR-101 Harbour Cranes Upgrade** and **PR-102 Clinic Scheduling Pilot** are picked.
   - **Notes:**
 
 - [ ] **Step 8.** Unpick **PR-101 Harbour Cranes Upgrade**.
@@ -203,7 +223,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 11.** Select **Discard**.
   - **Expected:**
     - Both dialogs close.
-    - The **Proposals** cell of **Offline Sync** still names both proposals.
+    - The **Proposals** cell of **Offline Sync** still names **Harbour Cranes Upgrade** and **Clinic Scheduling Pilot**.
     - The keyboard focus is back on the **Proposals** cell of **Offline Sync**.
   - **Notes:**
 
@@ -212,7 +232,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 13.** Press Enter.
-  - **Expected:** The list of proposals opens, with both picked.
+  - **Expected:**
+    - The list of proposals opens.
+    - **PR-101 Harbour Cranes Upgrade** and **PR-102 Clinic Scheduling Pilot** are picked.
   - **Notes:**
 
 - [ ] **Step 14.** Unpick **PR-101 Harbour Cranes Upgrade**.
@@ -248,7 +270,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **Offline Sync**
     - The first row's next line reads **Removed** and today's date, in grey.
     - The first row's last line reads **Reason: Customer chose another supplier**.
-    - A **Change reason** button, with an outline, is at the first row's right.
+    - A **Change reason** button is at the first row's right.
+    - The button has an outline.
     - The second row reads **Added** and a date, in grey.
     - The third row reads **Added** and a date, in grey.
     - No row is struck through.
@@ -362,7 +385,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Projects** page open, **Proposals** tab chosen.
 
 - [ ] **Step 1.** In the **⋯** menu of **Harbour Cranes Upgrade**, select **Approve…**.
-  - **Expected:** A dialog opens, with an **Approve** button.
+  - **Expected:**
+    - A dialog opens.
+    - It has an **Approve** button.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Approve** in the dialog.
