@@ -21,10 +21,10 @@
 import { changes, type Database, drafts, lists } from "@fathom/db";
 import type { FictionalList, FictionalOrganization } from "@fathom/fixtures";
 import { createDataAccess } from "@fathom/server/data";
-import { and, eq, gt, inArray, max, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, sql } from "drizzle-orm";
 import type { Actor } from "@fathom/server/access";
 import { accountDomain } from "./accounts.ts";
-import { actorOf, skilledFor } from "./drafts.ts";
+import { actorOf, addedAt, skilledFor } from "./drafts.ts";
 
 const editorEmail = `engineering.operations.manager@${accountDomain}`;
 const secondEditorEmail = `engineering.operations.manager.2@${accountDomain}`;
@@ -77,16 +77,8 @@ async function draftedBefore(
   name = draftedListName,
 ): Promise<boolean> {
   const [first] = organization.lists as [FictionalList];
-  const [seeded] = await database
-    .select({ id: max(changes.id) })
-    .from(changes)
-    .where(
-      and(
-        eq(changes.recordId, first.id),
-        eq(changes.action, "created"),
-        eq(changes.draft, false),
-      ),
-    );
+  // The lists are always added before their drafts.
+  const seeded = Number(await addedAt(database, first.id));
   const found = await database
     .select({ one: sql`1` })
     .from(changes)
@@ -96,8 +88,7 @@ async function draftedBefore(
         eq(changes.field, "name"),
         eq(changes.draft, true),
         sql`${changes.newValue} #>> '{}' = ${name}`,
-        // The lists are always added before their drafts.
-        gt(changes.id, (seeded as { id: number }).id),
+        gt(changes.id, seeded),
       ),
     )
     .limit(1);

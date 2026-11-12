@@ -23,7 +23,7 @@ import {
   valueField,
 } from "@fathom/db";
 import type { FictionalOrganization, FictionalPerson } from "@fathom/fixtures";
-import { addMonths, lastDayOfMonth } from "@fathom/shared";
+import { addMonths, draftingPermissions, lastDayOfMonth } from "@fathom/shared";
 import type { Actor } from "@fathom/server/access";
 import { createDataAccess } from "@fathom/server/data";
 import { and, eq, gt, inArray, isNull, max, ne, or, sql } from "drizzle-orm";
@@ -115,25 +115,33 @@ async function discard(database: Database, ids: readonly string[]) {
   await data.unpublished.publish(editor);
 }
 
-// The last change that added the fictional people, so drafts made before it, since removed, are not
-// taken for the seed's.
+// The last change that added a record as live, by its id, or null when none has: what the seed
+// added since, it made anew, so a draft made before it, since removed, is not taken for the seed's.
+export async function addedAt(
+  database: Database,
+  recordId: string,
+): Promise<number | null> {
+  const [added] = await database
+    .select({ id: max(changes.id) })
+    .from(changes)
+    .where(
+      and(
+        eq(changes.recordId, recordId),
+        eq(changes.action, "created"),
+        eq(changes.draft, false),
+      ),
+    );
+  return added?.id ?? null;
+}
+
+// The last change that added the fictional people, or, with none added yet, the start.
 async function seededAt(
   database: Database,
   organization: FictionalOrganization,
 ): Promise<number> {
   const [first] = organization.people as [FictionalPerson];
-  const [seeded] = await database
-    .select({ id: max(changes.id) })
-    .from(changes)
-    .where(
-      and(
-        eq(changes.recordId, first.id),
-        eq(changes.action, "created"),
-        eq(changes.draft, false),
-      ),
-    );
-  // No people seeded yet reads as from the start.
-  return Number(seeded?.id);
+  // None added yet reads as from the start.
+  return Number(await addedAt(database, first.id));
 }
 
 // What the seed's drafts already did since the fictional people were last added: the seeded people
@@ -450,10 +458,7 @@ export async function unseedUnpublished(
       ({ email }) => email === account.email,
     ) as (typeof personaAccounts)[number];
     const persona = personaActor(account, role);
-    if (
-      persona.permissions.includes("people:edit") ||
-      persona.permissions.includes("configuration:edit")
-    ) {
+    if (draftingPermissions.some((one) => persona.permissions.includes(one))) {
       discarded += await data.unpublished.discard(persona);
     }
   }

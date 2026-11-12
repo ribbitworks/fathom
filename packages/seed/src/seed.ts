@@ -9,8 +9,9 @@
 // history. Seeding twice adds nothing more, and removing takes away only what seeding added,
 // keeping a seeded column, list, release stream, project, proposal, customer, or person that
 // something added by hand still uses, and deactivating the accounts. Drafts made by the personas,
-// from ./drafts.ts, are added once the accounts are, and discarded before the rest is removed,
-// unpublished changes first. A development-only package, never included in the runtime image.
+// from ./drafts.ts, ./hires.ts, ./list-drafts.ts, and ./plan-drafts.ts, are added once the accounts
+// are, and discarded before the rest is removed, unpublished changes first. A development-only
+// package, never included in the runtime image.
 // Usage: node src/seed.ts seed | unseed | accounts, where accounts adds only the personas'
 // accounts, with the FATHOM_DB_* settings for the application role, and FATHOM_PUBLIC_URL and
 // FATHOM_AUTH_SECRET_FILE, as the account command reads. Seeding also needs
@@ -71,6 +72,11 @@ import {
 import { defaultPasswordSettings, passwordLength } from "@fathom/shared";
 import { seedAllocations, unseedAllocations } from "./allocations.ts";
 import { seedFeatures, unseedFeatures } from "./features.ts";
+import {
+  seedPlanDrafts,
+  seedUnpublishedPlan,
+  unseedPlanDrafts,
+} from "./plan-drafts.ts";
 import { seedProjects, unseedProjects } from "./projects.ts";
 import {
   filledIn,
@@ -784,9 +790,19 @@ export async function seedCommand(
       if (await seedListDrafts(database, organization)) {
         console.log("Added drafts of lists and columns made by the personas");
       }
+      if (await seedPlanDrafts(database, organization)) {
+        console.log(
+          "Added drafts of releases, projects, features, and feature teams made by the personas",
+        );
+      }
       // After every published draft, so publishing them leaves these unpublished.
       const people = await seedUnpublishedPeople(database, organization);
-      if ((await seedUnpublishedList(database, organization)) || people) {
+      const plan = await seedUnpublishedPlan(database, organization);
+      if (
+        (await seedUnpublishedList(database, organization)) ||
+        people ||
+        plan
+      ) {
         console.log("Added unpublished changes made by the personas");
       }
     } else {
@@ -814,6 +830,12 @@ export async function seedCommand(
       if (discardedLists > 0) {
         console.log(
           `Discarded ${String(discardedLists)} drafts of lists and columns made by the personas`,
+        );
+      }
+      const discardedPlan = await unseedPlanDrafts(database, organization);
+      if (discardedPlan > 0) {
+        console.log(
+          `Discarded ${String(discardedPlan)} drafts of releases, projects, features, and feature teams`,
         );
       }
       // Allocations before the people, planned hires, and features they name, features before the

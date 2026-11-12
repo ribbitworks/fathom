@@ -203,7 +203,7 @@ export const streamId = (stream: { name: string }) =>
   fictionalId(`release-stream:${stream.name}`);
 const patternId = (stream: { name: string }, key: string) =>
   fictionalId(`cycle-pattern:${stream.name}:${key}`);
-const releaseId = (stream: { name: string }, key: string) =>
+export const releaseId = (stream: { name: string }, key: string) =>
   fictionalId(`release:${stream.name}:${key}`);
 
 // Adds each stream that is not already there, as one seeded before or one of the same name added by

@@ -652,7 +652,21 @@ describe("the seed command", () => {
   it("seeds, says when it already has, and unseeds", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     expect(await seedCommand(["seed"], environment())).toBe(0);
-    const made = await connection.select().from(drafts);
+    // The drafts of the plan and feature teams, which plan-drafts.test.ts tries, are left out.
+    const peopleAndLists = [
+      "person",
+      "planned-hire",
+      "list",
+      "list-item",
+      "choice-order",
+      "field",
+    ];
+    const ofPeopleAndLists = () =>
+      connection
+        .select()
+        .from(drafts)
+        .where(inArray(drafts.recordType, peopleAndLists));
+    const made = await ofPeopleAndLists();
     // Of people, then of lists: a person moved to another manager, a team named, a site renamed and
     // described by two people, a role retired, Roles on the team renamed, Languages retired, the
     // Sites, Levels, and Positions orders, and a Positions description; the Skills list, its two
@@ -692,6 +706,7 @@ describe("the seed command", () => {
           })
           .from(unpublishedDrafts)
           .innerJoin(users, eq(users.id, unpublishedDrafts.userId))
+          .where(inArray(unpublishedDrafts.recordType, peopleAndLists))
       )
         .map(({ recordType, email }) => `${recordType} ${email}`)
         .sort();
@@ -711,7 +726,7 @@ describe("the seed command", () => {
     );
     expect(await seedCommand(["seed"], environment())).toBe(0);
     expect(await totalOf(people)).toBe(150);
-    expect(await connection.select().from(drafts)).toHaveLength(30);
+    expect(await ofPeopleAndLists()).toHaveLength(30);
     const reportingDrafts = made.filter(
       ({ recordType, fields }) =>
         recordType === "person" &&
@@ -779,7 +794,7 @@ describe("the seed command", () => {
     expect(await seedCommand(["seed"], environment())).toBe(0);
     // The two rejected drafts of people, the one being changed, the one given a skill, the one made
     // by hand, the fourteen of lists, the four of columns, and the three of planned hires.
-    expect(await connection.select().from(drafts)).toHaveLength(26);
+    expect(await ofPeopleAndLists()).toHaveLength(26);
     expect(await holders()).toHaveLength(4);
     const levels = fictionalOrganization({ size: 1 }).lists[1];
     await connection.insert(listItems).values({
@@ -825,13 +840,15 @@ describe("the seed command", () => {
       "Added drafts made by the personas",
       "Added drafts of planned hires made by the personas",
       "Added drafts of lists and columns made by the personas",
+      "Added drafts of releases, projects, features, and feature teams made by the personas",
       "Added unpublished changes made by the personas",
       "The fictional data is already in the database",
       "The fictional data is already in the database",
-      "Discarded 5 unpublished changes made by the personas",
+      "Discarded 8 unpublished changes made by the personas",
       "Discarded 3 drafts of planned hires",
       "Discarded 5 drafts made by the personas",
       "Discarded 16 drafts of lists and columns made by the personas",
+      "Discarded 15 drafts of releases, projects, features, and feature teams",
       "Removed the fictional data",
       "Kept: The Levels list, which has choices added by hand",
       ...addresses.map((email) => `Deactivated the account ${email}`),
