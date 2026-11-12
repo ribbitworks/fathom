@@ -30,6 +30,8 @@ import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
+  generalApprover,
+  generalReader,
   type Method,
   startTestApp,
   type TestApp,
@@ -192,7 +194,7 @@ describe("drafts as people see them", () => {
     const removed = await livePerson();
     await saved("DELETE", `/api/people/${removed.id}`);
 
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     expect((await seen(planner.cookie, added.id))?.draft).toMatchObject({
       action: "created",
       changed: ["preferredName", "employeeId", "positionId", field.id],
@@ -227,7 +229,7 @@ describe("drafts as people see them", () => {
     await saved("PATCH", `/api/people/${person.id}`, {
       endDate: "2031-01-01",
     });
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     const manager = await test.signedIn("engineering-manager");
     expect((await seen(planner.cookie, person.id))?.draft).toBeUndefined();
     expect((await seen(manager.cookie, person.id))?.draft).toMatchObject({
@@ -297,7 +299,7 @@ describe("drafts as people see them", () => {
     await saved("PATCH", `/api/people/${leaving.id}`, {
       endDate: "2021-01-01",
     });
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     expect(await seen(planner.cookie, starting.id)).toBeUndefined();
     expect(await seen(planner.cookie, future.id)).toBeUndefined();
     // A draft changing only Personal dates shows no draft before it is approved.
@@ -554,7 +556,7 @@ describe("approving and rejecting", () => {
     // draft at all, so asking reveals nothing.
     const roles: [Role | Permission[], number][] = [
       ["workforce-administrator", 403],
-      ["project-manager", 404],
+      [generalApprover, 404],
       [["people:approve", "people:view"], 404],
     ];
     for (const [held, status] of roles) {
@@ -1207,7 +1209,7 @@ describe("who last changed a draft", () => {
     await send(other.cookie, "PATCH", `/api/people/${person.id}`, {
       endDate: "2033-01-01",
     });
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     expect((await seen(planner.cookie, person.id))?.draft?.madeBy).toBe(
       "Fictional User 1",
     );
@@ -1243,7 +1245,7 @@ describe("who last changed a draft", () => {
     await test.connection
       .insert(userRoles)
       .values({ userId: maker.id, roleId: editingId });
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     await send(maker.cookie, "PATCH", `/api/people/${person.id}`, {
       preferredName: unique("Fictional"),
     });

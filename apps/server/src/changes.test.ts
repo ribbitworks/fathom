@@ -3,7 +3,7 @@
 // Tests for the change history, against a PostgreSQL server of its own: each change set saved, put
 // in terms of names rather than identifiers, newest first and older ones on request, holding only
 // the changes each reader's roles let them see, with Personal and Confidential changes recorded in
-// the access history. Resource Planners stand for readers who see people's General details only.
+// the access history. Readers with generalReader's permissions see people's General details only.
 
 import { accessHistory, recordChanges } from "@fathom/db";
 import {
@@ -18,7 +18,12 @@ import { and, eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
-import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
+import {
+  generalReader,
+  startTestApp,
+  type TestApp,
+  testPosition,
+} from "./test-app.ts";
 
 let test: TestApp;
 let admin: { id: string; cookie: string };
@@ -279,14 +284,13 @@ describe("the change history", () => {
     const sets = [name, date, choice, list];
     // Whether each role sees the General, Personal, and Confidential changes, and the configuration.
     const expected: [Role, boolean[]][] = [
-      ["product-manager", [true, false, false, false]],
+      ["product-manager", [true, false, false, true]],
       ["feature-lead", [true, false, false, false]],
-      ["project-manager", [true, false, false, true]],
-      ["engineering-manager", [true, true, false, false]],
+      ["project-manager", [true, true, false, true]],
+      ["engineering-manager", [true, true, false, true]],
       ["engineering-director", [true, true, true, true]],
       ["workforce-administrator", [true, true, true, true]],
       ["executive", [true, true, true, true]],
-      ["resource-planner", [true, false, false, false]],
     ];
     for (const [role, sees] of expected) {
       const { cookie } = await test.signedIn(role);
@@ -337,7 +341,7 @@ describe("the change history", () => {
       "Kappa Current",
       "Kappa Former",
     ]);
-    expect(await named("resource-planner")).toEqual(["Kappa Current"]);
+    expect(await named("feature-lead")).toEqual(["Kappa Current"]);
   });
 
   it("finds no one who has not started for readers who do not see Personal details, even someone never added", async () => {
@@ -364,7 +368,7 @@ describe("the change history", () => {
     });
     const [discardedId] = drafted.ids as string[];
     await send("DELETE", `/api/people/${String(discardedId)}/draft`);
-    const planner = (await test.signedIn("resource-planner")).cookie;
+    const planner = (await test.signedIn(generalReader)).cookie;
 
     // Then neither is found by a reader who does not see Personal details
     expect((await search(planner, "Lambda")).entries).toEqual([]);
@@ -388,7 +392,7 @@ describe("the change history", () => {
     });
     const [discardedId] = drafted.ids as string[];
     await send("DELETE", `/api/people/${String(discardedId)}/draft`);
-    const planner = (await test.signedIn("resource-planner")).cookie;
+    const planner = (await test.signedIn(generalReader)).cookie;
 
     // Then they are not found by a reader who does not see Personal details
     expect((await search(planner, "Mu Former")).entries).toEqual([]);
@@ -407,7 +411,7 @@ describe("the change history", () => {
     });
     await approve(made.personId);
     await send("DELETE", `/api/people/columns/${made.field.id}`);
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     expect(await entryFor(planner.cookie, chosen.changeSetId)).toBeUndefined();
     const leader = await test.signedIn("executive");
     expect(
@@ -434,7 +438,7 @@ describe("the change history", () => {
       employeeId: "E-Gamma-2",
       values: { [made.field.id]: [made.south.id] },
     });
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     const manager = await test.signedIn("engineering-manager");
     const project = await test.signedIn("product-manager");
 
@@ -475,7 +479,7 @@ describe("the change history", () => {
     const chosen = await send("PATCH", `/api/people/${made.personId}`, {
       values: { [made.field.id]: [made.south.id] },
     });
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     expect(await entryFor(planner.cookie, chosen.changeSetId)).toBeDefined();
     await send("PUT", `/api/lists/${made.list.id}/class`, {
       dataClass: "confidential",
@@ -501,7 +505,7 @@ describe("the change history", () => {
     expect(
       (await entryFor(manager.cookie, changeSetId))?.records[0],
     ).toMatchObject({ kind: "saved-view", name: "Leaving soon" });
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     expect(await entryFor(planner.cookie, changeSetId)).toBeUndefined();
     // Seeing a tier is enough; a reader need not be able to edit it.
     const reader = await test.signedIn("engineering-manager");
@@ -551,7 +555,7 @@ describe("the change history", () => {
         },
       )
     ).json<{ changeSetId: string }>();
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     expect(await entryFor(planner.cookie, renamed.changeSetId)).toBeDefined();
     await send("PUT", `/api/lists/${made.list.id}/class`, {
       dataClass: "confidential",
@@ -777,7 +781,7 @@ describe("the change history", () => {
             eq(accessHistory.action, "personal-viewed"),
           ),
         );
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     await history(planner.cookie);
     expect(await viewed(planner.id)).toHaveLength(0);
     const manager = await test.signedIn("engineering-manager");
@@ -790,7 +794,7 @@ describe("the change history", () => {
   });
 
   it("shows the latest change sets, then older ones on request", async () => {
-    const reader = await test.signedIn("resource-planner");
+    const reader = await test.signedIn(generalReader);
     const personId = randomUUID();
     // More change sets than are shown at once, made directly for speed.
     for (let index = 0; index < 205; index += 1) {
@@ -894,7 +898,7 @@ describe("the change history", () => {
             eq(accessHistory.action, "personal-viewed"),
           ),
         );
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     // The planner's searches work, finding what they may see.
     expect(
       (await search(planner.cookie, "Omicron Person")).entries.length,
@@ -941,7 +945,7 @@ describe("the change history", () => {
     await send("PUT", `/api/lists/${made.list.id}/class`, {
       dataClass: "confidential",
     });
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     const { entries } = await history(planner.cookie);
     expect(entries.length).toBeGreaterThan(0);
     // Only adding the person, whose General details the planner sees, and none of the hidden changes.
@@ -979,7 +983,7 @@ describe("the change history", () => {
 
   // Kept last but for the refusals, since the change sets it adds fill every page after it.
   it("stops a search after reading as many change sets as one request may, to read on from there", async () => {
-    const reader = await test.signedIn("resource-planner");
+    const reader = await test.signedIn(generalReader);
     // Enough change sets, made in one statement for speed, that none of them match.
     await test.connection.execute(sql`
       WITH made AS (
@@ -1004,7 +1008,7 @@ describe("the change history", () => {
   });
 
   it("refuses a search longer than a table's", async () => {
-    const reader = await test.signedIn("resource-planner");
+    const reader = await test.signedIn(generalReader);
     const response = await test.request(
       reader.cookie,
       "GET",
@@ -1014,7 +1018,7 @@ describe("the change history", () => {
   });
 
   it("refuses a page named by something other than a change set", async () => {
-    const reader = await test.signedIn("resource-planner");
+    const reader = await test.signedIn(generalReader);
     const response = await test.request(
       reader.cookie,
       "GET",

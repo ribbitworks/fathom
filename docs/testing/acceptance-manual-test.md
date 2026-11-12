@@ -140,9 +140,9 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 #### ACC-02: Someone Who Has Not Started Is Listed Only for Those Who See Personal Details
 
-**Account:** Project Manager, `project.manager@fathom.test`, the same as the account ACC-01 ended with. Step 2 signs in as another account.
+**Account:** Product Manager, `product.manager@fathom.test`, changed from the account ACC-01 ended with. Step 2 signs in as another account.
 
-**Preconditions:** **People** page open.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Search for `Chatura Abbott`.
   - **Expected:**
@@ -2100,7 +2100,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:**
     - A dialog titled **Copy Team Member** opens.
     - The name reads **Copy of Team Member**.
-    - **View** is ticked on **Plan**, **Allocations** and **Org chart**.
+    - **View** is ticked on **Plan**, **Features and releases**, **Allocations**, **People** and **Feature teams**.
     - Its main button is **Create role**.
   - **Notes:**
 
@@ -2108,8 +2108,8 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The name reads **Fictional Reader**.
   - **Notes:**
 
-- [ ] **Step 3.** Tick **View** on **Change history**.
-  - **Expected:** **View** on **Change history** is ticked.
+- [ ] **Step 3.** Tick **View** on **Configuration**.
+  - **Expected:** **View** on **Configuration** is ticked.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Create role**.
@@ -2141,7 +2141,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 10.** In the second browser, reload the page.
-  - **Expected:** The left-hand menu shows **Change history** in the **History** section.
+  - **Expected:** The left-hand menu shows **Lists** in the **People** section.
   - **Notes:**
 
 #### ACC-39: Restore Template Brings Back a Starting Role

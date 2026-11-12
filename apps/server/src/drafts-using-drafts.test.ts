@@ -19,6 +19,7 @@ import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { listTier, type ListsState } from "./data/lists.ts";
 import {
+  generalReader,
   startTestApp,
   type TestApp,
   testPosition,
@@ -34,7 +35,7 @@ beforeAll(async () => {
   test = await startTestApp();
   editor = await test.signedIn("workforce-administrator");
   approver = await test.signedIn("engineering-director");
-  planner = await test.signedIn("resource-planner");
+  planner = await test.signedIn(generalReader);
 });
 
 afterAll(async () => {

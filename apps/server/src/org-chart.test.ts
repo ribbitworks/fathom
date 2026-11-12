@@ -25,6 +25,8 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { rolesGranting } from "./access.ts";
 import {
+  generalApprover,
+  generalReader,
   otherTestPosition,
   startTestApp,
   type TestApp,
@@ -326,8 +328,7 @@ describe("the org chart on a chosen day", () => {
     ["team-member", 403],
     ["product-manager", 403],
     ["feature-lead", 403],
-    ["project-manager", 403],
-    ["resource-planner", 403],
+    ["project-manager", 200],
   ] as const)("answers %s with %i", async (role, status) => {
     const reader = await test.signedIn(role);
 
@@ -379,7 +380,7 @@ describe("the org chart on a chosen day", () => {
   });
 
   it("is refused to readers who do not see Personal details", async () => {
-    const reader = await test.signedIn("resource-planner");
+    const reader = await test.signedIn(generalReader);
 
     const response = await test.request(
       reader.cookie,
@@ -491,7 +492,7 @@ describe("the org chart", () => {
       unpublished: false,
     });
     expect(await personalViews(executive.id)).toHaveLength(1);
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     const shown = (await chart(planner.cookie)).get(report);
     expect(shown?.managerId).toBe(first);
     expect(shown).not.toHaveProperty("draft");
@@ -504,7 +505,7 @@ describe("the org chart", () => {
     const renamed = unique("Fictional Team");
     await changed(named, { teamName: null });
     await changed(unnamed, { teamName: renamed });
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     const shown = await chart(planner.cookie);
     expect(shown.get(named)?.draft).toEqual({
       teamName: null,
@@ -707,7 +708,7 @@ describe("the org chart", () => {
         .where(eq(lists.builtIn, "positions"));
     await setVisibility("personal");
     try {
-      const planner = await test.signedIn("resource-planner");
+      const planner = await test.signedIn(generalReader);
       const shown = await drafted(planner.cookie);
       expect(shown.get(changing)?.position).toBeNull();
       expect(shown.get(addedId)?.position).toBeNull();
@@ -743,7 +744,7 @@ describe("the org chart", () => {
     const forExecutive = await drafted(executive.cookie);
     expect(forExecutive.get(report)?.managerId).toBe(second);
     expect(forExecutive.has(ending)).toBe(false);
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     const forPlanner = await drafted(planner.cookie);
     expect(forPlanner.get(report)?.managerId).toBe(first);
     expect(forPlanner.has(ending)).toBe(true);
@@ -767,7 +768,7 @@ describe("the org chart", () => {
 
   it("draws the whole chain for anyone else, without saying who has left", async () => {
     const { top, middle, report } = await leftChain();
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     const shown = await chart(planner.cookie);
     expect(shown.get(report)?.managerId).toBe(middle);
     expect(shown.get(middle)?.managerId).toBe(top);
@@ -1026,7 +1027,7 @@ describe("planned hires on the chart", () => {
 
     // Then a reader who sees the hiring plan but not Personal details sees the planned manager
     // still, its hire at the top rather than under the starter, and never the starter
-    const manager = await test.signedIn("project-manager");
+    const manager = await test.signedIn(generalApprover);
     const asDrafted = await drafted(manager.cookie);
     expect(asDrafted.has(planned)).toBe(true);
     expect(asDrafted.get(report)?.managerId).toBeNull();
@@ -1067,7 +1068,7 @@ describe("planned hires on the chart", () => {
       /^Fictional Renamed Hire/,
     );
     expect(asDrafted.has(removed)).toBe(false);
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     expect((await chart(planner.cookie)).get(moving)?.draft).toBeUndefined();
     const plannerDrafted = await drafted(planner.cookie);
     expect(plannerDrafted.get(moving)?.managerId).toBe(first);
@@ -1261,7 +1262,7 @@ describe("a team's colour", () => {
 
   it("is changed only by those whose roles let them edit people, such as Engineering Directors", async () => {
     const manager = await person({ teamName: unique("Fictional Team") });
-    const reader = await test.signedIn("resource-planner");
+    const reader = await test.signedIn(generalReader);
     expect(
       (await colour(manager, { colour: "teal" }, reader.cookie)).statusCode,
     ).toBe(403);

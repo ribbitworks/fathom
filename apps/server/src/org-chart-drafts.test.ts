@@ -16,7 +16,12 @@ import {
   it,
   vi,
 } from "vitest";
-import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
+import {
+  generalReader,
+  startTestApp,
+  type TestApp,
+  testPosition,
+} from "./test-app.ts";
 
 // The server takes today's date from the clock, so the tests fix it, to give the same days on every
 // run.
@@ -170,7 +175,7 @@ describe("drafts on the org chart", () => {
     });
     expect(added.statusCode, added.body).toBe(201);
     const id = String(added.json<{ ids: string[] }>().ids[0]);
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     expect((await chart(planner.cookie)).drafted.has(id)).toBe(false);
   });
 

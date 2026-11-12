@@ -15,7 +15,12 @@ import {
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
+import {
+  generalApprover,
+  startTestApp,
+  type TestApp,
+  testPosition,
+} from "./test-app.ts";
 
 interface User {
   id: string;
@@ -245,10 +250,10 @@ describe("filling a planned hire with a new person", () => {
   it("names the person a draft fills a hire with only to those who see Personal details", async () => {
     const id = await hire();
     await filled(id, newPerson());
-    const projectManager = await test.signedIn("project-manager");
+    const withoutPersonal = await test.signedIn(generalApprover);
 
     const { hires } = await ok<{ hires: Hire[] }>(
-      await send(projectManager, "GET", "/api/planned-hires"),
+      await send(withoutPersonal, "GET", "/api/planned-hires"),
     );
 
     expect(hires.find((one) => one.id === id)?.filler).toBeNull();
@@ -799,7 +804,7 @@ describe("a fill's draft", () => {
           record.kind === "planned-hire" ? record.fields : [],
         )
         .find((one) => one.field === field)?.newValue;
-    const projectManager = await test.signedIn("project-manager");
+    const withoutPersonal = await test.signedIn(generalApprover);
 
     // Then the editor sees the person, who fills the hire and manages its report
     const edited = await recordsSeen(editor);
@@ -807,7 +812,7 @@ describe("a fill's draft", () => {
     expect(value(edited, "filledBy")).toBe(body.preferredName);
     expect(value(edited, "managerId")).toBe(body.preferredName);
     // And the Project Manager sees the hires changed, but nobody named
-    const seen = await recordsSeen(projectManager);
+    const seen = await recordsSeen(withoutPersonal);
     expect(seen.some(({ name }) => name === body.preferredName)).toBe(false);
     expect(value(seen, "filledBy")).toBeNull();
     expect(value(seen, "managerId")).toBeNull();
@@ -825,19 +830,19 @@ describe("a fill's draft", () => {
         ?.records.flatMap(({ fields }) => fields)
         .find(({ field }) => field === "filledBy")?.newValue;
     };
-    const projectManager = await test.signedIn("project-manager");
+    const withoutPersonal = await test.signedIn(generalApprover);
 
     expect(await filler(editor)).not.toBeNull();
-    expect(await filler(projectManager)).toBeNull();
+    expect(await filler(withoutPersonal)).toBeNull();
   });
 
   it("is not rejected by an Approver who does not see Personal details", async () => {
     const id = await hire();
     await filled(id, newPerson());
-    const projectManager = await test.signedIn("project-manager");
+    const withoutPersonal = await test.signedIn(generalApprover);
 
     const response = await send(
-      projectManager,
+      withoutPersonal,
       "POST",
       "/api/drafts/rejection",
       {
@@ -877,9 +882,9 @@ describe("a fill's draft", () => {
   it("needs an Approver who sees start and end dates, since it holds a start date or a reporting line", async () => {
     const id = await hire();
     await filled(id, newPerson());
-    const projectManager = await test.signedIn("project-manager");
+    const withoutPersonal = await test.signedIn(generalApprover);
 
-    const response = await approve({ plannedHires: [id] }, projectManager);
+    const response = await approve({ plannedHires: [id] }, withoutPersonal);
 
     expect(response.statusCode).toBe(403);
     expect(refusal(response)).toBe(

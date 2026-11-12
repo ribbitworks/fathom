@@ -114,8 +114,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The search box is empty, every account shows again, and the **×** is gone.
   - **Notes:**
 
-- [ ] **Step 8.** Type `planner`.
-  - **Expected:** The letters go straight into the search box, and only the **Resource Planner** row shows.
+- [ ] **Step 8.** Type `executive`.
+  - **Expected:** The letters go straight into the search box, and only the **Executive** row shows.
   - **Notes:**
 
 - [ ] **Step 9.** Press Esc.

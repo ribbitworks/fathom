@@ -68,7 +68,7 @@ const draft = (fields: Partial<AllocationDraft> = {}): AllocationDraft => ({
   action: "changed",
   months: { "2027-03": 75 },
   state: "waiting",
-  madeBy: "Resource Planner",
+  madeBy: "Engineering Manager",
   madeAt: null,
   ...fields,
 });

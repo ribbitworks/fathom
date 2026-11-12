@@ -25,7 +25,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 - **Engineering Manager:** `engineering.manager@fathom.test`
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
-- **Resource Planner:** `resource.planner@fathom.test`
+- **Feature Lead:** `feature.lead@fathom.test`
 
 ## Common Procedures
 
@@ -232,7 +232,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### ORG-08: Only Readers Who See Personal Details Are Told a Manager Has Left
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, changed from ORG-07.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ORG-07.
 
 **Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
 
@@ -537,9 +537,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### ORG-15: Readers Who Do Not See Personal Details See No Drafted Manager
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, changed from ORG-14.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ORG-14.
 
-**Preconditions:** Signed in with this account, with **Resource Planner** on the account button at the top right. **Org chart** page open from the left-hand menu.
+**Preconditions:** Signed in with this account, with **Feature Lead** on the account button at the top right. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** On the card for **Viktoria Holmberg**, read the column under it.
   - **Expected:**

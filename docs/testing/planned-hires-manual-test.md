@@ -11,7 +11,7 @@ last_updated: "2026-11-11"
 
 ## Scope
 
-Verifies planned hires shown as rows of the People table: how their rows look beside people's in light and dark mode, their names, the **State** column, their values in added columns, a column switched off for them, people who have left, saving a view of planned hires alone, a planned manager whom other planned hires report to, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, what a Resource Planner sees, and filling a hire from its details panel with a new or an existing person. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies planned hires shown as rows of the People table: how their rows look beside people's in light and dark mode, their names, the **State** column, their values in added columns, a column switched off for them, people who have left, saving a view of planned hires alone, a planned manager whom other planned hires report to, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, what a Feature Lead sees, and filling a hire from its details panel with a new or an existing person. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -25,7 +25,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
 - **Engineering Director:** `engineering.director@fathom.test`
-- **Resource Planner:** `resource.planner@fathom.test`
+- **Feature Lead:** `feature.lead@fathom.test`
 
 ## Common Procedures
 
@@ -202,7 +202,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Afterwards:** Run Restore the Seed Data.
 
-### HIRE-06: A Planned Hire Is Added, Approved, and Seen by a Resource Planner
+### HIRE-06: A Planned Hire Is Added, Approved, and Seen by a Feature Lead
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-05. Steps 8 and 14 sign in as other accounts.
 
@@ -267,8 +267,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A notice reads **Approved 1 draft.**
   - **Notes:**
 
-- [ ] **Step 14.** Sign in as the Resource Planner, `resource.planner@fathom.test`, changing account.
-  - **Expected:** The top bar's right end reads **Resource Planner**.
+- [ ] **Step 14.** Sign in as the Feature Lead, `feature.lead@fathom.test`, changing account.
+  - **Expected:** The top bar's right end reads **Feature Lead**.
   - **Notes:**
 
 - [ ] **Step 15.** Select the **People** page in the left-hand menu.
@@ -284,9 +284,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Afterwards:** Run Restore the Seed Data.
 
-### HIRE-07: A Resource Planner Sees Placeholders Only
+### HIRE-07: A Feature Lead Sees Placeholders Only
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, the same as the account HIRE-06 ended with.
+**Account:** Feature Lead, `feature.lead@fathom.test`, the same as the account HIRE-06 ended with.
 
 **Preconditions:** Signed in with this account. **People** page open.
 
@@ -459,8 +459,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The picker closes.
   - **Notes:**
 
-- [ ] **Step 6.** Sign in as the Resource Planner, `resource.planner@fathom.test`, changing account.
-  - **Expected:** The top bar's right end reads **Resource Planner**.
+- [ ] **Step 6.** Sign in as the Feature Lead, `feature.lead@fathom.test`, changing account.
+  - **Expected:** The top bar's right end reads **Feature Lead**.
   - **Notes:**
 
 - [ ] **Step 7.** Select the **People** page in the left-hand menu.
@@ -486,7 +486,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### HIRE-11: A View of Planned Hires Alone Is Saved and Applied
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, the same as the account HIRE-10 ended with.
+**Account:** Feature Lead, `feature.lead@fathom.test`, the same as the account HIRE-10 ended with.
 
 **Preconditions:** Restore the Seed Data run after HIRE-10. Signed in with this account. **People** page open, with no filters.
 

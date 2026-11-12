@@ -11,6 +11,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Person } from "@fathom/shared";
 import {
+  generalReader,
   type Method,
   startTestApp,
   type TestApp,
@@ -660,7 +661,7 @@ describe("people's states", () => {
     });
     expect(drafted.statusCode, drafted.body).toBe(200);
     const generalOnly = await test.signedIn(["people:view", "people:edit"]);
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     expect((await seenBy(planner, person))?.stateId).toBe(
       await firstOf("hired"),
     );

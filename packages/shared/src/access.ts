@@ -16,7 +16,6 @@ export const roleSchema = z.enum([
   "engineering-director",
   "workforce-administrator",
   "executive",
-  "resource-planner",
   "administrator",
 ]);
 
@@ -430,8 +429,7 @@ export const startingRoles: Record<
 > = {
   "team-member": {
     name: "Team Member",
-    description:
-      "Sees the plan, including everyone's work assignments, and people's General details.",
+    description: "Sees the plan and people's General details.",
     permissions: [
       "plan:view",
       "features:view",
@@ -443,7 +441,7 @@ export const startingRoles: Record<
   "product-manager": {
     name: "Product Manager",
     description:
-      "Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan, approves or rejects drafts of the plan and releases, and sees people's General details.",
+      "Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan, approves or rejects drafts of the plan and releases, and sees people's General details and configuration.",
     permissions: [
       "plan:edit",
       "plan:approve",
@@ -452,16 +450,16 @@ export const startingRoles: Record<
       "allocations:view",
       "people:view",
       "feature-teams:view",
+      "configuration:view",
     ],
   },
   "feature-lead": {
     name: "Feature Lead",
     description:
-      "Sees the plan and people's General details, edits features, estimates, and allocations, and proposes feature teams.",
+      "Sees the plan and people's General details, edits features and estimates, and proposes feature teams.",
     permissions: [
       "plan:view",
       "features:edit",
-      "allocations:edit",
       "people:view",
       "feature-teams:edit",
     ],
@@ -471,13 +469,13 @@ export const startingRoles: Record<
   "project-manager": {
     name: "Project Manager",
     description:
-      "Edits the plan, sees people and the hiring plan, and approves or rejects drafts of the data the role sees, including feature teams.",
+      "Edits the plan and allocations, sees people with their Personal details and the hiring plan, and approves or rejects drafts of the data the role sees, including feature teams.",
     permissions: [
       "plan:edit",
       "plan:approve",
       "features:edit",
       "features:approve",
-      "allocations:view",
+      "allocations:edit",
       "allocations:approve",
       "people:view",
       "people:approve",
@@ -487,12 +485,13 @@ export const startingRoles: Record<
       "hiring-plan:approve",
       "configuration:view",
       "configuration:approve",
+      "personal:view",
     ],
   },
   "engineering-manager": {
     name: "Engineering Manager",
     description:
-      "Edits the plan and allocations, sees people, with everyone's Personal details and the hiring plan, and proposes feature teams.",
+      "Edits the plan and allocations, sees people, with everyone's Personal details, the hiring plan, and configuration, and proposes feature teams.",
     permissions: [
       "plan:edit",
       "features:edit",
@@ -500,6 +499,7 @@ export const startingRoles: Record<
       "people:view",
       "feature-teams:edit",
       "hiring-plan:view",
+      "configuration:view",
       "personal:view",
     ],
   },
@@ -561,19 +561,6 @@ export const startingRoles: Record<
       "administration:view",
       "personal:view",
       "confidential:view",
-    ],
-  },
-  // Resource Planners see people, since they allocate them, but not their Personal details.
-  "resource-planner": {
-    name: "Resource Planner",
-    description:
-      "Sees the plan and people's General details, and edits allocations across the whole plan.",
-    permissions: [
-      "plan:view",
-      "features:view",
-      "allocations:edit",
-      "people:view",
-      "feature-teams:view",
     ],
   },
   administrator: {

@@ -27,6 +27,8 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { readToday } from "./data/settings.ts";
 import {
+  generalApprover,
+  generalReader,
   builtInChoice,
   errorOf,
   startTestApp,
@@ -39,9 +41,9 @@ let test: TestApp;
 let today: string;
 let current: string;
 type Account = { id: string; cookie: string };
-// Allocations need Personal details, so each role here is given them: a Resource Planner edits
-// allocations, an Engineering Manager edits them too, the Director and a Project Manager approve
-// them, and a Team Member sees them.
+// Allocations need Personal details, so each role here sees them: a reader of General details given
+// them edits allocations, as do an Engineering Manager and a Project Manager, the Director and the
+// Project Manager approve them, and a Team Member given them sees them.
 let planner: Account;
 let manager: Account;
 let director: Account;
@@ -65,10 +67,10 @@ beforeAll(async () => {
   test = await startTestApp();
   today = await readToday(test.connection);
   current = monthOf(today);
-  planner = await withPersonal("resource-planner");
+  planner = await test.signedIn([...generalReader, "personal:view"]);
   manager = await test.signedIn("engineering-manager");
   director = await test.signedIn("engineering-director");
-  projectManager = await withPersonal("project-manager");
+  projectManager = await test.signedIn("project-manager");
   viewer = await withPersonal("team-member");
 });
 
@@ -772,14 +774,14 @@ describe("approving", () => {
     const read = await test.request(reader.cookie, "GET", "/api/allocations");
     expect(read.statusCode).toBe(403);
     expect(errorOf(read)).toBe(why);
-    const editor = await test.signedIn("resource-planner");
+    const editor = await test.signedIn(generalReader);
     const edited = await change(
       { personId, featureId, percentage: 25, from: month(0) },
       editor,
     );
     expect(edited.statusCode).toBe(403);
     expect(errorOf(edited)).toBe(why);
-    const approver = await test.signedIn("project-manager");
+    const approver = await test.signedIn(generalApprover);
     const decided = await decide(approver, "approval", [id]);
     expect(decided.statusCode).toBe(403);
     expect(errorOf(decided)).toBe(why);
@@ -1035,7 +1037,7 @@ describe("the change history", () => {
     const naming = (records: { name: string | null }[]) =>
       records.filter((record) => record.name?.startsWith(`${name} on `));
     expect(naming(await allocationRecords(director))).not.toHaveLength(0);
-    const reader = await test.signedIn("resource-planner");
+    const reader = await test.signedIn(generalReader);
     expect(naming(await allocationRecords(reader))).toHaveLength(0);
   });
 });

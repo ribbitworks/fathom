@@ -25,7 +25,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
 - **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as **Second Engineering Operations Manager**
-- **Resource Planner:** `resource.planner@fathom.test`
+- **Feature Lead:** `feature.lead@fathom.test`
 
 ## Common Procedures
 
@@ -45,7 +45,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### VIEW-01: A Personal View Is Kept to Its Maker
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, the first account of this test.
+**Account:** Feature Lead, `feature.lead@fathom.test`, the first account of this test.
 
 **Preconditions:** Restore the Seed Data has been run. Signed in with this account in the main window. Select the **People** page in the left-hand menu.
 
@@ -146,8 +146,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The stop-sharing item is offered.
   - **Notes:**
 
-- [ ] **Step 8.** In the second window, sign out, and sign in as Resource Planner, `resource.planner@fathom.test`, changed from this case's first account.
-  - **Expected:** The top bar's right end reads **Resource Planner**.
+- [ ] **Step 8.** In the second window, sign out, and sign in as Feature Lead, `feature.lead@fathom.test`, changed from this case's first account.
+  - **Expected:** The top bar's right end reads **Feature Lead**.
   - **Notes:**
 
 - [ ] **Step 9.** In the second window, select the **People** page in the left-hand menu.
@@ -175,7 +175,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as VIEW-02.
 
-**Preconditions:** In the main window, this account is signed in on **People**. In the second window, Resource Planner, `resource.planner@fathom.test` is signed in on **People**, as VIEW-02 leaves it.
+**Preconditions:** In the main window, this account is signed in on **People**. In the second window, Feature Lead, `feature.lead@fathom.test` is signed in on **People**, as VIEW-02 leaves it.
 
 - [ ] **Step 1.** In the main window, replace the text in the search box above the table with `ar`.
   - **Expected:** The table shows only the rows matching **ar**.
@@ -379,7 +379,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### VIEW-07: A Column Moves for One Account Only
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, in the second window, changed from VIEW-06.
+**Account:** Feature Lead, `feature.lead@fathom.test`, in the second window, changed from VIEW-06.
 
 **Preconditions:** In the second window, this account is signed in on **People**, with no view applied. In the main window, Workforce Administrator, `engineering.operations.manager@fathom.test` is signed in on **People**, with no view applied.
 
@@ -421,7 +421,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### VIEW-08: A Moved Column Is Kept in a Saved View and Cleared
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, in the second window, the same as VIEW-07.
+**Account:** Feature Lead, `feature.lead@fathom.test`, in the second window, the same as VIEW-07.
 
 **Preconditions:** In the second window, this account is signed in on **People**, with **Position** in its original place.
 
@@ -465,7 +465,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from VIEW-08.
 
-**Preconditions:** In the main window, this account is signed in on **People**. In the second window, Resource Planner, `resource.planner@fathom.test` is signed in on **People**.
+**Preconditions:** In the main window, this account is signed in on **People**. In the second window, Feature Lead, `feature.lead@fathom.test` is signed in on **People**.
 
 - [ ] **Step 1.** In the main window, open the Views menu and select **Fictional passed round**.
   - **Expected:** The Views menu's button says **Fictional passed round**.

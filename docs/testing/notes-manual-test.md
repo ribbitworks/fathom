@@ -25,7 +25,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
 - **Engineering Director:** `engineering.director@fathom.test`
-- **Resource Planner:** `resource.planner@fathom.test`
+- **Feature Lead:** `feature.lead@fathom.test`
 
 ## Common Procedures
 
@@ -510,7 +510,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### NOTE-05: A Note Is Read, Approved, and Recorded
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, changed from NOTE-04. Step 3 signs in as another account.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from NOTE-04. Step 3 signs in as another account.
 
 **Preconditions:** Run after NOTE-04. Run Publish as the Workforce Administrator, then sign in with this account. **People** page open, with **Max Munk** searched for.
 

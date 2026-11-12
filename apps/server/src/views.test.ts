@@ -3,7 +3,7 @@
 // Tests for saved views of the People table, against a PostgreSQL server of their own: saving,
 // renaming, updating, and deleting them; who may change them; keeping a view on columns a reader may
 // not see from that reader; personal and shared views, and who may share them; and undoing each
-// change. Resource Planners stand for readers who see people's General details and no more, and
+// change. General readers stand for readers who see people's General details and no more, and
 // Workforce Administrators for those who may change planning configuration.
 
 import {
@@ -17,7 +17,7 @@ import {
 } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { findStartingRole } from "./data/roles.ts";
-import { startTestApp, type TestApp } from "./test-app.ts";
+import { generalReader, startTestApp, type TestApp } from "./test-app.ts";
 
 let test: TestApp;
 
@@ -66,7 +66,7 @@ const demote = async (id: string) => {
     accounts.cookie,
     "PATCH",
     `/api/accounts/${id}`,
-    { roleId: await findStartingRole(test.connection, "resource-planner") },
+    { roleId: await findStartingRole(test.connection, "feature-lead") },
   );
   expect(response.statusCode).toBe(200);
 };
@@ -85,7 +85,7 @@ const undo = (cookie: string, changeSetId: string | null) =>
 
 describe("saved views", () => {
   it("are saved, renamed, updated, and deleted, with names unique regardless of case, and each change undone", async () => {
-    const { cookie } = await test.signedIn("resource-planner");
+    const { cookie } = await test.signedIn(generalReader);
     const made = await save(cookie, "  By name  ", {
       search: "fictional",
       sort: ["-preferredName"],
@@ -158,7 +158,7 @@ describe("saved views", () => {
 
   it("may be changed, when shared, only by their maker or by someone who may change planning configuration", async () => {
     const maker = await test.signedIn("workforce-administrator");
-    const other = await test.signedIn("resource-planner");
+    const other = await test.signedIn(generalReader);
     const administrator = await test.signedIn("workforce-administrator");
     const { view } = (
       await share(maker.cookie, "Shared", { search: "a" })
@@ -218,7 +218,7 @@ describe("saved views", () => {
   it("are kept from readers who may not see a column they use, who cannot save such a view either", async () => {
     const manager = await test.signedIn("engineering-manager");
     const maker = await test.signedIn("workforce-administrator");
-    const viewer = await test.signedIn("resource-planner");
+    const viewer = await test.signedIn(generalReader);
     const { view } = (
       await share(maker.cookie, "Leaving soon", {
         filters: { endDate: { from: "2026-11-01" } },
@@ -266,7 +266,7 @@ describe("saved views", () => {
 
   it("keep their columns' widths, sending each reader only those of columns they may see", async () => {
     const sharer = await test.signedIn("workforce-administrator");
-    const viewer = await test.signedIn("resource-planner");
+    const viewer = await test.signedIn(generalReader);
     const widths = { preferredName: 240, startDate: 120, gone: 300 };
     const { view } = (
       await share(sharer.cookie, "Wide names", { widths })
@@ -280,7 +280,7 @@ describe("saved views", () => {
 
   it("keep the unit and decimal places each column is shown in, sending them to every reader", async () => {
     const sharer = await test.signedIn("workforce-administrator");
-    const viewer = await test.signedIn("resource-planner");
+    const viewer = await test.signedIn(generalReader);
     const shown = {
       units: { effort: "person-weeks" },
       places: { effort: 1 },
@@ -324,7 +324,7 @@ describe("saved views", () => {
 
   it("keep the order of their columns, sending each reader only the places of columns they may see", async () => {
     const maker = await test.signedIn("workforce-administrator");
-    const viewer = await test.signedIn("resource-planner");
+    const viewer = await test.signedIn(generalReader);
     const order = ["startDate", "preferredName", "gone"];
     const { view } = (
       await share(maker.cookie, "Moved round", { order })
@@ -359,7 +359,7 @@ describe("saved views", () => {
   });
 
   it("take an order of columns when updated without one before", async () => {
-    const { cookie } = await test.signedIn("resource-planner");
+    const { cookie } = await test.signedIn(generalReader);
     const { view } = (await save(cookie, "Plain order", {})).json<Saved>();
     const updated = await change(cookie, view.id, {
       definition: { order: ["employeeId", "preferredName"] },
@@ -371,7 +371,7 @@ describe("saved views", () => {
 
   it("keep what they show and the columns they break down by, and are kept from readers who may not see those columns", async () => {
     const sharer = await test.signedIn("workforce-administrator");
-    const viewer = await test.signedIn("resource-planner");
+    const viewer = await test.signedIn(generalReader);
     const general = (
       await save(viewer.cookie, "Metrics open", {
         show: "drafts",
@@ -427,7 +427,7 @@ describe("saved views", () => {
   });
 
   it("may filter on drafts, which every reader may see, since each is sent only the drafts they may see", async () => {
-    const viewer = await test.signedIn("resource-planner");
+    const viewer = await test.signedIn(generalReader);
     const maker = await test.signedIn("workforce-administrator");
     const { view } = (
       await share(maker.cookie, "Drafts waiting", {
@@ -501,7 +501,7 @@ describe("saved views", () => {
     await test.approveLists();
     // Readers are sent the view without the deleted column, which is not shown to them, though its
     // metrics still show.
-    const viewer = await test.signedIn("resource-planner");
+    const viewer = await test.signedIn(generalReader);
     expect(
       (await viewsOf(viewer.cookie)).find(({ id }) => id === view.id)
         ?.definition,
@@ -531,7 +531,7 @@ describe("saved views", () => {
       })
     ).json<{ field: Field }>().field;
     await test.approveLists();
-    const viewer = await test.signedIn("resource-planner");
+    const viewer = await test.signedIn(generalReader);
     const { view, changeSetId } = (
       await save(viewer.cookie, "By team", { sort: [field.id] })
     ).json<Saved>();
@@ -552,7 +552,7 @@ describe("saved views", () => {
   });
 
   it("refuses names and views that do not fit", async () => {
-    const { cookie } = await test.signedIn("resource-planner");
+    const { cookie } = await test.signedIn(generalReader);
     const refusals = [
       await save(cookie, "   ", {}),
       await save(cookie, "n".repeat(81), {}),
@@ -577,7 +577,7 @@ describe("personal and shared views", () => {
 
   it("keeps a personal view from everyone but its maker, whatever their role", async () => {
     // Given a personal view
-    const maker = await test.signedIn("resource-planner");
+    const maker = await test.signedIn(generalReader);
     const { view } = (
       await save(maker.cookie, "Only mine", { search: "a" })
     ).json<Saved>();
@@ -633,7 +633,7 @@ describe("personal and shared views", () => {
   });
 
   it("lets only those who may change planning configuration save a shared view", async () => {
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     const refused = await share(planner.cookie, "For everyone", {});
     expect(refused.statusCode).toBe(403);
     expect(refused.json()).toEqual({ error: notSharedViewMaker });
@@ -693,7 +693,7 @@ describe("personal and shared views", () => {
 
   it("lets a maker who may share a view share it and take it back", async () => {
     const maker = await test.signedIn("workforce-administrator");
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     const { view } = (
       await save(maker.cookie, "Passing round", {})
     ).json<Saved>();
@@ -710,7 +710,7 @@ describe("personal and shared views", () => {
   });
 
   it("refuses sharing to a maker who may not, and taking back to anyone but the maker", async () => {
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     const own = (await save(planner.cookie, "Staying", {})).json<Saved>().view;
     const refused = await change(planner.cookie, own.id, { scope: "shared" });
     expect(refused.statusCode).toBe(403);
@@ -745,7 +745,7 @@ describe("personal and shared views", () => {
 
   it("undoes sharing and taking back", async () => {
     const maker = await test.signedIn("workforce-administrator");
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     const { view } = (
       await save(maker.cookie, "Back and forth", {})
     ).json<Saved>();
@@ -851,7 +851,7 @@ describe("built-in columns in saved views", () => {
       sort: ["expected"],
     };
     expect(hiringPlan.filters.stateId.any).not.toHaveLength(0);
-    const viewer = await test.signedIn("resource-planner");
+    const viewer = await test.signedIn(generalReader);
     const { view } = (
       await save(viewer.cookie, "Hiring plan", hiringPlan)
     ).json<Saved>();
@@ -862,7 +862,7 @@ describe("built-in columns in saved views", () => {
   });
 
   it("on managers and teams are saved by readers who see only General details", async () => {
-    const viewer = await test.signedIn("resource-planner");
+    const viewer = await test.signedIn(generalReader);
     const response = await save(viewer.cookie, "By manager", {
       filters: { isManager: { empty: true } },
       sort: ["managerId", "teamName"],
@@ -878,14 +878,14 @@ describe("built-in columns in saved views", () => {
         sort: ["managerFrom"],
       })
     ).json<Saved>();
-    const viewer = await test.signedIn("resource-planner");
+    const viewer = await test.signedIn(generalReader);
     expect(
       (await viewsOf(viewer.cookie)).some(({ id }) => id === view.id),
     ).toBe(false);
   });
 
   it("on Manager assigned are refused to readers who do not see Personal details", async () => {
-    const viewer = await test.signedIn("resource-planner");
+    const viewer = await test.signedIn(generalReader);
     expect(
       (await save(viewer.cookie, "Since", { sort: ["managerFrom"] })).json(),
     ).toEqual({ error: "Choose only columns this role can see" });

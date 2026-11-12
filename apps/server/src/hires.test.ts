@@ -36,6 +36,8 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
 import {
+  generalApprover,
+  generalReader,
   otherTestPosition,
   startTestApp,
   type TestApp,
@@ -52,7 +54,7 @@ let test: TestApp;
 let editor: User;
 // An Approver who sees the hiring plan, so decides hires' drafts.
 let approver: User;
-// A Resource Planner, who sees people, so the hiring plan's placeholders.
+// A reader who sees people, so the hiring plan's placeholders.
 let planner: User;
 // The hiring states: Proposed, Open, and Hired, as Fathom starts them, and a second state meaning
 // Open.
@@ -67,7 +69,7 @@ beforeAll(async () => {
   test = await startTestApp();
   editor = await test.signedIn("workforce-administrator");
   approver = await test.signedIn("engineering-director");
-  planner = await test.signedIn("resource-planner");
+  planner = await test.signedIn(generalReader);
   const states = await test.connection
     .select({ id: listItems.id, label: listItems.label, listId: lists.id })
     .from(listItems)
@@ -394,7 +396,7 @@ describe("the hiring plan", () => {
   it("records reading the whole plan once a day, apart from viewing people's details, but not reading placeholders", async () => {
     await liveHire();
     const reader = await test.signedIn("executive");
-    const placeholders = await test.signedIn("resource-planner");
+    const placeholders = await test.signedIn(generalReader);
     await ok(await send(reader, "GET", "/api/people"));
     await hiresSeen(reader);
     await hiresSeen(reader);
@@ -1254,9 +1256,9 @@ describe("each role's view of the hiring plan", () => {
     );
   });
 
-  it("shows a Project Manager the whole plan, with each hire's target date on People", async () => {
+  it("shows an Approver of hires without Personal data the whole plan, with each hire's target date on People", async () => {
     const id = await liveHire({ stateId: open });
-    const manager = await test.signedIn("project-manager");
+    const manager = await test.signedIn(generalApprover);
     const seen = await hiresSeen(manager);
     expect(seen.wholePlan).toBe(true);
     expect(seen.hires.find((hire) => hire.id === id)?.targetDate).toBe(

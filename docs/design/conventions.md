@@ -200,7 +200,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 
 - **A page without its data:** A page or view a role reaches, but whose classes of data the role can't see, is never shown cut down: the page stays in the menu and opens to a short line saying why, and a view, such as another date, gives way to one where it would be.
   - **Drawn by:** `WhyMissing` in `apps/web/src/why-missing.tsx`, with the words from `whyMissing` in `packages/shared/src/data-classes.ts`, which the server's refusals use too.
-  - **Example:** Feature assignments for the Team Member, which reads Feature assignments needs Personal access., and the Org chart for the Resource Planner, where Other dates need Personal access. stands in place of the date row.
+  - **Example:** Feature assignments for the Team Member, which reads Feature assignments needs Personal access., and the Org chart for the Feature Lead, where Other dates need Personal access. stands in place of the date row.
 - **Columns a role can't see:** A column a role can't see isn't shown, and nothing says it's missing. A column whose values belong to a class beyond General shows a grey box after its heading, with a lock and the class's name, such as Personal, read aloud after the column's name; so does a list on the Lists page and in its panel. Decided by the owner on 2026-11-10.
   - **Drawn by:** `ClassMark` in `apps/web/src/status-mark.tsx`, given by a column's `dataClass` in `apps/web/src/table-view.ts`.
   - **Example:** Start and End on People; on the Lists page, Sites once moved to Personal.

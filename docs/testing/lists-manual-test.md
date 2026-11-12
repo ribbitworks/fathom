@@ -23,7 +23,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
 - **Engineering Director:** `engineering.director@fathom.test`
-- **Resource Planner:** `resource.planner@fathom.test`
+- **Feature Lead:** `feature.lead@fathom.test`
 
 ## Common Procedures
 
@@ -195,8 +195,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - A grey box with a lock and **Personal** follows **Positions** in the table of lists
   - **Notes:**
 
-- [ ] **Step 6.** Sign out, and sign in as the Resource Planner, `resource.planner@fathom.test`.
-  - **Expected:** The top bar's right end reads **Resource Planner**.
+- [ ] **Step 6.** Sign out, and sign in as the Feature Lead, `feature.lead@fathom.test`.
+  - **Expected:** The top bar's right end reads **Feature Lead**.
   - **Notes:**
 
 - [ ] **Step 7.** Select the **People** page in the left-hand menu.

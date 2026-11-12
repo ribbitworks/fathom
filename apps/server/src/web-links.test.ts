@@ -467,7 +467,7 @@ describe("a web link column's settings over time", () => {
         (await send(reader.cookie, "GET", "/api/changes")).json(),
       ).includes(raised.address);
     };
-    expect(await reads("resource-planner")).toBe(false);
+    expect(await reads("feature-lead")).toBe(false);
     expect(await reads("executive")).toBe(true);
   });
 

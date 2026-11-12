@@ -139,7 +139,7 @@ To release, run `pnpm release` on an up-to-date, clean default branch. It picks 
 
 ### Development Accounts
 
-Seeding adds these accounts: one for each persona in the [Product Brief](../product/brief.md#users), holding its persona's role from [Roles](../product/roles.md#starting-roles), with the Feature Lead also holding Engineering Manager, so switching roles can be tried; a second Engineering Operations Manager, so the seed data has drafts that two people changed; a Resource Planner, which no persona holds by default; and a Superuser, for trying a feature without changing accounts. The Superuser holds a Superuser role that grants every permission, which seeding makes if it is missing; it is not a starting role, so a Fathom set up without the seed data does not have it. They share a random password, kept in `.dev/secrets/dev_account_password` so it stays the same between resets, which `pnpm db:seed` prints, and, unlike accounts given a password Fathom generates, they need not change it at first sign-in. An account already there keeps its password, so if that file is replaced, run `pnpm dev:reset` to give every account the new one.
+Seeding adds these accounts: one for each persona in the [Product Brief](../product/brief.md#users), holding its persona's role from [Roles](../product/roles.md#starting-roles), with the Feature Lead also holding Engineering Manager, so switching roles can be tried; a second Engineering Operations Manager, so the seed data has drafts that two people changed; and a Superuser, for trying a feature without changing accounts. The Superuser holds a Superuser role that grants every permission, which seeding makes if it is missing; it is not a starting role, so a Fathom set up without the seed data does not have it. They share a random password, kept in `.dev/secrets/dev_account_password` so it stays the same between resets, which `pnpm db:seed` prints, and, unlike accounts given a password Fathom generates, they need not change it at first sign-in. An account already there keeps its password, so if that file is replaced, run `pnpm dev:reset` to give every account the new one.
 
 | Account | Name | Roles |
 | --- | --- | --- |
@@ -152,6 +152,5 @@ Seeding adds these accounts: one for each persona in the [Product Brief](../prod
 | `engineering.operations.manager.2@fathom.test` | Second Engineering Operations Manager | Workforce Administrator |
 | `executive@fathom.test` | Executive | Executive |
 | `team.member@fathom.test` | Team Member | Team Member |
-| `resource.planner@fathom.test` | Resource Planner | Resource Planner |
 | `fathom.administrator@fathom.test` | Fathom Administrator | Administrator |
 | `superuser@fathom.test` | Superuser | Superuser |

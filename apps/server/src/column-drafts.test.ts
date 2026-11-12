@@ -23,6 +23,8 @@ import { recordChanges } from "./data/changes.ts";
 import { createDataAccess } from "./data/index.ts";
 import { ConflictError, ForbiddenError } from "./errors.ts";
 import {
+  generalApprover,
+  generalReader,
   startTestApp,
   type TestApp,
   testPosition,
@@ -439,7 +441,7 @@ describe("drafting columns", () => {
     const field = await liveColumn(list.id);
     await livePerson({ [field.id]: [String(choices[0]?.id)] });
     await send("DELETE", `/api/people/columns/${field.id}`);
-    const listsOnly = await test.signedIn("project-manager");
+    const listsOnly = await test.signedIn(generalApprover);
     expect(
       (await decide("approval", { columns: [field.id] }, listsOnly.cookie))
         .statusCode,
@@ -554,7 +556,7 @@ describe("reading columns", () => {
   it("leaves out a column whose values the reader may not see, with its draft", async () => {
     const { list } = await liveList(["A"], "confidential");
     const { field } = await draftColumn(list.id);
-    const reader = await test.signedIn("resource-planner");
+    const reader = await test.signedIn(generalReader);
     expect(
       (await readPeople(reader.cookie)).fields.some(
         ({ id }) => id === field.id,
@@ -602,7 +604,7 @@ describe("orders stored before the reporting columns", () => {
         ...added,
       ];
       expect((await readPeople()).order).toEqual(shown);
-      const general = await test.signedIn("resource-planner");
+      const general = await test.signedIn(generalReader);
       const seen = await readPeople(general.cookie);
       expect(seen.order).toEqual([
         "preferredName",
@@ -874,7 +876,7 @@ describe("what decides and keeps column drafts safe", () => {
   it("needs an Approver who sees people, and the column's values", async () => {
     const { list } = await liveList(["A"], "confidential");
     const { field } = await draftColumn(list.id);
-    const listsOnly = await test.signedIn("project-manager");
+    const listsOnly = await test.signedIn(generalApprover);
     expect(
       (await decide("approval", { columns: [field.id] }, listsOnly.cookie))
         .statusCode,

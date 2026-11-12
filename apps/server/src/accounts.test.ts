@@ -457,14 +457,14 @@ describe("administering accounts", () => {
       cookie,
       "PATCH",
       `/api/accounts/${other.id}`,
-      { roleId: await roleId("resource-planner") },
+      { roleId: await roleId("feature-lead") },
     );
     expect(response.json()).toMatchObject({
-      account: { role: { name: "Resource Planner" } },
+      account: { role: { name: "Feature Lead" } },
     });
     const session = await request(other.cookie, "GET", "/api/session");
     expect(session.json()).toMatchObject({
-      role: { key: "resource-planner", name: "Resource Planner" },
+      role: { key: "feature-lead", name: "Feature Lead" },
       permissions: expect.arrayContaining(["people:view"]) as unknown,
     });
   });

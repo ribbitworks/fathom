@@ -25,7 +25,7 @@ Fathom's additions to the shared [Testing Standards](shared/testing.md), which d
 
 Every new or changed API operation has integration tests, as well as unit tests for its rules.
 
-Until Fathom is first deployed with real data, migrations have no upgrade tests, since no migration converts existing data and databases are reset instead, as the [Decisions Log](../product/decisions.md#platform-and-operations) records.
+Until Fathom is first deployed with real data, migrations have no upgrade tests, since databases are reset instead of upgraded, as the [Decisions Log](../product/decisions.md#platform-and-operations) records.
 
 ## Access Control Tests
 
@@ -91,7 +91,7 @@ Rules:
 - **Must** give every action and expected result precisely enough for a junior test engineer to run and judge without knowing Fathom: what to select, where, and the exact text shown, in bold. Every fact a step relies on, such as a URL or a supported browser, comes from the document that owns it, never from assumption.
 - **Must** keep each test case to one behavior, and make its preconditions enough to start it.
 - **Must** give each step one action: one interaction with one control, such as choosing in a list by opening it, typing and pressing Enter, or a path through menus to one place, when only its end result is checked. These also count as one action each: switching to another account (signing out and in), clearing a box and typing in it, choosing in a cell's list (selecting the cell, pressing Enter, choosing and pressing Enter), and pressing and holding. Anything whose result is checked on its way is a step of its own. Writing down a value seen, such as a name to use later, is not an action. Decided by the owner on 2026-11-11.
-- **Must** name, in every test case's **Account:** line, the account by its role and email address, and say whether it is the account the previous test case ended with or a change from it, such as "Resource Planner, `resource.planner@fathom.test`, changed from HIRE-06". A step that signs in as another account says so, naming the account the same way.
+- **Must** name, in every test case's **Account:** line, the account by its role and email address, and say whether it is the account the previous test case ended with or a change from it, such as "Feature Lead, `feature.lead@fathom.test`, changed from HIRE-06". A step that signs in as another account says so, naming the account the same way.
 - **Must** say exactly where to act and what to look for: which row when a record shows a draft row and a live row, which heading a button sits beside, what to type in a search box to find an entry on a long page, and each column of a table to check, in order.
 - **Must** put an **Expected:** result that names more than one thing to check in nested bullets under it, one thing per line, such as each row or column to read in order, each control's state, and each message, never in one long sentence or paragraph. A single short fact may stay on the **Expected:** line.
 - **Must** describe what is on screen as the tester sees it, such as "a yellow dot and **Draft**", not by the names the code or design documents use.

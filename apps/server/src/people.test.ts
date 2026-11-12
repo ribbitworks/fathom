@@ -30,6 +30,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { rolesGranting } from "./access.ts";
 import { hiresHave, peopleHave } from "./data/fields.ts";
 import {
+  generalReader,
   type Method,
   startTestApp,
   type TestApp,
@@ -399,7 +400,7 @@ describe("who is listed and what each user sees", () => {
       { startDate: "2020-01-01", endDate: "2021-01-01" },
       { startDate: "2999-01-01" },
     ]);
-    const viewer = await test.signedIn("resource-planner");
+    const viewer = await test.signedIn(generalReader);
     const seen = await readPeople(viewer.cookie);
     const listed = seen.people.filter((person) => ids.includes(person.id));
     expect(listed.map((person) => ids.indexOf(person.id)).sort()).toEqual([
@@ -875,7 +876,7 @@ describe("columns", () => {
     const order = (await readPeople(cookie)).order;
     expect(order.at(-1)).toBe(field.id);
     expect(order).toEqual(expect.arrayContaining(["startDate", "endDate"]));
-    const viewer = await test.signedIn("resource-planner");
+    const viewer = await test.signedIn(generalReader);
     const seen = (await readPeople(viewer.cookie)).order;
     expect(seen).not.toContain("startDate");
     expect(seen).toContain("employeeId");

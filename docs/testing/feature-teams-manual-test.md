@@ -26,7 +26,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 - **Engineering Manager:** `engineering.manager@fathom.test`, which proposes and renames feature teams
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**, which also removes feature teams
 - **Engineering Director:** `engineering.director@fathom.test`, which approves feature teams
-- **Resource Planner:** `resource.planner@fathom.test`, which sees feature teams but does not change them
+- **Product Manager:** `product.manager@fathom.test`, which sees feature teams but does not change them
 - **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as **Second Engineering Operations Manager**
 
 ## Common Procedures
@@ -43,7 +43,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### FT-01: The Chart Draws Feature Teams Under Their Leads
 
-**Account:** Resource Planner, `resource.planner@fathom.test`; the first test case.
+**Account:** Product Manager, `product.manager@fathom.test`; the first test case.
 
 **Preconditions:** **Light** chosen in the Appearance menu. Signed in with this account. Select the **Org chart** page in the left-hand menu.
 
@@ -533,7 +533,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### FT-07: Readers Without Personal Details Are Told Why There Is No Other Date
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, changed from FT-06.
+**Account:** Product Manager, `product.manager@fathom.test`, changed from FT-06.
 
 **Preconditions:** Signed in with this account. Select the **Org chart** page in the left-hand menu; it shows reporting teams.
 

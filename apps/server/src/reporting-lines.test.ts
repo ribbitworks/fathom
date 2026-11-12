@@ -10,7 +10,12 @@ import type { ChangeHistory, Person } from "@fathom/shared";
 import { asc, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { rolesGranting } from "./access.ts";
-import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
+import {
+  generalReader,
+  startTestApp,
+  type TestApp,
+  testPosition,
+} from "./test-app.ts";
 
 // The server takes today's date from the clock, so the tests fix it, to give the same days on every
 // run.
@@ -598,7 +603,7 @@ describe("a reporting line", () => {
     await changed(manager, { endDate: day(-1) });
     await approved([manager]);
     expect((await readPerson(report))?.managerLeft).toBe(true);
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     const seen = await readPerson(report, planner.cookie);
     expect(seen?.manager?.id).toBe(manager);
     expect(seen?.managerLeft).toBeUndefined();
@@ -629,7 +634,7 @@ describe("the Manager? mark", () => {
 
   it("is General, and recorded only when it changes", async () => {
     const id = await person({ isManager: false });
-    const general = await test.signedIn("resource-planner");
+    const general = await test.signedIn(generalReader);
     expect((await readPerson(id, general.cookie))?.isManager).toBe(false);
     await changed(id, { isManager: true });
     expect(await readPerson(id)).toMatchObject({
@@ -833,7 +838,7 @@ describe("a team's name", () => {
     await reportsTo(report, manager);
     const name = unique("Fictional Drafted Team");
     await changed(manager, { teamName: name });
-    const reader = await test.signedIn("resource-planner");
+    const reader = await test.signedIn(generalReader);
     expect((await readPerson(manager, reader.cookie))?.teamName).toBe(name);
     expect((await readPerson(report, reader.cookie))?.team).toBe(name);
   });

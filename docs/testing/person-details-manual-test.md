@@ -24,7 +24,7 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Engineering Manager:** `engineering.manager@fathom.test`
-- **Resource Planner:** `resource.planner@fathom.test`
+- **Feature Lead:** `feature.lead@fathom.test`
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
 
 ## Common Procedures
@@ -197,7 +197,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### DETAILS-05: A Person's Details Open Beside People
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, changed from DETAILS-04.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from DETAILS-04.
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
@@ -239,7 +239,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### DETAILS-06: The Details Open and Close From the Keyboard
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, the same as DETAILS-05.
+**Account:** Feature Lead, `feature.lead@fathom.test`, the same as DETAILS-05.
 
 **Preconditions:** **People** page open from the left-hand menu, searched for **E10026**.
 
@@ -270,7 +270,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### DETAILS-07: The Details Read Well in Both Modes, Resized, and in a Narrow Window
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, the same as DETAILS-06.
+**Account:** Feature Lead, `feature.lead@fathom.test`, the same as DETAILS-06.
 
 **Preconditions:** **People** page open, searched for **E10026**, with **Lorenza Thiel**'s details open beside the table. **Light** chosen in the Appearance menu.
 

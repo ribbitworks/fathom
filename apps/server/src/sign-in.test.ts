@@ -300,6 +300,7 @@ describe("signing in", () => {
       },
       permissions: [
         "allocations:view",
+        "configuration:view",
         "feature-teams:view",
         "features:approve",
         "features:edit",

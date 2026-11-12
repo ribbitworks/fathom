@@ -71,7 +71,6 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
       - Feature Lead 1
       - Product Manager 1
       - Project Manager 1
-      - Resource Planner 1
       - Superuser 1
       - Team Member 1
       - Workforce Administrator 2
@@ -81,7 +80,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] **Step 2.** Read the **What it is for** column.
   - **Expected:**
-    - Engineering Manager reads **Edits the plan and allocations, sees people, with everyone's Personal details and the hiring plan, and proposes feature teams.**
+    - Engineering Manager reads **Edits the plan and allocations, sees people, with everyone's Personal details, the hiring plan, and configuration, and proposes feature teams.**
     - Wherever **Personal** or **Confidential** appears, it is in its tier colour, in light and dark mode alike.
   - **Notes:**
 
@@ -95,11 +94,12 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** A dialog titled **Edit Project Manager** shows **Name**, **What it is for**, and the grid, with these boxes ticked:
     - **Plan:** **View**, greyed, **Approve** and **Edit**
     - **Features and releases:** **View**, greyed, **Approve** and **Edit**
-    - **Allocations:** **View** and **Approve**
+    - **Allocations:** **View**, greyed, **Approve** and **Edit**
     - **People:** **View** and **Approve**
     - **Feature teams:** **View** and **Approve**
     - **Hiring plan:** **View** and **Approve**
     - **Configuration:** **View** and **Approve**
+    - **Personal details:** **View**
     - **Classify data** and **Their own drafts** have no box under **View**
   - **Notes:**
 
@@ -107,8 +107,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The summary reads:
     - **Pages its holders see:** Overview, Projects, Features, Releases, People, Org chart, Feature assignments, Drafts, Capacity, Lists and Change history.
     - **Can:** a line for each ticked box, such as seeing the plan, approving drafts of features and releases, and seeing feature teams.
-    - **Cannot** includes **Cannot change allocations.** and **Cannot change feature teams.**
-    - **Cannot** also includes, with the tier colours: **Personal details are hidden wherever they appear, and people who haven't started yet aren't listed.** and **Confidential data is hidden wherever it appears.**
+    - **Cannot** includes **Cannot change people.** and **Cannot change feature teams.**
+    - **Cannot** also includes, in its tier colour, **Confidential data is hidden wherever it appears.**
+    - **Cannot** does not include **Personal details are hidden wherever they appear, and people who haven't started yet aren't listed.**
     - **Cannot** does not include **The People page does not appear.**
   - **Notes:**
 

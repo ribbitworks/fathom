@@ -437,8 +437,7 @@ describe("a role's description", () => {
   });
 
   it("of a starting role is stored emptied with a change to what it grants, and comes back with its template", async () => {
-    const { name, description, permissions } =
-      startingRoles["resource-planner"];
+    const { name, description, permissions } = startingRoles["feature-lead"];
     const role = await roleNamed(name);
     const changed = await change(role.id, {
       name,

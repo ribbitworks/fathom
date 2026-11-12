@@ -11,7 +11,7 @@ last_updated: "2026-11-11"
 
 ## Scope
 
-Verifies the People table's **Manager**, **Manager?**, **Manager assigned**, **Team** and **Team name** columns: who can be picked as a manager, checking and clearing **Manager?** as drafts, the rule that refuses clearing it, team names, the red **Left** box on a manager who has left, filtering and sorting by **Manager?**, and what a Resource Planner sees.
+Verifies the People table's **Manager**, **Manager?**, **Manager assigned**, **Team** and **Team name** columns: who can be picked as a manager, checking and clearing **Manager?** as drafts, the rule that refuses clearing it, team names, the red **Left** box on a manager who has left, filtering and sorting by **Manager?**, and what a Feature Lead sees.
 
 ## Test Environment
 
@@ -23,7 +23,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
 - **Engineering Director:** `engineering.director@fathom.test`
-- **Resource Planner:** `resource.planner@fathom.test`
+- **Feature Lead:** `feature.lead@fathom.test`
 
 ## Common Procedures
 
@@ -298,9 +298,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Afterwards:** Run Restore the Seed Data.
 
-### MGR-10: A Resource Planner Sees Managers and Teams but Cannot Change Them
+### MGR-10: A Feature Lead Sees Managers and Teams but Cannot Change Them
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, changed from MGR-09.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from MGR-09.
 
 **Preconditions:** Signed in with this account. **People** page open.
 

@@ -16,6 +16,7 @@ import type {
 import { and, eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
+  generalReader,
   type Method,
   otherTestPosition,
   startTestApp,
@@ -242,7 +243,7 @@ describe("the Position column", () => {
 
   it("shows a placeholder's position only to those who see the Positions list's tier", async () => {
     const id = await liveHire();
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     expect((await hireSeen(planner, id))?.positionId).toBe(testPosition);
     await setVisibility("positions", "personal");
     const unseen = await hireSeen(planner, id);
@@ -269,7 +270,7 @@ describe("the State column", () => {
 
   it("shows a placeholder's state to those who see the Hiring states list's tier", async () => {
     const id = await liveHire();
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     expect((await hireSeen(planner, id))?.stateId).toBeDefined();
     await setVisibility("hiring-states", "personal");
     expect((await hireSeen(planner, id))?.stateId).toBeUndefined();
@@ -278,7 +279,7 @@ describe("the State column", () => {
   it("leaves State, and a hire row's position and state, off People for those who cannot see their lists' tier", async () => {
     const id = await liveHire();
     const someone = await livePerson();
-    const planner = await test.signedIn("resource-planner");
+    const planner = await test.signedIn(generalReader);
     await setVisibility("positions", "personal");
     await setVisibility("hiring-states", "personal");
     const read = await send(planner, "GET", "/api/people");

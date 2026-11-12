@@ -20,6 +20,7 @@ import {
   runMigrations,
 } from "@fathom/db";
 import type { BuiltInList, Meaning, Permission, Role } from "@fathom/shared";
+import { startingRoles } from "@fathom/shared";
 import {
   createTestCertificate,
   startTestDatabase,
@@ -46,6 +47,21 @@ export type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export const missingRecord = "00000000-0000-4000-8000-000000000000";
 
 let uniqueNames = 0;
+
+// A role that sees people's General details, but not their Personal details, and edits
+// allocations, for the tests of what such a reader sees.
+export const generalReader: Permission[] = [
+  "plan:view",
+  "features:view",
+  "allocations:edit",
+  "people:view",
+  "feature-teams:view",
+];
+
+// An Approver who sees people and the hiring plan, but not their Personal data.
+export const generalApprover: Permission[] = startingRoles[
+  "project-manager"
+].permissions.filter((permission) => permission !== "personal:view");
 
 // A name no other in the run has, so tests never collide on a name that must be unique.
 export const unique = (prefix: string) => {

@@ -32,6 +32,8 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { readToday } from "./data/settings.ts";
 import {
+  generalApprover,
+  generalReader,
   builtInChoice,
   startTestApp,
   type TestApp,
@@ -57,9 +59,9 @@ let approver: User;
 let proposer: User;
 // A Feature Lead given Personal details, which choosing another day needs, but not changing them.
 let datedProposer: User;
-// A Project Manager, who approves feature teams but does not see Personal details.
-let projectManager: User;
-// A Resource Planner, who sees people and feature teams, but not Personal details.
+// An Approver of feature teams who does not see Personal details.
+let approverWithoutPersonal: User;
+// A reader who sees people and feature teams, but not Personal details.
 let planner: User;
 // Sees feature teams and has Personal details, but does not see people.
 let chartOnly: User;
@@ -74,8 +76,8 @@ beforeAll(async () => {
     ...startingRoles["feature-lead"].permissions,
     "personal:view",
   ]);
-  projectManager = await test.signedIn("project-manager");
-  planner = await test.signedIn("resource-planner");
+  approverWithoutPersonal = await test.signedIn(generalApprover);
+  planner = await test.signedIn(generalReader);
   chartOnly = await test.signedIn(["feature-teams:view", "personal:view"]);
   today = await readToday(test.connection);
 });
@@ -1172,7 +1174,9 @@ describe("changing a feature team", () => {
     const id = await liveTeam();
     const name = unique("Fictional Renamed Team");
 
-    expect((await change(id, { name }, projectManager)).statusCode).toBe(403);
+    expect(
+      (await change(id, { name }, approverWithoutPersonal)).statusCode,
+    ).toBe(403);
   });
 
   it("is refused a name another team has", async () => {
@@ -1979,7 +1983,7 @@ describe("approving a team's draft", () => {
   it("is approved without a day by an Approver who does not see Personal details", async () => {
     const member = await person();
     const { id } = await drafted({ members: [member] });
-    await approved(id, projectManager);
+    await approved(id, approverWithoutPersonal);
     expect(await liveRow(id)).toBeDefined();
   });
 
@@ -1987,7 +1991,7 @@ describe("approving a team's draft", () => {
     const member = await person();
     const { id } = await drafted({ members: [member], from: "2025-01-01" });
 
-    const response = await approve(id, projectManager);
+    const response = await approve(id, approverWithoutPersonal);
 
     expect(response.statusCode).toBe(403);
     expect(refusal(response)).toBe(
@@ -2002,16 +2006,18 @@ describe("approving a team's draft", () => {
     const adding = await liveTeam({ members: [started] });
     await changed(adding, { add: [starting] });
 
-    const response = await approve(adding, projectManager);
+    const response = await approve(adding, approverWithoutPersonal);
     expect(response.statusCode).toBe(403);
     expect(refusal(response)).toBe(
       "One of these drafts holds details this role can't see, so an Approver who sees them must decide it",
     );
-    expect((await reject(adding, projectManager)).statusCode).toBe(403);
+    expect((await reject(adding, approverWithoutPersonal)).statusCode).toBe(
+      403,
+    );
 
     await approved(adding);
     await changed(adding, { name: unique("Fictional Renamed Team") });
-    await approved(adding, projectManager);
+    await approved(adding, approverWithoutPersonal);
   });
 
   it("records the access history of the people whose days it makes", async () => {
@@ -2133,7 +2139,7 @@ describe("rejecting a team's draft", () => {
   it("is refused to an Approver who does not see when members join, when the draft holds it", async () => {
     const member = await person();
     const { id } = await drafted({ members: [member], from: "2025-01-01" });
-    expect((await reject(id, projectManager)).statusCode).toBe(403);
+    expect((await reject(id, approverWithoutPersonal)).statusCode).toBe(403);
     expect((await teamSeen(id))?.draft?.state).toBe("waiting");
   });
 });

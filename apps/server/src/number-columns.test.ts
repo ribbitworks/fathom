@@ -11,6 +11,7 @@ import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
 import {
+  generalReader,
   type Method,
   startTestApp,
   type TestApp,
@@ -406,7 +407,7 @@ describe("who sees a Confidential number column", () => {
     expect(added.statusCode, added.body).toBe(201);
     const id = String(added.json<{ ids: string[] }>().ids[0]);
     await approve({ plannedHires: [id] });
-    const { cookie: planner } = await test.signedIn("resource-planner");
+    const { cookie: planner } = await test.signedIn(generalReader);
     const read = await send(planner, "GET", "/api/planned-hires");
     const placeholder = read
       .json<{ hires: { id: string; numbers: Record<string, number> }[] }>()

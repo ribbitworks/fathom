@@ -2,8 +2,7 @@
 
 // Development accounts, one for each persona in docs/product/brief.md, named after the persona and
 // holding its role from docs/product/roles.md, so each role can be tried by signing in as it, with
-// one also holding a second role, so switching roles can be tried, a
-// Resource Planner, which sees people without their Personal details, and a Superuser, which holds
+// one also holding a second role, so switching roles can be tried, and a Superuser, which holds
 // a role of the seed's own granting every permission, for trying anything at once. They share one
 // password. Accounts are never deleted, since the change history and saved views refer to them, so
 // removing the seed data deactivates them, and seeding again reactivates them. Development only:
@@ -90,13 +89,6 @@ export const personaAccounts: readonly PersonaAccount[] = [
     name: "Team Member",
     email: `team.member@${accountDomain}`,
     role: "team-member",
-  },
-  // No persona sees people without Personal details, so this account shows what such a reader
-  // sees.
-  {
-    name: "Resource Planner",
-    email: `resource.planner@${accountDomain}`,
-    role: "resource-planner",
   },
   {
     name: "Fathom Administrator",
