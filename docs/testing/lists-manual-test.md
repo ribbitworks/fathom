@@ -11,7 +11,7 @@ last_updated: "2026-11-11"
 
 ## Scope
 
-Verifies the Lists page's built-in lists, Positions, Hiring states, Proposal statuses and Feature statuses: their grey **Built in** box, the line telling those who may change them that they are theirs to change, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
+Verifies the Lists page's built-in lists, Positions, Hiring states, Proposal statuses and Feature statuses: their grey **Built in** box, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
 
 ## Test Environment
 
@@ -33,13 +33,13 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Publish button and the ⋯ menu. This test adds:
 
-- **Panel:** the area that opens beside the table of lists when you select a list's name, showing the list's choices.
+- **Panel:** the area that opens beside the table of lists when a list's name is selected, showing the list's choices.
 - **Empty row:** the last row of the panel's choices, starting with a **+**, where new choices are typed.
 - **Meaning menu:** the drop-down at the end of a choice's row while it is being edited, and at the end of the empty row.
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Reset the Database. Record each step's result as [Recording Results](manual-test-basics.md#recording-results) sets out.
 
 ### LIST-01: Built-in Lists Are Marked
 
@@ -54,11 +54,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 2.** Select **Positions**.
-  - **Expected:** The panel opens with **Positions** at the top and a grey **Built in** box after it. Under the choices, in grey, it reads three lines: **These can be renamed, added to, or retired.**, **Every person and planned hire has one of these positions.** and **Keep at least one.**
+  - **Expected:**
+    - The panel opens with **Positions** at the top and a grey **Built in** box after it.
+    - Under the choices, in grey, a line reads **Every person and planned hire has one of these positions.**
   - **Notes:**
 
 - [ ] **Step 3.** Select **Hiring states**.
-  - **Expected:** The panel opens with **Hiring states** at the top and a grey **Built in** box after it. No description is shown under the name. Under the choices, in grey, it reads four lines: **These can be renamed, added to, or retired.**, **Proposed: the request to hire is not yet approved.**, **Open: the request to hire is approved.** and **Keep at least one choice for each.**
+  - **Expected:**
+    - The panel opens with **Hiring states** at the top and a grey **Built in** box after it.
+    - No description is shown under the name.
+    - Under the choices, in grey, a line reads **Proposed: the request to hire is not yet approved.**
+    - Under it, in grey, a line reads **Open: the request to hire is approved.**
   - **Notes:**
 
 ### LIST-02: Each Hiring State Shows Its Meaning
@@ -68,7 +74,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** As LIST-01, with the **Hiring states** panel open.
 
 - [ ] **Step 1.** Read each choice's row in the panel.
-  - **Expected:** **Request to hire** shows **Proposed** at the end of its row. **Approved to hire** shows **Open** at the end of its row.
+  - **Expected:**
+    - **Request to hire** shows **Proposed** at the end of its row.
+    - **Approved to hire** shows **Open** at the end of its row.
   - **Notes:**
 
 ### LIST-03: A New Choice Takes the Meaning Chosen
@@ -77,7 +85,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** As LIST-01, with the **Hiring states** panel open.
 
-- [ ] **Step 1.** In the empty row's meaning menu, choose **Open**. Type **Fictional Interviewing** in the empty row's **Name** box and press Enter.
+- [ ] **Step 1.** In the empty row's meaning menu, choose **Open**.
+  - **Expected:** The empty row's meaning menu reads **Open**.
+  - **Notes:**
+
+- [ ] **Step 2.** Type **Fictional Interviewing** in the empty row's **Name** box and press Enter.
   - **Expected:**
     - A row **Fictional Interviewing** appears above the empty row, with a hollow yellow dot in its slot, and **Open** at the end of the row
     - The empty row is empty again, and its meaning menu still reads **Open**
@@ -99,15 +111,21 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** As LIST-04.
 
-- [ ] **Step 1.** Press Esc. Select the **⋯** button at the end of the **Approved to hire** row, then select **Retire**.
+- [ ] **Step 1.** Press Esc.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the **⋯** button at the end of the **Approved to hire** row, then select **Retire**.
   - **Expected:** The **Approved to hire** row:
     - Stays where it is
     - Has a hollow yellow dot in its slot
     - Has a yellow **Retired** box after its name
   - **Notes:**
 
-- [ ] **Step 2.** Select the Publish button.
-  - **Expected:** A notice says the changes were published. The Publish button is gone from the top bar.
+- [ ] **Step 3.** Select the Publish button.
+  - **Expected:**
+    - A notice says the changes were published.
+    - The Publish button is gone from the top bar.
   - **Notes:**
 
 ### LIST-06: Approving Cannot Leave a Meaning With No Choice
@@ -133,33 +151,69 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 ### LIST-07: Positions' Visibility Sets Who Sees the Position Column
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from LIST-06. Steps 3, 4 and 5 sign in as other accounts.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from LIST-06. Steps 5, 10 and 12 sign in as other accounts.
 
 **Preconditions:** LIST-06 done. Signed in with this account. **Lists** page open, with the **Positions** panel open.
 
-- [ ] **Step 1.** Select **Edit list**. Under **Visible to**, select **Personal**, then select **Save**.
+- [ ] **Step 1.** Select **Edit list**.
+  - **Expected:** A dialog opens, with **Visible to** in it.
+  - **Notes:**
+
+- [ ] **Step 2.** Under **Visible to**, select **Personal**.
+  - **Expected:** **Personal** is selected under **Visible to**.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Save**.
   - **Expected:**
     - The dialog closes
     - **Positions** has a hollow yellow dot in its slot
   - **Notes:**
 
-- [ ] **Step 2.** Select the Publish button.
+- [ ] **Step 4.** Select the Publish button.
   - **Expected:** A notice says the changes were published.
   - **Notes:**
 
-- [ ] **Step 3.** Sign in as the Engineering Director, `engineering.director@fathom.test`. Open the **Lists** page and select **Positions**. Select the **⋯** button beside **Edit list**, then select **Approve…**, then **Approve**.
-  - **Expected:** The dialog closes, and the dot beside **Positions** is gone.
+- [ ] **Step 5.** Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
+  - **Expected:** The top bar's right end reads **Engineering Director**.
   - **Notes:**
 
-- [ ] **Step 4.** Sign in as the Resource Planner, `resource.planner@fathom.test`. Open the **People** page.
+- [ ] **Step 6.** Select the **Lists** page in the left-hand menu.
+  - **Expected:** The table of lists shows.
+  - **Notes:**
+
+- [ ] **Step 7.** Select **Positions**.
+  - **Expected:** The panel opens with **Positions** at the top.
+  - **Notes:**
+
+- [ ] **Step 8.** Select the **⋯** button beside **Edit list**, then select **Approve…**.
+  - **Expected:** A dialog opens, with an **Approve** button.
+  - **Notes:**
+
+- [ ] **Step 9.** Select **Approve**.
+  - **Expected:**
+    - The dialog closes
+    - The dot beside **Positions** is gone.
+  - **Notes:**
+
+- [ ] **Step 10.** Sign out, and sign in as the Resource Planner, `resource.planner@fathom.test`.
+  - **Expected:** The top bar's right end reads **Resource Planner**.
+  - **Notes:**
+
+- [ ] **Step 11.** Select the **People** page in the left-hand menu.
   - **Expected:** The table has no **Position** column.
   - **Notes:**
 
-- [ ] **Step 5.** Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Open the **People** page.
-  - **Expected:** The table has a **Position** column, and **New** can be selected.
+- [ ] **Step 12.** Sign out, and sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
+  - **Expected:** The top bar's right end reads **Engineering Operations Manager**.
   - **Notes:**
 
-- [ ] **Step 6.** Run Reset the Database.
+- [ ] **Step 13.** Select the **People** page in the left-hand menu.
+  - **Expected:**
+    - The table has a **Position** column.
+    - **New** can be selected.
+  - **Notes:**
+
+- [ ] **Step 14.** Run Reset the Database.
   - **Expected:** The last line printed gives the shared password, with no error above it.
   - **Notes:**
 
@@ -170,7 +224,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** LIST-07 done, so the database is as Reset the Database leaves it. Signed in with this account. **Lists** page open from the left-hand menu, with no list's panel open.
 
 - [ ] **Step 1.** In the switch beside **Search lists**, select **Built in**.
-  - **Expected:** The table shows only **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses**, and the count reads **4 of 12**.
+  - **Expected:**
+    - The table shows only **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses**.
+    - The count reads **4 of 12**.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

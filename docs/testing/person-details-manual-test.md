@@ -50,8 +50,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** On the card at the top of the chart, select the name **Silje Holm-Schrøder**.
   - **Expected:**
-    - The details panel slides out on the right, headed **Silje Holm-Schrøder**, with **Engineering Manager** under the heading and the link **Show in People** under that.
-    - The chart narrows to make room, and her card, with a blue ring around it, stays in the middle of the space left beside the panel.
+    - The details panel slides out on the right, headed **Silje Holm-Schrøder**.
+    - **Engineering Manager** is under the heading, and the link **Show in People** under that.
+    - The chart narrows to make room.
+    - Her card, with a blue ring around it, stays in the middle of the space left beside the panel.
   - **Notes:**
 
 - [ ] **Step 2.** Read the **Reporting** section.
@@ -67,14 +69,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 3.** Read the **Details** and **Columns** sections, scrolling the panel if needed.
   - **Expected:**
-    - **Details** shows **ID** **E10007**, **Position** **Engineering Manager**, **State** **Hired**, **Start** a date, no **End**, and **Manager?** **Yes**.
-    - **Columns** shows **Grade** **M1**, **Site** **Ashgrove** and **Role on team** **Design Authority**.
+    - **Details** shows:
+      - **ID** **E10007**
+      - **Position** **Engineering Manager**
+      - **State** **Hired**
+      - **Start** a date
+      - no **End**
+      - **Manager?** **Yes**
+    - **Columns** shows:
+      - **Grade** **M1**
+      - **Site** **Ashgrove**
+      - **Role on team** **Design Authority**
   - **Notes:**
 
-- [ ] **Step 4.** Select **Tanushree Patel-Singh** under **Direct reports**, and read **Onboarding** under **Columns**.
+- [ ] **Step 4.** Select **Tanushree Patel-Singh** under **Direct reports**.
   - **Expected:**
     - The panel now shows **Tanushree Patel-Singh**.
-    - **Onboarding** shows, in order:
+    - **Onboarding** under **Columns** shows, in order:
       - the heading **First weeks**
       - a checklist of four steps with only **Laptop and accounts ready** ticked, and the buddy's name **Elly Gunther** in bold
       - **On track** in teal
@@ -86,7 +97,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 6.** Select the **×** at the top right of the panel.
-  - **Expected:** The panel slides away, and the chart fills the page again.
+  - **Expected:**
+    - The panel slides away.
+    - The chart fills the page again.
   - **Notes:**
 
 ### DETAILS-02: A Drafted Value Shows Beside the Live One
@@ -96,7 +109,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **Org chart** page open, as DETAILS-01 ends.
 
 - [ ] **Step 1.** Select the name on the card for **Simone Jean**, under **Silje Holm-Schrøder**.
-  - **Expected:** The details panel shows **Simone Jean**, with **Software Engineer** under the heading.
+  - **Expected:**
+    - The details panel shows **Simone Jean**.
+    - **Software Engineer** is under the heading.
   - **Notes:**
 
 - [ ] **Step 2.** Read **Manager** in the **Reporting** section.
@@ -118,23 +133,38 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Org chart** page open, with **Simone Jean** in the details panel, as DETAILS-02 ends.
 
-- [ ] **Step 1.** Select **Draft** above the chart, then **Drafts applied**, then press Esc.
+- [ ] **Step 1.** Select **Draft** above the chart, then **Drafts applied**.
+  - **Expected:** The Draft menu stays open, with a tick before **Drafts applied**.
+  - **Notes:**
+
+- [ ] **Step 2.** Press Esc.
   - **Expected:**
+    - The Draft menu closes.
     - In the panel, **Manager** reads **Silje Holm-Schrøder**, with a yellow dot before it.
     - Nothing is under **Silje Holm-Schrøder**.
     - No value has a green dot.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Draft**, then **Live only**, then press Esc.
+- [ ] **Step 3.** Select **Draft**, then **Live only**.
+  - **Expected:** The Draft menu stays open, with a tick before **Live only**.
+  - **Notes:**
+
+- [ ] **Step 4.** Press Esc.
   - **Expected:**
+    - The Draft menu closes.
     - In the panel, **Manager** reads **Viktoria Holmberg**, with a green dot before it.
     - A red **Left** box follows **Viktoria Holmberg**.
     - **Team** reads **Search team**, with a green dot before it.
     - No value has a yellow dot.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Draft**, then **Drafts beside live**, then press Esc.
+- [ ] **Step 5.** Select **Draft**, then **Drafts beside live**.
+  - **Expected:** The Draft menu stays open, with a tick before **Drafts beside live**.
+  - **Notes:**
+
+- [ ] **Step 6.** Press Esc.
   - **Expected:**
+    - The Draft menu closes.
     - In the panel, **Manager** reads **Silje Holm-Schrøder**, with a yellow dot before it again.
     - **Viktoria Holmberg** is under it.
   - **Notes:**
@@ -163,16 +193,22 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Point at her row, without selecting anything.
-  - **Expected:**
-    - A small button, an arrow pointing out of a box, appears at the right of her **Name** cell.
-    - Pointing away from the row hides it again.
+  - **Expected:** A small button, an arrow pointing out of a box, appears at the right of her **Name** cell.
   - **Notes:**
 
-- [ ] **Step 3.** Point at her row again, put the pointer on that arrow button, and press the mouse button without letting go.
+- [ ] **Step 3.** Point away from the row.
+  - **Expected:** The arrow button is hidden again.
+  - **Notes:**
+
+- [ ] **Step 4.** Point at her row again.
+  - **Expected:** The arrow button appears again at the right of her **Name** cell.
+  - **Notes:**
+
+- [ ] **Step 5.** Put the pointer on the arrow button, and press the mouse button without letting go.
   - **Expected:** The arrow button stays under the pointer.
   - **Notes:**
 
-- [ ] **Step 4.** Let go of the mouse button.
+- [ ] **Step 6.** Let go of the mouse button.
   - **Expected:**
     - The details panel slides out on the right, headed **Lorenza Thiel**, with the link **Show on org chart** under her position.
     - The table narrows to make room.
@@ -180,10 +216,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Reporting** shows no **Manager assigned**.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Show on org chart**.
+- [ ] **Step 7.** Select **Show on org chart**.
   - **Expected:**
     - The **Org chart** page opens.
-    - The finder reads **Lorenza Thiel**, and her card has a blue ring around it.
+    - The finder reads **Lorenza Thiel**.
+    - Her card has a blue ring around it.
   - **Notes:**
 
 ### DETAILS-06: The Details Open and Close From the Keyboard
@@ -192,19 +229,28 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **People** page open from the left-hand menu, searched for **E10026**.
 
-- [ ] **Step 1.** Select the **Name** cell of **Lorenza Thiel**'s row, then press Shift+F10.
+- [ ] **Step 1.** Select the **Name** cell of **Lorenza Thiel**'s row.
+  - **Expected:** Her **Name** cell is selected.
+  - **Notes:**
+
+- [ ] **Step 2.** Press Shift+F10.
   - **Expected:** Her menu opens, offering **Show details**.
   - **Notes:**
 
-- [ ] **Step 2.** Press the down arrow until **Show details** is highlighted, then press Enter.
+- [ ] **Step 3.** Press the down arrow until **Show details** is highlighted.
+  - **Expected:** **Show details** is highlighted.
+  - **Notes:**
+
+- [ ] **Step 4.** Press Enter.
   - **Expected:**
     - The details panel opens, headed **Lorenza Thiel**.
     - Focus is on her name at the top of the panel.
   - **Notes:**
 
-- [ ] **Step 3.** Press Esc.
+- [ ] **Step 5.** Press Esc.
   - **Expected:**
-    - The panel closes, and the table fills the page again.
+    - The panel closes.
+    - The table fills the page again.
     - Focus is back on her **Name** cell.
   - **Notes:**
 
@@ -226,28 +272,48 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Every label, value, link and mark in the panel is still easy to read.
   - **Notes:**
 
-- [ ] **Step 3.** Drag the panel's left edge to the left, then to the right.
+- [ ] **Step 3.** Drag the panel's left edge to the left.
   - **Expected:**
-    - The panel widens and narrows, and the table beside it narrows and widens to match.
+    - The panel widens.
+    - The table beside it narrows to match.
+  - **Notes:**
+
+- [ ] **Step 4.** Drag the panel's left edge to the right, until the panel is narrow.
+  - **Expected:**
+    - The panel narrows.
+    - The table beside it widens to match.
     - Once the panel is narrow, each label sits over its value, instead of a column of labels beside the values.
     - The names under **Direct reports** line up on the left.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Metrics** above the table, then drag the edge between the two panels up and down.
+- [ ] **Step 5.** Select **Metrics** above the table.
   - **Expected:**
     - The **Metrics** panel opens under the details panel, the two sharing the height.
-    - The edge moves the share between them.
     - Lorenza's details stay open.
   - **Notes:**
 
-- [ ] **Step 5.** Make the browser window as narrow as it goes.
+- [ ] **Step 6.** Drag the edge between the two panels up.
+  - **Expected:** The edge moves the share between them: the details panel gets shorter and the **Metrics** panel taller.
+  - **Notes:**
+
+- [ ] **Step 7.** Drag the edge between the two panels down.
+  - **Expected:**
+    - The details panel gets taller and the **Metrics** panel shorter.
+    - Lorenza's details stay open.
+  - **Notes:**
+
+- [ ] **Step 8.** Make the browser window as narrow as it goes.
   - **Expected:**
     - The panel covers the whole window, with each label above its value.
     - Nothing is cut off or overlapping.
   - **Notes:**
 
-- [ ] **Step 6.** Restore the window, and choose **Light** in the Appearance menu.
-  - **Expected:** The page is light again, with the panel beside the table.
+- [ ] **Step 9.** Restore the window to its earlier width.
+  - **Expected:** The panel is beside the table again.
+  - **Notes:**
+
+- [ ] **Step 10.** Choose **Light** in the Appearance menu.
+  - **Expected:** The page is light again.
   - **Notes:**
 
 ### DETAILS-08: Changing a Person's Details Beside People
@@ -277,52 +343,97 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Press Cmd+Z on a Mac, or Ctrl+Z otherwise.
-  - **Expected:** **Site** reads **Corran Quay** again, with no dot, in the panel and the table.
+  - **Expected:**
+    - **Site** in the panel reads **Corran Quay** again, with no dot.
+    - Her **Site** cell in the table reads **Corran Quay** again, with no dot.
   - **Notes:**
 
-- [ ] **Step 5.** Select the word **None** beside **Team name**, type **Harbour team**, and press Enter.
+- [ ] **Step 5.** Select the word **None** beside **Team name**.
+  - **Expected:** A box to type in opens in place of **None**.
+  - **Notes:**
+
+- [ ] **Step 6.** Type **Harbour team**, and press Enter.
   - **Expected:**
     - **Team name** reads **Harbour team**, with a hollow yellow dot before it.
     - Under it, a green dot, then **None** in grey.
   - **Notes:**
 
-- [ ] **Step 6.** Select the change button beside **End**, type **2014-01-01**, and press Enter.
+- [ ] **Step 7.** Select the change button beside **End**.
+  - **Expected:** A box to type a date in opens beside **End**.
+  - **Notes:**
+
+- [ ] **Step 8.** Type **2014-01-01**, and press Enter.
   - **Expected:**
     - The field stays open, outlined in red.
     - **The end date cannot be before the start date** shows in red under it.
   - **Notes:**
 
-- [ ] **Step 7.** Press Esc.
+- [ ] **Step 9.** Press Esc.
   - **Expected:**
     - The field closes, and **End** shows no date.
-    - The red line has gone, and the panel stays open.
+    - The red line has gone.
+    - The panel stays open.
   - **Notes:**
 
-- [ ] **Step 8.** Press Shift+Tab until the change button beside **Position** has focus, then press Enter, choose **SDET** with the down arrow, and press Enter.
+- [ ] **Step 10.** Press Shift+Tab until the change button beside **Position** has focus.
+  - **Expected:** The change button beside **Position** shows the focus outline.
+  - **Notes:**
+
+- [ ] **Step 11.** Press Enter.
+  - **Expected:** A list of positions opens.
+  - **Notes:**
+
+- [ ] **Step 12.** Press the down arrow until **SDET** is highlighted.
+  - **Expected:** **SDET** is highlighted in the list.
+  - **Notes:**
+
+- [ ] **Step 13.** Press Enter.
   - **Expected:**
-    - A list of positions opens, then closes.
+    - The list closes.
     - **Position** reads **SDET**, with a hollow yellow dot before it.
     - **SDET** under the heading at the top of the panel follows it.
   - **Notes:**
 
-- [ ] **Step 9.** Choose **Dark** in the Appearance menu, then select the change button beside **Grade**.
-  - **Expected:** The list of grades and every value, mark and change button in the panel are easy to read on the dark page.
+- [ ] **Step 14.** Choose **Dark** in the Appearance menu.
+  - **Expected:** The page turns dark.
   - **Notes:**
 
-- [ ] **Step 10.** Press Esc, then choose **Light** in the Appearance menu.
+- [ ] **Step 15.** Select the change button beside **Grade**.
   - **Expected:**
-    - The list closes, and **Grade** reads as it did.
-    - The page is light again.
+    - A list of grades opens.
+    - The list of grades is easy to read on the dark page.
+    - Every value, mark and change button in the panel is easy to read on the dark page.
   - **Notes:**
 
-- [ ] **Step 11.** Select **Draft** above the table, then **Live only**, then press Esc.
+- [ ] **Step 16.** Press Esc.
   - **Expected:**
+    - The list closes.
+    - **Grade** reads as it did.
+  - **Notes:**
+
+- [ ] **Step 17.** Choose **Light** in the Appearance menu.
+  - **Expected:** The page is light again.
+  - **Notes:**
+
+- [ ] **Step 18.** Select **Draft** above the table, then **Live only**.
+  - **Expected:** The Draft menu stays open, with a tick before **Live only**.
+  - **Notes:**
+
+- [ ] **Step 19.** Press Esc.
+  - **Expected:**
+    - The Draft menu closes.
     - The panel shows no change buttons.
     - **Manager?** reads **Yes** with no checkbox.
   - **Notes:**
 
-- [ ] **Step 12.** Select **Draft**, then **Drafts beside live**, then press Esc.
-  - **Expected:** The change buttons show again.
+- [ ] **Step 20.** Select **Draft**, then **Drafts beside live**.
+  - **Expected:** The Draft menu stays open, with a tick before **Drafts beside live**.
+  - **Notes:**
+
+- [ ] **Step 21.** Press Esc.
+  - **Expected:**
+    - The Draft menu closes.
+    - The change buttons show again.
   - **Notes:**
 
 ### DETAILS-09: Changing a Person's Details Beside the Org Chart
@@ -331,57 +442,91 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Org chart** page open from the left-hand menu.
 
-- [ ] **Step 1.** In the finder above the chart, type **Lorenza Thiel**, choose her, then select her name on her card.
+- [ ] **Step 1.** In the finder above the chart, type **Lorenza Thiel**, and choose her in the list that opens.
+  - **Expected:** The finder reads **Lorenza Thiel**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select her name on her card.
   - **Expected:**
     - The details panel shows **Lorenza Thiel**.
     - **Team name** reads **Harbour team**, with a hollow yellow dot before it.
     - Her card shows **Harbour team** too.
   - **Notes:**
 
-- [ ] **Step 2.** Select the change button beside **Team name**, replace the text with **Quayside team**, and press Enter.
+- [ ] **Step 3.** Select the change button beside **Team name**.
+  - **Expected:** A box to type in opens, holding **Harbour team**.
+  - **Notes:**
+
+- [ ] **Step 4.** Replace the text with **Quayside team**, and press Enter.
   - **Expected:**
     - In the panel, **Team name** reads **Quayside team**, with a hollow yellow dot before it.
     - Within a moment, her card shows **Quayside team** as well.
   - **Notes:**
 
-- [ ] **Step 3.** Select the change button beside **Onboarding**, under **Columns**.
+- [ ] **Step 5.** Select the change button beside **Onboarding**, under **Columns**.
   - **Expected:**
     - A second panel opens under her details, headed **Onboarding for Lorenza Thiel**, with **Clear**, **Cancel** and **Save** buttons.
     - Her details stay above it, the two sharing the height.
   - **Notes:**
 
-- [ ] **Step 4.** Type **Laptop ready** in the note, then press Cmd+Z on a Mac, or Ctrl+Z otherwise.
+- [ ] **Step 6.** Type **Laptop ready** in the note.
+  - **Expected:** The note holds **Laptop ready**.
+  - **Notes:**
+
+- [ ] **Step 7.** Press Cmd+Z on a Mac, or Ctrl+Z otherwise.
   - **Expected:**
     - **Laptop ready** goes from the note.
     - **Team name** still reads **Quayside team**, with a hollow yellow dot before it.
     - Her card still shows **Quayside team**.
   - **Notes:**
 
-- [ ] **Step 5.** Type **Laptop ready** in the note, then select the name on the card for **Silje Holm-Schrøder**.
+- [ ] **Step 8.** Type **Laptop ready** in the note.
+  - **Expected:** The note holds **Laptop ready**.
+  - **Notes:**
+
+- [ ] **Step 9.** Select the name on the card for **Silje Holm-Schrøder**.
   - **Expected:**
     - A box asks **Discard changes to the note?**, with **Keep writing** and **Discard**.
     - The details behind it still show **Lorenza Thiel**.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Keep writing**.
+- [ ] **Step 10.** Select **Keep writing**.
   - **Expected:**
     - The box closes.
-    - The details still show **Lorenza Thiel**, and the note panel still holds **Laptop ready**.
+    - The details still show **Lorenza Thiel**.
+    - The note panel still holds **Laptop ready**.
   - **Notes:**
 
-- [ ] **Step 7.** Select the name on the card for **Silje Holm-Schrøder** again, then **Discard**.
+- [ ] **Step 11.** Select the name on the card for **Silje Holm-Schrøder** again.
+  - **Expected:** The box asking **Discard changes to the note?** opens again.
+  - **Notes:**
+
+- [ ] **Step 12.** Select **Discard**.
   - **Expected:**
     - The details show **Silje Holm-Schrøder**.
     - The note panel has closed.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Tanushree Patel-Singh** under **Direct reports**, then the change button beside **Onboarding**, then, without changing the note, select **Silje Holm-Schrøder** beside **Manager**.
-  - **Expected:**
-    - Tanushree's note opens under her details, headed **Onboarding for Tanushree Patel-Singh** and showing her checklist.
-    - Once Silje is chosen, nothing asks: the details show Silje, and the note panel closes.
+- [ ] **Step 13.** Select **Tanushree Patel-Singh** under **Direct reports**.
+  - **Expected:** The details show **Tanushree Patel-Singh**.
   - **Notes:**
 
-- [ ] **Step 9.** Select **Lorenza Thiel** under **Direct reports**, then run Restore the Seed Data.
+- [ ] **Step 14.** Select the change button beside **Onboarding**.
+  - **Expected:** Tanushree's note opens under her details, headed **Onboarding for Tanushree Patel-Singh** and showing her checklist.
+  - **Notes:**
+
+- [ ] **Step 15.** Without changing the note, select **Silje Holm-Schrøder** beside **Manager**.
+  - **Expected:**
+    - Nothing asks.
+    - The details show Silje.
+    - The note panel closes.
+  - **Notes:**
+
+- [ ] **Step 16.** Select **Lorenza Thiel** under **Direct reports**.
+  - **Expected:** The details show **Lorenza Thiel**.
+  - **Notes:**
+
+- [ ] **Step 17.** Run Restore the Seed Data.
   - **Expected:**
     - After the reload, her details show no dot.
     - **Team name** reads **None**.
@@ -400,7 +545,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **SDET, TBD-5**, with **Engineering Manager, TBD-3** in **Manager**
   - **Notes:**
 
-- [ ] **Step 2.** Point at the row for **Engineering Manager, TBD-3**, and select the arrow button at the right of its **Name** cell.
+- [ ] **Step 2.** Select the details button in the row for **Engineering Manager, TBD-3**, the arrow out of a box that shows at the right of its **Name** cell while the row is pointed at.
   - **Expected:**
     - The details panel opens, headed **Engineering Manager, TBD-3**.
     - Under the heading, **Engineering Manager**, then a grey box reading **Planned, expected** and this month, such as **Nov 2026**.
@@ -411,7 +556,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - **Manager** reads **No manager**.
     - **Direct reports** lists **Platform engineer** and **SDET, TBD-5**.
-    - **Details** shows **ID** **TBD-3**, **State** **Request to hire** and **Expected** **Nov 2026**, and has no **End**.
+    - **Details** shows:
+      - **ID** **TBD-3**
+      - **State** **Request to hire**
+      - **Expected** **Nov 2026**
+      - no **End**
     - **Manager?** shows a ticked checkbox and **Yes**.
     - Every other value has a change button, except **Team**, **Expected** and **Direct reports**.
   - **Notes:**
@@ -422,7 +571,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Manager** reads **Engineering Manager, TBD-3**, as a link.
   - **Notes:**
 
-- [ ] **Step 5.** Select the change button beside **Name**, type **Fictional test lead**, and press Enter.
+- [ ] **Step 5.** Select the change button beside **Name**.
+  - **Expected:** A box to type in opens beside **Name**.
+  - **Notes:**
+
+- [ ] **Step 6.** Type **Fictional test lead**, and press Enter.
   - **Expected:**
     - **Name** reads **Fictional test lead**, with a hollow yellow dot before it.
     - The heading reads **Fictional test lead**.
@@ -442,25 +595,44 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The details panel opens, headed **New person**.
     - Its first row is **State**, reading **Hired**, with a change button.
     - **Name**, **ID**, **Start**, **End**, **Manager assigned** and **Team name** are empty boxes to type in.
-    - **Manager?** is an empty checkbox, and the other values have change buttons.
+    - **Manager?** is an empty checkbox.
+    - The other values have change buttons.
     - **Cancel** and **Add** are at the foot of the panel.
   - **Notes:**
 
-- [ ] **Step 2.** Type **Fictional Newcomer** in **Name**, press Tab, type **E10007** in **ID**, and press Tab.
+- [ ] **Step 2.** Type **Fictional Newcomer** in **Name**, and press Tab.
+  - **Expected:**
+    - **Name** holds **Fictional Newcomer**.
+    - Focus moves on from **Name**.
+  - **Notes:**
+
+- [ ] **Step 3.** Type **E10007** in **ID**, and press Tab.
   - **Expected:**
     - The **ID** box is outlined in red.
     - **Someone already has that ID** shows in red under it.
   - **Notes:**
 
-- [ ] **Step 3.** Replace the ID with **E20001**, press Tab, and select **Add**.
+- [ ] **Step 4.** Replace the ID with **E20001**, and press Tab.
+  - **Expected:** The red line under **ID** has gone.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Add**.
   - **Expected:**
-    - The red line under **ID** has gone.
-    - **Position needed** shows in red under **Position**, and **Grade needed** under **Grade**.
+    - **Position needed** shows in red under **Position**.
+    - **Grade needed** shows in red under **Grade**.
     - Focus is on the change button beside **Position**.
     - Nothing is added to the table.
   - **Notes:**
 
-- [ ] **Step 4.** Select the change button beside **Position** and choose **Software Engineer**, then the change button beside **Grade** and choose **P2**, then select **Add**.
+- [ ] **Step 6.** Select the change button beside **Position**, and choose **Software Engineer** in the list that opens.
+  - **Expected:** **Position** reads **Software Engineer**.
+  - **Notes:**
+
+- [ ] **Step 7.** Select the change button beside **Grade**, and choose **P2** in the list that opens.
+  - **Expected:** **Grade** reads **P2**.
+  - **Notes:**
+
+- [ ] **Step 8.** Select **Add**.
   - **Expected:**
     - The panel's heading: a hollow yellow dot, then **Fictional Newcomer**, with **Software Engineer** under it.
     - Change buttons show beside its values.
@@ -475,17 +647,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **People** page open from the left-hand menu. **Light** chosen in the Appearance menu.
 
-- [ ] **Step 1.** Select **New**. Type **Fictional Opening** in **Name**, then type **2027-06-30** in **End** and press Tab.
+- [ ] **Step 1.** Select **New**.
+  - **Expected:** The details panel opens, headed **New person**.
+  - **Notes:**
+
+- [ ] **Step 2.** Type **Fictional Opening** in **Name**.
+  - **Expected:** **Name** holds **Fictional Opening**.
+  - **Notes:**
+
+- [ ] **Step 3.** Type **2027-06-30** in **End**, and press Tab.
   - **Expected:**
-    - The panel is headed **New person**.
+    - The panel is still headed **New person**.
     - **End** holds **2027-06-30**.
   - **Notes:**
 
-- [ ] **Step 2.** Select the change button beside **State**.
+- [ ] **Step 4.** Select the change button beside **State**.
   - **Expected:** A list opens offering **Hired**, **Left**, **Request to hire** and **Approved to hire**.
   - **Notes:**
 
-- [ ] **Step 3.** Choose **Request to hire**.
+- [ ] **Step 5.** Choose **Request to hire**.
   - **Expected:**
     - The heading reads **New planned hire**.
     - Under **State**, a grey line reads **End was cleared, since a planned hire doesn't have it.**
@@ -493,25 +673,43 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - There is no **End**, **Manager assigned** or **Team name**.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **×** in the **Name** box, choose **SDET** in **Position** from its change button, then type **REQ-4100** in **ID** and press Tab.
+- [ ] **Step 6.** Select the **×** in the **Name** box.
+  - **Expected:** The **Name** box is empty.
+  - **Notes:**
+
+- [ ] **Step 7.** Select the change button beside **Position**, and choose **SDET** in the list that opens.
+  - **Expected:** **Position** reads **SDET**.
+  - **Notes:**
+
+- [ ] **Step 8.** Type **REQ-4100** in **ID**, and press Tab.
   - **Expected:** The **Name** box is empty, showing **SDET, REQ-4100** in grey.
   - **Notes:**
 
-- [ ] **Step 5.** Choose **Dark** in the Appearance menu, and read the panel.
-  - **Expected:** Every label, value, box and button in the panel, and the grey line, is easy to read.
+- [ ] **Step 9.** Choose **Dark** in the Appearance menu, and read the panel.
+  - **Expected:**
+    - Every label, value, box and button in the panel is easy to read.
+    - The grey line is easy to read.
   - **Notes:**
 
-- [ ] **Step 6.** Choose **Light** in the Appearance menu, then select the **×** at the top right of the panel.
+- [ ] **Step 10.** Choose **Light** in the Appearance menu.
+  - **Expected:** The page is light again.
+  - **Notes:**
+
+- [ ] **Step 11.** Select the **×** at the top right of the panel.
   - **Expected:** A box asks **Discard the new planned hire?**, with **Keep adding** and **Discard**.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Keep adding**.
+- [ ] **Step 12.** Select **Keep adding**.
   - **Expected:**
     - The box closes.
     - The panel still shows **New planned hire**, with **SDET, REQ-4100** in grey in **Name**.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Cancel** at the foot of the panel, then **Discard**.
+- [ ] **Step 13.** Select **Cancel** at the foot of the panel.
+  - **Expected:** The box asking **Discard the new planned hire?** opens again.
+  - **Notes:**
+
+- [ ] **Step 14.** Select **Discard**.
   - **Expected:**
     - The panel closes.
     - No row for **Fictional Opening** is in the table.

@@ -291,42 +291,80 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Its members are listed in the **Members** row.
   - **Notes:**
 
-- [ ] **Step 3.** Select the change button in the **Members** row, press the Down arrow key until a person without a tick is highlighted, press Enter, and press Enter again. Note the person's name: the joiner.
+- [ ] **Step 3.** Select the change button in the **Members** row.
+  - **Expected:** A list of people opens under the row, with the cursor in a box above it.
+  - **Notes:**
+
+- [ ] **Step 4.** Press the Down arrow key until a person without a tick is highlighted.
+  - **Expected:** A person without a tick is on a light grey background.
+  - **Notes:**
+
+- [ ] **Step 5.** Press Enter. Note the person's name: the joiner.
+  - **Expected:** The joiner has a tick.
+  - **Notes:**
+
+- [ ] **Step 6.** Press Enter.
   - **Expected:** The joiner is in the list of members, with a hollow yellow dot before their name.
   - **Notes:**
 
-- [ ] **Step 4.** Select the change button in the **Members** row, type the leaver's name, press Enter to untick them, and press Enter again.
+- [ ] **Step 7.** Select the change button in the **Members** row.
+  - **Expected:** A list of people opens under the row, with the cursor in a box above it.
+  - **Notes:**
+
+- [ ] **Step 8.** Type the leaver's name, and press Enter.
+  - **Expected:** The leaver has no tick.
+  - **Notes:**
+
+- [ ] **Step 9.** Press Enter.
   - **Expected:** The leaver's name is still in the list of members, with a hollow yellow dot before it, struck through.
   - **Notes:**
 
-- [ ] **Step 5.** Select the **Feature assignments** page in the left-hand menu. Select **None** in the Group by menu, and type the joiner's name in the search box.
+- [ ] **Step 10.** Select the **Feature assignments** page in the left-hand menu.
+  - **Expected:** The **Feature assignments** page opens.
+  - **Notes:**
+
+- [ ] **Step 11.** Select **None** in the Group by menu.
+  - **Expected:** There are no group names.
+  - **Notes:**
+
+- [ ] **Step 12.** Type the joiner's name in the search box.
   - **Expected:**
     - The joiner's row is tinted faint yellow.
     - A light green Live row is under it.
   - **Notes:**
 
-- [ ] **Step 6.** Look along the joiner's row, from two months ago to the right.
+- [ ] **Step 13.** Look along the joiner's row, from two months ago to the right.
   - **Expected:**
     - The cell two months ago holds the same labels as the Live row's cell under it.
     - The labels in the cell two months ago have no dot.
     - From last month on, each cell holds a **Payments core** label with a hollow yellow dot inside it, before the name, beside any other labels.
   - **Notes:**
 
-- [ ] **Step 7.** Look along the light green row under it.
+- [ ] **Step 14.** Look along the light green row under it.
   - **Expected:**
     - Its cells hold no **Payments core** label.
     - Any other labels are in their colours.
   - **Notes:**
 
-- [ ] **Step 8.** Empty the search box and type the leaver's name.
+- [ ] **Step 15.** Empty the search box.
+  - **Expected:** Every person is listed.
+  - **Notes:**
+
+- [ ] **Step 16.** Type the leaver's name in the search box.
   - **Expected:**
     - From last month on, the leaver's cells hold a **Payments core** label with a hollow yellow dot inside it.
     - The label's name is struck through.
   - **Notes:**
 
-- [ ] **Step 9.** Select **Dark** in the Appearance menu, then **Light**.
+- [ ] **Step 17.** Select **Dark** in the Appearance menu.
   - **Expected:**
-    - In both modes, the tinted row, the dots in the labels and the struck-through label are easy to make out.
+    - The tinted row, the dots in the labels and the struck-through label are easy to make out.
+    - Every label is easy to read.
+  - **Notes:**
+
+- [ ] **Step 18.** Select **Light** in the Appearance menu.
+  - **Expected:**
+    - The tinted row, the dots in the labels and the struck-through label are easy to make out.
     - Every label is easy to read.
   - **Notes:**
 
@@ -401,11 +439,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** Only the person's row is listed.
   - **Notes:**
 
-- [ ] **Step 5.** Select the person's cell two months after the current month, and press Enter.
+- [ ] **Step 5.** Select the person's cell two months after the current month.
+  - **Expected:** The cell has a blue outline.
+  - **Notes:**
+
+- [ ] **Step 6.** Press Enter.
   - **Expected:** The team list opens, with no team shown as chosen.
   - **Notes:**
 
-- [ ] **Step 6.** Type `Pay`, then press Tab.
+- [ ] **Step 7.** Type `Pay`, then press Tab.
   - **Expected:**
     - The team list closes.
     - The person's row is tinted faint yellow.
@@ -414,33 +456,37 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - From the cell selected on, each cell holds a **Payments core** label with a hollow yellow dot inside it, before the name.
   - **Notes:**
 
-- [ ] **Step 7.** Press Cmd+Z, or Ctrl+Z outside a Mac.
+- [ ] **Step 8.** Press Cmd+Z, or Ctrl+Z outside a Mac.
   - **Expected:**
     - The person's row has no tint.
     - No light green row is under it.
     - No cell holds a label.
   - **Notes:**
 
-- [ ] **Step 8.** Select the person's cell two months after the current month, and press Enter.
+- [ ] **Step 9.** Select the person's cell two months after the current month.
+  - **Expected:** The cell has a blue outline.
+  - **Notes:**
+
+- [ ] **Step 10.** Press Enter.
   - **Expected:** The team list opens.
   - **Notes:**
 
-- [ ] **Step 9.** Type `Pay`, then press Tab.
+- [ ] **Step 11.** Type `Pay`, then press Tab.
   - **Expected:**
     - The person's row is tinted faint yellow.
     - A light green Live row is under it.
     - From the cell selected on, each cell holds a **Payments core** label with a hollow yellow dot inside it.
   - **Notes:**
 
-- [ ] **Step 10.** Select the **Org chart** page in the left-hand menu.
+- [ ] **Step 12.** Select the **Org chart** page in the left-hand menu.
   - **Expected:** The **Org chart** page opens.
   - **Notes:**
 
-- [ ] **Step 11.** Choose **Feature teams** in the teams switch.
+- [ ] **Step 13.** Choose **Feature teams** in the teams switch.
   - **Expected:** The chart shows feature teams.
   - **Notes:**
 
-- [ ] **Step 12.** Select the Feature teams button, then **Payments core**.
+- [ ] **Step 14.** Select the Feature teams button, then **Payments core**.
   - **Expected:**
     - The team panel opens, titled **Payments core**.
     - The person is in the **Members** row.
@@ -454,15 +500,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
-- [ ] **Step 1.** Select a cell in the current month's column that holds one label, **Payments core**, in a row with no tint, and press Delete.
+- [ ] **Step 1.** Select a cell in the current month's column that holds one label, **Payments core**, in a row with no tint.
+  - **Expected:** The cell has a blue outline.
+  - **Notes:**
+
+- [ ] **Step 2.** Press Delete.
   - **Expected:**
     - The row is tinted faint yellow.
     - In the cell and every cell to its right, the **Payments core** label has a hollow yellow dot inside it.
     - The label's name is struck through.
   - **Notes:**
 
-- [ ] **Step 2.** Press Cmd+Z, or Ctrl+Z outside a Mac.
-  - **Expected:** The row is as it was before step 1.
+- [ ] **Step 3.** Press Cmd+Z, or Ctrl+Z outside a Mac.
+  - **Expected:** The row is as it was before step 2.
   - **Notes:**
 
 ### FA-18: A Change the Draft Can't Hold Is Explained
@@ -471,15 +521,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu and the person's name from FA-16 in the search box, after FA-16.
 
-- [ ] **Step 1.** Select the person's cell four months after the current month, and press Enter.
+- [ ] **Step 1.** Select the person's cell four months after the current month.
+  - **Expected:** The cell has a blue outline.
+  - **Notes:**
+
+- [ ] **Step 2.** Press Enter.
   - **Expected:** The team list opens, with **Payments core** shown as chosen.
   - **Notes:**
 
-- [ ] **Step 2.** Type `Pay`, and press Enter.
+- [ ] **Step 3.** Type `Pay`, and press Enter.
   - **Expected:** **Payments core** is no longer shown as chosen.
   - **Notes:**
 
-- [ ] **Step 3.** Select the person's name with the mouse.
+- [ ] **Step 4.** Select the person's name with the mouse.
   - **Expected:**
     - Fathom refuses the change, saying that the draft of **Payments core** already changes the person from another month, and to approve or discard that draft first.
     - The cell still holds the **Payments core** label.
@@ -531,8 +585,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Under** is grey.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Dark** in the Appearance menu, then **Light**.
-  - **Expected:** In both modes, these are easy to read and to tell apart:
+- [ ] **Step 2.** Select **Dark** in the Appearance menu.
+  - **Expected:** These are easy to read and to tell apart:
+    - the feature names
+    - the percentages
+    - the **Over** and **Under** lines
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Light** in the Appearance menu.
+  - **Expected:** These are easy to read and to tell apart:
     - the feature names
     - the percentages
     - the **Over** and **Under** lines
@@ -544,31 +605,55 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
 
-- [ ] **Step 1.** Select the **People** page in the left-hand menu, type **Payments tester** in the search box, and note the month in the row's **Expected** column.
+- [ ] **Step 1.** Select the **People** page in the left-hand menu.
+  - **Expected:** The **People** page opens.
+  - **Notes:**
+
+- [ ] **Step 2.** Type **Payments tester** in the search box, and note the month in the row's **Expected** column.
   - **Expected:**
     - One row is listed, named **Payments tester**.
     - **Expected** holds a month.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **Feature assignments** page in the left-hand menu, and type **Payments tester** in the search box.
+- [ ] **Step 3.** Select the **Feature assignments** page in the left-hand menu.
+  - **Expected:** The **Feature assignments** page opens.
+  - **Notes:**
+
+- [ ] **Step 4.** Type **Payments tester** in the search box.
   - **Expected:**
     - One row is listed, named **Payments tester**.
     - **Allocations** is still chosen in the mode switch.
   - **Notes:**
 
-- [ ] **Step 3.** Look along the row from 12 months ago to the right.
+- [ ] **Step 5.** Look along the row from 12 months ago to the right.
   - **Expected:**
-    - The cells before the month noted in step 1 are empty.
+    - The cells before the month noted in step 2 are empty.
     - From that month on, cells list a feature with **100%**.
   - **Notes:**
 
-- [ ] **Step 4.** Empty the search box. Select **Feature team** in the Group by menu, and type **TBD** in the search box.
+- [ ] **Step 6.** Empty the search box.
+  - **Expected:** Every row is listed again.
+  - **Notes:**
+
+- [ ] **Step 7.** Select **Feature team** in the Group by menu.
+  - **Expected:** **Group by: Feature team** shows.
+  - **Notes:**
+
+- [ ] **Step 8.** Type **TBD** in the search box.
   - **Expected:**
     - Planned hires with no name and a temporary ID are listed by their position and ID, such as **SDET, TBD-** and a number, in grey.
     - They are under **No feature team**.
   - **Notes:**
 
-- [ ] **Step 5.** Empty the search box and select **Teams** in the mode switch. Type **Payments tester** in the search box.
+- [ ] **Step 9.** Empty the search box.
+  - **Expected:** Every row is listed again.
+  - **Notes:**
+
+- [ ] **Step 10.** Select **Teams** in the mode switch.
+  - **Expected:** The cells show feature teams as labels.
+  - **Notes:**
+
+- [ ] **Step 11.** Type **Payments tester** in the search box.
   - **Expected:** No rows are listed.
   - **Notes:**
 
@@ -584,17 +669,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Each of its month cells reads two numbers, such as **7.5 of 9**, with a percentage under it, such as **83.3%**, in bold.
   - **Notes:**
 
-- [ ] **Step 2.** Look at the foot of the table, then scroll the table down and sideways.
+- [ ] **Step 2.** Scroll the table down.
   - **Expected:**
-    - A total row headed **Organization** stays at the foot of the table as the rows scroll under it, with nothing showing through it.
-    - **Organization** stays on the left while the months scroll sideways.
+    - A total row headed **Organization** is at the foot of the table.
+    - It stays there as the rows scroll under it, with nothing showing through it.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Dark** in the Appearance menu, then **Light**.
-  - **Expected:** In both modes the total rows are easy to read and to tell apart from the rows above them.
+- [ ] **Step 3.** Scroll the table sideways.
+  - **Expected:** **Organization** stays on the left while the months scroll sideways.
   - **Notes:**
 
-- [ ] **Step 4.** Select **None** in the Group by menu.
+- [ ] **Step 4.** Select **Dark** in the Appearance menu.
+  - **Expected:** The total rows are easy to read and to tell apart from the rows above them.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Light** in the Appearance menu.
+  - **Expected:** The total rows are easy to read and to tell apart from the rows above them.
+  - **Notes:**
+
+- [ ] **Step 6.** Select **None** in the Group by menu.
   - **Expected:**
     - No group ends with a total row.
     - The **Organization** row is still at the foot.
@@ -610,7 +703,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The Metrics panel gives a number of people and a number of planned hires, such as **150 people and 8 planned hires**.
   - **Notes:**
 
-- [ ] **Step 2.** Close the Metrics panel, and type **Payments tester** in the search box.
+- [ ] **Step 2.** Close the Metrics panel.
+  - **Expected:** The Metrics panel closes.
+  - **Notes:**
+
+- [ ] **Step 3.** Type **Payments tester** in the search box.
   - **Expected:**
     - One row is listed, named **Payments tester**.
     - In the **Organization** row, the cells before the month its allocations start are empty.
@@ -623,11 +720,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
 
-- [ ] **Step 1.** Select **Teams** in the mode switch. Under the **Mobile apps** group, find the person whose **Mobile apps** labels stop before the current month, and note their name and the last month with the label.
+- [ ] **Step 1.** Select **Teams** in the mode switch.
+  - **Expected:** The cells show feature teams as labels.
+  - **Notes:**
+
+- [ ] **Step 2.** Under the **Mobile apps** group, find the person whose **Mobile apps** labels stop before the current month, and note their name and the last month with the label.
   - **Expected:** One person under **Mobile apps** has no **Mobile apps** label in the current month.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Allocations** in the mode switch, and type the name noted in step 1 in the search box.
+- [ ] **Step 3.** Select **Allocations** in the mode switch.
+  - **Expected:** The cells list features, each with its percentage.
+  - **Notes:**
+
+- [ ] **Step 4.** Type the name noted in step 2 in the search box.
   - **Expected:**
     - The person has a row under **Mobile apps** and a row under another group, or **No feature team**, each followed by a total row.
     - The total row under **Mobile apps** has figures only in the months the person was on **Mobile apps**, up to the month noted.
@@ -637,27 +742,81 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### FA-25: Someone Has a Row Under Each Manager They Reported To
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FA-24. Step 3 signs in as another account, and step 4 signs in as this one again.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FA-24. Step 8 signs in as another account, and step 14 signs in as this one again.
 
 **Preconditions:** Restore the Seed Data has been run. Signed in with this account. **People** open from the left-hand menu.
 
-- [ ] **Step 1.** Type **Samuel Richter** in the search box. Select the row's **Manager** cell, press Enter, type **Max**, and choose **Max Munk**. Select the row's **Manager assigned** cell, type the first day of the current month as digits alone, such as `20261101` in November 2026, and press Enter.
-  - **Expected:**
-    - The **Manager** cell reads **Max Munk**, with a hollow yellow dot before it.
-    - The **Manager assigned** cell reads the date typed, with a hollow yellow dot before it.
+- [ ] **Step 1.** Type **Samuel Richter** in the search box.
+  - **Expected:** Only Samuel Richter's row is listed.
   - **Notes:**
 
-- [ ] **Step 2.** Select the Publish button.
+- [ ] **Step 2.** Select the row's **Manager** cell.
+  - **Expected:** The cell has a blue outline.
+  - **Notes:**
+
+- [ ] **Step 3.** Press Enter.
+  - **Expected:** A list of people opens under the cell.
+  - **Notes:**
+
+- [ ] **Step 4.** Type **Max**, and choose **Max Munk**.
+  - **Expected:** The **Manager** cell reads **Max Munk**, with a hollow yellow dot before it.
+  - **Notes:**
+
+- [ ] **Step 5.** Select the row's **Manager assigned** cell.
+  - **Expected:** The cell has a blue outline.
+  - **Notes:**
+
+- [ ] **Step 6.** Type the first day of the current month as digits alone, such as `20261101` in November 2026, and press Enter.
+  - **Expected:** The **Manager assigned** cell reads the date typed, with a hollow yellow dot before it.
+  - **Notes:**
+
+- [ ] **Step 7.** Select the Publish button.
   - **Expected:**
     - A notice starts **Published**.
     - The Publish button is gone from the top bar.
   - **Notes:**
 
-- [ ] **Step 3.** Sign in as the Engineering Director, `engineering.director@fathom.test`. Select the **Drafts** page in the left-hand menu and type **Samuel Richter** in the search box. Select the entry's checkbox, then **Approve 1 draft**, and **Approve** in the dialog.
+- [ ] **Step 8.** Sign in as the Engineering Director, `engineering.director@fathom.test`.
+  - **Expected:** The top bar's right end reads **Engineering Director**.
+  - **Notes:**
+
+- [ ] **Step 9.** Select the **Drafts** page in the left-hand menu.
+  - **Expected:** The **Drafts** page opens.
+  - **Notes:**
+
+- [ ] **Step 10.** Type **Samuel Richter** in the search box.
+  - **Expected:** One entry is listed.
+  - **Notes:**
+
+- [ ] **Step 11.** Select the entry's checkbox.
+  - **Expected:** The checkbox is ticked.
+  - **Notes:**
+
+- [ ] **Step 12.** Select **Approve 1 draft**.
+  - **Expected:** A dialog opens with an **Approve** button.
+  - **Notes:**
+
+- [ ] **Step 13.** Select **Approve** in the dialog.
   - **Expected:** A notice reads **Approved 1 draft.**
   - **Notes:**
 
-- [ ] **Step 4.** Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Select the **Feature assignments** page in the left-hand menu, **Allocations** in the mode switch and **Manager** in the Group by menu, and type **Samuel Richter** in the search box.
+- [ ] **Step 14.** Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
+  - **Expected:** The top bar's right end reads **Engineering Operations Manager**.
+  - **Notes:**
+
+- [ ] **Step 15.** Select the **Feature assignments** page in the left-hand menu.
+  - **Expected:** The **Feature assignments** page opens.
+  - **Notes:**
+
+- [ ] **Step 16.** Select **Allocations** in the mode switch.
+  - **Expected:** The cells list features, each with its percentage.
+  - **Notes:**
+
+- [ ] **Step 17.** Select **Manager** in the Group by menu.
+  - **Expected:** **Group by: Manager** shows.
+  - **Notes:**
+
+- [ ] **Step 18.** Type **Samuel Richter** in the search box.
   - **Expected:**
     - Samuel Richter has a row under **Atmananda Ganaka** whose cells are empty from the current month on.
     - He has a row under **Max Munk** whose cells are empty before the current month.

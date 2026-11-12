@@ -59,16 +59,34 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The side panel is headed **Cedar Valley Clinics**.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Features** page in the left-hand menu, select **Show details** in the **⋯** menu of **Offline Sync**, and select the pencil button beside **Notes**.
+- [ ] **Step 3.** Select the **Features** page in the left-hand menu.
+  - **Expected:** The **Features** page opens.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Show details** in the **⋯** menu of **Offline Sync**.
+  - **Expected:** The side panel opens, headed **Offline Sync**.
+  - **Notes:**
+
+- [ ] **Step 5.** Select the pencil button beside **Notes**.
   - **Expected:**
     - A panel titled **Notes for Offline Sync** opens beside the side panel.
     - It shows the note, starting **Field crews asked for this first.**
   - **Notes:**
 
-- [ ] **Step 4.** Close the **Notes for Offline Sync** panel, then switch Fathom between light and dark mode.
+- [ ] **Step 6.** Close the **Notes for Offline Sync** panel.
+  - **Expected:** The **Notes for Offline Sync** panel closes, and the side panel stays open.
+  - **Notes:**
+
+- [ ] **Step 7.** Choose **Dark** in the Appearance menu.
   - **Expected:**
-    - In both modes the four section headings are easy to read.
-    - In both modes the headings stand apart from the rows under them.
+    - The four section headings are easy to read.
+    - The headings stand apart from the rows under them.
+  - **Notes:**
+
+- [ ] **Step 8.** Choose **Light** in the Appearance menu.
+  - **Expected:**
+    - The four section headings are easy to read.
+    - The headings stand apart from the rows under them.
   - **Notes:**
 
 ### SCOPE-02: A Proposal's and a Project's Scope History
@@ -77,7 +95,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Features** page open, the side panel of **Offline Sync** open.
 
-- [ ] **Step 1.** Select **Harbour Cranes Upgrade** under **Proposals** in the side panel, and look under **Scope history**.
+- [ ] **Step 1.** Select **Harbour Cranes Upgrade** under **Proposals** in the side panel.
   - **Expected:**
     - Under **Scope history**, the entries read, from the top:
       - Audit Export
@@ -90,15 +108,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The side panel shows **Offline Sync** again.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Crane Control** under **Projects**, and look under **Scope history**, after its milestones.
+- [ ] **Step 3.** Select **Crane Control** under **Projects**.
   - **Expected:**
-    - Under **Scope history**, the entries read, from the top:
+    - Under **Scope history**, after its milestones, the entries read, from the top:
       - Audit Export
       - Offline Sync
     - Under each entry, **Added** and a date show in grey.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **Projects** page in the left-hand menu, then the **Proposals** tab, and select **Show details** in the **⋯** menu of **Fleet Tracking Bid**.
+- [ ] **Step 4.** Select the **Projects** page in the left-hand menu.
+  - **Expected:** The **Projects** page opens.
+  - **Notes:**
+
+- [ ] **Step 5.** Select the **Proposals** tab.
+  - **Expected:** The table lists the proposals.
+  - **Notes:**
+
+- [ ] **Step 6.** Select **Show details** in the **⋯** menu of **Fleet Tracking Bid**.
   - **Expected:**
     - The first row under **Scope history** names **Report Builder**.
     - The first row reads **Removed** and a date, in grey.
@@ -117,7 +143,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Features** page open.
 
-- [ ] **Step 1.** Select the **Proposals** cell of **Offline Sync**, and press Enter.
+- [ ] **Step 1.** Select the **Proposals** cell of **Offline Sync**.
+  - **Expected:** The cell is selected.
+  - **Notes:**
+
+- [ ] **Step 2.** Press Enter.
   - **Expected:**
     - A list of proposals opens.
     - These are picked:
@@ -125,7 +155,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - PR-102 Clinic Scheduling Pilot
   - **Notes:**
 
-- [ ] **Step 2.** Unpick **PR-101 Harbour Cranes Upgrade**, and press Enter.
+- [ ] **Step 3.** Unpick **PR-101 Harbour Cranes Upgrade**.
+  - **Expected:** **PR-101 Harbour Cranes Upgrade** is no longer picked.
+  - **Notes:**
+
+- [ ] **Step 4.** Press Enter.
   - **Expected:**
     - A dialog titled **Reason for the removal** opens.
     - It reads **Offline Sync is removed from Harbour Cranes Upgrade.**
@@ -136,13 +170,29 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - Save
   - **Notes:**
 
-- [ ] **Step 3.** Select **Cancel**.
+- [ ] **Step 5.** Select **Cancel**.
   - **Expected:**
     - The dialog closes.
     - The **Proposals** cell of **Offline Sync** still names both proposals.
   - **Notes:**
 
-- [ ] **Step 4.** Repeat steps 1 and 2, type `x` in **Reason (optional)**, and press Esc.
+- [ ] **Step 6.** Select the **Proposals** cell of **Offline Sync**.
+  - **Expected:** The cell is selected.
+  - **Notes:**
+
+- [ ] **Step 7.** Press Enter.
+  - **Expected:** The list of proposals opens, with both picked.
+  - **Notes:**
+
+- [ ] **Step 8.** Unpick **PR-101 Harbour Cranes Upgrade**.
+  - **Expected:** **PR-101 Harbour Cranes Upgrade** is no longer picked.
+  - **Notes:**
+
+- [ ] **Step 9.** Press Enter.
+  - **Expected:** The **Reason for the removal** dialog opens.
+  - **Notes:**
+
+- [ ] **Step 10.** Type `x` in **Reason (optional)**, and press Esc.
   - **Expected:**
     - A dialog titled **Discard the reason?** opens.
     - Its buttons read, from left to right:
@@ -150,20 +200,44 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - Discard
   - **Notes:**
 
-- [ ] **Step 5.** Select **Discard**.
+- [ ] **Step 11.** Select **Discard**.
   - **Expected:**
     - Both dialogs close.
     - The **Proposals** cell of **Offline Sync** still names both proposals.
     - The keyboard focus is back on the **Proposals** cell of **Offline Sync**.
   - **Notes:**
 
-- [ ] **Step 6.** Repeat steps 1 and 2, type `Customer chose another supplier` in **Reason (optional)**, and press Enter.
+- [ ] **Step 12.** Select the **Proposals** cell of **Offline Sync**.
+  - **Expected:** The cell is selected.
+  - **Notes:**
+
+- [ ] **Step 13.** Press Enter.
+  - **Expected:** The list of proposals opens, with both picked.
+  - **Notes:**
+
+- [ ] **Step 14.** Unpick **PR-101 Harbour Cranes Upgrade**.
+  - **Expected:** **PR-101 Harbour Cranes Upgrade** is no longer picked.
+  - **Notes:**
+
+- [ ] **Step 15.** Press Enter.
+  - **Expected:** The **Reason for the removal** dialog opens.
+  - **Notes:**
+
+- [ ] **Step 16.** Type `Customer chose another supplier` in **Reason (optional)**, and press Enter.
   - **Expected:**
     - The dialog closes.
     - The **Proposals** cell names **Clinic Scheduling Pilot** alone.
   - **Notes:**
 
-- [ ] **Step 7.** Select the **Projects** page in the left-hand menu, then the **Proposals** tab, and select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
+- [ ] **Step 17.** Select the **Projects** page in the left-hand menu.
+  - **Expected:** The **Projects** page opens.
+  - **Notes:**
+
+- [ ] **Step 18.** Select the **Proposals** tab.
+  - **Expected:** The table lists the proposals.
+  - **Notes:**
+
+- [ ] **Step 19.** Select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
   - **Expected:**
     - Under **Scope history**, the rows read, from the top:
       - Offline Sync
@@ -195,7 +269,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - Save
   - **Notes:**
 
-- [ ] **Step 2.** Replace the reason with `Customer delayed the upgrade`, and select **Save**.
+- [ ] **Step 2.** Replace the reason with `Customer delayed the upgrade`.
+  - **Expected:** **Reason (optional)** holds **Customer delayed the upgrade**.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Save**.
   - **Expected:** The first row under **Scope history** reads **Reason: Customer delayed the upgrade**.
   - **Notes:**
 
@@ -217,23 +295,31 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - Scheduler API
   - **Notes:**
 
-- [ ] **Step 3.** Unpick **Scheduler API**, and press Enter.
+- [ ] **Step 3.** Unpick **Scheduler API**.
+  - **Expected:** **Scheduler API** is no longer picked.
+  - **Notes:**
+
+- [ ] **Step 4.** Press Enter.
   - **Expected:**
     - The **Reason for the removal** dialog opens.
     - It reads **Scheduler API is removed from Clinic Scheduling Pilot.**
   - **Notes:**
 
-- [ ] **Step 4.** Type `x` in **Reason (optional)**, then select the **×** at the right of the box.
+- [ ] **Step 5.** Type `x` in **Reason (optional)**.
+  - **Expected:** The box holds **x**.
+  - **Notes:**
+
+- [ ] **Step 6.** Select the **×** at the right of the box.
   - **Expected:** The box is empty.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Save**.
+- [ ] **Step 7.** Select **Save**.
   - **Expected:**
     - The dialog closes.
     - **Features** in the side panel names **Offline Sync** alone.
   - **Notes:**
 
-- [ ] **Step 6.** Look under **Scope history** in the side panel.
+- [ ] **Step 8.** Look under **Scope history** in the side panel.
   - **Expected:**
     - The first row under **Scope history** names **Scheduler API**.
     - The first row has a hollow yellow dot before **Scheduler API**.
@@ -241,19 +327,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The first row shows no reason.
   - **Notes:**
 
-- [ ] **Step 7.** Open the Draft menu, and select **Live only**.
+- [ ] **Step 9.** Open the Draft menu, and select **Live only**.
   - **Expected:**
     - No row has a yellow dot.
     - No row reads **Removed**.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Drafts beside live**.
+- [ ] **Step 10.** Select **Drafts beside live**.
   - **Expected:**
     - The **Scheduler API** row reading **Removed** is back at the top.
     - It has a hollow yellow dot before **Scheduler API**.
   - **Notes:**
 
-- [ ] **Step 9.** Run Publish.
+- [ ] **Step 11.** Run Publish.
   - **Expected:** The dot before **Scheduler API** is now solid yellow.
   - **Notes:**
 
@@ -275,13 +361,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Projects** page open, **Proposals** tab chosen.
 
-- [ ] **Step 1.** In the **⋯** menu of **Harbour Cranes Upgrade**, select **Approve…**, then **Approve** in the dialog.
+- [ ] **Step 1.** In the **⋯** menu of **Harbour Cranes Upgrade**, select **Approve…**.
+  - **Expected:** A dialog opens, with an **Approve** button.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Approve** in the dialog.
   - **Expected:**
     - A notification says **Approved 1 draft.**
     - The row has no dot.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
+- [ ] **Step 3.** Select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
   - **Expected:**
     - Under **Scope history**, the rows read, from the top:
       - Offline Sync
@@ -293,10 +383,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The first row has no **Change reason** button.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Change history** page in the left-hand menu.
+- [ ] **Step 4.** Select the **Change history** page in the left-hand menu.
   - **Expected:**
     - The newest entry, the approval, names **Harbour Cranes Upgrade**.
     - It shows **Reasons for removing features** set to **Offline Sync: Customer delayed the upgrade**.
   - **Notes:**
 
-**Afterwards:** Run Reset the Database, since the seed data cannot be restored once its drafts are approved.
+**Afterwards:** Run Reset the Database.

@@ -56,7 +56,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Select **Metrics** above the table.
   - **Expected:**
-    - The Metrics panel opens on the right, and the table narrows beside it.
+    - The Metrics panel opens on the right.
+    - The table narrows beside it.
     - **Break down by** reads **Choose a column**.
   - **Notes:**
 
@@ -82,7 +83,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **People** page open. Live only shown: run Show Live Only.
 
-- [ ] **Step 1.** Select **Metrics**, then set **Break down by** to **Position**.
+- [ ] **Step 1.** Select **Metrics**.
+  - **Expected:** The Metrics panel opens.
+  - **Notes:**
+
+- [ ] **Step 2.** Set **Break down by** to **Position**.
   - **Expected:**
     - The count line says **150 people and 8 planned hires**.
     - The figures are headed **Count**.
@@ -103,11 +108,22 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As METRICS-02, with the panel open.
 
-- [ ] **Step 1.** Set **Break down by** to **Position**, then **and by** to **Site**.
+- [ ] **Step 1.** Set **Break down by** to **Position**.
+  - **Expected:** **Break down by** reads **Position**.
+  - **Notes:**
+
+- [ ] **Step 2.** Set **and by** to **Site**.
   - **Expected:**
-    - A table headed **Position by Site** has a column for each site and an **All** column, and a row for each position and an **All** row.
+    - A table headed **Position by Site** has a column for each site and an **All** column.
+    - It has a row for each position and an **All** row.
     - An **Empty** column counts the planned hires, which have no site.
-    - The **All** row shows Kestrel Bay 31, Northmere 33, Ashgrove 47, Corran Quay 39, Empty 8 and All 158.
+    - The **All** row shows:
+      - Kestrel Bay 31
+      - Northmere 33
+      - Ashgrove 47
+      - Corran Quay 39
+      - Empty 8
+      - All 158
     - **Count** is selected above the table.
   - **Notes:**
 
@@ -117,8 +133,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As METRICS-02, with **Break down by** set to **Position**.
 
-- [ ] **Step 1.** Open the **Site** column menu, select **Filter…**, and pick only **Ashgrove**. Press Esc.
+- [ ] **Step 1.** Open the **Site** column menu, and select **Filter…**.
+  - **Expected:** The filter opens, listing the sites.
+  - **Notes:**
+
+- [ ] **Step 2.** Pick only **Ashgrove**.
+  - **Expected:** **Ashgrove** is the only site picked.
+  - **Notes:**
+
+- [ ] **Step 3.** Press Esc.
   - **Expected:**
+    - The filter closes.
     - The bar above the table says **47 of 158**.
     - The count line says **47 people**.
     - The rows read, from top to bottom:
@@ -131,7 +156,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - Architect 0 (0%)
   - **Notes:**
 
-- [ ] **Step 2.** Select **Clear all** in the bar above the table.
+- [ ] **Step 4.** Select **Clear all** in the bar above the table.
   - **Expected:**
     - The filter is cleared.
     - The panel stays open.
@@ -143,7 +168,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **People** page open. Metrics panel open.
 
-- [ ] **Step 1.** Open the Draft menu, select **Drafts beside live**, and press Esc. Set **Break down by** to **Grade**, and **and by** to **Nothing more**.
+- [ ] **Step 1.** Open the Draft menu, and select **Drafts beside live**.
+  - **Expected:** The Draft menu stays open, with a tick before **Drafts beside live**.
+  - **Notes:**
+
+- [ ] **Step 2.** Press Esc.
+  - **Expected:** The Draft menu closes.
+  - **Notes:**
+
+- [ ] **Step 3.** Set **Break down by** to **Grade**.
+  - **Expected:** **Break down by** reads **Grade**.
+  - **Notes:**
+
+- [ ] **Step 4.** Set **and by** to **Nothing more**.
   - **Expected:**
     - The **P1** row shows a count.
     - Under the count, a green dot before a dimmed **17**.
@@ -157,16 +194,24 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **People** page open, with the Metrics panel open.
 
 - [ ] **Step 1.** Drag the panel edge to the left.
-  - **Expected:** The panel widens and the table narrows with the pointer.
-  - **Notes:**
-
-- [ ] **Step 2.** Select the **Metrics** title at the top of the panel, press Shift+Tab once, then press the Right arrow key three times.
   - **Expected:**
-    - A blue line shows on the panel edge.
-    - The panel narrows a little with each press.
+    - The panel widens with the pointer.
+    - The table narrows with the pointer.
   - **Notes:**
 
-- [ ] **Step 3.** Reload the page.
+- [ ] **Step 2.** Select the **Metrics** title at the top of the panel.
+  - **Expected:** The panel stays as it is.
+  - **Notes:**
+
+- [ ] **Step 3.** Press Shift+Tab once.
+  - **Expected:** A blue line shows on the panel edge.
+  - **Notes:**
+
+- [ ] **Step 4.** Press the Right arrow key three times.
+  - **Expected:** The panel narrows a little with each press.
+  - **Notes:**
+
+- [ ] **Step 5.** Reload the page.
   - **Expected:** The panel opens again at the width it was left.
   - **Notes:**
 
@@ -176,24 +221,36 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **People** page open. Live only shown: run Show Live Only. Metrics panel open, with **Break down by** set to **Position** and **and by** to **Site**.
 
-- [ ] **Step 1.** Open the Views menu, select **Save view…**, type `Fictional positions by site`, and select **Save view**.
+- [ ] **Step 1.** Open the Views menu, and select **Save view…**.
+  - **Expected:** A dialog titled **Save view** opens.
+  - **Notes:**
+
+- [ ] **Step 2.** Type `Fictional positions by site`.
+  - **Expected:** The name box holds **Fictional positions by site**.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Save view**.
   - **Expected:** The Views button is named **Fictional positions by site**.
   - **Notes:**
 
-- [ ] **Step 2.** Open the Views menu and select **Clear view**.
+- [ ] **Step 4.** Open the Views menu, and select **Clear view**.
   - **Expected:**
     - The Metrics panel closes.
     - The table shows drafts beside live again.
   - **Notes:**
 
-- [ ] **Step 3.** Open the Views menu and select **Fictional positions by site**.
-  - **Expected:** The Metrics panel opens with **Position by Site**, live only, as in METRICS-03 step 1.
+- [ ] **Step 5.** Open the Views menu, and select **Fictional positions by site**.
+  - **Expected:**
+    - The Metrics panel opens, with a table headed **Position by Site**.
+    - The figures are live only: the **All** row ends with **All** 158.
   - **Notes:**
 
-- [ ] **Step 4.** Open the Views menu and select **Delete view**, then open the Views menu again.
-  - **Expected:**
-    - A notice at the top right reads **Deleted the Fictional positions by site view.**, with **Undo**.
-    - The view is gone from the Views menu.
+- [ ] **Step 6.** Open the Views menu, and select **Delete view**.
+  - **Expected:** A notice at the top right reads **Deleted the Fictional positions by site view.**, with **Undo**.
+  - **Notes:**
+
+- [ ] **Step 7.** Open the Views menu.
+  - **Expected:** The view is gone from the Views menu.
   - **Notes:**
 
 ### METRICS-08: The Panel Covers a Narrow Screen
@@ -218,18 +275,29 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Browser window at least 1,440 pixels wide. **People** page open from the left-hand menu, with the Metrics panel closed. In the Appearance menu, **Light** selected.
 
-- [ ] **Step 1.** Look at the right edge of the **Name** column, then scroll the table sideways to the right.
+- [ ] **Step 1.** Look at the right edge of the **Name** column.
+  - **Expected:** A thin grey line runs down the right edge of **Name**, header included.
+  - **Notes:**
+
+- [ ] **Step 2.** Scroll the table sideways to the right.
   - **Expected:**
-    - A thin grey line runs down the right edge of **Name**, header included.
     - As the table scrolls, the other columns pass under **Name**, which stays in place.
     - A soft shadow shows to the right of the line.
   - **Notes:**
 
-- [ ] **Step 2.** Scroll back to the left. Open the **ID** column menu and select **Freeze up to this column**.
+- [ ] **Step 3.** Scroll the table sideways back to the left.
+  - **Expected:** The table is back at its first columns.
+  - **Notes:**
+
+- [ ] **Step 4.** Open the **ID** column menu, and select **Freeze up to this column**.
   - **Expected:** The line moves to the right edge of **ID**.
   - **Notes:**
 
-- [ ] **Step 3.** Scroll the table sideways to the right, then down.
+- [ ] **Step 5.** Scroll the table sideways to the right.
+  - **Expected:** **Name** and **ID** stay in place, with the shadow beside them.
+  - **Notes:**
+
+- [ ] **Step 6.** Scroll the table down.
   - **Expected:**
     - **Name** and **ID** stay in place, with the shadow beside them.
     - The header row stays at the top.
@@ -238,30 +306,50 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The dashed line between a draft row and its light green Live row is dashed all the way across.
   - **Notes:**
 
-- [ ] **Step 4.** In the Appearance menu, select **Dark**, then repeat step 3.
-  - **Expected:**
-    - The frozen columns are dark, with nothing from the columns underneath showing through.
-    - The line and shadow are visible.
+- [ ] **Step 7.** In the Appearance menu, select **Dark**.
+  - **Expected:** The page turns dark.
   - **Notes:**
 
-- [ ] **Step 5.** Scroll back to the left. Open the menu of the column furthest to the right.
+- [ ] **Step 8.** Scroll the table sideways back to the left.
+  - **Expected:**
+    - The frozen columns are dark, with nothing from the columns underneath showing through.
+    - The line and shadow are visible while the table scrolls.
+  - **Notes:**
+
+- [ ] **Step 9.** Open the menu of the column furthest to the right.
   - **Expected:** **Freeze up to this column** is greyed out and cannot be selected.
   - **Notes:**
 
-- [ ] **Step 6.** Press Esc. Drag the **Site** column's name onto the **Name** column's name.
-  - **Expected:**
-    - **Site** moves before **Name**.
-    - It stays in place with the other frozen columns when the table scrolls sideways.
+- [ ] **Step 10.** Press Esc.
+  - **Expected:** The menu closes.
   - **Notes:**
 
-- [ ] **Step 7.** Open the **ID** column menu and select **Unfreeze columns**. Scroll the table sideways and back, then open **Views**.
-  - **Expected:**
-    - No column stays in place when the table scrolls sideways.
-    - The menu shows **Unfrozen** with an **×**, set apart from the items around it.
+- [ ] **Step 11.** Drag the **Site** column's name onto the **Name** column's name.
+  - **Expected:** **Site** moves before **Name**.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Unfrozen**. In the Appearance menu, select **Light**.
+- [ ] **Step 12.** Scroll the table sideways to the right.
+  - **Expected:** **Site** stays in place with the other frozen columns.
+  - **Notes:**
+
+- [ ] **Step 13.** Open the **ID** column menu, and select **Unfreeze columns**.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
+- [ ] **Step 14.** Scroll the table sideways back to the left.
+  - **Expected:** No column stays in place as the table scrolls.
+  - **Notes:**
+
+- [ ] **Step 15.** Open **Views**.
+  - **Expected:** The menu shows **Unfrozen** with an **×**, set apart from the items around it.
+  - **Notes:**
+
+- [ ] **Step 16.** Select **Unfrozen**.
   - **Expected:** Only the first column stays in place again.
+  - **Notes:**
+
+- [ ] **Step 17.** In the Appearance menu, select **Light**.
+  - **Expected:** The page is light again.
   - **Notes:**
 
 **Afterwards:** Open **Views** and select **Columns moved**, which puts the columns back.
@@ -272,36 +360,53 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Browser window at least 1,440 pixels wide. **People** page open, with the Metrics panel closed. In the Appearance menu, **Light** selected.
 
-- [ ] **Step 1.** Point at the column edge of **Name**, then drag it to the left as far as it goes.
+- [ ] **Step 1.** Point at the column edge of **Name**.
+  - **Expected:** A short blue line shows on the edge.
+  - **Notes:**
+
+- [ ] **Step 2.** Drag the column edge of **Name** to the left as far as it goes.
   - **Expected:**
-    - A short blue line shows on the edge.
     - **Name** narrows smoothly with the pointer and stops at about five characters wide.
     - Names that no longer fit end in **…**.
     - Every row stays one line tall.
   - **Notes:**
 
-- [ ] **Step 2.** Point at a person's row.
+- [ ] **Step 3.** Point at a person's row.
   - **Expected:**
     - The details button shows at the right end of their **Name** cell.
     - The name stops short of it, ending in **…**.
     - The row stays one line tall.
   - **Notes:**
 
-- [ ] **Step 3.** Drag the column edge of **Name** to the right as far as it goes.
+- [ ] **Step 4.** Drag the column edge of **Name** to the right as far as it goes.
   - **Expected:** **Name** widens with the pointer and stops when it takes about half the table's width.
   - **Notes:**
 
-- [ ] **Step 4.** Look at the **Onboarding** column, then drag its column edge to the right by about the width of the column.
+- [ ] **Step 5.** Look at the **Onboarding** column.
   - **Expected:**
-    - Before the drag, **Onboarding** is about 15 characters wide, each note cut short with **…**.
-    - After it, more of each note shows.
+    - **Onboarding** is about 15 characters wide.
+    - Each note is cut short with **…**.
   - **Notes:**
 
-- [ ] **Step 5.** Select the **ID** column's name, press Esc, then press Shift+Alt+Right arrow three times (Shift+Option+Right arrow on a Mac).
-  - **Expected:** **ID** widens a little with each press and stays where it is.
+- [ ] **Step 6.** Drag the column edge of **Onboarding** to the right by about the width of the column.
+  - **Expected:** More of each note shows.
   - **Notes:**
 
-- [ ] **Step 6.** Open the **Site** column menu.
+- [ ] **Step 7.** Select the **ID** column's name.
+  - **Expected:** The **ID** column menu opens.
+  - **Notes:**
+
+- [ ] **Step 8.** Press Esc.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
+- [ ] **Step 9.** Press Shift+Alt+Right arrow three times (Shift+Option+Right arrow on a Mac).
+  - **Expected:**
+    - **ID** widens a little with each press.
+    - **ID** stays where it is.
+  - **Notes:**
+
+- [ ] **Step 10.** Open the **Site** column menu.
   - **Expected:** Lines split the menu into groups, from top to bottom:
     - the two sorts
     - **Filter…** and **Break down by**
@@ -309,14 +414,26 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Edit column**, **Move left**, and **Move right**
   - **Notes:**
 
-- [ ] **Step 7.** Press Esc. In the Appearance menu, select **Dark**, then point at the column edge of **Site**.
+- [ ] **Step 11.** Press Esc.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
+- [ ] **Step 12.** In the Appearance menu, select **Dark**.
+  - **Expected:** The page turns dark.
+  - **Notes:**
+
+- [ ] **Step 13.** Point at the column edge of **Site**.
   - **Expected:** The blue line shows clearly on the edge.
   - **Notes:**
 
-- [ ] **Step 8.** Open the Views menu.
+- [ ] **Step 14.** Open the Views menu.
   - **Expected:** The menu shows **Widths: Name, ID, Onboarding** with an **×**, set apart from the items around it.
   - **Notes:**
 
-- [ ] **Step 9.** Select **Widths: Name, ID, Onboarding**. In the Appearance menu, select **Light**.
+- [ ] **Step 15.** Select **Widths: Name, ID, Onboarding**.
   - **Expected:** **Name**, **ID**, and **Onboarding** go back to the widths they had at the start of this test case.
+  - **Notes:**
+
+- [ ] **Step 16.** In the Appearance menu, select **Light**.
+  - **Expected:** The page is light again.
   - **Notes:**

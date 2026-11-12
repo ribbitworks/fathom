@@ -37,10 +37,11 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 - **Main window:** the browser window the test starts in.
 - **Second window:** the second browser or private window.
+- **Stop-sharing item:** the item in the Views menu, offered in place of **Share current view** while the view applied is shared, that stops sharing it.
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Recording Results](manual-test-basics.md#recording-results) sets out.
 
 ### VIEW-01: A Personal View Is Kept to Its Maker
 
@@ -49,7 +50,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Restore the Seed Data has been run. Signed in with this account in the main window. Select the **People** page in the left-hand menu.
 
 - [ ] **Step 1.** Type `an` in the search box above the table.
-  - **Expected:** The table shows only the rows matching **an**, and a **Views** button shows above the table.
+  - **Expected:**
+    - The table shows only the rows matching **an**.
+    - A **Views** button shows above the table.
   - **Notes:**
 
 - [ ] **Step 2.** Open the Views menu.
@@ -57,7 +60,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Select **Save view…**.
-  - **Expected:** A dialog titled **Save view** shows **Name** and, under **Includes**, the search. It offers no choice about sharing.
+  - **Expected:** A dialog titled **Save view** shows:
+    - **Name**.
+    - Under **Includes**, the search.
+    - No choice about sharing.
   - **Notes:**
 
 - [ ] **Step 4.** Type `Fictional planner view` in **Name**.
@@ -65,15 +71,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 5.** Select **Save view** in the dialog.
-  - **Expected:** The dialog closes, and the Views menu's button says **Fictional planner view**.
+  - **Expected:**
+    - The dialog closes.
+    - The Views menu's button says **Fictional planner view**.
   - **Notes:**
 
 - [ ] **Step 6.** Open the Views menu.
-  - **Expected:** The heading **My views** is above **Fictional planner view**, which has a check mark. **Rename…** and **Delete view** are offered. **Share current view** is not.
+  - **Expected:**
+    - The heading **My views** is above **Fictional planner view**.
+    - **Fictional planner view** has a check mark.
+    - **Rename…** and **Delete view** are offered.
+    - **Share current view** is not offered.
   - **Notes:**
 
 - [ ] **Step 7.** In the second window, sign in as Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, changed from this case's first account.
-  - **Expected:** Fathom opens, signed in as **Second Engineering Operations Manager**.
+  - **Expected:** The top bar's right end reads **Second Engineering Operations Manager**.
   - **Notes:**
 
 - [ ] **Step 8.** In the second window, select the **People** page in the left-hand menu.
@@ -103,7 +115,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Select **Save view…**.
-  - **Expected:** The dialog shows a checkbox, **Share with everyone who sees this table**, not ticked, below **Name**.
+  - **Expected:**
+    - The dialog shows a checkbox, **Share with everyone who sees this table**, below **Name**.
+    - The checkbox is not ticked.
   - **Notes:**
 
 - [ ] **Step 4.** Type `Fictional team view` in **Name**.
@@ -115,15 +129,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 6.** Select **Save view** in the dialog.
-  - **Expected:** The dialog closes, and the Views menu's button says **Fictional team view**.
+  - **Expected:**
+    - The dialog closes.
+    - The Views menu's button says **Fictional team view**.
   - **Notes:**
 
 - [ ] **Step 7.** Open the Views menu.
-  - **Expected:** The heading **Shared views** is above **Fictional team view**. **Take back current view** is offered.
+  - **Expected:**
+    - The heading **Shared views** is above **Fictional team view**.
+    - The stop-sharing item is offered.
   - **Notes:**
 
 - [ ] **Step 8.** In the second window, sign out, and sign in as Resource Planner, `resource.planner@fathom.test`, changed from this case's first account.
-  - **Expected:** Fathom opens, signed in as **Resource Planner**.
+  - **Expected:** The top bar's right end reads **Resource Planner**.
   - **Notes:**
 
 - [ ] **Step 9.** In the second window, select the **People** page in the left-hand menu.
@@ -131,7 +149,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 10.** In the second window, open the Views menu.
-  - **Expected:** **My views** lists **Fictional planner view** and, below it, **Shared views** lists **Fictional team view**.
+  - **Expected:**
+    - **My views** lists **Fictional planner view**.
+    - Below it, **Shared views** lists **Fictional team view**.
   - **Notes:**
 
 - [ ] **Step 11.** In the second window, select **Fictional team view**.
@@ -139,7 +159,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 12.** In the second window, open the Views menu.
-  - **Expected:** **Rename…**, **Delete view**, and **Take back current view** are not offered.
+  - **Expected:** None of these is offered:
+    - **Rename…**.
+    - **Delete view**.
+    - The stop-sharing item.
   - **Notes:**
 
 ### VIEW-03: A View Is Shared and Taken Back
@@ -157,7 +180,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Select **Save view…**.
-  - **Expected:** A dialog titled **Save view** shows, with **Share with everyone who sees this table** not ticked.
+  - **Expected:**
+    - A dialog titled **Save view** shows.
+    - **Share with everyone who sees this table** is not ticked.
   - **Notes:**
 
 - [ ] **Step 4.** Type `Fictional passed round` in **Name**.
@@ -165,19 +190,28 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 5.** Select **Save view** in the dialog.
-  - **Expected:** The dialog closes, and the Views menu's button says **Fictional passed round**.
+  - **Expected:**
+    - The dialog closes.
+    - The Views menu's button says **Fictional passed round**.
   - **Notes:**
 
 - [ ] **Step 6.** Open the Views menu.
-  - **Expected:** **Fictional passed round** is under **My views**, and **Share current view** is offered.
+  - **Expected:**
+    - **Fictional passed round** is under **My views**.
+    - **Share current view** is offered.
   - **Notes:**
 
 - [ ] **Step 7.** Select **Share current view**.
-  - **Expected:** A notice at the top right says **Shared the Fictional passed round view.** and offers **Undo**.
+  - **Expected:** A notice shows at the top right:
+    - It says **Shared the Fictional passed round view.**
+    - It offers **Undo**.
   - **Notes:**
 
 - [ ] **Step 8.** Open the Views menu.
-  - **Expected:** **Fictional passed round** is under **Shared views**, and **Take back current view** is offered in place of **Share current view**.
+  - **Expected:**
+    - **Fictional passed round** is under **Shared views**.
+    - The stop-sharing item is offered.
+    - **Share current view** is not offered.
   - **Notes:**
 
 - [ ] **Step 9.** In the second window, reload the page.
@@ -188,8 +222,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** **Fictional passed round** is under **Shared views**.
   - **Notes:**
 
-- [ ] **Step 11.** In the main window, select **Take back current view** from the Views menu.
-  - **Expected:** A notice says **Took back the Fictional passed round view.** and offers **Undo**.
+- [ ] **Step 11.** In the main window, select the stop-sharing item from the Views menu.
+  - **Expected:** A notice shows:
+    - It names **Fictional passed round**.
+    - It offers **Undo**.
   - **Notes:**
 
 - [ ] **Step 12.** In the main window, open the Views menu.
@@ -219,7 +255,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Select **Save view…**.
-  - **Expected:** A dialog titled **Save view** shows, with **Share with everyone who sees this table** not ticked.
+  - **Expected:**
+    - A dialog titled **Save view** shows.
+    - **Share with everyone who sees this table** is not ticked.
   - **Notes:**
 
 - [ ] **Step 4.** Type `Fictional team view` in **Name**.
@@ -227,11 +265,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 5.** Select **Save view** in the dialog.
-  - **Expected:** The dialog closes, and the Views menu's button says **Fictional team view**.
+  - **Expected:**
+    - The dialog closes.
+    - The Views menu's button says **Fictional team view**.
   - **Notes:**
 
 - [ ] **Step 6.** Open the Views menu.
-  - **Expected:** **Fictional team view** is listed under both **My views** and **Shared views**, the one under **My views** with a check mark.
+  - **Expected:**
+    - **Fictional team view** is listed under **My views**, with a check mark.
+    - **Fictional team view** is listed under **Shared views**.
   - **Notes:**
 
 - [ ] **Step 7.** Select **Share current view**.
@@ -249,7 +291,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** In the main window, this account is signed in on **People**, with views saved as the earlier cases leave them. **Light** chosen in the Appearance menu.
 
 - [ ] **Step 1.** Open the Views menu.
-  - **Expected:** **My views** and **Shared views** read as headings, set apart from the names below them, and the names line up under each.
+  - **Expected:**
+    - **My views** and **Shared views** read as headings, set apart from the names below them.
+    - The names line up under each heading.
   - **Notes:**
 
 - [ ] **Step 2.** Press Esc to close the menu.
@@ -261,11 +305,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Open the Views menu.
-  - **Expected:** The headings and names are as easy to read as in light.
+  - **Expected:** The headings and names are easy to read.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Save view…**.
-  - **Expected:** The dialog and its checkbox are as easy to read as in light.
+  - **Expected:** The dialog and its checkbox are easy to read.
   - **Notes:**
 
 - [ ] **Step 6.** Select **Cancel**.
@@ -325,7 +369,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** In the second window, this account is signed in on **People**, with no view applied. In the main window, Workforce Administrator, `engineering.operations.manager@fathom.test` is signed in on **People**, with no view applied.
 
 - [ ] **Step 1.** In the second window, select **Position** in the People table's header.
-  - **Expected:** The Column menu opens, offering **Move left** and **Move right**.
+  - **Expected:**
+    - The Column menu opens.
+    - It offers **Move left** and **Move right**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Move right**.
@@ -379,7 +425,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 5.** Select **Save view** in the dialog.
-  - **Expected:** The dialog closes, and the Views menu's button says **Fictional moved columns**.
+  - **Expected:**
+    - The dialog closes.
+    - The Views menu's button says **Fictional moved columns**.
   - **Notes:**
 
 - [ ] **Step 6.** Select **Clear all** above the table.

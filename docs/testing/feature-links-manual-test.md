@@ -50,16 +50,32 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Look at the **Proposals** cell of **Offline Sync**.
-  - **Expected:** It names **Clinic Scheduling Pilot**, with **PR-102** in grey before it, then **Harbour Cranes Upgrade**, with **PR-101** in grey before it.
+  - **Expected:**
+    - It names **Clinic Scheduling Pilot** first, with **PR-102** in grey before it.
+    - Then **Harbour Cranes Upgrade**, with **PR-101** in grey before it.
   - **Notes:**
 
 - [ ] **Step 3.** Point at the **Projects** cell of **Offline Sync**.
   - **Expected:** A tip lists **Clinic Booking Rollout** and **P-2001 Crane Control**, each on a line of its own.
   - **Notes:**
 
-- [ ] **Step 4.** Switch Fathom between light and dark mode, and look at the **Projects** and **Proposals** cells.
+- [ ] **Step 4.** Choose **Dark** in the Appearance menu.
+  - **Expected:** The page turns dark.
+  - **Notes:**
+
+- [ ] **Step 5.** Look at the **Projects** and **Proposals** cells of **Offline Sync**.
   - **Expected:**
-    - In both modes the grey IDs are easy to read.
+    - The grey IDs are easy to read.
+    - They are clearly lighter than the names.
+  - **Notes:**
+
+- [ ] **Step 6.** Choose **Light** in the Appearance menu.
+  - **Expected:** The page turns light.
+  - **Notes:**
+
+- [ ] **Step 7.** Look at the **Projects** and **Proposals** cells of **Offline Sync**.
+  - **Expected:**
+    - The grey IDs are easy to read.
     - They are clearly lighter than the names.
   - **Notes:**
 
@@ -79,7 +95,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 2.** Select **Crane Control** under **Projects**.
   - **Expected:**
     - The page is still titled **Features**, with the table of features in view.
-    - The side panel is headed **Crane Control**, listing **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **First milestone**, **Last milestone** and **Next delivery**, then **Milestones**.
+    - The side panel is headed **Crane Control**.
+    - The side panel lists, from the top:
+      - Name
+      - Project ID
+      - Owner
+      - Customers
+      - Proposals
+      - Features
+      - First milestone
+      - Last milestone
+      - Next delivery
+      - Milestones
   - **Notes:**
 
 - [ ] **Step 3.** Select **Audit Export** under **Features** in the side panel.
@@ -92,13 +119,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The side panel shows **Crane Control** again.
   - **Notes:**
 
-- [ ] **Step 5.** Select the browser's back button again, then select **Harbour Cranes Upgrade** under **Proposals**.
-  - **Expected:**
-    - The page is still **Features**.
-    - The side panel is headed **Harbour Cranes Upgrade**, listing the proposal's **Name**, **Proposal ID**, **Link**, **Owner**, **Customers**, **Status** and **Features**.
+- [ ] **Step 5.** Select the browser's back button again.
+  - **Expected:** The side panel shows **Offline Sync** again.
   - **Notes:**
 
-- [ ] **Step 6.** Close the side panel.
+- [ ] **Step 6.** Select **Harbour Cranes Upgrade** under **Proposals**.
+  - **Expected:**
+    - The page is still **Features**.
+    - The side panel is headed **Harbour Cranes Upgrade**.
+    - The side panel lists the proposal's:
+      - Name
+      - Proposal ID
+      - Link
+      - Owner
+      - Customers
+      - Status
+      - Features
+  - **Notes:**
+
+- [ ] **Step 7.** Close the side panel.
   - **Expected:**
     - The panel closes.
     - The table fills the page.
@@ -112,7 +151,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Select the **Projects** cell of **Bulk Import**, and press Enter.
   - **Expected:**
-    - A list of projects opens, with a search box, each project named by its ID, where it has one, then its name, such as **P-2001 Crane Control**.
+    - A list of projects opens, with a search box.
+    - Each project is named by its ID, where it has one, then its name, such as **P-2001 Crane Control**.
     - None is picked.
   - **Notes:**
 
@@ -130,11 +170,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The light green Live row under it names **Usage Alerts** alone in its **Features** cell.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **Features** page in the left-hand menu, then **New feature**.
+- [ ] **Step 4.** Select the **Features** page in the left-hand menu.
+  - **Expected:** The page is titled **Features**.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **New feature**.
   - **Expected:** The **New feature** panel has no **Projects** or **Proposals** row.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Cancel** in the **New feature** panel.
+- [ ] **Step 6.** Select **Cancel** in the **New feature** panel.
   - **Expected:** The panel closes.
   - **Notes:**
 
@@ -147,23 +191,45 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Restore the Seed Data run after LINK-03. **Projects** page open, **Projects** tab chosen.
 
 - [ ] **Step 1.** In the **⋯** menu of **Crane Control**, select **Show features**.
-  - **Expected:** The **Features** page opens showing only **Audit Export** and **Offline Sync**, with a pill above the table reading **Projects: P-2001 Crane Control**.
+  - **Expected:**
+    - The **Features** page opens, showing only **Audit Export** and **Offline Sync**.
+    - A pill above the table reads **Projects: P-2001 Crane Control**.
   - **Notes:**
 
 - [ ] **Step 2.** Select the **×** on the pill.
   - **Expected:** Every feature shows again.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Projects** page in the left-hand menu, then the **Proposals** tab, and in the **⋯** menu of **Ore Sorting Study**, select **Show features**.
-  - **Expected:** The **Features** page opens showing only **Partner Portal**, with a pill reading **Proposals: Ore Sorting Study**.
+- [ ] **Step 3.** Select the **Projects** page in the left-hand menu.
+  - **Expected:** The **Projects** page opens.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **×** on the pill, then open the column menu of **Proposals** and select **Filter…**.
+- [ ] **Step 4.** Select the **Proposals** tab.
+  - **Expected:** The table lists proposals, among them **Ore Sorting Study**.
+  - **Notes:**
+
+- [ ] **Step 5.** In the **⋯** menu of **Ore Sorting Study**, select **Show features**.
+  - **Expected:**
+    - The **Features** page opens, showing only **Partner Portal**.
+    - A pill reads **Proposals: Ore Sorting Study**.
+  - **Notes:**
+
+- [ ] **Step 6.** Select the **×** on the pill.
+  - **Expected:** Every feature shows again.
+  - **Notes:**
+
+- [ ] **Step 7.** Open the column menu of **Proposals**, and select **Filter…**.
   - **Expected:** A list of the proposals opens, each named by its ID, where it has one, then its name.
   - **Notes:**
 
-- [ ] **Step 5.** Select **PR-097 Fleet Tracking Bid**, and press Esc.
-  - **Expected:** Only **Data Retention Controls** and **Partner Portal** show, with a pill reading **Proposals: PR-097 Fleet Tracking Bid**.
+- [ ] **Step 8.** Select **PR-097 Fleet Tracking Bid**.
+  - **Expected:** **PR-097 Fleet Tracking Bid** is picked.
+  - **Notes:**
+
+- [ ] **Step 9.** Press Esc.
+  - **Expected:**
+    - Only **Data Retention Controls** and **Partner Portal** show.
+    - A pill reads **Proposals: PR-097 Fleet Tracking Bid**.
   - **Notes:**
 
 ### LINK-05: The Feature Lead Sees Projects and Proposals Read Only
