@@ -15,9 +15,10 @@
   container-type: inline-size;
 }
 
+/* A page with the room may widen the labels, so longer ones stay on one line. */
 .row {
   display: grid;
-  grid-template-columns: 9rem 1fr;
+  grid-template-columns: var(--fathom-record-label-width, 9rem) 1fr;
   gap: var(--mantine-spacing-md);
   padding: 6px 0;
   border-bottom: 1px solid var(--mantine-color-default-border);

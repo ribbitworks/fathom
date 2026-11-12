@@ -11,7 +11,6 @@ import {
   unbuiltPermissions,
 } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import { pagesNotBuilt } from "./layout.tsx";
 import { consequences, difference, notBuiltYet, rowNotBuilt } from "./roles.ts";
 
 const allows = (permission: Permission) =>
@@ -175,14 +174,8 @@ describe("what a change to an account's permissions does", () => {
 });
 
 describe("lines about what is not built yet", () => {
-  // Whether a line names a page Fathom does not have yet, or says what an unbuilt permission does.
+  // Whether a line says what an unbuilt permission does.
   const aboutUnbuilt = (line: string) =>
-    pagesNotBuilt.some(
-      (page) =>
-        line === page ||
-        line.includes(`the ${page} page`) ||
-        line.includes(`The ${page} page`),
-    ) ||
     unbuiltPermissions.some(
       (permission) =>
         line === allows(permission) || line === without(permission),
@@ -203,7 +196,7 @@ describe("lines about what is not built yet", () => {
   });
 
   it("include every unbuilt page and permission a change can bring or take away", () => {
-    const expected = pagesNotBuilt.length + unbuiltPermissions.length;
+    const expected = unbuiltPermissions.length;
     expect(
       difference([], every).gains.filter((line) => notBuiltYet(line)),
     ).toHaveLength(expected);
@@ -212,7 +205,7 @@ describe("lines about what is not built yet", () => {
     ).toHaveLength(expected);
     expect(
       consequences(every).pages.filter((line) => notBuiltYet(line)),
-    ).toEqual([...pagesNotBuilt]);
+    ).toEqual([]);
   });
 });
 

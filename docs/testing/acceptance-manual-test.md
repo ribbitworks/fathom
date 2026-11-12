@@ -1057,7 +1057,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 **Preconditions:** ACC-32 done. Signed in with this account. **Light** chosen in the Appearance menu.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The **Overview** page is open. The menu shows **Overview**, **Projects**, **Features** and **Releases** in the **Plan** section; **People**, **Org chart**, **Feature assignments**, **Drafts**, **Capacity** tagged **Later**, and **Lists** in the **People** section; **Accounts**, **Roles** and **Settings** in the **Administration** section; **Change history** and **Access history** in the **History** section; and the **Help** section.
+  - **Expected:** The **Overview** page is open. The menu shows **Overview**, **Projects**, **Features** and **Releases** in the **Plan** section; **People**, **Org chart**, **Feature assignments**, **Drafts**, **Capacity** and **Lists** in the **People** section; **Accounts**, **Roles** and **Settings** in the **Administration** section; **Change history** and **Access history** in the **History** section; and the **Help** section.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Releases**, then **Platform** in the streams table.
@@ -1108,7 +1108,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 **Preconditions:** Signed in with this account.
 
 - [ ] **Step 1.** Look at the left-hand menu.
-  - **Expected:** The menu shows **Overview**, **Projects**, **Features** and **Releases** in the **Plan** section; **Org chart**, **Feature assignments**, **Drafts** and **Capacity** tagged **Later** in the **People** section; and the **Help** section. There is no **People** page.
+  - **Expected:** The menu shows **Overview**, **Projects**, **Features** and **Releases** in the **Plan** section; **Org chart**, **Feature assignments** and **Drafts** in the **People** section; and the **Help** section. There is no **People** page.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Features**.

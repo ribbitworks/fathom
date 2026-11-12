@@ -372,6 +372,13 @@
       "when": 1794436008698,
       "tag": "0052_data_classes",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1794447990120,
+      "tag": "0053_planning_settings",
+      "breakpoints": true
     }
   ]
 }

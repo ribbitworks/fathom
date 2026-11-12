@@ -22,7 +22,7 @@ import {
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { getJson, sendJsonFor } from "./api.ts";
-import { pagesNotBuilt, pagesOpened } from "./layout.tsx";
+import { pagesOpened } from "./layout.tsx";
 
 export const rolesQuery = queryOptions({
   queryKey: ["roles"],
@@ -68,14 +68,8 @@ const everyPage = pagesOpened(
 );
 
 // Every line the summary or the confirmation can show about something Fathom does not have yet: a
-// page, or a permission that does nothing until its feature is built.
+// permission that does nothing until its feature is built.
 const linesNotBuilt = new Set([
-  ...pagesNotBuilt.flatMap((page) => [
-    page,
-    `The ${page} page does not appear.`,
-    `Sees the ${page} page.`,
-    `The ${page} page no longer appears.`,
-  ]),
   ...unbuiltPermissions.flatMap((permission) => {
     // The permission is always one of the shared list.
     // eslint-disable-next-line security/detect-object-injection

@@ -49,7 +49,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Select the **Projects** page in the left-hand menu.
   - **Expected:**
-    - The **Projects** page opens, with no **Later** tag beside **Projects** in the menu.
+    - The **Projects** page opens.
     - The **Projects** tab is chosen.
     - The table's columns are **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **First milestone**, **Last milestone** and **Next delivery**, with a row for each seeded project.
     - There is no **New project** button.

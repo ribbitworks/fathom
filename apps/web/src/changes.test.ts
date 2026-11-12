@@ -161,6 +161,55 @@ describe("a feature's estimate in the change history", () => {
   });
 });
 
+describe("the planning settings in the change history", () => {
+  it("names them as one record, changed for everyone", () => {
+    expect(
+      describeRecord({
+        kind: "planning-settings",
+        action: "changed",
+        name: null,
+        list: null,
+        draft: false,
+        fields: [{ field: "hoursPerDay", oldValue: "8", newValue: "7.5" }],
+      }).sentence,
+    ).toBe("changed the planning settings");
+  });
+
+  it("names each setting, with percentages as such", () => {
+    expect([
+      describeField({ field: "hoursPerDay", oldValue: "8", newValue: "7.5" }),
+      describeField({ field: "focusPercent", oldValue: "80", newValue: "70" }),
+      describeField({
+        field: "rampUpPercents",
+        oldValue: ["50", "75"],
+        newValue: ["50"],
+      }),
+    ]).toEqual([
+      [
+        { strong: "Hours a day" },
+        " from ",
+        { value: "8" },
+        " to ",
+        { value: "7.5" },
+      ],
+      [
+        { strong: "Default focus" },
+        " from ",
+        { value: "80%" },
+        " to ",
+        { value: "70%" },
+      ],
+      [
+        { strong: "Ramp-up" },
+        " from ",
+        { value: "50%, 75%" },
+        " to ",
+        { value: "50%" },
+      ],
+    ]);
+  });
+});
+
 describe("a feature team's changes in the change history", () => {
   it("names its lead, members, and the days they join or leave", () => {
     expect([

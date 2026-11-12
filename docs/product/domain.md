@@ -20,6 +20,10 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **Roadmap:** The features wanted and roughly when, before anything is costed. Not built yet, as [The Roadmap and the Plan](decisions.md#planning) sets out.
 - **Plan:** The features that are staffed, with their estimates, allocations, months, and capacity. Written with a capital P, apart from the plan Approve Plan approves. Not built yet.
 - **Estimate:** A rough size of the effort a feature needs, not its cost, such as a rough order of magnitude (ROM) or a SWAG, given in a unit of effort such as hours or person-months.
+- **Planning settings:** The figures for the whole organization that capacity and forecasts are worked out with: the working time a unit of effort stands for, focus, buffer, and ramp-up.
+- **Focus:** The share of a person's time that goes to feature work at all, after meetings, support and other overhead.
+- **Buffer:** A percentage added to a feature's effort before forecasting, for what the estimate leaves out. The estimate itself stays as given.
+- **Ramp-up:** The share of full output a new starter delivers in each of their first months.
 
 ## People Terms
 

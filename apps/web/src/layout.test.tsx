@@ -47,20 +47,22 @@ describe("the first page a user may open", () => {
 });
 
 describe("the sidebar", () => {
-  it("shows Capacity, still to come, only to those who may see allocations", async () => {
+  it("shows Capacity to those who see configuration", async () => {
     serverAnswers({
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["plan:view", "allocations:view"],
+          permissions: ["plan:view", "configuration:view"],
         }),
       "GET /api/greeting": greeting,
     });
     renderApp("/");
     await screen.findByText("Hello, Fathom");
     expect(
-      within(sidebar()).getByText("Capacity").parentElement?.textContent,
-    ).toBe("Capacity, Later");
+      within(sidebar())
+        .getByRole("link", { name: "Capacity" })
+        .getAttribute("href"),
+    ).toBe("/capacity");
   });
 
   it("leaves Drafts out for those who see only the org chart", async () => {
@@ -79,9 +81,13 @@ describe("the sidebar", () => {
     ).not.toContain("/drafts");
   });
 
-  it("leaves Capacity out for those who may not see allocations", async () => {
+  it("leaves Capacity out for those who see allocations but not configuration", async () => {
     serverAnswers({
-      "GET /api/session": signedIn,
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["plan:view", "allocations:view"],
+        }),
       "GET /api/greeting": greeting,
     });
     renderApp("/");
@@ -156,7 +162,7 @@ describe("the sidebar", () => {
     ).toBeNull();
   });
 
-  it("marks the current page, and pages still to come", async () => {
+  it("marks the current page", async () => {
     serverAnswers({
       "GET /api/session": administrator,
       "GET /api/greeting": greeting,
@@ -172,12 +178,6 @@ describe("the sidebar", () => {
       within(sidebar())
         .getByRole("link", { name: "Accounts" })
         .getAttribute("aria-current"),
-    ).toBeNull();
-    expect(
-      within(sidebar()).getByText("Capacity").parentElement?.textContent,
-    ).toBe("Capacity, Later");
-    expect(
-      within(sidebar()).queryByRole("link", { name: /Capacity/ }),
     ).toBeNull();
   });
 });
@@ -205,7 +205,6 @@ describe("the collapsed sidebar", () => {
     expect(
       within(sidebar()).getByRole("link", { name: "Accounts" }),
     ).toBeDefined();
-    expect(within(sidebar()).getByText("Capacity, Later")).toBeDefined();
     await userEvent.hover(
       within(sidebar()).getByRole("link", { name: "Accounts" }),
     );

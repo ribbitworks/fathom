@@ -76,24 +76,22 @@ type Page =
   | "/org-chart"
   | "/feature-assignments"
   | "/releases/{-$streamId}"
+  | "/capacity"
   | "/projects"
   | "/features"
   | "/help/roles"
   | "/help/drafts";
 
-interface Item {
+// A page, or a box opened over the current page instead of going to another.
+type Item = {
   label: string;
   icon: IconName;
-  // Absent for pages still to come, and for boxes.
-  to?: Page;
-  // Opens a box over the current page instead of going to another.
-  box?: "about";
   // The permission the page needs, or several, any one of which opens it.
   permission?: Permission | readonly Permission[];
   // Pages with addresses below their own, such as each list's, are marked as the current page for
   // all of them.
   nested?: boolean;
-}
+} & ({ to: Page; box?: undefined } | { box: "about"; to?: undefined });
 
 // Whether the user's permissions open an item's page.
 function opens(item: Item, permissions: readonly Permission[]): boolean {
@@ -165,7 +163,9 @@ const sections: { label: string; items: Item[] }[] = [
       {
         label: "Capacity",
         icon: "capacity",
-        permission: "allocations:view",
+        to: "/capacity",
+        // Only its Settings tab is built, which needs configuration.
+        permission: "configuration:view",
       },
       {
         label: "Lists",
@@ -279,18 +279,6 @@ export function pagesOpened(permissions: readonly Permission[]): string[] {
   );
 }
 
-// The pages in the sidebar that some permissions open but Fathom does not have yet, by name.
-export const pagesNotBuilt: readonly string[] = sections.flatMap(({ items }) =>
-  items
-    .filter(
-      (item) =>
-        item.permission !== undefined &&
-        item.to === undefined &&
-        item.box === undefined,
-    )
-    .map((item) => item.label),
-);
-
 // The sidebar's section and page at an address, which the top bar names: a page's own address, or,
 // for a page with addresses below its own, such as each list's, any of them.
 function placeAt(
@@ -403,25 +391,6 @@ function Sidebar({
             {items.map((item) =>
               item.box === "about" ? (
                 <AboutItem key={item.label} item={item} rail={rail} />
-              ) : item.to === undefined ? (
-                <RailTip
-                  key={item.label}
-                  rail={rail}
-                  label={`${item.label} (Later)`}
-                >
-                  <span className={classes.later}>
-                    <Icon name={item.icon} />
-                    {rail ? (
-                      <VisuallyHidden>{item.label}, Later</VisuallyHidden>
-                    ) : (
-                      <>
-                        <span className={classes.grow}>{item.label}</span>
-                        <VisuallyHidden>, </VisuallyHidden>
-                        <span className={classes.laterTag}>Later</span>
-                      </>
-                    )}
-                  </span>
-                </RailTip>
               ) : (
                 <RailTip key={item.label} rail={rail} label={item.label}>
                   <Link

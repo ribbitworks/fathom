@@ -45,6 +45,7 @@ import {
   gridModeSchema,
 } from "./feature-assignments-page.tsx";
 import { OrgChartPage } from "./org-chart-page.tsx";
+import { CapacityPage, capacityTabSchema } from "./capacity-page.tsx";
 import { SettingsPage } from "./settings-page.tsx";
 import { setTimeZone } from "./today.ts";
 import { ReleasesPage } from "./releases-page.tsx";
@@ -356,6 +357,29 @@ const releasesRoute = createRoute({
   },
 });
 
+const capacityRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/capacity",
+  validateSearch: z.object({
+    tab: capacityTabSchema.optional().catch(undefined),
+  }),
+  beforeLoad: requiring("configuration:view"),
+  component: function Capacity() {
+    const { permissions } = signedIn.useRouteContext();
+    const navigate = capacityRoute.useNavigate();
+    const { tab } = capacityRoute.useSearch();
+    return (
+      <CapacityPage
+        tab={tab ?? "settings"}
+        onTab={(next) => {
+          void navigate({ search: { tab: next } });
+        }}
+        canEditSettings={permissions.includes("configuration:edit")}
+      />
+    );
+  },
+});
+
 // A plan page's address: its view, and the record whose details are shown beside it.
 const planRecordSearch = viewSearchSchema.extend({
   open: z.uuid().optional().catch(undefined),
@@ -637,6 +661,7 @@ const routeTree = rootRoute.addChildren([
     featuresRoute,
     peopleRoute,
     orgChartRoute,
+    capacityRoute,
     featureAssignmentsRoute,
     draftsRoute,
     helpRoute,

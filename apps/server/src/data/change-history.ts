@@ -105,7 +105,7 @@ const livePlanKinds: readonly {
   type: RecordType;
   readWith: readonly Permission[];
   view?: ClassifiedView;
-}[] = [{ type: "effort-conversions", readWith: ["plan:view"] }];
+}[] = [{ type: "planning-settings", readWith: ["configuration:view"] }];
 
 // The plan's records, such as release streams, and its configuration changed live.
 const planKinds: readonly RecordType[] = [
@@ -470,6 +470,8 @@ function shown(
   if (typeof value === "string" || typeof value === "boolean") return value;
   // Such as the length of a release stream's cycles.
   if (typeof value === "number") return String(value);
+  // Such as a new starter's ramp-up, month by month.
+  if (Array.isArray(value)) return value.map(String);
   return null;
 }
 

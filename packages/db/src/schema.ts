@@ -558,14 +558,14 @@ export const features = fathomSchema.table(
   ],
 );
 
-// The one row of conversions between units of effort, for the whole of Fathom, which the migrations
-// add with the starting conversions. Its fixed identifier names it in the change history.
-export const effortConversionsId = "effort-conversions";
+// The one row of planning settings for the whole of Fathom, which the migrations add with the
+// starting settings. Its fixed identifier names it in the change history.
+export const planningSettingsId = "planning-settings";
 
-export const effortConversions = fathomSchema.table(
-  "effort_conversions",
+export const planningSettings = fathomSchema.table(
+  "planning_settings",
   {
-    id: text("id").primaryKey().default(effortConversionsId),
+    id: text("id").primaryKey().default(planningSettingsId),
     hoursPerDay: numeric("hours_per_day", {
       mode: "number",
       precision: 3,
@@ -573,23 +573,39 @@ export const effortConversions = fathomSchema.table(
     }).notNull(),
     daysPerWeek: integer("days_per_week").notNull(),
     daysPerMonth: integer("days_per_month").notNull(),
+    focusPercent: integer("focus_percent").notNull(),
+    bufferPercent: integer("buffer_percent").notNull(),
+    // A new starter's share of full output in each of their first months, in order.
+    rampUpPercents: integer("ramp_up_percents").array().notNull(),
   },
   (table) => [
     check(
-      "effort_conversions_one_row",
-      sql`${table.id} = ${sql.raw(`'${effortConversionsId}'`)}`,
+      "planning_settings_one_row",
+      sql`${table.id} = ${sql.raw(`'${planningSettingsId}'`)}`,
     ),
     check(
-      "effort_conversions_hours_per_day",
+      "planning_settings_hours_per_day",
       sql`${table.hoursPerDay} BETWEEN 0.5 AND 24 AND ${table.hoursPerDay} * 2 = trunc(${table.hoursPerDay} * 2)`,
     ),
     check(
-      "effort_conversions_days_per_week",
+      "planning_settings_days_per_week",
       sql`${table.daysPerWeek} BETWEEN 1 AND 7`,
     ),
     check(
-      "effort_conversions_days_per_month",
+      "planning_settings_days_per_month",
       sql`${table.daysPerMonth} BETWEEN 1 AND 31`,
+    ),
+    check(
+      "planning_settings_focus_percent",
+      sql`${table.focusPercent} BETWEEN 1 AND 100`,
+    ),
+    check(
+      "planning_settings_buffer_percent",
+      sql`${table.bufferPercent} BETWEEN 0 AND 100`,
+    ),
+    check(
+      "planning_settings_ramp_up_percents",
+      sql`array_ndims(${table.rampUpPercents}) = 1 AND array_position(${table.rampUpPercents}, NULL) IS NULL AND cardinality(${table.rampUpPercents}) <= 12 AND 1 <= ALL(${table.rampUpPercents}) AND 100 >= ALL(${table.rampUpPercents})`,
     ),
   ],
 );

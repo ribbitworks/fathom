@@ -42,24 +42,6 @@
   box-shadow: inset 3px 0 0 var(--fathom-sidebar-accent);
 }
 
-.later {
-  composes: link;
-  color: var(--fathom-sidebar-muted);
-  cursor: default;
-}
-
-.later:hover {
-  background: none;
-  color: var(--fathom-sidebar-muted);
-}
-
-.laterTag {
-  font-size: 11px;
-  border: 1px solid var(--fathom-sidebar-line);
-  border-radius: 4px;
-  padding: 0 5px;
-}
-
 .link:focus-visible {
   outline: 2px solid var(--fathom-sidebar-accent);
   outline-offset: 1px;
@@ -69,10 +51,6 @@
   background: var(--fathom-canvas);
 }
 
-.grow {
-  flex: 1;
-}
-
 /* The collapsed rail: icons only, centred, with sections divided by a line. */
 .railSection {
   align-items: center;
@@ -80,8 +58,7 @@
   border-top: 1px solid var(--fathom-sidebar-line);
 }
 
-.railSection .link,
-.railSection .later {
+.railSection .link {
   justify-content: center;
   width: 40px;
   padding: 8px 0;

@@ -116,7 +116,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] **Step 3.** Read the summary.
   - **Expected:** The summary reads:
-    - **Pages its holders see:** Overview, Projects, Features, Releases, People, Org chart, Drafts, Capacity, Lists and Change history, with Capacity tagged **Not built yet**.
+    - **Pages its holders see:** Overview, Projects, Features, Releases, People, Org chart, Drafts, Capacity, Lists and Change history.
     - **Can**, tagged **Not built yet:** making drafts of changes to the plan and allocations.
     - **Can**, not tagged: seeing the plan, changing the plan, approving drafts of the plan, changing features and estimates, approving drafts of releases, seeing allocations, approving drafts of allocations, seeing people, approving drafts of people, seeing the org chart, seeing the hiring plan, approving drafts of planned hires, approving feature teams, seeing configuration, approving drafts of configuration, and seeing the change history.
     - **Cannot**, not tagged: **Cannot change allocations.**, **Cannot propose feature teams.** and **Cannot change feature teams.**

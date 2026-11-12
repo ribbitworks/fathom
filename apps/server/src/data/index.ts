@@ -8,6 +8,8 @@
 import type { Database } from "@fathom/db";
 import type {
   EffortConversions,
+  PlanningSettings,
+  PlanningSettingsChange,
   ChangeHistory,
   ClassifiedField,
   DataClasses,
@@ -74,7 +76,11 @@ import {
   requirePermission,
 } from "../access.ts";
 import { approveDrafts, rejectDrafts } from "./approvals.ts";
-import { changeEffortConversions, readEffortConversions } from "./effort.ts";
+import {
+  changePlanningSettings,
+  readEffortConversions,
+  readPlanningSettings,
+} from "./planning-settings.ts";
 import { changeAllocation, readAllocations } from "./allocations.ts";
 import { readGreeting } from "./greeting.ts";
 import * as columnDrafts from "./column-drafts.ts";
@@ -155,13 +161,14 @@ export interface DataAccess {
   // Refuses a password a person chose that the rules in the password settings do not allow, or that
   // is too common or easy to guess for its owner. Anyone may ask, since the rules are no secret.
   checkChosenPassword(password: string, owner: PasswordOwner): Promise<void>;
-  // The conversions between units of effort, seen with the plan and changed by those who change
-  // configuration.
+  // The planning settings, seen by those who see configuration and changed by those who change it,
+  // and the conversions between units of effort among them, seen with the plan.
+  readPlanningSettings(actor: Actor): Promise<PlanningSettings>;
   readEffortConversions(actor: Actor): Promise<EffortConversions>;
-  changeEffortConversions(
+  changePlanningSettings(
     actor: Actor,
-    conversions: EffortConversions,
-  ): Promise<Saved<EffortConversions>>;
+    change: PlanningSettingsChange,
+  ): Promise<Saved<PlanningSettings>>;
   // The most recent entries in the access history.
   readHistory(actor: Actor): Promise<HistoryEntry[]>;
   // The change sets saved before the one named, or the latest, holding only the changes the actor
@@ -1106,10 +1113,12 @@ export function createDataAccess(database: Database): DataAccess {
       return readGreeting(database);
     },
     readSettings: async () => readSettings(database),
+    readPlanningSettings: async (actor) =>
+      readPlanningSettings(database, actor),
     readEffortConversions: async (actor) =>
       readEffortConversions(database, actor),
-    changeEffortConversions: async (actor, conversions) =>
-      changeEffortConversions(database, actor, conversions),
+    changePlanningSettings: async (actor, change) =>
+      changePlanningSettings(database, actor, change),
     changeTimeZone: async (actor, timeZone) =>
       changeTimeZone(database, actor, timeZone),
     moveFieldClass: async (actor, field, to) =>

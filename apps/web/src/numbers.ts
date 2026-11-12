@@ -10,6 +10,16 @@ export function count(value: number): string {
   return counts.format(value);
 }
 
+const percents = new Intl.NumberFormat(undefined, {
+  style: "percent",
+  maximumFractionDigits: 0,
+});
+
+// A whole percentage, such as 80 as 80%.
+export function percentage(value: number): string {
+  return percents.format(value / 100);
+}
+
 const decimals = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: numberDigits.afterPoint,
 });

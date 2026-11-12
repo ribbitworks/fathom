@@ -7,8 +7,7 @@
 // hour, which the database keeps exactly, so an estimate always reads back as it was entered.
 
 import { z } from "zod";
-import { numberDigits, roundedUpTo } from "./numbers.ts";
-import { changeSetIdSchema } from "./people.ts";
+import { numberDigits, outOfRange, roundedUpTo } from "./numbers.ts";
 
 export const effortUnits = [
   "hours",
@@ -43,33 +42,45 @@ export const startingEffortConversions = {
 
 const { hoursPerDay, daysPerWeek, daysPerMonth } = effortConversionLimits;
 
-const range = (
-  what: string,
-  { least, most }: { least: number; most: number },
-) => `${what} must be from ${String(least)} to ${String(most)}`;
+// What each conversion is called on screen, where it is set with the other planning settings.
+export const effortConversionNames = {
+  hoursPerDay: "Hours a day",
+  daysPerWeek: "Working days a week",
+  daysPerMonth: "Working days a month",
+} as const satisfies Record<keyof typeof effortConversionLimits, string>;
 
-const hoursInDay = "Hours in a person-day";
-const daysInWeek = "Person-days in a person-week";
-const daysInMonth = "Person-days in a person-month";
+const wholeDays = (name: string) => `${name}: use whole days`;
 
 export const effortConversionsSchema = z.object({
   hoursPerDay: z
     .number()
-    .min(hoursPerDay.least, { error: range(hoursInDay, hoursPerDay) })
-    .max(hoursPerDay.most, { error: range(hoursInDay, hoursPerDay) })
+    .min(hoursPerDay.least, {
+      error: outOfRange(effortConversionNames.hoursPerDay, hoursPerDay),
+    })
+    .max(hoursPerDay.most, {
+      error: outOfRange(effortConversionNames.hoursPerDay, hoursPerDay),
+    })
     .refine((value) => Number.isInteger(value * hourSteps), {
-      error: `${hoursInDay} must be whole or half hours`,
+      error: `${effortConversionNames.hoursPerDay}: use whole or half hours`,
     }),
   daysPerWeek: z
     .number()
-    .int({ error: `${daysInWeek} must be whole days` })
-    .min(daysPerWeek.least, { error: range(daysInWeek, daysPerWeek) })
-    .max(daysPerWeek.most, { error: range(daysInWeek, daysPerWeek) }),
+    .int({ error: wholeDays(effortConversionNames.daysPerWeek) })
+    .min(daysPerWeek.least, {
+      error: outOfRange(effortConversionNames.daysPerWeek, daysPerWeek),
+    })
+    .max(daysPerWeek.most, {
+      error: outOfRange(effortConversionNames.daysPerWeek, daysPerWeek),
+    }),
   daysPerMonth: z
     .number()
-    .int({ error: `${daysInMonth} must be whole days` })
-    .min(daysPerMonth.least, { error: range(daysInMonth, daysPerMonth) })
-    .max(daysPerMonth.most, { error: range(daysInMonth, daysPerMonth) }),
+    .int({ error: wholeDays(effortConversionNames.daysPerMonth) })
+    .min(daysPerMonth.least, {
+      error: outOfRange(effortConversionNames.daysPerMonth, daysPerMonth),
+    })
+    .max(daysPerMonth.most, {
+      error: outOfRange(effortConversionNames.daysPerMonth, daysPerMonth),
+    }),
 });
 
 export type EffortConversions = z.infer<typeof effortConversionsSchema>;
@@ -174,12 +185,3 @@ export function shownEffort(
     ((steps * step) / unitHundredths(conversions, unit)).toFixed(placesShown),
   );
 }
-
-export const savedEffortConversionsSchema = z.object({
-  conversions: effortConversionsSchema,
-  changeSetId: changeSetIdSchema,
-});
-
-export type SavedEffortConversions = z.infer<
-  typeof savedEffortConversionsSchema
->;

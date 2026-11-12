@@ -603,14 +603,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 ### Not Built Yet
 
-#### PERM-26: Permissions Not Built Yet Add Only the Capacity Entry
+#### PERM-26: Permissions Not Built Yet Add No Page
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-25 ended with.
 
 **Preconditions:** Team Member granted only **View** on **Allocations** and **Draft** on **Drafts** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The Help **Roles** page is open. The menu shows **Capacity** tagged **Later** in the **People** section, and the **Help** section, and nothing else. There is no Publish button.
+  - **Expected:**
+    - The Help **Roles** page is open.
+    - The menu shows only the **Help** section.
+    - There is no Publish button.
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.

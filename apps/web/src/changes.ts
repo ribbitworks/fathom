@@ -15,6 +15,8 @@ import {
   isDay,
   meaningName,
   meaningSchema,
+  percentSettingFields,
+  planningSettingNames,
   recordSearchText,
   tierSchema,
   type ViewScope,
@@ -26,7 +28,7 @@ import { visibilityName } from "./lists.ts";
 import type { Phrase } from "./phrase.tsx";
 import { effortColumnUnits } from "./effort.ts";
 import { formatDay, unitAmountWords } from "./table-view.ts";
-import { count } from "./numbers.ts";
+import { count, percentage } from "./numbers.ts";
 import { nameAs } from "./names.ts";
 import { colourName } from "./releases.ts";
 
@@ -95,6 +97,7 @@ const fieldNames = new Map([
   ["memberFrom", "Joining and leaving dates"],
   ["leadFrom", "Date the feature lead changes"],
   ["estimateHours", "Effort"],
+  ...Object.entries(planningSettingNames),
   ["removalReasons", "Reasons for removing features"],
 ]);
 
@@ -112,7 +115,9 @@ function valueText(field: string, value: ChangeValue): string | null {
   ) {
     return null;
   }
-  if (Array.isArray(value)) return value.join(", ");
+  if (Array.isArray(value)) {
+    return value.map((one) => valueWords.get(field)?.(one) ?? one).join(", ");
+  }
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (isDay(value)) return formatDay(value);
   return valueWords.get(field)?.(value) ?? value;
@@ -146,6 +151,9 @@ const valueWords = new Map<string, (value: string) => string | undefined>([
     "estimateHours",
     (value) => unitAmountWords(value, Number(value), effortColumnUnits[0]),
   ],
+  ...percentSettingFields.map(
+    (field) => [field, (value: string) => percentage(Number(value))] as const,
+  ),
 ]);
 
 // What changed in one field of a record of the kind given, such as "Name from Sites to Locations",
@@ -223,6 +231,8 @@ function thing({ kind, name, list }: ChangedRecord): string {
       return name === null ? "a planned hire" : `the planned hire ${name}`;
     case "feature-team":
       return `the feature team ${called}`;
+    case "planning-settings":
+      return "the planning settings";
     default:
       return "a record";
   }

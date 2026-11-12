@@ -23,6 +23,13 @@ function withinDigits(text: string): boolean {
   );
 }
 
+// What a value refused for being out of its range says, such as Hours a day: use 0.5 to 24.
+export const outOfRange = (
+  name: string,
+  { least, most }: { least: number; most: number },
+  unit = "",
+) => `${name}: use ${String(least)}${unit} to ${String(most)}${unit}`;
+
 // What is wrong with text typed as a number, in words to follow a label, or undefined when it is
 // empty or a number Fathom keeps.
 export function numberProblem(text: string): string | undefined {

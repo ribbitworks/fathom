@@ -1,0 +1,8 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The planning settings, laid out as a details panel's rows, with labels wide enough for the
+   longest, such as Working days a month, to stay on one line on a page. */
+
+.settings {
+  --fathom-record-label-width: 12rem;
+}

@@ -165,47 +165,39 @@ describe("effortConversionsSchema", () => {
     [
       "hours not whole or half",
       { hoursPerDay: 7.25 },
-      "Hours in a person-day must be whole or half hours",
+      "Hours a day: use whole or half hours",
     ],
-    [
-      "too few hours",
-      { hoursPerDay: 0 },
-      "Hours in a person-day must be from 0.5 to 24",
-    ],
-    [
-      "too many hours",
-      { hoursPerDay: 24.5 },
-      "Hours in a person-day must be from 0.5 to 24",
-    ],
+    ["too few hours", { hoursPerDay: 0 }, "Hours a day: use 0.5 to 24"],
+    ["too many hours", { hoursPerDay: 24.5 }, "Hours a day: use 0.5 to 24"],
     [
       "part of a day in a week",
       { daysPerWeek: 4.5 },
-      "Person-days in a person-week must be whole days",
+      "Working days a week: use whole days",
     ],
     [
       "too few days in a week",
       { daysPerWeek: 0 },
-      "Person-days in a person-week must be from 1 to 7",
+      "Working days a week: use 1 to 7",
     ],
     [
       "too many days in a week",
       { daysPerWeek: 8 },
-      "Person-days in a person-week must be from 1 to 7",
+      "Working days a week: use 1 to 7",
     ],
     [
       "part of a day in a month",
       { daysPerMonth: 21.5 },
-      "Person-days in a person-month must be whole days",
+      "Working days a month: use whole days",
     ],
     [
       "too few days in a month",
       { daysPerMonth: 0 },
-      "Person-days in a person-month must be from 1 to 31",
+      "Working days a month: use 1 to 31",
     ],
     [
       "too many days in a month",
       { daysPerMonth: 32 },
-      "Person-days in a person-month must be from 1 to 31",
+      "Working days a month: use 1 to 31",
     ],
   ])("refuses %s", (_case, change, message) => {
     const result = effortConversionsSchema.safeParse({

@@ -3,7 +3,7 @@
 // Tests for counts, written as the language settings the tests fix write them.
 
 import { describe, expect, it } from "vitest";
-import { count, decimalUpTo } from "./numbers.ts";
+import { count, decimalUpTo, percentage } from "./numbers.ts";
 
 describe("decimalUpTo", () => {
   it("rounds a number up to the places given, as the language settings write it", () => {
@@ -23,5 +23,12 @@ describe("counts", () => {
   it("group thousands as the language settings do", () => {
     expect(count(7)).toBe("7");
     expect(count(1500)).toBe("1,500");
+  });
+});
+
+describe("percentage", () => {
+  it("writes a whole percentage as the language settings do", () => {
+    expect(percentage(80)).toBe("80%");
+    expect(percentage(0)).toBe("0%");
   });
 });

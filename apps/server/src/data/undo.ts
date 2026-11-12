@@ -12,7 +12,7 @@ import {
   changeSets,
   type Database,
   databaseCodes,
-  effortConversions,
+  planningSettings,
   fields,
   fieldValues,
   hasDatabaseCode,
@@ -140,7 +140,7 @@ const editPermissions = {
   "feature-team": ["org-chart:view"],
   // Who may change each view is checked for the view itself.
   "saved-view": ["people:view"],
-  "effort-conversions": ["configuration:edit"],
+  "planning-settings": ["configuration:edit"],
 } as const;
 
 // The order kinds of record are put back in, so a record comes back before those that belong to it.
@@ -154,7 +154,7 @@ const kindOrder: readonly RecordType[] = [
   "planned-hire",
   "feature-team",
   "saved-view",
-  "effort-conversions",
+  "planning-settings",
 ];
 
 // The table each kind of record is kept in. A list's choice order is only ever changed live by
@@ -166,7 +166,7 @@ const tables = {
   person: people,
   "planned-hire": plannedHires,
   "saved-view": savedViews,
-  "effort-conversions": effortConversions,
+  "planning-settings": planningSettings,
 } as const;
 const tableOf = (record: Undone) =>
   tables[record.recordType as keyof typeof tables];
@@ -240,10 +240,13 @@ const columnsOf: Record<
     definition: asStored,
     createdBy: text,
   },
-  "effort-conversions": {
+  "planning-settings": {
     hoursPerDay: asStored,
     daysPerWeek: asStored,
     daysPerMonth: asStored,
+    focusPercent: asStored,
+    bufferPercent: asStored,
+    rampUpPercents: asStored,
   },
 };
 
@@ -849,9 +852,9 @@ async function lockRecords(
     .orderBy(asc(savedViews.id))
     .for("update");
   await transaction
-    .select({ id: effortConversions.id })
-    .from(effortConversions)
-    .where(inArray(effortConversions.id, idsOf(records, "effort-conversions")))
+    .select({ id: planningSettings.id })
+    .from(planningSettings)
+    .where(inArray(planningSettings.id, idsOf(records, "planning-settings")))
     .for("update");
 }
 

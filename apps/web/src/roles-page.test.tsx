@@ -416,7 +416,7 @@ describe("the summary of what a role allows", () => {
     // Then
     expect(summaryLines(dialog, "Cannot")).toEqual(
       expect.arrayContaining([
-        "The Capacity page does not appear., Not built yet",
+        "The Capacity page does not appear.",
         `${permissionDescriptions["drafts:submit"].without}, Not built yet`,
         "The People page does not appear.",
       ]),
@@ -425,9 +425,6 @@ describe("the summary of what a role allows", () => {
     await userEvent.click(box(dialog, "Edit Allocations"));
     await userEvent.click(box(dialog, "Draft Drafts, not built yet"));
     // Then
-    expect(summaryLines(dialog, "Pages its holders see")).toContain(
-      "Capacity, Not built yet",
-    );
     expect(summaryLines(dialog, "Can")).toEqual(
       expect.arrayContaining([
         permissionDescriptions["allocations:edit"].allows,
@@ -531,11 +528,13 @@ describe("the summary of what a role allows", () => {
       "No longer: Overview",
       "No longer: Projects",
       "No longer: Features",
-      // Releases and Drafts come back, since configuration opens them too.
+      // Releases and Drafts come back, since configuration opens them too, and Capacity opens with
+      // it.
       "Releases",
       "No longer: People",
       "Drafts",
       "No longer: None, apart from Help.",
+      "Capacity",
       "Lists",
     ]);
     expect(summaryLine(dialog, cannot).className).toMatch(/added/);
@@ -548,6 +547,7 @@ describe("the summary of what a role allows", () => {
     expect(summaryLines(dialog, "Pages its holders see")).toEqual([
       "Releases",
       "Drafts",
+      "Capacity",
       "Lists",
     ]);
     expect(summaryLine(dialog, cannot).className).not.toMatch(/added/);

@@ -213,7 +213,7 @@ export function Row({
     | undefined;
   editing?: Editing | undefined;
   children?: ReactNode;
-  // A control of its own at the row's right, in place of the change button, such as a menu.
+  // A control of its own at the row's right, after the change button if there is one, such as a menu.
   action?: ReactNode;
 }) {
   const draft = changed?.draft;
@@ -277,14 +277,18 @@ export function Row({
                     ))}
               </DraftedItem>
             </MarkRow>
-            {start !== undefined && (
-              <ActionIcon
-                id={changeId(column)}
-                {...changeButton(column.label)}
-                onClick={start}
-              />
+            {(start !== undefined || Boolean(action)) && (
+              <Group gap={4} wrap="nowrap">
+                {start !== undefined && (
+                  <ActionIcon
+                    id={changeId(column)}
+                    {...changeButton(column.label)}
+                    onClick={start}
+                  />
+                )}
+                {action}
+              </Group>
             )}
-            {action}
           </Group>
         )}
         {editing?.problem !== undefined && (

@@ -31,6 +31,9 @@ import { PageHeader } from "./page-header.tsx";
 import { PasswordSettingsPanel } from "./password-settings.tsx";
 import { sessionQuery } from "./session.ts";
 
+// How wide a page of settings is: as wide as its fields need, not the window.
+export const settingsPageWidth = 560;
+
 const changeTimeZone = (request: TimeZoneRequest) =>
   sendJsonFor("PUT", "/api/settings/time-zone", request, timeZoneSettingSchema);
 
@@ -91,7 +94,7 @@ export function SettingsPage({
     },
   });
   return (
-    <Stack gap="md" maw={560}>
+    <Stack gap="md" maw={settingsPageWidth}>
       <PageHeader title="Settings" />
       <Paper withBorder p="md" component="section" aria-label="Time zone">
         <form
