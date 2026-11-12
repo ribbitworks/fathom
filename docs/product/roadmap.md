@@ -52,6 +52,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 - **Planned managers:** Added by the owner on 2026-11-07. A planned hire can be marked as a manager in People's Manager? column, as a person is, so other planned hires can report to it, and the org chart shows it heading its planned team. People keep reporting to people until planned reporting changes come in The Organization stage. Filling a planned manager moves the hires that report to it to the person who fills it. It follows the Left state.
 - **People on a date:** Added by the owner on 2026-11-11. People read as of a chosen date, as the org chart is, with the planned hires not yet filled beside today's people, as [People over time](decisions.md#workforce) sets out. Built after the current changes that reach across many pages.
 - **Demand forecasting:** One estimate per feature.
+- **Overview:** Added by the owner on 2026-11-11. A page of links to what needs attention, as [The Overview page](decisions.md#planning) sets out, built after The Roadmap and the Plan, since it shows which features are Late, Not staffed or Critical, and how much capacity is used.
 - **Roles:** A fixed set of roles, with access tiers and access history for start and end dates, and the hiring plan. Project Managers see feature teams on the org chart, approve them, and may give other input, still to be confirmed in the [Product Brief](brief.md)'s open questions.
 
 ## Stage: Snapshots, Exports, and Hiring

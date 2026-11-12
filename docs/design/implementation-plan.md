@@ -205,6 +205,10 @@ flowchart TD
     later --> split
 ```
 
+### Overview
+
+The Overview page as a page of links to what needs attention, as [The Overview page](../product/decisions.md#planning) sets out, built after the steps of [The Roadmap and the Plan](#features-and-the-roadmap), since it shows which features are Late, Not staffed or Critical, and how much capacity is used.
+
 ### Project Manager Input
 
 The input Project Managers give on whether teams are in place. Its form is an [open question in the Product Brief](../product/brief.md#open-questions), so this slice is scheduled once it is answered.
