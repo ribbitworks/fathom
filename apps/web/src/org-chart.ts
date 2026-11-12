@@ -433,14 +433,6 @@ export function levelsOf(tree: OrgTree): number {
   return Math.max(0, ...tree.roots.map(below));
 }
 
-// What the reader may change of teams on the chart: their names, as drafts, and their colours.
-export interface TeamEdits {
-  names: boolean;
-  colours: boolean;
-}
-
-export const noTeamEdits: TeamEdits = { names: false, colours: false };
-
 // The chart's address: the person found, and the manager whose team alone is shown, each by
 // Employee ID, and what the Draft menu shows, drafts beside live unless chosen otherwise.
 export interface ChartSearch {

@@ -42,7 +42,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 ### Grant Team Member Only Some Permissions
 
 1. Sign in as the Administrator, `fathom.administrator@fathom.test`, and open the **Team Member** role, as Open a Role describes.
-2. Untick **View** on the **Plan**, **Allocations** and **Org chart** rows. Confirm that no box in the grid is ticked, and that **Pages its holders see** says **None, apart from Help.**
+2. Untick **View** on the **Plan**, **Features and releases**, **Allocations**, **People** and **Feature teams** rows. Confirm that no box in the grid is ticked, and that **Pages its holders see** says **None, apart from Help.**
 3. Tick the boxes the test case names.
 4. Select **Save**, then **Save changes**, and confirm that a green banner says **The role has been changed.**
 5. Sign in as the Team Member, `team.member@fathom.test`.
@@ -50,7 +50,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 ### Restore Team Member
 
 1. Sign in as the Administrator, `fathom.administrator@fathom.test`, and open the **Team Member** role, as Open a Role describes.
-2. Select **Restore template**, and confirm that the ticked boxes are **View** on **Plan**, **Allocations** and **Org chart** only.
+2. Select **Restore template**, and confirm that the ticked boxes are **View** on **Plan**, **Features and releases**, **Allocations**, **People** and **Feature teams** only.
 3. Select **Save**, then **Save changes**, and confirm that a green banner says **The role has been changed.**
 
 ## Terms
@@ -70,68 +70,104 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Team Member granted only **View** on **Plan** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The **Overview** page is open. The menu shows **Overview**, **Projects**, **Features**, and **Releases** in the **Plan** section, **Drafts** in the **People** section, and the **Help** section, and nothing else.
+  - **Expected:**
+    - The **Overview** page is open
+    - **Plan** section: **Overview** and **Projects**
+    - **People** section: **Drafts**
+    - **History** section: **Change history**
+    - The **Help** section, and no other page
   - **Notes:**
 
-- [ ] **Step 2.** Select **Releases**, then **Platform** in the table.
+- [ ] **Step 2.** Select **Drafts**.
   - **Expected:**
-    - Under **Releases**, the side panel lists **Harbor 1**, **Harbor 2 LTS**, **Harbor 3** and **Harbor 4**
-    - A light green Live row is under **Harbor 2 LTS** and under **Harbor 3**
-    - There is no **New release…** button and no **New release stream** button
-  - **Notes:**
-
-- [ ] **Step 3.** Select **Drafts**.
-  - **Expected:**
-    - Drafts of the plan are listed, among them one naming **Harbor 4**
+    - Drafts of the plan are listed, among them one naming **Clinic Booking Rollout**
+    - No entry names **Harbor 4**, a draft of a release
     - No entry has a checkbox
     - There is no **Select all waiting** or **Approve** button
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
 
-#### PERM-02: Edit Plan Makes Releases
+#### PERM-02: View Features and Releases Shows Them Without Changing Them
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-01 ended with.
 
-**Preconditions:** Team Member granted only **Edit** on **Plan** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Team Member granted only **View** on **Features and releases** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Select **Releases**, then **Platform** in the table, then **New release…** under **Releases** in the side panel.
-  - **Expected:** A dialog titled **New release in Platform** opens. There is no **New release stream** button at the top right of the page.
+- [ ] **Step 1.** Look at the left-hand menu.
+  - **Expected:**
+    - **Plan** section: **Features** and **Releases**
+    - **People** section: **Drafts**
+    - **History** section: **Change history**
+    - The **Help** section, and no other page
   - **Notes:**
 
-- [ ] **Step 2.** Type `Harbor 5` in **Name**.
+- [ ] **Step 2.** Select **Releases**.
+  - **Expected:** The table of release streams shows.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Platform** in the table.
+  - **Expected:**
+    - Under **Releases**, the side panel lists **Harbor 1**, **Harbor 2 LTS**, **Harbor 3** and **Harbor 4**
+    - A light green Live row is under **Harbor 2 LTS** and under **Harbor 3**
+    - There is no **New release…** button and no **New release stream** button
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Drafts**.
+  - **Expected:**
+    - An entry names **Harbor 4**
+    - No entry has a checkbox
+  - **Notes:**
+
+**Afterwards:** Run Restore Team Member.
+
+#### PERM-03: Edit Features and Releases Makes Releases
+
+**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-02 ended with.
+
+**Preconditions:** Team Member granted only **Edit** on **Features and releases** through Grant Team Member Only Some Permissions, signed in with this account.
+
+- [ ] **Step 1.** Look at the left-hand menu.
+  - **Expected:**
+    - **Plan** section: **Features** and **Releases**
+    - **People** section: **Drafts**
+    - **History** section: **Change history**
+    - The **Help** section, and no other page
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Releases**.
+  - **Expected:** The table of release streams shows.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Platform** in the table.
+  - **Expected:** The side panel opens, with **New release…** under **Releases**, and there is no **New release stream** button at the top right of the page.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **New release…**.
+  - **Expected:** A dialog titled **New release in Platform** opens.
+  - **Notes:**
+
+- [ ] **Step 5.** Type `Harbor 5` in **Name**.
   - **Expected:** **Name** reads **Harbor 5**.
   - **Notes:**
 
-- [ ] **Step 3.** In **First cycle**, choose Platform's third half-year cycle: the third in the list whose dates span six months.
+- [ ] **Step 6.** In **First cycle**, choose Platform's third half-year cycle: the third in the list whose dates span six months.
   - **Expected:** **First cycle** shows that cycle.
   - **Notes:**
 
-- [ ] **Step 4.** In **Last cycle**, choose the same cycle.
+- [ ] **Step 7.** In **Last cycle**, choose the same cycle.
   - **Expected:** **Last cycle** shows that cycle.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Make release**.
+- [ ] **Step 8.** Select **Make release**.
   - **Expected:**
     - A notification says **Drafted the new release.**
     - Under **Releases**, a row reads **Harbor 5**, with a hollow yellow dot in its slot
     - The Publish button reads **Publish 1 change**
   - **Notes:**
 
-- [ ] **Step 6.** Run Discard the Unpublished Changes.
+- [ ] **Step 9.** Run Discard the Unpublished Changes.
   - **Expected:** **Harbor 5** is gone from the side panel.
-  - **Notes:**
-
-**Afterwards:** Run Restore Team Member.
-
-#### PERM-03: Edit Features Opens No Further Pages
-
-**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-02 ended with.
-
-**Preconditions:** Team Member granted only **Edit** on **Features** through Grant Team Member Only Some Permissions, signed in with this account.
-
-- [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The menu shows the same pages as in PERM-01 Step 1, since editing features brings seeing the plan. On **Releases**, **Platform** has no **New release…** button.
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
@@ -145,11 +181,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Team Member granted only **View** on **People** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The **People** page is open. The menu shows **People** and **Drafts** in the **People** section, and the **Help** section, and nothing else.
+  - **Expected:**
+    - The **People** page is open
+    - **People** section: **People**, **Org chart** and **Drafts**
+    - **History** section: **Change history**
+    - The **Help** section, and no other page
   - **Notes:**
 
 - [ ] **Step 2.** Read the column headers, and the top right of the page.
-  - **Expected:** **Start**, **End** and **Manager assigned** are not shown. There is no **New** and no **New column** button.
+  - **Expected:**
+    - **Start**, **End** and **Manager assigned** are not shown
+    - There is no **New** and no **New column** button
   - **Notes:**
 
 - [ ] **Step 3.** Search for **Viktoria Holmberg**.
@@ -165,7 +207,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Team Member granted only **Edit** on **People** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
-  - **Expected:** **New** is at the top right, and there is no **New column** button. **Start**, **End** and **Manager assigned** are not shown.
+  - **Expected:**
+    - **New** is at the top right, and there is no **New column** button
+    - **Start**, **End** and **Manager assigned** are not shown
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**. Select the row's **Team name** cell, press Enter, replace the text with `Mobile apps team`, and press Enter.
@@ -180,22 +224,25 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Afterwards:** Run Restore Team Member.
 
-#### PERM-06: View Org Chart Shows the Chart Without People
+#### PERM-06: View Feature Teams Shows Feature Teams
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-05 ended with.
 
-**Preconditions:** Team Member granted only **View** on **Org chart** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Team Member granted only **View** on **People** and **View** on **Feature teams** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the left-hand menu, then select **Org chart** in the **People** section.
-  - **Expected:** The menu shows **Org chart** in the **People** section, and the **Help** section, and nothing else. The chart shows each person's name, position, and the team they lead.
+- [ ] **Step 1.** Look at the left-hand menu.
+  - **Expected:**
+    - **People** section: **People**, **Org chart**, **Feature assignments** and **Drafts**
+    - **History** section: **Change history**
+    - The **Help** section, and no other page
   - **Notes:**
 
-- [ ] **Step 2.** Select any person's card.
-  - **Expected:** The card opens nothing, and the page stays on the chart.
+- [ ] **Step 2.** Select **Org chart**.
+  - **Expected:** The chart shows each person's name, position, and the team they lead.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Show only this team** button on a manager's card.
-  - **Expected:** Only that manager's team is shown.
+- [ ] **Step 3.** Select **Feature teams** in the switch at the heading's right.
+  - **Expected:** The chart shows the feature teams **Payments core**, **Search**, **Platform reliability** and **Mobile apps**, with their members, and offers no way to add or change one.
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
@@ -209,7 +256,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Team Member granted only **View** on **People** and **View** on **Personal details** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
-  - **Expected:** **Start**, **End** and **Manager assigned** are shown. There is no **New** button.
+  - **Expected:**
+    - **Start**, **End** and **Manager assigned** are shown
+    - There is no **New** button
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Viktoria Holmberg**.
@@ -225,7 +274,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Personal details** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
-  - **Expected:** **Start**, **End** and **Manager assigned** are shown. **New** is at the top right, and there is no **New column** button.
+  - **Expected:**
+    - **Start**, **End** and **Manager assigned** are shown
+    - **New** is at the top right, and there is no **New column** button
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**. Select the row's **Start** cell, press Enter, type `2010-01-04`, and press Enter.
@@ -249,7 +300,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Reset the Database, then Add a Confidential Column, then Team Member granted only **View** on **People** and **View** on **Confidential data** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
-  - **Expected:** An **Offer letter** column is shown. **Start**, **End** and **Manager assigned** are not shown. There is no **New** button.
+  - **Expected:**
+    - An **Offer letter** column is shown
+    - **Start**, **End** and **Manager assigned** are not shown
+    - There is no **New** button
   - **Notes:**
 
 - [ ] **Step 2.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
@@ -268,7 +322,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Add a Confidential Column done since the last reset, as for PERM-09, then Team Member granted only **Edit** on **People** and **Edit** on **Confidential data** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
-  - **Expected:** An **Offer letter** column is shown, and **New** is at the top right. **Start**, **End** and **Manager assigned** are not shown.
+  - **Expected:**
+    - An **Offer letter** column is shown, and **New** is at the top right
+    - **Start**, **End** and **Manager assigned** are not shown
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**. Select the row's **Offer letter** cell, press Enter, type `https://example.test/offer` in **Address**, and press Enter.
@@ -301,7 +357,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 2.** Read the column headers, then the **Start** cell of **REQ-2050**.
-  - **Expected:** **Start** is shown, and **End** and **Manager assigned** are not. The **Start** cell of **REQ-2050** shows a date.
+  - **Expected:**
+    - **Start** is shown, and **End** and **Manager assigned** are not
+    - The **Start** cell of **REQ-2050** shows a date
   - **Notes:**
 
 - [ ] **Step 3.** Select **Clear all** above the table, and search for **Max Munk**.
@@ -345,11 +403,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** The seed's draft of a new order for **Levels** still waiting, as after Reset the Database, then Team Member granted only **View** and **Approve** on **Configuration** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the left-hand menu.
-  - **Expected:** The menu shows **Releases** in the **Plan** section, **Drafts** and **Lists** in the **People** section, and the **Help** section, and nothing else.
+  - **Expected:**
+    - **Plan** section: **Releases**
+    - **People** section: **Drafts**, **Capacity** and **Lists**
+    - **History** section: **Change history**
+    - The **Help** section, and no other page
   - **Notes:**
 
 - [ ] **Step 2.** Select **Drafts**, and type `new order for Levels` in the search box.
-  - **Expected:** **Select all waiting**, **Reject…** and **Approve** are above the list. One entry is shown, ending **drafted a new order for Levels**, with a checkbox.
+  - **Expected:**
+    - **Select all waiting**, **Reject…** and **Approve** are above the list
+    - One entry is shown, ending **drafted a new order for Levels**, with a checkbox
   - **Notes:**
 
 - [ ] **Step 3.** Select the entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog titled **Approve 1 draft?**.
@@ -371,7 +435,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Team Member granted only **View** and **Approve** on **People** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Select the **Drafts** page in the left-hand menu, and type `Skills` in the search box.
-  - **Expected:** The entry **Engineering Operations Manager drafted changes to Silje Holm-Schrøder: Skills set to Rust** has a checkbox. The entries for the list **Skills**, the column **Skills** and its choices have none.
+  - **Expected:**
+    - The entry **Engineering Operations Manager drafted changes to Silje Holm-Schrøder: Skills set to Rust** has a checkbox
+    - The entries for the list **Skills**, the column **Skills** and its choices have none
   - **Notes:**
 
 - [ ] **Step 2.** Select the **Silje Holm-Schrøder** entry's checkbox, then **Approve 1 draft**.
@@ -388,7 +454,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-14 ended with.
 
-**Preconditions:** Team Member granted only **Edit** on **Plan**, **Approve** on **Releases** and **Approve** on **Their own drafts** through Grant Team Member Only Some Permissions, signed in with this account. **Releases** page open, with **Platform** selected in the streams table.
+**Preconditions:** Team Member granted only **Edit** on **Features and releases**, **Approve** on **Features and releases** and **Approve** on **Their own drafts** through Grant Team Member Only Some Permissions, signed in with this account. **Releases** page open, with **Platform** selected in the streams table.
 
 - [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
   - **Expected:** A dialog titled **Change Harbor 1** opens.
@@ -431,7 +497,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 2.** Select **Releases**.
-  - **Expected:** **Platform** and **Patches** are in the table. There is no **New release stream** button.
+  - **Expected:**
+    - **Platform** and **Patches** are in the table
+    - There is no **New release stream** button
   - **Notes:**
 
 - [ ] **Step 3.** Select **Drafts**.
@@ -465,164 +533,122 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 ### Change History
 
-#### PERM-18: View Change History Shows Only Changes to Data the Account Sees
+#### PERM-18: The Change History Comes With Each Area, Showing Only Its Changes
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-17 ended with.
 
-**Preconditions:** Team Member granted only **View** on **Change history** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Team Member granted only **View** on **Configuration** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The **Change history** page is open and says **No changes yet to data this account can see.** The menu shows **Change history** in the **History** section, and the **Help** section, and nothing else.
+- [ ] **Step 1.** Look at the left-hand menu.
+  - **Expected:** The menu shows **Change history** in the **History** section, with the configuration pages, and the **Help** section.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Change history**.
+  - **Expected:** Its entries name lists, such as **Levels**, and none names a person, a project or a release.
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
 
-### Access History
+### Administration
 
-#### PERM-19: View Access History Shows the Access History
+#### PERM-19: View Administration Shows Accounts, Roles, Settings and the Access History Without Changing Them
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-18 ended with.
 
-**Preconditions:** Team Member granted only **View** on **Access history** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Team Member granted only **View** on **Administration** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The **Access history** page is open. The menu shows **Access history** in the **History** section, and the **Help** section, and nothing else.
+- [ ] **Step 1.** Look at the left-hand menu.
+  - **Expected:**
+    - **Administration** section: **Accounts**, **Roles** and **Settings**
+    - **History** section: **Access history**
+    - The **Help** section, and no other page
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Accounts**.
+  - **Expected:**
+    - Every account is in the table with its role
+    - There is no **New account** button and no **Edit** button in any row
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Roles**.
+  - **Expected:** There is no **New role** button, and each row ends with **View** only.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **View** in the **Team Member** row.
+  - **Expected:** A dialog shows the role's name, what it is for and the grid, with every box fixed, and **Close** as its one button.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Close**, then **Settings**.
+  - **Expected:** **Time zone** and the **Passwords** panel show their values, which cannot be changed, and there is no **Save** button.
+  - **Notes:**
+
+- [ ] **Step 6.** Select **Access history**.
+  - **Expected:** The **Access history** page lists entries.
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
 
-### Accounts
-
-#### PERM-20: View Accounts Shows Accounts Without Changing Them
+#### PERM-20: Edit Administration Manages Accounts, Roles and Settings
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-19 ended with.
 
-**Preconditions:** Team Member granted only **View** on **Accounts** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Team Member granted only **Edit** on **Administration** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The **Accounts** page is open. The menu shows **Accounts** in the **Administration** section, and the **Help** section, and nothing else.
-  - **Notes:**
-
-- [ ] **Step 2.** Look at the table and the top right of the page.
-  - **Expected:** Every account is in the table with its role. There is no **New account** button and no **Edit** button in any row.
-  - **Notes:**
-
-**Afterwards:** Run Restore Team Member.
-
-#### PERM-21: Edit Accounts Manages Accounts
-
-**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-20 ended with.
-
-**Preconditions:** Team Member granted only **Edit** on **Accounts** through Grant Team Member Only Some Permissions, signed in with this account.
-
-- [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The **Accounts** page is open. The menu shows **Accounts** in the **Administration** section, and the **Help** section, and nothing else.
+- [ ] **Step 1.** Select **Accounts**.
+  - **Expected:** **New account** is at the top right, and each row ends with **Edit**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **New account**.
-  - **Expected:** A dialog titled **New account**, whose **Roles** lists every role, each with a tick box and its description, with only **Team Member** ticked.
+  - **Expected:** A dialog titled **New account** opens, whose **Roles** lists every role, each with a tick box and its description, with only **Team Member** ticked.
   - **Notes:**
 
-- [ ] **Step 3.** Type `Test Account` in **Name** and `test.account@fathom.test` in **Email address**, and select **Create account**.
-  - **Expected:** The dialog, now titled **Password for Test Account**, shows a password hidden as dots, which the eye button beside it shows as 20 letters and digits.
+- [ ] **Step 3.** Type `Test Account` in **Name**.
+  - **Expected:** **Name** reads **Test Account**.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Done**.
+- [ ] **Step 4.** Type `test.account@fathom.test` in **Email address**.
+  - **Expected:** **Email address** reads `test.account@fathom.test`.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Create account**.
+  - **Expected:** The dialog, now titled **Password for Test Account**, shows a password hidden as dots.
+  - **Notes:**
+
+- [ ] **Step 6.** Select **Done**.
   - **Expected:** A notice reads **Created the account for Test Account.** **Test Account** is in the table, with **Team Member** in its **Roles** column.
   - **Notes:**
 
-**Afterwards:** Run Restore Team Member.
-
-### Roles
-
-#### PERM-22: View Roles Shows Roles Without Changing Them
-
-**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-21 ended with.
-
-**Preconditions:** Team Member granted only **View** on **Roles** through Grant Team Member Only Some Permissions, signed in with this account.
-
-- [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The **Roles** page is open. The menu shows **Roles** in the **Administration** section, and the **Help** section, and nothing else.
+- [ ] **Step 7.** Select **Roles**, then **New role**.
+  - **Expected:** A dialog titled **New role** opens.
   - **Notes:**
 
-- [ ] **Step 2.** Look at the table and the top right of the page, then select **View** in the **Team Member** row.
-  - **Expected:** There is no **New role** button, and each row ends with **View** only. A dialog shows the role's name, what it is for and the grid, with every box fixed, and **Close** as its one button.
+- [ ] **Step 8.** Type `Test Role` as the name.
+  - **Expected:** The name reads **Test Role**.
   - **Notes:**
 
-**Afterwards:** Run Restore Team Member.
-
-#### PERM-23: Edit Roles Creates and Changes Roles
-
-**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-22 ended with.
-
-**Preconditions:** Team Member granted only **Edit** on **Roles** through Grant Team Member Only Some Permissions, signed in with this account.
-
-- [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The **Roles** page is open. The menu shows **Roles** in the **Administration** section, and the **Help** section, and nothing else.
-  - **Notes:**
-
-- [ ] **Step 2.** Select **New role**, type `Test Role` as the name, and select **Create role**.
+- [ ] **Step 9.** Select **Create role**.
   - **Expected:** A green banner says **The role has been created.** **Test Role** is in the list, with **0** in the **Accounts** column.
   - **Notes:**
 
-**Afterwards:** Run Restore Team Member.
-
-### Settings
-
-#### PERM-24: View Settings Shows Settings Without Changing Them
-
-**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-23 ended with.
-
-**Preconditions:** Team Member granted only **View** on **Settings** through Grant Team Member Only Some Permissions, signed in with this account.
-
-- [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The **Settings** page is open. The menu shows **Settings** in the **Administration** section, and the **Help** section, and nothing else.
+- [ ] **Step 10.** Select **Settings**.
+  - **Expected:** **Time zone** can be changed, with a **Save** button.
   - **Notes:**
 
-- [ ] **Step 2.** Look at **Time zone** and the **Passwords** panel.
-  - **Expected:** Their values show but cannot be changed, and there is no **Save** button.
+- [ ] **Step 11.** Type `Kolkata` in **Time zone**, and choose **Asia/Kolkata** from the list.
+  - **Expected:** **Time zone** shows **Asia/Kolkata**.
   - **Notes:**
 
-**Afterwards:** Run Restore Team Member.
-
-#### PERM-25: Edit Settings Changes Fathom's Time Zone
-
-**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-24 ended with.
-
-**Preconditions:** Team Member granted only **Edit** on **Settings** through Grant Team Member Only Some Permissions, signed in with this account.
-
-- [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The **Settings** page is open. The menu shows **Settings** in the **Administration** section, and the **Help** section, and nothing else.
-  - **Notes:**
-
-- [ ] **Step 2.** Type `Kolkata` in **Time zone**, choose **Asia/Kolkata** from the list, and select **Save**.
+- [ ] **Step 12.** Select **Save**.
   - **Expected:** A green banner says **Fathom's time zone is now Asia/Kolkata.**
-  - **Notes:**
-
-**Afterwards:** Run Restore Team Member.
-
-### Not Built Yet
-
-#### PERM-26: Permissions Not Built Yet Add No Page
-
-**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-25 ended with.
-
-**Preconditions:** Team Member granted only **View** on **Allocations** and **Draft** on **Drafts** through Grant Team Member Only Some Permissions, signed in with this account.
-
-- [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:**
-    - The Help **Roles** page is open.
-    - The menu shows only the **Help** section.
-    - There is no Publish button.
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
 
 ### Putting Everything Back
 
-#### PERM-27: Every Starting Role Is as Fathom Started It
+#### PERM-21: Every Starting Role Is as Fathom Started It
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, the same as the account PERM-26 ended with. Step 2 signs in again with this account.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as the account PERM-20 ended with. Step 2 signs in again with this account.
 
 **Preconditions:** All the test cases above run. Signed in with this account.
 

@@ -20,7 +20,11 @@ import {
   planningSettingFields,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
-import { type Actor, requirePermission } from "../access.ts";
+import {
+  type Actor,
+  requireAnyPermission,
+  requirePermission,
+} from "../access.ts";
 import { changesBetween, recordChanges, type Saved } from "./changes.ts";
 
 // Locked for a change when asked, so two changes made at once are recorded one after the other.
@@ -57,7 +61,8 @@ export async function readEffortConversions(
   database: Database,
   actor: Actor,
 ): Promise<EffortConversions> {
-  requirePermission(actor, "plan:view");
+  // Estimates on features and projects alike are read in these units.
+  requireAnyPermission(actor, ["plan:view", "features:view"]);
   const { hoursPerDay, daysPerWeek, daysPerMonth } =
     await readSettings(database);
   return { hoursPerDay, daysPerWeek, daysPerMonth };

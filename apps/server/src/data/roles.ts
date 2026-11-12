@@ -15,6 +15,7 @@ import {
   users,
 } from "@fathom/db";
 import type { AccountRole, DataClasses } from "@fathom/shared";
+import { keptPermissions } from "@fathom/shared";
 import { and, asc, eq, isNull, notInArray, sql } from "drizzle-orm";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
@@ -284,9 +285,9 @@ export async function switchRole(
   });
 }
 
-// Changes that could leave nobody able to manage accounts, or to edit roles, wait for each other
-// until their transaction ends, so two at once cannot each leave the other as the last such account
-// and then remove it. Each takes this lock before any account's or role's row, so none waits on
+// Changes that could leave nobody with Edit Administration wait for each other until their
+// transaction ends, so two at once cannot each leave the other as the last such account and then
+// remove it. Each takes this lock before any account's or role's row, so none waits on
 // another in the opposite order. Relies on PostgreSQL's default isolation, under which each
 // statement sees what the change before it saved.
 export async function lockAccessManagers(
@@ -296,10 +297,6 @@ export async function lockAccessManagers(
     sql`SELECT pg_advisory_xact_lock(hashtextextended('fathom.administrators', 0))`,
   );
 }
-
-// The permissions that keep Fathom manageable: without an active account holding each, nobody could
-// give anyone access again.
-const keptPermissions = ["accounts:manage", "roles:edit"] as const;
 
 // Refuses a change, made earlier in the same transaction, that leaves no active account with a role
 // that grants each of the permissions that keep Fathom manageable. Callers take lockAccessManagers

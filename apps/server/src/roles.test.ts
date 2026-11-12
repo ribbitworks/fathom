@@ -3,7 +3,7 @@
 // Tests for editing roles through the API: who may, listing roles with what they grant and how many
 // active accounts hold them, creating and changing roles, what a change would do to the accounts
 // holding a role, the access history it leaves, and the refusal of any change that would leave no
-// active account able to manage accounts or edit roles.
+// active account with Edit Administration.
 
 import { rolePermissions, userRoles, users } from "@fathom/db";
 import {
@@ -103,7 +103,7 @@ describe("who may edit roles", () => {
       const other = await test.signedIn(role);
       expect(
         (await send("GET", "/api/roles", undefined, other.cookie)).statusCode,
-      ).toBe(rolesGranting("roles:view").includes(role) ? 200 : 403);
+      ).toBe(rolesGranting("administration:view").includes(role) ? 200 : 403);
     },
   );
 
@@ -137,10 +137,10 @@ describe("who may edit roles", () => {
     },
   );
 
-  it("lets those who manage accounts list roles, to choose each account's, but not change them", async () => {
-    const manager = await test.signedIn(["accounts:manage"]);
+  it("lets those who view administration list roles, but not change them", async () => {
+    const viewer = await test.signedIn(["administration:view"]);
     expect(
-      (await send("GET", "/api/roles", undefined, manager.cookie)).statusCode,
+      (await send("GET", "/api/roles", undefined, viewer.cookie)).statusCode,
     ).toBe(200);
     expect(
       (
@@ -148,15 +148,10 @@ describe("who may edit roles", () => {
           "POST",
           "/api/roles",
           { name: "Fictional Unmade", description: "", permissions: [] },
-          manager.cookie,
+          viewer.cookie,
         )
       ).statusCode,
     ).toBe(403);
-    // Later tests count on nobody else managing accounts.
-    await test.connection
-      .update(users)
-      .set({ deactivatedAt: new Date() })
-      .where(eq(users.id, manager.id));
   });
 
   it("refuses anyone signed out", async () => {
@@ -198,7 +193,7 @@ describe("creating a role", () => {
     const response = await send("POST", "/api/roles", {
       name: "  Fictional   Created Role ",
       description: " Sees the plan. ",
-      permissions: ["changes:view", "plan:view", "plan:view"],
+      permissions: ["people:view", "plan:view", "plan:view"],
     });
     expect(response.statusCode).toBe(201);
     const { role } = response.json<{ role: RoleSummary }>();
@@ -206,7 +201,7 @@ describe("creating a role", () => {
       key: null,
       name: "Fictional Created Role",
       description: "Sees the plan.",
-      permissions: ["plan:view", "changes:view"],
+      permissions: ["plan:view", "people:view"],
       accounts: 0,
     });
     expect(await latestEntries(1)).toMatchObject([
@@ -215,7 +210,7 @@ describe("creating a role", () => {
         actor: { id: editorId },
         details: {
           role: "Fictional Created Role",
-          granted: ["plan:view", "changes:view"],
+          granted: ["plan:view", "people:view"],
         },
       },
     ]);
@@ -281,7 +276,7 @@ describe("creating a role", () => {
 
 describe("changing a role", () => {
   it("changes its name, description, and permissions, and records what changed", async () => {
-    const role = await newRole(["plan:view", "changes:view"]);
+    const role = await newRole(["plan:view", "configuration:view"]);
     const response = await change(role.id, {
       name: "Fictional Changed Role",
       description: "Changed.",
@@ -301,7 +296,7 @@ describe("changing a role", () => {
           role: "Fictional Changed Role",
           previousName: role.name,
           granted: ["people:view"],
-          withdrawn: ["changes:view"],
+          withdrawn: ["configuration:view"],
         },
       },
     ]);
@@ -464,7 +459,7 @@ describe("a role's description", () => {
 });
 
 describe("keeping Fathom manageable", () => {
-  it.each(["accounts:manage", "roles:edit"] as const)(
+  it.each(["administration:edit"] as const)(
     "refuses withdrawing %s when no other active account would hold it",
     async (permission) => {
       const administrator = await roleNamed("Administrator");
@@ -477,8 +472,7 @@ describe("keeping Fathom manageable", () => {
       });
       expect(response.statusCode).toBe(409);
       expect(response.json()).toEqual({
-        error:
-          "Some active account must keep the permissions to manage accounts and to edit roles",
+        error: "Some active account must keep Edit Administration",
       });
       expect((await roleNamed("Administrator")).permissions).toEqual(
         administrator.permissions,
@@ -486,8 +480,8 @@ describe("keeping Fathom manageable", () => {
     },
   );
 
-  it("allows it while another role gives an active account both", async () => {
-    const keeper = await newRole(["accounts:manage", "roles:edit"]);
+  it("allows it while another role gives an active account Edit Administration", async () => {
+    const keeper = await newRole(["administration:edit"]);
     const holder = await test.signedIn([]);
     await give(holder.id, keeper.id);
     const administrator = await roleNamed("Administrator");
@@ -495,7 +489,7 @@ describe("keeping Fathom manageable", () => {
       const response = await change(administrator.id, {
         name: administrator.name,
         description: administrator.description,
-        permissions: ["history:view"],
+        permissions: ["administration:view"],
       });
       expect(response.statusCode).toBe(200);
     } finally {
@@ -516,13 +510,13 @@ describe("keeping Fathom manageable", () => {
 });
 
 describe("a change to a role and a deactivation at once", () => {
-  it("wait for each other, so together they cannot leave nobody able to edit roles", async () => {
-    // The administrator's own account, and another holding a role of its own that edits roles.
-    const keeper = await newRole(["accounts:manage", "roles:edit"]);
+  it("wait for each other, so together they cannot leave nobody with Edit Administration", async () => {
+    // The administrator's own account, and another holding a role of its own with Edit Administration.
+    const keeper = await newRole(["administration:edit"]);
     const holder = await test.signedIn([]);
     await give(holder.id, keeper.id);
     const administrator = await roleNamed("Administrator");
-    // Everyone else who could edit roles is deactivated, so the holder is the only other one left.
+    // Everyone else with Edit Administration is deactivated, so the holder is the only other one left.
     await test.connection
       .update(users)
       .set({ deactivatedAt: new Date() })
@@ -538,7 +532,7 @@ describe("a change to a role and a deactivation at once", () => {
                 rolePermissions,
                 eq(rolePermissions.roleId, userRoles.roleId),
               )
-              .where(eq(rolePermissions.permission, "roles:edit")),
+              .where(eq(rolePermissions.permission, "administration:edit")),
           ),
         ),
       );
@@ -566,7 +560,7 @@ describe("a change to a role and a deactivation at once", () => {
     const withdrawing = change(administrator.id, {
       name: administrator.name,
       description: administrator.description,
-      permissions: ["accounts:manage", "history:view"],
+      permissions: ["administration:view"],
     });
     await vi.waitFor(
       async () => {

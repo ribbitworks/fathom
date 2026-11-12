@@ -339,12 +339,11 @@ describe("changes to positions and states", () => {
       positionId: otherTestPosition,
     });
     const { changeSetId } = changed.json<{ changeSetId: string }>();
-    const reader = await grantedOnly(["people:view", "changes:view"]);
+    const reader = await grantedOnly(["people:view"]);
     // Seeing Confidential data does not give Personal, though Confidential is more sensitive.
     const confidential = await grantedOnly([
       "people:view",
       "confidential:view",
-      "changes:view",
     ]);
     expect(await entryFor(reader, changeSetId)).toBeDefined();
     expect(await entryFor(confidential, changeSetId)).toBeDefined();
@@ -361,11 +360,7 @@ describe("changes to positions and states", () => {
       targetDate: "2027-05-15",
     });
     const { changeSetId } = changed.json<{ changeSetId: string }>();
-    const plan = await grantedOnly([
-      "people:view",
-      "hiring-plan:view",
-      "changes:view",
-    ]);
+    const plan = await grantedOnly(["people:view", "hiring-plan:view"]);
     const name = async () =>
       (await entryFor(plan, changeSetId))?.records[0]?.name;
     expect(await name()).toMatch(/^.+, TBD-\d+$/);
@@ -493,7 +488,6 @@ describe("changes to positions and states", () => {
       "people:edit",
       "hiring-plan:view",
       "hiring-plan:edit",
-      "drafts:submit",
     ]);
     const made = await test.request(
       hireEditor.cookie,

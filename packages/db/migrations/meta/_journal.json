@@ -379,6 +379,13 @@
       "when": 1794447990120,
       "tag": "0053_planning_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1794456315207,
+      "tag": "0054_fewer_permissions",
+      "breakpoints": true
     }
   ]
 }

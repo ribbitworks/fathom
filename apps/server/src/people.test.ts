@@ -1060,7 +1060,10 @@ describe("access history", () => {
       // A person has no account, so no email address.
       ["personal-changed", { id, name: null, email: null }],
     ]);
-    const seesPeople = await test.signedIn(["history:view", "people:view"]);
+    const seesPeople = await test.signedIn([
+      "administration:view",
+      "people:view",
+    ]);
     expect(await entriesBy(seesPeople.cookie, editorId)).toEqual([
       ["personal-viewed", null],
       ["personal-changed", { id, name, email: null }],

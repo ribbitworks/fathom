@@ -96,7 +96,7 @@ export async function readTeamMonths(
   actor: Actor,
   { from, to }: MonthRange,
 ): Promise<TeamMonths> {
-  requirePermission(actor, "org-chart:view");
+  requirePermission(actor, "feature-teams:view");
   requireView(actor, "featureAssignments");
   const byManager = seesView("groupingByManager", actor);
   const today = await readToday(database);

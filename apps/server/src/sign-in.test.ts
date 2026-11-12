@@ -300,10 +300,11 @@ describe("signing in", () => {
       },
       permissions: [
         "allocations:view",
-        "changes:view",
-        "drafts:submit",
+        "feature-teams:view",
+        "features:approve",
         "features:edit",
-        "org-chart:view",
+        "features:view",
+        "people:view",
         "plan:approve",
         "plan:edit",
         "plan:view",
@@ -607,7 +608,13 @@ describe("account command", () => {
       await sessionOf("operator@example.test", printedPassword(printed)),
     ).toMatchObject({
       role: { key: "team-member", name: "Team Member" },
-      permissions: ["allocations:view", "org-chart:view", "plan:view"],
+      permissions: [
+        "allocations:view",
+        "feature-teams:view",
+        "features:view",
+        "people:view",
+        "plan:view",
+      ],
     });
   });
 

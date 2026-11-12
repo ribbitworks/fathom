@@ -879,7 +879,7 @@ describe("who sees reporting lines", () => {
     },
   );
 
-  it.each(rolesGranting("changes:view"))(
+  it.each(rolesGranting("plan:view"))(
     "a %s, a role that sees the change history, sees changes of manager only if the role lets them see Personal data",
     async (role) => {
       const { cookie: reader } = await test.signedIn(role);

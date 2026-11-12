@@ -8,12 +8,12 @@
 // the dialog then shows once, to copy. A user's own account offers all but the password reset, as
 // changing one's own password needs the current one. A dialog cannot be closed while its change is
 // being saved, shows plainly why a change was refused, and keeps no password once it closes. Some
-// active account must keep each of the permissions to manage accounts and to edit roles, so taking
-// away a role or deactivating when that would leave none holding one is turned off, as the server
-// refuses it.
+// active account must keep Edit Administration, so taking away a role or deactivating when that
+// would leave none holding it is turned off, as the server refuses it.
 
 import {
   type Account,
+  keptPermissions,
   newAccountSchema,
   type RoleSummary,
 } from "@fathom/shared";
@@ -80,8 +80,6 @@ type Dialog =
 // What a dialog reports: when it is done, with a notice for the page, when it is busy saving, and
 // when it opens another dialog in its place.
 interface DialogProps {
-  // Whether the user may make roles, so a list of roles can send them to the Roles page.
-  canEditRoles: boolean;
   onDone: (notice?: string) => void;
   onBusy: (busy: boolean) => void;
   onOpen: (dialog: Dialog) => void;
@@ -101,9 +99,6 @@ function dialogTitle(dialog: Dialog): string {
       return `${dialog.account.active ? "Deactivate" : "Reactivate"} ${dialog.account.name}`;
   }
 }
-
-// What keeps Fathom manageable: some active account's roles must grant each of these.
-const keptPermissions = ["accounts:manage", "roles:edit"] as const;
 
 // Whether some active account's roles grant each kept permission, as the server checks after
 // changing an account's roles or deactivating it.
@@ -177,11 +172,9 @@ function RolesChoice({
   form,
   roles,
   refused,
-  canEditRoles,
 }: {
   form: ReturnType<typeof useForm<AccountForm>>;
   roles: readonly RoleSummary[];
-  canEditRoles: boolean;
   // Roles the server would refuse to take away, turned off.
   refused?: ReadonlySet<string>;
 }) {
@@ -215,15 +208,13 @@ function RolesChoice({
                   disabled={refused?.has(role.id)}
                 />
               ))}
-              {canEditRoles && (
-                <Text size="sm" c="dimmed">
-                  Custom roles are created on the{" "}
-                  <Anchor component={Link} to="/roles" inherit>
-                    Roles
-                  </Anchor>{" "}
-                  page.
-                </Text>
-              )}
+              <Text size="sm" c="dimmed">
+                Custom roles are created on the{" "}
+                <Anchor component={Link} to="/roles" inherit>
+                  Roles
+                </Anchor>{" "}
+                page.
+              </Text>
             </Stack>
           </Checkbox.Group>
         )}
@@ -282,7 +273,6 @@ function useAccountChange<Input, Output>(
 
 function CreateAccount({
   roles,
-  canEditRoles,
   onDone,
   onBusy,
   onOpen,
@@ -330,7 +320,7 @@ function CreateAccount({
           error={errors.email && "Enter a valid email address."}
           {...form.register("email")}
         />
-        <RolesChoice form={form} roles={roles} canEditRoles={canEditRoles} />
+        <RolesChoice form={form} roles={roles} />
         <DialogActions
           error={creating.error}
           pending={creating.isPending}
@@ -354,7 +344,7 @@ function useOwnAccountRefresh() {
       ...sessionQuery,
       staleTime: 0,
     });
-    if (session?.permissions.includes("accounts:manage"))
+    if (session?.permissions.includes("administration:edit"))
       await router.invalidate();
     else await navigate({ to: "/" });
   };
@@ -365,7 +355,6 @@ function EditAccount({
   own,
   accounts,
   roles,
-  canEditRoles,
   onDone,
   onBusy,
   onOpen,
@@ -418,12 +407,7 @@ function EditAccount({
           error={errors.email && "Enter a valid email address."}
           {...form.register("email")}
         />
-        <RolesChoice
-          form={form}
-          roles={roles}
-          canEditRoles={canEditRoles}
-          refused={refused.roleIds}
-        />
+        <RolesChoice form={form} roles={roles} refused={refused.roleIds} />
         <DialogActions
           error={saving.error}
           pending={saving.isPending}
@@ -761,11 +745,9 @@ function AccountRow({
 export function AccountsPage({
   user,
   canManage,
-  canEditRoles,
 }: {
   user: SignedInUser;
   canManage: boolean;
-  canEditRoles: boolean;
 }) {
   const accounts = useQuery(accountsQuery);
   // Read now, so the dialogs that choose a role have them on opening.
@@ -904,7 +886,6 @@ export function AccountsPage({
         {dialog && (
           <DialogContent
             dialog={dialog}
-            canEditRoles={canEditRoles}
             onDone={close}
             onBusy={setBusy}
             onOpen={open}

@@ -155,14 +155,14 @@ describe("approving by area", () => {
   });
 
   it("names the kinds some permissions approve", () => {
-    expect(approvableKinds(["people:approve", "releases:approve"])).toEqual([
+    expect(approvableKinds(["people:approve", "features:approve"])).toEqual([
       "person",
       "release-stream",
       "cycle-pattern",
       "release",
+      "feature",
     ]);
     expect(approvableKinds(["plan:approve", "people:view"])).toEqual([
-      "feature",
       "customer",
       "proposal",
       "project",

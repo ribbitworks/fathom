@@ -12,12 +12,12 @@ describe("roleRequestSchema", () => {
       roleRequestSchema.parse({
         name: "  Fictional   Role ",
         description: " For a test. ",
-        permissions: ["changes:view", "plan:view", "plan:view"],
+        permissions: ["people:view", "plan:view", "plan:view"],
       }),
     ).toEqual({
       name: "Fictional Role",
       description: "For a test.",
-      permissions: ["plan:view", "changes:view"],
+      permissions: ["plan:view", "people:view"],
     });
   });
 

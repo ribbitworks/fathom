@@ -4,9 +4,8 @@
 // default, the passwords Fathom generates for them, which their users must change at first sign-in,
 // and the administration of them: those who see accounts list them, and those who manage them change
 // their names, email addresses, and roles, reset their passwords, and deactivate them. Administrators
-// manage their own account like any other, except that some active account must keep the
-// permissions to manage accounts and to edit roles, so no one can lock everyone out, and nobody
-// resets their own password here.
+// manage their own account like any other, except that some active account must keep Edit
+// Administration, so no one can lock everyone out, and nobody resets their own password here.
 // Public sign-up is turned off, so accounts are created here, through Better Auth's own storage,
 // which hashes passwords.
 
@@ -266,7 +265,7 @@ export async function createFirstAdministrator(
 // out everywhere when deactivated. The actor is null for the server's operators, as when the
 // development seed command does it. Callers check permissions first. When asked to keep Fathom
 // manageable, as for Administrators acting in Fathom, deactivating is refused if it would leave no
-// active account able to manage accounts or edit roles; the server's operators are not held to it.
+// active account with Edit Administration; the server's operators are not held to it.
 export async function setAccountActive(
   auth: Auth,
   database: Database,
@@ -285,7 +284,7 @@ export async function setAccountActive(
     if (guarded) {
       await keepAccessManaged(
         transaction,
-        "The last active account that can manage accounts or edit roles cannot be deactivated",
+        "The last active account with Edit Administration cannot be deactivated",
       );
     }
     await recordEvent(transaction, {
@@ -402,7 +401,7 @@ export function createAccountAdministration(
 
   return {
     async listAccounts(actor) {
-      requirePermission(actor, "accounts:view");
+      requirePermission(actor, "administration:view");
       const rows = await database
         .select({ id: users.id })
         .from(users)
@@ -411,7 +410,7 @@ export function createAccountAdministration(
     },
 
     async createAccount(actor, account) {
-      requirePermission(actor, "accounts:manage");
+      requirePermission(actor, "administration:edit");
       const { id, password } = await createAccountWithGeneratedPassword(
         auth,
         database,
@@ -422,7 +421,7 @@ export function createAccountAdministration(
     },
 
     async updateAccount(actor, userId, change) {
-      requirePermission(actor, "accounts:manage");
+      requirePermission(actor, "administration:edit");
       await readAccount(userId);
       const changedEmail =
         change.email === undefined
@@ -474,7 +473,7 @@ export function createAccountAdministration(
           );
           await keepAccessManaged(
             transaction,
-            "The last active account that can manage accounts or edit roles keeps that access",
+            "The last active account with Edit Administration keeps it",
           );
         }
         await recordEvents(transaction, events);
@@ -483,7 +482,7 @@ export function createAccountAdministration(
     },
 
     async resetPassword(actor, userId) {
-      requirePermission(actor, "accounts:manage");
+      requirePermission(actor, "administration:edit");
       // Changing one's own password needs the current one, so a session left open cannot be used
       // to take the account over.
       if (actor.user.id === userId) {
@@ -554,7 +553,7 @@ export function createAccountAdministration(
     },
 
     async setActive(actor, userId, active) {
-      requirePermission(actor, "accounts:manage");
+      requirePermission(actor, "administration:edit");
       await readAccount(userId);
       await setAccountActive(
         auth,

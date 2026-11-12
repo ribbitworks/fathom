@@ -54,4 +54,4 @@ Select **Remove feature** in the feature's **⋯** menu. Fathom refuses while a 
 
 ## Where Changes Go
 
-Every change is a draft. It goes live once someone whose role approves the plan approves it. See [Drafts](drafts.md).
+Every change is a draft. It goes live once someone whose role approves features and releases approves it. See [Drafts](drafts.md).

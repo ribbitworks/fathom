@@ -29,7 +29,7 @@ async function fillIn(email: string, password: string) {
 const administratorOnly = () =>
   Response.json({
     ...fictionalUser,
-    permissions: ["accounts:view", "accounts:manage", "history:view"],
+    permissions: ["administration:view", "administration:edit"],
   });
 
 afterEach(() => {
@@ -82,22 +82,6 @@ describe("home page", () => {
       await screen.findByRole("heading", { name: "Accounts" }),
     ).toBeDefined();
     expect(history.location.pathname).toBe("/accounts");
-  });
-
-  it("sends someone who may only see the access history there", async () => {
-    serverAnswers({
-      "GET /api/session": () =>
-        Response.json({
-          ...fictionalUser,
-          permissions: ["history:view"],
-        }),
-      "GET /api/access-history": () => Response.json({ entries: [] }),
-    });
-    const history = renderApp("/");
-    expect(
-      await screen.findByRole("heading", { name: "Access history" }),
-    ).toBeDefined();
-    expect(history.location.pathname).toBe("/history");
   });
 
   it("brings an administrator who may not see the plan to their first page after signing in", async () => {

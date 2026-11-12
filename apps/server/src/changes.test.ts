@@ -112,7 +112,7 @@ async function approve(personId: string) {
 describe("the change history", () => {
   it.each(
     roleSchema.options.filter(
-      (role) => !rolesGranting("changes:view").includes(role),
+      (role) => !rolesGranting("plan:view").includes(role),
     ),
   )("is refused to a %s, whose role does not let them see it", async (role) => {
     const { cookie } = await test.signedIn(role);
@@ -279,7 +279,7 @@ describe("the change history", () => {
     const sets = [name, date, choice, list];
     // Whether each role sees the General, Personal, and Confidential changes, and the configuration.
     const expected: [Role, boolean[]][] = [
-      ["product-manager", [false, false, false, false]],
+      ["product-manager", [true, false, false, false]],
       ["feature-lead", [true, false, false, false]],
       ["project-manager", [true, false, false, true]],
       ["engineering-manager", [true, true, false, false]],
@@ -460,7 +460,9 @@ describe("the change history", () => {
       (await entryFor(manager.cookie, both.changeSetId))?.records[0]?.fields,
     ).toHaveLength(2);
 
-    expect((await history(project.cookie)).entries).toEqual([]);
+    // Product Managers see people's General details, since the org chart became part of People.
+    expect(await entryFor(project.cookie, general.changeSetId)).toBeDefined();
+    expect(await entryFor(project.cookie, dates.changeSetId)).toBeUndefined();
     const administrator = await test.signedIn("administrator");
     expect(
       (await test.request(administrator.cookie, "GET", "/api/changes"))
@@ -957,7 +959,6 @@ describe("the change history", () => {
       "people:view",
       "personal:view",
       "confidential:view",
-      "changes:view",
     ]);
     expect((await history(leader.cookie)).entries[0]?.records[0]).toMatchObject(
       { name: "Pi Person" },

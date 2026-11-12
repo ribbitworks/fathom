@@ -5,7 +5,7 @@
 // confirmed first, putting a starting role back as Fathom made it, the summary of what a role
 // allows as it changes, and the server's refusals.
 
-import { permissionDescriptions } from "@fathom/shared";
+import { permissionDescriptions, startingRoles } from "@fathom/shared";
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -21,16 +21,15 @@ import {
 const roleEditor = () =>
   Response.json({
     ...fictionalUser,
-    permissions: ["roles:view", "roles:edit", "plan:view"],
+    permissions: ["administration:view", "administration:edit", "plan:view"],
   });
 
 const teamMemberRole = {
   id: "00000000-0000-4000-8000-000000000001",
   key: "team-member",
   name: "Team Member",
-  description:
-    "Sees the plan, including everyone's work assignments, and the org chart.",
-  permissions: ["plan:view", "allocations:view", "org-chart:view"],
+  description: startingRoles["team-member"].description,
+  permissions: [...startingRoles["team-member"].permissions],
   accounts: 3,
   updatedAt: "2026-11-01T12:00:00.000Z",
 };
@@ -373,39 +372,10 @@ describe("the grid of permissions", () => {
       /confidential/,
     );
   });
-
-  it("marks what Fathom does not have yet, area by area or action by action", async () => {
-    // Given
-    serverAnswers({
-      "GET /api/session": roleEditor,
-      "GET /api/roles": roleList,
-    });
-    renderApp("/roles");
-    // When
-    const dialog = await openDialog("New role", "New role");
-    // Then
-    const grid = within(dialog).getByRole("table", {
-      name: "What the role grants",
-    });
-    const area = (name: string) =>
-      within(grid).getByText(name).closest("td")?.textContent;
-    expect(area("Allocations")).toBe("Allocations");
-    expect(area("Feature teams")).toBe("Feature teams");
-    expect(area("Drafts")).toBe("Drafts, Not built yet");
-    expect(area("Plan")).toBe("Plan");
-    expect(area("Releases")).toBe("Releases");
-    expect(box(dialog, "Draft Drafts, not built yet")).toBeDefined();
-    expect(box(dialog, "Approve Allocations")).toBeDefined();
-    expect(box(dialog, "Approve Plan")).toBeDefined();
-    expect(box(dialog, "Approve Releases")).toBeDefined();
-    expect(
-      within(dialog).getByText(/marked Not built yet/).textContent,
-    ).toContain("A role can grant it now, and it works once it is built.");
-  });
 });
 
 describe("the summary of what a role allows", () => {
-  it("marks what it grants, and what its holders cannot do, that Fathom does not have yet", async () => {
+  it("lists what it grants, and what its holders cannot do", async () => {
     // Given
     serverAnswers({
       "GET /api/session": roleEditor,
@@ -417,18 +387,15 @@ describe("the summary of what a role allows", () => {
     expect(summaryLines(dialog, "Cannot")).toEqual(
       expect.arrayContaining([
         "The Capacity page does not appear.",
-        `${permissionDescriptions["drafts:submit"].without}, Not built yet`,
         "The People page does not appear.",
       ]),
     );
     // When
     await userEvent.click(box(dialog, "Edit Allocations"));
-    await userEvent.click(box(dialog, "Draft Drafts, not built yet"));
     // Then
     expect(summaryLines(dialog, "Can")).toEqual(
       expect.arrayContaining([
         permissionDescriptions["allocations:edit"].allows,
-        `${permissionDescriptions["drafts:submit"].allows}, Not built yet`,
       ]),
     );
     expect(summaryLines(dialog, "Cannot")).toContain(
@@ -449,10 +416,10 @@ describe("the summary of what a role allows", () => {
     expect(summaryLines(dialog, "Pages its holders see")).toEqual([
       "Overview",
       "Projects",
-      "Features",
-      "Releases",
       "People",
+      "Org chart",
       "Drafts",
+      "Change history",
     ]);
     expect(summaryLines(dialog, "Can")).toEqual([
       permissionDescriptions["plan:view"].allows,
@@ -506,11 +473,11 @@ describe("the summary of what a role allows", () => {
     expect(summaryLines(dialog, "Pages its holders see")).toEqual([
       "Overview",
       "Projects",
-      "Features",
-      "Releases",
       "No longer: People",
-      // Drafts stays, since viewing the plan opens it too.
+      "No longer: Org chart",
+      // Drafts and the change history stay, since viewing the plan opens them too.
       "Drafts",
+      "Change history",
     ]);
     expect(summaryLines(dialog, "Can")).toEqual([
       permissionDescriptions["plan:view"].allows,
@@ -527,15 +494,16 @@ describe("the summary of what a role allows", () => {
     expect(summaryLines(dialog, "Pages its holders see")).toEqual([
       "No longer: Overview",
       "No longer: Projects",
-      "No longer: Features",
-      // Releases and Drafts come back, since configuration opens them too, and Capacity opens with
-      // it.
-      "Releases",
+      // Releases, Drafts and the change history come back, since configuration opens them too,
+      // and Capacity opens with it.
       "No longer: People",
+      "No longer: Org chart",
+      "Releases",
       "Drafts",
-      "No longer: None, apart from Help.",
       "Capacity",
       "Lists",
+      "Change history",
+      "No longer: None, apart from Help.",
     ]);
     expect(summaryLine(dialog, cannot).className).toMatch(/added/);
     expect(summaryLine(dialog, "Drafts").className).toMatch(/added/);
@@ -549,6 +517,7 @@ describe("the summary of what a role allows", () => {
       "Drafts",
       "Capacity",
       "Lists",
+      "Change history",
     ]);
     expect(summaryLine(dialog, cannot).className).not.toMatch(/added/);
     expect(summaryLine(dialog, "Lists").className).not.toMatch(/added/);
@@ -613,12 +582,12 @@ describe("changing a role", () => {
             {
               account: self,
               before: ["plan:view", "people:view", "personal:view"],
-              after: ["plan:view", "personal:view", "changes:view"],
+              after: ["plan:view", "personal:view", "configuration:view"],
             },
             {
               account: planner,
               before: ["plan:view"],
-              after: ["plan:view", "changes:view"],
+              after: ["plan:view", "configuration:view"],
             },
           ],
         }),
@@ -631,7 +600,7 @@ describe("changing a role", () => {
       "Edit Fictional Auditors",
     );
     await userEvent.click(box(dialog, "View People"));
-    await userEvent.click(box(dialog, "View Change history"));
+    await userEvent.click(box(dialog, "View Configuration"));
     // When
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     // Then
@@ -641,9 +610,7 @@ describe("changing a role", () => {
     const own = within(dialog)
       .getByText("Fictional Person (person@example.test) (this account)")
       .closest(".mantine-Paper-root") as HTMLElement;
-    expect(
-      within(own).getByText("Sees the Change history page."),
-    ).toBeDefined();
+    expect(within(own).getByText("Sees the Lists page.")).toBeDefined();
     expect(
       within(own).getByText("The People page no longer appears."),
     ).toBeDefined();
@@ -669,7 +636,7 @@ describe("changing a role", () => {
         body: JSON.stringify({
           name: auditors.name,
           description: auditors.description,
-          permissions: ["plan:view", "personal:view", "changes:view"],
+          permissions: ["plan:view", "personal:view", "configuration:view"],
           updatedAt: auditors.updatedAt,
         }),
       }),
@@ -815,50 +782,6 @@ describe("changing a role", () => {
   });
 });
 
-describe("confirming a change to what is not built yet", () => {
-  it("marks each account's gains and losses that Fathom does not have yet", async () => {
-    // Given
-    serverAnswers({
-      "GET /api/session": roleEditor,
-      "GET /api/roles": roleList,
-      "POST /api/roles/00000000-0000-4000-8000-000000000002/effects": () =>
-        Response.json({
-          effects: [
-            {
-              account: planner,
-              before: ["plan:view", "allocations:view", "drafts:submit"],
-              after: ["plan:view", "allocations:view", "allocations:edit"],
-            },
-          ],
-        }),
-    });
-    renderApp("/roles");
-    const dialog = await openDialog(
-      "Edit Fictional Auditors",
-      "Edit Fictional Auditors",
-    );
-    await userEvent.click(box(dialog, "Edit Allocations"));
-    // When
-    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    // Then
-    expect(
-      await within(dialog).findByText("This change affects 1 account."),
-    ).toBeDefined();
-    const lines = (title: string) =>
-      [
-        ...(within(dialog)
-          .getByRole("heading", { name: title })
-          .parentElement?.querySelectorAll("li") ?? []),
-      ].map((item) => item.textContent);
-    expect(lines("Gains")).toEqual([
-      permissionDescriptions["allocations:edit"].allows,
-    ]);
-    expect(lines("Loses")).toEqual([
-      `${permissionDescriptions["drafts:submit"].without}, Not built yet`,
-    ]);
-  });
-});
-
 describe("restoring a starting role", () => {
   it("is offered only for Fathom's starting roles", async () => {
     serverAnswers({
@@ -953,9 +876,9 @@ describe("restoring a starting role", () => {
     ).toBe(teamMemberRole.description);
     expect(box(dialog, "View Plan").checked).toBe(true);
     expect(box(dialog, "View Allocations").checked).toBe(true);
-    expect(box(dialog, "View Org chart").checked).toBe(true);
-    expect(box(dialog, "View Change history").checked).toBe(false);
-    expect(box(dialog, "View People").checked).toBe(false);
+    expect(box(dialog, "View People").checked).toBe(true);
+    expect(box(dialog, "View Feature teams").checked).toBe(true);
+    expect(box(dialog, "View Configuration").checked).toBe(false);
     expect(
       within(dialog).getByRole<HTMLButtonElement>("button", {
         name: "Restore template",
@@ -969,16 +892,16 @@ describe("restoring a starting role", () => {
 
 describe("seeing roles without editing them", () => {
   const roleViewer = () =>
-    Response.json({ ...fictionalUser, permissions: ["roles:view"] });
+    Response.json({ ...fictionalUser, permissions: ["administration:view"] });
 
-  it("starts on the page, which offers each role only to view", async () => {
+  it("offers each role only to view", async () => {
     // Given
     serverAnswers({
       "GET /api/session": roleViewer,
       "GET /api/roles": roleList,
     });
     // When
-    const history = renderApp("/");
+    const history = renderApp("/roles");
     // Then
     await screen.findByText("Fictional Auditors");
     expect(history.location.pathname).toBe("/roles");
@@ -1021,9 +944,9 @@ describe("seeing roles without editing them", () => {
       true,
     ]);
     await userEvent.click(box(dialog, "View People"));
-    await userEvent.click(box(dialog, "View Change history"));
+    await userEvent.click(box(dialog, "View Configuration"));
     expect(box(dialog, "View People").checked).toBe(true);
-    expect(box(dialog, "View Change history").checked).toBe(false);
+    expect(box(dialog, "View Configuration").checked).toBe(false);
     expect(summaryLines(dialog, "Pages its holders see")).toContain("People");
     expect(within(dialog).queryByRole("button", { name: "Save" })).toBeNull();
     await userEvent.click(
@@ -1057,7 +980,7 @@ describe("a starting role's summary", () => {
     const dialog = await openDialog("Edit Team Member", "Edit Team Member");
     // When
     await userEvent.click(box(dialog, "View People"));
-    await userEvent.click(box(dialog, "View Change history"));
+    await userEvent.click(box(dialog, "View Configuration"));
     // Then
     expect(purpose(dialog).value).toBe("");
     expect(within(dialog).getByText(gone)).toBeDefined();
@@ -1070,9 +993,10 @@ describe("a starting role's summary", () => {
           name: "Team Member",
           description: "",
           permissions: [
-            ...teamMemberRole.permissions,
-            "people:view",
-            "changes:view",
+            ...teamMemberRole.permissions.filter(
+              (permission) => permission !== "people:view",
+            ),
+            "configuration:view",
           ],
           updatedAt: teamMemberRole.updatedAt,
         }),
@@ -1153,7 +1077,7 @@ describe("a starting role's summary", () => {
       "Edit Fictional Auditors",
     );
     // When
-    await userEvent.click(box(dialog, "View Change history"));
+    await userEvent.click(box(dialog, "View Configuration"));
     // Then
     expect(purpose(dialog).value).toBe(auditors.description);
   });

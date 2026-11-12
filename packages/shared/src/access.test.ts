@@ -53,10 +53,8 @@ describe("permissionGrid", () => {
 describe("permissionLabel", () => {
   it("names a permission by its action and area", () => {
     expect(permissionLabel("people:edit")).toBe("Edit People");
-    expect(permissionLabel("feature-teams:propose")).toBe(
-      "Draft Feature teams",
-    );
-    expect(permissionLabel("accounts:manage")).toBe("Edit Accounts");
+    expect(permissionLabel("feature-teams:edit")).toBe("Edit Feature teams");
+    expect(permissionLabel("administration:edit")).toBe("Edit Administration");
   });
 
   it("names a permission whose row gives it a name of its own by that name", () => {
@@ -104,10 +102,7 @@ describe("startingRoles", () => {
       withImplied(startingRoles["engineering-director"].permissions),
     ).toEqual(
       permissionSchema.options.filter(
-        (permission) =>
-          !["accounts:manage", "roles:edit", "settings:edit"].includes(
-            permission,
-          ),
+        (permission) => !["administration:edit"].includes(permission),
       ),
     );
   });

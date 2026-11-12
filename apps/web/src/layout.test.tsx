@@ -26,9 +26,8 @@ const administrator = () =>
     permissions: [
       "plan:view",
       "allocations:view",
-      "accounts:view",
-      "accounts:manage",
-      "history:view",
+      "administration:view",
+      "administration:edit",
     ],
   });
 
@@ -42,7 +41,9 @@ describe("the first page a user may open", () => {
   it("is never the Overview, so someone sent there from it cannot be sent back", () => {
     expect(firstPage(permissionSchema.options)).toBe("/projects");
     expect(firstPage(["people:view"])).toBe("/people");
-    expect(firstPage(["allocations:view"])).toBeUndefined();
+    // Allocations has no page of its own, but seeing it opens the change history.
+    expect(firstPage(["allocations:view"])).toBe("/changes");
+    expect(firstPage([])).toBeUndefined();
   });
 });
 
@@ -65,22 +66,6 @@ describe("the sidebar", () => {
     ).toBe("/capacity");
   });
 
-  it("leaves Drafts out for those who see only the org chart", async () => {
-    serverAnswers({
-      "GET /api/session": () =>
-        Response.json({ ...fictionalUser, permissions: ["org-chart:view"] }),
-      "GET /api/org-chart": () => Response.json({ people: [], drafted: [] }),
-    });
-    renderApp("/");
-    const menu = await screen.findByRole("navigation", { name: "Sections" });
-    await within(menu).findByRole("link", { name: "Org chart" });
-    expect(
-      within(menu)
-        .getAllByRole("link")
-        .map((link) => link.getAttribute("href")),
-    ).not.toContain("/drafts");
-  });
-
   it("leaves Capacity out for those who see allocations but not configuration", async () => {
     serverAnswers({
       "GET /api/session": () =>
@@ -100,7 +85,7 @@ describe("the sidebar", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["accounts:view", "accounts:manage", "history:view"],
+          permissions: ["administration:view", "administration:edit"],
         }),
       "GET /api/accounts": () => Response.json({ accounts: [] }),
     });
@@ -133,12 +118,16 @@ describe("the sidebar", () => {
     ).toBeNull();
   });
 
-  it("shows Roles under Administration to those who may edit roles, without Accounts", async () => {
+  it("shows Accounts, Roles and Settings under Administration to those who see it", async () => {
     serverAnswers({
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["plan:view", "roles:view", "roles:edit"],
+          permissions: [
+            "plan:view",
+            "administration:view",
+            "administration:edit",
+          ],
         }),
       "GET /api/roles": () => Response.json({ roles: [] }),
     });
@@ -157,9 +146,9 @@ describe("the sidebar", () => {
       ["/roles", "page"],
       ["/help/roles", null],
     ]);
-    expect(
-      within(sidebar()).queryByRole("link", { name: "Accounts" }),
-    ).toBeNull();
+    for (const name of ["Accounts", "Settings"]) {
+      expect(within(sidebar()).getByRole("link", { name })).toBeDefined();
+    }
   });
 
   it("marks the current page", async () => {
@@ -353,7 +342,7 @@ describe("switching role", () => {
       ...fictionalUser,
       role,
       roles: [teamMember, keepers].map(({ id, name }) => ({ id, name })),
-      permissions: role === keepers ? ["accounts:view"] : ["plan:view"],
+      permissions: role === keepers ? ["administration:view"] : ["plan:view"],
     });
 
   it("names the one role an account holds, with nothing to switch to", async () => {

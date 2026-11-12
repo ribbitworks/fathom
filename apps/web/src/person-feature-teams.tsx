@@ -2,7 +2,7 @@
 
 // The feature teams a person is on, in their details, read only: those they lead, then those they
 // are a member of, each with who leads it, each opening on the org chart's feature teams beside their
-// details. Shown only to readers who see the org chart, where feature teams are kept.
+// details. Shown only to readers who see feature teams.
 
 import type { FeatureTeam } from "@fathom/shared";
 import { Anchor, Text } from "@mantine/core";
@@ -17,19 +17,19 @@ import { RecordSection } from "./record-details.tsx";
 export function PersonFeatureTeams({
   personId,
   employeeId,
-  seesChart,
+  seesFeatureTeams,
 }: {
   personId: string;
   // The person's Employee ID, which keeps their details open beside the team.
   employeeId: string;
-  seesChart: boolean;
+  seesFeatureTeams: boolean;
 }) {
-  const query = useQuery({ ...featureTeamsQuery, enabled: seesChart });
-  const chart = useQuery({ ...orgChartQuery, enabled: seesChart });
+  const query = useQuery({ ...featureTeamsQuery, enabled: seesFeatureTeams });
+  const chart = useQuery({ ...orgChartQuery, enabled: seesFeatureTeams });
   const nameOf = (id: string) =>
     chart.data?.people.find((person) => person.id === id)?.preferredName ??
     someoneUnseen.toLowerCase();
-  if (!seesChart) return null;
+  if (!seesFeatureTeams) return null;
   const teams = (query.data?.teams ?? []).filter(({ members }) =>
     members.includes(personId),
   );

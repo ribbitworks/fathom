@@ -144,8 +144,9 @@ const approver = () =>
     ...fictionalUser,
     permissions: [
       "plan:view",
+      "features:view",
       "plan:approve",
-      "releases:approve",
+      "features:approve",
       "people:approve",
       "hiring-plan:approve",
       "configuration:approve",

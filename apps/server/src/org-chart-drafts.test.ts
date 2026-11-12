@@ -248,8 +248,8 @@ describe("drafts on the org chart", () => {
     // When a reader who sees people and their Personal details, but may not change them, reads an
     // earlier day
     const planner = await test.signedIn([
-      "org-chart:view",
       "people:view",
+      "feature-teams:view",
       "personal:view",
     ]);
     const response = await test.request(

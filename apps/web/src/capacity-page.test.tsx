@@ -61,7 +61,12 @@ function settingsServer(
   return fetch;
 }
 
-const editor = ["plan:view", "configuration:view", "configuration:edit"];
+const editor = [
+  "plan:view",
+  "features:view",
+  "configuration:view",
+  "configuration:edit",
+];
 
 async function openSettings() {
   renderApp("/capacity");
@@ -80,7 +85,7 @@ async function change(label: string, typed: string) {
 
 describe("the Capacity page", () => {
   it("opens on its Settings tab, kept in the address", async () => {
-    settingsServer(["plan:view", "configuration:view"]);
+    settingsServer(["plan:view", "features:view", "configuration:view"]);
     const history = renderApp("/capacity?tab=settings");
     expect(
       await screen.findByRole("heading", { name: "Capacity" }),
@@ -97,7 +102,7 @@ describe("the Capacity page", () => {
 
 describe("the settings read only", () => {
   it("shows every setting, with no pencils or buttons", async () => {
-    settingsServer(["plan:view", "configuration:view"]);
+    settingsServer(["plan:view", "features:view", "configuration:view"]);
     await openSettings();
     expect(
       [

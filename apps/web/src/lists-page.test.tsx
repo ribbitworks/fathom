@@ -27,13 +27,18 @@ import {
 const viewer = () =>
   Response.json({
     ...fictionalUser,
-    permissions: ["configuration:view", "plan:view"],
+    permissions: ["configuration:view", "plan:view", "features:view"],
   });
 
 const editor = () =>
   Response.json({
     ...fictionalUser,
-    permissions: ["configuration:edit", "configuration:view", "plan:view"],
+    permissions: [
+      "configuration:edit",
+      "configuration:view",
+      "plan:view",
+      "features:view",
+    ],
   });
 
 // An editor who may move data between classes, seeing Personal data but not Confidential.
@@ -44,6 +49,7 @@ const classifier = () =>
       "configuration:edit",
       "configuration:view",
       "plan:view",
+      "features:view",
       "people:view",
       "personal:view",
       "data:classify",
@@ -215,6 +221,7 @@ describe("who sees the Lists page", () => {
             "configuration:view",
             "people:view",
             "plan:view",
+            "features:view",
           ],
         }),
       "GET /api/greeting": greeting,
@@ -2113,11 +2120,12 @@ describe("drafts on the Lists page", () => {
       permissions: [
         "configuration:view",
         "plan:approve",
-        "releases:approve",
+        "features:approve",
         "people:approve",
         "hiring-plan:approve",
         "configuration:approve",
         "plan:view",
+        "features:view",
       ],
     });
 
@@ -2128,11 +2136,12 @@ describe("drafts on the Lists page", () => {
         "configuration:edit",
         "configuration:view",
         "plan:approve",
-        "releases:approve",
+        "features:approve",
         "people:approve",
         "hiring-plan:approve",
         "configuration:approve",
         "plan:view",
+        "features:view",
       ],
     });
   const waiting = {
@@ -2659,12 +2668,13 @@ describe("drafts on the Lists page", () => {
           permissions: [
             "configuration:view",
             "plan:approve",
-            "releases:approve",
+            "features:approve",
             "people:approve",
             "hiring-plan:approve",
             "configuration:approve",
             "people:view",
             "plan:view",
+            "features:view",
           ],
         }),
       "GET /api/lists": () => Response.json({ lists: [added] }),
@@ -3400,11 +3410,12 @@ describe("unpublished and held changes on the Lists page", () => {
         "configuration:edit",
         "configuration:view",
         "plan:approve",
-        "releases:approve",
+        "features:approve",
         "people:approve",
         "hiring-plan:approve",
         "configuration:approve",
         "plan:view",
+        "features:view",
       ],
     });
   const holder = "Second Fictional Editor";

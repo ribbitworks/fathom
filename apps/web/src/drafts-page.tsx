@@ -597,7 +597,7 @@ export function DraftsPage({
   seesLists?: boolean;
   // Whether the user sees the plan's records, such as release streams.
   seesPlan?: boolean;
-  // Whether the user sees feature teams, on the org chart.
+  // Whether the user sees feature teams.
   seesTeams?: boolean;
   // Whether the user sees the plan itself, so its customers, proposals, projects, and milestones.
   seesProjects?: boolean;

@@ -24,7 +24,6 @@ import {
   type RoleSummary,
   sameGrants,
   startingRoles,
-  unbuiltPermissions,
 } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -47,7 +46,7 @@ import {
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import { nameProblem } from "./accounts.ts";
@@ -62,11 +61,8 @@ import {
   consequences,
   createRole,
   difference,
-  notBuilt,
-  notBuiltYet,
   previewRole,
   rolesQuery,
-  rowNotBuilt,
   updateRole,
 } from "./roles.ts";
 import { type SignedInUser, sessionQuery } from "./session.ts";
@@ -80,24 +76,9 @@ const detailsSchema = roleRequestSchema.pick({ name: true, description: true });
 
 type Details = z.infer<typeof detailsSchema>;
 
-// Marks something Fathom does not have yet, as the sidebar marks pages still to come.
-function NotBuiltTag({ text = notBuilt }: { text?: string }) {
-  return (
-    <>
-      <VisuallyHidden>, </VisuallyHidden>
-      <span className={roleClasses.notBuilt}>{text}</span>
-    </>
-  );
-}
-
-// A line of the summary or the confirmation, marked if it is about something not built yet.
+// A line of the summary or the confirmation.
 function Line({ text }: { text: string }) {
-  return (
-    <>
-      <TierWords text={text} />
-      {notBuiltYet(text) && <NotBuiltTag />}
-    </>
-  );
+  return <TierWords text={text} />;
 }
 
 // The permission granted with another, such as viewing with editing, if a granted one brings it.
@@ -221,97 +202,72 @@ function PermissionGrid({
   disabled: boolean;
   onChange?: (granted: Permission[]) => void;
 }) {
-  // The notes under the grid, which screen readers hear with it.
-  const notes = useId();
   return (
-    <Stack gap={4}>
-      <Table
-        aria-describedby={`${notes}-greyed ${notes}-not-built`}
-        withTableBorder
-        verticalSpacing={4}
-        aria-label="What the role grants"
-      >
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>Area</Table.Th>
-            {gridActions.map((action) => (
-              <Table.Th key={action} ta="center">
-                {
-                  // The action is always one of the fixed list.
-                  // eslint-disable-next-line security/detect-object-injection
-                  actionHeadings[action]
-                }
-              </Table.Th>
-            ))}
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
-          {permissionGrid.map(({ area, actions }) => {
-            const mark = rowNotBuilt(actions);
-            return (
-              <Table.Tr key={area}>
-                <Table.Td>
-                  <TierWords text={area} />
-                  {mark !== undefined && <NotBuiltTag text={mark} />}
+    <Table
+      withTableBorder
+      verticalSpacing={4}
+      aria-label="What the role grants"
+    >
+      <Table.Thead>
+        <Table.Tr>
+          <Table.Th>Area</Table.Th>
+          {gridActions.map((action) => (
+            <Table.Th key={action} ta="center">
+              {
+                // The action is always one of the fixed list.
+                // eslint-disable-next-line security/detect-object-injection
+                actionHeadings[action]
+              }
+            </Table.Th>
+          ))}
+        </Table.Tr>
+      </Table.Thead>
+      <Table.Tbody>
+        {permissionGrid.map(({ area, actions }) => (
+          <Table.Tr key={area}>
+            <Table.Td>
+              <TierWords text={area} />
+            </Table.Td>
+            {gridActions.map((action) => {
+              // The action is always one of the fixed list.
+              // eslint-disable-next-line security/detect-object-injection
+              const permission = actions[action];
+              if (permission === undefined) return <Table.Td key={action} />;
+              const comesWith = impliedBy(permission, granted);
+              const label = permissionLabel(permission);
+              return (
+                <Table.Td key={action} ta="center">
+                  <Checkbox
+                    display="inline-block"
+                    aria-label={
+                      comesWith === undefined
+                        ? label
+                        : `${label}, which comes with ${permissionLabel(comesWith)}`
+                    }
+                    checked={
+                      granted.includes(permission) || comesWith !== undefined
+                    }
+                    disabled={disabled || comesWith !== undefined}
+                    readOnly={onChange === undefined}
+                    onChange={
+                      onChange &&
+                      ((event) => {
+                        const on = event.currentTarget.checked;
+                        onChange(
+                          on
+                            ? [...granted, permission]
+                            : granted.filter((other) => other !== permission),
+                        );
+                      })
+                    }
+                  />
                 </Table.Td>
-                {gridActions.map((action) => {
-                  // The action is always one of the fixed list.
-                  // eslint-disable-next-line security/detect-object-injection
-                  const permission = actions[action];
-                  if (permission === undefined)
-                    return <Table.Td key={action} />;
-                  const comesWith = impliedBy(permission, granted);
-                  const label = `${permissionLabel(permission)}${
-                    unbuiltPermissions.includes(permission)
-                      ? `, ${notBuilt.toLowerCase()}`
-                      : ""
-                  }`;
-                  return (
-                    <Table.Td key={action} ta="center">
-                      <Checkbox
-                        display="inline-block"
-                        aria-label={
-                          comesWith === undefined
-                            ? label
-                            : `${label}, which comes with ${permissionLabel(comesWith)}`
-                        }
-                        checked={
-                          granted.includes(permission) ||
-                          comesWith !== undefined
-                        }
-                        disabled={disabled || comesWith !== undefined}
-                        readOnly={onChange === undefined}
-                        onChange={
-                          onChange &&
-                          ((event) => {
-                            const on = event.currentTarget.checked;
-                            onChange(
-                              on
-                                ? [...granted, permission]
-                                : granted.filter(
-                                    (other) => other !== permission,
-                                  ),
-                            );
-                          })
-                        }
-                      />
-                    </Table.Td>
-                  );
-                })}
-              </Table.Tr>
-            );
-          })}
-        </Table.Tbody>
-      </Table>
-      <Text id={`${notes}-greyed`} fz="xs" c="dimmed">
-        A greyed tick comes with another action on the same area, such as View
-        with Edit.
-      </Text>
-      <Text id={`${notes}-not-built`} fz="xs" c="dimmed">
-        Fathom doesn&apos;t have what is marked {notBuilt}. A role can grant it
-        now, and it works once it is built.
-      </Text>
-    </Stack>
+              );
+            })}
+          </Table.Tr>
+        ))}
+      </Table.Tbody>
+    </Table>
   );
 }
 

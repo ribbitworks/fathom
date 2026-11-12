@@ -27,6 +27,7 @@ const editor = () =>
       "people:edit",
       "people:view",
       "plan:view",
+      "features:view",
     ],
   });
 

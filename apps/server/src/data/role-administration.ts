@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Roles as those who may edit them see and change them: listing roles with what they grant and how
-// many active accounts hold them, which those who manage accounts may also do, to choose each
-// account's role, creating roles, such as by copying another, changing a role's name,
+// Roles as those who see and edit administration see and change them: listing roles with what they
+// grant and how many active accounts hold them, which choosing each account's role also needs,
+// creating roles, such as by copying another, changing a role's name,
 // description, and what it grants, and working out what a change would do to each account before it
 // is saved. Every change is recorded in the access history. A change that would leave no active
-// account able to manage accounts or edit roles is refused.
+// account with Edit Administration is refused.
 
 import {
   databaseCodes,
@@ -28,11 +28,7 @@ import {
 } from "@fathom/shared";
 import { and, asc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import {
-  type Actor,
-  requireAnyPermission,
-  requirePermission,
-} from "../access.ts";
+import { type Actor, requirePermission } from "../access.ts";
 import { ConflictError, NotFoundError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
 import { recordEvent } from "./history.ts";
@@ -164,13 +160,12 @@ export function createRoleAdministration(
 
   return {
     async listRoles(actor) {
-      // Those who manage accounts choose from every role, so they read them too.
-      requireAnyPermission(actor, ["roles:view", "accounts:manage"]);
+      requirePermission(actor, "administration:view");
       return readRoles(database);
     },
 
     async createRole(actor, { name, description, permissions }) {
-      requirePermission(actor, "roles:edit");
+      requirePermission(actor, "administration:edit");
       const id = await refusingTakenNames(() =>
         database.transaction(async (transaction) => {
           await checkName(transaction, name);
@@ -192,7 +187,7 @@ export function createRoleAdministration(
     },
 
     async updateRole(actor, id, { name, description, permissions, updatedAt }) {
-      requirePermission(actor, "roles:edit");
+      requirePermission(actor, "administration:edit");
       await readRole(database, id);
       await refusingTakenNames(() =>
         database.transaction(async (transaction) => {
@@ -230,7 +225,7 @@ export function createRoleAdministration(
           if (withdrawn.length > 0) {
             await keepAccessManaged(
               transaction,
-              "Some active account must keep the permissions to manage accounts and to edit roles",
+              "Some active account must keep Edit Administration",
             );
           }
           await recordEvent(transaction, {
@@ -252,7 +247,7 @@ export function createRoleAdministration(
     },
 
     async previewRole(actor, id, permissions) {
-      requirePermission(actor, "roles:edit");
+      requirePermission(actor, "administration:edit");
       const role = await readRole(database, id);
       const before = withImplied(role.permissions);
       const after = withImplied(permissions);

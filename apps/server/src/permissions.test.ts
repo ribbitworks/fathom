@@ -11,6 +11,7 @@
 // each feature's own tests.
 
 import {
+  changeHistoryViews,
   defaultPasswordSettings,
   defaultTimeZone,
   impliedPermissions,
@@ -139,9 +140,9 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     asked: () => ({ plannedHires: [id()] }),
   },
   {
-    // Feature teams are seen on the org chart, and their drafts with people.
+    // Feature teams' drafts are seen with people.
     variant: "feature teams",
-    needs: allOf("feature-teams:approve", "org-chart:view", "people:view"),
+    needs: allOf("feature-teams:approve", "feature-teams:view", "people:view"),
     asked: () => ({ featureTeams: [id()] }),
   },
   ...[
@@ -163,12 +164,12 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     asked: () => ({ columns: [id()] }),
   },
   {
-    // The plan's records are seen with the plan or with planning configuration.
+    // Releases are seen with features and releases, or with planning configuration.
     variant: "records",
     needs: {
       kind: "permissions",
-      all: ["releases:approve"],
-      any: ["plan:view", "configuration:view"],
+      all: ["features:approve"],
+      any: ["features:view", "configuration:view"],
     },
     asked: () => ({ records: [{ type: "release", id: id() }] }),
   },
@@ -191,18 +192,14 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
   },
 ];
 
-// Those who propose or edit feature teams change them, seeing the org chart and people.
-const changingTeams: Needs = {
-  kind: "permissions",
-  all: ["org-chart:view", "people:view"],
-  any: ["feature-teams:propose", "feature-teams:edit"],
-};
+// Those who edit feature teams change them, seeing people.
+const changingTeams = allOf("people:view", "feature-teams:edit");
 
 // Who may discard and resend drafts of each kind of the plan's records.
 const recordKinds: { type: string; needs: Needs }[] = [
   { type: "release-stream", needs: allOf("configuration:edit") },
   { type: "cycle-pattern", needs: allOf("configuration:edit") },
-  { type: "release", needs: allOf("plan:edit") },
+  { type: "release", needs: allOf("features:edit") },
   { type: "feature", needs: allOf("features:edit") },
   { type: "customer", needs: allOf("plan:edit") },
   { type: "proposal", needs: allOf("plan:edit") },
@@ -229,11 +226,15 @@ const routes: Route[] = [
     body: () => ({ roleId: id() }),
   },
 
-  { method: "GET", pattern: "/api/accounts", needs: allOf("accounts:view") },
+  {
+    method: "GET",
+    pattern: "/api/accounts",
+    needs: allOf("administration:view"),
+  },
   {
     method: "POST",
     pattern: "/api/accounts",
-    needs: allOf("accounts:manage"),
+    needs: allOf("administration:edit"),
     body: () => ({
       ...named(),
       email: `${unique("fictional").replace(" ", ".")}@example.test`,
@@ -243,19 +244,19 @@ const routes: Route[] = [
   {
     method: "PATCH",
     pattern: "/api/accounts/:id",
-    needs: allOf("accounts:manage"),
+    needs: allOf("administration:edit"),
     body: named,
   },
   {
     method: "POST",
     pattern: "/api/accounts/:id/password",
-    needs: allOf("accounts:manage"),
+    needs: allOf("administration:edit"),
     body: () => ({}),
   },
   {
     method: "PUT",
     pattern: "/api/accounts/:id/active",
-    needs: allOf("accounts:manage"),
+    needs: allOf("administration:edit"),
     body: () => ({ active: true }),
   },
   // Each user changes their own name.
@@ -270,31 +271,31 @@ const routes: Route[] = [
   {
     method: "GET",
     pattern: "/api/roles",
-    needs: anyOf("roles:view", "accounts:manage"),
+    needs: allOf("administration:view"),
   },
   {
     method: "POST",
     pattern: "/api/roles",
-    needs: allOf("roles:edit"),
+    needs: allOf("administration:edit"),
     body: role,
   },
   {
     method: "PUT",
     pattern: "/api/roles/:id",
-    needs: allOf("roles:edit"),
+    needs: allOf("administration:edit"),
     body: () => ({ ...role(), updatedAt: new Date().toISOString() }),
   },
   {
     method: "POST",
     pattern: "/api/roles/:id/effects",
-    needs: allOf("roles:edit"),
+    needs: allOf("administration:edit"),
     body: () => ({ permissions: [] }),
   },
 
   {
     method: "PUT",
     pattern: "/api/settings/time-zone",
-    needs: allOf("settings:edit"),
+    needs: allOf("administration:edit"),
     body: () => ({ timeZone: defaultTimeZone }),
   },
   {
@@ -319,13 +320,13 @@ const routes: Route[] = [
   {
     method: "PUT",
     pattern: "/api/settings/passwords",
-    needs: allOf("settings:edit"),
+    needs: allOf("administration:edit"),
     body: () => defaultPasswordSettings,
   },
   {
     method: "GET",
     pattern: "/api/effort-conversions",
-    needs: allOf("plan:view"),
+    needs: anyOf("plan:view", "features:view"),
   },
   {
     method: "GET",
@@ -359,10 +360,14 @@ const routes: Route[] = [
   {
     method: "GET",
     pattern: "/api/access-history",
-    needs: allOf("history:view"),
+    needs: allOf("administration:view"),
   },
   // Holds only changes to data the reader sees, as the change history tests check.
-  { method: "GET", pattern: "/api/changes", needs: allOf("changes:view") },
+  {
+    method: "GET",
+    pattern: "/api/changes",
+    needs: anyOf(...changeHistoryViews),
+  },
 
   // Lists' choices are read by those who see configuration, and by those who see People, whose
   // columns draw on them.
@@ -562,7 +567,7 @@ const routes: Route[] = [
     pattern: "/api/org-chart",
     // Personal details, and Employee IDs for those who do not see people, are left out, which the
     // org chart tests check.
-    needs: allOf("org-chart:view"),
+    needs: allOf("people:view"),
   },
   {
     // Other dates need Personal details, which show only with people.
@@ -570,7 +575,7 @@ const routes: Route[] = [
     pattern: "/api/org-chart",
     variant: "on another day",
     url: "/api/org-chart?on=2020-01-01",
-    needs: allOf("org-chart:view", "people:view", "personal:view"),
+    needs: allOf("people:view", "personal:view"),
   },
   {
     // Later dates of reporting lines are future reorganizations, which are Confidential.
@@ -578,17 +583,12 @@ const routes: Route[] = [
     pattern: "/api/org-chart",
     variant: "on a later day",
     url: "/api/org-chart?on=2099-01-01",
-    needs: allOf(
-      "org-chart:view",
-      "people:view",
-      "personal:view",
-      "confidential:view",
-    ),
+    needs: allOf("people:view", "personal:view", "confidential:view"),
   },
   {
     method: "PUT",
     pattern: "/api/org-chart/teams/:personId/colour",
-    needs: allOf("org-chart:view", "team-colours:edit"),
+    needs: allOf("people:edit"),
     body: () => ({ colour: "teal" }),
   },
   {
@@ -627,24 +627,24 @@ const routes: Route[] = [
   },
 
   // Planning configuration is seen with the plan.
-  // Feature teams are seen and changed on the org chart; renaming one needs feature-teams:edit, as
-  // the feature teams tests check.
+  // Feature teams are seen with View Feature teams; renaming one needs feature-teams:edit, as the
+  // feature teams tests check.
   {
     method: "GET",
     pattern: "/api/feature-teams",
-    needs: allOf("org-chart:view"),
+    needs: allOf("feature-teams:view"),
   },
   {
     method: "GET",
     pattern: "/api/feature-teams",
     variant: "on another day",
     url: "/api/feature-teams?on=2099-01-01",
-    needs: allOf("org-chart:view", "people:view", "personal:view"),
+    needs: allOf("feature-teams:view", "people:view", "personal:view"),
   },
   {
     method: "GET",
     pattern: "/api/feature-teams/months",
-    needs: allOf("org-chart:view", "people:view", "personal:view"),
+    needs: allOf("feature-teams:view", "people:view", "personal:view"),
     url: "/api/feature-teams/months?from=2025-01&to=2025-03",
   },
   {
@@ -657,7 +657,7 @@ const routes: Route[] = [
     method: "POST",
     pattern: "/api/feature-teams",
     variant: "from another day",
-    needs: { ...changingTeams, all: [...changingTeams.all, "personal:view"] },
+    needs: allOf("people:view", "feature-teams:edit", "personal:view"),
     body: () => ({
       name: unique("Fictional Feature Team"),
       from: "2099-01-01",
@@ -674,13 +674,13 @@ const routes: Route[] = [
     // Changing someone's teams month by month is part of Feature assignments, which needs
     // Personal details.
     pattern: "/api/feature-teams/members/:personId",
-    needs: { ...changingTeams, all: [...changingTeams.all, "personal:view"] },
+    needs: allOf("people:view", "feature-teams:edit", "personal:view"),
     body: () => ({}),
   },
   {
     method: "DELETE",
     pattern: "/api/feature-teams/:teamId",
-    needs: allOf("org-chart:view", "people:view", "feature-teams:edit"),
+    needs: changingTeams,
   },
   ...["/draft", "/draft/rejection"].map((end): Route => ({
     method: "DELETE",
@@ -690,14 +690,14 @@ const routes: Route[] = [
   {
     method: "PUT",
     pattern: "/api/feature-teams/:teamId/colour",
-    needs: allOf("org-chart:view", "team-colours:edit"),
+    needs: allOf("feature-teams:edit"),
     body: () => ({ colour: "teal" }),
   },
 
   {
     method: "GET",
     pattern: "/api/release-streams",
-    needs: anyOf("plan:view", "configuration:view"),
+    needs: anyOf("features:view", "configuration:view"),
   },
   {
     method: "POST",
@@ -747,36 +747,40 @@ const routes: Route[] = [
     pattern: "/api/release-streams/:streamId/patterns/:id",
     needs: allOf("configuration:edit"),
   },
-  // Releases are part of the plan, though they sit in a stream.
+  // Releases are part of features and releases, though they sit in a stream.
   {
     method: "POST",
     pattern: "/api/release-streams/:streamId/releases",
-    needs: allOf("plan:edit"),
+    needs: allOf("features:edit"),
     body: release,
   },
   {
     method: "PUT",
     pattern: "/api/release-streams/:streamId/releases/:id",
-    needs: allOf("plan:edit"),
+    needs: allOf("features:edit"),
     body: release,
   },
   {
     method: "DELETE",
     pattern: "/api/release-streams/:streamId/releases/:id",
-    needs: allOf("plan:edit"),
+    needs: allOf("features:edit"),
   },
   {
     method: "PUT",
     pattern: "/api/release-streams/:streamId/releases/:id/note",
-    needs: allOf("plan:edit"),
+    needs: allOf("features:edit"),
     body: () => ({ note: "Fictional **note**" }),
   },
-  { method: "GET", pattern: "/api/projects", needs: allOf("plan:view") },
+  {
+    method: "GET",
+    pattern: "/api/projects",
+    needs: anyOf("plan:view", "features:view"),
+  },
   // Owners by name and proposal statuses, for those who see the plan but not People or Lists.
   {
     method: "GET",
     pattern: "/api/projects/choices",
-    needs: allOf("plan:view"),
+    needs: anyOf("plan:view", "features:view"),
   },
   ...(
     [
@@ -866,7 +870,6 @@ const routes: Route[] = [
       "plan:edit",
       "features:edit",
       "allocations:edit",
-      "feature-teams:propose",
       "feature-teams:edit",
       "hiring-plan:edit",
     ),

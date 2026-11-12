@@ -268,7 +268,7 @@ describe("who may manage accounts", () => {
     async (role) => {
       const { cookie } = await signedIn(role);
       const response = await request(cookie, "GET", "/api/accounts");
-      if (rolesGranting("accounts:view").includes(role)) {
+      if (rolesGranting("administration:view").includes(role)) {
         expect(response.statusCode).toBe(200);
       } else {
         expect(response.statusCode).toBe(403);
@@ -292,7 +292,7 @@ describe("who may manage accounts", () => {
     ["PUT", "/api/accounts/any/active", { active: false }],
   ] as const;
   const refusedRoles = roleSchema.options.filter(
-    (role) => !rolesGranting("accounts:manage").includes(role),
+    (role) => !rolesGranting("administration:edit").includes(role),
   );
 
   it.each(
@@ -388,7 +388,7 @@ describe("administering accounts", () => {
 
   it("creates an account holding a role made later", async () => {
     const { cookie } = await signedIn("administrator");
-    const id = await madeRole("Fictional Made Role", ["history:view"]);
+    const id = await madeRole("Fictional Made Role", ["administration:view"]);
     const response = await request(cookie, "POST", "/api/accounts", {
       name: "Fictional Custom Holder",
       email: "custom.holder@example.test",
@@ -407,7 +407,7 @@ describe("administering accounts", () => {
     );
     expect(session.json()).toMatchObject({
       role: { id, key: null, name: "Fictional Made Role" },
-      permissions: ["history:view"],
+      permissions: ["administration:view"],
     });
   });
 
@@ -472,14 +472,16 @@ describe("administering accounts", () => {
   it("gives a role made later in place of the one held, so the account holds exactly one", async () => {
     const { cookie } = await signedIn("administrator");
     const other = await signedIn("executive");
-    const made = await madeRole("Fictional Given Role", ["history:view"]);
+    const made = await madeRole("Fictional Given Role", [
+      "administration:view",
+    ]);
     await request(cookie, "PATCH", `/api/accounts/${other.id}`, {
       roleId: made,
     });
     const session = await request(other.cookie, "GET", "/api/session");
     expect(session.json()).toMatchObject({
       role: { id: made, key: null, name: "Fictional Given Role" },
-      permissions: ["history:view"],
+      permissions: ["administration:view"],
     });
     const held = await connection
       .select({ roleId: userRoles.roleId })
@@ -810,8 +812,7 @@ describe("the last active Administrator", () => {
     );
     expect(response.statusCode).toBe(409);
     expect(response.json()).toEqual({
-      error:
-        "The last active account that can manage accounts or edit roles keeps that access",
+      error: "The last active account with Edit Administration keeps it",
     });
     expect(
       (await request(admin.cookie, "GET", "/api/accounts")).statusCode,
@@ -847,7 +848,7 @@ describe("the last active Administrator", () => {
     expect(response.statusCode).toBe(409);
     expect(response.json()).toEqual({
       error:
-        "The last active account that can manage accounts or edit roles cannot be deactivated",
+        "The last active account with Edit Administration cannot be deactivated",
     });
     expect(
       (await request(admin.cookie, "GET", "/api/session")).statusCode,
@@ -880,19 +881,11 @@ describe("the last active Administrator", () => {
     expect(given.statusCode).toBe(200);
   });
 
-  it("may give up the role while another active account manages accounts and edits roles through a role of its own", async () => {
+  it("may give up the role while another active account holds Edit Administration through a role of its own", async () => {
     const admin = await lastAdministrator();
     const holder = await newAccount();
-    const keeper = await madeRole("Fictional Keeper of Both", [
-      "accounts:manage",
-      "roles:edit",
-    ]);
-    const manager = await madeRole("Fictional Account Manager Only", [
-      "accounts:manage",
-    ]);
+    const keeper = await madeRole("Fictional Keeper", ["administration:edit"]);
     try {
-      // Managing accounts alone is not enough: nobody else could edit roles.
-      await holdRole(holder.id, manager);
       const refused = await request(
         admin.cookie,
         "PATCH",
@@ -1393,7 +1386,7 @@ describe("the access history", () => {
       const { cookie } = await signedIn(role);
       const response = await request(cookie, "GET", "/api/access-history");
       expect(response.statusCode).toBe(
-        rolesGranting("history:view").includes(role) ? 200 : 403,
+        rolesGranting("administration:view").includes(role) ? 200 : 403,
       );
     },
   );
@@ -1738,7 +1731,7 @@ describe("several roles", () => {
       ],
       defaultRoleId: await roleId("team-member"),
     });
-    expect(session.permissions).not.toContain("accounts:view");
+    expect(session.permissions).not.toContain("administration:view");
     const accountsPage = await request(holder.cookie, "GET", "/api/accounts");
     expect(accountsPage.statusCode).toBe(403);
   });
@@ -1756,7 +1749,7 @@ describe("several roles", () => {
     );
     const session = await sessionOf(holder.cookie);
     expect(session.role?.key).toBe("administrator");
-    expect(session.permissions).toContain("accounts:manage");
+    expect(session.permissions).toContain("administration:edit");
     expect(session.permissions).not.toContain("plan:view");
     expect(
       (await request(holder.cookie, "GET", "/api/accounts")).statusCode,

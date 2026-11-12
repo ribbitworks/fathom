@@ -17,7 +17,7 @@ import {
 const historyViewer = () =>
   Response.json({
     ...fictionalUser,
-    permissions: ["accounts:view", "accounts:manage", "history:view"],
+    permissions: ["administration:view", "administration:edit"],
   });
 
 const admin = { id: "user-1", name: "Fictional Person" };
@@ -317,7 +317,7 @@ describe("the entries", () => {
             roleEntry(13, "role-changed", {
               role: "Fictional Checkers",
               previousName: "Fictional Auditors",
-              granted: ["people:view", "changes:view"],
+              granted: ["people:view"],
               withdrawn: ["personal:view"],
             }),
             roleEntry(12, "role-changed", {
@@ -327,7 +327,7 @@ describe("the entries", () => {
             }),
             roleEntry(11, "role-created", {
               role: "Fictional Auditors",
-              granted: ["plan:view", "retired:permission"],
+              granted: ["plan:view", "features:view", "retired:permission"],
             }),
             roleEntry(10, "role-created", { role: "Fictional Empty" }),
           ],
@@ -340,9 +340,9 @@ describe("the entries", () => {
       ),
     );
     expect(lines).toEqual([
-      "Worth checking: Fictional Person changed the role: Fictional Checkers, before named Fictional Auditors; granting View People, View Change history; withdrawing View Personal details",
+      "Worth checking: Fictional Person changed the role: Fictional Checkers, before named Fictional Auditors; granting View People; withdrawing View Personal details",
       "Worth checking: Fictional Person changed the role: Fictional Checkers",
-      "Fictional Person created the role: Fictional Auditors; granting View Plan, retired:permission",
+      "Fictional Person created the role: Fictional Auditors; granting View Plan, View Features and releases, retired:permission",
       "Fictional Person created the role: Fictional Empty",
     ]);
   });

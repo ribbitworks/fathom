@@ -104,7 +104,7 @@ export async function changePasswordSettings(
   actor: Actor,
   requested: PasswordSettings,
 ): Promise<PasswordSettings> {
-  requirePermission(actor, "settings:edit");
+  requirePermission(actor, "administration:edit");
   const [problem] = recipeProblems(requested);
   if (problem !== undefined) throw new BadRequestError(problem);
   const passwords = passwordSettingsSchema.parse(requested);
@@ -132,7 +132,7 @@ export async function changeTimeZone(
   actor: Actor,
   requested: string,
 ): Promise<TimeZoneSetting> {
-  requirePermission(actor, "settings:edit");
+  requirePermission(actor, "administration:edit");
   return database.transaction(async (transaction) => {
     // Days are also worked out by PostgreSQL, whose time zone data may lack a name added lately.
     // Its own spelling is kept, so a name typed in another case still works there.

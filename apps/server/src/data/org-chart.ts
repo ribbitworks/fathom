@@ -105,7 +105,6 @@ type ChartRecord = PersonRecord | HireRecord;
 // What a reader of the chart may see.
 interface Reader {
   seesPersonal: boolean;
-  seesPeople: boolean;
   seesPositions: boolean;
   today: string;
 }
@@ -116,7 +115,7 @@ interface Reader {
 function chartOf(
   records: ReadonlyMap<string, ChartRecord>,
   colours: ReadonlyMap<string, string | null>,
-  { seesPersonal, seesPeople, seesPositions, today }: Reader,
+  { seesPersonal, seesPositions, today }: Reader,
 ): OrgChartPerson[] {
   // Every person on the chart is among the records.
   const recordOf = (id: string) => records.get(id) as ChartRecord;
@@ -171,8 +170,7 @@ function chartOf(
       preferredName: record.preferredName,
       // People hides someone who has left from those who do not see end dates, so their card
       // names no one there.
-      employeeId:
-        seesPeople && (seesPersonal || !gone) ? record.employeeId : null,
+      employeeId: seesPersonal || !gone ? record.employeeId : null,
       position: seesPositions ? record.position : null,
       teamName: record.teamName,
       // A team whose name comes off loses its colour.
@@ -212,7 +210,6 @@ export async function readOrgChart(
 ): Promise<OrgChartRead> {
   const today = await readToday(database);
   const shownDay = day ?? today;
-  const seesPeople = actor.permissions.includes("people:view");
   const seesPersonal = seesPeopleOverTime(actor);
   const approvedOnly =
     day !== undefined &&
@@ -221,9 +218,7 @@ export async function readOrgChart(
       mayDateLineChange(changesField(actor, "managerHistory"), day, today)
     );
   const withHires = day === undefined;
-  // Hires' drafts are part of the hiring plan, which does nothing without seeing people.
-  const wholePlan =
-    withHires && seesPeople && seesSensitivity(actor, "hiring-plan");
+  const wholePlan = withHires && seesSensitivity(actor, "hiring-plan");
   // Read as of one moment, so an approval saved meanwhile is seen whole or not at all.
   const {
     rows,
@@ -237,11 +232,9 @@ export async function readOrgChart(
     held,
   } = await database.transaction(
     async (transaction) => {
-      // Drafts are details of people, so those who do not see people are sent none.
-      const drafts =
-        seesPeople && !approvedOnly
-          ? await readPersonDrafts(transaction, undefined, actor.user.id)
-          : new Map<string, Draft>();
+      const drafts = !approvedOnly
+        ? await readPersonDrafts(transaction, undefined, actor.user.id)
+        : new Map<string, Draft>();
       const hires = withHires
         ? await readLiveHires(transaction)
         : new Map<string, Recorded>();
@@ -281,7 +274,7 @@ export async function readOrgChart(
         labelOf: await choiceLabels(transaction, draftedPositions),
         // Who holds each person or planned hire by unpublished changes, to those sent their drafts.
         held: new Map([
-          ...(seesPeople && !approvedOnly
+          ...(!approvedOnly
             ? await readHeld(transaction, "person", actor.user.id)
             : []),
           ...(wholePlan
@@ -308,10 +301,8 @@ export async function readOrgChart(
   );
   const reader: Reader = {
     seesPersonal,
-    seesPeople,
     seesPositions:
-      positionTier === "general" ||
-      (seesPeople && seesSensitivity(actor, positionTier)),
+      positionTier === "general" || seesSensitivity(actor, positionTier),
     today: shownDay,
   };
   // Start dates of everyone live, and of those only drafted to be added, such as a new person a

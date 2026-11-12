@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Feature teams: reading them, for everyone who sees the org chart, and drafting teams added,
+// Feature teams: reading them, for everyone who sees feature teams, and drafting teams added,
 // changed, and removed, and the teams someone is on changed, discarding drafts, sending rejected
 // ones for approval again, and setting a team's colour. Approving and rejecting drafts is in
 // drafts.ts. The data access layer checks the actor's permissions.

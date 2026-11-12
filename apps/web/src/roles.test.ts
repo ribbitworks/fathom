@@ -2,16 +2,11 @@
 
 // Tests for what a role's permissions mean in plain English: the pages its holders see, what they
 // can and cannot do, permissions that do nothing without another, and what an account gains and
-// loses when what it may do changes, and which of those lines are about something not built yet.
+// loses when what it may do changes.
 
-import {
-  type Permission,
-  permissionDescriptions,
-  permissionSchema,
-  unbuiltPermissions,
-} from "@fathom/shared";
+import { type Permission, permissionDescriptions } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import { consequences, difference, notBuiltYet, rowNotBuilt } from "./roles.ts";
+import { consequences, difference } from "./roles.ts";
 
 const allows = (permission: Permission) =>
   // The permission is always one of the shared list.
@@ -46,14 +41,28 @@ describe("what a role allows", () => {
   });
 
   it("names the pages a role's permissions open, and only those others as not appearing", () => {
-    const { pages, cannot } = consequences(["people:view", "roles:edit"]);
-    expect(pages).toEqual(["People", "Drafts", "Roles"]);
-    expect(cannot).toContain("The Accounts page does not appear.");
-    expect(cannot).toContain("The Org chart page does not appear.");
+    const { pages, cannot } = consequences([
+      "people:view",
+      "administration:view",
+    ]);
+    expect(pages).toEqual([
+      "People",
+      "Org chart",
+      "Drafts",
+      "Accounts",
+      "Roles",
+      "Settings",
+      "Change history",
+      "Access history",
+    ]);
+    expect(cannot).toContain("The Feature assignments page does not appear.");
     expect(cannot).not.toContain("The People page does not appear.");
-    expect(consequences(["org-chart:view"]).pages).toEqual([
+    expect(consequences(["people:view", "feature-teams:view"]).pages).toEqual([
+      "People",
       "Org chart",
       "Feature assignments",
+      "Drafts",
+      "Change history",
     ]);
   });
 
@@ -69,17 +78,19 @@ describe("what a role allows", () => {
     const { cannot } = consequences([]);
     expect(cannot).toContain(without("plan:view"));
     expect(cannot).not.toContain(without("plan:edit"));
-    expect(cannot).toContain(without("feature-teams:propose"));
-    expect(cannot).not.toContain(without("feature-teams:approve"));
+    expect(cannot).toContain(without("feature-teams:view"));
     expect(cannot).not.toContain(without("feature-teams:edit"));
+    expect(cannot).not.toContain(without("feature-teams:approve"));
   });
 
   it("says each action missing on an area the role reaches in part", () => {
-    const { can, cannot } = consequences(["feature-teams:propose"]);
-    expect(can).toEqual([allows("feature-teams:propose")]);
+    const { can, cannot } = consequences(["feature-teams:edit"]);
+    expect(can).toEqual([
+      allows("feature-teams:view"),
+      allows("feature-teams:edit"),
+    ]);
     expect(cannot).toContain(without("feature-teams:approve"));
-    expect(cannot).toContain(without("feature-teams:edit"));
-    expect(cannot).not.toContain(without("feature-teams:propose"));
+    expect(cannot).not.toContain(without("feature-teams:view"));
   });
 
   it("warns of each permission, granted or brought by another, that does nothing without one the role lacks", () => {
@@ -106,10 +117,10 @@ describe("what a role allows", () => {
 
   it("names every permission one could do something with, and is content with any of them", () => {
     expect(consequences(["drafts:approve-own"]).ineffective).toEqual([
-      "Approve Their own drafts does nothing without Approve Plan, Approve Releases, Approve Allocations, Approve People, Approve Hiring plan, Approve Feature teams, or Approve Configuration.",
+      "Approve Their own drafts does nothing without Approve Plan, Approve Features and releases, Approve Allocations, Approve People, Approve Hiring plan, Approve Feature teams, or Approve Configuration.",
     ]);
     expect(
-      consequences(["drafts:approve-own", "releases:approve", "plan:view"])
+      consequences(["drafts:approve-own", "features:approve", "features:view"])
         .ineffective,
     ).toEqual([]);
   });
@@ -119,49 +130,46 @@ describe("what a change to an account's permissions does", () => {
   it("lists the pages it gains first, then what it gains", () => {
     expect(
       difference(
-        ["changes:view"],
-        ["changes:view", "people:view", "roles:view", "roles:edit"],
+        ["people:view"],
+        ["people:view", "administration:view", "administration:edit"],
       ),
     ).toEqual({
       gains: [
-        "Sees the People page.",
-        "Sees the Drafts page.",
+        "Sees the Accounts page.",
         "Sees the Roles page.",
-        allows("people:view"),
-        allows("roles:view"),
-        allows("roles:edit"),
+        "Sees the Settings page.",
+        "Sees the Access history page.",
+        allows("administration:view"),
+        allows("administration:edit"),
       ],
       losses: [],
     });
   });
 
   it("lists the pages it loses first, then what it loses", () => {
-    expect(
-      difference(["changes:view", "people:view"], ["changes:view"]),
-    ).toEqual({
+    expect(difference(["people:view"], [])).toEqual({
       gains: [],
       losses: [
         "The People page no longer appears.",
+        "The Org chart page no longer appears.",
         "The Drafts page no longer appears.",
+        "The Change history page no longer appears.",
         without("people:view"),
       ],
     });
   });
 
   it("lists gains and losses together, without pages that stay", () => {
-    expect(
-      difference(["people:view", "changes:view"], ["people:view", "plan:view"]),
-    ).toEqual({
+    expect(difference(["people:view"], ["plan:view"])).toEqual({
       gains: [
         "Sees the Overview page.",
         "Sees the Projects page.",
-        "Sees the Features page.",
-        "Sees the Releases page.",
         allows("plan:view"),
       ],
       losses: [
-        "The Change history page no longer appears.",
-        without("changes:view"),
+        "The People page no longer appears.",
+        "The Org chart page no longer appears.",
+        without("people:view"),
       ],
     });
   });
@@ -171,56 +179,5 @@ describe("what a change to an account's permissions does", () => {
       gains: [],
       losses: [],
     });
-  });
-});
-
-describe("lines about what is not built yet", () => {
-  // Whether a line says what an unbuilt permission does.
-  const aboutUnbuilt = (line: string) =>
-    unbuiltPermissions.some(
-      (permission) =>
-        line === allows(permission) || line === without(permission),
-    );
-  const every = permissionSchema.options;
-
-  it("are recognised wherever the summary or the confirmation shows them, and no other line is", () => {
-    const lines = [
-      ...consequences(every).pages,
-      ...consequences(every).can,
-      ...consequences([]).cannot,
-      ...difference([], every).gains,
-      ...difference(every, []).losses,
-    ];
-    expect(lines.filter((line) => notBuiltYet(line))).toEqual(
-      lines.filter(aboutUnbuilt),
-    );
-  });
-
-  it("include every unbuilt page and permission a change can bring or take away", () => {
-    const expected = unbuiltPermissions.length;
-    expect(
-      difference([], every).gains.filter((line) => notBuiltYet(line)),
-    ).toHaveLength(expected);
-    expect(
-      difference(every, []).losses.filter((line) => notBuiltYet(line)),
-    ).toHaveLength(expected);
-    expect(
-      consequences(every).pages.filter((line) => notBuiltYet(line)),
-    ).toEqual([]);
-  });
-});
-
-describe("a row of the grid not built yet", () => {
-  const actions = { view: "plan:view", approve: "plan:approve" } as const;
-
-  it("names the actions not built yet, or marks the whole row", () => {
-    expect(rowNotBuilt(actions, [])).toBeUndefined();
-    expect(rowNotBuilt(actions, ["plan:approve"])).toBe(
-      "Approve not built yet",
-    );
-    expect(rowNotBuilt(actions, ["plan:view", "plan:approve"])).toBe(
-      "Not built yet",
-    );
-    expect(rowNotBuilt(actions)).toBeUndefined();
   });
 });

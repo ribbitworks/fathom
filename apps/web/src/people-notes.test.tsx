@@ -33,8 +33,9 @@ const editor = session([
   "people:edit",
   "people:view",
   "plan:view",
+  "features:view",
 ]);
-const viewer = session(["people:view", "plan:view"]);
+const viewer = session(["people:view", "plan:view", "features:view"]);
 
 const background = {
   id: "f1",
@@ -570,6 +571,7 @@ describe("a Note column", () => {
         "people:edit",
         "people:view",
         "plan:view",
+        "features:view",
         "personal:view",
         "data:classify",
       ]),

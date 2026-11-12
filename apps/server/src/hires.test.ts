@@ -385,7 +385,7 @@ describe("the hiring plan", () => {
   });
 
   it("is refused to those who see neither", async () => {
-    const viewer = await test.signedIn("team-member");
+    const viewer = await test.signedIn(["plan:view"]);
     expect((await send(viewer, "GET", "/api/planned-hires")).statusCode).toBe(
       403,
     );
@@ -1224,7 +1224,6 @@ describe("each role's view of the hiring plan", () => {
       "people:view",
       "personal:view",
       "confidential:view",
-      "changes:view",
     ]);
     const requisition = unique("Fictional-Managed");
     const id = await liveHire({ requisition });
@@ -1314,7 +1313,7 @@ describe("each role's view of the hiring plan", () => {
     expect((await hireSeen(id))?.stateId).toBe(open);
   });
 
-  it.each([["administrator"], ["team-member"], ["product-manager"]] as const)(
+  it.each([["administrator"]] as const)(
     "refuses the plan to the %s role alone",
     async (role) => {
       const user = await test.signedIn(role);
@@ -2126,7 +2125,6 @@ describe("values in People's columns", () => {
       "hiring-plan:approve",
       "people:view",
       "hiring-plan:view",
-      "changes:view",
     ]);
     const secret = await linkColumn({ visibility: "confidential" });
     const reason = unique("Fictional reason");

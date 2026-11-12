@@ -87,7 +87,7 @@ const plan = (more: Partial<Plan> = {}): Plan => ({
   ...more,
 });
 
-const editor = ["plan:view", "plan:edit"];
+const editor = ["plan:view", "features:view", "plan:edit"];
 const approver = [...editor, "plan:approve"];
 
 const saved = (current: () => Plan) => () =>
@@ -158,7 +158,7 @@ describe("the page's tabs", () => {
       "/projects",
       plan({ canEdit: false }),
       {},
-      ["plan:view"],
+      ["plan:view", "features:view"],
     );
     expect(screen.getByRole("grid", { name: "Projects" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^New/ })).toBeNull();
@@ -755,6 +755,7 @@ describe("a project's milestones in its panel", () => {
   it("offers no menu to those who may not change it, while it has no draft", async () => {
     await openPage(atProject, { ...withMilestone(), canEdit: false }, {}, [
       "plan:view",
+      "features:view",
     ]);
     await screen.findByText("Fictional Kickoff");
     expect(
@@ -1592,7 +1593,7 @@ describe("the Features page", () => {
     "GET /api/effort-conversions": () =>
       Response.json(startingEffortConversions),
   };
-  const featureEditor = ["plan:view", "features:edit"];
+  const featureEditor = ["plan:view", "features:view", "features:edit"];
   const open = (
     start = featurePlan(),
     more: typeof answers | object = {},
@@ -2892,7 +2893,7 @@ describe("the Features page", () => {
       "/features",
       featurePlan({ canEditFeatures: false }),
       answers,
-      ["plan:view"],
+      ["plan:view", "features:view"],
     );
     expect(screen.queryByRole("button", { name: "New feature" })).toBeNull();
   });
@@ -2944,6 +2945,7 @@ describe("the Features page", () => {
       featurePlan({ featureColumns: columnsOf(), ...more });
     const columnEditor = [
       "plan:view",
+      "features:view",
       "features:edit",
       "configuration:view",
       "configuration:edit",

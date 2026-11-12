@@ -20,7 +20,12 @@ const settingsEditor =
   () =>
     Response.json({
       ...fictionalUser,
-      permissions: ["settings:view", "settings:edit", "plan:view"],
+      permissions: [
+        "administration:view",
+        "administration:edit",
+        "plan:view",
+        "features:view",
+      ],
       settings: { ...fictionalUser.settings, timeZone },
     });
 
@@ -62,10 +67,13 @@ describe("who sees the Settings page", () => {
     // Given
     const fetch = serverAnswers({
       "GET /api/session": () =>
-        Response.json({ ...fictionalUser, permissions: ["settings:view"] }),
+        Response.json({
+          ...fictionalUser,
+          permissions: ["administration:view"],
+        }),
     });
     // When
-    const history = renderApp("/");
+    const history = renderApp("/settings");
     // Then
     const passwords = await screen.findByRole("region", { name: "Passwords" });
     expect(history.location.pathname).toBe("/settings");

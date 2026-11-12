@@ -476,7 +476,7 @@ function shown(
 }
 
 // Whether the actor sees a change, by the rule of its kind of record. Feature teams' General details
-// are seen with the org chart, whether or not the reader sees people, but their drafts and
+// are seen with View Feature teams, whether or not the reader sees people, but their drafts and
 // Personal details, being details of people, only with people; a role can be given the rest
 // without them. Changes to a saved view are kept from others as long as it is, or was then, personal.
 function seesRowOfKind(
@@ -1042,8 +1042,7 @@ export async function readChangeHistory(
       : []),
     ...(actor.permissions.includes("people:view") ? peopleKinds : []),
   ];
-  // Feature teams are seen on the org chart, whether or not the reader sees people.
-  const teams = actor.permissions.includes("org-chart:view");
+  const teams = actor.permissions.includes("feature-teams:view");
   const hiring =
     actor.permissions.includes("people:view") &&
     seesSensitivity(actor, "hiring-plan");

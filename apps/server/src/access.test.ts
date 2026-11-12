@@ -26,32 +26,41 @@ const user = {
 };
 // What each starting role lets a user do, as the owner decided on 2026-11-07.
 const expected: [Role, Permission[]][] = [
-  ["team-member", ["plan:view", "allocations:view", "org-chart:view"]],
+  [
+    "team-member",
+    [
+      "plan:view",
+      "features:view",
+      "allocations:view",
+      "people:view",
+      "feature-teams:view",
+    ],
+  ],
   [
     "product-manager",
     [
       "plan:view",
       "plan:edit",
       "plan:approve",
+      "features:view",
       "features:edit",
+      "features:approve",
       "allocations:view",
-      "org-chart:view",
-      "drafts:submit",
-      "changes:view",
+      "people:view",
+      "feature-teams:view",
     ],
   ],
   [
     "feature-lead",
     [
       "plan:view",
+      "features:view",
       "features:edit",
       "allocations:view",
       "allocations:edit",
       "people:view",
-      "org-chart:view",
-      "feature-teams:propose",
-      "drafts:submit",
-      "changes:view",
+      "feature-teams:view",
+      "feature-teams:edit",
     ],
   ],
   [
@@ -60,20 +69,19 @@ const expected: [Role, Permission[]][] = [
       "plan:view",
       "plan:edit",
       "plan:approve",
+      "features:view",
       "features:edit",
-      "releases:approve",
+      "features:approve",
       "allocations:view",
       "allocations:approve",
-      "org-chart:view",
       "people:view",
       "people:approve",
+      "feature-teams:view",
       "feature-teams:approve",
       "hiring-plan:view",
       "hiring-plan:approve",
       "configuration:view",
       "configuration:approve",
-      "drafts:submit",
-      "changes:view",
     ],
   ],
   [
@@ -81,125 +89,98 @@ const expected: [Role, Permission[]][] = [
     [
       "plan:view",
       "plan:edit",
+      "features:view",
       "features:edit",
       "allocations:view",
       "allocations:edit",
-      "org-chart:view",
       "people:view",
-      "team-colours:edit",
-      "feature-teams:propose",
-      "personal:view",
+      "feature-teams:view",
+      "feature-teams:edit",
       "hiring-plan:view",
-      "drafts:submit",
-      "changes:view",
+      "personal:view",
     ],
   ],
-  // Everything but managing accounts, editing roles, and changing settings.
   [
     "engineering-director",
     [
       "plan:view",
       "plan:edit",
       "plan:approve",
+      "features:view",
       "features:edit",
-      "releases:approve",
+      "features:approve",
       "allocations:view",
       "allocations:edit",
       "allocations:approve",
       "people:view",
       "people:edit",
       "people:approve",
-      "org-chart:view",
-      "team-colours:edit",
-      "feature-teams:propose",
+      "feature-teams:view",
       "feature-teams:edit",
       "feature-teams:approve",
-      "personal:view",
-      "personal:edit",
-      "confidential:view",
-      "confidential:edit",
-      "data:classify",
       "hiring-plan:view",
       "hiring-plan:edit",
       "hiring-plan:approve",
       "configuration:view",
       "configuration:edit",
       "configuration:approve",
-      "drafts:submit",
+      "administration:view",
+      "personal:view",
+      "personal:edit",
+      "confidential:view",
+      "confidential:edit",
+      "data:classify",
       "drafts:approve-own",
-      "accounts:view",
-      "roles:view",
-      "settings:view",
-      "history:view",
-      "changes:view",
     ],
   ],
   [
     "workforce-administrator",
     [
       "plan:view",
+      "features:view",
       "allocations:view",
-      "org-chart:view",
       "people:view",
       "people:edit",
-      "team-colours:edit",
+      "feature-teams:view",
       "feature-teams:edit",
+      "hiring-plan:view",
+      "hiring-plan:edit",
+      "configuration:view",
+      "configuration:edit",
       "personal:view",
       "personal:edit",
       "confidential:view",
       "confidential:edit",
       "data:classify",
-      "hiring-plan:view",
-      "hiring-plan:edit",
-      "configuration:view",
-      "configuration:edit",
-      "changes:view",
     ],
   ],
-  // Every view, and nothing that changes or approves.
   [
     "executive",
     [
       "plan:view",
+      "features:view",
       "allocations:view",
       "people:view",
-      "org-chart:view",
-      "personal:view",
-      "confidential:view",
+      "feature-teams:view",
       "hiring-plan:view",
       "configuration:view",
-      "accounts:view",
-      "roles:view",
-      "settings:view",
-      "history:view",
-      "changes:view",
+      "administration:view",
+      "personal:view",
+      "confidential:view",
     ],
   ],
   [
     "resource-planner",
     [
       "plan:view",
+      "features:view",
       "allocations:view",
       "allocations:edit",
-      "org-chart:view",
       "people:view",
-      "drafts:submit",
-      "changes:view",
+      "feature-teams:view",
     ],
   ],
-  // Running Fathom needs no access to people data or the plan.
-  [
-    "administrator",
-    [
-      "accounts:view",
-      "accounts:manage",
-      "roles:view",
-      "roles:edit",
-      "settings:view",
-      "settings:edit",
-      "history:view",
-    ],
-  ],
+  ["administrator", ["administration:view", "administration:edit"]],
 ];
 
 describe("what each role lets a user do", () => {
@@ -226,7 +207,7 @@ describe("what each role lets a user do", () => {
       "workforce-administrator",
       "executive",
     ]);
-    expect(rolesGranting("accounts:manage")).toEqual(["administrator"]);
+    expect(rolesGranting("administration:edit")).toEqual(["administrator"]);
   });
 });
 
@@ -241,22 +222,23 @@ describe("permissions from a stored role", () => {
 
   it("ignores a permission the server does not know", () => {
     expect(
-      actorWith(user, ["retired:permission", "history:view"]).permissions,
-    ).toEqual(["history:view"]);
+      actorWith(user, ["retired:permission", "administration:view"])
+        .permissions,
+    ).toEqual(["administration:view"]);
   });
 });
 
 describe("permission checks", () => {
   it("allow an actor whose role grants the permission", () => {
     expect(() => {
-      requirePermission(actorFor(user, "administrator"), "accounts:manage");
+      requirePermission(actorFor(user, "administrator"), "administration:edit");
     }).not.toThrow();
   });
 
   it("refuse an actor whose role does not, as forbidden", () => {
     let refusal: unknown;
     try {
-      requirePermission(actorFor(user, "executive"), "accounts:manage");
+      requirePermission(actorFor(user, "executive"), "administration:edit");
     } catch (error) {
       refusal = error;
     }
@@ -277,7 +259,7 @@ describe("permission checks", () => {
     expect(() => {
       requireAnyPermission(actorFor(user, "team-member"), [
         "configuration:view",
-        "people:view",
+        "hiring-plan:view",
       ]);
     }).toThrow(ForbiddenError);
   });

@@ -28,9 +28,10 @@ const session = (permissions: string[]) => () =>
   Response.json({ ...fictionalUser, permissions });
 const viewer = session([
   "people:view",
-  "org-chart:view",
+  "feature-teams:view",
   "personal:view",
   "plan:view",
+  "features:view",
 ]);
 
 const background = {
@@ -723,42 +724,6 @@ describe("a person's details", () => {
     expect(screen.queryByText(/Being changed by/)).toBeNull();
   });
 
-  it("is not offered to those who see the chart but not people", async () => {
-    const fetch = serverAnswers({
-      "GET /api/session": session(["org-chart:view", "plan:view"]),
-      "GET /api/org-chart": () =>
-        Response.json({
-          people: chart.map((one) => ({ ...one, employeeId: null })),
-          drafted: [],
-        }),
-    });
-    renderApp("/org-chart?open=E1");
-    await screen.findAllByText("Robin Fictional");
-    expect(
-      screen.queryByRole("region", { name: "Robin Fictional" }),
-    ).toBeNull();
-    expect(
-      fetch.mock.calls.some(([url]) => url.startsWith("/api/people")),
-    ).toBe(false);
-  });
-
-  it("links to the org chart, and draws team colours, only for those who see it", async () => {
-    const fetch = serverAnswers({
-      "GET /api/session": session(["people:view", "plan:view"]),
-      "GET /api/people": peopleAnswer(),
-      "GET /api/lists": () => Response.json({ lists: [positions] }),
-      "GET /api/unpublished": () => Response.json({ changes: [] }),
-    });
-    renderApp("/people?open=E1");
-    await panel("Robin Fictional");
-    expect(
-      screen.queryByRole("link", { name: "Show on org chart" }),
-    ).toBeNull();
-    expect(fetch.mock.calls.some(([url]) => url === "/api/org-chart")).toBe(
-      false,
-    );
-  });
-
   it("closes beside the org chart onto finding someone, when nobody has the ID", async () => {
     answers();
     const history = renderApp("/org-chart?open=E9");
@@ -797,10 +762,11 @@ describe("changing a manager beside the org chart on an earlier day", () => {
   const changesDates = [
     "people:view",
     "people:edit",
-    "org-chart:view",
+    "feature-teams:view",
     "personal:view",
     "personal:edit",
     "plan:view",
+    "features:view",
   ];
 
   function onDay(
@@ -977,9 +943,10 @@ describe("changing a person's details", () => {
   const editor = session([
     "people:view",
     "people:edit",
-    "org-chart:view",
+    "feature-teams:view",
     "personal:view",
     "plan:view",
+    "features:view",
   ]);
   const saved = "00000000-0000-4000-8000-0000000000c1";
   const savedAs = () => Response.json({ changeSetId: saved });
@@ -1868,9 +1835,9 @@ describe("changing a person's details", () => {
         "GET /api/session": session([
           "people:view",
           "people:edit",
-          "org-chart:view",
-          "team-colours:edit",
+          "feature-teams:view",
           "plan:view",
+          "features:view",
         ]),
         "PUT /api/org-chart/teams/1/colour": () =>
           new Response(null, { status: 204 }),
@@ -1906,17 +1873,19 @@ describe("changing a planned hire's details", () => {
     "people:edit",
     "hiring-plan:view",
     "hiring-plan:edit",
-    "org-chart:view",
+    "feature-teams:view",
     "personal:view",
     "plan:view",
+    "features:view",
   ]);
   const peopleEditor = session([
     "people:view",
     "people:edit",
     "hiring-plan:view",
-    "org-chart:view",
+    "feature-teams:view",
     "personal:view",
     "plan:view",
+    "features:view",
   ]);
   const states = {
     ...positions,

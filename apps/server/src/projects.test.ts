@@ -147,6 +147,29 @@ describe("reading", () => {
     expect((await readPlan()).canEdit).toBe(true);
   });
 
+  it("sends features only to those who see them, and the plan's other records only to those who see the plan", async () => {
+    const project = await addProject();
+    const customer = await addCustomer();
+    const feature = await addFeature();
+    const featuresOnly = await test.signedIn(["features:view"]);
+    const planOnly = await test.signedIn(["plan:view"]);
+    const ids = (records: readonly { id: string }[]) =>
+      records.map(({ id }) => id);
+
+    const features = await readPlan(featuresOnly.cookie);
+    expect(ids(features.features)).toContain(feature.id);
+    expect(features.featureColumns).toEqual((await readPlan()).featureColumns);
+    expect(ids(features.projects)).not.toContain(project.id);
+    expect(ids(features.customers)).not.toContain(customer.id);
+    expect(features.proposals).toEqual([]);
+
+    const plan = await readPlan(planOnly.cookie);
+    expect(ids(plan.projects)).toContain(project.id);
+    expect(ids(plan.customers)).toContain(customer.id);
+    expect(ids(plan.features)).not.toContain(feature.id);
+    expect(plan.featureColumns).toEqual({ fields: [], order: [], lists: [] });
+  });
+
   it("lists live records by name, then those drafted to be added", async () => {
     const later = await addCustomer(unique("Fictional Zed"));
     const earlier = await addCustomer(unique("Fictional Abe"));
@@ -1085,10 +1108,8 @@ describe("drafts", () => {
         .entries.flatMap((entry) => entry.records)
         .map(({ name }) => name);
     };
-    expect(await history(["plan:view", "changes:view"])).toContain(
-      customer.name,
-    );
-    const configuration = await history(["configuration:view", "changes:view"]);
+    expect(await history(["plan:view"])).toContain(customer.name);
+    const configuration = await history(["configuration:view"]);
     expect(configuration).not.toContain(customer.name);
     expect(configuration).toContain(stream);
   });

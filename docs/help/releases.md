@@ -56,4 +56,4 @@ Select **Rename** or **Retire** at the top of the stream's panel. A retired stre
 
 ## Where Changes Go
 
-Every change is a draft. It goes live once someone whose role approves releases approves it. Changing one cycle's length makes several drafts, which are approved or discarded together. See [Drafts](drafts.md).
+Every change is a draft. It goes live once someone whose role approves features and releases approves it. Changing one cycle's length makes several drafts, which are approved or discarded together. See [Drafts](drafts.md).

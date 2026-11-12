@@ -68,7 +68,7 @@ export function FeatureAssignmentsPage({
   whyMissing,
   whyNoManagerGrouping,
   seesAllocations,
-  proposesTeams,
+  editsTeams,
   changesDates,
   mode: asked,
   onMode,
@@ -80,7 +80,7 @@ export function FeatureAssignmentsPage({
   // Why the role may not group rows by manager, when it may not.
   whyNoManagerGrouping?: string | undefined;
   seesAllocations: boolean;
-  proposesTeams: boolean;
+  editsTeams: boolean;
   // Whether the reader may change Personal details, and so months before the current one.
   changesDates: boolean;
   mode: GridMode;
@@ -140,7 +140,7 @@ export function FeatureAssignmentsPage({
       {mode === "teams" ? (
         <TeamsGrid
           {...grid}
-          proposesTeams={proposesTeams}
+          editsTeams={editsTeams}
           changesDates={changesDates}
         />
       ) : (
@@ -159,12 +159,12 @@ interface GridProps {
 
 function TeamsGrid({
   byManager,
-  proposesTeams,
+  editsTeams,
   changesDates,
   now,
   view,
   onView,
-}: GridProps & { proposesTeams: boolean; changesDates: boolean }) {
+}: GridProps & { editsTeams: boolean; changesDates: boolean }) {
   const [range] = useState(() => gridMonthsAround(now));
   const query = useQuery(teamMonthsQuery(range));
   const actions = useTeamMonthActions(range, now);
@@ -193,7 +193,7 @@ function TeamsGrid({
       table={table}
       records={records}
       actions={actions}
-      canEdit={proposesTeams}
+      canEdit={editsTeams}
       now={now}
       view={view}
       onView={onView}

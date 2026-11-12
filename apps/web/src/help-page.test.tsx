@@ -72,7 +72,7 @@ describe("Help's Roles page", () => {
             name: "Executive",
             description: "Fictional description.",
           },
-          permissions: ["plan:view", "people:view"],
+          permissions: ["plan:view", "features:view", "people:view"],
         }),
     });
     renderApp("/help/roles");

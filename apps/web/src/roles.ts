@@ -5,7 +5,6 @@
 // and, for a change to a role, what each account holding it gains and loses.
 
 import {
-  gridActions,
   type Permission,
   permissionDescriptions,
   permissionGrid,
@@ -16,7 +15,6 @@ import {
   type RoleRequest,
   roleResponseSchema,
   type RoleSummary,
-  unbuiltPermissions,
   withImplied,
   eitherOf,
 } from "@fathom/shared";
@@ -66,20 +64,6 @@ export async function previewRole(
 const everyPage = pagesOpened(
   permissionGrid.flatMap(({ actions }) => Object.values(actions)),
 );
-
-// Every line the summary or the confirmation can show about something Fathom does not have yet: a
-// permission that does nothing until its feature is built.
-const linesNotBuilt = new Set([
-  ...unbuiltPermissions.flatMap((permission) => {
-    // The permission is always one of the shared list.
-    // eslint-disable-next-line security/detect-object-injection
-    const { allows, without } = permissionDescriptions[permission];
-    return [allows, without];
-  }),
-]);
-
-// Whether a line of the summary or the confirmation is about something Fathom does not have yet.
-export const notBuiltYet = (line: string): boolean => linesNotBuilt.has(line);
 
 export interface Consequences {
   pages: string[];
@@ -168,29 +152,6 @@ export function difference(
 
 export const actionHeadings = {
   view: "View",
-  draft: "Draft",
   approve: "Approve",
   edit: "Edit",
 } as const;
-
-// The words that mark something Fathom does not have yet.
-export const notBuilt = "Not built yet";
-
-// What a row of the grid grants that Fathom does not have yet: every action, or the ones named.
-export function rowNotBuilt(
-  actions: (typeof permissionGrid)[number]["actions"],
-  unbuilt: readonly Permission[] = unbuiltPermissions,
-): string | undefined {
-  const offered = gridActions.filter((action) => action in actions);
-  const missing = offered.filter((action) => {
-    // The action is always one of the fixed list.
-    // eslint-disable-next-line security/detect-object-injection
-    const permission = actions[action];
-    return permission !== undefined && unbuilt.includes(permission);
-  });
-  if (missing.length === 0) return undefined;
-  if (missing.length === offered.length) return notBuilt;
-  // The action is always one of the fixed list.
-  // eslint-disable-next-line security/detect-object-injection
-  return `${missing.map((action) => actionHeadings[action]).join(" and ")} ${notBuilt.toLowerCase()}`;
-}

@@ -85,7 +85,7 @@ const session = (permissions: string[]) => () =>
     ],
   });
 
-const reader = session(["org-chart:view"]);
+const reader = session(["people:view", "feature-teams:view"]);
 
 function openPage(
   search = "",
@@ -117,9 +117,9 @@ afterEach(() => {
 
 describe("changing a month's teams", () => {
   const proposes = session([
-    "org-chart:view",
     "people:view",
-    "feature-teams:propose",
+    "feature-teams:view",
+    "feature-teams:edit",
   ]);
   const caseyUrl = "/api/feature-teams/members/p-casey";
   const saved = "00000000-0000-4000-8000-000000000001";
@@ -194,9 +194,9 @@ describe("changing a month's teams", () => {
   it("lets those who may change Personal details change earlier months", async () => {
     await openEditing(
       session([
-        "org-chart:view",
         "people:view",
-        "feature-teams:propose",
+        "feature-teams:view",
+        "feature-teams:edit",
         "personal:edit",
       ]),
     );
@@ -253,7 +253,7 @@ describe("the Feature assignments page", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["org-chart:view", "people:view"],
+          permissions: ["people:view", "feature-teams:view"],
         }),
     });
     renderApp("/feature-assignments");
@@ -355,7 +355,7 @@ describe("the Feature assignments page", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["org-chart:view", "people:view", "personal:view"],
+          permissions: ["people:view", "feature-teams:view", "personal:view"],
         }),
       [monthsUrl]: () => Response.json(months),
     });
@@ -472,8 +472,10 @@ describe("the Feature assignments page", () => {
     ).toBeDefined();
   });
 
-  it("is not there for those who do not see the org chart", async () => {
-    serverAnswers({ "GET /api/session": session(["plan:view"]) });
+  it("is not there for those who do not see feature teams", async () => {
+    serverAnswers({
+      "GET /api/session": session(["plan:view", "features:view"]),
+    });
     renderApp("/feature-assignments");
 
     expect(
@@ -527,8 +529,8 @@ describe("the Allocations mode", () => {
     drafted: [],
   };
   const seesAllocations = session([
-    "org-chart:view",
     "people:view",
+    "feature-teams:view",
     "allocations:view",
   ]);
 
@@ -555,8 +557,8 @@ describe("the Allocations mode", () => {
         Response.json({
           ...fictionalUser,
           permissions: [
-            "org-chart:view",
             "people:view",
+            "feature-teams:view",
             "personal:view",
             "allocations:view",
           ],

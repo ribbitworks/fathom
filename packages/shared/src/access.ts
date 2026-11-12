@@ -23,35 +23,24 @@ export const roleSchema = z.enum([
 export type Role = z.infer<typeof roleSchema>;
 
 export const permissionSchema = z.enum([
+  // Projects, proposals, customers and milestones.
   "plan:view",
   "plan:edit",
   "plan:approve",
-  // Features and their estimates, apart from the rest of the plan, which Edit Plan changes.
+  // Features and their estimates, releases, release streams and cycle patterns.
+  "features:view",
   "features:edit",
-  // Releases are an area of their own, apart from the plan, for approving.
-  "releases:approve",
+  "features:approve",
   "allocations:view",
   "allocations:edit",
   "allocations:approve",
+  // People, their teams and reporting lines, the org chart, and the colours teams are drawn in.
   "people:view",
   "people:edit",
   "people:approve",
-  // The org chart, apart from People: without people:view, each card shows only a name, position,
-  // and team, and opens nothing.
-  "org-chart:view",
-  // A team's colour is how the org chart is drawn, not a detail of anyone, so it has its own
-  // permission. Until accounts are linked to people, it reaches every team.
-  "team-colours:edit",
-  // Feature teams are General data. Roles proposes that seeing them comes with seeing the plan.
-  "feature-teams:propose",
+  "feature-teams:view",
   "feature-teams:edit",
   "feature-teams:approve",
-  "personal:view",
-  "personal:edit",
-  "confidential:view",
-  "confidential:edit",
-  // Moving built-in details, lists, and columns between the classes the role sees.
-  "data:classify",
   // The hiring plan is Confidential, but has a permission area of its own, apart from other
   // Confidential data.
   "hiring-plan:view",
@@ -61,21 +50,18 @@ export const permissionSchema = z.enum([
   "configuration:view",
   "configuration:edit",
   "configuration:approve",
-  "drafts:submit",
+  // Accounts, roles, settings and the access history.
+  "administration:view",
+  "administration:edit",
+  "personal:view",
+  "personal:edit",
+  "confidential:view",
+  "confidential:edit",
+  // Moving built-in details, lists, and columns between the classes the role sees.
+  "data:classify",
   // Approving drafts the approver changed themselves, in the areas they approve, which nobody may
   // do without it.
   "drafts:approve-own",
-  "accounts:view",
-  "accounts:manage",
-  "roles:view",
-  // Changing what roles grant, apart from managing accounts, as the Decisions Log sets out.
-  "roles:edit",
-  "settings:view",
-  // Changing settings for the whole of Fathom, such as its time zone.
-  "settings:edit",
-  "history:view",
-  // The change history, holding only changes to data the reader may see.
-  "changes:view",
 ]);
 
 export type Permission = z.infer<typeof permissionSchema>;
@@ -90,38 +76,41 @@ export const permissionDescriptions: Record<
 > = {
   "plan:view": {
     allows:
-      "Sees the plan: projects, proposals, features, milestones, and releases.",
+      "Sees the plan: projects, proposals, customers, and milestones, with the change history of each.",
     without: "Does not see the plan.",
   },
-
   "plan:edit": {
-    allows:
-      "Changes the plan across every project, apart from features and estimates.",
+    allows: "Drafts changes to projects, proposals, customers, and milestones.",
     without: "Cannot change the plan.",
   },
   "plan:approve": {
     allows:
-      "Approves or rejects drafts of the plan: features, projects, proposals, and the roadmap.",
+      "Approves or rejects drafts of projects, proposals, customers, and milestones.",
     without: "Cannot approve drafts of the plan.",
     needs: ["plan:view"],
   },
+  "features:view": {
+    allows:
+      "Sees features, their estimates, and releases, with the change history of each.",
+    without: "Does not see features or releases.",
+  },
   "features:edit": {
     allows:
-      "Adds, changes, and removes features and their estimates, without changing the rest of the plan.",
+      "Drafts changes to features and their estimates, without changing the rest of the plan.",
     without: "Cannot change features or estimates.",
   },
-  "releases:approve": {
+  "features:approve": {
     allows:
-      "Approves or rejects drafts of releases, release streams, and cycle patterns.",
-    without: "Cannot approve drafts of releases.",
-    needs: ["plan:view", "configuration:view"],
+      "Approves or rejects drafts of features, releases, release streams, and cycle patterns.",
+    without: "Cannot approve drafts of features or releases.",
+    needs: ["features:view", "configuration:view"],
   },
   "allocations:view": {
     allows: "Sees allocations: who is assigned to what, and when.",
     without: "Does not see allocations.",
   },
   "allocations:edit": {
-    allows: "Changes allocations across the whole plan.",
+    allows: "Drafts changes to allocations across the whole plan.",
     without: "Cannot change allocations.",
   },
   "allocations:approve": {
@@ -131,13 +120,13 @@ export const permissionDescriptions: Record<
   },
   "people:view": {
     allows:
-      "Sees people and their General details, such as position, site, level, and manager.",
+      "Sees people and their General details, such as position, site, level, and manager, on People and the org chart.",
     without:
       "Does not see people's details; people appear in the plan only by name.",
   },
   "people:edit": {
     allows:
-      "Adds, changes, and removes people, with their teams and reporting lines.",
+      "Drafts adding, changing, and removing people, with their teams and reporting lines, and chooses the colour each team is drawn in.",
     without: "Cannot change people.",
   },
   "people:approve": {
@@ -146,85 +135,37 @@ export const permissionDescriptions: Record<
     without: "Cannot approve drafts of people.",
     needs: ["people:view"],
   },
-  "org-chart:view": {
-    allows:
-      "Sees the org chart: who reports to whom, with each person's name, position, and the team they lead. With View People, a person's card opens them on People.",
-    without: "Does not see the org chart.",
-  },
-  "team-colours:edit": {
-    allows:
-      "Chooses the colour each team is drawn in on the org chart, for every team.",
-    without: "Cannot change teams' colours.",
-    needs: ["org-chart:view"],
-  },
-  "feature-teams:propose": {
-    allows: "Proposes feature teams for approval.",
-    without: "Cannot propose feature teams.",
+  "feature-teams:view": {
+    allows: "Sees feature teams: who is on each, and who leads it.",
+    without: "Does not see feature teams.",
     needs: ["people:view"],
   },
   "feature-teams:edit": {
-    allows: "Changes feature teams.",
+    allows: "Drafts adding, changing, and removing feature teams.",
     without: "Cannot change feature teams.",
     needs: ["people:view"],
   },
   "feature-teams:approve": {
-    allows: "Approves or rejects proposed feature teams.",
+    allows: "Approves or rejects drafts of feature teams.",
     without: "Cannot approve feature teams.",
-    needs: ["people:view"],
+    needs: ["feature-teams:view"],
   },
-  "personal:view": {
-    allows:
-      "Sees people who haven't started yet, and Personal details of the people the role sees, such as gender, start and end dates, and past managers.",
-    without:
-      "Personal details are hidden wherever they appear, and people who haven't started yet aren't listed.",
-    needs: ["people:view"],
-  },
-
-  "personal:edit": {
-    allows: "Changes Personal details of people.",
-    without: "Cannot change Personal details.",
-    needs: ["people:edit"],
-  },
-
-  "confidential:view": {
-    allows:
-      "Sees Confidential data, such as future-dated reorganizations and columns marked Confidential.",
-    without: "Confidential data is hidden wherever it appears.",
-    needs: ["people:view"],
-  },
-
-  "confidential:edit": {
-    allows: "Changes Confidential data, such as columns marked Confidential.",
-    without: "Cannot change Confidential data.",
-    needs: ["people:edit"],
-  },
-
-  "data:classify": {
-    allows:
-      "Moves built-in details, lists, and columns to another class, between the classes the role sees.",
-    without: "Cannot move data to another class.",
-    needs: ["personal:view", "confidential:view"],
-  },
-
   "hiring-plan:view": {
     allows:
       "Sees the hiring plan: every planned hire, with its target date, drafts, and history.",
     without: "Planned hires appear only as placeholders.",
     needs: ["people:view"],
   },
-
   "hiring-plan:edit": {
-    allows: "Adds, changes, and removes planned hires.",
+    allows: "Drafts adding, changing, and removing planned hires.",
     without: "Cannot change the hiring plan.",
     needs: ["people:edit"],
   },
-
   "hiring-plan:approve": {
     allows: "Approves or rejects drafts of planned hires.",
     without: "Cannot approve drafts of planned hires.",
     needs: ["hiring-plan:view"],
   },
-
   "configuration:view": {
     allows:
       "Sees configuration, such as lists of choices and People's columns.",
@@ -242,19 +183,52 @@ export const permissionDescriptions: Record<
     without: "Cannot approve drafts of configuration.",
     needs: ["configuration:view", "people:view"],
   },
-  "drafts:submit": {
+  "administration:view": {
     allows:
-      "Makes drafts of changes to the plan and allocations, for approval, once those can be changed in Fathom.",
-    without: "Cannot make drafts of changes to the plan or allocations.",
+      "Sees user accounts and the role each holds, roles and what they grant, Fathom's settings, and the access history.",
+    without: "Does not see accounts, roles, settings, or the access history.",
   },
-
+  "administration:edit": {
+    allows:
+      "Manages user accounts, creates and changes roles, including the role the user holds, and changes settings for the whole of Fathom.",
+    without: "Cannot manage accounts, roles, or settings.",
+  },
+  "personal:view": {
+    allows:
+      "Sees people who haven't started yet, and Personal details of the people the role sees, such as gender, start and end dates, and past managers.",
+    without:
+      "Personal details are hidden wherever they appear, and people who haven't started yet aren't listed.",
+    needs: ["people:view"],
+  },
+  "personal:edit": {
+    allows: "Changes Personal details of people.",
+    without: "Cannot change Personal details.",
+    needs: ["people:edit"],
+  },
+  "confidential:view": {
+    allows:
+      "Sees Confidential data, such as future-dated reorganizations and columns marked Confidential.",
+    without: "Confidential data is hidden wherever it appears.",
+    needs: ["people:view"],
+  },
+  "confidential:edit": {
+    allows: "Changes Confidential data, such as columns marked Confidential.",
+    without: "Cannot change Confidential data.",
+    needs: ["people:edit"],
+  },
+  "data:classify": {
+    allows:
+      "Moves built-in details, lists, and columns to another class, between the classes the role sees.",
+    without: "Cannot move data to another class.",
+    needs: ["personal:view", "confidential:view"],
+  },
   "drafts:approve-own": {
     allows:
       "Approves drafts they changed themselves, in the areas they approve, which otherwise need another approver.",
     without: "Drafts they changed need someone else to approve them.",
     needs: [
       "plan:approve",
-      "releases:approve",
+      "features:approve",
       "allocations:approve",
       "people:approve",
       "hiring-plan:approve",
@@ -262,45 +236,23 @@ export const permissionDescriptions: Record<
       "configuration:approve",
     ],
   },
-  "accounts:view": {
-    allows:
-      "Sees user accounts: their names, email addresses, the role each holds, and whether each is active.",
-    without: "Does not see user accounts.",
-  },
-  "accounts:manage": {
-    allows:
-      "Manages user accounts: creates them, changes their names, email addresses, and the role each holds, resets passwords, and deactivates them.",
-    without: "Cannot manage user accounts.",
-  },
-  "roles:view": {
-    allows: "Sees roles: their names, descriptions, and what they grant.",
-    without: "Does not see roles.",
-  },
-  "roles:edit": {
-    allows:
-      "Creates and changes roles: their names, descriptions, and what they grant, including the role the user holds.",
-    without: "Cannot change roles.",
-  },
-  "settings:view": {
-    allows: "Sees settings for the whole of Fathom, such as its time zone.",
-    without: "Does not see Fathom's settings.",
-  },
-  "settings:edit": {
-    allows:
-      "Changes settings for the whole of Fathom, such as the time zone that decides which day is today.",
-    without: "Cannot change Fathom's settings.",
-  },
-  "history:view": {
-    allows:
-      "Sees the access history: who changed accounts or protected data, or looked at protected data, and when.",
-    without: "Does not see the access history.",
-  },
-
-  "changes:view": {
-    allows: "Sees the change history of the data their role lets them see.",
-    without: "Does not see the change history.",
-  },
 };
+
+// The permissions that keep Fathom manageable: without an active account holding each, nobody could
+// give anyone access again.
+export const keptPermissions: readonly Permission[] = ["administration:edit"];
+
+// The change history shows each area's changes to those who see the area, so seeing any area opens
+// it.
+export const changeHistoryViews: readonly Permission[] = [
+  "plan:view",
+  "features:view",
+  "allocations:view",
+  "people:view",
+  "feature-teams:view",
+  "hiring-plan:view",
+  "configuration:view",
+];
 
 // The permissions that let a user make drafts, any of which gives them unpublished changes to
 // publish or discard.
@@ -310,15 +262,9 @@ export const draftingPermissions: readonly Permission[] = [
   "plan:edit",
   "features:edit",
   "allocations:edit",
-  "feature-teams:propose",
   "feature-teams:edit",
   "hiring-plan:edit",
 ];
-
-// Permissions a role can grant before Fathom has the features they govern, so they do nothing yet.
-// The Roles page marks them, as the Decisions Log sets out, so roles can be set up ahead of the
-// features. Building a feature takes its permissions out of this list.
-export const unbuiltPermissions: readonly Permission[] = ["drafts:submit"];
 
 // The sensitivity tiers of Fathom's data. Roles grant access to tiers, not to screens.
 export const tierSchema = z.enum(["general", "personal", "confidential"]);
@@ -329,16 +275,15 @@ export type Tier = z.infer<typeof tierSchema>;
 // second, whether or not it is stored.
 export const impliedPermissions: Partial<Record<Permission, Permission>> = {
   "plan:edit": "plan:view",
-  "features:edit": "plan:view",
+  "features:edit": "features:view",
   "allocations:edit": "allocations:view",
   "people:edit": "people:view",
+  "feature-teams:edit": "feature-teams:view",
   "personal:edit": "personal:view",
   "confidential:edit": "confidential:view",
   "hiring-plan:edit": "hiring-plan:view",
   "configuration:edit": "configuration:view",
-  "accounts:manage": "accounts:view",
-  "roles:edit": "roles:view",
-  "settings:edit": "settings:view",
+  "administration:edit": "administration:view",
 };
 
 // Everything some granted permissions let a user do, in the order of the shared list. A permission
@@ -369,7 +314,7 @@ export function sameGrants(
 }
 
 // The actions a role can be given on an area, as the columns of the grid that sets them.
-export const gridActions = ["view", "draft", "approve", "edit"] as const;
+export const gridActions = ["view", "approve", "edit"] as const;
 
 export type GridAction = (typeof gridActions)[number];
 
@@ -383,10 +328,20 @@ export const permissionGrid: readonly {
 }[] = [
   {
     area: "Plan",
-    actions: { view: "plan:view", approve: "plan:approve", edit: "plan:edit" },
+    actions: {
+      view: "plan:view",
+      approve: "plan:approve",
+      edit: "plan:edit",
+    },
   },
-  { area: "Features", actions: { edit: "features:edit" } },
-  { area: "Releases", actions: { approve: "releases:approve" } },
+  {
+    area: "Features and releases",
+    actions: {
+      view: "features:view",
+      approve: "features:approve",
+      edit: "features:edit",
+    },
+  },
   {
     area: "Allocations",
     actions: {
@@ -403,8 +358,34 @@ export const permissionGrid: readonly {
       edit: "people:edit",
     },
   },
-  { area: "Org chart", actions: { view: "org-chart:view" } },
-  { area: "Team colours", actions: { edit: "team-colours:edit" } },
+  {
+    area: "Feature teams",
+    actions: {
+      view: "feature-teams:view",
+      approve: "feature-teams:approve",
+      edit: "feature-teams:edit",
+    },
+  },
+  {
+    area: "Hiring plan",
+    actions: {
+      view: "hiring-plan:view",
+      approve: "hiring-plan:approve",
+      edit: "hiring-plan:edit",
+    },
+  },
+  {
+    area: "Configuration",
+    actions: {
+      view: "configuration:view",
+      approve: "configuration:approve",
+      edit: "configuration:edit",
+    },
+  },
+  {
+    area: "Administration",
+    actions: { view: "administration:view", edit: "administration:edit" },
+  },
   {
     area: "Personal details",
     actions: { view: "personal:view", edit: "personal:edit" },
@@ -418,51 +399,11 @@ export const permissionGrid: readonly {
     actions: { edit: "data:classify" },
     name: "Classify data",
   },
-  {
-    area: "Hiring plan",
-    actions: {
-      view: "hiring-plan:view",
-      approve: "hiring-plan:approve",
-      edit: "hiring-plan:edit",
-    },
-  },
-  {
-    area: "Feature teams",
-    actions: {
-      draft: "feature-teams:propose",
-      approve: "feature-teams:approve",
-      edit: "feature-teams:edit",
-    },
-  },
-  {
-    area: "Drafts",
-    actions: { draft: "drafts:submit" },
-  },
   { area: "Their own drafts", actions: { approve: "drafts:approve-own" } },
-  {
-    area: "Configuration",
-    actions: {
-      view: "configuration:view",
-      approve: "configuration:approve",
-      edit: "configuration:edit",
-    },
-  },
-  { area: "Change history", actions: { view: "changes:view" } },
-  { area: "Access history", actions: { view: "history:view" } },
-  {
-    area: "Accounts",
-    actions: { view: "accounts:view", edit: "accounts:manage" },
-  },
-  { area: "Roles", actions: { view: "roles:view", edit: "roles:edit" } },
-  {
-    area: "Settings",
-    actions: { view: "settings:view", edit: "settings:edit" },
-  },
 ];
 
 const actionNames: Record<GridAction, string> = {
   view: "View",
-  draft: "Draft",
   approve: "Approve",
   edit: "Edit",
 };
@@ -490,21 +431,27 @@ export const startingRoles: Record<
   "team-member": {
     name: "Team Member",
     description:
-      "Sees the plan, including everyone's work assignments, and the org chart.",
-    permissions: ["plan:view", "allocations:view", "org-chart:view"],
+      "Sees the plan, including everyone's work assignments, and people's General details.",
+    permissions: [
+      "plan:view",
+      "features:view",
+      "allocations:view",
+      "people:view",
+      "feature-teams:view",
+    ],
   },
   "product-manager": {
     name: "Product Manager",
     description:
-      "Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan, and approves or rejects drafts of the plan.",
+      "Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan, approves or rejects drafts of the plan and releases, and sees people's General details.",
     permissions: [
       "plan:edit",
       "plan:approve",
       "features:edit",
+      "features:approve",
       "allocations:view",
-      "org-chart:view",
-      "drafts:submit",
-      "changes:view",
+      "people:view",
+      "feature-teams:view",
     ],
   },
   "feature-lead": {
@@ -515,11 +462,8 @@ export const startingRoles: Record<
       "plan:view",
       "features:edit",
       "allocations:edit",
-      "org-chart:view",
       "people:view",
-      "feature-teams:propose",
-      "drafts:submit",
-      "changes:view",
+      "feature-teams:edit",
     ],
   },
   // Project Managers approve drafts, so they see lists, people, and the hiring plan, and can judge
@@ -532,37 +476,31 @@ export const startingRoles: Record<
       "plan:edit",
       "plan:approve",
       "features:edit",
-      "releases:approve",
+      "features:approve",
       "allocations:view",
       "allocations:approve",
-      "org-chart:view",
       "people:view",
       "people:approve",
+      "feature-teams:view",
       "feature-teams:approve",
       "hiring-plan:view",
       "hiring-plan:approve",
       "configuration:view",
       "configuration:approve",
-      "drafts:submit",
-      "changes:view",
     ],
   },
   "engineering-manager": {
     name: "Engineering Manager",
     description:
-      "Edits the plan and allocations, sees people, with everyone's Personal details and the hiring plan, colours teams on the org chart, and proposes feature teams.",
+      "Edits the plan and allocations, sees people, with everyone's Personal details and the hiring plan, and proposes feature teams.",
     permissions: [
       "plan:edit",
       "features:edit",
       "allocations:edit",
-      "org-chart:view",
       "people:view",
-      "team-colours:edit",
-      "feature-teams:propose",
-      "personal:view",
+      "feature-teams:edit",
       "hiring-plan:view",
-      "drafts:submit",
-      "changes:view",
+      "personal:view",
     ],
   },
   "engineering-director": {
@@ -573,30 +511,22 @@ export const startingRoles: Record<
       "plan:edit",
       "plan:approve",
       "features:edit",
-      "releases:approve",
+      "features:approve",
       "allocations:edit",
       "allocations:approve",
       "people:edit",
       "people:approve",
-      "org-chart:view",
-      "team-colours:edit",
-      "feature-teams:propose",
       "feature-teams:edit",
       "feature-teams:approve",
-      "personal:edit",
-      "confidential:edit",
-      "data:classify",
       "hiring-plan:edit",
       "hiring-plan:approve",
       "configuration:edit",
       "configuration:approve",
-      "drafts:submit",
+      "administration:view",
+      "personal:edit",
+      "confidential:edit",
+      "data:classify",
       "drafts:approve-own",
-      "accounts:view",
-      "roles:view",
-      "settings:view",
-      "history:view",
-      "changes:view",
     ],
   },
   "workforce-administrator": {
@@ -605,17 +535,15 @@ export const startingRoles: Record<
       "Sees the plan, maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Personal and Confidential data and moves data between classes.",
     permissions: [
       "plan:view",
+      "features:view",
       "allocations:view",
-      "org-chart:view",
       "people:edit",
-      "team-colours:edit",
       "feature-teams:edit",
+      "hiring-plan:edit",
+      "configuration:edit",
       "personal:edit",
       "confidential:edit",
       "data:classify",
-      "hiring-plan:edit",
-      "configuration:edit",
-      "changes:view",
     ],
   },
   executive: {
@@ -624,18 +552,15 @@ export const startingRoles: Record<
       "Sees the plan, people, with their Personal and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.",
     permissions: [
       "plan:view",
+      "features:view",
       "allocations:view",
       "people:view",
-      "org-chart:view",
-      "personal:view",
-      "confidential:view",
+      "feature-teams:view",
       "hiring-plan:view",
       "configuration:view",
-      "accounts:view",
-      "roles:view",
-      "settings:view",
-      "history:view",
-      "changes:view",
+      "administration:view",
+      "personal:view",
+      "confidential:view",
     ],
   },
   // Resource Planners see people, since they allocate them, but not their Personal details.
@@ -645,22 +570,16 @@ export const startingRoles: Record<
       "Sees the plan and people's General details, and edits allocations across the whole plan.",
     permissions: [
       "plan:view",
+      "features:view",
       "allocations:edit",
-      "org-chart:view",
       "people:view",
-      "drafts:submit",
-      "changes:view",
+      "feature-teams:view",
     ],
   },
   administrator: {
     name: "Administrator",
     description:
       "Manages user accounts, roles, and system settings, without access to the plan or people's data.",
-    permissions: [
-      "accounts:manage",
-      "roles:edit",
-      "settings:edit",
-      "history:view",
-    ],
+    permissions: ["administration:edit"],
   },
 };

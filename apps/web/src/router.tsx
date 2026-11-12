@@ -8,6 +8,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import {
   approvableKinds,
+  changeHistoryViews,
   changesField,
   historySearchLength,
   editsField,
@@ -164,14 +165,13 @@ const homeRoute = createRoute({
 const accountsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/accounts",
-  beforeLoad: requiring("accounts:view"),
+  beforeLoad: requiring("administration:view"),
   component: function Accounts() {
     const { user, permissions } = signedIn.useRouteContext();
     return (
       <AccountsPage
         user={user}
-        canManage={permissions.includes("accounts:manage")}
-        canEditRoles={permissions.includes("roles:edit")}
+        canManage={permissions.includes("administration:edit")}
       />
     );
   },
@@ -180,11 +180,14 @@ const accountsRoute = createRoute({
 const rolesRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/roles",
-  beforeLoad: requiring("roles:view"),
+  beforeLoad: requiring("administration:view"),
   component: function Roles() {
     const { user, permissions } = signedIn.useRouteContext();
     return (
-      <RolesPage user={user} canEdit={permissions.includes("roles:edit")} />
+      <RolesPage
+        user={user}
+        canEdit={permissions.includes("administration:edit")}
+      />
     );
   },
 });
@@ -202,14 +205,14 @@ const dataClassesRoute = createRoute({
 const settingsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/settings",
-  beforeLoad: requiring("settings:view"),
+  beforeLoad: requiring("administration:view"),
   component: function Settings() {
     const { timeZone, passwords, permissions } = signedIn.useRouteContext();
     return (
       <SettingsPage
         timeZone={timeZone}
         passwords={passwords}
-        canEdit={permissions.includes("settings:edit")}
+        canEdit={permissions.includes("administration:edit")}
       />
     );
   },
@@ -225,7 +228,7 @@ const changesRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/changes",
   validateSearch: historySearch,
-  beforeLoad: requiring("changes:view"),
+  beforeLoad: requiring(...changeHistoryViews),
   component: function Changes() {
     const navigate = changesRoute.useNavigate();
     return (
@@ -245,7 +248,12 @@ const draftsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/drafts",
   validateSearch: historySearch,
-  beforeLoad: requiring("people:view", "configuration:view", "plan:view"),
+  beforeLoad: requiring(
+    "people:view",
+    "configuration:view",
+    "plan:view",
+    "features:view",
+  ),
   component: function Drafts() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = draftsRoute.useNavigate();
@@ -259,10 +267,11 @@ const draftsRoute = createRoute({
         }
         seesPlan={
           permissions.includes("plan:view") ||
+          permissions.includes("features:view") ||
           permissions.includes("configuration:view")
         }
         seesTeams={
-          permissions.includes("org-chart:view") &&
+          permissions.includes("feature-teams:view") &&
           permissions.includes("people:view")
         }
         seesProjects={permissions.includes("plan:view")}
@@ -279,7 +288,7 @@ const historyRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/history",
   validateSearch: historySearch,
-  beforeLoad: requiring("history:view"),
+  beforeLoad: requiring("administration:view"),
   component: function AccessHistory() {
     const navigate = historyRoute.useNavigate();
     return (
@@ -349,7 +358,7 @@ const releasesRoute = createRoute({
   validateSearch: z.object({
     show: showSchema.optional().catch(undefined),
   }),
-  beforeLoad: requiring("plan:view", "configuration:view"),
+  beforeLoad: requiring("features:view", "configuration:view"),
   component: function Releases() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = releasesRoute.useNavigate();
@@ -422,7 +431,7 @@ const featuresRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/features",
   validateSearch: planRecordSearch,
-  beforeLoad: requiring("plan:view"),
+  beforeLoad: requiring("features:view"),
   component: function Features() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = featuresRoute.useNavigate();
@@ -529,7 +538,7 @@ const peopleRoute = createRoute({
           void navigate({ search: { ...next, open }, replace });
         })}
         open={open}
-        seesChart={permissions.includes("org-chart:view")}
+        seesFeatureTeams={permissions.includes("feature-teams:view")}
         access={access}
         onOpen={(next, replace = false) => {
           void navigate({ search: { ...search, open: next }, replace });
@@ -540,47 +549,34 @@ const peopleRoute = createRoute({
 });
 
 // Whether a role may draft changes to feature teams, which needs seeing the people on them.
-const proposesFeatureTeams = (permissions: readonly string[]) =>
+const editsFeatureTeams = (permissions: readonly string[]) =>
   permissions.includes("people:view") &&
-  (permissions.includes("feature-teams:propose") ||
-    permissions.includes("feature-teams:edit"));
+  permissions.includes("feature-teams:edit");
 
 const orgChartRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/org-chart",
   validateSearch: chartSearch,
-  beforeLoad: requiring("org-chart:view"),
+  beforeLoad: requiring("people:view"),
   component: function OrgChart() {
     const { permissions, access } = signedIn.useRouteContext();
     const navigate = orgChartRoute.useNavigate();
-    const teamEdits = useMemo(
-      () => ({
-        names: permissions.includes("people:edit"),
-        colours: permissions.includes("team-colours:edit"),
-      }),
-      [permissions],
-    );
+
     const featureTeamEdits = useMemo(
       () => ({
-        propose: proposesFeatureTeams(permissions),
-        rename: proposesFeatureTeams(permissions),
-        remove:
-          permissions.includes("people:view") &&
-          permissions.includes("feature-teams:edit"),
-        colours: permissions.includes("team-colours:edit"),
+        members: editsFeatureTeams(permissions),
+        undated: editsFeatureTeams(permissions),
         dates: editsField(access, "featureTeamDates"),
       }),
       [permissions, access],
     );
     return (
       <OrgChartPage
-        seesPeople={permissions.includes("people:view")}
         showDates={seesEmployment(access)}
         whyNoOtherDates={whyMissing("orgChartOtherDates", access)}
         whyNoFutureDates={whyMissing("orgChartFutureDates", access)}
         canEdit={permissions.includes("people:edit")}
         changesDates={changesField(access, "managerHistory")}
-        teamEdits={teamEdits}
         featureTeamEdits={featureTeamEdits}
         search={orgChartRoute.useSearch()}
         onSearch={(search, replace) => {
@@ -600,7 +596,7 @@ const featureAssignmentsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/feature-assignments",
   validateSearch: featureAssignmentsSearch,
-  beforeLoad: requiring("org-chart:view"),
+  beforeLoad: requiring("feature-teams:view"),
   component: function FeatureAssignments() {
     const { permissions, access } = signedIn.useRouteContext();
     const navigate = featureAssignmentsRoute.useNavigate();
@@ -618,7 +614,7 @@ const featureAssignmentsRoute = createRoute({
         whyMissing={whyMissing("featureAssignments", access)}
         whyNoManagerGrouping={whyMissing("groupingByManager", access)}
         seesAllocations={seesAllocations}
-        proposesTeams={proposesFeatureTeams(permissions)}
+        editsTeams={editsFeatureTeams(permissions)}
         changesDates={editsField(access, "featureTeamDates")}
         mode={mode}
         onMode={(next, nextView) => {

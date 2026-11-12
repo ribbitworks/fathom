@@ -66,8 +66,11 @@ const onCycles = [
   },
 ] as const;
 
-// Planning configuration is seen with the plan, as Roles proposes.
-const planOrConfiguration = ["plan:view", "configuration:view"] as const;
+// Release streams and cycles are seen with features and releases, and with configuration.
+const featuresOrConfiguration = [
+  "features:view",
+  "configuration:view",
+] as const;
 
 export const streamKind: RecordKind = {
   type: "release-stream",
@@ -80,7 +83,7 @@ export const streamKind: RecordKind = {
       message: "There is already a release stream with that name",
     },
   ],
-  readWith: planOrConfiguration,
+  readWith: featuresOrConfiguration,
   subject: (state, id) => planSubjects.stream(nameIn(state, id)),
   // A stream added goes at the end of the order.
   added: (rows) => ({
@@ -105,7 +108,7 @@ export const patternKind: RecordKind = {
       message: "This stream already has cycles that change on that day",
     },
   ],
-  readWith: planOrConfiguration,
+  readWith: featuresOrConfiguration,
   subject: (state, id) => {
     const pattern = shownVersion(state, "cycle-pattern", id);
     return planSubjects.pattern(
@@ -167,7 +170,7 @@ export const releaseKind: RecordKind = {
       message: "This stream already has a release with that name",
     },
   ],
-  readWith: planOrConfiguration,
+  readWith: featuresOrConfiguration,
   subject: (state, id) => {
     const release = shownVersion(state, "release", id);
     return planSubjects.release(
@@ -233,7 +236,7 @@ export const featureKind: RecordKind = {
   unique: [
     { field: "name", message: "There is already a feature with that name" },
   ],
-  readWith: ["plan:view"],
+  readWith: ["features:view"],
   subject: (state, id) =>
     (isGeneralFeature(state, id)
       ? projectSubjects.project

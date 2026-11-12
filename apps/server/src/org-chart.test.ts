@@ -247,7 +247,6 @@ describe("the org chart on a chosen day", () => {
       const { first, report } = await draftedReport("2024-03-01");
       const reader = await test.signedIn([
         "people:view",
-        "org-chart:view",
         ...granted,
       ] as Permission[]);
 
@@ -263,7 +262,7 @@ describe("the org chart on a chosen day", () => {
     const editor = await test.signedIn([
       "people:view",
       "people:edit",
-      "org-chart:view",
+      "feature-teams:view",
       "personal:view",
     ]);
     await test.connection
@@ -283,7 +282,7 @@ describe("the org chart on a chosen day", () => {
     const editor = await test.signedIn([
       "people:view",
       "people:edit",
-      "org-chart:view",
+      "feature-teams:view",
       "personal:view",
       "personal:edit",
       "confidential:view",
@@ -341,8 +340,8 @@ describe("the org chart on a chosen day", () => {
     expect(response.statusCode).toBe(status);
   });
 
-  it("is refused without the org chart", async () => {
-    const reader = await test.signedIn(["personal:view", "changes:view"]);
+  it("is refused without View People", async () => {
+    const reader = await test.signedIn(["personal:view"]);
 
     expect(
       (await test.request(reader.cookie, "GET", "/api/org-chart?on=2024-06-01"))
@@ -528,7 +527,7 @@ describe("the org chart", () => {
         recorded: (await personalViews(reader.id)).length > 0,
       };
     };
-    expect(await draftFor(["org-chart:view", "people:view"])).toEqual({
+    expect(await draftFor(["people:view", "feature-teams:view"])).toEqual({
       draft: {
         position: "Fictional Lead",
         state: "waiting",
@@ -543,13 +542,17 @@ describe("the org chart", () => {
         .where(eq(lists.builtIn, "positions"));
     await marked("confidential");
     try {
-      expect(await draftFor(["org-chart:view", "people:view"])).toEqual({
+      expect(await draftFor(["people:view", "feature-teams:view"])).toEqual({
         draft: undefined,
         recorded: false,
       });
       // A reader without Personal details, so only the position can be what is recorded.
       expect(
-        await draftFor(["org-chart:view", "people:view", "confidential:view"]),
+        await draftFor([
+          "people:view",
+          "feature-teams:view",
+          "confidential:view",
+        ]),
       ).toEqual({
         draft: {
           position: "Fictional Lead",
@@ -762,41 +765,6 @@ describe("the org chart", () => {
     expect(await personalViews(viewer.id)).toHaveLength(1);
   });
 
-  it("gives Personal details on the chart only to those who also see people", async () => {
-    const { top, middle } = await leftChain();
-    const viewer = await test.signedIn(["org-chart:view", "personal:view"]);
-    const shown = await chart(viewer.cookie);
-    expect(shown.get(middle)).toMatchObject({
-      employeeId: null,
-      managerId: top,
-    });
-    expect(shown.get(middle)?.left).toBeUndefined();
-    expect(await personalViews(viewer.id)).toHaveLength(0);
-  });
-
-  it("sends no drafts to those who see the chart but not people", async () => {
-    const first = await person();
-    const second = await person({ teamName: unique("Fictional Team") });
-    const report = await person({ managerId: first, isManager: false });
-    await changed(report, { managerId: second });
-    await changed(second, { teamName: unique("Fictional Team") });
-    await changed(first, { positionId: otherTestPosition });
-    const leaving = await person({ isManager: false });
-    await changed(leaving, { endDate: "2026-06-01" });
-    const viewer = await test.signedIn(["org-chart:view", "personal:view"]);
-    const response = await test.request(viewer.cookie, "GET", "/api/org-chart");
-    const read = response.json<{
-      people: OrgChartPerson[];
-      drafted: OrgChartPerson[];
-    }>();
-    expect(read.people.some((one) => one.draft !== undefined)).toBe(false);
-    expect(read.drafted).toEqual(read.people);
-    expect(read.drafted.every(({ employeeId }) => employeeId === null)).toBe(
-      true,
-    );
-    expect(await personalViews(viewer.id)).toHaveLength(0);
-  });
-
   it("draws the whole chain for anyone else, without saying who has left", async () => {
     const { top, middle, report } = await leftChain();
     const planner = await test.signedIn("resource-planner");
@@ -834,25 +802,17 @@ describe("the org chart", () => {
         .update(lists)
         .set({ visibility })
         .where(eq(lists.builtIn, "positions"));
-    expect(await positionFor(["org-chart:view"])).not.toBeNull();
+    expect(await positionFor(["people:view"])).not.toBeNull();
     try {
       await marked("personal");
-      expect(await positionFor(["org-chart:view"])).toBeNull();
-      expect(await positionFor(["org-chart:view", "people:view"])).toBeNull();
-      expect(await positionFor(["org-chart:view", "personal:view"])).toBeNull();
+      expect(await positionFor(["people:view"])).toBeNull();
       expect(
-        await positionFor(["org-chart:view", "people:view", "personal:view"]),
+        await positionFor(["people:view", "personal:view"]),
       ).not.toBeNull();
       await marked("confidential");
+      expect(await positionFor(["people:view", "personal:view"])).toBeNull();
       expect(
-        await positionFor(["org-chart:view", "confidential:view"]),
-      ).toBeNull();
-      expect(
-        await positionFor([
-          "org-chart:view",
-          "people:view",
-          "confidential:view",
-        ]),
+        await positionFor(["people:view", "confidential:view"]),
       ).not.toBeNull();
     } finally {
       await marked("general");
@@ -871,7 +831,7 @@ describe("the org chart", () => {
       async (role) => {
         const { cookie: as } = await test.signedIn(role);
         const response = await test.request(as, "GET", "/api/org-chart");
-        if (!rolesGranting("org-chart:view").includes(role)) {
+        if (!rolesGranting("people:view").includes(role)) {
           expect(response.statusCode).toBe(403);
           return;
         }
@@ -960,7 +920,7 @@ describe("planned hires on the chart", () => {
       managerId: planned,
     });
     expect(shown.get(report)?.planned).toEqual({ expected: "2026-06" });
-    const viewer = await test.signedIn(["org-chart:view"]);
+    const viewer = await test.signedIn(["people:view", "feature-teams:view"]);
     expect((await chart(viewer.cookie)).get(report)?.managerId).toBe(planned);
   });
 
@@ -971,7 +931,7 @@ describe("planned hires on the chart", () => {
       .set({ visibility: "personal" })
       .where(eq(lists.builtIn, "positions"));
     try {
-      const viewer = await test.signedIn(["org-chart:view"]);
+      const viewer = await test.signedIn(["people:view", "feature-teams:view"]);
       expect((await chart(viewer.cookie)).get(id)).toMatchObject({
         preferredName: expect.stringMatching(/^TBD-\d+$/) as unknown,
         position: null,
@@ -1024,7 +984,7 @@ describe("planned hires on the chart", () => {
         filledBy: started,
       },
     ]);
-    const viewer = await test.signedIn(["org-chart:view"]);
+    const viewer = await test.signedIn(["people:view", "feature-teams:view"]);
     const shown = await chart(viewer.cookie);
     expect(shown.get(waiting)?.planned).toEqual({
       expected: "2026-08",
@@ -1128,8 +1088,8 @@ describe("planned hires on the chart", () => {
       .where(eq(lists.builtIn, "positions"));
     try {
       const planReader = await test.signedIn([
-        "org-chart:view",
         "people:view",
+        "feature-teams:view",
         "hiring-plan:view",
       ]);
       expect((await chart(planReader.cookie)).get(id)).toMatchObject({
@@ -1159,15 +1119,18 @@ describe("planned hires on the chart", () => {
             eq(accessHistory.action, "hiring-plan-viewed"),
           ),
         );
-    const chartOnly = await test.signedIn(["org-chart:view"]);
+    const chartOnly = await test.signedIn([
+      "people:view",
+      "feature-teams:view",
+    ]);
     expect((await chart(chartOnly.cookie)).get(moving)?.draft).toBeUndefined();
     const asDrafted = await drafted(chartOnly.cookie);
     expect(asDrafted.get(moving)?.managerId).toBe(first);
     expect(asDrafted.has(added)).toBe(false);
     expect(await plansViewed(chartOnly.id)).toHaveLength(0);
     const planReader = await test.signedIn([
-      "org-chart:view",
       "people:view",
+      "feature-teams:view",
       "hiring-plan:view",
     ]);
     await chart(planReader.cookie);
@@ -1182,8 +1145,8 @@ describe("planned hires on the chart", () => {
       .where(eq(lists.builtIn, "positions"));
     try {
       const viewer = await test.signedIn([
-        "org-chart:view",
         "people:view",
+        "feature-teams:view",
         "personal:view",
       ]);
       await chart(viewer.cookie);
@@ -1221,8 +1184,8 @@ describe("planned hires on the chart", () => {
     expect((await chart()).get(moving)?.draft?.state).toBe("rejected");
     expect((await drafted()).get(moving)?.managerId).toBe(first);
     const viewer = await test.signedIn([
-      "org-chart:view",
       "people:view",
+      "feature-teams:view",
       "hiring-plan:view",
     ]);
     expect((await chart(viewer.cookie)).get(moving)?.draft?.managerId).toBe(
@@ -1296,17 +1259,16 @@ describe("a team's colour", () => {
     expect((await teamRow(manager))[0]?.colour).toBeNull();
   });
 
-  it("is changed only by those whose roles let them colour teams, such as Engineering Managers", async () => {
+  it("is changed only by those whose roles let them edit people, such as Engineering Directors", async () => {
     const manager = await person({ teamName: unique("Fictional Team") });
     const reader = await test.signedIn("resource-planner");
     expect(
       (await colour(manager, { colour: "teal" }, reader.cookie)).statusCode,
     ).toBe(403);
     expect((await teamRow(manager))[0]?.colour).toBeNull();
-    const engineeringManager = await test.signedIn("engineering-manager");
+    const director = await test.signedIn("engineering-director");
     expect(
-      (await colour(manager, { colour: "teal" }, engineeringManager.cookie))
-        .statusCode,
+      (await colour(manager, { colour: "teal" }, director.cookie)).statusCode,
     ).toBe(204);
     expect((await teamRow(manager))[0]?.colour).toBe("teal");
   });

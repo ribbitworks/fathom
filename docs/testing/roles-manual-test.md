@@ -81,7 +81,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] **Step 2.** Read the **What it is for** column.
   - **Expected:**
-    - Engineering Manager reads **Edits the plan and allocations, sees people, with everyone's Personal details and the hiring plan, colours teams on the org chart, and proposes feature teams.**
+    - Engineering Manager reads **Edits the plan and allocations, sees people, with everyone's Personal details and the hiring plan, and proposes feature teams.**
     - Wherever **Personal** or **Confidential** appears, it is in its tier colour, in light and dark mode alike.
   - **Notes:**
 
@@ -94,37 +94,25 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] **Step 1.** Open the **Project Manager** role, as Open a Role describes.
   - **Expected:** A dialog titled **Edit Project Manager** shows **Name**, **What it is for**, and the grid, with these boxes ticked:
     - **Plan:** **View**, greyed, **Approve** and **Edit**
-    - **Features:** **Edit**
-    - **Releases:** **Approve**
+    - **Features and releases:** **View**, greyed, **Approve** and **Edit**
     - **Allocations:** **View** and **Approve**
     - **People:** **View** and **Approve**
-    - **Org chart:** **View**
+    - **Feature teams:** **View** and **Approve**
     - **Hiring plan:** **View** and **Approve**
-    - **Feature teams:** **Approve**
-    - **Drafts:** **Draft**
     - **Configuration:** **View** and **Approve**
-    - **Change history:** **View**
-    - **Features**, **Releases**, **Team colours**, **Classify data**, **Feature teams**, **Drafts** and **Their own drafts** have no box under **View**.
-    - Under the grid: **A greyed tick comes with another action on the same area, such as View with Edit.**
+    - **Classify data** and **Their own drafts** have no box under **View**
   - **Notes:**
 
-- [ ] **Step 2.** Read the **Area** column, and the lines under the grid.
-  - **Expected:**
-    - **Drafts** carries a small grey **Not built yet** tag. No other area is tagged.
-    - A line under the grid reads **Fathom doesn't have what is marked Not built yet. A role can grant it now, and it works once it is built.**
-  - **Notes:**
-
-- [ ] **Step 3.** Read the summary.
+- [ ] **Step 2.** Read the summary.
   - **Expected:** The summary reads:
-    - **Pages its holders see:** Overview, Projects, Features, Releases, People, Org chart, Drafts, Capacity, Lists and Change history.
-    - **Can**, tagged **Not built yet:** making drafts of changes to the plan and allocations.
-    - **Can**, not tagged: seeing the plan, changing the plan, approving drafts of the plan, changing features and estimates, approving drafts of releases, seeing allocations, approving drafts of allocations, seeing people, approving drafts of people, seeing the org chart, seeing the hiring plan, approving drafts of planned hires, approving feature teams, seeing configuration, approving drafts of configuration, and seeing the change history.
-    - **Cannot**, not tagged: **Cannot change allocations.**, **Cannot propose feature teams.** and **Cannot change feature teams.**
+    - **Pages its holders see:** Overview, Projects, Features, Releases, People, Org chart, Feature assignments, Drafts, Capacity, Lists and Change history.
+    - **Can:** a line for each ticked box, such as seeing the plan, approving drafts of features and releases, and seeing feature teams.
+    - **Cannot** includes **Cannot change allocations.** and **Cannot change feature teams.**
     - **Cannot** also includes, with the tier colours: **Personal details are hidden wherever they appear, and people who haven't started yet aren't listed.** and **Confidential data is hidden wherever it appears.**
     - **Cannot** does not include **The People page does not appear.**
   - **Notes:**
 
-- [ ] **Step 4.** Look at the foot of the dialog.
+- [ ] **Step 3.** Look at the foot of the dialog.
   - **Expected:**
     - **Restore template** is on the left, turned off.
     - **Cancel** and **Save** are on the right.
@@ -182,16 +170,16 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Signed in with this account. **Roles** page open, with the **Edit Project Manager** dialog still open, unsaved, as ROLE-05 left it.
 
-- [ ] **Step 1.** Tick **View** on the **Access history** row, and select **Save**.
+- [ ] **Step 1.** Tick **View** on the **Administration** row, and select **Save**.
   - **Expected:**
     - The dialog says **This change affects 1 account.**
     - It lists **Project Manager**, with its email address.
-    - Under **Gains**: **Sees the Access history page.** and a sentence about seeing the access history.
+    - Under **Gains**: a line for each of the **Accounts**, **Roles**, **Settings** and **Access history** pages, and a sentence about seeing accounts, roles, settings and the access history.
     - **Back** is on the left, **Cancel** and **Save changes** on the right.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Back**.
-  - **Expected:** The grid shows again, with **View** on **Access history** still ticked.
+  - **Expected:** The grid shows again, with **View** on **Administration** still ticked.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Save**, then **Save changes**.
@@ -202,11 +190,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 4.** Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The left-hand menu shows **Access history** in the **History** section.
+  - **Expected:** The left-hand menu shows **Accounts**, **Roles** and **Settings** in the **Administration** section, and **Access history** in the **History** section.
   - **Notes:**
 
 - [ ] **Step 5.** Sign out, and sign in as the Administrator, `fathom.administrator@fathom.test`. Select the **Access history** page in the left-hand menu.
-  - **Expected:** The latest entry says Fathom Administrator **changed the role** Project Manager, granting View Access history, and is marked as worth checking.
+  - **Expected:** The latest entry says Fathom Administrator **changed the role** Project Manager, granting View Administration, and is marked as worth checking.
   - **Notes:**
 
 ### ROLE-07: Restoring a Starting Role's Template
@@ -269,7 +257,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] **Step 1.** Select **Copy** in the **Team Member** row.
   - **Expected:**
     - A dialog titled **Copy Team Member**, with the name **Copy of Team Member** and Team Member's description.
-    - The same boxes are ticked as Team Member: **View** on **Plan**, **Allocations** and **Org chart**.
+    - The same boxes are ticked as Team Member: **View** on **Plan**, **Features and releases**, **Allocations**, **People** and **Feature teams**.
     - There is no **Restore template** button, and the main button is **Create role**.
   - **Notes:**
 
@@ -280,7 +268,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - **Copy of Team Member** is in the list with 0 accounts.
   - **Notes:**
 
-- [ ] **Step 3.** Open **Copy of Team Member**, as Open a Role describes, tick **View** on **People**, and select **Save**.
+- [ ] **Step 3.** Open **Copy of Team Member**, as Open a Role describes, tick **View** on **Configuration**, and select **Save**.
   - **Expected:**
     - The dialog closes with **The role has been changed.**, with no confirmation, since no account holds the role.
     - There is no **Restore template** button.
@@ -288,8 +276,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] **Step 4.** Select the **Access history** page in the left-hand menu.
   - **Expected:**
-    - The entry before the latest says **created the role** Copy of Team Member, granting View Plan, View Allocations, View Org chart.
-    - The latest says **changed the role** Copy of Team Member, granting View People.
+    - The entry before the latest says **created the role** Copy of Team Member, granting View Plan, View Features and releases, View Allocations, View People, View Feature teams.
+    - The latest says **changed the role** Copy of Team Member, granting View Configuration.
   - **Notes:**
 
 ### ROLE-10: Giving an Account a Role Made Later
@@ -333,7 +321,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 7.** Sign out, and sign in as the Team Member, `team.member@fathom.test`.
-  - **Expected:** The left-hand menu shows **People** and **Org chart** in the **People** section.
+  - **Expected:** The left-hand menu shows **Lists** in the **People** section, which Team Member alone doesn't.
   - **Notes:**
 
 - [ ] **Step 8.** Select the **Roles** page under **Help** in the left-hand menu.
@@ -389,7 +377,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 4.** Select **Save changes**.
-  - **Expected:** A red box says **Some active account must keep the permissions to manage accounts and to edit roles**, and the dialog stays open.
+  - **Expected:** A red box says **Some active account must keep Edit Administration**, and the dialog stays open.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Cancel**, and open the **Administrator** role again, as Open a Role describes.

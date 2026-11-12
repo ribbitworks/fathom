@@ -30,13 +30,19 @@ const u1 = "00000000-0000-4000-8000-000000000002";
 
 const session = (permissions: string[]) => () =>
   Response.json({ ...fictionalUser, permissions });
-const viewer = session(["people:view", "configuration:view", "plan:view"]);
+const viewer = session([
+  "people:view",
+  "configuration:view",
+  "plan:view",
+  "features:view",
+]);
 const editor = session([
   "configuration:edit",
   "configuration:view",
   "people:edit",
   "people:view",
   "plan:view",
+  "features:view",
   "personal:edit",
   "personal:view",
 ]);
@@ -47,6 +53,7 @@ const hiringEditor = session([
   "people:edit",
   "people:view",
   "plan:view",
+  "features:view",
   "personal:edit",
   "personal:view",
 ]);
@@ -369,7 +376,7 @@ describe("who sees the People page", () => {
 
   it("is not linked or shown for anyone else", async () => {
     serverAnswers({
-      "GET /api/session": session(["plan:view"]),
+      "GET /api/session": session(["plan:view", "features:view"]),
       "GET /api/greeting": greeting,
     });
     const history = renderApp("/");
@@ -1282,7 +1289,7 @@ describe("drafts", () => {
     const fetch = await openPeople({
       "GET /api/session": session([
         "plan:approve",
-        "releases:approve",
+        "features:approve",
         "people:approve",
         "hiring-plan:approve",
         "configuration:approve",
@@ -1413,7 +1420,7 @@ describe("drafts", () => {
     await openPeople({
       "GET /api/session": session([
         "plan:approve",
-        "releases:approve",
+        "features:approve",
         "people:approve",
         "hiring-plan:approve",
         "configuration:approve",
@@ -1718,6 +1725,7 @@ describe("columns", () => {
         "configuration:view",
         "people:view",
         "plan:view",
+        "features:view",
         "personal:view",
         "data:classify",
       ]),
@@ -3157,13 +3165,14 @@ describe("drafts of columns", () => {
     "configuration:edit",
     "configuration:view",
     "plan:approve",
-    "releases:approve",
+    "features:approve",
     "people:approve",
     "hiring-plan:approve",
     "configuration:approve",
     "people:edit",
     "people:view",
     "plan:view",
+    "features:view",
     "personal:view",
   ]);
   const waiting = {
@@ -3631,13 +3640,14 @@ describe("unpublished and held changes", () => {
     "configuration:edit",
     "configuration:view",
     "plan:approve",
-    "releases:approve",
+    "features:approve",
     "people:approve",
     "hiring-plan:approve",
     "configuration:approve",
     "people:edit",
     "people:view",
     "plan:view",
+    "features:view",
     "personal:view",
   ]);
   const holder = "Second Fictional Editor";
@@ -4448,6 +4458,7 @@ describe("adding from New", () => {
         "people:edit",
         "people:view",
         "plan:view",
+        "features:view",
       ]),
     );
     await choose("State", "Request to hire");

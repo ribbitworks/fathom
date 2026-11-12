@@ -55,8 +55,8 @@ const saved = async (cookie: string, settings: object) =>
   (await change(cookie, settings)).json<SavedPlanningSettings>();
 
 // Roles that see the change history and configuration.
-const configurationHistoryReaders = rolesGranting("changes:view").filter(
-  (role) => rolesGranting("configuration:view").includes(role),
+const configurationHistoryReaders = rolesGranting("plan:view").filter((role) =>
+  rolesGranting("configuration:view").includes(role),
 );
 
 const entryFor = async (cookie: string, changeSetId: string | null) =>
@@ -212,11 +212,7 @@ describe("the history of the settings", () => {
 
   it("is kept from those who see the plan and people but not configuration", async () => {
     const { changeSetId } = await saved(editor.cookie, changed);
-    const reader = await test.signedIn([
-      "changes:view",
-      "plan:view",
-      "people:view",
-    ]);
+    const reader = await test.signedIn(["plan:view", "people:view"]);
     const response = await test.request(reader.cookie, "GET", "/api/changes");
     expect(response.statusCode).toBe(200);
     expect(
@@ -247,7 +243,7 @@ describe("undoing a change to the settings", () => {
   it("is refused once its maker may no longer change configuration", async () => {
     const maker = await test.signedIn("workforce-administrator");
     const { changeSetId } = await saved(maker.cookie, changed);
-    await test.holdOnly(maker.id, ["plan:view", "changes:view"]);
+    await test.holdOnly(maker.id, ["plan:view"]);
     expect((await undo(maker.cookie, changeSetId)).statusCode).toBe(403);
     expect(await read(editor.cookie)).toMatchObject(changed);
   });

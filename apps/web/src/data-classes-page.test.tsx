@@ -19,6 +19,7 @@ type Answers = Parameters<typeof serverAnswers>[0];
 
 const classifierPermissions: Permission[] = [
   "plan:view",
+  "features:view",
   "people:view",
   "personal:view",
   "configuration:view",
@@ -170,7 +171,10 @@ describe("the Data classes page", () => {
   it("is not in the menu of a role without Classify data", async () => {
     serverAnswers({
       "GET /api/session": () =>
-        Response.json({ ...fictionalUser, permissions: ["plan:view"] }),
+        Response.json({
+          ...fictionalUser,
+          permissions: ["plan:view", "features:view"],
+        }),
     });
     renderApp("/");
     await screen.findByRole("link", { name: "Overview" });
@@ -181,6 +185,7 @@ describe("the Data classes page", () => {
     serverAnswers({
       "GET /api/session": session(defaultClasses, [
         "plan:view",
+        "features:view",
         "personal:view",
         "data:classify",
       ]),

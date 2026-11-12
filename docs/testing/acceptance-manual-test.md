@@ -716,8 +716,8 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 - [ ] **Step 2.** Select the name on the card for **Lorenza Thiel**.
   - **Expected:**
-    - The card opens nothing.
-    - The page stays on the chart.
+    - The details panel slides out on the right, headed **Lorenza Thiel**.
+    - The panel shows no pencils.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **Show only this team** button at the top right of the card for **Lorenza Thiel**.
@@ -758,7 +758,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
     - There is no date control.
   - **Notes:**
 
-#### ACC-12: An Engineering Manager Reads a Note Beside the Chart and Colours a Team
+#### ACC-12: An Engineering Manager Reads a Note Beside the Chart
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ACC-11.
 
@@ -792,24 +792,6 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 - [ ] **Step 5.** Select the **×** at the top right of the panel.
   - **Expected:** The panel slides away.
-  - **Notes:**
-
-- [ ] **Step 6.** On the card for **Silje Holm-Schrøder**, select the small teal dot before **Platform team**.
-  - **Expected:**
-    - A menu opens headed **Colour of Platform team**, listing ten colours and **No colour**.
-    - A tick is beside **Teal**.
-  - **Notes:**
-
-- [ ] **Step 7.** Select **Grape**.
-  - **Expected:**
-    - The dot before **Platform team**, the bands of the cards under her and the lines to them turn grape (purple).
-    - A notification reads **Platform team is now drawn in Grape.**
-    - The notification offers **Undo**.
-    - The Publish button does not appear.
-  - **Notes:**
-
-- [ ] **Step 8.** Select **Undo**.
-  - **Expected:** The dot, the bands and the lines are teal.
   - **Notes:**
 
 #### ACC-13: A Person Drafted to Another Manager Is Drawn in Both Places
@@ -1972,9 +1954,9 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 - [ ] **Step 1.** Look at the left-hand menu.
   - **Expected:**
     - The **Plan** section shows **Overview**, **Projects**, **Features** and **Releases**.
-    - The **People** section shows **Org chart**, **Feature assignments** and **Drafts**.
+    - The **People** section shows **People**, **Org chart**, **Feature assignments** and **Drafts**.
+    - The **History** section shows **Change history**.
     - The menu shows the **Help** section.
-    - There is no **People** page.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Features**.

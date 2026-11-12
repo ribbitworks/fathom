@@ -28,6 +28,8 @@ export {
   samePasswordMessage,
 } from "./accounts.ts";
 export {
+  changeHistoryViews,
+  keptPermissions,
   draftingPermissions,
   type GridAction,
   gridActions,
@@ -42,7 +44,6 @@ export {
   startingRoles,
   type Tier,
   tierSchema,
-  unbuiltPermissions,
   sameGrants,
   withImplied,
 } from "./access.ts";

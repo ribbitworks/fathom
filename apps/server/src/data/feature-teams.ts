@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Feature teams, as part of the data access layer: the people working on a set of related features,
-// apart from reporting lines, as the Decisions Log sets out, seen by everyone who sees the org chart
+// apart from reporting lines, as the Decisions Log sets out, seen by everyone who sees feature teams
 // and changed there. A team's name, lead, and members are General; the day each member joined or
 // left is Personal, as reporting lines' dates are, and so are members who have not started, whom
 // readers who do not see Personal details never see. Drafts are details of people, so those who
@@ -48,7 +48,6 @@ import { randomUUID } from "node:crypto";
 import {
   type Actor,
   mostSensitive,
-  requireAnyPermission,
   requireFieldEdit,
   requirePermission,
   requireView,
@@ -125,7 +124,7 @@ export const featureTeamTier =
       ? classes.featureTeamDates
       : "general";
 
-// Everyone who sees the org chart sees a team's General details, whether or not they see people.
+// Everyone who sees feature teams sees a team's General details, whether or not they see people.
 const seesTeamField = (actor: Actor) => (field: string) =>
   seesClass(actor.permissions, featureTeamTier(actor.dataClasses)(field));
 
@@ -182,9 +181,8 @@ export function teamChanges(
 // Those who propose or edit feature teams change them, seeing the org chart they are on and the
 // people in the drafts they are sent.
 function requireChanging(actor: Actor): void {
-  requirePermission(actor, "org-chart:view");
   requirePermission(actor, "people:view");
-  requireAnyPermission(actor, ["feature-teams:propose", "feature-teams:edit"]);
+  requirePermission(actor, "feature-teams:edit");
 }
 
 interface LiveTeams {
@@ -549,7 +547,7 @@ function draftedOn(
 }
 
 // Every feature team on a day, today unless another is given, as the reader's drafts make it, with
-// its draft beside, for those who see the org chart. Members and a lead who have not started are
+// its draft beside, for those who see feature teams. Members and a lead who have not started are
 // left out for readers who do not see Personal details, and those who have left for everyone.
 // Those who do not see people get teams as approved, with no drafts. Another day needs every class
 // of data other dates need. On another day, only teams with members then, or with a draft, are
@@ -559,7 +557,7 @@ export async function readFeatureTeams(
   actor: Actor,
   on?: string,
 ): Promise<FeatureTeams> {
-  requirePermission(actor, "org-chart:view");
+  requirePermission(actor, "feature-teams:view");
   const seesPeople = seesEmployment(actor);
   const seesDays = seesField(actor, "featureTeamDates");
   const today = await readToday(database);
@@ -1665,10 +1663,6 @@ export async function resubmitFeatureTeamDraft(
     ) {
       requireFieldEdit(actor, "featureTeamDates");
     }
-    // Removing a team needs the right to edit teams, whoever first drafted it.
-    if (draft.action === "deleted") {
-      requirePermission(actor, "feature-teams:edit");
-    }
     const made = await clearedTeamRejection(
       transaction,
       id,
@@ -1712,7 +1706,7 @@ async function seenTeams(
   ids: readonly string[],
   today: string,
 ) {
-  requirePermission(actor, "org-chart:view");
+  requirePermission(actor, "feature-teams:view");
   const found = await readTeamDrafts(transaction, ids);
   if (found.size !== ids.length) {
     throw new NotFoundError(

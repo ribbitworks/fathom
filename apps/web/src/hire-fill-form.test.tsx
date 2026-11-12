@@ -91,6 +91,7 @@ function answers(
           "hiring-plan:edit",
           "personal:view",
           "plan:view",
+          "features:view",
         ],
       }),
     "GET /api/people": () =>
@@ -353,6 +354,7 @@ describe("filling a planned hire with a new person", () => {
         "hiring-plan:view",
         "hiring-plan:edit",
         "plan:view",
+        "features:view",
       ],
     });
     renderApp("/people");
@@ -704,6 +706,7 @@ describe("a planned hire's details", () => {
         "hiring-plan:view",
         "personal:view",
         "plan:view",
+        "features:view",
       ],
     });
     renderApp("/people?open=TBD-1");
@@ -763,6 +766,7 @@ describe("after filling", () => {
             "hiring-plan:edit",
             "personal:view",
             "plan:view",
+            "features:view",
           ],
         });
       }

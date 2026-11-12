@@ -33,7 +33,7 @@ beforeAll(async () => {
   columnApprover = await test.signedIn("engineering-director");
   planner = await test.signedIn("product-manager");
   planApprover = await test.signedIn("project-manager");
-  viewer = await test.signedIn("team-member");
+  viewer = await test.signedIn(["plan:view", "features:view"]);
 });
 
 afterAll(async () => {

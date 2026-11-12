@@ -3,7 +3,7 @@
 // A feature team's details, beside the org chart, laid out as a person's are: its name and colour,
 // then its lead and members, as its draft makes them, each drafted value with its live one under it
 // and members a draft adds or removes marked, with when each change takes effect, where that is not
-// the day shown. Those who propose feature teams rename the team on today's chart, and change its
+// the day shown. Those who edit feature teams rename the team on today's chart, and change its
 // lead and members from the day the chart shows, choosing each person in a picker that describes
 // them by their position and reporting team; those who edit them also remove the team. Each change
 // is a draft, saved at once, which Cmd+Z or Ctrl+Z undoes. A new team is given its name, lead and
@@ -54,21 +54,16 @@ export const featureTeamPanelId = "feature-team-panel";
 const titleId = "feature-team-panel-title";
 
 export const noFeatureTeamEdits: FeatureTeamEdits = {
-  propose: false,
-  rename: false,
-  remove: false,
-  colours: false,
+  members: false,
+  undated: false,
   dates: false,
 };
 
 export interface FeatureTeamEdits {
-  // Adds teams, and changes their members and leads.
-  propose: boolean;
-  // Renames teams, which takes no date, so only on today's chart.
-  rename: boolean;
-  // Removes teams.
-  remove: boolean;
-  colours: boolean;
+  // Adds teams, and changes their members and leads, which take effect from the day shown.
+  members: boolean;
+  // Renames, removes and colours teams, which take no date, so only on today's chart.
+  undated: boolean;
   // Changes teams from an earlier day than today.
   dates: boolean;
 }
@@ -345,8 +340,8 @@ function TeamDetails({
     ownDraft?.action === "changed" && ownDraft.changed.includes(key)
       ? ownDraft
       : undefined;
-  const changes = edits.propose && show !== "live" && team.heldBy === undefined;
-  const columns = teamColumns(choices, edits.rename);
+  const changes = edits.members && show !== "live" && team.heldBy === undefined;
+  const columns = teamColumns(choices, edits.undated);
   const save = (change: TeamChange) => {
     if (change.name !== undefined) actions.rename(team, change.name);
     if (change.leadId !== undefined) actions.lead(team, change.leadId, day);
@@ -439,7 +434,7 @@ function TeamDetails({
               column={colourColumn}
               value={team.colour ?? ""}
               action={
-                edits.colours &&
+                edits.undated &&
                 live !== undefined &&
                 draft?.action !== "deleted" && (
                   <TeamColourMenu
@@ -523,7 +518,7 @@ function TeamDetails({
                   Discard draft
                 </Button>
               )}
-              {edits.remove && draft?.action !== "deleted" && (
+              {edits.undated && draft?.action !== "deleted" && (
                 <Button
                   variant="outline"
                   color="red"

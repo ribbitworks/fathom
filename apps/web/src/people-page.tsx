@@ -186,7 +186,7 @@ export function PeoplePage({
   onApply,
   open,
   onOpen,
-  seesChart = false,
+  seesFeatureTeams = false,
   access = { permissions: [], dataClasses: defaultClasses },
 }: {
   canEdit: boolean;
@@ -208,8 +208,8 @@ export function PeoplePage({
   // nobody's.
   open?: string | undefined;
   onOpen?: (employeeId: string | undefined, replace?: boolean) => void;
-  // Whether the reader sees the org chart, which a person's details then link to.
-  seesChart?: boolean;
+  // Whether the reader sees feature teams, which a person's details then list.
+  seesFeatureTeams?: boolean;
   // The role's permissions and the classes people's details are kept in, which mark the columns
   // holding them and decide the classes a column may be moved to.
   access?: ClassAccess;
@@ -668,10 +668,9 @@ export function PeoplePage({
                         showDates={showDates}
                         showHireDates={showHireDates}
                         canEditHires={canEditHires}
-                        seesChart={seesChart}
+                        seesFeatureTeams={seesFeatureTeams}
                         narrow={narrow}
                         elsewhere={(person) =>
-                          seesChart &&
                           !isHire(person) && (
                             <Anchor
                               size="sm"

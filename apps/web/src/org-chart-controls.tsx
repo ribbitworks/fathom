@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The controls above the org chart: on the left the finder, the Draft menu and, for those who can
-// name or colour teams, the Teams panel; on the right the levels to show, zooming, and fitting the
+// change teams, the Teams panel; on the right the levels to show, zooming, and fitting the
 // chart to the screen. The chart decides what each choice does to it.
 
 import {

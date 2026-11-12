@@ -43,7 +43,7 @@ const administratorRole = role(
   "administrator",
   "Administrator",
   "Manages user accounts, roles, and system settings.",
-  ["accounts:manage", "roles:edit", "settings:edit", "history:view"],
+  ["administration:edit", "administration:view"],
 );
 const auditorsRole = role(
   2,
@@ -61,6 +61,7 @@ const productManagerRole = role(
 );
 const teamMemberRole = role(4, "team-member", "Team Member", "Sees the plan.", [
   "plan:view",
+  "features:view",
 ]);
 // Manages accounts and edits roles, as Administrator does, though made later.
 const keepersRole = role(
@@ -68,7 +69,7 @@ const keepersRole = role(
   null,
   "Fictional Keepers",
   "Keeps Fathom manageable.",
-  ["accounts:manage", "roles:edit"],
+  ["administration:edit"],
 );
 const roles = [
   administratorRole,
@@ -96,7 +97,12 @@ const manager = () =>
       key: "administrator",
       description: "",
     },
-    permissions: ["accounts:view", "accounts:manage", "plan:view"],
+    permissions: [
+      "administration:view",
+      "administration:edit",
+      "plan:view",
+      "features:view",
+    ],
   });
 
 const own = {
@@ -221,7 +227,10 @@ describe("who sees the Accounts page", () => {
     // Given
     const fetch = serverAnswers({
       "GET /api/session": () =>
-        Response.json({ ...fictionalUser, permissions: ["accounts:view"] }),
+        Response.json({
+          ...fictionalUser,
+          permissions: ["administration:view"],
+        }),
       "GET /api/accounts": accountList,
     });
     // When
@@ -395,7 +404,12 @@ describe("changing one's own account", () => {
           Response.json({
             ...fictionalUser,
             user: { ...fictionalUser.user, name: "Fictional Self" },
-            permissions: ["accounts:view", "accounts:manage", "plan:view"],
+            permissions: [
+              "administration:view",
+              "administration:edit",
+              "plan:view",
+              "features:view",
+            ],
           });
         return Response.json({ account: { ...own, name: "Fictional Self" } });
       },
@@ -475,29 +489,13 @@ describe("changing one's own account", () => {
   });
 });
 
-describe("the last active account that manages accounts and edits roles", () => {
-  // Roles made later that each grant only one of the permissions that keep Fathom manageable.
-  const accountKeepersRole = role(
-    6,
-    null,
-    "Fictional Account Keepers",
-    "Manages accounts.",
-    ["accounts:manage"],
-  );
-  const roleEditorsRole = role(
-    7,
-    null,
-    "Fictional Role Editors",
-    "Edits roles.",
-    ["roles:edit"],
-  );
-
+describe("the last active account with Edit Administration", () => {
   async function controlsFor(accounts: object[], name = "Fictional Person") {
     serverAnswers({
       "GET /api/session": manager,
       "GET /api/roles": () =>
         Response.json({
-          roles: [...roles, accountKeepersRole, roleEditorsRole],
+          roles,
         }),
       "GET /api/accounts": () => Response.json({ accounts }),
     });
@@ -511,7 +509,7 @@ describe("the last active account that manages accounts and edits roles", () => 
     return { deactivate, choice };
   }
 
-  it("can neither give up the role that alone grants both nor be deactivated, though it can take on others", async () => {
+  it("can neither give up the role that alone grants it nor be deactivated, though it can take on others", async () => {
     const { deactivate, choice } = await controlsFor([own, planner, former]);
     expect((deactivate as HTMLButtonElement).disabled).toBe(true);
     expect(choice("Administrator").checked).toBe(true);
@@ -519,7 +517,7 @@ describe("the last active account that manages accounts and edits roles", () => 
     expect(choice("Team Member").disabled).toBe(false);
   });
 
-  it("can do both once another active account's role grants both, even a role made later", async () => {
+  it("can do both once another active account's role grants it, even a role made later", async () => {
     const { deactivate, choice } = await controlsFor([
       own,
       { ...planner, ...holdingRoles(keepersRole) },
@@ -528,37 +526,13 @@ describe("the last active account that manages accounts and edits roles", () => 
     expect(choice("Administrator").disabled).toBe(false);
   });
 
-  it("can give up a role once another of its picked roles grants both", async () => {
+  it("can give up a role once another of its picked roles grants it", async () => {
     const { choice } = await controlsFor([own, planner]);
     await userEvent.click(choice("Fictional Keepers"));
     expect(choice("Administrator").disabled).toBe(false);
     expect(choice("Fictional Keepers").disabled).toBe(false);
     await userEvent.click(choice("Administrator"));
     expect(choice("Fictional Keepers").disabled).toBe(true);
-  });
-
-  it("can give up the role whose permissions its other roles and another account's role keep", async () => {
-    const { deactivate, choice } = await controlsFor([
-      { ...own, ...holdingRoles(administratorRole, roleEditorsRole) },
-      { ...planner, ...holdingRoles(accountKeepersRole) },
-    ]);
-    expect(choice("Administrator").disabled).toBe(false);
-    expect(choice("Fictional Role Editors").disabled).toBe(false);
-    expect((deactivate as HTMLButtonElement).disabled).toBe(true);
-  });
-
-  it("keeps each permission apart, when no account's role grants both", async () => {
-    const { deactivate, choice } = await controlsFor(
-      [
-        { ...own, ...holdingRoles(roleEditorsRole) },
-        { ...planner, ...holdingRoles(accountKeepersRole) },
-      ],
-      "Fictional Planner",
-    );
-    expect((deactivate as HTMLButtonElement).disabled).toBe(true);
-    expect(choice("Fictional Account Keepers").checked).toBe(true);
-    expect(choice("Fictional Account Keepers").disabled).toBe(true);
-    expect(choice("Fictional Role Editors").disabled).toBe(false);
   });
 
   it("counts a deactivated account as gone", async () => {
@@ -777,12 +751,7 @@ describe("creating an account", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: [
-            "accounts:view",
-            "accounts:manage",
-            "roles:view",
-            "roles:edit",
-          ],
+          permissions: ["administration:view", "administration:edit"],
         }),
       "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
@@ -802,21 +771,6 @@ describe("creating an account", () => {
     await waitFor(() => {
       expect(history.location.pathname).toBe("/roles");
     });
-  });
-
-  it("does not point to the Roles page those who may not edit roles", async () => {
-    serverAnswers({
-      "GET /api/session": manager,
-      "GET /api/roles": roleList,
-      "GET /api/accounts": accountList,
-    });
-    renderApp("/accounts");
-    const edit = await openEditFor("Fictional Planner");
-    expect(
-      within(edit).getByRole("checkbox", { name: "Product Manager" }),
-    ).toBeDefined();
-    expect(within(edit).queryByText(/Custom roles are created/u)).toBeNull();
-    expect(within(edit).queryByRole("link", { name: "Roles" })).toBeNull();
   });
 
   it("asks for a role when there is none to start from", async () => {

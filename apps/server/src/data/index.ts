@@ -66,6 +66,7 @@ import type {
 import {
   type AllocationChange,
   type Allocations,
+  changeHistoryViews,
   draftsRequestSchema,
   seesField,
 } from "@fathom/shared";
@@ -188,8 +189,7 @@ export interface DataAccess {
   people: PeopleAccess;
   // Planned hires: the hiring plan, or its placeholders.
   hires: HireAccess;
-  // Feature teams, seen by everyone who sees the org chart, and drafted by those who propose or edit
-  // them.
+  // Feature teams, drafted by those who edit them.
   featureTeams: FeatureTeamAccess;
   // The actor's own unpublished changes to drafts, which only they see until they publish them.
   unpublished: UnpublishedAccess;
@@ -580,8 +580,7 @@ function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
     resubmitDraft: async (actor, id) =>
       featureTeamData.resubmitFeatureTeamDraft(database, actor, id),
     setColour: async (actor, id, colour) => {
-      requirePermission(actor, "org-chart:view");
-      requirePermission(actor, "team-colours:edit");
+      requirePermission(actor, "feature-teams:edit");
       await featureTeamData.setFeatureTeamColour(database, id, colour);
     },
   };
@@ -686,7 +685,7 @@ function createListAccess(database: Database): ListAccess {
 const recordEditors: Record<RecordType, Permission> = {
   "release-stream": "configuration:edit",
   "cycle-pattern": "configuration:edit",
-  release: "plan:edit",
+  release: "features:edit",
   feature: "features:edit",
   customer: "plan:edit",
   proposal: "plan:edit",
@@ -706,13 +705,12 @@ function createReleaseAccess(database: Database): ReleaseAccess {
   const streams = (actor: Actor) => recordEditor(actor, "release-stream");
   const plan = (actor: Actor) => recordEditor(actor, "release");
   return {
-    // Planning configuration is seen with the plan, as Roles proposes.
     read: async (actor) => {
-      requireAnyPermission(actor, ["plan:view", "configuration:view"]);
+      requireAnyPermission(actor, ["features:view", "configuration:view"]);
       return {
         streams: await releases.readReleaseStreams(database, actor),
         canEditStreams: actor.permissions.includes("configuration:edit"),
-        canEditReleases: actor.permissions.includes("plan:edit"),
+        canEditReleases: actor.permissions.includes("features:edit"),
       };
     },
     createStream: async (actor, request) =>
@@ -804,17 +802,44 @@ const planChanges = {
   feature: { add: projectData.addFeature, change: projectData.changeFeature },
 } as const;
 
+// The plan's records, features among them, are read by those who see either, each kind shown only
+// to those who may read it.
+const planOrFeatures = ["plan:view", "features:view"] as const;
+
+// The plan's records a reader may see: features and their columns with features, and the rest with
+// the plan.
+function seenRecords(
+  actor: Actor,
+  records: projectData.PlanRecords,
+): projectData.PlanRecords {
+  const seesPlan = actor.permissions.includes("plan:view");
+  const seesFeatures = actor.permissions.includes("features:view");
+  return {
+    ...records,
+    customers: seesPlan ? records.customers : [],
+    projects: seesPlan ? records.projects : [],
+    proposals: seesPlan ? records.proposals : [],
+    features: seesFeatures ? records.features : [],
+    featureColumns: seesFeatures
+      ? records.featureColumns
+      : { fields: [], order: [], lists: [] },
+  };
+}
+
 function createProjectAccess(database: Database): ProjectAccess {
   return {
     read: async (actor) => {
-      requirePermission(actor, "plan:view");
+      requireAnyPermission(actor, planOrFeatures);
       return {
-        ...(await projectData.readPlanRecords(database, actor)),
+        ...seenRecords(
+          actor,
+          await projectData.readPlanRecords(database, actor),
+        ),
         ...planAbilities(actor),
       };
     },
     readChoices: async (actor) => {
-      requirePermission(actor, "plan:view");
+      requireAnyPermission(actor, planOrFeatures);
       return projectData.readPlanChoices(database);
     },
     createFeatureColumn: async (actor, request) =>
@@ -874,6 +899,7 @@ function createProjectAccess(database: Database): ProjectAccess {
           request,
         ),
       ),
+    // A project's or proposal's scope history is the plan's, removal reasons included.
     readScopeHistory: async (actor, type, id) => {
       requirePermission(actor, "plan:view");
       return readScopeHistory(database, type, id);
@@ -961,7 +987,7 @@ function createPeopleAccess(database: Database): PeopleAccess {
       };
     },
     readOrgChart: async (actor, on) => {
-      requirePermission(actor, "org-chart:view");
+      requirePermission(actor, "people:view");
       const { includedPersonal, includedHiringPlan, ...chart } = await (on ===
       undefined
         ? readOrgChart(database, actor)
@@ -984,8 +1010,7 @@ function createPeopleAccess(database: Database): PeopleAccess {
       return chart;
     },
     setTeamColour: async (actor, managerId, colour) => {
-      requirePermission(actor, "org-chart:view");
-      requirePermission(actor, "team-colours:edit");
+      requirePermission(actor, "people:edit");
       await setTeamColour(database, managerId, colour);
     },
     create: async (actor, requests) => {
@@ -1053,11 +1078,11 @@ export function createDataAccess(database: Database): DataAccess {
     keepSessionRole: (token, roleId) =>
       keepSessionRole(database, token, roleId),
     readHistory: async (actor) => {
-      requirePermission(actor, "history:view");
+      requirePermission(actor, "administration:view");
       return readHistory(database, actor.permissions.includes("people:view"));
     },
     readChanges: async (actor, before, search) => {
-      requirePermission(actor, "changes:view");
+      requireAnyPermission(actor, changeHistoryViews);
       const read = await readChangeHistory(database, actor, before, search);
       if (read.includedSensitive) {
         await recordPersonalView(

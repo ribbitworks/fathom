@@ -13,13 +13,12 @@ import {
   greeting,
   renderApp,
   serverAnswers,
-  signedIn,
 } from "./test-support.tsx";
 
 const changesViewer = () =>
   Response.json({
     ...fictionalUser,
-    permissions: ["plan:view", "changes:view"],
+    permissions: ["plan:view", "features:view"],
   });
 
 const older = "6f9619ff-8b86-4011-b42d-00c04fc964ff";
@@ -94,10 +93,13 @@ describe("who sees the Change history page", () => {
     ).toBeDefined();
   });
 
-  it("neither links to it nor shows it to anyone else", async () => {
+  it("neither links to it nor shows it to anyone who sees no area", async () => {
     serverAnswers({
-      "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["administration:view"],
+        }),
     });
     renderApp("/changes");
     expect(

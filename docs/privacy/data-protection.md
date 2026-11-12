@@ -61,7 +61,7 @@ Fathom also holds information about its own users: a user account for each perso
 
 Access is controlled by roles. Each user is given one or more roles and acts as one at a time, with only that role's access, and roles grant access by sensitivity level rather than screen by screen. Fathom starts with one role for each job; roles can be changed, and new ones made, in Fathom. The roles are proposed and will be agreed before Fathom goes live.
 
-Which roles see each level, the hiring plan beyond its placeholders, work assignments, and the org chart is set out in [Roles](../product/roles.md#what-each-role-can-do). The org chart shows each employee's name, position, team, and manager, and no other details, such as site and level.
+Which roles see each level, the hiring plan beyond its placeholders, work assignments, and the org chart is set out in [Roles](../product/roles.md#what-each-role-can-do). The org chart shows each employee's General details, such as name, position, team, and manager, to every role that sees people, which is every starting role but the Administrator.
 
 Information in the Personal tier is private to a person and stays so, such as gender, start and end dates, and past managers. Information in the Confidential tier is not yet announced, and runs out: a future-dated reorganization becomes the org chart on its date, and a planned role becomes a person once filled, much as a person's departure is shown once they have left. Decided by the owner on 2026-11-07.
 

@@ -29,14 +29,12 @@ import {
 const viewer = () =>
   Response.json({
     ...fictionalUser,
-    permissions: ["people:view", "org-chart:view", "plan:view"],
-  });
-
-// Sees the org chart but not People, as a Team Member does.
-const chartOnly = () =>
-  Response.json({
-    ...fictionalUser,
-    permissions: ["org-chart:view", "plan:view"],
+    permissions: [
+      "people:view",
+      "feature-teams:view",
+      "plan:view",
+      "features:view",
+    ],
   });
 
 const person = (
@@ -190,19 +188,6 @@ describe("who sees the Org chart page", () => {
     expect(history.location.pathname).toBe("/org-chart");
   });
 
-  it("links to it for users who see the org chart but not People", async () => {
-    serverAnswers({
-      "GET /api/session": chartOnly,
-      "GET /api/greeting": greeting,
-      "GET /api/org-chart": chartAnswer,
-    });
-    renderApp("/");
-    expect(
-      await screen.findByRole("link", { name: "Org chart" }),
-    ).toBeDefined();
-    expect(screen.queryByRole("link", { name: "People" })).toBeNull();
-  });
-
   it("is not shown to anyone else", async () => {
     serverAnswers({ "GET /api/session": signedIn });
     renderApp("/org-chart");
@@ -286,18 +271,13 @@ describe("the org chart", () => {
     expect(colourOf("Tatum Fictional")).toBeNull();
   });
 
-  it("lets those who may colour teams choose a named team's colour from its manager's card, and undo it", async () => {
+  it("lets those who may change teams choose a named team's colour from its manager's card, and undo it", async () => {
     let colour: string | null = null;
     const fetch = serverAnswers({
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: [
-            "people:view",
-            "org-chart:view",
-            "people:edit",
-            "team-colours:edit",
-          ],
+          permissions: ["people:view", "feature-teams:view", "people:edit"],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": () =>
@@ -347,12 +327,7 @@ describe("the org chart", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: [
-            "people:view",
-            "org-chart:view",
-            "people:edit",
-            "team-colours:edit",
-          ],
+          permissions: ["people:view", "feature-teams:view", "people:edit"],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": chartAnswer,
@@ -403,7 +378,7 @@ describe("the org chart", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["people:view", "org-chart:view", "people:edit"],
+          permissions: ["people:view", "feature-teams:view", "people:edit"],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": () => chartJson({ people: planned }),
@@ -440,12 +415,7 @@ describe("the org chart", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: [
-            "people:view",
-            "org-chart:view",
-            "people:edit",
-            "team-colours:edit",
-          ],
+          permissions: ["people:view", "feature-teams:view", "people:edit"],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": chartAnswer,
@@ -465,17 +435,52 @@ describe("the org chart", () => {
     ).toBe("Add a name");
   });
 
+  it("orders named teams by name, and offers no colour menu for a team named only in a draft", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["people:view", "feature-teams:view", "people:edit"],
+        }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": () =>
+        chartJson({
+          people: people.map((one) =>
+            one.id === "p1"
+              ? {
+                  ...one,
+                  teamColour: "grape",
+                  draft: {
+                    teamName: "Fictional board",
+                    state: "waiting",
+                    unpublished: false,
+                  },
+                }
+              : one,
+          ),
+        }),
+    });
+    renderApp("/org-chart");
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    await userEvent.click(screen.getByRole("button", { name: "Teams" }));
+    const panel = await screen.findByRole("dialog", { name: "Teams" });
+    const text = panel.textContent;
+    expect(text.indexOf("Fictional board")).toBeLessThan(
+      text.indexOf("Fictional team"),
+    );
+    expect(
+      within(panel).queryByRole("button", {
+        name: /^Colour of Fictional board/,
+      }),
+    ).toBeNull();
+  });
+
   it("marks a drafted team name in the Teams panel, with the live one under it", async () => {
     serverAnswers({
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: [
-            "people:view",
-            "org-chart:view",
-            "people:edit",
-            "team-colours:edit",
-          ],
+          permissions: ["people:view", "feature-teams:view", "people:edit"],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": () =>
@@ -504,7 +509,7 @@ describe("the org chart", () => {
     expect(within(panel).getByText(", live")).toBeDefined();
   });
 
-  it("shows those who may only colour teams a name drafted to come off, and a Live copy in its team's colour, and goes back to drafts beside live", async () => {
+  it("shows those who may change teams a name drafted to come off, and a Live copy in its team's colour, and goes back to drafts beside live", async () => {
     const history = await openChart(() =>
       chartJson({
         people: people.map((one) =>
@@ -543,45 +548,12 @@ describe("the org chart", () => {
     expect(history.location.search).not.toContain("show=");
   });
 
-  it("lists a team whose name a draft takes off, for those who may only colour teams", async () => {
+  it("lets those who may change teams colour them, from cards and the Teams panel", async () => {
     serverAnswers({
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["people:view", "org-chart:view", "team-colours:edit"],
-        }),
-      "GET /api/unpublished": () => Response.json({ changes: [] }),
-      "GET /api/org-chart": () =>
-        chartJson({
-          people: people.map((one) =>
-            one.id === "p2"
-              ? {
-                  ...one,
-                  draft: {
-                    teamName: null,
-                    state: "waiting",
-                    unpublished: false,
-                  },
-                }
-              : one,
-          ),
-        }),
-    });
-    renderApp("/org-chart");
-    await screen.findByRole("link", { name: "Sasha Fictional" });
-    await userEvent.click(screen.getByRole("button", { name: "Teams" }));
-    const panel = await screen.findByRole("dialog", { name: "Teams" });
-    expect(within(panel).getByText("No name")).toBeDefined();
-    expect(within(panel).getByText("Fictional team")).toBeDefined();
-    expect(within(panel).getByText(", live")).toBeDefined();
-  });
-
-  it("lets those who may only colour teams, such as Engineering Managers, colour them without renaming", async () => {
-    serverAnswers({
-      "GET /api/session": () =>
-        Response.json({
-          ...fictionalUser,
-          permissions: ["people:view", "org-chart:view", "team-colours:edit"],
+          permissions: ["people:view", "feature-teams:view", "people:edit"],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": chartAnswer,
@@ -591,43 +563,12 @@ describe("the org chart", () => {
     expect(
       screen.getByRole("button", { name: /^Colour of Fictional team:/ }),
     ).toBeDefined();
-    expect(
-      screen.queryByRole("button", { name: "Rename Fictional team" }),
-    ).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Teams" }));
-    const panel = await screen.findByRole("dialog", { name: "Teams" });
-    expect(
-      within(panel).getByRole("button", { name: /^Colour of Fictional team:/ }),
-    ).toBeDefined();
-    expect(within(panel).getByText("Fictional team")).toBeDefined();
-    expect(within(panel).queryByText("Add a name")).toBeNull();
-    expect(within(panel).queryByText("Led by Robin Fictional")).toBeNull();
-  });
-
-  it("lets those who may colour teams but do not see People colour them, from cards and the Teams panel", async () => {
-    serverAnswers({
-      "GET /api/session": () =>
-        Response.json({
-          ...fictionalUser,
-          permissions: ["org-chart:view", "team-colours:edit"],
-        }),
-      "GET /api/unpublished": () => Response.json({ changes: [] }),
-      "GET /api/org-chart": () =>
-        chartJson({
-          people: people.map((one) => ({ ...one, employeeId: null })),
-        }),
-    });
-    renderApp("/org-chart");
-    await screen.findAllByText("Sasha Fictional");
-    expect(
-      screen.getByRole("button", { name: /^Colour of Fictional team:/ }),
-    ).toBeDefined();
     await userEvent.click(screen.getByRole("button", { name: "Teams" }));
     const panel = await screen.findByRole("dialog", { name: "Teams" });
     expect(within(panel).getByText("Fictional team")).toBeDefined();
   });
 
-  // The chart for one who may change people and colour teams, with the answers given added.
+  // The chart for one who may change people and their teams, with the answers given added.
   function openAsEditor(
     answers: Record<string, () => Response>,
     chart: readonly OrgChartPerson[] = people,
@@ -636,12 +577,7 @@ describe("the org chart", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: [
-            "people:view",
-            "org-chart:view",
-            "people:edit",
-            "team-colours:edit",
-          ],
+          permissions: ["people:view", "feature-teams:view", "people:edit"],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": () => chartJson({ people: chart }),
@@ -651,18 +587,13 @@ describe("the org chart", () => {
     return fetch;
   }
 
-  // The chart for one who may change people and colour teams, at the address given.
+  // The chart for one who may change people and their teams, at the address given.
   function openEditableAt(path: string, answer: () => Response) {
     serverAnswers({
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: [
-            "people:view",
-            "org-chart:view",
-            "people:edit",
-            "team-colours:edit",
-          ],
+          permissions: ["people:view", "feature-teams:view", "people:edit"],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": answer,
@@ -939,40 +870,6 @@ describe("the org chart", () => {
     expect(JSON.parse(patch?.[1]?.body as string)).toEqual({
       teamName: "Fictional top team",
     });
-  });
-
-  it("shows those who may name teams but not colour them each team's colour, without a menu", async () => {
-    serverAnswers({
-      "GET /api/session": () =>
-        Response.json({
-          ...fictionalUser,
-          permissions: ["people:view", "org-chart:view", "people:edit"],
-        }),
-      "GET /api/unpublished": () => Response.json({ changes: [] }),
-      "GET /api/org-chart": () =>
-        chartJson({
-          people: [
-            person("p1", "Robin Fictional", null, {
-              teamName: "Fictional top team",
-            }),
-            person("p2", "Sasha Fictional", "p1", {
-              teamName: "Fictional team",
-              teamColour: "teal",
-            }),
-            person("p3", "Tatum Fictional", "p2"),
-          ],
-        }),
-    });
-    renderApp("/org-chart");
-    await userEvent.click(await screen.findByRole("button", { name: "Teams" }));
-    const panel = await screen.findByRole("dialog", { name: "Teams" });
-    expect(
-      within(panel).queryByRole("button", { name: /^Colour of/ }),
-    ).toBeNull();
-    const names = within(panel)
-      .getAllByRole("button", { name: /^Rename/ })
-      .map((button) => button.textContent);
-    expect(names).toEqual(["Fictional team", "Fictional top team"]);
   });
 
   it("offers no colour menu, renaming or Teams panel to those who cannot change people", async () => {
@@ -1369,6 +1266,29 @@ describe("the org chart", () => {
     expect(card("Uma Fictional").querySelector("[data-found]")).not.toBeNull();
   });
 
+  it("leaves out a position the reader may not see, on the card and in the finder", async () => {
+    await openChart(() =>
+      chartJson({
+        people: people.map((one) =>
+          one.preferredName === "Uma Fictional"
+            ? { ...one, position: null }
+            : one,
+        ),
+      }),
+    );
+    expect(
+      within(card("Uma Fictional")).queryByText("Fictional Engineer"),
+    ).toBeNull();
+    await userEvent.type(
+      screen.getByRole("combobox", { name: "Find a person or team" }),
+      "Uma",
+    );
+    expect(
+      (await screen.findByRole("option", { name: /Uma Fictional/ }))
+        .textContent,
+    ).toBe("Uma Fictional");
+  });
+
   it("finds someone already shown, and clears the search", async () => {
     await openChart();
     await screen.findByRole("link", { name: "Uma Fictional" });
@@ -1492,81 +1412,6 @@ describe("the org chart", () => {
       screen.getByRole("button", { name: "Fit to screen" }),
     );
     expect(screen.getByRole("link", { name: "Uma Fictional" })).toBeDefined();
-  });
-
-  it("offers no Draft menu to those who do not see People, whatever the address says", async () => {
-    serverAnswers({
-      "GET /api/session": chartOnly,
-      "GET /api/org-chart": () =>
-        chartJson({
-          people: people.map((one) => ({ ...one, employeeId: null })),
-          drafted: [],
-        }),
-    });
-    renderApp("/org-chart?show=drafts");
-    await screen.findAllByText("Robin Fictional");
-    expect(screen.queryByRole("button", { name: /^Draft/ })).toBeNull();
-  });
-
-  it("shows those who do not see People each card without opening it, keeping Fathom's own IDs in the address", async () => {
-    serverAnswers({
-      "GET /api/session": chartOnly,
-      "GET /api/org-chart": () =>
-        chartJson({
-          people: people.map((one) => ({ ...one, employeeId: null })),
-        }),
-    });
-    const history = renderApp("/org-chart");
-    await showLevels("All levels");
-    await screen.findAllByText("Uma Fictional");
-    expect(screen.queryByRole("link", { name: "Uma Fictional" })).toBeNull();
-    const uma = screen
-      .getAllByText("Uma Fictional")
-      .map((name) => name.closest("div.react-flow__node"))
-      .find((node) => node !== null) as HTMLElement;
-    expect(within(uma).getByText("Fictional Engineer")).toBeDefined();
-    expect(screen.getAllByText("Fictional team").length).toBeGreaterThan(0);
-    fireEvent.click(uma);
-    expect(history.location.pathname).toBe("/org-chart");
-    await userEvent.type(
-      screen.getByRole("combobox", { name: "Find a person or team" }),
-      "Uma",
-    );
-    await userEvent.click(
-      await screen.findByRole("option", { name: /Uma Fictional/ }),
-    );
-    expect(history.location.search).toBe("?person=p4");
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: "Show only the team of Sasha Fictional",
-      }),
-    );
-    expect(
-      await screen.findByText("Only the team of Sasha Fictional is shown."),
-    ).toBeDefined();
-    expect(history.location.search).toBe("?team=p2");
-  });
-
-  it("keeps those who do not see People able to show one team when no position may be shown", async () => {
-    serverAnswers({
-      "GET /api/session": chartOnly,
-      "GET /api/org-chart": () =>
-        chartJson({
-          people: people.map((one) => ({
-            ...one,
-            employeeId: null,
-            position: null,
-          })),
-        }),
-    });
-    const history = renderApp("/org-chart");
-    await showLevels("All levels");
-    await userEvent.click(
-      await screen.findByRole("button", {
-        name: "Show only the team of Sasha Fictional",
-      }),
-    );
-    expect(history.location.search).toBe("?team=p2");
   });
 
   it("brings back the person found when chosen again after their card was hidden", async () => {
@@ -1696,9 +1541,9 @@ describe("feature teams on the org chart", () => {
   // The server sends the permissions editing implies, as here viewing Personal details.
   const editor = session([
     "people:view",
-    "org-chart:view",
+    "feature-teams:view",
     "feature-teams:edit",
-    "team-colours:edit",
+    "people:edit",
     "personal:view",
     "personal:edit",
   ]);
@@ -1994,7 +1839,7 @@ describe("feature teams on the org chart", () => {
     expect(card("Fictional Quay").querySelector("[data-found]")).not.toBeNull();
   });
 
-  it("offers those who may not propose feature teams each team read only", async () => {
+  it("offers those who may not edit feature teams each team read only", async () => {
     await openFeatureTeams();
     await userEvent.click(
       await screen.findByRole("button", { name: "Feature teams" }),
@@ -2010,19 +1855,6 @@ describe("feature teams on the org chart", () => {
     expect(rowText(panel, "Feature lead")).toBe("Sasha Fictional");
     expect(
       within(panel).queryByRole("button", { name: /^Change / }),
-    ).toBeNull();
-  });
-
-  it("offers no changes to a role that edits feature teams but does not see people", async () => {
-    await openFeatureTeams({
-      signedInAs: session(["org-chart:view", "feature-teams:edit"]),
-    });
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Feature teams" }),
-    );
-    await screen.findByRole("menuitem", { name: "Fictional Quay" });
-    expect(
-      screen.queryByRole("menuitem", { name: "New feature team" }),
     ).toBeNull();
   });
 
@@ -2221,11 +2053,11 @@ describe("feature teams on the org chart", () => {
   describe("on another day", () => {
     const seesDetails = session([
       "people:view",
-      "org-chart:view",
+      "feature-teams:view",
       "personal:view",
       "feature-teams:edit",
     ]);
-    const seesChart = session(["people:view", "org-chart:view"]);
+    const seesChart = session(["people:view", "feature-teams:view"]);
     const onDay = "2025-03-01";
     const teamsOnDay = {
       [`GET /api/feature-teams?on=${onDay}`]: () => Response.json({ teams }),
@@ -2371,7 +2203,7 @@ describe("feature teams on the org chart", () => {
         signedInAs: session([
           "people:view",
           "people:edit",
-          "org-chart:view",
+          "feature-teams:view",
           "personal:view",
           "personal:edit",
           "confidential:view",
@@ -2397,7 +2229,7 @@ describe("feature teams on the org chart", () => {
         signedInAs: session([
           "people:view",
           "people:edit",
-          "org-chart:view",
+          "feature-teams:view",
           "personal:view",
           "personal:edit",
           "confidential:view",

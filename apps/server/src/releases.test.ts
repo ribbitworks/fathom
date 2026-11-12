@@ -1238,7 +1238,7 @@ describe("drafts of streams, patterns, and releases", () => {
       name: "Fictional Named Release",
       ...firstHalf,
     });
-    const reader = await test.signedIn(["plan:view", "changes:view"]);
+    const reader = await test.signedIn(["features:view"]);
     const response = await test.request(reader.cookie, "GET", "/api/changes");
     const { entries } = response.json<ChangeHistory>();
     expect(
@@ -1306,7 +1306,7 @@ describe("drafts of streams, patterns, and releases", () => {
       user: { id: viewer.id, name: "Fictional", email: "" },
       roleId: null,
       dataClasses: defaultClasses,
-      permissions: ["changes:view" as const],
+      permissions: ["people:view" as const],
     };
     expect(await readChangeHistory(test.connection, actor)).toEqual({
       entries: [],
@@ -1735,11 +1735,7 @@ describe("unpublished changes to the plan's records", () => {
   let maker: { id: string; cookie: string };
 
   beforeAll(async () => {
-    maker = await test.signedIn([
-      "plan:edit",
-      "drafts:submit",
-      "configuration:edit",
-    ]);
+    maker = await test.signedIn(["features:edit", "configuration:edit"]);
   });
 
   afterEach(async () => {

@@ -102,7 +102,7 @@ export function PersonPanel({
   showDates,
   showHireDates = showDates,
   canEditHires = false,
-  seesChart = true,
+  seesFeatureTeams = true,
   teams = "reporting",
   narrow,
   elsewhere,
@@ -124,8 +124,8 @@ export function PersonPanel({
   showHireDates?: boolean;
   // Whether the reader may change planned hires, as well as people.
   canEditHires?: boolean;
-  // Whether the reader sees the org chart, which gives each team's colour.
-  seesChart?: boolean;
+  // Whether the reader sees feature teams, listed in the person's details.
+  seesFeatureTeams?: boolean;
   // Which teams the person is shown in: their reporting line, or, beside the feature team chart,
   // their feature teams in its place.
   teams?: "reporting" | "feature-teams";
@@ -152,7 +152,7 @@ export function PersonPanel({
 }) {
   const query = useQuery(peopleQuery);
   const lists = useQuery(listsQuery);
-  const chart = useQuery({ ...orgChartQuery, enabled: seesChart });
+  const chart = useQuery(orgChartQuery);
   const { closeStale, editingOf } = usePersonEditing(notes);
   const people = query.data?.people ?? [];
   const found = people.find((one) => sameId(one, employeeId));
@@ -468,7 +468,7 @@ export function PersonPanel({
             <PersonFeatureTeams
               personId={person.id}
               employeeId={person.employeeId}
-              seesChart={seesChart}
+              seesFeatureTeams={seesFeatureTeams}
             />
           )}
           <RecordSection id="person-details" title="Details">

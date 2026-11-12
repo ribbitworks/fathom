@@ -121,8 +121,8 @@ const planRecordTypes: ReadonlySet<string> = new Set(recordTypeSchema.options);
 const changedSince =
   "This has been changed since, so it can no longer be undone";
 
-// A feature team's joining, leaving and lead days are Personal, yet those who only propose teams
-// may draft some of them, so undoing checks the days themselves, as drafting them does.
+// A feature team's joining, leaving and lead days are Personal, yet those who edit teams without
+// Personal details may draft some of them, so undoing checks the days themselves, as drafting them does.
 const isTeamDay = ({ recordType, field }: StoredChange) =>
   recordType === "feature-team" &&
   (field === "memberFrom" || field === "leadFrom");
@@ -136,8 +136,8 @@ const editPermissions = {
   field: ["configuration:edit"],
   person: ["people:edit"],
   "planned-hire": ["people:edit", "hiring-plan:edit"],
-  // Proposing or editing them is checked for the teams themselves.
-  "feature-team": ["org-chart:view"],
+  // Editing them is checked for the teams themselves.
+  "feature-team": ["feature-teams:view"],
   // Who may change each view is checked for the view itself.
   "saved-view": ["people:view"],
   "planning-settings": ["configuration:edit"],

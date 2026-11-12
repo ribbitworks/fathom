@@ -387,9 +387,9 @@ async function deciding(
   if (asksForColumns(asked)) requirePermission(actor, "people:view");
   // Planned hires are seen beside the people who manage and fill them.
   if (asked.plannedHires.length > 0) requirePermission(actor, "people:view");
-  // Feature teams are seen on the org chart, and their drafts, as details of people, with people.
+  // Feature teams' drafts are details of people, so are seen with people.
   if (asked.featureTeams.length > 0) {
-    requirePermission(actor, "org-chart:view");
+    requirePermission(actor, "feature-teams:view");
     requirePermission(actor, "people:view");
   }
   // The plan's records are each seen with the permissions their kind is read with, such as release

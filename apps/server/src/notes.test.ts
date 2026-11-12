@@ -479,7 +479,7 @@ describe("who sees a Confidential note column", () => {
     ]);
   });
 
-  it.each(rolesGranting("changes:view"))(
+  it.each(rolesGranting("plan:view"))(
     "a %s, a role that sees the change history, sees changes to the notes only if the role lets them see Confidential data",
     async (role) => {
       const { cookie } = await test.signedIn(role);

@@ -53,15 +53,15 @@ let test: TestApp;
 let editor: User;
 // An Engineering Director, who approves feature teams and sees Personal details.
 let approver: User;
-// A Feature Lead, who proposes feature teams but does not edit them or see Personal details.
+// A Feature Lead, who edits feature teams but does not see Personal details.
 let proposer: User;
 // A Feature Lead given Personal details, which choosing another day needs, but not changing them.
 let datedProposer: User;
 // A Project Manager, who approves feature teams but does not see Personal details.
 let projectManager: User;
-// A Resource Planner, who sees the org chart and people, but not Personal details.
+// A Resource Planner, who sees people and feature teams, but not Personal details.
 let planner: User;
-// Sees the org chart and has Personal details, but does not see people.
+// Sees feature teams and has Personal details, but does not see people.
 let chartOnly: User;
 let today: string;
 
@@ -76,11 +76,7 @@ beforeAll(async () => {
   ]);
   projectManager = await test.signedIn("project-manager");
   planner = await test.signedIn("resource-planner");
-  chartOnly = await test.signedIn([
-    "org-chart:view",
-    "personal:view",
-    "changes:view",
-  ]);
+  chartOnly = await test.signedIn(["feature-teams:view", "personal:view"]);
   today = await readToday(test.connection);
 });
 
@@ -281,7 +277,7 @@ const leads = (id: string) =>
 const sorted = (...ids: string[]) => [...ids].sort();
 
 describe("reading feature teams", () => {
-  it("shows each team, with its lead and members, to everyone who sees the org chart", async () => {
+  it("shows each team, with its lead and members, to everyone who sees feature teams", async () => {
     const lead = await person();
     const member = await person();
     const name = unique("Fictional Feature Team");
@@ -298,7 +294,7 @@ describe("reading feature teams", () => {
     }
   });
 
-  it("is refused to those who do not see the org chart", async () => {
+  it("is refused to those who do not see feature teams", async () => {
     const outsider = await test.signedIn("administrator");
     expect((await send(outsider, "GET", "/api/feature-teams")).statusCode).toBe(
       403,
@@ -317,7 +313,7 @@ describe("reading feature teams", () => {
     expect((await teamSeen(id, planner))?.draft).toBeUndefined();
   });
 
-  describe("a reader who sees the org chart with Personal details but not people", () => {
+  describe("a reader who sees feature teams with Personal details but not people", () => {
     it("sees members who have started, and no one who has not", async () => {
       const starting = await person({ startDate: "2099-01-01" });
       const started = await person();
@@ -662,7 +658,7 @@ describe("adding a feature team", () => {
     ]);
   });
 
-  it("is refused to those who neither propose nor edit feature teams", async () => {
+  it("is refused to those who do not edit feature teams", async () => {
     const response = await create(
       { name: unique("Fictional Feature Team") },
       planner,
@@ -1162,7 +1158,7 @@ describe("changing a feature team", () => {
     expect((await teamSeen(id))?.draft).toBeUndefined();
   });
 
-  it("is renamed by those who propose feature teams", async () => {
+  it("is renamed by those who edit feature teams", async () => {
     const id = await liveTeam();
     const manager = await test.signedIn("engineering-manager");
     const name = unique("Fictional Renamed Team");
@@ -1784,9 +1780,9 @@ describe("removing a feature team", () => {
     expect(await memberships(id)).toEqual([]);
   });
 
-  it("is refused to those who only propose feature teams", async () => {
+  it("is refused to those who see feature teams without editing them", async () => {
     const id = await liveTeam();
-    expect((await remove(id, proposer)).statusCode).toBe(403);
+    expect((await remove(id, planner)).statusCode).toBe(403);
   });
 
   it("discards the draft of a team only drafted to be added", async () => {
@@ -1868,14 +1864,6 @@ describe("discarding and resubmitting a team's draft", () => {
     await ok(await resubmit(id, proposer));
   });
 
-  it("needs the right to edit teams to resend a draft removing a team", async () => {
-    const id = await liveTeam();
-    await ok(await remove(id));
-    await ok(await reject(id));
-
-    expect((await resubmit(id, proposer)).statusCode).toBe(403);
-  });
-
   it("is resent by a proposer when the draft adds a team or changes only its members", async () => {
     const { id: adding } = await drafted({}, proposer);
     await ok(await reject(adding));
@@ -1918,7 +1906,7 @@ describe("a team's colour", () => {
   const colour = (id: string, value: string | null, who = editor) =>
     send(who, "PUT", `/api/feature-teams/${id}/colour`, { colour: value });
 
-  it("is set and removed at once by those who colour teams", async () => {
+  it("is set and removed at once by those who edit feature teams", async () => {
     const id = await liveTeam();
 
     expect((await colour(id, "teal")).statusCode).toBe(204);
@@ -1928,9 +1916,9 @@ describe("a team's colour", () => {
     expect((await teamSeen(id))?.colour).toBeNull();
   });
 
-  it("is refused to those who do not colour teams", async () => {
+  it("is refused to those who do not edit feature teams", async () => {
     const id = await liveTeam();
-    expect((await colour(id, "teal", proposer)).statusCode).toBe(403);
+    expect((await colour(id, "teal", planner)).statusCode).toBe(403);
   });
 
   it("is refused for a team not yet approved", async () => {
@@ -2041,7 +2029,7 @@ describe("approving a team's draft", () => {
   it("is refused to an Approver who does not see people", async () => {
     const { id } = await drafted();
     const other = await test.signedIn([
-      "org-chart:view",
+      "feature-teams:view",
       "feature-teams:approve",
     ]);
     expect((await approve(id, other)).statusCode).toBe(403);
@@ -2050,8 +2038,8 @@ describe("approving a team's draft", () => {
   it("is refused to an Approver who does not approve feature teams", async () => {
     const { id } = await drafted();
     const other = await test.signedIn([
-      "org-chart:view",
       "people:view",
+      "feature-teams:view",
       "people:approve",
     ]);
     expect((await approve(id, other)).statusCode).toBe(403);
@@ -2244,46 +2232,6 @@ describe("undoing a change to a team", () => {
     expect((await undo(changeSetId, maker)).statusCode).toBe(409);
   });
 
-  it("needs the right to edit teams to put back a team it drafted to remove, but not to put back a name", async () => {
-    const maker = await test.signedIn("workforce-administrator");
-    const id = await liveTeam();
-    const { changeSetId } = await ok<{ changeSetId: string }>(
-      await remove(id, maker),
-    );
-    await test.holdOnly(maker.id, [
-      "org-chart:view",
-      "people:view",
-      "feature-teams:propose",
-    ]);
-
-    expect((await undo(changeSetId, maker)).statusCode).toBe(403);
-
-    const renaming = await test.signedIn("workforce-administrator");
-    const renamed = await liveTeam();
-    const changeSet = await changed(
-      renamed,
-      { name: unique("Fictional Renamed Team") },
-      renaming,
-    );
-    await test.holdOnly(renaming.id, [
-      "org-chart:view",
-      "people:view",
-      "feature-teams:propose",
-    ]);
-    await ok(await undo(changeSet, renaming));
-  });
-
-  it("needs the right to edit teams to bring back a removal that was discarded", async () => {
-    const id = await liveTeam();
-    await ok(await remove(id));
-    const discarder = await test.signedIn("feature-lead");
-    const { changeSetId } = await ok<{ changeSetId: string }>(
-      await discard(id, discarder),
-    );
-
-    expect((await undo(changeSetId, discarder)).statusCode).toBe(403);
-  });
-
   it("is made by a proposer to bring back a discarded draft adding a team", async () => {
     const maker = await test.signedIn("feature-lead");
     const { id } = await drafted({}, maker);
@@ -2365,10 +2313,10 @@ describe("undoing a change to a team", () => {
     ).toHaveLength(before.length + 1);
   });
 
-  it("is refused to its maker once they neither propose nor edit feature teams", async () => {
+  it("is refused to its maker once they no longer edit feature teams", async () => {
     const maker = await test.signedIn("feature-lead");
     const { changeSetId } = await drafted({}, maker);
-    await test.holdOnly(maker.id, ["org-chart:view"]);
+    await test.holdOnly(maker.id, ["people:view", "feature-teams:view"]);
     expect((await undo(changeSetId, maker)).statusCode).toBe(403);
   });
 });
@@ -2516,7 +2464,7 @@ describe("the change history of a team", () => {
     );
   });
 
-  it("names nobody who has not started to a reader who sees the org chart but not People", async () => {
+  it("names nobody who has not started to a reader who sees feature teams but not People", async () => {
     const preferredName = unique("Fictional Starter");
     const starting = await person({ preferredName, startDate: "2099-01-01" });
     const id = await liveTeam();
@@ -2547,7 +2495,7 @@ describe("the change history of a team", () => {
 
   it("is seen with the org chart", async () => {
     const { changeSetId } = await drafted();
-    const reader = await test.signedIn(["changes:view"]);
+    const reader = await test.signedIn(["plan:view"]);
     expect(await recordOf(changeSetId, reader)).toBeUndefined();
     expect(await recordOf(changeSetId, planner)).toBeDefined();
   });
@@ -2688,7 +2636,7 @@ describe("teams on a chosen day", () => {
   it("is refused, saying why, to readers who do not see Personal details", async () => {
     for (const who of [
       planner,
-      await test.signedIn(["org-chart:view", "personal:view"]),
+      await test.signedIn(["feature-teams:view", "personal:view"]),
     ]) {
       const response = await send(
         who,
@@ -2920,8 +2868,8 @@ describe("teams on a chosen day", () => {
     expect(ids.indexOf(earlier)).toBeLessThan(ids.indexOf(later));
   });
 
-  it("is refused to those who do not see the org chart", async () => {
-    const noChart = await test.signedIn(["changes:view"]);
+  it("is refused to those who do not see feature teams", async () => {
+    const noChart = await test.signedIn(["plan:view"]);
 
     expect(
       (await send(noChart, "GET", "/api/feature-teams?on=2025-02-01"))
@@ -2969,7 +2917,7 @@ describe("feature teams month by month", () => {
   it("is refused, saying why, to readers who do not see Personal details", async () => {
     for (const who of [
       planner,
-      await test.signedIn(["org-chart:view", "personal:view"]),
+      await test.signedIn(["feature-teams:view", "personal:view"]),
     ]) {
       const response = await send(
         who,
@@ -3357,8 +3305,8 @@ describe("a team disbanding", () => {
     // Given
     const id = await teamWhoseMemberLeaves("2025-03-15");
     const reader = await test.signedIn([
-      "org-chart:view",
       "people:view",
+      "feature-teams:view",
       "personal:view",
     ]);
     expect(await disbandedFrom(id, reader)).toBe("2025-04");
@@ -3527,7 +3475,7 @@ describe("unpublished changes to teams", () => {
     ).toHaveLength(before.length + 1);
   });
 
-  it("are published by those who only propose feature teams", async () => {
+  it("are published by those who edit feature teams", async () => {
     const { id } = await drafted({}, proposer, unpublished);
     await ok(await send(proposer, "POST", "/api/unpublished/publish"));
     expect((await teamSeen(id, planner))?.draft?.unpublished).toBeUndefined();

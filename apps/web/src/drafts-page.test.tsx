@@ -34,7 +34,7 @@ const session = (permissions: string[]) => () =>
   Response.json({ ...fictionalUser, permissions });
 const approver = session([
   "plan:approve",
-  "releases:approve",
+  "features:approve",
   "people:approve",
   "hiring-plan:approve",
   "configuration:approve",
@@ -528,7 +528,7 @@ describe("the Drafts page", () => {
     const fetch = serverAnswers({
       "GET /api/session": session([
         "plan:approve",
-        "releases:approve",
+        "features:approve",
         "people:approve",
         "hiring-plan:approve",
         "configuration:approve",
@@ -559,7 +559,11 @@ describe("the Drafts page", () => {
   it("lists drafts of customers, proposals, projects, and milestones in words", async () => {
     const projectId = "a0000000-0000-4000-8000-000000000001";
     serverAnswers({
-      "GET /api/session": session(["plan:approve", "plan:view"]),
+      "GET /api/session": session([
+        "plan:approve",
+        "plan:view",
+        "features:view",
+      ]),
       "GET /api/release-streams": noStreams,
       "GET /api/projects/choices": noPlanChoices,
       "GET /api/projects": () =>
@@ -631,7 +635,11 @@ describe("the Drafts page", () => {
 
   it("names a draft of a column on Features as being on Features", async () => {
     serverAnswers({
-      "GET /api/session": session(["configuration:approve", "plan:view"]),
+      "GET /api/session": session([
+        "configuration:approve",
+        "plan:view",
+        "features:view",
+      ]),
       "GET /api/release-streams": () =>
         Response.json({
           streams: [],
@@ -685,7 +693,11 @@ describe("the Drafts page", () => {
     const streamOfCycles = fictionalStream();
     const [first, second] = streamOfCycles.cycles;
     serverAnswers({
-      "GET /api/session": session(["plan:approve", "plan:view"]),
+      "GET /api/session": session([
+        "plan:approve",
+        "plan:view",
+        "features:view",
+      ]),
       "GET /api/release-streams": () =>
         Response.json({
           streams: [streamOfCycles],
@@ -740,7 +752,11 @@ describe("the Drafts page", () => {
   it("tries the plan's records again when they could not be loaded", async () => {
     let healthy = false;
     serverAnswers({
-      "GET /api/session": session(["plan:approve", "plan:view"]),
+      "GET /api/session": session([
+        "plan:approve",
+        "plan:view",
+        "features:view",
+      ]),
       "GET /api/release-streams": noStreams,
       "GET /api/people": peopleWith([]),
       "GET /api/lists": () => Response.json({ lists: [] }),
@@ -761,11 +777,12 @@ describe("the Drafts page", () => {
     serverAnswers({
       "GET /api/session": session([
         "plan:approve",
-        "releases:approve",
+        "features:approve",
         "people:approve",
         "hiring-plan:approve",
         "configuration:approve",
         "plan:view",
+        "features:view",
       ]),
       "GET /api/projects": noPlan,
       "GET /api/projects/choices": noPlanChoices,
@@ -814,11 +831,12 @@ describe("the Drafts page", () => {
     const fetch = serverAnswers({
       "GET /api/session": session([
         "plan:approve",
-        "releases:approve",
+        "features:approve",
         "people:approve",
         "hiring-plan:approve",
         "configuration:approve",
         "plan:view",
+        "features:view",
       ]),
       "GET /api/projects": noPlan,
       "GET /api/projects/choices": noPlanChoices,
@@ -1505,8 +1523,8 @@ describe("drafts of feature teams on the Drafts page", () => {
     openDrafts({
       "GET /api/session": session([
         "feature-teams:approve",
-        "org-chart:view",
         "people:view",
+        "feature-teams:view",
       ]),
       "GET /api/people": peopleWith([]),
       "GET /api/feature-teams": () => Response.json({ teams }),

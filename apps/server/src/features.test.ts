@@ -576,7 +576,7 @@ describe("drafts", () => {
     expect(after.draft).toBeUndefined();
   });
 
-  it("need Approve Plan", async () => {
+  it("need Approve Features and releases", async () => {
     const feature = await draftFeature();
     const response = await test.request(
       featureLead.cookie,
@@ -816,7 +816,7 @@ describe("when a stream's cycles change", () => {
     expect(await patternDrafts(streamId)).toEqual([]);
   });
 
-  it("refuses approving a moved feature without Approve Releases", async () => {
+  it("refuses approving a moved feature with Approve Plan alone", async () => {
     const { feature } = await movedFeature();
     const planOnly = await test.signedIn(["plan:approve", "plan:view"]);
     const response = await test.request(
@@ -824,18 +824,6 @@ describe("when a stream's cycles change", () => {
       "POST",
       "/api/drafts/approval",
       { records: featureRecords(feature.id) },
-    );
-    expect(response.statusCode).toBe(403);
-  });
-
-  it("refuses approving the cycles' drafts without Approve Plan when a feature moves", async () => {
-    const { streamId } = await movedFeature();
-    const releasesOnly = await test.signedIn(["releases:approve", "plan:view"]);
-    const response = await test.request(
-      releasesOnly.cookie,
-      "POST",
-      "/api/drafts/approval",
-      { records: await patternDrafts(streamId) },
     );
     expect(response.statusCode).toBe(403);
   });

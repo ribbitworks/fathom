@@ -161,7 +161,7 @@ describe("responses", () => {
           { id: otherRoleId, name: "Fictional Role" },
         ],
         defaultRoleId: otherRoleId,
-        permissions: ["accounts:manage"],
+        permissions: ["administration:edit"],
         mustChangePassword: true,
         settings: {
           timeZone: "America/Vancouver",

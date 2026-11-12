@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The list of feature teams beside the org chart, where a team is opened in its panel, and where
-// those who propose feature teams add one; each team named with its colour, and marked when its
+// those who edit feature teams add one; each team named with its colour, and marked when its
 // draft is waiting. Shown live only, each team is as it is live, marked Live while a draft waits.
 
 import type { FeatureTeam, Show } from "@fathom/shared";

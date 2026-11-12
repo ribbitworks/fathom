@@ -76,10 +76,8 @@ const draft = (fields: Partial<NonNullable<FeatureTeam["draft"]>> = {}) => ({
 });
 
 const everything: FeatureTeamEdits = {
-  propose: true,
-  rename: true,
-  remove: true,
-  colours: true,
+  members: true,
+  undated: true,
   dates: true,
 };
 
@@ -373,12 +371,15 @@ describe("a feature team's panel", () => {
     );
   });
 
-  it("renames and colours nothing without the right to, as on another day", () => {
-    openPanel({ edits: { ...everything, rename: false, colours: false } });
+  it("renames, colours and removes nothing on another day, which they take no date from", () => {
+    openPanel({ edits: { ...everything, undated: false } });
     expect([changeButton("Name"), changeButton("Colour")]).toEqual([
       null,
       null,
     ]);
+    expect(
+      screen.queryByRole("button", { name: "Remove feature team" }),
+    ).toBeNull();
   });
 
   it("chooses the team's colour", async () => {
@@ -398,14 +399,6 @@ describe("a feature team's panel", () => {
       screen.getByRole("button", { name: "Remove feature team" }),
     );
     expect(asked.removeTeam).toHaveBeenCalledWith(team());
-  });
-
-  it("lets those who propose but do not edit feature teams rename, but not remove", () => {
-    openPanel({ edits: { ...everything, remove: false } });
-    expect(changeButton("Name")).not.toBeNull();
-    expect(
-      screen.queryByRole("button", { name: "Remove feature team" }),
-    ).toBeNull();
   });
 });
 

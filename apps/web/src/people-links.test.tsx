@@ -32,6 +32,7 @@ const editor = () =>
       "people:edit",
       "people:view",
       "plan:view",
+      "features:view",
     ],
   });
 
@@ -108,6 +109,7 @@ const classifier = () =>
       "people:edit",
       "people:view",
       "plan:view",
+      "features:view",
       "confidential:view",
       "data:classify",
     ],

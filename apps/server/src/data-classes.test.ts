@@ -161,7 +161,7 @@ describe("a built-in detail's class", () => {
 
   it("is shown in the access history with what moved and its classes", async () => {
     await move("/api/data-classes/managerHistory", "confidential");
-    const reader = await test.signedIn(["history:view"]);
+    const reader = await test.signedIn(["administration:view"]);
     const { entries } = (
       await test.request(reader.cookie, "GET", "/api/access-history")
     ).json<{ entries: { action: string; details: object }[] }>();
@@ -205,7 +205,7 @@ describe("views that need a built-in detail", () => {
 
   it("open to roles once the organization moves its details to General", async () => {
     // Given
-    const reader = await test.signedIn(["org-chart:view"]);
+    const reader = await test.signedIn(["people:view", "feature-teams:view"]);
     expect(
       (await test.request(reader.cookie, "GET", otherDay)).statusCode,
     ).toBe(403);
@@ -226,7 +226,10 @@ describe("views that need a built-in detail", () => {
 
   it("close to roles that do not see the class a detail moves to", async () => {
     const reader = await test.signedIn(seesBoth.slice(0, 2));
-    await test.holdOnly(reader.id, [...seesBoth.slice(0, 2), "org-chart:view"]);
+    await test.holdOnly(reader.id, [
+      ...seesBoth.slice(0, 2),
+      "feature-teams:view",
+    ]);
     expect(
       (await test.request(reader.cookie, "GET", otherDay)).statusCode,
     ).toBe(200);

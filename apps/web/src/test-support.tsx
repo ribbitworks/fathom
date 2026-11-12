@@ -61,7 +61,7 @@ export const fictionalUser = {
   },
   roles: [{ id: "00000000-0000-4000-8000-0000000000a1", name: "Team Member" }],
   defaultRoleId: "00000000-0000-4000-8000-0000000000a1",
-  permissions: ["plan:view"],
+  permissions: ["plan:view", "features:view"],
   mustChangePassword: false,
   settings: {
     timeZone: "America/Vancouver",
