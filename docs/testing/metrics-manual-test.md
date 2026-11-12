@@ -94,7 +94,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - SDET 32 (20.3%)
       - Engineering Manager 17 (10.8%)
       - Architect 0 (0%)
-    - No row shows **Live**.
+    - No row shows a green dot and a second figure.
   - **Notes:**
 
 ### METRICS-03: Two Columns Are Crossed
@@ -145,8 +145,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Open the Draft menu, select **Drafts beside live**, and press Esc. Set **Break down by** to **Grade**, and **and by** to **Nothing more**.
   - **Expected:**
-    - The **P1** row shows a count with a dimmed **Live 17** under it.
-    - Rows whose count drafts do not change show no **Live** figure.
+    - The **P1** row shows a count.
+    - Under the count, a green dot before a dimmed **17**.
+    - Rows whose count drafts do not change show no green dot.
   - **Notes:**
 
 ### METRICS-06: The Panel Is Resized
@@ -232,9 +233,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - **Name** and **ID** stay in place, with the shadow beside them.
     - The header row stays at the top.
-    - Rows tinted blue or yellow for a draft keep their tint in the frozen columns.
+    - Rows tinted faint yellow or faint red for a draft keep their tint in the frozen columns.
     - Each line between rows is one thin line running straight across the frozen columns into the others, no heavier under **Name** and **ID**.
-    - The dashed line between a draft row and its light green **Live** row is dashed all the way across.
+    - The dashed line between a draft row and its light green Live row is dashed all the way across.
   - **Notes:**
 
 - [ ] **Step 4.** In the Appearance menu, select **Dark**, then repeat step 3.

@@ -74,11 +74,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 2.** Select **Releases**, then **Platform** in the table.
-  - **Expected:** The side panel lists **Harbor 1**, **Harbor 2** and **Harbor 3** under **Releases**. There is no **New release…** button and no **New release stream** button.
+  - **Expected:**
+    - Under **Releases**, the side panel lists **Harbor 1**, **Harbor 2 LTS**, **Harbor 3** and **Harbor 4**
+    - A light green Live row is under **Harbor 2 LTS** and under **Harbor 3**
+    - There is no **New release…** button and no **New release stream** button
   - **Notes:**
 
 - [ ] **Step 3.** Select **Drafts**.
-  - **Expected:** The page says **No drafts waiting for approval.**
+  - **Expected:**
+    - Drafts of the plan are listed, among them one naming **Harbor 4**
+    - No entry has a checkbox
+    - There is no **Select all waiting** or **Approve** button
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
@@ -93,12 +99,27 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** A dialog titled **New release in Platform** opens. There is no **New release stream** button at the top right of the page.
   - **Notes:**
 
-- [ ] **Step 2.** Type `Harbor 4` in **Name**, choose Platform's second half-year cycle, such as **28.1 (2028-01-01 to 2028-06-30)**, as both the first and the last cycle, and select **Make release**.
-  - **Expected:** A notification says **Drafted the new release.** Under **Releases**, a row reads **Harbor 4** with a hollow yellow dot and **Draft: added**. The Publish button reads **Publish 1 change**.
+- [ ] **Step 2.** Type `Harbor 5` in **Name**.
+  - **Expected:** **Name** reads **Harbor 5**.
   - **Notes:**
 
-- [ ] **Step 3.** Run Discard the Unpublished Changes.
-  - **Expected:** **Harbor 4** is gone from the side panel.
+- [ ] **Step 3.** In **First cycle**, choose Platform's third half-year cycle: the third in the list whose dates span six months.
+  - **Expected:** **First cycle** shows that cycle.
+  - **Notes:**
+
+- [ ] **Step 4.** In **Last cycle**, choose the same cycle.
+  - **Expected:** **Last cycle** shows that cycle.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Make release**.
+  - **Expected:**
+    - A notification says **Drafted the new release.**
+    - Under **Releases**, a row reads **Harbor 5**, with a hollow yellow dot in its slot
+    - The Publish button reads **Publish 1 change**
+  - **Notes:**
+
+- [ ] **Step 6.** Run Discard the Unpublished Changes.
+  - **Expected:** **Harbor 5** is gone from the side panel.
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
@@ -148,7 +169,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**. Select the row's **Team name** cell, press Enter, replace the text with `Mobile apps team`, and press Enter.
-  - **Expected:** The cell reads **Mobile apps team** and is yellow. The row has a hollow yellow dot and **Draft**. The Publish button reads **Publish 1 change**.
+  - **Expected:**
+    - The cell reads **Mobile apps team**, with a hollow yellow dot before it
+    - The Publish button reads **Publish 1 change**
   - **Notes:**
 
 - [ ] **Step 3.** Run Discard the Unpublished Changes.
@@ -206,11 +229,13 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**. Select the row's **Start** cell, press Enter, type `2010-01-04`, and press Enter.
-  - **Expected:** The cell reads **2010-01-04** and is yellow. The Publish button reads **Publish 1 change**.
+  - **Expected:**
+    - The cell reads **2010-01-04**, with a hollow yellow dot before it
+    - The Publish button reads **Publish 1 change**
   - **Notes:**
 
 - [ ] **Step 3.** Run Discard the Unpublished Changes.
-  - **Expected:** The **Start** cell is no longer yellow.
+  - **Expected:** The **Start** cell has no dot before it.
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
@@ -228,7 +253,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 2.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
-  - **Expected:** Only hire rows are shown, none with a **Draft** mark, and **REQ-2050** is not among them.
+  - **Expected:**
+    - Only hire rows are shown
+    - No row has a dot
+    - **REQ-2050** is not among them
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
@@ -244,7 +272,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**. Select the row's **Offer letter** cell, press Enter, type `https://example.test/offer` in **Address**, and press Enter.
-  - **Expected:** The cell shows the address and is yellow. The Publish button reads **Publish 1 change**.
+  - **Expected:**
+    - The cell shows the address, with a hollow yellow dot before it
+    - The Publish button reads **Publish 1 change**
   - **Notes:**
 
 - [ ] **Step 3.** Run Discard the Unpublished Changes.
@@ -262,7 +292,12 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Team Member granted only **View** on **People** and **View** on **Hiring plan** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
-  - **Expected:** Only hire rows are shown. **REQ-2050** is among them, and it and **Backend engineer 1** have a **Draft** mark. There is no **New** button.
+  - **Expected:**
+    - Only hire rows are shown
+    - **REQ-2050** is among them
+    - **REQ-2050** has a yellow dot in its slot
+    - **Backend engineer 1** has a yellow dot before its **State**, **Approved to hire**
+    - There is no **New** button
   - **Notes:**
 
 - [ ] **Step 2.** Read the column headers, then the **Start** cell of **REQ-2050**.
@@ -290,7 +325,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Backend engineer 2**. Select the row's **Name** cell, press Enter, replace the text with `Backend engineer 3`, and press Enter.
-  - **Expected:** The cell reads **Backend engineer 3** and is yellow. The row has a hollow yellow dot and **Draft**. The Publish button reads **Publish 1 change**.
+  - **Expected:**
+    - The cell reads **Backend engineer 3**, with a hollow yellow dot before it
+    - The Publish button reads **Publish 1 change**
   - **Notes:**
 
 - [ ] **Step 3.** Run Discard the Unpublished Changes.
@@ -320,7 +357,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 4.** Select **Lists**.
-  - **Expected:** **Levels** has no mark. There is no **New list** button.
+  - **Expected:**
+    - **Levels** has no dot
+    - There is no **New list** button
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
@@ -351,15 +390,27 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **Edit** on **Plan**, **Approve** on **Releases** and **Approve** on **Their own drafts** through Grant Team Member Only Some Permissions, signed in with this account. **Releases** page open, with **Platform** selected in the streams table.
 
-- [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 3** row, then **Change…**. Replace the name with `Harbor Three`, and select **Save**.
-  - **Expected:** **Harbor Three** is followed by a hollow yellow dot and **Draft**.
+- [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
+  - **Expected:** A dialog titled **Change Harbor 1** opens.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Publish 1 change** in the top bar, then the **Drafts** page in the left-hand menu, and select the **Harbor Three** entry's checkbox.
+- [ ] **Step 2.** Replace the name with `Harbor One`, and select **Save**.
+  - **Expected:** **Harbor One** has a hollow yellow dot before it.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Publish 1 change** in the top bar.
+  - **Expected:** The Publish button is gone.
+  - **Notes:**
+
+- [ ] **Step 4.** Select the **Drafts** page in the left-hand menu.
+  - **Expected:** An entry names **Harbor One**.
+  - **Notes:**
+
+- [ ] **Step 5.** Select the **Harbor One** entry's checkbox.
   - **Expected:** **Approve 1 draft** can be selected, and no line says another approver is needed.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Approve 1 draft**, then **Approve** in the dialog.
+- [ ] **Step 6.** Select **Approve 1 draft**, then **Approve** in the dialog.
   - **Expected:** A notice reads **Approved 1 draft.**
   - **Notes:**
 
@@ -374,7 +425,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Team Member granted only **View** on **Configuration** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Select **Lists**.
-  - **Expected:** **Skills** has a yellow dot and **Draft: added**. There is no **New list** button.
+  - **Expected:**
+    - **Skills** has a yellow dot in its slot
+    - There is no **New list** button
   - **Notes:**
 
 - [ ] **Step 2.** Select **Releases**.
@@ -398,7 +451,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 2.** Select **New release stream**, type `Testing Stream`, and select **Add stream**.
-  - **Expected:** A notification says **Drafted the new release stream.** The table has a **Testing Stream** row with a hollow yellow dot and **Draft: added**. The Publish button reads **Publish 1 change**.
+  - **Expected:**
+    - A notification says **Drafted the new release stream.**
+    - The table has a **Testing Stream** row, with a hollow yellow dot in its slot
+    - The Publish button reads **Publish 1 change**
   - **Notes:**
 
 - [ ] **Step 3.** Run Discard the Unpublished Changes, and select **Releases**.

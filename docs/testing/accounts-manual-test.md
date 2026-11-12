@@ -392,39 +392,63 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** Under `feature.lead@fathom.test`, **Role** lists **Engineering Manager** and **Feature Lead**, with a tick beside **Feature Lead** only, followed by **Change name**, **Change password**, **Appearance**, and **Sign out**.
   - **Notes:**
 
-- [ ] **Step 2.** Press Escape. Select the **Releases** page in the left-hand menu, then **Platform** in the table.
-  - **Expected:** In the panel beside the table, under **Releases**, the rows **Harbor 1**, **Harbor 2**, and **Harbor 3** have no **⋯** button, and there is no **New release…** button.
+- [ ] **Step 2.** Press Escape.
+  - **Expected:** The account menu closes.
   - **Notes:**
 
-- [ ] **Step 3.** Choose **Engineering Manager** in the role menu.
-  - **Expected:** The menu closes, and the page stays on **Releases** with **Platform** open, without the browser reloading. Under **Releases**, each row now ends with a **⋯** button, and **New release…** shows.
+- [ ] **Step 3.** Select the **Releases** page in the left-hand menu.
+  - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] **Step 4.** Open the account menu, and press Escape.
+- [ ] **Step 4.** Select **Platform** in the table.
+  - **Expected:** In the panel beside the table, under **Releases**:
+    - The **Harbor 1** row has no **⋯** button
+    - There is no **New release…** button
+  - **Notes:**
+
+- [ ] **Step 5.** Choose **Engineering Manager** in the role menu.
+  - **Expected:**
+    - The menu closes
+    - The page stays on **Releases** with **Platform** open, without the browser reloading
+    - Under **Releases**, the **Harbor 1** row now ends with a **⋯** button
+    - **New release…** shows
+  - **Notes:**
+
+- [ ] **Step 6.** Open the account menu, and press Escape.
   - **Expected:** The tick is beside **Engineering Manager** only.
   - **Notes:**
 
-- [ ] **Step 5.** Select the **⋯** button at the end of the **Harbor 3** row, then **Change…**. Replace the name with `Harbor Three`, and select **Save**.
-  - **Expected:** A notification says **Drafted the change to the release.** The row reads **Harbor Three**, with a hollow yellow dot and **Draft**.
+- [ ] **Step 7.** Select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
+  - **Expected:** A dialog titled **Change Harbor 1** opens.
   - **Notes:**
 
-- [ ] **Step 6.** Select the **Publish** button in the top bar.
+- [ ] **Step 8.** Replace the name with `Harbor One`, and select **Save**.
+  - **Expected:**
+    - A notification says **Drafted the change to the release.**
+    - The row reads **Harbor One**, with a hollow yellow dot before its square
+  - **Notes:**
+
+- [ ] **Step 9.** Select the **Publish** button in the top bar.
   - **Expected:** A notification says **Published**, and the button is gone.
   - **Notes:**
 
-- [ ] **Step 7.** Select the **Change history** page in the left-hand menu.
-  - **Expected:** The latest entry names **Harbor Three** and starts with **Feature Lead as Engineering Manager**.
+- [ ] **Step 10.** Select the **Change history** page in the left-hand menu.
+  - **Expected:** The latest entry:
+    - Names **Harbor One**
+    - Starts with **Feature Lead as Engineering Manager**
   - **Notes:**
 
-- [ ] **Step 8.** Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The entry for **Harbor Three** starts with **Feature Lead as Engineering Manager**.
+- [ ] **Step 11.** Select the **Drafts** page in the left-hand menu.
+  - **Expected:** The entry for **Harbor One** starts with **Feature Lead as Engineering Manager**.
   - **Notes:**
 
-- [ ] **Step 9.** Choose **Feature Lead** in the role menu.
-  - **Expected:** The page stays on **Drafts**, and the entry for **Harbor Three** still starts with **Feature Lead as Engineering Manager**.
+- [ ] **Step 12.** Choose **Feature Lead** in the role menu.
+  - **Expected:**
+    - The page stays on **Drafts**
+    - The entry for **Harbor One** still starts with **Feature Lead as Engineering Manager**
   - **Notes:**
 
-- [ ] **Step 10.** Choose **Dark** in the Appearance menu, open the account menu, then press Escape and choose **Light** in the Appearance menu.
+- [ ] **Step 13.** Choose **Dark** in the Appearance menu, open the account menu, then press Escape and choose **Light** in the Appearance menu.
   - **Expected:** In dark mode, the role menu's ticks and names are easy to read.
   - **Notes:**
 

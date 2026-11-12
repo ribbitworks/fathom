@@ -11,7 +11,7 @@ last_updated: "2026-11-11"
 
 ## Scope
 
-Verifies the Lists page's built-in lists, Positions, Hiring states, Proposal statuses and Feature statuses: their mark, the line telling those who may change them that they are theirs to change, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
+Verifies the Lists page's built-in lists, Positions, Hiring states, Proposal statuses and Feature statuses: their grey **Built in** box, the line telling those who may change them that they are theirs to change, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
 
 ## Test Environment
 
@@ -48,15 +48,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Signed in with this account. **Lists** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the **Name** column of the **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses** rows.
-  - **Expected:** Each name has a grey **Built in** label beside it. No other list has one.
+  - **Expected:**
+    - Each name has a grey **Built in** box after it
+    - No other list has one
   - **Notes:**
 
 - [ ] **Step 2.** Select **Positions**.
-  - **Expected:** The panel opens with **Positions** at the top and **Built in** beside it. Under the choices, in grey, it reads three lines: **These can be renamed, added to, or retired.**, **Every person and planned hire has one of these positions.** and **Keep at least one.**
+  - **Expected:** The panel opens with **Positions** at the top and a grey **Built in** box after it. Under the choices, in grey, it reads three lines: **These can be renamed, added to, or retired.**, **Every person and planned hire has one of these positions.** and **Keep at least one.**
   - **Notes:**
 
 - [ ] **Step 3.** Select **Hiring states**.
-  - **Expected:** The panel opens with **Hiring states** at the top and **Built in** beside it. No description is shown under the name. Under the choices, in grey, it reads four lines: **These can be renamed, added to, or retired.**, **Proposed: the request to hire is not yet approved.**, **Open: the request to hire is approved.** and **Keep at least one choice for each.**
+  - **Expected:** The panel opens with **Hiring states** at the top and a grey **Built in** box after it. No description is shown under the name. Under the choices, in grey, it reads four lines: **These can be renamed, added to, or retired.**, **Proposed: the request to hire is not yet approved.**, **Open: the request to hire is approved.** and **Keep at least one choice for each.**
   - **Notes:**
 
 ### LIST-02: Each Hiring State Shows Its Meaning
@@ -76,7 +78,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** As LIST-01, with the **Hiring states** panel open.
 
 - [ ] **Step 1.** In the empty row's meaning menu, choose **Open**. Type **Fictional Interviewing** in the empty row's **Name** box and press Enter.
-  - **Expected:** A row **Fictional Interviewing** appears above the empty row, with a hollow yellow dot and **Draft: added**, and **Open** at the end of the row. The empty row is empty again and its meaning menu still reads **Open**.
+  - **Expected:**
+    - A row **Fictional Interviewing** appears above the empty row, with a hollow yellow dot in its slot, and **Open** at the end of the row
+    - The empty row is empty again, and its meaning menu still reads **Open**
   - **Notes:**
 
 ### LIST-04: The Last Choice for a Meaning Is Kept
@@ -96,7 +100,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** As LIST-04.
 
 - [ ] **Step 1.** Press Esc. Select the **⋯** button at the end of the **Approved to hire** row, then select **Retire**.
-  - **Expected:** The **Approved to hire** row stays where it is, with a hollow yellow dot and **Draft: retired**.
+  - **Expected:** The **Approved to hire** row:
+    - Stays where it is
+    - Has a hollow yellow dot in its slot
+    - Has a yellow **Retired** box after its name
   - **Notes:**
 
 - [ ] **Step 2.** Select the Publish button.
@@ -118,7 +125,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 3.** Select **Cancel**.
-  - **Expected:** The dialog closes. The **Approved to hire** row still has a yellow dot and **Draft: retired**.
+  - **Expected:**
+    - The dialog closes
+    - The **Approved to hire** row still has a yellow dot in its slot
+    - It still has a yellow **Retired** box after its name
   - **Notes:**
 
 ### LIST-07: Positions' Visibility Sets Who Sees the Position Column
@@ -128,7 +138,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** LIST-06 done. Signed in with this account. **Lists** page open, with the **Positions** panel open.
 
 - [ ] **Step 1.** Select **Edit list**. Under **Visible to**, select **Personal**, then select **Save**.
-  - **Expected:** The dialog closes. **Positions** has a hollow yellow dot beside its name.
+  - **Expected:**
+    - The dialog closes
+    - **Positions** has a hollow yellow dot in its slot
   - **Notes:**
 
 - [ ] **Step 2.** Select the Publish button.

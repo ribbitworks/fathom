@@ -11,7 +11,7 @@ last_updated: "2026-11-11"
 
 ## Scope
 
-Verifies a person's or planned hire's details in the side panel beside the org chart and People: what it shows of them, moving to another person, drafted values beside live ones and following the Draft menu, the mark on someone who has left, opening and closing it with the mouse and the keyboard, how it reads in light and dark mode, resized, and in a narrow window, changing their details there, beside People and the org chart, being asked before a changed note is discarded, and adding a person or planned hire from **New**.
+Verifies a person's or planned hire's details in the side panel beside the org chart and People: what it shows of them, moving to another person, drafted values beside live ones and following the Draft menu, the red **Left** box on someone who has left, opening and closing it with the mouse and the keyboard, how it reads in light and dark mode, resized, and in a narrow window, changing their details there, beside People and the org chart, being asked before a changed note is discarded, and adding a person or planned hire from **New**.
 
 ## Test Environment
 
@@ -60,7 +60,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Team name** reads **Platform team**, after a small teal dot.
     - **Direct reports** lists the people under her on the org chart, from **Blaise Gislason** to **武井 聡**, among them:
       - **Tanushree Patel-Singh**
-      - **Simone Jean**, followed by a yellow dot and **Draft**
+      - **Simone Jean**, with a yellow dot before her name
       - **Chatura Abbott**, who has not started yet, followed in grey by **Starts** and a day after today
     - **Marceau Leroux** is not listed.
   - **Notes:**
@@ -101,14 +101,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 2.** Read **Manager** in the **Reporting** section.
   - **Expected:**
-    - It reads **Silje Holm-Schrøder**, a link, followed by a yellow dot and **Draft**.
-    - Under it, in grey, **Viktoria Holmberg** is followed by a green dot and **Live**.
+    - It reads **Silje Holm-Schrøder**, a link.
+    - A yellow dot is before **Silje Holm-Schrøder**.
+    - Under it, a green dot, then **Viktoria Holmberg** in grey, then a red **Left** box.
   - **Notes:**
 
 - [ ] **Step 3.** Read **Team** in the same section.
   - **Expected:**
-    - It reads **Platform team**, followed by a yellow dot and **Draft**.
-    - Under it, in grey, **Search team** is followed by a green dot and **Live**.
+    - It reads **Platform team**, with a yellow dot before it.
+    - Under it, a green dot, then **Search team** in grey.
   - **Notes:**
 
 ### DETAILS-03: The Details Follow the Draft Menu
@@ -119,18 +120,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Select **Draft** above the chart, then **Drafts applied**, then press Esc.
   - **Expected:**
-    - In the panel, **Manager** reads **Silje Holm-Schrøder**, with no mark and nothing under it.
-    - No value has a green dot and **Live**.
+    - In the panel, **Manager** reads **Silje Holm-Schrøder**, with a yellow dot before it.
+    - Nothing is under **Silje Holm-Schrøder**.
+    - No value has a green dot.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Draft**, then **Live only**, then press Esc.
   - **Expected:**
-    - In the panel, **Manager** reads **Viktoria Holmberg**, with no mark.
-    - **Team** reads **Search team**, with no mark.
+    - In the panel, **Manager** reads **Viktoria Holmberg**, with a green dot before it.
+    - A red **Left** box follows **Viktoria Holmberg**.
+    - **Team** reads **Search team**, with a green dot before it.
+    - No value has a yellow dot.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Draft**, then **Drafts beside live**, then press Esc.
-  - **Expected:** In the panel, **Manager** reads **Silje Holm-Schrøder** followed by a yellow dot and **Draft** again.
+  - **Expected:**
+    - In the panel, **Manager** reads **Silje Holm-Schrøder**, with a yellow dot before it again.
+    - **Viktoria Holmberg** is under it.
   - **Notes:**
 
 ### DETAILS-04: Someone Who Has Left Is Marked
@@ -141,7 +147,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Select the name on the card for **Viktoria Holmberg**.
   - **Expected:**
-    - The details panel shows **Viktoria Holmberg**, with a red dot and **Left** after her position.
+    - The details panel shows **Viktoria Holmberg**.
+    - Her position is under the heading, then a red **Left** box.
     - **End** under **Details** shows a date before today.
   - **Notes:**
 
@@ -262,21 +269,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 3.** Select **Kestrel Bay**.
   - **Expected:**
-    - **Site** reads **Kestrel Bay**, followed by a yellow dot and **Draft**.
-    - Under it, in grey, **Corran Quay** is followed by a green dot and **Live**.
+    - **Site** reads **Kestrel Bay**, with a hollow yellow dot before it.
+    - Under it, a green dot, then **Corran Quay** in grey.
     - Her **Site** cell in the table reads **Kestrel Bay** too.
     - Focus is on the change button beside **Site**.
     - No notification shows.
   - **Notes:**
 
 - [ ] **Step 4.** Press Cmd+Z on a Mac, or Ctrl+Z otherwise.
-  - **Expected:** **Site** reads **Corran Quay** again, with no mark, in the panel and the table.
+  - **Expected:** **Site** reads **Corran Quay** again, with no dot, in the panel and the table.
   - **Notes:**
 
 - [ ] **Step 5.** Select the word **None** beside **Team name**, type **Harbour team**, and press Enter.
   - **Expected:**
-    - **Team name** reads **Harbour team**, followed by a yellow dot and **Draft**.
-    - Under it, in grey, **None** is followed by a green dot and **Live**.
+    - **Team name** reads **Harbour team**, with a hollow yellow dot before it.
+    - Under it, a green dot, then **None** in grey.
   - **Notes:**
 
 - [ ] **Step 6.** Select the change button beside **End**, type **2014-01-01**, and press Enter.
@@ -294,7 +301,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 8.** Press Shift+Tab until the change button beside **Position** has focus, then press Enter, choose **SDET** with the down arrow, and press Enter.
   - **Expected:**
     - A list of positions opens, then closes.
-    - **Position** reads **SDET**, followed by a yellow dot and **Draft**.
+    - **Position** reads **SDET**, with a hollow yellow dot before it.
     - **SDET** under the heading at the top of the panel follows it.
   - **Notes:**
 
@@ -326,13 +333,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** In the finder above the chart, type **Lorenza Thiel**, choose her, then select her name on her card.
   - **Expected:**
-    - The details panel shows **Lorenza Thiel**, with **Team name** reading **Harbour team** and a yellow dot and **Draft**, as DETAILS-08 left it.
+    - The details panel shows **Lorenza Thiel**.
+    - **Team name** reads **Harbour team**, with a hollow yellow dot before it.
     - Her card shows **Harbour team** too.
   - **Notes:**
 
 - [ ] **Step 2.** Select the change button beside **Team name**, replace the text with **Quayside team**, and press Enter.
   - **Expected:**
-    - In the panel, **Team name** reads **Quayside team**, followed by a yellow dot and **Draft**.
+    - In the panel, **Team name** reads **Quayside team**, with a hollow yellow dot before it.
     - Within a moment, her card shows **Quayside team** as well.
   - **Notes:**
 
@@ -345,7 +353,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 4.** Type **Laptop ready** in the note, then press Cmd+Z on a Mac, or Ctrl+Z otherwise.
   - **Expected:**
     - **Laptop ready** goes from the note.
-    - **Team name** still reads **Quayside team**, followed by a yellow dot and **Draft**.
+    - **Team name** still reads **Quayside team**, with a hollow yellow dot before it.
     - Her card still shows **Quayside team**.
   - **Notes:**
 
@@ -375,7 +383,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 9.** Select **Lorenza Thiel** under **Direct reports**, then run Restore the Seed Data.
   - **Expected:**
-    - After the reload, her details show no **Draft** mark.
+    - After the reload, her details show no dot.
     - **Team name** reads **None**.
   - **Notes:**
 
@@ -395,7 +403,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 2.** Point at the row for **Engineering Manager, TBD-3**, and select the arrow button at the right of its **Name** cell.
   - **Expected:**
     - The details panel opens, headed **Engineering Manager, TBD-3**.
-    - Under the heading, **Engineering Manager** is followed by a dot and **Planned, expected Nov 2026**.
+    - Under the heading, **Engineering Manager**, then a grey box reading **Planned, expected** and this month, such as **Nov 2026**.
     - There is no **Show on org chart** link.
   - **Notes:**
 
@@ -416,7 +424,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 5.** Select the change button beside **Name**, type **Fictional test lead**, and press Enter.
   - **Expected:**
-    - **Name** reads **Fictional test lead**, followed by a yellow dot and **Draft**.
+    - **Name** reads **Fictional test lead**, with a hollow yellow dot before it.
     - The heading reads **Fictional test lead**.
     - Its row in the table reads **Fictional test lead** too.
   - **Notes:**
@@ -454,9 +462,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 4.** Select the change button beside **Position** and choose **Software Engineer**, then the change button beside **Grade** and choose **P2**, then select **Add**.
   - **Expected:**
-    - The panel shows **Fictional Newcomer**, with **Software Engineer** under the heading, followed by a hollow yellow dot and **Draft: added**.
+    - The panel's heading: a hollow yellow dot, then **Fictional Newcomer**, with **Software Engineer** under it.
     - Change buttons show beside its values.
-    - Her row is in the table with the same mark.
+    - Her row is in the table, with a hollow yellow dot in its slot.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.

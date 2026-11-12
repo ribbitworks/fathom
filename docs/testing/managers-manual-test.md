@@ -11,7 +11,7 @@ last_updated: "2026-11-11"
 
 ## Scope
 
-Verifies the People table's **Manager**, **Manager?**, **Manager assigned**, **Team** and **Team name** columns: who can be picked as a manager, checking and clearing **Manager?** as drafts, the rule that refuses clearing it, team names, the mark on a manager who has left, filtering and sorting by **Manager?**, and what a Resource Planner sees.
+Verifies the People table's **Manager**, **Manager?**, **Manager assigned**, **Team** and **Team name** columns: who can be picked as a manager, checking and clearing **Manager?** as drafts, the rule that refuses clearing it, team names, the red **Left** box on a manager who has left, filtering and sorting by **Manager?**, and what a Resource Planner sees.
 
 ## Test Environment
 
@@ -87,8 +87,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Search for **Lilian Lang**. Click once in the row's **Manager?** cell.
   - **Expected:**
-    - The box is checked, and the cell turns yellow.
-    - The row has a hollow yellow dot and **Draft**.
+    - The box is checked, with a hollow yellow dot before it.
+    - The cell turns yellow.
   - **Notes:**
 
 - [ ] **Step 2.** Select the Publish button.
@@ -134,7 +134,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 1.** Search for **Max Munk**. Click once in the row's **Manager?** cell.
   - **Expected:**
     - A message reads **Reassign direct reports first**.
-    - The box stays checked, and the row has no **Draft** mark.
+    - The box stays checked.
+    - The row has no dot.
   - **Notes:**
 
 ### MGR-06: Changing a Manager Moves the Person to Their New Manager's Team
@@ -146,9 +147,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 1.** Search for **Samuel Richter**, whose **Manager** cell reads **Atmananda Ganaka** and **Team** cell **Payments team**. Select the row's **Manager** cell, press Enter, type **Max**, and choose **Max Munk**.
   - **Expected:**
     - The **Manager** cell reads **Max Munk**, in yellow.
+    - A hollow yellow dot is before **Max Munk**.
     - The **Team** cell reads **Mobile team**, in yellow.
     - The **Manager assigned** cell holds today's date.
-    - The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
 - [ ] **Step 2.** Select the **⋯** button at the end of the row, then **Discard draft**.
@@ -166,13 +167,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 1.** Search for **Lorenza Thiel**. Select the row's **Team name** cell, type **Fictional Crew**, and press Enter.
   - **Expected:**
     - The **Team name** cell reads **Fictional Crew**, in yellow.
-    - The row has a hollow yellow dot and **Draft**.
+    - A hollow yellow dot is before **Fictional Crew**.
   - **Notes:**
 
 - [ ] **Step 2.** Select the **⋯** button at the end of the row, then **Discard draft**.
   - **Expected:**
     - The **Team name** cell is empty.
-    - The row has no **Draft** mark.
+    - The row has no dot.
   - **Notes:**
 
 ### MGR-08: A Manager Who Has Left Is Marked
@@ -182,7 +183,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** As MGR-05.
 
 - [ ] **Step 1.** Search for **西尾 亮**.
-  - **Expected:** In **西尾 亮**'s row, the **Manager** cell reads **Viktoria Holmberg**, followed by a red dot and **Left**.
+  - **Expected:** In **西尾 亮**'s row, the **Manager** cell reads **Viktoria Holmberg**, followed by a red **Left** box.
   - **Notes:**
 
 ### MGR-09: People Are Filtered and Sorted by Manager?
@@ -222,9 +223,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 2.** Search for **Max Munk**. Click once in the row's **Manager?** cell.
   - **Expected:**
     - The box stays checked.
-    - The row has no **Draft** mark.
+    - The row has no dot.
   - **Notes:**
 
 - [ ] **Step 3.** Search for **西尾 亮**.
-  - **Expected:** In **西尾 亮**'s row, the **Manager** cell reads **Viktoria Holmberg**, with no **Left** mark.
+  - **Expected:** In **西尾 亮**'s row, the **Manager** cell reads **Viktoria Holmberg**, with no **Left** box.
   - **Notes:**

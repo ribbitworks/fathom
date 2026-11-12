@@ -75,9 +75,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 5.** Choose **Dark** in the Appearance menu, and look over the same rows.
   - **Expected:** These are all easy to read and tell apart:
     - the grey names
-    - the yellow draft cells
-    - the red rejected cells
-    - the light green **Live** rows under the drafted hires
+    - the faint yellow rows of drafted hires
+    - the faint red row of **Payments tester**
+    - the light green Live rows under the drafted hires
   - **Notes:**
 
 - [ ] **Step 6.** Choose **Light** in the Appearance menu.
@@ -92,8 +92,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Search for **SDET, REQ-2042**. Select the row's **Name** cell, type **Fictional test lead**, and press Enter.
   - **Expected:**
-    - The cell reads **Fictional test lead** in the usual colour and turns yellow.
-    - The row has a hollow yellow dot and **Draft**.
+    - The cell reads **Fictional test lead** in the usual colour, with a hollow yellow dot before it.
   - **Notes:**
 
 - [ ] **Step 2.** Clear the search, and search for **Fictional test lead**. Select the row's **Name** cell, press Backspace, and press Enter if an editor opened.
@@ -144,7 +143,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The row is added with an ID starting with **TBD-**.
     - Its **Name** reads **SDET, TBD-** followed by the same number, in grey italics.
-    - The row has a hollow yellow dot and **Draft**.
+    - The row has a hollow yellow dot in its slot.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -159,9 +158,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - Second line: Tab, **REQ-3002**, Tab, **Software Engineer**, Tab, **Request to hire**.
 
 - [ ] **Step 1.** Copy both lines. Select the **Name** cell of the empty row at the bottom of the table, and paste.
-  - **Expected:** Two hire rows are added, each reading **Request to hire** in **State**, with a hollow yellow dot and **Draft**:
+  - **Expected:** Two hire rows are added:
     - **Fictional pasted hire**, with ID **REQ-3001**
     - **Software Engineer, REQ-3002**, in grey italics
+    - Each reads **Request to hire** in **State**
+    - Each has a hollow yellow dot in its slot
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -175,7 +176,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 1.** Select **New** at the top right. In the panel, choose **Request to hire** in **State**, type **Fictional platform hire** in **Name** and **REQ-3100** in **ID**, choose **Software Engineer** in **Position**, and select **Add**.
   - **Expected:**
     - The panel shows **Fictional platform hire**.
-    - Its row in the table has a hollow yellow dot and **Draft**, and **Request to hire** in **State**.
+    - Its row in the table has a hollow yellow dot in its slot.
+    - Its row reads **Request to hire** in **State**.
   - **Notes:**
 
 - [ ] **Step 2.** Select the Publish button.
@@ -193,7 +195,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 5.** Sign in as the Resource Planner, `resource.planner@fathom.test`, changing account. Open **People** and search for **Fictional platform hire**.
-  - **Expected:** One hire row, with no **Draft** mark, reading:
+  - **Expected:** One hire row, with no dot, reading:
     - **REQ-3100** in **ID**
     - **Software Engineer** in **Position**
     - **Request to hire** in **State**
@@ -209,7 +211,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
   - **Expected:**
-    - Only hire rows are shown, and none has a **Draft** mark.
+    - Only hire rows are shown.
+    - None has a dot.
     - There is no **Start** column.
     - **REQ-2036** is among them, and **REQ-2050** is not.
   - **Notes:**
@@ -243,8 +246,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 2.** Select the row's **Site** cell, press Enter, choose **Ashgrove**, and press Enter.
   - **Expected:**
-    - The cell reads **Ashgrove** and turns yellow.
-    - The row has a hollow yellow dot and **Draft**.
+    - The cell reads **Ashgrove**, with a hollow yellow dot before it.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -309,7 +311,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** Only people are shown, **Viktoria Holmberg** among them. Every **State** cell reads **Left**, and every **End** cell holds a date that has passed.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **State** cell of the first row with no **Draft** mark beside its name, and press Enter.
+- [ ] **Step 2.** Select the **State** cell of the first row with no dot, and press Enter.
   - **Expected:** A picker opens offering **Left** only. Press Esc to close it.
   - **Notes:**
 
@@ -389,7 +391,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 6.** Click once in the row's **Manager?** cell.
   - **Expected:**
     - A message reads **Reassign direct reports first**.
-    - The box stays checked, and the row has no **Draft** mark.
+    - The box stays checked.
+    - The row has no dot.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -418,8 +421,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 3.** Type **Fictional new starter** in **Name** and **EMP-9001** in **ID**, and select **Fill** at the foot of the panel.
   - **Expected:**
-    - The form closes, and the panel is headed **Fictional new starter**, with a hollow yellow dot and **Draft**.
-    - The **Backend engineer 2** row no longer has a **Fill** button, and has a hollow yellow dot and **Draft**.
+    - The form closes.
+    - The panel is headed **Fictional new starter**, with a hollow yellow dot before it.
+    - The **Backend engineer 2** row no longer has a **Fill** button.
+    - The **Backend engineer 2** row has a hollow yellow dot in its slot.
   - **Notes:**
 
 - [ ] **Step 4.** Select the button with an arrow out of a box at the right of the **Backend engineer 2** row's **Name** cell.
@@ -430,7 +435,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 5.** Clear the search box, and type **Fictional new starter**.
-  - **Expected:** One row, with a hollow yellow dot and **Draft**.
+  - **Expected:** One row, with a hollow yellow dot in its slot.
   - **Notes:**
 
 - [ ] **Step 6.** Select the Publish button.
@@ -449,7 +454,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 9.** Open **People** and type **Fictional new starter** in the search box, then search for **Backend engineer 2**.
   - **Expected:**
-    - For **Fictional new starter**, one row, with no **Draft** mark, reading **Software Engineer** in **Position**, a name in **Manager**, and **Ashgrove** in **Site**.
+    - For **Fictional new starter**, one row:
+      - No dot
+      - **Software Engineer** in **Position**
+      - A name in **Manager**
+      - **Ashgrove** in **Site**
     - For **Backend engineer 2**, no row named **Backend engineer 2**.
   - **Notes:**
 
@@ -492,8 +501,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 5.** Select **Fill** at the foot of the panel.
   - **Expected:**
     - The form closes, and the panel is headed with the person chosen in Step 3.
-    - Its **Manager** row reads the name chosen in Step 4, with a yellow dot and **Draft** beside it.
-    - Its **Position** row reads the planned hire's position, with a yellow dot and **Draft** beside it.
+    - Its **Manager** row reads the name chosen in Step 4, with a hollow yellow dot before it.
+    - Its **Position** row reads the planned hire's position, with a hollow yellow dot before it.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -531,8 +540,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 6.** Clear the search box, and type **Platform engineer TBD**.
   - **Expected:**
-    - The **Manager** cell of **Platform engineer** reads **Fictional new lead**.
-    - The row has a hollow yellow dot and **Draft**.
+    - The **Manager** cell of **Platform engineer** reads **Fictional new lead**, with a hollow yellow dot before it.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.

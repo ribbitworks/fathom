@@ -43,7 +43,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Find the row **Offline Sync**, and look at its **Projects** cell.
-  - **Expected:** It names **Clinic Booking**, with no ID before it, then **Crane Control**, with **P-2001** in grey before it, separated by a comma.
+  - **Expected:**
+    - It names **Clinic Booking Rollout** first, with no ID before it.
+    - Then **Crane Control**, with **P-2001** in grey before it.
+    - A comma separates the two.
   - **Notes:**
 
 - [ ] **Step 2.** Look at the **Proposals** cell of **Offline Sync**.
@@ -51,7 +54,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Point at the **Projects** cell of **Offline Sync**.
-  - **Expected:** A tip lists **Clinic Booking** and **P-2001 Crane Control**, each on a line of its own.
+  - **Expected:** A tip lists **Clinic Booking Rollout** and **P-2001 Crane Control**, each on a line of its own.
   - **Notes:**
 
 - [ ] **Step 4.** Switch Fathom between light and dark mode, and look at the **Projects** and **Proposals** cells.
@@ -68,7 +71,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Select **Show details** in the **⋯** menu of **Offline Sync**.
   - **Expected:**
-    - The side panel lists **Clinic Booking** and **Crane Control** under **Projects**.
+    - The side panel lists **Clinic Booking Rollout** and **Crane Control** under **Projects**.
     - It lists **Clinic Scheduling Pilot** and **Harbour Cranes Upgrade** under **Proposals**.
     - Each name is a link on a line of its own, with its ID in grey before it where it has one.
   - **Notes:**
@@ -109,20 +112,22 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Select the **Projects** cell of **Bulk Import**, and press Enter.
   - **Expected:**
-    - A list of projects opens, with a search box, each project named by its ID, where it has one, then its name, such as **P-1984 Transit Displays**.
+    - A list of projects opens, with a search box, each project named by its ID, where it has one, then its name, such as **P-2001 Crane Control**.
     - None is picked.
   - **Notes:**
 
-- [ ] **Step 2.** Pick **P-1984 Transit Displays**, and press Enter.
+- [ ] **Step 2.** Pick **Internal Tools**, and press Enter.
   - **Expected:**
-    - The list closes, and the cell names **Transit Displays**, with **P-1984** in grey before it.
-    - **Bulk Import** has no mark.
+    - The list closes.
+    - The cell names **Internal Tools**.
+    - **Bulk Import** has no dot.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **Projects** page in the left-hand menu.
-  - **Expected:**
-    - **Transit Displays** has a hollow yellow dot and **Draft**.
-    - Its **Features** cell names **Bulk Import** and **Data Retention Controls**, and the light green **Live** row under it names **Data Retention Controls** alone.
+  - **Expected:** In the row **Internal Tools**:
+    - Its **Features** cell names **Bulk Import** and **Usage Alerts**.
+    - A hollow yellow dot is before them.
+    - The light green Live row under it names **Usage Alerts** alone in its **Features** cell.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **Features** page in the left-hand menu, then **New feature**.

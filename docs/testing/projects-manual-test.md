@@ -145,8 +145,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 9.** Select **Add**.
   - **Expected:**
-    - The side panel is now headed **Testing Customer**, with a hollow yellow dot and **Draft: added**.
-    - The table has a row for it with the same mark.
+    - The side panel is now headed **Testing Customer**, with a hollow yellow dot before it.
+    - The table has a row for it, with a hollow yellow dot in its slot.
   - **Notes:**
 
 ### PROJ-03: The Product Manager Adds a Proposal and Changes Its Status
@@ -171,7 +171,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 4.** Select **Add**.
   - **Expected:**
-    - The side panel is headed **Testing Proposal** with a hollow yellow dot and **Draft: added**.
+    - The side panel is headed **Testing Proposal**, with a hollow yellow dot before it.
     - **Status** reads **Open**.
   - **Notes:**
 
@@ -186,7 +186,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 7.** Type `Won` and press Enter.
   - **Expected:**
     - The cell reads **Won**.
-    - The mark is still **Draft: added**, and the side panel shows **Status** as **Won**.
+    - The row's slot still has its hollow yellow dot.
+    - Pointing at the dot shows **Draft: added**.
+    - The side panel shows **Status** as **Won**.
   - **Notes:**
 
 ### PROJ-04: The Product Manager Adds a Project With Milestones
@@ -217,7 +219,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 6.** Select **Add**.
   - **Expected:**
-    - The side panel is headed **Testing Project** with a hollow yellow dot and **Draft: added**, with the owner, **Testing Customer** and **Testing Proposal**.
+    - The side panel is headed **Testing Project**, with a hollow yellow dot before it.
+    - It shows the owner, **Testing Customer** and **Testing Proposal**.
     - **First milestone**, **Last milestone** and **Next delivery** read **None**.
     - Under **Milestones** are **No milestones yet** and an **Add milestone** button.
     - The table has a row for it.
@@ -258,7 +261,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 15.** Select **Add milestone** in the dialog.
   - **Expected:**
     - The dialog closes.
-    - Under **Milestones**, **Pilot** shows on one line with a hollow yellow dot and **Draft: added**, and under it the date for 2030-03-15 and **, customer delivery**.
+    - Under **Milestones**, **Pilot** shows on one line, with a hollow yellow dot before it.
+    - Under **Pilot**, the date for 2030-03-15 and **, customer delivery**.
     - The **⋯** button is at the right of the panel.
   - **Notes:**
 
@@ -282,7 +286,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 20.** Run Publish.
-  - **Expected:** The marks on the customer, proposal, project and both milestones are now solid yellow dots with **Draft: added**.
+  - **Expected:** The dots before the customer, proposal, project and both milestones are now solid yellow.
   - **Notes:**
 
 ### PROJ-05: The Milestones Tab and a Project's Milestones
@@ -313,7 +317,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Project** already reads **TP-1 Testing Project**.
   - **Notes:**
 
-- [ ] **Step 5.** Type `Handover` in **Name**.
+- [ ] **Step 5.** Type `Sign-off` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
@@ -324,21 +328,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 7.** Select **Add**.
   - **Expected:**
     - The side panel closes.
-    - **Handover** is added with a hollow yellow dot and **Draft: added**.
+    - **Sign-off** is added, with a hollow yellow dot in its slot.
   - **Notes:**
 
 - [ ] **Step 8.** Select the **×** on the **Project: TP-1 Testing Project** pill.
   - **Expected:** Every project's milestones show again.
   - **Notes:**
 
-- [ ] **Step 9.** In the ⋯ menu of **Handover**, select **Show project**.
+- [ ] **Step 9.** In the ⋯ menu of **Sign-off**, select **Show project**.
   - **Expected:**
     - The **Projects** tab opens with **Testing Project**'s side panel, where **Last milestone** now shows 2030-09-01.
-    - **Handover** is listed after **Go live**.
+    - **Sign-off** is listed after **Go live**.
   - **Notes:**
 
 - [ ] **Step 10.** Run Publish.
-  - **Expected:** **Handover**'s mark becomes a solid yellow dot.
+  - **Expected:** **Sign-off**'s dot is now solid yellow.
   - **Notes:**
 
 ### PROJ-06: The Project Manager Approves the Drafts
@@ -356,7 +360,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **the customer Testing Customer**
     - **the proposal Testing Proposal**
     - **the project Testing Project**
-    - **the milestone Pilot of Testing Project**, and **Go live** and **Handover** likewise
+    - **the milestone Pilot of Testing Project**, and **Go live** and **Sign-off** likewise
   - **Notes:**
 
 - [ ] **Step 3.** Select the **Projects** page in the left-hand menu.
@@ -373,7 +377,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 6.** Select **Approve** in the dialog.
   - **Expected:**
-    - The mark goes.
+    - The dot goes.
     - **Testing Customer** is live.
   - **Notes:**
 
@@ -390,11 +394,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 10.** Select **Approve** in the dialog.
-  - **Expected:** **Testing Project** has no mark.
+  - **Expected:** **Testing Project** has no dot.
   - **Notes:**
 
 - [ ] **Step 11.** Open **Show details** of **Testing Project**.
-  - **Expected:** The side panel shows **Pilot**, **Go live** and **Handover** under **Milestones**, still marked **Draft: added**.
+  - **Expected:**
+    - The side panel shows **Pilot**, **Go live** and **Sign-off** under **Milestones**.
+    - Each still has a yellow dot before it.
   - **Notes:**
 
 - [ ] **Step 12.** Select the **Milestones** tab.
@@ -410,7 +416,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 15.** Select **Approve** in the dialog.
-  - **Expected:** **Pilot**, **Go live** and **Handover** have no marks.
+  - **Expected:** **Pilot**, **Go live** and **Sign-off** have no dots.
   - **Notes:**
 
 - [ ] **Step 16.** Select the **Projects** tab.
@@ -424,17 +430,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. Run after PROJ-06. **Projects** tab open.
 
 - [ ] **Step 1.** Open **Show details** of **Testing Project**.
-  - **Expected:** The side panel shows **Testing Project**, with **Handover** under **Milestones**.
+  - **Expected:**
+    - The side panel shows **Testing Project**.
+    - **Sign-off** is under **Milestones**.
   - **Notes:**
 
-- [ ] **Step 2.** In the ⋯ menu of **Handover**, select **Edit…**.
+- [ ] **Step 2.** In the ⋯ menu of **Sign-off**, select **Edit…**.
   - **Expected:** The **Edit milestone** dialog opens.
   - **Notes:**
 
 - [ ] **Step 3.** Change **Date** to `20301015` and select **Save**.
   - **Expected:**
-    - **Handover** shows a hollow yellow dot and **Draft**.
-    - **Last milestone** shows 2030-10-15, with 2030-09-01 under it, dimmed, after a green dot and **Live**.
+    - **Sign-off**'s new date has a hollow yellow dot before it.
+    - **Last milestone** shows 2030-10-15, with a hollow yellow dot before it.
+    - Under it, 2030-09-01, with a green dot before it.
   - **Notes:**
 
 - [ ] **Step 4.** Close the side panel.
@@ -443,7 +452,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 5.** In the ⋯ menu of **Testing Project**, select **Remove project**.
   - **Expected:**
-    - **Testing Project** is struck through, with a hollow yellow dot and **Draft: removed**.
+    - A hollow yellow dot is in **Testing Project**'s slot.
+    - The row is struck through.
     - Its cells no longer open for editing.
   - **Notes:**
 
@@ -454,7 +464,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 7.** Run Publish.
-  - **Expected:** The marks become solid yellow dots.
+  - **Expected:** The hollow dots are now solid yellow.
   - **Notes:**
 
 ### PROJ-08: The Project Manager Approves the Removal
@@ -475,7 +485,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** It is not listed any more.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **Milestones** tab, and look for **Pilot**, **Go live** and **Handover**.
+- [ ] **Step 4.** Select the **Milestones** tab, and look for **Pilot**, **Go live** and **Sign-off**.
   - **Expected:** None of them is listed any more.
   - **Notes:**
 
@@ -517,16 +527,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Projects** page open, **Proposals** tab chosen.
 
-- [ ] **Step 1.** In the first row of the table, open the row's ⋯ menu and select **Show details**.
+- [ ] **Step 1.** In the row **Harbour Cranes Upgrade**, open the row's ⋯ menu and select **Show details**.
   - **Expected:**
-    - The side panel opens, headed with the proposal's name.
+    - The side panel opens, headed **Harbour Cranes Upgrade**.
     - Its first row is **Name**, and each row has a small pencil button at its right.
   - **Notes:**
 
 - [ ] **Step 2.** Select the pencil beside **Proposal ID**, select the **×** at the end of the box if it holds anything, type `PRO-9000`, and press Enter.
   - **Expected:**
-    - **Proposal ID** shows `PRO-9000`, with its earlier value under it, dimmed, after a green dot and **Live**.
-    - A yellow dot and **Draft** show beside the name at the top of the panel.
+    - **Proposal ID** shows `PRO-9000`, with a hollow yellow dot before it.
+    - Under it, **PR-101**, with a green dot before it.
     - The proposal's row in the table shows `PRO-9000` too.
   - **Notes:**
 
@@ -550,7 +560,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 6.** Open the **Draft** menu and select **Live only**.
   - **Expected:**
     - The panel shows no pencil buttons.
-    - **Proposal ID** shows its earlier value.
+    - **Proposal ID** shows **PR-101**.
   - **Notes:**
 
 ### PROJ-11: A Project's and a Proposal's Features
@@ -589,12 +599,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. Run after PROJ-11. **Projects** page open, **Projects** tab chosen.
 
-- [ ] **Step 1.** Select the **Features** cell of a project that names one feature, write the project's name in the notes, and press Enter.
-  - **Expected:** A list of features opens, with a search box, and that feature marked as picked.
+- [ ] **Step 1.** Select the **Features** cell of **Internal Tools**, and press Enter.
+  - **Expected:**
+    - A list of features opens, with a search box.
+    - **Usage Alerts** is marked as picked.
   - **Notes:**
 
 - [ ] **Step 2.** Pick one more feature from the list, and press Esc.
   - **Expected:**
-    - The list closes, and the cell names both features.
-    - The row is tinted light blue, with a hollow yellow dot and **Draft** after the project's name, and under it a light green **Live** row whose **Features** cell names the one feature it had.
+    - The list closes.
+    - The cell names both features, with a hollow yellow dot before them.
+    - The row is tinted faint yellow.
+    - Under it, a light green Live row's **Features** cell names **Usage Alerts** alone.
   - **Notes:**

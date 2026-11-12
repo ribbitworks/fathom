@@ -60,7 +60,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] **Step 4.** Type `Score` in **Name**, then select **Add column**.
   - **Expected:**
     - The dialog closes, and a **Score** column with empty cells is at the right end of the table.
-    - The whole of **Draft: added** shows under its name.
+    - A hollow yellow dot is before **Score** in the header.
   - **Notes:**
 
 ### NUM-02: Numbers Read Well in Cells
@@ -72,7 +72,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] **Step 1.** In the first three rows' Score cells, type `1234.5`, `-7` and `0`, pressing Enter after each.
   - **Expected:**
     - The cells read **1,234.5**, **-7** and **0**, or as the browser's language writes them.
-    - Each is marked as a draft.
+    - Each has a hollow yellow dot before it.
   - **Notes:**
 
 - [ ] **Step 2.** In the fourth row's Score cell, type `abc` and press Enter.

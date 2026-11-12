@@ -33,7 +33,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 As [Manual Test Basics](manual-test-basics.md#terms) sets out, and:
 
-- **Scope history:** the list at the foot of a project's or a proposal's side panel, under the heading **Scope history**. Each row names a feature, with a grey line under it saying **Added** or **Removed** and the date, and any reason under that. A draft's row is at the top, marked **Draft**, dated the day it was drafted.
+- **Scope history:** the list at the foot of a project's or a proposal's side panel, under the heading **Scope history**. Each row names a feature, with a grey line under it saying **Added** or **Removed** and the date, and any reason under that. A draft's row is at the top, with a yellow dot before the feature's name, dated the day it was drafted.
 
 ## Test Cases
 
@@ -103,7 +103,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The first row under **Scope history** names **Report Builder**.
     - The first row reads **Removed** and a date, in grey.
     - The first row reads **Reason: Reporting dropped from the bid**.
-    - The first row has no mark.
+    - The first row has no dot.
     - The next three rows name, from the top:
       - Data Retention Controls
       - Report Builder
@@ -170,7 +170,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - Audit Export
       - Offline Sync
     - The first row's top line holds, from left to right:
-      - A hollow yellow dot and **Draft**
+      - A hollow yellow dot
       - **Offline Sync**
     - The first row's next line reads **Removed** and today's date, in grey.
     - The first row's last line reads **Reason: Customer chose another supplier**.
@@ -205,48 +205,56 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Projects** page open, **Proposals** tab chosen.
 
-- [ ] **Step 1.** Select **Show details** in the **⋯** menu of **Cabin Wi-Fi Refresh**, then the pencil button beside **Features** in the side panel.
+- [ ] **Step 1.** Select **Show details** in the **⋯** menu of **Clinic Scheduling Pilot**.
+  - **Expected:** The side panel opens, headed **Clinic Scheduling Pilot**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the pencil button beside **Features** in the side panel.
   - **Expected:**
     - A list of features opens.
     - These are picked:
-      - Mobile Approvals
-      - Voice Notes
+      - Offline Sync
+      - Scheduler API
   - **Notes:**
 
-- [ ] **Step 2.** Unpick **Voice Notes**, and press Enter.
+- [ ] **Step 3.** Unpick **Scheduler API**, and press Enter.
   - **Expected:**
     - The **Reason for the removal** dialog opens.
-    - It reads **Voice Notes is removed from Cabin Wi-Fi Refresh.**
+    - It reads **Scheduler API is removed from Clinic Scheduling Pilot.**
   - **Notes:**
 
-- [ ] **Step 3.** Type `x` in **Reason (optional)**, then select the **×** at the right of the box.
+- [ ] **Step 4.** Type `x` in **Reason (optional)**, then select the **×** at the right of the box.
   - **Expected:** The box is empty.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Save**.
+- [ ] **Step 5.** Select **Save**.
   - **Expected:**
     - The dialog closes.
-    - **Features** in the side panel names **Mobile Approvals** alone.
+    - **Features** in the side panel names **Offline Sync** alone.
   - **Notes:**
 
-- [ ] **Step 5.** Look under **Scope history** in the side panel.
+- [ ] **Step 6.** Look under **Scope history** in the side panel.
   - **Expected:**
-    - The first row under **Scope history** names **Voice Notes**.
-    - The first row has a hollow yellow dot and **Draft**.
+    - The first row under **Scope history** names **Scheduler API**.
+    - The first row has a hollow yellow dot before **Scheduler API**.
     - The first row reads **Removed** and today's date, in grey.
     - The first row shows no reason.
   - **Notes:**
 
-- [ ] **Step 6.** Open the Draft menu, and select **Live only**.
+- [ ] **Step 7.** Open the Draft menu, and select **Live only**.
   - **Expected:**
-    - No row has a **Draft** mark.
+    - No row has a yellow dot.
     - No row reads **Removed**.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Drafts beside live**, then run Publish.
+- [ ] **Step 8.** Select **Drafts beside live**.
   - **Expected:**
-    - The **Voice Notes** row reading **Removed** is back at the top.
-    - Its **Draft** mark has a filled yellow dot.
+    - The **Scheduler API** row reading **Removed** is back at the top.
+    - It has a hollow yellow dot before **Scheduler API**.
+  - **Notes:**
+
+- [ ] **Step 9.** Run Publish.
+  - **Expected:** The dot before **Scheduler API** is now solid yellow.
   - **Notes:**
 
 ### SCOPE-06: The Feature Lead Sees the Reason Without Changing It
@@ -270,7 +278,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 1.** In the **⋯** menu of **Harbour Cranes Upgrade**, select **Approve…**, then **Approve** in the dialog.
   - **Expected:**
     - A notification says **Approved 1 draft.**
-    - The row has no mark.
+    - The row has no dot.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
@@ -279,7 +287,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - Offline Sync
       - Audit Export
       - Offline Sync
-    - The first row has no mark.
+    - The first row has no dot.
     - The first row reads **Removed** and today's date, in grey.
     - The first row reads **Reason: Customer delayed the upgrade**.
     - The first row has no **Change reason** button.

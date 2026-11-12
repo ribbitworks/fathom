@@ -214,7 +214,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Select the left arrow beside the timeline once.
-  - **Expected:** The team led by the card that names **Search**, the lead and the members stacked under that card, are the same people as noted in step 1.
+  - **Expected:**
+    - A card names **Search and discovery**, with a yellow dot before it.
+    - The lead and the members stacked under that card are the same people as noted in step 1.
   - **Notes:**
 
 ### FA-11: Months Outside Someone's Employment Are Shaded
@@ -283,9 +285,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The text below the timeline ends **Changes take effect from this date.**
   - **Notes:**
 
-- [ ] **Step 2.** Select the Feature teams button, then **Platform reliability**. Note the first name in the **Members** row: the leaver.
+- [ ] **Step 2.** Select the Feature teams button, then **Payments core**. Note the first name in the **Members** row that is not the one in **Feature lead**: the leaver.
   - **Expected:**
-    - The team panel opens, titled **Platform reliability**.
+    - The team panel opens, titled **Payments core**.
     - Its members are listed in the **Members** row.
   - **Notes:**
 
@@ -299,32 +301,32 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 5.** Select the **Feature assignments** page in the left-hand menu. Select **None** in the Group by menu, and type the joiner's name in the search box.
   - **Expected:**
-    - The joiner's row is tinted blue.
-    - A hollow yellow dot and **Draft** are beside their name.
-    - A light green row under it is marked **Live**.
+    - The joiner's row is tinted faint yellow.
+    - A light green Live row is under it.
   - **Notes:**
 
-- [ ] **Step 6.** Look along the joiner's tinted row, from two months ago to the right.
+- [ ] **Step 6.** Look along the joiner's row, from two months ago to the right.
   - **Expected:**
-    - The cell two months ago has no yellow, and holds the same labels as the light green row's cell under it.
-    - From last month on, each cell is yellow and holds a **Platform reliability** label with a hollow yellow dot inside it, beside any other labels.
+    - The cell two months ago holds the same labels as the Live row's cell under it.
+    - The labels in the cell two months ago have no dot.
+    - From last month on, each cell holds a **Payments core** label with a hollow yellow dot inside it, before the name, beside any other labels.
   - **Notes:**
 
 - [ ] **Step 7.** Look along the light green row under it.
   - **Expected:**
-    - Its cells hold no **Platform reliability** label.
+    - Its cells hold no **Payments core** label.
     - Any other labels are in their colours.
   - **Notes:**
 
 - [ ] **Step 8.** Empty the search box and type the leaver's name.
   - **Expected:**
-    - From last month on, the leaver's cells are yellow.
-    - The **Platform reliability** label in them has a hollow yellow dot inside it and is struck through.
+    - From last month on, the leaver's cells hold a **Payments core** label with a hollow yellow dot inside it.
+    - The label's name is struck through.
   - **Notes:**
 
 - [ ] **Step 9.** Select **Dark** in the Appearance menu, then **Light**.
   - **Expected:**
-    - In both modes, the yellow cells, the dots in the labels and the struck-through label are easy to make out.
+    - In both modes, the tinted row, the dots in the labels and the struck-through label are easy to make out.
     - Every label is easy to read.
   - **Notes:**
 
@@ -336,30 +338,43 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Open the Draft menu and select **Live only**.
   - **Expected:**
-    - The leaver's row has no mark, no yellow cells and no light green row.
-    - **Platform reliability** is in every month it was in before FA-14, with nothing struck through.
+    - The leaver's row has no tint.
+    - The leaver's labels have no dots.
+    - No light green row is under the leaver's row.
+    - **Payments core** is in every month it was in before FA-14.
+    - Nothing is struck through.
   - **Notes:**
 
 - [ ] **Step 2.** Open the Draft menu and select **Drafts applied**.
   - **Expected:**
-    - From last month on, the leaver's cells hold no **Platform reliability** label.
+    - From last month on, the leaver's cells hold no **Payments core** label.
     - There is no light green row.
   - **Notes:**
 
-- [ ] **Step 3.** Empty the search box. Select **Feature team** in the Group by menu, and scroll to the **Platform reliability** group.
-  - **Expected:** The joiner is listed under **Platform reliability**.
+- [ ] **Step 3.** Empty the search box.
+  - **Expected:** Every person is listed.
   - **Notes:**
 
-- [ ] **Step 4.** Open the Draft menu and select **Live only**.
+- [ ] **Step 4.** Select **Feature team** in the Group by menu.
+  - **Expected:** The people are listed in groups, each named for a feature team.
+  - **Notes:**
+
+- [ ] **Step 5.** Scroll to the **Payments core** group.
+  - **Expected:** The joiner is listed under **Payments core**.
+  - **Notes:**
+
+- [ ] **Step 6.** Open the Draft menu and select **Live only**.
   - **Expected:**
-    - The leaver is listed under **Platform reliability**.
+    - The leaver is listed under **Payments core**.
     - The joiner is not.
   - **Notes:**
 
-- [ ] **Step 5.** Open the Draft menu and select **Drafts beside live**.
+- [ ] **Step 7.** Open the Draft menu and select **Drafts beside live**.
   - **Expected:**
-    - The joiner and the leaver are both listed under **Platform reliability**.
-    - The yellow cells, the struck-through label and the light green rows show as in FA-14.
+    - The joiner and the leaver are both listed under **Payments core**.
+    - The joiner's **Payments core** labels from last month on have a hollow yellow dot inside them.
+    - The leaver's **Payments core** labels from last month on have a hollow yellow dot inside them, and their name is struck through.
+    - Each of their rows has a light green Live row under it.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -368,42 +383,69 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from FA-15.
 
-**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. Select the **Feature assignments** page in the left-hand menu, and choose **None** in the Group by menu, with nothing in the search box and no filters.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. Select the **Feature assignments** page in the left-hand menu, with nothing in the search box and no filters.
 
-- [ ] **Step 1.** Note the name in the first row of the table: the person. Type it in the search box.
+- [ ] **Step 1.** Select **Feature team** in the Group by menu.
+  - **Expected:** The last group is **No feature team**.
+  - **Notes:**
+
+- [ ] **Step 2.** Scroll to the **No feature team** group, and note the name in its first row: the person.
+  - **Expected:** The **No feature team** group lists at least one person.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **None** in the Group by menu.
+  - **Expected:** There are no group names.
+  - **Notes:**
+
+- [ ] **Step 4.** Type the person's name in the search box.
   - **Expected:** Only the person's row is listed.
   - **Notes:**
 
-- [ ] **Step 2.** Select the person's cell two months after the current month, and press Enter.
-  - **Expected:** The team list opens, with the teams already in the cell shown as chosen.
+- [ ] **Step 5.** Select the person's cell two months after the current month, and press Enter.
+  - **Expected:** The team list opens, with no team shown as chosen.
   - **Notes:**
 
-- [ ] **Step 3.** Type the first letters of a team that is not in the cell, and note its name: the new team. Press Tab.
+- [ ] **Step 6.** Type `Pay`, then press Tab.
   - **Expected:**
     - The team list closes.
-    - The person's row is tinted blue, with a hollow yellow dot and **Draft** beside their name.
-    - A light green row under it is marked **Live**.
-    - The cells before the one selected have no yellow.
-    - From the cell selected on, each cell is yellow and holds the new team's label with a hollow yellow dot inside it.
+    - The person's row is tinted faint yellow.
+    - A light green Live row is under it.
+    - The cells before the one selected hold no label.
+    - From the cell selected on, each cell holds a **Payments core** label with a hollow yellow dot inside it, before the name.
   - **Notes:**
 
-- [ ] **Step 4.** Press Cmd+Z, or Ctrl+Z outside a Mac.
+- [ ] **Step 7.** Press Cmd+Z, or Ctrl+Z outside a Mac.
   - **Expected:**
-    - The person's row has no **Draft** mark.
+    - The person's row has no tint.
     - No light green row is under it.
-    - No cell is yellow.
+    - No cell holds a label.
   - **Notes:**
 
-- [ ] **Step 5.** Select the person's cell two months after the current month, press Enter, type the first letters of the new team, and press Tab.
-  - **Expected:**
-    - The person's row is tinted blue, with a hollow yellow dot and **Draft** beside their name, and a light green row under it marked **Live**.
-    - From the cell selected on, each cell is yellow and holds the new team's label with a hollow yellow dot inside it.
+- [ ] **Step 8.** Select the person's cell two months after the current month, and press Enter.
+  - **Expected:** The team list opens.
   - **Notes:**
 
-- [ ] **Step 6.** Select the **Org chart** page in the left-hand menu, choose **Feature teams** in the teams switch, then select the Feature teams button and the new team.
+- [ ] **Step 9.** Type `Pay`, then press Tab.
   - **Expected:**
-    - The team panel opens, titled with the new team's name.
-    - The person is in the **Members** row, with a hollow yellow dot before their name, followed in grey by **Draft, from** and the first day of the month two months after the current one, such as **Draft, from Jan 1, 2027**.
+    - The person's row is tinted faint yellow.
+    - A light green Live row is under it.
+    - From the cell selected on, each cell holds a **Payments core** label with a hollow yellow dot inside it.
+  - **Notes:**
+
+- [ ] **Step 10.** Select the **Org chart** page in the left-hand menu.
+  - **Expected:** The **Org chart** page opens.
+  - **Notes:**
+
+- [ ] **Step 11.** Choose **Feature teams** in the teams switch.
+  - **Expected:** The chart shows feature teams.
+  - **Notes:**
+
+- [ ] **Step 12.** Select the Feature teams button, then **Payments core**.
+  - **Expected:**
+    - The team panel opens, titled **Payments core**.
+    - The person is in the **Members** row.
+    - A hollow yellow dot is before the person's name.
+    - After the name, in grey, **from** and the first day of the month two months after the current one, such as **from Jan 1, 2027**.
   - **Notes:**
 
 ### FA-17: The Current Month Changes From Today
@@ -412,10 +454,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
-- [ ] **Step 1.** Select a cell in the current month's column that holds one label, in a row with no **Draft** mark, and press Delete.
+- [ ] **Step 1.** Select a cell in the current month's column that holds one label, **Payments core**, in a row with no tint, and press Delete.
   - **Expected:**
-    - The cell and every cell to its right are yellow.
-    - The label in them has a hollow yellow dot inside it and is struck through.
+    - The row is tinted faint yellow.
+    - In the cell and every cell to its right, the **Payments core** label has a hollow yellow dot inside it.
+    - The label's name is struck through.
   - **Notes:**
 
 - [ ] **Step 2.** Press Cmd+Z, or Ctrl+Z outside a Mac.
@@ -428,10 +471,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu and the person's name from FA-16 in the search box, after FA-16.
 
-- [ ] **Step 1.** Select the person's cell four months after the current month, and press Enter. Type the first letters of the new team from FA-16 and press Enter to take it out, then select the person's name with the mouse.
+- [ ] **Step 1.** Select the person's cell four months after the current month, and press Enter.
+  - **Expected:** The team list opens, with **Payments core** shown as chosen.
+  - **Notes:**
+
+- [ ] **Step 2.** Type `Pay`, and press Enter.
+  - **Expected:** **Payments core** is no longer shown as chosen.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the person's name with the mouse.
   - **Expected:**
-    - Fathom refuses the change, saying that the draft of the new team already changes the person from another month, and to approve or discard that draft first.
-    - The cell still holds the new team's label.
+    - Fathom refuses the change, saying that the draft of **Payments core** already changes the person from another month, and to approve or discard that draft first.
+    - The cell still holds the **Payments core** label.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -592,8 +643,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Type **Samuel Richter** in the search box. Select the row's **Manager** cell, press Enter, type **Max**, and choose **Max Munk**. Select the row's **Manager assigned** cell, type the first day of the current month as digits alone, such as `20261101` in November 2026, and press Enter.
   - **Expected:**
-    - The **Manager** cell reads **Max Munk**, in yellow.
-    - The **Manager assigned** cell reads the date typed, in yellow.
+    - The **Manager** cell reads **Max Munk**, with a hollow yellow dot before it.
+    - The **Manager assigned** cell reads the date typed, with a hollow yellow dot before it.
   - **Notes:**
 
 - [ ] **Step 2.** Select the Publish button.

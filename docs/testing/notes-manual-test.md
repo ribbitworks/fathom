@@ -50,7 +50,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Select **New column**. Type `Background` in **Name**, choose **Note** in **Type**, leave **General** chosen, select **Add column**, then run Publish.
-  - **Expected:** A **Background** column is at the end of the table, its name marked **Draft: added**.
+  - **Expected:** A **Background** column is at the end of the table, with a yellow dot before its name.
   - **Notes:**
 
 - [ ] **Step 2.** Sign in as the Engineering Director, `engineering.director@fathom.test`. Open the **Drafts** page from the left-hand menu and approve the **Background** column.
@@ -101,7 +101,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The panel slides out smoothly to the right over the table, which is already full width, with no jump.
     - The cell shows the note's words on one line, cut short where they do not fit.
-    - The row is marked **Draft**.
+    - A hollow yellow dot is before the cell's words.
   - **Notes:**
 
 - [ ] **Step 7.** Select Max Munk's **Background** cell again, then **Editor**. Type a space and `again` at the end of `Set goals`, then press Cmd+Z on a Mac, or Ctrl+Z otherwise.
@@ -113,7 +113,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] **Step 8.** Select **Cancel**.
   - **Expected:**
     - The panel closes.
-    - The cell still shows the note's words, and the row is still marked **Draft**.
+    - The cell still shows the note's words.
+    - The hollow yellow dot is still before them.
   - **Notes:**
 
 ### NOTE-03: Text Is Pasted From Another App

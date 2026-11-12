@@ -31,6 +31,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 - **Feature Lead:** `feature.lead@fathom.test`, holding the Feature Lead role, its default, and the Engineering Manager role
 - **Engineering Director:** `engineering.director@fathom.test`
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as **Second Engineering Operations Manager**
 - **Executive:** `executive@fathom.test`
 - **Team Member:** `team.member@fathom.test`
 - **Administrator:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**
@@ -46,7 +47,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the account menu, marks, the Publish button, the finder, the teams switch, the team panel and seeded dates. This test adds:
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the account menu, marks, the lock, boxes, a row's slot, Draft rows and Live rows, the Publish button, the finder, the teams switch, the team panel and seeded dates. This test adds:
 
 - **Seeded dates in this test:** **Next quarter's cycle** is the Platform stream's cycle for the quarter after the one today is in. The examples after "such as" are as the seed data is when added in November 2026.
 - **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20300315`.
@@ -71,7 +72,10 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 2.** Type `Fictional mobile tester` in **Name** and `REQ-5001` in **ID**. Choose **SDET** in **Position** from its change button, and select **Add**.
-  - **Expected:** The panel shows **Fictional mobile tester**. Its row in the table has a hollow yellow dot and a **Draft** mark, and reads **Request to hire** in **State**.
+  - **Expected:**
+    - The panel shows **Fictional mobile tester**.
+    - Its row in the table has a hollow yellow dot in its slot.
+    - The row reads **Request to hire** in **State**.
   - **Notes:**
 
 - [ ] **Step 3.** Run Publish.
@@ -87,7 +91,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 6.** Select the **People** page in the left-hand menu, and search for `Fictional mobile tester`.
-  - **Expected:** One hire row, with no mark, reading **REQ-5001** in **ID**, **SDET** in **Position** and **Request to hire** in **State**.
+  - **Expected:** One hire row, with no dot, reading **REQ-5001** in **ID**, **SDET** in **Position** and **Request to hire** in **State**.
   - **Notes:**
 
 #### ACC-02: Someone Who Has Not Started Is Listed Only for Those Who See Personal Details
@@ -119,7 +123,10 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 2.** Type `Fictional new starter` in **Name** and `EMP-9001` in **ID**, and select **Fill** at the foot of the panel.
-  - **Expected:** The panel is headed **Fictional new starter**, with a hollow yellow dot and **Draft**. The **Backend engineer 2** row has no **Fill** button, and has a hollow yellow dot and **Draft**.
+  - **Expected:**
+    - The panel is headed with a hollow yellow dot before **Fictional new starter**.
+    - The **Backend engineer 2** row has no **Fill** button.
+    - The **Backend engineer 2** row has a hollow yellow dot in its slot.
   - **Notes:**
 
 - [ ] **Step 3.** Select the details button of the **Backend engineer 2** row.
@@ -135,7 +142,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 6.** Select **Approve** in the dialog. Select **People**, and search for `Fictional new starter`.
-  - **Expected:** A notice says the drafts were approved. One row, with no mark, reading **Software Engineer** in **Position** and a name in **Manager**.
+  - **Expected:** A notice says the drafts were approved. One row, with no dot, reading **Software Engineer** in **Position** and a name in **Manager**.
   - **Notes:**
 
 - [ ] **Step 7.** Search for `Backend engineer 2`.
@@ -161,11 +168,11 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 4.** Search for `Platform engineer TBD`.
-  - **Expected:** The **Manager** cell of **Platform engineer** reads **Fictional new lead**, and the row has a hollow yellow dot and **Draft**.
+  - **Expected:** The **Manager** cell of **Platform engineer** reads **Fictional new lead**, with a hollow yellow dot before it.
   - **Notes:**
 
 - [ ] **Step 5.** Run Discard the Unpublished Changes, and search for `Platform engineer TBD` again.
-  - **Expected:** The **Manager** cell of **Platform engineer** reads **Engineering Manager, TBD-** and a number, and the row has no mark.
+  - **Expected:** The **Manager** cell of **Platform engineer** reads **Engineering Manager, TBD-** and a number, and the row has no dot.
   - **Notes:**
 
 #### ACC-05: A New Manager Moves Someone to Their Team
@@ -175,15 +182,23 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 **Preconditions:** **People** page open, with no filters.
 
 - [ ] **Step 1.** Search for `Samuel Richter`, whose **Manager** cell reads **Atmananda Ganaka** and **Team** cell **Payments team**. Select the row's **Manager** cell, press Enter, type `Max`, and choose **Max Munk**.
-  - **Expected:** The **Manager** cell reads **Max Munk** and the **Team** cell **Mobile team**, both yellow. The **Manager assigned** cell holds today's date. The row has a hollow yellow dot and **Draft**.
+  - **Expected:**
+    - The **Manager** cell reads **Max Munk**, with a hollow yellow dot before it.
+    - The **Team** cell reads **Mobile team**.
+    - The **Manager assigned** cell holds today's date.
+    - The row is faintly yellow.
   - **Notes:**
 
 - [ ] **Step 2.** Select the row's details button, and read the **Reporting** section.
-  - **Expected:** **Manager** reads **Max Munk**, followed by a yellow dot and **Draft**, with **Atmananda Ganaka** under it, in grey, followed by a green dot and **Live**.
+  - **Expected:**
+    - **Manager** reads **Max Munk**, with a hollow yellow dot before it.
+    - Under it, **Atmananda Ganaka** in grey, with a green dot before it.
   - **Notes:**
 
 - [ ] **Step 3.** Choose **Dark** in the Appearance menu, read the panel and the row, then choose **Light**.
-  - **Expected:** In dark mode, every value, mark and change button in the panel, and the yellow cells in the row, are easy to read.
+  - **Expected:**
+    - In dark mode, every value, dot and change button in the panel is easy to read.
+    - In dark mode, the faintly yellow row is easy to read.
   - **Notes:**
 
 - [ ] **Step 4.** Run Publish. Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, type `Samuel Richter` in the search box, select the entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog.
@@ -191,7 +206,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 5.** Select **People**, and search for `Samuel Richter`.
-  - **Expected:** The row has no mark, and reads **Max Munk** in **Manager** and **Mobile team** in **Team**.
+  - **Expected:** The row has no dot, and reads **Max Munk** in **Manager** and **Mobile team** in **Team**.
   - **Notes:**
 
 #### ACC-06: A Number Column Is Added, Approved and Filled In
@@ -205,7 +220,9 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 2.** Type `On-call weeks` in **Name**, leave **General** chosen, and select **Add column**.
-  - **Expected:** The dialog closes. An **On-call weeks** column with empty cells is at the right end of the table, with a hollow yellow dot and **Draft: added** under its name.
+  - **Expected:**
+    - The dialog closes.
+    - An **On-call weeks** column with empty cells is at the right end of the table, with a hollow yellow dot before its name.
   - **Notes:**
 
 - [ ] **Step 3.** Run Publish. Sign out, and sign in as the Project Manager, `project.manager@fathom.test`. Select **Drafts**, and type `On-call` in the search box.
@@ -217,7 +234,9 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 5.** Sign out, and sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Open **People**, search for `Max Munk`, select the row's **On-call weeks** cell, type `4`, and press Enter. Search for `Lilian Lang`, and type `2.5` in her **On-call weeks** cell the same way.
-  - **Expected:** **On-call weeks** has no mark under its name. The cells read **4** and **2.5**, each yellow, and each row has a hollow yellow dot and **Draft**.
+  - **Expected:**
+    - **On-call weeks** has no dot before its name.
+    - The cells read **4** and **2.5**, each with a hollow yellow dot before it.
   - **Notes:**
 
 - [ ] **Step 6.** Clear the search. Select the **On-call weeks** header, then **Highest first**.
@@ -249,7 +268,9 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 **Preconditions:** **People** page open, with the Metrics panel open.
 
 - [ ] **Step 1.** Open the Draft menu, select **Drafts beside live**, and press Esc. Set **Break down by** to **Grade**, and **and by** to **Nothing more**.
-  - **Expected:** At least one row, such as **P1**, shows a count with a dimmed **Live** figure under it. Rows whose count the drafts do not change show no **Live** figure.
+  - **Expected:**
+    - At least one row, such as **P1**, shows a count with a dimmed live figure under it, with a green dot before the live figure.
+    - Rows whose count the drafts do not change show no live figure.
   - **Notes:**
 
 - [ ] **Step 2.** Press Esc.
@@ -275,7 +296,10 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 3.** Select **Position** in the header, then **Move right**.
-  - **Expected:** **Position** moves one place to the right. No mark shows under its name, and no Publish button is in the top bar.
+  - **Expected:**
+    - **Position** moves one place to the right.
+    - No dot shows before its name.
+    - No Publish button is in the top bar.
   - **Notes:**
 
 - [ ] **Step 4.** Open the Views menu, and select **Save view…**.
@@ -358,7 +382,11 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 - [ ] **Step 4.** Choose **Feature teams** in the teams switch.
   - **Expected:**
-    - The chart shows four feature teams side by side, each first card naming its team: **Mobile apps**, **Payments core**, **Search** and **Platform reliability**.
+    - The chart shows four feature teams side by side, each first card naming its team:
+      - **Mobile apps**
+      - **Payments core**
+      - **Search and discovery**, with a yellow dot before it
+      - **Platform reliability**, with a grey lock before it
     - Above the chart, a line in grey reads **Other dates need Personal access.**, with no date control.
   - **Notes:**
 
@@ -403,44 +431,69 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 **Preconditions:** **Org chart** page open, showing the top two levels. **Light** chosen in the Appearance menu.
 
 - [ ] **Step 1.** Read the card for **Simone Jean**, under **Silje Holm-Schrøder**.
-  - **Expected:** The card is tinted blue. A yellow dot and **Draft** follow the name.
+  - **Expected:**
+    - The card is faintly yellow.
+    - A yellow dot is before her name.
   - **Notes:**
 
 - [ ] **Step 2.** On the card for **Viktoria Holmberg**, select **Show 3 reports**.
-  - **Expected:** **Simone Jean**, **우아현** and **西尾 亮** appear in a column under her. The card for **Simone Jean** there is faded and light green, with a dashed edge, its name in grey and followed by a green dot and **Live**, and the line to it is dashed.
+  - **Expected:**
+    - **Simone Jean**, **우아현** and **西尾 亮** appear in a column under her.
+    - The card for **Simone Jean** there is faded and light green, with a dashed edge.
+    - Its name is in grey, with a green dot before it.
+    - The line to it is dashed.
   - **Notes:**
 
 - [ ] **Step 3.** Choose **Dark** in the Appearance menu, then **Light**.
-  - **Expected:** In both modes, the tinted card and the light green card are easy to tell apart from the other cards, and every word on them is easy to read.
+  - **Expected:**
+    - In both modes, the faintly yellow card and the light green card are easy to tell apart from the other cards.
+    - In both modes, every word on them is easy to read.
   - **Notes:**
 
 #### ACC-14: A Feature Lead Proposes a Lead and a Member
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-13.
+**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, changed from ACC-13. Step 2 signs in as another account in the second browser.
 
 **Preconditions:** Signed in with this account, acting as **Feature Lead**. Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch.
 
 - [ ] **Step 1.** Select the Feature teams button, then **Platform reliability**.
   - **Expected:**
-    - The team panel opens, titled **Platform reliability**.
+    - The team panel opens, titled **Platform reliability**, with a grey lock before it.
+    - Pointing at the lock shows **Being changed by Second Engineering Operations Manager**.
+    - No row has a change button.
+  - **Notes:**
+
+- [ ] **Step 2.** In the second browser, sign in as the Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`.
+  - **Expected:** The top bar shows the Publish button.
+  - **Notes:**
+
+- [ ] **Step 3.** In the second browser, run Discard the Unpublished Changes.
+  - **Expected:**
+    - A notice says **Discarded** followed by the number of changes.
+    - The Publish button is gone.
+  - **Notes:**
+
+- [ ] **Step 4.** In the main browser, reload the page.
+  - **Expected:**
+    - The team panel is titled **Platform reliability**, with no lock.
     - **Feature lead** reads **None**.
     - **Name**, **Feature lead** and **Members** each have a change button.
   - **Notes:**
 
-- [ ] **Step 2.** Select the change button in the **Feature lead** row, type `Polly`, and press Enter.
+- [ ] **Step 5.** Select the change button in the **Feature lead** row, type `Polly`, and press Enter.
   - **Expected:**
-    - **Feature lead** reads **Polly Smith**, followed by a hollow yellow dot and **Draft**.
+    - **Feature lead** reads **Polly Smith**, with a hollow yellow dot before it.
     - On the chart, the card reading **Platform reliability** and **No feature lead** is gone. Polly Smith's card is at the top of the team in its place, with **Platform reliability** under her position, and the team's members under her.
   - **Notes:**
 
-- [ ] **Step 3.** Select the change button in the **Members** row, type `Rosendo`, press Enter, and press Enter again.
+- [ ] **Step 6.** Select the change button in the **Members** row, type `Rosendo`, press Enter, and press Enter again.
   - **Expected:**
     - **Members** lists **Rosendo Champlin**, with a hollow yellow dot before his name.
-    - On the chart, a card for him is under Polly Smith, his name followed by a hollow yellow dot and **Draft**.
+    - On the chart, a card for him is under Polly Smith, with a hollow yellow dot before his name.
     - His card in **Mobile apps** is still there.
   - **Notes:**
 
-- [ ] **Step 4.** Run Publish.
+- [ ] **Step 7.** Run Publish.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
@@ -459,7 +512,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 3.** Select **Org chart**, and choose **Feature teams** in the teams switch.
-  - **Expected:** **Platform reliability** is led by **Polly Smith**, with **Rosendo Champlin** among the cards under her, and no draft marks.
+  - **Expected:** **Platform reliability** is led by **Polly Smith**, with **Rosendo Champlin** among the cards under her, and no dots.
   - **Notes:**
 
 #### ACC-16: A Member Joins a Feature Team From an Earlier Date
@@ -474,8 +527,11 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
     - Below the row, text reads **Showing** with that day, then **Changes take effect from this date.**
   - **Notes:**
 
-- [ ] **Step 2.** Select the Feature teams button, then **Search**.
-  - **Expected:** The team panel is titled **Search**.
+- [ ] **Step 2.** Select the Feature teams button, then **Search and discovery**.
+  - **Expected:**
+    - The team panel is titled **Search and discovery**.
+    - **Name** reads **Search and discovery**, with a yellow dot before it.
+    - Under it, **Search**, with a green dot before it.
   - **Notes:**
 
 - [ ] **Step 3.** Select the change button in the **Members** row, type `Branson`, press Enter, and press Enter again.
@@ -485,7 +541,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 - [ ] **Step 4.** Select **Today**.
   - **Expected:**
     - The text below the row is gone.
-    - In the team panel, **Branson O'Keefe** has a hollow yellow dot before his name, followed in grey by **Draft, from** and the first day of last month, such as **Draft, from Oct 1, 2026**.
+    - In the team panel, **Branson O'Keefe** has a hollow yellow dot before his name, followed in grey by **from** and the first day of last month.
   - **Notes:**
 
 - [ ] **Step 5.** Run Publish.
@@ -498,7 +554,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 - [ ] **Step 7.** Select the **Drafts** page in the left-hand menu, and type `Branson` in the search box.
   - **Expected:**
-    - One entry is listed, **the feature team Search**.
+    - One entry is listed, **the feature team Search and discovery**.
     - Its **Members** line adds **Branson O'Keefe**.
     - Its **Joining and leaving dates** line gives **Branson O'Keefe** and the first day of last month.
   - **Notes:**
@@ -522,11 +578,16 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 3.** Open the **Person** column menu, select **Filter…**, and type `Branson`.
-  - **Expected:** Only **Branson O'Keefe** is listed, under the **Search** group, with a **Search** label in the current month's column.
+  - **Expected:**
+    - Only **Branson O'Keefe** is listed, under the **Search and discovery** group.
+    - His current month's cell holds a **Search and discovery** label.
   - **Notes:**
 
 - [ ] **Step 4.** Press Esc, and scroll the table one month to the left.
-  - **Expected:** The **Person** column stays in place. Last month's cell for **Branson O'Keefe** holds a **Search** label too, and the month before it holds none.
+  - **Expected:**
+    - The **Person** column stays in place.
+    - Last month's cell for **Branson O'Keefe** holds a **Search and discovery** label too.
+    - The month before it holds no label.
   - **Notes:**
 
 - [ ] **Step 5.** Choose **Dark** in the Appearance menu, then **Light**.
@@ -566,24 +627,28 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 **Preconditions:** ACC-16 done. Signed in with this account, acting as **Engineering Manager**. **Light** chosen in the Appearance menu. Select the **Feature assignments** page in the left-hand menu, with **Teams** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] **Step 1.** Type `Branson` in the search box.
-  - **Expected:** Only **Branson O'Keefe**'s row is listed, with a **Search** label in the current month's cell.
+  - **Expected:**
+    - Only **Branson O'Keefe**'s row is listed.
+    - His current month's cell holds a **Search and discovery** label.
   - **Notes:**
 
 - [ ] **Step 2.** Select his cell two months after the current month, and press Enter.
-  - **Expected:** The team list opens, with **Search** shown as chosen.
+  - **Expected:** The team list opens, with **Search and discovery** shown as chosen.
   - **Notes:**
 
 - [ ] **Step 3.** Type `Payments`, and press Tab.
   - **Expected:**
     - The team list closes.
-    - The row is tinted blue, with a hollow yellow dot and **Draft** beside the name.
-    - A light green row under it is marked **Live**.
-    - The cells before the one selected have no yellow.
-    - From the cell selected on, each cell is yellow and holds a **Payments core** label with a hollow yellow dot inside it, beside the **Search** label.
+    - From the cell selected on, each cell holds a **Payments core** label with a hollow yellow dot before it, beside the **Search and discovery** label.
+    - The cells before the one selected are unchanged, with no dot.
+    - The row is faintly yellow, with a light green Live row under it.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **Org chart** page in the left-hand menu, choose **Feature teams** in the teams switch, then select the Feature teams button and **Payments core**.
-  - **Expected:** The team panel is titled **Payments core**, and **Branson O'Keefe** is in the **Members** row, with a hollow yellow dot before his name, followed in grey by **Draft, from** and the first day of the month two months after the current one, such as **Draft, from Jan 1, 2027**.
+  - **Expected:**
+    - The team panel is titled **Payments core**.
+    - **Branson O'Keefe** is in the **Members** row, with a hollow yellow dot before his name.
+    - His name is followed in grey by **from** and the first day of the month two months after the current one.
   - **Notes:**
 
 #### ACC-20: A Team Member Is Told Why Feature Assignments Is Missing
@@ -609,19 +674,28 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 **Preconditions:** Restore the Seed Data run after ACC-20. Signed in with this account. **Projects** page open from the left-hand menu.
 
 - [ ] **Step 1.** Select the **Customers** tab, then **New customer**. Type `Fictional Ferry Co-op` in **Name**, and select **Add**.
-  - **Expected:** The side panel is headed **Fictional Ferry Co-op**, with a hollow yellow dot and **Draft: added**, and the table has a row for it with the same mark.
+  - **Expected:**
+    - The side panel is headed with a hollow yellow dot before **Fictional Ferry Co-op**.
+    - The table has a row for it, with a hollow yellow dot in its slot.
   - **Notes:**
 
 - [ ] **Step 2.** Select the **Proposals** tab, then **New proposal**. Type `Fictional Ferry Proposal` in **Name**, and select **Add**.
-  - **Expected:** The side panel is headed **Fictional Ferry Proposal** with a hollow yellow dot and **Draft: added**, and **Status** reads **Open**.
+  - **Expected:**
+    - The side panel is headed with a hollow yellow dot before **Fictional Ferry Proposal**.
+    - **Status** reads **Open**.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **Projects** tab, then **New project**. Type `Fictional Harbour Lights` in **Name** and `FHL-1` in **Project ID**. Using the pencil buttons, pick any person in **Owner**, **Fictional Ferry Co-op** in **Customers** and **Fictional Ferry Proposal** in **Proposals**. Write the owner's name in the notes, and select **Add**.
-  - **Expected:** The side panel is headed **Fictional Harbour Lights** with a hollow yellow dot and **Draft: added**. **First milestone**, **Last milestone** and **Next delivery** read **None**. Under **Milestones**, **No milestones yet** and an **Add milestone** button.
+  - **Expected:**
+    - The side panel is headed with a hollow yellow dot before **Fictional Harbour Lights**.
+    - **First milestone**, **Last milestone** and **Next delivery** read **None**.
+    - Under **Milestones**, **No milestones yet** and an **Add milestone** button.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Add milestone**. Type `Pilot` in **Name** and `20300315` in **Date**, tick **Customer delivery**, and select **Add milestone** in the dialog.
-  - **Expected:** Under **Milestones**, **Pilot** with a hollow yellow dot and **Draft: added**, and under it the date for 2030-03-15 and **, customer delivery**.
+  - **Expected:**
+    - Under **Milestones**, a hollow yellow dot before **Pilot**.
+    - Under **Pilot**, the date for 2030-03-15 and **, customer delivery**.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Add milestone**. Type `Go live` in **Name** and `20300630` in **Date**, leave **Customer delivery** unticked, and select **Add milestone** in the dialog.
@@ -629,7 +703,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 6.** Run Publish.
-  - **Expected:** The marks on the project and both milestones are now solid yellow dots with **Draft: added**.
+  - **Expected:** The dots before the project and both milestones are now filled yellow.
   - **Notes:**
 
 #### ACC-22: A Project Manager Approves the Project and Its Milestones
@@ -643,18 +717,28 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 2.** Select **Approve** in the dialog.
-  - **Expected:** **Fictional Harbour Lights** has no mark.
+  - **Expected:** **Fictional Harbour Lights** has no dot.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Milestones** tab, then the Draft menu.
-  - **Expected:** The menu offers **Approve** with the number of waiting drafts, such as **Approve 2 drafts…**.
+- [ ] **Step 3.** Select the **Milestones** tab.
+  - **Expected:** The **Milestones** tab is selected, with its table under it.
   - **Notes:**
 
-- [ ] **Step 4.** Select it, then **Approve** in the dialog.
-  - **Expected:** **Pilot** and **Go live** have no marks, and each has **Fictional Harbour Lights** under **Project**, after **FHL-1** in grey.
+- [ ] **Step 4.** Type `Fictional Harbour Lights` in the search box.
+  - **Expected:** **Pilot** and **Go live** are listed, each with a yellow dot in its slot.
   - **Notes:**
 
-- [ ] **Step 5.** Choose **Dark** in the Appearance menu, look over the tabs and the table, then choose **Light**.
+- [ ] **Step 5.** Open the Draft menu.
+  - **Expected:** The menu offers **Approve 2 drafts…**.
+  - **Notes:**
+
+- [ ] **Step 6.** Select it, then **Approve** in the dialog.
+  - **Expected:**
+    - **Pilot** and **Go live** have no dots.
+    - Each has **Fictional Harbour Lights** under **Project**, with **FHL-1** in grey before it.
+  - **Notes:**
+
+- [ ] **Step 7.** Choose **Dark** in the Appearance menu, look over the tabs and the table, then choose **Light**.
   - **Expected:** In dark mode, the text, the tabs and the ticked **Customer delivery** box are easy to read.
   - **Notes:**
 
@@ -677,15 +761,19 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 4.** Select **Add** at the foot of the **New feature** panel.
-  - **Expected:** The feature's details show beside the table, headed **Fictional Atlas** with a hollow yellow dot and **Draft: added**, with **Ferry routes first** in bold under **Notes**.
+  - **Expected:**
+    - The feature's details show beside the table, headed with a hollow yellow dot before **Fictional Atlas**.
+    - **Ferry routes first** is in bold under **Notes**.
   - **Notes:**
 
 - [ ] **Step 5.** Run Publish, and reload the page.
-  - **Expected:** **Fictional Atlas** is under the heading **Later**, with a solid yellow dot and **Draft: added**.
+  - **Expected:**
+    - **Fictional Atlas** is under the heading **Later**.
+    - Its row has a filled yellow dot in its slot.
   - **Notes:**
 
 - [ ] **Step 6.** Sign out, and sign in as the Project Manager, `project.manager@fathom.test`. Open **Features**, open the ⋯ menu of **Fictional Atlas**, select **Approve draft**, then **Approve** in the dialog titled **Approve 1 draft?**.
-  - **Expected:** A notice reads **Approved 1 draft.** **Fictional Atlas** has no mark.
+  - **Expected:** A notice reads **Approved 1 draft.** **Fictional Atlas** has no dot.
   - **Notes:**
 
 #### ACC-24: Leaving the New Feature Panel Asks First
@@ -717,7 +805,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 2.** Pick **FHL-1 Fictional Harbour Lights**, and press Enter. Select the **Proposals** cell of **Fictional Atlas**, press Enter, pick **Fictional Ferry Proposal**, and press Enter.
-  - **Expected:** The **Projects** cell names **Fictional Harbour Lights**, with **FHL-1** in grey before it, and the **Proposals** cell names **Fictional Ferry Proposal**. **Fictional Atlas** has no mark.
+  - **Expected:** The **Projects** cell names **Fictional Harbour Lights**, with **FHL-1** in grey before it, and the **Proposals** cell names **Fictional Ferry Proposal**. **Fictional Atlas** has no dot.
   - **Notes:**
 
 - [ ] **Step 3.** Run Publish.
@@ -747,11 +835,15 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 **Preconditions:** Signed in with this account. **Lists** page open from the left-hand menu.
 
 - [ ] **Step 1.** Select **Feature statuses**.
-  - **Expected:** The panel opens with **Feature statuses** at the top and a grey **Built in** label beside it. Its choices are **Possible**, **Planned**, **In progress**, **Done** and **Cancelled**, each beside a meaning of the same name.
+  - **Expected:**
+    - The panel opens with **Feature statuses** at the top, and a grey **Built in** box after it.
+    - Its choices are **Possible**, **Planned**, **In progress**, **Done** and **Cancelled**, each beside a meaning of the same name.
   - **Notes:**
 
 - [ ] **Step 2.** In the empty row's meaning menu, choose **Possible**. Type `Long shot` in the empty row's **Name** box, and press Enter.
-  - **Expected:** A row **Long shot** appears above the empty row, with a hollow yellow dot and **Draft: added**, and **Possible** at the end of the row.
+  - **Expected:**
+    - A row **Long shot** appears above the empty row, with a hollow yellow dot in its slot.
+    - **Possible** is at the end of the row.
   - **Notes:**
 
 - [ ] **Step 3.** Run Publish.
@@ -759,7 +851,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 4.** Sign out, and sign in as the Project Manager, `project.manager@fathom.test`. Open **Lists**, then **Feature statuses**. Select the **⋯** button at the end of the **Long shot** row, then **Approve…**, then **Approve** in the dialog titled **Approve 1 draft?**.
-  - **Expected:** The dialog closes, and **Long shot** has no mark.
+  - **Expected:** The dialog closes, and **Long shot** has no dot.
   - **Notes:**
 
 #### ACC-27: The Last Status for a Meaning Is Kept
@@ -786,15 +878,18 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** ACC-26 done. Signed in with this account, acting as **Feature Lead**. **Features** page open.
 
-- [ ] **Step 1.** In the row **Voice Notes**, select the **Status** cell, press Enter, choose **Long shot**, and press Enter.
-  - **Expected:** The cell reads **Long shot** and is yellow. The row has a hollow yellow dot and **Draft**, with a Live row under it reading **Possible**.
+- [ ] **Step 1.** In the row **Partner Portal**, select the **Status** cell, press Enter, choose **Long shot**, and press Enter.
+  - **Expected:**
+    - The cell reads **Long shot**, with a hollow yellow dot before it.
+    - The row is faintly yellow.
+    - A Live row under it reads **Possible**.
   - **Notes:**
 
 - [ ] **Step 2.** Run Publish.
-  - **Expected:** The dot on the **Voice Notes** row is filled.
+  - **Expected:** The dot before **Long shot** in the **Partner Portal** row is filled yellow.
   - **Notes:**
 
-- [ ] **Step 3.** Sign out, and sign in as the Product Manager, `product.manager@fathom.test`. Open **Features**, and open the ⋯ menu of **Voice Notes**.
+- [ ] **Step 3.** Sign out, and sign in as the Product Manager, `product.manager@fathom.test`. Open **Features**, and open the ⋯ menu of **Partner Portal**.
   - **Expected:** The menu names the change to **Status**, and offers **Approve draft** and **Reject draft…**.
   - **Notes:**
 
@@ -803,7 +898,10 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 5.** Type `Fictional reason: wait for the customer day.`, and select **Reject**.
-  - **Expected:** A notice reads **Rejected 1 draft.** The **Voice Notes** row shows a red dot and **Rejected**.
+  - **Expected:**
+    - A notice reads **Rejected 1 draft.**
+    - In the **Partner Portal** row, **Long shot** has a red dot in a ring before it.
+    - The row is faintly red.
   - **Notes:**
 
 #### ACC-29: A Rejected Change Is Resubmitted and Approved
@@ -812,16 +910,24 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** ACC-28 done. Signed in with this account, acting as **Feature Lead**. **Features** page open.
 
-- [ ] **Step 1.** Open the ⋯ menu of **Voice Notes**.
-  - **Expected:** The menu shows a red dot and **Rejected**, and **Reason: Fictional reason: wait for the customer day.**, and offers **Resubmit** and **Discard draft**.
+- [ ] **Step 1.** Open the ⋯ menu of **Partner Portal**.
+  - **Expected:**
+    - The menu shows a red dot in a ring, then **Rejected**.
+    - Under it, **Reason: Fictional reason: wait for the customer day.**
+    - The menu offers **Resubmit** and **Discard draft**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Resubmit**.
-  - **Expected:** The row shows a yellow dot and **Draft** again.
+  - **Expected:**
+    - The dot before **Long shot** is yellow again.
+    - The row is faintly yellow.
   - **Notes:**
 
-- [ ] **Step 3.** Sign out, and sign in as the Product Manager, `product.manager@fathom.test`. Select **Drafts**, and type `Voice Notes` in the search box.
-  - **Expected:** One entry is shown, for the feature **Voice Notes**, made by **Feature Lead**, with a checkbox.
+- [ ] **Step 3.** Sign out, and sign in as the Product Manager, `product.manager@fathom.test`. Select **Drafts**, and type `Partner Portal` in the search box.
+  - **Expected:**
+    - One entry is shown, for the feature **Partner Portal**.
+    - It was made by **Feature Lead**.
+    - It has a checkbox.
   - **Notes:**
 
 - [ ] **Step 4.** Select the entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog titled **Approve 1 draft?**.
@@ -829,7 +935,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 5.** Select **Features**.
-  - **Expected:** **Voice Notes** reads **Long shot** in **Status**, with no mark.
+  - **Expected:** **Partner Portal** reads **Long shot** in **Status**, with no dot.
   - **Notes:**
 
 #### ACC-30: The Change History Tells How a Draft Went
@@ -838,8 +944,12 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** ACC-29 done. Signed in with this account.
 
-- [ ] **Step 1.** Select the **Change history** page in the left-hand menu, and type `Voice Notes` in the search box.
-  - **Expected:** The entries, newest first, say that Product Manager approved the changes to **Voice Notes**, Feature Lead sent its draft for approval again, Product Manager rejected its draft, with the reason **Fictional reason: wait for the customer day.**, and Feature Lead drafted changing **Status** from **Possible** to **Long shot**.
+- [ ] **Step 1.** Select the **Change history** page in the left-hand menu, and type `Partner Portal` in the search box.
+  - **Expected:** The entries, newest first, say that:
+    - Product Manager approved the changes to **Partner Portal**
+    - Feature Lead sent its draft for approval again
+    - Product Manager rejected its draft, with the reason **Fictional reason: wait for the customer day.**
+    - Feature Lead drafted changing **Status** from **Possible** to **Long shot**
   - **Notes:**
 
 - [ ] **Step 2.** Choose **Dark** in the Appearance menu, read the entries, then choose **Light**.
@@ -848,28 +958,72 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 #### ACC-31: A Shorter Cycle Moves a Release and Its Features
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-30. Step 4 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, in the main browser, changed from ACC-30. The second browser is still signed in as the Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, from ACC-14; steps 2 and 3 act there. Step 9 signs in as another account in the main browser.
 
 **Preconditions:** Signed in with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the streams table.
 
-- [ ] **Step 1.** In the side panel's **Cycles** table, select the **⋯** button at the end of next quarter's cycle, such as **27.1**, then **Change length…**.
-  - **Expected:** A dialog titled **Change the length of** that cycle opens. **Length** reads **3**, followed by **months**. Under **Later cycles**, **Move with it** is selected.
+- [ ] **Step 1.** Look at the side panel's heading and its **Cycles** table.
+  - **Expected:**
+    - The heading reads **Platform**, with a grey lock before it.
+    - The rows of the **Cycles** table have no **⋯** button.
   - **Notes:**
 
-- [ ] **Step 2.** Replace **3** in **Length** with `2`.
-  - **Expected:** **New dates** lists that cycle two months long, then the next cycles each starting a month earlier than before. **Releases that move** names **Harbor 3**, and **Features that move** names **Data Retention Controls** and **Report Builder**.
+- [ ] **Step 2.** In the second browser, reload the page.
+  - **Expected:** The top bar shows the Publish button.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Change length**, then run Publish.
-  - **Expected:** A notification says **Drafted the new length.** The **Harbor 3** row under **Releases** has a yellow dot and **Draft**, and ships on the first half-year cycle's new last day, such as **27.1 to 27.3 · ships 2027-11-30**.
+- [ ] **Step 3.** In the second browser, run Discard the Unpublished Changes.
+  - **Expected:**
+    - A notice says **Discarded** followed by the number of changes.
+    - The Publish button is gone.
   - **Notes:**
 
-- [ ] **Step 4.** Sign out, and sign in as the Project Manager, `project.manager@fathom.test`. Open **Releases**, select **Platform**, then the **⋯** button at the end of the **Harbor 3** row, then **Approve…**.
-  - **Expected:** A dialog titled **Approve 6 drafts?** says **Also approves the drafts these depend on:**, listing three entries for **the cycles of Platform from** a day, with **the feature Data Retention Controls** and **the feature Report Builder**.
+- [ ] **Step 4.** In the main browser, reload the page.
+  - **Expected:** The side panel's heading reads **Platform**, with no lock.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Approve**.
-  - **Expected:** A notification says **Approved 6 drafts.** No row under **Cycle schedule** or **Releases** has a mark, and **Harbor 3** still ships on the new day.
+- [ ] **Step 5.** In the side panel's **Cycles** table, select the **⋯** button at the end of next quarter's cycle, then **Change length…**.
+  - **Expected:**
+    - A dialog titled **Change the length of** that cycle opens.
+    - **Length** reads **3**, followed by **months**.
+    - Under **Later cycles**, **Move with it** is selected.
+  - **Notes:**
+
+- [ ] **Step 6.** Replace **3** in **Length** with `2`.
+  - **Expected:**
+    - **New dates** lists that cycle two months long, then the next cycles each starting a month earlier than before.
+    - **Releases that move** names **Harbor 3** and **Harbor 4**.
+    - **Features that move** names **Data Retention Controls** and **Report Builder**.
+  - **Notes:**
+
+- [ ] **Step 7.** Select **Change length**.
+  - **Expected:** A notification says **Drafted the new length.**
+  - **Notes:**
+
+- [ ] **Step 8.** Run Publish.
+  - **Expected:** Under **Releases**, in the **Harbor 3** row:
+    - A yellow dot in its slot, then **Harbor 3** and the yellow **Moved** box
+    - Its cycles run from the cycle after next quarter's to the second half-year cycle
+    - It ships on the second half-year cycle's new last day
+  - **Notes:**
+
+- [ ] **Step 9.** Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
+  - **Expected:** The top bar's right end reads **Project Manager**.
+  - **Notes:**
+
+- [ ] **Step 10.** Select the **Releases** page in the left-hand menu, then **Platform** in the streams table, then the **⋯** button at the end of the **Harbor 3** row, then **Approve…**.
+  - **Expected:** A dialog titled **Approve 6 drafts?** says **Also approves the drafts these depend on:**, listing:
+    - Three entries for **the cycles of Platform from** a day
+    - **the feature Data Retention Controls**
+    - **the feature Report Builder**
+  - **Notes:**
+
+- [ ] **Step 11.** Select **Approve**.
+  - **Expected:**
+    - A notification says **Approved 6 drafts.**
+    - No row under **Cycle schedule** has a dot.
+    - **Harbor 3** has no dot and no box.
+    - **Harbor 3** still ships on the second half-year cycle's new last day.
   - **Notes:**
 
 #### ACC-32: A Product Manager Makes a Release
@@ -887,11 +1041,13 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 3.** Select **Make release**, then run Publish.
-  - **Expected:** A notification says **Drafted the new release.** Under **Releases**, a row reads **Fictional Harbor 4**, with a yellow dot and **Draft: added**.
+  - **Expected:**
+    - A notification says **Drafted the new release.**
+    - Under **Releases**, a row reads **Fictional Harbor 4**, with a yellow dot in its slot.
   - **Notes:**
 
 - [ ] **Step 4.** Sign out, and sign in as the Project Manager, `project.manager@fathom.test`. Open **Releases**, select **Platform**, then the **⋯** button at the end of the **Fictional Harbor 4** row, then **Approve…**, then **Approve** in the dialog titled **Approve 1 draft?**.
-  - **Expected:** A notification says **Approved 1 draft.** **Fictional Harbor 4** has no mark.
+  - **Expected:** A notification says **Approved 1 draft.** **Fictional Harbor 4** has no dot.
   - **Notes:**
 
 #### ACC-33: An Executive Reads the Plan
@@ -905,7 +1061,10 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 2.** Select **Releases**, then **Platform** in the streams table.
-  - **Expected:** There is no **New release stream** button, no **New release…** button, and no **⋯** button at the end of any release.
+  - **Expected:**
+    - There is no **New release stream** button.
+    - There is no **New release…** button.
+    - **Harbor 1**, **Harbor 3** and **Fictional Harbor 4** have no **⋯** button at their end.
   - **Notes:**
 
 - [ ] **Step 3.** Close the side panel, scroll to the timeline, and select **All**.
@@ -953,7 +1112,10 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 2.** Select **Features**.
-  - **Expected:** The table shows **Fictional Atlas** and **Voice Notes** reading **Long shot**, with no **New feature** button and no empty row at its end.
+  - **Expected:**
+    - The table shows **Fictional Atlas** and **Partner Portal** reading **Long shot**.
+    - There is no **New feature** button.
+    - There is no empty row at the table's end.
   - **Notes:**
 
 - [ ] **Step 3.** Double-click the **Status** cell of any row.
@@ -961,7 +1123,10 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 4.** Select **Releases**, then **Platform** in the streams table.
-  - **Expected:** **Fictional Harbor 4** is under **Releases**. No row has a **⋯** button, and there is no **New release…** button.
+  - **Expected:**
+    - **Fictional Harbor 4** is under **Releases**.
+    - **Harbor 1**, **Harbor 3** and **Fictional Harbor 4** have no **⋯** button.
+    - There is no **New release…** button.
   - **Notes:**
 
 #### ACC-36: Removing a Project Removes Its Milestones
@@ -971,11 +1136,13 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 **Preconditions:** ACC-22 done. Signed in with this account. **Projects** page open, on the **Projects** tab.
 
 - [ ] **Step 1.** Open the ⋯ menu of **Fictional Harbour Lights**, and select **Remove project**.
-  - **Expected:** **Fictional Harbour Lights** is struck through, with a hollow yellow dot and **Draft: removed**.
+  - **Expected:**
+    - **Fictional Harbour Lights** has a hollow yellow dot in its slot.
+    - Its row is struck through.
   - **Notes:**
 
 - [ ] **Step 2.** Run Publish.
-  - **Expected:** The mark becomes a solid yellow dot.
+  - **Expected:** The dot is filled yellow.
   - **Notes:**
 
 - [ ] **Step 3.** Sign out, and sign in as the Project Manager, `project.manager@fathom.test`. Open **Projects**, open the ⋯ menu of **Fictional Harbour Lights**, and select **Approve draft**.
@@ -1112,7 +1279,9 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 2.** Press Esc, and look under **Releases** in the side panel.
-  - **Expected:** The rows have no **⋯** button, and there is no **New release…** button.
+  - **Expected:**
+    - **Harbor 1**, **Harbor 3** and **Fictional Harbor 4** have no **⋯** button.
+    - There is no **New release…** button.
   - **Notes:**
 
 - [ ] **Step 3.** Choose **Engineering Manager** in the role menu.
@@ -1126,7 +1295,9 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 **Preconditions:** ACC-42 done, acting as **Engineering Manager**. **Releases** page open, with **Platform** selected in the streams table.
 
 - [ ] **Step 1.** Select the **⋯** button at the end of the **Harbor 3** row, then **Change…**. Replace the name with `Fictional Harbor Three`, and select **Save**.
-  - **Expected:** A notification says **Drafted the change to the release.** The row reads **Fictional Harbor Three**, with a hollow yellow dot and **Draft**.
+  - **Expected:**
+    - A notification says **Drafted the change to the release.**
+    - The row reads **Fictional Harbor Three**, with a hollow yellow dot before it.
   - **Notes:**
 
 - [ ] **Step 2.** Run Publish, then select the **Change history** page in the left-hand menu.
@@ -1134,11 +1305,11 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 3.** Select **Releases**, then **Platform**, then the **⋯** button at the end of the **Fictional Harbor Three** row, then **Discard draft**.
-  - **Expected:** A notification says **Discarded the draft.** The row reads **Harbor 3** again, with no mark.
+  - **Expected:** A notification says **Discarded the draft.** The row reads **Harbor 3** again, with no dot.
   - **Notes:**
 
 - [ ] **Step 4.** Choose **Feature Lead** in the role menu.
-  - **Expected:** The rows under **Releases** have no **⋯** button again.
+  - **Expected:** **Harbor 1**, **Harbor 3** and **Fictional Harbor 4** have no **⋯** button again.
   - **Notes:**
 
 #### ACC-44: Each Browser Keeps Its Own Appearance
@@ -1232,7 +1403,12 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 4.** Select **People**. Copy the seven lines from the text editor, select the **Name** cell of the empty row, and paste.
-  - **Expected:** Seven rows are added, one for each line, each with its ID, **Manager** or **Employee** in **Position**, **Hired** in **State**, and a hollow yellow dot and **Draft**. The count reads **7 people**.
+  - **Expected:**
+    - Seven rows are added, one for each line.
+    - Each row has its ID, and **Manager** or **Employee** in **Position**.
+    - Each row reads **Hired** in **State**.
+    - Each row has a hollow yellow dot in its slot.
+    - The count reads **7 people**.
   - **Notes:**
 
 - [ ] **Step 5.** Click once in the **Manager?** cell of **Odile Brandt**, then of **Ada Quill**.
@@ -1254,15 +1430,22 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 **Preconditions:** ACC-47 done. Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Select the **Manager** cell of **Bram Oakes**, press Enter, type `Ada`, and choose **Ada Quill**.
-  - **Expected:** The **Manager** cell reads **Ada Quill**, in yellow, and **Manager assigned** holds today's date. The row has a hollow yellow dot and **Draft**.
+  - **Expected:**
+    - The **Manager** cell reads **Ada Quill**, with a hollow yellow dot before it.
+    - **Manager assigned** holds today's date.
   - **Notes:**
 
 - [ ] **Step 2.** In the same way, choose **Ada Quill** as the manager of **Cleo Marsh** and **Freya Holt**, and **Odile Brandt** as the manager of **Ada Quill**, **Dara Finch** and **Emil Stone**.
-  - **Expected:** Each of the six rows reads its new manager, and has a hollow yellow dot and **Draft**. **Odile Brandt** has no manager.
+  - **Expected:**
+    - Each of the six rows reads its new manager, with a hollow yellow dot before it.
+    - **Odile Brandt** has no manager.
   - **Notes:**
 
 - [ ] **Step 3.** Select **New** at the top right of the page. Select the change button beside **State**, and choose **Request to hire**. Type `Fictional tide engineer` in **Name**, `REQ-7001` in **ID**, and the first day of three months from now in **Start**, such as `20270201`. Choose **Employee** in **Position** and **Ada Quill** in **Manager** from their change buttons, and select **Add**.
-  - **Expected:** The panel shows **Fictional tide engineer**. Its row reads **Request to hire** in **State** and **Ada Quill** in **Manager**, with a hollow yellow dot and **Draft**.
+  - **Expected:**
+    - The panel shows **Fictional tide engineer**.
+    - Its row reads **Request to hire** in **State** and **Ada Quill** in **Manager**.
+    - Its row has a hollow yellow dot in its slot.
   - **Notes:**
 
 - [ ] **Step 4.** Run Publish. Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, tick **Select all waiting**, then select **Approve 7 drafts**, then **Approve** in the dialog.
@@ -1280,7 +1463,10 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 2.** On the card for **Ada Quill**, select **Show 4 reports**.
-  - **Expected:** **Bram Oakes**, **Cleo Marsh** and **Freya Holt** appear in a column under her, then a card with a grey dashed edge for **Fictional tide engineer**, with **Employee** under it, then a hollow grey dot, **Planned, expected** and the month three months from now, such as **Feb 2027**.
+  - **Expected:**
+    - **Bram Oakes**, **Cleo Marsh** and **Freya Holt** appear in a column under her.
+    - After them, a card with a grey dashed edge for **Fictional tide engineer**.
+    - On that card, **Employee** under the name, then a grey box reading **Planned, expected** and the month three months from now.
   - **Notes:**
 
 - [ ] **Step 3.** Choose **Feature teams** in the teams switch, and select the Feature teams button.
@@ -1306,7 +1492,12 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 4.** Select **New release stream**, type `Fictional Mainline` in **Name**, and select **Add stream**.
-  - **Expected:** A notification says **Drafted the new release stream.** The side panel is headed **Fictional Mainline**, with a hollow yellow dot and **Draft: added**, **No cycles yet.** under **Cycle schedule**, **No releases yet.** under **Releases**, and no **New release…** button.
+  - **Expected:**
+    - A notification says **Drafted the new release stream.**
+    - The side panel is headed with a hollow yellow dot before **Fictional Mainline**.
+    - **No cycles yet.** is under **Cycle schedule**.
+    - **No releases yet.** is under **Releases**.
+    - There is no **New release…** button.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Set up cycles…**, and type `20270101` in **First cycle starts**, leaving **Each cycle lasts** at **3**, **Months**, and **Names** at **{YY}.{N}**.
@@ -1326,7 +1517,10 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 9.** Select **Make release**, then run Publish.
-  - **Expected:** A notification says **Drafted the new release.** Under **Releases**, a row reads **Fictional Mainline 1**, with a yellow dot and **Draft: added**, then **27.1 to 27.2 · ships 2027-06-15**, followed in bold by **15 days before 27.2 ends**.
+  - **Expected:**
+    - A notification says **Drafted the new release.**
+    - Under **Releases**, a row reads **Fictional Mainline 1**, with a yellow dot in its slot.
+    - The row then reads **27.1 to 27.2 · ships 2027-06-15**, followed in bold by **15 days before 27.2 ends**.
   - **Notes:**
 
 #### ACC-51: A Product Manager Starts the Plan
@@ -1340,15 +1534,21 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 2.** Select the **Customers** tab. Select the **Name** cell of the empty row, type `Fictional Lighthouse Trust`, and press Enter.
-  - **Expected:** A row **Fictional Lighthouse Trust** is added, with a hollow yellow dot and **Draft: added**, and a new empty row is under it.
+  - **Expected:**
+    - A row **Fictional Lighthouse Trust** is added, with a hollow yellow dot in its slot.
+    - A new empty row is under it.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **Proposals** tab, then **New proposal**. Type `Fictional Lighthouse Bid` in **Name**, and select **Add**.
-  - **Expected:** The side panel is headed **Fictional Lighthouse Bid** with a hollow yellow dot and **Draft: added**, and **Status** reads **Open**.
+  - **Expected:**
+    - The side panel is headed with a hollow yellow dot before **Fictional Lighthouse Bid**.
+    - **Status** reads **Open**.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **Projects** tab, then **New project**. Type `Fictional Lamp Room` in **Name** and `FLR-1` in **Project ID**. Using the pencil buttons, pick **Ada Quill** in **Owner**, **Fictional Lighthouse Trust** in **Customers** and **Fictional Lighthouse Bid** in **Proposals**, and select **Add**.
-  - **Expected:** The side panel is headed **Fictional Lamp Room** with a hollow yellow dot and **Draft: added**, and under **Milestones** reads **No milestones yet**.
+  - **Expected:**
+    - The side panel is headed with a hollow yellow dot before **Fictional Lamp Room**.
+    - Under **Milestones**, it reads **No milestones yet**.
   - **Notes:**
 
 - [ ] **Step 5.** Select the **Features** page in the left-hand menu.
@@ -1356,7 +1556,9 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 6.** Select **New feature**. Type `Fictional Tide Tables` in **Name**. Using the pencil buttons, choose **Planned** in **Status** and **Fictional Lighthouse Trust** in **Customers**, and select **Add**.
-  - **Expected:** The feature's details are headed **Fictional Tide Tables** with a hollow yellow dot and **Draft: added**. In the table, its **Feature team** cell shows a **No team** mark.
+  - **Expected:**
+    - The feature's details are headed with a hollow yellow dot before **Fictional Tide Tables**.
+    - In the table, its **Feature team** cell shows a red **No team** box.
   - **Notes:**
 
 - [ ] **Step 7.** Run Publish.
@@ -1378,7 +1580,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 3.** Select **Releases**, then **Fictional Mainline** in the streams table.
-  - **Expected:** No row in the side panel has a mark. **Fictional Mainline 1** still ships on **2027-06-15**, **15 days before 27.2 ends**.
+  - **Expected:** No row in the side panel has a dot. **Fictional Mainline 1** still ships on **2027-06-15**, **15 days before 27.2 ends**.
   - **Notes:**
 
 #### ACC-53: Feature Teams Are Recorded From Six Months Ago
@@ -1421,7 +1623,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 - [ ] **Step 7.** Select **Add**.
   - **Expected:**
-    - The panel is titled **Tide team**, followed by a hollow yellow dot and **Draft: added**.
+    - The panel is titled **Tide team**, with a hollow yellow dot before it.
     - **Members** lists **Ada Quill**, **Bram Oakes** and **Cleo Marsh**, each with a hollow yellow dot before the name and no date after it.
     - On the chart, a card named **Tide team** reads **No feature lead**.
   - **Notes:**
@@ -1440,7 +1642,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 - [ ] **Step 11.** Select **Add**.
   - **Expected:**
-    - The panel is titled **Harbour team**, followed by a hollow yellow dot and **Draft: added**.
+    - The panel is titled **Harbour team**, with a hollow yellow dot before it.
     - **Feature lead** reads **Dara Finch**.
     - **Members** lists **Dara Finch** and **Emil Stone**.
   - **Notes:**
@@ -1459,7 +1661,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 - [ ] **Step 15.** Select **Add**.
   - **Expected:**
-    - The panel is titled **Beacon team**, followed by a hollow yellow dot and **Draft: added**.
+    - The panel is titled **Beacon team**, with a hollow yellow dot before it.
     - On the chart, a card for **Cleo Marsh** is under **Tide team**, and another under **Beacon team**.
   - **Notes:**
 
@@ -1503,8 +1705,8 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 - [ ] **Step 3.** Select the change button in the **Feature lead** row, type `Ada`, and press Enter.
   - **Expected:**
-    - **Feature lead** reads **Ada Quill**, followed by a hollow yellow dot and **Draft**.
-    - Under it, **None** is in grey, followed by a green dot and **Live**.
+    - **Feature lead** reads **Ada Quill**, with a hollow yellow dot before it.
+    - Under it, a green dot before **None**, in grey.
   - **Notes:**
 
 - [ ] **Step 4.** Select the change button in the **Members** row, type `Bram`, press Enter to untick **Bram Oakes**, and press Enter again.
@@ -1536,7 +1738,10 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 11.** Select the Feature teams button, then **Tide team**.
-  - **Expected:** In the **Members** row, **Bram Oakes** has a hollow yellow dot before his name and is struck through, followed in grey by **Draft, from** and the first day of next month, such as **Draft, from Dec 1, 2026**.
+  - **Expected:**
+    - In the **Members** row, **Bram Oakes** has a hollow yellow dot before his name.
+    - His name is struck through.
+    - It is followed in grey by **from** and the first day of next month.
   - **Notes:**
 
 - [ ] **Step 12.** Run Publish.
@@ -1614,15 +1819,24 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 2.** Choose **Tide team**, and press Enter.
-  - **Expected:** The cell reads **Tide team**, in yellow, and the **No team** mark is gone. The row has a hollow yellow dot and **Draft**, with a Live row under it.
+  - **Expected:**
+    - The cell reads **Tide team**, with a hollow yellow dot before it.
+    - The **No team** box is gone.
+    - The row is faintly yellow, with a Live row under it.
   - **Notes:**
 
 - [ ] **Step 3.** Select the row's **Target cycle** cell, press Enter, choose **Fictional Mainline: 27.1**, and press Enter. Run Publish.
-  - **Expected:** The cell reads **Fictional Mainline: 27.1**, in yellow, and the dot on the row is filled.
+  - **Expected:**
+    - The cell reads **Fictional Mainline: 27.1**, with a filled yellow dot before it.
+    - The dot before **Tide team** is filled yellow too.
   - **Notes:**
 
 - [ ] **Step 4.** Sign out, and sign in as the Product Manager, `product.manager@fathom.test`. Open **Features**, open the ⋯ menu of **Fictional Tide Tables**, select **Approve draft**, then **Approve** in the dialog titled **Approve 1 draft?**.
-  - **Expected:** A notice reads **Approved 1 draft.** **Fictional Tide Tables** has no mark, reads **Tide team** in **Feature team**, and is under the heading **Fictional Mainline: 27.1**.
+  - **Expected:**
+    - A notice reads **Approved 1 draft.**
+    - **Fictional Tide Tables** has no dot.
+    - It reads **Tide team** in **Feature team**.
+    - It is under the heading **Fictional Mainline: 27.1**.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

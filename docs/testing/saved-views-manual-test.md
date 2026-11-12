@@ -329,7 +329,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Select **Move right**.
-  - **Expected:** **Position** moves one place to the right. No **Draft: moved** mark shows under its name, and no **Publish** button is in the top bar.
+  - **Expected:**
+    - **Position** moves one place to the right
+    - No dot before its name
+    - No **Moved** box after its name
+    - No **Publish** button is in the top bar
   - **Notes:**
 
 - [ ] **Step 3.** Open the Views menu.
