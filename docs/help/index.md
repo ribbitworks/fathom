@@ -10,7 +10,14 @@ How to use each page of Fathom.
 
 ## People
 
+- [Org chart](org-chart.md): reporting teams and feature teams as cards, on any date.
+- [Feature assignments](feature-assignments.md): who is on which feature team, and what they work on, month by month.
 - [Capacity](capacity.md): the planning settings capacity and forecasts are worked out with.
+- [Lists](lists.md): the lists of choices that columns offer.
+
+## Tables
+
+- [Saved views](saved-views.md): saving, sharing and applying a table's views, on People for now.
 
 ## Changes
 
