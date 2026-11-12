@@ -15,6 +15,7 @@ import { retiredLive } from "./lists.ts";
 import {
   daysBetween,
   lastCycleEnd,
+  placingFields,
   releaseCycles,
   releaseDate,
 } from "./releases.ts";
@@ -71,16 +72,20 @@ export function timelineFrame(
   };
 }
 
+export type ReleaseSpan = Span & {
+  release: ReleaseStream["releases"][number];
+  cycleWords: string;
+  shipsOn: string;
+  // Days from the timeline's first day to the end of the day the release ships.
+  shipsAt: number;
+};
+
 export interface ReleaseLayerRow {
   stream: ReleaseStream;
   cycles: (Span & ReleaseStream["cycles"][number])[];
-  releases: (Span & {
-    release: ReleaseStream["releases"][number];
-    cycleWords: string;
-    shipsOn: string;
-    // Days from the timeline's first day to the end of the day the release ships.
-    shipsAt: number;
-  })[];
+  releases: ReleaseSpan[];
+  // Beside live, each release a draft moves as it is live, in its old place.
+  live: ReleaseSpan[];
 }
 
 // The streams a timeline's release layer shows: those with cycles that are not retired as they are
@@ -101,42 +106,67 @@ export function releaseLayerRange(
   };
 }
 
-// Where each stream's cycles and releases fall on a timeline starting on the day given. Streams
-// retired as they are live, and releases drafted to be removed, are left out.
+// Where a release falls on a timeline starting on the day given, or undefined when its cycles are
+// not among the stream's.
+function releaseSpan(
+  stream: ReleaseStream,
+  release: ReleaseStream["releases"][number],
+  from: string,
+): ReleaseSpan | undefined {
+  const end = lastCycleEnd(stream, release.lastCycle);
+  const shipsOn = releaseDate(stream, release);
+  if (end === undefined || shipsOn === undefined) return undefined;
+  return {
+    release,
+    cycleWords: releaseCycles(stream, release),
+    shipsOn,
+    at: daysBetween(from, release.firstCycle),
+    days: daysBetween(release.firstCycle, addDays(end, 1)),
+    shipsAt: daysBetween(from, addDays(shipsOn, 1)),
+  };
+}
+
+const spansOf = (
+  stream: ReleaseStream,
+  releases: readonly ReleaseStream["releases"][number][],
+  from: string,
+) => releases.flatMap((release) => releaseSpan(stream, release, from) ?? []);
+
+// Where each stream's cycles and releases fall on a timeline starting on the day given, as the
+// Draft view shows them, with, beside live, the streams as they are live, whose releases a draft
+// moves are drawn in their old places too. Streams retired as they are live are left out.
 export function releaseLayer(
   streams: readonly ReleaseStream[],
   from: string,
+  live?: readonly ReleaseStream[],
 ): ReleaseLayerRow[] {
-  const at = (day: string) => daysBetween(from, day);
-  return layerStreams(streams).map((stream) => ({
-    stream,
-    cycles: stream.cycles.map((cycle) => ({
-      ...cycle,
-      at: at(cycle.startsOn),
-      days: daysBetween(cycle.startsOn, addDays(cycle.endsOn, 1)),
-    })),
-    releases: stream.releases.flatMap((release) => {
-      const end = lastCycleEnd(stream, release.lastCycle);
-      const shipsOn = releaseDate(stream, release);
-      if (
-        release.draft?.action === "deleted" ||
-        end === undefined ||
-        shipsOn === undefined
-      ) {
-        return [];
-      }
-      return [
-        {
-          release,
-          cycleWords: releaseCycles(stream, release),
-          shipsOn,
-          at: at(release.firstCycle),
-          days: daysBetween(release.firstCycle, addDays(end, 1)),
-          shipsAt: at(addDays(shipsOn, 1)),
-        },
-      ];
-    }),
-  }));
+  return layerStreams(streams).map((stream) => {
+    const liveStream = live?.find(({ id }) => id === stream.id);
+    const moved = stream.releases.filter(
+      ({ draft }) =>
+        draft?.action === "changed" &&
+        draft.changed.some((field) => placingFields.includes(field)),
+    );
+    return {
+      stream,
+      cycles: stream.cycles.map((cycle) => ({
+        ...cycle,
+        at: daysBetween(from, cycle.startsOn),
+        days: daysBetween(cycle.startsOn, addDays(cycle.endsOn, 1)),
+      })),
+      releases: spansOf(stream, stream.releases, from),
+      live:
+        liveStream === undefined
+          ? []
+          : spansOf(
+              liveStream,
+              liveStream.releases.filter(({ id }) =>
+                moved.some((release) => release.id === id),
+              ),
+              from,
+            ),
+    };
+  });
 }
 
 // How finely the axis is cut, named by its ticks, each under the next larger period: half years
@@ -150,6 +180,10 @@ export const labelPadding = { axis: 8, block: 12 } as const;
 
 export const labelWidth = (label: string, padding: number): number =>
   label.length * characterWidth + padding;
+
+// About how wide some characters are, such as the room a mark takes before a name.
+export const charactersWidth = (characters: number): number =>
+  characters * characterWidth;
 
 // Each scale finer than half years, with its widest tick name and its shortest tick in days.
 const scaleNeeds: readonly [AxisScale, string, number][] = [

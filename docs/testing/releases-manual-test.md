@@ -452,11 +452,19 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - The row is struck through.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Discard draft**.
+- [ ] **Step 2.** Read **Testing Stream**'s releases lane on the timeline.
+  - **Expected:**
+    - **Testing Release** is still there, struck through.
+    - A hollow yellow dot is before its name.
+  - **Notes:**
+
+- [ ] **Step 3.** Under **Releases** in the side panel, select **Discard draft** in the **Testing Release** row's **⋯** menu.
   - **Expected:**
     - A notification says **Discarded the draft.**
-    - **Testing Release** is no longer struck through.
-    - **Testing Release** has no dot.
+    - The **Testing Release** row is no longer struck through.
+    - The **Testing Release** row has no dot.
+    - On the timeline, **Testing Release** is not struck through.
+    - On the timeline, **Testing Release** has no dot.
   - **Notes:**
 
 #### REL-16: A Stream's Cycles Are Made Until a Later Day
@@ -567,17 +575,19 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - The red line is labelled **Today** in a row of its own above the axis.
   - **Notes:**
 
-- [ ] **Step 3.** Read **Platform**'s two lanes.
+- [ ] **Step 3.** Read **Platform**'s lanes.
   - **Expected:**
     - The cycles up to the first half are each a quarter long.
     - The first half and the cycles after it are half a year long.
     - Each block is as long as its dates on the axis.
-    - In the lane below, **Harbor 3** spans next quarter's cycle to the first half, such as **27.1** to **27.3**.
-    - A diamond is at the right end of **Harbor 3**.
+    - In the lane below, **Harbor 3** has a yellow dot before its name and spans the cycle after next quarter's to the cycle after the first half, such as **27.2** to **28.1**.
+    - A yellow **Moved** box is after its name.
+    - A diamond is under the right end of **Harbor 3**.
+    - In a third lane, a faded **Harbor 3** after a green dot spans next quarter's cycle to the first half, such as **27.1** to **27.3**.
   - **Notes:**
 
 - [ ] **Step 4.** Hover over **Harbor 1**'s span, scrolling the timeline left to it if needed.
-  - **Expected:** A tooltip names **Harbor 1**, its cycles and the day it ships, such as **Harbor 1: 26.1 to 26.2, ships 2026-06-30**.
+  - **Expected:** A tooltip names **Harbor 1**, its cycles and the day it ships, such as **Harbor 1: 26.1 to 26.2, ships 2026-06-30.**
   - **Notes:**
 
 - [ ] **Step 5.** Read **Patches**' cycles lane.
@@ -588,6 +598,30 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] **Step 6.** Hover over one of **Patches**' cycles.
   - **Expected:** A tooltip shows its name and dates, such as **P24.3: 2026-11-02 to 2026-11-29**.
+  - **Notes:**
+
+- [ ] **Step 7.** Read **Patches**' name on the left of the timeline.
+  - **Expected:**
+    - A yellow dot is before **Patches**.
+    - A **Retired** box is after it.
+  - **Notes:**
+
+- [ ] **Step 8.** Choose **Drafts applied** in the Draft menu.
+  - **Expected:**
+    - **Harbor 3** still spans the cycle after next quarter's to the cycle after the first half, such as **27.2** to **28.1**, with a yellow dot before its name.
+    - A yellow **Moved** box is after its name.
+    - **Platform** has no third lane, and no faded **Harbor 3**.
+  - **Notes:**
+
+- [ ] **Step 9.** Choose **Live only** in the Draft menu.
+  - **Expected:**
+    - **Harbor 3** spans next quarter's cycle to the first half, such as **27.1** to **27.3**, with a green dot before its name.
+    - **Harbor 4** is not on the timeline.
+    - No release on the timeline has a yellow dot.
+  - **Notes:**
+
+- [ ] **Step 10.** Choose **Drafts beside live** in the Draft menu.
+  - **Expected:** The faded **Harbor 3** is back in **Platform**'s third lane.
   - **Notes:**
 
 #### REL-19: The Timeline Zooms In and Out
@@ -745,8 +779,9 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] **Step 7.** Find **Harbor 1** in **Platform**'s releases lane, scrolling the timeline left to it.
   - **Expected:**
-    - **Harbor 1**'s span, across the cycles three and two quarters ago, such as **26.1** and **26.2**, has a dashed edge.
-    - A dashed line runs on from its right end, past the start of the next release, to a diamond a quarter later, on the day typed.
+    - **Harbor 1**'s span, across the cycles three and two quarters ago, such as **26.1** and **26.2**, has a hollow yellow dot before its name.
+    - Under the span, a dashed line runs from its right end, under the next release, to a diamond a quarter later, on the day typed.
+    - In a lane under **Platform**'s releases, a faded **Harbor 1** after a green dot has its diamond under its right end.
   - **Notes:**
 
 - [ ] **Step 8.** Select **Platform** in the table.
@@ -756,9 +791,10 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] **Step 9.** In the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Discard draft**.
   - **Expected:**
     - A notification says **Discarded the draft.**
-    - On the timeline, **Harbor 1**'s span has a solid edge.
-    - Its diamond is at its right end.
+    - On the timeline, **Harbor 1**'s span has no dot before its name.
+    - Its diamond is under its right end.
     - There is no dashed line.
+    - The faded **Harbor 1** is gone.
   - **Notes:**
 
 #### REL-22: A Release's Colour Is Chosen in Its Dialog
@@ -812,7 +848,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - The **Harbor 1** row has a hollow yellow dot before its square.
     - The square is teal.
     - On the timeline, **Harbor 1**'s span is teal.
-    - The span has a dashed edge.
+    - The span has a hollow yellow dot before its name.
   - **Notes:**
 
 - [ ] **Step 9.** Run Publish.
@@ -844,7 +880,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] **Step 15.** Select the **Releases** page in the left-hand menu.
   - **Expected:**
     - **Harbor 1**'s span on the timeline is teal.
-    - The span has a solid edge.
+    - The span has no dot before its name.
   - **Notes:**
 
 ### Part 5: Changing One Cycle's Length

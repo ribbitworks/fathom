@@ -1232,6 +1232,15 @@ th.liveColumn {
   height: 24px;
 }
 
+/* A lane of releases: each release's bar, with a row under it for its Ships on diamond, so a
+   diamond never sits on the next release's bar. */
+.timelineReleaseLane {
+  --release-bar: 24px;
+  --release-ships-row: 14px;
+
+  height: calc(var(--release-bar) + var(--release-ships-row));
+}
+
 .timelineCycle,
 .timelineRelease {
   position: absolute;
@@ -1260,6 +1269,8 @@ th.liveColumn {
 
 /* Text stays in the body's text colour, since some colours' own text shades are hard to read. */
 .timelineRelease {
+  bottom: auto;
+  height: var(--release-bar);
   border: 1px solid var(--release-filled);
   border-radius: var(--mantine-radius-sm);
   background: var(--release-light);
@@ -1267,19 +1278,21 @@ th.liveColumn {
   font-weight: 500;
 }
 
-.timelineReleaseDraft {
-  border-style: dashed;
+/* A release as it is live, beside the draft that moves it, dimmed as a Live copy is. */
+.timelineReleaseLive {
+  opacity: 0.7;
 }
 
+/* The diamond's row, under the bar. */
 .timelineShipsReach {
   position: absolute;
-  top: 50%;
+  top: calc(var(--release-bar) + var(--release-ships-row) / 2);
   border-top: 1px dashed var(--release-filled);
 }
 
 .timelineShips {
   position: absolute;
-  top: 50%;
+  top: calc(var(--release-bar) + var(--release-ships-row) / 2);
   z-index: 1;
   width: 11px;
   height: 11px;

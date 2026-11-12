@@ -26,6 +26,7 @@ import {
   releaseStreamSchema,
   releaseStreamsSchema,
   savedSchema,
+  type Show,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import type { CSSProperties } from "react";
@@ -321,6 +322,37 @@ export const draftedStreams = (
     patterns: kept(undoDrafts(stream.patterns, rejected)),
     releases: kept(undoDrafts(stream.releases, rejected)),
   }));
+
+// Each stream's, pattern's and release's draft, whatever the view, by its record, for its marks.
+export const draftsById = (
+  streams: readonly ReleaseStream[],
+): ReadonlyMap<string, RecordDraft> =>
+  new Map(
+    streams.flatMap((stream) =>
+      [stream, ...stream.patterns, ...stream.releases].flatMap(
+        ({ id, draft }): [string, RecordDraft][] =>
+          draft === undefined ? [] : [[id, draft]],
+      ),
+    ),
+  );
+
+// The fields of a release that place it on a timeline.
+export const placingFields: readonly string[] = [
+  "firstCycle",
+  "lastCycle",
+  "shipsOn",
+];
+
+// The streams as a Draft view shows them, from every stream with its drafts.
+export const streamsShown = (
+  streams: readonly ReleaseStream[],
+  show: Show,
+): readonly ReleaseStream[] =>
+  show === "live"
+    ? liveStreams(streams)
+    : show === "drafts"
+      ? draftedStreams(streams)
+      : streams;
 
 // The cycle that starts on a day, by name, or the day itself when the stream has no such cycle.
 export function cycleNamed(stream: ReleaseStream, startsOn: string): string {

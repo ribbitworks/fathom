@@ -52,8 +52,8 @@ Select **Rename** or **Retire** at the top of the stream's panel. A retired stre
 
 - **Ships on** is the day a release ships. It's the end of its last cycle unless another day is set.
 - **Planned to** is the last day cycles are made up to, so features far ahead can target a cycle.
-- A **diamond** on the timeline marks the day a release ships. A dashed line joins it to the release's last cycle when it ships on another day.
-- A **dashed edge** on the timeline marks a release with a draft.
+- A **diamond** under a release on the timeline marks the day it ships. A dashed line joins it to the end of the release when it ships on another day.
+- A **dot** before a release's or stream's name on the timeline marks its draft, as in the table. With **Drafts beside live**, a release a draft moves also shows faded, after a green dot, in a lane under the stream's releases, where it is now, and a release a draft removes stays, struck through.
 
 ## Where Changes Go
 

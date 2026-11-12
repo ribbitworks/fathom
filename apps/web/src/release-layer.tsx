@@ -1,31 +1,94 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The release layer a timeline may show: a row for each release stream, with a lane of its cycles
-// drawn at their real lengths above a lane of its releases, each a span across its cycles marked
-// on the day it ships.
+// The release layer a timeline may show: a row for each release stream, labelled with its name and
+// its draft's marks, with a lane of its cycles drawn at their real lengths above a lane of its
+// releases, each a span across its cycles with its Ships on diamond under it, and, beside live, a
+// Live lane holding each release a draft moves in its old place. The streams are shown as the
+// Draft view around the timeline shows them, and each mark is given its record's own draft.
 
+import type { RecordDraft, ReleaseStream } from "@fathom/shared";
+import { useCallback, useMemo } from "react";
 import classes from "./pages.module.css";
-import { releaseColourStyle } from "./releases.ts";
-import { draftWords } from "./status-mark.tsx";
 import {
+  draftsById,
+  liveStreams,
+  markedDraft,
+  releaseColourStyle,
+  streamsShown,
+} from "./releases.ts";
+import {
+  besideLive,
+  DraftedItem,
+  draftedItemChars,
+  draftMarkChars,
+  draftTip,
+  liveWaitingWords,
+  MarkedItem,
+  useDraftView,
+  viewedDraft,
+} from "./status-mark.tsx";
+import {
+  charactersWidth,
+  type DayRange,
   fits,
+  labelPadding,
   type Px,
+  releaseLayer,
+  releaseLayerRange,
   type ReleaseLayerRow,
+  type ReleaseSpan,
   type TimelineRow,
 } from "./timeline.ts";
 
-type ReleaseLayout = ReleaseLayerRow["releases"][number];
+// A bar's mark: its release's own draft, and who is changing it, or Live's, on a live copy of a
+// release a draft moves.
+type BarMark =
+  | { live: false; draft: RecordDraft | undefined; heldBy: string | undefined }
+  | { live: true };
 
-// A release's span across its cycles, with a marker on the day it ships and, when that is not the
-// end of its last cycle, a line from that end to the marker.
-function ReleaseSpan({ span, px }: { span: ReleaseLayout; px: Px }) {
+// A release's bar across its cycles, named inside when the name fits, with its Ships on diamond
+// under the bar: at the bar's end, or on the day it ships, joined to the bar's end by a dashed line.
+function ReleaseBar({
+  span,
+  px,
+  mark,
+}: {
+  span: ReleaseSpan;
+  px: Px;
+  mark: BarMark;
+}) {
+  const show = useDraftView();
   const { release, at, days, shipsAt } = span;
   const end = at + days;
   const left = Math.min(at, shipsAt);
   const from = (day: number) => px(day - left);
-  const draft =
-    release.draft === undefined ? "" : `, ${draftWords(release.draft)}`;
-  const words = `${release.name}${draft}: ${span.cycleWords}, ships ${span.shipsOn}`;
+  const draft = mark.live ? undefined : markedDraft(mark.draft);
+  const viewed = viewedDraft(draft, show);
+  const removed =
+    viewed.draft?.action === "deleted" && viewed.draft.state !== "rejected";
+  const markRoom = mark.live
+    ? draftMarkChars
+    : draftedItemChars(draft, show, mark.heldBy);
+  const name = fits(
+    release.name,
+    px.of(days),
+    labelPadding.block + charactersWidth(markRoom),
+  )
+    ? release.name
+    : undefined;
+  // The release, then each mark in a sentence of its own.
+  const sentences = [
+    `${release.name}: ${span.cycleWords}, ships ${span.shipsOn}`,
+    ...(mark.live ? ["Live"] : []),
+    ...(viewed.draft === undefined ? [] : [draftTip(viewed.draft)]),
+    ...(draft !== undefined && viewed.live ? [liveWaitingWords(draft)] : []),
+    ...(mark.live || mark.heldBy === undefined
+      ? []
+      : [`Being changed by ${mark.heldBy}`]),
+  ];
+  const words = sentences
+    .map((sentence) => `${sentence.replace(/\.$/, "")}.`)
+    .join(" ");
   return (
     <li
       className={classes.timelineReleaseSlot}
@@ -39,12 +102,19 @@ function ReleaseSpan({ span, px }: { span: ReleaseLayout; px: Px }) {
       <span
         className={[
           classes.timelineRelease,
-          release.draft === undefined ? "" : classes.timelineReleaseDraft,
+          mark.live ? classes.timelineReleaseLive : "",
+          removed ? classes.struck : "",
         ].join(" ")}
         style={{ left: from(at), width: px(days) }}
         aria-hidden
       >
-        {fits(release.name, px.of(days)) && release.name}
+        {mark.live ? (
+          <MarkedItem tone="live">{name}</MarkedItem>
+        ) : (
+          <DraftedItem draft={draft} heldBy={mark.heldBy}>
+            {name}
+          </DraftedItem>
+        )}
       </span>
       {shipsAt !== end && (
         <span
@@ -67,10 +137,12 @@ function ReleaseSpan({ span, px }: { span: ReleaseLayout; px: Px }) {
 }
 
 function ReleaseLanes({
-  row: { stream, cycles, releases },
+  row: { stream, cycles, releases, live },
+  markOf,
   px,
 }: {
   row: ReleaseLayerRow;
+  markOf: (id: string) => BarMark;
   px: Px;
 }) {
   return (
@@ -96,22 +168,93 @@ function ReleaseLanes({
         ))}
       </ul>
       <ul
-        className={classes.timelineLane}
+        className={[classes.timelineLane, classes.timelineReleaseLane].join(
+          " ",
+        )}
         aria-label={`Releases of ${stream.name}`}
       >
         {releases.map((span) => (
-          <ReleaseSpan key={span.release.id} span={span} px={px} />
+          <ReleaseBar
+            key={span.release.id}
+            span={span}
+            px={px}
+            mark={markOf(span.release.id)}
+          />
         ))}
       </ul>
+      {live.length > 0 && (
+        <ul
+          className={[classes.timelineLane, classes.timelineReleaseLane].join(
+            " ",
+          )}
+          aria-label={`Releases of ${stream.name} as they are live`}
+        >
+          {live.map((span) => (
+            <ReleaseBar
+              key={span.release.id}
+              span={span}
+              px={px}
+              mark={{ live: true }}
+            />
+          ))}
+        </ul>
+      )}
     </>
   );
 }
 
-export const releaseLayerRows = (
-  layer: readonly ReleaseLayerRow[],
-): TimelineRow[] =>
-  layer.map((row) => ({
-    id: row.stream.id,
-    label: row.stream.name,
-    lanes: (px) => <ReleaseLanes row={row} px={px} />,
-  }));
+// The release layer of every stream with its drafts, as the Draft view around it shows them: the
+// days it covers, and its rows on a timeline starting on a day.
+export function useReleaseLayer(releaseStreams: readonly ReleaseStream[]): {
+  range: DayRange | undefined;
+  rows: (from: string) => TimelineRow[];
+} {
+  const show = useDraftView();
+  const shown = useMemo(
+    () => streamsShown(releaseStreams, show),
+    [releaseStreams, show],
+  );
+  const live = useMemo(
+    () => (besideLive(show) ? liveStreams(releaseStreams) : undefined),
+    [releaseStreams, show],
+  );
+  const range = useMemo(
+    () => releaseLayerRange([...shown, ...(live ?? [])]),
+    [shown, live],
+  );
+  const rows = useCallback(
+    (from: string): TimelineRow[] => {
+      const drafts = draftsById(releaseStreams);
+      const records = releaseStreams.flatMap((stream) => [
+        stream,
+        ...stream.releases,
+      ]);
+      const heldBy = new Map(records.map(({ id, heldBy }) => [id, heldBy]));
+      const retired = new Map(
+        releaseStreams.map((stream) => [stream.id, stream.retired]),
+      );
+      const markOf = (id: string): BarMark => ({
+        live: false,
+        draft: drafts.get(id),
+        heldBy: heldBy.get(id),
+      });
+      return releaseLayer(shown, from, live).map((row) => ({
+        id: row.stream.id,
+        label: (
+          <DraftedItem
+            draft={markedDraft(
+              drafts.get(row.stream.id),
+              retired.get(row.stream.id),
+            )}
+            heldBy={heldBy.get(row.stream.id)}
+          >
+            {row.stream.name}
+          </DraftedItem>
+        ),
+        lanes: (px) => <ReleaseLanes row={row} markOf={markOf} px={px} />,
+      }));
+    },
+    [releaseStreams, shown, live],
+  );
+  return { range, rows };
+}

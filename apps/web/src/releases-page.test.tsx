@@ -1507,14 +1507,18 @@ describe("the timeline", () => {
 
   const zoomKey = "fathom-releases-timeline-zoom";
 
-  async function showTimeline(shown: ReleaseStream[], today: string) {
+  async function showTimeline(
+    shown: ReleaseStream[],
+    today: string,
+    view: "" | "?show=drafts" | "?show=live" = "",
+  ) {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(`${today}T12:00:00Z`));
     serverAnswers({
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer(shown),
     });
-    renderApp("/releases");
+    renderApp(`/releases${view}`);
     return screen.findByRole("region", { name: "Timeline" });
   }
 
@@ -1599,11 +1603,11 @@ describe("the timeline", () => {
     );
     const releases = items(timeline, "Releases of Fictional Majors");
     expect(releases.map((item) => item.getAttribute("title"))).toEqual([
-      "Fictional One: 27.1 to 27.2, ships 2027-06-30",
-      "Fictional Two, Draft: 27.3, ships 2027-08-14",
+      "Fictional One: 27.1 to 27.2, ships 2027-06-30.",
+      "Fictional Two: 27.3, ships 2027-08-14. Draft.",
     ]);
     const [one, two] = releases.map((item) =>
-      [...item.querySelectorAll<HTMLElement>("[aria-hidden]")].map(
+      [...item.querySelectorAll<HTMLElement>(":scope > [aria-hidden]")].map(
         ({ style }) => [style.left, style.width],
       ),
     );
@@ -1951,6 +1955,173 @@ describe("the timeline", () => {
     expect(
       within(timeline).getByRole("radio", { name: "Year" }),
     ).toHaveProperty("checked", true);
+  });
+
+  describe("drafts on it, as the Draft view shows them", () => {
+    // Fictional One moved a quarter later, Fictional Two drafted to be removed, Fictional Three
+    // added, on a stream drafted to be retired.
+    const drafted = () =>
+      fictionalStream({
+        retired: true,
+        draft: recordDraft({ changed: ["retired"], live: { retired: false } }),
+        releases: [
+          fictionalRelease({
+            firstCycle: "2027-04-01",
+            lastCycle: "2027-04-01",
+            draft: recordDraft({
+              changed: ["firstCycle", "lastCycle"],
+              live: { firstCycle: "2027-01-01", lastCycle: "2027-01-01" },
+            }),
+          }),
+          fictionalRelease({
+            id: "30000000-0000-4000-8000-000000000002",
+            name: "Fictional Two",
+            firstCycle: "2027-07-01",
+            lastCycle: "2027-07-01",
+            draft: recordDraft({ action: "deleted" }),
+          }),
+          fictionalRelease({
+            id: "30000000-0000-4000-8000-000000000003",
+            name: "Fictional Three",
+            firstCycle: "2027-10-01",
+            lastCycle: "2027-10-01",
+            draft: recordDraft({ action: "created" }),
+          }),
+        ],
+      });
+
+    const names = (timeline: HTMLElement, list: string) =>
+      items(timeline, list).map((item) => item.getAttribute("title"));
+
+    const liveList = "Releases of Fictional Majors as they are live";
+
+    it("shows beside live each release a draft moves in its old place, and what a draft removes", async () => {
+      const timeline = await showTimeline([drafted()], "2027-02-15");
+      expect(names(timeline, "Releases of Fictional Majors")).toEqual([
+        "Fictional One: 27.2, ships 2027-06-30. Draft: moved.",
+        "Fictional Two: 27.3, ships 2027-09-30. Draft: removed.",
+        "Fictional Three: 27.4, ships 2027-12-31. Draft: added.",
+      ]);
+      expect(names(timeline, liveList)).toEqual([
+        "Fictional One: 27.1, ships 2027-03-31. Live.",
+      ]);
+      expect(
+        within(items(timeline, "Release streams")[0] as HTMLElement).getByText(
+          "Retired",
+        ),
+      ).toBeDefined();
+    });
+
+    it("shows with drafts applied only what the drafts make", async () => {
+      const timeline = await showTimeline(
+        [drafted()],
+        "2027-02-15",
+        "?show=drafts",
+      );
+      expect(names(timeline, "Releases of Fictional Majors")).toEqual([
+        "Fictional One: 27.2, ships 2027-06-30. Draft: moved.",
+        "Fictional Three: 27.4, ships 2027-12-31. Draft: added.",
+      ]);
+      expect(
+        within(timeline).queryByRole("list", { name: liveList }),
+      ).toBeNull();
+    });
+
+    it("shows Live only the releases as they are live, saying which a waiting draft would change", async () => {
+      const timeline = await showTimeline(
+        [drafted()],
+        "2027-02-15",
+        "?show=live",
+      );
+      expect(names(timeline, "Releases of Fictional Majors")).toEqual([
+        "Fictional One: 27.1, ships 2027-03-31. Live. A move is waiting for approval.",
+        "Fictional Two: 27.3, ships 2027-09-30. Live. Its removal is waiting for approval.",
+      ]);
+    });
+
+    // A rejected removal, a rejected move, and the reader's own unpublished change of colour.
+    const judged = () =>
+      fictionalStream({
+        releases: [
+          fictionalRelease({
+            firstCycle: "2027-04-01",
+            lastCycle: "2027-04-01",
+            draft: recordDraft({
+              changed: ["firstCycle", "lastCycle"],
+              live: { firstCycle: "2027-01-01", lastCycle: "2027-01-01" },
+              state: "rejected",
+            }),
+          }),
+          fictionalRelease({
+            id: "30000000-0000-4000-8000-000000000002",
+            name: "Fictional Two",
+            firstCycle: "2027-07-01",
+            lastCycle: "2027-07-01",
+            draft: recordDraft({ action: "deleted", state: "rejected" }),
+          }),
+          fictionalRelease({
+            id: "30000000-0000-4000-8000-000000000003",
+            name: "Fictional Three",
+            firstCycle: "2027-10-01",
+            lastCycle: "2027-10-01",
+            colour: "teal",
+            draft: recordDraft({
+              changed: ["colour"],
+              live: { colour: null },
+              unpublished: true,
+            }),
+          }),
+        ],
+      });
+
+    it("says beside live which drafts were rejected, striking out none, and which are unpublished", async () => {
+      const timeline = await showTimeline([judged()], "2027-02-15");
+      const [moved, removed, unpublished] = names(
+        timeline,
+        "Releases of Fictional Majors",
+      );
+      expect(moved).toMatch(/^Fictional One: .*\. Rejected/);
+      expect(removed).toMatch(/^Fictional Two: .*\. Rejected/);
+      expect(unpublished).toMatch(/^Fictional Three: .*unpublished/);
+      expect(
+        items(timeline, "Releases of Fictional Majors").map(
+          (item) =>
+            item.querySelector(":scope > [aria-hidden]")?.className ?? "",
+        ),
+      ).not.toContainEqual(expect.stringMatching(/struck/));
+    });
+
+    it("says who is changing a stream or a release", async () => {
+      const timeline = await showTimeline(
+        [
+          fictionalStream({
+            heldBy: "Fictional Editor",
+            releases: [fictionalRelease({ heldBy: "Fictional Editor" })],
+          }),
+        ],
+        "2027-02-15",
+      );
+      expect(names(timeline, "Releases of Fictional Majors")).toEqual([
+        "Fictional One: 27.1, ships 2027-03-31. Being changed by Fictional Editor.",
+      ]);
+      expect(items(timeline, "Release streams")[0]?.textContent).toContain(
+        "being changed by Fictional Editor",
+      );
+    });
+
+    it("takes rejected drafts back with drafts applied", async () => {
+      const timeline = await showTimeline(
+        [judged()],
+        "2027-02-15",
+        "?show=drafts",
+      );
+      expect(
+        names(timeline, "Releases of Fictional Majors").slice(0, 2),
+      ).toEqual([
+        "Fictional One: 27.1, ships 2027-03-31.",
+        "Fictional Two: 27.3, ships 2027-09-30.",
+      ]);
+    });
   });
 
   it("is left out while no stream has cycles", async () => {

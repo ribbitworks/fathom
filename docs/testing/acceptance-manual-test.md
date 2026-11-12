@@ -1880,7 +1880,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:**
     - The whole timeline fits across.
     - **Fictional Harbor 4** is at the right end of **Platform**'s releases lane.
-    - A diamond is at the right end of **Fictional Harbor 4**.
+    - A diamond is under the right end of **Fictional Harbor 4**.
   - **Notes:**
 
 - [ ] **Step 6.** Hover over **Fictional Harbor 4**'s span.

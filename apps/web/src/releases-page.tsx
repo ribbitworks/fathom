@@ -60,13 +60,14 @@ import {
 } from "./release-dialogs.tsx";
 import {
   discardRecordDraft,
-  draftedStreams,
   markedDraft,
   patternRowFields,
   releaseRowFields,
   slotDraft,
   streamRowFields,
+  draftsById,
   liveStreams,
+  streamsShown,
   recordNodes,
   includesCycle,
   keptReleases,
@@ -1016,21 +1017,8 @@ export function ReleasesPage({
 
   const { streams: all, canEditStreams, canEditReleases } = query.data;
   const allById = new Map(all.map((stream) => [stream.id, stream]));
-  const streams =
-    show === "live"
-      ? liveStreams(all)
-      : show === "drafts"
-        ? draftedStreams(all)
-        : all;
-  // Each record's draft, whatever the view, by its record, for its marks.
-  const drafts = new Map(
-    all.flatMap((stream) =>
-      [stream, ...stream.patterns, ...stream.releases].flatMap(
-        ({ id, draft }): [string, RecordDraft][] =>
-          draft === undefined ? [] : [[id, draft]],
-      ),
-    ),
-  );
+  const streams = streamsShown(all, show);
+  const drafts = draftsById(all);
   const nodes = [
     ...recordNodes(all),
     ...(plan.data === undefined ? [] : planNodes(plan.data)),
@@ -1237,7 +1225,7 @@ export function ReleasesPage({
               <TimelineView
                 title="Timeline"
                 zoomKey={timelineZoomKey}
-                releaseStreams={streams}
+                releaseStreams={all}
                 today={today()}
               />
               <StreamTable

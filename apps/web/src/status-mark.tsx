@@ -132,7 +132,7 @@ export function wasWords(
 const wasLength = 40;
 
 // What kind of change a draft is, where its dot cannot say it: shown in a box after the item.
-function draftKind(draft: DraftLike): string | undefined {
+export function draftKind(draft: DraftLike): string | undefined {
   if (draft.state === "rejected") return undefined;
   if (draft.moved === true) return "Moved";
   if (draft.action === undefined) return "Reordered";
@@ -195,6 +195,10 @@ export function partsMark(
 
 // How many characters a draft's dot takes in a table, with the space after it.
 export const draftMarkChars = 2;
+
+// How many characters a box such as Moved takes beyond its word, for its padding and the gap before
+// it.
+const kindBoxChars = 2;
 
 type Tone = "draft" | "rejected" | "live" | "unpublished";
 
@@ -430,6 +434,24 @@ export function DraftedItem({
         <VisuallyHidden>, {spoken.join(", ")}</VisuallyHidden>
       )}
     </>
+  );
+}
+
+// How many characters the marks DraftedItem draws around an item take, in a Draft view: a dot for
+// the draft or Live, one for a lock, and the box a dot cannot say, such as Moved.
+export function draftedItemChars(
+  draft: DraftLike | undefined,
+  show: Show,
+  heldBy: string | undefined,
+): number {
+  const { draft: shown, live } = viewedDraft(draft, show);
+  const dots = [shown !== undefined, live, heldBy !== undefined].filter(
+    Boolean,
+  ).length;
+  const kind = shown === undefined ? undefined : draftKind(shown);
+  return (
+    dots * draftMarkChars +
+    (kind === undefined ? 0 : kind.length + kindBoxChars)
   );
 }
 

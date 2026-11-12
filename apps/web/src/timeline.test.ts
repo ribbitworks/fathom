@@ -127,10 +127,9 @@ describe("the timeline of release streams", () => {
             }),
             fictionalRelease({
               id: "r3",
-              name: "Fictional Gone",
+              name: "Fictional Four",
               firstCycle: "2027-10-01",
               lastCycle: "2027-10-01",
-              draft: recordDraft({ action: "deleted" }),
             }),
             fictionalRelease({
               id: "r4",
@@ -171,7 +170,62 @@ describe("the timeline of release streams", () => {
         days: 92,
         shipsAt: 226,
       },
+      {
+        name: "Fictional Four",
+        cycleWords: "27.4",
+        shipsOn: "2027-12-31",
+        at: 273,
+        days: 92,
+        shipsAt: 365,
+      },
     ]);
+  });
+
+  it("lays out, beside live, each release a draft moves as it is live", () => {
+    const moved = fictionalStream({
+      releases: [
+        fictionalRelease({
+          firstCycle: "2027-04-01",
+          lastCycle: "2027-04-01",
+          draft: recordDraft({ changed: ["firstCycle", "lastCycle"] }),
+        }),
+        fictionalRelease({
+          id: "r2",
+          name: "Fictional Renamed",
+          firstCycle: "2027-07-01",
+          lastCycle: "2027-07-01",
+          draft: recordDraft({ changed: ["name"] }),
+        }),
+        fictionalRelease({
+          id: "r3",
+          name: "Fictional Later",
+          firstCycle: "2027-10-01",
+          lastCycle: "2027-10-01",
+          shipsOn: "2028-01-15",
+          draft: recordDraft({ changed: ["shipsOn"] }),
+        }),
+      ],
+    });
+    const live = fictionalStream({
+      releases: [
+        fictionalRelease(),
+        fictionalRelease({ id: "r2" }),
+        fictionalRelease({
+          id: "r3",
+          name: "Fictional Later",
+          firstCycle: "2027-10-01",
+          lastCycle: "2027-10-01",
+        }),
+      ],
+    });
+    const [row] = releaseLayer([moved], "2027-01-01", [live]);
+    expect(
+      row?.live.map(({ release, at, days }) => [release.name, at, days]),
+    ).toEqual([
+      ["Fictional One", 0, 90],
+      ["Fictional Later", 273, 92],
+    ]);
+    expect(releaseLayer([moved], "2027-01-01")[0]?.live).toEqual([]);
   });
 
   it("marks today only while it is on the timeline", () => {

@@ -26,7 +26,7 @@ import {
 } from "react";
 import classes from "./pages.module.css";
 import { Icon } from "./icons.tsx";
-import { releaseLayerRows } from "./release-layer.tsx";
+import { useReleaseLayer } from "./release-layer.tsx";
 import { daysBetween } from "./releases.ts";
 import {
   type AxisScale,
@@ -37,8 +37,6 @@ import {
   labelPadding,
   type Px,
   pxAt,
-  releaseLayer,
-  releaseLayerRange,
   type TimelineFrame,
   timelineAxis,
   timelineFrame,
@@ -139,7 +137,8 @@ export function TimelineView({
   // Where the zoom is kept in the browser.
   zoomKey: string;
   today: string;
-  // The release streams whose cycles and releases are shown first, as a layer.
+  // The release streams whose cycles and releases are shown first, as a layer, each with its
+  // drafts, shown as the Draft view around the timeline shows them.
   releaseStreams?: readonly ReleaseStream[];
   // The view's own rows, under the release layer, with the days they cover.
   rows?: (RowGroup & { range: DayRange }) | undefined;
@@ -159,12 +158,10 @@ export function TimelineView({
   // Where the timeline last scrolled the view itself, so only the reader's scrolling moves the
   // anchor.
   const scrolledTo = useRef<number>(undefined);
+  const { range: layerRange, rows: layerRows } =
+    useReleaseLayer(releaseStreams);
   // The frame is built from days alone, so a view handing over equal streams or rows anew on each
   // render doesn't rebuild the axis, the quarters and the strip.
-  const layerRange = useMemo(
-    () => releaseLayerRange(releaseStreams),
-    [releaseStreams],
-  );
   const frame = useMemo(
     () =>
       timelineFrame(
@@ -184,12 +181,14 @@ export function TimelineView({
   );
   const groups = useMemo(() => {
     if (frame === undefined) return [];
-    const layer = releaseLayerRows(releaseLayer(releaseStreams, frame.from));
+    const releaseRows = layerRows(frame.from);
     return [
-      ...(layer.length > 0 ? [{ name: "Release streams", rows: layer }] : []),
+      ...(releaseRows.length > 0
+        ? [{ name: "Release streams", rows: releaseRows }]
+        : []),
       ...(rows === undefined ? [] : [rows]),
     ];
-  }, [frame, releaseStreams, rows]);
+  }, [frame, layerRows, rows]);
   const days = frame?.days;
   const todayAt = frame?.today;
   const shows = days === undefined ? undefined : shownDays(zoom, days);
