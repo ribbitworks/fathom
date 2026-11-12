@@ -7,6 +7,7 @@
 import {
   builtInColumnNames,
   type ChangedField,
+  classNames,
   type ChangedRecord,
   type ChangeEntry,
   changeHistorySchema,
@@ -24,7 +25,6 @@ import {
 } from "@fathom/shared";
 import { infiniteQueryOptions, keepPreviousData } from "@tanstack/react-query";
 import { getJson } from "./api.ts";
-import { visibilityName } from "./lists.ts";
 import type { Phrase } from "./phrase.tsx";
 import { effortColumnUnits } from "./effort.ts";
 import { formatDay, unitAmountWords } from "./table-view.ts";
@@ -67,7 +67,7 @@ const fieldNames = new Map([
   ["name", "Name"],
   ["label", "Name"],
   ["description", "Description"],
-  ["visibility", "Visibility"],
+  ["visibility", "Class"],
   ["retired", "Retired"],
   ["listId", "List"],
   ["multiple", "Several choices"],
@@ -137,7 +137,7 @@ const valueWords = new Map<string, (value: string) => string | undefined>([
     "visibility",
     (value) => {
       const tier = tierSchema.safeParse(value);
-      return tier.success ? visibilityName(tier.data) : undefined;
+      return tier.success ? classNames[tier.data] : undefined;
     },
   ],
   [

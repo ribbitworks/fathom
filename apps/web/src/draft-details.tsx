@@ -233,33 +233,38 @@ const describers = new Map<string, (field: ChangedField) => Phrase>([
   ["filledBy", describeFill],
 ]);
 
+// A line in a menu, such as why the item above it is turned off.
+export function MenuNote({ children }: { children: ReactNode }) {
+  return (
+    <Text fz="xs" px="sm" pb={4} className={classes.draftLine}>
+      {children}
+    </Text>
+  );
+}
+
 // Under Approve, greyed out, for a draft this account changed when its role does not let it approve
 // its own.
 export function OtherApproverNote() {
   return (
-    <Text fz="xs" px="sm" pb={4} className={classes.draftLine}>
+    <MenuNote>
       Changed by this account, so another approver must approve it
-    </Text>
+    </MenuNote>
   );
 }
 
 // Under an Approve item that is disabled because the draft depends on a rejected one.
 export function WaitingNote() {
-  return (
-    <Text fz="xs" px="sm" pb={4} className={classes.draftLine}>
-      Waiting for a rejected draft to be resubmitted
-    </Text>
-  );
+  return <MenuNote>Waiting for a rejected draft to be resubmitted</MenuNote>;
 }
 
 // In the menu of a record someone else has unpublished changes to, which nobody else may change,
 // approve, or reject until they publish or discard them.
 export function HeldNote({ by }: { by: string }) {
   return (
-    <Text fz="xs" px="sm" pb={4} className={classes.draftLine}>
+    <MenuNote>
       Being changed by {by}. It can be changed once they publish or discard
       their changes.
-    </Text>
+    </MenuNote>
   );
 }
 
@@ -267,9 +272,7 @@ export function HeldNote({ by }: { by: string }) {
 // approve until they publish them.
 export function UnpublishedNote() {
   return (
-    <Text fz="xs" px="sm" pb={4} className={classes.draftLine}>
-      Nobody else sees these changes until they're published.
-    </Text>
+    <MenuNote>Nobody else sees these changes until they're published.</MenuNote>
   );
 }
 

@@ -36,6 +36,20 @@ const editor = () =>
     permissions: ["configuration:edit", "configuration:view", "plan:view"],
   });
 
+// An editor who may move data between classes, seeing Personal data but not Confidential.
+const classifier = () =>
+  Response.json({
+    ...fictionalUser,
+    permissions: [
+      "configuration:edit",
+      "configuration:view",
+      "plan:view",
+      "people:view",
+      "personal:view",
+      "data:classify",
+    ],
+  });
+
 const choice = (id: string, label: string, extra: object = {}) => ({
   id,
   label,
@@ -493,7 +507,7 @@ describe("the table of lists", () => {
       .map((tableRow) => tableRow.textContent);
     expect(rows).toEqual([
       "LocationsOffices and labs.(3) Kestrel Bay, Northmere, Corran Quay",
-      "Skills(1) Rust",
+      "SkillsPersonal(1) Rust",
       "Empty List(0) ",
     ]);
   });
@@ -571,7 +585,7 @@ describe("the table of lists", () => {
         "(4) Fenwick, Kestrel Bay, Northmere, Corran QuayReordered, Draft: reordered",
       ],
       [
-        "Skills",
+        "SkillsPersonal",
         "What people know., Rejected, changed from no description: Not yet",
         "(1) Rust, Rejected",
       ],
@@ -593,7 +607,7 @@ describe("the table of lists", () => {
         "Offices and labs.",
         "(3) Kestrel Bay, Northmere, Corran QuayReordered, Draft: reordered",
       ],
-      ["Skills", "No description", "(1) Go"],
+      ["SkillsPersonal", "No description", "(1) Go"],
       ["Empty List", "No description", "(0) , Draft"],
     ]);
   });
@@ -664,7 +678,7 @@ describe("the table of lists", () => {
     expect(await names()).toEqual([
       "LocationsRetired, Draft: retired",
       "Retired",
-      "RegionsRestored, Draft: restored",
+      "RegionsConfidentialRestored, Draft: restored",
     ]);
     await userEvent.click(screen.getByRole("link", { name: "Locations" }));
     const opened = await screen.findByRole("region", { name: /./ });
@@ -679,7 +693,7 @@ describe("the table of lists", () => {
     });
     await waitFor(async () => {
       expect(await names()).toEqual([
-        "RegionsRestored, Draft: restored",
+        "RegionsConfidentialRestored, Draft: restored",
         "Retired",
         "LocationsRetired, Draft: retired",
       ]);
@@ -1485,7 +1499,7 @@ describe("creating and editing lists", () => {
   it("creates a list, opens it ready for choices, and undoes it", async () => {
     let lists = [locations, skills, empty, regions];
     const fetch = serverAnswers({
-      "GET /api/session": editor,
+      "GET /api/session": classifier,
       "GET /api/lists": () => Response.json({ lists }),
       "POST /api/lists": () => {
         lists = [...lists, createdList];
@@ -1512,7 +1526,17 @@ describe("creating and editing lists", () => {
       within(dialog).getByLabelText(/^Description/),
       "Parts of the product.",
     );
-    await userEvent.click(within(dialog).getByText("Personal"));
+    expect(
+      within(dialog).getByRole<HTMLInputElement>("radio", {
+        name: /^Confidential/,
+      }).disabled,
+    ).toBe(true);
+    expect(
+      within(dialog).getByText("This role can't see Confidential data"),
+    ).toBeTruthy();
+    await userEvent.click(
+      within(dialog).getByRole("radio", { name: /^Personal/ }),
+    );
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Create list" }),
     );
@@ -3572,14 +3596,18 @@ describe("built-in lists and lists with meanings", () => {
     return fetch;
   }
 
-  it("marks a built-in list, and offers changing its visibility but not retiring or deleting it", async () => {
+  it("marks a built-in list and its class, and offers neither retiring nor deleting it", async () => {
     await openStates();
     const table = screen.getByRole("table", { name: "Lists" });
     const stateRow = within(table)
       .getByRole("link", { name: "Hiring states" })
       .closest("[role='row']") as HTMLElement;
     expect(within(stateRow).getByText("Built in")).toBeTruthy();
+    expect(within(stateRow).getByText("Confidential")).toBeTruthy();
     expect(within(panel()).getByText("Built in")).toBeTruthy();
+    expect(within(panel()).getByText("Confidential")).toBeTruthy();
+    // Without Classify data, an approved list's class is neither changed nor moved.
+    expect(screen.queryByRole("button", { name: "Change class…" })).toBe(null);
     expect(
       within(panel()).getByText(
         /Proposed: the request to hire is not yet approved\.\s+Open: the request to hire is approved\.\s+Hired: everyone in People who hasn't left\. A planned hire is hired when someone fills it\.\s+Left: everyone in People whose end date has passed\.\s+Keep at least one choice for each\./,
@@ -3593,11 +3621,172 @@ describe("built-in lists and lists with meanings", () => {
     expect(within(dialog).queryByRole("button", { name: "Delete list" })).toBe(
       null,
     );
+    expect(within(dialog).queryByRole("radio")).toBe(null);
+  });
+
+  it("changes an approved list's class at once, from its panel", async () => {
+    let shown = skills;
+    const fetch = serverAnswers({
+      "GET /api/session": classifier,
+      "GET /api/lists": () => Response.json({ lists: [locations, shown] }),
+      "PUT /api/lists/l2/class": () => {
+        shown = { ...skills, visibility: "general" };
+        return savedAs(s1)();
+      },
+    });
+    renderApp("/lists/l2");
+    await screen.findByRole("heading", { name: "Skills", level: 2 });
+    await userEvent.click(screen.getByRole("button", { name: "Edit list" }));
+    const edit = await screen.findByRole("dialog", { name: "Edit list" });
+    expect(within(edit).queryByRole("radio")).toBe(null);
+    await userEvent.click(within(edit).getByRole("button", { name: "Cancel" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change class…" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Change the class of Skills",
+    });
     expect(
       within(dialog).getByRole<HTMLInputElement>("radio", {
-        name: "Confidential",
+        name: /^Personal/,
+      }).checked,
+    ).toBe(true);
+    await userEvent.click(
+      within(dialog).getByRole("radio", { name: /^General/ }),
+    );
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Change" }),
+    );
+    expect(bodyOf(fetch, "PUT", "/api/lists/l2/class")).toEqual([
+      { dataClass: "general" },
+    ]);
+    await waitFor(() => {
+      expect(within(panel()).queryByText("Personal")).toBe(null);
+    });
+  });
+
+  it("gives a list only drafted to be added its class in its dialog, not from its panel", async () => {
+    const added = {
+      ...empty,
+      draft: {
+        action: "created",
+        changed: [],
+        live: {},
+        state: "waiting",
+        madeBy: "Fictional Editor",
+        madeAt: "2026-11-01T10:00:00.000Z",
+      },
+    };
+    const fetch = serverAnswers({
+      "GET /api/session": classifier,
+      "GET /api/lists": () => Response.json({ lists: [added] }),
+      "PUT /api/lists/l3": () =>
+        Response.json({
+          list: { ...added, visibility: "personal" },
+          changeSetId: s1,
+        }),
+    });
+    renderApp("/lists/l3");
+    await screen.findByRole("heading", { name: "Empty List", level: 2 });
+    expect(screen.queryByRole("button", { name: "Change class…" })).toBe(null);
+    await userEvent.click(screen.getByRole("button", { name: "Edit list" }));
+    const dialog = await screen.findByRole("dialog", { name: "Edit list" });
+    await userEvent.click(
+      within(dialog).getByRole("radio", { name: /^Personal/ }),
+    );
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(bodyOf(fetch, "PUT", "/api/lists/l3")).toEqual([
+        { name: "Empty List", description: "", visibility: "personal" },
+      ]);
+    });
+  });
+
+  it("makes a General list for a role without Classify data, offering no class", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () => Response.json({ lists: [] }),
+      "POST /api/lists": () =>
+        Response.json({ list: empty, changeSetId: s1 }, { status: 201 }),
+    });
+    renderApp("/lists");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "New list" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "New list" });
+    expect(within(dialog).queryByRole("radio")).toBe(null);
+    await userEvent.type(within(dialog).getByLabelText("Name"), "Empty List");
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Create list" }),
+    );
+    expect(bodyOf(fetch, "POST", "/api/lists")).toEqual([
+      { name: "Empty List", description: "", visibility: "general" },
+    ]);
+  });
+
+  it("offers no change of class for a list drafted to be removed", async () => {
+    serverAnswers({
+      "GET /api/session": classifier,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...empty,
+              draft: {
+                action: "deleted",
+                changed: [],
+                live: {},
+                state: "waiting",
+                madeBy: "Fictional Editor",
+                madeAt: "2026-11-01T10:00:00.000Z",
+              },
+            },
+          ],
+        }),
+    });
+    renderApp("/lists/l3");
+    await screen.findByRole("heading", { name: "Empty List", level: 2 });
+    expect(screen.queryByRole("button", { name: "Change class…" })).toBe(null);
+  });
+
+  it("turns off changing the class of a list someone else is changing", async () => {
+    serverAnswers({
+      "GET /api/session": classifier,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [{ ...empty, heldBy: "Fictional Editor" }],
+        }),
+    });
+    renderApp("/lists/l3");
+    await screen.findByRole("heading", { name: "Empty List", level: 2 });
+    expect(
+      screen.getByRole<HTMLButtonElement>("button", { name: "Change class…" })
+        .disabled,
+    ).toBe(true);
+  });
+
+  it("keeps a list a column on Features draws on General, saying why", async () => {
+    serverAnswers({
+      "GET /api/session": classifier,
+      "GET /api/lists": () =>
+        Response.json({ lists: [{ ...empty, onFeatures: true }] }),
+    });
+    renderApp("/lists/l3");
+    await screen.findByRole("heading", { name: "Empty List", level: 2 });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change class…" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByRole<HTMLInputElement>("radio", {
+        name: /^Personal/,
       }).disabled,
-    ).toBe(false);
+    ).toBe(true);
+    expect(
+      within(dialog).getByText(
+        "A column on Features draws on this list, so it stays General",
+      ),
+    ).toBeTruthy();
   });
 
   it("shows each choice's meaning, and adds choices, pasted too, with the meaning chosen", async () => {

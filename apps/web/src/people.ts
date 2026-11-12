@@ -8,6 +8,7 @@ import {
   changeSetIdSchema,
   type PersonChange,
   type PersonRequest,
+  peopleColumnsSchema,
   peopleSchema,
   savedSchema,
   type SavedViewChange,
@@ -23,6 +24,12 @@ export type PeopleData = z.infer<typeof peopleSchema>;
 export const peopleQuery = queryOptions({
   queryKey: ["people"],
   queryFn: () => getJson("/api/people", peopleSchema),
+});
+
+// People's added columns alone, under the people's key, so whatever reloads the people reloads them.
+export const peopleColumnsQuery = queryOptions({
+  queryKey: [...peopleQuery.queryKey, "columns"],
+  queryFn: () => getJson("/api/people/columns", peopleColumnsSchema),
 });
 
 const personPath = (id: string) => `/api/people/${encodeURIComponent(id)}`;

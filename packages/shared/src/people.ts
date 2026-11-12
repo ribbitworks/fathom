@@ -211,10 +211,14 @@ export type Person = z.infer<typeof personSchema>;
 // Everyone the user may see, by preferred name, with the added columns whose values they may see,
 // the order of the columns they see: built-in ones by name, such as "employeeId", and added ones
 // by identifier, and the saved views of the People table they may see, by name.
-export const peopleSchema = z.object({
-  people: z.array(personSchema),
+// The People table's added columns as their drafts make them, and their order, without the people.
+export const peopleColumnsSchema = z.object({
   fields: z.array(fieldSchema),
   order: z.array(z.string()),
+});
+
+export const peopleSchema = peopleColumnsSchema.extend({
+  people: z.array(personSchema),
   // Set for users who cannot see the Positions list's tier, who see no Position column.
   positionHidden: z.literal(true).optional(),
   views: z.array(savedViewSchema),

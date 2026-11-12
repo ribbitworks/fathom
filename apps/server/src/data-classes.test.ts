@@ -333,6 +333,20 @@ describe("a list's class", () => {
     );
   });
 
+  it("waits while someone else has unpublished changes to the list", async () => {
+    const id = await liveList();
+    const other = await test.signedIn("workforce-administrator");
+    await test.request(
+      other.cookie,
+      "PUT",
+      `/api/lists/${id}`,
+      { name: unique("Fictional held"), visibility: "general" },
+      { publish: false },
+    );
+    const response = await move(`/api/lists/${id}/class`, "personal");
+    expect(response.statusCode).toBe(409);
+  });
+
   it("is moved back rather than undone", async () => {
     const id = await liveList();
     const { changeSetId } = (
@@ -471,6 +485,59 @@ describe("a column's class", () => {
     expect(await latestMove(classifier.id)).toMatchObject({
       details: { dataClass: "confidential", previousDataClass: "general" },
     });
+  });
+
+  it("waits while someone else has unpublished changes to the column", async () => {
+    const id = await liveColumn("link");
+    const other = await test.signedIn("workforce-administrator");
+    await test.request(
+      other.cookie,
+      "PUT",
+      `/api/people/columns/${id}`,
+      {
+        name: unique("Fictional held"),
+        type: "link",
+        visibility: "general",
+        multiple: false,
+        required: false,
+        onPlannedHires: true,
+      },
+      { publish: false },
+    );
+    const response = await move(`/api/columns/${id}/class`, "personal");
+    expect(response.statusCode).toBe(409);
+  });
+
+  it("is not moved for a column drafted to be removed", async () => {
+    const id = await liveColumn("link");
+    await test.request(
+      classifier.cookie,
+      "DELETE",
+      `/api/people/columns/${id}`,
+    );
+    const response = await move(`/api/columns/${id}/class`, "personal");
+    expect(response.statusCode).toBe(409);
+  });
+
+  it("is read with People's columns alone, without anyone's values, by those who see people", async () => {
+    const id = await liveColumn("link");
+    const response = await test.request(
+      classifier.cookie,
+      "GET",
+      "/api/people/columns",
+    );
+    expect(response.statusCode).toBe(200);
+    const read = response.json<{
+      fields: { id: string }[];
+      people?: unknown;
+    }>();
+    expect(read.fields.map((field) => field.id)).toContain(id);
+    expect(read.people).toBeUndefined();
+    const outsider = await test.signedIn(["plan:view"]);
+    expect(
+      (await test.request(outsider.cookie, "GET", "/api/people/columns"))
+        .statusCode,
+    ).toBe(403);
   });
 
   it("is its list's for a column that draws on one", async () => {

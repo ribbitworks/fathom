@@ -8,6 +8,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import {
   approvableKinds,
+  changesField,
   historySearchLength,
   editsField,
   seesEmployment,
@@ -47,6 +48,7 @@ import {
 import { OrgChartPage } from "./org-chart-page.tsx";
 import { CapacityPage, capacityTabSchema } from "./capacity-page.tsx";
 import { SettingsPage } from "./settings-page.tsx";
+import { DataClassesPage } from "./data-classes-page.tsx";
 import { setTimeZone } from "./today.ts";
 import { ReleasesPage } from "./releases-page.tsx";
 import { PeoplePage } from "./people-page.tsx";
@@ -187,6 +189,16 @@ const rolesRoute = createRoute({
   },
 });
 
+const dataClassesRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/data-classes",
+  beforeLoad: requiring("data:classify"),
+  component: function DataClasses() {
+    const { access } = signedIn.useRouteContext();
+    return <DataClassesPage access={access} />;
+  },
+});
+
 const settingsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/settings",
@@ -302,6 +314,7 @@ const listsRoute = createRoute({
         canEdit={permissions.includes("configuration:edit")}
         approves={approvableKinds(permissions)}
         seesPeople={permissions.includes("people:view")}
+        permissions={permissions}
         show={show ?? "both"}
         search={search ?? ""}
         kind={kind ?? "all"}
@@ -517,6 +530,7 @@ const peopleRoute = createRoute({
         })}
         open={open}
         seesChart={permissions.includes("org-chart:view")}
+        access={access}
         onOpen={(next, replace = false) => {
           void navigate({ search: { ...search, open: next }, replace });
         }}
@@ -565,7 +579,7 @@ const orgChartRoute = createRoute({
         whyNoOtherDates={whyMissing("orgChartOtherDates", access)}
         whyNoFutureDates={whyMissing("orgChartFutureDates", access)}
         canEdit={permissions.includes("people:edit")}
-        changesDates={editsField(access, "managerHistory")}
+        changesDates={changesField(access, "managerHistory")}
         teamEdits={teamEdits}
         featureTeamEdits={featureTeamEdits}
         search={orgChartRoute.useSearch()}
@@ -653,6 +667,7 @@ const routeTree = rootRoute.addChildren([
     accountsRoute,
     rolesRoute,
     settingsRoute,
+    dataClassesRoute,
     historyRoute,
     changesRoute,
     listsRoute,

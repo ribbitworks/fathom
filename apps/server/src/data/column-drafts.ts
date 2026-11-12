@@ -8,6 +8,7 @@
 
 import { changes, type Database, fields, lists } from "@fathom/db";
 import {
+  builtInColumnTiers,
   type ColumnTable,
   columnTablePolicies,
   featureColumnKeys,
@@ -77,11 +78,7 @@ import {
   unpublishedMark,
   unseenDetails,
 } from "./lists.ts";
-import {
-  builtInColumnTiers,
-  type FieldRow,
-  readBuiltInTiers,
-} from "./values.ts";
+import { type FieldRow, readBuiltInTiers } from "./values.ts";
 
 type Reader = Pick<Database, "select">;
 
@@ -497,6 +494,11 @@ export async function moveColumnClass(
       .where(eq(fields.id, id))
       .for("update");
     if (row === undefined) throw new NotFoundError(noField);
+    const state = await readColumnsState(transaction, actor.user.id);
+    refuseHeldIn(state.held.fields.get(id));
+    if (draftedField(state, id) === undefined) {
+      throw new ConflictError(toBeRemoved);
+    }
     if (row.visibility === null) {
       throw new BadRequestError(
         "This column takes the class of its list, so move the list instead",

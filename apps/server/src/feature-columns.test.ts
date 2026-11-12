@@ -13,6 +13,7 @@ import {
   lists,
 } from "@fathom/db";
 import type { Feature, Field, ProjectPlan } from "@fathom/shared";
+import { featuresListGeneral } from "@fathom/shared";
 import { and, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -534,7 +535,22 @@ describe("keeping columns on Features General", () => {
       { name: unique("Fictional Raised"), visibility: "personal" },
     );
     expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toContain("must stay General");
+    expect(errorOf(response)).toBe(featuresListGeneral);
+  });
+
+  it("tells readers of the lists which ones a column on Features draws on, live or drafted", async () => {
+    const { field } = await liveColumn();
+    const { listId } = await addList();
+    expect((await addColumn({ listId })).statusCode).toBe(201);
+    const { listId: unused } = await addList();
+    const { lists: read } = (
+      await test.request(editor.cookie, "GET", "/api/lists")
+    ).json<{ lists: { id: string; onFeatures?: boolean }[] }>();
+    const onFeatures = (id: string | null) =>
+      read.find((list) => list.id === id)?.onFeatures;
+    expect(onFeatures(field.listId)).toBe(true);
+    expect(onFeatures(listId)).toBe(true);
+    expect(onFeatures(unused)).toBeUndefined();
   });
 
   it("refuses raising a list a column only drafted on Features draws on", async () => {

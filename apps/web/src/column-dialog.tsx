@@ -3,12 +3,14 @@
 // The dialog for adding a column to a table or changing one: its name, its type, which is set once,
 // whether it must be filled in, and, for a choice column, the list it draws on and whether several
 // choices can be picked. On People, it also sets whether planned hires, which never must fill it
-// in, are offered it, and, for a web link, note, or number column, who may see its values; a column
-// on Features is General, so it offers only General lists. Changing a column also offers deleting
-// it, to those who may. The name is checked against the other columns as it is typed. The dialog
-// cannot be closed while a change is being saved.
+// in, are offered it, and, for a web link, note, or number column not yet approved and a role with
+// Classify data, the class of its values; an approved column changes class from its menu instead.
+// A column on Features is General, so it offers only General lists. Changing a column also offers
+// deleting it, to those who may. The name is checked against the other columns as it is typed. The
+// dialog cannot be closed while a change is being saved.
 
 import {
+  classNames,
   type ColumnTable,
   columnTablePolicies,
   type Field,
@@ -17,6 +19,7 @@ import {
   fieldTypeSchema,
   type List,
   personLengths,
+  type Permission,
   type Tier,
 } from "@fathom/shared";
 import {
@@ -31,8 +34,9 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
-import { Count, nameProblem, VisibleTo } from "./list-dialog.tsx";
-import { sameName, visibilityName } from "./lists.ts";
+import { Count, nameProblem } from "./list-dialog.tsx";
+import { sameName } from "./lists.ts";
+import { ClassChoice } from "./move-class-dialog.tsx";
 import { createField, updateField } from "./column-requests.ts";
 
 const conflict = 409;
@@ -55,8 +59,11 @@ export function ColumnDialog({
   onDelete,
   onCancel,
   onBusy,
+  permissions,
 }: {
   table: ColumnTable;
+  // The role's permissions, which decide whether and to which classes the column may be given.
+  permissions: readonly Permission[];
   // The column being changed; absent when adding one.
   field?: Field;
   fields: Field[];
@@ -79,6 +86,10 @@ export function ColumnDialog({
   // The table is always one of the fixed tables.
   // eslint-disable-next-line security/detect-object-injection
   const policy = columnTablePolicies[table];
+  const classifies =
+    !policy.generalOnly &&
+    permissions.includes("data:classify") &&
+    (field === undefined || field.draft?.action === "created");
   const [onPlannedHires, setOnPlannedHires] = useState(
     field?.onPlannedHires ?? policy.onPlannedHires,
   );
@@ -188,10 +199,11 @@ export function ColumnDialog({
           }}
         />
         {type !== "choice" ? (
-          !policy.generalOnly && (
-            <VisibleTo
-              id="column-visibility"
+          classifies && (
+            <ClassChoice
+              from={field?.visibility ?? "general"}
               value={visibility}
+              permissions={permissions}
               onChange={setVisibility}
             />
           )
@@ -201,14 +213,14 @@ export function ColumnDialog({
               label="List"
               data={[
                 { value: "", label: "" },
-                // A list whose values not everyone may see says who may, and one only drafted to be
-                // added says it is new.
+                // A list in a class beyond General names it, and one only drafted to be added says
+                // it is new.
                 ...offered.map((list) => {
                   const notes = [
                     ...(list.draft?.action === "created" ? ["new"] : []),
                     ...(list.visibility === "general"
                       ? []
-                      : [visibilityName(list.visibility)]),
+                      : [classNames[list.visibility]]),
                   ];
                   return {
                     value: list.id,

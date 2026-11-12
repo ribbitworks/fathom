@@ -1711,6 +1711,35 @@ describe("columns", () => {
     });
   });
 
+  it("marks each classified column's heading with its class, and moves a choice column only with its list", async () => {
+    await openPeople({
+      "GET /api/session": session([
+        "configuration:edit",
+        "configuration:view",
+        "people:view",
+        "plan:view",
+        "personal:view",
+        "data:classify",
+      ]),
+    });
+    expect(
+      screen.getByRole("button", { name: "Start column, Personal" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "End column, Personal" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Name column" })).toBeTruthy();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Role on team column, Personal" }),
+    );
+    expect(
+      (
+        await screen.findByRole("menuitem", { name: "Change class…" })
+      ).hasAttribute("data-disabled"),
+    ).toBe(true);
+    expect(screen.getByText("Takes the class of its list")).toBeTruthy();
+  });
+
   it("changes a column from its header's menu, and deletes it with Undo", async () => {
     const fetch = await openPeople({
       "PUT /api/people/columns/f2": () =>
@@ -1718,7 +1747,7 @@ describe("columns", () => {
       "DELETE /api/people/columns/f2": savedAs(),
     });
     await userEvent.click(
-      screen.getByRole("button", { name: "Role on team column" }),
+      screen.getByRole("button", { name: "Role on team column, Personal" }),
     );
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Edit column" }),
@@ -1740,7 +1769,9 @@ describe("columns", () => {
     ]);
     // The simulated server still answers with the old name once the change has saved.
     await userEvent.click(
-      await screen.findByRole("button", { name: "Role on team column" }),
+      await screen.findByRole("button", {
+        name: "Role on team column, Personal",
+      }),
     );
     await userEvent.click(
       within(
@@ -1762,13 +1793,18 @@ describe("columns", () => {
 
   it("moves any column from its menu, with Alt and the arrow keys, and by dragging, but not past either end", async () => {
     await openPeople();
+    // A classified column's name ends with its class.
     const header = (label: string) =>
-      screen.getByRole("button", { name: `${label} column` });
+      screen.getByRole("button", {
+        name: (name) =>
+          name === `${label} column` || name === `${label} column, Personal`,
+      });
     const labels = () =>
       screen
-        .getAllByRole("button", { name: / column$/ })
+        .getAllByRole("button", { name: / column(, Personal)?$/ })
         .map((button) => button.getAttribute("aria-label"));
-    const place = (label: string) => labels().indexOf(`${label} column`);
+    const place = (label: string) =>
+      labels().findIndex((name) => name?.startsWith(`${label} column`));
 
     // Given the Role on team column somewhere after the first
     const rolePlace = place("Role on team");

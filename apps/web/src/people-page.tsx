@@ -13,6 +13,7 @@
 
 import { LoadProblem } from "./load-problem.tsx";
 import type {
+  ClassAccess,
   DraftKind,
   HireFill,
   List,
@@ -20,6 +21,7 @@ import type {
   PersonDraft,
   SavedView,
 } from "@fathom/shared";
+import { defaultClasses } from "@fathom/shared";
 import {
   Anchor,
   Button,
@@ -185,6 +187,7 @@ export function PeoplePage({
   open,
   onOpen,
   seesChart = false,
+  access = { permissions: [], dataClasses: defaultClasses },
 }: {
   canEdit: boolean;
   // Whether the user may change planned hires too.
@@ -207,6 +210,9 @@ export function PeoplePage({
   onOpen?: (employeeId: string | undefined, replace?: boolean) => void;
   // Whether the reader sees the org chart, which a person's details then link to.
   seesChart?: boolean;
+  // The role's permissions and the classes people's details are kept in, which mark the columns
+  // holding them and decide the classes a column may be moved to.
+  access?: ClassAccess;
 }) {
   const query = useQuery(peopleQuery);
   const narrow = useNarrow();
@@ -290,12 +296,12 @@ export function PeoplePage({
     justAdded.current = undefined;
     onOpen?.(added.employeeId, true);
   }, [query.data, onOpen]);
-  const { save, undoable, done } = useSaving<PeopleData>({
+  const changes = useSaving<PeopleData>({
     queryKey: peopleQuery.queryKey,
     removed: "Someone else has removed this. The people have been refreshed.",
     blocked: columnDialog.opened || namingOpened || deciding,
   });
-  const columnSaving = { save, undoable, done };
+  const { save, shown, undoable, done } = changes;
 
   // A row by name, as menus and notices name it, once the lists, which a row's actions wait for,
   // are loaded.
@@ -317,7 +323,7 @@ export function PeoplePage({
       );
       setDeciding(true);
     },
-    ...columnDraftActions("people", columnSaving),
+    ...columnDraftActions("people", changes),
     add: (added, onAdded, onFailed) => {
       save({
         next: (data) => ({
@@ -435,6 +441,13 @@ export function PeoplePage({
     editColumn: (field) => {
       columnDialog.open({ kind: "edit", field });
     },
+    ...(access.permissions.includes("data:classify")
+      ? {
+          moveColumnClass: (field, from) => {
+            columnDialog.open({ kind: "move", field, from });
+          },
+        }
+      : {}),
   };
 
   // Saves the fill as one draft. The form stays open, with what was entered, if it is refused.
@@ -531,14 +544,13 @@ export function PeoplePage({
   // applied.
   const named = ({ view: saved, changeSetId }: SavedViewResult) => {
     setNamingOpened(false);
-    save({
-      next: (data) => ({ ...data, views: withView(data.views, saved) }),
-      save: () => Promise.resolve(changeSetId),
-      failure: "",
-      onSaved: (_saved, before) => {
+    shown(
+      (data) => ({ ...data, views: withView(data.views, saved) }),
+      changeSetId,
+      (_saved, before) => {
         undoable(changeSetId, before);
       },
-    });
+    );
     if (naming?.saved === undefined && naming) {
       onApply(naming.view, saved.id, true);
     }
@@ -570,6 +582,7 @@ export function PeoplePage({
     content = (
       <>
         <PeopleGrid
+          dataClasses={access.dataClasses}
           onOpen={
             onOpen &&
             ((person) => {
@@ -829,7 +842,8 @@ export function PeoplePage({
           table="people"
           fields={query.data.fields}
           lists={lists.data}
-          saving={columnSaving}
+          saving={changes}
+          permissions={access.permissions}
           withColumns={(data, change) => ({ ...data, ...change(data) })}
           newColumnButton={newColumnId}
         />

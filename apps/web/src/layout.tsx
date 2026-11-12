@@ -68,6 +68,7 @@ type Page =
   | "/accounts"
   | "/roles"
   | "/settings"
+  | "/data-classes"
   | "/history"
   | "/changes"
   | "/drafts"
@@ -196,6 +197,12 @@ const sections: { label: string; items: Item[] }[] = [
         icon: "settings",
         to: "/settings",
         permission: "settings:view",
+      },
+      {
+        label: "Data classes",
+        icon: "lock",
+        to: "/data-classes",
+        permission: "data:classify",
       },
     ],
   },

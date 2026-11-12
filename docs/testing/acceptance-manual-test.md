@@ -216,7 +216,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 **Preconditions:** Signed in with this account. **People** page open, with no filters.
 
 - [ ] **Step 1.** Select **New column**. Choose **Number** in **Type**.
-  - **Expected:** **List** and **Several choices** are gone, and **Visible to** is shown.
+  - **Expected:** **List** and **Several choices** are gone, and **Class** is shown, with **General** chosen.
   - **Notes:**
 
 - [ ] **Step 2.** Type `On-call weeks` in **Name**, leave **General** chosen, and select **Add column**.

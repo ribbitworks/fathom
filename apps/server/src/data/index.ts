@@ -441,6 +441,9 @@ export interface PeopleAccess {
   // Telling anyone that a manager has left, or showing them a draft's Personal details, such as
   // its manager, its dates, or someone it adds, is recorded in the access history.
   readOrgChart(actor: Actor, on?: string): Promise<OrgChart>;
+  // The added columns as their drafts make them, and their order, as the actor may see them, with
+  // none of anyone's values.
+  readColumns(actor: Actor): Promise<{ fields: Field[]; order: string[] }>;
   // Sets the colour of a manager's named team, or removes it, at once rather than as a draft.
   setTeamColour(
     actor: Actor,
@@ -917,8 +920,20 @@ function createProjectAccess(database: Database): ProjectAccess {
   };
 }
 
+// The columns as their drafts make them, and their order, as the actor may see them, read as of one
+// moment, so an approval saved meanwhile is seen whole or not at all.
+const readPeopleColumns = (database: Database, actor: Actor) =>
+  database.transaction((transaction) => readColumnsOut(transaction, actor), {
+    isolationLevel: "repeatable read",
+    accessMode: "read only",
+  });
+
 function createPeopleAccess(database: Database): PeopleAccess {
   return {
+    readColumns: async (actor) => {
+      requirePermission(actor, "people:view");
+      return readPeopleColumns(database, actor);
+    },
     read: async (actor) => {
       requirePermission(actor, "people:view");
       const read = await peopleData.readPeople(database, actor);
@@ -937,12 +952,7 @@ function createPeopleAccess(database: Database): PeopleAccess {
           "hiring-plan-viewed",
         );
       }
-      // The columns as their drafts make them, and their order, as the actor may see them.
-      // Read as of one moment, so an approval saved meanwhile is seen whole or not at all.
-      const columns = await database.transaction(
-        (transaction) => readColumnsOut(transaction, actor),
-        { isolationLevel: "repeatable read", accessMode: "read only" },
-      );
+      const columns = await readPeopleColumns(database, actor);
       return {
         people: read.people,
         ...columns,

@@ -70,6 +70,7 @@ import { AppMenu, MenuChoices } from "./app-menu.tsx";
 import type { ColumnUnits } from "./record-grid.tsx";
 import classes from "./pages.module.css";
 import { ClearableInput } from "./clearable-input.tsx";
+import { classWords } from "./status-mark.tsx";
 import { count, decimal } from "./numbers.ts";
 
 // Changes the view, replacing the current address rather than adding to its history when asked.
@@ -87,6 +88,7 @@ type AnyColumn = Pick<
   | "retiredLabel"
   | "unit"
   | "places"
+  | "dataClass"
 >;
 
 // Each kind's sorts, ascending then descending.
@@ -305,7 +307,9 @@ export function headerState(column: AnyColumn, view: View): string {
       : []),
     ...(isActive(view.filters[column.key]) ? ["filtered"] : []),
   ];
-  return parts.map((part) => `, ${part}`).join("");
+  return [...classWords(column.dataClass), ...parts]
+    .map((part) => `, ${part}`)
+    .join("");
 }
 
 // Whether Fathom's own find key was pressed: Cmd+F on a Mac, and Ctrl+F elsewhere, where Ctrl+F is

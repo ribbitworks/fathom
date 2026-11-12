@@ -12,6 +12,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* A table cell kept on one line, so a wider column beside it wraps instead. */
+.unwrapped {
+  white-space: nowrap;
+}
+
 /* A panel holding a table or bands, kept inside its rounded corners. */
 .tablePanel {
   overflow: hidden;

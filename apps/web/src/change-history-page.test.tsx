@@ -323,7 +323,7 @@ describe("the entries", () => {
     renderApp("/changes");
     expect(await lines()).toEqual([
       "Fictional Person changed Avery Fictional: Name from Avery to Avery Fictional; Site from North to North, South; End set to Jan 31, 2030; ID changed; A deleted column cleared, from North",
-      "Fathom changed the list Sites: Visibility from Everyone to Personal; Description cleared, from Where; Retired from No to Yes; Visibility set to secret",
+      "Fathom changed the list Sites: Class from General to Personal; Description cleared, from Where; Retired from No to Yes; Class set to secret",
       "Fictional Person added the list Sites",
       "Fictional Person deleted a person",
       "Fictional Person changed the choice Approved in Hiring states: Meaning from Open to Proposed; Meaning set to filled",

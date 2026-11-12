@@ -47,8 +47,12 @@ export {
   withImplied,
 } from "./access.ts";
 export {
+  builtInColumnTiers,
+  type BuiltInTiers,
   type ClassAccess,
+  changesField,
   type ClassifiedField,
+  classDescriptions,
   classifiedFieldNames,
   classifiedFieldSchema,
   type ClassifiedView,
@@ -67,6 +71,7 @@ export {
   seesEmployment,
   seesField,
   seesView,
+  shownIn,
   whyMissing,
   whyNoMove,
 } from "./data-classes.ts";
@@ -221,6 +226,7 @@ export {
   unpublishedSchema,
 } from "./drafts.ts";
 export {
+  featuresListGeneral,
   type BuiltInList,
   builtInListSchema,
   type Choice,
@@ -382,6 +388,7 @@ export {
   type PersonChange,
   type PersonRequest,
   peopleRequestSchema,
+  peopleColumnsSchema,
   peopleSchema,
   personChangeSchema,
   type PersonDraft,

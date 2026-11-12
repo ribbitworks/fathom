@@ -234,6 +234,21 @@ export function useSaving<Data>({
     save: (next: Change<Data>) => {
       change.mutate({ ...next, made: changeMade() });
     },
+    // A change a dialog already saved, in the change set given, if any: shown at once, then
+    // reloaded once no other change is saving.
+    shown: (
+      next: Change<Data>["next"],
+      changeSetId: string | null = null,
+      onSaved?: Change<Data>["onSaved"],
+    ) => {
+      change.mutate({
+        next,
+        save: () => Promise.resolve(changeSetId),
+        failure: "",
+        ...(onSaved ? { onSaved } : {}),
+        made: changeMade(),
+      });
+    },
     undoable,
     done,
   };

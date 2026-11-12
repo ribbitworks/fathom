@@ -9,6 +9,8 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 import {
+  classMarkChars,
+  classWords,
   changedValue,
   type DraftLike,
   DraftedItem,
@@ -407,5 +409,15 @@ describe("a row's values", () => {
     );
     expect(screen.getByText(", Draft: added")).toBeDefined();
     expect(screen.getAllByText(", live")).toHaveLength(1);
+  });
+});
+
+describe("a class's mark", () => {
+  it("names a class beyond General, and takes room for its lock and box besides its words", () => {
+    expect(classWords("confidential")).toEqual(["Confidential"]);
+    expect(classWords("general")).toEqual([]);
+    expect(classWords(undefined)).toEqual([]);
+    expect(classMarkChars("personal")).toBeGreaterThan("Personal".length);
+    expect(classMarkChars("general")).toBe(0);
   });
 });

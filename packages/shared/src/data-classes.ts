@@ -7,6 +7,7 @@
 
 import { z } from "zod";
 import { type Permission, type Tier, tierSchema } from "./access.ts";
+import { builtInColumnNames } from "./changes.ts";
 
 // The built-in details whose class is stored and can be moved. Lists and columns hold their own.
 export const classifiedFieldSchema = z.enum([
@@ -51,9 +52,54 @@ export const classNames: Record<Tier, string> = {
   confidential: "Confidential",
 };
 
+// What each class holds, as the Decisions Log's Data classes defines it.
+export const classDescriptions: Record<Tier, string> = {
+  general: "Seen by everyone whose role reaches the page",
+  personal: "People's private and HR details",
+  confidential: "Business data not yet announced",
+};
+
 export const classMoveSchema = z.object({ dataClass: tierSchema });
 
 export type ClassMove = z.infer<typeof classMoveSchema>;
+
+// The classes of the People table's built-in details: the Position and State columns', which move
+// with their lists, and the classes of the rest, read together so every class worked out agrees.
+export interface BuiltInTiers {
+  readonly positionTier: Tier;
+  readonly stateTier: Tier;
+  readonly dataClasses: DataClasses;
+}
+
+// The People table's built-in columns holding a classified detail, by key, with the detail.
+const classifiedColumns: ReadonlyMap<string, ClassifiedField> = new Map([
+  ["startDate", "startDate"],
+  ["endDate", "endDate"],
+  ["managerFrom", "managerHistory"],
+]);
+
+// The tier of each of the People table's built-in columns, by key, as readers are sent them: the
+// manager is General, though a drafted one is as past managers are, since everyone is sent each
+// live manager.
+export function builtInColumnTiers(tiers: BuiltInTiers): Map<string, Tier> {
+  return new Map<string, Tier>([
+    ["preferredName", "general"],
+    ["employeeId", "general"],
+    ["positionId", tiers.positionTier],
+    ["stateId", tiers.stateTier],
+    ["expected", "general"],
+    ["managerId", "general"],
+    ["isManager", "general"],
+    ["team", "general"],
+    ["teamName", "general"],
+    ...[...classifiedColumns].map(([key, field]): [string, Tier] => [
+      key,
+      // The field is always one of the fixed fields.
+      // eslint-disable-next-line security/detect-object-injection
+      tiers.dataClasses[field],
+    ]),
+  ]);
+}
 
 // What decides a role's access to classified data: what its role grants, and the classes the
 // organization keeps its details in.
@@ -117,8 +163,14 @@ export const editsField = (
   field: ClassifiedField,
 ): boolean => editsClass(access.permissions, classOf(access, field));
 
-// Whether a role sees people who have not started yet and those who have left, which their start and
-// end dates would reveal. Both are needed, so a person is shown or hidden as a whole.
+// Whether a role sees and changes a built-in detail, needing both for its class.
+export const changesField = (
+  access: ClassAccess,
+  field: ClassifiedField,
+): boolean => seesField(access, field) && editsField(access, field);
+
+// Whether a role sees people who have not started yet and those who have left, which their start
+// and end dates would reveal. Both are needed, so a person is shown or hidden as a whole.
 export const seesEmployment = (access: ClassAccess): boolean =>
   seesField(access, "startDate") && seesField(access, "endDate");
 
@@ -144,28 +196,67 @@ export function whyNoMove(
 const employment = ["startDate", "endDate"] as const;
 const overTime = [...employment, "managerHistory", "featureTeamDates"] as const;
 
-// The pages and views that need classified details, and what each needs. Allocations reads the
-// months of Feature assignments, so needs what it does.
-const viewNeeds = {
+// The pages and views that need classified details.
+const classifiedViewSchema = z.enum([
+  "orgChartOtherDates",
+  "orgChartFutureDates",
+  "featureAssignments",
+  "groupingByManager",
+  "allocations",
+]);
+
+export type ClassifiedView = z.infer<typeof classifiedViewSchema>;
+
+// What each view needs. Allocations reads the months of Feature assignments, so needs what it does.
+const viewNeeds: Record<ClassifiedView, readonly ClassifiedField[]> = {
   orgChartOtherDates: overTime,
   orgChartFutureDates: [...overTime, "futureReorganizations"],
   featureAssignments: overTime,
   groupingByManager: [...overTime, "futureReorganizations"],
   allocations: overTime,
-} as const satisfies Record<string, readonly ClassifiedField[]>;
+};
 
-export type ClassifiedView = keyof typeof viewNeeds;
+// How a sentence on the view's page names it, and whether it reads as plural, and its name
+// elsewhere. Every view must be named, which the compiler checks.
+const viewWords: Record<
+  ClassifiedView,
+  { subject: string; plural: boolean; name: string }
+> = {
+  orgChartOtherDates: {
+    subject: "Other dates",
+    plural: true,
+    name: "Org chart on other dates",
+  },
+  orgChartFutureDates: {
+    subject: "Future dates",
+    plural: true,
+    name: "Org chart on future dates",
+  },
+  featureAssignments: {
+    subject: "Feature assignments",
+    plural: false,
+    name: "Feature assignments",
+  },
+  groupingByManager: {
+    subject: "Grouping by manager",
+    plural: false,
+    name: "Feature assignments grouped by manager",
+  },
+  allocations: { subject: "Allocations", plural: false, name: "Allocations" },
+};
 
-// How a sentence names each view, and whether it reads as plural. Every view must be named, which
-// the compiler checks.
-const viewWords: Record<ClassifiedView, { subject: string; plural: boolean }> =
-  {
-    orgChartOtherDates: { subject: "Other dates", plural: true },
-    orgChartFutureDates: { subject: "Future dates", plural: true },
-    featureAssignments: { subject: "Feature assignments", plural: false },
-    groupingByManager: { subject: "Grouping by manager", plural: false },
-    allocations: { subject: "Allocations", plural: false },
-  };
+// The views needing a built-in detail, and People's columns holding it, by name.
+export function shownIn(field: ClassifiedField): string[] {
+  const views = classifiedViewSchema.options.flatMap((view) =>
+    // The view is always one of the fixed views listed above.
+    // eslint-disable-next-line security/detect-object-injection
+    viewNeeds[view].includes(field) ? [viewWords[view].name] : [],
+  );
+  const columns = [...builtInColumnNames].flatMap(([key, label]) =>
+    classifiedColumns.get(key) === field ? [`People's ${label}`] : [],
+  );
+  return [...views, ...columns];
+}
 
 // The classes a view needs that a role does not see, least sensitive first.
 function missingClasses(view: ClassifiedView, access: ClassAccess): Tier[] {

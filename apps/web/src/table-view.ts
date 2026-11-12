@@ -16,6 +16,7 @@ import {
   notePlainText,
   searchWords,
   type Show,
+  type Tier,
   type ViewDefinition,
   inPlacesOf,
   viewDefinitionSchema,
@@ -78,6 +79,8 @@ export interface TableColumn<Row> {
   // For text columns: what an empty cell shows in grey in its place, such as a name made from other
   // details, which sorting, filtering, and searching take as its value.
   standIn?: (row: Row) => string;
+  // The class of data the column's values belong to, which its heading marks unless General.
+  dataClass?: Tier | undefined;
 }
 
 // What a field editing a column's value is called: its label, and its unit's words, if any.

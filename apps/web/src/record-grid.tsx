@@ -38,6 +38,7 @@ import type {
   FieldDraft,
   List,
   Show,
+  Tier,
 } from "@fathom/shared";
 import { draftFilterKey } from "@fathom/shared";
 import {
@@ -73,6 +74,7 @@ import {
   draftLines,
   HeldNote,
   MenuDraftLines,
+  MenuNote,
   MenuTitle,
   UnpublishedNote,
   OtherApproverNote,
@@ -135,6 +137,8 @@ import { type SidePanel, WithSidePanel } from "./side-panel.tsx";
 import {
   besideLive,
   changedValue,
+  ClassMark,
+  classMarkChars,
   DraftedItem,
   type DraftLike,
   draftMarkChars,
@@ -182,6 +186,9 @@ export interface RecordActions<Rec extends GridRecord, Change, Request> {
   // Sends a rejected draft for approval again, unchanged.
   resubmit: (record: Rec) => void;
   editColumn: (field: Field) => void;
+  // Moves an approved column to another class, for a role with Classify data on a table whose
+  // columns may be in any class.
+  moveColumnClass?: ((field: Field, from: Tier) => void) | undefined;
   // Discards a draft of a column, or sends a rejected one again.
   discardColumn: (id: string, name: string) => void;
   resubmitColumn: (id: string) => void;
@@ -834,7 +841,9 @@ export function columnWidth(
     ),
     header: Math.min(
       Math.max(
-        column.label.length + (column.field?.draft ? draftMarkChars : 0),
+        column.label.length +
+          (column.field?.draft ? draftMarkChars : 0) +
+          classMarkChars(column.dataClass),
         (liveName(column, "both")?.length ?? 0) + draftMarkChars,
       ),
       widestChars,
@@ -2228,6 +2237,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
 
   const header = (column: Column<Rec, Change>, index: number) => {
     const { field } = column;
+    const ownClass = field?.visibility ?? null;
     const ownWaiting = field !== undefined && decidable(field);
     // Someone else's unpublished changes to the column hold it.
     const changesColumn = canEditColumns && field?.heldBy === undefined;
@@ -2309,6 +2319,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                         draftedFields.find(({ id }) => id === field?.id)?.draft
                       }
                       heldBy={field?.heldBy}
+                      facts={
+                        column.dataClass && (
+                          <ClassMark dataClass={column.dataClass} />
+                        )
+                      }
                     >
                       <span className={classes.headerLabel}>
                         {column.label}
@@ -2478,6 +2493,30 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   )}
                 </>
               )}
+              {field &&
+                actions.moveColumnClass &&
+                field.draft?.action !== "created" &&
+                field.draft?.action !== "deleted" && (
+                  <>
+                    <Menu.Divider />
+                    {ownClass === null ? (
+                      <>
+                        <Menu.Item disabled>Change class…</Menu.Item>
+                        <MenuNote>Takes the class of its list</MenuNote>
+                      </>
+                    ) : (
+                      <Menu.Item
+                        // Until someone else publishes or discards their changes, as the menu says.
+                        disabled={field.heldBy !== undefined}
+                        onClick={() => {
+                          actions.moveColumnClass?.(field, ownClass);
+                        }}
+                      >
+                        Change class…
+                      </Menu.Item>
+                    )}
+                  </>
+                )}
             </AppMenu.Dropdown>
           </AppMenu>
         </FilterPopover>

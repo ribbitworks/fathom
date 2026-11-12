@@ -25,7 +25,7 @@ describe("what a role allows", () => {
   it("lists no pages for a role granting nothing, and every page as not appearing", () => {
     const { pages, cannot } = consequences([]);
     expect(pages).toEqual([]);
-    expect(cannot.slice(0, 15)).toEqual([
+    expect(cannot.slice(0, 16)).toEqual([
       "The Overview page does not appear.",
       "The Projects page does not appear.",
       "The Features page does not appear.",
@@ -39,6 +39,7 @@ describe("what a role allows", () => {
       "The Accounts page does not appear.",
       "The Roles page does not appear.",
       "The Settings page does not appear.",
+      "The Data classes page does not appear.",
       "The Change history page does not appear.",
       "The Access history page does not appear.",
     ]);

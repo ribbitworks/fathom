@@ -2,10 +2,10 @@
 
 // The buttons at the foot of a dialog that changes something, with any other actions it offers on
 // the left, and why the change it asked for was refused. Cancelling is not possible while the
-// change is being saved.
+// change is being saved. Also, what a dialog is open for, which is kept while its modal closes.
 
 import { Alert, Button, Group } from "@mantine/core";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { describeProblem } from "./api.ts";
 
 export function DialogActions({
@@ -57,4 +57,26 @@ export function DialogActions({
       </Group>
     </>
   );
+}
+
+// What a dialog is open for, such as the record it changes, and whether its modal is open. It stays
+// set while the modal closes, so the dialog's content does not vanish mid-animation.
+export function useDialogState<Subject>() {
+  const [dialog, setDialog] = useState<Subject>();
+  const [opened, setOpened] = useState(false);
+  return {
+    dialog,
+    opened,
+    open: (next: Subject) => {
+      setDialog(next);
+      setOpened(true);
+    },
+    close: () => {
+      setOpened(false);
+    },
+    // Lets go of what the dialog was open for, once closed, such as a password never to be kept.
+    forget: () => {
+      setDialog(undefined);
+    },
+  };
 }

@@ -32,3 +32,4 @@ How to use each page of Fathom.
 ## Administration
 
 - [Settings](settings.md): the time zone and the rules for passwords.
+- [Data classes](data-classes.md): the class of each detail, column and list, and changing it.

@@ -98,9 +98,24 @@ afterEach(() => {
 
 type Answers = Parameters<typeof serverAnswers>[0];
 
-async function openPeople(answers: Answers = {}) {
+// An editor who may give a new column a class beyond General.
+const classifier = () =>
+  Response.json({
+    ...fictionalUser,
+    permissions: [
+      "configuration:edit",
+      "configuration:view",
+      "people:edit",
+      "people:view",
+      "plan:view",
+      "confidential:view",
+      "data:classify",
+    ],
+  });
+
+async function openPeople(answers: Answers = {}, session = editor) {
   const fetch = serverAnswers({
-    "GET /api/session": editor,
+    "GET /api/session": session,
     "GET /api/people": peopleAnswer(),
     "GET /api/lists": () => Response.json({ lists: [positions] }),
     ...answers,
@@ -367,13 +382,19 @@ describe("a web link column", () => {
   });
 
   it("is added from the column dialog with its own visibility, and no list", async () => {
-    const fetch = await openPeople({
-      "POST /api/people/columns": () =>
-        Response.json(
-          { field: { ...profile, id: "f2", name: "Reviews" }, changeSetId: s1 },
-          { status: 201 },
-        ),
-    });
+    const fetch = await openPeople(
+      {
+        "POST /api/people/columns": () =>
+          Response.json(
+            {
+              field: { ...profile, id: "f2", name: "Reviews" },
+              changeSetId: s1,
+            },
+            { status: 201 },
+          ),
+      },
+      classifier,
+    );
     await userEvent.click(screen.getByRole("button", { name: "New column" }));
     const dialog = await screen.findByRole("dialog", { name: "New column" });
     await userEvent.type(within(dialog).getByLabelText("Name"), "Reviews");
@@ -383,7 +404,9 @@ describe("a web link column", () => {
     );
     expect(within(dialog).queryByRole("combobox", { name: "List" })).toBeNull();
     expect(within(dialog).queryByLabelText("Several choices")).toBeNull();
-    fireEvent.click(within(dialog).getByText("Confidential"));
+    fireEvent.click(
+      within(dialog).getByRole("radio", { name: /^Confidential/ }),
+    );
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Add column" }),
     );
@@ -418,6 +441,184 @@ describe("a web link column", () => {
     await waitFor(() => {
       expect(place()).toBe(before - 1);
     });
+  });
+
+  it("changes class at once from its menu, which then marks its heading", async () => {
+    let moved = false;
+    const fetch = await openPeople(
+      {
+        "GET /api/people": () =>
+          Response.json({
+            people: [avery, blake],
+            fields: [
+              { ...profile, visibility: moved ? "confidential" : "general" },
+              { ...profile, id: "f2", name: "Portfolio" },
+            ],
+            order: ["preferredName", "employeeId", "f1", "f2"],
+            views: [],
+          }),
+        "PUT /api/columns/f1/class": () => {
+          moved = true;
+          return saved();
+        },
+      },
+      classifier,
+    );
+    // An approved column's class is moved, not changed in a draft.
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Profile column" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Edit column" }),
+    );
+    const edit = await screen.findByRole("dialog", { name: "Edit column" });
+    expect(within(edit).queryByRole("radio")).toBe(null);
+    await userEvent.click(within(edit).getByRole("button", { name: "Cancel" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Profile column" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Change class…" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Change the class of Profile",
+    });
+    expect(
+      within(dialog).getByRole<HTMLInputElement>("radio", {
+        name: /^Personal/,
+      }).disabled,
+    ).toBe(true);
+    await userEvent.click(
+      within(dialog).getByRole("radio", { name: /^Confidential/ }),
+    );
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Change" }),
+    );
+    expect(bodyOf(fetch, "PUT", "/api/columns/f1/class")).toEqual([
+      { dataClass: "confidential" },
+    ]);
+    const heading = await screen.findByRole("button", {
+      name: "Profile column, Confidential",
+    });
+    expect(within(heading).getByText("Confidential")).toBeTruthy();
+  });
+
+  it("offers no change of class to a role without Classify data, nor a class for a new column", async () => {
+    await openPeople();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Profile column" }),
+    );
+    await screen.findByRole("menuitem", { name: "Edit column" });
+    expect(screen.queryByRole("menuitem", { name: "Change class…" })).toBe(
+      null,
+    );
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(screen.getByRole("button", { name: "New column" }));
+    const dialog = await screen.findByRole("dialog", { name: "New column" });
+    await userEvent.selectOptions(
+      within(dialog).getByRole("combobox", { name: "Type" }),
+      "Web link",
+    );
+    expect(within(dialog).queryByRole("radio")).toBe(null);
+  });
+
+  it("offers no change of class for a column drafted to be removed", async () => {
+    await openPeople(
+      {
+        "GET /api/people": () =>
+          Response.json({
+            people: [avery, blake],
+            fields: [
+              {
+                ...profile,
+                draft: {
+                  action: "deleted",
+                  changed: [],
+                  live: {},
+                  state: "waiting",
+                  madeBy: "Fictional Editor",
+                  madeAt: "2026-11-01T10:00:00.000Z",
+                },
+              },
+            ],
+            order: ["preferredName", "employeeId", "f1"],
+            views: [],
+          }),
+      },
+      classifier,
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: /^Profile column/ }),
+    );
+    await screen.findByRole("menuitem", { name: /Wider/ });
+    expect(screen.queryByRole("menuitem", { name: "Change class…" })).toBe(
+      null,
+    );
+  });
+
+  it("turns off changing the class of a column someone else is changing", async () => {
+    await openPeople(
+      {
+        "GET /api/people": () =>
+          Response.json({
+            people: [avery, blake],
+            fields: [{ ...profile, heldBy: "Fictional Editor" }],
+            order: ["preferredName", "employeeId", "f1"],
+            views: [],
+          }),
+      },
+      classifier,
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: /^Profile column/ }),
+    );
+    expect(
+      (
+        await screen.findByRole("menuitem", { name: "Change class…" })
+      ).hasAttribute("data-disabled"),
+    ).toBe(true);
+  });
+
+  it("gives a column only drafted to be added its class in its dialog, not from its menu", async () => {
+    const added = {
+      ...profile,
+      draft: {
+        action: "created",
+        changed: [],
+        live: {},
+        state: "waiting",
+        madeBy: "Fictional Editor",
+        madeAt: "2026-11-01T10:00:00.000Z",
+      },
+    };
+    await openPeople(
+      {
+        "GET /api/people": () =>
+          Response.json({
+            people: [avery, blake],
+            fields: [added],
+            order: ["preferredName", "employeeId", "f1"],
+            views: [],
+          }),
+      },
+      classifier,
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: /^Profile column/ }),
+    );
+    await screen.findByRole("menuitem", { name: "Edit column" });
+    expect(screen.queryByRole("menuitem", { name: "Change class…" })).toBe(
+      null,
+    );
+    await userEvent.click(
+      screen.getByRole("menuitem", { name: "Edit column" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Edit column" });
+    expect(
+      within(dialog).getByRole<HTMLInputElement>("radio", {
+        name: /^General/,
+      }).checked,
+    ).toBe(true);
   });
 
   it("keeps its type once added", async () => {

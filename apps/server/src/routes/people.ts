@@ -13,6 +13,7 @@ import {
   fieldSchema,
   orgChartSchema,
   peopleRequestSchema,
+  peopleColumnsSchema,
   peopleSchema,
   personChangeSchema,
   savedSchema,
@@ -47,6 +48,12 @@ export function peopleRoutes(people: PeopleAccess): FastifyPluginCallbackZod {
       "/api/people",
       { schema: { response: { 200: peopleSchema } } },
       async (request) => people.read(request.actor),
+    );
+
+    app.get(
+      "/api/people/columns",
+      { schema: { response: { 200: peopleColumnsSchema } } },
+      async (request) => people.readColumns(request.actor),
     );
 
     app.get(

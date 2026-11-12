@@ -25,18 +25,24 @@ export const kept = <Value>(
     ),
   );
 
-// A column's type is the kind of its cells, and its choices are those of the list it draws on.
+// A column's type is the kind of its cells, and its choices and class are those of the list it
+// draws on, unless it has a class of its own.
 export const addedColumn = <Rec extends CellRecord, Change extends CellChange>(
   field: Field,
   lists: readonly List[],
-): Column<Rec, Change> =>
-  cellColumn<Rec, Change>(field.id, field.type, {
-    label: field.name,
-    required: field.required,
-    field,
-    choices: lists.find(({ id }) => id === field.listId)?.choices ?? [],
-    multiple: field.multiple,
-  });
+): Column<Rec, Change> => {
+  const list = lists.find(({ id }) => id === field.listId);
+  return {
+    ...cellColumn<Rec, Change>(field.id, field.type, {
+      label: field.name,
+      required: field.required,
+      field,
+      choices: list?.choices ?? [],
+      multiple: field.multiple,
+    }),
+    dataClass: field.visibility ?? list?.visibility,
+  };
+};
 
 // A record's values in added columns with a change applied, as the table shows them before it is
 // saved.

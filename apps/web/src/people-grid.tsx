@@ -13,9 +13,18 @@
 
 import { dayNeeded } from "./day-input.tsx";
 import { FillHireButton, ShowDetailsButton } from "./show-details-button.tsx";
-import type { Choice, Field, List, Person, Show } from "@fathom/shared";
+import type {
+  Choice,
+  DataClasses,
+  Field,
+  List,
+  Person,
+  Show,
+} from "@fathom/shared";
 import {
   builtInColumnNames,
+  builtInColumnTiers,
+  defaultClasses,
   personLengths,
   temporaryIdPrefix,
 } from "@fathom/shared";
@@ -637,8 +646,25 @@ function peopleTable(
   canEditHires: boolean,
   onOpen: ((person: Person) => void) | undefined,
   onFill: ((hire: Person) => void) | undefined,
+  dataClasses: DataClasses,
 ): RecordTable<Person, RowChange, RowRequest> {
   const kindOf = (row: Person) => row.kind ?? personKind;
+  // Each built-in column's class, as the server decides who is sent it. A Start column showing
+  // planned hires' target dates alone is part of the hiring plan, not people's start dates.
+  const classed = (shown: readonly List[]) => {
+    const listClass = (key: string) =>
+      shown.find(({ builtIn }) => builtIn === key)?.visibility ?? "general";
+    const builtInClasses = builtInColumnTiers({
+      positionTier: listClass("positions"),
+      stateTier: listClass("hiring-states"),
+      dataClasses,
+    });
+    return (column: Column): Column =>
+      column.dataClass !== undefined ||
+      (column.key === "startDate" && !showDates)
+        ? column
+        : { ...column, dataClass: builtInClasses.get(column.key) };
+  };
   const hireIds = new Set(people.filter(isHire).map(({ id }) => id));
   return {
     label: "People",
@@ -663,32 +689,34 @@ function peopleTable(
         showPosition,
         showHireDates,
         canEditHires,
-      ).map((column) =>
-        column.key === "preferredName" && onOpen !== undefined
-          ? {
-              ...column,
-              mark: (row: Person) =>
-                !isPending(row) && (
-                  <>
-                    {onFill !== undefined && canFill(row, lists) && (
-                      <FillHireButton
-                        name={rowName(row, lists)}
-                        onFill={() => {
-                          onFill(row);
+      )
+        .map(classed(lists))
+        .map((column) =>
+          column.key === "preferredName" && onOpen !== undefined
+            ? {
+                ...column,
+                mark: (row: Person) =>
+                  !isPending(row) && (
+                    <>
+                      {onFill !== undefined && canFill(row, lists) && (
+                        <FillHireButton
+                          name={rowName(row, lists)}
+                          onFill={() => {
+                            onFill(row);
+                          }}
+                        />
+                      )}
+                      <ShowDetailsButton
+                        name={row.preferredName}
+                        onOpen={() => {
+                          onOpen(row);
                         }}
                       />
-                    )}
-                    <ShowDetailsButton
-                      name={row.preferredName}
-                      onOpen={() => {
-                        onOpen(row);
-                      }}
-                    />
-                  </>
-                ),
-            }
-          : column,
-      ),
+                    </>
+                  ),
+              }
+            : column,
+        ),
     liveRecords: livePeople,
     draftFields: (person, draft, fields, lists) =>
       personDraftFields(person, draft, fields, lists, people),
@@ -734,6 +762,8 @@ type PeopleGridProps = Omit<
   showPosition?: boolean;
   // Whether the user may change planned hires, as well as people.
   canEditHires?: boolean;
+  // The classes the organization keeps people's details in, which mark the columns holding them.
+  dataClasses?: DataClasses;
   // Shows a person's details beside the table.
   onOpen?: ((person: Person) => void) | undefined;
   // Starts filling a planned hire in its details, for those who may.
@@ -746,6 +776,7 @@ export function PeopleGrid({
   showHireDates = showDates,
   showPosition = true,
   canEditHires = false,
+  dataClasses = defaultClasses,
   onOpen,
   onFill,
   ...props
@@ -762,6 +793,7 @@ export function PeopleGrid({
         canEditHires,
         onOpen,
         onFill,
+        dataClasses,
       )}
       canAdd={showPosition}
       {...props}

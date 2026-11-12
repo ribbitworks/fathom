@@ -18,8 +18,8 @@ import {
   lists,
 } from "@fathom/db";
 import {
+  type BuiltInTiers,
   type ColumnTable,
-  type DataClasses,
   isLink,
   type Link,
   type Tier,
@@ -59,14 +59,6 @@ export interface ColumnInfo extends FieldRow {
   listRetired: boolean;
 }
 
-// The tiers of the People table's built-in details: the Position and State columns', and the
-// classes of the rest, read together so every tier worked out from them agrees.
-export interface BuiltInTiers {
-  readonly positionTier: Tier;
-  readonly stateTier: Tier;
-  readonly dataClasses: DataClasses;
-}
-
 // The People table's columns, carrying the tiers of its built-in details with them, so every tier
 // worked out from the columns read has them.
 export type PeopleColumns = readonly ColumnInfo[] & BuiltInTiers;
@@ -85,27 +77,6 @@ export const builtInTiersOf = ({
   stateTier,
   dataClasses,
 }: BuiltInTiers): BuiltInTiers => ({ positionTier, stateTier, dataClasses });
-
-// The tier of each of the People table's built-in columns, by key, as readers are sent them: the
-// manager is General, though a drafted one is as past managers are, since everyone is sent each
-// live manager.
-export function builtInColumnTiers(tiers: BuiltInTiers): Map<string, Tier> {
-  const { startDate, endDate, managerHistory } = tiers.dataClasses;
-  return new Map<string, Tier>([
-    ["preferredName", "general"],
-    ["employeeId", "general"],
-    ["positionId", tiers.positionTier],
-    ["stateId", tiers.stateTier],
-    ["startDate", startDate],
-    ["expected", "general"],
-    ["endDate", endDate],
-    ["managerId", "general"],
-    ["isManager", "general"],
-    ["managerFrom", managerHistory],
-    ["team", "general"],
-    ["teamName", "general"],
-  ]);
-}
 
 // The tier of a built-in list's values: its live visibility, or the most sensitive tier when the
 // list cannot be read, rather than trusted.

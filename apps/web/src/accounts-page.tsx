@@ -53,7 +53,7 @@ import {
   setActive,
   updateAccount,
 } from "./accounts.ts";
-import { DialogActions } from "./dialog-actions.tsx";
+import { DialogActions, useDialogState } from "./dialog-actions.tsx";
 import { initials, rolesHeld } from "./names.ts";
 import { notifySuccess } from "./notices.tsx";
 import { rolesQuery } from "./roles.ts";
@@ -770,20 +770,20 @@ export function AccountsPage({
   const accounts = useQuery(accountsQuery);
   // Read now, so the dialogs that choose a role have them on opening.
   useQuery({ ...rolesQuery, enabled: canManage });
-  // The dialog stays set while it closes, so its content does not vanish mid-animation.
-  const [dialog, setDialog] = useState<Dialog>();
-  const [opened, setOpened] = useState(false);
+  const {
+    dialog,
+    opened,
+    open,
+    close: closeDialog,
+    forget,
+  } = useDialogState<Dialog>();
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
 
-  const open = (next: Dialog) => {
-    setDialog(next);
-    setOpened(true);
-  };
   const close = (done?: string) => {
     if (done !== undefined) notifySuccess(done);
-    setOpened(false);
+    closeDialog();
   };
   const all = accounts.data ?? [];
   const activeCount = all.filter((account) => account.active).length;
@@ -894,7 +894,7 @@ export function AccountsPage({
         // A generated password is not lost to a stray click, and is forgotten once its dialog has
         // closed.
         onExitTransitionEnd={() => {
-          if (dialog?.kind === "generated") setDialog(undefined);
+          if (dialog?.kind === "generated") forget();
         }}
         closeOnEscape={!busy}
         closeOnClickOutside={!busy && dialog?.kind !== "generated"}

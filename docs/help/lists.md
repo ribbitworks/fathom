@@ -8,7 +8,7 @@ Lists holds the lists of choices that columns offer, such as **Sites** or **Leve
 
 1. Select **New list**.
 1. Type the **Name**, and a **Description** if it helps.
-1. Under **Visible to**, choose who sees the values picked from it.
+1. If the role may classify data, choose its **Class** too: **General**, or **Personal** or **Confidential** for values only roles that see that class may see. Other roles make General lists.
 1. Select **Create list**.
 
 ### Add Choices
@@ -33,7 +33,11 @@ Select **Retire** or **Remove** in the choice's **⋯** menu. A retired choice s
 
 ### Change, Retire or Delete a List
 
-Select **Edit list** in the list's panel. Change the name, description or **Visible to**, and select **Save**. **Retire list** and **Delete list** are at the foot. A list can't be retired or deleted while a column uses it.
+Select **Edit list** in the list's panel. Change the name or description, and select **Save**. **Retire list** and **Delete list** are at the foot. A list can't be retired or deleted while a column uses it.
+
+### Change a List's Class
+
+For a role that may classify data, select **Change class…** in the list's panel, choose the class, and select **Change**. The change takes effect at once, with no draft, and is recorded in the access history. A class the role can't see can't be chosen, and a list a column on Features uses stays **General**. Every list's class is also on the **Data classes** page.
 
 ### Find a List
 
@@ -46,8 +50,8 @@ Select **Edit list** in the list's panel. Change the name, description or **Visi
 - **A meaning**, such as **Proposed** or **Open**, ends each choice in a list with meanings. Fathom acts on the meaning and shows the choice's name. Choose the meaning when adding or changing the choice.
 - **Needed for** and a meaning, under a choice's greyed-out **Retire** and **Remove**, means it's the last choice with that meaning, so it stays. **The last choice** says the same for a list that must keep one.
 - **Retired**, in a yellow box, marks a list or choice drafted to be retired.
-- **Visible to** sets who sees the values picked from the list: **Everyone**, or only roles that see **Personal** or **Confidential** data.
+- **A lock with Personal or Confidential**, in a grey box after a list's name, gives its class: only roles that see that class see the values picked from it. A General list has none.
 
 ## Where Changes Go
 
-Every change to a list or its choices is a draft. It goes live once someone whose role approves configuration approves it. See [Drafts](drafts.md).
+Every change to a list or its choices is a draft, apart from changing its class. It goes live once someone whose role approves configuration approves it. See [Drafts](drafts.md).

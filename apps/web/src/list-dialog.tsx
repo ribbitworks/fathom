@@ -1,30 +1,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The dialog for creating a list or editing one: its name, description, and who can see the values
-// chosen from it. Editing also offers retiring or restoring the list, and deleting it, except for a
-// built-in list, which is kept. The name is checked against the other lists as it is typed. The
-// dialog cannot be closed while a change is being saved.
+// The dialog for creating a list or editing one: its name, description, and, for a list not yet
+// approved and a role with Classify data, the class of the values chosen from it; an approved list
+// changes class from its panel instead. Editing also offers retiring or restoring the list, and
+// deleting it, except for a built-in list, which is kept. The name is checked against the other
+// lists as it is typed. The dialog cannot be closed while a change is being saved.
 
 import {
   type List,
   listLengths,
   type ListRequest,
+  type Permission,
   type Tier,
-  tierSchema,
 } from "@fathom/shared";
-import {
-  Button,
-  Group,
-  SegmentedControl,
-  Stack,
-  Text,
-  Textarea,
-  TextInput,
-} from "@mantine/core";
+import { Button, Group, Stack, Text, Textarea, TextInput } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
-import { createList, sameName, updateList, visibilityName } from "./lists.ts";
+import { createList, sameName, updateList } from "./lists.ts";
+import { ClassChoice } from "./move-class-dialog.tsx";
 import classes from "./pages.module.css";
 
 const conflict = 409;
@@ -32,37 +26,6 @@ const conflict = 409;
 const nearLimit = 5;
 
 // The count of characters, shown only near the limit, and in red over it.
-// Who may see the values chosen from a list, or held in a column with a visibility of its own.
-export function VisibleTo({
-  id,
-  value,
-  onChange,
-}: {
-  id: string;
-  value: Tier;
-  onChange: (tier: Tier) => void;
-}) {
-  return (
-    <Stack gap={6}>
-      <Text fz="sm" fw={500} id={id}>
-        Visible to
-      </Text>
-      <SegmentedControl
-        aria-labelledby={id}
-        value={value}
-        onChange={(chosen) => {
-          onChange(tierSchema.parse(chosen));
-        }}
-        data={tierSchema.options.map((tier) => ({
-          value: tier,
-          label: visibilityName(tier),
-        }))}
-        w="fit-content"
-      />
-    </Stack>
-  );
-}
-
 export function Count({
   length,
   maximum,
@@ -98,10 +61,13 @@ export function ListDialog({
   onDelete,
   onCancel,
   onBusy,
+  permissions,
 }: {
   // The list being edited; absent when creating one.
   list?: List;
   lists: List[];
+  // The role's permissions, which decide whether and to which classes the list may be given.
+  permissions: readonly Permission[];
   // Given the list as saved, and the change set it was saved in.
   onSaved: (saved: List, changeSetId: string | null) => void;
   onRetire: (list: List) => void;
@@ -110,6 +76,9 @@ export function ListDialog({
   onBusy: (busy: boolean) => void;
 }) {
   const builtIn = Boolean(list?.builtIn);
+  const classifies =
+    permissions.includes("data:classify") &&
+    (list === undefined || list.draft?.action === "created");
   const [name, setName] = useState(list?.name ?? "");
   const [description, setDescription] = useState(list?.description ?? "");
   const [visibility, setVisibility] = useState<Tier>(
@@ -184,11 +153,14 @@ export function ListDialog({
             setDescription(event.currentTarget.value);
           }}
         />
-        <VisibleTo
-          id="list-visibility"
-          value={visibility}
-          onChange={setVisibility}
-        />
+        {classifies && (
+          <ClassChoice
+            from={list?.visibility ?? "general"}
+            value={visibility}
+            permissions={permissions}
+            onChange={setVisibility}
+          />
+        )}
         {saving.error && !refusedAsTaken && (
           <Text fz="sm" c="red" role="alert">
             {describeProblem(

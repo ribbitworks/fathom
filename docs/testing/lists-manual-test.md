@@ -149,71 +149,55 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - It still has a yellow **Retired** box after its name
   - **Notes:**
 
-### LIST-07: Positions' Visibility Sets Who Sees the Position Column
+### LIST-07: Moving Positions to Another Class Sets Who Sees the Position Column
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from LIST-06. Steps 5, 10 and 12 sign in as other accounts.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from LIST-06. Steps 6 and 8 sign in as other accounts.
 
 **Preconditions:** LIST-06 done. Signed in with this account. **Lists** page open, with the **Positions** panel open.
 
 - [ ] **Step 1.** Select **Edit list**.
-  - **Expected:** A dialog opens, with **Visible to** in it.
+  - **Expected:** A dialog opens, with no **Class** choice in it.
   - **Notes:**
 
-- [ ] **Step 2.** Under **Visible to**, select **Personal**.
-  - **Expected:** **Personal** is selected under **Visible to**.
+- [ ] **Step 2.** Select **Cancel**.
+  - **Expected:** The dialog closes.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Save**.
+- [ ] **Step 3.** Select **Change class…**.
   - **Expected:**
-    - The dialog closes
-    - **Positions** has a hollow yellow dot in its slot
+    - A dialog titled **Change the class of Positions** opens
+    - **General** is chosen, and **Personal** and **Confidential** can each be chosen, each with a line saying what it holds
   - **Notes:**
 
-- [ ] **Step 4.** Select the Publish button.
-  - **Expected:** A notice says the changes were published.
+- [ ] **Step 4.** Select **Personal**.
+  - **Expected:** **Personal** is chosen.
   - **Notes:**
 
-- [ ] **Step 5.** Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
-  - **Expected:** The top bar's right end reads **Engineering Director**.
-  - **Notes:**
-
-- [ ] **Step 6.** Select the **Lists** page in the left-hand menu.
-  - **Expected:** The table of lists shows.
-  - **Notes:**
-
-- [ ] **Step 7.** Select **Positions**.
-  - **Expected:** The panel opens with **Positions** at the top.
-  - **Notes:**
-
-- [ ] **Step 8.** Select the **⋯** button beside **Edit list**, then select **Approve…**.
-  - **Expected:** A dialog opens, with an **Approve** button.
-  - **Notes:**
-
-- [ ] **Step 9.** Select **Approve**.
+- [ ] **Step 5.** Select **Change**.
   - **Expected:**
-    - The dialog closes
-    - The dot beside **Positions** is gone.
+    - The dialog closes, with no dot beside **Positions** and nothing to publish
+    - A grey box with a lock and **Personal** follows **Positions**, in its panel and in the table of lists
   - **Notes:**
 
-- [ ] **Step 10.** Sign out, and sign in as the Resource Planner, `resource.planner@fathom.test`.
+- [ ] **Step 6.** Sign out, and sign in as the Resource Planner, `resource.planner@fathom.test`.
   - **Expected:** The top bar's right end reads **Resource Planner**.
   - **Notes:**
 
-- [ ] **Step 11.** Select the **People** page in the left-hand menu.
+- [ ] **Step 7.** Select the **People** page in the left-hand menu.
   - **Expected:** The table has no **Position** column.
   - **Notes:**
 
-- [ ] **Step 12.** Sign out, and sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
+- [ ] **Step 8.** Sign out, and sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Operations Manager**.
   - **Notes:**
 
-- [ ] **Step 13.** Select the **People** page in the left-hand menu.
+- [ ] **Step 9.** Select the **People** page in the left-hand menu.
   - **Expected:**
-    - The table has a **Position** column.
-    - **New** can be selected.
+    - The **Position** column's heading is followed by a grey box with a lock and **Personal**
+    - **New** can be selected
   - **Notes:**
 
-- [ ] **Step 14.** Run Reset the Database.
+- [ ] **Step 10.** Run Reset the Database.
   - **Expected:** The last line printed gives the shared password, with no error above it.
   - **Notes:**
 

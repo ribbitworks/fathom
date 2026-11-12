@@ -76,6 +76,7 @@ import {
   DraftedItem,
   DraftedValue,
   emptiedWords,
+  ClassMark,
   FactBox,
   LiveLine,
   LiveRowMarks,
@@ -172,9 +173,15 @@ function builtInNote(key: BuiltInList, mayChange: boolean): string {
   }
 }
 
-// Marks a list Fathom builds in, which cannot be retired or removed.
-export function BuiltInMark() {
-  return <FactBox>Built in</FactBox>;
+// The facts about a list: whether Fathom builds it in, so it cannot be retired or removed, and the
+// class of the values chosen from it.
+export function ListFacts({ list }: { list: List }) {
+  return (
+    <>
+      {list.builtIn && <FactBox>Built in</FactBox>}
+      <ClassMark dataClass={list.visibility} />
+    </>
+  );
 }
 
 // A choice's meaning in words, or nothing for one the server no longer knows, which it sends
@@ -374,6 +381,7 @@ export function ListPanel({
   draftActions,
   onClose,
   onEditList,
+  onMoveClass,
 }: {
   list: List;
   canEdit: boolean;
@@ -391,6 +399,9 @@ export function ListPanel({
   draftActions: ListDraftActions;
   onClose: () => void;
   onEditList: () => void;
+  // Changes the list's class, for a role with Classify data, once the list is approved and while it
+  // is not drafted to be removed.
+  onMoveClass?: (() => void) | undefined;
 }) {
   // A list a draft removes cannot be changed until the draft is discarded.
   const listRemoved = list.draft?.action === "deleted";
@@ -1185,7 +1196,7 @@ export function ListPanel({
                       })
                 }
                 heldBy={list.heldBy ?? list.orderHeldBy}
-                facts={list.builtIn && <BuiltInMark />}
+                facts={<ListFacts list={list} />}
               >
                 <DraftedValue
                   draft={original.draft}
@@ -1210,6 +1221,19 @@ export function ListPanel({
                 Edit list
               </Button>
             )}
+            {onMoveClass &&
+              list.draft?.action !== "created" &&
+              list.draft?.action !== "deleted" && (
+                <Button
+                  variant="default"
+                  size="compact-sm"
+                  // Until someone else publishes or discards their changes, as its lock says.
+                  disabled={list.heldBy !== undefined}
+                  onClick={onMoveClass}
+                >
+                  Change class…
+                </Button>
+              )}
             {(list.draft ?? list.orderDraft) && (
               <ListDraftMenu
                 list={list}

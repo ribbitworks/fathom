@@ -16,9 +16,9 @@ import type {
   Tier,
 } from "@fathom/shared";
 import {
+  changesField,
   classPermissions,
   defaultClasses,
-  editsField,
   roleSchema,
   seesClass,
   seesEmployment,
@@ -142,14 +142,12 @@ export function seesSensitivity(
 }
 
 // Whether the actor sees people's employment and their past managers, as the org chart draws them.
-export const seesPersonalDetails = (actor: Actor): boolean =>
+export const seesPeopleOverTime = (actor: Actor): boolean =>
   seesEmployment(actor) && seesField(actor, "managerHistory");
 
 // Refuses changing a built-in detail to an actor who cannot see and change its class.
 export function requireFieldEdit(actor: Actor, field: ClassifiedField): void {
-  if (!seesField(actor, field) || !editsField(actor, field)) {
-    throw new ForbiddenError();
-  }
+  if (!changesField(actor, field)) throw new ForbiddenError();
 }
 
 export function requireSensitivityEdit(

@@ -390,7 +390,7 @@ export function ProjectsPage({
   >();
   const [dialogOpened, setDialogOpened] = useState(false);
   const [reasonAsked, setReasonAsked] = useState<ReasonAsked>();
-  const { save, undoable, done } = useSaving<ProjectPlan>({
+  const changes = useSaving<ProjectPlan>({
     queryKey: projectPlanQuery.queryKey,
     removed: "Someone else has removed this. The plan has been refreshed.",
     blocked:
@@ -399,7 +399,7 @@ export function ProjectsPage({
       columnDialog.opened ||
       reasonAsked !== undefined,
   });
-  const columnSaving = { save, undoable, done };
+  const { save, shown, undoable, done } = changes;
   const canEdit = query.data !== undefined && page.mayEdit(query.data);
 
   const decide = (asking: Asking, chosen: DraftSelection) => {
@@ -754,7 +754,7 @@ export function ProjectsPage({
         const table = featureTable(choices, openRecord, plan.canEdit);
         const actions: RecordActions<Feature, PlanChange, FeatureFields> = {
           ...actionsFor<Feature, FeatureFields>("feature"),
-          ...columnDraftActions("features", columnSaving),
+          ...columnDraftActions("features", changes),
           editColumn: (field) => {
             columnDialog.open({ kind: "edit", field });
           },
@@ -781,7 +781,7 @@ export function ProjectsPage({
               fields={fields}
               lists={listsToOffer.data ?? lists}
               canDelete={plan.canEditFeatures}
-              saving={columnSaving}
+              saving={changes}
               withColumns={(shown, change) => ({
                 ...shown,
                 featureColumns: {
@@ -925,14 +925,13 @@ export function ProjectsPage({
             onSaved={(changeSetId) => {
               setDialogOpened(false);
               const before = query.data as ProjectPlan;
-              save({
-                next: (plan) => plan,
-                save: () => Promise.resolve(changeSetId),
-                failure: "",
-                onSaved: () => {
+              shown(
+                (plan) => plan,
+                changeSetId,
+                () => {
                   undoable(changeSetId, before);
                 },
-              });
+              );
             }}
           />
         )}

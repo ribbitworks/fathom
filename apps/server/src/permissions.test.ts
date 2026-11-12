@@ -449,6 +449,11 @@ const routes: Route[] = [
 
   // Personal details and former staff are left out for those who may not see them.
   { method: "GET", pattern: "/api/people", needs: allOf("people:view") },
+  {
+    method: "GET",
+    pattern: "/api/people/columns",
+    needs: allOf("people:view"),
+  },
   // Changing Personal or Confidential details needs those tiers' edit permissions too, as the
   // people tests check; these requests change only General details.
   {

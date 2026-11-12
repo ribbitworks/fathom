@@ -33,6 +33,7 @@ import type {
   OrderDraft,
 } from "@fathom/shared";
 import {
+  featuresListGeneral,
   builtInListSchema,
   type Kept,
   keptOf,
@@ -877,7 +878,11 @@ const byName = new Intl.Collator("en", { sensitivity: "base" });
 
 // The lists, by name, as their drafts make them, each with its choices in order and the drafts
 // beside. A draft that removes a list or choice shows it as it is.
-export function listsOut(state: ListsState, makers: Makers): List[] {
+export function listsOut(
+  state: ListsState,
+  makers: Makers,
+  onFeatures: ReadonlySet<string>,
+): List[] {
   const ids = [
     ...state.lists.keys(),
     ...[...state.listDrafts.keys()].filter((id) => !state.lists.has(id)),
@@ -916,6 +921,7 @@ export function listsOut(state: ListsState, makers: Makers): List[] {
         visibility: tierSchema.catch("general").parse(list.visibility),
         retired: list.retired === true,
         builtIn: builtInKey(state.builtIn.get(id)),
+        ...(onFeatures.has(id) ? { onFeatures: true } : {}),
         choices: draftedOrder(state, id).map((choiceId) =>
           choiceOut(state, makers, choiceId),
         ),
@@ -991,7 +997,11 @@ export async function readListsWithin(
   viewer: Actor,
 ): Promise<List[]> {
   const state = await readState(transaction, viewer.user.id);
-  return listsOut(state, await readMakers(transaction, state, viewer));
+  return listsOut(
+    state,
+    await readMakers(transaction, state, viewer),
+    await featureListIds(transaction),
+  );
 }
 
 // The list as the editor now sees it, with its drafts.
@@ -1002,9 +1012,11 @@ async function listNow(
 ): Promise<List> {
   const state = await readState(transaction, editor.user.id);
   // The list was just saved, so is there.
-  return listsOut(state, await readMakers(transaction, state, editor)).find(
-    (other) => other.id === id,
-  ) as List;
+  return listsOut(
+    state,
+    await readMakers(transaction, state, editor),
+    await featureListIds(transaction),
+  ).find((other) => other.id === id) as List;
 }
 
 // Runs a change to the editor's drafts of lists, after every other change to drafts, with the lists
@@ -1153,34 +1165,41 @@ async function changeList(
   });
 }
 
-const featuresGeneralOnly =
-  "A column on Features draws on this list, and columns on Features are General, so its visibility must stay General";
+// The lists a column on Features draws on, live or in a draft, published or not. Anyone's
+// unpublished drafts count, since raising such a list is refused whoever's draft it is, so telling
+// readers says no more than the refusal would.
+export async function featureListIds(reader: Reader): Promise<Set<string>> {
+  const live = await reader
+    .select({ listId: fields.listId })
+    .from(fields)
+    .where(eq(fields.tableName, "features"));
+  const drafted: { listId: string | null }[] = [];
+  // One after the other, since a transaction runs one query at a time.
+  for (const table of [drafts, unpublishedDrafts]) {
+    drafted.push(
+      ...(await reader
+        .select({ listId: sql<string | null>`${table.fields}->>'listId'` })
+        .from(table)
+        .where(
+          and(
+            eq(table.recordType, "field"),
+            sql`${table.fields}->>'tableName' = 'features'`,
+          ),
+        )),
+    );
+  }
+  return new Set(
+    [...live, ...drafted]
+      .map(({ listId }) => listId)
+      .filter((listId): listId is string => listId !== null),
+  );
+}
 
-// Whether a column on Features draws on the list, live or in a draft, published or not.
-export async function featureColumnDrawsOn(
+// Whether a column on Features draws on the list.
+export const featureColumnDrawsOn = async (
   reader: Reader,
   listId: string,
-): Promise<boolean> {
-  const live = await reader
-    .select({ id: fields.id })
-    .from(fields)
-    .where(and(eq(fields.listId, listId), eq(fields.tableName, "features")));
-  if (live.length > 0) return true;
-  for (const table of [drafts, unpublishedDrafts]) {
-    const drafted = await reader
-      .select({ id: table.recordId })
-      .from(table)
-      .where(
-        and(
-          eq(table.recordType, "field"),
-          sql`${table.fields}->>'listId' = ${listId}`,
-          sql`${table.fields}->>'tableName' = 'features'`,
-        ),
-      );
-    if (drafted.length > 0) return true;
-  }
-  return false;
-}
+): Promise<boolean> => (await featureListIds(reader)).has(listId);
 
 // Refuses a visibility other than General for a list a column on Features draws on.
 export async function refuseSensitiveFeatureList(
@@ -1192,7 +1211,7 @@ export async function refuseSensitiveFeatureList(
     visibility !== "general" &&
     (await featureColumnDrawsOn(reader, listId))
   ) {
-    throw new ConflictError(featuresGeneralOnly);
+    throw new ConflictError(featuresListGeneral);
   }
 }
 
@@ -1242,6 +1261,7 @@ export async function moveListClass(
       .where(eq(lists.id, id))
       .for("update");
     if (row === undefined) throw new NotFoundError(noList);
+    changeableList(await readState(transaction, actor.user.id), id);
     const from = storedTier(row.visibility);
     requireMove(actor, from, to);
     if (from === to) return null;

@@ -553,16 +553,27 @@ describe("a Note column", () => {
   });
 
   it("is added from the column dialog with its own visibility, and no list", async () => {
-    const fetch = await openPeople({
-      "POST /api/people/columns": () =>
-        Response.json(
-          {
-            field: { ...background, id: "f2", name: "Reviews" },
-            changeSetId: s1,
-          },
-          { status: 201 },
-        ),
-    });
+    const fetch = await openPeople(
+      {
+        "POST /api/people/columns": () =>
+          Response.json(
+            {
+              field: { ...background, id: "f2", name: "Reviews" },
+              changeSetId: s1,
+            },
+            { status: 201 },
+          ),
+      },
+      session([
+        "configuration:edit",
+        "configuration:view",
+        "people:edit",
+        "people:view",
+        "plan:view",
+        "personal:view",
+        "data:classify",
+      ]),
+    );
     await userEvent.click(screen.getByRole("button", { name: "New column" }));
     const dialog = await screen.findByRole("dialog", { name: "New column" });
     await userEvent.type(within(dialog).getByLabelText("Name"), "Reviews");
@@ -571,7 +582,7 @@ describe("a Note column", () => {
       "Note",
     );
     expect(within(dialog).queryByRole("combobox", { name: "List" })).toBeNull();
-    fireEvent.click(within(dialog).getByText("Personal"));
+    fireEvent.click(within(dialog).getByRole("radio", { name: /^Personal/ }));
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Add column" }),
     );

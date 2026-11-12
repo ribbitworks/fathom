@@ -9,7 +9,12 @@
 // state; a fact about an item, such as a warning that someone has left or a place still planned, is
 // a box after it, as moved or retired is. Every page draws them here, so they show the same marks.
 
-import type { DraftState, Show } from "@fathom/shared";
+import {
+  classNames,
+  type DraftState,
+  type Show,
+  type Tier,
+} from "@fathom/shared";
 import { Text, VisuallyHidden } from "@mantine/core";
 import { createContext, type ReactNode, useContext } from "react";
 import classes from "./pages.module.css";
@@ -498,6 +503,37 @@ export function FactBox({
       {children}
     </KindBox>
   );
+}
+
+// The words for a class's mark, as a header's spoken name adds them: none for General.
+export const classWords = (dataClass: Tier | undefined): string[] =>
+  dataClass === undefined || dataClass === "general"
+    ? []
+    : // The class is always one of the fixed classes.
+      // eslint-disable-next-line security/detect-object-injection
+      [classNames[dataClass]];
+
+// The characters a class's mark takes besides its words: its lock and its box's padding and border.
+const classFrameChars = 3;
+
+// How many characters a class's mark takes, as a header's width counts it.
+export const classMarkChars = (dataClass: Tier | undefined): number =>
+  classWords(dataClass).reduce(
+    (chars, words) => chars + words.length + classFrameChars,
+    0,
+  );
+
+// The class of data an item's values belong to, as a lock and the class's name in a grey box after
+// it, so nobody shares them by mistake; nothing for General, which everyone reaching the page sees.
+export function ClassMark({ dataClass }: { dataClass: Tier }) {
+  return classWords(dataClass).map((words) => (
+    <FactBox key={words}>
+      <span className={marks.classWords}>
+        <Icon name="lock" size={lockSize} />
+        {words}
+      </span>
+    </FactBox>
+  ));
 }
 
 // What an empty value says, in grey, where a draft's mark would otherwise mark nothing, as where a

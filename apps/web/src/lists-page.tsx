@@ -15,8 +15,10 @@ import {
   type DraftKind,
   type List,
   matchesWords,
+  type Permission,
   searchWords,
   type Show,
+  type Tier,
 } from "@fathom/shared";
 import {
   Button,
@@ -45,6 +47,9 @@ import {
 } from "./drafts.ts";
 import { focusSoon } from "./focus.ts";
 import { ListDialog } from "./list-dialog.tsx";
+import { useDialogState } from "./dialog-actions.tsx";
+import { moveListClass } from "./data-classes.ts";
+import { MoveClassModal, useClassMove } from "./move-class-dialog.tsx";
 import {
   drafting,
   draftName,
@@ -54,7 +59,7 @@ import {
   selectionOf,
 } from "./list-drafts.tsx";
 import {
-  BuiltInMark,
+  ListFacts,
   type ChoiceActions,
   entryNameId,
   ListPanel,
@@ -74,6 +79,7 @@ import {
   listKindSchema,
   listsQuery,
   liveLists,
+  listRefusal,
   moveChoice,
   resubmitListDraft,
   retiredLive,
@@ -272,7 +278,7 @@ function ListsTable({
           draft={original.draft}
           unpublished={mark === undefined && original.draft?.unpublished}
           heldBy={list.heldBy}
-          facts={list.builtIn && <BuiltInMark />}
+          facts={<ListFacts list={list} />}
         >
           <Link
             id={linkId(list)}
@@ -365,6 +371,7 @@ export function ListsPage({
   kind = "all",
   onKind,
   seesPeople = false,
+  permissions = [],
 }: {
   listId: string | undefined;
   canEdit: boolean;
@@ -383,6 +390,8 @@ export function ListsPage({
   onSearch?: (search: string, replace: boolean) => void;
   kind?: ListKind;
   onKind?: (kind: ListKind) => void;
+  // The role's permissions, which decide whether and to which classes a list may be moved.
+  permissions?: readonly Permission[];
 }) {
   const canEdit = mayEdit && show !== "live";
   // What to show, the search, and which lists, stay in the address as lists are opened and closed.
@@ -401,17 +410,21 @@ export function ListsPage({
     mayApprove && show !== "live" && (!readsPeople || people.isSuccess);
   const narrow = useMediaQuery("(max-width: 48em)");
   const navigate = useNavigate();
-  // The dialog stays set while it closes, so its content does not vanish mid-animation.
-  const [dialog, setDialog] = useState<Dialog>();
-  const [opened, setOpened] = useState(false);
+  const {
+    dialog,
+    opened,
+    open: openDialog,
+    close: closeDialog,
+  } = useDialogState<Dialog>();
   const [busy, setBusy] = useState(false);
+  const classMove = useClassMove();
   // Approving or rejecting drafts, which asks first.
   const [decision, setDecision] = useState<Decision>();
   const [deciding, setDeciding] = useState(false);
-  const { save, undoable, done } = useSaving<List[]>({
+  const { save, shown, undoable, done } = useSaving<List[]>({
     queryKey: listsQuery.queryKey,
     removed: "Someone else has removed this. The lists have been refreshed.",
-    blocked: opened || deciding,
+    blocked: opened || classMove.opened || deciding,
   });
   const all = query.data ?? [];
   const lists =
@@ -558,7 +571,7 @@ export function ListsPage({
   });
 
   const retireList = (list: List) => {
-    setOpened(false);
+    closeDialog();
     const retired = !list.retired;
     changeList(
       list,
@@ -574,7 +587,7 @@ export function ListsPage({
   // A list only drafted to be added goes, with its choices; a live one stays, struck through, until
   // its draft is approved.
   const removeList = (list: List) => {
-    setOpened(false);
+    closeDialog();
     if (list.draft?.action !== "created") {
       changeList(
         list,
@@ -677,28 +690,28 @@ export function ListsPage({
   // The dialog saved the list itself, so the page shows it at once, then reloads the lists once no
   // other change is saving. Undoing a new list deletes it again.
   const saved = (list: List, changeSetId: string | null) => {
-    setOpened(false);
+    closeDialog();
     const created = !lists.some((other) => other.id === list.id);
-    save({
-      next: (current) => [
-        ...current.filter((other) => other.id !== list.id),
-        list,
-      ],
-      save: () => Promise.resolve(changeSetId),
-      failure: "",
-      onSaved: (_saved, before) => {
+    shown(
+      (current) => [...current.filter((other) => other.id !== list.id), list],
+      changeSetId,
+      (_saved, before) => {
         undoable(changeSetId, before, created ? newListId : undefined);
       },
-    });
+    );
     if (created) {
       openList(list);
       focusSoon(entryNameId);
     }
   };
 
-  const openDialog = (next: Dialog) => {
-    setDialog(next);
-    setOpened(true);
+  // A move is changed back rather than undone, so it offers no Undo.
+  const movedClass = (list: List, visibility: Tier) => {
+    shown((current) =>
+      current.map((other) =>
+        other.id === list.id ? { ...other, visibility } : other,
+      ),
+    );
   };
 
   // Clicking the page outside the panel, the table's rows, and any control closes the panel. Menus
@@ -876,6 +889,21 @@ export function ListsPage({
                           onEditList={() => {
                             openDialog({ kind: "edit", list: open });
                           }}
+                          onMoveClass={
+                            permissions.includes("data:classify")
+                              ? () => {
+                                  classMove.open({
+                                    name: open.name,
+                                    from: open.visibility,
+                                    move: (to) => moveListClass(open.id, to),
+                                    refusal: listRefusal(open),
+                                    moved: (to) => {
+                                      movedClass(open, to);
+                                    },
+                                  });
+                                }
+                              : undefined
+                          }
                         />
                       </div>
                     ),
@@ -899,9 +927,7 @@ export function ListsPage({
       />
       <Modal
         opened={opened}
-        onClose={() => {
-          setOpened(false);
-        }}
+        onClose={closeDialog}
         closeOnEscape={!busy}
         closeOnClickOutside={!busy}
         withCloseButton={!busy}
@@ -914,13 +940,18 @@ export function ListsPage({
             onSaved={saved}
             onRetire={retireList}
             onDelete={removeList}
-            onCancel={() => {
-              setOpened(false);
-            }}
+            onCancel={closeDialog}
             onBusy={setBusy}
+            permissions={permissions}
           />
         )}
       </Modal>
+      <MoveClassModal
+        moving={classMove.dialog}
+        opened={classMove.opened}
+        permissions={permissions}
+        onClose={classMove.close}
+      />
     </Stack>
   );
 }

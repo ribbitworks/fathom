@@ -124,6 +124,12 @@
   line-height: 1;
 }
 
+.classWords {
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+}
+
 :where([data-mantine-color-scheme="dark"]) .kind {
   color: var(--mantine-color-yellow-4);
 }

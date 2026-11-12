@@ -2,50 +2,44 @@
 
 // Adding, changing, and deleting a table's added columns, as any page with such a table does: the
 // column dialog in its modal, each change shown at once and saved as a draft, and discarding or
-// sending again a column's draft. The modal cannot be closed while a change is being saved.
+// sending again a column's draft. The modal cannot be closed while a change is being saved. Moving
+// a column to another class takes effect at once, never as a draft.
 
-import type { ColumnTable, FeatureColumns, Field, List } from "@fathom/shared";
+import type {
+  ColumnTable,
+  FeatureColumns,
+  Field,
+  List,
+  Permission,
+  Tier,
+} from "@fathom/shared";
 import { Modal } from "@mantine/core";
 import { useState } from "react";
 import { ColumnDialog } from "./column-dialog.tsx";
+import { moveColumnClass } from "./data-classes.ts";
+import { useDialogState } from "./dialog-actions.tsx";
+import { MoveClassModal } from "./move-class-dialog.tsx";
 import {
   deleteField,
   discardColumnDraft,
   resubmitColumnDraft,
 } from "./column-requests.ts";
-import type { Change } from "./saving.ts";
+import type { useSaving } from "./saving.ts";
 
-type Dialog = { kind: "new" } | { kind: "edit"; field: Field };
+type Dialog =
+  | { kind: "new" }
+  | { kind: "edit"; field: Field }
+  | { kind: "move"; field: Field; from: Tier };
 
 type TableColumns = Pick<FeatureColumns, "fields" | "order">;
 
 // What a page's saving gives the columns' changes.
-interface ColumnSaving<Data> {
-  save: (change: Change<Data>) => void;
-  undoable: (
-    changeSetId: string | null,
-    before: Data,
-    focusAfter?: string,
-  ) => void;
-  done: (message: string, changeSetId: string | null, before: Data) => void;
-}
+type ColumnSaving<Data> = Pick<
+  ReturnType<typeof useSaving<Data>>,
+  "save" | "shown" | "undoable" | "done"
+>;
 
-// The dialog stays set while it closes, so its content does not vanish mid-animation.
-export function useColumnDialog() {
-  const [dialog, setDialog] = useState<Dialog>();
-  const [opened, setOpened] = useState(false);
-  return {
-    dialog,
-    opened,
-    open: (next: Dialog) => {
-      setDialog(next);
-      setOpened(true);
-    },
-    close: () => {
-      setOpened(false);
-    },
-  };
-}
+export const useColumnDialog = () => useDialogState<Dialog>();
 
 export function columnDraftActions<Data>(
   table: ColumnTable,
@@ -81,7 +75,8 @@ export function ColumnModal<Data>({
   fields,
   lists,
   canDelete = true,
-  saving: { save, undoable, done },
+  permissions = [],
+  saving: { save, shown, undoable, done },
   withColumns,
   newColumnButton,
 }: {
@@ -90,6 +85,8 @@ export function ColumnModal<Data>({
   fields: Field[];
   lists: List[];
   canDelete?: boolean;
+  // The role's permissions, which decide the classes a column may be moved to.
+  permissions?: readonly Permission[];
   saving: ColumnSaving<Data>;
   // The page's data with its table's columns changed.
   withColumns: (
@@ -105,20 +102,29 @@ export function ColumnModal<Data>({
   // change is saving.
   const saved = (field: Field, changeSetId: string | null) => {
     close();
-    save({
-      next: (data) =>
-        withColumns(data, ({ fields: shown, order }) => ({
-          fields: shown.some((other) => other.id === field.id)
-            ? shown.map((other) => (other.id === field.id ? field : other))
-            : [...shown, field],
+    shown(
+      (data) =>
+        withColumns(data, ({ fields: listed, order }) => ({
+          fields: listed.some((other) => other.id === field.id)
+            ? listed.map((other) => (other.id === field.id ? field : other))
+            : [...listed, field],
           order: order.includes(field.id) ? order : [...order, field.id],
         })),
-      save: () => Promise.resolve(changeSetId),
-      failure: "",
-      onSaved: (_saved, before) => {
+      changeSetId,
+      (_saved, before) => {
         undoable(changeSetId, before, newColumnButton);
       },
-    });
+    );
+  };
+  // A move is changed back rather than undone, so it offers no Undo.
+  const moved = (field: Field, visibility: Field["visibility"]) => {
+    shown((data) =>
+      withColumns(data, ({ fields: listed }) => ({
+        fields: listed.map((other) =>
+          other.id === field.id ? { ...other, visibility } : other,
+        ),
+      })),
+    );
   };
   const remove = (field: Field) => {
     close();
@@ -134,27 +140,46 @@ export function ColumnModal<Data>({
       },
     });
   };
+  const moving = dialog?.kind === "move" ? dialog : undefined;
   return (
-    <Modal
-      opened={opened}
-      onClose={close}
-      closeOnEscape={!busy}
-      closeOnClickOutside={!busy}
-      withCloseButton={!busy}
-      title={dialog?.kind === "edit" ? "Edit column" : "New column"}
-    >
-      {dialog && (
-        <ColumnDialog
-          table={table}
-          {...(dialog.kind === "edit" ? { field: dialog.field } : {})}
-          fields={fields}
-          lists={lists}
-          onSaved={saved}
-          onDelete={canDelete ? remove : undefined}
-          onCancel={close}
-          onBusy={setBusy}
-        />
-      )}
-    </Modal>
+    <>
+      <MoveClassModal
+        moving={
+          moving && {
+            name: moving.field.name,
+            from: moving.from,
+            move: (to) => moveColumnClass(moving.field.id, to),
+            moved: (to) => {
+              moved(moving.field, to);
+            },
+          }
+        }
+        opened={opened && moving !== undefined}
+        permissions={permissions}
+        onClose={close}
+      />
+      <Modal
+        opened={opened && moving === undefined}
+        onClose={close}
+        closeOnEscape={!busy}
+        closeOnClickOutside={!busy}
+        withCloseButton={!busy}
+        title={dialog?.kind === "new" ? "New column" : "Edit column"}
+      >
+        {dialog && dialog.kind !== "move" && (
+          <ColumnDialog
+            table={table}
+            {...(dialog.kind === "edit" ? { field: dialog.field } : {})}
+            fields={fields}
+            lists={lists}
+            onSaved={saved}
+            onDelete={canDelete ? remove : undefined}
+            onCancel={close}
+            onBusy={setBusy}
+            permissions={permissions}
+          />
+        )}
+      </Modal>
+    </>
   );
 }

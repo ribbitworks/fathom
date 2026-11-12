@@ -19,6 +19,7 @@
 
 import { type Database, listItems, people, teams } from "@fathom/db";
 import {
+  changesField,
   hireCalled,
   knownColour,
   type OrgChart,
@@ -32,7 +33,7 @@ import { NotFoundError } from "../errors.ts";
 import {
   type Actor,
   requireView,
-  seesPersonalDetails,
+  seesPeopleOverTime,
   seesSensitivity,
 } from "../access.ts";
 import {
@@ -212,12 +213,12 @@ export async function readOrgChart(
   const today = await readToday(database);
   const shownDay = day ?? today;
   const seesPeople = actor.permissions.includes("people:view");
-  const seesPersonal = seesPersonalDetails(actor);
+  const seesPersonal = seesPeopleOverTime(actor);
   const approvedOnly =
     day !== undefined &&
     !(
       actor.permissions.includes("people:edit") &&
-      mayDateLineChange(actor.permissions.includes("personal:edit"), day, today)
+      mayDateLineChange(changesField(actor, "managerHistory"), day, today)
     );
   const withHires = day === undefined;
   // Hires' drafts are part of the hiring plan, which does nothing without seeing people.

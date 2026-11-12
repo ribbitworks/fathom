@@ -51,7 +51,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import { nameProblem } from "./accounts.ts";
-import { DialogActions } from "./dialog-actions.tsx";
+import { DialogActions, useDialogState } from "./dialog-actions.tsx";
 import { notifySuccess } from "./notices.tsx";
 import { count } from "./numbers.ts";
 import { PageHeader } from "./page-header.tsx";
@@ -719,17 +719,8 @@ export function RolesPage({
   canEdit: boolean;
 }) {
   const roles = useQuery(rolesQuery);
-  // The dialog stays set while it closes, so its content does not vanish mid-animation.
-  const [dialog, setDialog] = useState<Dialog>();
-  const [opened, setOpened] = useState(false);
+  const { dialog, opened, open, close } = useDialogState<Dialog>();
   const [busy, setBusy] = useState(false);
-  const open = (next: Dialog) => {
-    setDialog(next);
-    setOpened(true);
-  };
-  const close = () => {
-    setOpened(false);
-  };
 
   return (
     <Stack gap="md" className={classes.tablePage}>

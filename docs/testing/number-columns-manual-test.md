@@ -54,7 +54,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] **Step 3.** Choose **Number**.
   - **Expected:**
     - **List** and **Several choices** are gone.
-    - **Visible to** is shown.
+    - **Class** is shown, with **General** chosen.
   - **Notes:**
 
 - [ ] **Step 4.** Type `Score` in **Name**.

@@ -9,6 +9,7 @@
 
 import {
   accessHistory,
+  dataClasses,
   listItems,
   lists,
   plannedHires,
@@ -256,6 +257,48 @@ describe("the org chart on a chosen day", () => {
       expect(shown?.draft).toBeUndefined();
     },
   );
+
+  it("lays drafts over an earlier day for those who change past managers' class, wherever it is kept", async () => {
+    const { report } = await draftedReport("2024-03-01");
+    const editor = await test.signedIn([
+      "people:view",
+      "people:edit",
+      "org-chart:view",
+      "personal:view",
+    ]);
+    await test.connection
+      .insert(dataClasses)
+      .values({ field: "managerHistory", dataClass: "general" });
+    try {
+      const shown = (await chartOn("2024-06-01", editor.cookie)).get(report);
+
+      expect(shown?.draft).toBeDefined();
+    } finally {
+      await test.connection.delete(dataClasses);
+    }
+  });
+
+  it("shows an earlier day as approved to those who edit Personal details once past managers are kept Confidential", async () => {
+    const { report } = await draftedReport("2024-03-01");
+    const editor = await test.signedIn([
+      "people:view",
+      "people:edit",
+      "org-chart:view",
+      "personal:view",
+      "personal:edit",
+      "confidential:view",
+    ]);
+    await test.connection
+      .insert(dataClasses)
+      .values({ field: "managerHistory", dataClass: "confidential" });
+    try {
+      const shown = (await chartOn("2024-06-01", editor.cookie)).get(report);
+
+      expect(shown?.draft).toBeUndefined();
+    } finally {
+      await test.connection.delete(dataClasses);
+    }
+  });
 
   it("shows the chart as approved, without drafts, to those who may not change reporting lines", async () => {
     const { first, report } = await draftedReport("2024-03-01");

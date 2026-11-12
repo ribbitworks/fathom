@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Lists of choices through the server's API: reading them, with their drafts, every change to lists
-// and choices, each a draft, and discarding drafts or sending rejected ones for approval again, with
-// the names users see for each visibility. Each change returns the change set it was saved in, which
-// undoing it names, or null when nothing changed.
+// and choices, each a draft, and discarding drafts or sending rejected ones for approval again. Each
+// change returns the change set it was saved in, which undoing it names, or null when nothing
+// changed.
 
 import {
+  featuresListGeneral,
   changeSetIdSchema,
-  classNames,
   type Choice,
   type ChoiceRequest,
   choiceSchema,
@@ -22,11 +22,14 @@ import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
 
-// Who sees what is chosen from a list: everyone for General, and otherwise the class's name.
-export const visibilityName = (tier: Tier): string =>
-  // The tier is always one of the fixed classes.
-  // eslint-disable-next-line security/detect-object-injection
-  tier === "general" ? "Everyone" : classNames[tier];
+// Why a list can't go to a class beyond the role's own reasons: a column on Features draws on it,
+// and columns there stay General.
+export const listRefusal =
+  (list: Pick<List, "onFeatures">) =>
+  (to: Tier): string | undefined =>
+    list.onFeatures === true && to !== "general"
+      ? featuresListGeneral
+      : undefined;
 
 // Which lists the Lists page shows: every one, those Fathom builds in, or those people added.
 export const listKindSchema = z.enum(["all", "built-in", "custom"]);

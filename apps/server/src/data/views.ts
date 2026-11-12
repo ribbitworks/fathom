@@ -12,6 +12,7 @@
 
 import { changes, type Database, inChunks, savedViews } from "@fathom/db";
 import {
+  builtInColumnTiers,
   type SavedView,
   type SavedViewChange,
   type SavedViewRequest,
@@ -35,7 +36,7 @@ import {
   type Saved,
   type Transaction,
 } from "./changes.ts";
-import { builtInColumnTiers, readColumns } from "./values.ts";
+import { readColumns } from "./values.ts";
 
 const table = "people";
 const noView = "There is no such view";

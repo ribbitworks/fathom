@@ -7,6 +7,8 @@
 import { describe, expect, it } from "vitest";
 import type { Permission } from "./access.ts";
 import {
+  builtInColumnTiers,
+  changesField,
   type ClassAccess,
   type DataClasses,
   defaultClasses,
@@ -16,6 +18,7 @@ import {
   seesEmployment,
   seesField,
   seesView,
+  shownIn,
   whyMissing,
   whyNoMove,
 } from "./data-classes.ts";
@@ -69,6 +72,52 @@ describe("a built-in detail's class", () => {
     expect(
       seesField(access(personal, { endDate: "confidential" }), "endDate"),
     ).toBe(false);
+  });
+});
+
+describe("the classes of People's built-in columns", () => {
+  it("follow their lists and the classes the organization keeps details in", () => {
+    const tiers = builtInColumnTiers({
+      positionTier: "personal",
+      stateTier: "confidential",
+      dataClasses: { ...defaultClasses, managerHistory: "general" },
+    });
+    expect(tiers.get("preferredName")).toBe("general");
+    expect(tiers.get("positionId")).toBe("personal");
+    expect(tiers.get("stateId")).toBe("confidential");
+    expect(tiers.get("startDate")).toBe("personal");
+    expect(tiers.get("managerFrom")).toBe("general");
+  });
+});
+
+describe("what shows a built-in detail", () => {
+  it("names the views needing it and People's columns holding it", () => {
+    expect(shownIn("futureReorganizations")).toEqual([
+      "Org chart on future dates",
+      "Feature assignments grouped by manager",
+    ]);
+    expect(shownIn("managerHistory")).toContain("People's Manager assigned");
+  });
+
+  it("names nothing for a detail no view needs yet", () => {
+    expect(shownIn("hiringPlan")).toEqual([]);
+  });
+});
+
+describe("changing a built-in detail", () => {
+  it("needs seeing and editing its class", () => {
+    expect(
+      changesField(access(["people:view", "personal:view"]), "managerHistory"),
+    ).toBe(false);
+    expect(
+      changesField(
+        access(["people:view", "personal:view", "personal:edit"]),
+        "managerHistory",
+      ),
+    ).toBe(true);
+    expect(
+      changesField(access([], { managerHistory: "general" }), "managerHistory"),
+    ).toBe(true);
   });
 });
 

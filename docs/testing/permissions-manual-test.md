@@ -33,7 +33,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 ### Add a Confidential Column
 
 1. Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`, and select the **People** page in the left-hand menu.
-2. Select **New column**. Type `Offer letter` in **Name**, choose **Web link** in **Type**, select **Confidential** under **Visible to**, and select **Add column**.
+2. Select **New column**. Type `Offer letter` in **Name**, choose **Web link** in **Type**, choose **Confidential** under **Class**, and select **Add column**.
 3. Select the Publish button, which reads **Publish 4 changes**, and confirm that a notice reads **Published 4 changes.**
 4. Sign in as the Engineering Director, `engineering.director@fathom.test`, select the **Drafts** page in the left-hand menu, and type `Offer letter` in the search box.
 5. Select the entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog titled **Approve 1 draft?**.

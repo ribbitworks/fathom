@@ -166,6 +166,8 @@ export const listSchema = z.object({
   retired: z.boolean(),
   // Which built-in list it is, which cannot be removed or retired; null or absent for any other.
   builtIn: builtInListSchema.nullable().optional(),
+  // Set when a column on Features draws on the list, which then stays General as columns there do.
+  onFeatures: z.literal(true).optional(),
   // In order, as a draft of the order makes it, offered and retired alike, with choices drafted to
   // be added after the rest, in the order they were drafted.
   choices: z.array(choiceSchema),
@@ -177,6 +179,10 @@ export const listSchema = z.object({
 });
 
 export type List = z.infer<typeof listSchema>;
+
+// Why a list a column on Features draws on keeps General, as columns there do.
+export const featuresListGeneral =
+  "A column on Features draws on this list, so it stays General";
 
 // Every list, by name.
 export const listsSchema = z.object({ lists: z.array(listSchema) });

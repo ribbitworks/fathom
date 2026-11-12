@@ -40,9 +40,10 @@ To work in a person's details instead, point at the row and select the button at
 
 1. Select **New column**.
 1. Type the **Name**, and choose the **Type**: **Choice from a list**, **Web link**, **Note** or **Number**.
+1. If the role may classify data, choose the **Class** of a **Web link**, **Note** or **Number** column. A choice column takes its list's class.
 1. Select **Add column**.
 
-To change or delete a column, open its column menu and select **Edit column** or **Delete column**.
+To change or delete a column, open its column menu and select **Edit column** or **Delete column**. A role that may classify data changes an approved column's class with **Change class…** in the same menu, at once and with no draft, as [Data classes](data-classes.md) explains.
 
 ### Write a Note
 
@@ -63,8 +64,9 @@ Select **Remove person** or **Remove planned hire** in the row's **⋯** menu. F
 - **Expected** gives the month a planned hire is expected.
 - **Manager?** is ticked for those who can be someone's manager.
 - **A red Left box** after a manager's name means they've left, with people still reporting to them.
+- **A lock with Personal or Confidential**, in a grey box after a column's heading, gives its class: only roles that see that class see the column.
 - **A value in red** can't be saved as it is. Point at the row's dot to see why.
 
 ## Where Changes Go
 
-Every change to people, planned hires and columns is a draft. It goes live once an approver approves it. See [Drafts](drafts.md).
+Every change to people, planned hires and columns is a draft, apart from changing a column's class. It goes live once an approver approves it. See [Drafts](drafts.md).
