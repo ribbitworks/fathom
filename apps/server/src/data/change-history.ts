@@ -475,10 +475,10 @@ function shown(
   return null;
 }
 
-// Whether the actor sees a change, by the rule of its kind of record. Feature teams' General details
-// are seen with View Feature teams, whether or not the reader sees people, but their drafts and
-// Personal details, being details of people, only with people; a role can be given the rest
-// without them. Changes to a saved view are kept from others as long as it is, or was then, personal.
+// Whether the actor sees a change, by the rule of its kind of record. Feature teams' details are
+// seen with View Feature teams and the classes they are kept in, whether or not the reader sees
+// people, but their drafts only with people. Changes to a saved view are kept from others as long
+// as it is, or was then, personal.
 function seesRowOfKind(
   actor: Actor,
   row: StoredChange,

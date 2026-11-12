@@ -13,9 +13,12 @@
 // refused, such as when someone else changed the role after it was opened.
 
 import {
+  classNames,
+  type DataClasses,
   gridActions,
   impliedPermissions,
   type Permission,
+  permissionDescriptions,
   permissionGrid,
   permissionLabel,
   type RoleEffects,
@@ -52,6 +55,7 @@ import type { z } from "zod";
 import { nameProblem } from "./accounts.ts";
 import { DialogActions, useDialogState } from "./dialog-actions.tsx";
 import { notifySuccess } from "./notices.tsx";
+import { ClassMark } from "./status-mark.tsx";
 import { count } from "./numbers.ts";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
@@ -191,8 +195,62 @@ function useChangingLines(items: readonly string[]): Line[] {
   return lines;
 }
 
-// Whether two lists grant the same permissions, whatever their order.
-// The grid of what a role grants, read only without a way to change it.
+// One permission's box: ticked when granted, or ticked and greyed when another granted one brings
+// it, such as viewing with editing.
+function PermissionBox({
+  permission,
+  granted,
+  disabled,
+  onChange,
+  label,
+  description,
+}: {
+  permission: Permission;
+  granted: readonly Permission[];
+  disabled: boolean;
+  onChange: ((granted: Permission[]) => void) | undefined;
+  label?: string;
+  description?: string;
+}) {
+  const comesWith = impliedBy(permission, granted);
+  const name = permissionLabel(permission);
+  return (
+    <Checkbox
+      display={label === undefined ? "inline-block" : undefined}
+      label={label}
+      description={description}
+      aria-label={
+        label !== undefined
+          ? undefined
+          : comesWith === undefined
+            ? name
+            : `${name}, which comes with ${permissionLabel(comesWith)}`
+      }
+      checked={granted.includes(permission) || comesWith !== undefined}
+      disabled={disabled || comesWith !== undefined}
+      readOnly={onChange === undefined}
+      onChange={
+        onChange &&
+        ((event) => {
+          const on = event.currentTarget.checked;
+          onChange(
+            on
+              ? [...granted, permission]
+              : granted.filter((other) => other !== permission),
+          );
+        })
+      }
+    />
+  );
+}
+
+type BoxProps = Omit<Parameters<typeof PermissionBox>[0], "permission">;
+
+const classActions = ["view", "edit"] as const;
+
+// What a role grants, in three parts: the areas it reaches, with View, Approve and Edit; the classes
+// of data it sees and changes within them, with View and Edit; and the permissions of their own.
+// Read only without a way to change it.
 function PermissionGrid({
   granted,
   disabled,
@@ -202,72 +260,104 @@ function PermissionGrid({
   disabled: boolean;
   onChange?: (granted: Permission[]) => void;
 }) {
+  const box: BoxProps = { granted, disabled, onChange };
+  const cell = (permission: Permission | undefined, key: string) =>
+    permission === undefined ? (
+      <Table.Td key={key} />
+    ) : (
+      <Table.Td key={key} ta="center">
+        <PermissionBox permission={permission} {...box} />
+      </Table.Td>
+    );
   return (
-    <Table
-      withTableBorder
-      verticalSpacing={4}
-      aria-label="What the role grants"
-    >
-      <Table.Thead>
-        <Table.Tr>
-          <Table.Th>Area</Table.Th>
-          {gridActions.map((action) => (
-            <Table.Th key={action} ta="center">
-              {
-                // The action is always one of the fixed list.
-                // eslint-disable-next-line security/detect-object-injection
-                actionHeadings[action]
-              }
-            </Table.Th>
-          ))}
-        </Table.Tr>
-      </Table.Thead>
-      <Table.Tbody>
-        {permissionGrid.map(({ area, actions }) => (
-          <Table.Tr key={area}>
-            <Table.Td>
-              <TierWords text={area} />
-            </Table.Td>
-            {gridActions.map((action) => {
-              // The action is always one of the fixed list.
-              // eslint-disable-next-line security/detect-object-injection
-              const permission = actions[action];
-              if (permission === undefined) return <Table.Td key={action} />;
-              const comesWith = impliedBy(permission, granted);
-              const label = permissionLabel(permission);
-              return (
-                <Table.Td key={action} ta="center">
-                  <Checkbox
-                    display="inline-block"
-                    aria-label={
-                      comesWith === undefined
-                        ? label
-                        : `${label}, which comes with ${permissionLabel(comesWith)}`
-                    }
-                    checked={
-                      granted.includes(permission) || comesWith !== undefined
-                    }
-                    disabled={disabled || comesWith !== undefined}
-                    readOnly={onChange === undefined}
-                    onChange={
-                      onChange &&
-                      ((event) => {
-                        const on = event.currentTarget.checked;
-                        onChange(
-                          on
-                            ? [...granted, permission]
-                            : granted.filter((other) => other !== permission),
-                        );
-                      })
-                    }
-                  />
-                </Table.Td>
-              );
-            })}
+    <Stack gap="sm" role="group" aria-label="What the role grants">
+      <Table withTableBorder verticalSpacing={4} aria-label="Areas">
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th>Area</Table.Th>
+            {gridActions.map((action) => (
+              <Table.Th key={action} ta="center">
+                {
+                  // The action is always one of the fixed list.
+                  // eslint-disable-next-line security/detect-object-injection
+                  actionHeadings[action]
+                }
+              </Table.Th>
+            ))}
           </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
+          {permissionGrid
+            .filter(({ kind }) => kind === "area")
+            .map(({ area, actions }) => (
+              <Table.Tr key={area}>
+                <Table.Td>{area}</Table.Td>
+                {gridActions.map((action) =>
+                  // The action is always one of the fixed list.
+                  // eslint-disable-next-line security/detect-object-injection
+                  cell(actions[action], action),
+                )}
+              </Table.Tr>
+            ))}
+        </Table.Tbody>
+      </Table>
+      <Table withTableBorder verticalSpacing={4} aria-label="Data classes">
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th>Data class</Table.Th>
+            {classActions.map((action) => (
+              <Table.Th key={action} ta="center">
+                {
+                  // The action is always one of the fixed list.
+                  // eslint-disable-next-line security/detect-object-injection
+                  actionHeadings[action]
+                }
+              </Table.Th>
+            ))}
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
+          <Table.Tr>
+            <Table.Td>{classNames.general}</Table.Td>
+            <Table.Td colSpan={classActions.length} ta="center" c="dimmed">
+              With the area
+            </Table.Td>
+          </Table.Tr>
+          {permissionGrid.flatMap((row) =>
+            row.kind === "class"
+              ? [
+                  <Table.Tr key={row.area}>
+                    <Table.Td>
+                      <ClassMark dataClass={row.dataClass} />
+                    </Table.Td>
+                    {classActions.map((action) =>
+                      // The action is always one of the fixed list.
+                      // eslint-disable-next-line security/detect-object-injection
+                      cell(row.actions[action], action),
+                    )}
+                  </Table.Tr>,
+                ]
+              : [],
+          )}
+        </Table.Tbody>
+      </Table>
+      {permissionGrid
+        .filter(({ kind }) => kind === "single")
+        .flatMap(({ actions }) => Object.values(actions))
+        .map((permission) => (
+          <PermissionBox
+            key={permission}
+            permission={permission}
+            label={permissionLabel(permission)}
+            description={
+              // The permission is always one of the shared list.
+              // eslint-disable-next-line security/detect-object-injection
+              permissionDescriptions[permission].allows
+            }
+            {...box}
+          />
         ))}
-      </Table.Tbody>
-    </Table>
+    </Stack>
   );
 }
 
@@ -338,8 +428,17 @@ function ChangingSentences({
 }
 
 // The result of a role's permissions in plain English, which follows the grid as it changes.
-function Summary({ granted }: { granted: readonly Permission[] }) {
-  const { pages, can, cannot, ineffective } = consequences(granted);
+function Summary({
+  granted,
+  dataClasses,
+}: {
+  granted: readonly Permission[];
+  dataClasses: DataClasses;
+}) {
+  const { gets, misses, can, cannot, ineffective } = consequences(
+    granted,
+    dataClasses,
+  );
   return (
     <Paper
       withBorder
@@ -355,9 +454,10 @@ function Summary({ granted }: { granted: readonly Permission[] }) {
           </Alert>
         )}
         <ChangingSentences
-          title="Pages its holders see"
-          items={pages.length === 0 ? ["None, apart from Help."] : pages}
+          title="What this role gets"
+          items={gets.length === 0 ? ["None, apart from Help."] : gets}
         />
+        <ChangingSentences title="What it doesn't get" items={misses} />
         <ChangingSentences title="Can" items={can} />
         <ChangingSentences title="Cannot" items={cannot} />
       </Stack>
@@ -405,7 +505,15 @@ function Effects({
 }
 
 // What a role grants, for those who may see roles but not edit them.
-function RoleView({ role, onDone }: { role: RoleSummary; onDone: () => void }) {
+function RoleView({
+  role,
+  dataClasses,
+  onDone,
+}: {
+  role: RoleSummary;
+  dataClasses: DataClasses;
+  onDone: () => void;
+}) {
   return (
     <Stack>
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
@@ -420,7 +528,7 @@ function RoleView({ role, onDone }: { role: RoleSummary; onDone: () => void }) {
           />
           <PermissionGrid granted={role.permissions} disabled={false} />
         </Stack>
-        <Summary granted={role.permissions} />
+        <Summary granted={role.permissions} dataClasses={dataClasses} />
       </SimpleGrid>
       <Group justify="flex-end">
         <Button variant="default" data-autofocus onClick={onDone}>
@@ -434,11 +542,13 @@ function RoleView({ role, onDone }: { role: RoleSummary; onDone: () => void }) {
 function RoleForm({
   dialog,
   userId,
+  dataClasses,
   onDone,
   onBusy,
 }: {
   dialog: Exclude<Dialog, { kind: "view" }>;
   userId: string;
+  dataClasses: DataClasses;
   onDone: () => void;
   onBusy: (busy: boolean) => void;
 }) {
@@ -620,7 +730,7 @@ function RoleForm({
               onChange={changeGranted}
             />
           </Stack>
-          <Summary granted={granted} />
+          <Summary granted={granted} dataClasses={dataClasses} />
         </SimpleGrid>
         <DialogActions
           error={saving.error ?? previewing.error}
@@ -670,9 +780,11 @@ function dialogTitle(dialog: Dialog): string {
 export function RolesPage({
   user,
   canEdit,
+  dataClasses,
 }: {
   user: SignedInUser;
   canEdit: boolean;
+  dataClasses: DataClasses;
 }) {
   const roles = useQuery(rolesQuery);
   const { dialog, opened, open, close } = useDialogState<Dialog>();
@@ -780,13 +892,18 @@ export function RolesPage({
         title={dialog && dialogTitle(dialog)}
       >
         {dialog?.kind === "view" && (
-          <RoleView role={dialog.role} onDone={close} />
+          <RoleView
+            role={dialog.role}
+            dataClasses={dataClasses}
+            onDone={close}
+          />
         )}
         {dialog !== undefined && dialog.kind !== "view" && (
           <RoleForm
             key={JSON.stringify(dialog)}
             dialog={dialog}
             userId={user.id}
+            dataClasses={dataClasses}
             onDone={close}
             onBusy={setBusy}
           />

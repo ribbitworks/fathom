@@ -104,7 +104,10 @@ export async function readTeamMonths(
   const { rows, lines, teams, memberships, drafts } =
     await database.transaction(
       async (transaction) => ({
-        drafts: await readDraftedMemberships(transaction, actor.user.id, today),
+        // Drafts show only to readers who see people, as feature teams' drafts do everywhere.
+        drafts: actor.permissions.includes("people:view")
+          ? await readDraftedMemberships(transaction, actor.user.id, today)
+          : { teams: [], records: [] },
         rows: await transaction
           .select({
             id: people.id,

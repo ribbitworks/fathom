@@ -5,6 +5,7 @@
 // and, for a change to a role, what each account holding it gains and loses.
 
 import {
+  type DataClasses,
   type Permission,
   permissionDescriptions,
   permissionGrid,
@@ -15,6 +16,7 @@ import {
   type RoleRequest,
   roleResponseSchema,
   type RoleSummary,
+  viewsOfRole,
   withImplied,
   eitherOf,
 } from "@fathom/shared";
@@ -66,7 +68,10 @@ const everyPage = pagesOpened(
 );
 
 export interface Consequences {
-  pages: string[];
+  // The pages its holders see, each followed by the views on it needing classified data they get.
+  gets: string[];
+  // Each view on those pages they miss, with the classes it needs.
+  misses: string[];
   can: string[];
   cannot: string[];
   // Permissions granted that do nothing without any of others the role does not grant.
@@ -74,8 +79,11 @@ export interface Consequences {
 }
 
 // What a role granting these permissions lets its holders do, and not do, in plain English, in the
-// order of the grid that sets them.
-export function consequences(granted: readonly Permission[]): Consequences {
+// order of the grid that sets them, with the organization's data in the classes it keeps it in.
+export function consequences(
+  granted: readonly Permission[],
+  dataClasses: DataClasses,
+): Consequences {
   const held = withImplied(granted);
   const pages = pagesOpened(held);
   const can: string[] = [];
@@ -111,7 +119,27 @@ export function consequences(granted: readonly Permission[]): Consequences {
           `${permissionLabel(permission)} does nothing without ${eitherOf(needs.map(permissionLabel))}.`,
         ];
   });
-  return { pages, can, cannot, ineffective };
+  const views = viewsOfRole({ permissions: held, dataClasses }, pages);
+  // A page missed whole opens only to its line saying why, so it is not among what the role gets.
+  const missedWhole = views.flatMap(({ name, page, why }) =>
+    why !== undefined && name === page ? [page] : [],
+  );
+  return {
+    gets: pages
+      .filter((page) => !missedWhole.includes(page))
+      .flatMap((page) => [
+        page,
+        ...views.flatMap((view) =>
+          view.page === page && view.name !== page && view.why === undefined
+            ? [view.name]
+            : [],
+        ),
+      ]),
+    misses: views.flatMap(({ why }) => (why === undefined ? [] : [why])),
+    can,
+    cannot,
+    ineffective,
+  };
 }
 
 export interface Difference {

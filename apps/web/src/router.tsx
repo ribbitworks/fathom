@@ -182,11 +182,12 @@ const rolesRoute = createRoute({
   path: "/roles",
   beforeLoad: requiring("administration:view"),
   component: function Roles() {
-    const { user, permissions } = signedIn.useRouteContext();
+    const { user, permissions, access } = signedIn.useRouteContext();
     return (
       <RolesPage
         user={user}
         canEdit={permissions.includes("administration:edit")}
+        dataClasses={access.dataClasses}
       />
     );
   },

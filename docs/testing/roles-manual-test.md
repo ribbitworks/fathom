@@ -34,7 +34,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu and the account menu. This test adds:
 
-- **Summary:** the panel on the right of the role dialog, headed **Pages its holders see**, **Can** and **Cannot**.
+- **Summary:** the panel on the right of the role dialog, headed **What this role gets**, **What it doesn't get**, **Can** and **Cannot**.
 - **Tier colours:** the word **Personal** in bold orange and the word **Confidential** in bold red.
 
 ## Test Cases
@@ -99,13 +99,16 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - **Feature teams:** **View** and **Approve**
     - **Hiring plan:** **View** and **Approve**
     - **Configuration:** **View** and **Approve**
-    - **Personal details:** **View**
-    - **Classify data** and **Their own drafts** have no box under **View**
+    - Under **Data class**, **General** reads **With the area**, and **Personal**, with its lock, has **View** ticked
+    - **Confidential**, with its lock, has nothing ticked
+    - **Classify data**, below the two grids, is unticked, with **Moves built-in details, lists, and columns to another class, between the classes the role sees.** under it
+    - **Approve own drafts** is unticked, with **Approves drafts they changed themselves, in the areas they approve, which otherwise need another approver.** under it
   - **Notes:**
 
 - [ ] **Step 2.** Read the summary.
   - **Expected:** The summary reads:
-    - **Pages its holders see:** Overview, Projects, Features, Releases, People, Org chart, Feature assignments, Drafts, Capacity, Lists and Change history.
+    - **What this role gets:** Overview, Projects, Features, Releases, People, Org chart, Org chart on other dates, Feature assignments, Allocations, Drafts, Capacity, Lists and Change history.
+    - **What it doesn't get:** **Org chart on future dates: needs Confidential (Future reorganizations)** and **Feature assignments grouped by manager: needs Confidential (Future reorganizations)**.
     - **Can:** a line for each ticked box, such as seeing the plan, approving drafts of features and releases, and seeing feature teams.
     - **Cannot** includes **Cannot change allocations.** and **Cannot change feature teams.**
     - **Cannot** also includes, in its tier colour, **Confidential data is hidden wherever it appears.**
@@ -143,7 +146,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] **Step 1.** Untick **View** on the **People** row, and watch the summary.
   - **Expected:**
-    - **People** under **Pages its holders see**, and the sentence about seeing people under **Can**, are struck through in red and fade away over about three seconds, then go.
+    - **People**, **Org chart** and **Org chart on other dates** under **What this role gets**, and the sentence about seeing people under **Can**, are struck through in red and fade away over about three seconds, then go.
+    - Under **What it doesn't get**, **Org chart on future dates: needs Confidential (Future reorganizations)** is struck through in red and fades away.
     - Under **Cannot**, **The People page does not appear.** appears in bold teal, turning to plain text after about three seconds.
     - A yellow box at the top of the summary reads **View Hiring plan does nothing without View People.**
   - **Notes:**
@@ -340,7 +344,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] **Step 1.** Select **New role**.
   - **Expected:**
     - A dialog titled **New role**, with an empty name, no description, and nothing ticked.
-    - **Pages its holders see** says **None, apart from Help.**
+    - **What this role gets** says **None, apart from Help.**
   - **Notes:**
 
 - [ ] **Step 2.** Select **Create role** with the name empty.

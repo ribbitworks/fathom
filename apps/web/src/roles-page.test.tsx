@@ -203,7 +203,7 @@ describe("creating a role", () => {
     expect(within(dialog).getByLabelText<HTMLInputElement>("Name").value).toBe(
       "",
     );
-    expect(summaryLines(dialog, "Pages its holders see")).toEqual([
+    expect(summaryLines(dialog, "What this role gets")).toEqual([
       "None, apart from Help.",
     ]);
     expect(within(dialog).queryByRole("heading", { name: "Can" })).toBeNull();
@@ -357,20 +357,54 @@ describe("the grid of permissions", () => {
     expect(box(dialog, "View People").disabled).toBe(false);
   });
 
-  it("names the sensitivity tiers among the areas in their own colours", async () => {
+  it("sets the classes apart from the areas, General coming with the area, and the others marked", async () => {
     serverAnswers({
       "GET /api/session": roleEditor,
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
     const dialog = await openDialog("New role", "New role");
-    const grid = within(dialog).getByRole("table", {
-      name: "What the role grants",
+    const classes = within(dialog).getByRole("table", { name: "Data classes" });
+    expect(
+      within(classes)
+        .getAllByRole("row")
+        .map((row) => row.textContent),
+    ).toEqual([
+      "Data classViewEdit",
+      "GeneralWith the area",
+      "Personal",
+      "Confidential",
+    ]);
+    expect(
+      within(within(dialog).getByRole("table", { name: "Areas" })).queryByText(
+        "Personal details",
+      ),
+    ).toBeNull();
+    expect(box(dialog, "View Personal details").checked).toBe(false);
+  });
+
+  it("gives Classify data and Approve own drafts a box of their own, saying what each allows", async () => {
+    serverAnswers({
+      "GET /api/session": roleEditor,
+      "GET /api/roles": roleList,
     });
-    expect(within(grid).getByText("Personal").className).toMatch(/personal/);
-    expect(within(grid).getByText("Confidential").className).toMatch(
-      /confidential/,
+    renderApp("/roles");
+    const dialog = await openDialog("New role", "New role");
+    const classify = within(dialog).getByRole<HTMLInputElement>("checkbox", {
+      name: "Classify data",
+    });
+    expect(classify.checked).toBe(false);
+    expect(
+      within(dialog).getByText(permissionDescriptions["data:classify"].allows),
+    ).toBeDefined();
+    await userEvent.click(
+      within(dialog).getByRole("checkbox", { name: "Approve own drafts" }),
     );
+    expect(
+      within(dialog).getByRole<HTMLInputElement>("checkbox", {
+        name: "Approve own drafts",
+      }).checked,
+    ).toBe(true);
   });
 });
 
@@ -413,13 +447,17 @@ describe("the summary of what a role allows", () => {
       "Edit Fictional Auditors",
       "Edit Fictional Auditors",
     );
-    expect(summaryLines(dialog, "Pages its holders see")).toEqual([
+    expect(summaryLines(dialog, "What this role gets")).toEqual([
       "Overview",
       "Projects",
       "People",
       "Org chart",
+      "Org chart on other dates",
       "Drafts",
       "Change history",
+    ]);
+    expect(summaryLines(dialog, "What it doesn't get")).toEqual([
+      "Org chart on future dates: needs Confidential (Future reorganizations)",
     ]);
     expect(summaryLines(dialog, "Can")).toEqual([
       permissionDescriptions["plan:view"].allows,
@@ -442,10 +480,10 @@ describe("the summary of what a role allows", () => {
       "Edit Fictional Auditors",
     );
     expect(within(dialog).queryByText(/does nothing without/)).toBeNull();
-    await userEvent.click(box(dialog, "View People"));
+    await userEvent.click(box(dialog, "Edit Personal details"));
     expect(
       within(dialog).getByText(
-        "View Personal details does nothing without View People.",
+        "Edit Personal details does nothing without Edit People or Edit Feature teams.",
       ),
     ).toBeDefined();
   });
@@ -470,11 +508,12 @@ describe("the summary of what a role allows", () => {
     // When
     await user.click(box(dialog, "View People"));
     // Then
-    expect(summaryLines(dialog, "Pages its holders see")).toEqual([
+    expect(summaryLines(dialog, "What this role gets")).toEqual([
       "Overview",
       "Projects",
       "No longer: People",
       "No longer: Org chart",
+      "No longer: Org chart on other dates",
       // Drafts and the change history stay, since viewing the plan opens them too.
       "Drafts",
       "Change history",
@@ -491,13 +530,14 @@ describe("the summary of what a role allows", () => {
     await user.click(box(dialog, "View Plan"));
     await user.click(box(dialog, "View Configuration"));
     // Then
-    expect(summaryLines(dialog, "Pages its holders see")).toEqual([
+    expect(summaryLines(dialog, "What this role gets")).toEqual([
       "No longer: Overview",
       "No longer: Projects",
       // Releases, Drafts and the change history come back, since configuration opens them too,
       // and Capacity opens with it.
       "No longer: People",
       "No longer: Org chart",
+      "No longer: Org chart on other dates",
       "Releases",
       "Drafts",
       "Capacity",
@@ -512,7 +552,7 @@ describe("the summary of what a role allows", () => {
       vi.advanceTimersByTime(3000);
     });
     // Then
-    expect(summaryLines(dialog, "Pages its holders see")).toEqual([
+    expect(summaryLines(dialog, "What this role gets")).toEqual([
       "Releases",
       "Drafts",
       "Capacity",
@@ -947,7 +987,7 @@ describe("seeing roles without editing them", () => {
     await userEvent.click(box(dialog, "View Configuration"));
     expect(box(dialog, "View People").checked).toBe(true);
     expect(box(dialog, "View Configuration").checked).toBe(false);
-    expect(summaryLines(dialog, "Pages its holders see")).toContain("People");
+    expect(summaryLines(dialog, "What this role gets")).toContain("People");
     expect(within(dialog).queryByRole("button", { name: "Save" })).toBeNull();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Close" }),

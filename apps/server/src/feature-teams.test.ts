@@ -316,14 +316,14 @@ describe("reading feature teams", () => {
   });
 
   describe("a reader who sees feature teams with Personal details but not people", () => {
-    it("sees members who have started, and no one who has not", async () => {
+    it("sees members who have not started yet too, as Personal details allow", async () => {
       const starting = await person({ startDate: "2099-01-01" });
       const started = await person();
       const id = await liveTeam({ leadId: starting, members: [started] });
 
       expect(await teamSeen(id, chartOnly)).toMatchObject({
-        leadId: null,
-        members: [started],
+        leadId: starting,
+        members: expect.arrayContaining([started, starting]) as string[],
       });
     });
 
@@ -2446,7 +2446,7 @@ describe("the change history of a team", () => {
     expect(await recordOf(adding, editor)).toBeDefined();
   });
 
-  it("shows a reader who does not see people only approved changes, without when members join", async () => {
+  it("shows a reader who does not see people only approved changes", async () => {
     const member = await person();
     const name = unique("Fictional Feature Team");
     const { id, changeSetId } = await drafted({
@@ -2465,9 +2465,6 @@ describe("the change history of a team", () => {
       .find((one) => one.name === name);
     expect(record).toBeDefined();
     expect(record?.draft).toBe(false);
-    expect(record?.fields.map(({ field }) => field)).not.toContain(
-      "memberFrom",
-    );
   });
 
   it("names nobody who has not started to a reader who sees feature teams but not People", async () => {
@@ -2640,18 +2637,23 @@ describe("teams on a chosen day", () => {
     (await teamsOn(day, who)).find((team) => team.id === id);
 
   it("is refused, saying why, to readers who do not see Personal details", async () => {
-    for (const who of [
+    const response = await send(
       planner,
-      await test.signedIn(["feature-teams:view", "personal:view"]),
-    ]) {
-      const response = await send(
-        who,
-        "GET",
-        "/api/feature-teams?on=2025-03-01",
-      );
-      expect(response.statusCode).toBe(403);
-      expect(refusal(response)).toBe("Other dates need Personal access.");
-    }
+      "GET",
+      "/api/feature-teams?on=2025-03-01",
+    );
+    expect(response.statusCode).toBe(403);
+    expect(refusal(response)).toBe("Other dates need Personal access.");
+  });
+
+  it("is given to readers who see Personal details without seeing people", async () => {
+    const reader = await test.signedIn(["feature-teams:view", "personal:view"]);
+    const response = await send(
+      reader,
+      "GET",
+      "/api/feature-teams?on=2025-03-01",
+    );
+    expect(response.statusCode).toBe(200);
   });
 
   it("shows the members and lead of that day, as approved", async () => {
@@ -2921,20 +2923,25 @@ describe("feature teams month by month", () => {
   });
 
   it("is refused, saying why, to readers who do not see Personal details", async () => {
-    for (const who of [
+    const response = await send(
       planner,
-      await test.signedIn(["feature-teams:view", "personal:view"]),
-    ]) {
-      const response = await send(
-        who,
-        "GET",
-        "/api/feature-teams/months?from=2025-01&to=2025-03",
-      );
-      expect(response.statusCode).toBe(403);
-      expect(refusal(response)).toBe(
-        "Feature assignments needs Personal access.",
-      );
-    }
+      "GET",
+      "/api/feature-teams/months?from=2025-01&to=2025-03",
+    );
+    expect(response.statusCode).toBe(403);
+    expect(refusal(response)).toBe(
+      "Feature assignments needs Personal access.",
+    );
+  });
+
+  it("is given to readers who see Personal details without seeing people", async () => {
+    const reader = await test.signedIn(["feature-teams:view", "personal:view"]);
+    const response = await send(
+      reader,
+      "GET",
+      "/api/feature-teams/months?from=2025-01&to=2025-03",
+    );
+    expect(response.statusCode).toBe(200);
   });
 
   it("lists the months asked for and the live teams, with their colours", async () => {
@@ -3125,6 +3132,19 @@ describe("feature teams month by month", () => {
         action: "changed",
         state: "waiting",
       });
+    });
+
+    it("leaves drafts out for readers who do not see people", async () => {
+      const member = await person();
+      const id = await liveTeam({ from: "2025-01-15" });
+      await changed(id, { add: [member], from: "2025-02-15" });
+
+      const read = await monthsOf("2025-02", "2025-03", chartOnly);
+
+      expect(
+        read.people.find((one) => one.id === member)?.drafted,
+      ).toBeUndefined();
+      expect(read.drafts).toEqual([]);
     });
 
     it("shows someone leaving only in the months they would be gone", async () => {

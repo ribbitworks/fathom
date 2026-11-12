@@ -32,6 +32,7 @@ export {
   keptPermissions,
   draftingPermissions,
   type GridAction,
+  type GridRow,
   gridActions,
   impliedPermissions,
   type Permission,
@@ -73,6 +74,8 @@ export {
   seesField,
   seesView,
   shownIn,
+  type RoleView,
+  viewsOfRole,
   whyMissing,
   whyNoMove,
 } from "./data-classes.ts";

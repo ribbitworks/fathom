@@ -1,12 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for what a role's permissions mean in plain English: the pages its holders see, what they
-// can and cannot do, permissions that do nothing without another, and what an account gains and
-// loses when what it may do changes.
+// Tests for what a role's permissions mean in plain English: the pages and views its holders get,
+// those they miss and why, what they can and cannot do, permissions that do nothing without
+// another, and what an account gains and loses when what it may do changes.
 
-import { type Permission, permissionDescriptions } from "@fathom/shared";
+import {
+  defaultClasses,
+  type Permission,
+  permissionDescriptions,
+} from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import { consequences, difference } from "./roles.ts";
+
+// What a role allows with the data in the classes Fathom starts it in.
+const allowed = (granted: readonly Permission[]) =>
+  consequences(granted, defaultClasses);
 
 const allows = (permission: Permission) =>
   // The permission is always one of the shared list.
@@ -18,8 +26,8 @@ const without = (permission: Permission) =>
 
 describe("what a role allows", () => {
   it("lists no pages for a role granting nothing, and every page as not appearing", () => {
-    const { pages, cannot } = consequences([]);
-    expect(pages).toEqual([]);
+    const { gets, cannot } = allowed([]);
+    expect(gets).toEqual([]);
     expect(cannot.slice(0, 16)).toEqual([
       "The Overview page does not appear.",
       "The Projects page does not appear.",
@@ -41,11 +49,8 @@ describe("what a role allows", () => {
   });
 
   it("names the pages a role's permissions open, and only those others as not appearing", () => {
-    const { pages, cannot } = consequences([
-      "people:view",
-      "administration:view",
-    ]);
-    expect(pages).toEqual([
+    const { gets, cannot } = allowed(["people:view", "administration:view"]);
+    expect(gets).toEqual([
       "People",
       "Org chart",
       "Drafts",
@@ -57,17 +62,65 @@ describe("what a role allows", () => {
     ]);
     expect(cannot).toContain("The Feature assignments page does not appear.");
     expect(cannot).not.toContain("The People page does not appear.");
-    expect(consequences(["people:view", "feature-teams:view"]).pages).toEqual([
+    expect(
+      allowed(["people:view", "feature-teams:view", "personal:view"]).gets,
+    ).toEqual([
       "People",
       "Org chart",
+      "Org chart on other dates",
       "Feature assignments",
       "Drafts",
       "Change history",
     ]);
   });
 
+  it("adds the views a role gets, and says why it misses each other view on the pages it reaches", () => {
+    const engineeringManager = allowed([
+      "people:view",
+      "feature-teams:view",
+      "allocations:view",
+      "personal:view",
+    ]);
+    expect(engineeringManager.gets).toEqual([
+      "People",
+      "Org chart",
+      "Org chart on other dates",
+      "Feature assignments",
+      "Allocations",
+      "Drafts",
+      "Change history",
+    ]);
+    expect(engineeringManager.misses).toEqual([
+      "Org chart on future dates: needs Confidential (Future reorganizations)",
+      "Feature assignments grouped by manager: needs Confidential (Future reorganizations)",
+    ]);
+    const withoutPersonal = allowed(["feature-teams:view"]);
+    // A page missed whole opens only to its line saying why.
+    expect(withoutPersonal.gets).not.toContain("Feature assignments");
+    expect(withoutPersonal.misses).toEqual([
+      "Feature assignments: needs Personal (Start date, End date, Past managers, Feature team dates)",
+      "Feature assignments grouped by manager: needs Personal (Start date, End date, Past managers, Feature team dates) and Confidential (Future reorganizations)",
+    ]);
+  });
+
+  it("follows the classes the organization keeps its data in", () => {
+    const general = {
+      ...defaultClasses,
+      futureReorganizations: "general" as const,
+    };
+    expect(
+      consequences(["people:view", "personal:view"], general).misses,
+    ).toEqual([]);
+  });
+
+  it("gives Personal views to a role that sees Personal data without People, on the pages it reaches", () => {
+    expect(allowed(["feature-teams:view", "personal:view"]).misses).toEqual([
+      "Feature assignments grouped by manager: needs Confidential (Future reorganizations)",
+    ]);
+  });
+
   it("says what its holders can do, in the grid's order, including what editing brings", () => {
-    expect(consequences(["people:edit", "plan:view"]).can).toEqual([
+    expect(allowed(["people:edit", "plan:view"]).can).toEqual([
       allows("plan:view"),
       allows("people:view"),
       allows("people:edit"),
@@ -75,7 +128,7 @@ describe("what a role allows", () => {
   });
 
   it("says once what an area the role does not reach at all is closed to", () => {
-    const { cannot } = consequences([]);
+    const { cannot } = allowed([]);
     expect(cannot).toContain(without("plan:view"));
     expect(cannot).not.toContain(without("plan:edit"));
     expect(cannot).toContain(without("feature-teams:view"));
@@ -84,7 +137,7 @@ describe("what a role allows", () => {
   });
 
   it("says each action missing on an area the role reaches in part", () => {
-    const { can, cannot } = consequences(["feature-teams:edit"]);
+    const { can, cannot } = allowed(["feature-teams:edit"]);
     expect(can).toEqual([
       allows("feature-teams:view"),
       allows("feature-teams:edit"),
@@ -94,33 +147,35 @@ describe("what a role allows", () => {
   });
 
   it("warns of each permission, granted or brought by another, that does nothing without one the role lacks", () => {
-    expect(consequences(["personal:edit"]).ineffective).toEqual([
-      "View Personal details does nothing without View People.",
-      "Edit Personal details does nothing without Edit People.",
+    expect(allowed(["personal:edit"]).ineffective).toEqual([
+      "View Personal details does nothing without View People or View Feature teams.",
+      "Edit Personal details does nothing without Edit People or Edit Feature teams.",
     ]);
   });
 
   it("gives no warning once the permission needed is granted, or brought by another", () => {
-    expect(consequences(["personal:view", "people:view"]).ineffective).toEqual(
+    expect(allowed(["personal:edit", "people:edit"]).ineffective).toEqual([]);
+    expect(
+      allowed(["personal:edit", "feature-teams:edit", "people:view"])
+        .ineffective,
+    ).toEqual([]);
+    expect(allowed(["confidential:edit", "people:edit"]).ineffective).toEqual(
       [],
     );
-    expect(
-      consequences(["confidential:edit", "people:edit"]).ineffective,
-    ).toEqual([]);
   });
 
   it("warns that approving planned hires does nothing without seeing the hiring plan", () => {
-    expect(
-      consequences(["hiring-plan:approve", "people:view"]).ineffective,
-    ).toEqual(["Approve Hiring plan does nothing without View Hiring plan."]);
+    expect(allowed(["hiring-plan:approve", "people:view"]).ineffective).toEqual(
+      ["Approve Hiring plan does nothing without View Hiring plan."],
+    );
   });
 
   it("names every permission one could do something with, and is content with any of them", () => {
-    expect(consequences(["drafts:approve-own"]).ineffective).toEqual([
-      "Approve Their own drafts does nothing without Approve Plan, Approve Features and releases, Approve Allocations, Approve People, Approve Hiring plan, Approve Feature teams, or Approve Configuration.",
+    expect(allowed(["drafts:approve-own"]).ineffective).toEqual([
+      "Approve own drafts does nothing without Approve Plan, Approve Features and releases, Approve Allocations, Approve People, Approve Hiring plan, Approve Feature teams, or Approve Configuration.",
     ]);
     expect(
-      consequences(["drafts:approve-own", "features:approve", "features:view"])
+      allowed(["drafts:approve-own", "features:approve", "features:view"])
         .ineffective,
     ).toEqual([]);
   });

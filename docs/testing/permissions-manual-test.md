@@ -42,7 +42,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 ### Grant Team Member Only Some Permissions
 
 1. Sign in as the Administrator, `fathom.administrator@fathom.test`, and open the **Team Member** role, as Open a Role describes.
-2. Untick **View** on the **Plan**, **Features and releases**, **Allocations**, **People** and **Feature teams** rows. Confirm that no box in the grid is ticked, and that **Pages its holders see** says **None, apart from Help.**
+2. Untick **View** on the **Plan**, **Features and releases**, **Allocations**, **People** and **Feature teams** rows. Confirm that no box in the grid is ticked, and that **What this role gets** says **None, apart from Help.**
 3. Tick the boxes the test case names.
 4. Select **Save**, then **Save changes**, and confirm that a green banner says **The role has been changed.**
 5. Sign in as the Team Member, `team.member@fathom.test`.
@@ -454,7 +454,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-14 ended with.
 
-**Preconditions:** Team Member granted only **Edit** on **Features and releases**, **Approve** on **Features and releases** and **Approve** on **Their own drafts** through Grant Team Member Only Some Permissions, signed in with this account. **Releases** page open, with **Platform** selected in the streams table.
+**Preconditions:** Team Member granted only **Edit** on **Features and releases**, **Approve** on **Features and releases** and **Approve own drafts** through Grant Team Member Only Some Permissions, signed in with this account. **Releases** page open, with **Platform** selected in the streams table.
 
 - [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
   - **Expected:** A dialog titled **Change Harbor 1** opens.

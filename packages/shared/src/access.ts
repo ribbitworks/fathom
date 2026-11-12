@@ -197,23 +197,23 @@ export const permissionDescriptions: Record<
       "Sees people who haven't started yet, and Personal details of the people the role sees, such as gender, start and end dates, and past managers.",
     without:
       "Personal details are hidden wherever they appear, and people who haven't started yet aren't listed.",
-    needs: ["people:view"],
+    needs: ["people:view", "feature-teams:view"],
   },
   "personal:edit": {
     allows: "Changes Personal details of people.",
     without: "Cannot change Personal details.",
-    needs: ["people:edit"],
+    needs: ["people:edit", "feature-teams:edit"],
   },
   "confidential:view": {
     allows:
       "Sees Confidential data, such as future-dated reorganizations and columns marked Confidential.",
     without: "Confidential data is hidden wherever it appears.",
-    needs: ["people:view"],
+    needs: ["people:view", "feature-teams:view"],
   },
   "confidential:edit": {
     allows: "Changes Confidential data, such as columns marked Confidential.",
     without: "Cannot change Confidential data.",
-    needs: ["people:edit"],
+    needs: ["people:edit", "feature-teams:edit"],
   },
   "data:classify": {
     allows:
@@ -319,14 +319,22 @@ export type GridAction = (typeof gridActions)[number];
 
 // The areas a role grants actions on, as the rows of the grid that sets them, with the permission
 // each action on the area is. Every permission is in exactly one place, which a test checks.
-export const permissionGrid: readonly {
+// A row of the grid, in the part it belongs to: an area a role reaches; a class of data it sees and
+// changes within them; or a permission of its own, named, since its action and area together do
+// not read as one.
+export type GridRow = {
   area: string;
   actions: Partial<Record<GridAction, Permission>>;
-  // The name of a row's only permission, when the action and area together do not read as one.
-  name?: string;
-}[] = [
+} & (
+  | { kind: "area" }
+  | { kind: "class"; dataClass: Exclude<Tier, "general"> }
+  | { kind: "single"; name: string }
+);
+
+export const permissionGrid: readonly GridRow[] = [
   {
     area: "Plan",
+    kind: "area",
     actions: {
       view: "plan:view",
       approve: "plan:approve",
@@ -335,6 +343,7 @@ export const permissionGrid: readonly {
   },
   {
     area: "Features and releases",
+    kind: "area",
     actions: {
       view: "features:view",
       approve: "features:approve",
@@ -343,6 +352,7 @@ export const permissionGrid: readonly {
   },
   {
     area: "Allocations",
+    kind: "area",
     actions: {
       view: "allocations:view",
       approve: "allocations:approve",
@@ -351,6 +361,7 @@ export const permissionGrid: readonly {
   },
   {
     area: "People",
+    kind: "area",
     actions: {
       view: "people:view",
       approve: "people:approve",
@@ -359,6 +370,7 @@ export const permissionGrid: readonly {
   },
   {
     area: "Feature teams",
+    kind: "area",
     actions: {
       view: "feature-teams:view",
       approve: "feature-teams:approve",
@@ -367,6 +379,7 @@ export const permissionGrid: readonly {
   },
   {
     area: "Hiring plan",
+    kind: "area",
     actions: {
       view: "hiring-plan:view",
       approve: "hiring-plan:approve",
@@ -375,6 +388,7 @@ export const permissionGrid: readonly {
   },
   {
     area: "Configuration",
+    kind: "area",
     actions: {
       view: "configuration:view",
       approve: "configuration:approve",
@@ -383,22 +397,33 @@ export const permissionGrid: readonly {
   },
   {
     area: "Administration",
+    kind: "area",
     actions: { view: "administration:view", edit: "administration:edit" },
   },
   {
     area: "Personal details",
     actions: { view: "personal:view", edit: "personal:edit" },
+    kind: "class",
+    dataClass: "personal",
   },
   {
     area: "Confidential data",
     actions: { view: "confidential:view", edit: "confidential:edit" },
+    kind: "class",
+    dataClass: "confidential",
   },
   {
     area: "Classify data",
     actions: { edit: "data:classify" },
+    kind: "single",
     name: "Classify data",
   },
-  { area: "Their own drafts", actions: { approve: "drafts:approve-own" } },
+  {
+    area: "Their own drafts",
+    actions: { approve: "drafts:approve-own" },
+    kind: "single",
+    name: "Approve own drafts",
+  },
 ];
 
 const actionNames: Record<GridAction, string> = {
@@ -409,12 +434,14 @@ const actionNames: Record<GridAction, string> = {
 
 // A permission's short name, such as "Edit People", for lists of what changed.
 export function permissionLabel(permission: string): string {
-  for (const { area, actions, name: own } of permissionGrid) {
+  for (const row of permissionGrid) {
     for (const action of gridActions) {
       // The action is always one of the fixed list above.
       // eslint-disable-next-line security/detect-object-injection
-      const [granted, name] = [actions[action], actionNames[action]];
-      if (granted === permission) return own ?? `${name} ${area}`;
+      const [granted, name] = [row.actions[action], actionNames[action]];
+      if (granted === permission) {
+        return row.kind === "single" ? row.name : `${name} ${row.area}`;
+      }
     }
   }
   return permission;

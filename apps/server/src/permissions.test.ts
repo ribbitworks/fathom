@@ -180,14 +180,8 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     asked: () => ({ records: [{ type: "project", id: id() }] }),
   },
   {
-    // Allocations need Personal details, which show only with people.
     variant: "allocations",
-    needs: allOf(
-      "allocations:approve",
-      "allocations:view",
-      "people:view",
-      "personal:view",
-    ),
+    needs: allOf("allocations:approve", "allocations:view", "personal:view"),
     asked: () => ({ records: [{ type: "allocation", id: id() }] }),
   },
 ];
@@ -302,7 +296,7 @@ const routes: Route[] = [
     method: "PUT",
     pattern: "/api/data-classes/:field",
     url: "/api/data-classes/startDate",
-    needs: allOf("data:classify", "people:view", "personal:view"),
+    needs: allOf("data:classify", "personal:view"),
     body: () => ({ dataClass: "general" }),
   },
   {
@@ -343,12 +337,12 @@ const routes: Route[] = [
   {
     method: "GET",
     pattern: "/api/allocations",
-    needs: allOf("allocations:view", "people:view", "personal:view"),
+    needs: allOf("allocations:view", "personal:view"),
   },
   {
     method: "POST",
     pattern: "/api/allocations/changes",
-    needs: allOf("allocations:edit", "people:view", "personal:view"),
+    needs: allOf("allocations:edit", "personal:view"),
     body: () => ({
       personId: randomUUID(),
       featureId: randomUUID(),
@@ -570,7 +564,6 @@ const routes: Route[] = [
     needs: allOf("people:view"),
   },
   {
-    // Other dates need Personal details, which show only with people.
     method: "GET",
     pattern: "/api/org-chart",
     variant: "on another day",
@@ -639,12 +632,12 @@ const routes: Route[] = [
     pattern: "/api/feature-teams",
     variant: "on another day",
     url: "/api/feature-teams?on=2099-01-01",
-    needs: allOf("feature-teams:view", "people:view", "personal:view"),
+    needs: allOf("feature-teams:view", "personal:view"),
   },
   {
     method: "GET",
     pattern: "/api/feature-teams/months",
-    needs: allOf("feature-teams:view", "people:view", "personal:view"),
+    needs: allOf("feature-teams:view", "personal:view"),
     url: "/api/feature-teams/months?from=2025-01&to=2025-03",
   },
   {

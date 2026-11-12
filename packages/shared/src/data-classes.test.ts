@@ -19,6 +19,7 @@ import {
   seesField,
   seesView,
   shownIn,
+  viewsOfRole,
   whyMissing,
   whyNoMove,
 } from "./data-classes.ts";
@@ -38,7 +39,7 @@ describe("seesClass", () => {
   it.each([
     ["General, with no permissions", [], "general", true],
     ["Personal, with people", personal, "personal", true],
-    ["Personal, without people", ["personal:view"], "personal", false],
+    ["Personal, without people", ["personal:view"], "personal", true],
     ["Personal, without it", ["people:view"], "personal", false],
     ["Confidential, with it", ["confidential:view"], "confidential", true],
     ["Confidential, without it", personal, "confidential", false],
@@ -206,5 +207,55 @@ describe("why a view is missing", () => {
 
   it("says nothing when the role sees the view", () => {
     expect(whyMissing("allocations", access(personal))).toBeUndefined();
+  });
+});
+
+describe("the views on the pages a role reaches", () => {
+  const orgChart = ["People", "Org chart"];
+  const whys = (permissions: readonly Permission[], moved = {}) =>
+    viewsOfRole(access(permissions, moved), orgChart).map(({ why }) => why);
+
+  it("names each view with its page, and why the role misses it", () => {
+    expect(viewsOfRole(access(personal), orgChart)).toEqual([
+      { name: "Org chart on other dates", page: "Org chart" },
+      {
+        name: "Org chart on future dates",
+        page: "Org chart",
+        why: "Org chart on future dates: needs Confidential (Future reorganizations)",
+      },
+    ]);
+  });
+
+  it("names every class a view needs, with the details kept in each", () => {
+    expect(whys(["people:view"])).toEqual([
+      "Org chart on other dates: needs Personal (Start date, End date, Past managers, Feature team dates)",
+      "Org chart on future dates: needs Personal (Start date, End date, Past managers, Feature team dates) and Confidential (Future reorganizations)",
+    ]);
+  });
+
+  it("follows the details the organization moved", () => {
+    expect(
+      whys(["people:view"], {
+        startDate: "general",
+        endDate: "general",
+        featureTeamDates: "confidential",
+      })[0],
+    ).toBe(
+      "Org chart on other dates: needs Personal (Past managers) and Confidential (Feature team dates)",
+    );
+  });
+
+  it("leaves out views on pages the role does not reach", () => {
+    expect(whys(everything)).toEqual([undefined, undefined]);
+    expect(viewsOfRole(access(everything), [])).toEqual([]);
+  });
+
+  it("needs View Allocations as well as Feature assignments for Allocations", () => {
+    const names = (permissions: readonly Permission[]) =>
+      viewsOfRole(access(permissions), ["Feature assignments"]).map(
+        ({ name }) => name,
+      );
+    expect(names(everything)).not.toContain("Allocations");
+    expect(names([...everything, "allocations:view"])).toContain("Allocations");
   });
 });
