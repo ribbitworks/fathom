@@ -243,10 +243,10 @@ describe("the Position column", () => {
 
   it("shows a placeholder's position only to those who see the Positions list's tier", async () => {
     const id = await liveHire();
-    const planner = await test.signedIn(generalReader);
-    expect((await hireSeen(planner, id))?.positionId).toBe(testPosition);
+    const generalViewer = await test.signedIn(generalReader);
+    expect((await hireSeen(generalViewer, id))?.positionId).toBe(testPosition);
     await setVisibility("positions", "personal");
-    const unseen = await hireSeen(planner, id);
+    const unseen = await hireSeen(generalViewer, id);
     expect(unseen).toBeDefined();
     expect(unseen?.positionId).toBeUndefined();
   });
@@ -270,19 +270,19 @@ describe("the State column", () => {
 
   it("shows a placeholder's state to those who see the Hiring states list's tier", async () => {
     const id = await liveHire();
-    const planner = await test.signedIn(generalReader);
-    expect((await hireSeen(planner, id))?.stateId).toBeDefined();
+    const generalViewer = await test.signedIn(generalReader);
+    expect((await hireSeen(generalViewer, id))?.stateId).toBeDefined();
     await setVisibility("hiring-states", "personal");
-    expect((await hireSeen(planner, id))?.stateId).toBeUndefined();
+    expect((await hireSeen(generalViewer, id))?.stateId).toBeUndefined();
   });
 
   it("leaves State, and a hire row's position and state, off People for those who cannot see their lists' tier", async () => {
     const id = await liveHire();
     const someone = await livePerson();
-    const planner = await test.signedIn(generalReader);
+    const generalViewer = await test.signedIn(generalReader);
     await setVisibility("positions", "personal");
     await setVisibility("hiring-states", "personal");
-    const read = await send(planner, "GET", "/api/people");
+    const read = await send(generalViewer, "GET", "/api/people");
     const { people, order } = read.json<{
       people: Person[];
       order: string[];
@@ -516,13 +516,16 @@ describe("reading positions and states more sensitive than General", () => {
   it("is recorded in the access history, for people and for placeholders", async () => {
     await livePerson();
     await liveHire();
-    const planner = await grantedOnly(["people:view", "confidential:view"]);
-    await send(planner, "GET", "/api/people");
-    await send(planner, "GET", "/api/planned-hires");
-    const before = await viewsRecorded(planner);
+    const confidentialReader = await grantedOnly([
+      "people:view",
+      "confidential:view",
+    ]);
+    await send(confidentialReader, "GET", "/api/people");
+    await send(confidentialReader, "GET", "/api/planned-hires");
+    const before = await viewsRecorded(confidentialReader);
     await setVisibility("positions", "confidential");
-    await send(planner, "GET", "/api/people");
-    expect(await viewsRecorded(planner)).toBe(before + 1);
+    await send(confidentialReader, "GET", "/api/people");
+    expect(await viewsRecorded(confidentialReader)).toBe(before + 1);
     const placeholders = await grantedOnly(["people:view", "personal:view"]);
     await setVisibility("positions", "general");
     await send(placeholders, "GET", "/api/planned-hires");

@@ -10,7 +10,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 - **Team Member:** Sees the plan and people's General details.
 - **Product Manager:** Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan, approves or rejects drafts of the plan and releases, and sees people's General details and configuration.
 - **Feature Lead:** Sees the plan and people's General details, edits features and estimates, and proposes feature teams.
-- **Project Manager:** Edits the plan and allocations, sees people with their Personal details and the hiring plan, and approves or rejects drafts of the data the role sees, including feature teams.
+- **Project Manager:** Edits the plan, sees people with their Personal details and the hiring plan, and approves or rejects drafts of the data the role sees, including allocations and feature teams.
 - **Engineering Manager:** Edits the plan and allocations, sees people, with everyone's Personal details, the hiring plan, and configuration, and proposes feature teams.
 - **Engineering Director:** Edits and approves the plan, features, allocations, people, feature teams, the hiring plan, and configuration, sees all Personal and Confidential data and moves data between classes, and sees accounts, roles, settings, and the access history without changing them.
 - **Workforce Administrator:** Sees the plan, maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Personal and Confidential data and moves data between classes. Held by Engineering Operations Managers.
@@ -23,7 +23,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Plan: projects, proposals, milestones, and products and customers (**proposal**) | View | Edit | View | Edit | Edit | Edit | View | View | None |
 | Features and releases: features and their estimates, with Edit Features apart from Edit Plan, decided by the owner on 2026-11-07, and releases and the cycles they include, one area since the owner's 2026-11-11 permissions | View | Edit | Edit | Edit | Edit | Edit | View | View | None |
-| Allocations | View | View | None | Edit | Edit | Edit | View | View | None |
+| Allocations | View | View | None | View | Edit | Edit | View | View | None |
 | People, teams, reporting lines, and the org chart (General), with Edit also choosing the colour each team is drawn in on the org chart, for every team until accounts are linked to people; Team Members and Product Managers see people since the org chart became part of People, decided by the owner on 2026-11-11 | View | View | View | View | View | Edit | Edit | View | None |
 | Feature teams (General), changed as drafts: Edit adds, renames, and removes teams, changes their members and leads, from the days [Where feature teams are kept](decisions.md#workforce) allows, and chooses their colours | View | View | Edit | Approve | Edit | Edit and Approve | Edit | View | None |
 | Personal employee details | None | None | None | View | View | Edit | Edit | View | None |

@@ -368,10 +368,10 @@ describe("the change history", () => {
     });
     const [discardedId] = drafted.ids as string[];
     await send("DELETE", `/api/people/${String(discardedId)}/draft`);
-    const planner = (await test.signedIn(generalReader)).cookie;
+    const generalViewer = (await test.signedIn(generalReader)).cookie;
 
     // Then neither is found by a reader who does not see Personal details
-    expect((await search(planner, "Lambda")).entries).toEqual([]);
+    expect((await search(generalViewer, "Lambda")).entries).toEqual([]);
     expect(
       (await search(admin.cookie, "Lambda")).entries.length,
     ).toBeGreaterThan(0);
@@ -392,10 +392,10 @@ describe("the change history", () => {
     });
     const [discardedId] = drafted.ids as string[];
     await send("DELETE", `/api/people/${String(discardedId)}/draft`);
-    const planner = (await test.signedIn(generalReader)).cookie;
+    const generalViewer = (await test.signedIn(generalReader)).cookie;
 
     // Then they are not found by a reader who does not see Personal details
-    expect((await search(planner, "Mu Former")).entries).toEqual([]);
+    expect((await search(generalViewer, "Mu Former")).entries).toEqual([]);
     expect(
       (await search(admin.cookie, "Mu Former")).entries.length,
     ).toBeGreaterThan(0);
@@ -411,8 +411,10 @@ describe("the change history", () => {
     });
     await approve(made.personId);
     await send("DELETE", `/api/people/columns/${made.field.id}`);
-    const planner = await test.signedIn(generalReader);
-    expect(await entryFor(planner.cookie, chosen.changeSetId)).toBeUndefined();
+    const generalViewer = await test.signedIn(generalReader);
+    expect(
+      await entryFor(generalViewer.cookie, chosen.changeSetId),
+    ).toBeUndefined();
     const leader = await test.signedIn("executive");
     expect(
       (await entryFor(leader.cookie, chosen.changeSetId))?.records[0]?.fields,
@@ -438,21 +440,26 @@ describe("the change history", () => {
       employeeId: "E-Gamma-2",
       values: { [made.field.id]: [made.south.id] },
     });
-    const planner = await test.signedIn(generalReader);
+    const generalViewer = await test.signedIn(generalReader);
     const manager = await test.signedIn("engineering-manager");
     const project = await test.signedIn("product-manager");
 
-    expect(await entryFor(planner.cookie, general.changeSetId)).toBeDefined();
-    // Only Personal changes: the change set is left out altogether.
-    expect(await entryFor(planner.cookie, dates.changeSetId)).toBeUndefined();
     expect(
-      (await entryFor(planner.cookie, both.changeSetId))?.records[0]?.fields,
+      await entryFor(generalViewer.cookie, general.changeSetId),
+    ).toBeDefined();
+    // Only Personal changes: the change set is left out altogether.
+    expect(
+      await entryFor(generalViewer.cookie, dates.changeSetId),
+    ).toBeUndefined();
+    expect(
+      (await entryFor(generalViewer.cookie, both.changeSetId))?.records[0]
+        ?.fields,
     ).toEqual([
       { field: "employeeId", oldValue: "E-Gamma", newValue: "E-Gamma-2" },
     ]);
     // Lists and columns are configuration, seen only by those who may open its pages.
     expect(
-      (await history(planner.cookie)).entries.flatMap(({ records }) =>
+      (await history(generalViewer.cookie)).entries.flatMap(({ records }) =>
         records.map(({ kind }) => kind),
       ),
     ).not.toContain("list");
@@ -479,12 +486,16 @@ describe("the change history", () => {
     const chosen = await send("PATCH", `/api/people/${made.personId}`, {
       values: { [made.field.id]: [made.south.id] },
     });
-    const planner = await test.signedIn(generalReader);
-    expect(await entryFor(planner.cookie, chosen.changeSetId)).toBeDefined();
+    const generalViewer = await test.signedIn(generalReader);
+    expect(
+      await entryFor(generalViewer.cookie, chosen.changeSetId),
+    ).toBeDefined();
     await send("PUT", `/api/lists/${made.list.id}/class`, {
       dataClass: "confidential",
     });
-    expect(await entryFor(planner.cookie, chosen.changeSetId)).toBeUndefined();
+    expect(
+      await entryFor(generalViewer.cookie, chosen.changeSetId),
+    ).toBeUndefined();
     const leader = await test.signedIn("executive");
     expect(await entryFor(leader.cookie, chosen.changeSetId)).toBeDefined();
   });
@@ -505,8 +516,8 @@ describe("the change history", () => {
     expect(
       (await entryFor(manager.cookie, changeSetId))?.records[0],
     ).toMatchObject({ kind: "saved-view", name: "Leaving soon" });
-    const planner = await test.signedIn(generalReader);
-    expect(await entryFor(planner.cookie, changeSetId)).toBeUndefined();
+    const generalViewer = await test.signedIn(generalReader);
+    expect(await entryFor(generalViewer.cookie, changeSetId)).toBeUndefined();
     // Seeing a tier is enough; a reader need not be able to edit it.
     const reader = await test.signedIn("engineering-manager");
     expect(await entryFor(reader.cookie, changeSetId)).toBeDefined();
@@ -555,12 +566,16 @@ describe("the change history", () => {
         },
       )
     ).json<{ changeSetId: string }>();
-    const planner = await test.signedIn(generalReader);
-    expect(await entryFor(planner.cookie, renamed.changeSetId)).toBeDefined();
+    const generalViewer = await test.signedIn(generalReader);
+    expect(
+      await entryFor(generalViewer.cookie, renamed.changeSetId),
+    ).toBeDefined();
     await send("PUT", `/api/lists/${made.list.id}/class`, {
       dataClass: "confidential",
     });
-    expect(await entryFor(planner.cookie, renamed.changeSetId)).toBeUndefined();
+    expect(
+      await entryFor(generalViewer.cookie, renamed.changeSetId),
+    ).toBeUndefined();
     expect(await entryFor(manager.cookie, renamed.changeSetId)).toBeDefined();
     const reader = await test.signedIn("executive");
     expect(await entryFor(reader.cookie, renamed.changeSetId)).toBeDefined();
@@ -781,9 +796,9 @@ describe("the change history", () => {
             eq(accessHistory.action, "personal-viewed"),
           ),
         );
-    const planner = await test.signedIn(generalReader);
-    await history(planner.cookie);
-    expect(await viewed(planner.id)).toHaveLength(0);
+    const generalViewer = await test.signedIn(generalReader);
+    await history(generalViewer.cookie);
+    expect(await viewed(generalViewer.id)).toHaveLength(0);
     const manager = await test.signedIn("engineering-manager");
     await history(manager.cookie);
     await history(manager.cookie);
@@ -898,14 +913,18 @@ describe("the change history", () => {
             eq(accessHistory.action, "personal-viewed"),
           ),
         );
-    const planner = await test.signedIn(generalReader);
-    // The planner's searches work, finding what they may see.
+    const generalViewer = await test.signedIn(generalReader);
+    // The general viewer's searches work, finding what they may see.
     expect(
-      (await search(planner.cookie, "Omicron Person")).entries.length,
+      (await search(generalViewer.cookie, "Omicron Person")).entries.length,
     ).toBeGreaterThan(0);
-    expect((await search(planner.cookie, "2033-03-03")).entries).toEqual([]);
-    expect((await search(planner.cookie, "Omicron South")).entries).toEqual([]);
-    expect(await viewed(planner.id)).toHaveLength(0);
+    expect((await search(generalViewer.cookie, "2033-03-03")).entries).toEqual(
+      [],
+    );
+    expect(
+      (await search(generalViewer.cookie, "Omicron South")).entries,
+    ).toEqual([]);
+    expect(await viewed(generalViewer.id)).toHaveLength(0);
 
     await send("POST", "/api/people", {
       people: [
@@ -945,10 +964,10 @@ describe("the change history", () => {
     await send("PUT", `/api/lists/${made.list.id}/class`, {
       dataClass: "confidential",
     });
-    const planner = await test.signedIn(generalReader);
-    const { entries } = await history(planner.cookie);
+    const generalViewer = await test.signedIn(generalReader);
+    const { entries } = await history(generalViewer.cookie);
     expect(entries.length).toBeGreaterThan(0);
-    // Only adding the person, whose General details the planner sees, and none of the hidden changes.
+    // Only adding the person, whose General details the general viewer sees, and none of the hidden changes.
     expect(
       entries.filter(({ records }) =>
         records.some(({ name }) => name === "Pi Person"),

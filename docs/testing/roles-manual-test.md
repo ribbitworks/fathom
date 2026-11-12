@@ -94,7 +94,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** A dialog titled **Edit Project Manager** shows **Name**, **What it is for**, and the grid, with these boxes ticked:
     - **Plan:** **View**, greyed, **Approve** and **Edit**
     - **Features and releases:** **View**, greyed, **Approve** and **Edit**
-    - **Allocations:** **View**, greyed, **Approve** and **Edit**
+    - **Allocations:** **View** and **Approve**
     - **People:** **View** and **Approve**
     - **Feature teams:** **View** and **Approve**
     - **Hiring plan:** **View** and **Approve**
@@ -107,7 +107,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The summary reads:
     - **Pages its holders see:** Overview, Projects, Features, Releases, People, Org chart, Feature assignments, Drafts, Capacity, Lists and Change history.
     - **Can:** a line for each ticked box, such as seeing the plan, approving drafts of features and releases, and seeing feature teams.
-    - **Cannot** includes **Cannot change people.** and **Cannot change feature teams.**
+    - **Cannot** includes **Cannot change allocations.** and **Cannot change feature teams.**
     - **Cannot** also includes, in its tier colour, **Confidential data is hidden wherever it appears.**
     - **Cannot** does not include **Personal details are hidden wherever they appear, and people who haven't started yet aren't listed.**
     - **Cannot** does not include **The People page does not appear.**

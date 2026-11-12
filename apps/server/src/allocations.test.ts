@@ -41,10 +41,10 @@ let test: TestApp;
 let today: string;
 let current: string;
 type Account = { id: string; cookie: string };
-// Allocations need Personal details, so each role here sees them: a reader of General details given
-// them edits allocations, as do an Engineering Manager and a Project Manager, the Director and the
-// Project Manager approve them, and a Team Member given them sees them.
-let planner: Account;
+// Allocations need Personal details, so every account here sees them. The allocator and the
+// Engineering Manager edit allocations, the Director and the Project Manager approve them, and the
+// viewer only sees them.
+let allocator: Account;
 let manager: Account;
 let director: Account;
 let projectManager: Account;
@@ -67,7 +67,7 @@ beforeAll(async () => {
   test = await startTestApp();
   today = await readToday(test.connection);
   current = monthOf(today);
-  planner = await test.signedIn([...generalReader, "personal:view"]);
+  allocator = await test.signedIn([...generalReader, "personal:view"]);
   manager = await test.signedIn("engineering-manager");
   director = await test.signedIn("engineering-director");
   projectManager = await test.signedIn("project-manager");
@@ -186,17 +186,17 @@ type Change = {
   to?: string;
 };
 
-const change = (body: Change, who = planner, publish = true) =>
+const change = (body: Change, who = allocator, publish = true) =>
   test.request(who.cookie, "POST", "/api/allocations/changes", body, {
     publish,
   });
 
-async function changed(body: Change, who = planner): Promise<void> {
+async function changed(body: Change, who = allocator): Promise<void> {
   const response = await change(body, who);
   expect(response.statusCode, response.body).toBe(200);
 }
 
-async function read(who = planner): Promise<Allocations> {
+async function read(who = allocator): Promise<Allocations> {
   const response = await test.request(who.cookie, "GET", "/api/allocations");
   expect(response.statusCode).toBe(200);
   return response.json<Allocations>();
@@ -205,7 +205,7 @@ async function read(who = planner): Promise<Allocations> {
 async function allocationOf(
   assignee: { personId?: string; plannedHireId?: string },
   featureId: string,
-  who = planner,
+  who = allocator,
 ): Promise<Allocation | undefined> {
   return (await read(who)).allocations.find(
     (allocation) =>
@@ -805,7 +805,7 @@ describe("approving", () => {
     await changed({ personId, featureId, percentage: 50, from: month(0) });
     const id = String((await allocationOf({ personId }, featureId))?.id);
     const response = await test.request(
-      planner.cookie,
+      allocator.cookie,
       "DELETE",
       `/api/records/allocation/${id}/draft`,
     );

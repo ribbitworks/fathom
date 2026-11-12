@@ -2118,12 +2118,12 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
     - **Fictional Reader** is in the list with 0 accounts.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Accounts**.
-  - **Expected:** The **Accounts** page opens.
+- [ ] **Step 5.** Select **Accounts** in the left-hand menu.
+  - **Expected:** The **Accounts** page opens, with a **Fictional Newcomer** row.
   - **Notes:**
 
 - [ ] **Step 6.** Select **Edit** in the **Fictional Newcomer** row.
-  - **Expected:** A dialog titled **Edit Fictional Newcomer** opens.
+  - **Expected:** A dialog titled **Edit Fictional Newcomer** opens, with only **Team Member** ticked.
   - **Notes:**
 
 - [ ] **Step 7.** Tick **Fictional Reader**.

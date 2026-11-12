@@ -492,11 +492,11 @@ describe("the org chart", () => {
       unpublished: false,
     });
     expect(await personalViews(executive.id)).toHaveLength(1);
-    const planner = await test.signedIn(generalReader);
-    const shown = (await chart(planner.cookie)).get(report);
+    const generalViewer = await test.signedIn(generalReader);
+    const shown = (await chart(generalViewer.cookie)).get(report);
     expect(shown?.managerId).toBe(first);
     expect(shown).not.toHaveProperty("draft");
-    expect(await personalViews(planner.id)).toHaveLength(0);
+    expect(await personalViews(generalViewer.id)).toHaveLength(0);
   });
 
   it("shows a drafted team name, or its removal, to everyone who sees people", async () => {
@@ -505,8 +505,8 @@ describe("the org chart", () => {
     const renamed = unique("Fictional Team");
     await changed(named, { teamName: null });
     await changed(unnamed, { teamName: renamed });
-    const planner = await test.signedIn(generalReader);
-    const shown = await chart(planner.cookie);
+    const generalViewer = await test.signedIn(generalReader);
+    const shown = await chart(generalViewer.cookie);
     expect(shown.get(named)?.draft).toEqual({
       teamName: null,
       state: "waiting",
@@ -708,8 +708,8 @@ describe("the org chart", () => {
         .where(eq(lists.builtIn, "positions"));
     await setVisibility("personal");
     try {
-      const planner = await test.signedIn(generalReader);
-      const shown = await drafted(planner.cookie);
+      const generalViewer = await test.signedIn(generalReader);
+      const shown = await drafted(generalViewer.cookie);
       expect(shown.get(changing)?.position).toBeNull();
       expect(shown.get(addedId)?.position).toBeNull();
     } finally {
@@ -744,11 +744,11 @@ describe("the org chart", () => {
     const forExecutive = await drafted(executive.cookie);
     expect(forExecutive.get(report)?.managerId).toBe(second);
     expect(forExecutive.has(ending)).toBe(false);
-    const planner = await test.signedIn(generalReader);
-    const forPlanner = await drafted(planner.cookie);
+    const generalViewer = await test.signedIn(generalReader);
+    const forPlanner = await drafted(generalViewer.cookie);
     expect(forPlanner.get(report)?.managerId).toBe(first);
     expect(forPlanner.has(ending)).toBe(true);
-    expect(await personalViews(planner.id)).toHaveLength(0);
+    expect(await personalViews(generalViewer.id)).toHaveLength(0);
   });
 
   it("shows managers who have left, up the chain, to those who see Personal details, and records it", async () => {
@@ -768,15 +768,15 @@ describe("the org chart", () => {
 
   it("draws the whole chain for anyone else, without saying who has left", async () => {
     const { top, middle, report } = await leftChain();
-    const planner = await test.signedIn(generalReader);
-    const shown = await chart(planner.cookie);
+    const generalViewer = await test.signedIn(generalReader);
+    const shown = await chart(generalViewer.cookie);
     expect(shown.get(report)?.managerId).toBe(middle);
     expect(shown.get(middle)?.managerId).toBe(top);
     expect(shown.get(middle)).not.toHaveProperty("left");
     expect(shown.get(middle)?.employeeId).toBeNull();
     expect(shown.get(report)?.employeeId).not.toBeNull();
     expect(shown.has(top)).toBe(true);
-    expect(await personalViews(planner.id)).toHaveLength(0);
+    expect(await personalViews(generalViewer.id)).toHaveLength(0);
   });
 
   it("leaves out a manager who has left once nobody current reports to them", async () => {
@@ -1068,11 +1068,13 @@ describe("planned hires on the chart", () => {
       /^Fictional Renamed Hire/,
     );
     expect(asDrafted.has(removed)).toBe(false);
-    const planner = await test.signedIn(generalReader);
-    expect((await chart(planner.cookie)).get(moving)?.draft).toBeUndefined();
-    const plannerDrafted = await drafted(planner.cookie);
-    expect(plannerDrafted.get(moving)?.managerId).toBe(first);
-    expect(plannerDrafted.has(added)).toBe(false);
+    const generalViewer = await test.signedIn(generalReader);
+    expect(
+      (await chart(generalViewer.cookie)).get(moving)?.draft,
+    ).toBeUndefined();
+    const viewerDrafted = await drafted(generalViewer.cookie);
+    expect(viewerDrafted.get(moving)?.managerId).toBe(first);
+    expect(viewerDrafted.has(added)).toBe(false);
   });
 
   it("shows a hire's drafted position beside only to those who see the Positions list's tier", async () => {

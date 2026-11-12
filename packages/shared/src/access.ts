@@ -469,13 +469,13 @@ export const startingRoles: Record<
   "project-manager": {
     name: "Project Manager",
     description:
-      "Edits the plan and allocations, sees people with their Personal details and the hiring plan, and approves or rejects drafts of the data the role sees, including feature teams.",
+      "Edits the plan, sees people with their Personal details and the hiring plan, and approves or rejects drafts of the data the role sees, including allocations and feature teams.",
     permissions: [
       "plan:edit",
       "plan:approve",
       "features:edit",
       "features:approve",
-      "allocations:edit",
+      "allocations:view",
       "allocations:approve",
       "people:view",
       "people:approve",

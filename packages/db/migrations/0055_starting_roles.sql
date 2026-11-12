@@ -1,11 +1,11 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 -- Gives the starting roles their permissions under the 29 permissions: Feature Leads no longer edit
--- allocations; Project Managers edit allocations and see Personal data; Product Managers and
--- Engineering Managers see configuration; and the Resource Planner is no longer a starting role. A
--- Resource Planner role that an account holds, that the change history names, or that a session is
--- acting as, is kept as a role the organization made; otherwise it goes. The starting roles'
--- descriptions follow, where nobody has changed them.
+-- allocations; Project Managers see Personal data; Product Managers and Engineering Managers see
+-- configuration; and the Resource Planner is no longer a starting role. A Resource Planner role that
+-- an account holds, that the change history names, or that a session is acting as, is kept as a role
+-- the organization made; otherwise it goes. The starting roles' descriptions follow, where nobody
+-- has changed them.
 
 DELETE FROM "fathom"."role_permissions"
 WHERE "permission" = 'allocations:edit'
@@ -16,13 +16,8 @@ SELECT "id", 'configuration:view' FROM "fathom"."roles"
 WHERE "key" IN ('product-manager', 'engineering-manager')
 ON CONFLICT DO NOTHING;
 --> statement-breakpoint
-DELETE FROM "fathom"."role_permissions"
-WHERE "permission" = 'allocations:view'
-  AND "role_id" = (SELECT "id" FROM "fathom"."roles" WHERE "key" = 'project-manager');
---> statement-breakpoint
 INSERT INTO "fathom"."role_permissions" ("role_id", "permission")
-SELECT "id", "permission"
-FROM "fathom"."roles", (VALUES ('allocations:edit'), ('personal:view')) AS granted ("permission")
+SELECT "id", 'personal:view' FROM "fathom"."roles"
 WHERE "key" = 'project-manager'
 ON CONFLICT DO NOTHING;
 --> statement-breakpoint
@@ -52,7 +47,7 @@ WHERE "key" = 'feature-lead'
   AND "description" = 'Sees the plan and people''s General details, edits features, estimates, and allocations, and proposes feature teams.';
 --> statement-breakpoint
 UPDATE "fathom"."roles"
-SET "description" = 'Edits the plan and allocations, sees people with their Personal details and the hiring plan, and approves or rejects drafts of the data the role sees, including feature teams.'
+SET "description" = 'Edits the plan, sees people with their Personal details and the hiring plan, and approves or rejects drafts of the data the role sees, including allocations and feature teams.'
 WHERE "key" = 'project-manager'
   AND "description" = 'Edits the plan, sees people and the hiring plan, and approves or rejects drafts of the data the role sees, including feature teams.';
 --> statement-breakpoint

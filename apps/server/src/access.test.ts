@@ -72,7 +72,6 @@ const expected: [Role, Permission[]][] = [
       "features:edit",
       "features:approve",
       "allocations:view",
-      "allocations:edit",
       "allocations:approve",
       "people:view",
       "people:approve",
