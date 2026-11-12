@@ -118,20 +118,20 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 | Red line | Today |
 
 - **The language:** Each mark in the table above means one thing on every timeline. Drafts are drawn with the draft marks, as [Drafts](#drafts) sets out, and a dashed edge never means a draft.
-  - **Drawn by:** `apps/web/src/releases-timeline.tsx`, for today's line and the release diamonds; the rest is not built yet.
+  - **Drawn by:** `Tracks` in `apps/web/src/timeline-view.tsx`, for today's line, and `releaseLayerRows` in `apps/web/src/release-layer.tsx`, for the release diamonds; the rest is not built yet.
   - **Example:** today's red line on the Releases timeline.
-- **The shared timeline:** One component draws every view with time across it: its axis of two rows of dates, its zoom, kept in the browser, today's line, scrolling that keeps today a sixth of the way across, and release streams' cycles and releases as a layer a view may show. Each view gives it its rows. It is taken out of the Releases timeline with no visible change, so its axis, zoom and scrolling work as the [Releases timeline](visual-design.md#components) sets out.
-  - **Drawn by:** `apps/web/src/releases-timeline.tsx` and `apps/web/src/timeline.ts`, for Releases alone; not shared yet.
+- **The shared timeline:** One component draws every view with time across it: its axis of two rows of dates, which stays in view while its rows scroll, its zoom, kept in the browser for each view, today's line, scrolling that keeps today a sixth of the way across, the strip, and release streams' cycles and releases as a layer a view may show, first. Each view gives it its rows and the days they cover, and the timeline covers the whole months holding them and the layer's cycles. Its axis, zoom and scrolling work as the [Releases timeline](visual-design.md#components) sets out.
+  - **Drawn by:** `TimelineView` in `apps/web/src/timeline-view.tsx`, with where everything falls from `apps/web/src/timeline.ts`.
   - **Example:** the timeline on the Releases page.
 - **The release layer:** Shows every stream's releases by default, or one stream's, or none, chosen in a Releases picker. Every release has its diamond, drawn under its bar so it never sits on the next release: at the bar's end, or, when its Ships on day was moved from its last cycle's end, at that day, joined to the bar's end by a dashed line. A release's bar names the release only, with no counts or warnings about its features, which are listed in its panel.
-  - **Drawn by:** not built yet; the Releases timeline draws its diamond on the release's own lane today.
+  - **Drawn by:** `releaseLayerRows` in `apps/web/src/release-layer.tsx`, which shows every stream's releases and draws a moved diamond on the release's own lane; the picker and the diamonds under the bars are not built yet.
   - **Example:** on Releases, set a release's Ships on day after its last cycle's end.
 - **Feature rows:** A feature's row label shows its ID and name on the bar's line, with the [Size mark](#values) under them, so the name stays in view when the bar is scrolled away. Every feature row keeps room under its bar for day marks, such as Needed by, and labels line up with their bars.
   - **Drawn by:** not built yet.
   - **Example:** none until the Plan is built.
-- **The strip:** Above every timeline, and above the Features Board, one strip shows the quarters, on a timeline, or the cycles, on the board, across the whole range: those in view tinted, the current one underlined, with ‹ ›, and Today. On the board it steps by cycle; on a timeline a click scrolls there, and scrolling moves the tint. The Org chart's date row is to become the same strip.
-  - **Drawn by:** not built yet; the Org chart's date row is `apps/web/src/org-chart-date.tsx`.
-  - **Example:** none until the strip is built.
+- **The strip:** Above every timeline, and above the Features Board, one strip shows the quarters, on a timeline, or the cycles, on the board, across the whole range, each as wide as its share: those in view tinted, the current one underlined, with ‹ before it, and › and Today after it. On the board it steps by cycle; on a timeline a click, or ‹ or ›, scrolls a quarter's start a sixth of the way across, where Today puts today, so the end of the quarter before stays in sight, decided by the owner on 2026-11-11, and scrolling moves the tint. The periods are one stop for Tab, at the one last focused while focus stays in the strip, or else the first in view; the arrow keys, Home and End move between them, and Enter or Space chooses one. Those in view are named as in view for assistive technology. The Org chart's date row is to become the same strip.
+  - **Drawn by:** `TimelineStrip` in `apps/web/src/timeline-strip.tsx`, with a timeline's quarters from `QuarterStrip` in `apps/web/src/timeline-view.tsx`; not yet on the board or the Org chart, whose date row is `apps/web/src/org-chart-date.tsx`.
+  - **Example:** the strip above the Releases timeline.
 - **Month grids:** A grid of months that is edited, such as Feature assignments and the allocations grid, stays an editable grid, with the timeline's month names, today's mark, and cycle and release lines.
   - **Drawn by:** `apps/web/src/feature-assignments-page.tsx`, with each month's cell in `apps/web/src/team-months.tsx` and `apps/web/src/allocation-months.tsx`; the timeline's month names, today's mark, and the lines are not shared with it yet.
   - **Example:** Feature assignments.
@@ -144,6 +144,9 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **Following a link:** A record named in a details panel is a link that opens that record's details, on its own page or tab, and the browser's back button goes back. A link from one page to a record on another, such as Show in People on the Org chart, opens that page with the record's details open, not only a search for it. A project or proposal named in a feature's details on Features opens on Projects in the same way, and Back returns to Features as it was. Decided by the owner on 2026-11-11.
   - **Drawn by:** `RecordLink` in `apps/web/src/record-details.tsx`.
   - **Example:** a customer in Offline Sync's details opens Projects' Customers tab with that customer's details.
+- **Opening from a table:** A table's row opens its own record's details from the show-details arrow, on every table; another record named in a cell, such as a stream's releases or a project's features, is a link that opens that record's details on its own page, as Following a link sets out. Decided by the owner on 2026-11-11.
+  - **Drawn by:** `ShowDetailsButton` in `apps/web/src/show-details-button.tsx`; links in cells are not built yet, and Releases opens a stream from its name, as [Issues](../issues.md#releases) records.
+  - **Example:** the arrow at the start of any row on People.
 - **Several records in a cell:** A cell naming several records lists them in one line, cut short where they don't fit, with every name in its tooltip, one to a line; a details panel lists them one to a line.
   - **Drawn by:** the cell's kind in `apps/web/src/cell-kinds.tsx`, with the tip from `TableTips` in `apps/web/src/table-tips.tsx`, and `RecordLinkList` in `apps/web/src/record-details.tsx` in a panel.
   - **Example:** Crane Control's Features cell.

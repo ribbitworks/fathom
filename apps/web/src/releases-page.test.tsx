@@ -16,7 +16,7 @@ import {
 import { userEvent } from "@testing-library/user-event";
 import { focusManager } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ReleasesTimeline } from "./releases-timeline.tsx";
+import { TimelineView } from "./timeline-view.tsx";
 import {
   bodyOf,
   featureDraft,
@@ -1524,8 +1524,7 @@ describe("the timeline", () => {
     );
 
   const view = (timeline: HTMLElement) =>
-    within(timeline).getByRole("list", { name: "Release streams" })
-      .parentElement?.parentElement as HTMLElement;
+    within(timeline).getByRole("group", { name: "Timeline" });
 
   const widths = (timeline: HTMLElement) =>
     items(timeline, "Cycles of Fictional Majors").map(
@@ -1737,7 +1736,12 @@ describe("the timeline", () => {
     vi.setSystemTime(new Date("2027-06-15T12:00:00Z"));
     const shown = (streams: ReleaseStream[]) => (
       <MantineProvider theme={testTheme}>
-        <ReleasesTimeline streams={streams} today="2027-06-15" />
+        <TimelineView
+          title="Timeline"
+          zoomKey={zoomKey}
+          releaseStreams={streams}
+          today="2027-06-15"
+        />
       </MantineProvider>
     );
     const { rerender } = render(shown([fictionalStream()]));

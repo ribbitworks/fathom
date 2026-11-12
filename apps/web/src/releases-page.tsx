@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Releases page: every release stream in one table, with how its cycles are made now and its
-// releases, above a timeline of them all, and the selected stream in a side panel at its own
+// The Releases page: a timeline of every release stream, above a table of them all, with how its
+// cycles are made now and its releases, and the selected stream in a side panel at its own
 // address, as the Lists page does with lists. The panel holds the stream's changes of cycles, its
 // releases, and its cycles, worked out at least two years ahead, each with its share of the months
 // it spans and a menu to change its length. Those who edit planning configuration add, rename,
@@ -82,8 +82,7 @@ import {
   setStreamRetired,
 } from "./releases.ts";
 import { Swatch } from "./colour-swatch.tsx";
-import { ReleasesTimeline } from "./releases-timeline.tsx";
-import { sidePanelScroll, useNarrow, WithSidePanel } from "./side-panel.tsx";
+import { useNarrow, WithSidePanel } from "./side-panel.tsx";
 import { retiredLive } from "./lists.ts";
 import { undoDrafts } from "./record-grid.tsx";
 import {
@@ -107,6 +106,7 @@ import {
 } from "./summary-row.tsx";
 import { DraftMenu } from "./table-controls.tsx";
 import { unpublishedQuery } from "./unpublished.tsx";
+import { TimelineView } from "./timeline-view.tsx";
 import { today } from "./today.ts";
 import { planNodes, projectPlanQuery } from "./projects.ts";
 
@@ -121,6 +121,7 @@ const panelId = "release-stream-panel";
 const panelTitleId = "release-stream-panel-title";
 const linkId = (stream: { id: string }) => `release-stream-link-${stream.id}`;
 const noteId = "release-note";
+const timelineZoomKey = "fathom-releases-timeline-zoom";
 const noteButtonId = (release: { id: string }) =>
   `release-note-button-${release.id}`;
 const menuId = (release: { id: string }) => `release-menu-${release.id}`;
@@ -905,7 +906,7 @@ function StreamTable({
     );
   };
   return (
-    <Paper withBorder className={classes.tablePanel}>
+    <Paper withBorder className={classes.streamsPanel}>
       <div
         role="table"
         aria-label="Release streams"
@@ -1227,12 +1228,18 @@ export function ReleasesPage({
             </Text>
           ) : (
             // While a note is being changed, the streams wait, as a table waits for a note's panel.
-            <Stack gap="lg" className={sidePanelScroll} inert={writing}>
+            <div className={classes.releasesContent} inert={writing}>
               {onShow && (
-                <Group gap="sm">
+                <Group gap="sm" className={classes.releasesBar}>
                   <DraftMenu show={show} onShow={onShow} />
                 </Group>
               )}
+              <TimelineView
+                title="Timeline"
+                zoomKey={timelineZoomKey}
+                releaseStreams={streams}
+                today={today()}
+              />
               <StreamTable
                 streams={streams}
                 actions={actions}
@@ -1240,8 +1247,7 @@ export function ReleasesPage({
                 originalOf={(stream) => originalOf(allById, stream)}
                 onOpen={openStream}
               />
-              <ReleasesTimeline streams={streams} today={today()} />
-            </Stack>
+            </div>
           )}
         </WithSidePanel>
       </DraftView>

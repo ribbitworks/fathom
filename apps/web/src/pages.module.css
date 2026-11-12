@@ -1113,11 +1113,27 @@ th.liveColumn {
   text-decoration: line-through;
 }
 
-/* The Releases page's timeline: a sticky column of stream names, as wide as the timeline's style
-   sets, beside tracks that scroll sideways, a day being the same width everywhere at each zoom,
-   with today's line under the names. */
+/* The shared timeline: a sticky column of row labels, as wide as the timeline's style sets, beside
+   tracks that scroll sideways, a day being the same width everywhere at each zoom, under an axis
+   that stays in view, with today's line under the labels. */
+/* The timeline takes the height its rows need, and, given less, scrolls its rows under its axis. */
+.timelineSection {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-height: 12rem;
+}
+
+.timelinePanel {
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .timelineScroll {
-  overflow-x: auto;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 .timeline {
@@ -1131,7 +1147,15 @@ th.liveColumn {
 }
 
 .timelineHead {
+  position: sticky;
+  top: 0;
+  z-index: 3;
   border-bottom: 1px solid var(--mantine-color-default-border);
+  background: var(--mantine-color-body);
+}
+
+.timelineBody {
+  position: relative;
 }
 
 .timelineLabel {
@@ -1190,6 +1214,10 @@ th.liveColumn {
 
 .timelineRow:not(:last-child) {
   border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.timelineRows + .timelineRows {
+  border-top: 1px solid var(--mantine-color-default-border);
 }
 
 .timelineRow .timelineTrack {
@@ -1281,6 +1309,91 @@ th.liveColumn {
 
   /* Short enough to stay inside its row, clear of the line under it. */
   line-height: 16px;
+}
+
+/* The Releases page: the timeline, then the streams table, each scrolling on its own within the
+   window, the table's header staying in view. */
+.releasesContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-lg);
+  max-height: 100%;
+  min-height: 0;
+}
+
+.releasesBar {
+  flex: none;
+}
+
+.streamsPanel {
+  flex: 0 1 auto;
+  min-height: 8rem;
+  overflow: auto;
+}
+
+.streamsPanel .listHead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--mantine-color-body);
+}
+
+/* The strip above a timeline: its periods side by side, each as wide as its share, those in view
+   tinted with the accent and the current one underlined. A period too narrow for its label shows
+   the shorter one, or none. */
+.strip {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-sm);
+}
+
+.stripPeriod {
+  flex: var(--strip-weight) 1 0;
+  min-width: 0;
+  height: 28px;
+  container-type: inline-size;
+  overflow: hidden;
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-xs);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.stripPeriod + .stripPeriod {
+  border-left: 1px solid var(--mantine-color-default-border);
+}
+
+.stripPeriod[data-in-view] {
+  background: var(--mantine-primary-color-light);
+  color: var(--mantine-color-text);
+}
+
+.stripPeriod[aria-current] {
+  box-shadow: inset 0 -2px 0 var(--mantine-primary-color-filled);
+  font-weight: 600;
+}
+
+.stripShort {
+  display: none;
+}
+
+@container (max-width: 56px) {
+  .stripLabel {
+    display: none;
+  }
+
+  .stripShort {
+    display: inline;
+  }
+}
+
+@container (max-width: 20px) {
+  .stripShort {
+    display: none;
+  }
 }
 
 /* A password Fathom made, shown as text that cannot be changed, though it can be selected. */

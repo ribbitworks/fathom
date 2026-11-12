@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Where release streams' cycles and releases fall on the Releases page's timeline, by days from
-// its first day, and how its axis is cut and named at each scale.
+// Where things fall on a timeline, by days from its first day: the whole months it covers, today,
+// release streams' cycles and releases, how its axis is cut and named at each scale, and its
+// quarters.
 
 import {
   addDays,
@@ -9,6 +10,8 @@ import {
   monthOf,
   type ReleaseStream,
 } from "@fathom/shared";
+import type { ReactNode } from "react";
+import { retiredLive } from "./lists.ts";
 import {
   daysBetween,
   lastCycleEnd,
@@ -22,51 +25,90 @@ interface Span {
   days: number;
 }
 
-export interface TimelineLayout {
+// The first and last days a timeline must show.
+export interface DayRange {
+  first: string;
+  last: string;
+}
+
+// The range from the first day to the last, or undefined without both.
+export const dayRange = (
+  first: string | undefined,
+  last: string | undefined,
+): DayRange | undefined =>
+  first === undefined || last === undefined ? undefined : { first, last };
+
+export interface TimelineFrame {
   // The timeline's first day, the first of a month, and how many days it covers.
   from: string;
   days: number;
-  rows: {
-    stream: ReleaseStream;
-    cycles: (Span & ReleaseStream["cycles"][number])[];
-    releases: (Span & {
-      release: ReleaseStream["releases"][number];
-      cycleWords: string;
-      shipsOn: string;
-      // Days from the timeline's first day to the end of the day the release ships.
-      shipsAt: number;
-    })[];
-  }[];
   // Days from the timeline's first day to the start of today, when today is on the timeline.
   today: number | undefined;
 }
 
 const monthStart = (day: string) => `${monthOf(day)}-01`;
 
-// Where everything falls on a timeline of whole months, from the month the first cycle starts in
-// to the month the last ends in, or undefined when no stream has cycles. Retired streams, and
-// releases drafted to be removed, are left out.
-export function timelineLayout(
-  streams: readonly ReleaseStream[],
+const earliest = (days: readonly string[]) =>
+  days.reduce((a, b) => (a < b ? a : b));
+const latest = (days: readonly string[]) =>
+  days.reduce((a, b) => (a > b ? a : b));
+
+// The whole months that hold every range given, from the month the first starts in to the month the
+// last ends in, or undefined when none is given.
+export function timelineFrame(
+  ranges: readonly DayRange[],
   today: string,
-): TimelineLayout | undefined {
-  const shown = streams.filter(
-    ({ retired, cycles }) => !retired && cycles.length > 0,
-  );
-  if (shown.length === 0) return undefined;
-  const cycles = shown.flatMap((stream) => stream.cycles);
-  const from = monthStart(
-    cycles.map(({ startsOn }) => startsOn).reduce((a, b) => (a < b ? a : b)),
-  );
-  const to = addMonths(
-    monthStart(
-      cycles.map(({ endsOn }) => endsOn).reduce((a, b) => (a > b ? a : b)),
-    ),
-    1,
-  );
+): TimelineFrame | undefined {
+  if (ranges.length === 0) return undefined;
+  const from = monthStart(earliest(ranges.map(({ first }) => first)));
+  const to = addMonths(monthStart(latest(ranges.map(({ last }) => last))), 1);
+  const days = daysBetween(from, to);
+  const todayAt = daysBetween(from, today);
+  return {
+    from,
+    days,
+    today: todayAt >= 0 && todayAt < days ? todayAt : undefined,
+  };
+}
+
+export interface ReleaseLayerRow {
+  stream: ReleaseStream;
+  cycles: (Span & ReleaseStream["cycles"][number])[];
+  releases: (Span & {
+    release: ReleaseStream["releases"][number];
+    cycleWords: string;
+    shipsOn: string;
+    // Days from the timeline's first day to the end of the day the release ships.
+    shipsAt: number;
+  })[];
+}
+
+// The streams a timeline's release layer shows: those with cycles that are not retired as they are
+// live, since a stream drafted to be retired or restored stays where it is until approved.
+const layerStreams = (streams: readonly ReleaseStream[]) =>
+  streams.filter((stream) => !retiredLive(stream) && stream.cycles.length > 0);
+
+// From the first day of the release layer's first cycle to the last of its last, or undefined
+// when it shows no stream.
+export function releaseLayerRange(
+  streams: readonly ReleaseStream[],
+): DayRange | undefined {
+  const cycles = layerStreams(streams).flatMap((stream) => stream.cycles);
+  if (cycles.length === 0) return undefined;
+  return {
+    first: earliest(cycles.map(({ startsOn }) => startsOn)),
+    last: latest(cycles.map(({ endsOn }) => endsOn)),
+  };
+}
+
+// Where each stream's cycles and releases fall on a timeline starting on the day given. Streams
+// retired as they are live, and releases drafted to be removed, are left out.
+export function releaseLayer(
+  streams: readonly ReleaseStream[],
+  from: string,
+): ReleaseLayerRow[] {
   const at = (day: string) => daysBetween(from, day);
-  const days = at(to);
-  const rows = shown.map((stream) => ({
+  return layerStreams(streams).map((stream) => ({
     stream,
     cycles: stream.cycles.map((cycle) => ({
       ...cycle,
@@ -95,13 +137,6 @@ export function timelineLayout(
       ];
     }),
   }));
-  const todayAt = at(today);
-  return {
-    from,
-    days,
-    rows,
-    today: todayAt >= 0 && todayAt < days ? todayAt : undefined,
-  };
 }
 
 // How finely the axis is cut, named by its ticks, each under the next larger period: half years
@@ -131,7 +166,7 @@ export const axisScale = (dayWidth: number): AxisScale =>
       dayWidth * days >= labelWidth(label, labelPadding.axis),
   )?.[0] ?? "halves";
 
-interface Tick extends Span {
+export interface Tick extends Span {
   day: string;
   label: string;
   // A shorter label, for when the label does not fit.
@@ -178,7 +213,7 @@ const periodWords =
 
 // The timeline cut into periods, each ending where the next begins, labelled by the day it starts.
 function ticks(
-  { from, days }: TimelineLayout,
+  { from, days }: TimelineFrame,
   next: (day: string) => string,
   label: (day: string) => string,
 ): Tick[] {
@@ -196,28 +231,43 @@ function ticks(
   return cut;
 }
 
+const quarterOf = (day: string) =>
+  `Q${String(Math.ceil(monthNumber(day) / 3))}`;
+
+// The timeline cut into quarters, such as Q1 2027, or Q1 27 with the year short, each with the
+// quarter alone as its shorter label.
+function quarterTicks(
+  frame: TimelineFrame,
+  shortYear: boolean,
+): (Tick & { short: string })[] {
+  return ticks(frame, nextPeriod(3), (day) => {
+    const year = shortYear ? day.slice(2, 4) : day.slice(0, 4);
+    return `${quarterOf(day)} ${year}`;
+  }).map((tick) => ({ ...tick, short: quarterOf(tick.day) }));
+}
+
+// The quarters across the whole timeline, such as Q1 2027, the first and last cut short by its
+// ends.
+export const timelineQuarters = (
+  frame: TimelineFrame,
+): (Tick & { short: string })[] => quarterTicks(frame, false);
+
 // The timeline's axis at a scale: the periods the view is cut into, under the larger periods they
 // fall in, such as the quarters Q1 27 and Q2 27 under "Jan to Jun 2027". A period cut short by
 // the timeline's start is still named, except a week, named by its Monday.
 export function timelineAxis(
-  layout: TimelineLayout,
+  frame: TimelineFrame,
   scale: AxisScale,
 ): { above: Tick[]; ticks: Tick[] } {
   const cut = (next: (day: string) => string, label: (day: string) => string) =>
-    ticks(layout, next, label);
+    ticks(frame, next, label);
   const months = (withYear: boolean) =>
     cut(
       (day) => addMonths(day, 1),
       (day) =>
         withYear ? `${monthWords(day)} ${day.slice(0, 4)}` : monthWords(day),
     );
-  const quarterOf = (day: string) =>
-    `Q${String(Math.ceil(monthNumber(day) / 3))}`;
-  const quarters = (shortYear: boolean) =>
-    cut(nextPeriod(3), (day) => {
-      const year = shortYear ? day.slice(2, 4) : day.slice(0, 4);
-      return `${quarterOf(day)} ${year}`;
-    }).map((tick) => ({ ...tick, short: quarterOf(tick.day) }));
+  const quarters = (shortYear: boolean) => quarterTicks(frame, shortYear);
   if (scale === "halves") {
     // Half years named with the year's last two digits, or by their first months when that is
     // too long.
@@ -256,4 +306,36 @@ export function timelineAxis(
       (day) => `${weekdayName.format(dateOf(day))} ${dayNumber(day)}`,
     ),
   };
+}
+
+// A name too long for its cycle, release or period is left out rather than cut short, as hovering
+// shows it.
+export const fits = (
+  label: string,
+  width: number,
+  padding: number = labelPadding.block,
+): boolean => width >= labelWidth(label, padding);
+
+export interface Px {
+  (days: number): string;
+  of: (days: number) => number;
+  // The pixels a day takes, unrounded.
+  day: number;
+}
+
+// Rounded, since days at a fraction of a pixel each leave errors such as 62.99999999999999px.
+export function pxAt(dayWidth: number): Px {
+  const of = (days: number) => Math.round(days * dayWidth * 100) / 100;
+  return Object.assign((days: number) => `${String(of(days))}px`, {
+    of,
+    day: dayWidth,
+  });
+}
+
+// A row a view puts on a timeline: its label, kept in view while the tracks scroll, and its lanes,
+// drawn at the pixels a day takes.
+export interface TimelineRow {
+  id: string;
+  label: ReactNode;
+  lanes: (px: Px) => ReactNode;
 }

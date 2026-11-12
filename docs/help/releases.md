@@ -1,6 +1,6 @@
 # Releases
 
-Releases holds the release streams, such as **Platform**. Each stream is a sequence of releases with its own cycles. A cycle is a planning period, such as a quarter, and a release ships the features that target its cycles. The timeline below the table shows every stream side by side.
+Releases holds the release streams, such as **Platform**. Each stream is a sequence of releases with its own cycles. A cycle is a planning period, such as a quarter, and a release ships the features that target its cycles. The timeline above the table shows every stream side by side.
 
 ## Main Tasks
 
@@ -44,7 +44,8 @@ Select **Rename** or **Retire** at the top of the stream's panel. A retired stre
 ### Use the Timeline
 
 - Choose a zoom, from **All** to **Days**, or use **−** and **+**.
-- Select **Today** to go back to today, which a red line marks.
+- Select a quarter in the strip above the timeline to scroll to it, or use **‹** and **›** to move a quarter at a time. The quarters in view are tinted, and the current one is underlined. From the keyboard, Tab reaches the strip's quarters, and the arrow keys move between them.
+- Select **Today**, at the end of the strip, to go back to today, which a red line marks.
 - Rest the pointer on a cycle or release to see its name and dates.
 
 ## Marks and Terms

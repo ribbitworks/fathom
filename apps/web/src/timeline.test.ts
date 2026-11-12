@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for where release streams' cycles and releases fall on the timeline, and how its axis is
-// cut and named.
+// Tests for the whole months a timeline covers, where release streams' cycles and releases fall on
+// it, how its axis is cut and named, and its quarters.
 
 import { describe, expect, it } from "vitest";
 import {
@@ -9,9 +9,68 @@ import {
   fictionalStream,
   recordDraft,
 } from "./test-support.tsx";
-import { axisScale, timelineAxis, timelineLayout } from "./timeline.ts";
+import type { ReleaseStream } from "@fathom/shared";
+import {
+  axisScale,
+  dayRange,
+  releaseLayer,
+  releaseLayerRange,
+  timelineAxis,
+  timelineFrame,
+  timelineQuarters,
+} from "./timeline.ts";
 
 const stream = fictionalStream();
+
+// A timeline showing only the release layer, with its rows, as the Releases page shows it.
+function releasesOnlyTimeline(
+  streams: readonly ReleaseStream[],
+  today: string,
+) {
+  const range = releaseLayerRange(streams);
+  const frame = timelineFrame(range === undefined ? [] : [range], today);
+  return frame && { ...frame, rows: releaseLayer(streams, frame.from) };
+}
+
+describe("a timeline's frame", () => {
+  it("covers the whole months holding every range given", () => {
+    expect(
+      timelineFrame(
+        [
+          { first: "2027-02-10", last: "2027-03-05" },
+          { first: "2027-01-20", last: "2027-01-25" },
+        ],
+        "2027-02-01",
+      ),
+    ).toEqual({ from: "2027-01-01", days: 90, today: 31 });
+  });
+
+  it("makes a range only of a first and a last day", () => {
+    expect(dayRange("2027-01-01", "2027-02-01")).toEqual({
+      first: "2027-01-01",
+      last: "2027-02-01",
+    });
+    expect(dayRange(undefined, "2027-02-01")).toBeUndefined();
+    expect(dayRange("2027-01-01", undefined)).toBeUndefined();
+  });
+
+  it("has nothing to cover when no range is given", () => {
+    expect(timelineFrame([], "2027-02-01")).toBeUndefined();
+  });
+
+  it("is cut into quarters, the first and last cut short by its ends", () => {
+    const frame = timelineFrame(
+      [{ first: "2026-12-14", last: "2027-04-10" }],
+      "2027-02-01",
+    );
+    expect(
+      timelineQuarters(frame as NonNullable<typeof frame>).map(
+        ({ label, short, at, days }) =>
+          `${label} ${String(at)}+${String(days)} ${short}`,
+      ),
+    ).toEqual(["Q4 2026 0+31 Q4", "Q1 2027 31+90 Q1", "Q2 2027 121+30 Q2"]);
+  });
+});
 
 describe("the timeline of release streams", () => {
   const minors = fictionalStream({
@@ -23,7 +82,7 @@ describe("the timeline of release streams", () => {
   });
 
   it("lays every current stream's cycles on one axis of whole months", () => {
-    const layout = timelineLayout(
+    const layout = releasesOnlyTimeline(
       [
         stream,
         minors,
@@ -54,7 +113,7 @@ describe("the timeline of release streams", () => {
   });
 
   it("spans each release across its cycles, to the end of the day it ships", () => {
-    const layout = timelineLayout(
+    const layout = releasesOnlyTimeline(
       [
         fictionalStream({
           releases: [
@@ -116,16 +175,32 @@ describe("the timeline of release streams", () => {
   });
 
   it("marks today only while it is on the timeline", () => {
-    const today = (day: string) => timelineLayout([stream], day)?.today;
+    const today = (day: string) => releasesOnlyTimeline([stream], day)?.today;
     expect(today("2027-02-15")).toBe(45);
     expect(today("2026-12-31")).toBeUndefined();
     expect(today("2028-01-01")).toBeUndefined();
   });
 
-  it("has nothing to show while no current stream has cycles", () => {
-    expect(timelineLayout([], "2027-02-15")).toBeUndefined();
+  it("keeps a stream where it is live while a draft retires or restores it", () => {
+    const retiring = (retired: boolean) =>
+      fictionalStream({
+        id: retired ? "s2" : "s3",
+        name: retired ? "Fictional Retiring" : "Fictional Restoring",
+        retired,
+        draft: recordDraft({ changed: ["retired"] }),
+      });
     expect(
-      timelineLayout(
+      releasesOnlyTimeline(
+        [retiring(true), retiring(false)],
+        "2027-02-15",
+      )?.rows.map((row) => row.stream.name),
+    ).toEqual(["Fictional Retiring"]);
+  });
+
+  it("has nothing to show while no current stream has cycles", () => {
+    expect(releasesOnlyTimeline([], "2027-02-15")).toBeUndefined();
+    expect(
+      releasesOnlyTimeline(
         [fictionalStream({ cycles: [] }), fictionalStream({ retired: true })],
         "2027-02-15",
       ),
@@ -133,7 +208,7 @@ describe("the timeline of release streams", () => {
   });
 
   describe("its axis", () => {
-    const layout = timelineLayout([stream, minors], "2027-02-15");
+    const layout = releasesOnlyTimeline([stream, minors], "2027-02-15");
     const axis = (scale: Parameters<typeof timelineAxis>[1]) => {
       const { above, ticks } = timelineAxis(
         layout as NonNullable<typeof layout>,

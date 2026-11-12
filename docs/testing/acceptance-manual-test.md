@@ -1876,26 +1876,22 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The side panel closes.
   - **Notes:**
 
-- [ ] **Step 5.** Scroll to the timeline.
-  - **Expected:** The timeline is in view.
-  - **Notes:**
-
-- [ ] **Step 6.** Select **All**.
+- [ ] **Step 5.** Select **All** on the timeline.
   - **Expected:**
     - The whole timeline fits across.
     - **Fictional Harbor 4** is at the right end of **Platform**'s releases lane.
     - A diamond is at the right end of **Fictional Harbor 4**.
   - **Notes:**
 
-- [ ] **Step 7.** Hover over **Fictional Harbor 4**'s span.
+- [ ] **Step 6.** Hover over **Fictional Harbor 4**'s span.
   - **Expected:** A tooltip names **Fictional Harbor 4**, its cycle and the day it ships.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Features**.
+- [ ] **Step 7.** Select **Features**.
   - **Expected:** The **Features** page opens.
   - **Notes:**
 
-- [ ] **Step 9.** Select **Group by: Cycle** above the table, then **Needed by**.
+- [ ] **Step 8.** Select **Group by: Cycle** above the table, then **Needed by**.
   - **Expected:**
     - Each heading names a month and year, such as **Mar 2027**, with how many features it holds.
     - The headings run from the earliest month to the latest.
@@ -1903,15 +1899,15 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
     - There is no **New feature** button.
   - **Notes:**
 
-- [ ] **Step 10.** Select **Group by: Needed by**, then **Cycle**.
+- [ ] **Step 9.** Select **Group by: Needed by**, then **Cycle**.
   - **Expected:** The headings name cycles, with **Later** last.
   - **Notes:**
 
-- [ ] **Step 11.** Choose **Dark** in the Appearance menu, and look over the table.
+- [ ] **Step 10.** Choose **Dark** in the Appearance menu, and look over the table.
   - **Expected:** In dark mode, every word, the group headings and the lines between rows are easy to read.
   - **Notes:**
 
-- [ ] **Step 12.** Choose **Light** in the Appearance menu.
+- [ ] **Step 11.** Choose **Light** in the Appearance menu.
   - **Expected:** The page is light.
   - **Notes:**
 
