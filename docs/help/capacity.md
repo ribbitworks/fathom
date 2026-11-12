@@ -13,7 +13,7 @@ Esc leaves the value as it was. A value that won't do stays in its field, with t
 
 ### Add or Remove a Month of Ramp-Up
 
-- **Add:** Select **Add month**. The new month starts at 100%; change it with its pencil.
+- **Add:** Select **Add month**. The new month starts at 100%; change it with its pencil. Ramp-up holds up to 12 months, and **Add month** is turned off once it's full.
 - **Remove:** Select the **×** at the right of the month's row. The months after it move up one. A notification offers **Undo**.
 
 ### Undo a Change

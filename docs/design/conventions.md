@@ -201,7 +201,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **Columns a role can't see:** A column a role can't see isn't shown, and nothing says it's missing. A column whose values belong to a class beyond General shows a grey box after its heading, with a lock and the class's name, such as Personal, read aloud after the column's name; so does a list on the Lists page and in its panel. Decided by the owner on 2026-11-10.
   - **Drawn by:** `ClassMark` in `apps/web/src/status-mark.tsx`, given by a column's `dataClass` in `apps/web/src/table-view.ts`.
   - **Example:** Start and End on People; on the Lists page, Sites once moved to Personal.
-- **Changing a class:** Wherever it starts, Change class… opens one dialog, whose Change takes effect at once, never as a draft. It turns off each class the data can't go to and says why, and the button itself is turned off, with why, for a role that can't see the class the data is in now, or while someone else has unpublished changes to the record. Decided by the owner on 2026-11-11.
+- **Changing a class:** Wherever it starts, Change class… opens one dialog, whose Change takes effect at once, never as a draft, and is changed back rather than undone, as [Data classes](../product/decisions.md#people-and-privacy) decides. It turns off each class the data can't go to and says why, and the button itself is turned off, with why, for a role that can't see the class the data is in now, or while someone else has unpublished changes to the record. Decided by the owner on 2026-11-11.
   - **Drawn by:** `MoveClassModal` and `ClassChoice` in `apps/web/src/move-class-dialog.tsx`.
   - **Example:** Change class… in the panel of Sites on the Lists page, as the Engineering Director.
 

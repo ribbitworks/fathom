@@ -149,7 +149,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - It still has a yellow **Retired** box after its name
   - **Notes:**
 
-### LIST-07: Moving Positions to Another Class Sets Who Sees the Position Column
+### LIST-07: Changing the Class of Positions Sets Who Sees the Position Column
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from LIST-06. Steps 6 and 8 sign in as other accounts.
 
@@ -166,7 +166,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] **Step 3.** Select **Change class…**.
   - **Expected:**
     - A dialog titled **Change the class of Positions** opens
-    - **General** is chosen, and **Personal** and **Confidential** can each be chosen, each with a line saying what it holds
+    - **General** is chosen
+    - **Personal** and **Confidential** can each be chosen, each with a line saying what it holds
   - **Notes:**
 
 - [ ] **Step 4.** Select **Personal**.
@@ -175,8 +176,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] **Step 5.** Select **Change**.
   - **Expected:**
-    - The dialog closes, with no dot beside **Positions** and nothing to publish
-    - A grey box with a lock and **Personal** follows **Positions**, in its panel and in the table of lists
+    - The dialog closes
+    - No dot is beside **Positions**
+    - The Publish button doesn't appear
+    - A grey box with a lock and **Personal** follows **Positions** in its panel
+    - A grey box with a lock and **Personal** follows **Positions** in the table of lists
   - **Notes:**
 
 - [ ] **Step 6.** Sign out, and sign in as the Resource Planner, `resource.planner@fathom.test`.
@@ -194,7 +198,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] **Step 9.** Select the **People** page in the left-hand menu.
   - **Expected:**
     - The **Position** column's heading is followed by a grey box with a lock and **Personal**
-    - **New** can be selected
+    - **New** is not greyed out
   - **Notes:**
 
 - [ ] **Step 10.** Run Reset the Database.

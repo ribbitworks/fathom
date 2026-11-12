@@ -33,8 +33,8 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 As [Manual Test Basics](manual-test-basics.md#terms) sets out, and:
 
 - **Settings tab:** the tab under the **Capacity** heading, which reads **Settings**.
-- **Pencil button:** the small pencil at the right of a setting's row, which changes that setting.
-- **× button:** the small × after the pencil button of a month of ramp-up, which removes that month.
+- **Change button:** as [Manual Test Basics](manual-test-basics.md#terms) sets out, here at the right of a setting's row.
+- **× button:** the small × after the change button of a month of ramp-up, which removes that month.
 
 ## Test Cases
 
@@ -61,14 +61,20 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
       - **Month 1**: **50%**
       - **Month 2**: **75%**
       - **From month 3**: **100%**
-    - No row has a pencil button.
+    - No row has a change button.
     - There are no buttons under the rows.
   - **Notes:**
 
-- [ ] **Step 2.** Switch Fathom between light and dark mode.
+- [ ] **Step 2.** Select **Dark** in the Appearance menu.
   - **Expected:**
-    - In both modes the headings and values are easy to read.
-    - In both modes the labels are dimmed beside their values.
+    - The headings and values are easy to read.
+    - The labels are dimmed beside their values.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Light** in the Appearance menu.
+  - **Expected:**
+    - The headings and values are easy to read.
+    - The labels are dimmed beside their values.
   - **Notes:**
 
 ### CAP-02: A Change Undone, Then Followed on Features
@@ -83,41 +89,49 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] **Step 2.** Select the **Capacity** page in the left-hand menu.
   - **Expected:**
-    - Each row but the last has a pencil button at its right.
-    - The rows **Month 1** and **Month 2** each have an × button after their pencil button.
+    - Every row but **From month 3** has a change button at its right.
+    - The rows **Month 1** and **Month 2** each have an × button after their change button.
     - Under the ramp-up rows is one outlined button, **Add month**.
   - **Notes:**
 
-- [ ] **Step 3.** Press Tab until the pencil button of **Hours a day** has focus.
-  - **Expected:** A focus ring shows around the pencil button of **Hours a day**.
+- [ ] **Step 3.** Press Tab until the change button of **Hours a day** has focus.
+  - **Expected:** A focus ring shows around the change button of **Hours a day**.
   - **Notes:**
 
 - [ ] **Step 4.** Press Enter.
-  - **Expected:** A field in place of **8** holds **8**, with the focus in it.
+  - **Expected:**
+    - A field in place of **8** holds **8**.
+    - The focus is in the field.
   - **Notes:**
 
 - [ ] **Step 5.** Replace **8** with **4**, and press Enter.
   - **Expected:**
     - **Hours a day** reads **4**.
-    - The pencil button of **Hours a day** has focus.
+    - The change button of **Hours a day** has focus.
     - No notification shows.
   - **Notes:**
 
 - [ ] **Step 6.** Press Cmd+Z on a Mac, or Ctrl+Z elsewhere.
   - **Expected:**
     - **Hours a day** reads **8**.
-    - The pencil button of **Hours a day** has focus.
+    - The change button of **Hours a day** has focus.
   - **Notes:**
 
 - [ ] **Step 7.** Press Enter.
-  - **Expected:** A field in place of **8** holds **8**, with the focus in it.
+  - **Expected:**
+    - A field in place of **8** holds **8**.
+    - The focus is in the field.
   - **Notes:**
 
 - [ ] **Step 8.** Replace **8** with **4**, and press Enter.
   - **Expected:** **Hours a day** reads **4**.
   - **Notes:**
 
-- [ ] **Step 9.** Select the **Features** page in the left-hand menu, open the column menu of **Effort**, and select **Person-days** under **Show in**.
+- [ ] **Step 9.** Select the **Features** page in the left-hand menu.
+  - **Expected:** The **Features** page opens.
+  - **Notes:**
+
+- [ ] **Step 10.** Open the column menu of **Effort**, and select **Person-days** under **Show in**.
   - **Expected:** **Audit Export** reads **79 PD**.
   - **Notes:**
 
@@ -128,7 +142,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 **Preconditions:** **Capacity** page open, on the **Settings** tab.
 
 - [ ] **Step 1.** Select **80%** beside **Default focus**.
-  - **Expected:** A field in place of **80%** holds **80**, with the focus in it.
+  - **Expected:**
+    - A field in place of **80%** holds **80**.
+    - The focus is in the field.
   - **Notes:**
 
 - [ ] **Step 2.** Replace **80** with **0**, and press Enter.
@@ -156,12 +172,14 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
       - **Month 2**: **75%**
       - **Month 3**: **100%**
       - **From month 4**: **100%**
-    - The pencil button of **Month 3** has focus.
-    - **Month 3** has an × button after its pencil button.
+    - The change button of **Month 3** has focus.
+    - **Month 3** has an × button after its change button.
   - **Notes:**
 
 - [ ] **Step 2.** Press Enter.
-  - **Expected:** A field in place of **100%** beside **Month 3** holds **100**, with the focus in it.
+  - **Expected:**
+    - A field in place of **100%** beside **Month 3** holds **100**.
+    - The focus is in the field.
   - **Notes:**
 
 - [ ] **Step 3.** Replace **100** with **90**, and press Enter.
