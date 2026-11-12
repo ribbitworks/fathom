@@ -31,14 +31,15 @@ Development uses fictional data only.
 
 ## Stage: Who Is Working on What
 
-Covers the owner's immediate needs. Each goal starts in its simplest useful form, and the first stage shows the plan in tables and simple charts rather than an interactive Gantt view.
+Covers the owner's immediate needs. Each goal starts in its simplest useful form, and the first stage shows the plan in tables, simple charts, the Features Board, and timelines, rather than an interactive Gantt view whose bars are dragged to new dates.
 
 - **People and teams:** Includes feature teams and feature leads. Employee details are limited to the General tier plus start and end dates.
 - **Org structure:** People managers and their current direct reports, and the org chart of reporting lines, today or, for those who see Personal details, on a chosen date, without planned changes. The owner brought the org chart forward from The Organization stage, as the [Decisions Log](decisions.md#workforce) records.
 - **Change history:** Who changed what, and when, for the data each user may see.
 - **Plan approval:** Drafts and their approval, built on people first, so every later table follows the same pattern. Includes feature team approval, in which Engineering Managers' proposals are approved by an Approver.
 - **Projects, proposals, and feature teams:** Projects with their milestones, proposals, and feature teams, built before the roadmap's features, as the [Decisions Log](decisions.md#planning) sets out. Their links to features come with the roadmap view. Feature teams include planned membership changes and leads, a monthly grid of who is on which team, and the org chart on a chosen date, brought forward from The Organization stage by the owner on 2026-11-08, as the [Decisions Log](decisions.md#workforce) records.
-- **Roadmap view:** First built as the Product Manager's working roadmap, an input to the rest of the plan: features in a table grouped by cycle. The visual roadmap comes in a later stage.
+- **Roadmap view:** First built as the Product Manager's working roadmap, an input to the rest of the plan: features in a table grouped by cycle.
+- **The Roadmap and the Plan:** Brought forward from The Organization stage by the owner on 2026-11-11, as [The Roadmap and the Plan](decisions.md#planning) sets out: the Features Board, the visual roadmap; the Plan, staffed work in the Capacity page's Work mode; a timeline of projects; and the shared timeline all three use with Releases, which replaces the timeline or Gantt view.
 - **Release planning:** Cycles, releases, and release streams.
 - **Lists drawn from a table:** Added by the owner. A list whose choices are the values of a chosen column in a chosen table, such as product names, so a column elsewhere can pick from them without the values being kept twice.
 - **Web link columns:** Added by the owner. A column on People holding one web link for each person, ahead of the other column types.
@@ -72,8 +73,6 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 - **Own record and reports:** Users see their own record and their reports' records through a link to their person record, as proposed in [Roles](roles.md).
 - **Unified people view**
 - **Team composition:** The remaining measures, such as test-to-development ratios.
-- **Timeline / Gantt view:** Proposed with the roadmap view in [ADR 0009](../adr/0009-roadmap-and-timeline-views.md).
-- **Roadmap view:** The visual roadmap, proposed in [ADR 0009](../adr/0009-roadmap-and-timeline-views.md).
 
 ## Stage: Planning Ahead
 

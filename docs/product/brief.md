@@ -1,7 +1,7 @@
 # Fathom — Product Brief
 
 **Status:** Draft
-**Last updated:** 2026-11-07
+**Last updated:** 2026-11-11
 
 ## Problem
 
@@ -102,4 +102,4 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md). The order 
 1. **Privacy review:** A document describing the personal data Fathom holds and how it is protected will be prepared for HR to review and approve. Which laws apply, in Canada, India, and other countries, is to be confirmed in that review.
 1. **Backup location:** Where are backup files kept?
 1. **Project Manager input:** How do Project Managers give input on whether teams are in place, beyond what [Roles](roles.md) grants, such as comments or proposals?
-1. **Timeline changes:** The timeline goal asks for drag and drop to change dates and assignments. [ADR 0009](../adr/0009-roadmap-and-timeline-views.md) proposes moving features between cycles and feature teams first. Is dragging to shift a feature's allocations by months also needed?
+1. **Timeline changes:** The timeline goal asks for drag and drop to change dates and assignments. [ADR 0009](../adr/0009-roadmap-and-timeline-views.md) moves features between cycles, and between the rows of the Features Board, first. Is dragging to shift a feature's allocations by months also needed?

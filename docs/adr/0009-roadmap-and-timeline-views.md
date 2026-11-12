@@ -3,18 +3,20 @@
 - **ADR:** 0009
 - **Status:** Proposed
 - **Date:** 2026-11-03
-- **Revised:** 2026-11-03, to point to the Decisions Log's answer on how a cycle's demand is counted, and to the board's test page in the Implementation Plan; 2026-11-10, since large work is no longer split into a feature for each increment
+- **Revised:** 2026-11-03, to point to the Decisions Log's answer on how a cycle's demand is counted, and to the board's test page in the Implementation Plan; 2026-11-10, since large work is no longer split into a feature for each increment; 2026-11-11, since the board and timeline it proposed were revised with the owner into the Features Board and the shared timeline, keeping the choice of libraries
 
 ## Context
 
-The [Product Brief](../product/brief.md#goals-for-v1) asks for a roadmap view, where Product Managers shape the roadmap of features by cycle and release and leadership reads it, and a timeline or Gantt view, which changes dates and assignments by drag and drop. The [Roadmap](../product/roadmap.md#stage-the-organization) places both in The Organization stage, after the first stage's table of features grouped by cycle. [ADR 0004](0004-ui-components.md) chose vis-timeline for them, to be confirmed when that stage starts.
+The [Product Brief](../product/brief.md#goals-for-v1) asks for a roadmap view, where Product Managers shape the roadmap of features by cycle and release and leadership reads it, and a timeline or Gantt view, which changes dates and assignments by drag and drop. The [Roadmap](../product/roadmap.md#stage-who-is-working-on-what) places both in the first stage, after its table of features grouped by cycle, where the owner moved them from The Organization stage on 2026-11-11. [ADR 0004](0004-ui-components.md) chose vis-timeline for them, to be confirmed later; this ADR replaces that choice.
 
 What the views move is coarse, as the [Decisions Log](../product/decisions.md#planning) sets out:
 
-- **Features target cycles:** A feature's start and end are months that follow from its allocations, and only milestones have dates to the day. Moving a feature means changing its target cycle, or its feature team, not dragging free dates.
+- **Features target cycles:** A feature's start and end are months that follow from its allocations, and only milestones have dates to the day. Moving a feature means changing its target cycle, or the value its row on the board stands for, such as its feature team, not dragging free dates.
 - **Work can take longer than a cycle:** Work may need allocations over several cycles. As the Decisions Log's feature scope sets out, it stays one feature, which targets the cycle it is delivered in, and whose allocations span the cycles before it.
 - **No dependency lines:** Dependencies between features are not recorded, and Fathom plans features, never tasks.
 - **Every change is a draft:** Moves are drafts, private until published, as [ADR 0007](0007-draft-rows.md) and [ADR 0008](0008-unpublished-drafts.md) set out, shown with the marks every other table uses.
+
+On 2026-11-11 the owner revised the board and timeline below, keeping the choice of libraries: the board became the Features Board, the Roadmap, whose columns are one stream's cycles and whose rows follow Group by, and the timeline became one shared timeline, taken out of the Releases timeline, for the Plan, the project timeline and Releases, each day the same width, as [Visual Design](../design/visual-design.md#components) and [UI Conventions](../design/conventions.md#timelines) set out.
 
 Every choice must meet ADR 0004's rules: completely open source with no paid edition, bundled and working offline, no code built from strings, React 19, and actively maintained. The candidates below were compared from GitHub and npm on 2026-11-03, without test pages; sizes are minified and compressed, from bundlephobia.
 
@@ -30,15 +32,15 @@ Every choice must meet ADR 0004's rules: completely open source with no paid edi
 
 ## Decision
 
-- **Fathom's own view:** The roadmap and the timeline are one board built on Mantine: a column for each cycle, and on the timeline a row for each feature team, laid out as [Visual Design](../design/visual-design.md#components) sets out. Cards are moved with the mouse by @hello-pangea/dnd, as ADR 0004 chose for ordering, with each cycle of each row its own list, since the library moves items between lists but does not lay out a grid. Keyboard users move cards with Fathom's own keys and menus, as for ordering.
-- **Moves are drafts:** Dropping a card on another cycle or row changes the feature's target cycle or feature team through the same draft functions every table uses.
+- **Fathom's own views:** The Features Board is built on Mantine, with a column for each cycle of one stream and a row for each value of the Group by chosen, as [Visual Design](../design/visual-design.md#components) sets out. Cards are moved with the mouse by @hello-pangea/dnd, as ADR 0004 chose for ordering, with each cycle of each row its own list, since the library moves items between lists but does not lay out a grid. Keyboard users move cards with Fathom's own keys, as for ordering. The timelines are drawn by Fathom's own shared timeline, taken out of the Releases timeline.
+- **Moves are drafts:** Dropping a card on another cycle or row changes the feature's target cycle or that row's value through the same draft functions every table uses.
 - **No timeline library:** vis-timeline, chosen in ADR 0004 to be confirmed, is not used; this replaces that choice once accepted.
 - **Fallback:** If dragging months freely or resizing bars turns out to be needed, dnd-timeline is the first library to try, styled with Mantine.
 
 ## Consequences
 
-- **Fathom maintains the board,** as it does the spreadsheet tables, in return for drafts shown as everywhere else and no new dependency, and none of moment, HTML labels, or a wrapper around a component that is not React.
-- **Bars cross cycles:** A feature's bar spans its allocated months across cycle columns, so each feature has its own lane in its feature team's row, with its bar drawn in a layer behind the cycles' lists and its card at the bar's end, in its target cycle. A board of Fathom's own does this without a time axis library, but lanes make rows taller, which the design weighs. How bars line up with cycles measured in weeks is settled with the design.
-- **The brief's dates and assignments are narrowed:** The first version moves target cycles and feature teams only. Dragging a bar to shift a feature's allocations by months would make many allocation drafts at once, so it is left out until the owner decides it is needed, as the brief's open questions ask.
+- **Fathom maintains the board and the timeline,** as it does the spreadsheet tables, in return for drafts shown as everywhere else and no new dependency, and none of moment, HTML labels, or a wrapper around a component that is not React.
+- **Bars live on the timeline, not the board:** A feature's staffed months are a bar on the shared timeline, in the Plan and the project timeline, each day the same width, so cycles of any length line up. The board's cards name their staffed months in words instead, so the board needs no lanes.
+- **The brief's dates and assignments are narrowed:** The first version moves target cycles and the board's row values only. Dragging a bar to shift a feature's allocations by months would make many allocation drafts at once, so it is left out until the owner decides it is needed, as the brief's open questions ask.
 - **More reliance on @hello-pangea/dnd,** whose last release was in February 2025. Moving it out would touch both ordering and the board, with `@dnd-kit/react` the replacement ADR 0004 names.
-- **To be iterated:** The design is a first sketch, revised with the owner before The Organization stage starts. How a cycle's demand is counted is set out in the [Decisions Log](../product/decisions.md#planning), and the board's test page in the [Implementation Plan](../design/implementation-plan.md#features-and-the-roadmap).
+- **Build order:** The Features Board, the Plan and the project timeline are built in the order the [Implementation Plan](../design/implementation-plan.md#features-and-the-roadmap) sets out. The board shows no demand; demand against capacity is the Capacity page's Demand mode, as the [Decisions Log](../product/decisions.md#planning) sets out.

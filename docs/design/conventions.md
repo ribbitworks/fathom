@@ -79,6 +79,15 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **Values in units:** An amount shows its unit's code in a table, such as 2.5 PD, and spells the unit out in a panel, such as 2.5 person-days (20 hours). Totals of one unit, such as Feature assignments' capacity totals, name it once, in their heading. Decided by the owner on 2026-11-11.
   - **Drawn by:** `EffortCell` in `apps/web/src/effort-cell.tsx`, and `inUnitsWords` in `apps/web/src/record-details.tsx`.
   - **Example:** Audit Export's Effort.
+- **A size:** A feature's [Size](../product/decisions.md#planning) is the word Size and a block for each S it weighs, light to dark blue-grey by position, four blocks filling the space given, such as a card's width or a row's label. It is never a bar on a track, which reads as progress, and never green to red, which would borrow red's meaning of a problem. The same mark shows on cards, in the panel, in a timeline's row labels and in group headings. Its value, such as M, 2 × S, shows on hover, is read aloud, and shows in the panel. Decided by the owner on 2026-11-11.
+  - **Drawn by:** not built yet.
+  - **Example:** none until Size is built.
+- **A risk:** A feature's [Risk](../product/decisions.md#planning) is the word Risk and a segment for each step of its list, green to red by the list's order, filling the space given, lined up under the Size mark. Its value shows on hover, is read aloud, and shows in the panel. Decided by the owner on 2026-11-11.
+  - **Drawn by:** not built yet.
+  - **Example:** none until Risk is built.
+- **A coloured name:** A team or release named with its colour is always its name in a box tinted with that colour, never after a coloured dot or square, which reads as a draft's dot. One shared piece draws every coloured name. The Org chart's square before a team's name, and the Releases side panel's square before a release's name, are to move to it. Decided by the owner on 2026-11-11.
+  - **Drawn by:** `TeamLabels` in `apps/web/src/team-labels.tsx`, for feature teams; to be widened, or renamed, for any coloured name.
+  - **Example:** Mobile apps in a month's cell on Feature assignments.
 
 ## Dates
 
@@ -94,6 +103,38 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **A time:** History entries give the day, its year and the time, in the reader's language.
   - **Drawn by:** `EntryRow` in `apps/web/src/history-entries.tsx`.
   - **Example:** any entry on the Change history page.
+
+## Timelines
+
+Every view with time across it, the Releases timeline, the Plan and the project timeline, draws time in one design language, decided by the owner on 2026-11-11:
+
+| Mark | Means |
+| --- | --- |
+| Solid bar | Staffed months |
+| Dashed outline | A target cycle only, not staffed |
+| Diamond | A day: a milestone, or a release's Ships on day |
+| Triangle under the bar, the size of a diamond, named such as Needed by May | Needed by, at the end of its month |
+| Red Late or Not staffed pill at the end of a bar | Ends after its Needed by, or after its project's last milestone; or [Not staffed](../product/decisions.md#planning). Never a faint red outline. |
+| Red line | Today |
+
+- **The language:** Each mark in the table above means one thing on every timeline. Drafts are drawn with the draft marks, as [Drafts](#drafts) sets out, and a dashed edge never means a draft.
+  - **Drawn by:** `apps/web/src/releases-timeline.tsx`, for today's line and the release diamonds; the rest is not built yet.
+  - **Example:** today's red line on the Releases timeline.
+- **The shared timeline:** One component draws every view with time across it: its axis of two rows of dates, its zoom, kept in the browser, today's line, scrolling that keeps today a sixth of the way across, and release streams' cycles and releases as a layer a view may show. Each view gives it its rows. It is taken out of the Releases timeline with no visible change, so its axis, zoom and scrolling work as the [Releases timeline](visual-design.md#components) sets out.
+  - **Drawn by:** `apps/web/src/releases-timeline.tsx` and `apps/web/src/timeline.ts`, for Releases alone; not shared yet.
+  - **Example:** the timeline on the Releases page.
+- **The release layer:** Shows every stream's releases by default, or one stream's, or none, chosen in a Releases picker. Every release has its diamond, drawn under its bar so it never sits on the next release: at the bar's end, or, when its Ships on day was moved from its last cycle's end, at that day, joined to the bar's end by a dashed line. A release's bar names the release only, with no counts or warnings about its features, which are listed in its panel.
+  - **Drawn by:** not built yet; the Releases timeline draws its diamond on the release's own lane today.
+  - **Example:** on Releases, set a release's Ships on day after its last cycle's end.
+- **Feature rows:** A feature's row label shows its ID and name on the bar's line, with the [Size mark](#values) under them, so the name stays in view when the bar is scrolled away. Every feature row keeps room under its bar for day marks, such as Needed by, and labels line up with their bars.
+  - **Drawn by:** not built yet.
+  - **Example:** none until the Plan is built.
+- **The strip:** Above every timeline, and above the Features Board, one strip shows the quarters, on a timeline, or the cycles, on the board, across the whole range: those in view tinted, the current one underlined, with ‹ ›, and Today. On the board it steps by cycle; on a timeline a click scrolls there, and scrolling moves the tint. The Org chart's date row is to become the same strip.
+  - **Drawn by:** not built yet; the Org chart's date row is `apps/web/src/org-chart-date.tsx`.
+  - **Example:** none until the strip is built.
+- **Month grids:** A grid of months that is edited, such as Feature assignments and the allocations grid, stays an editable grid, with the timeline's month names, today's mark, and cycle and release lines.
+  - **Drawn by:** `apps/web/src/feature-assignments-page.tsx`, with each month's cell in `apps/web/src/team-months.tsx` and `apps/web/src/allocation-months.tsx`; the timeline's month names, today's mark, and the lines are not shared with it yet.
+  - **Example:** Feature assignments.
 
 ## Links to Records
 

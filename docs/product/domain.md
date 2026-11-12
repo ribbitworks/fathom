@@ -1,7 +1,7 @@
 # Fathom: Domain Concepts
 
 **Status:** Draft
-**Last updated:** 2026-11-08
+**Last updated:** 2026-11-11
 
 The terms Fathom uses, defined so they fit any software organization, whatever its titles and practices. How an organization works with them, such as who leads what or how often it releases, is its own configuration. See also the [Product Brief](brief.md) and the [Decisions Log](decisions.md).
 
@@ -17,6 +17,8 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **Cycle:** A repeating planning period of a set length, such as six months, a quarter, or a program increment. Features target cycles.
 - **Release:** A named delivery that includes one or more cycles, and ships the features that target them.
 - **Release stream:** A sequence of releases with its own cycle length, such as major releases or patches.
+- **Roadmap:** The features wanted and roughly when, before anything is costed. Not built yet, as [The Roadmap and the Plan](decisions.md#planning) sets out.
+- **Plan:** The features that are staffed, with their estimates, allocations, months, and capacity. Written with a capital P, apart from the plan Approve Plan approves. Not built yet.
 - **Estimate:** A rough size of the effort a feature needs, not its cost, such as a rough order of magnitude (ROM) or a SWAG, given in a unit of effort such as hours or person-months.
 
 ## People Terms
