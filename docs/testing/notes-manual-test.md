@@ -45,44 +45,44 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### NOTE-01: A Note Column Is Added
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case. Step 6 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case. Step `5AE9` signs in as another account.
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
-- [ ] **Step 1.** Select **New column**.
+- [ ] `11E2` Select **New column**.
   - **Expected:** The **New column** dialog opens.
   - **Notes:**
 
-- [ ] **Step 2.** Type `Background` in **Name**.
+- [ ] `FA17` Type `Background` in **Name**.
   - **Expected:** **Name** holds **Background**.
   - **Notes:**
 
-- [ ] **Step 3.** Choose **Note** in **Type**.
+- [ ] `F5E6` Choose **Note** in **Type**.
   - **Expected:**
     - **Type** reads **Note**.
     - **General** is still chosen.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Add column**.
+- [ ] `CDDE` Select **Add column**.
   - **Expected:**
     - The dialog closes.
     - A **Background** column is at the end of the table.
     - A hollow yellow dot is before its name.
   - **Notes:**
 
-- [ ] **Step 5.** Run Publish.
+- [ ] `3A7D` Run Publish.
   - **Expected:** The **Background** column at the end of the table has a yellow dot before its name.
   - **Notes:**
 
-- [ ] **Step 6.** Sign in as the Engineering Director, `engineering.director@fathom.test`.
+- [ ] `5AE9` Sign in as the Engineering Director, `engineering.director@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Director**.
   - **Notes:**
 
-- [ ] **Step 7.** Select the **Drafts** page in the left-hand menu.
+- [ ] `EC0B` Select the **Drafts** page in the left-hand menu.
   - **Expected:** The **Drafts** page lists the **Background** column.
   - **Notes:**
 
-- [ ] **Step 8.** Approve the **Background** column.
+- [ ] `5BDF` Approve the **Background** column.
   - **Expected:** A notice reads **Approved 1 draft.**
   - **Notes:**
 
@@ -92,7 +92,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** Signed in with this account. Run after NOTE-01. **People** page open, with **Max Munk** searched for.
 
-- [ ] **Step 1.** Select Max Munk's **Background** cell.
+- [ ] `33CD` Select Max Munk's **Background** cell.
   - **Expected:**
     - The panel slides in smoothly from the right over the table, with no jump.
     - The table then has room beside it.
@@ -104,129 +104,129 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - **Clear**, **Cancel** and **Save** are at the bottom.
   - **Notes:**
 
-- [ ] **Step 2.** Drag the panel's left edge to the left.
+- [ ] `F5E4` Drag the panel's left edge to the left.
   - **Expected:**
     - The panel widens.
     - The table beside it stays usable.
   - **Notes:**
 
-- [ ] **Step 3.** Drag the panel's left edge to the right.
+- [ ] `A5A7` Drag the panel's left edge to the right.
   - **Expected:**
     - The panel narrows.
     - The table beside it stays usable.
   - **Notes:**
 
-- [ ] **Step 4.** Type `Joined from the platform team`.
+- [ ] `88B3` Type `Joined from the platform team`.
   - **Expected:** The note reads **Joined from the platform team**.
   - **Notes:**
 
-- [ ] **Step 5.** Double-click `Joined`.
+- [ ] `97F0` Double-click `Joined`.
   - **Expected:** **Joined** is highlighted.
   - **Notes:**
 
-- [ ] **Step 6.** Select the bold button in the toolbar.
+- [ ] `7AA3` Select the bold button in the toolbar.
   - **Expected:**
     - **Joined** shows in bold at once.
     - The toolbar's buttons are clear about what they do.
   - **Notes:**
 
-- [ ] **Step 7.** Double-click `platform`.
+- [ ] `B281` Double-click `platform`.
   - **Expected:** **platform** is highlighted.
   - **Notes:**
 
-- [ ] **Step 8.** Select the colour button in the toolbar, then **Teal**.
+- [ ] `1A05` Select the colour button in the toolbar, then **Teal**.
   - **Expected:** **platform** shows in teal at once.
   - **Notes:**
 
-- [ ] **Step 9.** Click at the end of the line, after `team`.
+- [ ] `6FEE` Click at the end of the line, after `team`.
   - **Expected:** The cursor is after **team**.
   - **Notes:**
 
-- [ ] **Step 10.** Press Enter.
+- [ ] `33AB` Press Enter.
   - **Expected:** A new line starts under the first.
   - **Notes:**
 
-- [ ] **Step 11.** Select the bullet list button in the toolbar.
+- [ ] `710F` Select the bullet list button in the toolbar.
   - **Expected:** A bullet shows at once at the start of the line.
   - **Notes:**
 
-- [ ] **Step 12.** Type `Mentor: Lilian`, and press Enter.
+- [ ] `9AB5` Type `Mentor: Lilian`, and press Enter.
   - **Expected:** A second bullet starts under **Mentor: Lilian**.
   - **Notes:**
 
-- [ ] **Step 13.** Type `Speaks Japanese`.
+- [ ] `F2B8` Type `Speaks Japanese`.
   - **Expected:** The second bullet reads **Speaks Japanese**.
   - **Notes:**
 
-- [ ] **Step 14.** Double-click `Lilian`.
+- [ ] `7F87` Double-click `Lilian`.
   - **Expected:** **Lilian** is highlighted.
   - **Notes:**
 
-- [ ] **Step 15.** Select the link button in the toolbar.
+- [ ] `EA8F` Select the link button in the toolbar.
   - **Expected:**
     - A form opens under the button.
     - It has **Address** and **Text to show**.
   - **Notes:**
 
-- [ ] **Step 16.** Type `wiki.example.test/lilian` in **Address**, and press Enter.
+- [ ] `325E` Type `wiki.example.test/lilian` in **Address**, and press Enter.
   - **Expected:** **Lilian** shows as a link at once.
   - **Notes:**
 
-- [ ] **Step 17.** Click in `Lilian`.
+- [ ] `FC5C` Click in `Lilian`.
   - **Expected:** The cursor is in **Lilian**.
   - **Notes:**
 
-- [ ] **Step 18.** Select the link button in the toolbar.
+- [ ] `E537` Select the link button in the toolbar.
   - **Expected:**
     - The form opens again under the button.
     - It has **Address** and **Text to show**.
   - **Notes:**
 
-- [ ] **Step 19.** Replace the text in **Text to show** with `Lilian Lang`, and press Enter.
+- [ ] `71D9` Replace the text in **Text to show** with `Lilian Lang`, and press Enter.
   - **Expected:** The link reads **Lilian Lang**.
   - **Notes:**
 
-- [ ] **Step 20.** Click at the end of `Speaks Japanese`.
+- [ ] `5C89` Click at the end of `Speaks Japanese`.
   - **Expected:** The cursor is after **Japanese**.
   - **Notes:**
 
-- [ ] **Step 21.** Press Enter twice.
+- [ ] `BD0A` Press Enter twice.
   - **Expected:**
     - The list ends.
     - The cursor is on a line with no bullet.
   - **Notes:**
 
-- [ ] **Step 22.** Type `Plans`.
+- [ ] `E955` Type `Plans`.
   - **Expected:** The line reads **Plans**.
   - **Notes:**
 
-- [ ] **Step 23.** Select the heading 2 button in the toolbar.
+- [ ] `8A8E` Select the heading 2 button in the toolbar.
   - **Expected:** **Plans** reads as a heading at once.
   - **Notes:**
 
-- [ ] **Step 24.** Press Enter.
+- [ ] `89D9` Press Enter.
   - **Expected:** A new line starts under **Plans**.
   - **Notes:**
 
-- [ ] **Step 25.** Select the checkbox list button in the toolbar.
+- [ ] `FC0A` Select the checkbox list button in the toolbar.
   - **Expected:** A checkbox shows at once at the start of the line.
   - **Notes:**
 
-- [ ] **Step 26.** Type `Meet the team`, and press Enter.
+- [ ] `47EF` Type `Meet the team`, and press Enter.
   - **Expected:** A second checkbox starts under **Meet the team**.
   - **Notes:**
 
-- [ ] **Step 27.** Type `Set goals`.
+- [ ] `F0B7` Type `Set goals`.
   - **Expected:** The second checkbox reads **Set goals**.
   - **Notes:**
 
-- [ ] **Step 28.** Tick the box before **Meet the team**.
+- [ ] `493F` Tick the box before **Meet the team**.
   - **Expected:**
     - The box before **Meet the team** is ticked.
     - The checkboxes line up with their text.
   - **Notes:**
 
-- [ ] **Step 29.** Select **Note** at the top of the panel.
+- [ ] `F125` Select **Note** at the top of the panel.
   - **Expected:**
     - The text starts in the same place in the panel, so nothing jumps.
     - The note reads, from the top:
@@ -238,7 +238,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
       - a checkbox **Set goals**
   - **Notes:**
 
-- [ ] **Step 30.** Select **Markdown**.
+- [ ] `C377` Select **Markdown**.
   - **Expected:**
     - The text starts in the same place in the panel, so nothing jumps.
     - The note shows as Markdown text, reading, from the top:
@@ -250,7 +250,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
       - **Set goals**, with checkbox markup before it
   - **Notes:**
 
-- [ ] **Step 31.** Select **Editor**.
+- [ ] `C74E` Select **Editor**.
   - **Expected:**
     - The text starts in the same place in the panel, so nothing jumps.
     - The note reads, from the top:
@@ -262,15 +262,15 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
       - a checkbox **Set goals**
   - **Notes:**
 
-- [ ] **Step 32.** Select **Note**.
+- [ ] `7AAC` Select **Note**.
   - **Expected:** The link reads **Lilian Lang**.
   - **Notes:**
 
-- [ ] **Step 33.** Click the link.
+- [ ] `D336` Click the link.
   - **Expected:** The wiki page opens in a new tab.
   - **Notes:**
 
-- [ ] **Step 34.** Back on the Fathom tab, select **Save**.
+- [ ] `5DF8` Back on the Fathom tab, select **Save**.
   - **Expected:**
     - The panel slides out smoothly to the right over the table, with no jump.
     - The table is already full width.
@@ -278,7 +278,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - A hollow yellow dot is before the cell's words.
   - **Notes:**
 
-- [ ] **Step 35.** Select Max Munk's **Background** cell again.
+- [ ] `65A7` Select Max Munk's **Background** cell again.
   - **Expected:**
     - The panel opens.
     - It shows the note, reading, from the top:
@@ -290,21 +290,21 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
       - a checkbox **Set goals**
   - **Notes:**
 
-- [ ] **Step 36.** Select **Editor**.
+- [ ] `F9CA` Select **Editor**.
   - **Expected:**
     - **Editor** is chosen.
     - The toolbar is under the text.
   - **Notes:**
 
-- [ ] **Step 37.** Click at the end of `Set goals`.
+- [ ] `33E2` Click at the end of `Set goals`.
   - **Expected:** The cursor is after **Set goals**.
   - **Notes:**
 
-- [ ] **Step 38.** Type a space and `again`.
+- [ ] `286F` Type a space and `again`.
   - **Expected:** The line reads **Set goals again**.
   - **Notes:**
 
-- [ ] **Step 39.** Press Cmd+Z on a Mac, or Ctrl+Z otherwise.
+- [ ] `9C4C` Press Cmd+Z on a Mac, or Ctrl+Z otherwise.
   - **Expected:**
     - Only the space and **again** go, leaving **Set goals**.
     - The rest of the note reads, from the top:
@@ -315,7 +315,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
       - a ticked checkbox **Meet the team**
   - **Notes:**
 
-- [ ] **Step 40.** Select **Cancel**.
+- [ ] `34B0` Select **Cancel**.
   - **Expected:**
     - The panel closes.
     - The cell still shows the note's words.
@@ -328,11 +328,11 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** Signed in with this account. Run after NOTE-02. **People** page open, with **Lilian Lang** searched for.
 
-- [ ] **Step 1.** In a word processor or web page, copy a passage holding a heading, bold text, highlighted text, a numbered list, a table, and an image.
+- [ ] `E291` In a word processor or web page, copy a passage holding a heading, bold text, highlighted text, a numbered list, a table, and an image.
   - **Expected:** The passage is highlighted in the other app.
   - **Notes:**
 
-- [ ] **Step 2.** Select Lilian Lang's **Background** cell.
+- [ ] `B3CA` Select Lilian Lang's **Background** cell.
   - **Expected:**
     - The panel opens.
     - It is headed **Background**.
@@ -340,7 +340,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The note is empty.
   - **Notes:**
 
-- [ ] **Step 3.** Paste the passage into the editor.
+- [ ] `B005` Paste the passage into the editor.
   - **Expected:**
     - The heading and bold stay.
     - Highlighting and the image are gone.
@@ -348,13 +348,13 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - What is left reads sensibly.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Clear**.
+- [ ] `5FAC` Select **Clear**.
   - **Expected:**
     - The note empties.
     - The panel stays open.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Cancel**.
+- [ ] `814A` Select **Cancel**.
   - **Expected:**
     - The panel closes.
     - Lilian Lang's cell is still empty.
@@ -366,59 +366,59 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** Signed in with this account. Run after NOTE-03. **Light** chosen in the Appearance menu. **People** page open, with **Max Munk** searched for.
 
-- [ ] **Step 1.** Using only the keyboard, move to Max Munk's **Background** cell.
+- [ ] `EDAC` Using only the keyboard, move to Max Munk's **Background** cell.
   - **Expected:** The cell shows the focus outline.
   - **Notes:**
 
-- [ ] **Step 2.** Press Enter.
+- [ ] `26D0` Press Enter.
   - **Expected:** The panel opens on **Note**.
   - **Notes:**
 
-- [ ] **Step 3.** Press Tab until **Note** has focus.
+- [ ] `58D7` Press Tab until **Note** has focus.
   - **Expected:**
     - Tab reaches **Note**, **Editor** and **Markdown**.
     - Focus is on **Note**.
   - **Notes:**
 
-- [ ] **Step 4.** Press the Right arrow key.
+- [ ] `BC3A` Press the Right arrow key.
   - **Expected:** **Editor** is chosen.
   - **Notes:**
 
-- [ ] **Step 5.** Press Tab.
+- [ ] `D3FC` Press Tab.
   - **Expected:** The cursor is in the note, ready to type.
   - **Notes:**
 
-- [ ] **Step 6.** Look at the note.
+- [ ] `4AA7` Look at the note.
   - **Expected:**
     - **platform** is teal.
     - The heading, bullets, link and checkboxes are easy to read against the panel.
   - **Notes:**
 
-- [ ] **Step 7.** Choose **Dark** in the Appearance menu.
+- [ ] `F332` Choose **Dark** in the Appearance menu.
   - **Expected:**
     - **platform** is still teal.
     - The heading, bullets, link and checkboxes are easy to read against the dark panel.
   - **Notes:**
 
-- [ ] **Step 8.** Choose **Light** in the Appearance menu.
+- [ ] `DBD6` Choose **Light** in the Appearance menu.
   - **Expected:** The panel is light.
   - **Notes:**
 
-- [ ] **Step 9.** Press Tab until **Cancel** has focus.
+- [ ] `E586` Press Tab until **Cancel** has focus.
   - **Expected:** Focus is visible on each control on the way.
   - **Notes:**
 
-- [ ] **Step 10.** Press Enter.
+- [ ] `8D76` Press Enter.
   - **Expected:**
     - The panel closes.
     - Focus is back on Max Munk's **Background** cell.
   - **Notes:**
 
-- [ ] **Step 11.** Select **Metrics** above the table.
+- [ ] `8D6D` Select **Metrics** above the table.
   - **Expected:** The Metrics panel opens.
   - **Notes:**
 
-- [ ] **Step 12.** Select Max Munk's **Background** cell.
+- [ ] `45BF` Select Max Munk's **Background** cell.
   - **Expected:**
     - The panels keep their width as the note opens.
     - The note grows in above the Metrics panel, with Metrics moving smoothly to make room.
@@ -428,118 +428,118 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - Each panel is easy to read and scrolls on its own.
   - **Notes:**
 
-- [ ] **Step 13.** Drag the edge between the two panels up.
+- [ ] `070D` Drag the edge between the two panels up.
   - **Expected:**
     - The note gets shorter.
     - The Metrics panel gets taller.
   - **Notes:**
 
-- [ ] **Step 14.** Drag the edge between the two panels down.
+- [ ] `78BC` Drag the edge between the two panels down.
   - **Expected:**
     - The note gets taller.
     - The Metrics panel gets shorter.
   - **Notes:**
 
-- [ ] **Step 15.** Select the note's close button.
+- [ ] `FCFB` Select the note's close button.
   - **Expected:**
     - The note shrinks away as it closes, with Metrics moving smoothly to make room.
     - The panels keep their width.
   - **Notes:**
 
-- [ ] **Step 16.** Select Max Munk's **Background** cell again.
+- [ ] `902F` Select Max Munk's **Background** cell again.
   - **Expected:**
     - The note grows back as it opens, with Metrics moving smoothly to make room.
     - The panels keep their width.
   - **Notes:**
 
-- [ ] **Step 17.** Clear the search.
+- [ ] `0FC4` Clear the search.
   - **Expected:** The table shows every row again.
   - **Notes:**
 
-- [ ] **Step 18.** Select Lilian Lang's **Background** cell.
+- [ ] `9C64` Select Lilian Lang's **Background** cell.
   - **Expected:**
     - Lilian Lang's empty note replaces Max Munk's.
     - It is open in **Editor**.
   - **Notes:**
 
-- [ ] **Step 19.** Select the note's close button.
+- [ ] `3DF6` Select the note's close button.
   - **Expected:** The Metrics panel fills the height beside the table.
   - **Notes:**
 
-- [ ] **Step 20.** Select the Metrics panel's close button.
+- [ ] `56F7` Select the Metrics panel's close button.
   - **Expected:** The table fills the page.
   - **Notes:**
 
-- [ ] **Step 21.** Turn on reduced motion in the computer's accessibility settings.
+- [ ] `4F9A` Turn on reduced motion in the computer's accessibility settings.
   - **Expected:** Reduced motion is on in the accessibility settings.
   - **Notes:**
 
-- [ ] **Step 22.** Select Max Munk's **Background** cell.
+- [ ] `CFDC` Select Max Munk's **Background** cell.
   - **Expected:** The panel appears at once, without sliding.
   - **Notes:**
 
-- [ ] **Step 23.** Select the panel's close button.
+- [ ] `9B70` Select the panel's close button.
   - **Expected:** The panel goes at once, without sliding.
   - **Notes:**
 
-- [ ] **Step 24.** Turn reduced motion off again.
+- [ ] `A2F2` Turn reduced motion off again.
   - **Expected:** Reduced motion is off in the accessibility settings.
   - **Notes:**
 
-- [ ] **Step 25.** Make the browser window as narrow as a phone's screen.
+- [ ] `4C0E` Make the browser window as narrow as a phone's screen.
   - **Expected:** The People page fits the narrow window.
   - **Notes:**
 
-- [ ] **Step 26.** Select Max Munk's **Background** cell.
+- [ ] `A1C3` Select Max Munk's **Background** cell.
   - **Expected:** The panel covers the table.
   - **Notes:**
 
-- [ ] **Step 27.** Press Tab several times.
+- [ ] `E478` Press Tab several times.
   - **Expected:** Focus stays within the panel.
   - **Notes:**
 
-- [ ] **Step 28.** Select the panel's close button.
+- [ ] `93F8` Select the panel's close button.
   - **Expected:**
     - The panel closes.
     - The table shows.
   - **Notes:**
 
-- [ ] **Step 29.** Widen the window again.
+- [ ] `F789` Widen the window again.
   - **Expected:** The table fills the wider window.
   - **Notes:**
 
 ### NOTE-05: A Note Is Read, Approved, and Recorded
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from NOTE-04. Step 3 signs in as another account.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from NOTE-04. Step `5F1D` signs in as another account.
 
 **Preconditions:** Run after NOTE-04. Run Publish as the Workforce Administrator, then sign in with this account. **People** page open, with **Max Munk** searched for.
 
-- [ ] **Step 1.** Select Max Munk's **Background** cell.
+- [ ] `6A4B` Select Max Munk's **Background** cell.
   - **Expected:**
     - The panel shows the note as it reads.
     - It has a close button.
     - Nothing in it changes the note.
   - **Notes:**
 
-- [ ] **Step 2.** Press Esc.
+- [ ] `2BBD` Press Esc.
   - **Expected:** The panel closes.
   - **Notes:**
 
-- [ ] **Step 3.** Sign in as the Engineering Director, `engineering.director@fathom.test`.
+- [ ] `5F1D` Sign in as the Engineering Director, `engineering.director@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Director**.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **Drafts** page in the left-hand menu.
+- [ ] `726B` Select the **Drafts** page in the left-hand menu.
   - **Expected:**
     - Max Munk's draft shows the note's words without formatting.
     - The words read clearly.
   - **Notes:**
 
-- [ ] **Step 5.** Approve Max Munk's draft.
+- [ ] `760F` Approve Max Munk's draft.
   - **Expected:** A notice reads **Approved 1 draft.**
   - **Notes:**
 
-- [ ] **Step 6.** Select the **Change history** page in the left-hand menu.
+- [ ] `C26D` Select the **Change history** page in the left-hand menu.
   - **Expected:**
     - The history shows the note's words without formatting.
     - The words read clearly.

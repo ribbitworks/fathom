@@ -45,7 +45,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
-- [ ] **Step 1.** Read the column headers from left to right.
+- [ ] `C677` Read the column headers from left to right.
   - **Expected:** After **Manager**, in order:
     - **Manager?**
     - **Manager assigned**
@@ -53,7 +53,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Team name**
   - **Notes:**
 
-- [ ] **Step 2.** Search for **Max Munk**.
+- [ ] `693C` Search for **Max Munk**.
   - **Expected:**
     - The **Manager?** cell shows a checked box.
     - The **Team name** cell reads **Mobile team**.
@@ -65,25 +65,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As MGR-01.
 
-- [ ] **Step 1.** Search for **Samuel Richter**.
+- [ ] `B750` Search for **Samuel Richter**.
   - **Expected:** The **Samuel Richter** row is shown.
   - **Notes:**
 
-- [ ] **Step 2.** Select the row's **Manager** cell and press Enter.
+- [ ] `1B52` Select the row's **Manager** cell and press Enter.
   - **Expected:**
     - The Manager picker opens.
     - **Atmananda Ganaka** is chosen.
   - **Notes:**
 
-- [ ] **Step 3.** Type **Max**.
+- [ ] `D766` Type **Max**.
   - **Expected:** **Max Munk** is offered.
   - **Notes:**
 
-- [ ] **Step 4.** Clear the text typed, and type **Lilian**.
+- [ ] `69C3` Clear the text typed, and type **Lilian**.
   - **Expected:** **Lilian Lang** is not offered.
   - **Notes:**
 
-- [ ] **Step 5.** Press Esc.
+- [ ] `FC50` Press Esc.
   - **Expected:**
     - The picker closes.
     - The row's **Manager** cell still reads **Atmananda Ganaka**.
@@ -95,18 +95,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As MGR-01.
 
-- [ ] **Step 1.** Search for **Lilian Lang**.
+- [ ] `E308` Search for **Lilian Lang**.
   - **Expected:** The **Lilian Lang** row is shown.
   - **Notes:**
 
-- [ ] **Step 2.** Click once in the row's **Manager?** cell.
+- [ ] `9A02` Click once in the row's **Manager?** cell.
   - **Expected:**
     - The box is checked.
     - A hollow yellow dot is before it.
     - The cell turns yellow.
   - **Notes:**
 
-- [ ] **Step 3.** Select the Publish button.
+- [ ] `8A51` Select the Publish button.
   - **Expected:**
     - A notice reads **Published 4 changes.**
     - The Publish button is gone from the top bar.
@@ -114,51 +114,51 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### MGR-04: An Approved Check Makes Someone a Manager Who Can Be Picked
 
-**Account:** Engineering Director, `engineering.director@fathom.test`, changed from MGR-03. Step 5 signs in as another account.
+**Account:** Engineering Director, `engineering.director@fathom.test`, changed from MGR-03. Step `9D0D` signs in as another account.
 
 **Preconditions:** MGR-03 done. Signed in with this account. **Drafts** page open from the left-hand menu.
 
-- [ ] **Step 1.** Type **Lilian Lang** in the search box.
+- [ ] `DFCC` Type **Lilian Lang** in the search box.
   - **Expected:** One entry is shown: **Engineering Operations Manager drafted changes to Lilian Lang: Manager? from No to Yes**.
   - **Notes:**
 
-- [ ] **Step 2.** Select the entry's checkbox.
+- [ ] `C48D` Select the entry's checkbox.
   - **Expected:** The entry's checkbox is ticked.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Approve 1 draft**.
+- [ ] `EA2A` Select **Approve 1 draft**.
   - **Expected:**
     - A dialog headed **Approve 1 draft?** opens.
     - It has an **Approve** button.
   - **Notes:**
 
-- [ ] **Step 4.** In the dialog, select **Approve**.
+- [ ] `C4DA` In the dialog, select **Approve**.
   - **Expected:**
     - The dialog closes.
     - A notice reads **Approved 1 draft.**
   - **Notes:**
 
-- [ ] **Step 5.** Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
+- [ ] `9D0D` Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Operations Manager**.
   - **Notes:**
 
-- [ ] **Step 6.** Select the **People** page in the left-hand menu.
+- [ ] `4F3C` Select the **People** page in the left-hand menu.
   - **Expected:** The **People** page opens.
   - **Notes:**
 
-- [ ] **Step 7.** Search for **Samuel Richter**.
+- [ ] `CCA6` Search for **Samuel Richter**.
   - **Expected:** The **Samuel Richter** row is shown.
   - **Notes:**
 
-- [ ] **Step 8.** Select the row's **Manager** cell and press Enter.
+- [ ] `B7D4` Select the row's **Manager** cell and press Enter.
   - **Expected:** The Manager picker opens.
   - **Notes:**
 
-- [ ] **Step 9.** Type **Lilian**.
+- [ ] `B754` Type **Lilian**.
   - **Expected:** **Lilian Lang** is offered.
   - **Notes:**
 
-- [ ] **Step 10.** Press Esc.
+- [ ] `EE56` Press Esc.
   - **Expected:**
     - The picker closes.
     - The row's **Manager** cell still reads **Atmananda Ganaka**.
@@ -172,13 +172,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] **Step 1.** Search for **Max Munk**.
+- [ ] `588F` Search for **Max Munk**.
   - **Expected:**
     - The **Max Munk** row is shown.
     - Its **Manager?** box is checked.
   - **Notes:**
 
-- [ ] **Step 2.** Click once in the row's **Manager?** cell.
+- [ ] `61BE` Click once in the row's **Manager?** cell.
   - **Expected:**
     - A message reads **Reassign direct reports first**.
     - The box stays checked.
@@ -191,17 +191,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As MGR-05.
 
-- [ ] **Step 1.** Search for **Samuel Richter**.
+- [ ] `2CB4` Search for **Samuel Richter**.
   - **Expected:**
     - The **Manager** cell reads **Atmananda Ganaka**.
     - The **Team** cell reads **Payments team**.
   - **Notes:**
 
-- [ ] **Step 2.** Select the row's **Manager** cell and press Enter.
+- [ ] `7A36` Select the row's **Manager** cell and press Enter.
   - **Expected:** The Manager picker opens.
   - **Notes:**
 
-- [ ] **Step 3.** Type **Max**, and choose **Max Munk**.
+- [ ] `E6C7` Type **Max**, and choose **Max Munk**.
   - **Expected:**
     - The **Manager** cell reads **Max Munk**.
     - The **Manager** cell is yellow.
@@ -211,7 +211,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **Manager assigned** cell holds today's date.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **⋯** button at the end of the row, then **Discard draft**.
+- [ ] `15AF` Select the **⋯** button at the end of the row, then **Discard draft**.
   - **Expected:**
     - The **Manager** cell reads **Atmananda Ganaka** again.
     - The **Team** cell reads **Payments team**.
@@ -223,20 +223,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As MGR-05.
 
-- [ ] **Step 1.** Search for **Lorenza Thiel**.
+- [ ] `2FD7` Search for **Lorenza Thiel**.
   - **Expected:**
     - The **Lorenza Thiel** row is shown.
     - Its **Team name** cell is empty.
   - **Notes:**
 
-- [ ] **Step 2.** Select the row's **Team name** cell, type **Fictional Crew**, and press Enter.
+- [ ] `F4A6` Select the row's **Team name** cell, type **Fictional Crew**, and press Enter.
   - **Expected:**
     - The **Team name** cell reads **Fictional Crew**.
     - The **Team name** cell is yellow.
     - A hollow yellow dot is before **Fictional Crew**.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **⋯** button at the end of the row, then **Discard draft**.
+- [ ] `B0E1` Select the **⋯** button at the end of the row, then **Discard draft**.
   - **Expected:**
     - The **Team name** cell is empty.
     - The row has no dot.
@@ -248,7 +248,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As MGR-05.
 
-- [ ] **Step 1.** Search for **西尾 亮**.
+- [ ] `DED2` Search for **西尾 亮**.
   - **Expected:** In **西尾 亮**'s row, the **Manager** cell reads **Viktoria Holmberg**, followed by a red **Left** box.
   - **Notes:**
 
@@ -258,41 +258,41 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As MGR-05.
 
-- [ ] **Step 1.** Clear the search box.
+- [ ] `E1FC` Clear the search box.
   - **Expected:** The search box is empty.
   - **Notes:**
 
-- [ ] **Step 2.** Open the **Manager?** column menu, and select **Filter…**.
+- [ ] `E801` Open the **Manager?** column menu, and select **Filter…**.
   - **Expected:** **Yes** is among the choices.
   - **Notes:**
 
-- [ ] **Step 3.** Pick only **Yes**.
+- [ ] `BA22` Pick only **Yes**.
   - **Expected:** **Yes** is the only choice picked.
   - **Notes:**
 
-- [ ] **Step 4.** Press Esc.
+- [ ] `E230` Press Esc.
   - **Expected:**
     - Every row shown has a checked **Manager?** box.
     - **Max Munk** and **Viktoria Holmberg** are among them.
   - **Notes:**
 
-- [ ] **Step 5.** Open the **Manager?** column menu, and select **Filter…**.
+- [ ] `508F` Open the **Manager?** column menu, and select **Filter…**.
   - **Expected:** **Yes** is picked.
   - **Notes:**
 
-- [ ] **Step 6.** Clear **Yes**.
+- [ ] `C933` Clear **Yes**.
   - **Expected:** **Yes** is no longer picked.
   - **Notes:**
 
-- [ ] **Step 7.** Press Esc.
+- [ ] `977D` Press Esc.
   - **Expected:** The choices close.
   - **Notes:**
 
-- [ ] **Step 8.** Open the **Manager?** column menu.
+- [ ] `627C` Open the **Manager?** column menu.
   - **Expected:** The menu offers **Checked first** and **Unchecked first**.
   - **Notes:**
 
-- [ ] **Step 9.** Select **Checked first**.
+- [ ] `B0CB` Select **Checked first**.
   - **Expected:** The rows with a checked **Manager?** box come first.
   - **Notes:**
 
@@ -304,25 +304,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] **Step 1.** Read the column headers from left to right.
+- [ ] `3EDD` Read the column headers from left to right.
   - **Expected:**
     - **Manager**, **Manager?**, **Team** and **Team name** are shown.
     - **Manager assigned**, **Start** and **End** are not.
   - **Notes:**
 
-- [ ] **Step 2.** Search for **Max Munk**.
+- [ ] `4CED` Search for **Max Munk**.
   - **Expected:**
     - The **Max Munk** row is shown.
     - Its **Manager?** box is checked.
   - **Notes:**
 
-- [ ] **Step 3.** Click once in the row's **Manager?** cell.
+- [ ] `1BC1` Click once in the row's **Manager?** cell.
   - **Expected:**
     - The box stays checked.
     - The row has no dot.
   - **Notes:**
 
-- [ ] **Step 4.** Search for **西尾 亮**.
+- [ ] `C4C8` Search for **西尾 亮**.
   - **Expected:**
     - In **西尾 亮**'s row, the **Manager** cell reads **Viktoria Holmberg**.
     - The cell has no **Left** box.

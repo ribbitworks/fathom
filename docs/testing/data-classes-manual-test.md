@@ -38,11 +38,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 ### CLASS-01: The Data Classes Page Shows the Class of Everything
 
-**Account:** Engineering Director, `engineering.director@fathom.test`; the first test case. Step 7 signs in as another account.
+**Account:** Engineering Director, `engineering.director@fathom.test`; the first test case. Step `CA89` signs in as another account.
 
 **Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Select **Data classes** under **Administration** in the left-hand menu.
+- [ ] `DB3B` Select **Data classes** under **Administration** in the left-hand menu.
   - **Expected:**
     - Three sections follow the heading: **Built-in details**, **Columns** and **Lists**
     - Each section is a table with **Name**, **Class**, and a column saying what each row is about
@@ -51,7 +51,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - Only the third column wraps
   - **Notes:**
 
-- [ ] **Step 2.** Look at the **Built-in details** section.
+- [ ] `753A` Look at the **Built-in details** section.
   - **Expected:**
     - It lists **Start date**, **End date**, **Past managers**, **Feature team dates**, **Future reorganizations** and **Hiring plan**
     - **Start date**'s class is a grey box with a lock and **Personal**
@@ -60,7 +60,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **Hiring plan**'s **Needed by** is empty
   - **Notes:**
 
-- [ ] **Step 3.** Look at the **Columns** section.
+- [ ] `A726` Look at the **Columns** section.
   - **Expected:**
     - It lists People's added columns, such as **Site**
     - Each column's class reads **General**
@@ -68,74 +68,74 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **Site** has no **Change class…** button
   - **Notes:**
 
-- [ ] **Step 4.** Look at the **Lists** section.
+- [ ] `2A27` Look at the **Lists** section.
   - **Expected:**
     - It lists the lists, such as **Sites**
     - **Sites**' third column reads **Site**
     - Each list's row ends with a **Change class…** button
   - **Notes:**
 
-- [ ] **Step 5.** Choose **Dark** in the Appearance menu.
+- [ ] `66B5` Choose **Dark** in the Appearance menu.
   - **Expected:**
     - The page and the grey boxes are easy to read
     - Each lock lines up with its word
   - **Notes:**
 
-- [ ] **Step 6.** Choose **Light** in the Appearance menu.
+- [ ] `ABD7` Choose **Light** in the Appearance menu.
   - **Expected:** The page is light.
   - **Notes:**
 
-- [ ] **Step 7.** Sign out, and sign in as the Engineering Manager, `engineering.manager@fathom.test`.
+- [ ] `CA89` Sign out, and sign in as the Engineering Manager, `engineering.manager@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Manager**.
   - **Notes:**
 
-- [ ] **Step 8.** Look at the left-hand menu.
+- [ ] `7EC0` Look at the left-hand menu.
   - **Expected:** There is no **Data classes** item.
   - **Notes:**
 
 ### CLASS-02: Changing a Detail's Class Changes What Another Role Sees
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CLASS-01 ended with. Steps 1, 11 and 13 sign in as other accounts.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CLASS-01 ended with. Steps `035D`, `605E` and `17BB` sign in as other accounts.
 
 **Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
+- [ ] `035D` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Director**.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Data classes** under **Administration** in the left-hand menu.
+- [ ] `C38C` Select **Data classes** under **Administration** in the left-hand menu.
   - **Expected:** The three sections show.
   - **Notes:**
 
-- [ ] **Step 3.** Press Tab until **Change class…** on the **Start date** row has focus.
+- [ ] `AB5D` Press Tab until **Change class…** on the **Start date** row has focus.
   - **Expected:** A focus ring shows around that **Change class…**.
   - **Notes:**
 
-- [ ] **Step 4.** Press Enter.
+- [ ] `3A94` Press Enter.
   - **Expected:**
     - A dialog titled **Change the class of Start date** opens
     - **Personal** is chosen
     - **General**, **Personal** and **Confidential** each have a line saying what the class holds
   - **Notes:**
 
-- [ ] **Step 5.** Press Esc.
+- [ ] `87E5` Press Esc.
   - **Expected:**
     - The dialog closes
     - Focus is back on **Change class…** on the **Start date** row
     - The class is still **Personal**
   - **Notes:**
 
-- [ ] **Step 6.** Press Enter.
+- [ ] `05E5` Press Enter.
   - **Expected:**
     - The dialog opens again
     - **Personal** is chosen
   - **Notes:**
 
-- [ ] **Step 7.** Select **Confidential**.
+- [ ] `DDCB` Select **Confidential**.
   - **Expected:** **Confidential** is chosen.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Change**.
+- [ ] `C2A4` Select **Change**.
   - **Expected:**
     - The dialog closes
     - No notice shows
@@ -143,31 +143,31 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **Start date**'s class is a grey box with a lock and **Confidential**
   - **Notes:**
 
-- [ ] **Step 9.** Select **Change class…** on the **Start date** row.
+- [ ] `B18D` Select **Change class…** on the **Start date** row.
   - **Expected:**
     - The dialog opens
     - **Confidential** is chosen
   - **Notes:**
 
-- [ ] **Step 10.** Select **Change**.
+- [ ] `B86B` Select **Change**.
   - **Expected:**
     - The dialog closes
     - The class is still **Confidential**
   - **Notes:**
 
-- [ ] **Step 11.** Sign out, and sign in as the Engineering Manager, `engineering.manager@fathom.test`.
+- [ ] `605E` Sign out, and sign in as the Engineering Manager, `engineering.manager@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Manager**.
   - **Notes:**
 
-- [ ] **Step 12.** Select the **Org chart** page in the left-hand menu.
+- [ ] `C812` Select the **Org chart** page in the left-hand menu.
   - **Expected:** In place of the date row, a line reads **Other dates need Confidential access.**
   - **Notes:**
 
-- [ ] **Step 13.** Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
+- [ ] `17BB` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Director**.
   - **Notes:**
 
-- [ ] **Step 14.** Select the **Access history** page in the left-hand menu.
+- [ ] `8F30` Select the **Access history** page in the left-hand menu.
   - **Expected:**
     - The newest entry has a yellow dot before it
     - It says the Engineering Director moved **Start date from Personal to Confidential**
@@ -179,66 +179,66 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
-- [ ] **Step 1.** Select **New column**.
+- [ ] `8AC9` Select **New column**.
   - **Expected:** The **New column** dialog opens.
   - **Notes:**
 
-- [ ] **Step 2.** Type `Portfolio` in **Name**.
+- [ ] `668B` Type `Portfolio` in **Name**.
   - **Expected:** **Name** reads **Portfolio**.
   - **Notes:**
 
-- [ ] **Step 3.** Choose **Web link** in **Type**.
+- [ ] `394F` Choose **Web link** in **Type**.
   - **Expected:**
     - **Class** is shown
     - **General** is chosen
     - **Personal** and **Confidential** each have a line saying what the class holds
   - **Notes:**
 
-- [ ] **Step 4.** Select **Add column**.
+- [ ] `DC8C` Select **Add column**.
   - **Expected:**
     - The dialog closes
     - A **Portfolio** column is at the right end of the table
     - A hollow dot is before its name
   - **Notes:**
 
-- [ ] **Step 5.** Select the Publish button.
+- [ ] `71F0` Select the Publish button.
   - **Expected:** A notice reads **Published 1 change.**
   - **Notes:**
 
-- [ ] **Step 6.** Open the **Portfolio** column menu, and select **Approve…**.
+- [ ] `525B` Open the **Portfolio** column menu, and select **Approve…**.
   - **Expected:**
     - A dialog opens
     - It has an **Approve** button
   - **Notes:**
 
-- [ ] **Step 7.** Select **Approve**.
+- [ ] `4ED3` Select **Approve**.
   - **Expected:** A notice reads **Approved 1 draft.**
   - **Notes:**
 
-- [ ] **Step 8.** Open the **Portfolio** column menu, and select **Change class…**.
+- [ ] `F2C4` Open the **Portfolio** column menu, and select **Change class…**.
   - **Expected:**
     - A dialog titled **Change the class of Portfolio** opens
     - **General** is chosen
   - **Notes:**
 
-- [ ] **Step 9.** Select **Personal**.
+- [ ] `A291` Select **Personal**.
   - **Expected:** **Personal** is chosen.
   - **Notes:**
 
-- [ ] **Step 10.** Select **Change**.
+- [ ] `58D9` Select **Change**.
   - **Expected:**
     - The dialog closes
     - The **Portfolio** heading is followed by a grey box with a lock and **Personal**
     - The box lines up with the heading's text
   - **Notes:**
 
-- [ ] **Step 11.** Open the column menu of **Site**, which draws on a list.
+- [ ] `EAD1` Open the column menu of **Site**, which draws on a list.
   - **Expected:**
     - **Change class…** is greyed out
     - **Takes the class of its list** is under it
   - **Notes:**
 
-- [ ] **Step 12.** Select the **Data classes** page in the left-hand menu.
+- [ ] `D938` Select the **Data classes** page in the left-hand menu.
   - **Expected:** In the **Columns** section, **Portfolio**'s class is a grey box with a lock and **Personal**.
   - **Notes:**
 

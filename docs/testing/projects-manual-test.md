@@ -47,7 +47,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Restore the Seed Data run, then signed in with this account.
 
-- [ ] **Step 1.** Select the **Projects** page in the left-hand menu.
+- [ ] `D63F` Select the **Projects** page in the left-hand menu.
   - **Expected:**
     - The **Projects** page opens.
     - The **Projects** tab is chosen.
@@ -56,37 +56,37 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - There is no **New project** button.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **Proposals** tab.
+- [ ] `8FE4` Select the **Proposals** tab.
   - **Expected:**
     - A table shows **Name**, **Proposal ID**, **Link**, **Owner**, **Customers**, **Status** and **Features**.
     - The address bar changes.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Customers** tab.
+- [ ] `E116` Select the **Customers** tab.
   - **Expected:** A table with **Name**.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **Milestones** tab.
+- [ ] `A16F` Select the **Milestones** tab.
   - **Expected:** A table with **Name**, **Project**, **Date** and **Customer delivery**.
   - **Notes:**
 
-- [ ] **Step 5.** Select the browser's back button.
+- [ ] `ACE0` Select the browser's back button.
   - **Expected:** The **Customers** tab shows again.
   - **Notes:**
 
-- [ ] **Step 6.** Select the **Projects** tab.
+- [ ] `5FA4` Select the **Projects** tab.
   - **Expected:** The table of projects shows again.
   - **Notes:**
 
-- [ ] **Step 7.** On **Projects**, double-click the **Name** cell of any project.
+- [ ] `8D3E` On **Projects**, double-click the **Name** cell of any project.
   - **Expected:** Nothing changes: the cell does not open for editing.
   - **Notes:**
 
-- [ ] **Step 8.** Type a letter.
+- [ ] `5AA6` Type a letter.
   - **Expected:** Nothing changes.
   - **Notes:**
 
-- [ ] **Step 9.** Open the project's ⋯ menu and select **Show details**.
+- [ ] `FA04` Open the project's ⋯ menu and select **Show details**.
   - **Expected:**
     - The side panel opens, headed with the project's name.
     - It lists **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **First milestone**, **Last milestone** and **Next delivery**, then **Milestones** with each of the project's milestones and its date.
@@ -94,11 +94,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No milestone has a ⋯ button.
   - **Notes:**
 
-- [ ] **Step 10.** Select **Light** in the Appearance menu.
+- [ ] `C513` Select **Light** in the Appearance menu.
   - **Expected:** Text, marks and tabs on the page and side panel are easy to read.
   - **Notes:**
 
-- [ ] **Step 11.** Select **Dark** in the Appearance menu.
+- [ ] `2F1C` Select **Dark** in the Appearance menu.
   - **Expected:** Text, marks and tabs on the page and side panel are easy to read.
   - **Notes:**
 
@@ -108,50 +108,50 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Projects** page open.
 
-- [ ] **Step 1.** Select the **Customers** tab.
+- [ ] `DFAE` Select the **Customers** tab.
   - **Expected:** The table of customers shows.
   - **Notes:**
 
-- [ ] **Step 2.** Select **New customer** at the top right.
+- [ ] `7F45` Select **New customer** at the top right.
   - **Expected:**
     - The side panel opens, headed **New customer**.
     - It has a **Name** box.
     - **Cancel** and **Add** are at its foot.
   - **Notes:**
 
-- [ ] **Step 3.** Type `Discard me` in **Name**.
+- [ ] `990D` Type `Discard me` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Cancel**.
+- [ ] `AD18` Select **Cancel**.
   - **Expected:**
     - A dialog asks **Discard the new customer?**.
     - It has **Keep adding** and **Discard**.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Discard**.
+- [ ] `5A03` Select **Discard**.
   - **Expected:**
     - The dialog is gone.
     - The form is gone.
   - **Notes:**
 
-- [ ] **Step 6.** Select **New customer**.
+- [ ] `A3FD` Select **New customer**.
   - **Expected:**
     - The form opens again.
     - **Name** is empty.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Add** with **Name** empty.
+- [ ] `53AA` Select **Add** with **Name** empty.
   - **Expected:**
     - **Name needed** shows in red under **Name**.
     - The form stays open.
   - **Notes:**
 
-- [ ] **Step 8.** Type `Testing Customer` in **Name**.
+- [ ] `11B3` Type `Testing Customer` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] **Step 9.** Select **Add**.
+- [ ] `4BC5` Select **Add**.
   - **Expected:**
     - The side panel is now headed **Testing Customer**.
     - A hollow yellow dot is before the heading.
@@ -165,37 +165,37 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. Run after PROJ-02.
 
-- [ ] **Step 1.** Select the **Proposals** tab.
+- [ ] `A477` Select the **Proposals** tab.
   - **Expected:** The table of proposals shows.
   - **Notes:**
 
-- [ ] **Step 2.** Select **New proposal**.
+- [ ] `8B61` Select **New proposal**.
   - **Expected:**
     - The side panel opens, headed **New proposal**.
     - It has **Name**, **Proposal ID**, **Link**, **Owner**, **Customers**, **Status** and **Features**.
     - **Status** already reads **Open**.
   - **Notes:**
 
-- [ ] **Step 3.** Type `Testing Proposal` in **Name**.
+- [ ] `84A9` Type `Testing Proposal` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Add**.
+- [ ] `880E` Select **Add**.
   - **Expected:**
     - The side panel is headed **Testing Proposal**.
     - A hollow yellow dot is before the heading.
     - **Status** reads **Open**.
   - **Notes:**
 
-- [ ] **Step 5.** In the table, select the **Status** cell of **Testing Proposal**.
+- [ ] `0B36` In the table, select the **Status** cell of **Testing Proposal**.
   - **Expected:** The cell is outlined.
   - **Notes:**
 
-- [ ] **Step 6.** Press Enter.
+- [ ] `DDC9` Press Enter.
   - **Expected:** The list of statuses opens.
   - **Notes:**
 
-- [ ] **Step 7.** Type `Won` and press Enter.
+- [ ] `C24D` Type `Won` and press Enter.
   - **Expected:**
     - The cell reads **Won**.
     - The row's slot still has its hollow yellow dot.
@@ -209,37 +209,37 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. Run after PROJ-03.
 
-- [ ] **Step 1.** Select the **Projects** tab.
+- [ ] `C43B` Select the **Projects** tab.
   - **Expected:** The table of projects shows.
   - **Notes:**
 
-- [ ] **Step 2.** Select **New project**.
+- [ ] `7B51` Select **New project**.
   - **Expected:**
     - The side panel opens, headed **New project**.
     - It has **Name**, **Project ID**, **Owner**, **Customers**, **Proposals** and **Features**.
   - **Notes:**
 
-- [ ] **Step 3.** Type `Testing Project` in **Name**.
+- [ ] `CFC3` Type `Testing Project` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] **Step 4.** Type `TP-1` in **Project ID**.
+- [ ] `FA46` Type `TP-1` in **Project ID**.
   - **Expected:** **Project ID** shows what was typed.
   - **Notes:**
 
-- [ ] **Step 5.** Select the pencil button in the **Owner** row, and pick any person, and write the name in the notes.
+- [ ] `F9B9` Select the pencil button in the **Owner** row, and pick any person, and write the name in the notes.
   - **Expected:** **Owner** shows the name picked.
   - **Notes:**
 
-- [ ] **Step 6.** Select the pencil button in the **Customers** row, and pick **Testing Customer**.
+- [ ] `10A4` Select the pencil button in the **Customers** row, and pick **Testing Customer**.
   - **Expected:** **Customers** shows **Testing Customer**.
   - **Notes:**
 
-- [ ] **Step 7.** Select the pencil button in the **Proposals** row, and pick **Testing Proposal**.
+- [ ] `28B5` Select the pencil button in the **Proposals** row, and pick **Testing Proposal**.
   - **Expected:** **Proposals** shows **Testing Proposal**.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Add**.
+- [ ] `82C4` Select **Add**.
   - **Expected:**
     - The side panel is headed **Testing Project**.
     - A hollow yellow dot is before the heading.
@@ -249,43 +249,43 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The table has a row for it.
   - **Notes:**
 
-- [ ] **Step 9.** In the side panel, select **Testing Customer**.
+- [ ] `9CDA` In the side panel, select **Testing Customer**.
   - **Expected:**
     - The **Customers** tab opens.
     - **Testing Customer**'s side panel shows.
   - **Notes:**
 
-- [ ] **Step 10.** Select the browser's back button.
+- [ ] `A2B3` Select the browser's back button.
   - **Expected:** **Testing Project**'s side panel shows again.
   - **Notes:**
 
-- [ ] **Step 11.** In the side panel, select **Testing Proposal**.
+- [ ] `C344` In the side panel, select **Testing Proposal**.
   - **Expected:**
     - The **Proposals** tab opens.
     - **Testing Proposal**'s side panel shows.
   - **Notes:**
 
-- [ ] **Step 12.** Select the browser's back button.
+- [ ] `469B` Select the browser's back button.
   - **Expected:** **Testing Project**'s side panel shows again.
   - **Notes:**
 
-- [ ] **Step 13.** Select **Add milestone**.
+- [ ] `C4CE` Select **Add milestone**.
   - **Expected:** A dialog titled **New milestone** opens.
   - **Notes:**
 
-- [ ] **Step 14.** Type `Pilot` in **Name**.
+- [ ] `FE60` Type `Pilot` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] **Step 15.** Type `20300315` in **Date**.
+- [ ] `15B1` Type `20300315` in **Date**.
   - **Expected:** **Date** reads 2030-03-15.
   - **Notes:**
 
-- [ ] **Step 16.** Tick **Customer delivery**.
+- [ ] `3C91` Tick **Customer delivery**.
   - **Expected:** The box is ticked.
   - **Notes:**
 
-- [ ] **Step 17.** Select **Add milestone** in the dialog.
+- [ ] `F1AB` Select **Add milestone** in the dialog.
   - **Expected:**
     - The dialog closes.
     - Under **Milestones**, **Pilot** shows on one line.
@@ -294,19 +294,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **⋯** button is at the right of the panel.
   - **Notes:**
 
-- [ ] **Step 18.** Select **Add milestone**.
+- [ ] `20EA` Select **Add milestone**.
   - **Expected:** A dialog titled **New milestone** opens.
   - **Notes:**
 
-- [ ] **Step 19.** Type `Go live` in **Name**.
+- [ ] `FE19` Type `Go live` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] **Step 20.** Type `20300630` in **Date**.
+- [ ] `2E32` Type `20300630` in **Date**.
   - **Expected:** **Date** reads 2030-06-30.
   - **Notes:**
 
-- [ ] **Step 21.** Select **Add milestone** in the dialog, leaving **Customer delivery** unticked.
+- [ ] `2ED8` Select **Add milestone** in the dialog, leaving **Customer delivery** unticked.
   - **Expected:**
     - **Go live** is listed after **Pilot**.
     - In the panel, **First milestone** shows 2030-03-15.
@@ -315,7 +315,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The table's row for **Testing Project** shows **First milestone** 2030-03-15, **Last milestone** 2030-06-30 and **Next delivery** 2030-03-15.
   - **Notes:**
 
-- [ ] **Step 22.** Run Publish.
+- [ ] `65A1` Run Publish.
   - **Expected:** The dots before the customer, proposal, project and both milestones are now solid yellow.
   - **Notes:**
 
@@ -325,18 +325,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. Run after PROJ-04. **Projects** tab open.
 
-- [ ] **Step 1.** Select the **Milestones** tab.
+- [ ] `66E9` Select the **Milestones** tab.
   - **Expected:**
     - Every project's milestones are listed, among them **Pilot** and **Go live**.
     - **Pilot** and **Go live** each have **Testing Project** under **Project**, after **TP-1** in grey.
     - **Pilot**'s **Customer delivery** box is ticked.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **Projects** tab.
+- [ ] `FD18` Select the **Projects** tab.
   - **Expected:** The table of projects shows.
   - **Notes:**
 
-- [ ] **Step 3.** In the ⋯ menu of **Testing Project**, select **Show milestones**.
+- [ ] `47EF` In the ⋯ menu of **Testing Project**, select **Show milestones**.
   - **Expected:**
     - The **Milestones** tab opens.
     - It shows only **Pilot** and **Go live**.
@@ -344,32 +344,32 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Beside the pill, **2 of** is followed by the number of all milestones.
   - **Notes:**
 
-- [ ] **Step 4.** Select **New milestone**.
+- [ ] `10CE` Select **New milestone**.
   - **Expected:**
     - The side panel opens, headed **New milestone**.
     - **Project** already reads **TP-1 Testing Project**.
   - **Notes:**
 
-- [ ] **Step 5.** Type `Sign-off` in **Name**.
+- [ ] `03D0` Type `Sign-off` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] **Step 6.** Type `20300901` in **Date**.
+- [ ] `101B` Type `20300901` in **Date**.
   - **Expected:** **Date** reads 2030-09-01 as it is typed.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Add**.
+- [ ] `37E1` Select **Add**.
   - **Expected:**
     - The side panel closes.
     - **Sign-off** is added.
     - It has a hollow yellow dot in its slot.
   - **Notes:**
 
-- [ ] **Step 8.** Select the **×** on the **Project: TP-1 Testing Project** pill.
+- [ ] `456E` Select the **×** on the **Project: TP-1 Testing Project** pill.
   - **Expected:** Every project's milestones show again.
   - **Notes:**
 
-- [ ] **Step 9.** In the ⋯ menu of **Sign-off**, select **Show project**.
+- [ ] `2DD8` In the ⋯ menu of **Sign-off**, select **Show project**.
   - **Expected:**
     - The **Projects** tab opens.
     - **Testing Project**'s side panel shows.
@@ -377,7 +377,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Sign-off** is listed after **Go live**.
   - **Notes:**
 
-- [ ] **Step 10.** Run Publish.
+- [ ] `BA19` Run Publish.
   - **Expected:** **Sign-off**'s dot is now solid yellow.
   - **Notes:**
 
@@ -387,11 +387,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. Run after PROJ-05.
 
-- [ ] **Step 1.** Select the **Drafts** page in the left-hand menu.
+- [ ] `725A` Select the **Drafts** page in the left-hand menu.
   - **Expected:** The **Drafts** page opens.
   - **Notes:**
 
-- [ ] **Step 2.** Type `Testing` in the search box.
+- [ ] `36AF` Type `Testing` in the search box.
   - **Expected:**
     - There is an entry for each of these:
       - **the customer Testing Customer**
@@ -402,69 +402,69 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Each entry has a box to select it.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Projects** page in the left-hand menu.
+- [ ] `318B` Select the **Projects** page in the left-hand menu.
   - **Expected:** The **Projects** page opens on the **Projects** tab.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **Customers** tab.
+- [ ] `B5D5` Select the **Customers** tab.
   - **Expected:** The table of customers shows.
   - **Notes:**
 
-- [ ] **Step 5.** In the ⋯ menu of **Testing Customer**, select **Approve draft**.
+- [ ] `FAB6` In the ⋯ menu of **Testing Customer**, select **Approve draft**.
   - **Expected:** A dialog asks **Approve 1 draft?**.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Approve** in the dialog.
+- [ ] `0E73` Select **Approve** in the dialog.
   - **Expected:**
     - The dot goes.
     - **Testing Customer** is live.
   - **Notes:**
 
-- [ ] **Step 7.** Select the **Projects** tab.
+- [ ] `46BD` Select the **Projects** tab.
   - **Expected:** The table of projects shows.
   - **Notes:**
 
-- [ ] **Step 8.** Select the Draft menu.
+- [ ] `FB16` Select the Draft menu.
   - **Expected:**
     - The menu opens.
     - It has **Approve** and the number of waiting drafts, such as **Approve 6 drafts…**.
   - **Notes:**
 
-- [ ] **Step 9.** Select **Approve** with the number of waiting drafts shown.
+- [ ] `F680` Select **Approve** with the number of waiting drafts shown.
   - **Expected:**
     - A dialog says how many drafts it approves.
     - Under **Also approves the drafts these depend on:**, it lists **the proposal Testing Proposal**.
   - **Notes:**
 
-- [ ] **Step 10.** Select **Approve** in the dialog.
+- [ ] `C59C` Select **Approve** in the dialog.
   - **Expected:** **Testing Project** has no dot.
   - **Notes:**
 
-- [ ] **Step 11.** Open **Show details** of **Testing Project**.
+- [ ] `E300` Open **Show details** of **Testing Project**.
   - **Expected:**
     - The side panel shows **Pilot**, **Go live** and **Sign-off** under **Milestones**.
     - Each still has a yellow dot before it.
   - **Notes:**
 
-- [ ] **Step 12.** Select the **Milestones** tab.
+- [ ] `A4F0` Select the **Milestones** tab.
   - **Expected:** The table of milestones shows.
   - **Notes:**
 
-- [ ] **Step 13.** Select the Draft menu.
+- [ ] `2AF6` Select the Draft menu.
   - **Expected:**
     - The menu opens.
     - It has **Approve** and the number of waiting drafts.
   - **Notes:**
 
-- [ ] **Step 14.** Select **Approve** with the number of waiting drafts shown.
+- [ ] `51A8` Select **Approve** with the number of waiting drafts shown.
   - **Expected:** A dialog says how many drafts it approves.
   - **Notes:**
 
-- [ ] **Step 15.** Select **Approve** in the dialog.
+- [ ] `C9D6` Select **Approve** in the dialog.
   - **Expected:** **Pilot**, **Go live** and **Sign-off** have no dots.
   - **Notes:**
 
-- [ ] **Step 16.** Select the **Projects** tab.
+- [ ] `8EC1` Select the **Projects** tab.
   - **Expected:** **Testing Project** shows **Last milestone** 2030-09-01.
   - **Notes:**
 
@@ -474,21 +474,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. Run after PROJ-06. **Projects** tab open.
 
-- [ ] **Step 1.** Open **Show details** of **Testing Project**.
+- [ ] `6DF6` Open **Show details** of **Testing Project**.
   - **Expected:**
     - The side panel shows **Testing Project**.
     - **Sign-off** is under **Milestones**.
   - **Notes:**
 
-- [ ] **Step 2.** In the ⋯ menu of **Sign-off**, select **Edit…**.
+- [ ] `A100` In the ⋯ menu of **Sign-off**, select **Edit…**.
   - **Expected:** The **Edit milestone** dialog opens.
   - **Notes:**
 
-- [ ] **Step 3.** Change **Date** to `20301015`.
+- [ ] `324D` Change **Date** to `20301015`.
   - **Expected:** **Date** reads 2030-10-15.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Save**.
+- [ ] `9BE4` Select **Save**.
   - **Expected:**
     - **Sign-off**'s new date has a hollow yellow dot before it.
     - **Last milestone** shows 2030-10-15.
@@ -497,25 +497,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A green dot is before 2030-09-01.
   - **Notes:**
 
-- [ ] **Step 5.** Close the side panel.
+- [ ] `D29C` Close the side panel.
   - **Expected:** Focus returns to **Testing Project**'s **Name** cell.
   - **Notes:**
 
-- [ ] **Step 6.** In the ⋯ menu of **Testing Project**, select **Remove project**.
+- [ ] `D9DC` In the ⋯ menu of **Testing Project**, select **Remove project**.
   - **Expected:**
     - A hollow yellow dot is in **Testing Project**'s slot.
     - The row is struck through.
     - Its cells no longer open for editing.
   - **Notes:**
 
-- [ ] **Step 7.** Open the ⋯ menu of **Testing Project** again.
+- [ ] `7BA7` Open the ⋯ menu of **Testing Project** again.
   - **Expected:**
     - The menu offers **Discard draft**.
     - It has no **Remove project**.
     - Its cells do not open for editing.
   - **Notes:**
 
-- [ ] **Step 8.** Run Publish.
+- [ ] `2F36` Run Publish.
   - **Expected:** The hollow dots are now solid yellow.
   - **Notes:**
 
@@ -525,21 +525,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. Run after PROJ-07. **Projects** tab open.
 
-- [ ] **Step 1.** Open the ⋯ menu of **Testing Project** and select **Approve draft**.
+- [ ] `3D0B` Open the ⋯ menu of **Testing Project** and select **Approve draft**.
   - **Expected:**
     - The dialog names the removal of **the project Testing Project**.
     - As drafts it includes, it names the removal of each of its milestones.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Approve** in the dialog.
+- [ ] `240C` Select **Approve** in the dialog.
   - **Expected:** The dialog closes.
   - **Notes:**
 
-- [ ] **Step 3.** On **Projects**, look for **Testing Project**.
+- [ ] `DC38` On **Projects**, look for **Testing Project**.
   - **Expected:** It is not listed any more.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **Milestones** tab, and look for **Pilot**, **Go live** and **Sign-off**.
+- [ ] `966F` Select the **Milestones** tab, and look for **Pilot**, **Go live** and **Sign-off**.
   - **Expected:** None of them is listed any more.
   - **Notes:**
 
@@ -549,34 +549,34 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Projects** page open, **Milestones** tab chosen.
 
-- [ ] **Step 1.** Select the **Name** cell of the empty row at the end of the table.
+- [ ] `D192` Select the **Name** cell of the empty row at the end of the table.
   - **Expected:** The cell is outlined.
   - **Notes:**
 
-- [ ] **Step 2.** Type `Keyboard` and press Tab.
+- [ ] `98CE` Type `Keyboard` and press Tab.
   - **Expected:** The **Project** cell opens for typing.
   - **Notes:**
 
-- [ ] **Step 3.** Press Tab.
+- [ ] `0BF7` Press Tab.
   - **Expected:** The **Date** cell opens for typing.
   - **Notes:**
 
-- [ ] **Step 4.** Type `20300501`.
+- [ ] `88A7` Type `20300501`.
   - **Expected:** The cell reads 2030-05-01 as it is typed.
   - **Notes:**
 
-- [ ] **Step 5.** Press Tab.
+- [ ] `FB99` Press Tab.
   - **Expected:**
     - Focus moves to **Customer delivery**.
     - Its box stays unticked.
     - The **Date** cell shows the date.
   - **Notes:**
 
-- [ ] **Step 6.** Press Shift+F10.
+- [ ] `7CAB` Press Shift+F10.
   - **Expected:** The row's menu opens.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Clear row**.
+- [ ] `6B3F` Select **Clear row**.
   - **Expected:** The row is empty again.
   - **Notes:**
 
@@ -586,22 +586,22 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Projects** page open, **Proposals** tab chosen.
 
-- [ ] **Step 1.** In the row **Harbour Cranes Upgrade**, open the row's ⋯ menu and select **Show details**.
+- [ ] `77F4` In the row **Harbour Cranes Upgrade**, open the row's ⋯ menu and select **Show details**.
   - **Expected:**
     - The side panel opens, headed **Harbour Cranes Upgrade**.
     - Its first row is **Name**.
     - Each row has a small pencil button at its right.
   - **Notes:**
 
-- [ ] **Step 2.** Select the pencil beside **Proposal ID**.
+- [ ] `CC32` Select the pencil beside **Proposal ID**.
   - **Expected:** A box opens for **Proposal ID**.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **×** at the end of the box, if it holds anything.
+- [ ] `3B84` Select the **×** at the end of the box, if it holds anything.
   - **Expected:** The box is empty.
   - **Notes:**
 
-- [ ] **Step 4.** Type `PRO-9000` and press Enter.
+- [ ] `C8EB` Type `PRO-9000` and press Enter.
   - **Expected:**
     - **Proposal ID** shows `PRO-9000`.
     - A hollow yellow dot is before `PRO-9000`.
@@ -610,33 +610,33 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The proposal's row in the table shows `PRO-9000` too.
   - **Notes:**
 
-- [ ] **Step 5.** Select the pencil beside **Owner**, and choose a name from the list.
+- [ ] `DCAF` Select the pencil beside **Owner**, and choose a name from the list.
   - **Expected:**
     - **Owner** shows the name chosen.
     - The list is gone.
   - **Notes:**
 
-- [ ] **Step 6.** Select the pencil beside **Name**.
+- [ ] `D927` Select the pencil beside **Name**.
   - **Expected:**
     - A box opens for **Name**.
     - It holds the proposal's name.
   - **Notes:**
 
-- [ ] **Step 7.** Empty the box and press Enter.
+- [ ] `71CB` Empty the box and press Enter.
   - **Expected:**
     - The box stays open.
     - It is outlined in red.
     - **Name needed** shows in red under it.
   - **Notes:**
 
-- [ ] **Step 8.** Press Esc.
+- [ ] `C941` Press Esc.
   - **Expected:**
     - The box is gone.
     - **Name** shows **Harbour Cranes Upgrade**.
     - Focus is on the pencil beside **Name**.
   - **Notes:**
 
-- [ ] **Step 9.** Open the **Draft** menu and select **Live only**.
+- [ ] `BD45` Open the **Draft** menu and select **Live only**.
   - **Expected:**
     - The panel shows no pencil buttons.
     - **Proposal ID** shows **PR-101**.
@@ -648,37 +648,37 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. Restore the Seed Data run. **Projects** page open, **Projects** tab chosen.
 
-- [ ] **Step 1.** Look at the **Features** column.
+- [ ] `71C1` Look at the **Features** column.
   - **Expected:** Each project names the features it needs, separated by commas.
   - **Notes:**
 
-- [ ] **Step 2.** Point at a **Features** cell that names two features.
+- [ ] `D3DD` Point at a **Features** cell that names two features.
   - **Expected:** A tip lists the project's features, each on a line of its own.
   - **Notes:**
 
-- [ ] **Step 3.** Open **Show details** of the same project.
+- [ ] `56B3` Open **Show details** of the same project.
   - **Expected:**
     - The side panel lists the project's features under **Features**.
     - Each is a link on a line of its own.
   - **Notes:**
 
-- [ ] **Step 4.** Select the first feature under **Features**.
+- [ ] `AB8D` Select the first feature under **Features**.
   - **Expected:**
     - The **Features** page opens.
     - That feature's side panel is beside the table.
   - **Notes:**
 
-- [ ] **Step 5.** Select the browser's back button.
+- [ ] `3C89` Select the browser's back button.
   - **Expected:**
     - The **Projects** page shows.
     - The project's side panel shows.
   - **Notes:**
 
-- [ ] **Step 6.** Select the **Proposals** tab.
+- [ ] `F63A` Select the **Proposals** tab.
   - **Expected:** The **Features** column names each proposal's features, separated by commas.
   - **Notes:**
 
-- [ ] **Step 7.** Point at a **Features** cell that names two features.
+- [ ] `E237` Point at a **Features** cell that names two features.
   - **Expected:** A tip lists the proposal's features, each on a line of its own.
   - **Notes:**
 
@@ -688,22 +688,22 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. Run after PROJ-11. **Projects** page open, **Projects** tab chosen.
 
-- [ ] **Step 1.** Select the **Features** cell of **Internal Tools**.
+- [ ] `A956` Select the **Features** cell of **Internal Tools**.
   - **Expected:** The cell is outlined.
   - **Notes:**
 
-- [ ] **Step 2.** Press Enter.
+- [ ] `26D7` Press Enter.
   - **Expected:**
     - A list of features opens.
     - It has a search box.
     - **Usage Alerts** is marked as picked.
   - **Notes:**
 
-- [ ] **Step 3.** Pick one more feature from the list.
+- [ ] `FDBE` Pick one more feature from the list.
   - **Expected:** The feature is marked as picked.
   - **Notes:**
 
-- [ ] **Step 4.** Press Esc.
+- [ ] `1B41` Press Esc.
   - **Expected:**
     - The list closes.
     - The cell names both features.

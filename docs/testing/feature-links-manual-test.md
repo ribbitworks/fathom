@@ -42,7 +42,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Features** page open.
 
-- [ ] **Step 1.** Find the row **Offline Sync**, and look at its **Projects** cell.
+- [ ] `6F72` Find the row **Offline Sync**, and look at its **Projects** cell.
   - **Expected:**
     - It names **Clinic Booking Rollout** first.
     - No ID is before **Clinic Booking Rollout**.
@@ -51,7 +51,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A comma separates the two.
   - **Notes:**
 
-- [ ] **Step 2.** Look at the **Proposals** cell of **Offline Sync**.
+- [ ] `92BE` Look at the **Proposals** cell of **Offline Sync**.
   - **Expected:**
     - It names **Clinic Scheduling Pilot** first.
     - **PR-102** is in grey before **Clinic Scheduling Pilot**.
@@ -59,25 +59,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **PR-101** is in grey before **Harbour Cranes Upgrade**.
   - **Notes:**
 
-- [ ] **Step 3.** Point at the **Projects** cell of **Offline Sync**.
+- [ ] `5A96` Point at the **Projects** cell of **Offline Sync**.
   - **Expected:** A tip lists **Clinic Booking Rollout** and **P-2001 Crane Control**, each on a line of its own.
   - **Notes:**
 
-- [ ] **Step 4.** Choose **Dark** in the Appearance menu.
+- [ ] `E2F6` Choose **Dark** in the Appearance menu.
   - **Expected:** The page turns dark.
   - **Notes:**
 
-- [ ] **Step 5.** Look at the **Projects** and **Proposals** cells of **Offline Sync**.
+- [ ] `F82F` Look at the **Projects** and **Proposals** cells of **Offline Sync**.
   - **Expected:**
     - The grey IDs are easy to read.
     - They are clearly lighter than the names.
   - **Notes:**
 
-- [ ] **Step 6.** Choose **Light** in the Appearance menu.
+- [ ] `3B78` Choose **Light** in the Appearance menu.
   - **Expected:** The page is light.
   - **Notes:**
 
-- [ ] **Step 7.** Look at the **Projects** and **Proposals** cells of **Offline Sync**.
+- [ ] `E3B8` Look at the **Projects** and **Proposals** cells of **Offline Sync**.
   - **Expected:**
     - The grey IDs are easy to read.
     - They are clearly lighter than the names.
@@ -89,7 +89,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Features** page open.
 
-- [ ] **Step 1.** Select **Show details** in the **⋯** menu of **Offline Sync**.
+- [ ] `412D` Select **Show details** in the **⋯** menu of **Offline Sync**.
   - **Expected:**
     - The side panel lists **Clinic Booking Rollout** and **Crane Control** under **Projects**.
     - It lists **Clinic Scheduling Pilot** and **Harbour Cranes Upgrade** under **Proposals**.
@@ -97,7 +97,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Each name has its ID in grey before it, where it has one.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Crane Control** under **Projects**.
+- [ ] `FD1E` Select **Crane Control** under **Projects**.
   - **Expected:**
     - The page is still titled **Features**.
     - The table of features is in view.
@@ -115,21 +115,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - Milestones
   - **Notes:**
 
-- [ ] **Step 3.** Select **Audit Export** under **Features** in the side panel.
+- [ ] `FD3D` Select **Audit Export** under **Features** in the side panel.
   - **Expected:**
     - The page is still **Features**.
     - The side panel is headed **Audit Export**.
   - **Notes:**
 
-- [ ] **Step 4.** Select the browser's back button.
+- [ ] `6A45` Select the browser's back button.
   - **Expected:** The side panel shows **Crane Control** again.
   - **Notes:**
 
-- [ ] **Step 5.** Select the browser's back button again.
+- [ ] `CDEC` Select the browser's back button again.
   - **Expected:** The side panel shows **Offline Sync** again.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Harbour Cranes Upgrade** under **Proposals**.
+- [ ] `B2E4` Select **Harbour Cranes Upgrade** under **Proposals**.
   - **Expected:**
     - The page is still **Features**.
     - The side panel is headed **Harbour Cranes Upgrade**.
@@ -143,7 +143,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - Features
   - **Notes:**
 
-- [ ] **Step 7.** Close the side panel.
+- [ ] `32BC` Close the side panel.
   - **Expected:**
     - The panel closes.
     - The table fills the page.
@@ -155,7 +155,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Features** page open.
 
-- [ ] **Step 1.** Select the **Projects** cell of **Bulk Import**, and press Enter.
+- [ ] `220E` Select the **Projects** cell of **Bulk Import**, and press Enter.
   - **Expected:**
     - A list of projects opens.
     - It has a search box.
@@ -163,29 +163,29 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - None is picked.
   - **Notes:**
 
-- [ ] **Step 2.** Pick **Internal Tools**, and press Enter.
+- [ ] `34B4` Pick **Internal Tools**, and press Enter.
   - **Expected:**
     - The list closes.
     - The cell names **Internal Tools**.
     - **Bulk Import** has no dot.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Projects** page in the left-hand menu.
+- [ ] `59FB` Select the **Projects** page in the left-hand menu.
   - **Expected:** In the row **Internal Tools**:
     - Its **Features** cell names **Bulk Import** and **Usage Alerts**.
     - A hollow yellow dot is before them.
     - The light green Live row under it names **Usage Alerts** alone in its **Features** cell.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **Features** page in the left-hand menu.
+- [ ] `A6DC` Select the **Features** page in the left-hand menu.
   - **Expected:** The page is titled **Features**.
   - **Notes:**
 
-- [ ] **Step 5.** Select **New feature**.
+- [ ] `66AE` Select **New feature**.
   - **Expected:** The **New feature** panel has no **Projects** or **Proposals** row.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Cancel** in the **New feature** panel.
+- [ ] `2D1E` Select **Cancel** in the **New feature** panel.
   - **Expected:** The panel closes.
   - **Notes:**
 
@@ -197,49 +197,49 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Restore the Seed Data run after LINK-03. **Projects** page open, **Projects** tab chosen.
 
-- [ ] **Step 1.** In the **⋯** menu of **Crane Control**, select **Show features**.
+- [ ] `865B` In the **⋯** menu of **Crane Control**, select **Show features**.
   - **Expected:**
     - The **Features** page opens.
     - Only **Audit Export** and **Offline Sync** show.
     - A pill above the table reads **Projects: P-2001 Crane Control**.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **×** on the pill.
+- [ ] `A3F9` Select the **×** on the pill.
   - **Expected:** Every feature shows again.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Projects** page in the left-hand menu.
+- [ ] `DFE4` Select the **Projects** page in the left-hand menu.
   - **Expected:** The **Projects** page opens.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **Proposals** tab.
+- [ ] `E48B` Select the **Proposals** tab.
   - **Expected:**
     - The table lists proposals.
     - **Ore Sorting Study** is among them.
   - **Notes:**
 
-- [ ] **Step 5.** In the **⋯** menu of **Ore Sorting Study**, select **Show features**.
+- [ ] `E2BD` In the **⋯** menu of **Ore Sorting Study**, select **Show features**.
   - **Expected:**
     - The **Features** page opens.
     - Only **Partner Portal** shows.
     - A pill reads **Proposals: Ore Sorting Study**.
   - **Notes:**
 
-- [ ] **Step 6.** Select the **×** on the pill.
+- [ ] `64B8` Select the **×** on the pill.
   - **Expected:** Every feature shows again.
   - **Notes:**
 
-- [ ] **Step 7.** Open the column menu of **Proposals**, and select **Filter…**.
+- [ ] `D6F7` Open the column menu of **Proposals**, and select **Filter…**.
   - **Expected:**
     - A list of the proposals opens.
     - Each is named by its ID, where it has one, then its name.
   - **Notes:**
 
-- [ ] **Step 8.** Select **PR-097 Fleet Tracking Bid**.
+- [ ] `471B` Select **PR-097 Fleet Tracking Bid**.
   - **Expected:** **PR-097 Fleet Tracking Bid** is picked.
   - **Notes:**
 
-- [ ] **Step 9.** Press Esc.
+- [ ] `A59D` Press Esc.
   - **Expected:**
     - Only **Data Retention Controls** and **Partner Portal** show.
     - A pill reads **Proposals: PR-097 Fleet Tracking Bid**.
@@ -251,11 +251,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Features** page open.
 
-- [ ] **Step 1.** Select the **Projects** cell of **Bulk Import**, and press Enter.
+- [ ] `49BB` Select the **Projects** cell of **Bulk Import**, and press Enter.
   - **Expected:** No list opens.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Show details** in the **⋯** menu of **Offline Sync**.
+- [ ] `A1E8` Select **Show details** in the **⋯** menu of **Offline Sync**.
   - **Expected:**
     - The side panel shows no pencil button beside **Projects** or **Proposals**.
     - It shows one beside **Name**.

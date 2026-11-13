@@ -68,15 +68,15 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 ### ACCT-01: Only Those Who May Manage Accounts See the Accounts Page
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case. Step 2 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case. Step `E144` signs in as another account.
 
 **Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Look at the left-hand menu.
+- [ ] `1B9E` Look at the left-hand menu.
   - **Expected:** There is no **Administration** section and no **Accounts** page.
   - **Notes:**
 
-- [ ] **Step 2.** Sign out, and sign in as the Administrator, `fathom.administrator@fathom.test`.
+- [ ] `E144` Sign out, and sign in as the Administrator, `fathom.administrator@fathom.test`.
   - **Expected:** The left-hand menu shows **Accounts**, **Roles** and **Settings**.
   - **Notes:**
 
@@ -86,43 +86,43 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Signed in with this account. **Light** chosen in the Appearance menu.
 
-- [ ] **Step 1.** Select the **Accounts** page in the left-hand menu, and read the column headings.
+- [ ] `328E` Select the **Accounts** page in the left-hand menu, and read the column headings.
   - **Expected:** The table has the columns **Person**, **Roles**, **Status** and **Created**. **New account** is at the top right.
   - **Notes:**
 
-- [ ] **Step 2.** Read the rows from top to bottom.
+- [ ] `1D11` Read the rows from top to bottom.
   - **Expected:** There are 12 rows, in alphabetical order by name. Each **Person** cell shows the person's initials, name, and email address, and each **Roles** cell shows the account's roles, as [Development Setup](../design/development-setup.md#development-accounts) lists: one for every account but **Feature Lead**, whose cell shows **Feature Lead (default)** then **Engineering Manager**. Each **Status** cell says **Active**, in green. Each **Created** cell shows a date. Each row ends with an **Edit** button.
   - **Notes:**
 
-- [ ] **Step 3.** Look at the **Fathom Administrator** row.
+- [ ] `1CB3` Look at the **Fathom Administrator** row.
   - **Expected:** The name is followed by **This account**, and the role is **Administrator**. No other row says **This account**.
   - **Notes:**
 
-- [ ] **Step 4.** Read the buttons of the filter.
+- [ ] `55A8` Read the buttons of the filter.
   - **Expected:** **All 12**, **Active 12** and **Deactivated 0**, with **All 12** selected.
   - **Notes:**
 
-- [ ] **Step 5.** Type `director` in the search box.
+- [ ] `944E` Type `director` in the search box.
   - **Expected:** Only the **Engineering Director** row shows, and a **×** appears at the right end of the search box.
   - **Notes:**
 
-- [ ] **Step 6.** Choose **Dark** in the Appearance menu.
+- [ ] `32CF` Choose **Dark** in the Appearance menu.
   - **Expected:** The page has a dark ground and every word is easy to read. The **×** in the search box is easy to see. The **This account** badge is lighter than it was in light mode, and **Active** is green.
   - **Notes:**
 
-- [ ] **Step 7.** Select the **×** in the search box.
+- [ ] `02A2` Select the **×** in the search box.
   - **Expected:** The search box is empty, every account shows again, and the **×** is gone.
   - **Notes:**
 
-- [ ] **Step 8.** Type `executive`.
+- [ ] `2BB5` Type `executive`.
   - **Expected:** The letters go straight into the search box, and only the **Executive** row shows.
   - **Notes:**
 
-- [ ] **Step 9.** Press Esc.
+- [ ] `9BE4` Press Esc.
   - **Expected:** The search box empties, and every account shows again.
   - **Notes:**
 
-- [ ] **Step 10.** Choose **Light** in the Appearance menu.
+- [ ] `B2CB` Choose **Light** in the Appearance menu.
   - **Expected:** The page returns to its light colours.
   - **Notes:**
 
@@ -132,99 +132,99 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** **Accounts** page open, signed in with this account in the first browser.
 
-- [ ] **Step 1.** Select **New account**.
+- [ ] `8EC9` Select **New account**.
   - **Expected:** A dialog titled **New account**, with an empty **Name**, an empty **Email address**, and **Roles**, and no password field. **Roles** lists every role in the order of the **Roles** page, each with a square tick box and its description under its name. Only **Team Member** is ticked, and there is no **Default role**. Under the role list, a dimmed line says **Custom roles are created on the Roles page.**, with **Roles** as a link.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Roles** in the line under the role list.
+- [ ] `F2CD` Select **Roles** in the line under the role list.
   - **Expected:** The dialog closes, and the **Roles** page opens.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Accounts**, then **New account**. Type `Test Newcomer` in **Name** and `team.member@fathom.test` in **Email address**, and select **Create account**.
+- [ ] `2F27` Select **Accounts**, then **New account**. Type `Test Newcomer` in **Name** and `team.member@fathom.test` in **Email address**, and select **Create account**.
   - **Expected:** A red box in the dialog says **An account with this email address already exists**, and the dialog stays open.
   - **Notes:**
 
-- [ ] **Step 4.** Replace the email address with `test.newcomer@fathom.test`, and select **Create account**.
+- [ ] `283D` Replace the email address with `test.newcomer@fathom.test`, and select **Create account**.
   - **Expected:** The dialog, now titled **Password for Test Newcomer**, says **This password is shown only once. Test Newcomer must change it at the next sign-in.** Below it, the password is hidden as dots, on a grey ground with no border, so it does not look like a field to type in, with an eye button at its right, as on the **Sign in** page. Beside it is a **Copy** button, and **Done** is the only other button.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Copy**, then paste into any text field outside Fathom, such as the browser's address bar, without pressing Enter.
+- [ ] `8A6E` Select **Copy**, then paste into any text field outside Fathom, such as the browser's address bar, without pressing Enter.
   - **Expected:** The button reads **Copied** for a moment, and the text pasted is letters and digits, not dots.
   - **Notes:**
 
-- [ ] **Step 6.** Select the eye button.
-  - **Expected:** The password shows in grey, in a typeface whose characters are all one width, and is the text pasted in Step 5.
+- [ ] `05B5` Select the eye button.
+  - **Expected:** The password shows in grey, in a typeface whose characters are all one width, and is the text pasted in Step `8A6E`.
   - **Notes:**
 
-- [ ] **Step 7.** Click in the password, and try to type.
+- [ ] `FD69` Click in the password, and try to type.
   - **Expected:** The whole password is selected, and typing does not change it.
   - **Notes:**
 
-- [ ] **Step 8.** Click the page outside the dialog.
+- [ ] `02EF` Click the page outside the dialog.
   - **Expected:** The dialog stays open, showing the same password.
   - **Notes:**
 
-- [ ] **Step 9.** Write the password down for ACCT-04, and select **Done**.
+- [ ] `71EE` Write the password down for ACCT-04, and select **Done**.
   - **Expected:** The dialog closes, a green banner says **Created the account for Test Newcomer.**, and **Test Newcomer** is in the table with **Team Member** in its **Roles** column.
   - **Notes:**
 
 ### ACCT-04: A Generated Password Must Be Changed First
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-03. Step 1 signs in as another account, in the second browser.
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-03. Step `2C28` signs in as another account, in the second browser.
 
 **Preconditions:** ACCT-03 run, with the password it showed written down. The first browser stays signed in with this account.
 
-- [ ] **Step 1.** In the second browser, open Fathom's address and sign in as the new Team Member, `test.newcomer@fathom.test`, with the password written down.
+- [ ] `2C28` In the second browser, open Fathom's address and sign in as the new Team Member, `test.newcomer@fathom.test`, with the password written down.
   - **Expected:** The page shows only Fathom's name and mark above a panel headed **Change password**, saying **Fathom generated this password. A new password is required to continue.**, with **Current password**, **New password**, **New password again**, **Sign out**, and **Change password**. Under **New password**, a checklist shows **12 to 128 characters** and **Not a common or easily guessed password**, each with a dimmed circle. There is no left-hand menu and no account button.
   - **Notes:**
 
-- [ ] **Step 2.** Click in **New password**, and type `test1234`.
+- [ ] `5B34` Click in **New password**, and type `test1234`.
   - **Expected:** Both lines of the checklist keep a dimmed circle, and neither is red.
   - **Notes:**
 
-- [ ] **Step 3.** Click in **Current password**.
+- [ ] `AB9D` Click in **Current password**.
   - **Expected:** Both lines of the checklist turn red, each with a red cross.
   - **Notes:**
 
-- [ ] **Step 4.** Click at the end of **New password**, and type `5678`, so it reads `test12345678`.
+- [ ] `B942` Click at the end of **New password**, and type `5678`, so it reads `test12345678`.
   - **Expected:** **12 to 128 characters** shows a green check as soon as the twelfth character is typed. **Not a common or easily guessed password** keeps its red cross.
   - **Notes:**
 
-- [ ] **Step 5.** Enter the password written down in **Current password** and `test12345678` in **New password again**, and select **Change password**.
+- [ ] `B8D4` Enter the password written down in **Current password** and `test12345678` in **New password again**, and select **Change password**.
   - **Expected:** **New password** says **This password is too common or easy to guess.**, and nothing is saved.
   - **Notes:**
 
-- [ ] **Step 6.** Replace both new passwords with `fictional password 2`.
+- [ ] `50BE` Replace both new passwords with `fictional password 2`.
   - **Expected:** Both lines of the checklist show a green check.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Change password**.
+- [ ] `6AF1` Select **Change password**.
   - **Expected:** A green banner says **The password has been changed, and every other session has been signed out.**, and Fathom opens on the **Overview**, with the left-hand menu and the account button.
   - **Notes:**
 
 ### ACCT-05: A Reset Gives a New Password Fathom Makes
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, and the new Team Member, `test.newcomer@fathom.test`, in the second, the same as the accounts ACCT-04 ended with. Step 5 signs in again as the new Team Member, in the second browser.
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, and the new Team Member, `test.newcomer@fathom.test`, in the second, the same as the accounts ACCT-04 ended with. Step `97A6` signs in again as the new Team Member, in the second browser.
 
 **Preconditions:** ACCT-04 run. Each browser signed in with its account.
 
-- [ ] **Step 1.** In the first browser, select **Accounts**, then **Edit** in the **Test Newcomer** row, then **Reset password**.
+- [ ] `FB2A` In the first browser, select **Accounts**, then **Edit** in the **Test Newcomer** row, then **Reset password**.
   - **Expected:** A dialog titled **Reset the password for Test Newcomer** says **Test Newcomer will be signed out of every session. Fathom will generate a new password, which Test Newcomer must change at the next sign-in.**, with no password field.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Reset password**.
+- [ ] `2F99` Select **Reset password**.
   - **Expected:** The dialog, now titled **Password for Test Newcomer**, shows a new password hidden as dots, with the eye button, **Copy** and **Done**.
   - **Notes:**
 
-- [ ] **Step 3.** Write the password down, and select **Done**.
+- [ ] `AEBD` Write the password down, and select **Done**.
   - **Expected:** A green banner says **Reset the password for Test Newcomer.**
   - **Notes:**
 
-- [ ] **Step 4.** In the second browser, select any page in the left-hand menu.
+- [ ] `C1BB` In the second browser, select any page in the left-hand menu.
   - **Expected:** The **Sign in** page opens.
   - **Notes:**
 
-- [ ] **Step 5.** Sign in as the new Team Member, `test.newcomer@fathom.test`, with the password written down in Step 3.
+- [ ] `97A6` Sign in as the new Team Member, `test.newcomer@fathom.test`, with the password written down in Step `AEBD`.
   - **Expected:** The panel headed **Change password** opens, as in ACCT-04.
   - **Notes:**
 
@@ -234,23 +234,23 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** ACCT-05 run. The first browser signed in with this account, with the **Accounts** page open.
 
-- [ ] **Step 1.** Select **Edit** in the **Test Newcomer** row. Type `Test Arrival` in **Name** and `test.arrival@fathom.test` in **Email address**, tick **Product Manager**, untick **Team Member**, and select **Save**.
+- [ ] `971F` Select **Edit** in the **Test Newcomer** row. Type `Test Arrival` in **Name** and `test.arrival@fathom.test` in **Email address**, tick **Product Manager**, untick **Team Member**, and select **Save**.
   - **Expected:** The dialog, titled **Edit Test Newcomer**, shows the account's name, email address, and roles, with only **Team Member** ticked and the buttons **Reset password**, **Deactivate**, **Cancel** and **Save**. After **Save** is selected, the dialog closes, a green banner says **Saved the account for Test Arrival.**, and the table has a **Test Arrival** row with `test.arrival@fathom.test` and **Product Manager**, and no **Test Newcomer** row.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Edit** in the **Test Arrival** row, then **Deactivate**.
+- [ ] `45E7` Select **Edit** in the **Test Arrival** row, then **Deactivate**.
   - **Expected:** A dialog titled **Deactivate Test Arrival** says **Test Arrival will be signed out everywhere, and will not be able to sign in until the account is reactivated.**, with **Cancel** and a red **Deactivate**.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Deactivate**.
+- [ ] `19B4` Select **Deactivate**.
   - **Expected:** The dialog closes, a green banner says **Deactivated the account for Test Arrival.**, and the **Test Arrival** row says **Deactivated**, in grey. The filter reads **All 13**, **Active 12** and **Deactivated 1**.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Deactivated 1** in the filter, then **Edit** in the **Test Arrival** row, then **Reactivate**, then **Reactivate** in the dialog.
+- [ ] `2E69` Select **Deactivated 1** in the filter, then **Edit** in the **Test Arrival** row, then **Reactivate**, then **Reactivate** in the dialog.
   - **Expected:** The edit dialog offers **Reactivate** in place of **Deactivate**. A dialog titled **Reactivate Test Arrival** says **Test Arrival will be able to sign in again.** After the second **Reactivate**, a green banner says **Reactivated the account for Test Arrival.**, and the filter reads **All 13**, **Active 13** and **Deactivated 0**.
   - **Notes:**
 
-- [ ] **Step 5.** Select the **Access history** page in the left-hand menu.
+- [ ] `AD5B` Select the **Access history** page in the left-hand menu.
   - **Expected:** The latest entry says Fathom Administrator (`fathom.administrator@fathom.test`) **reactivated the account for** Test Arrival (`test.arrival@fathom.test`). The one before says **deactivated the account for** Test Arrival (`test.arrival@fathom.test`), and is marked as worth checking.
   - **Notes:**
 
@@ -260,99 +260,99 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** ACCT-06 run. The first browser signed in with this account. The Administrator and Superuser roles both manage accounts and edit roles.
 
-- [ ] **Step 1.** Select **Accounts**, then **Edit** in the **Superuser** row, then **Deactivate**, then **Deactivate** in the dialog.
+- [ ] `A070` Select **Accounts**, then **Edit** in the **Superuser** row, then **Deactivate**, then **Deactivate** in the dialog.
   - **Expected:** A green banner says **Deactivated the account for Superuser.**
   - **Notes:**
 
-- [ ] **Step 2.** Select **Edit** in the **Fathom Administrator** row.
+- [ ] `1A99` Select **Edit** in the **Fathom Administrator** row.
   - **Expected:** **Deactivate** is greyed out. In the role list, **Administrator** is ticked and greyed out, and every other role can be ticked.
   - **Notes:**
 
-- [ ] **Step 3.** Tick **Superuser** in the role list.
+- [ ] `DD84` Tick **Superuser** in the role list.
   - **Expected:** **Administrator** is no longer greyed out. Under the role list, **Default role** shows **Administrator** and **Superuser**, with **Administrator** chosen.
   - **Notes:**
 
 ### ACCT-08: Setting the Password Rules and Recipe
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-07. Step 6 signs in as another account, in the second browser.
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-07. Step `D967` signs in as another account, in the second browser.
 
 **Preconditions:** ACCT-07 run, with its **Edit Fathom Administrator** dialog still open and unsaved. The first browser signed in with this account.
 
-- [ ] **Step 1.** Select **Cancel**, then the **Settings** page in the left-hand menu.
+- [ ] `2CB8` Select **Cancel**, then the **Settings** page in the left-hand menu.
   - **Expected:** Under **Time zone**, a second panel has two parts. **Password requirements** shows **Minimum length** at 12, and **Must have** with **An uppercase letter**, **A lowercase letter**, **A digit**, and **A symbol**, none ticked, then the dimmed line **Changes apply the next time each person changes their password.** **Generated passwords** shows **Length** at 20, and **Use** with **Uppercase letters**, **Lowercase letters**, and **Digits** ticked and **Symbols:** `! # $ % & * + - = ? @ ^ _ ~` not ticked, then **Leave out characters that look alike:** `I L O i l o 0 1`, ticked. The panel's **Save** is turned off.
   - **Notes:**
 
-- [ ] **Step 2.** Tick **A symbol**.
+- [ ] `7DFB` Tick **A symbol**.
   - **Expected:** A red box says **Generated passwords must include symbols, because passwords must contain a symbol.**, and **Save** stays off.
   - **Notes:**
 
-- [ ] **Step 3.** Enter `14` in **Minimum length** and `16` in **Length**, and tick **Symbols**.
+- [ ] `B99D` Enter `14` in **Minimum length** and `16` in **Length**, and tick **Symbols**.
   - **Expected:** The red box is gone, and **Save** is turned on.
   - **Notes:**
 
-- [ ] **Step 4.** Select the panel's **Save**.
+- [ ] `F205` Select the panel's **Save**.
   - **Expected:** A green banner says **Saved the password settings.**, and **Save** is turned off again.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Accounts**, then **New account**. Type `Test Rules` in **Name** and `test.rules@fathom.test` in **Email address**, select **Create account**, and select the eye button.
+- [ ] `8E8F` Select **Accounts**, then **New account**. Type `Test Rules` in **Name** and `test.rules@fathom.test` in **Email address**, select **Create account**, and select the eye button.
   - **Expected:** The dialog titled **Password for Test Rules** shows a password of 16 characters that includes at least one of `! # $ % & * + - = ? @ ^ _ ~`.
   - **Notes:**
 
-- [ ] **Step 6.** Write the password down, and select **Done**. In the second browser, sign in as the second new Team Member, `test.rules@fathom.test`, with it.
+- [ ] `D967` Write the password down, and select **Done**. In the second browser, sign in as the second new Team Member, `test.rules@fathom.test`, with it.
   - **Expected:** The panel headed **Change password** opens. Under **New password**, before anything is typed, a checklist shows **14 to 128 characters**, **A symbol**, and **Not a common or easily guessed password**, each with a dimmed circle.
   - **Notes:**
 
 ### ACCT-09: Each Browser Keeps Its Own Appearance
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-08. Step 8 signs in again with this account.
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-08. Step `FB5D` signs in again with this account.
 
 **Preconditions:** Signed in with this account. The computer's appearance set to light. **Light** chosen in the Appearance menu, as ACCT-02 leaves it. The case ends with **Light** chosen.
 
-- [ ] **Step 1.** Choose **System** in the Appearance menu.
+- [ ] `EC43` Choose **System** in the Appearance menu.
   - **Expected:** The page stays light, as the computer is set.
   - **Notes:**
 
-- [ ] **Step 2.** Open the account menu.
+- [ ] `8CF1` Open the account menu.
   - **Expected:** Under **Appearance**, **System**, **Light** and **Dark**, with a tick beside **System** only.
   - **Notes:**
 
-- [ ] **Step 3.** Press Escape, then press Tab until the button with the account's name and initials has focus, and press Enter.
+- [ ] `0FB1` Press Escape, then press Tab until the button with the account's name and initials has focus, and press Enter.
   - **Expected:** The menu opens, and the first item has focus.
   - **Notes:**
 
-- [ ] **Step 4.** Press the down arrow until **Dark** has focus, and press Enter.
+- [ ] `B857` Press the down arrow until **Dark** has focus, and press Enter.
   - **Expected:** The menu closes, and the whole page turns dark at once: the sidebar, the table and the top bar.
   - **Notes:**
 
-- [ ] **Step 5.** Reload the page.
+- [ ] `C942` Reload the page.
   - **Expected:** The page opens dark.
   - **Notes:**
 
-- [ ] **Step 6.** Open the account menu.
+- [ ] `4FCB` Open the account menu.
   - **Expected:** The tick is beside **Dark**.
   - **Notes:**
 
-- [ ] **Step 7.** Press Escape, and sign out.
+- [ ] `A0EC` Press Escape, and sign out.
   - **Expected:** The sign-in page is dark.
   - **Notes:**
 
-- [ ] **Step 8.** Sign in with this account again.
+- [ ] `FB5D` Sign in with this account again.
   - **Expected:** The page is dark.
   - **Notes:**
 
-- [ ] **Step 9.** Choose **System** in the Appearance menu.
+- [ ] `1BE7` Choose **System** in the Appearance menu.
   - **Expected:** The page turns light, as the computer is set.
   - **Notes:**
 
-- [ ] **Step 10.** Set the computer's appearance to dark.
+- [ ] `B2EE` Set the computer's appearance to dark.
   - **Expected:** Fathom turns dark with it.
   - **Notes:**
 
-- [ ] **Step 11.** Set the computer's appearance back to light.
+- [ ] `6B27` Set the computer's appearance back to light.
   - **Expected:** Fathom turns light again.
   - **Notes:**
 
-- [ ] **Step 12.** Choose **Light** in the Appearance menu.
+- [ ] `D054` Choose **Light** in the Appearance menu.
   - **Expected:** The page stays light, and the tick is beside **Light**.
   - **Notes:**
 
@@ -362,23 +362,23 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Signed in with this account in the first browser, with the **Accounts** page open.
 
-- [ ] **Step 1.** Select **Edit** in the **Team Member** row.
+- [ ] `26F2` Select **Edit** in the **Team Member** row.
   - **Expected:** In the role list, only **Team Member** is ticked, and there is no **Default role**.
   - **Notes:**
 
-- [ ] **Step 2.** Tick **Executive**.
+- [ ] `BF47` Tick **Executive**.
   - **Expected:** Under the role list, **Default role** shows **Executive** and **Team Member**, in the order of the role list, with **Team Member** chosen.
   - **Notes:**
 
-- [ ] **Step 3.** Choose **Executive** under **Default role**, and select **Save**.
+- [ ] `6EB1` Choose **Executive** under **Default role**, and select **Save**.
   - **Expected:** A green banner says **Saved the account for Team Member.**, and the **Roles** cell of the **Team Member** row shows **Executive (default)** then **Team Member**.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Edit** in the **Team Member** row, and untick **Executive**.
+- [ ] `4D05` Select **Edit** in the **Team Member** row, and untick **Executive**.
   - **Expected:** **Default role** disappears, and only **Team Member** is ticked.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Save**.
+- [ ] `3E3B` Select **Save**.
   - **Expected:** A green banner says **Saved the account for Team Member.**, and the **Roles** cell of the **Team Member** row shows only **Team Member**.
   - **Notes:**
 
@@ -388,25 +388,25 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** In the second browser, select **Sign out** on the **Change password** panel ACCT-08 left open, and sign in with this account. **Light** chosen in the Appearance menu.
 
-- [ ] **Step 1.** Open the account menu.
+- [ ] `98D6` Open the account menu.
   - **Expected:** Under `feature.lead@fathom.test`, **Role** lists **Engineering Manager** and **Feature Lead**, with a tick beside **Feature Lead** only, followed by **Change name**, **Change password**, **Appearance**, and **Sign out**.
   - **Notes:**
 
-- [ ] **Step 2.** Press Escape.
+- [ ] `498C` Press Escape.
   - **Expected:** The account menu closes.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Releases** page in the left-hand menu.
+- [ ] `141F` Select the **Releases** page in the left-hand menu.
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Platform** in the table.
+- [ ] `DAAD` Select **Platform** in the table.
   - **Expected:** In the panel beside the table, under **Releases**:
     - The **Harbor 1** row has no **⋯** button
     - There is no **New release…** button
   - **Notes:**
 
-- [ ] **Step 5.** Choose **Engineering Manager** in the role menu.
+- [ ] `FD20` Choose **Engineering Manager** in the role menu.
   - **Expected:**
     - The menu closes
     - The page stays on **Releases** with **Platform** open, without the browser reloading
@@ -414,59 +414,59 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - **New release…** shows
   - **Notes:**
 
-- [ ] **Step 6.** Open the account menu, and press Escape.
+- [ ] `5B6D` Open the account menu, and press Escape.
   - **Expected:** The tick is beside **Engineering Manager** only.
   - **Notes:**
 
-- [ ] **Step 7.** Select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
+- [ ] `C1E3` Select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
   - **Expected:** A dialog titled **Change Harbor 1** opens.
   - **Notes:**
 
-- [ ] **Step 8.** Replace the name with `Harbor One`, and select **Save**.
+- [ ] `234F` Replace the name with `Harbor One`, and select **Save**.
   - **Expected:**
     - A notification says **Drafted the change to the release.**
     - The row reads **Harbor One**, with a hollow yellow dot before its square
   - **Notes:**
 
-- [ ] **Step 9.** Select the **Publish** button in the top bar.
+- [ ] `B3D9` Select the **Publish** button in the top bar.
   - **Expected:** A notification says **Published**, and the button is gone.
   - **Notes:**
 
-- [ ] **Step 10.** Select the **Change history** page in the left-hand menu.
+- [ ] `B92F` Select the **Change history** page in the left-hand menu.
   - **Expected:** The latest entry:
     - Names **Harbor One**
     - Starts with **Feature Lead as Engineering Manager**
   - **Notes:**
 
-- [ ] **Step 11.** Select the **Drafts** page in the left-hand menu.
+- [ ] `EB91` Select the **Drafts** page in the left-hand menu.
   - **Expected:** The entry for **Harbor One** starts with **Feature Lead as Engineering Manager**.
   - **Notes:**
 
-- [ ] **Step 12.** Choose **Feature Lead** in the role menu.
+- [ ] `D396` Choose **Feature Lead** in the role menu.
   - **Expected:**
     - The page stays on **Drafts**
     - The entry for **Harbor One** still starts with **Feature Lead as Engineering Manager**
   - **Notes:**
 
-- [ ] **Step 13.** Choose **Dark** in the Appearance menu, open the account menu, then press Escape and choose **Light** in the Appearance menu.
+- [ ] `5D59` Choose **Dark** in the Appearance menu, open the account menu, then press Escape and choose **Light** in the Appearance menu.
   - **Expected:** In dark mode, the role menu's ticks and names are easy to read.
   - **Notes:**
 
 ### ACCT-12: Signing In Again Comes Back to the Last Role
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, in the second browser, the same as ACCT-11. Step 2 signs in with it in the first browser, and step 3 signs in as another account there.
+**Account:** Feature Lead, `feature.lead@fathom.test`, in the second browser, the same as ACCT-11. Step `94D8` signs in with it in the first browser, and step `BE44` signs in as another account there.
 
 **Preconditions:** ACCT-11 run, with **Feature Lead** chosen in the role menu in the second browser.
 
-- [ ] **Step 1.** Choose **Engineering Manager** in the role menu. Sign out, sign in with this account again, and open the account menu.
+- [ ] `547F` Choose **Engineering Manager** in the role menu. Sign out, sign in with this account again, and open the account menu.
   - **Expected:** The tick is beside **Engineering Manager** only.
   - **Notes:**
 
-- [ ] **Step 2.** In the first browser, sign out, sign in as the Feature Lead, `feature.lead@fathom.test`, and open the account menu.
+- [ ] `94D8` In the first browser, sign out, sign in as the Feature Lead, `feature.lead@fathom.test`, and open the account menu.
   - **Expected:** The tick is beside **Feature Lead** only.
   - **Notes:**
 
-- [ ] **Step 3.** In the first browser, sign out, sign in as the Administrator, `fathom.administrator@fathom.test`, and open the account menu.
+- [ ] `BE44` In the first browser, sign out, sign in as the Administrator, `fathom.administrator@fathom.test`, and open the account menu.
   - **Expected:** Under `fathom.administrator@fathom.test`, the menu shows **Administrator**, with no **Role** heading and nothing to choose, then **Change name**.
   - **Notes:**
 
@@ -476,17 +476,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** ACCT-10 to ACCT-12 run. Signed in with this account in the first browser.
 
-- [ ] **Step 1.** Press Escape. Select the **Access history** page in the left-hand menu, and type `switched` in the search box at the top of the page.
+- [ ] `2AEB` Press Escape. Select the **Access history** page in the left-hand menu, and type `switched` in the search box at the top of the page.
   - **Expected:** The latest entry says Feature Lead (`feature.lead@fathom.test`) **switched role**, **from Feature Lead to Engineering Manager**, not marked as worth checking.
   - **Notes:**
 
 ### ACCT-14: Creating the Fathom Administrator at Install
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-13. Step 1 deletes it, and step 2 signs in as another account.
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-13. Step `EF8E` deletes it, and step `6DB1` signs in as another account.
 
 **Preconditions:** None. This test case empties the database, so ACCT-15 must follow it.
 
-- [ ] **Step 1.** Run Start With No Accounts. In the second terminal, run:
+- [ ] `EF8E` Run Start With No Accounts. In the second terminal, run:
 
    ```sh
    pnpm admin:create --email install.admin@fathom.test
@@ -495,20 +495,20 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** It prints `Created the Fathom Administrator account for install.admin@fathom.test.`, then `Password:` followed by 20 letters and digits, then `Fathom shows this password only once, and asks for a new one at first sign-in.`
   - **Notes:**
 
-- [ ] **Step 2.** Write the password down. Run Start Fathom, and in the first browser sign in as the installed Administrator, `install.admin@fathom.test`, with it.
+- [ ] `6DB1` Write the password down. Run Start Fathom, and in the first browser sign in as the installed Administrator, `install.admin@fathom.test`, with it.
   - **Expected:** The panel headed **Change password** opens, as in ACCT-04.
   - **Notes:**
 
 ### ACCT-15: Put Every Account Back
 
-**Account:** Installed Administrator, `install.admin@fathom.test`, the same as the account ACCT-14 ended with. Step 1 signs in as another account.
+**Account:** Installed Administrator, `install.admin@fathom.test`, the same as the account ACCT-14 ended with. Step `D7B7` signs in as another account.
 
 **Preconditions:** All the test cases above run.
 
-- [ ] **Step 1.** Run Reset the Database, and sign in as the Administrator, `fathom.administrator@fathom.test`.
+- [ ] `D7B7` Run Reset the Database, and sign in as the Administrator, `fathom.administrator@fathom.test`.
   - **Expected:** Fathom opens.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **Accounts** page in the left-hand menu.
+- [ ] `C7E3` Select the **Accounts** page in the left-hand menu.
   - **Expected:** The table lists 12 accounts, as in ACCT-02, with no **Test Arrival** or **Test Rules**, and with `fathom.administrator@fathom.test` as the **Fathom Administrator**. The filter reads **All 12**, **Active 12** and **Deactivated 0**.
   - **Notes:**

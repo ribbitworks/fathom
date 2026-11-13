@@ -43,18 +43,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
-- [ ] **Step 1.** Look at the **Grade** column header.
+- [ ] `23A9` Look at the **Grade** column header.
   - **Expected:**
     - A yellow dot before **Grade**
     - Under it, a green dot before **Level**
     - The column tinted faint yellow
   - **Notes:**
 
-- [ ] **Step 2.** Look at the **Role on team** column header.
+- [ ] `F31B` Look at the **Role on team** column header.
   - **Expected:** A yellow dot, then **Role on team** struck through.
   - **Notes:**
 
-- [ ] **Step 3.** Look at the last two column headers.
+- [ ] `3D34` Look at the last two column headers.
   - **Expected:**
     - A red dot in a ring before **Previous site**
     - A yellow dot before **Skills**
@@ -66,27 +66,27 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As DRAFT-01.
 
-- [ ] **Step 1.** Select the **Grade** column name to open its column menu.
+- [ ] `5E7E` Select the **Grade** column name to open its column menu.
   - **Expected:** Under **Grade** and a divider, a yellow dot and **Draft** heads two lines:
     - **Name** from **Level** to **Grade**, by Engineering Operations Manager
     - **Required** from **No** to **Yes**, by Second Engineering Operations Manager
   - **Notes:**
 
-- [ ] **Step 2.** Look at the actions in the menu.
+- [ ] `4D46` Look at the actions in the menu.
   - **Expected:**
     - **Discard draft** is among them.
     - **Approve…** and **Reject…** are not.
   - **Notes:**
 
-- [ ] **Step 3.** Press Esc.
+- [ ] `FB5D` Press Esc.
   - **Expected:** The column menu closes.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **Draft** button above the table.
+- [ ] `A0E3` Select the **Draft** button above the table.
   - **Expected:** The Draft menu has a **Show** section and a **Filter** section.
   - **Notes:**
 
-- [ ] **Step 5.** Select the **Show** heading in the menu.
+- [ ] `448F` Select the **Show** heading in the menu.
   - **Expected:** The menu closes.
   - **Notes:**
 
@@ -96,7 +96,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As DRAFT-01.
 
-- [ ] **Step 1.** Open the Draft menu, and select **Drafts applied**.
+- [ ] `87F2` Open the Draft menu, and select **Drafts applied**.
   - **Expected:** The columns are, from the left:
     - Name
     - ID
@@ -116,7 +116,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Skills
   - **Notes:**
 
-- [ ] **Step 2.** Select **Drafts beside live**.
+- [ ] `EE9B` Select **Drafts beside live**.
   - **Expected:** **Role on team** and **Previous site** are among the columns again.
   - **Notes:**
 
@@ -126,7 +126,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As DRAFT-01.
 
-- [ ] **Step 1.** Open the Draft menu, and select **Live only**.
+- [ ] `F453` Open the Draft menu, and select **Live only**.
   - **Expected:** The columns are, from the left:
     - Name
     - ID
@@ -146,13 +146,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Team name
   - **Notes:**
 
-- [ ] **Step 2.** Look at the filter section of the Draft menu, which stays open.
+- [ ] `054F` Look at the filter section of the Draft menu, which stays open.
   - **Expected:**
     - The filter section is headed **Filter (needs drafts shown)**.
     - Its choices are greyed out.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Drafts beside live**.
+- [ ] `332F` Select **Drafts beside live**.
   - **Expected:** **Grade**, **Previous site** and **Skills** are among the columns again.
   - **Notes:**
 
@@ -162,7 +162,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] **Step 1.** Select the **Previous site** column name to open its column menu.
+- [ ] `67D6` Select the **Previous site** column name to open its column menu.
   - **Expected:**
     - A red dot in a ring, then **Rejected**
     - Under them, **Reason: Fictional reason: a previous site is not needed yet.**
@@ -175,7 +175,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As DRAFT-05.
 
-- [ ] **Step 1.** Open the Draft menu, and under **Filter** select **Rejected**.
+- [ ] `C680` Open the Draft menu, and under **Filter** select **Rejected**.
   - **Expected:**
     - Two people are shown.
     - **우아현** (Employee ID E10004), with a red dot in a ring before her **Position**
@@ -183,11 +183,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Ophélie Roussel** (Employee ID E10152), with a red dot in a ring in her row's slot
   - **Notes:**
 
-- [ ] **Step 2.** Press Esc.
+- [ ] `9C68` Press Esc.
   - **Expected:** The Draft menu closes.
   - **Notes:**
 
-- [ ] **Step 3.** Open the Draft menu, and select **Rejected** again.
+- [ ] `9F80` Open the Draft menu, and select **Rejected** again.
   - **Expected:** All people are shown again.
   - **Notes:**
 
@@ -197,7 +197,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Lists** page open from the left-hand menu.
 
-- [ ] **Step 1.** Read each list's row.
+- [ ] `D033` Read each list's row.
   - **Expected:**
     - **Certifications** struck through
     - **Languages**, then a yellow **Retired** box
@@ -205,11 +205,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No dot in the row of Hiring states
   - **Notes:**
 
-- [ ] **Step 2.** Look at the row under each list.
+- [ ] `E91A` Look at the row under each list.
   - **Expected:** Each list except Certifications and Skills has a light green Live row under it.
   - **Notes:**
 
-- [ ] **Step 3.** Read the Choices column of the **Positions** row, not its Live row.
+- [ ] `ADF8` Read the Choices column of the **Positions** row, not its Live row.
   - **Expected:** **(6)** Engineering Manager, Employee, Manager, Software Engineer, Test Engineer, SDET, and **Architect** struck through.
   - **Notes:**
 
@@ -219,13 +219,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As DRAFT-08.
 
-- [ ] **Step 1.** Select **Sites** in its row, not its Live row.
+- [ ] `7E3F` Select **Sites** in its row, not its Live row.
   - **Expected:**
     - A panel opens with **Sites** at the top.
     - **Harbourside** is the first choice.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **⋯** button beside **Sites** at the top of the panel.
+- [ ] `C3B3` Select the **⋯** button beside **Sites** at the top of the panel.
   - **Expected:**
     - The menu shows **Sites**, a divider, a yellow dot and **Draft: reordered**, and **Reordered by Engineering Operations Manager**.
     - **Approve…** is greyed out.
@@ -233,11 +233,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Reject…** can be selected.
   - **Notes:**
 
-- [ ] **Step 3.** Press Esc.
+- [ ] `C796` Press Esc.
   - **Expected:** The menu closes.
   - **Notes:**
 
-- [ ] **Step 4.** Close the panel with the **×** button at its top right.
+- [ ] `5C09` Close the panel with the **×** button at its top right.
   - **Expected:** The panel closes.
   - **Notes:**
 
@@ -247,7 +247,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As DRAFT-08.
 
-- [ ] **Step 1.** Select **Positions** in its row, not its Live row.
+- [ ] `4C9E` Select **Positions** in its row, not its Live row.
   - **Expected:**
     - A panel opens with **Positions** at the top.
     - A red dot in a ring is before the description under it.
@@ -256,7 +256,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Architect**: a yellow dot, then its name struck through.
   - **Notes:**
 
-- [ ] **Step 2.** Close the panel.
+- [ ] `28E8` Close the panel.
   - **Expected:** The panel closes.
   - **Notes:**
 
@@ -266,7 +266,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As DRAFT-08.
 
-- [ ] **Step 1.** Open the Draft menu, and select **Drafts applied**.
+- [ ] `9A70` Open the Draft menu, and select **Drafts applied**.
   - **Expected:**
     - The count beside the search box reads **12 lists**.
     - Certifications and Languages are not in the table.
@@ -274,7 +274,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No green dots.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Drafts beside live**.
+- [ ] `242E` Select **Drafts beside live**.
   - **Expected:** **Certifications** and **Languages** are in the table again.
   - **Notes:**
 
@@ -284,14 +284,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Drafts** page open from the left-hand menu.
 
-- [ ] **Step 1.** Type **new order** in the search box.
+- [ ] `E9FE` Type **new order** in the search box.
   - **Expected:** Three entries are shown:
     - **drafted a new order for Levels**
     - **drafted a new order for Positions**
     - **drafted a new order for Sites**
   - **Notes:**
 
-- [ ] **Step 2.** Read the **Sites** entry.
+- [ ] `7F80` Read the **Sites** entry.
   - **Expected:**
     - It names the order **Kestrel Bay, Northmere, Ashgrove, Corran Quay**.
     - After it, it names the new order **Harbourside, Kestrel Bay, Northmere Labs, Ashgrove, Corran Quay**.
@@ -299,7 +299,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Waiting for a rejected draft to be resubmitted** is under it.
   - **Notes:**
 
-- [ ] **Step 3.** Clear the search box.
+- [ ] `CD13` Clear the search box.
   - **Expected:** All drafts are shown again.
   - **Notes:**
 
@@ -309,7 +309,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As DRAFT-12.
 
-- [ ] **Step 1.** Type **Rejected** in the search box.
+- [ ] `64A2` Type **Rejected** in the search box.
   - **Expected:** Eight entries are shown, each starting with a red dot in a ring, with **Reason:** and its reason under it:
     - the column Previous site
     - the list Positions
@@ -321,27 +321,27 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - a release in Patches, its colour changed
   - **Notes:**
 
-- [ ] **Step 2.** Try to select the checkbox of each entry.
+- [ ] `72D0` Try to select the checkbox of each entry.
   - **Expected:** None can be selected.
   - **Notes:**
 
-- [ ] **Step 3.** Clear the search box.
+- [ ] `51CB` Clear the search box.
   - **Expected:** All drafts are shown again.
   - **Notes:**
 
 ### DRAFT-15: Unpublished Changes Are Seen Only by the Person Who Made Them
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-13. Step 5 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-13. Step `8F00` signs in as another account.
 
 **Preconditions:** Run Restore the Seed Data first. Signed in with this account. **People** page open.
 
-- [ ] **Step 1.** Look at the top bar, beside the account's name.
+- [ ] `AC61` Look at the top bar, beside the account's name.
   - **Expected:**
     - It shows **Publish 3 changes**.
     - A **⋯** button is beside it.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **⋯** button beside **Publish 3 changes**.
+- [ ] `3DBD` Select the **⋯** button beside **Publish 3 changes**.
   - **Expected:** The menu shows, in order:
     - **Unpublished changes**, then a divider.
     - **Nobody else sees these changes until they're published.**
@@ -351,26 +351,26 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Discard all…**.
   - **Notes:**
 
-- [ ] **Step 3.** Press Esc.
+- [ ] `61B5` Press Esc.
   - **Expected:** The menu closes.
   - **Notes:**
 
-- [ ] **Step 4.** Type **Mariana Metz** in the search box above the table.
+- [ ] `D8C1` Type **Mariana Metz** in the search box above the table.
   - **Expected:** In her row:
     - Nothing in the slot
     - A hollow yellow dot before the new **Site**
     - The **Site** cell yellow
   - **Notes:**
 
-- [ ] **Step 5.** Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
+- [ ] `8F00` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Director**.
   - **Notes:**
 
-- [ ] **Step 6.** Select the **People** page in the left-hand menu.
+- [ ] `D858` Select the **People** page in the left-hand menu.
   - **Expected:** The People table shows.
   - **Notes:**
 
-- [ ] **Step 7.** Type **Mariana Metz** in the search box.
+- [ ] `40D2` Type **Mariana Metz** in the search box.
   - **Expected:**
     - Her row has the grey lock in its slot.
     - Her **Site** has no dot before it.
@@ -384,13 +384,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] **Step 1.** Type **Viktoria Holmberg** in the search box above the table.
+- [ ] `E97E` Type **Viktoria Holmberg** in the search box above the table.
   - **Expected:** In her row:
     - The grey lock in the slot
     - A yellow dot before each value her published draft changes
   - **Notes:**
 
-- [ ] **Step 2.** Select the **⋯** button at the end of her row.
+- [ ] `B5C4` Select the **⋯** button at the end of her row.
   - **Expected:**
     - The menu says **Being changed by Second Engineering Operations Manager. It can be changed once they publish or discard their changes.**
     - It has no **Discard draft** or **Remove person**.
@@ -398,15 +398,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### DRAFT-17: Changing a Published Draft Keeps Others Seeing It as Published
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-16. Step 3 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-16. Step `A1FC` signs in as another account.
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] **Step 1.** Type **E10002** in the search box.
+- [ ] `49A5` Type **E10002** in the search box.
   - **Expected:** The table shows the row whose **ID** is **E10002**.
   - **Notes:**
 
-- [ ] **Step 2.** Select that person's **ID** cell, type **E20002**, and press Enter.
+- [ ] `84D8` Select that person's **ID** cell, type **E20002**, and press Enter.
   - **Expected:**
     - The cell reads **E20002**.
     - A hollow yellow dot is before it.
@@ -414,15 +414,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The top bar shows **Publish 4 changes**.
   - **Notes:**
 
-- [ ] **Step 3.** Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
+- [ ] `A1FC` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Director**.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **People** page in the left-hand menu.
+- [ ] `47E4` Select the **People** page in the left-hand menu.
   - **Expected:** The People table shows.
   - **Notes:**
 
-- [ ] **Step 5.** Type **E10002** in the search box.
+- [ ] `4E79` Type **E10002** in the search box.
   - **Expected:**
     - The row still reads **E10002**.
     - No dot before **E10002**.
@@ -431,29 +431,29 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### DRAFT-18: Publishing Shows the Changes to Everyone
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-17. Step 3 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-17. Step `A2AB` signs in as another account.
 
 **Preconditions:** DRAFT-17 done. Signed in with this account. **People** page open.
 
-- [ ] **Step 1.** Select **Publish 4 changes** in the top bar.
+- [ ] `E65D` Select **Publish 4 changes** in the top bar.
   - **Expected:**
     - A notice reads **Published 4 changes.**
     - The **Publish** button is gone from the top bar.
   - **Notes:**
 
-- [ ] **Step 2.** Type **Mariana Metz** in the search box.
+- [ ] `FA4F` Type **Mariana Metz** in the search box.
   - **Expected:** A solid yellow dot before her new **Site**.
   - **Notes:**
 
-- [ ] **Step 3.** Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
+- [ ] `A2AB` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Director**.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **People** page in the left-hand menu.
+- [ ] `54CE` Select the **People** page in the left-hand menu.
   - **Expected:** The People table shows.
   - **Notes:**
 
-- [ ] **Step 5.** Type **Mariana Metz** in the search box.
+- [ ] `450E` Type **Mariana Metz** in the search box.
   - **Expected:**
     - A yellow dot before her new **Site**
     - The **Site** cell yellow
@@ -467,13 +467,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] **Step 1.** Select the **⋯** button beside **Publish 3 changes**, then **Discard all…**.
+- [ ] `711C` Select the **⋯** button beside **Publish 3 changes**, then **Discard all…**.
   - **Expected:**
     - A dialog titled **Discard 3 changes?** opens.
     - It says **This cannot be undone.**
   - **Notes:**
 
-- [ ] **Step 2.** Select **Discard**.
+- [ ] `AB77` Select **Discard**.
   - **Expected:**
     - A notice reads **Discarded 3 changes.**
     - The **Publish** button is gone from the top bar.
@@ -485,18 +485,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Run Reset the Database first. Signed in with this account. **Drafts** page open.
 
-- [ ] **Step 1.** Select **Select all waiting**.
+- [ ] `800D` Select **Select all waiting**.
   - **Expected:**
     - The button at the top right starts **Approve 32 drafts**.
     - The **Sites** new order entry is not selected.
     - The **Viktoria Holmberg** entry is not selected.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Approve 32 drafts**.
+- [ ] `5D0A` Select **Approve 32 drafts**.
   - **Expected:** A dialog titled **Approve 32 drafts?** opens.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Approve** in the dialog.
+- [ ] `F061` Select **Approve** in the dialog.
   - **Expected:**
     - The dialog closes.
     - A notice reads **Approved 32 drafts.**
@@ -504,41 +504,41 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### DRAFT-21: A Resubmitted Choice Is Approved With the New Order That Depends on It
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-20. Step 4 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-20. Step `71C1` signs in as another account.
 
 **Preconditions:** Run Reset the Database first. Signed in with this account.
 
-- [ ] **Step 1.** Select the **Lists** page in the left-hand menu.
+- [ ] `04CF` Select the **Lists** page in the left-hand menu.
   - **Expected:** The table of lists shows.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Sites**.
+- [ ] `DD9A` Select **Sites**.
   - **Expected:** A panel opens with **Sites** at the top.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **⋯** button at the end of the **Harbourside** row, then **Resubmit**.
+- [ ] `1FAD` Select the **⋯** button at the end of the **Harbourside** row, then **Resubmit**.
   - **Expected:** **Harbourside** has a yellow dot in its slot.
   - **Notes:**
 
-- [ ] **Step 4.** Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
+- [ ] `71C1` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Director**.
   - **Notes:**
 
-- [ ] **Step 5.** Select the **Lists** page in the left-hand menu.
+- [ ] `1A24` Select the **Lists** page in the left-hand menu.
   - **Expected:** The table of lists shows.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Sites**.
+- [ ] `EE37` Select **Sites**.
   - **Expected:** A panel opens with **Sites** at the top.
   - **Notes:**
 
-- [ ] **Step 7.** Select the **⋯** button beside **Sites** at the top of the panel, then **Approve…**.
+- [ ] `2D66` Select the **⋯** button beside **Sites** at the top of the panel, then **Approve…**.
   - **Expected:**
     - A dialog titled **Approve 2 drafts?** opens.
     - Under **Also approves the drafts these depend on:** it lists *the choice Harbourside in Sites*.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Approve**.
+- [ ] `52C7` Select **Approve**.
   - **Expected:**
     - **Harbourside** is the first choice.
     - **Harbourside** has no dot and no box.
@@ -552,14 +552,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Reset the Database run after DRAFT-21. Signed in with this account. **Lists** page open.
 
-- [ ] **Step 1.** Select **Skills**.
+- [ ] `2F53` Select **Skills**.
   - **Expected:**
     - A panel opens.
     - **Rust** has a yellow dot in its slot.
     - **TypeScript** has a yellow dot in its slot.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **⋯** button at the end of the **Rust** row, then **Discard draft**.
+- [ ] `CAE8` Select the **⋯** button at the end of the **Rust** row, then **Discard draft**.
   - **Expected:**
     - A red notice reads **This choice can't be discarded while other drafts depend on it. Discard those drafts, or change them so they no longer use it, then try again.**
     - **Rust** still has a yellow dot in its slot.
@@ -571,22 +571,22 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As DRAFT-22, signed in with this account instead. **Lists** page open.
 
-- [ ] **Step 1.** Select **Skills**.
+- [ ] `DC93` Select **Skills**.
   - **Expected:** A panel opens with **Skills** at the top.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **⋯** button beside **Skills** at the top of the panel, then **Reject…**.
+- [ ] `33FA` Select the **⋯** button beside **Skills** at the top of the panel, then **Reject…**.
   - **Expected:**
     - A dialog titled **Reject 5 drafts?** opens.
     - Under **Also rejects the drafts that use these:** it lists *Silje Holm-Schrøder*, *the column Skills*, *the choice Rust in Skills* and *the choice TypeScript in Skills*.
     - It has a **Reason** box.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Cancel**.
+- [ ] `3D12` Select **Cancel**.
   - **Expected:** The dialog closes.
   - **Notes:**
 
-- [ ] **Step 4.** Close the panel.
+- [ ] `9AAC` Close the panel.
   - **Expected:**
     - The panel closes.
     - **Skills** still has a yellow dot in its slot.
@@ -598,21 +598,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As DRAFT-23. **Drafts** page open.
 
-- [ ] **Step 1.** Type **Silje Skills** in the search box.
+- [ ] `6BF4` Type **Silje Skills** in the search box.
   - **Expected:** One entry is shown: **Engineering Operations Manager drafted changes to Silje Holm-Schrøder: Skills set to Rust**.
   - **Notes:**
 
-- [ ] **Step 2.** Select the entry's checkbox.
+- [ ] `BEC2` Select the entry's checkbox.
   - **Expected:** The entry's checkbox is ticked.
   - **Notes:**
 
-- [ ] **Step 3.** Select the button at the top right that starts **Approve**.
+- [ ] `C3F3` Select the button at the top right that starts **Approve**.
   - **Expected:**
     - A dialog titled **Approve 4 drafts?** opens.
     - Under **Also approves the drafts these depend on:** it lists *the column Skills*, *the list Skills* and *the choice Rust in Skills*.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Approve** in the dialog.
+- [ ] `FB2C` Select **Approve** in the dialog.
   - **Expected:**
     - The dialog closes.
     - A notice reads **Approved 4 drafts.**
@@ -623,72 +623,72 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### DRAFT-25: Drafts This Account Changed Need Another Approver
 
-**Account:** Project Manager, `project.manager@fathom.test`, changed from DRAFT-24. Step 9 signs in as another account.
+**Account:** Project Manager, `project.manager@fathom.test`, changed from DRAFT-24. Step `B553` signs in as another account.
 
 **Preconditions:** Run Reset the Database first. Signed in with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the streams table.
 
-- [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
+- [ ] `D7A6` Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
   - **Expected:**
     - A dialog titled **Change Harbor 1** opens.
     - **Name** holds **Harbor 1**.
   - **Notes:**
 
-- [ ] **Step 2.** Replace the name with `Harbor One`.
+- [ ] `BDCF` Replace the name with `Harbor One`.
   - **Expected:** **Name** holds **Harbor One**.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Save**.
+- [ ] `7F16` Select **Save**.
   - **Expected:**
     - The dialog closes.
     - A hollow yellow dot before **Harbor One**.
     - The top bar shows **Publish 2 changes**.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Publish 2 changes** in the top bar.
+- [ ] `EFB7` Select **Publish 2 changes** in the top bar.
   - **Expected:** The top bar no longer offers to publish.
   - **Notes:**
 
-- [ ] **Step 5.** Select the **⋯** button at the end of the **Harbor One** row.
+- [ ] `12ED` Select the **⋯** button at the end of the **Harbor One** row.
   - **Expected:**
     - **Approve…** is greyed out.
     - **Changed by this account, so another approver must approve it** is under it, easy to read.
     - **Reject…** is not greyed out.
   - **Notes:**
 
-- [ ] **Step 6.** Press Escape.
+- [ ] `3CBD` Press Escape.
   - **Expected:** The menu closes.
   - **Notes:**
 
-- [ ] **Step 7.** Select the **Drafts** page in the left-hand menu.
+- [ ] `7DEE` Select the **Drafts** page in the left-hand menu.
   - **Expected:** An entry names **Harbor One**, drafted by **Project Manager**.
   - **Notes:**
 
-- [ ] **Step 8.** Select that entry's checkbox.
+- [ ] `4F66` Select that entry's checkbox.
   - **Expected:**
     - **Approve 1 draft** is greyed out.
     - **Reject…** is not greyed out.
     - A line under them says another approver must approve it.
   - **Notes:**
 
-- [ ] **Step 9.** Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
+- [ ] `B553` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Director**.
   - **Notes:**
 
-- [ ] **Step 10.** Select the **Drafts** page in the left-hand menu.
+- [ ] `9FAB` Select the **Drafts** page in the left-hand menu.
   - **Expected:** An entry names **Harbor One**.
   - **Notes:**
 
-- [ ] **Step 11.** Select the **Harbor One** entry's checkbox.
+- [ ] `2A5A` Select the **Harbor One** entry's checkbox.
   - **Expected:** The entry's checkbox is ticked.
   - **Notes:**
 
-- [ ] **Step 12.** Select **Approve 1 draft**.
+- [ ] `561B` Select **Approve 1 draft**.
   - **Expected:**
     - A dialog opens.
     - It has an **Approve** button.
   - **Notes:**
 
-- [ ] **Step 13.** Select **Approve** in the dialog.
+- [ ] `E72D` Select **Approve** in the dialog.
   - **Expected:** A notice reads **Approved 1 draft.**
   - **Notes:**
 
@@ -700,14 +700,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
-- [ ] **Step 1.** In the search box above the table, type **Simone Jean**.
+- [ ] `17CA` In the search box above the table, type **Simone Jean**.
   - **Expected:**
     - Her row is tinted faint yellow.
     - A yellow dot before her **Manager**.
     - A light green Live row is under it.
   - **Notes:**
 
-- [ ] **Step 2.** Scroll the table all the way to the right, and read the end of that row.
+- [ ] `CDD2` Scroll the table all the way to the right, and read the end of that row.
   - **Expected:**
     - The row ends with one **⋯** button.
     - Nothing is beside it.

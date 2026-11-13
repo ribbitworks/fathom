@@ -45,7 +45,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Features** page open.
 
-- [ ] **Step 1.** Select **Show details** in the **⋯** menu of **Offline Sync**.
+- [ ] `327B` Select **Show details** in the **⋯** menu of **Offline Sync**.
   - **Expected:**
     - Under the heading **Details**, the rows read, from the top:
       - Name
@@ -72,39 +72,39 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - Cedar Valley Clinics
   - **Notes:**
 
-- [ ] **Step 2.** Select **Cedar Valley Clinics** under **Customers** in the side panel.
+- [ ] `2DCD` Select **Cedar Valley Clinics** under **Customers** in the side panel.
   - **Expected:**
     - The **Projects** page opens on its **Customers** tab.
     - The side panel is headed **Cedar Valley Clinics**.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Features** page in the left-hand menu.
+- [ ] `0BB2` Select the **Features** page in the left-hand menu.
   - **Expected:** The **Features** page opens.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Show details** in the **⋯** menu of **Offline Sync**.
+- [ ] `94B7` Select **Show details** in the **⋯** menu of **Offline Sync**.
   - **Expected:** The side panel opens, headed **Offline Sync**.
   - **Notes:**
 
-- [ ] **Step 5.** Select the pencil button beside **Notes**.
+- [ ] `12F6` Select the pencil button beside **Notes**.
   - **Expected:**
     - A panel titled **Notes for Offline Sync** opens beside the side panel.
     - It shows the note, starting **Field crews asked for this first.**
   - **Notes:**
 
-- [ ] **Step 6.** Close the **Notes for Offline Sync** panel.
+- [ ] `3ECA` Close the **Notes for Offline Sync** panel.
   - **Expected:**
     - The **Notes for Offline Sync** panel closes.
     - The side panel stays open.
   - **Notes:**
 
-- [ ] **Step 7.** Choose **Dark** in the Appearance menu.
+- [ ] `EB75` Choose **Dark** in the Appearance menu.
   - **Expected:**
     - The four section headings are easy to read.
     - The headings stand apart from the rows under them.
   - **Notes:**
 
-- [ ] **Step 8.** Choose **Light** in the Appearance menu.
+- [ ] `CC7F` Choose **Light** in the Appearance menu.
   - **Expected:**
     - The four section headings are easy to read.
     - The headings stand apart from the rows under them.
@@ -116,7 +116,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Features** page open, the side panel of **Offline Sync** open.
 
-- [ ] **Step 1.** Select **Harbour Cranes Upgrade** under **Proposals** in the side panel.
+- [ ] `C97E` Select **Harbour Cranes Upgrade** under **Proposals** in the side panel.
   - **Expected:**
     - Under **Scope history**, the entries read, from the top:
       - Audit Export
@@ -125,11 +125,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Under each entry, **Added** and a date show in grey.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Offline Sync** under **Scope history**.
+- [ ] `F5A4` Select **Offline Sync** under **Scope history**.
   - **Expected:** The side panel shows **Offline Sync** again.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Crane Control** under **Projects**.
+- [ ] `FD46` Select **Crane Control** under **Projects**.
   - **Expected:**
     - Under **Scope history**, after its milestones, the entries read, from the top:
       - Audit Export
@@ -137,15 +137,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Under each entry, **Added** and a date show in grey.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **Projects** page in the left-hand menu.
+- [ ] `D045` Select the **Projects** page in the left-hand menu.
   - **Expected:** The **Projects** page opens.
   - **Notes:**
 
-- [ ] **Step 5.** Select the **Proposals** tab.
+- [ ] `B5EE` Select the **Proposals** tab.
   - **Expected:** The table lists the proposals.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Show details** in the **⋯** menu of **Fleet Tracking Bid**.
+- [ ] `AEEC` Select **Show details** in the **⋯** menu of **Fleet Tracking Bid**.
   - **Expected:**
     - The first row under **Scope history** names **Report Builder**.
     - The first row reads **Removed** and a date, in grey.
@@ -164,11 +164,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Features** page open.
 
-- [ ] **Step 1.** Select the **Proposals** cell of **Offline Sync**.
+- [ ] `486B` Select the **Proposals** cell of **Offline Sync**.
   - **Expected:** The cell is selected.
   - **Notes:**
 
-- [ ] **Step 2.** Press Enter.
+- [ ] `BFED` Press Enter.
   - **Expected:**
     - A list of proposals opens.
     - These are picked:
@@ -176,26 +176,26 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - PR-102 Clinic Scheduling Pilot
   - **Notes:**
 
-- [ ] **Step 3.** Unpick **PR-101 Harbour Cranes Upgrade**.
+- [ ] `B667` Unpick **PR-101 Harbour Cranes Upgrade**.
   - **Expected:** **PR-101 Harbour Cranes Upgrade** is no longer picked.
   - **Notes:**
 
-- [ ] **Step 4.** Press Enter.
+- [ ] `8C47` Press Enter.
   - **Expected:**
     - The list closes.
     - No dialog opens.
     - The **Proposals** cell names **Clinic Scheduling Pilot** alone.
   - **Notes:**
 
-- [ ] **Step 5.** Select the **Projects** page in the left-hand menu.
+- [ ] `E3EC` Select the **Projects** page in the left-hand menu.
   - **Expected:** The **Projects** page opens.
   - **Notes:**
 
-- [ ] **Step 6.** Select the **Proposals** tab.
+- [ ] `E8F4` Select the **Proposals** tab.
   - **Expected:** The table lists the proposals.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
+- [ ] `75DE` Select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
   - **Expected:**
     - Under **Scope history**, the rows read, from the top:
       - Offline Sync
@@ -218,45 +218,45 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As SCOPE-03 ends, the side panel of **Harbour Cranes Upgrade** open.
 
-- [ ] **Step 1.** Select the pencil button at the right of the first row under **Scope history**.
+- [ ] `816B` Select the pencil button at the right of the first row under **Scope history**.
   - **Expected:**
     - An empty box opens under **Removed** and today's date.
     - The cursor is in the box.
     - The pencil button is gone.
   - **Notes:**
 
-- [ ] **Step 2.** Type `Customer chose another supplier`, and press Enter.
+- [ ] `CBD4` Type `Customer chose another supplier`, and press Enter.
   - **Expected:**
     - The box closes.
     - The first row's last line reads **Reason: Customer chose another supplier**.
     - The keyboard focus is on the pencil button at the first row's right.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Reason: Customer chose another supplier**.
+- [ ] `3EB2` Select **Reason: Customer chose another supplier**.
   - **Expected:**
     - The box opens, holding **Customer chose another supplier**.
     - The cursor is in the box.
   - **Notes:**
 
-- [ ] **Step 4.** Clear the box, and type `x`.
+- [ ] `27DC` Clear the box, and type `x`.
   - **Expected:** The box holds **x**.
   - **Notes:**
 
-- [ ] **Step 5.** Press Esc.
+- [ ] `321C` Press Esc.
   - **Expected:**
     - The box closes.
     - The first row's last line reads **Reason: Customer chose another supplier**.
   - **Notes:**
 
-- [ ] **Step 6.** Select the pencil button at the right of the first row.
+- [ ] `D346` Select the pencil button at the right of the first row.
   - **Expected:** The box opens, holding **Customer chose another supplier**.
   - **Notes:**
 
-- [ ] **Step 7.** Clear the box, and type `Customer delayed the upgrade`.
+- [ ] `D4A3` Clear the box, and type `Customer delayed the upgrade`.
   - **Expected:** The box holds **Customer delayed the upgrade**.
   - **Notes:**
 
-- [ ] **Step 8.** Select the heading **Scope history**.
+- [ ] `D77B` Select the heading **Scope history**.
   - **Expected:**
     - The box closes.
     - The first row's last line reads **Reason: Customer delayed the upgrade**.
@@ -268,11 +268,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Projects** page open, **Proposals** tab chosen.
 
-- [ ] **Step 1.** Select **Show details** in the **⋯** menu of **Clinic Scheduling Pilot**.
+- [ ] `958D` Select **Show details** in the **⋯** menu of **Clinic Scheduling Pilot**.
   - **Expected:** The side panel opens, headed **Clinic Scheduling Pilot**.
   - **Notes:**
 
-- [ ] **Step 2.** Select the pencil button beside **Features** in the side panel.
+- [ ] `C4EF` Select the pencil button beside **Features** in the side panel.
   - **Expected:**
     - A list of features opens.
     - These are picked:
@@ -280,11 +280,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - Scheduler API
   - **Notes:**
 
-- [ ] **Step 3.** Unpick **Scheduler API**.
+- [ ] `5DCB` Unpick **Scheduler API**.
   - **Expected:** **Scheduler API** is no longer picked.
   - **Notes:**
 
-- [ ] **Step 4.** Press Enter.
+- [ ] `6B38` Press Enter.
   - **Expected:**
     - No dialog opens.
     - **Features** in the side panel names **Offline Sync** alone.
@@ -294,19 +294,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The first row shows no reason.
   - **Notes:**
 
-- [ ] **Step 5.** Open the Draft menu, and select **Live only**.
+- [ ] `947E` Open the Draft menu, and select **Live only**.
   - **Expected:**
     - No row has a yellow dot.
     - No row reads **Removed**.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Drafts beside live**.
+- [ ] `735D` Select **Drafts beside live**.
   - **Expected:**
     - The **Scheduler API** row reading **Removed** is back at the top.
     - It has a hollow yellow dot before **Scheduler API**.
   - **Notes:**
 
-- [ ] **Step 7.** Run Publish.
+- [ ] `EB88` Run Publish.
   - **Expected:** The dot before **Scheduler API** is now solid yellow.
   - **Notes:**
 
@@ -316,7 +316,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Projects** page open, **Proposals** tab chosen.
 
-- [ ] **Step 1.** Select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
+- [ ] `FBF0` Select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
   - **Expected:**
     - The first row under **Scope history** reads **Reason: Customer delayed the upgrade**.
     - It has no pencil button.
@@ -328,19 +328,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Projects** page open, **Proposals** tab chosen.
 
-- [ ] **Step 1.** In the **⋯** menu of **Harbour Cranes Upgrade**, select **Approve…**.
+- [ ] `60CA` In the **⋯** menu of **Harbour Cranes Upgrade**, select **Approve…**.
   - **Expected:**
     - A dialog opens.
     - It has an **Approve** button.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Approve** in the dialog.
+- [ ] `B5E4` Select **Approve** in the dialog.
   - **Expected:**
     - A notification says **Approved 1 draft.**
     - The row has no dot.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
+- [ ] `93BF` Select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
   - **Expected:**
     - Under **Scope history**, the rows read, from the top:
       - Offline Sync
@@ -352,7 +352,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The first row has no pencil button.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **Change history** page in the left-hand menu.
+- [ ] `A22D` Select the **Change history** page in the left-hand menu.
   - **Expected:**
     - The newest entry reads **Engineering Director as Engineering Director approved changes to the proposal Harbour Cranes Upgrade**.
     - After a colon, its details read, dimmed, in this order:

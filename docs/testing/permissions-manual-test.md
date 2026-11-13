@@ -69,7 +69,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **View** on **Plan** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the page and the left-hand menu.
+- [ ] `98FD` Look at the page and the left-hand menu.
   - **Expected:**
     - The **Overview** page is open
     - **Plan** section: **Overview** and **Projects**
@@ -78,7 +78,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - The **Help** section, and no other page
   - **Notes:**
 
-- [ ] **Step 2.** Select **Drafts**.
+- [ ] `DE22` Select **Drafts**.
   - **Expected:**
     - Drafts of the plan are listed, among them one naming **Clinic Booking Rollout**
     - No entry names **Harbor 4**, a draft of a release
@@ -94,7 +94,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **View** on **Features and releases** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the left-hand menu.
+- [ ] `6C7D` Look at the left-hand menu.
   - **Expected:**
     - **Plan** section: **Features** and **Releases**
     - **People** section: **Drafts**
@@ -102,18 +102,18 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - The **Help** section, and no other page
   - **Notes:**
 
-- [ ] **Step 2.** Select **Releases**.
+- [ ] `AA88` Select **Releases**.
   - **Expected:** The table of release streams shows.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Platform** in the table.
+- [ ] `50E9` Select **Platform** in the table.
   - **Expected:**
     - Under **Releases**, the side panel lists **Harbor 1**, **Harbor 2 LTS**, **Harbor 3** and **Harbor 4**
     - A light green Live row is under **Harbor 2 LTS** and under **Harbor 3**
     - There is no **New release…** button and no **New release stream** button
   - **Notes:**
 
-- [ ] **Step 4.** Select **Drafts**.
+- [ ] `3EDC` Select **Drafts**.
   - **Expected:**
     - An entry names **Harbor 4**
     - No entry has a checkbox
@@ -127,7 +127,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **Edit** on **Features and releases** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the left-hand menu.
+- [ ] `4D73` Look at the left-hand menu.
   - **Expected:**
     - **Plan** section: **Features** and **Releases**
     - **People** section: **Drafts**
@@ -135,38 +135,38 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - The **Help** section, and no other page
   - **Notes:**
 
-- [ ] **Step 2.** Select **Releases**.
+- [ ] `B4C1` Select **Releases**.
   - **Expected:** The table of release streams shows.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Platform** in the table.
+- [ ] `F936` Select **Platform** in the table.
   - **Expected:** The side panel opens, with **New release…** under **Releases**, and there is no **New release stream** button at the top right of the page.
   - **Notes:**
 
-- [ ] **Step 4.** Select **New release…**.
+- [ ] `5F2C` Select **New release…**.
   - **Expected:** A dialog titled **New release in Platform** opens.
   - **Notes:**
 
-- [ ] **Step 5.** Type `Harbor 5` in **Name**.
+- [ ] `18CD` Type `Harbor 5` in **Name**.
   - **Expected:** **Name** reads **Harbor 5**.
   - **Notes:**
 
-- [ ] **Step 6.** In **First cycle**, choose Platform's third half-year cycle: the third in the list whose dates span six months.
+- [ ] `ED11` In **First cycle**, choose Platform's third half-year cycle: the third in the list whose dates span six months.
   - **Expected:** **First cycle** shows that cycle.
   - **Notes:**
 
-- [ ] **Step 7.** In **Last cycle**, choose the same cycle.
+- [ ] `306D` In **Last cycle**, choose the same cycle.
   - **Expected:** **Last cycle** shows that cycle.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Make release**.
+- [ ] `698F` Select **Make release**.
   - **Expected:**
     - A notification says **Drafted the new release.**
     - Under **Releases**, a row reads **Harbor 5**, with a hollow yellow dot in its slot
     - The Publish button reads **Publish 1 change**
   - **Notes:**
 
-- [ ] **Step 9.** Run Discard the Unpublished Changes.
+- [ ] `A9A0` Run Discard the Unpublished Changes.
   - **Expected:** **Harbor 5** is gone from the side panel.
   - **Notes:**
 
@@ -180,7 +180,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **View** on **People** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the page and the left-hand menu.
+- [ ] `11CE` Look at the page and the left-hand menu.
   - **Expected:**
     - The **People** page is open
     - **People** section: **People**, **Org chart** and **Drafts**
@@ -188,13 +188,13 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - The **Help** section, and no other page
   - **Notes:**
 
-- [ ] **Step 2.** Read the column headers, and the top right of the page.
+- [ ] `BE13` Read the column headers, and the top right of the page.
   - **Expected:**
     - **Start**, **End** and **Manager assigned** are not shown
     - There is no **New** and no **New column** button
   - **Notes:**
 
-- [ ] **Step 3.** Search for **Viktoria Holmberg**.
+- [ ] `1BAF` Search for **Viktoria Holmberg**.
   - **Expected:** No row is shown.
   - **Notes:**
 
@@ -206,19 +206,19 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **Edit** on **People** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the column headers and the top right of the page.
+- [ ] `F859` Look at the column headers and the top right of the page.
   - **Expected:**
     - **New** is at the top right, and there is no **New column** button
     - **Start**, **End** and **Manager assigned** are not shown
   - **Notes:**
 
-- [ ] **Step 2.** Search for **Max Munk**. Select the row's **Team name** cell, press Enter, replace the text with `Mobile apps team`, and press Enter.
+- [ ] `B7CD` Search for **Max Munk**. Select the row's **Team name** cell, press Enter, replace the text with `Mobile apps team`, and press Enter.
   - **Expected:**
     - The cell reads **Mobile apps team**, with a hollow yellow dot before it
     - The Publish button reads **Publish 1 change**
   - **Notes:**
 
-- [ ] **Step 3.** Run Discard the Unpublished Changes.
+- [ ] `D3A6` Run Discard the Unpublished Changes.
   - **Expected:** The **Team name** cell reads **Mobile team**.
   - **Notes:**
 
@@ -230,18 +230,18 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **View** on **People** and **View** on **Feature teams** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the left-hand menu.
+- [ ] `E063` Look at the left-hand menu.
   - **Expected:**
     - **People** section: **People**, **Org chart**, **Feature assignments** and **Drafts**
     - **History** section: **Change history**
     - The **Help** section, and no other page
   - **Notes:**
 
-- [ ] **Step 2.** Select **Org chart**.
+- [ ] `C762` Select **Org chart**.
   - **Expected:** The chart shows each person's name, position, and the team they lead.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Feature teams** in the switch at the heading's right.
+- [ ] `EEC1` Select **Feature teams** in the switch at the heading's right.
   - **Expected:** The chart shows the feature teams **Payments core**, **Search**, **Platform reliability** and **Mobile apps**, with their members, and offers no way to add or change one.
   - **Notes:**
 
@@ -255,13 +255,13 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **View** on **People** and **View** on **Personal** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the column headers and the top right of the page.
+- [ ] `E73F` Look at the column headers and the top right of the page.
   - **Expected:**
     - **Start**, **End** and **Manager assigned** are shown
     - There is no **New** button
   - **Notes:**
 
-- [ ] **Step 2.** Search for **Viktoria Holmberg**.
+- [ ] `F2BD` Search for **Viktoria Holmberg**.
   - **Expected:** Her row is shown.
   - **Notes:**
 
@@ -273,19 +273,19 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Personal** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the column headers and the top right of the page.
+- [ ] `DD13` Look at the column headers and the top right of the page.
   - **Expected:**
     - **Start**, **End** and **Manager assigned** are shown
     - **New** is at the top right, and there is no **New column** button
   - **Notes:**
 
-- [ ] **Step 2.** Search for **Max Munk**. Select the row's **Start** cell, press Enter, type `2010-01-04`, and press Enter.
+- [ ] `98AC` Search for **Max Munk**. Select the row's **Start** cell, press Enter, type `2010-01-04`, and press Enter.
   - **Expected:**
     - The cell reads **2010-01-04**, with a hollow yellow dot before it
     - The Publish button reads **Publish 1 change**
   - **Notes:**
 
-- [ ] **Step 3.** Run Discard the Unpublished Changes.
+- [ ] `10DC` Run Discard the Unpublished Changes.
   - **Expected:** The **Start** cell has no dot before it.
   - **Notes:**
 
@@ -299,14 +299,14 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Reset the Database, then Add a Confidential Column, then Team Member granted only **View** on **People** and **View** on **Confidential** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the column headers and the top right of the page.
+- [ ] `7D27` Look at the column headers and the top right of the page.
   - **Expected:**
     - An **Offer letter** column is shown
     - **Start**, **End** and **Manager assigned** are not shown
     - There is no **New** button
   - **Notes:**
 
-- [ ] **Step 2.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
+- [ ] `7F60` Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
   - **Expected:**
     - Only hire rows are shown
     - No row has a dot
@@ -321,19 +321,19 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Add a Confidential Column done since the last reset, as for PERM-09, then Team Member granted only **Edit** on **People** and **Edit** on **Confidential** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the column headers and the top right of the page.
+- [ ] `512C` Look at the column headers and the top right of the page.
   - **Expected:**
     - An **Offer letter** column is shown, and **New** is at the top right
     - **Start**, **End** and **Manager assigned** are not shown
   - **Notes:**
 
-- [ ] **Step 2.** Search for **Max Munk**. Select the row's **Offer letter** cell, press Enter, type `https://example.test/offer` in **Address**, and press Enter.
+- [ ] `FC92` Search for **Max Munk**. Select the row's **Offer letter** cell, press Enter, type `https://example.test/offer` in **Address**, and press Enter.
   - **Expected:**
     - The cell shows the address, with a hollow yellow dot before it
     - The Publish button reads **Publish 1 change**
   - **Notes:**
 
-- [ ] **Step 3.** Run Discard the Unpublished Changes.
+- [ ] `23C3` Run Discard the Unpublished Changes.
   - **Expected:** The **Offer letter** cell is empty.
   - **Notes:**
 
@@ -347,7 +347,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **View** on **People** and **View** on **Hiring plan** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
+- [ ] `B7D8` Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
   - **Expected:**
     - Only hire rows are shown
     - **REQ-2050** is among them
@@ -356,17 +356,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - There is no **New** button
   - **Notes:**
 
-- [ ] **Step 2.** Read the column headers, then the **Start** cell of **REQ-2050**.
+- [ ] `6BFB` Read the column headers, then the **Start** cell of **REQ-2050**.
   - **Expected:**
     - **Start** is shown, and **End** and **Manager assigned** are not
     - The **Start** cell of **REQ-2050** shows a date
   - **Notes:**
 
-- [ ] **Step 3.** Select **Clear all** above the table, and search for **Max Munk**.
+- [ ] `5ABF` Select **Clear all** above the table, and search for **Max Munk**.
   - **Expected:** The row's **Start** cell is empty.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Clear all** again, search for **Backend engineer 1**, select the row's **Name** cell, and type a letter.
+- [ ] `7E52` Select **Clear all** again, search for **Backend engineer 1**, select the row's **Name** cell, and type a letter.
   - **Expected:** No editor opens.
   - **Notes:**
 
@@ -378,17 +378,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Hiring plan** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the top right of the page.
+- [ ] `0AF4` Look at the top right of the page.
   - **Expected:** **New** is shown.
   - **Notes:**
 
-- [ ] **Step 2.** Search for **Backend engineer 2**. Select the row's **Name** cell, press Enter, replace the text with `Backend engineer 3`, and press Enter.
+- [ ] `47A7` Search for **Backend engineer 2**. Select the row's **Name** cell, press Enter, replace the text with `Backend engineer 3`, and press Enter.
   - **Expected:**
     - The cell reads **Backend engineer 3**, with a hollow yellow dot before it
     - The Publish button reads **Publish 1 change**
   - **Notes:**
 
-- [ ] **Step 3.** Run Discard the Unpublished Changes.
+- [ ] `50F5` Run Discard the Unpublished Changes.
   - **Expected:** The **Name** cell reads **Backend engineer 2**.
   - **Notes:**
 
@@ -402,7 +402,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** The seed's draft of a new order for **Levels** still waiting, as after Reset the Database, then Team Member granted only **View** and **Approve** on **Configuration** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the left-hand menu.
+- [ ] `9A70` Look at the left-hand menu.
   - **Expected:**
     - **Plan** section: **Releases**
     - **People** section: **Drafts**, **Capacity** and **Lists**
@@ -410,17 +410,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - The **Help** section, and no other page
   - **Notes:**
 
-- [ ] **Step 2.** Select **Drafts**, and type `new order for Levels` in the search box.
+- [ ] `73D1` Select **Drafts**, and type `new order for Levels` in the search box.
   - **Expected:**
     - **Select all waiting**, **Reject…** and **Approve** are above the list
     - One entry is shown, ending **drafted a new order for Levels**, with a checkbox
   - **Notes:**
 
-- [ ] **Step 3.** Select the entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog titled **Approve 1 draft?**.
+- [ ] `35A1` Select the entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog titled **Approve 1 draft?**.
   - **Expected:** A notice reads **Approved 1 draft.** The page says **No drafts match the search.**
   - **Notes:**
 
-- [ ] **Step 4.** Select **Lists**.
+- [ ] `C04B` Select **Lists**.
   - **Expected:**
     - **Levels** has no dot
     - There is no **New list** button
@@ -434,17 +434,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **View** and **Approve** on **People** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Select the **Drafts** page in the left-hand menu, and type `Skills` in the search box.
+- [ ] `A824` Select the **Drafts** page in the left-hand menu, and type `Skills` in the search box.
   - **Expected:**
     - The entry **Engineering Operations Manager drafted changes to Silje Holm-Schrøder: Skills set to Rust** has a checkbox
     - The entries for the list **Skills**, the column **Skills** and its choices have none
   - **Notes:**
 
-- [ ] **Step 2.** Select the **Silje Holm-Schrøder** entry's checkbox, then **Approve 1 draft**.
+- [ ] `219C` Select the **Silje Holm-Schrøder** entry's checkbox, then **Approve 1 draft**.
   - **Expected:** A dialog titled **Another approver needed** reads **This role can't approve these drafts:** above *the column Skills*, *the list Skills* and *the choice Rust in Skills*, with only a **Close** button.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Close**.
+- [ ] `86CC` Select **Close**.
   - **Expected:** The dialog closes, and the **Silje Holm-Schrøder** entry is still shown.
   - **Notes:**
 
@@ -456,27 +456,27 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **Edit** on **Features and releases**, **Approve** on **Features and releases** and **Approve own drafts** through Grant Team Member Only Some Permissions, signed in with this account. **Releases** page open, with **Platform** selected in the streams table.
 
-- [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
+- [ ] `A0FF` Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
   - **Expected:** A dialog titled **Change Harbor 1** opens.
   - **Notes:**
 
-- [ ] **Step 2.** Replace the name with `Harbor One`, and select **Save**.
+- [ ] `A9FD` Replace the name with `Harbor One`, and select **Save**.
   - **Expected:** **Harbor One** has a hollow yellow dot before it.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Publish 1 change** in the top bar.
+- [ ] `7FBC` Select **Publish 1 change** in the top bar.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **Drafts** page in the left-hand menu.
+- [ ] `899B` Select the **Drafts** page in the left-hand menu.
   - **Expected:** An entry names **Harbor One**.
   - **Notes:**
 
-- [ ] **Step 5.** Select the **Harbor One** entry's checkbox.
+- [ ] `7BBD` Select the **Harbor One** entry's checkbox.
   - **Expected:** **Approve 1 draft** can be selected, and no line says another approver is needed.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Approve 1 draft**, then **Approve** in the dialog.
+- [ ] `3DD0` Select **Approve 1 draft**, then **Approve** in the dialog.
   - **Expected:** A notice reads **Approved 1 draft.**
   - **Notes:**
 
@@ -490,19 +490,19 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **View** on **Configuration** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Select **Lists**.
+- [ ] `327E` Select **Lists**.
   - **Expected:**
     - **Skills** has a yellow dot in its slot
     - There is no **New list** button
   - **Notes:**
 
-- [ ] **Step 2.** Select **Releases**.
+- [ ] `D311` Select **Releases**.
   - **Expected:**
     - **Platform** and **Patches** are in the table
     - There is no **New release stream** button
   - **Notes:**
 
-- [ ] **Step 3.** Select **Drafts**.
+- [ ] `C148` Select **Drafts**.
   - **Expected:** Drafts are listed, with no checkboxes, and no **Select all waiting** or **Approve** button.
   - **Notes:**
 
@@ -514,18 +514,18 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **Edit** on **Configuration** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Select **Releases**.
+- [ ] `B0BC` Select **Releases**.
   - **Expected:** **New release stream** is at the top right of the page.
   - **Notes:**
 
-- [ ] **Step 2.** Select **New release stream**, type `Testing Stream`, and select **Add stream**.
+- [ ] `9DA0` Select **New release stream**, type `Testing Stream`, and select **Add stream**.
   - **Expected:**
     - A notification says **Drafted the new release stream.**
     - The table has a **Testing Stream** row, with a hollow yellow dot in its slot
     - The Publish button reads **Publish 1 change**
   - **Notes:**
 
-- [ ] **Step 3.** Run Discard the Unpublished Changes, and select **Releases**.
+- [ ] `CE3A` Run Discard the Unpublished Changes, and select **Releases**.
   - **Expected:** **Testing Stream** is gone from the table.
   - **Notes:**
 
@@ -539,11 +539,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **View** on **Configuration** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the left-hand menu.
+- [ ] `850A` Look at the left-hand menu.
   - **Expected:** The menu shows **Change history** in the **History** section, with the configuration pages, and the **Help** section.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Change history**.
+- [ ] `B044` Select **Change history**.
   - **Expected:** Its entries name lists, such as **Levels**, and none names a person, a project or a release.
   - **Notes:**
 
@@ -557,32 +557,32 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **View** on **Administration** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Look at the left-hand menu.
+- [ ] `D4C7` Look at the left-hand menu.
   - **Expected:**
     - **Administration** section: **Accounts**, **Roles** and **Settings**
     - **History** section: **Access history**
     - The **Help** section, and no other page
   - **Notes:**
 
-- [ ] **Step 2.** Select **Accounts**.
+- [ ] `07A4` Select **Accounts**.
   - **Expected:**
     - Every account is in the table with its role
     - There is no **New account** button and no **Edit** button in any row
   - **Notes:**
 
-- [ ] **Step 3.** Select **Roles**.
+- [ ] `5E53` Select **Roles**.
   - **Expected:** There is no **New role** button, and each row ends with **View** only.
   - **Notes:**
 
-- [ ] **Step 4.** Select **View** in the **Team Member** row.
+- [ ] `84B6` Select **View** in the **Team Member** row.
   - **Expected:** A dialog shows the role's name, its description and the grid, with every box fixed, and **Close** as its one button.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Close**, then **Settings**.
+- [ ] `33FF` Select **Close**, then **Settings**.
   - **Expected:** **Time zone** and the **Passwords** panel show their values, which cannot be changed, and there is no **Save** button.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Access history**.
+- [ ] `B114` Select **Access history**.
   - **Expected:** The **Access history** page lists entries.
   - **Notes:**
 
@@ -594,51 +594,51 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **Edit** on **Administration** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] **Step 1.** Select **Accounts**.
+- [ ] `B8CB` Select **Accounts**.
   - **Expected:** **New account** is at the top right, and each row ends with **Edit**.
   - **Notes:**
 
-- [ ] **Step 2.** Select **New account**.
+- [ ] `B97C` Select **New account**.
   - **Expected:** A dialog titled **New account** opens, whose **Roles** lists every role, each with a tick box and its description, with only **Team Member** ticked.
   - **Notes:**
 
-- [ ] **Step 3.** Type `Test Account` in **Name**.
+- [ ] `A9B3` Type `Test Account` in **Name**.
   - **Expected:** **Name** reads **Test Account**.
   - **Notes:**
 
-- [ ] **Step 4.** Type `test.account@fathom.test` in **Email address**.
+- [ ] `A5D6` Type `test.account@fathom.test` in **Email address**.
   - **Expected:** **Email address** reads `test.account@fathom.test`.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Create account**.
+- [ ] `95A4` Select **Create account**.
   - **Expected:** The dialog, now titled **Password for Test Account**, shows a password hidden as dots.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Done**.
+- [ ] `90EA` Select **Done**.
   - **Expected:** A notice reads **Created the account for Test Account.** **Test Account** is in the table, with **Team Member** in its **Roles** column.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Roles**, then **New role**.
+- [ ] `5CE2` Select **Roles**, then **New role**.
   - **Expected:** A dialog titled **New role** opens.
   - **Notes:**
 
-- [ ] **Step 8.** Type `Test Role` as the name.
+- [ ] `57EA` Type `Test Role` as the name.
   - **Expected:** The name reads **Test Role**.
   - **Notes:**
 
-- [ ] **Step 9.** Select **Create role**.
+- [ ] `80B1` Select **Create role**.
   - **Expected:** A green banner says **The role has been created.** **Test Role** is in the list, with **0** in the **Accounts** column.
   - **Notes:**
 
-- [ ] **Step 10.** Select **Settings**.
+- [ ] `0B38` Select **Settings**.
   - **Expected:** **Time zone** can be changed, with a **Save** button.
   - **Notes:**
 
-- [ ] **Step 11.** Type `Kolkata` in **Time zone**, and choose **Asia/Kolkata** from the list.
+- [ ] `692F` Type `Kolkata` in **Time zone**, and choose **Asia/Kolkata** from the list.
   - **Expected:** **Time zone** shows **Asia/Kolkata**.
   - **Notes:**
 
-- [ ] **Step 12.** Select **Save**.
+- [ ] `86EF` Select **Save**.
   - **Expected:** A green banner says **Fathom's time zone is now Asia/Kolkata.**
   - **Notes:**
 
@@ -648,14 +648,14 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 #### PERM-21: Every Starting Role Is as Fathom Started It
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, the same as the account PERM-20 ended with. Step 2 signs in again with this account.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as the account PERM-20 ended with. Step `DC4E` signs in again with this account.
 
 **Preconditions:** All the test cases above run. Signed in with this account.
 
-- [ ] **Step 1.** Open each role in turn, as Open a Role describes, except **Test Role**, and select **Cancel** after each.
+- [ ] `300F` Open each role in turn, as Open a Role describes, except **Test Role**, and select **Cancel** after each.
   - **Expected:** In every role's dialog, **Restore template** is turned off.
   - **Notes:**
 
-- [ ] **Step 2.** Run Reset the Database, sign in as the Administrator, `fathom.administrator@fathom.test`, and select the **Roles** page in the left-hand menu.
+- [ ] `DC4E` Run Reset the Database, sign in as the Administrator, `fathom.administrator@fathom.test`, and select the **Roles** page in the left-hand menu.
   - **Expected:** The **Roles** page lists the roles as [Roles](../product/roles.md#starting-roles) sets out, and the Superuser role, with no **Test Role**.
   - **Notes:**

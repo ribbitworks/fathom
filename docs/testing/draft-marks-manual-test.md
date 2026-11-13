@@ -42,30 +42,30 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Light** chosen in the Appearance menu. **People** page open from the left-hand menu.
 
-- [ ] **Step 1.** Type **Vianney Rousseau** in the search box.
+- [ ] `866B` Type **Vianney Rousseau** in the search box.
   - **Expected:** In Vianney Rousseau's row:
     - A yellow dot in the row's slot
     - No dot before the name or any other value
     - The row faintly yellow
   - **Notes:**
 
-- [ ] **Step 2.** Point at the yellow dot in Vianney Rousseau's row.
+- [ ] `78FC` Point at the yellow dot in Vianney Rousseau's row.
   - **Expected:** A tip shows words saying what the draft does.
   - **Notes:**
 
-- [ ] **Step 3.** Type **Salvador Quiñones Méndez** in the search box.
+- [ ] `B859` Type **Salvador Quiñones Méndez** in the search box.
   - **Expected:** In Salvador Quiñones Méndez's row:
     - A yellow dot in the slot
     - The row struck through
   - **Notes:**
 
-- [ ] **Step 4.** Type **Ophélie Roussel** in the search box.
+- [ ] `C825` Type **Ophélie Roussel** in the search box.
   - **Expected:** In Ophélie Roussel's row:
     - A red dot in a ring in the slot
     - The row faintly red
   - **Notes:**
 
-- [ ] **Step 5.** Type **西尾 亮** in the search box.
+- [ ] `A2FD` Type **西尾 亮** in the search box.
   - **Expected:** In 西尾 亮's row:
     - Nothing in the slot
     - No dot before the name
@@ -73,7 +73,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A yellow dot before **Grade**, in semibold
   - **Notes:**
 
-- [ ] **Step 6.** Look at the Live row under 西尾 亮's row.
+- [ ] `B6E7` Look at the Live row under 西尾 亮's row.
   - **Expected:**
     - The row light green
     - Nothing in its slot
@@ -81,13 +81,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A green dot before the live **Grade**
   - **Notes:**
 
-- [ ] **Step 7.** Type **Viktoria Holmberg** in the search box.
+- [ ] `00CF` Type **Viktoria Holmberg** in the search box.
   - **Expected:** In Viktoria Holmberg's row:
     - The grey lock alone in the slot
     - A yellow dot before each changed value
   - **Notes:**
 
-- [ ] **Step 8.** Type **우아현** in the search box.
+- [ ] `87D0` Type **우아현** in the search box.
   - **Expected:** In 우아현's row:
     - Nothing in the slot
     - A red dot in a ring before the **Position** value
@@ -103,17 +103,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **People** page open, with **Simone Jean** typed in the search box.
 
-- [ ] **Step 1.** Select the details button in Simone Jean's row.
+- [ ] `26DE` Select the details button in Simone Jean's row.
   - **Expected:** In the side panel's **Manager** row:
     - A yellow dot before **Silje Holm-Schrøder**
     - Under it, a green dot before **Viktoria Holmberg**, then a red **Left** box
   - **Notes:**
 
-- [ ] **Step 2.** Type **Viktoria Holmberg** in the search box.
+- [ ] `1EE3` Type **Viktoria Holmberg** in the search box.
   - **Expected:** Only Viktoria Holmberg's row shows.
   - **Notes:**
 
-- [ ] **Step 3.** Select the details button in Viktoria Holmberg's row.
+- [ ] `DFF0` Select the details button in Viktoria Holmberg's row.
   - **Expected:** In the side panel:
     - Under her name, her position, then a red **Left** box
     - Under **Direct reports**, a yellow dot before **Simone Jean**
@@ -126,11 +126,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Org chart** page open from the left-hand menu, with **Reporting teams** chosen in the teams switch.
 
-- [ ] **Step 1.** Type **Simone** in the finder.
+- [ ] `7F4E` Type **Simone** in the finder.
   - **Expected:** A yellow dot before **Simone Jean** in the finder's list.
   - **Notes:**
 
-- [ ] **Step 2.** Choose **Simone Jean** in the finder's list.
+- [ ] `22BC` Choose **Simone Jean** in the finder's list.
   - **Expected:**
     - Her card under Silje Holm-Schrøder: a yellow dot before her name
     - That card faintly yellow
@@ -138,7 +138,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Viktoria Holmberg's card: her name, then a red **Left** box
   - **Notes:**
 
-- [ ] **Step 3.** Choose **Feature teams** in the teams switch.
+- [ ] `2B1C` Choose **Feature teams** in the teams switch.
   - **Expected:**
     - The card titled **Search and discovery**: a yellow dot before the title
     - Under **Mobile apps**, a yellow dot before **Atmananda Ganaka**
@@ -153,26 +153,26 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Lists** page open from the left-hand menu.
 
-- [ ] **Step 1.** Type **Languages** in the search box.
+- [ ] `61EF` Type **Languages** in the search box.
   - **Expected:** In Languages' row:
     - A yellow dot in the slot
     - **Languages**, then a yellow **Retired** box
   - **Notes:**
 
-- [ ] **Step 2.** Type **Positions** in the search box.
+- [ ] `B138` Type **Positions** in the search box.
   - **Expected:** In Positions' row:
     - **Positions**, then a grey **Built in** box
     - A red dot in a ring before the description
   - **Notes:**
 
-- [ ] **Step 3.** Type **Sites** in the search box.
+- [ ] `30BC` Type **Sites** in the search box.
   - **Expected:**
     - In Sites' row, a yellow dot before its choices
     - Under it, a light green Live row
     - A green dot before the Live row's choices
   - **Notes:**
 
-- [ ] **Step 4.** Select **Sites** in its row, not its Live row.
+- [ ] `4A64` Select **Sites** in its row, not its Live row.
   - **Expected:**
     - Sites' row has a thin blue bar at its left edge
     - In the panel, **Harbourside**: a red dot in a ring in its slot
@@ -191,13 +191,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Drafts** page open from the left-hand menu.
 
-- [ ] **Step 1.** Type **Ophélie Roussel** in the search box.
+- [ ] `41DB` Type **Ophélie Roussel** in the search box.
   - **Expected:** In Ophélie Roussel's entry:
     - A red dot in a ring before the sentence
     - The **Reason:** line under the sentence
   - **Notes:**
 
-- [ ] **Step 2.** Type **Viktoria Holmberg** in the search box.
+- [ ] `34BF` Type **Viktoria Holmberg** in the search box.
   - **Expected:** In Viktoria Holmberg's entry, a yellow dot, then the grey lock, before the sentence.
   - **Notes:**
 
@@ -207,7 +207,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **People** page open from the left-hand menu.
 
-- [ ] **Step 1.** Choose **Drafts applied** in the Draft menu.
+- [ ] `CE9E` Choose **Drafts applied** in the Draft menu.
   - **Expected:**
     - Yellow dots still show
     - No red dots in a ring
@@ -217,11 +217,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No green dots
   - **Notes:**
 
-- [ ] **Step 2.** Select the **Org chart** page in the left-hand menu.
+- [ ] `FA5C` Select the **Org chart** page in the left-hand menu.
   - **Expected:** The chart shows the reporting teams.
   - **Notes:**
 
-- [ ] **Step 3.** Choose **Drafts applied** in the Draft menu.
+- [ ] `2E7F` Choose **Drafts applied** in the Draft menu.
   - **Expected:**
     - Yellow dots still show
     - No card tinted
@@ -235,28 +235,28 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Org chart** page open, with **Reporting teams** chosen in the teams switch.
 
-- [ ] **Step 1.** Choose **Live only** in the Draft menu.
+- [ ] `7BA0` Choose **Live only** in the Draft menu.
   - **Expected:**
     - No yellow dots
     - No red dots in a ring
     - No card tinted
   - **Notes:**
 
-- [ ] **Step 2.** Type **Simone** in the finder.
+- [ ] `7A48` Type **Simone** in the finder.
   - **Expected:** **Simone Jean** is in the finder's list.
   - **Notes:**
 
-- [ ] **Step 3.** Choose **Simone Jean** in the finder's list.
+- [ ] `5ED1` Choose **Simone Jean** in the finder's list.
   - **Expected:**
     - Her one card is under Viktoria Holmberg
     - A green dot before her name on that card
   - **Notes:**
 
-- [ ] **Step 4.** Select the **People** page in the left-hand menu.
+- [ ] `D892` Select the **People** page in the left-hand menu.
   - **Expected:** The table of people shows.
   - **Notes:**
 
-- [ ] **Step 5.** Choose **Live only** in the Draft menu.
+- [ ] `9D72` Choose **Live only** in the Draft menu.
   - **Expected:**
     - No yellow dots
     - No red dots in a ring
@@ -264,14 +264,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A green dot before **Level** in its column's header
   - **Notes:**
 
-- [ ] **Step 6.** Type **西尾 亮** in the search box.
+- [ ] `D843` Type **西尾 亮** in the search box.
   - **Expected:** In 西尾 亮's row:
     - Nothing in the slot
     - A green dot before **End**
     - A green dot before **Level**
   - **Notes:**
 
-- [ ] **Step 7.** Type **우아현** in the search box.
+- [ ] `B992` Type **우아현** in the search box.
   - **Expected:** In 우아현's row:
     - No dot
     - **Manager:** **Viktoria Holmberg**, then a red **Left** box
@@ -283,25 +283,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **People** page open from the left-hand menu.
 
-- [ ] **Step 1.** Choose **Dark** in the Appearance menu.
+- [ ] `718A` Choose **Dark** in the Appearance menu.
   - **Expected:** The page turns dark.
   - **Notes:**
 
-- [ ] **Step 2.** Type **Vianney Rousseau** in the search box.
+- [ ] `DABB` Type **Vianney Rousseau** in the search box.
   - **Expected:**
     - The yellow dot is easy to see
     - The faintly yellow row is told apart from the page
     - Every value in the row is easy to read
   - **Notes:**
 
-- [ ] **Step 3.** Type **Ophélie Roussel** in the search box.
+- [ ] `8DC8` Type **Ophélie Roussel** in the search box.
   - **Expected:**
     - The red dot's ring is easy to see
     - The faintly red row is told apart from the page
     - Every value in the row is easy to read
   - **Notes:**
 
-- [ ] **Step 4.** Type **西尾 亮** in the search box.
+- [ ] `C1BD` Type **西尾 亮** in the search box.
   - **Expected:**
     - The yellow dots and green dots are easy to see
     - The semibold values are easy to read
@@ -309,15 +309,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Every value in the Live row is easy to read
   - **Notes:**
 
-- [ ] **Step 5.** Type **우아현** in the search box.
+- [ ] `6D18` Type **우아현** in the search box.
   - **Expected:** The red **Left** box and its word are easy to read.
   - **Notes:**
 
-- [ ] **Step 6.** Type **Viktoria Holmberg** in the search box.
+- [ ] `B9D7` Type **Viktoria Holmberg** in the search box.
   - **Expected:** The grey lock is easy to see.
   - **Notes:**
 
-- [ ] **Step 7.** Choose **Light** in the Appearance menu.
+- [ ] `99B4` Choose **Light** in the Appearance menu.
   - **Expected:** The page is light.
   - **Notes:**
 
@@ -327,18 +327,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **People** page open from the left-hand menu.
 
-- [ ] **Step 1.** Type **우아현** in the search box.
+- [ ] `C352` Type **우아현** in the search box.
   - **Expected:**
     - The red dot in a ring is centred on the centreline of the **Position** value's capital letters
     - The red **Left** box is centred on the centreline of **Viktoria Holmberg**'s capital letters
     - The dot and the box each sit just beside their text, with no extra space
   - **Notes:**
 
-- [ ] **Step 2.** Type **Viktoria Holmberg** in the search box.
+- [ ] `BB21` Type **Viktoria Holmberg** in the search box.
   - **Expected:** The grey lock is centred on the centreline of the name's capital letters.
   - **Notes:**
 
-- [ ] **Step 3.** Type **Vianney Rousseau** in the search box.
+- [ ] `5F7B` Type **Vianney Rousseau** in the search box.
   - **Expected:** The yellow dot is centred on the centreline of the name's capital letters.
   - **Notes:**
 
@@ -348,16 +348,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
-- [ ] **Step 1.** Type **Mariana Metz** in the search box.
+- [ ] `2E90` Type **Mariana Metz** in the search box.
   - **Expected:** In Mariana Metz's row:
     - Nothing in the slot
     - A hollow yellow dot before the new **Site**
   - **Notes:**
 
-- [ ] **Step 2.** Select the **Lists** page in the left-hand menu.
+- [ ] `8EC2` Select the **Lists** page in the left-hand menu.
   - **Expected:** The table of lists shows.
   - **Notes:**
 
-- [ ] **Step 3.** Type **Equipment** in the search box.
+- [ ] `F1E1` Type **Equipment** in the search box.
   - **Expected:** In Equipment's row, a hollow yellow dot in the slot.
   - **Notes:**

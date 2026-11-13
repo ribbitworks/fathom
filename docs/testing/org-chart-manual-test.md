@@ -47,7 +47,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Select the **Org chart** page in the **People** section of the left-hand menu.
+- [ ] `B4D3` Select the **Org chart** page in the **People** section of the left-hand menu.
   - **Expected:**
     - The page's heading reads **Org chart**.
     - The top bar reads **People / Org chart**.
@@ -61,7 +61,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
 
-- [ ] **Step 1.** Read the card at the top left of the chart.
+- [ ] `2A30` Read the card at the top left of the chart.
   - **Expected:**
     - It reads **Silje Holm-Schrøder**.
     - **Manager** is under the name.
@@ -72,7 +72,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **REQ-2047**, with **Software Engineer** under it
   - **Notes:**
 
-- [ ] **Step 2.** Read the cards under it.
+- [ ] `39D8` Read the cards under it.
   - **Expected:**
     - Eight cards, each joined to **Silje Holm-Schrøder** by a line.
     - Five are in a column under her card's left edge, from the top: **Blaise Gislason**, **Cleora Jerde**, **Jedidiah Funk**, **Simone Jean** and **Tanushree Patel-Singh**.
@@ -80,7 +80,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - There is nothing below the row.
   - **Notes:**
 
-- [ ] **Step 3.** Read the card for **Viktoria Holmberg**.
+- [ ] `53AB` Read the card for **Viktoria Holmberg**.
   - **Expected:**
     - A red **Left** box follows the name.
     - Its position reads **Manager**.
@@ -93,7 +93,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As ORG-02.
 
-- [ ] **Step 1.** On the card for **Lorenza Thiel**, select **Show 8 reports**.
+- [ ] `D2FA` On the card for **Lorenza Thiel**, select **Show 8 reports**.
   - **Expected:**
     - Eight cards appear under **Lorenza Thiel**, each joined to her by a line:
       - seven in a column under her card's left edge, from **Candice Swift** to **Valéry Caron**, then **REQ-2042**, with **SDET** under it and a dashed edge
@@ -101,11 +101,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The button now reads **Hide 8 reports**.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Show levels**, then **All levels**.
+- [ ] `B38D` Select **Show levels**, then **All levels**.
   - **Expected:** No card ends with a **Show** button.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Fit to screen**.
+- [ ] `68C9` Select **Fit to screen**.
   - **Expected:**
     - The whole organization fits in the panel.
     - Its cards are too small to read.
@@ -118,14 +118,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As ORG-02. Select **Show levels**, then **1 level**, first.
 
-- [ ] **Step 1.** Select the finder, and type **Gloria**.
+- [ ] `5C31` Select the finder, and type **Gloria**.
   - **Expected:**
     - A list opens under the finder offering **Gloria Armas Guardado**.
     - **Software Engineer** is under the name.
     - An **×** is at the right of the finder, before the arrow.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Gloria Armas Guardado**.
+- [ ] `98ED` Select **Gloria Armas Guardado**.
   - **Expected:**
     - The finder reads **Gloria Armas Guardado**.
     - The chart opens out and moves until the card for **Gloria Armas Guardado** is in the middle of the panel.
@@ -135,21 +135,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The card for **Joaquin Rice** shows **Billing team**.
   - **Notes:**
 
-- [ ] **Step 3.** Select the finder, clear what it holds, and type **Zzz**.
+- [ ] `D9EB` Select the finder, clear what it holds, and type **Zzz**.
   - **Expected:** The list reads **Nobody has that name**.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **×** at the right of the finder.
+- [ ] `92E7` Select the **×** at the right of the finder.
   - **Expected:** The finder is empty.
   - **Notes:**
 
-- [ ] **Step 5.** Type **Billing**.
+- [ ] `AB8F` Type **Billing**.
   - **Expected:**
     - The list offers **Billing team**.
     - **Led by Joaquin Rice** is under it.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Billing team**.
+- [ ] `D826` Select **Billing team**.
   - **Expected:**
     - The finder reads **Joaquin Rice**.
     - His card is in the middle of the panel.
@@ -164,15 +164,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As ORG-02.
 
-- [ ] **Step 1.** Hold the mouse button down on an empty part of the chart and drag to the left.
+- [ ] `BF3E` Hold the mouse button down on an empty part of the chart and drag to the left.
   - **Expected:** The cards move to the left with the pointer.
   - **Notes:**
 
-- [ ] **Step 2.** With the pointer over the chart, scroll the mouse wheel, or move two fingers on the trackpad, up.
+- [ ] `16D9` With the pointer over the chart, scroll the mouse wheel, or move two fingers on the trackpad, up.
   - **Expected:** The chart zooms in around the pointer.
   - **Notes:**
 
-- [ ] **Step 3.** With the pointer over the chart, scroll the mouse wheel, or move two fingers on the trackpad, down.
+- [ ] `D1F2` With the pointer over the chart, scroll the mouse wheel, or move two fingers on the trackpad, down.
   - **Expected:** The chart zooms out around the pointer.
   - **Notes:**
 
@@ -182,7 +182,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As ORG-02.
 
-- [ ] **Step 1.** On the card for **Lorenza Thiel**, select the name.
+- [ ] `D92A` On the card for **Lorenza Thiel**, select the name.
   - **Expected:**
     - A panel slides out on the right, headed **Lorenza Thiel**.
     - The chart narrows to make room.
@@ -190,7 +190,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Her card has a blue ring around it.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **×** at the top right of the panel.
+- [ ] `8D83` Select the **×** at the top right of the panel.
   - **Expected:**
     - The panel slides away.
     - The chart fills the page again.
@@ -204,13 +204,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As ORG-02.
 
-- [ ] **Step 1.** Point at the small org chart button at the top right of the card for **Lorenza Thiel**.
+- [ ] `861F` Point at the small org chart button at the top right of the card for **Lorenza Thiel**.
   - **Expected:**
     - A tip reads **Show only this team**.
     - The cards for **Tanushree Patel-Singh** and the others with no reports have no such button.
   - **Notes:**
 
-- [ ] **Step 2.** Select the button.
+- [ ] `7D8E` Select the button.
   - **Expected:**
     - **Lorenza Thiel** is at the top of the chart.
     - Her eight reports are under her.
@@ -220,13 +220,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Her card has no org chart button.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Show everyone**.
+- [ ] `A2DE` Select **Show everyone**.
   - **Expected:**
     - **Silje Holm-Schrøder** is at the top of the chart again.
     - The line above the chart is gone.
   - **Notes:**
 
-- [ ] **Step 4.** Go back with the browser's back button.
+- [ ] `B75A` Go back with the browser's back button.
   - **Expected:** Only the team of **Lorenza Thiel** is shown again.
   - **Notes:**
 
@@ -236,13 +236,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
 
-- [ ] **Step 1.** Look at the area between the page's heading and the chart.
+- [ ] `7A96` Look at the area between the page's heading and the chart.
   - **Expected:**
     - A line in grey reads **Other dates need Personal access.**
     - There is no date control.
   - **Notes:**
 
-- [ ] **Step 2.** Type `Viktoria` in **Find a person or team**, and choose **Viktoria Holmberg**.
+- [ ] `C89C` Type `Viktoria` in **Find a person or team**, and choose **Viktoria Holmberg**.
   - **Expected:**
     - The chart centres on the card for **Viktoria Holmberg**.
     - The card shows her name, position and a yellow dot before **Search team**.
@@ -258,26 +258,26 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As ORG-02. **Light** chosen in the Appearance menu.
 
-- [ ] **Step 1.** Read the card for **Silje Holm-Schrøder**.
+- [ ] `E696` Read the card for **Silje Holm-Schrøder**.
   - **Expected:**
     - A small teal dot comes before **Platform team**.
     - The card has no band.
   - **Notes:**
 
-- [ ] **Step 2.** Read the eight cards under her, and the lines to them.
+- [ ] `447D` Read the eight cards under her, and the lines to them.
   - **Expected:**
     - Each card has a teal band.
     - Each line from her card is teal.
   - **Notes:**
 
-- [ ] **Step 3.** On the card for **Lorenza Thiel**, select **Show 8 reports**.
+- [ ] `7FC3` On the card for **Lorenza Thiel**, select **Show 8 reports**.
   - **Expected:**
     - Her card shows no team name.
     - Her eight reports' cards have teal bands.
     - The lines to them are teal.
   - **Notes:**
 
-- [ ] **Step 4.** On the card for **Atmananda Ganaka**, select **Show 9 reports**.
+- [ ] `AD3D` On the card for **Atmananda Ganaka**, select **Show 9 reports**.
   - **Expected:**
     - His card has a teal band.
     - A small grape (purple) dot comes before **Payments team**.
@@ -285,19 +285,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The lines to them are grape.
   - **Notes:**
 
-- [ ] **Step 5.** Choose **Dark** in the Appearance menu.
+- [ ] `88A9` Choose **Dark** in the Appearance menu.
   - **Expected:**
     - The bands, dots and lines are still teal and grape.
     - Each is easy to tell apart from the card behind it.
   - **Notes:**
 
-- [ ] **Step 6.** Choose **Light** in the Appearance menu.
+- [ ] `5D1F` Choose **Light** in the Appearance menu.
   - **Expected:**
     - The chart is light.
     - The bands, dots and lines are still teal and grape.
   - **Notes:**
 
-- [ ] **Step 7.** In the finder, type **Candice**, and select **Candice Swift**.
+- [ ] `7C65` In the finder, type **Candice**, and select **Candice Swift**.
   - **Expected:**
     - Her card has a blue ring around it.
     - Its band is blue too while she is found.
@@ -309,14 +309,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
 
-- [ ] **Step 1.** On the card for **Silje Holm-Schrøder**, select the small teal dot before **Platform team**.
+- [ ] `F922` On the card for **Silje Holm-Schrøder**, select the small teal dot before **Platform team**.
   - **Expected:**
     - A menu opens headed **Colour of Platform team**.
     - It lists **Indigo**, **Violet**, **Grape**, **Pink**, **Red**, **Orange**, **Yellow**, **Lime**, **Green** and **Teal**, each after a small dot of its colour, then **No colour**.
     - **Teal** has a tick.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Grape**.
+- [ ] `B3FC` Select **Grape**.
   - **Expected:**
     - The menu closes.
     - The dot before **Platform team** is grape (purple).
@@ -324,11 +324,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The Publish button does not appear.
   - **Notes:**
 
-- [ ] **Step 3.** Select the grape dot before **Platform team**, then **Teal**.
+- [ ] `691C` Select the grape dot before **Platform team**, then **Teal**.
   - **Expected:** The dot, the bands and the lines are teal again.
   - **Notes:**
 
-- [ ] **Step 4.** In the finder, type **Joaquin**, and select **Joaquin Rice**.
+- [ ] `D72D` In the finder, type **Joaquin**, and select **Joaquin Rice**.
   - **Expected:** A small dashed circle comes before **Billing team** on his card.
   - **Notes:**
 
@@ -340,22 +340,22 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
 
-- [ ] **Step 1.** Read **Platform team** on the card for **Silje Holm-Schrøder**.
+- [ ] `C4F4` Read **Platform team** on the card for **Silje Holm-Schrøder**.
   - **Expected:** **Platform team** is underlined.
   - **Notes:**
 
-- [ ] **Step 2.** On the card for **Silje Holm-Schrøder**, select **Platform team**.
+- [ ] `1CCE` On the card for **Silje Holm-Schrøder**, select **Platform team**.
   - **Expected:**
     - A box opens under it with a field holding **Platform team**.
     - The field has an **×** at its end.
     - **Cancel** and **Save** are under the field.
   - **Notes:**
 
-- [ ] **Step 3.** Replace the name with **Platform crew**.
+- [ ] `9EA5` Replace the name with **Platform crew**.
   - **Expected:** The field holds **Platform crew**.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Save**.
+- [ ] `FFD5` Select **Save**.
   - **Expected:**
     - The box closes.
     - The Publish button reads **Publish 4 changes**.
@@ -366,7 +366,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Under that, a green dot before **Platform team**, in grey.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Teams** beside the finder.
+- [ ] `79AC` Select **Teams** beside the finder.
   - **Expected:**
     - A **Teams** panel opens on the right.
     - It lists first the named teams by name.
@@ -390,14 +390,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As ORG-02. **Light** chosen in the Appearance menu.
 
-- [ ] **Step 1.** Read the card for **Simone Jean**, in the column under **Silje Holm-Schrøder**.
+- [ ] `5CDC` Read the card for **Simone Jean**, in the column under **Silje Holm-Schrøder**.
   - **Expected:**
     - The card is tinted faint yellow.
     - A yellow dot comes before the name.
     - **Software Engineer** is under the name.
   - **Notes:**
 
-- [ ] **Step 2.** On the card for **Viktoria Holmberg**, select **Show 3 reports**.
+- [ ] `C32D` On the card for **Viktoria Holmberg**, select **Show 3 reports**.
   - **Expected:**
     - Three cards appear in a column under her: **Simone Jean**, **우아현** and **西尾 亮**.
     - The card for **Simone Jean** is faded and light green.
@@ -406,25 +406,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The line to it is dashed and faded.
   - **Notes:**
 
-- [ ] **Step 3.** Select the name on the light green card for **Simone Jean**.
+- [ ] `E6C8` Select the name on the light green card for **Simone Jean**.
   - **Expected:**
     - Nothing opens.
     - No card changes colour.
   - **Notes:**
 
-- [ ] **Step 4.** Look at the tinted card under **Silje Holm-Schrøder** and the light green card under **Viktoria Holmberg**.
+- [ ] `AFD0` Look at the tinted card under **Silje Holm-Schrøder** and the light green card under **Viktoria Holmberg**.
   - **Expected:**
     - Both are easy to tell apart from the untinted cards.
     - Every word on them is easy to read.
   - **Notes:**
 
-- [ ] **Step 5.** Choose **Dark** in the Appearance menu.
+- [ ] `A603` Choose **Dark** in the Appearance menu.
   - **Expected:**
     - The two cards are still easy to tell apart from the untinted cards.
     - Every word on them is easy to read.
   - **Notes:**
 
-- [ ] **Step 6.** Choose **Light** in the Appearance menu.
+- [ ] `E092` Choose **Light** in the Appearance menu.
   - **Expected:** The chart is light.
   - **Notes:**
 
@@ -434,7 +434,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As ORG-02.
 
-- [ ] **Step 1.** In the finder, type **本間**, and select **本間 稔**.
+- [ ] `96C8` In the finder, type **本間**, and select **本間 稔**.
   - **Expected:**
     - The card for **本間 稔** is in the middle of the panel.
     - The card is tinted faint yellow.
@@ -443,11 +443,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - There is no line under **Observability team**.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **×** at the right of the finder.
+- [ ] `854F` Select the **×** at the right of the finder.
   - **Expected:** The finder is empty.
   - **Notes:**
 
-- [ ] **Step 3.** Type **우아**, and select **우아현**.
+- [ ] `EA3D` Type **우아**, and select **우아현**.
   - **Expected:**
     - The card for **우아현** is in the middle of the panel.
     - The card is tinted faint red.
@@ -458,11 +458,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Nothing on the card is cut off.
   - **Notes:**
 
-- [ ] **Step 4.** Choose **Dark** in the Appearance menu.
+- [ ] `1A5F` Choose **Dark** in the Appearance menu.
   - **Expected:** Every word on the card for **우아현** is easy to read.
   - **Notes:**
 
-- [ ] **Step 5.** Choose **Light** in the Appearance menu.
+- [ ] `DD8C` Choose **Light** in the Appearance menu.
   - **Expected:** The chart is light.
   - **Notes:**
 
@@ -472,17 +472,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As ORG-02.
 
-- [ ] **Step 1.** Select **Draft**.
+- [ ] `0BA8` Select **Draft**.
   - **Expected:**
     - A menu opens with **Drafts beside live**, **Drafts applied** and **Live only** under **Show**.
     - **Drafts beside live** has a tick.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Drafts applied**.
+- [ ] `E344` Select **Drafts applied**.
   - **Expected:** **Drafts applied** has a tick.
   - **Notes:**
 
-- [ ] **Step 3.** Press Esc.
+- [ ] `990C` Press Esc.
   - **Expected:**
     - The menu closes.
     - A dot follows **Draft** on its button.
@@ -492,7 +492,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No card on the chart is light green.
   - **Notes:**
 
-- [ ] **Step 4.** In the finder, type **Vianney**, and select **Vianney Rousseau**.
+- [ ] `739A` In the finder, type **Vianney**, and select **Vianney Rousseau**.
   - **Expected:**
     - The card for **Vianney Rousseau** has **Engineering Manager** under the name.
     - The card is in the middle of the panel.
@@ -500,19 +500,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No line joins it to a card above.
   - **Notes:**
 
-- [ ] **Step 5.** Select the **×** at the right of the finder.
+- [ ] `C862` Select the **×** at the right of the finder.
   - **Expected:** The finder is empty.
   - **Notes:**
 
-- [ ] **Step 6.** Type **Ophélie**.
+- [ ] `B8D1` Type **Ophélie**.
   - **Expected:** The list reads **Nobody has that name**.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Draft**, then **Live only**.
+- [ ] `49F8` Select **Draft**, then **Live only**.
   - **Expected:** **Live only** has a tick.
   - **Notes:**
 
-- [ ] **Step 8.** Press Esc.
+- [ ] `2F9B` Press Esc.
   - **Expected:**
     - The menu closes.
     - The card for **Silje Holm-Schrøder** ends with **Hide 7 reports**.
@@ -521,13 +521,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No card has a yellow or red dot.
   - **Notes:**
 
-- [ ] **Step 9.** Read the buttons just right of the finder.
+- [ ] `1E2E` Read the buttons just right of the finder.
   - **Expected:**
     - **Draft** is there.
     - **Teams** is not.
   - **Notes:**
 
-- [ ] **Step 10.** On the card for **Silje Holm-Schrøder**, select the name.
+- [ ] `AE0B` On the card for **Silje Holm-Schrøder**, select the name.
   - **Expected:**
     - Her details slide out in a panel on the right.
     - **Draft** still has a dot after it.
@@ -541,7 +541,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account, with **Feature Lead** on the account button at the top right. **Org chart** page open from the left-hand menu.
 
-- [ ] **Step 1.** On the card for **Viktoria Holmberg**, read the column under it.
+- [ ] `2A9C` On the card for **Viktoria Holmberg**, read the column under it.
   - **Expected:**
     - The column holds **Simone Jean**, **우아현** and **西尾 亮**.
     - The card for **Simone Jean** is untinted.
@@ -555,7 +555,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu. **Light** chosen in the Appearance menu.
 
-- [ ] **Step 1.** Read the card for **TBD-3**, at the top of the chart.
+- [ ] `A6AC` Read the card for **TBD-3**, at the top of the chart.
   - **Expected:**
     - The card has a grey dashed edge.
     - The card has no shadow.
@@ -565,7 +565,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - It ends with **Hide 2 reports**.
   - **Notes:**
 
-- [ ] **Step 2.** Read the two cards under it.
+- [ ] `C338` Read the two cards under it.
   - **Expected:**
     - The cards are:
       - **Platform engineer**, with **Software Engineer** under the name
@@ -575,18 +575,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Platform engineer** reads **Planned, expected** and the month six months after the month Restore the Seed Data was run, such as **May 2027** for a run in November 2026.
   - **Notes:**
 
-- [ ] **Step 3.** On the card for **TBD-3**, select the small org chart button at the top right.
+- [ ] `47AC` On the card for **TBD-3**, select the small org chart button at the top right.
   - **Expected:**
     - **TBD-3** is at the top of the chart.
     - Its two planned hires are under it.
     - The page reads **Only the team of Engineering Manager, TBD-3 is shown.**
   - **Notes:**
 
-- [ ] **Step 4.** Select **Show everyone**.
+- [ ] `A9EE` Select **Show everyone**.
   - **Expected:** **Only the team of Engineering Manager, TBD-3 is shown.** is gone.
   - **Notes:**
 
-- [ ] **Step 5.** Choose **Dark** in the Appearance menu.
+- [ ] `61ED` Choose **Dark** in the Appearance menu.
   - **Expected:** The dashed edges and the grey boxes are easy to see on the dark cards.
   - **Notes:**
 
@@ -596,15 +596,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Org chart** page open from the left-hand menu, showing today.
 
-- [ ] **Step 1.** Select **Reporting teams** in the switch at the top right.
+- [ ] `0CC9` Select **Reporting teams** in the switch at the top right.
   - **Expected:** The chart shows managers and their reports.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Show levels**, then **All levels**.
+- [ ] `FADD` Select **Show levels**, then **All levels**.
   - **Expected:** No card ends with a **Show** button.
   - **Notes:**
 
-- [ ] **Step 3.** In the date row, select the left arrow once.
+- [ ] `76C4` In the date row, select the left arrow once.
   - **Expected:**
     - The **Date** box shows the first day of last month.
     - Below the row, text reads **Showing** with that date, then **Changes take effect from this date.**
@@ -612,13 +612,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Teams** is gone.
   - **Notes:**
 
-- [ ] **Step 4.** In the finder, type `Candice`, and select **Candice Swift**.
+- [ ] `B101` In the finder, type `Candice`, and select **Candice Swift**.
   - **Expected:**
     - The card for **Candice Swift** is in the middle of the panel.
     - It has a blue ring around it.
   - **Notes:**
 
-- [ ] **Step 5.** Select the name on her card.
+- [ ] `7CFA` Select the name on her card.
   - **Expected:**
     - Her details slide out in a panel on the right.
     - **Manager** reads **Lorenza Thiel**.
@@ -628,7 +628,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Manager?** has no checkbox.
   - **Notes:**
 
-- [ ] **Step 6.** Select the change button beside **Manager**, and choose **Max Munk**.
+- [ ] `DEBB` Select the change button beside **Manager**, and choose **Max Munk**.
   - **Expected:**
     - In the panel, **Manager** reads **Max Munk**.
     - A hollow yellow dot is before it.
@@ -641,7 +641,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - On that copy, a green dot before her name.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Today** in the date row.
+- [ ] `2AD0` Select **Today** in the date row.
   - **Expected:**
     - The text below the row goes.
     - **Teams** is back.
@@ -650,7 +650,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Nothing on the card is cut off.
   - **Notes:**
 
-- [ ] **Step 8.** Select the left arrow twice.
+- [ ] `FFA8` Select the left arrow twice.
   - **Expected:**
     - The text below the row ends **Changes take effect from this date.**
     - The card for **Candice Swift** is under **Lorenza Thiel**.

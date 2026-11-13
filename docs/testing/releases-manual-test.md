@@ -54,7 +54,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Start From an Empty Database run, then signed in with this account.
 
-- [ ] **Step 1.** Select the **Releases** page in the left-hand menu.
+- [ ] `575D` Select the **Releases** page in the left-hand menu.
   - **Expected:**
     - The **Releases** page opens.
     - There is no table.
@@ -68,17 +68,17 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-01. **Releases** page open.
 
-- [ ] **Step 1.** Select **New release stream** at the top right of the page.
+- [ ] `BE80` Select **New release stream** at the top right of the page.
   - **Expected:**
     - A dialog titled **New release stream** opens.
     - It has a **Name** box.
   - **Notes:**
 
-- [ ] **Step 2.** Type `Testing Stream` in **Name**.
+- [ ] `B5F3` Type `Testing Stream` in **Name**.
   - **Expected:** The **Name** box holds **Testing Stream**.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Add stream**.
+- [ ] `DEC9` Select **Add stream**.
   - **Expected:**
     - The dialog closes.
     - The streams table shows one row, **Testing Stream**.
@@ -94,7 +94,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-02. **Testing Stream** open in the side panel.
 
-- [ ] **Step 1.** In the side panel, select **Set up cycles…** under **Cycle schedule**.
+- [ ] `4A29` In the side panel, select **Set up cycles…** under **Cycle schedule**.
   - **Expected:**
     - A dialog titled **Set up cycles for Testing Stream** opens.
     - The **First cycle starts** box is empty, showing **2027-01-01** in grey.
@@ -103,26 +103,26 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - **Names** is set to **{YY}.{N}**.
   - **Notes:**
 
-- [ ] **Step 2.** Type `20270104` in **First cycle starts**.
+- [ ] `0CC6` Type `20270104` in **First cycle starts**.
   - **Expected:** The box shows **2027-01-04**.
   - **Notes:**
 
-- [ ] **Step 3.** Replace **3** in **Each cycle lasts** with `2`.
+- [ ] `FBA3` Replace **3** in **Each cycle lasts** with `2`.
   - **Expected:** **Each cycle lasts** reads **2**.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Weeks**.
+- [ ] `5CDA` Select **Weeks**.
   - **Expected:** Below **Names**, under **First cycles**, three lines:
     - **27.1** with **2027-01-04 to 2027-01-17**.
     - **27.2** with **2027-01-18 to 2027-01-31**.
     - **27.3** with **2027-02-01 to 2027-02-14**.
   - **Notes:**
 
-- [ ] **Step 5.** Replace **Names** with `Sprint {#}`.
+- [ ] `2BC4` Replace **Names** with `Sprint {#}`.
   - **Expected:** The three lines under **First cycles** now start with **Sprint 1**, **Sprint 2** and **Sprint 3**.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Set up cycles**.
+- [ ] `1E14` Select **Set up cycles**.
   - **Expected:**
     - The dialog closes.
     - Under **Cycle schedule**, a row reads **From 2027-01-04**, then **Every 2 weeks, named Sprint {#}**.
@@ -134,7 +134,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - In the table, the **Cycle schedule** column of **Testing Stream** reads **Every 2 weeks, named Sprint {#}**.
   - **Notes:**
 
-- [ ] **Step 7.** Run Publish.
+- [ ] `7D69` Run Publish.
   - **Expected:** The dots before **Testing Stream** and its cycles' row are now solid yellow.
   - **Notes:**
 
@@ -144,37 +144,37 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-03. **Releases** page open from the left-hand menu.
 
-- [ ] **Step 1.** Select **Testing Stream** in the table.
+- [ ] `EF30` Select **Testing Stream** in the table.
   - **Expected:** The side panel opens, headed **Testing Stream**.
   - **Notes:**
 
-- [ ] **Step 2.** Select **New release…** under **Releases** in the side panel.
+- [ ] `5D68` Select **New release…** under **Releases** in the side panel.
   - **Expected:**
     - A dialog titled **New release in Testing Stream** opens.
     - It has **Name**, **First cycle**, **Last cycle** and **Ships on**.
     - **Ships on** is empty.
   - **Notes:**
 
-- [ ] **Step 3.** Type `Testing Release` in **Name**.
+- [ ] `5AAC` Type `Testing Release` in **Name**.
   - **Expected:** The **Name** box holds **Testing Release**.
   - **Notes:**
 
-- [ ] **Step 4.** Choose **Sprint 1 (2027-01-04 to 2027-01-17)** in **First cycle**.
+- [ ] `2C25` Choose **Sprint 1 (2027-01-04 to 2027-01-17)** in **First cycle**.
   - **Expected:** **First cycle** reads **Sprint 1 (2027-01-04 to 2027-01-17)**.
   - **Notes:**
 
-- [ ] **Step 5.** Choose **Sprint 2 (2027-01-18 to 2027-01-31)** in **Last cycle**.
+- [ ] `D84E` Choose **Sprint 2 (2027-01-18 to 2027-01-31)** in **Last cycle**.
   - **Expected:** Under **Ships on**, the dialog reads **Leave empty to ship at the end of its last cycle, on 2027-01-31**.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Make release**.
+- [ ] `DDC5` Select **Make release**.
   - **Expected:**
     - Under **Releases** in the side panel, a row reads **Testing Release**, then **Sprint 1 to Sprint 2 · ships 2027-01-31**.
     - The row has a hollow yellow dot in its slot.
     - In the table, the **Releases** column of **Testing Stream** reads **(1) Testing Release**.
   - **Notes:**
 
-- [ ] **Step 7.** Run Publish.
+- [ ] `B93D` Run Publish.
   - **Expected:** The dot before **Testing Release** is now solid yellow.
   - **Notes:**
 
@@ -184,7 +184,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-04. **Testing Stream** open in the side panel.
 
-- [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Testing Release** row, then **Approve…**.
+- [ ] `83E2` Under **Releases** in the side panel, select the **⋯** button at the end of the **Testing Release** row, then **Approve…**.
   - **Expected:**
     - A dialog titled **Approve 3 drafts?** opens.
     - It says **Also approves the drafts these depend on:**, and lists:
@@ -192,7 +192,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
       - **the cycles of Testing Stream from 2027-01-04**.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Approve**.
+- [ ] `A9B9` Select **Approve**.
   - **Expected:**
     - A notification says **Approved 3 drafts.**
     - **Testing Stream**, its cycles' row and **Testing Release** no longer have dots, in the table or the side panel.
@@ -206,7 +206,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-05. **Releases** page open from the left-hand menu.
 
-- [ ] **Step 1.** Run Restore the Seed Data.
+- [ ] `9A9D` Run Restore the Seed Data.
   - **Expected:**
     - Restore the Seed Data finishes with no error.
     - After the page reloads, the table shows **Testing Stream**, **Platform** and **Patches**, in that order.
@@ -217,7 +217,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - There is no **New release stream** button.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Platform** in the table.
+- [ ] `17E3` Select **Platform** in the table.
   - **Expected:**
     - The side panel opens, headed by the grey lock and **Platform**.
     - Under **Releases**, the rows read, from the top (see [Seeded dates](#terms)):
@@ -236,15 +236,15 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-06. **Releases** page open.
 
-- [ ] **Step 1.** Select **Patches** in the table.
+- [ ] `37FF` Select **Patches** in the table.
   - **Expected:** The side panel opens on **Patches**.
   - **Notes:**
 
-- [ ] **Step 2.** Scroll the side panel down to **Cycles**.
+- [ ] `403B` Scroll the side panel down to **Cycles**.
   - **Expected:** A table with the columns **Name**, **Starts**, **Ends**, **Release**, **Months**.
   - **Notes:**
 
-- [ ] **Step 3.** Read the first row, each column in order.
+- [ ] `4B79` Read the first row, each column in order.
   - **Expected:** The row reads, from left to right:
     - the first cycle's name, such as **P24.1**
     - the Monday eight weeks before this week's Monday, such as **2026-09-07**
@@ -259,32 +259,32 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-07. **Releases** page open from the left-hand menu, with **Testing Stream** selected in the table.
 
-- [ ] **Step 1.** In the side panel, select **Change…** under **Cycle schedule**.
+- [ ] `F37F` In the side panel, select **Change…** under **Cycle schedule**.
   - **Expected:** The menu offers **Planned to…** and **Length or names from a date…**.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Length or names from a date…**.
+- [ ] `80EC` Select **Length or names from a date…**.
   - **Expected:**
     - A dialog titled **Change the length or names of Testing Stream's cycles** opens.
     - It has **From the start of**.
     - It shows the text **Cycles before it keep their names and dates**.
   - **Notes:**
 
-- [ ] **Step 3.** Choose **2027-02-01 (Sprint 3)** in **From the start of**.
+- [ ] `B1D3` Choose **2027-02-01 (Sprint 3)** in **From the start of**.
   - **Expected:** **From the start of** reads **2027-02-01 (Sprint 3)**.
   - **Notes:**
 
-- [ ] **Step 4.** Replace the number in **Each cycle lasts** with `4`.
+- [ ] `F3AA` Replace the number in **Each cycle lasts** with `4`.
   - **Expected:** **Each cycle lasts** reads **4**.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Change cycles**.
+- [ ] `81B0` Select **Change cycles**.
   - **Expected:**
     - A second row, **From 2027-02-01**, then **Every 4 weeks, named Sprint {#}**, appears.
     - It has a hollow yellow dot in its slot.
   - **Notes:**
 
-- [ ] **Step 6.** Select the **⋯** button at the end of that row, then **Discard draft**.
+- [ ] `FDA2` Select the **⋯** button at the end of that row, then **Discard draft**.
   - **Expected:**
     - A notification says **Discarded the draft.**
     - The row is gone.
@@ -298,23 +298,23 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-08. **Releases** page open from the left-hand menu, with **Testing Stream** selected in the table.
 
-- [ ] **Step 1.** Select **Rename** at the top of the side panel.
+- [ ] `130B` Select **Rename** at the top of the side panel.
   - **Expected:**
     - A dialog titled **Rename Testing Stream** opens.
     - The **Name** box holds **Testing Stream**.
   - **Notes:**
 
-- [ ] **Step 2.** Replace the name with `Tested Stream`.
+- [ ] `6D73` Replace the name with `Tested Stream`.
   - **Expected:** The **Name** box holds **Tested Stream**.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Save**.
+- [ ] `7FFB` Select **Save**.
   - **Expected:**
     - The side panel shows a hollow yellow dot before **Tested Stream**.
     - The table shows a hollow yellow dot before **Tested Stream**.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Discard draft**.
+- [ ] `472A` Select **Discard draft**.
   - **Expected:**
     - The side panel and the table show **Testing Stream** again.
     - **Testing Stream** has no dot in either.
@@ -326,7 +326,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-09. **Releases** page open, with **Testing Stream** selected in the table.
 
-- [ ] **Step 1.** Select **Retire** at the top of the side panel.
+- [ ] `050B` Select **Retire** at the top of the side panel.
   - **Expected:**
     - The side panel's heading shows a hollow yellow dot, **Testing Stream**, then the yellow **Retired** box.
     - The side panel's button now reads **Restore**.
@@ -335,7 +335,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - The yellow **Retired** box follows its name.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **⋯** button beside the close button at the top of the side panel, then **Discard draft**.
+- [ ] `0C4B` Select the **⋯** button beside the close button at the top of the side panel, then **Discard draft**.
   - **Expected:**
     - A notification says **Discarded the draft.**
     - **Testing Stream** has no dot.
@@ -349,11 +349,11 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-10. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
 
-- [ ] **Step 1.** Select the **⋯** button beside the close button at the top of the side panel, then **Approve…**.
+- [ ] `30D8` Select the **⋯** button beside the close button at the top of the side panel, then **Approve…**.
   - **Expected:** A dialog titled **Approve 1 draft?** opens.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Approve**.
+- [ ] `5D18` Select **Approve**.
   - **Expected:**
     - A notification says **Approved 1 draft.**
     - In the table, **Patches** is now under a **Retired** heading.
@@ -361,7 +361,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - The side panel's heading shows **Patches**, then **Retired** in grey.
   - **Notes:**
 
-- [ ] **Step 3.** Look under **Releases** in the side panel.
+- [ ] `EEA9` Look under **Releases** in the side panel.
   - **Expected:**
     - Both patch releases are listed, such as **Patch November** and **Patch December**.
     - The later has a red dot in a ring before it.
@@ -374,7 +374,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-11. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
-- [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
+- [ ] `3F25` Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
   - **Expected:**
     - A dialog titled **Change Harbor 1** opens.
     - **Name** holds **Harbor 1**.
@@ -382,17 +382,17 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - The last cycle is the cycle two quarters ago, such as **26.2 (2026-04-01 to 2026-06-30)**.
   - **Notes:**
 
-- [ ] **Step 2.** Replace the name with `Harbor One`.
+- [ ] `3CA7` Replace the name with `Harbor One`.
   - **Expected:** The **Name** box holds **Harbor One**.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Save**.
+- [ ] `43E8` Select **Save**.
   - **Expected:**
     - The row reads **Harbor One**.
     - A hollow yellow dot is before its square.
   - **Notes:**
 
-- [ ] **Step 4.** Run Publish.
+- [ ] `3E52` Run Publish.
   - **Expected:** The dot before **Harbor One** is now solid yellow.
   - **Notes:**
 
@@ -402,17 +402,17 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-12. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
-- [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor One** row, then **Reject…**.
+- [ ] `E857` Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor One** row, then **Reject…**.
   - **Expected:**
     - A dialog titled **Reject 1 draft?** opens.
     - It has a **Reason** box.
   - **Notes:**
 
-- [ ] **Step 2.** Type `Keep the old name` in **Reason**.
+- [ ] `EC7D` Type `Keep the old name` in **Reason**.
   - **Expected:** The **Reason** box holds **Keep the old name**.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Reject**.
+- [ ] `784C` Select **Reject**.
   - **Expected:**
     - A notification says **Rejected 1 draft.**
     - The row shows a red dot in a ring before **Harbor One**'s square.
@@ -424,7 +424,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-13. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
-- [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor One** row.
+- [ ] `331A` Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor One** row.
   - **Expected:**
     - Under **Harbor One**, the menu offers **Change…** and **Remove**.
     - Then it shows:
@@ -434,7 +434,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
       - Then **Resubmit** and **Discard draft**
   - **Notes:**
 
-- [ ] **Step 2.** Select **Resubmit**.
+- [ ] `6DE5` Select **Resubmit**.
   - **Expected:**
     - A notification says **Resubmitted the draft.**
     - The row shows a yellow dot before **Harbor One**'s square again.
@@ -446,19 +446,19 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-14. **Testing Stream** selected in the table.
 
-- [ ] **Step 1.** Under **Releases**, select the **⋯** button at the end of the **Testing Release** row, then **Remove**.
+- [ ] `C20C` Under **Releases**, select the **⋯** button at the end of the **Testing Release** row, then **Remove**.
   - **Expected:**
     - The **Testing Release** row has a hollow yellow dot in its slot.
     - The row is struck through.
   - **Notes:**
 
-- [ ] **Step 2.** Read **Testing Stream**'s releases lane on the timeline.
+- [ ] `25FE` Read **Testing Stream**'s releases lane on the timeline.
   - **Expected:**
     - **Testing Release** is still there, struck through.
     - A hollow yellow dot is before its name.
   - **Notes:**
 
-- [ ] **Step 3.** Under **Releases** in the side panel, select **Discard draft** in the **Testing Release** row's **⋯** menu.
+- [ ] `1DF3` Under **Releases** in the side panel, select **Discard draft** in the **Testing Release** row's **⋯** menu.
   - **Expected:**
     - A notification says **Discarded the draft.**
     - The **Testing Release** row is no longer struck through.
@@ -469,31 +469,31 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 #### REL-16: A Stream's Cycles Are Made Until a Later Day
 
-**Account:** Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, changed from REL-15. Step 2 signs in as another account.
+**Account:** Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, changed from REL-15. Step `A85C` signs in as another account.
 
 **Preconditions:** Signed in with this account. Run after REL-15. **Releases** page open from the left-hand menu.
 
-- [ ] **Step 1.** Run Discard the Unpublished Changes.
+- [ ] `9F3F` Run Discard the Unpublished Changes.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
-- [ ] **Step 2.** Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
+- [ ] `A85C` Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Operations Manager**.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Releases** page in the left-hand menu.
+- [ ] `CC73` Select the **Releases** page in the left-hand menu.
   - **Expected:**
     - The streams table shows **Platform**.
     - **Platform** has no grey lock in its slot.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Platform** in the table.
+- [ ] `3A26` Select **Platform** in the table.
   - **Expected:**
     - The side panel opens, headed **Platform**.
     - There is no grey lock.
   - **Notes:**
 
-- [ ] **Step 5.** Under **Cycle schedule**, select the **Change…** button below the line **Planned to** and 31 December three years after this year, such as **Planned to 2029-12-31**, then **Planned to…** in its menu.
+- [ ] `3D69` Under **Cycle schedule**, select the **Change…** button below the line **Planned to** and 31 December three years after this year, such as **Planned to 2029-12-31**, then **Planned to…** in its menu.
   - **Expected:**
     - A dialog titled **Change how far Platform is planned** opens.
     - **Planned to** holds that day.
@@ -501,11 +501,11 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - Under **Last cycles** are the last three half-year cycles, the last starting on or before that day, such as **28.2** with **2028-07-01 to 2028-12-31**, **29.1** with **2029-01-01 to 2029-06-30**, and **29.2** with **2029-07-01 to 2029-12-31**.
   - **Notes:**
 
-- [ ] **Step 6.** Replace the day with the same day a year later, such as `20301231`.
+- [ ] `1B32` Replace the day with the same day a year later, such as `20301231`.
   - **Expected:** **Planned to** in the dialog holds the new day, such as **2030-12-31**.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Save**.
+- [ ] `B32E` Select **Save**.
   - **Expected:**
     - The panel's heading shows a hollow yellow dot before **Platform**.
     - **Planned to** reads the new day, such as **Planned to 2030-12-31**.
@@ -513,7 +513,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - Its last row is a half-year cycle starting in the new day's year, such as **30.2** from **2030-07-01**.
   - **Notes:**
 
-- [ ] **Step 8.** Select the **⋯** button in the panel's heading, then **Discard draft**.
+- [ ] `AAA0` Select the **⋯** button in the panel's heading, then **Discard draft**.
   - **Expected:**
     - **Planned to** reads 31 December three years after this year, such as **Planned to 2029-12-31**.
     - The **Cycles** heading counts the cycles up to that day, such as **Cycles (11)**.
@@ -525,25 +525,25 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-16. **Releases** page open from the left-hand menu, with **Testing Stream** selected in the table.
 
-- [ ] **Step 1.** Under **Releases**, select the **⋯** button at the end of the **Testing Release** row, then **Change…**.
+- [ ] `DC88` Under **Releases**, select the **⋯** button at the end of the **Testing Release** row, then **Change…**.
   - **Expected:**
     - A dialog titled **Change Testing Release** opens.
     - **Ships on** is empty.
     - Under it, **Leave empty to ship at the end of its last cycle, on 2027-01-31**.
   - **Notes:**
 
-- [ ] **Step 2.** Type `20270303` in **Ships on**.
+- [ ] `DED5` Type `20270303` in **Ships on**.
   - **Expected:** **Ships on** shows **2027-03-03**.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Save**.
+- [ ] `C5B2` Select **Save**.
   - **Expected:**
     - The **Testing Release** row has a hollow yellow dot before **Sprint 1 to Sprint 2 · ships 2027-03-03**.
     - After it, in bold, the row reads **31 days after Sprint 2 ends**.
     - In the **Cycles** section, **Sprint 3** still starts on **2027-02-01**.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **⋯** button at the end of the **Testing Release** row, then **Discard draft**.
+- [ ] `5D17` Select the **⋯** button at the end of the **Testing Release** row, then **Discard draft**.
   - **Expected:**
     - A notification says **Discarded the draft.**
     - The row reads **Sprint 1 to Sprint 2 · ships 2027-01-31**.
@@ -558,14 +558,14 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-17. **Releases** page open from the left-hand menu.
 
-- [ ] **Step 1.** Run Restore the Seed Data.
+- [ ] `6CDB` Run Restore the Seed Data.
   - **Expected:**
     - Restore the Seed Data finishes with no error.
     - After the page reloads, the streams table shows **Testing Stream**, **Platform** and **Patches**, none under **Retired**.
     - The **Timeline** heading shows above the streams table, with the zoom buttons at its top right.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Year**.
+- [ ] `56D9` Select **Year**.
   - **Expected:**
     - **Year** is highlighted.
     - The timeline has three rows, named **Testing Stream**, **Platform** and **Patches**.
@@ -575,7 +575,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - The red line is labelled **Today** in a row of its own above the axis.
   - **Notes:**
 
-- [ ] **Step 3.** Read **Platform**'s lanes.
+- [ ] `1FC4` Read **Platform**'s lanes.
   - **Expected:**
     - The cycles up to the first half are each a quarter long.
     - The first half and the cycles after it are half a year long.
@@ -586,41 +586,41 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - In a third lane, a faded **Harbor 3** after a green dot spans next quarter's cycle to the first half, such as **27.1** to **27.3**.
   - **Notes:**
 
-- [ ] **Step 4.** Hover over **Harbor 1**'s span, scrolling the timeline left to it if needed.
+- [ ] `A150` Hover over **Harbor 1**'s span, scrolling the timeline left to it if needed.
   - **Expected:** A tooltip names **Harbor 1**, its cycles and the day it ships, such as **Harbor 1: 26.1 to 26.2, ships 2026-06-30.**
   - **Notes:**
 
-- [ ] **Step 5.** Read **Patches**' cycles lane.
+- [ ] `84D7` Read **Patches**' cycles lane.
   - **Expected:**
     - Each four-week cycle is a block as long as its dates on the axis.
     - Each is named inside only when its name fits.
   - **Notes:**
 
-- [ ] **Step 6.** Hover over one of **Patches**' cycles.
+- [ ] `2FD6` Hover over one of **Patches**' cycles.
   - **Expected:** A tooltip shows its name and dates, such as **P24.3: 2026-11-02 to 2026-11-29**.
   - **Notes:**
 
-- [ ] **Step 7.** Read **Patches**' name on the left of the timeline.
+- [ ] `A8FF` Read **Patches**' name on the left of the timeline.
   - **Expected:**
     - A yellow dot is before **Patches**.
     - A **Retired** box is after it.
   - **Notes:**
 
-- [ ] **Step 8.** Choose **Drafts applied** in the Draft menu.
+- [ ] `6CC2` Choose **Drafts applied** in the Draft menu.
   - **Expected:**
     - **Harbor 3** still spans the cycle after next quarter's to the cycle after the first half, such as **27.2** to **28.1**, with a yellow dot before its name.
     - A yellow **Moved** box is after its name.
     - **Platform** has no third lane, and no faded **Harbor 3**.
   - **Notes:**
 
-- [ ] **Step 9.** Choose **Live only** in the Draft menu.
+- [ ] `FAE7` Choose **Live only** in the Draft menu.
   - **Expected:**
     - **Harbor 3** spans next quarter's cycle to the first half, such as **27.1** to **27.3**, with a green dot before its name.
     - **Harbor 4** is not on the timeline.
     - No release on the timeline has a yellow dot.
   - **Notes:**
 
-- [ ] **Step 10.** Choose **Drafts beside live** in the Draft menu.
+- [ ] `278F` Choose **Drafts beside live** in the Draft menu.
   - **Expected:** The faded **Harbor 3** is back in **Platform**'s third lane.
   - **Notes:**
 
@@ -630,31 +630,31 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-18. **Releases** page open, with the timeline at **Year**.
 
-- [ ] **Step 1.** Select **All**.
+- [ ] `060D` Select **All**.
   - **Expected:**
     - The whole timeline fits across, from the earliest cycle of any stream to the end of the last, such as 2026 to 2030, with no scrolling sideways.
     - The **−** button is greyed out.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Quarter**.
+- [ ] `FC03` Select **Quarter**.
   - **Expected:**
     - The axis's top row names quarters, such as **Q1 2027**.
     - Its second row names months, such as **Jan**.
     - The red **Today** line crosses the timeline at today's date on the axis.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Month**.
+- [ ] `D3F1` Select **Month**.
   - **Expected:**
     - The axis's top row names months, such as **Jan 2027**.
     - Its second row names each week by its Monday, such as **Nov 9**, or, where that does not fit, just the day of the month, such as **9**.
     - The red **Today** line crosses the timeline at today's date on the axis.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Year**.
+- [ ] `82FE` Select **Year**.
   - **Expected:** **Year** is highlighted.
   - **Notes:**
 
-- [ ] **Step 5.** Reload the page.
+- [ ] `5DB7` Reload the page.
   - **Expected:** The **Releases** page shows again, with **Year** still highlighted.
   - **Notes:**
 
@@ -664,7 +664,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-19. **Releases** page open, with the timeline at **Year**.
 
-- [ ] **Step 1.** Select **Quarter**.
+- [ ] `C9C3` Select **Quarter**.
   - **Expected:**
     - Under the zoom buttons, the strip shows a box for each quarter of the timeline, such as **Q1 2027**, from its first quarter to its last.
     - **‹** is before the strip, and **›** and **Today** are after it.
@@ -672,78 +672,78 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - This quarter's box is underlined and its name in bold.
   - **Notes:**
 
-- [ ] **Step 2.** Select the box for the quarter after next in the strip, such as **Q2 2027**.
+- [ ] `7A96` Select the box for the quarter after next in the strip, such as **Q2 2027**.
   - **Expected:**
     - The timeline scrolls so that quarter starts about a sixth of the way across, with the end of the quarter before it in sight.
     - The tint moves to the quarters in view: the one before, that quarter, and those after it.
   - **Notes:**
 
-- [ ] **Step 3.** Select **›**.
+- [ ] `528C` Select **›**.
   - **Expected:**
     - The timeline scrolls on by one quarter, so the next quarter starts about a sixth of the way across.
     - The tint moves with it.
   - **Notes:**
 
-- [ ] **Step 4.** Select **‹**.
-  - **Expected:** The timeline scrolls back by one quarter, so the quarter chosen in step 2 starts about a sixth of the way across again.
+- [ ] `FC26` Select **‹**.
+  - **Expected:** The timeline scrolls back by one quarter, so the quarter chosen in step `7A96` starts about a sixth of the way across again.
   - **Notes:**
 
-- [ ] **Step 5.** Scroll the timeline sideways to its start, by dragging its scroll bar to the left.
+- [ ] `D68B` Scroll the timeline sideways to its start, by dragging its scroll bar to the left.
   - **Expected:**
     - The tint moves as the timeline scrolls, over the quarters in view.
     - At the start, **‹** is greyed out.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Today**.
+- [ ] `040D` Select **Today**.
   - **Expected:**
     - The red **Today** line is back about a sixth of the way across the timeline.
     - The tint covers this quarter and the quarters in view after it.
   - **Notes:**
 
-- [ ] **Step 7.** Select **‹**.
+- [ ] `8CAA` Select **‹**.
   - **Expected:**
     - The timeline scrolls back a little, so this quarter starts about a sixth of the way across.
     - The tint moves with it.
   - **Notes:**
 
-- [ ] **Step 8.** Press Tab.
+- [ ] `77FB` Press Tab.
   - **Expected:**
     - Focus is on the first tinted quarter's box.
     - The box has a focus ring.
   - **Notes:**
 
-- [ ] **Step 9.** Press the right arrow key.
+- [ ] `35C1` Press the right arrow key.
   - **Expected:**
     - Focus moves to the next quarter's box.
     - The timeline does not scroll.
   - **Notes:**
 
-- [ ] **Step 10.** Press Enter.
+- [ ] `5A49` Press Enter.
   - **Expected:** The timeline scrolls so that quarter starts about a sixth of the way across.
   - **Notes:**
 
-- [ ] **Step 11.** Press Tab.
+- [ ] `12EA` Press Tab.
   - **Expected:** Focus moves past the other quarters to **›**.
   - **Notes:**
 
-- [ ] **Step 12.** Select **All**.
+- [ ] `4A47` Select **All**.
   - **Expected:**
     - Every quarter's box is tinted.
     - **‹** and **›** are greyed out.
     - A box too narrow for its name shows only its quarter, such as **Q1**, or no name.
   - **Notes:**
 
-- [ ] **Step 13.** Choose **Dark** in the Appearance menu.
+- [ ] `FFF3` Choose **Dark** in the Appearance menu.
   - **Expected:**
     - The strip's names are easy to read.
     - The tint and this quarter's underline are clear against the dark page.
   - **Notes:**
 
-- [ ] **Step 14.** Choose **Light** in the Appearance menu.
+- [ ] `F97C` Choose **Light** in the Appearance menu.
   - **Expected:** The page is light again.
   - **Notes:**
 
-- [ ] **Step 15.** Select **Year**.
+- [ ] `5A51` Select **Year**.
   - **Expected:** **Year** is highlighted.
   - **Notes:**
 
@@ -753,42 +753,42 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-20. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
-- [ ] **Step 1.** In the side panel's **Cycles** table, find the row of last quarter's cycle, the one after **Harbor 1**'s last, such as **26.3**.
+- [ ] `752C` In the side panel's **Cycles** table, find the row of last quarter's cycle, the one after **Harbor 1**'s last, such as **26.3**.
   - **Expected:** Its **Ends** shows a day, such as **2026-09-30**. Write that day down.
   - **Notes:**
 
-- [ ] **Step 2.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
+- [ ] `EBEE` Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
   - **Expected:** A dialog titled **Change Harbor 1** opens.
   - **Notes:**
 
-- [ ] **Step 3.** Type the day written down in step 1 in **Ships on**, as its digits, such as `20260930`.
+- [ ] `004F` Type the day written down in step `752C` in **Ships on**, as its digits, such as `20260930`.
   - **Expected:** **Ships on** shows that day, such as **2026-09-30**.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Save**.
+- [ ] `C4FC` Select **Save**.
   - **Expected:** The dialog closes.
   - **Notes:**
 
-- [ ] **Step 5.** Close the side panel.
+- [ ] `23DD` Close the side panel.
   - **Expected:** The side panel closes.
   - **Notes:**
 
-- [ ] **Step 6.** Select **6 months**.
+- [ ] `EFE7` Select **6 months**.
   - **Expected:** **6 months** is highlighted.
   - **Notes:**
 
-- [ ] **Step 7.** Find **Harbor 1** in **Platform**'s releases lane, scrolling the timeline left to it.
+- [ ] `CAEE` Find **Harbor 1** in **Platform**'s releases lane, scrolling the timeline left to it.
   - **Expected:**
     - **Harbor 1**'s span, across the cycles three and two quarters ago, such as **26.1** and **26.2**, has a hollow yellow dot before its name.
     - Under the span, a dashed line runs from its right end, under the next release, to a diamond a quarter later, on the day typed.
     - In a lane under **Platform**'s releases, a faded **Harbor 1** after a green dot has its diamond under its right end.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Platform** in the table.
+- [ ] `8BD8` Select **Platform** in the table.
   - **Expected:** The side panel opens, headed **Platform**.
   - **Notes:**
 
-- [ ] **Step 9.** In the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Discard draft**.
+- [ ] `9D42` In the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Discard draft**.
   - **Expected:**
     - A notification says **Discarded the draft.**
     - On the timeline, **Harbor 1**'s span has no dot before its name.
@@ -799,19 +799,19 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 #### REL-22: A Release's Colour Is Chosen in Its Dialog
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as REL-21. Step 10 signs in as another account.
+**Account:** Product Manager, `product.manager@fathom.test`, the same as REL-21. Step `004B` signs in as another account.
 
 **Preconditions:** Signed in with this account. Run after REL-21. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
-- [ ] **Step 1.** Close the side panel.
+- [ ] `8A38` Close the side panel.
   - **Expected:** The side panel closes.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Year**.
+- [ ] `A5E5` Select **Year**.
   - **Expected:** **Year** is highlighted.
   - **Notes:**
 
-- [ ] **Step 3.** Find **Platform**'s releases lane, scrolling the timeline left if **Harbor 1** is not wholly in view.
+- [ ] `F2EF` Find **Platform**'s releases lane, scrolling the timeline left if **Harbor 1** is not wholly in view.
   - **Expected:**
     - **Harbor 1** and **Harbor 3** are blue.
     - **Harbor 2 LTS** is teal.
@@ -819,11 +819,11 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - Each name is in the page's usual text colour.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Platform** in the table.
+- [ ] `1D69` Select **Platform** in the table.
   - **Expected:** The side panel opens, headed **Platform**.
   - **Notes:**
 
-- [ ] **Step 5.** In the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
+- [ ] `962F` In the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
   - **Expected:**
     - A dialog titled **Change Harbor 1** opens.
     - Its last field, **Colour**, reads **Sea (default)**.
@@ -831,19 +831,19 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - **How the release is drawn on the timeline** is under its label.
   - **Notes:**
 
-- [ ] **Step 6.** Open **Colour**.
+- [ ] `2CB3` Open **Colour**.
   - **Expected:**
     - The list offers **Sea (default)**, then **Indigo**, **Violet**, **Grape**, **Pink**, **Red**, **Orange**, **Yellow**, **Lime**, **Green** and **Teal**.
     - Each has a square of its colour.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Teal**.
+- [ ] `50B5` Select **Teal**.
   - **Expected:**
     - **Colour** reads **Teal**.
     - A teal square is before it.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Save**.
+- [ ] `CE70` Select **Save**.
   - **Expected:**
     - The **Harbor 1** row has a hollow yellow dot before its square.
     - The square is teal.
@@ -851,33 +851,33 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - The span has a hollow yellow dot before its name.
   - **Notes:**
 
-- [ ] **Step 9.** Run Publish.
+- [ ] `D4FC` Run Publish.
   - **Expected:** The dot before **Harbor 1**'s square is now solid yellow.
   - **Notes:**
 
-- [ ] **Step 10.** Sign in as the Project Manager, `project.manager@fathom.test`.
+- [ ] `004B` Sign in as the Project Manager, `project.manager@fathom.test`.
   - **Expected:** The top bar's right end reads **Project Manager**.
   - **Notes:**
 
-- [ ] **Step 11.** Select the **Drafts** page in the left-hand menu.
+- [ ] `4A39` Select the **Drafts** page in the left-hand menu.
   - **Expected:** The draft of **the release Harbor 1 in Platform** lists **Colour from Sea to Teal**.
   - **Notes:**
 
-- [ ] **Step 12.** Tick the entry for **the release Harbor 1 in Platform**.
+- [ ] `DC38` Tick the entry for **the release Harbor 1 in Platform**.
   - **Expected:** The button at the top right reads **Approve 1 draft**.
   - **Notes:**
 
-- [ ] **Step 13.** Select **Approve 1 draft**.
+- [ ] `BF5D` Select **Approve 1 draft**.
   - **Expected:**
     - A dialog headed **Approve 1 draft?** opens.
     - It has an **Approve** button.
   - **Notes:**
 
-- [ ] **Step 14.** Select **Approve** in the dialog.
+- [ ] `7B68` Select **Approve** in the dialog.
   - **Expected:** A notification says **Approved 1 draft.**
   - **Notes:**
 
-- [ ] **Step 15.** Select the **Releases** page in the left-hand menu.
+- [ ] `2C9B` Select the **Releases** page in the left-hand menu.
   - **Expected:**
     - **Harbor 1**'s span on the timeline is teal.
     - The span has no dot before its name.
@@ -887,59 +887,59 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 #### REL-23: A Cycle's New Length Moves the Cycles and Releases After It
 
-**Account:** Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, changed from REL-22. Step 2 signs in as another account, and step 8 as the Workforce Administrator.
+**Account:** Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, changed from REL-22. Step `9D01` signs in as another account, and step `B6FF` as the Workforce Administrator.
 
 **Preconditions:** Run after REL-22. Run Restore the Seed Data. Signed in with this account.
 
-- [ ] **Step 1.** Run Discard the Unpublished Changes.
+- [ ] `11A6` Run Discard the Unpublished Changes.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
-- [ ] **Step 2.** Sign in as the Product Manager, `product.manager@fathom.test`.
+- [ ] `9D01` Sign in as the Product Manager, `product.manager@fathom.test`.
   - **Expected:** The top bar's right end reads **Product Manager**.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Releases** page in the left-hand menu.
+- [ ] `F216` Select the **Releases** page in the left-hand menu.
   - **Expected:**
     - The streams table shows **Platform**.
     - **Platform** has no grey lock in its slot.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Platform** in the table.
+- [ ] `3F63` Select **Platform** in the table.
   - **Expected:** The side panel opens, headed **Platform**.
   - **Notes:**
 
-- [ ] **Step 5.** Under **Releases**, select the **⋯** button at the end of the **Harbor 2 LTS** row, then **Discard draft**.
+- [ ] `F31C` Under **Releases**, select the **⋯** button at the end of the **Harbor 2 LTS** row, then **Discard draft**.
   - **Expected:**
     - The row reads **Harbor 2**.
     - It has no dot.
   - **Notes:**
 
-- [ ] **Step 6.** Select the **⋯** button at the end of the **Harbor 3** row, then **Discard draft**.
+- [ ] `844A` Select the **⋯** button at the end of the **Harbor 3** row, then **Discard draft**.
   - **Expected:**
     - **Harbor 3** has no dot.
     - **Harbor 3** has no **Moved** box.
   - **Notes:**
 
-- [ ] **Step 7.** Select the **⋯** button at the end of the **Harbor 4** row, then **Discard draft**.
+- [ ] `D78C` Select the **⋯** button at the end of the **Harbor 4** row, then **Discard draft**.
   - **Expected:** **Harbor 4** is gone.
   - **Notes:**
 
-- [ ] **Step 8.** Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
+- [ ] `B6FF` Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Operations Manager**.
   - **Notes:**
 
-- [ ] **Step 9.** Select the **Releases** page in the left-hand menu.
+- [ ] `196D` Select the **Releases** page in the left-hand menu.
   - **Expected:**
     - The streams table shows **Platform**, with no dot in its slot.
     - **Platform** has no grey lock in its slot.
   - **Notes:**
 
-- [ ] **Step 10.** Select **Platform** in the table.
+- [ ] `B1AB` Select **Platform** in the table.
   - **Expected:** The side panel opens, headed **Platform**.
   - **Notes:**
 
-- [ ] **Step 11.** In the side panel's **Cycles** table, select the **⋯** button at the end of next quarter's cycle, such as **27.1**, then **Change length…**.
+- [ ] `19CE` In the side panel's **Cycles** table, select the **⋯** button at the end of next quarter's cycle, such as **27.1**, then **Change length…**.
   - **Expected:**
     - A dialog titled **Change the length of** that cycle opens.
     - **Length** reads **3**, followed by **months**.
@@ -949,7 +949,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - **New dates** lists that cycle and the next one, each a quarter long, and the first half, half a year long, such as **27.1**, **2027-01-01 to 2027-03-31**; **27.2**, **2027-04-01 to 2027-06-30**; and **27.3**, **2027-07-01 to 2027-12-31**.
   - **Notes:**
 
-- [ ] **Step 12.** Replace **3** in **Length** with `2`.
+- [ ] `E427` Replace **3** in **Length** with `2`.
   - **Expected:**
     - **New dates** lists the cycle two months long, then the next a quarter and the first half half a year, such as **27.1**, **2027-01-01 to 2027-02-28**; **27.2**, **2027-03-01 to 2027-05-31**; and **27.3**, **2027-06-01 to 2027-11-30**.
     - The changed cycle starts on the first day of next quarter, such as **27.1** on **2027-01-01**.
@@ -958,7 +958,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - It says **Harbor 3 ships** on the first half's new last day, such as **Harbor 3 ships 2027-11-30.**
   - **Notes:**
 
-- [ ] **Step 13.** Select **Change length**.
+- [ ] `CDF0` Select **Change length**.
   - **Expected:**
     - Under **Cycle schedule**, a row reads **From** the changed cycle's first day, **Every 2 months, named {YY}.{N}**, such as **From 2027-01-01**.
     - It has a hollow yellow dot in its slot.
@@ -971,7 +971,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - In the **Cycles** table, the first half runs on its new dates, such as **27.3** from **2027-06-01** to **2027-11-30**.
   - **Notes:**
 
-- [ ] **Step 14.** Run Publish.
+- [ ] `4CBE` Run Publish.
   - **Expected:** The dots on the three rows of the cycle schedule and on **Harbor 3** are solid yellow.
   - **Notes:**
 
@@ -981,7 +981,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-23. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
-- [ ] **Step 1.** Under **Releases**, select the **⋯** button at the end of the **Harbor 3** row, then **Approve…**.
+- [ ] `6F59` Under **Releases**, select the **⋯** button at the end of the **Harbor 3** row, then **Approve…**.
   - **Expected:**
     - A dialog titled **Approve 6 drafts?** opens.
     - It says **Also approves the drafts these depend on:**, and lists:
@@ -992,7 +992,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
       - **the feature Report Builder**.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Approve**.
+- [ ] `3A60` Select **Approve**.
   - **Expected:**
     - A notification says **Approved 6 drafts.**
     - No row under **Cycle schedule** or **Releases** has a dot.
@@ -1005,25 +1005,25 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Run after REL-24. Signed in with this account. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
 
-- [ ] **Step 1.** In the **Cycles** table, select the **⋯** button at the end of the later patch release's last cycle, the fourth cycle, such as **P24.4**, then **Change length…**.
+- [ ] `1D3D` In the **Cycles** table, select the **⋯** button at the end of the later patch release's last cycle, the fourth cycle, such as **P24.4**, then **Change length…**.
   - **Expected:** A dialog titled **Change the length of** that cycle opens.
   - **Notes:**
 
-- [ ] **Step 2.** Replace **4** in **Length** with `2`.
+- [ ] `045F` Replace **4** in **Length** with `2`.
   - **Expected:** **Length** reads **2**, followed by **weeks**.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Keep their dates**.
+- [ ] `B0CC` Select **Keep their dates**.
   - **Expected:**
     - **New dates** lists that cycle two weeks long, then a cycle from the next day to the end of the cycle after it, six weeks long, then the cycle after that, four weeks long, such as **P24.4**, **2026-11-30 to 2026-12-13**; **P25.1**, **2026-12-14 to 2027-01-24**; and **P25.2**, **2027-01-25 to 2027-02-21**.
     - Below it, the dialog says the later patch release ships on that cycle's new last day, such as **Patch December ships 2026-12-13.**
   - **Notes:**
 
-- [ ] **Step 4.** Select **Change length**.
+- [ ] `58F4` Select **Change length**.
   - **Expected:** The dialog closes.
   - **Notes:**
 
-- [ ] **Step 5.** Run Publish.
+- [ ] `CD05` Run Publish.
   - **Expected:**
     - Under **Cycle schedule**, there is a row **From** each of the three cycles' first days, such as **From 2026-11-30**, **From 2026-12-14** and **From 2027-01-25**.
     - Each of these rows has a yellow dot in its slot.
@@ -1037,11 +1037,11 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-25. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
 
-- [ ] **Step 1.** Select the **⋯** button at the end of the second of the three rows REL-25 added, such as **From 2026-12-14**, then **Discard draft**.
+- [ ] `BC43` Select the **⋯** button at the end of the second of the three rows REL-25 added, such as **From 2026-12-14**, then **Discard draft**.
   - **Expected:** A notification says **Discarded the draft.**
   - **Notes:**
 
-- [ ] **Step 2.** Run Publish.
+- [ ] `9B5E` Run Publish.
   - **Expected:**
     - The cycle schedule has only its first row.
     - The fourth cycle is four weeks long again, such as **P24.4** from **2026-11-30** to **2026-12-27**.
@@ -1055,7 +1055,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-26. **Light** chosen in the Appearance menu. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
-- [ ] **Step 1.** Select **Harbor 2**'s underlined name.
+- [ ] `81AA` Select **Harbor 2**'s underlined name.
   - **Expected:**
     - A panel titled **Harbor 2** opens above the stream's panel.
     - It shows the note as it reads:
@@ -1066,23 +1066,23 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
       - a link
   - **Notes:**
 
-- [ ] **Step 2.** Choose **Dark** in the Appearance menu.
+- [ ] `A90C` Choose **Dark** in the Appearance menu.
   - **Expected:** Both panels read well in dark mode.
   - **Notes:**
 
-- [ ] **Step 3.** Choose **Light** in the Appearance menu.
+- [ ] `DA1F` Choose **Light** in the Appearance menu.
   - **Expected:** The panels are light.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Editor**.
+- [ ] `C2A8` Select **Editor**.
   - **Expected:** The note opens for editing.
   - **Notes:**
 
-- [ ] **Step 5.** Type a few words at the end of the note.
+- [ ] `E879` Type a few words at the end of the note.
   - **Expected:** The words show at the end of the note.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Save**.
+- [ ] `AAD0` Select **Save**.
   - **Expected:**
     - The note's panel closes.
     - The **Harbor 2** row has a hollow yellow dot in its slot.

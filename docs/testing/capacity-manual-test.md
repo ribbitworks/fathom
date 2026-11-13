@@ -46,7 +46,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Select the **Capacity** page in the left-hand menu.
+- [ ] `E86E` Select the **Capacity** page in the left-hand menu.
   - **Expected:**
     - The page is headed **Capacity**.
     - The **Settings** tab is selected.
@@ -65,13 +65,13 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - There are no buttons under the rows.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Dark** in the Appearance menu.
+- [ ] `D92C` Select **Dark** in the Appearance menu.
   - **Expected:**
     - The headings and values are easy to read.
     - The labels are dimmed beside their values.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Light** in the Appearance menu.
+- [ ] `ED4A` Select **Light** in the Appearance menu.
   - **Expected:**
     - The headings and values are easy to read.
     - The labels are dimmed beside their values.
@@ -83,55 +83,55 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** Signed in with this account. **Features** page open.
 
-- [ ] **Step 1.** Open the column menu of **Effort**, and select **Person-days** under **Show in**.
+- [ ] `A2D4` Open the column menu of **Effort**, and select **Person-days** under **Show in**.
   - **Expected:** **Audit Export** reads **39.5 PD**.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **Capacity** page in the left-hand menu.
+- [ ] `DCBC` Select the **Capacity** page in the left-hand menu.
   - **Expected:**
     - Every row but **From month 3** has a change button at its right.
     - The rows **Month 1** and **Month 2** each have an × button after their change button.
     - Under the ramp-up rows is one outlined button, **Add month**.
   - **Notes:**
 
-- [ ] **Step 3.** Press Tab until the change button of **Hours a day** has focus.
+- [ ] `93FD` Press Tab until the change button of **Hours a day** has focus.
   - **Expected:** A focus ring shows around the change button of **Hours a day**.
   - **Notes:**
 
-- [ ] **Step 4.** Press Enter.
+- [ ] `E7A7` Press Enter.
   - **Expected:**
     - A field in place of **8** holds **8**.
     - The focus is in the field.
   - **Notes:**
 
-- [ ] **Step 5.** Replace **8** with **4**, and press Enter.
+- [ ] `08BD` Replace **8** with **4**, and press Enter.
   - **Expected:**
     - **Hours a day** reads **4**.
     - The change button of **Hours a day** has focus.
     - No notification shows.
   - **Notes:**
 
-- [ ] **Step 6.** Press Cmd+Z on a Mac, or Ctrl+Z elsewhere.
+- [ ] `B912` Press Cmd+Z on a Mac, or Ctrl+Z elsewhere.
   - **Expected:**
     - **Hours a day** reads **8**.
     - The change button of **Hours a day** has focus.
   - **Notes:**
 
-- [ ] **Step 7.** Press Enter.
+- [ ] `91E5` Press Enter.
   - **Expected:**
     - A field in place of **8** holds **8**.
     - The focus is in the field.
   - **Notes:**
 
-- [ ] **Step 8.** Replace **8** with **4**, and press Enter.
+- [ ] `318F` Replace **8** with **4**, and press Enter.
   - **Expected:** **Hours a day** reads **4**.
   - **Notes:**
 
-- [ ] **Step 9.** Select the **Features** page in the left-hand menu.
+- [ ] `5C4A` Select the **Features** page in the left-hand menu.
   - **Expected:** The **Features** page opens.
   - **Notes:**
 
-- [ ] **Step 10.** Open the column menu of **Effort**, and select **Person-days** under **Show in**.
+- [ ] `8F7A` Open the column menu of **Effort**, and select **Person-days** under **Show in**.
   - **Expected:** **Audit Export** reads **79 PD**.
   - **Notes:**
 
@@ -141,13 +141,13 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** **Capacity** page open, on the **Settings** tab.
 
-- [ ] **Step 1.** Select **80%** beside **Default focus**.
+- [ ] `B6C0` Select **80%** beside **Default focus**.
   - **Expected:**
     - A field in place of **80%** holds **80**.
     - The focus is in the field.
   - **Notes:**
 
-- [ ] **Step 2.** Replace **80** with **0**, and press Enter.
+- [ ] `18AC` Replace **80** with **0**, and press Enter.
   - **Expected:**
     - The field stays open.
     - It holds **0**.
@@ -155,7 +155,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - Under it, in red, reads **Default focus: use 1% to 100%**.
   - **Notes:**
 
-- [ ] **Step 3.** Press Esc.
+- [ ] `A0AE` Press Esc.
   - **Expected:**
     - **Default focus** reads **80%**.
     - The red message is gone.
@@ -167,7 +167,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** **Capacity** page open, on the **Settings** tab.
 
-- [ ] **Step 1.** Select **Add month**.
+- [ ] `5B9D` Select **Add month**.
   - **Expected:**
     - Under **Ramp-up for new starters**, the rows read, from the top:
       - **Month 1**: **50%**
@@ -178,17 +178,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **Month 3** has an × button after its change button.
   - **Notes:**
 
-- [ ] **Step 2.** Press Enter.
+- [ ] `80C1` Press Enter.
   - **Expected:**
     - A field in place of **100%** beside **Month 3** holds **100**.
     - The focus is in the field.
   - **Notes:**
 
-- [ ] **Step 3.** Replace **100** with **90**, and press Enter.
+- [ ] `3F77` Replace **100** with **90**, and press Enter.
   - **Expected:** **Month 3** reads **90%**.
   - **Notes:**
 
-- [ ] **Step 4.** Select the × button of **Month 3**.
+- [ ] `2E12` Select the × button of **Month 3**.
   - **Expected:**
     - Under **Ramp-up for new starters**, the rows read, from the top:
       - **Month 1**: **50%**
@@ -199,7 +199,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - It offers **Undo**.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Undo** in the notification.
+- [ ] `A79C` Select **Undo** in the notification.
   - **Expected:**
     - Under **Ramp-up for new starters**, the rows read, from the top:
       - **Month 1**: **50%**
@@ -214,7 +214,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** None beyond CAP-04.
 
-- [ ] **Step 1.** Select the **Change history** page in the left-hand menu.
+- [ ] `D295` Select the **Change history** page in the left-hand menu.
   - **Expected:**
     - The newest entry reads **Engineering Operations Manager changed the planning settings**.
     - Its details read **Ramp-up from 50%, 75% to 50%, 75%, 90%**.

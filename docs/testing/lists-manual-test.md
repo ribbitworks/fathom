@@ -47,20 +47,20 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** Signed in with this account. **Lists** page open from the left-hand menu.
 
-- [ ] **Step 1.** Read the **Name** column of the **Feature priorities**, **Feature risks**, **Feature sizes**, **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses** rows.
+- [ ] `97EB` Read the **Name** column of the **Feature priorities**, **Feature risks**, **Feature sizes**, **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses** rows.
   - **Expected:**
     - Each name has a grey **Built in** box after it
     - No other list has one
   - **Notes:**
 
-- [ ] **Step 2.** Select **Positions**.
+- [ ] `2C8A` Select **Positions**.
   - **Expected:**
     - The panel opens with **Positions** at the top.
     - A grey **Built in** box is after it.
     - Under the choices, in grey, a line reads **Every person and planned hire has one of these positions.**
   - **Notes:**
 
-- [ ] **Step 3.** Select **Hiring states**.
+- [ ] `4E5E` Select **Hiring states**.
   - **Expected:**
     - The panel opens with **Hiring states** at the top.
     - A grey **Built in** box is after it.
@@ -75,7 +75,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** As LIST-01, with the **Hiring states** panel open.
 
-- [ ] **Step 1.** Read each choice's row in the panel.
+- [ ] `C4C0` Read each choice's row in the panel.
   - **Expected:**
     - **Request to hire** shows **Proposed** at the end of its row.
     - **Approved to hire** shows **Open** at the end of its row.
@@ -87,11 +87,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** As LIST-01, with the **Hiring states** panel open.
 
-- [ ] **Step 1.** In the empty row's meaning menu, choose **Open**.
+- [ ] `889C` In the empty row's meaning menu, choose **Open**.
   - **Expected:** The empty row's meaning menu reads **Open**.
   - **Notes:**
 
-- [ ] **Step 2.** Type **Fictional Interviewing** in the empty row's **Name** box and press Enter.
+- [ ] `F477` Type **Fictional Interviewing** in the empty row's **Name** box and press Enter.
   - **Expected:**
     - A row **Fictional Interviewing** appears above the empty row
     - It has a hollow yellow dot in its slot
@@ -106,7 +106,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** As LIST-03.
 
-- [ ] **Step 1.** Select the **⋯** button at the end of the **Request to hire** row.
+- [ ] `B11B` Select the **⋯** button at the end of the **Request to hire** row.
   - **Expected:**
     - **Retire** and **Remove** are greyed out.
     - **Needed for Proposed** is under them.
@@ -118,18 +118,18 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** As LIST-04.
 
-- [ ] **Step 1.** Press Esc.
+- [ ] `D78F` Press Esc.
   - **Expected:** The menu closes.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **⋯** button at the end of the **Approved to hire** row, then select **Retire**.
+- [ ] `CD6E` Select the **⋯** button at the end of the **Approved to hire** row, then select **Retire**.
   - **Expected:** The **Approved to hire** row:
     - Stays where it is
     - Has a hollow yellow dot in its slot
     - Has a yellow **Retired** box after its name
   - **Notes:**
 
-- [ ] **Step 3.** Select the Publish button.
+- [ ] `2F42` Select the Publish button.
   - **Expected:**
     - A notice says the changes were published.
     - The Publish button is gone from the top bar.
@@ -141,17 +141,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** LIST-05 done. Signed in with this account. **Lists** page open, with the **Hiring states** panel open.
 
-- [ ] **Step 1.** Select the **⋯** button at the end of the **Approved to hire** row, then select **Approve…**.
+- [ ] `95B3` Select the **⋯** button at the end of the **Approved to hire** row, then select **Approve…**.
   - **Expected:** A dialog titled **Approve 1 draft?** opens.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Approve**.
+- [ ] `DCBD` Select **Approve**.
   - **Expected:**
     - The dialog stays open.
     - It reads **This would leave Hiring states with no choice that means Open.**
   - **Notes:**
 
-- [ ] **Step 3.** Select **Cancel**.
+- [ ] `113E` Select **Cancel**.
   - **Expected:**
     - The dialog closes
     - The **Approved to hire** row still has a yellow dot in its slot
@@ -160,21 +160,21 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 ### LIST-07: Changing the Class of Positions Sets Who Sees the Position Column
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from LIST-06. Steps 6 and 8 sign in as other accounts.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from LIST-06. Steps `EACE` and `50D4` sign in as other accounts.
 
 **Preconditions:** LIST-06 done. Signed in with this account. **Lists** page open, with the **Positions** panel open.
 
-- [ ] **Step 1.** Select **Edit list**.
+- [ ] `3AA3` Select **Edit list**.
   - **Expected:**
     - A dialog opens.
     - It has no **Class** choice in it.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Cancel**.
+- [ ] `AA11` Select **Cancel**.
   - **Expected:** The dialog closes.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Change class…**.
+- [ ] `BE18` Select **Change class…**.
   - **Expected:**
     - A dialog titled **Change the class of Positions** opens
     - **General** is chosen
@@ -182,11 +182,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **Personal** and **Confidential** each have a line saying what it holds
   - **Notes:**
 
-- [ ] **Step 4.** Select **Personal**.
+- [ ] `784A` Select **Personal**.
   - **Expected:** **Personal** is chosen.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Change**.
+- [ ] `03C9` Select **Change**.
   - **Expected:**
     - The dialog closes
     - No dot is beside **Positions**
@@ -195,25 +195,25 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - A grey box with a lock and **Personal** follows **Positions** in the table of lists
   - **Notes:**
 
-- [ ] **Step 6.** Sign out, and sign in as the Feature Lead, `feature.lead@fathom.test`.
+- [ ] `EACE` Sign out, and sign in as the Feature Lead, `feature.lead@fathom.test`.
   - **Expected:** The top bar's right end reads **Feature Lead**.
   - **Notes:**
 
-- [ ] **Step 7.** Select the **People** page in the left-hand menu.
+- [ ] `B349` Select the **People** page in the left-hand menu.
   - **Expected:** The table has no **Position** column.
   - **Notes:**
 
-- [ ] **Step 8.** Sign out, and sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
+- [ ] `50D4` Sign out, and sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
   - **Expected:** The top bar's right end reads **Engineering Operations Manager**.
   - **Notes:**
 
-- [ ] **Step 9.** Select the **People** page in the left-hand menu.
+- [ ] `DACD` Select the **People** page in the left-hand menu.
   - **Expected:**
     - The **Position** column's heading is followed by a grey box with a lock and **Personal**
     - **New** is not greyed out
   - **Notes:**
 
-- [ ] **Step 10.** Run Reset the Database.
+- [ ] `0F88` Run Reset the Database.
   - **Expected:**
     - The last line printed gives the shared password.
     - No error is above it.
@@ -225,7 +225,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** LIST-07 done, so the database is as Reset the Database leaves it. Signed in with this account. **Lists** page open from the left-hand menu, with no list's panel open.
 
-- [ ] **Step 1.** In the switch beside **Search lists**, select **Built in**.
+- [ ] `DB05` In the switch beside **Search lists**, select **Built in**.
   - **Expected:**
     - The table shows only **Feature priorities**, **Feature risks**, **Feature sizes**, **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses**.
     - The count reads **7 of 15**.
