@@ -54,7 +54,7 @@ When the change affects what a manual test in `docs/testing/` covers, or the see
 
 ## Documentation Kept Current
 
-The reviewer goes through each document `AGENTS.md` lists, and every other Markdown file git tracks, and reports any statement the change has made untrue, incomplete, or out of date. In particular:
+The reviewer goes through each document [Documentation Standards § Which Document Owns What](documentation.md#which-document-owns-what) lists, and every other Markdown file git tracks, and reports any statement the change has made untrue, incomplete, or out of date. In particular:
 
 - **README:** The getting-started steps still work as written, and the repository layout matches the top-level folders.
 - **Development Setup:** Every command, setting, and folder the change adds, renames, or removes is listed.
