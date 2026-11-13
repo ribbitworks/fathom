@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The buttons at the foot of a dialog that changes something, with any other actions it offers on
-// the left, and why the change it asked for was refused. Cancelling is not possible while the
-// change is being saved. Also, what a dialog is open for, which is kept while its modal closes.
+// the left or beside Cancel, and why the change it asked for was refused. Cancelling is not
+// possible while the change is being saved. Also, what a dialog is open for, which is kept while
+// its modal closes.
 
 import { Alert, Button, Group } from "@mantine/core";
 import { type ReactNode, useState } from "react";
@@ -14,6 +15,7 @@ export function DialogActions({
   label,
   onCancel,
   others,
+  beforeCancel,
   removes = false,
 }: {
   error: Error | null;
@@ -21,6 +23,8 @@ export function DialogActions({
   label: string;
   onCancel: () => void;
   others?: ReactNode;
+  // Other actions beside Cancel, for those that undo what the dialog has changed so far.
+  beforeCancel?: ReactNode;
   // Whether the change deletes or deactivates something, which is shown in red.
   removes?: boolean;
 }) {
@@ -37,6 +41,7 @@ export function DialogActions({
       <Group justify="space-between" wrap="nowrap">
         <Group gap="xs">{others}</Group>
         <Group gap="xs">
+          {beforeCancel}
           <Button
             variant="default"
             disabled={pending}

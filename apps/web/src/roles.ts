@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Roles through the server's API, and what a role's permissions mean in plain English: what its
-// holders can and cannot do, which pages they see, any permission that does nothing without others,
-// and, for a change to a role, what each account holding it gains and loses.
+// holders can and cannot do, which pages they see, which permissions do nothing without others, how
+// a list of these changed, and, for a change to a role, what each account holding it gains and
+// loses.
 
 import {
   type DataClasses,
   type Permission,
   permissionDescriptions,
   permissionGrid,
-  permissionLabel,
   roleEffectsSchema,
   roleListSchema,
   type RoleChange,
@@ -18,7 +18,6 @@ import {
   type RoleSummary,
   viewsOfRole,
   withImplied,
-  eitherOf,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { getJson, sendJsonFor } from "./api.ts";
@@ -69,13 +68,12 @@ const everyPage = pagesOpened(
 
 export interface Consequences {
   // The pages its holders see, each followed by the views on it needing classified data they get.
-  gets: string[];
-  // Each view on those pages they miss, with the classes it needs.
-  misses: string[];
+  sees: string[];
+  // The pages they do not see, and each view they miss on the pages they do, with the classes it
+  // needs, in the order of the pages.
+  doesNotSee: string[];
   can: string[];
   cannot: string[];
-  // Permissions granted that do nothing without any of others the role does not grant.
-  ineffective: string[];
 }
 
 // What a role granting these permissions lets its holders do, and not do, in plain English, in the
@@ -87,9 +85,7 @@ export function consequences(
   const held = withImplied(granted);
   const pages = pagesOpened(held);
   const can: string[] = [];
-  const cannot: string[] = everyPage
-    .filter((page) => !pages.includes(page))
-    .map((page) => `The ${page} page does not appear.`);
+  const cannot: string[] = [];
   for (const { actions } of permissionGrid) {
     const permissions = Object.values(actions);
     const missing = permissions.filter(
@@ -109,23 +105,13 @@ export function consequences(
       }
     }
   }
-  const ineffective = held.flatMap((permission) => {
-    // The permission is always one of the shared list.
-    // eslint-disable-next-line security/detect-object-injection
-    const { needs = [] } = permissionDescriptions[permission];
-    return needs.length === 0 || needs.some((one) => held.includes(one))
-      ? []
-      : [
-          `${permissionLabel(permission)} does nothing without ${eitherOf(needs.map(permissionLabel))}.`,
-        ];
-  });
   const views = viewsOfRole({ permissions: held, dataClasses }, pages);
-  // A page missed whole opens only to its line saying why, so it is not among what the role gets.
+  // A page missed whole opens only to its line saying why, so it is not among what the role sees.
   const missedWhole = views.flatMap(({ name, page, why }) =>
     why !== undefined && name === page ? [page] : [],
   );
   return {
-    gets: pages
+    sees: pages
       .filter((page) => !missedWhole.includes(page))
       .flatMap((page) => [
         page,
@@ -135,11 +121,75 @@ export function consequences(
             : [],
         ),
       ]),
-    misses: views.flatMap(({ why }) => (why === undefined ? [] : [why])),
+    doesNotSee: everyPage.flatMap((page) =>
+      pages.includes(page)
+        ? views.flatMap((view) =>
+            view.page === page && view.why !== undefined ? [view.why] : [],
+          )
+        : [page],
+    ),
     can,
     cannot,
-    ineffective,
   };
+}
+
+// Whether a permission does anything with those held: it needs none, or holds any of those it
+// needs.
+export function needsMet(
+  permission: Permission,
+  held: readonly Permission[],
+): boolean {
+  // The permission is always one of the shared list.
+  // eslint-disable-next-line security/detect-object-injection
+  const { needs = [] } = permissionDescriptions[permission];
+  return needs.length === 0 || needs.some((one) => held.includes(one));
+}
+
+// The permissions granted, less each that does nothing without others no longer granted, and any
+// that needed those in turn, apart from those to keep whatever they need.
+export function withNeedsMet(
+  granted: readonly Permission[],
+  keep: readonly Permission[] = [],
+): Permission[] {
+  let kept = [...granted];
+  let before: number;
+  do {
+    before = kept.length;
+    const held = withImplied(kept);
+    kept = kept.filter(
+      (permission) => keep.includes(permission) || needsMet(permission, held),
+    );
+  } while (kept.length < before);
+  return kept;
+}
+
+export interface Line {
+  text: string;
+  change: "added" | "removed" | undefined;
+}
+
+// A list as it is now, marked against the list it was first: lines added since are marked
+// as added, and lines taken away since stay, struck through, after the line they followed.
+export function markedLines(
+  first: readonly string[],
+  items: readonly string[],
+): Line[] {
+  const lines: Line[] = items.map((text) => ({
+    text,
+    change: first.includes(text) ? undefined : "added",
+  }));
+  let after: string | undefined;
+  for (const text of first) {
+    if (!items.includes(text)) {
+      const at =
+        after === undefined
+          ? 0
+          : lines.findIndex((line) => line.text === after) + 1;
+      lines.splice(at, 0, { text, change: "removed" });
+    }
+    after = text;
+  }
+  return lines;
 }
 
 export interface Difference {

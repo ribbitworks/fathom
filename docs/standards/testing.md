@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/shared/testing.md", "docs/standards/shared/typescript/typescript.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-12"
 ---
 
 # Testing Standards
@@ -98,6 +98,7 @@ Rules:
 - **Must Not** describe what to do or see by comparison with another screen, page or record, such as "laid out as a person's details are" or "as on People": the tester cannot judge it without leaving the step, and the step changes meaning when the other screen does. Say what is on this screen.
 - **Must** say only what to do and what to see: no explanations of why, design rationale, or history of fixes.
 - **Must Not** repeat facts other documents own, such as the contents of the seed data, or what [Manual Test Basics](../testing/manual-test-basics.md) holds for every test; link to them.
+- **Must** save a run's marked copy in `docs/testing/results/` before clearing its marks and notes, as [Recording Results](../testing/manual-test-basics.md#recording-results) sets out.
 - **Must** be updated in the same change as the behavior or the seed data it tests, together with [Visual Design](../design/visual-design.md) where that changes too. When a step fails because the behavior is wrong, the behavior is fixed, not the step.
 - **Must Not** depend on data a tester adds by hand, other than through the steps themselves, or on real data.
 - **Must Not** re-check what automated tests prove: each validation message, each refusal of a rule, API responses, permissions by typing addresses, each access-history sentence, or each combination of settings. One case for a rule is enough to confirm the screen shows it.

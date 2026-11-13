@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/product/roles.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-12"
 ---
 
 # Manual Test: End-to-End Acceptance
@@ -2156,14 +2156,12 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 - [ ] **Step 2.** Tick **Edit** on the **Plan** row.
   - **Expected:**
-    - **What it is for** is empty.
-    - A line under it reads **What the role grants changed, so its old summary is gone.**
+    - **Description** reads **Sees the plan, people, with their Personal and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.**
     - **Restore template** is turned on.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Restore template**.
   - **Expected:**
-    - **What it is for** reads **Sees the plan, people, with their Personal and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.**
     - **Edit** on **Plan** is unticked.
     - **Restore template** is turned off.
   - **Notes:**

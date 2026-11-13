@@ -160,6 +160,7 @@ Automate every repeatable setup, development, and operations task with a script 
   - Issues (`docs/issues.md`): known problems and deferred work not yet scheduled in the implementation plan
   - Security plan (`docs/security/security-plan.md`): threat model, vulnerability scanning, source code assurance, and enforcement
   - Manual tests (`docs/testing/`): lasting step-by-step tests of a feature by hand in a real browser, following [Testing Standards § Manual Tests](docs/standards/testing.md#manual-tests)
+  - Manual test results (`docs/testing/results/`): the marked copy of each manual test run, saved when its marks are cleared, as [Manual Test Basics](docs/testing/manual-test-basics.md#recording-results) sets out
   - Manual test basics (`docs/testing/manual-test-basics.md`): what every manual test shares, its environment, where its accounts come from, the common procedures, named, and the common terms
   - Help pages (`docs/help/`): how to use each page of Fathom, for the people who use it, listed in `docs/help/index.md`; a guide that repeats facts the documents above own, kept consistent with them, and updated by every change to the page it covers
   - Supported platforms (`docs/operations/supported-platforms.md`): the platforms Fathom is tested and supported on, and their setup needs

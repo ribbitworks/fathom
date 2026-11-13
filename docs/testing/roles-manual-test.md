@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/roles*.ts*", "apps/web/src/accounts-page.tsx", "apps/web/src/settings-page.tsx", "apps/server/src/data/settings.ts", "apps/server/src/data/role-administration.ts", "apps/server/src/routes/roles.ts", "packages/shared/src/access.ts", "packages/shared/src/roles.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-12"
 ---
 
 # Manual Test: Editing Roles
 
 ## Scope
 
-Verifies the Roles page: who sees it, the list of roles, the dialog that sets what a role grants with its summary in plain English and its marks on what is not built yet, the confirmation of what a change does to the accounts holding a role, restoring a starting role's template, the note when a starting role's grants change, copying and creating roles, giving an account a role made later, the refusals, and the access history entries that changes leave. It also verifies the Settings page, where the Administrator changes Fathom's time zone.
+Verifies the Roles page: who sees it, the list of roles, the dialog that sets what a role grants with its summary in plain English, the boxes turned off without what they need, the confirmation of what a change does to the accounts holding a role, restoring a starting role's template, resetting the boxes, copying and creating roles, giving an account a role made later, the refusals, and the access history entries that changes leave. It also verifies the Settings page, where the Administrator changes Fathom's time zone.
 
 ## Test Environment
 
@@ -34,7 +34,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu and the account menu. This test adds:
 
-- **Summary:** the panel on the right of the role dialog, headed **What this role gets**, **What it doesn't get**, **Can** and **Cannot**.
+- **Summary:** the panel on the right of the role dialog, headed **Sees**, **Doesn't see**, **Can** and **Cannot**.
 - **Tier colours:** the word **Personal** in bold orange and the word **Confidential** in bold red.
 
 ## Test Cases
@@ -78,7 +78,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - **New role** is at the top right.
   - **Notes:**
 
-- [ ] **Step 2.** Read the **What it is for** column.
+- [ ] **Step 2.** Read the **Description** column.
   - **Expected:**
     - Engineering Manager reads **Edits the plan and allocations, sees people, with everyone's Personal details, the hiring plan, and configuration, and proposes feature teams.**
     - Wherever **Personal** or **Confidential** appears, it is in its tier colour, in light and dark mode alike.
@@ -91,35 +91,38 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Signed in with this account. **Roles** page open from the left-hand menu.
 
 - [ ] **Step 1.** Open the **Project Manager** role, as Open a Role describes.
-  - **Expected:** A dialog titled **Edit Project Manager** shows **Name**, **What it is for**, and the grid, with these boxes ticked:
-    - **Plan:** **View**, greyed, **Approve** and **Edit**
-    - **Features and releases:** **View**, greyed, **Approve** and **Edit**
-    - **Allocations:** **View** and **Approve**
-    - **People:** **View** and **Approve**
-    - **Feature teams:** **View** and **Approve**
-    - **Hiring plan:** **View** and **Approve**
-    - **Configuration:** **View** and **Approve**
-    - Under **Data class**, **General** reads **With the area**, and **Personal**, with its lock, has **View** ticked
-    - **Confidential**, with its lock, has nothing ticked
-    - **Classify data**, below the two grids, is unticked, with **Moves built-in details, lists, and columns to another class, between the classes the role sees.** under it
-    - **Approve own drafts** is unticked, with **Approves drafts they changed themselves, in the areas they approve, which otherwise need another approver.** under it
+  - **Expected:**
+    - A dialog titled **Edit Project Manager** shows **Name**, **Description**, and the grid.
+    - **Plan:** **View**, greyed, **Approve** and **Edit** ticked
+    - **Features and releases:** **View**, greyed, **Approve** and **Edit** ticked
+    - **Allocations:** **View** and **Approve** ticked
+    - **People:** **View** and **Approve** ticked
+    - **Feature teams:** **View** and **Approve** ticked
+    - **Hiring plan:** **View** and **Approve** ticked
+    - **Configuration:** **View** and **Approve** ticked
+    - **Administration:** nothing ticked
+    - Under **Administration**, a **Data classification** heading runs across the grid.
+    - **General:** **View** and **Edit** ticked and greyed, with no **Approve** box
+    - **Personal:** **View** ticked
+    - **Confidential:** nothing ticked
+    - **Classify data**, below the grid, is unticked, with **Updates data classification of details, lists, and columns.** under it.
+    - **Approve own drafts** is unticked, with **Approves drafts they changed themselves, in the areas they approve, which otherwise need another approver.** under it.
   - **Notes:**
 
 - [ ] **Step 2.** Read the summary.
-  - **Expected:** The summary reads:
-    - **What this role gets:** Overview, Projects, Features, Releases, People, Org chart, Org chart on other dates, Feature assignments, Allocations, Drafts, Capacity, Lists and Change history.
-    - **What it doesn't get:** **Org chart on future dates: needs Confidential (Future reorganizations)** and **Feature assignments grouped by manager: needs Confidential (Future reorganizations)**.
+  - **Expected:**
+    - **Sees:** Overview, Projects, Features, Releases, People, Org chart, Org chart on other dates, Feature assignments, Allocations, Drafts, Capacity, Lists and Change history.
+    - **Doesn't see:** **Org chart on future dates: needs Confidential (Future reorganizations)**, **Feature assignments grouped by manager: needs Confidential (Future reorganizations)**, Accounts, Roles, Settings, Data classes and Access history.
     - **Can:** a line for each ticked box, such as seeing the plan, approving drafts of features and releases, and seeing feature teams.
-    - **Cannot** includes **Cannot change allocations.** and **Cannot change feature teams.**
+    - **Cannot** includes **Cannot change allocations.**, **Cannot change feature teams.**, **Cannot reclassify data.** and **Cannot approve their own drafted changes.**
     - **Cannot** also includes, in its tier colour, **Confidential data is hidden wherever it appears.**
     - **Cannot** does not include **Personal details are hidden wherever they appear, and people who haven't started yet aren't listed.**
-    - **Cannot** does not include **The People page does not appear.**
   - **Notes:**
 
 - [ ] **Step 3.** Look at the foot of the dialog.
   - **Expected:**
-    - **Restore template** is on the left, turned off.
-    - **Cancel** and **Save** are on the right.
+    - **Restore template**, **Reset**, **Cancel** and **Save** are on the right, in that order.
+    - **Restore template** and **Reset** are turned off.
   - **Notes:**
 
 ### ROLE-04: Editing an Area Brings Viewing It
@@ -138,31 +141,33 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** **View** on the **Configuration** row is ticked and can be unticked again.
   - **Notes:**
 
-### ROLE-05: The Summary Shows Each Change
+### ROLE-05: Unticking a Box Takes Away What Needs It, and Reset Puts It Back
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-04.
 
 **Preconditions:** Signed in with this account. **Roles** page open, with the **Edit Project Manager** dialog still open, unsaved, as ROLE-04 left it.
 
-- [ ] **Step 1.** Untick **View** on the **People** row, and watch the summary.
+- [ ] **Step 1.** Untick **View** on the **People** row.
   - **Expected:**
-    - **People**, **Org chart** and **Org chart on other dates** under **What this role gets**, and the sentence about seeing people under **Can**, are struck through in red and fade away over about three seconds, then go.
-    - Under **What it doesn't get**, **Org chart on future dates: needs Confidential (Future reorganizations)** is struck through in red and fades away.
-    - Under **Cannot**, **The People page does not appear.** appears in bold teal, turning to plain text after about three seconds.
-    - A yellow box at the top of the summary reads **View Hiring plan does nothing without View People.**
+    - **Approve** on **People**, **View** and **Approve** on **Feature teams** and **Hiring plan**, **View** on **Personal**, and **Classify data** are unticked and greyed.
+    - Under **Sees**, **People**, **Org chart**, **Org chart on other dates** and **Feature assignments** are struck through in red.
+    - Under **Doesn't see**, **People**, **Org chart** and **Feature assignments** are in bold teal.
+    - Under **Doesn't see**, the two lines that need Confidential are struck through in red.
+    - There is no yellow box.
   - **Notes:**
 
 - [ ] **Step 2.** Tick **View** on the **People** row again.
   - **Expected:**
-    - The lines taken out in Step 1 come back in bold teal.
-    - **The People page does not appear.** is struck through in red and fades away.
-    - The yellow box goes.
+    - **Approve** on **People**, **View** on **Feature teams**, **Hiring plan** and **Personal** can be ticked again, and are unticked.
+    - **People**, **Org chart** and **Org chart on other dates** under **Sees** are in plain text again.
+    - **Feature assignments** under **Sees** is still struck through in red.
   - **Notes:**
 
-- [ ] **Step 3.** Untick **View** on the **Hiring plan** row.
+- [ ] **Step 3.** Select **Reset**.
   - **Expected:**
-    - The sentence about seeing the hiring plan under **Can** is struck through in red and fades away.
-    - Under **Cannot**, **Planned hires appear only as placeholders.** appears in bold teal.
+    - The boxes are ticked as in ROLE-03 Step 1.
+    - No line in the summary is struck through or in bold teal.
+    - **Reset** is turned off.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Cancel**, then open the **Project Manager** role again, as Open a Role describes.
@@ -180,18 +185,20 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - The dialog says **This change affects 1 account.**
     - It lists **Project Manager**, with its email address.
     - Under **Gains**: a line for each of the **Accounts**, **Roles**, **Settings** and **Access history** pages, and a sentence about seeing accounts, roles, settings and the access history.
-    - **Back** is on the left, **Cancel** and **Save changes** on the right.
+    - **Cancel** and **Save changes** are on the right, and there is no **Back** button.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Back**.
-  - **Expected:** The grid shows again, with **View** on **Administration** still ticked.
+- [ ] **Step 2.** Select **Cancel**.
+  - **Expected:**
+    - The grid shows again, with **View** on **Administration** still ticked.
+    - **Description** reads as it did when the dialog opened.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Save**, then **Save changes**.
   - **Expected:**
     - The dialog closes.
     - A green banner says **The role has been changed.**
-    - The **Project Manager** row is unchanged in the list.
+    - The **Project Manager** row is unchanged in the list, its **Description** included.
   - **Notes:**
 
 - [ ] **Step 4.** Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
@@ -226,7 +233,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - Once saved, the green banner says **The role has been changed.**
   - **Notes:**
 
-### ROLE-08: A Starting Role's Summary Goes When What It Grants Changes
+### ROLE-08: A Role's Description Stays When What It Grants Changes
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-07.
 
@@ -234,23 +241,19 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] **Step 1.** Open the **Executive** role, as Open a Role describes, and tick **Edit** on the **Plan** row.
   - **Expected:**
-    - **What it is for** is empty, with a line under it reading **What the role grants changed, so its old summary is gone.**
-    - **Restore template** is turned on.
+    - **Description** reads **Sees the plan, people, with their Personal and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.**
+    - There is no line under **Description**.
+    - **Restore template** and **Reset** are turned on.
   - **Notes:**
 
-- [ ] **Step 2.** Untick **Edit** on the **Plan** row.
-  - **Expected:** **What it is for** reads as it did before, and the line under it is gone.
-  - **Notes:**
-
-- [ ] **Step 3.** Tick **Edit** on the **Plan** row, then select **Restore template**.
+- [ ] **Step 2.** Select **Reset**.
   - **Expected:**
-    - **What it is for** reads **Sees the plan, people, with their Personal and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.**
     - **Edit** on **Plan** is unticked.
-    - **Restore template** is turned off.
+    - **Restore template** and **Reset** are turned off.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Cancel**.
-  - **Expected:** The dialog closes, and the **Executive** row's **What it is for** is unchanged.
+- [ ] **Step 3.** Select **Cancel**.
+  - **Expected:** The dialog closes, and the **Executive** row's **Description** is unchanged.
   - **Notes:**
 
 ### ROLE-09: Copying a Role
@@ -344,7 +347,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] **Step 1.** Select **New role**.
   - **Expected:**
     - A dialog titled **New role**, with an empty name, no description, and nothing ticked.
-    - **What this role gets** says **None, apart from Help.**
+    - **Sees** reads **Nothing.**
   - **Notes:**
 
 - [ ] **Step 2.** Select **Create role** with the name empty.
@@ -352,7 +355,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 3.** Enter `team member` as the name, and select **Create role**.
-  - **Expected:** A red box in the dialog says **Another role already has that name; choose another**, and the dialog stays open.
+  - **Expected:** A red box in the dialog says **A role with that name already exists**, and the dialog stays open.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Cancel**.
@@ -365,7 +368,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** **Roles** page open, signed in with this account.
 
-- [ ] **Step 1.** Open the **Superuser** role, as Open a Role describes, untick **Edit** on **Roles**, and select **Save**.
+- [ ] **Step 1.** Open the **Superuser** role, as Open a Role describes, untick **Edit** on **Administration**, and select **Save**.
   - **Expected:**
     - The confirmation says **This change affects 1 account.**
     - It lists **Superuser**, under **Loses** with **The Roles page no longer appears.**
@@ -375,18 +378,12 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The dialog closes and a green banner says **The role has been changed.**, since the Administrator role still edits roles.
   - **Notes:**
 
-- [ ] **Step 3.** Open the **Administrator** role, as Open a Role describes, untick **Edit** on **Roles**, and select **Save**.
-  - **Expected:**
-    - The confirmation says **This change affects 1 account.**
-    - It lists **Fathom Administrator**, marked **(this account)**, under **Loses** with **The Roles page no longer appears.**
+- [ ] **Step 3.** Open the **Administrator** role, as Open a Role describes.
+  - **Expected:** **Edit** on **Administration** is ticked and greyed, and cannot be unticked.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Save changes**.
-  - **Expected:** A red box says **Some active account must keep Edit Administration**, and the dialog stays open.
-  - **Notes:**
-
-- [ ] **Step 5.** Select **Cancel**, and open the **Administrator** role again, as Open a Role describes.
-  - **Expected:** **Edit** on **Roles** is still ticked; nothing changed.
+- [ ] **Step 4.** Select **Cancel**.
+  - **Expected:** The dialog closes, and the **Administrator** row is unchanged.
   - **Notes:**
 
 ### ROLE-13: Changing Fathom's Time Zone

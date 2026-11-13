@@ -2,11 +2,15 @@
 
 // Roles as those who may edit them see and change them: each a named set of permissions, kept in the
 // database, with how many active accounts hold it, and what a change to one would do to each account
-// it changes.
+// it changes; and whether some active account keeps the permissions that keep Fathom manageable.
 
 import { z } from "zod";
-import { permissionSchema } from "./access.ts";
-import { accountName } from "./accounts.ts";
+import {
+  keptPermissions,
+  type Permission,
+  permissionSchema,
+} from "./access.ts";
+import { type Account, accountName } from "./accounts.ts";
 import { isPlainText } from "./text.ts";
 
 export const roleLengths = { description: 500 } as const;
@@ -83,3 +87,51 @@ export type RoleEffects = z.infer<typeof roleEffectsSchema>;
 export const roleEffectsRequestSchema = z.object({
   permissions: grantedSchema,
 });
+
+type Holders = readonly Pick<Account, "active" | "roles">[];
+type Grants = readonly Pick<RoleSummary, "id" | "permissions">[];
+
+// Whether some active account holds a role granting the permission.
+function keeps(permission: Permission, accounts: Holders, roles: Grants) {
+  return accounts.some(
+    (account) =>
+      account.active &&
+      account.roles.some(({ id }) =>
+        roles.find((role) => role.id === id)?.permissions.includes(permission),
+      ),
+  );
+}
+
+// Whether some active account's roles grant each kept permission, as the server checks after
+// changing an account's roles or what a role grants, or deactivating an account.
+export function staysManageable(accounts: Holders, roles: Grants): boolean {
+  return keptPermissions.every((permission) =>
+    keeps(permission, accounts, roles),
+  );
+}
+
+// The kept permissions a role granting these cannot give up, since without it no active account
+// would hold each.
+export function lockedPermissions(
+  roleId: string,
+  granted: readonly Permission[],
+  accounts: Holders,
+  roles: Grants,
+): Permission[] {
+  return keptPermissions.filter(
+    (permission) =>
+      granted.includes(permission) &&
+      !keeps(
+        permission,
+        accounts,
+        roles.map((role) =>
+          role.id === roleId
+            ? {
+                id: role.id,
+                permissions: granted.filter((other) => other !== permission),
+              }
+            : role,
+        ),
+      ),
+  );
+}

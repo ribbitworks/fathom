@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["docs/testing/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-12"
 ---
 
 # Manual Test Basics
@@ -31,6 +31,8 @@ Mark each step's checkbox while running it, and write anything else under its **
 - `- [!]`: the step fails; its notes say what was seen instead.
 
 Marks and notes are kept while a test is being run and changed, and cleared before the test is committed, so every committed test starts unmarked.
+
+Before they are cleared, the marked copy is saved in `docs/testing/results/`, named after the test with the date and time it was last run, as `<test>_YYYY_MM_DD_hh_mm.md`, such as `roles-manual-test_2026_11_12_14_30.md`, apart from the kebab-case file names [Documentation](../standards/shared/documentation.md) asks for. The copy has no front matter, and its links to other documents point one folder up: it starts with the test's title, followed by a line giving that date and time and the branch it was run on, such as **Last run:** 2026-11-12 14:30, on `feat/simpler-roles`. Decided by the owner on 2026-11-12.
 
 ## Common Procedures
 

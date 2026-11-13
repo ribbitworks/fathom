@@ -216,15 +216,14 @@ export const permissionDescriptions: Record<
     needs: ["people:edit", "feature-teams:edit"],
   },
   "data:classify": {
-    allows:
-      "Moves built-in details, lists, and columns to another class, between the classes the role sees.",
-    without: "Cannot move data to another class.",
+    allows: "Updates data classification of details, lists, and columns.",
+    without: "Cannot reclassify data.",
     needs: ["personal:view", "confidential:view"],
   },
   "drafts:approve-own": {
     allows:
       "Approves drafts they changed themselves, in the areas they approve, which otherwise need another approver.",
-    without: "Drafts they changed need someone else to approve them.",
+    without: "Cannot approve their own drafted changes.",
     needs: [
       "plan:approve",
       "features:approve",

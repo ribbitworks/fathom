@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["packages/shared/src/access.ts", "apps/web/src/layout.tsx", "apps/web/src/router.tsx", "apps/web/src/*-page.tsx", "apps/server/src/access.ts", "apps/server/src/data/**", "apps/server/src/routes/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/testing/roles-manual-test.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-12"
 ---
 
 # Manual Test: What Each Permission Allows
@@ -42,8 +42,8 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 ### Grant Team Member Only Some Permissions
 
 1. Sign in as the Administrator, `fathom.administrator@fathom.test`, and open the **Team Member** role, as Open a Role describes.
-2. Untick **View** on the **Plan**, **Features and releases**, **Allocations**, **People** and **Feature teams** rows. Confirm that no box in the grid is ticked, and that **What this role gets** says **None, apart from Help.**
-3. Tick the boxes the test case names.
+2. Untick **View** on the **Plan**, **Features and releases**, **Allocations**, **People** and **Feature teams** rows. Confirm that no box in the grid is ticked, apart from the greyed ones on **General**, and that **Sees** reads **Nothing.**
+3. Tick the boxes the test case names, in the order it names them.
 4. Select **Save**, then **Save changes**, and confirm that a green banner says **The role has been changed.**
 5. Sign in as the Team Member, `team.member@fathom.test`.
 
@@ -253,7 +253,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-06 ended with.
 
-**Preconditions:** Team Member granted only **View** on **People** and **View** on **Personal details** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Team Member granted only **View** on **People** and **View** on **Personal** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
   - **Expected:**
@@ -271,7 +271,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-07 ended with.
 
-**Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Personal details** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Personal** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
   - **Expected:**
@@ -297,7 +297,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-08 ended with.
 
-**Preconditions:** Reset the Database, then Add a Confidential Column, then Team Member granted only **View** on **People** and **View** on **Confidential data** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Reset the Database, then Add a Confidential Column, then Team Member granted only **View** on **People** and **View** on **Confidential** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
   - **Expected:**
@@ -319,7 +319,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-09 ended with.
 
-**Preconditions:** Add a Confidential Column done since the last reset, as for PERM-09, then Team Member granted only **Edit** on **People** and **Edit** on **Confidential data** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Add a Confidential Column done since the last reset, as for PERM-09, then Team Member granted only **Edit** on **People** and **Edit** on **Confidential** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
   - **Expected:**
@@ -575,7 +575,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 4.** Select **View** in the **Team Member** row.
-  - **Expected:** A dialog shows the role's name, what it is for and the grid, with every box fixed, and **Close** as its one button.
+  - **Expected:** A dialog shows the role's name, its description and the grid, with every box fixed, and **Close** as its one button.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Close**, then **Settings**.

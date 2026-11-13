@@ -13,9 +13,9 @@
 
 import {
   type Account,
-  keptPermissions,
   newAccountSchema,
   type RoleSummary,
+  staysManageable,
 } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -98,25 +98,6 @@ function dialogTitle(dialog: Dialog): string {
     case "active":
       return `${dialog.account.active ? "Deactivate" : "Reactivate"} ${dialog.account.name}`;
   }
-}
-
-// Whether some active account's roles grant each kept permission, as the server checks after
-// changing an account's roles or deactivating it.
-function staysManageable(
-  accounts: readonly Pick<Account, "active" | "roles">[],
-  roles: readonly RoleSummary[],
-): boolean {
-  return keptPermissions.every((permission) =>
-    accounts.some(
-      (account) =>
-        account.active &&
-        account.roles.some(({ id }) =>
-          roles
-            .find((role) => role.id === id)
-            ?.permissions.includes(permission),
-        ),
-    ),
-  );
 }
 
 // The changes to an account that the server refuses: the roles picked for it that it cannot give

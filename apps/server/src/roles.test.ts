@@ -228,7 +228,7 @@ describe("creating a role", () => {
     });
     expect(response.statusCode).toBe(409);
     expect(response.json()).toEqual({
-      error: "Another role already has that name; choose another",
+      error: "A role with that name already exists",
     });
   });
 
@@ -251,7 +251,7 @@ describe("creating a role", () => {
       const response = await racing;
       expect(response.statusCode).toBe(409);
       expect(response.json()).toEqual({
-        error: "Another role already has that name; choose another",
+        error: "A role with that name already exists",
       });
     } finally {
       client.release();

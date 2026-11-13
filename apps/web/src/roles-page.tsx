@@ -1,22 +1,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Roles page, for users who may see roles: every role with what it is for and how many active
+// The Roles page, for users who may see roles: every role with its description and how many active
 // accounts hold it, and a dialog showing what each grants, read only for those who may not edit
 // roles. Those who may edit roles create a role, from nothing or as a copy of another, change one,
 // or put a starting role back to Fathom's own version. The dialog sets what a role grants in a grid
-// of areas and actions, beside the result in plain English: the pages its holders see, what they
-// can and cannot do, and any permission that does nothing without another. A starting role's
-// summary of what it grants is emptied once what it grants changes, to be written again or left
-// empty, and comes back with the rest of Fathom's version. Before a change to a role held by
-// accounts is saved, the dialog lists what each account would gain and lose, to be confirmed. A
-// dialog cannot be closed while its change is being saved, and shows plainly why a change was
-// refused, such as when someone else changed the role after it was opened.
+// of areas and data classes with their actions, beside the result in plain English: the pages and
+// views its holders see and do not see, and what they can and cannot do, marked against what the
+// role granted when the dialog opened, to which its boxes can be reset. A box that does nothing
+// without others is turned off until one of them is ticked, and unticking them unticks it. The box
+// that alone leaves some active account able to manage access cannot be unticked. Before a
+// change to a role held by accounts is saved, the dialog lists what each account would gain and
+// lose, to be confirmed. A dialog cannot be closed while its change is being saved, and shows
+// plainly why a change was refused, such as when someone else changed the role after it was
+// opened.
 
 import {
   classNames,
   type DataClasses,
   gridActions,
+  type GridRow,
   impliedPermissions,
+  eitherOf,
+  keptPermissions,
+  lockedPermissions,
   type Permission,
   permissionDescriptions,
   permissionGrid,
@@ -27,6 +33,7 @@ import {
   type RoleSummary,
   sameGrants,
   startingRoles,
+  withImplied,
 } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -52,10 +59,9 @@ import { useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
-import { nameProblem } from "./accounts.ts";
+import { accountsQuery, nameProblem } from "./accounts.ts";
 import { DialogActions, useDialogState } from "./dialog-actions.tsx";
 import { notifySuccess } from "./notices.tsx";
-import { ClassMark } from "./status-mark.tsx";
 import { count } from "./numbers.ts";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
@@ -65,9 +71,12 @@ import {
   consequences,
   createRole,
   difference,
+  markedLines,
+  needsMet,
   previewRole,
   rolesQuery,
   updateRole,
+  withNeedsMet,
 } from "./roles.ts";
 import { type SignedInUser, sessionQuery } from "./session.ts";
 
@@ -123,83 +132,13 @@ function TierWords({ text }: { text: string }) {
   );
 }
 
-// How long a line just added stays highlighted, and one just taken away fades before it goes.
-const changeShownFor = 3000;
-
-interface Line {
-  text: string;
-  change: "added" | "removed" | undefined;
-}
-
-// Lines that follow a list as it changes: those added are marked as added, and those taken away
-// stay, struck through where they were, for a moment before they go. Each change ends on its own
-// time. The first list is shown as it is.
-function useChangingLines(items: readonly string[]): Line[] {
-  const [lines, setLines] = useState<Line[]>(() =>
-    items.map((text) => ({ text, change: undefined })),
-  );
-  const previous = useRef(items);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  useEffect(() => {
-    const before = previous.current;
-    previous.current = items;
-    const added = items.filter((item) => !before.includes(item));
-    const removed = before.filter((item) => !items.includes(item));
-    if (added.length === 0 && removed.length === 0) return;
-    setLines((current) => {
-      const next: Line[] = items.map((text) => ({
-        text,
-        change:
-          added.includes(text) ||
-          current.find((line) => line.text === text)?.change === "added"
-            ? "added"
-            : undefined,
-      }));
-      // Lines no longer in the list keep their place after the line they followed.
-      let after: string | undefined;
-      for (const line of current) {
-        if (items.includes(line.text)) {
-          after = line.text;
-          continue;
-        }
-        const at =
-          after === undefined
-            ? 0
-            : next.findIndex((other) => other.text === after) + 1;
-        next.splice(at, 0, { text: line.text, change: "removed" });
-        after = line.text;
-      }
-      return next;
-    });
-    timers.current.push(
-      setTimeout(() => {
-        setLines((current) =>
-          current.flatMap((line) =>
-            removed.includes(line.text) && line.change === "removed"
-              ? []
-              : added.includes(line.text) && line.change === "added"
-                ? [{ text: line.text, change: undefined }]
-                : [line],
-          ),
-        );
-      }, changeShownFor),
-    );
-  }, [items]);
-  // No change outlives the page.
-  useEffect(
-    () => () => {
-      for (const timer of timers.current) clearTimeout(timer);
-    },
-    [],
-  );
-  return lines;
-}
-
 // One permission's box: ticked when granted, or ticked and greyed when another granted one brings
-// it, such as viewing with editing.
+// it, such as viewing with editing, or when it must stay. It is turned off while it would do
+// nothing without others not granted.
 function PermissionBox({
   permission,
   granted,
+  locked,
   disabled,
   onChange,
   label,
@@ -207,6 +146,7 @@ function PermissionBox({
 }: {
   permission: Permission;
   granted: readonly Permission[];
+  locked: readonly Permission[];
   disabled: boolean;
   onChange: ((granted: Permission[]) => void) | undefined;
   label?: string;
@@ -214,6 +154,16 @@ function PermissionBox({
 }) {
   const comesWith = impliedBy(permission, granted);
   const name = permissionLabel(permission);
+  const kept = locked.includes(permission);
+  const checked = granted.includes(permission) || comesWith !== undefined;
+  // A box already ticked stays free to untick, even on a role saved before its needs were kept to.
+  const waiting =
+    onChange !== undefined &&
+    !checked &&
+    !needsMet(permission, withImplied(granted));
+  // The permission is always one of the shared list.
+  // eslint-disable-next-line security/detect-object-injection
+  const { needs = [] } = permissionDescriptions[permission];
   return (
     <Checkbox
       display={label === undefined ? "inline-block" : undefined}
@@ -222,12 +172,16 @@ function PermissionBox({
       aria-label={
         label !== undefined
           ? undefined
-          : comesWith === undefined
-            ? name
-            : `${name}, which comes with ${permissionLabel(comesWith)}`
+          : comesWith !== undefined
+            ? `${name}, which comes with ${permissionLabel(comesWith)}`
+            : kept
+              ? `${name}, which some active account must keep`
+              : waiting
+                ? `${name}, which needs ${eitherOf(needs.map(permissionLabel))}`
+                : name
       }
-      checked={granted.includes(permission) || comesWith !== undefined}
-      disabled={disabled || comesWith !== undefined}
+      checked={checked}
+      disabled={disabled || comesWith !== undefined || kept || waiting}
       readOnly={onChange === undefined}
       onChange={
         onChange &&
@@ -246,32 +200,38 @@ function PermissionBox({
 
 type BoxProps = Omit<Parameters<typeof PermissionBox>[0], "permission">;
 
-const classActions = ["view", "edit"] as const;
-
-// What a role grants, in three parts: the areas it reaches, with View, Approve and Edit; the classes
-// of data it sees and changes within them, with View and Edit; and the permissions of their own.
-// Read only without a way to change it.
+// What a role grants, in two parts: a grid of the areas it reaches, with View, Approve and Edit,
+// followed by the classes of data it sees and changes within them, with View and Edit; and the
+// permissions of their own. General data comes with each area. Read only without a way to change
+// it.
 function PermissionGrid({
   granted,
+  locked = [],
   disabled,
   onChange,
 }: {
   granted: readonly Permission[];
+  locked?: readonly Permission[];
   disabled: boolean;
   onChange?: (granted: Permission[]) => void;
 }) {
-  const box: BoxProps = { granted, disabled, onChange };
-  const cell = (permission: Permission | undefined, key: string) =>
-    permission === undefined ? (
-      <Table.Td key={key} />
-    ) : (
-      <Table.Td key={key} ta="center">
-        <PermissionBox permission={permission} {...box} />
-      </Table.Td>
-    );
+  const box: BoxProps = { granted, locked, disabled, onChange };
+  const cells = (actions: GridRow["actions"]) =>
+    gridActions.map((action) => {
+      // The action is always one of the fixed list.
+      // eslint-disable-next-line security/detect-object-injection
+      const permission = actions[action];
+      return permission === undefined ? (
+        <Table.Td key={action} />
+      ) : (
+        <Table.Td key={action} ta="center">
+          <PermissionBox permission={permission} {...box} />
+        </Table.Td>
+      );
+    });
   return (
     <Stack gap="sm" role="group" aria-label="What the role grants">
-      <Table withTableBorder verticalSpacing={4} aria-label="Areas">
+      <Table withTableBorder verticalSpacing={4}>
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Area</Table.Th>
@@ -292,49 +252,38 @@ function PermissionGrid({
             .map(({ area, actions }) => (
               <Table.Tr key={area}>
                 <Table.Td>{area}</Table.Td>
-                {gridActions.map((action) =>
-                  // The action is always one of the fixed list.
-                  // eslint-disable-next-line security/detect-object-injection
-                  cell(actions[action], action),
-                )}
+                {cells(actions)}
               </Table.Tr>
             ))}
-        </Table.Tbody>
-      </Table>
-      <Table withTableBorder verticalSpacing={4} aria-label="Data classes">
-        <Table.Thead>
           <Table.Tr>
-            <Table.Th>Data class</Table.Th>
-            {classActions.map((action) => (
-              <Table.Th key={action} ta="center">
-                {
-                  // The action is always one of the fixed list.
-                  // eslint-disable-next-line security/detect-object-injection
-                  actionHeadings[action]
-                }
-              </Table.Th>
-            ))}
+            <Table.Th colSpan={gridActions.length + 1} scope="colgroup">
+              Data classification
+            </Table.Th>
           </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>
           <Table.Tr>
             <Table.Td>{classNames.general}</Table.Td>
-            <Table.Td colSpan={classActions.length} ta="center" c="dimmed">
-              With the area
-            </Table.Td>
+            {gridActions.map((action) => (
+              <Table.Td key={action} ta="center">
+                {action !== "approve" && (
+                  <Checkbox
+                    display="inline-block"
+                    // The action is always one of the fixed list.
+                    // eslint-disable-next-line security/detect-object-injection
+                    aria-label={`${actionHeadings[action]} ${classNames.general}, which comes with each area`}
+                    checked
+                    disabled
+                    readOnly
+                  />
+                )}
+              </Table.Td>
+            ))}
           </Table.Tr>
           {permissionGrid.flatMap((row) =>
             row.kind === "class"
               ? [
                   <Table.Tr key={row.area}>
-                    <Table.Td>
-                      <ClassMark dataClass={row.dataClass} />
-                    </Table.Td>
-                    {classActions.map((action) =>
-                      // The action is always one of the fixed list.
-                      // eslint-disable-next-line security/detect-object-injection
-                      cell(row.actions[action], action),
-                    )}
+                    <Table.Td>{classNames[row.dataClass]}</Table.Td>
+                    {cells(row.actions)}
                   </Table.Tr>,
                 ]
               : [],
@@ -379,29 +328,18 @@ function Sentences({ title, items }: { title: string; items: string[] }) {
   );
 }
 
-// A line being taken away: struck through in red, fading until it goes.
-function LeavingLine({ text }: { text: string }) {
-  return (
-    <List.Item>
-      <VisuallyHidden>No longer: </VisuallyHidden>
-      {/* The mark goes on the text itself, which a list item does not pass it down to. */}
-      <span className={roleClasses.removed}>
-        <Line text={text} />
-      </span>
-    </List.Item>
-  );
-}
-
-// Sentences that follow the grid as it changes, highlighting those just added and striking through
-// those just taken away as they fade, which screen readers hear from the summary's live region.
+// Sentences marked against those the dialog opened with: added ones highlighted, and those taken
+// away struck through, which screen readers hear from the summary's live region.
 function ChangingSentences({
   title,
+  first,
   items,
 }: {
   title: string;
+  first: readonly string[];
   items: readonly string[];
 }) {
-  const lines = useChangingLines(items);
+  const lines = markedLines(first, items);
   if (lines.length === 0) return null;
   return (
     <Stack gap={4}>
@@ -409,36 +347,50 @@ function ChangingSentences({
         {title}
       </Title>
       <List size="sm" spacing={2}>
-        {lines.map(({ text, change }) =>
-          change === "removed" ? (
-            <LeavingLine key={text} text={text} />
-          ) : (
-            <List.Item key={text}>
-              <span
-                className={change === "added" ? roleClasses.added : undefined}
-              >
-                <Line text={text} />
-              </span>
-            </List.Item>
-          ),
-        )}
+        {lines.map(({ text, change }) => (
+          <List.Item key={text}>
+            {change !== undefined && (
+              <VisuallyHidden>
+                {change === "removed" ? "No longer: " : "New: "}
+              </VisuallyHidden>
+            )}
+            {/* The mark goes on the text itself, which a list item does not pass it down to. */}
+            <span
+              className={
+                change === "added"
+                  ? roleClasses.added
+                  : change === "removed"
+                    ? roleClasses.removed
+                    : undefined
+              }
+            >
+              <Line text={text} />
+            </span>
+          </List.Item>
+        ))}
       </List>
     </Stack>
   );
 }
 
-// The result of a role's permissions in plain English, which follows the grid as it changes.
+// The pages and views a role's holders see, with a line saying so when there are none.
+function seen(sees: string[]): string[] {
+  return sees.length === 0 ? ["Nothing."] : sees;
+}
+
+// The result of a role's permissions in plain English, which follows the grid as it changes, marked
+// against what the role granted first.
 function Summary({
+  first,
   granted,
   dataClasses,
 }: {
+  first: readonly Permission[];
   granted: readonly Permission[];
   dataClasses: DataClasses;
 }) {
-  const { gets, misses, can, cannot, ineffective } = consequences(
-    granted,
-    dataClasses,
-  );
+  const before = consequences(first, dataClasses);
+  const now = consequences(granted, dataClasses);
   return (
     <Paper
       withBorder
@@ -448,18 +400,22 @@ function Summary({
       aria-label="What the role allows"
     >
       <Stack gap="sm">
-        {ineffective.length > 0 && (
-          <Alert color="yellow" p="xs">
-            {ineffective.join(" ")}
-          </Alert>
-        )}
         <ChangingSentences
-          title="What this role gets"
-          items={gets.length === 0 ? ["None, apart from Help."] : gets}
+          title="Sees"
+          first={seen(before.sees)}
+          items={seen(now.sees)}
         />
-        <ChangingSentences title="What it doesn't get" items={misses} />
-        <ChangingSentences title="Can" items={can} />
-        <ChangingSentences title="Cannot" items={cannot} />
+        <ChangingSentences
+          title="Doesn't see"
+          first={before.doesNotSee}
+          items={now.doesNotSee}
+        />
+        <ChangingSentences title="Can" first={before.can} items={now.can} />
+        <ChangingSentences
+          title="Cannot"
+          first={before.cannot}
+          items={now.cannot}
+        />
       </Stack>
     </Paper>
   );
@@ -520,7 +476,7 @@ function RoleView({
         <Stack>
           <TextInput label="Name" value={role.name} readOnly />
           <Textarea
-            label="What it is for"
+            label="Description"
             autosize
             minRows={2}
             value={role.description}
@@ -528,7 +484,11 @@ function RoleView({
           />
           <PermissionGrid granted={role.permissions} disabled={false} />
         </Stack>
-        <Summary granted={role.permissions} dataClasses={dataClasses} />
+        <Summary
+          first={role.permissions}
+          granted={role.permissions}
+          dataClasses={dataClasses}
+        />
       </SimpleGrid>
       <Group justify="flex-end">
         <Button variant="default" data-autofocus onClick={onDone}>
@@ -568,9 +528,33 @@ function RoleForm({
     },
   });
   const { errors } = form.formState;
-  const [granted, setGranted] = useState<Permission[]>(
-    source?.permissions ?? [],
-  );
+  const first = source?.permissions ?? [];
+  const [granted, setGranted] = useState<Permission[]>([...first]);
+  const changeGranted = (next: Permission[]) => {
+    // Boxes ticked without their needs when the role was saved stay until unticked.
+    const held = withImplied(granted);
+    setGranted(
+      withNeedsMet(
+        next,
+        granted.filter((permission) => !needsMet(permission, held)),
+      ),
+    );
+  };
+  // Each kept permission the role grants that no other role would leave some active account with.
+  const accounts = useQuery({
+    ...accountsQuery,
+    enabled: dialog.kind === "edit",
+  });
+  const roles = useQuery(rolesQuery);
+  // While the accounts load, the kept permissions stay, as they may be the last.
+  const locked =
+    dialog.kind !== "edit"
+      ? []
+      : accounts.data === undefined || roles.data === undefined
+        ? accounts.isError
+          ? []
+          : keptPermissions.filter((permission) => granted.includes(permission))
+        : lockedPermissions(dialog.role.id, granted, accounts.data, roles.data);
   // What the change would do to accounts, once worked out, shown for confirming.
   const [effects, setEffects] = useState<RoleEffects["effects"] | null>(null);
   const saving = useMutation({
@@ -623,31 +607,6 @@ function RoleForm({
     name === starting.template.name &&
     description === starting.template.description &&
     sameGrants(granted, starting.template.permissions);
-  // Whether a starting role's summary was emptied because what it grants changed.
-  const [summaryGone, setSummaryGone] = useState(false);
-
-  // A starting role's summary fits only what it granted when the summary was written: as saved, or
-  // as Fathom's version. Once what it grants changes, a summary nobody has rewritten is emptied,
-  // and comes back if what it grants is put back.
-  const changeGranted = (next: Permission[]) => {
-    if (starting !== undefined) {
-      const { saved, template } = starting;
-      const summaryFor = (grants: readonly Permission[]) =>
-        sameGrants(grants, template.permissions)
-          ? template.description
-          : sameGrants(grants, saved.permissions)
-            ? saved.description
-            : "";
-      const current = form.getValues("description");
-      const fitting = summaryFor(next);
-      if (current === summaryFor(granted) && fitting !== current) {
-        form.setValue("description", fitting, { shouldDirty: true });
-        setSummaryGone(fitting === "");
-      }
-    }
-    setGranted(next);
-  };
-
   // A change to a role that changes what some account may do is confirmed first.
   const submit = form.handleSubmit(async (details) => {
     if (dialog.kind === "edit" && effects === null) {
@@ -674,18 +633,9 @@ function RoleForm({
             error={saving.error}
             pending={saving.isPending}
             label="Save changes"
-            onCancel={onDone}
-            others={
-              <Button
-                variant="default"
-                disabled={busy}
-                onClick={() => {
-                  setEffects(null);
-                }}
-              >
-                Back
-              </Button>
-            }
+            onCancel={() => {
+              setEffects(null);
+            }}
           />
         </Stack>
       </form>
@@ -710,15 +660,10 @@ function RoleForm({
               {...form.register("name")}
             />
             <Textarea
-              label="What it is for"
+              label="Description"
               autosize
               minRows={2}
               disabled={busy}
-              description={
-                summaryGone &&
-                description === "" &&
-                "What the role grants changed, so its old summary is gone."
-              }
               error={
                 errors.description && `${String(errors.description.message)}.`
               }
@@ -726,35 +671,54 @@ function RoleForm({
             />
             <PermissionGrid
               granted={granted}
+              locked={locked}
               disabled={busy}
               onChange={changeGranted}
             />
           </Stack>
-          <Summary granted={granted} dataClasses={dataClasses} />
+          <Summary first={first} granted={granted} dataClasses={dataClasses} />
         </SimpleGrid>
         <DialogActions
           error={saving.error ?? previewing.error}
           pending={busy}
           label={dialog.kind === "edit" ? "Save" : "Create role"}
           onCancel={onDone}
-          others={
-            starting !== undefined && (
+          beforeCancel={
+            <>
+              {starting !== undefined && (
+                <Button
+                  variant="default"
+                  disabled={busy || asStarted}
+                  onClick={() => {
+                    const { template } = starting;
+                    form.setValue("name", template.name, {
+                      shouldDirty: true,
+                    });
+                    form.setValue("description", template.description, {
+                      shouldDirty: true,
+                    });
+                    setGranted([
+                      ...template.permissions,
+                      ...locked.filter(
+                        (permission) =>
+                          !template.permissions.includes(permission),
+                      ),
+                    ]);
+                  }}
+                >
+                  Restore template
+                </Button>
+              )}
               <Button
                 variant="default"
-                disabled={busy || asStarted}
+                disabled={busy || sameGrants(granted, first)}
                 onClick={() => {
-                  const { template } = starting;
-                  form.setValue("name", template.name, { shouldDirty: true });
-                  form.setValue("description", template.description, {
-                    shouldDirty: true,
-                  });
-                  setGranted([...template.permissions]);
-                  setSummaryGone(false);
+                  setGranted([...first]);
                 }}
               >
-                Restore template
+                Reset
               </Button>
-            )
+            </>
           }
         />
       </Stack>
@@ -819,7 +783,7 @@ export function RolesPage({
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>Role</Table.Th>
-                  <Table.Th>What it is for</Table.Th>
+                  <Table.Th>Description</Table.Th>
                   <Table.Th>Accounts</Table.Th>
                   <Table.Th>
                     <VisuallyHidden>Actions</VisuallyHidden>

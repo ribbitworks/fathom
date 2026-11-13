@@ -85,6 +85,7 @@ export {
   roleEffectsRequestSchema,
   type RoleEffects,
   roleEffectsSchema,
+  lockedPermissions,
   roleLengths,
   roleListSchema,
   type RoleRequest,
@@ -92,6 +93,7 @@ export {
   roleResponseSchema,
   type RoleSummary,
   roleSummarySchema,
+  staysManageable,
 } from "./roles.ts";
 export {
   builtInColumnNames,
