@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: Number Columns
@@ -21,7 +21,7 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
 
 ## Common Procedures
 
@@ -59,7 +59,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `74C1` Type `Score` in **Name**.
-  - **Expected:** **Name** holds **Score**.
+  - **Expected:** **Name** holds `Score`.
   - **Notes:**
 
 - [ ] `0FBA` Select **Add column**.
@@ -78,19 +78,19 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `6A37` In the first row's Score cell, type `1234.5` and press Enter.
   - **Expected:**
-    - The cell reads **1,234.5**, or as the browser's language writes it.
+    - The cell reads "1,234.5", or as the browser's language writes it.
     - It has a hollow yellow dot before it.
   - **Notes:**
 
 - [ ] `1E4A` In the second row's Score cell, type `-7` and press Enter.
   - **Expected:**
-    - The cell reads **-7**, or as the browser's language writes it.
+    - The cell reads "-7", or as the browser's language writes it.
     - It has a hollow yellow dot before it.
   - **Notes:**
 
 - [ ] `B00C` In the third row's Score cell, type `0` and press Enter.
   - **Expected:**
-    - The cell reads **0**, or as the browser's language writes it.
+    - The cell reads "0", or as the browser's language writes it.
     - It has a hollow yellow dot before it.
   - **Notes:**
 
@@ -98,7 +98,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - The cell stays open.
     - It is outlined in red.
-    - **Score: use a number such as 1234.5** shows in red under the row, in its first cell.
+    - "Score: use a number such as 1234.5" shows in red under the row, in its first cell.
   - **Notes:**
 
 - [ ] `4BE1` Press Esc.
@@ -106,7 +106,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `FCE6` Select the small button with an arrow out of a box at the right of the first row's **Name** cell.
-  - **Expected:** The panel lists **Score** with **1,234.5**, or as the browser's language writes it.
+  - **Expected:** The panel lists **Score** with "1,234.5", or as the browser's language writes it.
   - **Notes:**
 
 - [ ] `B718` Close the panel.
@@ -133,7 +133,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `F0E6` Select **Highest first**.
   - **Expected:**
-    - Among the rows marked as drafts, **Score** reads **1,234.5**, then **0**, then **-7** from the top.
+    - Among the rows marked as drafts, **Score** reads "1,234.5", then "0", then "-7" from the top.
     - Rows with no number come after them.
   - **Notes:**
 
@@ -147,15 +147,15 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `20EF` Type `0` in **At least**.
   - **Expected:**
-    - Rows reading **1,234.5** and **0** are shown.
-    - No row reading **-7** is shown.
+    - Rows reading "1,234.5" and "0" are shown.
+    - No row reading "-7" is shown.
   - **Notes:**
 
 - [ ] `AE38` Type `abc` in **At most**.
   - **Expected:**
-    - **Use a number such as 1234.5** shows in red under **At most**.
-    - Rows reading **1,234.5** and **0** are shown.
-    - No row reading **-7** is shown.
+    - "Use a number such as 1234.5" shows in red under **At most**.
+    - Rows reading "1,234.5" and "0" are shown.
+    - No row reading "-7" is shown.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

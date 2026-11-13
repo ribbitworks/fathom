@@ -23,7 +23,7 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
 
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
 
 ## Common Procedures
 
@@ -40,7 +40,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, the Draft menu and the column menu. This test adds:
 
 - **Metrics panel:** the panel titled **Metrics** that opens on the right of the People table.
-- **Count line:** the line under the panel's title saying how many people and planned hires it counts, such as **150 people and 8 planned hires**.
+- **Count line:** the line under the panel's title saying how many people and planned hires it counts, such as "150 people and 8 planned hires".
 - **Panel edge:** the strip between the table and the Metrics panel. A blue line shows on it when the pointer is over it.
 - **Column edge:** the right edge of a column's name in the People table's header. A short blue line shows on it when the pointer is over it.
 
@@ -58,7 +58,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The Metrics panel opens on the right.
     - The table narrows beside it.
-    - **Break down by** reads **Choose a column**.
+    - **Break down by** reads "Choose a column".
   - **Notes:**
 
 - [ ] `FAFE` Press Esc.
@@ -90,16 +90,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `014F` Set **Break down by** to **Position**.
   - **Expected:**
-    - The count line says **150 people and 8 planned hires**.
+    - The count line says "150 people and 8 planned hires".
     - The figures are headed **Count**.
     - The rows read, from top to bottom:
-      - Employee 0 (0%)
-      - Manager 0 (0%)
-      - Software Engineer 73 (46.2%)
-      - Test Engineer 36 (22.8%)
-      - SDET 32 (20.3%)
-      - Engineering Manager 17 (10.8%)
-      - Architect 0 (0%)
+      - "Employee 0 (0%)"
+      - "Manager 0 (0%)"
+      - "Software Engineer 73 (46.2%)"
+      - "Test Engineer 36 (22.8%)"
+      - "SDET 32 (20.3%)"
+      - "Engineering Manager 17 (10.8%)"
+      - "Architect 0 (0%)"
     - No row shows a green dot and a second figure.
   - **Notes:**
 
@@ -120,12 +120,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - It has a row for each position and an **All** row.
     - An **Empty** column counts the planned hires, which have no site.
     - The **All** row shows:
-      - Kestrel Bay 31
-      - Northmere 33
-      - Ashgrove 47
-      - Corran Quay 39
-      - Empty 8
-      - All 158
+      - "Kestrel Bay 31"
+      - "Northmere 33"
+      - "Ashgrove 47"
+      - "Corran Quay 39"
+      - "Empty 8"
+      - "All 158"
     - **Count** is selected above the table.
   - **Notes:**
 
@@ -141,23 +141,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - It lists the sites.
   - **Notes:**
 
-- [ ] `F8B5` Pick only **Ashgrove**.
-  - **Expected:** **Ashgrove** is the only site picked.
+- [ ] `F8B5` Pick only 'Ashgrove'.
+  - **Expected:** 'Ashgrove' is the only site picked.
   - **Notes:**
 
 - [ ] `2FED` Press Esc.
   - **Expected:**
     - The filter closes.
-    - The bar above the table says **47 of 158**.
-    - The count line says **47 people**.
+    - The bar above the table says "47 of 158".
+    - The count line says "47 people".
     - The rows read, from top to bottom:
-      - Employee 0 (0%)
-      - Manager 0 (0%)
-      - Software Engineer 20 (42.6%)
-      - Test Engineer 12 (25.5%)
-      - SDET 6 (12.8%)
-      - Engineering Manager 9 (19.1%)
-      - Architect 0 (0%)
+      - "Employee 0 (0%)"
+      - "Manager 0 (0%)"
+      - "Software Engineer 20 (42.6%)"
+      - "Test Engineer 12 (25.5%)"
+      - "SDET 6 (12.8%)"
+      - "Engineering Manager 9 (19.1%)"
+      - "Architect 0 (0%)"
   - **Notes:**
 
 - [ ] `4A90` Select **Clear all** in the bar above the table.
@@ -188,8 +188,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `04C1` Set **and by** to **Nothing more**.
   - **Expected:**
-    - The **P1** row shows a count.
-    - Under the count, a green dot before a dimmed **17**.
+    - The 'P1' row shows a count.
+    - Under the count, a green dot before a dimmed "17".
     - Rows whose count drafts do not change show no green dot.
   - **Notes:**
 
@@ -230,15 +230,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **People** page open. Live only shown: run Show Live Only. Metrics panel open, with **Break down by** set to **Position** and **and by** to **Site**.
 
 - [ ] `AD01` Open the Views menu, and select **Save view…**.
-  - **Expected:** A dialog titled **Save view** opens.
+  - **Expected:** A dialog titled "Save view" opens.
   - **Notes:**
 
 - [ ] `3EEF` Type `Fictional positions by site`.
-  - **Expected:** The name box holds **Fictional positions by site**.
+  - **Expected:** The name box holds `Fictional positions by site`.
   - **Notes:**
 
 - [ ] `2E85` Select **Save view**.
-  - **Expected:** The Views button is named **Fictional positions by site**.
+  - **Expected:** The Views button is named `Fictional positions by site`.
   - **Notes:**
 
 - [ ] `AC0A` Open the Views menu, and select **Clear view**.
@@ -247,16 +247,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The table shows drafts beside live again.
   - **Notes:**
 
-- [ ] `B586` Open the Views menu, and select **Fictional positions by site**.
+- [ ] `B586` Open the Views menu, and select `Fictional positions by site`.
   - **Expected:**
     - The Metrics panel opens.
     - It shows a table headed **Position by Site**.
-    - The figures are live only: the **All** row ends with **All** 158.
+    - The figures are live only: the **All** row ends with "All 158".
   - **Notes:**
 
 - [ ] `1CC4` Open the Views menu, and select **Delete view**.
   - **Expected:**
-    - A notice at the top right reads **Deleted the Fictional positions by site view.**
+    - A notice at the top right reads "Deleted the Fictional positions by site view."
     - It offers **Undo**.
   - **Notes:**
 
@@ -386,7 +386,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - **Name** narrows smoothly with the pointer.
     - **Name** stops at about five characters wide.
-    - Names that no longer fit end in **…**.
+    - Names that no longer fit end in "…".
     - Every row stays one line tall.
   - **Notes:**
 
@@ -394,7 +394,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The details button shows at the right end of their **Name** cell.
     - The name stops short of it.
-    - The name ends in **…**.
+    - The name ends in "…".
     - The row stays one line tall.
   - **Notes:**
 
@@ -407,7 +407,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `5AE1` Look at the **Onboarding** column.
   - **Expected:**
     - **Onboarding** is about 15 characters wide.
-    - Each note is cut short with **…**.
+    - Each note is cut short with "…".
   - **Notes:**
 
 - [ ] `9F15` Drag the column edge of **Onboarding** to the right by about the width of the column.

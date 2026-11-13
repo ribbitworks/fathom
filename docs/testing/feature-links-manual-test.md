@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: Feature Links
@@ -42,32 +42,32 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Features** page open.
 
-- [ ] `6F72` Find the row **Offline Sync**, and look at its **Projects** cell.
+- [ ] `6F72` Find the row 'Offline Sync', and look at its **Projects** cell.
   - **Expected:**
-    - It names **Clinic Booking Rollout** first.
-    - No ID is before **Clinic Booking Rollout**.
-    - Then **Crane Control**.
-    - **P-2001** is in grey before **Crane Control**.
+    - It names 'Clinic Booking Rollout' first.
+    - No ID is before 'Clinic Booking Rollout'.
+    - Then 'Crane Control'.
+    - 'P-2001' is in grey before 'Crane Control'.
     - A comma separates the two.
   - **Notes:**
 
-- [ ] `92BE` Look at the **Proposals** cell of **Offline Sync**.
+- [ ] `92BE` Look at the **Proposals** cell of 'Offline Sync'.
   - **Expected:**
-    - It names **Clinic Scheduling Pilot** first.
-    - **PR-102** is in grey before **Clinic Scheduling Pilot**.
-    - Then **Harbour Cranes Upgrade**.
-    - **PR-101** is in grey before **Harbour Cranes Upgrade**.
+    - It names 'Clinic Scheduling Pilot' first.
+    - 'PR-102' is in grey before 'Clinic Scheduling Pilot'.
+    - Then 'Harbour Cranes Upgrade'.
+    - 'PR-101' is in grey before 'Harbour Cranes Upgrade'.
   - **Notes:**
 
-- [ ] `5A96` Point at the **Projects** cell of **Offline Sync**.
-  - **Expected:** A tip lists **Clinic Booking Rollout** and **P-2001 Crane Control**, each on a line of its own.
+- [ ] `5A96` Point at the **Projects** cell of 'Offline Sync'.
+  - **Expected:** A tip lists 'Clinic Booking Rollout' and 'P-2001 Crane Control', each on a line of its own.
   - **Notes:**
 
 - [ ] `E2F6` Choose **Dark** in the Appearance menu.
   - **Expected:** The page turns dark.
   - **Notes:**
 
-- [ ] `F82F` Look at the **Projects** and **Proposals** cells of **Offline Sync**.
+- [ ] `F82F` Look at the **Projects** and **Proposals** cells of 'Offline Sync'.
   - **Expected:**
     - The grey IDs are easy to read.
     - They are clearly lighter than the names.
@@ -77,7 +77,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The page is light.
   - **Notes:**
 
-- [ ] `E3B8` Look at the **Projects** and **Proposals** cells of **Offline Sync**.
+- [ ] `E3B8` Look at the **Projects** and **Proposals** cells of 'Offline Sync'.
   - **Expected:**
     - The grey IDs are easy to read.
     - They are clearly lighter than the names.
@@ -89,58 +89,58 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Features** page open.
 
-- [ ] `412D` Select **Show details** in the **⋯** menu of **Offline Sync**.
+- [ ] `412D` Select **Show details** in the **⋯** menu of 'Offline Sync'.
   - **Expected:**
-    - The side panel lists **Clinic Booking Rollout** and **Crane Control** under **Projects**.
-    - It lists **Clinic Scheduling Pilot** and **Harbour Cranes Upgrade** under **Proposals**.
+    - The side panel lists 'Clinic Booking Rollout' and 'Crane Control' under **Projects**.
+    - It lists 'Clinic Scheduling Pilot' and 'Harbour Cranes Upgrade' under **Proposals**.
     - Each name is a link on a line of its own.
     - Each name has its ID in grey before it, where it has one.
   - **Notes:**
 
-- [ ] `FD1E` Select **Crane Control** under **Projects**.
+- [ ] `FD1E` Select 'Crane Control' under **Projects**.
   - **Expected:**
     - The page is still titled **Features**.
     - The table of features is in view.
-    - The side panel is headed **Crane Control**.
+    - The side panel is headed 'Crane Control'.
     - The side panel lists, from the top:
-      - Name
-      - Project ID
-      - Owner
-      - Customers
-      - Proposals
-      - Features
-      - First milestone
-      - Last milestone
-      - Next delivery
-      - Milestones
+      - **Name**
+      - **Project ID**
+      - **Owner**
+      - **Customers**
+      - **Proposals**
+      - **Features**
+      - **First milestone**
+      - **Last milestone**
+      - **Next delivery**
+      - **Milestones**
   - **Notes:**
 
-- [ ] `FD3D` Select **Audit Export** under **Features** in the side panel.
+- [ ] `FD3D` Select 'Audit Export' under **Features** in the side panel.
   - **Expected:**
     - The page is still **Features**.
-    - The side panel is headed **Audit Export**.
+    - The side panel is headed 'Audit Export'.
   - **Notes:**
 
 - [ ] `6A45` Select the browser's back button.
-  - **Expected:** The side panel shows **Crane Control** again.
+  - **Expected:** The side panel shows 'Crane Control' again.
   - **Notes:**
 
 - [ ] `CDEC` Select the browser's back button again.
-  - **Expected:** The side panel shows **Offline Sync** again.
+  - **Expected:** The side panel shows 'Offline Sync' again.
   - **Notes:**
 
-- [ ] `B2E4` Select **Harbour Cranes Upgrade** under **Proposals**.
+- [ ] `B2E4` Select 'Harbour Cranes Upgrade' under **Proposals**.
   - **Expected:**
     - The page is still **Features**.
-    - The side panel is headed **Harbour Cranes Upgrade**.
+    - The side panel is headed 'Harbour Cranes Upgrade'.
     - The side panel lists the proposal's:
-      - Name
-      - Proposal ID
-      - Link
-      - Owner
-      - Customers
-      - Status
-      - Features
+      - **Name**
+      - **Proposal ID**
+      - **Link**
+      - **Owner**
+      - **Customers**
+      - **Status**
+      - **Features**
   - **Notes:**
 
 - [ ] `32BC` Close the side panel.
@@ -155,26 +155,26 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Features** page open.
 
-- [ ] `220E` Select the **Projects** cell of **Bulk Import**, and press Enter.
+- [ ] `220E` Select the **Projects** cell of 'Bulk Import', and press Enter.
   - **Expected:**
     - A list of projects opens.
     - It has a search box.
-    - Each project is named by its ID, where it has one, then its name, such as **P-2001 Crane Control**.
+    - Each project is named by its ID, where it has one, then its name, such as 'P-2001 Crane Control'.
     - None is picked.
   - **Notes:**
 
-- [ ] `34B4` Pick **Internal Tools**, and press Enter.
+- [ ] `34B4` Pick 'Internal Tools', and press Enter.
   - **Expected:**
     - The list closes.
-    - The cell names **Internal Tools**.
-    - **Bulk Import** has no dot.
+    - The cell names 'Internal Tools'.
+    - 'Bulk Import' has no dot.
   - **Notes:**
 
 - [ ] `59FB` Select the **Projects** page in the left-hand menu.
-  - **Expected:** In the row **Internal Tools**:
-    - Its **Features** cell names **Bulk Import** and **Usage Alerts**.
+  - **Expected:** In the row 'Internal Tools':
+    - Its **Features** cell names 'Bulk Import' and 'Usage Alerts'.
     - A hollow yellow dot is before them.
-    - The light green Live row under it names **Usage Alerts** alone in its **Features** cell.
+    - The light green Live row under it names 'Usage Alerts' alone in its **Features** cell.
   - **Notes:**
 
 - [ ] `A6DC` Select the **Features** page in the left-hand menu.
@@ -197,11 +197,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Restore the Seed Data run after LINK-03. **Projects** page open, **Projects** tab chosen.
 
-- [ ] `865B` In the **⋯** menu of **Crane Control**, select **Show features**.
+- [ ] `865B` In the **⋯** menu of 'Crane Control', select **Show features**.
   - **Expected:**
     - The **Features** page opens.
-    - Only **Audit Export** and **Offline Sync** show.
-    - A pill above the table reads **Projects: P-2001 Crane Control**.
+    - Only 'Audit Export' and 'Offline Sync' show.
+    - A pill above the table reads "Projects: P-2001 Crane Control".
   - **Notes:**
 
 - [ ] `A3F9` Select the **×** on the pill.
@@ -215,14 +215,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `E48B` Select the **Proposals** tab.
   - **Expected:**
     - The table lists proposals.
-    - **Ore Sorting Study** is among them.
+    - 'Ore Sorting Study' is among them.
   - **Notes:**
 
-- [ ] `E2BD` In the **⋯** menu of **Ore Sorting Study**, select **Show features**.
+- [ ] `E2BD` In the **⋯** menu of 'Ore Sorting Study', select **Show features**.
   - **Expected:**
     - The **Features** page opens.
-    - Only **Partner Portal** shows.
-    - A pill reads **Proposals: Ore Sorting Study**.
+    - Only 'Partner Portal' shows.
+    - A pill reads "Proposals: Ore Sorting Study".
   - **Notes:**
 
 - [ ] `64B8` Select the **×** on the pill.
@@ -235,14 +235,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Each is named by its ID, where it has one, then its name.
   - **Notes:**
 
-- [ ] `471B` Select **PR-097 Fleet Tracking Bid**.
-  - **Expected:** **PR-097 Fleet Tracking Bid** is picked.
+- [ ] `471B` Select 'PR-097 Fleet Tracking Bid'.
+  - **Expected:** 'PR-097 Fleet Tracking Bid' is picked.
   - **Notes:**
 
 - [ ] `A59D` Press Esc.
   - **Expected:**
-    - Only **Data Retention Controls** and **Partner Portal** show.
-    - A pill reads **Proposals: PR-097 Fleet Tracking Bid**.
+    - Only 'Data Retention Controls' and 'Partner Portal' show.
+    - A pill reads "Proposals: PR-097 Fleet Tracking Bid".
   - **Notes:**
 
 ### LINK-05: The Feature Lead Sees Projects and Proposals Read Only
@@ -251,11 +251,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Features** page open.
 
-- [ ] `49BB` Select the **Projects** cell of **Bulk Import**, and press Enter.
+- [ ] `49BB` Select the **Projects** cell of 'Bulk Import', and press Enter.
   - **Expected:** No list opens.
   - **Notes:**
 
-- [ ] `A1E8` Select **Show details** in the **⋯** menu of **Offline Sync**.
+- [ ] `A1E8` Select **Show details** in the **⋯** menu of 'Offline Sync'.
   - **Expected:**
     - The side panel shows no pencil button beside **Projects** or **Proposals**.
     - It shows one beside **Name**.
