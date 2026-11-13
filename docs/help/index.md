@@ -6,6 +6,10 @@ How to use each page of Fathom, and the work each role does most.
 
 - [Setting up Fathom](setting-up-fathom.md): a new Fathom, from an empty database to an organization ready to plan.
 - [How work moves between roles](how-work-moves-between-roles.md): a change drafted, approved, and staffed.
+- [Working as a Product Manager](working-as-a-product-manager.md): features, projects, proposals and releases.
+- [Working as a Project Manager](working-as-a-project-manager.md): projects to delivery, and approving most drafts.
+- [Working as an Engineering Manager](working-as-an-engineering-manager.md): feature teams, allocations and estimates.
+- [Working as an Engineering Director](working-as-an-engineering-director.md): approving, reporting lines, hiring and data classes.
 - [Working as an Administrator](working-as-an-administrator.md): accounts, roles, settings and the access history.
 
 ## Plan
