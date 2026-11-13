@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/roles*.ts*", "apps/web/src/accounts-page.tsx", "apps/web/src/settings-page.tsx", "apps/server/src/data/settings.ts", "apps/server/src/data/role-administration.ts", "apps/server/src/routes/roles.ts", "packages/shared/src/access.ts", "packages/shared/src/roles.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-12"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: Editing Roles
@@ -21,8 +21,8 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Administrator:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**
-- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Administrator:** `fathom.administrator@fathom.test`, shown in Fathom as "Fathom Administrator"
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
 - **Project Manager:** `project.manager@fathom.test`
 - **Team Member:** `team.member@fathom.test`
 
@@ -64,24 +64,24 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `D783` Read the **Role** and **Accounts** columns from top to bottom.
   - **Expected:**
     - The **Role** and **Accounts** columns read, from top to bottom:
-      - Administrator 1
-      - Engineering Director 1
-      - Engineering Manager 2
-      - Executive 1
-      - Feature Lead 1
-      - Product Manager 1
-      - Project Manager 1
-      - Superuser 1
-      - Team Member 1
-      - Workforce Administrator 2
+      - **Administrator** 1
+      - **Engineering Director** 1
+      - **Engineering Manager** 2
+      - **Executive** 1
+      - **Feature Lead** 1
+      - **Product Manager** 1
+      - **Project Manager** 1
+      - **Superuser** 1
+      - **Team Member** 1
+      - **Workforce Administrator** 2
     - Each row ends with **Edit** and **Copy** buttons.
     - **New role** is at the top right.
   - **Notes:**
 
 - [ ] `DE52` Read the **Description** column.
   - **Expected:**
-    - Engineering Manager reads **Edits the plan and allocations, sees people, with everyone's Personal details, the hiring plan, and configuration, and proposes feature teams.**
-    - Wherever **Personal** or **Confidential** appears, it is in its tier colour, in light and dark mode alike.
+    - **Engineering Manager** reads "Edits the plan and allocations, sees people, with everyone's Personal details, the hiring plan, and configuration, and proposes feature teams."
+    - Wherever **Personal** or **Confidential** appears, it is in its tier colour.
   - **Notes:**
 
 ### ROLE-03: The Dialog Shows What a Role Grants
@@ -105,18 +105,18 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - **General:** **View** and **Edit** ticked and greyed, with no **Approve** box
     - **Personal:** **View** ticked
     - **Confidential:** nothing ticked
-    - **Classify data**, below the grid, is unticked, with **Updates data classification of details, lists, and columns.** under it.
-    - **Approve own drafts** is unticked, with **Approves drafts they changed themselves, in the areas they approve, which otherwise need another approver.** under it.
+    - **Classify data**, below the grid, is unticked, with "Updates data classification of details, lists, and columns." under it.
+    - **Approve own drafts** is unticked, with "Approves drafts they changed themselves, in the areas they approve, which otherwise need another approver." under it.
   - **Notes:**
 
 - [ ] `3DFA` Read the summary.
   - **Expected:**
-    - **Sees:** Overview, Projects, Features, Releases, People, Org chart, Org chart on other dates, Feature assignments, Allocations, Drafts, Capacity, Lists and Change history.
-    - **Doesn't see:** **Org chart on future dates: needs Confidential (Future reorganizations)**, **Feature assignments grouped by manager: needs Confidential (Future reorganizations)**, Accounts, Roles, Settings, Data classes and Access history.
+    - **Sees:** **Overview**, **Projects**, **Features**, **Releases**, **People**, **Org chart**, **Org chart on other dates**, **Feature assignments**, **Allocations**, **Drafts**, **Capacity**, **Lists** and **Change history**.
+    - **Doesn't see:** "Org chart on future dates: needs Confidential (Future reorganizations)", "Feature assignments grouped by manager: needs Confidential (Future reorganizations)", **Accounts**, **Roles**, **Settings**, **Data classes** and **Access history**.
     - **Can:** a line for each ticked box, such as seeing the plan, approving drafts of features and releases, and seeing feature teams.
-    - **Cannot** includes **Cannot change allocations.**, **Cannot change feature teams.**, **Cannot reclassify data.** and **Cannot approve their own drafted changes.**
-    - **Cannot** also includes, in its tier colour, **Confidential data is hidden wherever it appears.**
-    - **Cannot** does not include **Personal details are hidden wherever they appear, and people who haven't started yet aren't listed.**
+    - **Cannot** includes "Cannot change allocations.", "Cannot change feature teams.", "Cannot reclassify data." and "Cannot approve their own drafted changes."
+    - **Cannot** also includes, in its tier colour, "Confidential data is hidden wherever it appears."
+    - **Cannot** does not include "Personal details are hidden wherever they appear, and people who haven't started yet aren't listed."
   - **Notes:**
 
 - [ ] `E12E` Look at the foot of the dialog.
@@ -182,7 +182,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `60DE` Tick **View** on the **Administration** row, and select **Save**.
   - **Expected:**
-    - The dialog says **This change affects 1 account.**
+    - The dialog says "This change affects 1 account."
     - It lists **Project Manager**, with its email address.
     - Under **Gains**: a line for each of the **Accounts**, **Roles**, **Settings** and **Access history** pages, and a sentence about seeing accounts, roles, settings and the access history.
     - **Cancel** and **Save changes** are on the right, and there is no **Back** button.
@@ -197,7 +197,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `C2FC` Select **Save**, then **Save changes**.
   - **Expected:**
     - The dialog closes.
-    - A green banner says **The role has been changed.**
+    - A green banner says "The role has been changed."
     - The **Project Manager** row is unchanged in the list, its **Description** included.
   - **Notes:**
 
@@ -206,7 +206,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `1D13` Sign out, and sign in as the Administrator, `fathom.administrator@fathom.test`. Select the **Access history** page in the left-hand menu.
-  - **Expected:** The latest entry says Fathom Administrator **changed the role** Project Manager, granting View Administration, and is marked as worth checking.
+  - **Expected:** The latest entry says "Fathom Administrator" "changed the role" **Project Manager**, granting View Administration, and is marked as worth checking.
   - **Notes:**
 
 ### ROLE-07: Restoring a Starting Role's Template
@@ -229,8 +229,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `FE0E` Select **Save**, then **Save changes**.
   - **Expected:**
-    - The confirmation lists the same account, under **Loses** with **The Access history page no longer appears.**
-    - Once saved, the green banner says **The role has been changed.**
+    - The confirmation lists the same account, under **Loses** with "The Access history page no longer appears."
+    - Once saved, the green banner says "The role has been changed."
   - **Notes:**
 
 ### ROLE-08: A Role's Description Stays When What It Grants Changes
@@ -241,7 +241,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `EE3A` Open the **Executive** role, as Open a Role describes, and tick **Edit** on the **Plan** row.
   - **Expected:**
-    - **Description** reads **Sees the plan, people, with their Personal and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.**
+    - **Description** reads "Sees the plan, people, with their Personal and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them."
     - There is no line under **Description**.
     - **Restore template** and **Reset** are turned on.
   - **Notes:**
@@ -272,20 +272,20 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `0D73` Select **Create role**.
   - **Expected:**
     - The dialog closes.
-    - A green banner says **The role has been created.**
+    - A green banner says "The role has been created."
     - **Copy of Team Member** is in the list with 0 accounts.
   - **Notes:**
 
 - [ ] `1C6D` Open **Copy of Team Member**, as Open a Role describes, tick **View** on **Configuration**, and select **Save**.
   - **Expected:**
-    - The dialog closes with **The role has been changed.**, with no confirmation, since no account holds the role.
+    - The dialog closes with "The role has been changed.", with no confirmation, since no account holds the role.
     - There is no **Restore template** button.
   - **Notes:**
 
 - [ ] `7F08` Select the **Access history** page in the left-hand menu.
   - **Expected:**
-    - The entry before the latest says **created the role** Copy of Team Member, granting View Plan, View Features and releases, View Allocations, View People, View Feature teams.
-    - The latest says **changed the role** Copy of Team Member, granting View Configuration.
+    - The entry before the latest says "created the role" **Copy of Team Member**, granting View Plan, View Features and releases, View Allocations, View People, View Feature teams.
+    - The latest says "changed the role" **Copy of Team Member**, granting View Configuration.
   - **Notes:**
 
 ### ROLE-10: Giving an Account a Role Made Later
@@ -296,15 +296,15 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `47A0` Select the **Accounts** page in the left-hand menu, and read the **Roles** column.
   - **Expected:**
-    - **Team Member** row: **Team Member**
-    - **Product Manager** row: **Product Manager**
-    - **Feature Lead** row: **Feature Lead (default)** and **Engineering Manager**
-    - **Fathom Administrator** row: **Administrator**
+    - "Team Member" row: **Team Member**
+    - "Product Manager" row: **Product Manager**
+    - "Feature Lead" row: **Feature Lead (default)** and **Engineering Manager**
+    - "Fathom Administrator" row: **Administrator**
   - **Notes:**
 
-- [ ] `7B20` Select **Edit** in the **Team Member** row.
+- [ ] `7B20` Select **Edit** in the "Team Member" row.
   - **Expected:**
-    - A dialog titled **Edit Team Member**, with **Name**, **Email address**, and **Roles**.
+    - A dialog titled "Edit Team Member", with **Name**, **Email address**, and **Roles**.
     - **Roles** lists every role in the order of the **Roles** page, **Copy of Team Member** among them, each with a tick box and its description under its name.
     - Only **Team Member** is ticked.
   - **Notes:**
@@ -316,8 +316,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `92D0` Select **Save**.
   - **Expected:**
     - The dialog closes.
-    - A green banner says **Saved the account for Team Member.**
-    - The **Team Member** row shows **Copy of Team Member** in **Roles**.
+    - A green banner says "Saved the account for Team Member."
+    - The "Team Member" row shows **Copy of Team Member** in **Roles**.
   - **Notes:**
 
 - [ ] `826B` Select the **Roles** page in the left-hand menu.
@@ -325,7 +325,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `46DE` Select the **Access history** page in the left-hand menu.
-  - **Expected:** The latest entry says Fathom Administrator **changed the role of** Team Member: from Team Member to Copy of Team Member, and is marked as worth checking.
+  - **Expected:** The latest entry says "Fathom Administrator" "changed the role of" "Team Member": from **Team Member** to **Copy of Team Member**, and is marked as worth checking.
   - **Notes:**
 
 - [ ] `4E87` Sign out, and sign in as the Team Member, `team.member@fathom.test`.
@@ -347,15 +347,15 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `11D9` Select **New role**.
   - **Expected:**
     - A dialog titled **New role**, with an empty name, no description, and nothing ticked.
-    - **Sees** reads **Nothing.**
+    - **Sees** reads "Nothing."
   - **Notes:**
 
 - [ ] `CD73` Select **Create role** with the name empty.
-  - **Expected:** **Enter a name for the role.** shows under **Name**.
+  - **Expected:** "Enter a name for the role." shows under **Name**.
   - **Notes:**
 
 - [ ] `D424` Enter `team member` as the name, and select **Create role**.
-  - **Expected:** A red box in the dialog says **A role with that name already exists**, and the dialog stays open.
+  - **Expected:** A red box in the dialog says "A role with that name already exists", and the dialog stays open.
   - **Notes:**
 
 - [ ] `459D` Select **Cancel**.
@@ -370,12 +370,12 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `D693` Open the **Superuser** role, as Open a Role describes, untick **Edit** on **Administration**, and select **Save**.
   - **Expected:**
-    - The confirmation says **This change affects 1 account.**
-    - It lists **Superuser**, under **Loses** with **The Roles page no longer appears.**
+    - The confirmation says "This change affects 1 account."
+    - It lists **Superuser**, under **Loses** with "The Roles page no longer appears."
   - **Notes:**
 
 - [ ] `A5BD` Select **Save changes**.
-  - **Expected:** The dialog closes and a green banner says **The role has been changed.**, since the Administrator role still edits roles.
+  - **Expected:** The dialog closes and a green banner says "The role has been changed.", since the Administrator role still edits roles.
   - **Notes:**
 
 - [ ] `67B0` Open the **Administrator** role, as Open a Role describes.
@@ -395,7 +395,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `4CE5` Select the **Settings** page in the left-hand menu.
   - **Expected:**
     - **Time zone** is set to **America/Vancouver**.
-    - Under it, the day and time there, such as **It is Thursday, November 5, 2026 at 6:06 AM there.**, matching a clock in Vancouver.
+    - Under it, the day and time there, such as "It is Thursday, November 5, 2026 at 6:06 AM there.", matching a clock in Vancouver.
     - **Save** is turned off.
   - **Notes:**
 
@@ -407,16 +407,16 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `816F` Select **Save**.
   - **Expected:**
-    - A green banner says **Fathom's time zone is now** followed by the time zone chosen.
+    - A green banner says "Fathom's time zone is now" followed by the time zone chosen.
     - **Save** is turned off again.
   - **Notes:**
 
 - [ ] `956B` Select the **Access history** page in the left-hand menu.
-  - **Expected:** The newest entry says **Fathom Administrator changed Fathom's time zone: from America/Vancouver to** the time zone chosen.
+  - **Expected:** The newest entry says "Fathom Administrator changed Fathom's time zone: from America/Vancouver to" and the time zone chosen.
   - **Notes:**
 
 - [ ] `69B4` Open **Settings** again, choose **America/Vancouver**, and select **Save**.
-  - **Expected:** A green banner says **Fathom's time zone is now America/Vancouver.**
+  - **Expected:** A green banner says "Fathom's time zone is now America/Vancouver."
   - **Notes:**
 
 ### ROLE-14: Put Every Role Back
