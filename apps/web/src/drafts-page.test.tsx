@@ -773,6 +773,24 @@ describe("the Drafts page", () => {
     });
   });
 
+  it("lists the plan's drafts for a role seeing only the plan, without asking for release streams", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": session(["plan:view"]),
+      "GET /api/projects": noPlan,
+      "GET /api/projects/choices": noPlanChoices,
+      "GET /api/release-streams": () =>
+        Response.json({ error: "Forbidden" }, { status: 403 }),
+    });
+    renderApp("/drafts");
+    expect(
+      await screen.findByText("No drafts waiting for approval."),
+    ).not.toBeNull();
+    expect(screen.queryByText("Fathom could not load the drafts.")).toBeNull();
+    expect(fetch.mock.calls.map(([url]) => url)).not.toContain(
+      "/api/release-streams",
+    );
+  });
+
   it("puts a release's changed note in words without its formatting", async () => {
     serverAnswers({
       "GET /api/session": session([

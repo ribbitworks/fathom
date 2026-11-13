@@ -267,7 +267,6 @@ const draftsRoute = createRoute({
           permissions.includes("configuration:view")
         }
         seesPlan={
-          permissions.includes("plan:view") ||
           permissions.includes("features:view") ||
           permissions.includes("configuration:view")
         }
