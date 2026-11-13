@@ -9,7 +9,6 @@ import {
   createPool,
   type Database,
   drafts,
-  runMigrations,
   unpublishedDrafts,
   users,
 } from "@fathom/db";
@@ -53,7 +52,6 @@ let folder: string;
 
 beforeAll(async () => {
   database = await startTestDatabase();
-  await runMigrations(database.migrator);
   pool = createPool(database.app, () => undefined);
   connection = createDatabase(pool);
   folder = mkdtempSync(join(tmpdir(), "fathom-plan-drafts-"));
@@ -61,7 +59,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await pool.end();
-  await database.container.stop();
+  await database.remove();
   rmSync(folder, { recursive: true, force: true });
 });
 

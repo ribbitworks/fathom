@@ -18,7 +18,6 @@ import {
   people,
   projects,
   proposals,
-  runMigrations,
   features,
 } from "@fathom/db";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
@@ -46,7 +45,6 @@ let owner: string;
 
 beforeAll(async () => {
   database = await startTestDatabase();
-  await runMigrations(database.migrator);
   pool = createPool(database.app, () => undefined);
   connection = createDatabase(pool);
   const [position] = await connection
@@ -74,7 +72,7 @@ afterEach(async () => {
 
 afterAll(async () => {
   await pool.end();
-  await database.container.stop();
+  await database.remove();
 });
 
 const seed = () => seedProjects(connection, today, [randomUUID(), owner]);

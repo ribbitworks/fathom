@@ -4,6 +4,11 @@
     "rootDir": ".",
     "outDir": "dist"
   },
-  "include": ["src", "drizzle.config.ts", "vitest.config.ts"],
+  "include": [
+    "src",
+    "drizzle.config.ts",
+    "test-databases.ts",
+    "vitest.config.ts"
+  ],
   "references": [{ "path": "../test-utils" }]
 }

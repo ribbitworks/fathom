@@ -14,7 +14,6 @@ import {
   type Database,
   rolePermissions,
   roles as roleTable,
-  runMigrations,
   sessions,
   userRoles,
   users,
@@ -54,7 +53,6 @@ const addresses = personaAccounts.map(({ email }) => email);
 
 beforeAll(async () => {
   database = await startTestDatabase();
-  await runMigrations(database.migrator);
   pool = createPool(database.app, () => undefined);
   connection = createDatabase(pool);
   auth = createAuth(connection, {
@@ -65,7 +63,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await pool.end();
-  await database.container.stop();
+  await database.remove();
 });
 
 // Each test starts with no accounts but the hand-made one.

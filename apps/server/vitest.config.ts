@@ -7,7 +7,9 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     include: ["src/**/*.test.ts"],
-    // The tests start a PostgreSQL container, which takes a few seconds.
+    // One PostgreSQL server for the run, which every test file copies a database from.
+    globalSetup: ["../../packages/db/test-databases.ts"],
+    // The tests run against a real PostgreSQL server, which is slower under load.
     testTimeout: 60_000,
     hookTimeout: 120_000,
     coverage: {

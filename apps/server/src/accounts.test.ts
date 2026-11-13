@@ -16,7 +16,6 @@ import {
   hasDatabaseCode,
   rolePermissions,
   roles as roleTable,
-  runMigrations,
   sessions,
   userRoles,
   users,
@@ -53,7 +52,6 @@ const newPassword = "fictional password 2";
 beforeAll(async () => {
   certificate = createTestCertificate();
   database = await startTestDatabase();
-  await runMigrations(database.migrator);
   pool = createPool(database.app, () => undefined);
   connection = createDatabase(pool);
   // A second Better Auth for creating accounts directly, as the account command does.
@@ -72,7 +70,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await app.close();
   await pool.end();
-  await database.container.stop();
+  await database.remove();
   certificate.remove();
 });
 

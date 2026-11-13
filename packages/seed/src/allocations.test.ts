@@ -4,12 +4,7 @@
 // the people, planned hire, and projects they name are there. Adding and removing them with the rest
 // of the seed data is tested with the seed command.
 
-import {
-  createDatabase,
-  createPool,
-  type Database,
-  runMigrations,
-} from "@fathom/db";
+import { createDatabase, createPool, type Database } from "@fathom/db";
 import { fictionalOrganization } from "@fathom/fixtures";
 import { addToMonth, monthOf, percentageIn } from "@fathom/shared";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
@@ -28,14 +23,13 @@ let connection: Database;
 
 beforeAll(async () => {
   database = await startTestDatabase();
-  await runMigrations(database.migrator);
   pool = createPool(database.app, () => undefined);
   connection = createDatabase(pool);
 });
 
 afterAll(async () => {
   await pool.end();
-  await database.container.stop();
+  await database.remove();
 });
 
 const organization = fictionalOrganization({ size: 20 });

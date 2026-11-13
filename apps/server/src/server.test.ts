@@ -5,7 +5,7 @@
 // cannot start, closes once, closes idle connections when it stops, closes when the process is told
 // to end, and the serve command reads its settings from the environment and reports failures.
 
-import { createPool, runMigrations } from "@fathom/db";
+import { createPool } from "@fathom/db";
 import {
   createTestCertificate,
   httpGet,
@@ -54,11 +54,12 @@ function configFor(port = 0): ServerConfig {
   };
 }
 
-// The application role's open sessions, which a server that failed to start must not leave behind.
+// The application role's open sessions in this file's database, which a server that failed to start
+// must not leave behind.
 async function applicationSessions(): Promise<number> {
   return Number(
     await database.superuserQuery(
-      "SELECT count(*) FROM pg_stat_activity WHERE usename = 'fathom_app'",
+      "SELECT count(*) FROM pg_stat_activity WHERE usename = 'fathom_app' AND datname = current_database()",
     ),
   );
 }
@@ -86,11 +87,10 @@ function freePort(): Promise<number> {
 beforeAll(async () => {
   certificate = createTestCertificate();
   database = await startTestDatabase();
-  await runMigrations(database.migrator);
 });
 
 afterAll(async () => {
-  await database.container.stop();
+  await database.remove();
   certificate.remove();
 });
 

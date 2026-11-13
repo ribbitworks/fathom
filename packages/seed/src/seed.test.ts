@@ -26,7 +26,6 @@ import {
   reportingLines,
   teams,
   unpublishedDrafts,
-  runMigrations,
   users,
 } from "@fathom/db";
 import { fictionalOrganization } from "@fathom/fixtures";
@@ -67,7 +66,6 @@ let folder: string;
 
 beforeAll(async () => {
   database = await startTestDatabase();
-  await runMigrations(database.migrator);
   pool = createPool(database.app, () => undefined);
   connection = createDatabase(pool);
   folder = mkdtempSync(join(tmpdir(), "fathom-seed-"));
@@ -75,7 +73,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await pool.end();
-  await database.container.stop();
+  await database.remove();
   rmSync(folder, { recursive: true, force: true });
 });
 

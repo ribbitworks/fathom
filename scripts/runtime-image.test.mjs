@@ -2,8 +2,8 @@
 
 // Checks that development-only code stays out of the application's runtime image, so the
 // development accounts and their shared password can never reach production: the image build is
-// sent no file from the seed data, fixtures, or test helpers' source, and the server depends on no
-// development-only package, directly or through another workspace package.
+// sent no file from the seed data, fixtures, test helpers' source or the test database setup, and the
+// server depends on no development-only package, directly or through another workspace package.
 
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
@@ -13,6 +13,9 @@ const read = (path) =>
   readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
 const developmentOnly = ["@fathom/seed", "@fathom/fixtures"];
+
+// Development-only files kept in packages whose other files the image needs.
+const developmentOnlyFiles = ["packages/db/test-databases.ts"];
 
 // Every workspace package, by name, with the workspace packages it needs at run time.
 const workspace = new Map(
@@ -45,6 +48,13 @@ describe("the runtime image", () => {
           !path.startsWith("packages/test-utils/src"),
         `The image build is sent ${path}`,
       );
+      for (const file of developmentOnlyFiles) {
+        assert.ok(
+          file !== path &&
+            !file.startsWith(path.endsWith("/") ? path : `${path}/`),
+          `The image build is sent ${file}, through ${path}`,
+        );
+      }
     }
   });
 

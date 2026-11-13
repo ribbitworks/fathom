@@ -14,7 +14,6 @@ import {
   featureTeams,
   features,
   releaseStreams,
-  runMigrations,
   fields,
   fieldValues,
   listItems,
@@ -39,7 +38,6 @@ let connection: Database;
 
 beforeAll(async () => {
   database = await startTestDatabase();
-  await runMigrations(database.migrator);
   pool = createPool(database.app, () => undefined);
   connection = createDatabase(pool);
 });
@@ -55,7 +53,7 @@ afterEach(async () => {
 
 afterAll(async () => {
   await pool.end();
-  await database.container.stop();
+  await database.remove();
 });
 
 const addTeam = async () => {

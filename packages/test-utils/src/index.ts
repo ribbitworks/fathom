@@ -4,7 +4,9 @@
 // runtime image.
 
 export {
+  type CommandResult,
   type ConnectionSettings,
+  serveTestDatabases,
   startTestDatabase,
   type TestDatabase,
 } from "./postgres.ts";

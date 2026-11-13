@@ -5,7 +5,7 @@
 // limiting, the check that requests changing data come from Fathom's own pages, error responses that
 // reveal no internal details, and logs without personal data other than the client's address.
 
-import { appInfo, createDatabase, createPool, runMigrations } from "@fathom/db";
+import { appInfo, createDatabase, createPool } from "@fathom/db";
 import {
   createTestCertificate,
   startTestDatabase,
@@ -72,13 +72,12 @@ async function appFor(
 beforeAll(async () => {
   certificate = createTestCertificate();
   database = await startTestDatabase();
-  await runMigrations(database.migrator);
 });
 
 afterAll(async () => {
   await Promise.all(apps.map((app) => app.close()));
   await Promise.all(pools.map((pool) => pool.end()));
-  await database.container.stop();
+  await database.remove();
   certificate.remove();
 });
 

@@ -12,7 +12,6 @@ import {
   createPool,
   type Database,
   lists as listTable,
-  runMigrations,
 } from "@fathom/db";
 import { type Choice, type List, type Role, roleSchema } from "@fathom/shared";
 import {
@@ -46,7 +45,6 @@ const password = "fictional password 1";
 beforeAll(async () => {
   certificate = createTestCertificate();
   database = await startTestDatabase();
-  await runMigrations(database.migrator);
   pool = createPool(database.app, () => undefined);
   connection = createDatabase(pool);
   auth = createAuth(connection, { publicUrl, secret });
@@ -64,7 +62,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await app.close();
   await pool.end();
-  await database.container.stop();
+  await database.remove();
   certificate.remove();
 });
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A Fathom server for tests, against a migrated PostgreSQL server of its own, whose built-in
+// A Fathom server for tests, against a migrated PostgreSQL database of its own, whose built-in
 // Positions list offers two fictional positions, with helpers to sign in fictional accounts holding
 // a given role, to send requests as them, and to approve the drafts of lists that tests set up.
 // Unless asked not to, each change sent is published straight after, as its maker would, so tests
@@ -17,7 +17,6 @@ import {
   lists,
   rolePermissions,
   roles as roleTable,
-  runMigrations,
 } from "@fathom/db";
 import type { BuiltInList, Meaning, Permission, Role } from "@fathom/shared";
 import { startingRoles } from "@fathom/shared";
@@ -153,7 +152,6 @@ export async function startTestApp({
 } = {}): Promise<TestApp> {
   const certificate: TestCertificate = createTestCertificate();
   const database: TestDatabase = await startTestDatabase();
-  await runMigrations(database.migrator);
   const pool = createPool(database.app, () => undefined);
   const connection = createDatabase(pool);
   const [positions] = await connection
@@ -303,7 +301,7 @@ export async function startTestApp({
     async close() {
       await app.close();
       await pool.end();
-      await database.container.stop();
+      await database.remove();
       certificate.remove();
     },
   };

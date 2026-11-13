@@ -14,7 +14,6 @@ import {
   drafts,
   releases,
   releaseStreams,
-  runMigrations,
 } from "@fathom/db";
 import { actorFor } from "@fathom/server/access";
 import { cyclesOf, noteProblem } from "@fathom/shared";
@@ -39,7 +38,6 @@ let connection: Database;
 
 beforeAll(async () => {
   database = await startTestDatabase();
-  await runMigrations(database.migrator);
   pool = createPool(database.app, () => undefined);
   connection = createDatabase(pool);
 });
@@ -53,7 +51,7 @@ afterEach(async () => {
 
 afterAll(async () => {
   await pool.end();
-  await database.container.stop();
+  await database.remove();
 });
 
 const streamNames = async () =>

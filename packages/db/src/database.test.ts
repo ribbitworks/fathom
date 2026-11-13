@@ -105,7 +105,6 @@ const aPosition =
 
 beforeAll(async () => {
   database = await startTestDatabase();
-  await runMigrations(database.migrator);
   await withClient(database.app, (client) =>
     client.query(
       "INSERT INTO list_items (list_id, label) SELECT id, 'Fictional Position' FROM lists WHERE built_in = 'positions'",
@@ -114,7 +113,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await database.container.stop();
+  await database.remove();
 });
 
 describe("schema", () => {
@@ -1885,7 +1884,7 @@ describe("database server", () => {
   });
 
   it("requires a password even over the local socket", async () => {
-    const result = await database.container.exec([
+    const result = await database.command([
       "psql",
       "--username",
       "fathom_app",

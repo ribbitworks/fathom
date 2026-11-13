@@ -6,12 +6,7 @@
 // other Better Auth features, logs without users' details, and sign-in limits that a client cannot
 // dodge by naming another address.
 
-import {
-  createDatabase,
-  createPool,
-  type Database,
-  runMigrations,
-} from "@fathom/db";
+import { createDatabase, createPool, type Database } from "@fathom/db";
 import {
   createTestCertificate,
   startTestDatabase,
@@ -51,7 +46,6 @@ const newAddress = () => `192.0.2.${String((nextAddress += 1))}`;
 beforeAll(async () => {
   certificate = createTestCertificate();
   database = await startTestDatabase();
-  await runMigrations(database.migrator);
   pool = createPool(database.app, () => undefined);
   connection = createDatabase(pool);
   teamMember = await findStartingRole(connection, "team-member");
@@ -69,7 +63,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await app.close();
   await pool.end();
-  await database.container.stop();
+  await database.remove();
   certificate.remove();
 });
 
@@ -654,7 +648,6 @@ describe("administrator command", () => {
 
   beforeAll(async () => {
     ownDatabase = await startTestDatabase();
-    await runMigrations(ownDatabase.migrator);
     folder = mkdtempSync(join(tmpdir(), "fathom-administrator-command-"));
     writeFileSync(join(folder, "password"), ownDatabase.app.password);
     writeFileSync(join(folder, "secret"), secret);
@@ -671,7 +664,7 @@ describe("administrator command", () => {
 
   afterAll(async () => {
     rmSync(folder, { recursive: true, force: true });
-    await ownDatabase.container.stop();
+    await ownDatabase.remove();
   });
 
   async function run(args: string[]) {
