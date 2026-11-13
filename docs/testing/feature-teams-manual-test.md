@@ -11,7 +11,7 @@ last_updated: "2026-11-13"
 
 ## Scope
 
-Verifies feature teams on the **Org chart** page: how each team is drawn under its lead in light and dark mode, a team's panel, proposing, adding, renaming and removing teams as drafts with their marks on the chart and in the panel, what a reader who may not change teams sees, changing teams from another date, approving a team's draft on the Drafts page, using a team's panel from the keyboard, and choices shown with their descriptions when picked. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies feature teams on the **Org chart** page: how each team is drawn under its lead, a team's panel, proposing, adding, renaming and removing teams as drafts with their marks on the chart and in the panel, what a reader who may not change teams sees, changing teams from another date, approving a team's draft on the Drafts page, using a team's panel from the keyboard, and choices shown with their descriptions when picked. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -24,10 +24,10 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Engineering Manager:** `engineering.manager@fathom.test`, which proposes and renames feature teams
-- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**, which also removes feature teams
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager", which also removes feature teams
 - **Engineering Director:** `engineering.director@fathom.test`, which approves feature teams
 - **Product Manager:** `product.manager@fathom.test`, which sees feature teams but does not change them
-- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as **Second Engineering Operations Manager**
+- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as "Second Engineering Operations Manager"
 
 ## Common Procedures
 
@@ -45,94 +45,90 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Product Manager, `product.manager@fathom.test`; the first test case.
 
-**Preconditions:** **Light** chosen in the Appearance menu. Signed in with this account. Select the **Org chart** page in the left-hand menu.
+**Preconditions:** Signed in with this account. Select the **Org chart** page in the left-hand menu.
 
 - [ ] `0FC9` Choose **Feature teams** in the teams switch.
   - **Expected:**
     - The chart is drawn again with four teams side by side.
-    - **Mobile apps** is on Sharda Varrier's card.
-    - **Payments core** is on Gilda Effertz's card.
-    - **Search and discovery** is on Lorenza Thiel's card.
-    - A yellow dot is before **Search and discovery** on that card.
-    - A card named **Platform reliability** has the position **No feature lead**.
-    - A grey lock is before **Platform reliability** on that card.
+    - 'Mobile apps' is on the card of 'Sharda Varrier'.
+    - 'Payments core' is on the card of 'Gilda Effertz'.
+    - 'Search and discovery' is on the card of 'Lorenza Thiel'.
+    - A yellow dot is before 'Search and discovery' on that card.
+    - A card named 'Platform reliability' has the position "No feature lead".
+    - A grey lock is before 'Platform reliability' on that card.
     - The address bar ends with `view=feature-teams`.
   - **Notes:**
 
 - [ ] `5B0D` Look at the bands of the teams' cards.
   - **Expected:**
-    - Mobile apps' cards have an orange band.
-    - Payments core's cards have a teal band.
-    - Search and discovery's cards have an indigo band.
-    - Platform reliability's cards have none.
+    - The cards of 'Mobile apps' have an orange band.
+    - The cards of 'Payments core' have a teal band.
+    - The cards of 'Search and discovery' have an indigo band.
+    - The cards of 'Platform reliability' have none.
   - **Notes:**
 
 - [ ] `474A` Type `Lorenza` in the box reading **Find a person or team** at the top left of the chart.
-  - **Expected:** Under **People**, two entries read **Lorenza Thiel**:
-    - one with **Payments core** under it
-    - one with **Search and discovery** under it
+  - **Expected:** Under **People**, two entries read 'Lorenza Thiel':
+    - one with 'Payments core' under it
+    - one with 'Search and discovery' under it
   - **Notes:**
 
-- [ ] `D14D` Choose **Dark** in the Appearance menu, and look over the chart.
-  - **Expected:** The bands, team names and positions are all easy to read on the dark cards.
+- [ ] `49C6` Look at the bottom of the card of 'Lorenza Thiel' that leads 'Search and discovery'.
+  - **Expected:** It reads "Hide 3 members".
   - **Notes:**
 
-- [ ] `49C6` Choose **Light** in the Appearance menu, and look at the bottom of Lorenza Thiel's card that leads Search and discovery.
-  - **Expected:** It reads **Hide 3 members**.
-  - **Notes:**
-
-- [ ] `E670` Click Nicole Grüner's card, under Lorenza Thiel in Search and discovery.
+- [ ] `E670` Click the card of 'Nicole Grüner', under 'Lorenza Thiel' in 'Search and discovery'.
   - **Expected:**
-    - Nicole Grüner's details open beside the chart.
+    - The details of 'Nicole Grüner' open beside the chart.
     - The **Reporting** section has one row, **Manager**.
     - Under it, a **Feature teams** section has one row, **Member of**.
-    - **Member of** reads **Search and discovery**, followed by **Led by Lorenza Thiel** in grey.
+    - **Member of** reads 'Search and discovery', followed by "Led by Lorenza Thiel" in grey.
   - **Notes:**
 
 - [ ] `DB45` Close the details.
-  - **Expected:** Nicole Grüner's details close.
+  - **Expected:** The details of 'Nicole Grüner' close.
   - **Notes:**
 
-- [ ] `71A1` Click the card named **Platform reliability**.
+- [ ] `71A1` Click the card named 'Platform reliability'.
   - **Expected:**
-    - The team panel opens beside the chart, titled **Platform reliability**.
+    - The team panel opens beside the chart, titled 'Platform reliability'.
     - A grey lock is before the title.
     - Each row has its label in grey on the left and its value on the right, with a line under it.
     - A **Details** section has two rows:
-      - **Name**, reading **Platform reliability**.
-      - **Colour**, reading **None**.
+      - **Name**, reading 'Platform reliability'.
+      - **Colour**, reading "None".
     - A **Members** section has two rows:
-      - **Feature lead**, reading **None**.
-      - **Members**, listing **Bilwa Iyer**, **Polly Smith** and **Thad Heidenreich**.
+      - **Feature lead**, reading "None".
+      - **Members**, listing 'Bilwa Iyer', 'Polly Smith' and 'Thad Heidenreich'.
     - No row has a change button.
     - There are no buttons at the panel's foot.
   - **Notes:**
 
 - [ ] `FF44` Select the Feature teams button.
   - **Expected:**
-    - The list holds **Mobile apps**, **Payments core**, **Platform reliability** and **Search and discovery**.
+    - The list holds 'Mobile apps', 'Payments core', 'Platform reliability' and 'Search and discovery'.
     - The list has no **New feature team**.
   - **Notes:**
 
-- [ ] `8BA2` Choose **Search and discovery**.
+- [ ] `8BA2` Choose 'Search and discovery'.
   - **Expected:**
-    - The team panel is titled **Search and discovery**.
-    - **Name** has a yellow dot before **Search and discovery**.
-    - Under it, a green dot before **Search**.
-    - **Feature lead** reads **Lorenza Thiel**.
-    - **Members** lists **Lorenza Thiel**, **Nicole Grüner**, **Yara Habel** and **杨治涛**.
+    - The team panel is titled 'Search and discovery'.
+    - **Name** has a yellow dot before 'Search and discovery'.
+    - Under it, a green dot before 'Search'.
+    - **Feature lead** reads 'Lorenza Thiel'.
+    - **Members** lists 'Lorenza Thiel', 'Nicole Grüner', 'Yara Habel' and '杨治涛'.
   - **Notes:**
 
 - [ ] `C3B1` Close the team panel.
   - **Expected:** The team panel closes.
   - **Notes:**
 
-- [ ] `84ED` Select **Payments core**, the team name under Gilda Effertz's position on her card.
+- [ ] `84ED` Select 'Payments core', the team name under the position of 'Gilda Effertz' on her card.
   - **Expected:**
-    - The team panel slides in, titled **Payments core**.
-    - Gilda Effertz's card is fully in view, about halfway across the chart to the left of the panel.
-    - **Colour** reads **Teal**, after a teal dot.
-    - **Feature lead** reads **Gilda Effertz**.
+    - The team panel slides in, titled 'Payments core'.
+    - The card of 'Gilda Effertz' is fully in view, about halfway across the chart to the left of the panel.
+    - **Colour** reads "Teal", after a teal dot.
+    - **Feature lead** reads 'Gilda Effertz'.
   - **Notes:**
 
 - [ ] `5ED3` Close the team panel.
@@ -143,19 +139,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The chart shows managers and their reports.
   - **Notes:**
 
-- [ ] `D867` Click Lorenza Thiel's card.
+- [ ] `D867` Click the card of 'Lorenza Thiel'.
   - **Expected:**
-    - Lorenza Thiel's details open beside the chart.
+    - The details of 'Lorenza Thiel' open beside the chart.
     - The **Reporting** section's rows read **Manager**, **Reporting team**, **Reporting team name** and **Direct reports**.
     - A **Feature teams** section has two rows:
-      - **Leads**, reading **Search and discovery**.
-      - **Member of**, reading **Payments core**, followed by **Led by Gilda Effertz** in grey.
+      - **Leads**, reading 'Search and discovery'.
+      - **Member of**, reading 'Payments core', followed by "Led by Gilda Effertz" in grey.
   - **Notes:**
 
-- [ ] `D54D` Select **Search and discovery** in the **Leads** row.
+- [ ] `D54D` Select 'Search and discovery' in the **Leads** row.
   - **Expected:**
     - The chart shows feature teams.
-    - The team panel, titled **Search and discovery**, is under Lorenza Thiel's details.
+    - The team panel, titled 'Search and discovery', is under the details of 'Lorenza Thiel'.
   - **Notes:**
 
 ### FT-02: An Engineering Manager Proposes Members and a Lead
@@ -165,11 +161,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account.
 
 - [ ] `80FB` Run Discard the Unpublished Changes.
-  - **Expected:** The Publish button is gone.
+  - **Expected:** The **Publish** button is gone.
   - **Notes:**
 
 - [ ] `9F02` Sign in as the Engineering Manager, `engineering.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads **Engineering Manager**.
+  - **Expected:** The top bar's right end reads "Engineering Manager".
   - **Notes:**
 
 - [ ] `9CA3` Select the **Org chart** page in the left-hand menu.
@@ -177,15 +173,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `B377` Choose **Feature teams** in the teams switch.
-  - **Expected:** The card named **Platform reliability** has no grey lock.
+  - **Expected:** The card named 'Platform reliability' has no grey lock.
   - **Notes:**
 
-- [ ] `180D` Select the Feature teams button, then **Platform reliability**.
+- [ ] `180D` Select the Feature teams button, then 'Platform reliability'.
   - **Expected:**
-    - The team panel opens, titled **Platform reliability**.
+    - The team panel opens, titled 'Platform reliability'.
     - **Name**, **Colour**, **Feature lead** and **Members** each have a change button.
-    - **Colour** reads **None**.
-    - **Feature lead** reads **None**.
+    - **Colour** reads "None".
+    - **Feature lead** reads "None".
   - **Notes:**
 
 - [ ] `5A69` Select the change button in the **Feature lead** row.
@@ -197,15 +193,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Pointed at, their name and the line under it are easy to read.
   - **Notes:**
 
-- [ ] `B682` Type `Polly`, and select **Polly Smith**.
+- [ ] `B682` Type `Polly`, and select 'Polly Smith'.
   - **Expected:**
-    - **Feature lead** reads **Polly Smith**.
+    - **Feature lead** reads 'Polly Smith'.
     - A hollow yellow dot is before it.
-    - Under it, **None** shows.
-    - A green dot is before **None**.
-    - On the chart, the card reading **Platform reliability** and **No feature lead** is gone.
-    - Polly Smith's card is at the top of the team in its place.
-    - **Platform reliability** is under her position.
+    - Under it, "None" shows.
+    - A green dot is before "None".
+    - On the chart, the card reading 'Platform reliability' and "No feature lead" is gone.
+    - The card of 'Polly Smith' is at the top of the team in its place.
+    - 'Platform reliability' is under her position.
     - The team's members are under her card.
   - **Notes:**
 
@@ -216,16 +212,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `ACA3` Type `Rosendo`, and press Enter.
-  - **Expected:** **Rosendo Champlin** has a tick.
+  - **Expected:** 'Rosendo Champlin' has a tick.
   - **Notes:**
 
 - [ ] `DC41` Press Enter.
   - **Expected:**
-    - **Members** lists **Rosendo Champlin**.
+    - **Members** lists 'Rosendo Champlin'.
     - A hollow yellow dot is before his name.
-    - On the chart, a card for Rosendo Champlin is under Polly Smith.
+    - On the chart, a card for 'Rosendo Champlin' is under 'Polly Smith'.
     - That card has a hollow yellow dot before his name.
-    - His card in Mobile apps is still there.
+    - His card in 'Mobile apps' is still there.
   - **Notes:**
 
 - [ ] `A506` Select the change button in the **Members** row.
@@ -235,21 +231,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `4FE3` Type `Thad`, and press Enter.
-  - **Expected:** **Thad Heidenreich** has no tick.
+  - **Expected:** 'Thad Heidenreich' has no tick.
   - **Notes:**
 
 - [ ] `21BE` Press Enter.
   - **Expected:**
-    - **Members** lists **Bilwa Iyer**, **Polly Smith**, **Rosendo Champlin** and **Thad Heidenreich**, in that order.
-    - **Rosendo Champlin** has a hollow yellow dot before his name.
-    - **Thad Heidenreich** has a hollow yellow dot before his name.
-    - **Thad Heidenreich** is struck through.
-    - On the chart, his card under Polly Smith has a hollow yellow dot before his name.
+    - **Members** lists 'Bilwa Iyer', 'Polly Smith', 'Rosendo Champlin' and 'Thad Heidenreich', in that order.
+    - 'Rosendo Champlin' has a hollow yellow dot before his name.
+    - 'Thad Heidenreich' has a hollow yellow dot before his name.
+    - 'Thad Heidenreich' is struck through.
+    - On the chart, his card under 'Polly Smith' has a hollow yellow dot before his name.
     - His name on that card is struck through.
   - **Notes:**
 
 - [ ] `5C99` Run [Publish](manual-test-basics.md#publish).
-  - **Expected:** The Publish button is gone.
+  - **Expected:** The **Publish** button is gone.
   - **Notes:**
 
 ### FT-03: A Workforce Administrator Adds, Renames and Removes
@@ -268,7 +264,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `63E3` Type `Fictional data team` in the **Name** box.
-  - **Expected:** The **Name** box holds **Fictional data team**.
+  - **Expected:** The **Name** box holds `Fictional data team`.
   - **Notes:**
 
 - [ ] `D0FD` Select the change button in the **Members** row.
@@ -278,15 +274,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `0E24` Type `Branson`, and press Enter.
-  - **Expected:** **Branson O'Keefe** has a tick.
+  - **Expected:** 'Branson O'Keefe' has a tick.
   - **Notes:**
 
 - [ ] `116B` Type `Priscille`, and press Enter.
-  - **Expected:** **Priscille Adam** has a tick.
+  - **Expected:** 'Priscille Adam' has a tick.
   - **Notes:**
 
 - [ ] `E361` Press Enter.
-  - **Expected:** **Members** lists **Branson O'Keefe** and **Priscille Adam**, one to a line.
+  - **Expected:** **Members** lists 'Branson O'Keefe' and 'Priscille Adam', one to a line.
   - **Notes:**
 
 - [ ] `D763` Select the change button in the **Feature lead** row.
@@ -296,19 +292,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `9D7E` Type `Branson`, and press Enter.
-  - **Expected:** **Feature lead** reads **Branson O'Keefe**.
+  - **Expected:** **Feature lead** reads 'Branson O'Keefe'.
   - **Notes:**
 
 - [ ] `492D` Select **Add**.
   - **Expected:**
-    - The panel's title is a hollow yellow dot, then **Fictional data team**.
-    - On the chart, a card for Branson O'Keefe is named **Fictional data team**.
-    - Priscille Adam's card is under it.
+    - The panel's title is a hollow yellow dot, then `Fictional data team`.
+    - On the chart, a card for 'Branson O'Keefe' is named `Fictional data team`.
+    - The card of 'Priscille Adam' is under it.
   - **Notes:**
 
 - [ ] `8F95` Select the change button in the **Name** row.
   - **Expected:**
-    - A box holding **Fictional data team** opens in the **Name** row.
+    - A box holding `Fictional data team` opens in the **Name** row.
     - The box has an **×** at its right.
   - **Notes:**
 
@@ -318,18 +314,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `3F8E` Type `Fictional analytics team`, and press Enter.
   - **Expected:**
-    - The panel's title reads **Fictional analytics team**.
-    - The **Name** row reads **Fictional analytics team**.
-    - Branson O'Keefe's card is named **Fictional analytics team**.
+    - The panel's title reads `Fictional analytics team`.
+    - The **Name** row reads `Fictional analytics team`.
+    - The card of 'Branson O'Keefe' is named `Fictional analytics team`.
   - **Notes:**
 
-- [ ] `7CF8` Select the Feature teams button, then **Payments core**.
-  - **Expected:** The team panel is titled **Payments core**.
+- [ ] `7CF8` Select the Feature teams button, then 'Payments core'.
+  - **Expected:** The team panel is titled 'Payments core'.
   - **Notes:**
 
 - [ ] `3A39` Select **Remove feature team** at the panel's foot.
   - **Expected:**
-    - The panel's title is a hollow yellow dot, then **Payments core**.
+    - The panel's title is a hollow yellow dot, then 'Payments core'.
     - No row has a change button.
     - The foot has **Discard draft**.
     - The foot has no **Remove feature team**.
@@ -337,13 +333,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `9CE3` Select **Discard draft**.
   - **Expected:**
-    - The panel's title, **Payments core**, has no dot.
+    - The panel's title, 'Payments core', has no dot.
     - The foot has **Remove feature team**.
     - The foot has no **Discard draft**.
   - **Notes:**
 
 - [ ] `89BD` Run [Publish](manual-test-basics.md#publish).
-  - **Expected:** The Publish button is gone.
+  - **Expected:** The **Publish** button is gone.
   - **Notes:**
 
 ### FT-04: An Approver Approves a Team's Draft
@@ -354,10 +350,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `A4F5` Type `Platform reliability` in the search box.
   - **Expected:**
-    - One entry is listed, **the feature team Platform reliability**.
-    - Its **Feature lead** line sets it to **Polly Smith**.
-    - Its **Members** line changes them from **Bilwa Iyer, Polly Smith, Thad Heidenreich** to **Bilwa Iyer, Polly Smith, Rosendo Champlin**.
-    - Each line ends **by Engineering Manager**.
+    - One entry is listed, "the feature team Platform reliability".
+    - Its **Feature lead** line sets it to "Polly Smith".
+    - Its **Members** line changes them from "Bilwa Iyer, Polly Smith, Thad Heidenreich" to "Bilwa Iyer, Polly Smith, Rosendo Champlin".
+    - Each line ends "by Engineering Manager".
   - **Notes:**
 
 - [ ] `B5F5` Select the entry's checkbox.
@@ -366,14 +362,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `897A` Select **Approve 1 draft**.
   - **Expected:**
-    - A dialog headed **Approve 1 draft?** opens.
+    - A dialog headed "Approve 1 draft?" opens.
     - It has an **Approve** button.
   - **Notes:**
 
 - [ ] `638F` Select **Approve** in the dialog.
   - **Expected:**
     - The dialog closes.
-    - A notice begins **Approved**.
+    - A notice begins "Approved".
   - **Notes:**
 
 - [ ] `EC96` Select the **Org chart** page in the left-hand menu.
@@ -382,10 +378,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `5A17` Choose **Feature teams** in the teams switch.
   - **Expected:**
-    - Platform reliability's first card is Polly Smith's.
-    - Bilwa Iyer's and Rosendo Champlin's cards are under it.
-    - Bilwa Iyer's and Rosendo Champlin's cards have no dots.
-    - No card for Thad Heidenreich is in Platform reliability.
+    - The first card of 'Platform reliability' is that of 'Polly Smith'.
+    - The cards of 'Bilwa Iyer' and 'Rosendo Champlin' are under it.
+    - The cards of 'Bilwa Iyer' and 'Rosendo Champlin' have no dots.
+    - No card for 'Thad Heidenreich' is in 'Platform reliability'.
   - **Notes:**
 
 - [ ] `77CD` Select the **Drafts** page in the left-hand menu.
@@ -394,19 +390,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `E97B` Type `Fictional analytics team` in the search box.
   - **Expected:**
-    - One entry is listed, **the feature team Fictional analytics team**.
-    - Its **Feature lead** line reads **Branson O'Keefe**.
-    - Its **Members** line reads **Branson O'Keefe, Priscille Adam**.
+    - One entry is listed, "the feature team Fictional analytics team".
+    - Its **Feature lead** line reads "Branson O'Keefe".
+    - Its **Members** line reads "Branson O'Keefe, Priscille Adam".
   - **Notes:**
 
 ### FT-05: A Team's Panel Works From the Keyboard
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FT-04.
 
-**Preconditions:** Signed in with this account. Select the **Org chart** page in the left-hand menu, choose **Feature teams** in the teams switch, then select the Feature teams button, then **Payments core**.
+**Preconditions:** Signed in with this account. Select the **Org chart** page in the left-hand menu, choose **Feature teams** in the teams switch, then select the Feature teams button, then 'Payments core'.
 
-- [ ] `78FD` Click the panel's title, **Payments core**.
-  - **Expected:** The team panel is still open, titled **Payments core**.
+- [ ] `78FD` Click the panel's title, 'Payments core'.
+  - **Expected:** The team panel is still open, titled 'Payments core'.
   - **Notes:**
 
 - [ ] `ED8F` Press Tab until the panel's **×** has a visible outline.
@@ -436,13 +432,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `AB97` Type `Rosendo`, and press Enter.
-  - **Expected:** **Rosendo Champlin** has a tick.
+  - **Expected:** 'Rosendo Champlin' has a tick.
   - **Notes:**
 
 - [ ] `48F2` Press Enter.
   - **Expected:**
     - The list closes.
-    - **Members** lists **Rosendo Champlin**.
+    - **Members** lists 'Rosendo Champlin'.
     - A hollow yellow dot is before his name.
     - The outline is on the change button in the **Members** row.
   - **Notes:**
@@ -453,7 +449,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `01D7` Press Enter.
   - **Expected:**
-    - **Rosendo Champlin** is no longer listed.
+    - 'Rosendo Champlin' is no longer listed.
     - No dot is in the panel.
   - **Notes:**
 
@@ -467,20 +463,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `1C5A` Look at the row between the page's heading and the chart.
   - **Expected:**
-    - A **Date** box shows today's date, written as year, month and day, such as **2026-11-11**.
-    - Beside it are a left arrow, a timeline marked with one month in each year, such as **Nov 2024** and **Nov 2025**, and a right arrow.
+    - A **Date** box shows today's date, written as year, month and day, such as "2026-11-11".
+    - Beside it are a left arrow, a timeline marked with one month in each year, such as "Nov 2024" and "Nov 2025", and a right arrow.
     - A **Today** button is greyed out.
   - **Notes:**
 
 - [ ] `CE78` Select the left arrow once.
   - **Expected:**
     - The **Date** box shows the first day of last month.
-    - Below the row, text reads **Showing** with that date, then **Changes take effect from this date.**
+    - Below the row, text reads "Showing" with that date, then "Changes take effect from this date."
     - The chart redraws without the page going blank.
     - The **Draft** button is still above the chart.
   - **Notes:**
 
-- [ ] `9D38` Select the Feature teams button, then **Payments core**.
+- [ ] `9D38` Select the Feature teams button, then 'Payments core'.
   - **Expected:**
     - **Feature lead** and **Members** have change buttons.
     - **Name** and **Colour** have none.
@@ -501,7 +497,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `00C2` Type a date in the middle of a month in the **Date** box, as digits alone, such as `20250315`.
   - **Expected:**
-    - Below the row, text reads **Showing Mar 15, 2025. Changes take effect from this date.**
+    - Below the row, text reads "Showing Mar 15, 2025. Changes take effect from this date."
     - The timeline's handle is at March 2025.
   - **Notes:**
 
@@ -509,7 +505,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The **Date** box still shows the date typed.
     - The chart shows managers and their reports.
-    - The text below the row still ends **Changes take effect from this date.**
+    - The text below the row still ends "Changes take effect from this date."
   - **Notes:**
 
 - [ ] `D028` Select **Today**.
@@ -517,18 +513,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The text below the row is gone.
     - **Today** is greyed out.
     - The **Date** box shows today's date.
-  - **Notes:**
-
-- [ ] `ADDE` Choose **Dark** in the Appearance menu.
-  - **Expected:**
-    - The date row is easy to read.
-    - The timeline's month labels overlap neither each other nor the chart.
-  - **Notes:**
-
-- [ ] `3C53` Choose **Light** in the Appearance menu.
-  - **Expected:**
-    - The date row is easy to read.
-    - The timeline's month labels overlap neither each other nor the chart.
   - **Notes:**
 
 ### FT-07: Readers Without Personal Details Are Told Why There Is No Other Date
@@ -539,13 +523,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `7FB0` Look at the area between the page's heading and the chart.
   - **Expected:**
-    - A line in grey reads **Other dates need Personal access.**
+    - A line in grey reads "Other dates need Personal access."
     - There is no date control.
   - **Notes:**
 
 - [ ] `F46D` Select **Feature teams** in the teams switch.
   - **Expected:**
-    - A line in grey reads **Other dates need Personal access.**
+    - A line in grey reads "Other dates need Personal access."
     - There is still no date control.
   - **Notes:**
 
@@ -558,11 +542,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `8A8C` Select the right arrow once.
   - **Expected:**
     - The **Date** box shows the first day of next month.
-    - The text below the row ends **Changes take effect from this date.**
+    - The text below the row ends "Changes take effect from this date."
   - **Notes:**
 
-- [ ] `10CE` Select the Feature teams button, then **Payments core**.
-  - **Expected:** The team panel is titled **Payments core**.
+- [ ] `10CE` Select the Feature teams button, then 'Payments core'.
+  - **Expected:** The team panel is titled 'Payments core'.
   - **Notes:**
 
 - [ ] `26AA` Select the change button in the **Members** row.
@@ -591,7 +575,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The joiner is still in the team panel's list of members.
     - A hollow yellow dot is before their name.
-    - After their name, in grey, **from** and the first day of next month, such as **from Dec 1, 2026**.
+    - After their name, in grey, "from" and the first day of next month, such as "from Dec 1, 2026".
   - **Notes:**
 
 - [ ] `5F31` Select the **Drafts** page in the left-hand menu.
@@ -610,8 +594,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The chart shows feature teams.
   - **Notes:**
 
-- [ ] `3A5B` Select the Feature teams button, then **Payments core**.
-  - **Expected:** The team panel is titled **Payments core**.
+- [ ] `3A5B` Select the Feature teams button, then 'Payments core'.
+  - **Expected:** The team panel is titled 'Payments core'.
   - **Notes:**
 
 - [ ] `77F1` Select **Discard draft** at the panel's foot.
@@ -628,17 +612,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `D54C` Select the left arrow once.
   - **Expected:**
-    - The text below the row ends **Nothing can be changed on this date.**
+    - The text below the row ends "Nothing can be changed on this date."
     - There is no **Draft** button above the chart.
   - **Notes:**
 
-- [ ] `C6E3` Select the Feature teams button, then **Payments core**.
+- [ ] `C6E3` Select the Feature teams button, then 'Payments core'.
   - **Expected:** No row in the team panel has a change button.
   - **Notes:**
 
 - [ ] `1C45` Select the right arrow twice.
   - **Expected:**
-    - The text below the row ends **Changes take effect from this date.**
+    - The text below the row ends "Changes take effect from this date."
     - The **Draft** button is above the chart.
     - In the team panel, **Feature lead** and **Members** have change buttons.
     - In the team panel, **Name** and **Colour** have none.
@@ -654,7 +638,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FT-09.
 
-**Preconditions:** Restore the Seed Data has been run. Signed in with this account. Select the **Org chart** page in the left-hand menu, choose **Feature teams** in the teams switch, then select the Feature teams button, then **Payments core**.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. Select the **Org chart** page in the left-hand menu, choose **Feature teams** in the teams switch, then select the Feature teams button, then 'Payments core'.
 
 - [ ] `06CA` Select the change button in the **Members** row.
   - **Expected:**
@@ -663,7 +647,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `9F85` Type `engineer`.
-  - **Expected:** Every person listed has **Engineer** or **engineer** in the grey line under their name.
+  - **Expected:** Every person listed has "Engineer" or "engineer" in the grey line under their name.
   - **Notes:**
 
 - [ ] `210C` Press Esc.
@@ -687,12 +671,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `1FCC` Press Enter.
   - **Expected:**
     - A list of sites opens under the cell.
-    - **Northmere Labs** has **The research site.** in grey under it.
+    - 'Northmere Labs' has "The research site." in grey under it.
     - No other site has a grey line under it.
   - **Notes:**
 
 - [ ] `942D` Type `research`.
-  - **Expected:** **Northmere Labs** is the only site listed.
+  - **Expected:** 'Northmere Labs' is the only site listed.
   - **Notes:**
 
 - [ ] `3D09` Press Esc.
@@ -705,7 +689,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FT-10.
 
-**Preconditions:** Signed in with this account. Select the **Org chart** page in the left-hand menu, choose **Feature teams** in the teams switch, then select the Feature teams button, then **Payments core**.
+**Preconditions:** Signed in with this account. Select the **Org chart** page in the left-hand menu, choose **Feature teams** in the teams switch, then select the Feature teams button, then 'Payments core'.
 
 - [ ] `B9AB` Select the change button in the **Feature lead** row.
   - **Expected:**
@@ -719,36 +703,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `F016` Select **None**.
   - **Expected:**
-    - **Feature lead** reads **None**.
+    - **Feature lead** reads "None".
     - A hollow yellow dot is before it.
-    - Under it, **Gilda Effertz** shows.
-    - A green dot is before **Gilda Effertz**.
+    - Under it, 'Gilda Effertz' shows.
+    - A green dot is before 'Gilda Effertz'.
   - **Notes:**
 
 - [ ] `B125` Select **Discard draft** at the panel's foot.
   - **Expected:**
-    - **Feature lead** reads **Gilda Effertz**.
+    - **Feature lead** reads 'Gilda Effertz'.
     - **Feature lead** has no dot.
-  - **Notes:**
-
-- [ ] `20CF` Choose **Dark** in the Appearance menu.
-  - **Expected:** The panel's labels, values and change buttons are easy to read.
-  - **Notes:**
-
-- [ ] `21D5` Select the change button in the **Feature lead** row.
-  - **Expected:** **None** and the line under it are easy to see.
-  - **Notes:**
-
-- [ ] `E754` Point at the first person after the line.
-  - **Expected:**
-    - The person pointed at is on a dark grey background.
-    - Their name and the line under it are easy to read.
-  - **Notes:**
-
-- [ ] `DA9E` Press Esc.
-  - **Expected:** The list closes.
-  - **Notes:**
-
-- [ ] `DD5A` Choose **Light** in the Appearance menu.
-  - **Expected:** The panel is light.
   - **Notes:**
