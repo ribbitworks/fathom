@@ -461,19 +461,40 @@ export function draftedItemChars(
 
 // A part of a record a draft adds or takes away, such as a team's member or a manager's report: the
 // draft's dot before it, struck through when taken away, and when the change takes effect, where
-// that needs saying.
+// that needs saying. The part as it is live, where a draft changes it, has Live's dot instead: in a
+// Live row beside its draft, and, live only, naming the change waiting.
 export function DraftedPartItem({
   draft,
   part,
   from,
+  live = false,
   children,
 }: {
   draft: DraftLike | undefined;
   part: DraftedPart | undefined;
   from?: string | undefined;
+  live?: boolean | undefined;
   children: ReactNode;
 }) {
   const show = useDraftView();
+  if (live) {
+    // As live, the part's draft is named by what it does to the part, such as Its removal.
+    const partDraft =
+      draft === undefined
+        ? undefined
+        : {
+            ...draft,
+            action:
+              part === "removed" ? ("deleted" as const) : ("changed" as const),
+          };
+    return show === "live" ? (
+      <DraftedItem draft={partDraft}>{children}</DraftedItem>
+    ) : (
+      <MarkedItem tone={partDraft === undefined ? undefined : "live"}>
+        {children}
+      </MarkedItem>
+    );
+  }
   const marked = part === undefined ? undefined : draft;
   // Struck through only where the view shows the draft taking it away, not live only.
   const struck =

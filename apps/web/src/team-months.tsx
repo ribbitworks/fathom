@@ -45,6 +45,7 @@ type TeamDraft = NonNullable<TeamMonths["drafts"]>[number];
 export type MonthLabel = MonthTeam & {
   drafted?: DraftedLabel;
   draftedBy?: DraftLike;
+  live?: boolean;
 };
 
 // A row of the monthly grid, in either mode.
@@ -189,6 +190,7 @@ export function monthGridTable<
       multiple: true,
     }),
     content: (record) => content(record, month),
+    marksParts: true,
     shaded: (record) => record.outside.has(month),
     mark: (record) =>
       record.outside.has(month) ? (
@@ -454,7 +456,39 @@ function draftOf(
       ...draft,
       madeBy: null,
     },
-    live,
+    live: withLiveMarks(live, new Map(draftedMonths), draft),
+  };
+}
+
+// The person as approved, for the Live row and live only, with each team a draft takes away from a
+// month marked as live with that draft.
+function withLiveMarks(
+  live: PersonMonths,
+  draftedTeamsIn: ReadonlyMap<string, readonly string[]>,
+  draft: DraftLike,
+): PersonMonths {
+  return {
+    ...live,
+    teamsIn: new Map(
+      [...live.teamsIn].map(([month, labels]): [string, MonthLabel[]] => {
+        const draftedIds = draftedTeamsIn.get(month);
+        return [
+          month,
+          draftedIds === undefined
+            ? labels
+            : labels.map((label) =>
+                draftedIds.includes(label.id)
+                  ? label
+                  : {
+                      ...label,
+                      drafted: "removed",
+                      draftedBy: draft,
+                      live: true,
+                    },
+              ),
+        ];
+      }),
+    ),
   };
 }
 

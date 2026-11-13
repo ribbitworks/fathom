@@ -20,33 +20,34 @@ export const effortConversionsQuery = queryOptions({
     getJson("/api/effort-conversions", effortConversionsSchema),
 });
 
-const unitWords: Readonly<Record<EffortUnit, Omit<ColumnUnit, "key">>> = {
-  hours: { label: "Hours", code: "h", name: "hours", one: "hour" },
-  "person-days": {
-    label: "Person-days",
-    code: "PD",
-    name: "person-days",
-    one: "person-day",
-  },
-  "person-weeks": {
-    label: "Person-weeks",
-    code: "PW",
-    name: "person-weeks",
-    one: "person-week",
-  },
-  "person-months": {
-    label: "Person-months",
-    code: "PM",
-    name: "person-months",
-    one: "person-month",
-  },
-  "person-quarters": {
-    label: "Person-quarters",
-    code: "PQ",
-    name: "person-quarters",
-    one: "person-quarter",
-  },
-};
+export const unitWords: Readonly<Record<EffortUnit, Omit<ColumnUnit, "key">>> =
+  {
+    hours: { label: "Hours", code: "h", name: "hours", one: "hour" },
+    "person-days": {
+      label: "Person-days",
+      code: "PD",
+      name: "person-days",
+      one: "person-day",
+    },
+    "person-weeks": {
+      label: "Person-weeks",
+      code: "PW",
+      name: "person-weeks",
+      one: "person-week",
+    },
+    "person-months": {
+      label: "Person-months",
+      code: "PM",
+      name: "person-months",
+      one: "person-month",
+    },
+    "person-quarters": {
+      label: "Person-quarters",
+      code: "PQ",
+      name: "person-quarters",
+      one: "person-quarter",
+    },
+  };
 
 type EffortColumnUnit = ColumnUnit & { key: EffortUnit };
 

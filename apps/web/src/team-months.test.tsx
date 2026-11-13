@@ -174,7 +174,15 @@ describe("a person's months as drafts change them", () => {
     const [live] = table.liveRecords(record === undefined ? [] : [record]);
 
     expect(live?.draft).toBeUndefined();
-    expect(live?.teamsIn.get("2027-04")).toEqual([search]);
+    // Search, which the rejected draft takes away, is marked live with that draft.
+    expect(live?.teamsIn.get("2027-04")).toEqual([
+      {
+        ...search,
+        drafted: "removed",
+        draftedBy: { state: "rejected" },
+        live: true,
+      },
+    ]);
   });
 
   describe("grouped by feature team, as the Draft menu shows the teams", () => {

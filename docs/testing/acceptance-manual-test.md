@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/product/roles.md"]
-last_updated: "2026-11-12"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: End-to-End Acceptance
@@ -1056,13 +1056,18 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as ACC-17.
 
-**Preconditions:** **Light** chosen in the Appearance menu. **Feature assignments** open, with **Teams** chosen in the mode switch, **Feature team** chosen in the Group by menu, and nothing in the search box. The **Person** filter from ACC-17 removed with **Clear all** in the bar above the table.
+**Preconditions:** **Light** chosen in the Appearance menu.
 
-- [ ] `6F2A` Select **Allocations** in the mode switch.
+- [ ] `1D47` Select the **Capacity** page in the left-hand menu.
   - **Expected:**
+    - The mode switch has **People** chosen.
     - The table opens at the current month.
+  - **Notes:**
+
+- [ ] `5181` Select **Feature team** in the Group by menu.
+  - **Expected:**
     - It is grouped by **Feature team**.
-    - Cells list features, each on a line of its own with its percentage at the right, such as **50%**.
+    - Cells list features, each on a line of its own with its percentage at the right, such as "50%".
   - **Notes:**
 
 - [ ] `7E22` In the current month's column, find a cell that lists two features.
@@ -1085,17 +1090,11 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** In light mode the feature names, the percentages, and the **Over** and **Under** lines are easy to read and to tell apart.
   - **Notes:**
 
-- [ ] `6D47` Select **Teams** in the mode switch.
-  - **Expected:**
-    - The cells show feature teams as labels.
-    - The table is grouped by **Feature team**.
-  - **Notes:**
-
 #### ACC-19: The Feature Lead, Acting as Engineering Manager, Plans a Team Change in Feature Assignments
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-18.
 
-**Preconditions:** ACC-16 done. Signed in with this account, acting as **Engineering Manager**. **Light** chosen in the Appearance menu. Select the **Feature assignments** page in the left-hand menu, with **Teams** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** ACC-16 done. Signed in with this account, acting as **Engineering Manager**. **Light** chosen in the Appearance menu. Select the **Feature assignments** page in the left-hand menu, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `3DCD` Type `Branson` in the search box.
   - **Expected:**
@@ -1131,16 +1130,16 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
     - His name is followed in grey by **from** and the first day of the month two months after the current one.
   - **Notes:**
 
-#### ACC-20: A Team Member Is Told Why Feature Assignments Is Missing
+#### ACC-20: A Team Member Has No Feature Assignments or Capacity Page
 
 **Account:** Team Member, `team.member@fathom.test`, changed from ACC-19.
 
 **Preconditions:** Signed in with this account.
 
-- [ ] `0C12` Select the **Feature assignments** page in the left-hand menu.
+- [ ] `5318` Look at the **People** section of the left-hand menu.
   - **Expected:**
-    - Under the **Feature assignments** heading, a line in grey reads **Feature assignments needs Personal access.**
-    - There is no table.
+    - It shows **People**, **Org chart** and **Drafts**.
+    - There is no **Feature assignments** and no **Capacity**.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.

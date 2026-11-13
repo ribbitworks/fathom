@@ -319,6 +319,43 @@ describe("a draft's mark on screen", () => {
     renderIn("live", item);
     expect(screen.getByText("Fictional Member").className).toBe("");
   });
+
+  it.each([
+    ["removed", "Live. Its removal is waiting for approval."],
+    ["changed", "Live. A change is waiting for approval."],
+  ] as const)(
+    "names the change waiting for a part as it is live, live only: %s",
+    (part, words) => {
+      renderIn(
+        "live",
+        <DraftedPartItem draft={waiting} part={part} live>
+          Fictional Member
+        </DraftedPartItem>,
+      );
+      expect(screen.getByText(`, ${words}`)).toBeDefined();
+    },
+  );
+
+  it("marks a part as it is live in a Live row, unstruck", () => {
+    renderIn(
+      "both",
+      <DraftedPartItem draft={waiting} part="removed" live>
+        Fictional Member
+      </DraftedPartItem>,
+    );
+    expect(screen.getByText(", live")).toBeDefined();
+    expect(screen.queryByText(", removed")).toBeNull();
+  });
+
+  it("gives a part as it is live no mark without a draft", () => {
+    renderIn(
+      "both",
+      <DraftedPartItem draft={undefined} part={undefined} live>
+        Fictional Member
+      </DraftedPartItem>,
+    );
+    expect(screen.queryByText(", live")).toBeNull();
+  });
 });
 
 describe("a row's values", () => {

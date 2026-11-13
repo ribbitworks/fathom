@@ -5,7 +5,11 @@
 // says the user is, how each person chooses light or dark mode, and how the sidebar opens and closes
 // on narrow screens.
 
-import { permissionSchema } from "@fathom/shared";
+import {
+  defaultClasses,
+  type Permission,
+  permissionSchema,
+} from "@fathom/shared";
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -17,7 +21,7 @@ import {
   signedIn,
   signedOut,
 } from "./test-support.tsx";
-import { firstPage } from "./layout.tsx";
+import { firstPage, pagesOpened, pagesReached } from "./layout.tsx";
 
 // An administrator who also sees the plan, as through the Viewer role.
 const administrator = () =>
@@ -38,12 +42,41 @@ afterEach(() => {
 });
 
 describe("the first page a user may open", () => {
+  const access = (permissions: readonly Permission[]) => ({
+    permissions,
+    dataClasses: defaultClasses,
+  });
+
   it("is never the Overview, so someone sent there from it cannot be sent back", () => {
-    expect(firstPage(permissionSchema.options)).toBe("/projects");
-    expect(firstPage(["people:view"])).toBe("/people");
-    // Allocations has no page of its own, but seeing it opens the change history.
-    expect(firstPage(["allocations:view"])).toBe("/changes");
-    expect(firstPage([])).toBeUndefined();
+    expect(firstPage(access(permissionSchema.options))).toBe("/projects");
+    expect(firstPage(access(["people:view"]))).toBe("/people");
+    expect(firstPage(access([]))).toBeUndefined();
+  });
+
+  it("leaves out a page that would show none of its data", () => {
+    // Allocations need Personal details, so without them Capacity is left out for the change history.
+    expect(firstPage(access(["allocations:view"]))).toBe("/changes");
+  });
+});
+
+describe("the pages a role opens", () => {
+  const access = (permissions: readonly Permission[]) => ({
+    permissions,
+    dataClasses: defaultClasses,
+  });
+  const allocations: Permission[] = ["allocations:view", "personal:view"];
+
+  it("opens Capacity's People only with the feature teams and people its grid reads", () => {
+    expect(pagesOpened(access(allocations))).not.toContain("Capacity");
+    expect(
+      pagesOpened(
+        access([...allocations, "feature-teams:view", "people:view"]),
+      ),
+    ).toContain("Capacity");
+  });
+
+  it("reaches a page by its permission alone, whatever data the role sees", () => {
+    expect(pagesReached(["allocations:view"])).toContain("Capacity");
   });
 });
 

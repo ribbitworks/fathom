@@ -2,16 +2,16 @@
 title: "Manual Test: Feature Assignments"
 category: "How-To"
 audience: "AI Coding Assistant"
-applies_to: ["apps/web/src/feature-assignments-page*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "apps/web/src/allocation-months*", "apps/web/src/allocation-lines*", "packages/seed/src/**", "packages/fixtures/src/**"]
+applies_to: ["apps/web/src/feature-assignments-page*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: Feature Assignments
 
 ## Scope
 
-Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls in light and dark mode, how the table of allocations by month reads, with its over- and under-allocated months, planned hires, and the capacity totals of each group and of the organization, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, the line a role without Personal details sees in its place, and moving around it from the keyboard. The seeded feature teams and allocations are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls in light and dark mode, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, the page left out of the menu for a role without Personal details, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -35,9 +35,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Mode switch, the Group by menu and the Publish button. This test adds:
-
-- **Total row:** in **Allocations**, a row in bold at the end of each group, headed **Total** in the **Person** column, and one at the foot of the table, headed **Organization**.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Group by menu and the Publish button.
 
 ## Test Cases
 
@@ -52,7 +50,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `25EE` Select the **Feature assignments** page in the left-hand menu.
   - **Expected:**
     - The page is headed **Feature assignments**.
-    - Above the table, in order: the mode switch, with **Teams** chosen, a search box, a **Draft** button, **Metrics**, and **Group by: Manager**.
+    - Above the table, in order: a search box, a **Draft** button, **Metrics**, and **Group by: Manager**.
     - The table has a **Person** column on the left and a column for each month.
   - **Notes:**
 
@@ -236,18 +234,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Shaded cells hold no labels.
   - **Notes:**
 
-### FA-12: A Role Without Personal Details Is Told Why
+### FA-12: A Role Without Personal Details Has No Feature Assignments Page
 
 **Account:** Team Member, `team.member@fathom.test`, changed from FA-11.
 
 **Preconditions:** Signed in with this account.
 
-- [ ] `7C7A` Select the **Feature assignments** page in the left-hand menu.
+- [ ] `8352` Look at the **People** section of the left-hand menu.
   - **Expected:**
-    - Under the **Feature assignments** heading, a line in grey reads **Feature assignments needs Personal access.**
-    - There is no table.
-    - There is no **Teams** and **Allocations** switch.
-    - There is no **Draft** button.
+    - It shows **People**, **Org chart** and **Drafts**.
+    - There is no **Feature assignments**.
   - **Notes:**
 
 ### FA-13: The Table Works From the Keyboard
@@ -371,8 +367,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `CC85` Type the leaver's name in the search box.
   - **Expected:**
-    - From last month on, the leaver's cells hold a **Payments core** label with a hollow yellow dot inside it.
-    - The label's name is struck through.
+    - From last month on, the cells of the leaver hold a 'Payments core' label with a hollow yellow dot inside it.
+    - The name in the label is struck through.
+    - In the light green row under it, from last month on, each 'Payments core' label has a green dot inside it, before the name.
   - **Notes:**
 
 - [ ] `F5E5` Select **Dark** in the Appearance menu.
@@ -395,11 +392,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `278A` Open the Draft menu and select **Live only**.
   - **Expected:**
-    - The leaver's row has no tint.
-    - The leaver's labels have no dots.
-    - No light green row is under the leaver's row.
-    - The leaver's cells hold a **Payments core** label in every month they held one before FA-14, from the earliest such month on.
+    - The row of the leaver has no tint.
+    - No light green row is under the row of the leaver.
+    - The cells of the leaver hold a 'Payments core' label in every month they held one before FA-14, from the earliest such month on.
+    - From last month on, each 'Payments core' label has a green dot inside it, before the name.
+    - Their labels before last month have no dot.
     - Nothing is struck through.
+  - **Notes:**
+
+- [ ] `B7E1` Hold the pointer over the green dot in one of those 'Payments core' labels.
+  - **Expected:** After a moment, a tooltip reads "Live. A change isn't published yet."
   - **Notes:**
 
 - [ ] `AD18` Open the Draft menu and select **Drafts applied**.
@@ -564,302 +566,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - Fathom refuses the change, saying that the draft of **Payments core** already changes the person from another month, and to approve or discard that draft first.
     - The cell still holds the **Payments core** label.
-  - **Notes:**
-
-**Afterwards:** Run Restore the Seed Data.
-
-### FA-19: Allocations Show Each Feature With Its Percentage
-
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-18.
-
-**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. **Feature assignments** open, with **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
-
-- [ ] `F80D` Select **Allocations** in the mode switch.
-  - **Expected:**
-    - The table opens at the current month again.
-    - The rows are still grouped by **Feature team**.
-    - Under the **Payments core** group, cells list features, each on a line of its own with its percentage at the right, such as **50%**.
-  - **Notes:**
-
-- [ ] `ABC9` Hold the pointer over a feature's name in a cell.
-  - **Expected:** After a moment, a tooltip shows the feature's whole name.
-  - **Notes:**
-
-- [ ] `61EC` Under the **Payments core** group, find the first cell in the current month's column that lists two features.
-  - **Expected:**
-    - Under the two features, a last line gives the two percentages added up, at the right.
-    - A thin line above it sets it off.
-  - **Notes:**
-
-- [ ] `503E` Reload the page.
-  - **Expected:**
-    - **Allocations** is still chosen in the mode switch.
-    - **Group by: Feature team** still shows.
-  - **Notes:**
-
-- [ ] `6F79` Select **Teams** in the mode switch.
-  - **Expected:**
-    - The cells show feature teams as labels again.
-    - The rows are still grouped by **Feature team**.
-  - **Notes:**
-
-### FA-20: Over- and Under-Allocated Months Stand Out
-
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-19.
-
-**Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
-
-- [ ] `CBFE` In the current month's column, find a cell whose last line reads **Over**, and one whose last line reads **Under**.
-  - **Expected:**
-    - **Over** is red and bold.
-    - **Under** is grey.
-  - **Notes:**
-
-- [ ] `88C8` Select **Dark** in the Appearance menu.
-  - **Expected:** These are easy to read and to tell apart:
-    - the feature names
-    - the percentages
-    - the **Over** and **Under** lines
-  - **Notes:**
-
-- [ ] `C3D4` Select **Light** in the Appearance menu.
-  - **Expected:** These are easy to read and to tell apart:
-    - the feature names
-    - the percentages
-    - the **Over** and **Under** lines
-  - **Notes:**
-
-### FA-21: Planned Hires Have Rows of Their Own
-
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-20.
-
-**Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
-
-- [ ] `B36D` Select the **People** page in the left-hand menu.
-  - **Expected:** The **People** page opens.
-  - **Notes:**
-
-- [ ] `4CD5` Type **Payments tester** in the search box, and note the month in the row's **Expected** column.
-  - **Expected:**
-    - One row is listed, named **Payments tester**.
-    - **Expected** holds a month.
-  - **Notes:**
-
-- [ ] `C8D1` Select the **Feature assignments** page in the left-hand menu.
-  - **Expected:** The **Feature assignments** page opens.
-  - **Notes:**
-
-- [ ] `AD30` Type **Payments tester** in the search box.
-  - **Expected:**
-    - One row is listed, named **Payments tester**.
-    - **Allocations** is still chosen in the mode switch.
-  - **Notes:**
-
-- [ ] `1F82` Look along the row from 12 months ago to the right.
-  - **Expected:**
-    - The cells before the month noted in step `4CD5` are empty.
-    - From that month on, cells list a feature with **100%**.
-  - **Notes:**
-
-- [ ] `CB11` Empty the search box.
-  - **Expected:** Every row is listed again.
-  - **Notes:**
-
-- [ ] `D731` Select **Feature team** in the Group by menu.
-  - **Expected:** **Group by: Feature team** shows.
-  - **Notes:**
-
-- [ ] `D9A6` Type **TBD** in the search box.
-  - **Expected:**
-    - Planned hires with no name and a temporary ID are listed by their position and ID, such as **SDET, TBD-** and a number, in grey.
-    - They are under **No feature team**.
-  - **Notes:**
-
-- [ ] `0D80` Empty the search box.
-  - **Expected:** Every row is listed again.
-  - **Notes:**
-
-- [ ] `DF6A` Select **Teams** in the mode switch.
-  - **Expected:** The cells show feature teams as labels.
-  - **Notes:**
-
-- [ ] `EB18` Type **Payments tester** in the search box.
-  - **Expected:** No rows are listed.
-  - **Notes:**
-
-### FA-22: Each Group and the Organization Total Their Capacity
-
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-21.
-
-**Preconditions:** **Light** selected in the Appearance menu. **Feature assignments** open, with **Allocations** chosen in the mode switch, **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
-
-- [ ] `565B` Scroll down to the end of the **Payments core** group.
-  - **Expected:**
-    - The group ends with a total row.
-    - Each of its month cells reads two numbers, such as **7.5 of 9**.
-    - Under them is a percentage, such as **83.3%**, in bold.
-  - **Notes:**
-
-- [ ] `7D6D` Scroll the table down.
-  - **Expected:**
-    - A total row headed **Organization** is at the foot of the table.
-    - It stays there as the rows scroll under it.
-    - Nothing shows through it.
-  - **Notes:**
-
-- [ ] `1E55` Scroll the table sideways.
-  - **Expected:** **Organization** stays on the left while the months scroll sideways.
-  - **Notes:**
-
-- [ ] `9B19` Select **Dark** in the Appearance menu.
-  - **Expected:** The total rows are easy to read and to tell apart from the rows above them.
-  - **Notes:**
-
-- [ ] `861C` Select **Light** in the Appearance menu.
-  - **Expected:** The total rows are easy to read and to tell apart from the rows above them.
-  - **Notes:**
-
-- [ ] `F4F7` Select **None** in the Group by menu.
-  - **Expected:**
-    - No group ends with a total row.
-    - The **Organization** row is still at the foot.
-  - **Notes:**
-
-### FA-23: The Totals Count Only the Rows Shown
-
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-22.
-
-**Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
-
-- [ ] `8DC9` Select **Metrics**.
-  - **Expected:** The Metrics panel gives a number of people and a number of planned hires, such as **150 people and 8 planned hires**.
-  - **Notes:**
-
-- [ ] `C877` Close the Metrics panel.
-  - **Expected:** The Metrics panel closes.
-  - **Notes:**
-
-- [ ] `68AE` Type **Payments tester** in the search box.
-  - **Expected:**
-    - One row is listed, named **Payments tester**.
-    - In the **Organization** row, the cells before the month its allocations start are empty.
-    - From that month on, each reads **1 of 1** and **100%**.
-  - **Notes:**
-
-### FA-24: Someone Who Left a Team Has a Row for Each Part
-
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-23.
-
-**Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
-
-- [ ] `77F4` Select **Teams** in the mode switch.
-  - **Expected:** The cells show feature teams as labels.
-  - **Notes:**
-
-- [ ] `A582` Under the **Mobile apps** group, find the person whose **Mobile apps** labels stop before the current month, and note their name and the last month with the label.
-  - **Expected:** One person under **Mobile apps** has no **Mobile apps** label in the current month.
-  - **Notes:**
-
-- [ ] `A05E` Select **Allocations** in the mode switch.
-  - **Expected:** The cells list features, each with its percentage.
-  - **Notes:**
-
-- [ ] `F18D` Type the name noted in step `A582` in the search box.
-  - **Expected:**
-    - The person has a row under **Mobile apps** and a row under another group, or **No feature team**.
-    - Each of those rows is followed by a total row.
-    - The total row under **Mobile apps** has figures only in the months the person was on **Mobile apps**, up to the month noted.
-    - The other total row has figures only in the months before and after those.
-    - Each figure reads **0 of 1** and **0%**.
-  - **Notes:**
-
-### FA-25: Someone Has a Row Under Each Manager They Reported To
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FA-24. Step `7D63` signs in as another account, and step `981D` signs in as this one again.
-
-**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **People** open from the left-hand menu.
-
-- [ ] `3B65` Type **Samuel Richter** in the search box.
-  - **Expected:** Only Samuel Richter's row is listed.
-  - **Notes:**
-
-- [ ] `F866` Select the row's **Manager** cell.
-  - **Expected:** The cell has a blue outline.
-  - **Notes:**
-
-- [ ] `A924` Press Enter.
-  - **Expected:** A list of people opens under the cell.
-  - **Notes:**
-
-- [ ] `7B16` Type **Max**, and choose **Max Munk**.
-  - **Expected:**
-    - The **Manager** cell reads **Max Munk**.
-    - A hollow yellow dot is before it.
-  - **Notes:**
-
-- [ ] `CEE4` Select the row's **Manager assigned** cell.
-  - **Expected:** The cell has a blue outline.
-  - **Notes:**
-
-- [ ] `FC48` Type the first day of the current month as digits alone, such as `20261101` in November 2026, and press Enter.
-  - **Expected:**
-    - The **Manager assigned** cell reads the date typed.
-    - A hollow yellow dot is before it.
-  - **Notes:**
-
-- [ ] `E0DF` Select the Publish button.
-  - **Expected:**
-    - A notice starts **Published**.
-    - The Publish button is gone from the top bar.
-  - **Notes:**
-
-- [ ] `7D63` Sign in as the Engineering Director, `engineering.director@fathom.test`.
-  - **Expected:** The top bar's right end reads **Engineering Director**.
-  - **Notes:**
-
-- [ ] `96FB` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
-  - **Notes:**
-
-- [ ] `1E6F` Type **Samuel Richter** in the search box.
-  - **Expected:** One entry is listed.
-  - **Notes:**
-
-- [ ] `C245` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
-  - **Notes:**
-
-- [ ] `740B` Select **Approve 1 draft**.
-  - **Expected:**
-    - A dialog opens.
-    - It has an **Approve** button.
-  - **Notes:**
-
-- [ ] `923B` Select **Approve** in the dialog.
-  - **Expected:** A notice reads **Approved 1 draft.**
-  - **Notes:**
-
-- [ ] `981D` Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads **Engineering Operations Manager**.
-  - **Notes:**
-
-- [ ] `6D33` Select the **Feature assignments** page in the left-hand menu.
-  - **Expected:** The **Feature assignments** page opens.
-  - **Notes:**
-
-- [ ] `6BC6` Select **Allocations** in the mode switch.
-  - **Expected:** The cells list features, each with its percentage.
-  - **Notes:**
-
-- [ ] `94C4` Select **Manager** in the Group by menu.
-  - **Expected:** **Group by: Manager** shows.
-  - **Notes:**
-
-- [ ] `11E3` Type **Samuel Richter** in the search box.
-  - **Expected:**
-    - Samuel Richter has a row under **Atmananda Ganaka** whose cells are empty from the current month on.
-    - He has a row under **Max Munk** whose cells are empty before the current month.
-    - Each group ends with a total row.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.

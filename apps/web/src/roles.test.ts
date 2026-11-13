@@ -96,8 +96,9 @@ describe("what a role allows", () => {
       "Org chart",
       "Org chart on other dates",
       "Feature assignments",
-      "Allocations",
       "Drafts",
+      "Capacity",
+      "Allocations",
       "Change history",
     ]);
     expect(engineeringManager.doesNotSee).toEqual([
@@ -105,9 +106,9 @@ describe("what a role allows", () => {
       "Projects",
       "Features",
       "Releases",
-      "Org chart on future dates: needs Confidential (Future reorganizations)",
-      "Feature assignments grouped by manager: needs Confidential (Future reorganizations)",
-      "Capacity",
+      "Org chart on future dates: needs Confidential",
+      "Feature assignments grouped by manager: needs Confidential",
+      "Allocations grouped by manager: needs Confidential",
       "Lists",
       "Accounts",
       "Roles",
@@ -120,8 +121,8 @@ describe("what a role allows", () => {
     expect(withoutPersonal.sees).not.toContain("Feature assignments");
     expect(withoutPersonal.doesNotSee).toEqual(
       expect.arrayContaining([
-        "Feature assignments: needs Personal (Start date, End date, Past managers, Feature team dates)",
-        "Feature assignments grouped by manager: needs Personal (Start date, End date, Past managers, Feature team dates) and Confidential (Future reorganizations)",
+        "Feature assignments: needs Personal",
+        "Feature assignments grouped by manager: needs Personal and Confidential",
       ]),
     );
   });
@@ -146,7 +147,7 @@ describe("what a role allows", () => {
     ]);
     expect(sees).toContain("Feature assignments");
     expect(doesNotSee).toContain(
-      "Feature assignments grouped by manager: needs Confidential (Future reorganizations)",
+      "Feature assignments grouped by manager: needs Confidential",
     );
   });
 
@@ -254,6 +255,7 @@ describe("what a change to an account's permissions does", () => {
       difference(
         ["people:view"],
         ["people:view", "administration:view", "administration:edit"],
+        defaultClasses,
       ),
     ).toEqual({
       gains: [
@@ -269,7 +271,7 @@ describe("what a change to an account's permissions does", () => {
   });
 
   it("lists the pages it loses first, then what it loses", () => {
-    expect(difference(["people:view"], [])).toEqual({
+    expect(difference(["people:view"], [], defaultClasses)).toEqual({
       gains: [],
       losses: [
         "The People page no longer appears.",
@@ -282,7 +284,7 @@ describe("what a change to an account's permissions does", () => {
   });
 
   it("lists gains and losses together, without pages that stay", () => {
-    expect(difference(["people:view"], ["plan:view"])).toEqual({
+    expect(difference(["people:view"], ["plan:view"], defaultClasses)).toEqual({
       gains: [
         "Sees the Overview page.",
         "Sees the Projects page.",
@@ -296,8 +298,43 @@ describe("what a change to an account's permissions does", () => {
     });
   });
 
+  it("counts a page gained only once its data is seen too", () => {
+    const reaching: Permission[] = [
+      "allocations:view",
+      "feature-teams:view",
+      "people:view",
+    ];
+    expect(
+      difference(reaching, [...reaching, "personal:view"], defaultClasses)
+        .gains,
+    ).toContain("Sees the Capacity page.");
+  });
+
+  it("says which permissions a page reached needs to open, beside the classes", () => {
+    const { sees, doesNotSee } = allowed(["allocations:view", "personal:view"]);
+    expect(sees).not.toContain("Capacity");
+    expect(doesNotSee).toEqual(
+      expect.arrayContaining([
+        "Capacity",
+        "Allocations: needs View Feature teams and View People",
+      ]),
+    );
+  });
+
+  it("names a page reached without the data to open it, with why", () => {
+    const { sees, doesNotSee } = allowed([
+      "allocations:view",
+      "feature-teams:view",
+      "people:view",
+    ]);
+    expect(sees).not.toContain("Capacity");
+    expect(doesNotSee).toEqual(
+      expect.arrayContaining(["Capacity", "Allocations: needs Personal"]),
+    );
+  });
+
   it("finds nothing when nothing changes", () => {
-    expect(difference(["plan:view"], ["plan:view"])).toEqual({
+    expect(difference(["plan:view"], ["plan:view"], defaultClasses)).toEqual({
       gains: [],
       losses: [],
     });

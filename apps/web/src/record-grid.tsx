@@ -229,6 +229,9 @@ export interface Column<
   // What a record's cell shows in place of its value in words, such as labels in a team's colours,
   // in its Live row too, given the record as it is live.
   content?: (record: Rec) => ReactNode;
+  // Set for a column whose content marks each part a draft adds or removes, such as a month's teams,
+  // so its cells get no mark, words for an empty value, or Live mark of their own.
+  marksParts?: boolean;
   // Whether a record's cell is shaded, such as a month outside someone's employment.
   shaded?: (record: Rec) => boolean;
   // How many characters the column's cells fit, in place of what its kind works out.
@@ -772,6 +775,16 @@ const cellDraft = (
   draft: GridDraft | undefined,
   column: { key: string; changesWith?: string | undefined },
 ) => changedValue(draft, column.key, column.changesWith);
+
+// The draft a cell is marked with as a whole: none where its content marks its own parts.
+const wholeCellDraft = (
+  draft: GridDraft | undefined,
+  column: {
+    key: string;
+    changesWith?: string | undefined;
+    marksParts?: boolean | undefined;
+  },
+) => (column.marksParts === true ? undefined : cellDraft(draft, column));
 
 // Who changed a value a draft changes, as the draft names them.
 function changedBy(
@@ -1726,7 +1739,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     return (
       column.standIn?.(row.record) ??
       // A draft emptying the value, or filling it, says so wherever the view marks that draft.
-      (marksIn(cellDraft(draftById.get(row.record.id), column), known.show)
+      (marksIn(wholeCellDraft(draftById.get(row.record.id), column), known.show)
         ? emptiedWords(column.label, column.emptyLabel)
         : undefined)
     );
@@ -1739,7 +1752,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     if (live === undefined || !isEmpty(column.value(live))) return undefined;
     return (
       column.standIn?.(live) ??
-      (cellDraft(record.draft, column)
+      (wholeCellDraft(record.draft, column)
         ? emptiedWords(column.label, column.emptyLabel)
         : undefined)
     );
@@ -3279,7 +3292,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                 draft={
                                   editingHere
                                     ? undefined
-                                    : cellDraft(marked, column)
+                                    : wholeCellDraft(marked, column)
                                 }
                                 by={
                                   editingHere
@@ -3289,7 +3302,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                 was={
                                   !editingHere &&
                                   draft !== undefined &&
-                                  cellDraft(draft, column) !== undefined
+                                  wholeCellDraft(draft, column) !== undefined
                                     ? wasWords(
                                         shown(
                                           liveColumn(column),
@@ -3417,7 +3430,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                 >
                                   <MarkedItem
                                     tone={
-                                      cellDraft(draft, column) === undefined
+                                      wholeCellDraft(draft, column) ===
+                                      undefined
                                         ? undefined
                                         : "live"
                                     }

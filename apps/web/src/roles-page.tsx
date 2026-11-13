@@ -425,9 +425,11 @@ function Summary({
 function Effects({
   effects,
   userId,
+  dataClasses,
 }: {
   effects: RoleEffects["effects"];
   userId: string;
+  dataClasses: DataClasses;
 }) {
   // The confirmation replaces the grid, and the Save button with it, so focus moves to what it says.
   const heading = useRef<HTMLParagraphElement>(null);
@@ -442,7 +444,7 @@ function Effects({
           : `This change affects ${String(effects.length)} accounts.`}
       </Text>
       {effects.map(({ account, before, after }) => {
-        const { gains, losses } = difference(before, after);
+        const { gains, losses } = difference(before, after, dataClasses);
         return (
           <Paper key={account.id} withBorder p="sm">
             <Stack gap="xs">
@@ -628,7 +630,11 @@ function RoleForm({
         }}
       >
         <Stack>
-          <Effects effects={effects} userId={userId} />
+          <Effects
+            effects={effects}
+            userId={userId}
+            dataClasses={dataClasses}
+          />
           <DialogActions
             error={saving.error}
             pending={saving.isPending}

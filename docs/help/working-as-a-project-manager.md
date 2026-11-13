@@ -12,9 +12,9 @@ A Project Manager sees projects through to delivery: their milestones, the featu
 
 ## See Who Works on What
 
-1. Select the **Feature assignments** page.
-1. Choose **Teams** to see who is on which feature team each month, or **Allocations** to see what each person works on, as [Feature assignments](feature-assignments.md#choose-what-the-table-shows) sets out.
-1. Group by **Feature team** to see each team's people together, as [Feature assignments](feature-assignments.md#group-the-rows) sets out.
+1. Select the **Feature assignments** page to see who is on which feature team each month, as [Feature assignments](feature-assignments.md#read-the-table) sets out.
+1. Select the **Capacity** page, and choose **People**, to see what each person works on, as [Capacity](capacity.md#read-who-works-on-what) sets out.
+1. Group by **Feature team** to see each team's people together, as [Capacity](capacity.md#group-the-rows) sets out.
 
 ## Approve Others' Drafts
 

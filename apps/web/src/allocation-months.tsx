@@ -30,10 +30,12 @@ import {
   type TeamMonths,
   wholeMonth,
 } from "@fathom/shared";
+import { VisuallyHidden } from "@mantine/core";
 import { queryOptions } from "@tanstack/react-query";
 import styles from "./allocation-lines.module.css";
 import { groupedRows, type HeldRow } from "./allocation-groups.ts";
 import { getJson } from "./api.ts";
+import { unitWords } from "./effort.ts";
 import { share } from "./metrics.ts";
 import { decimal } from "./numbers.ts";
 import { peopleAndHires } from "./people-rows.ts";
@@ -70,6 +72,8 @@ export interface AllocationLine {
   live: number | null;
   drafted?: DraftedPart;
   draft?: DraftLike;
+  // Set on a line as it is live, where draft changes it as drafted says, so it shows Live's dot.
+  shownLive?: boolean;
 }
 
 export interface AllocationRow extends HeldRow {
@@ -136,23 +140,25 @@ export function AllocationLines({
   const withTotal = lines.length > 1 || marked !== undefined;
   return (
     <div className={styles.lines}>
-      {lines.map(({ featureId, name, percentage, drafted, draft }) => (
-        <div
-          key={featureId}
-          className={[
-            styles.line,
-            drafted === "removed" ? pages.struck : "",
-          ].join(" ")}
-          {...{ [tipAttribute]: name }}
-        >
-          <span className={styles.name}>
-            <DraftedPartItem draft={draft} part={drafted}>
-              {name}
-            </DraftedPartItem>
-          </span>
-          <span>{percentage}%</span>
-        </div>
-      ))}
+      {lines.map(
+        ({ featureId, name, percentage, drafted, draft, shownLive }) => (
+          <div
+            key={featureId}
+            className={[
+              styles.line,
+              drafted === "removed" && shownLive !== true ? pages.struck : "",
+            ].join(" ")}
+            {...{ [tipAttribute]: name }}
+          >
+            <span className={styles.name}>
+              <DraftedPartItem draft={draft} part={drafted} live={shownLive}>
+                {name}
+              </DraftedPartItem>
+            </span>
+            <span>{percentage}%</span>
+          </div>
+        ),
+      )}
       {withTotal && (
         <div
           className={[styles.line, styles.total, marked?.className ?? ""].join(
@@ -298,7 +304,40 @@ function withAllocations(
       ...personDraft(withDraftShown.map(({ draft }) => draft)),
       madeBy: null,
     },
-    live,
+    live: withLiveMarks(live, draftedIn),
+  };
+}
+
+// The row as approved, for its Live row, with each line a draft takes off or changes marked as
+// live.
+function withLiveMarks(
+  live: AllocationRow,
+  draftedIn: ReadonlyMap<string, AllocationLine[]>,
+): AllocationRow {
+  return {
+    ...live,
+    allocated: new Map(
+      [...live.allocated].map(([month, lines]): [string, AllocationLine[]] => {
+        const changed = new Map(
+          (draftedIn.get(month) ?? []).flatMap(
+            ({ featureId, drafted, draft }) =>
+              (drafted === "removed" || drafted === "changed") &&
+              draft !== undefined
+                ? [[featureId, { drafted, draft }] as const]
+                : [],
+          ),
+        );
+        return [
+          month,
+          lines.map((line) => {
+            const change = changed.get(line.featureId);
+            return change === undefined
+              ? line
+              : { ...line, ...change, shownLive: true };
+          }),
+        ];
+      }),
+    ),
   };
 }
 
@@ -484,22 +523,35 @@ export function capacityOf(
   return summedCapacity([...once.values()]);
 }
 
+const personMonths = unitWords["person-months"];
+
+// A month's capacity, with the unit in its tip and read aloud, since the heading names it by its
+// code alone.
 export function CapacityTotal({ allocated, available }: Capacity) {
   if (available === 0) return null;
+  const [of, from] = [allocated / wholeMonth, available / wholeMonth];
+  const unit = from === 1 ? personMonths.one : personMonths.name;
+  const shared = share(allocated, available);
   return (
-    <div className={styles.lines}>
+    <div
+      className={styles.lines}
+      {...{
+        [tipAttribute]: `${decimal(of)} of ${decimal(from)} ${unit} allocated: ${shared}`,
+      }}
+    >
       <span>
-        {decimal(allocated / wholeMonth)} of {decimal(available / wholeMonth)}
+        {decimal(of)} of {decimal(from)}
+        <VisuallyHidden> {unit} allocated</VisuallyHidden>
       </span>
-      <span>{share(allocated, available)}</span>
+      <span>{shared}</span>
     </div>
   );
 }
 
 function capacityTotals(show: Show): RowTotals<AllocationRow> {
   return {
-    label: "Total",
-    overall: "Organization",
+    label: `Total, ${personMonths.code}`,
+    overall: `Organization, ${personMonths.code}`,
     cell: (rows, month) => <CapacityTotal {...capacityOf(rows, month, show)} />,
   };
 }

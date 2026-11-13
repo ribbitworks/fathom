@@ -26,11 +26,14 @@ export function TeamLabels({
     drafted?: DraftedLabel | undefined;
     // The draft adding or removing the team, whose dot the label shows.
     draftedBy?: DraftLike | undefined;
+    // Set on a team as it is live, where draftedBy changes it as drafted says, so it shows Live's
+    // dot.
+    live?: boolean | undefined;
   }[];
 }) {
   return (
     <div className={styles.labels}>
-      {teams.map(({ id, name, colour, drafted, draftedBy }) => (
+      {teams.map(({ id, name, colour, drafted, draftedBy, live }) => (
         <span
           key={id}
           className={[
@@ -47,7 +50,7 @@ export function TeamLabels({
                 }
           }
         >
-          <DraftedPartItem draft={draftedBy} part={drafted}>
+          <DraftedPartItem draft={draftedBy} part={drafted} live={live}>
             {name}
           </DraftedPartItem>
         </span>

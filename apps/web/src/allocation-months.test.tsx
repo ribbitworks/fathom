@@ -213,9 +213,25 @@ describe("a person's allocations as drafts change them", () => {
       state: "waiting",
       live: { values: { "2027-03": ["f-checkout"] } },
     });
+    // As live, the line keeps its approved percentage, marked with the change waiting for it
     expect(row.live === undefined ? [] : linesIn(row.live, "2027-03")).toEqual([
-      "Checkout 50%",
+      "Checkout 50% changed",
     ]);
+    expect(row.live?.allocated.get("2027-03")?.[0]).toMatchObject({
+      shownLive: true,
+      draft: { state: "waiting" },
+    });
+  });
+
+  it("marks a feature a draft takes off as live, unstruck, for the Live row", () => {
+    const row = casey(
+      rowsOf([allocation({ draft: draft({ action: "deleted" }) })]),
+    );
+
+    expect(row.live?.allocated.get("2027-03")?.[0]).toMatchObject({
+      drafted: "removed",
+      shownLive: true,
+    });
   });
 
   it("marks a feature a draft adds", () => {
@@ -660,10 +676,14 @@ describe("the table", () => {
     );
 
     expect(table.totals).toMatchObject({
-      label: "Total",
-      overall: "Organization",
+      label: "Total, PM",
+      overall: "Organization, PM",
     });
     expect(screen.getByText("0.5 of 1")).toBeTruthy();
+    expect(screen.getByText("person-month allocated")).toBeTruthy();
+    expect(document.querySelector("[data-tip]")?.getAttribute("data-tip")).toBe(
+      "0.5 of 1 person-month allocated: 50%",
+    );
   });
 
   it("names a row by its name, or a planned hire with none by its position and ID", () => {

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Helpers for the front-end tests: a simulated server that answers each request the test expects, a
-// fictional signed-in user, fictional release streams, and Fathom's front end started on a page of
-// the test's choosing.
+// fictional signed-in user, fictional release streams, fictional people's feature teams month by
+// month, and Fathom's front end started on a page of the test's choosing.
 
 import type {
   FeatureDraft,
@@ -11,8 +11,13 @@ import type {
   RecordDraft,
   Release,
   ReleaseStream,
+  TeamMonths,
 } from "@fathom/shared";
-import { defaultClasses, defaultPasswordSettings } from "@fathom/shared";
+import {
+  defaultClasses,
+  defaultPasswordSettings,
+  monthsBetween,
+} from "@fathom/shared";
 import { mergeThemeOverrides } from "@mantine/core";
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory } from "@tanstack/react-router";
@@ -235,3 +240,55 @@ export function savedFiles(): { name: string; text: () => Promise<string> }[] {
   });
   return files;
 }
+
+// The day the month grids' tests are run on, and the months the grids read around it.
+export const gridNow = "2027-03-10";
+export const monthsUrl =
+  "GET /api/feature-teams/months?from=2026-03&to=2028-02";
+
+export const mobile = {
+  id: "t-mobile",
+  name: "Mobile apps",
+  colour: "teal" as const,
+};
+const payments = {
+  id: "t-payments",
+  name: "Payments core",
+  colour: "grape" as const,
+};
+export const platform = {
+  id: "t-platform",
+  name: "Platform reliability",
+  colour: null,
+};
+
+// Three fictional people and their feature teams, month by month.
+export const fictionalTeamMonths: TeamMonths = {
+  months: monthsBetween("2026-03", "2028-02"),
+  teams: [payments, platform, mobile],
+  drafts: [],
+  people: [
+    {
+      id: "p-casey",
+      preferredName: "Casey Fictional",
+      manager: { id: "p-blair", name: "Blair Fictional" },
+      managers: {},
+      teams: { "2027-03": [platform.id] },
+    },
+    {
+      id: "p-avery",
+      preferredName: "Avery Fictional",
+      manager: { id: "p-blair", name: "Blair Fictional" },
+      managers: {},
+      teams: { "2027-03": [payments.id, mobile.id] },
+      outside: ["2026-03"],
+    },
+    {
+      id: "p-blair",
+      preferredName: "Blair Fictional",
+      manager: null,
+      managers: {},
+      teams: {},
+    },
+  ],
+};

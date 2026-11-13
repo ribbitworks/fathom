@@ -43,7 +43,7 @@ A new role is held by no one until it's given to accounts on [Accounts](accounts
 ## Reading the Summary
 
 - **Sees** lists the pages the role opens, and the views on them its classes allow, such as **Org chart on other dates**.
-- **Doesn't see** lists the pages it doesn't reach, and each view it misses, with the class that view needs.
+- **Doesn't see** lists the pages the role doesn't open, and each view it misses, with the permissions and classes that view needs. A page the role's permissions reach but whose data it can't see, such as **Capacity** without Personal details, is listed here too, since the role doesn't have it.
 - **Can** and **Cannot** say, in a sentence each, what the role does and doesn't do.
 - **Highlighted** lines are new since the dialog opened, and **struck-through** lines are taken away.
 

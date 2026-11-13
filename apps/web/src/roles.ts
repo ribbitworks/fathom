@@ -21,7 +21,7 @@ import {
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { getJson, sendJsonFor } from "./api.ts";
-import { pagesOpened } from "./layout.tsx";
+import { pagesOpened, pagesReached } from "./layout.tsx";
 
 export const rolesQuery = queryOptions({
   queryKey: ["roles"],
@@ -62,7 +62,7 @@ export async function previewRole(
 }
 
 // Every page some permissions could open, for saying which ones a role leaves out.
-const everyPage = pagesOpened(
+const everyPage = pagesReached(
   permissionGrid.flatMap(({ actions }) => Object.values(actions)),
 );
 
@@ -83,7 +83,9 @@ export function consequences(
   dataClasses: DataClasses,
 ): Consequences {
   const held = withImplied(granted);
-  const pages = pagesOpened(held);
+  const access = { permissions: held, dataClasses };
+  const opened = pagesOpened(access);
+  const reached = pagesReached(held);
   const can: string[] = [];
   const cannot: string[] = [];
   for (const { actions } of permissionGrid) {
@@ -105,29 +107,34 @@ export function consequences(
       }
     }
   }
-  const views = viewsOfRole({ permissions: held, dataClasses }, pages);
-  // A page missed whole opens only to its line saying why, so it is not among what the role sees.
-  const missedWhole = views.flatMap(({ name, page, why }) =>
-    why !== undefined && name === page ? [page] : [],
-  );
+  const views = viewsOfRole(access, reached);
+  const whysOn = (page: string) =>
+    views.flatMap((view) =>
+      view.page === page && view.why !== undefined ? [view.why] : [],
+    );
+  // A page reached but not opened, since the role sees none of its data, is named by the line
+  // saying why, when that line is about the whole page.
+  const namedByWhy = (page: string) =>
+    views.some(
+      (view) =>
+        view.page === page && view.name === page && view.why !== undefined,
+    );
   return {
-    sees: pages
-      .filter((page) => !missedWhole.includes(page))
-      .flatMap((page) => [
-        page,
-        ...views.flatMap((view) =>
-          view.page === page && view.name !== page && view.why === undefined
-            ? [view.name]
-            : [],
-        ),
-      ]),
-    doesNotSee: everyPage.flatMap((page) =>
-      pages.includes(page)
-        ? views.flatMap((view) =>
-            view.page === page && view.why !== undefined ? [view.why] : [],
-          )
-        : [page],
-    ),
+    sees: opened.flatMap((page) => [
+      page,
+      ...views.flatMap((view) =>
+        view.page === page && view.name !== page && view.why === undefined
+          ? [view.name]
+          : [],
+      ),
+    ]),
+    doesNotSee: everyPage.flatMap((page) => {
+      if (opened.includes(page)) return whysOn(page);
+      if (!reached.includes(page) || !namedByWhy(page)) {
+        return [page, ...whysOn(page)];
+      }
+      return whysOn(page);
+    }),
     can,
     cannot,
   };
@@ -202,9 +209,10 @@ export interface Difference {
 export function difference(
   before: readonly Permission[],
   after: readonly Permission[],
+  dataClasses: DataClasses,
 ): Difference {
-  const pagesBefore = pagesOpened(before);
-  const pagesAfter = pagesOpened(after);
+  const pagesBefore = pagesOpened({ permissions: before, dataClasses });
+  const pagesAfter = pagesOpened({ permissions: after, dataClasses });
   const gains = [
     ...pagesAfter
       .filter((page) => !pagesBefore.includes(page))

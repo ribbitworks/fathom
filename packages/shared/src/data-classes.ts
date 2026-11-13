@@ -6,8 +6,14 @@
 // is never cut down.
 
 import { z } from "zod";
-import { type Permission, type Tier, tierSchema } from "./access.ts";
+import {
+  type Permission,
+  permissionLabel,
+  type Tier,
+  tierSchema,
+} from "./access.ts";
 import { builtInColumnNames } from "./changes.ts";
+import { allOf } from "./words.ts";
 
 // The built-in details whose class is stored and can be moved. Lists and columns hold their own.
 export const classifiedFieldSchema = z.enum([
@@ -212,48 +218,57 @@ const viewNeeds: Record<ClassifiedView, readonly ClassifiedField[]> = {
   allocations: overTime,
 };
 
-// What a view needs beyond reaching its page: Allocations, a mode of Feature assignments, needs
-// View Allocations too.
-const viewPermission: Partial<Record<ClassifiedView, Permission>> = {
-  allocations: "allocations:view",
-};
+// What the allocations grid reads, as a role must hold it to see the grid: allocations, which open
+// its page, and the feature teams' months and the org chart's planned hires it draws on.
+export const allocationsGridPermissions = [
+  "allocations:view",
+  "feature-teams:view",
+  "people:view",
+] as const satisfies readonly Permission[];
 
-// How a sentence on the view's page names it, and whether it reads as plural, and its name
-// elsewhere. Every view must be named, which the compiler checks.
-const viewWords: Record<
+// How a sentence on the view's page names it, and whether it reads as plural. Every view must be
+// named, which the compiler checks.
+const viewWords: Record<ClassifiedView, { subject: string; plural: boolean }> =
+  {
+    orgChartOtherDates: { subject: "Other dates", plural: true },
+    orgChartFutureDates: { subject: "Future dates", plural: true },
+    featureAssignments: { subject: "Feature assignments", plural: false },
+    groupingByManager: { subject: "Grouping by manager", plural: false },
+    allocations: { subject: "Allocations", plural: false },
+  };
+
+// Where each view is: each page holding it, its name there, and the permissions it needs there
+// beyond reaching the page, the first of which the role must hold for the view to be on its page at
+// all.
+const viewPlaces: Record<
   ClassifiedView,
-  { subject: string; plural: boolean; name: string; page: string }
+  readonly { page: string; name: string; needs?: readonly Permission[] }[]
 > = {
-  orgChartOtherDates: {
-    subject: "Other dates",
-    plural: true,
-    name: "Org chart on other dates",
-    page: "Org chart",
-  },
-  orgChartFutureDates: {
-    subject: "Future dates",
-    plural: true,
-    name: "Org chart on future dates",
-    page: "Org chart",
-  },
-  featureAssignments: {
-    subject: "Feature assignments",
-    plural: false,
-    name: "Feature assignments",
-    page: "Feature assignments",
-  },
-  groupingByManager: {
-    subject: "Grouping by manager",
-    plural: false,
-    name: "Feature assignments grouped by manager",
-    page: "Feature assignments",
-  },
-  allocations: {
-    subject: "Allocations",
-    plural: false,
-    name: "Allocations",
-    page: "Feature assignments",
-  },
+  orgChartOtherDates: [{ page: "Org chart", name: "Org chart on other dates" }],
+  orgChartFutureDates: [
+    { page: "Org chart", name: "Org chart on future dates" },
+  ],
+  featureAssignments: [
+    { page: "Feature assignments", name: "Feature assignments" },
+  ],
+  groupingByManager: [
+    {
+      page: "Feature assignments",
+      name: "Feature assignments grouped by manager",
+    },
+    {
+      page: "Capacity",
+      name: "Allocations grouped by manager",
+      needs: allocationsGridPermissions,
+    },
+  ],
+  allocations: [
+    {
+      page: "Capacity",
+      name: "Allocations",
+      needs: allocationsGridPermissions,
+    },
+  ],
 };
 
 // The views needing a built-in detail, and People's columns holding it, by name.
@@ -261,7 +276,11 @@ export function shownIn(field: ClassifiedField): string[] {
   const views = classifiedViewSchema.options.flatMap((view) =>
     // The view is always one of the fixed views listed above.
     // eslint-disable-next-line security/detect-object-injection
-    viewNeeds[view].includes(field) ? [viewWords[view].name] : [],
+    viewNeeds[view].includes(field)
+      ? // The view is always one of the fixed views listed above.
+        // eslint-disable-next-line security/detect-object-injection
+        viewPlaces[view].map(({ name }) => name)
+      : [],
   );
   const columns = [...builtInColumnNames].flatMap(([key, label]) =>
     classifiedColumns.get(key) === field ? [`People's ${label}`] : [],
@@ -295,38 +314,37 @@ export interface RoleView {
 }
 
 // The views needing classified details on the pages a role reaches, named as the sidebar names
-// them, each with why the role misses it, such as "Org chart on future dates: needs Confidential
-// (Future reorganizations)". Views on pages it never reaches are left out, as those pages are.
+// them, each with why the role misses it, such as "Org chart on future dates: needs Confidential",
+// naming the permissions and classes it needs, never the details in a class, which each
+// organization decides. Views on pages it never reaches are left out, as those pages are.
 export function viewsOfRole(
   access: ClassAccess,
   pages: readonly string[],
 ): RoleView[] {
-  return classifiedViewSchema.options.flatMap((view) => {
+  return classifiedViewSchema.options.flatMap((view) =>
     // The view is always one of the fixed views listed above.
     // eslint-disable-next-line security/detect-object-injection
-    const [{ name, page }, needed] = [viewWords[view], viewPermission[view]];
-    if (
-      !pages.includes(page) ||
-      (needed !== undefined && !access.permissions.includes(needed))
-    ) {
-      return [];
-    }
-    const missing = missingClasses(view, access);
-    if (missing.length === 0) return [{ name, page }];
-    const needs = missing.map((dataClass) => {
-      // The view is always one of the fixed views listed above.
-      // eslint-disable-next-line security/detect-object-injection
-      const fields = viewNeeds[view]
-        .filter((field) => classOf(access, field) === dataClass)
-        // The field is always one of the fixed fields listed above.
+    viewPlaces[view].flatMap(({ page, name, needs = [] }) => {
+      const [opening, ...others] = needs;
+      if (
+        !pages.includes(page) ||
+        (opening !== undefined && !access.permissions.includes(opening))
+      ) {
+        return [];
+      }
+      const permissions = others
+        .filter((one) => !access.permissions.includes(one))
+        .map(permissionLabel);
+      const classes = missingClasses(view, access).map(
+        // The class is always one of the fixed classes listed above.
         // eslint-disable-next-line security/detect-object-injection
-        .map((field) => classifiedFieldNames[field]);
-      // The class is always one of the fixed classes listed above.
-      // eslint-disable-next-line security/detect-object-injection
-      return `${classNames[dataClass]} (${fields.join(", ")})`;
-    });
-    return [{ name, page, why: `${name}: needs ${needs.join(" and ")}` }];
-  });
+        (dataClass) => classNames[dataClass],
+      );
+      const missing = [...permissions, ...classes];
+      if (missing.length === 0) return [{ name, page }];
+      return [{ name, page, why: `${name}: needs ${allOf(missing)}` }];
+    }),
+  );
 }
 
 // Why a role does not get a view, such as "Other dates need Personal access.", or undefined when it

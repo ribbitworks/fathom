@@ -23,7 +23,7 @@ A Workforce Administrator keeps the organization's records: its people and plann
 
 ## Keep the Feature Teams Current
 
-1. On **Feature assignments**, choose **Teams**, and move people between teams from the month they move, as [Feature assignments](feature-assignments.md#put-someone-on-a-feature-team-from-a-month) sets out.
+1. On **Feature assignments**, move people between teams from the month they move, as [Feature assignments](feature-assignments.md#put-someone-on-a-feature-team-from-a-month) sets out.
 1. Add, rename or remove teams on the **Org chart**, as [Org chart](org-chart.md#change-a-feature-team) sets out.
 1. Select **Publish** in the top bar.
 

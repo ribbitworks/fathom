@@ -1,52 +1,78 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Capacity page, in tabs kept in the address: for now only Settings, the planning settings that
-// capacity and forecasts are worked out with.
+// The Capacity page, in modes kept in the address: People, the allocations grid, and Settings, the
+// planning settings that capacity and forecasts are worked out with. A switch picks the mode for a
+// role that sees both; a role that sees one sees it alone.
 
-import { Stack, Tabs } from "@mantine/core";
-import { z } from "zod";
+import { Group, SegmentedControl, Stack } from "@mantine/core";
+import { useState } from "react";
+import { type CapacityMode, capacityModeSchema } from "./capacity.ts";
+import { CapacityPeople } from "./capacity-people.tsx";
 import { PageHeader } from "./page-header.tsx";
+import classes from "./pages.module.css";
 import { PlanningSettingsTab } from "./planning-settings-tab.tsx";
+import type { View } from "./table-view.ts";
+import { today } from "./today.ts";
 
-const capacityTabs = ["settings"] as const;
-
-export const capacityTabSchema = z.enum(capacityTabs);
-
-export type CapacityTab = z.infer<typeof capacityTabSchema>;
-
-const tabLabels: Record<CapacityTab, string> = { settings: "Settings" };
+const modeLabels: Record<CapacityMode, string> = {
+  people: "People",
+  settings: "Settings",
+};
 
 export function CapacityPage({
-  tab,
-  onTab,
+  modes,
+  mode,
+  onMode,
+  byManager,
+  view,
+  onView,
   canEditSettings,
 }: {
-  tab: CapacityTab;
-  onTab: (tab: CapacityTab) => void;
+  // The modes the role sees, in order.
+  modes: readonly CapacityMode[];
+  mode: CapacityMode;
+  onMode: (mode: CapacityMode) => void;
+  // Whether the reader may group People's rows by manager, which shows later months' managers.
+  byManager: boolean;
+  view: View;
+  onView: (view: View, replace?: boolean) => void;
   canEditSettings: boolean;
 }) {
+  const [now] = useState(today);
   return (
-    <Stack gap="lg">
+    <Stack
+      gap="md"
+      className={mode === "people" ? classes.tablePage : undefined}
+    >
       <PageHeader title="Capacity" />
-      <Tabs
-        value={tab}
-        onChange={(next) => {
-          onTab(capacityTabSchema.parse(next));
-        }}
-      >
-        <Tabs.List>
-          {capacityTabs.map((one) => (
-            <Tabs.Tab key={one} value={one}>
-              {
-                // The tab is one of the typed tabs, each a key of the labels.
-                // eslint-disable-next-line security/detect-object-injection
-                tabLabels[one]
-              }
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
-      </Tabs>
-      <PlanningSettingsTab canEdit={canEditSettings} />
+      {modes.length > 1 && (
+        <Group>
+          <SegmentedControl
+            aria-label="What the page shows"
+            size="xs"
+            value={mode}
+            onChange={(next) => {
+              onMode(capacityModeSchema.parse(next));
+            }}
+            data={modes.map((one) => ({
+              value: one,
+              // The mode is always one of the typed modes, each a key of the labels.
+              // eslint-disable-next-line security/detect-object-injection
+              label: modeLabels[one],
+            }))}
+          />
+        </Group>
+      )}
+      {mode === "settings" ? (
+        <PlanningSettingsTab canEdit={canEditSettings} />
+      ) : (
+        <CapacityPeople
+          byManager={byManager}
+          now={now}
+          view={view}
+          onView={onView}
+        />
+      )}
     </Stack>
   );
 }

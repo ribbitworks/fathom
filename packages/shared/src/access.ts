@@ -194,7 +194,7 @@ export const permissionDescriptions: Record<
   },
   "personal:view": {
     allows:
-      "Sees people who haven't started yet, and Personal details of the people the role sees, such as gender, start and end dates, and past managers.",
+      "Sees people who haven't started yet, and Personal data of the people the role sees.",
     without:
       "Personal details are hidden wherever they appear, and people who haven't started yet aren't listed.",
     needs: ["people:view", "feature-teams:view"],
@@ -205,13 +205,12 @@ export const permissionDescriptions: Record<
     needs: ["people:edit", "feature-teams:edit"],
   },
   "confidential:view": {
-    allows:
-      "Sees Confidential data, such as future-dated reorganizations and columns marked Confidential.",
+    allows: "Sees Confidential data.",
     without: "Confidential data is hidden wherever it appears.",
     needs: ["people:view", "feature-teams:view"],
   },
   "confidential:edit": {
-    allows: "Changes Confidential data, such as columns marked Confidential.",
+    allows: "Changes Confidential data.",
     without: "Cannot change Confidential data.",
     needs: ["people:edit", "feature-teams:edit"],
   },

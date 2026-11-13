@@ -96,6 +96,7 @@ describe("what shows a built-in detail", () => {
     expect(shownIn("futureReorganizations")).toEqual([
       "Org chart on future dates",
       "Feature assignments grouped by manager",
+      "Allocations grouped by manager",
     ]);
     expect(shownIn("managerHistory")).toContain("People's Manager assigned");
   });
@@ -221,28 +222,26 @@ describe("the views on the pages a role reaches", () => {
       {
         name: "Org chart on future dates",
         page: "Org chart",
-        why: "Org chart on future dates: needs Confidential (Future reorganizations)",
+        why: "Org chart on future dates: needs Confidential",
       },
     ]);
   });
 
-  it("names every class a view needs, with the details kept in each", () => {
+  it("names every class a view needs, never the details kept in each", () => {
     expect(whys(["people:view"])).toEqual([
-      "Org chart on other dates: needs Personal (Start date, End date, Past managers, Feature team dates)",
-      "Org chart on future dates: needs Personal (Start date, End date, Past managers, Feature team dates) and Confidential (Future reorganizations)",
+      "Org chart on other dates: needs Personal",
+      "Org chart on future dates: needs Personal and Confidential",
     ]);
   });
 
-  it("follows the details the organization moved", () => {
+  it("follows the classes the organization moved details to", () => {
     expect(
       whys(["people:view"], {
         startDate: "general",
         endDate: "general",
         featureTeamDates: "confidential",
       })[0],
-    ).toBe(
-      "Org chart on other dates: needs Personal (Past managers) and Confidential (Feature team dates)",
-    );
+    ).toBe("Org chart on other dates: needs Personal and Confidential");
   });
 
   it("leaves out views on pages the role does not reach", () => {
@@ -250,12 +249,43 @@ describe("the views on the pages a role reaches", () => {
     expect(viewsOfRole(access(everything), [])).toEqual([]);
   });
 
-  it("needs View Allocations as well as Feature assignments for Allocations", () => {
+  it("needs View Allocations as well as Capacity for Allocations", () => {
     const names = (permissions: readonly Permission[]) =>
-      viewsOfRole(access(permissions), ["Feature assignments"]).map(
-        ({ name }) => name,
-      );
-    expect(names(everything)).not.toContain("Allocations");
-    expect(names([...everything, "allocations:view"])).toContain("Allocations");
+      viewsOfRole(access(permissions), ["Capacity"]).map(({ name }) => name);
+    expect(names(everything)).toEqual([]);
+    expect(
+      names([
+        ...everything,
+        "allocations:view",
+        "feature-teams:view",
+        "people:view",
+      ]),
+    ).toEqual(["Allocations grouped by manager", "Allocations"]);
+  });
+
+  it("names the permissions a view needs beyond the one opening its page, with the classes", () => {
+    expect(
+      viewsOfRole(access(["allocations:view"]), ["Capacity"]).find(
+        ({ name }) => name === "Allocations",
+      )?.why,
+    ).toBe("Allocations: needs View Feature teams, View People, and Personal");
+  });
+
+  it("names grouping by manager on each page it is on, with why the role misses it there", () => {
+    const pages = ["Feature assignments", "Capacity"];
+    expect(
+      viewsOfRole(
+        access([...personal, "allocations:view", "feature-teams:view"]),
+        pages,
+      )
+        .filter(({ name }) => name.endsWith("grouped by manager"))
+        .map(({ page, why }) => [page, why]),
+    ).toEqual([
+      [
+        "Feature assignments",
+        "Feature assignments grouped by manager: needs Confidential",
+      ],
+      ["Capacity", "Allocations grouped by manager: needs Confidential"],
+    ]);
   });
 });

@@ -76,6 +76,7 @@ export {
   shownIn,
   type RoleView,
   viewsOfRole,
+  allocationsGridPermissions,
   whyMissing,
   whyNoMove,
 } from "./data-classes.ts";

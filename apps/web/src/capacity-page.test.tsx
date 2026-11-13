@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Capacity page and its Settings tab, with the server's responses simulated: the
-// settings read only and changed in place, a value refused, undoing a change, months of ramp-up
-// added and removed, and the settings that cannot be loaded.
+// Tests for the Capacity page's Settings mode, with the server's responses simulated: the settings
+// read only and changed in place, a value refused, undoing a change, months of ramp-up added and
+// removed, and the settings that cannot be loaded.
 
 import {
   type PlanningSettings,
@@ -82,23 +82,6 @@ async function change(label: string, typed: string) {
   await userEvent.clear(field);
   await userEvent.type(field, `${typed}{Enter}`);
 }
-
-describe("the Capacity page", () => {
-  it("opens on its Settings tab, kept in the address", async () => {
-    settingsServer(["plan:view", "features:view", "configuration:view"]);
-    const history = renderApp("/capacity?tab=settings");
-    expect(
-      await screen.findByRole("heading", { name: "Capacity" }),
-    ).toBeDefined();
-    expect(
-      screen
-        .getByRole("tab", { name: "Settings" })
-        .getAttribute("aria-selected"),
-    ).toBe("true");
-    await userEvent.click(screen.getByRole("tab", { name: "Settings" }));
-    expect(history.location.search).toContain("tab=settings");
-  });
-});
 
 describe("the settings read only", () => {
   it("shows every setting, with no pencils or buttons", async () => {

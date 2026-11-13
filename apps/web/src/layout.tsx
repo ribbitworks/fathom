@@ -13,6 +13,8 @@ import { AppMenu, MenuChoices } from "./app-menu.tsx";
 import {
   type AccountRole,
   changeHistoryViews,
+  type ClassAccess,
+  type DataClasses,
   draftingPermissions,
   type PasswordRules,
   type Permission,
@@ -44,6 +46,8 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Brand } from "./brand.tsx";
+import { capacityNeeds } from "./capacity.ts";
+import { opensWith, type PageNeeds, reaches } from "./page-access.ts";
 import { PageExportProvider } from "./page-export.tsx";
 import { DevBadge, devLabel } from "./dev-label.tsx";
 import { Icon, type IconName } from "./icons.tsx";
@@ -89,19 +93,17 @@ type Page =
 type Item = {
   label: string;
   icon: IconName;
-  // The permission the page needs, or several, any one of which opens it.
-  permission?: Permission | readonly Permission[];
+  // The permission the page needs, or several, any one of which opens it, each with the data it
+  // needs where the page would show nothing without it.
+  permission?: PageNeeds;
   // Pages with addresses below their own, such as each list's, are marked as the current page for
   // all of them.
   nested?: boolean;
 } & ({ to: Page; box?: undefined } | { box: "about"; to?: undefined });
 
-// Whether the user's permissions open an item's page.
-function opens(item: Item, permissions: readonly Permission[]): boolean {
-  if (item.permission === undefined) return true;
-  const needed: readonly Permission[] =
-    typeof item.permission === "string" ? [item.permission] : item.permission;
-  return needed.some((permission) => permissions.includes(permission));
+// Whether the user's access opens an item's page.
+function opens(item: Item, access: ClassAccess): boolean {
+  return item.permission === undefined || opensWith(item.permission, access);
 }
 
 const sections: { label: string; items: Item[] }[] = [
@@ -154,7 +156,9 @@ const sections: { label: string; items: Item[] }[] = [
         label: "Feature assignments",
         icon: "assignments",
         to: "/feature-assignments",
-        permission: "feature-teams:view",
+        permission: [
+          { permission: "feature-teams:view", view: "featureAssignments" },
+        ],
       },
       {
         label: "Drafts",
@@ -172,8 +176,7 @@ const sections: { label: string; items: Item[] }[] = [
         label: "Capacity",
         icon: "capacity",
         to: "/capacity",
-        // Only its Settings tab is built, which needs configuration.
-        permission: "configuration:view",
+        permission: capacityNeeds,
       },
       {
         label: "Lists",
@@ -267,9 +270,7 @@ function AppearanceChoices() {
 // The first page in the sidebar, other than the Overview, that the user's roles let them open, if
 // any: where someone who may not see the Overview starts. Never the Overview, so sending them there
 // cannot loop back, and never Help, which is open to everyone.
-export function firstPage(
-  permissions: readonly Permission[],
-): Page | undefined {
+export function firstPage(access: ClassAccess): Page | undefined {
   return sections
     .flatMap(({ items }) => items)
     .find(
@@ -277,17 +278,29 @@ export function firstPage(
         item.to !== undefined &&
         item.to !== "/" &&
         item.permission !== undefined &&
-        opens(item, permissions),
+        opens(item, access),
     )?.to;
 }
 
-// The pages in the sidebar that some permissions open, by name, leaving out those open to everyone,
+// The pages in the sidebar that some access opens, by name, leaving out those open to everyone,
 // such as Help, so the result of setting roles can say which pages a role's holders see.
-export function pagesOpened(permissions: readonly Permission[]): string[] {
+export function pagesOpened(access: ClassAccess): string[] {
+  return sections.flatMap(({ items }) =>
+    items
+      .filter((item) => item.permission !== undefined && opens(item, access))
+      .map((item) => item.label),
+  );
+}
+
+// The pages some permissions would open, whatever data they see, by name, as pagesOpened leaves
+// them, so the result of setting roles can say why a page reached is not opened.
+export function pagesReached(permissions: readonly Permission[]): string[] {
   return sections.flatMap(({ items }) =>
     items
       .filter(
-        (item) => item.permission !== undefined && opens(item, permissions),
+        (item) =>
+          item.permission !== undefined &&
+          reaches(item.permission, permissions),
       )
       .map((item) => item.label),
   );
@@ -312,10 +325,10 @@ function placeAt(
   return undefined;
 }
 
-// Whether some permissions open the page at an address. Pages outside the sidebar are open to all.
-function opensPage(pathname: string, permissions: readonly Permission[]) {
+// Whether some access opens the page at an address. Pages outside the sidebar are open to all.
+export function opensPage(pathname: string, access: ClassAccess) {
   const place = placeAt(pathname);
-  return place === undefined || opens(place.item, permissions);
+  return place === undefined || opens(place.item, access);
 }
 
 // In the rail, each page's name shows beside its icon on hover or focus.
@@ -370,17 +383,11 @@ function AboutItem({ item, rail }: { item: Item; rail: boolean }) {
   );
 }
 
-function Sidebar({
-  permissions,
-  rail,
-}: {
-  permissions: Permission[];
-  rail: boolean;
-}) {
+function Sidebar({ access, rail }: { access: ClassAccess; rail: boolean }) {
   return (
     <Stack gap={rail ? 14 : 22}>
       {sections.map((section) => {
-        const items = section.items.filter((item) => opens(item, permissions));
+        const items = section.items.filter((item) => opens(item, access));
         if (items.length === 0) return null;
         return (
           <Stack
@@ -429,6 +436,7 @@ export function Layout({
   role,
   roles,
   permissions,
+  dataClasses,
   passwordRules,
 }: {
   user: SignedInUser;
@@ -436,6 +444,8 @@ export function Layout({
   role: AccountRole | null;
   roles: readonly AccountRole[];
   permissions: Permission[];
+  // The classes the organization keeps its details in, which decide the pages opened with them.
+  dataClasses: DataClasses;
   // What a new password must meet, which the Change password dialog shows.
   passwordRules: PasswordRules;
 }) {
@@ -492,7 +502,13 @@ export function Layout({
         ...sessionQuery,
         staleTime: 0,
       });
-      if (session !== null && !opensPage(pathname, session.permissions)) {
+      if (
+        session !== null &&
+        !opensPage(pathname, {
+          permissions: session.permissions,
+          dataClasses: session.settings.dataClasses,
+        })
+      ) {
         await navigate({ to: "/" });
       }
       await queryClient.resetQueries();
@@ -653,7 +669,7 @@ export function Layout({
               </UnstyledButton>
             </Tooltip>
           </Group>
-          <Sidebar permissions={permissions} rail={rail} />
+          <Sidebar access={{ permissions, dataClasses }} rail={rail} />
         </Stack>
       </AppShell.Navbar>
       <AppShell.Main className={classes.main}>

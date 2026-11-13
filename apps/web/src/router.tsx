@@ -9,14 +9,15 @@ import type { QueryClient } from "@tanstack/react-query";
 import {
   approvableKinds,
   changeHistoryViews,
+  type ClassAccess,
   changesField,
   historySearchLength,
   editsField,
   seesEmployment,
-  seesView,
   whyMissing,
   type Permission,
   personLengths,
+  seesView,
   showSchema,
   daySchema,
 } from "@fathom/shared";
@@ -38,16 +39,17 @@ import { ChangeHistoryPage } from "./change-history-page.tsx";
 import { DraftsPage } from "./drafts-page.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
-import { firstPage, Layout } from "./layout.tsx";
+import { firstPage, Layout, opensPage } from "./layout.tsx";
 import { ListsPage } from "./lists-page.tsx";
 import { listKindSchema } from "./lists.ts";
-import {
-  FeatureAssignmentsPage,
-  type GridMode,
-  gridModeSchema,
-} from "./feature-assignments-page.tsx";
+import { FeatureAssignmentsPage } from "./feature-assignments-page.tsx";
 import { OrgChartPage } from "./org-chart-page.tsx";
-import { CapacityPage, capacityTabSchema } from "./capacity-page.tsx";
+import { CapacityPage } from "./capacity-page.tsx";
+import {
+  capacityModeSchema,
+  capacityModes,
+  shownCapacityMode,
+} from "./capacity.ts";
 import { SettingsPage } from "./settings-page.tsx";
 import { DataClassesPage } from "./data-classes-page.tsx";
 import { setTimeZone } from "./today.ts";
@@ -59,7 +61,7 @@ import { PageNotFound, ServerProblem } from "./problems.tsx";
 import { RolesPage } from "./roles-page.tsx";
 import { sessionQuery } from "./session.ts";
 import { SignIn } from "./sign-in.tsx";
-import { searchFor, viewProps, viewSearchSchema } from "./table-view.ts";
+import { viewProps, viewSearchSchema } from "./table-view.ts";
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   notFoundComponent: PageNotFound,
@@ -86,6 +88,21 @@ const chartSearch = z.object({
   // The day the chart is drawn as of, when not today.
   day: daySchema.optional().catch(undefined),
 });
+
+// Pages only for users whose access opens them, as the sidebar decides; anyone else is told there is
+// no such page.
+function opening({
+  context,
+  location,
+}: {
+  context: { access: ClassAccess };
+  location: { pathname: string };
+}) {
+  if (!opensPage(location.pathname, context.access)) {
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to say so
+    throw notFound();
+  }
+}
 
 // Pages only for users with a permission; anyone else is told there is no such page.
 function requiring(...permissions: Permission[]) {
@@ -128,8 +145,15 @@ const signedInRoute = createRoute({
     };
   },
   component: function SignedIn() {
-    const { user, role, roles, permissions, mustChangePassword, passwords } =
-      signedIn.useRouteContext();
+    const {
+      user,
+      role,
+      roles,
+      permissions,
+      access,
+      mustChangePassword,
+      passwords,
+    } = signedIn.useRouteContext();
     if (mustChangePassword) {
       return <FirstPasswordChange rules={passwords.rules} owner={user} />;
     }
@@ -139,6 +163,7 @@ const signedInRoute = createRoute({
         role={role}
         roles={roles}
         permissions={permissions}
+        dataClasses={access.dataClasses}
         passwordRules={passwords.rules}
       />
     );
@@ -155,7 +180,7 @@ const homeRoute = createRoute({
       return;
     // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
     throw redirect({
-      to: firstPage(context.permissions) ?? "/help/roles",
+      to: firstPage(context.access) ?? "/help/roles",
       replace: true,
     });
   },
@@ -379,23 +404,36 @@ const releasesRoute = createRoute({
   },
 });
 
+// The Capacity page's address: its mode, and People's view.
+const capacitySearch = viewSearchSchema.extend({
+  mode: capacityModeSchema.optional().catch(undefined),
+});
+
 const capacityRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/capacity",
-  validateSearch: z.object({
-    tab: capacityTabSchema.optional().catch(undefined),
-  }),
-  beforeLoad: requiring("configuration:view"),
+  validateSearch: capacitySearch,
+  beforeLoad: opening,
   component: function Capacity() {
-    const { permissions } = signedIn.useRouteContext();
+    const { permissions, access } = signedIn.useRouteContext();
     const navigate = capacityRoute.useNavigate();
-    const { tab } = capacityRoute.useSearch();
+    const { mode: asked, ...search } = capacityRoute.useSearch();
+    const mode = shownCapacityMode(asked, access);
+    // The address keeps the mode shown, not one asked for that the role doesn't see.
+    const kept = asked === undefined ? {} : { mode };
+    const { view, onView } = viewProps(search, (next, replace) => {
+      void navigate({ search: { ...next, ...kept }, replace });
+    });
     return (
       <CapacityPage
-        tab={tab ?? "settings"}
-        onTab={(next) => {
-          void navigate({ search: { tab: next } });
+        modes={capacityModes(access)}
+        mode={mode}
+        onMode={(next) => {
+          void navigate({ search: { mode: next } });
         }}
+        byManager={seesView("groupingByManager", access)}
+        view={view}
+        onView={onView}
         canEditSettings={permissions.includes("configuration:edit")}
       />
     );
@@ -587,39 +625,41 @@ const orgChartRoute = createRoute({
   },
 });
 
-// The Feature assignments page's address adds the grid's mode, Teams unless Allocations is named.
+// The Feature assignments page's address. Its Allocations mode moved to Capacity's People mode, so
+// an address naming it, such as a saved link, opens that instead, with the same view.
 const featureAssignmentsSearch = viewSearchSchema.extend({
-  mode: gridModeSchema.optional().catch(undefined),
+  mode: z.literal("allocations").optional().catch(undefined),
 });
 
 const featureAssignmentsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/feature-assignments",
   validateSearch: featureAssignmentsSearch,
-  beforeLoad: requiring("feature-teams:view"),
+  beforeLoad: ({ context, location, search: { mode, ...shown } }) => {
+    if (mode !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
+      throw redirect({
+        to: "/capacity",
+        search: { ...shown, mode: "people" },
+        replace: true,
+      });
+    }
+    opening({ context, location });
+  },
   component: function FeatureAssignments() {
     const { permissions, access } = signedIn.useRouteContext();
     const navigate = featureAssignmentsRoute.useNavigate();
-    const { mode = "teams", ...search } = featureAssignmentsRoute.useSearch();
-    const seesAllocations =
-      permissions.includes("allocations:view") &&
-      seesView("allocations", access);
-    const kept = (next: GridMode) =>
-      seesAllocations && next === "allocations" ? { mode: next } : {};
-    const { view, onView } = viewProps(search, (next, replace) => {
-      void navigate({ search: { ...next, ...kept(mode) }, replace });
-    });
+    const { view, onView } = viewProps(
+      featureAssignmentsRoute.useSearch(),
+      (next, replace) => {
+        void navigate({ search: next, replace });
+      },
+    );
     return (
       <FeatureAssignmentsPage
-        whyMissing={whyMissing("featureAssignments", access)}
-        whyNoManagerGrouping={whyMissing("groupingByManager", access)}
-        seesAllocations={seesAllocations}
+        byManager={seesView("groupingByManager", access)}
         editsTeams={editsFeatureTeams(permissions)}
         changesDates={editsField(access, "featureTeamDates")}
-        mode={mode}
-        onMode={(next, nextView) => {
-          void navigate({ search: { ...searchFor(nextView), ...kept(next) } });
-        }}
         view={view}
         onView={onView}
       />

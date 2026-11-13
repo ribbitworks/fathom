@@ -24,7 +24,7 @@ A rejected draft goes back to the person who made it, as [Drafts](drafts.md#what
 
 An Engineering Manager puts people on the feature team that builds it.
 
-1. Select the **Feature assignments** page, and choose **Teams**.
+1. Select the **Feature assignments** page.
 1. Put each person on the team from the month they start, as [Feature assignments](feature-assignments.md#put-someone-on-a-feature-team-from-a-month) sets out.
 1. Select **Publish** in the top bar.
 

@@ -518,7 +518,7 @@ describe("the summary of what a role allows", () => {
     ]);
     expect(summaryLines(dialog, "Doesn't see")).toEqual(
       expect.arrayContaining([
-        "Org chart on future dates: needs Confidential (Future reorganizations)",
+        "Org chart on future dates: needs Confidential",
         "Accounts",
       ]),
     );

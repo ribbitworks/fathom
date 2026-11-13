@@ -4,16 +4,16 @@ An Engineering Manager staffs the work: who is on which feature team, month by m
 
 ## Staff a Feature Team
 
-1. Select the **Feature assignments** page, and choose **Teams**.
+1. Select the **Feature assignments** page.
 1. Put each person on the team from the month they start, as [Feature assignments](feature-assignments.md#put-someone-on-a-feature-team-from-a-month) sets out.
 1. To change a team's lead or several members at once, use the team's panel on the **Org chart**, as [Org chart](org-chart.md#change-a-feature-team) sets out.
 1. Select **Publish** in the top bar.
 
 ## Check Who Is Over or Under Allocated
 
-1. On **Feature assignments**, choose **Allocations**.
-1. Group by **Feature team**, as [Feature assignments](feature-assignments.md#group-the-rows) sets out.
-1. Look for **Over** and **Under** in each month, as [Feature assignments](feature-assignments.md#marks-and-terms) explains.
+1. On **Capacity**, choose **People**.
+1. Group by **Feature team**, as [Capacity](capacity.md#group-the-rows) sets out.
+1. Look for **Over** and **Under** in each month, as [Capacity](capacity.md#in-people) explains.
 
 ## Estimate Features
 
