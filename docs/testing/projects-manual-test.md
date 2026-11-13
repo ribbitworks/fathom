@@ -94,14 +94,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No milestone has a ⋯ button.
   - **Notes:**
 
-- [ ] `C513` Select **Light** in the Appearance menu.
-  - **Expected:** Text, marks and tabs on the page and side panel are easy to read.
-  - **Notes:**
-
-- [ ] `2F1C` Select **Dark** in the Appearance menu.
-  - **Expected:** Text, marks and tabs on the page and side panel are easy to read.
-  - **Notes:**
-
 ### PROJ-02: The Product Manager Adds a Customer
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from PROJ-01.

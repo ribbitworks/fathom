@@ -29,7 +29,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu and the column menu. This test adds:
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the column menu. This test adds:
 
 - **Score cell:** a cell in the **Score** column, which NUM-01 adds at the right end of the People table; scroll right to reach it.
 
@@ -111,14 +111,6 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `B718` Close the panel.
   - **Expected:** The panel closes.
-  - **Notes:**
-
-- [ ] `6EE6` Choose **Dark** in the Appearance menu.
-  - **Expected:** The numbers are easy to read on the dark page.
-  - **Notes:**
-
-- [ ] `B58B` Choose **Light** in the Appearance menu.
-  - **Expected:** The numbers are easy to read on the light page.
   - **Notes:**
 
 ### NUM-03: Sorting and Filtering by Number

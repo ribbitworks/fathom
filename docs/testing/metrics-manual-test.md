@@ -11,7 +11,7 @@ last_updated: "2026-11-13"
 
 ## Scope
 
-Verifies the People table's Metrics panel: breaking people down by one column or two, following the filters and the Draft menu, resizing the panel, and keeping metrics in saved views. Also verifies that frozen columns stay in view while the table scrolls sideways, and that columns are made wider and narrower, in light and dark mode.
+Verifies the People table's Metrics panel: breaking people down by one column or two, following the filters and the Draft menu, resizing the panel, and keeping metrics in saved views. Also verifies that frozen columns stay in view while the table scrolls sideways, and that columns are made wider and narrower.
 
 ## Test Environment
 
@@ -37,7 +37,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, the Draft menu and the column menu. This test adds:
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Draft menu and the column menu. This test adds:
 
 - **Metrics panel:** the panel titled **Metrics** that opens on the right of the People table.
 - **Count line:** the line under the panel's title saying how many people and planned hires it counts, such as "150 people and 8 planned hires".
@@ -284,7 +284,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-08.
 
-**Preconditions:** Browser window at least 1,440 pixels wide. **People** page open from the left-hand menu, with the Metrics panel closed. In the Appearance menu, **Light** selected.
+**Preconditions:** Browser window at least 1,440 pixels wide. **People** page open from the left-hand menu, with the Metrics panel closed.
 
 - [ ] `62ED` Look at the right edge of the **Name** column.
   - **Expected:** A thin grey line runs down the right edge of **Name**, header included.
@@ -320,13 +320,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The dashed line between a draft row and its light green Live row is dashed all the way across.
   - **Notes:**
 
-- [ ] `4B29` In the Appearance menu, select **Dark**.
-  - **Expected:** The page turns dark.
-  - **Notes:**
-
 - [ ] `F86C` Scroll the table sideways back to the left.
   - **Expected:**
-    - The frozen columns are dark.
     - Nothing from the columns underneath shows through.
     - The line and shadow are visible while the table scrolls.
   - **Notes:**
@@ -366,17 +361,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** Only **Site**, now the first column, stays in place as the table scrolls.
   - **Notes:**
 
-- [ ] `FC33` In the Appearance menu, select **Light**.
-  - **Expected:** The page is light.
-  - **Notes:**
-
 **Afterwards:** Open **Views** and select **Columns moved**, which puts the columns back.
 
 ### METRICS-10: Columns Are Made Wider and Narrower
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-09.
 
-**Preconditions:** Browser window at least 1,440 pixels wide. **People** page open, with the Metrics panel closed. In the Appearance menu, **Light** selected.
+**Preconditions:** Browser window at least 1,440 pixels wide. **People** page open, with the Metrics panel closed.
 
 - [ ] `39A5` Point at the column edge of **Name**.
   - **Expected:** A short blue line shows on the edge.
@@ -440,14 +431,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The menu closes.
   - **Notes:**
 
-- [ ] `431C` In the Appearance menu, select **Dark**.
-  - **Expected:** The page turns dark.
-  - **Notes:**
-
-- [ ] `893D` Point at the column edge of **Site**.
-  - **Expected:** The blue line shows clearly on the edge.
-  - **Notes:**
-
 - [ ] `20C4` Open the Views menu.
   - **Expected:**
     - The menu shows **Widths: Name, ID, Onboarding**.
@@ -457,8 +440,4 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `ED3B` Select **Widths: Name, ID, Onboarding**.
   - **Expected:** **Name**, **ID**, and **Onboarding** go back to the widths they had at the start of this test case.
-  - **Notes:**
-
-- [ ] `65BB` In the Appearance menu, select **Light**.
-  - **Expected:** The page is light.
   - **Notes:**

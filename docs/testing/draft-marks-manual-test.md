@@ -11,7 +11,7 @@ last_updated: "2026-11-13"
 
 ## Scope
 
-Verifies how drafts are marked on a table, a side panel, the org chart's cards and the Drafts page: dots, boxes, the lock, Live rows and tints, how they sit beside their text, how they read in light and dark mode, and what each of the three Draft views shows.
+Verifies how drafts are marked on a table, a side panel, the org chart's cards and the Drafts page: dots, boxes, the lock, Live rows and tints, how they sit beside their text, and what each of the three Draft views shows.
 
 ## Test Environment
 
@@ -40,7 +40,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Superuser, `superuser@fathom.test`; the first test case.
 
-**Preconditions:** Signed in with this account. **Light** chosen in the Appearance menu. **People** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] `866B` Type `Vianney Rousseau` in the search box.
   - **Expected:** In the row of 'Vianney Rousseau':
@@ -279,51 +279,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### MARK-08: Marks Read in Dark Mode
 
-**Account:** Superuser, `superuser@fathom.test`, the same as MARK-07.
-
-**Preconditions:** **People** page open from the left-hand menu.
-
-- [ ] `718A` Choose **Dark** in the Appearance menu.
-  - **Expected:** The page turns dark.
-  - **Notes:**
-
-- [ ] `DABB` Type `Vianney Rousseau` in the search box.
-  - **Expected:**
-    - The yellow dot is easy to see
-    - The faintly yellow row is told apart from the page
-    - Every value in the row is easy to read
-  - **Notes:**
-
-- [ ] `8DC8` Type `Ophélie Roussel` in the search box.
-  - **Expected:**
-    - The red dot's ring is easy to see
-    - The faintly red row is told apart from the page
-    - Every value in the row is easy to read
-  - **Notes:**
-
-- [ ] `C1BD` Type `西尾 亮` in the search box.
-  - **Expected:**
-    - The yellow dots and green dots are easy to see
-    - The semibold values are easy to read
-    - The light green Live row is told apart from the row above it
-    - Every value in the Live row is easy to read
-  - **Notes:**
-
-- [ ] `6D18` Type `우아현` in the search box.
-  - **Expected:** The red **Left** box and its word are easy to read.
-  - **Notes:**
-
-- [ ] `B9D7` Type `Viktoria Holmberg` in the search box.
-  - **Expected:** The grey lock is easy to see.
-  - **Notes:**
-
-- [ ] `99B4` Choose **Light** in the Appearance menu.
-  - **Expected:** The page is light.
-  - **Notes:**
+Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 ### MARK-09: Marks Sit on the Centreline of Their Text
 
-**Account:** Superuser, `superuser@fathom.test`, the same as MARK-08.
+**Account:** Superuser, `superuser@fathom.test`, the same as MARK-07.
 
 **Preconditions:** **People** page open from the left-hand menu.
 
