@@ -762,7 +762,6 @@ export function PeoplePage({
           people={query.data.people}
           fields={query.data.fields}
           order={query.data.order}
-          canMoveColumns
           lists={lists.data}
           canEdit={canEdit}
           canEditHires={canEditHires}

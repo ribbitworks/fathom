@@ -15,20 +15,20 @@
 // is wrong as it is filled in, and a refused value keeps its editor open, marked. Every change to a
 // record is a draft, shown in place and marked, until an Approver approves it; a cell a draft
 // changes is marked, and names its live value. Each record's menu, also opened with Shift+F10,
-// drafts removing it or discards its draft. Where the table lets columns move, as People does, each
-// can be dragged by its header, moved with Alt and the arrow keys, or moved from its menu, which
-// the view keeps, and columns drawing on lists are changed from that menu too. Everyone can change
-// a column's width, kept in the view, by dragging its header's right edge, with Shift, Alt and the
-// arrow keys, or from its menu. Everyone, viewers included, can search the table and sort and
-// filter it by any column they see, as table-controls.tsx sets out; rows keep their place while
-// they are edited, until the view next changes. Viewers see the same table, read only. Changes to
-// columns are drafts too, marked under the columns' names, with each column's draft in its menu;
-// the Draft menu also chooses what to show and decides every draft waiting among those shown. What
-// is particular to a kind of record, such as its built-in columns and what adding one asks for,
-// comes from its table, as people-grid.tsx sets out for People.  A cell whose kind is edited in the
-// side panel, such as a note, opens there on a click, Enter, or F2, read only where the cell may
-// not change. While it is being changed, only the panel's own buttons close it, and the table
-// changes nothing else until then.
+// drafts removing it or discards its draft. Every column can be dragged by its header, moved with
+// Alt and the arrow keys, or moved from its menu, which the view keeps, and columns drawing on lists
+// are changed from that menu too. Everyone can change a column's width, kept in the view, by
+// dragging its header's right edge, with Shift, Alt and the arrow keys, or from its menu.
+// Everyone, viewers included, can search the table and sort and filter it by any column they see,
+// as table-controls.tsx sets out; rows keep their place while they are edited, until the view next
+// changes. Viewers see the same table, read only. Changes to columns are drafts too, marked under
+// the columns' names, with each column's draft in its menu; the Draft menu also chooses what to
+// show and decides every draft waiting among those shown. What is particular to a kind of record,
+// such as its built-in columns and what adding one asks for, comes from its table, as
+// people-grid.tsx sets out for People.  A cell whose kind is edited in the side panel, such as a
+// note, opens there on a click, Enter, or F2, read only where the cell may not change. While it is
+// being changed, only the panel's own buttons close it, and the table changes nothing else until
+// then.
 
 import type {
   Asking,
@@ -330,8 +330,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   nameOf: (record: Rec) => string;
   // Whether a record cannot be changed by this user, though others of the table can.
   readOnlyRecord?: (record: Rec) => boolean;
-  // The table's columns, in the order given by their keys, from its added columns and their lists,
-  // and the records, live or as drafted, for columns whose choices are records.
+  // The table's columns, from its added columns and their lists, and the records, live or as
+  // drafted, for columns whose choices are records. A table may start them in its own order rather
+  // than the one given by their keys, so the grid places them in the view's order itself.
   columnsFor: (
     fields: readonly Field[],
     lists: readonly List[],
@@ -1213,7 +1214,6 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   // draft not saved yet.
   saving?: boolean;
   canEditColumns: boolean;
-  canMoveColumns?: boolean;
   actions: RecordActions<Rec, Change, Request>;
   view: View;
   onView: ChangeView;
@@ -1268,7 +1268,6 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   approves: mayApprove = [],
   saving = false,
   canEditColumns,
-  canMoveColumns = false,
   actions,
   view: given,
   onView,
@@ -1287,25 +1286,27 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     draftedFields,
     lists,
   );
-  const askedHere = canMoveColumns ? asked : { ...asked, order: undefined };
-  const order = askedHere.order ?? tableOrder;
+  const order = asked.order ?? tableOrder;
+  // Not every table starts its columns in the order it is given.
+  const inViewOrder = (made: Column<Rec, Change>[]) =>
+    asked.order === undefined ? made : inOrder(made, asked.order);
   // The columns with their lists as they are live, for the live records and each live row, so a
   // choice's drafted name is not shown as live.
   const listsLive = liveLists(lists);
-  const liveColumns = table
-    .columnsFor(fields, listsLive, order, table.liveRecords(everyone))
-    .map((column) => inViewUnits(column, asked));
+  const liveColumns = inViewOrder(
+    table.columnsFor(fields, listsLive, order, table.liveRecords(everyone)),
+  ).map((column) => inViewUnits(column, asked));
   // Both are made from the same fields, so every column has its live one.
   const liveColumn = (column: Column<Rec, Change>) =>
     liveColumns.find(({ key }) => key === column.key) as Column<Rec, Change>;
   const columns =
     asked.show === "live"
       ? liveColumns
-      : table
-          .columnsFor(fields, listsShown, order, everyone)
-          .map((column) => inViewUnits(column, asked));
+      : inViewOrder(table.columnsFor(fields, listsShown, order, everyone)).map(
+          (column) => inViewUnits(column, asked),
+        );
   const known = knownView(
-    askedHere,
+    asked,
     columns,
     [draftColumn],
     columns.filter(breaksDown),
@@ -2215,9 +2216,18 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   };
 
   const moveColumn = (from: number, to: number) => {
+    // From every column, those drafted to be removed included, so a column not shown keeps its
+    // place.
+    const startKeys = table
+      .columnsFor(draftedFields, lists, tableOrder, everyone)
+      .map(({ key }) => key);
+    const ownOrder = [
+      ...startKeys,
+      ...tableOrder.filter((key) => !startKeys.includes(key)),
+    ];
     onView({
       ...view,
-      order: orderAfterMove(keys, from, to, tableOrder, view.order),
+      order: orderAfterMove(keys, from, to, ownOrder, view.order),
       frozen: frozenView(frozenAfterMove(frozenAsked, from, to)),
     });
   };
@@ -2254,26 +2264,24 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       ...noDrafts(),
       columns: ownWaiting ? [field.id] : [],
     };
-    const dragProps = canMoveColumns
-      ? {
-          draggable: true,
-          // A press on the column's edge resizes it, which the browser would otherwise take as
-          // dragging the whole header.
-          onDragStart: (event: DragEvent) => {
-            if (widths.resizing()) {
-              event.preventDefault();
-              return;
-            }
-            setDragging(column.key);
-          },
-          onDragOver: (event: DragEvent) => {
-            event.preventDefault();
-          },
-          onDrop: (event: DragEvent) => {
-            onDrop(event, column);
-          },
+    const dragProps = {
+      draggable: true,
+      // A press on the column's edge resizes it, which the browser would otherwise take as
+      // dragging the whole header.
+      onDragStart: (event: DragEvent) => {
+        if (widths.resizing()) {
+          event.preventDefault();
+          return;
         }
-      : {};
+        setDragging(column.key);
+      },
+      onDragOver: (event: DragEvent) => {
+        event.preventDefault();
+      },
+      onDrop: (event: DragEvent) => {
+        onDrop(event, column);
+      },
+    };
     const frozenAt = frozenCell(index);
     return (
       <Table.Th
@@ -2310,7 +2318,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                     widths.step(column.key, index, step);
                     return;
                   }
-                  if (!canMoveColumns || !event.altKey) return;
+                  if (!event.altKey) return;
                   if (event.key === "ArrowLeft") {
                     event.preventDefault();
                     moveColumnBy(column, -1);
@@ -2466,42 +2474,32 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   Reset width
                 </Menu.Item>
               )}
-              {(changesColumn || canMoveColumns) && (
-                <>
-                  <Menu.Divider />
-                  {changesColumn &&
-                    field &&
-                    field.draft?.action !== "deleted" && (
-                      <Menu.Item
-                        onClick={() => {
-                          actions.editColumn(field);
-                        }}
-                      >
-                        Edit column
-                      </Menu.Item>
-                    )}
-                  {canMoveColumns && (
-                    <>
-                      <Menu.Item
-                        rightSection={<kbd>{shortcuts.left}</kbd>}
-                        onClick={() => {
-                          moveColumnBy(column, -1);
-                        }}
-                      >
-                        Move left
-                      </Menu.Item>
-                      <Menu.Item
-                        rightSection={<kbd>{shortcuts.right}</kbd>}
-                        onClick={() => {
-                          moveColumnBy(column, 1);
-                        }}
-                      >
-                        Move right
-                      </Menu.Item>
-                    </>
-                  )}
-                </>
+              <Menu.Divider />
+              {changesColumn && field && field.draft?.action !== "deleted" && (
+                <Menu.Item
+                  onClick={() => {
+                    actions.editColumn(field);
+                  }}
+                >
+                  Edit column
+                </Menu.Item>
               )}
+              <Menu.Item
+                rightSection={<kbd>{shortcuts.left}</kbd>}
+                onClick={() => {
+                  moveColumnBy(column, -1);
+                }}
+              >
+                Move left
+              </Menu.Item>
+              <Menu.Item
+                rightSection={<kbd>{shortcuts.right}</kbd>}
+                onClick={() => {
+                  moveColumnBy(column, 1);
+                }}
+              >
+                Move right
+              </Menu.Item>
               {field &&
                 actions.moveColumnClass &&
                 field.draft?.action !== "created" &&

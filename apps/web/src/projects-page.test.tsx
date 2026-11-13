@@ -2922,13 +2922,34 @@ describe("the Features page", () => {
       expect(within(dialog).queryByLabelText(/visible|see/i)).toBeNull();
     });
 
-    it("offers no moving of a column", async () => {
+    it("moves any column from its menu, added or built in", async () => {
       await openWith(withColumns());
+      const place = (label: string) =>
+        screen
+          .getAllByRole("button", { name: / column/ })
+          .map((button) => button.getAttribute("aria-label") ?? "")
+          .findIndex((name) => name.startsWith(`${label} column`));
+      const sizeAt = place("Fictional Size");
       await userEvent.click(
         screen.getByRole("button", { name: "Fictional Size column" }),
       );
-      await screen.findByRole("menuitem", { name: "Edit column" });
-      expect(screen.queryByRole("menuitem", { name: /Move/ })).toBeNull();
+      await userEvent.click(
+        await screen.findByRole("menuitem", { name: /^Move left/ }),
+      );
+      await waitFor(() => {
+        expect(place("Fictional Size")).toBe(sizeAt - 1);
+        expect(screen.queryByRole("menu")).toBeNull();
+      });
+      const statusAt = place("Status");
+      await userEvent.click(
+        screen.getByRole("button", { name: /^Status column/ }),
+      );
+      await userEvent.click(
+        await screen.findByRole("menuitem", { name: /^Move right/ }),
+      );
+      await waitFor(() => {
+        expect(place("Status")).toBe(statusAt + 1);
+      });
     });
 
     it("deletes a column for those who may change features", async () => {

@@ -11,7 +11,7 @@ last_updated: "2026-11-13"
 
 ## Scope
 
-Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later, by release and by the month needed, the Release column, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, columns added to Features, writing a note in New feature, a feature's effort, shown and typed in the unit chosen, and its priority, size and risk, from their built-in lists. The projects and proposals that name a feature are verified in [Feature Links](feature-links-manual-test.md).
+Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later, by release and by the month needed, the Release column, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, columns added to Features, writing a note in New feature, a feature's effort, shown and typed in the unit chosen, its priority, size and risk, from their built-in lists, and moving any column. The projects and proposals that name a feature are verified in [Feature Links](feature-links-manual-test.md).
 
 ## Test Environment
 
@@ -510,8 +510,8 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `E244` Open the **Kind** column menu.
   - **Expected:**
-    - The menu offers sorting and filtering.
-    - It has no **Edit column**, **Move left** or **Move right**.
+    - The menu offers **Move left** and **Move right**.
+    - It has no **Edit column**.
   - **Notes:**
 
 ### FEAT-16: A Column Is Added to Features as a Draft
@@ -557,8 +557,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `F38D` Open the **Fictional Score** column menu.
   - **Expected:**
-    - The menu offers **Edit column**.
-    - It has no **Move left** or **Move right**.
+    - The menu offers **Edit column**, **Move left** and **Move right**.
   - **Notes:**
 
 - [ ] `5FEE` Select **Edit column**.
@@ -1315,3 +1314,49 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
+
+### FEAT-26: Any Column Moves
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account FEAT-25 ended with.
+
+**Preconditions:** Signed in with this account.
+
+- [ ] `E2D8` Select the **Features** page in the left-hand menu.
+  - **Expected:** The page is titled **Features**.
+  - **Notes:**
+
+- [ ] `2ABD` Open the **Priority** column menu.
+  - **Expected:** The menu offers **Move left** and **Move right**.
+  - **Notes:**
+
+- [ ] `E29D` Select **Move left**.
+  - **Expected:** **Priority** is between **Projects** and **Proposals**.
+  - **Notes:**
+
+- [ ] `A80C` Select the **Status** column header, and press Alt+Right arrow (Option+Right arrow on a Mac).
+  - **Expected:** **Status** is between **Description** and **Notes**.
+  - **Notes:**
+
+- [ ] `B5FA` Drag the **Kind** column header onto the **Customers** column header.
+  - **Expected:** **Kind** is between **Notes** and **Customers**.
+  - **Notes:**
+
+- [ ] `690E` Reload the page.
+  - **Expected:** The table's columns read, from left to right:
+    - Name
+    - Description
+    - Status
+    - Notes
+    - Kind
+    - Customers
+    - Projects
+    - Priority
+    - Proposals
+    - Needed by
+    - Effort
+    - Size
+    - Risk
+    - Release
+    - Target cycle
+    - Feature team
+  - **Notes:**

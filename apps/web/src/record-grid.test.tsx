@@ -173,7 +173,6 @@ function renderGadgets({
   onView = noop,
   approves = [],
   canEditColumns = false,
-  canMoveColumns = false,
   fields = [colour],
   order = [],
 }: {
@@ -185,7 +184,6 @@ function renderGadgets({
   onView?: (view: View) => void;
   approves?: readonly DraftKind[];
   canEditColumns?: boolean;
-  canMoveColumns?: boolean;
   order?: string[];
 }) {
   return render(
@@ -199,7 +197,6 @@ function renderGadgets({
         canEdit
         approves={approves}
         canEditColumns={canEditColumns}
-        canMoveColumns={canMoveColumns}
         view={view}
         onView={onView}
         actions={given}
@@ -718,7 +715,7 @@ describe("frozen columns", () => {
 
   it("keeps a column moved into the frozen ones frozen, in the view", () => {
     const onView = vi.fn();
-    renderGadgets({ gadgets: [gadget("g1")], onView, canMoveColumns: true });
+    renderGadgets({ gadgets: [gadget("g1")], onView });
     fireEvent.dragStart(headerOf("Code").closest("th") as HTMLElement);
     fireEvent.drop(headerOf("Name").closest("th") as HTMLElement);
     expect(onView).toHaveBeenLastCalledWith(
@@ -728,7 +725,7 @@ describe("frozen columns", () => {
 
   it("unfreezes a frozen column moved out, in the view", async () => {
     const onView = vi.fn();
-    renderGadgets({ gadgets: [gadget("g1")], onView, canMoveColumns: true });
+    renderGadgets({ gadgets: [gadget("g1")], onView });
     headerOf("Name").focus();
     await userEvent.keyboard("{Alt>}{ArrowRight}{/Alt}");
     expect(onView).toHaveBeenLastCalledWith(
@@ -742,7 +739,6 @@ describe("frozen columns", () => {
       gadgets: [gadget("g1")],
       view: { ...emptyView, order: ["code", "name", "f1"] },
       onView,
-      canMoveColumns: true,
       order: ["name", "code", "f1"],
     });
     headerOf("Code").focus();
@@ -752,15 +748,86 @@ describe("frozen columns", () => {
     );
   });
 
-  it("does not move columns on a table that does not let them move", async () => {
+  it("places the columns in the view's order, even on a table that starts them in its own", () => {
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      table: { ...gadgetTable(), columnsFor: () => gadgetColumns([], [], []) },
+      view: { ...emptyView, order: ["code", "name"] },
+    });
+    expect(
+      headerOf("Code").compareDocumentPosition(headerOf("Name")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("moves a column from the order a table starts them in, and leaves none once back", async () => {
     const onView = vi.fn();
-    renderGadgets({ gadgets: [gadget("g1")], onView, canEditColumns: true });
+    const table = {
+      ...gadgetTable(),
+      columnsFor: (fields: readonly Field[], lists: readonly List[]) =>
+        gadgetColumns(fields, lists, ["code", "name"]),
+    };
+    const { rerender } = renderGadgets({
+      gadgets: [gadget("g1")],
+      table,
+      onView,
+      order: ["f1"],
+    });
     headerOf("Code").focus();
     await userEvent.keyboard("{Alt>}{ArrowRight}{/Alt}");
-    expect(onView).not.toHaveBeenCalled();
-    expect(
-      headerOf("Code").closest("th")?.getAttribute("draggable"),
-    ).toBeNull();
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ order: ["name", "code", "f1"] }),
+    );
+    rerender(
+      <MantineProvider theme={testTheme}>
+        <RecordGrid
+          records={[gadget("g1")]}
+          table={table}
+          fields={[colour]}
+          order={["f1"]}
+          lists={[colours]}
+          canEdit
+          canEditColumns={false}
+          view={{ ...emptyView, order: ["name", "code", "f1"] }}
+          onView={onView}
+          actions={actions()}
+        />
+      </MantineProvider>,
+    );
+    headerOf("Code").focus();
+    await userEvent.keyboard("{Alt>}{ArrowLeft}{/Alt}");
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ order: undefined }),
+    );
+  });
+
+  it("keeps a column drafted to be removed in its place when another moves past it", async () => {
+    const onView = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      fields: [
+        {
+          ...colour,
+          draft: {
+            state: "waiting",
+            madeBy: null,
+            madeAt: null,
+            action: "deleted",
+            changed: [],
+            live: {},
+          },
+        },
+        { ...colour, id: "f2", name: "Shade" },
+      ],
+      view: { ...emptyView, show: "drafts" },
+      onView,
+      order: ["name", "code", "f1", "f2"],
+    });
+    headerOf("Code").focus();
+    await userEvent.keyboard("{Alt>}{ArrowRight}{/Alt}");
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ order: ["name", "f2", "f1", "code"] }),
+    );
   });
 
   it("keeps the rows where they are when the columns frozen or their widths change", () => {
@@ -868,7 +935,6 @@ describe("column widths", () => {
       gadgets: [gadget("g1")],
       view: { ...emptyView, widths: { name: 200 } },
       onView,
-      canMoveColumns: true,
     });
     headerOf("Code").focus();
     await userEvent.keyboard("{Shift>}{Alt>}{ArrowRight}{/Alt}{/Shift}");
@@ -989,7 +1055,6 @@ describe("column widths", () => {
     renderGadgets({
       gadgets: [gadget("g1")],
       onView,
-      canMoveColumns: true,
     });
     const header = headerOf("Code").closest("th") as HTMLElement;
     fireEvent.pointerDown(grabbable(edgeOf("Code")), { pointerId: 1 });
