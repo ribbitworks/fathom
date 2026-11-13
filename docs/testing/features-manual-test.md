@@ -24,8 +24,8 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 - **Product Manager:** `product.manager@fathom.test`
 - **Project Manager:** `project.manager@fathom.test`
 - **Team Member:** `team.member@fathom.test`
-- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
-- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as **Second Engineering Operations Manager**
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
+- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as "Second Engineering Operations Manager"
 - **Engineering Director:** `engineering.director@fathom.test`
 
 ## Common Procedures
@@ -42,7 +42,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
 
-### FEAT-01: The Table Reads Well in Light and Dark
+### FEAT-01: The Table Reads Well
 
 **Account:** Product Manager, `product.manager@fathom.test`; the first test case.
 
@@ -52,42 +52,27 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The page is titled **Features**.
     - The table's columns read, from left to right:
-      - Name
-      - Status
-      - Description
-      - Notes
-      - Customers
-      - Projects
-      - Proposals
-      - Priority
-      - Needed by
-      - Effort
-      - Size
-      - Risk
-      - Release
-      - Target cycle
-      - Feature team
-      - Kind
-    - Beside the search box, the count reads **12 features**.
+      - **Name**
+      - **Status**
+      - **Description**
+      - **Notes**
+      - **Customers**
+      - **Projects**
+      - **Proposals**
+      - **Priority**
+      - **Needed by**
+      - **Effort**
+      - **Size**
+      - **Risk**
+      - **Release**
+      - **Target cycle**
+      - **Feature team**
+      - **Kind**
+    - Beside the search box, the count reads "12 features".
   - **Notes:**
 
 - [ ] `F6D0` Look down the **Status** column.
-  - **Expected:** Each row reads one of **Possible**, **Planned**, **In progress**, **Done** or **Cancelled**.
-  - **Notes:**
-
-- [ ] `076E` Choose **Dark** in the Appearance menu.
-  - **Expected:** The page turns dark.
-  - **Notes:**
-
-- [ ] `4D51` Look at the group headings, the rows, the column headers and the lines between the rows.
-  - **Expected:**
-    - Every word is easy to read.
-    - The group headings are clearly set apart from the rows.
-    - Each line between rows, above and below the group headings too, is one thin line running straight across the whole table.
-  - **Notes:**
-
-- [ ] `1C9D` Choose **Light** in the Appearance menu.
-  - **Expected:** The page is light.
+  - **Expected:** Each row reads one of "Possible", "Planned", "In progress", "Done" or "Cancelled".
   - **Notes:**
 
 - [ ] `6BDE` Look at the group headings, the rows, the column headers and the lines between the rows.
@@ -113,13 +98,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `13D8` Look under the heading **Later**.
   - **Expected:**
-    - The rows **Voice Notes**, **Partner Portal** and **Shift Handover Notes** are there.
+    - The rows 'Voice Notes', 'Partner Portal' and 'Shift Handover Notes' are there.
     - Each has **Target cycle** empty.
   - **Notes:**
 
 - [ ] `7DF5` Type `offline` in the search box.
   - **Expected:**
-    - Only the row **Offline Sync** shows.
+    - Only the row 'Offline Sync' shows.
     - It is under its cycle's heading.
     - No heading without a row shows.
   - **Notes:**
@@ -157,14 +142,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Features** page open.
 
-- [ ] `F55A` Look at the **Feature team** cell of the row **Scheduler API**.
+- [ ] `F55A` Look at the **Feature team** cell of the row 'Scheduler API'.
   - **Expected:**
     - The cell has a red **No team** box.
     - No dot is before the box.
     - The box starts in line with the text of the cells above and below.
   - **Notes:**
 
-- [ ] `E379` Look at the **Feature team** cell of the row **Partner Portal**.
+- [ ] `E379` Look at the **Feature team** cell of the row 'Partner Portal'.
   - **Expected:**
     - The cell is empty.
     - The cell has no box.
@@ -184,17 +169,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - A hollow yellow dot is in the row's slot.
     - The row is tinted faint yellow.
-    - **Status** reads **Possible**.
+    - **Status** reads "Possible".
     - The row stays where it is until the view next changes.
   - **Notes:**
 
 - [ ] `954D` Reload the page.
   - **Expected:**
-    - **Fictional Reports** is under the heading **Later**.
+    - `Fictional Reports` is under the heading **Later**.
     - The hollow yellow dot is in its slot.
   - **Notes:**
 
-- [ ] `24AE` In the row **Report Builder**, select the **Target cycle** cell.
+- [ ] `24AE` In the row 'Report Builder', select the **Target cycle** cell.
   - **Expected:**
     - A list of cycles opens.
     - Each choice names its stream and cycle.
@@ -218,7 +203,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Features** page open.
 
-- [ ] `ACE6` Select the **⋯** menu of the row **Report Builder**.
+- [ ] `ACE6` Select the **⋯** menu of the row 'Report Builder'.
   - **Expected:**
     - The menu names the feature and the change to **Target cycle**.
     - It offers **Approve…** and **Reject…**.
@@ -244,7 +229,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account.
 
 - [ ] `F088` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The list has an entry reading **Product Manager as Product Manager drafted adding the feature Fictional Reports**.
+  - **Expected:** The list has an entry reading "Product Manager as Product Manager drafted adding the feature Fictional Reports".
   - **Notes:**
 
 ### FEAT-07: Those Who Only See the Plan Cannot Change Features
@@ -271,27 +256,27 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Run Restore the Seed Data first. Signed in with this account.
 
 - [ ] `360B` Run Discard the Unpublished Changes.
-  - **Expected:** The Publish button is gone.
+  - **Expected:** The **Publish** button is gone.
   - **Notes:**
 
 - [ ] `347C` Select the **Releases** page in the left-hand menu.
   - **Expected:**
-    - The streams table shows **Platform**.
-    - **Platform** has no grey lock in its slot.
+    - The streams table shows 'Platform'.
+    - 'Platform' has no grey lock in its slot.
   - **Notes:**
 
-- [ ] `AE97` Select **Platform** in the table.
-  - **Expected:** The side panel opens, headed **Platform**.
+- [ ] `AE97` Select 'Platform' in the table.
+  - **Expected:** The side panel opens, headed 'Platform'.
   - **Notes:**
 
 - [ ] `966D` In the side panel's **Cycles** table, find the row whose dates include today. Select the **⋯** button at the end of the row directly below it, then **Change length…**.
-  - **Expected:** A dialog titled **Change the length of** that cycle opens.
+  - **Expected:** A dialog titled "Change the length of" that cycle opens.
   - **Notes:**
 
-- [ ] `7DE5` Replace **3** in **Length** with `2`.
+- [ ] `7DE5` Replace `3` in **Length** with `2`.
   - **Expected:** Below **New dates**:
-    - **Releases that move** names **Harbor 3** and **Harbor 4**.
-    - **Features that move** names **Data Retention Controls** and **Report Builder**.
+    - **Releases that move** names 'Harbor 3' and 'Harbor 4'.
+    - **Features that move** names 'Data Retention Controls' and 'Report Builder'.
   - **Notes:**
 
 - [ ] `9BD3` Select **Change length**.
@@ -303,21 +288,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `5A7B` Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads **Project Manager**.
+  - **Expected:** The top bar's right end reads "Project Manager".
   - **Notes:**
 
 - [ ] `B621` Select the **Drafts** page in the left-hand menu.
   - **Expected:**
-    - The list has entries naming **the feature Data Retention Controls** and **the feature Report Builder**.
-    - It has entries for **the cycles of Platform**.
+    - The list has entries naming "the feature Data Retention Controls" and "the feature Report Builder".
+    - It has entries for "the cycles of Platform".
   - **Notes:**
 
-- [ ] `4BD5` Tick one entry for **the cycles of Platform**.
+- [ ] `4BD5` Tick one entry for "the cycles of Platform".
   - **Expected:** The entry's checkbox is ticked.
   - **Notes:**
 
 - [ ] `B27C` Select **Reject…**.
-  - **Expected:** The dialog lists **the feature Data Retention Controls** and **the feature Report Builder** among the drafts it includes.
+  - **Expected:** The dialog lists "the feature Data Retention Controls" and "the feature Report Builder" among the drafts it includes.
   - **Notes:**
 
 - [ ] `0B57` Type a reason in the dialog.
@@ -325,7 +310,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `32B4` Select **Reject** in the dialog.
-  - **Expected:** The entries for **the cycles of Platform**, **the feature Data Retention Controls** and **the feature Report Builder** each start with a red dot in a ring.
+  - **Expected:** The entries for "the cycles of Platform", "the feature Data Retention Controls" and "the feature Report Builder" each start with a red dot in a ring.
   - **Notes:**
 
 ### FEAT-09: The Keyboard Moves Across Group Headings
@@ -350,25 +335,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Features** page open.
 
-- [ ] `4B53` In the row **Usage Alerts**, select the **Needed by** cell.
+- [ ] `4B53` In the row 'Usage Alerts', select the **Needed by** cell.
   - **Expected:** The cell is selected.
   - **Notes:**
 
 - [ ] `E29F` Type `203003`.
-  - **Expected:** The cell reads **2030-03**.
+  - **Expected:** The cell reads "2030-03".
   - **Notes:**
 
 - [ ] `9DD5` Press Enter.
   - **Expected:**
-    - The cell reads **Mar 2030**.
+    - The cell reads "Mar 2030".
     - A hollow yellow dot is before it.
     - A light green Live row under the row shows an empty **Needed by**.
   - **Notes:**
 
-- [ ] `5AF3` In the row **Scheduler API**, select the **Needed by** cell, type `203013`, then press Enter.
+- [ ] `5AF3` In the row 'Scheduler API', select the **Needed by** cell, type `203013`, then press Enter.
   - **Expected:**
     - The value is refused.
-    - The message reads **Needed by: use a month such as 2027-03**.
+    - The message reads "Needed by: use a month such as 2027-03".
   - **Notes:**
 
 - [ ] `3A74` Press Escape.
@@ -381,23 +366,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Features** page open.
 
-- [ ] `53DF` In the row **Scheduler API**, select the **Customers** cell and pick the first two customers offered.
+- [ ] `53DF` In the row 'Scheduler API', select the **Customers** cell and pick the first two customers offered.
   - **Expected:**
     - The cell shows both customers' names.
     - A hollow yellow dot is before them.
   - **Notes:**
 
-- [ ] `5C0E` In the row **Scheduler API**, select the **Description** cell, replace its text with 201 letters, then press Enter.
+- [ ] `5C0E` In the row 'Scheduler API', select the **Description** cell, replace its text with 201 letters, then press Enter.
   - **Expected:**
     - The value is refused.
-    - The message reads **Description too long**.
+    - The message reads "Description too long".
   - **Notes:**
 
 - [ ] `6C7F` Press Escape.
   - **Expected:** The description is back as it was.
   - **Notes:**
 
-- [ ] `C664` In the row **Offline Sync**, select the **Notes** cell.
+- [ ] `C664` In the row 'Offline Sync', select the **Notes** cell.
   - **Expected:**
     - A side panel titled **Notes** opens beside the table.
     - It shows the note with bold words and a bulleted list, formatted as written.
@@ -407,7 +392,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The side panel closes.
   - **Notes:**
 
-- [ ] `48D7` Look at the **Notes** cell of the row **Offline Sync**.
+- [ ] `48D7` Look at the **Notes** cell of the row 'Offline Sync'.
   - **Expected:** The cell shows the start of the note as plain words.
   - **Notes:**
 
@@ -466,22 +451,22 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - They invite renaming, adding and retiring.
     - They say what each of the five meanings is.
-    - The lines end with **Keep at least one choice for each.**
+    - The lines end with "Keep at least one choice for each."
   - **Notes:**
 
 - [ ] `7D26` In the empty row of the choices, type `Long shot`.
-  - **Expected:** The empty row holds **Long shot**.
+  - **Expected:** The empty row holds `Long shot`.
   - **Notes:**
 
 - [ ] `FECE` Choose the meaning **Possible** in the same row.
-  - **Expected:** The row's meaning reads **Possible**.
+  - **Expected:** The row's meaning reads "Possible".
   - **Notes:**
 
 - [ ] `B856` Press Enter.
   - **Expected:**
-    - **Long shot** is added.
+    - `Long shot` is added.
     - A hollow yellow dot is before it.
-    - Its meaning is **Possible**.
+    - Its meaning is "Possible".
   - **Notes:**
 
 ### FEAT-14: A Feature's Details Open Beside the Table
@@ -501,11 +486,11 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 - [ ] `64D3` Scroll right to the **Kind** column.
   - **Expected:**
     - There is no **New column** button.
-    - The row **Offline Sync** shows **New**.
-    - **Mobile Approvals** shows **Improvement**.
-    - **Data Retention Controls** shows **Fix**.
-    - **Report Builder** shows **New**.
-    - **Usage Alerts** is empty.
+    - The row 'Offline Sync' shows 'New'.
+    - 'Mobile Approvals' shows 'Improvement'.
+    - 'Data Retention Controls' shows 'Fix'.
+    - 'Report Builder' shows 'New'.
+    - 'Usage Alerts' is empty.
   - **Notes:**
 
 - [ ] `E244` Open the **Kind** column menu.
@@ -529,7 +514,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `931E` Open the **List** box.
   - **Expected:**
-    - **Kind** is offered.
+    - 'Kind' is offered.
     - No list marked **Personal** or **Confidential** is offered.
   - **Notes:**
 
@@ -540,22 +525,22 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Notes:**
 
 - [ ] `E03F` Type `Fictional Score` in **Name**.
-  - **Expected:** **Name** holds **Fictional Score**.
+  - **Expected:** **Name** holds `Fictional Score`.
   - **Notes:**
 
 - [ ] `D48D` Select **Add column**.
   - **Expected:**
     - The dialog closes.
-    - A **Fictional Score** column is added at the right end of the table.
+    - A `Fictional Score` column is added at the right end of the table.
     - The column is tinted faint yellow.
-    - A hollow yellow dot is before **Fictional Score** in its header.
+    - A hollow yellow dot is before `Fictional Score` in its header.
   - **Notes:**
 
-- [ ] `2C67` Double-click the **Fictional Score** cell of any row.
+- [ ] `2C67` Double-click the `Fictional Score` cell of any row.
   - **Expected:** The cell does not open for editing while the column is a draft.
   - **Notes:**
 
-- [ ] `F38D` Open the **Fictional Score** column menu.
+- [ ] `F38D` Open the `Fictional Score` column menu.
   - **Expected:**
     - The menu offers **Edit column**, **Move left** and **Move right**.
   - **Notes:**
@@ -574,7 +559,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Notes:**
 
 - [ ] `933E` Select **Publish** in the top bar.
-  - **Expected:** The dot before **Fictional Score** is now solid yellow.
+  - **Expected:** The dot before `Fictional Score` is now solid yellow.
   - **Notes:**
 
 ### FEAT-17: An Approver Approves a Column on Features
@@ -585,15 +570,15 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `3CA1` Select the **Drafts** page in the left-hand menu.
   - **Expected:**
-    - The list has an entry naming **the column Fictional Score on Features**.
-    - The entry is drafted by **Engineering Operations Manager**.
+    - The list has an entry naming "the column Fictional Score on Features".
+    - The entry is drafted by "Engineering Operations Manager".
   - **Notes:**
 
 - [ ] `1F59` Select the **Features** page in the left-hand menu.
   - **Expected:** The page is titled **Features**.
   - **Notes:**
 
-- [ ] `C4A4` Open the **Fictional Score** column menu.
+- [ ] `C4A4` Open the `Fictional Score` column menu.
   - **Expected:** The menu offers **Approve…** and **Reject…**.
   - **Notes:**
 
@@ -605,9 +590,9 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `293A` Select **Approve**.
   - **Expected:**
-    - The **Fictional Score** header has no dot.
+    - The `Fictional Score` header has no dot.
     - The column is no longer tinted.
-    - **Fictional Score** stays at the right end of the table, after **Kind**.
+    - `Fictional Score` stays at the right end of the table, after **Kind**.
   - **Notes:**
 
 ### FEAT-18: A Value in an Added Column Is Part of a Feature's Draft
@@ -616,32 +601,32 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 **Preconditions:** Signed in with this account. **Features** page open.
 
-- [ ] `DD3D` Double-click the **Fictional Score** cell of the row **Usage Alerts**, type `3.5` and press Enter.
+- [ ] `DD3D` Double-click the `Fictional Score` cell of the row 'Usage Alerts', type `3.5` and press Enter.
   - **Expected:**
-    - The cell shows **3.5**.
+    - The cell shows `3.5`.
     - A hollow yellow dot is before it.
-    - A light green Live row under the row has an empty **Fictional Score** cell.
+    - A light green Live row under the row has an empty `Fictional Score` cell.
   - **Notes:**
 
-- [ ] `2D6E` Double-click the **Kind** cell of the same row, and choose **Fix**.
+- [ ] `2D6E` Double-click the **Kind** cell of the same row, and choose 'Fix'.
   - **Expected:**
-    - The cell shows **Fix**.
+    - The cell shows 'Fix'.
     - The Live row's **Kind** cell stays empty.
   - **Notes:**
 
-- [ ] `F82A` Select the **Drafts** page in the left-hand menu, and find **the feature Usage Alerts**.
+- [ ] `F82A` Select the **Drafts** page in the left-hand menu, and find "the feature Usage Alerts".
   - **Expected:** Its entry names both changes:
-    - **Fictional Score** to **3.5**.
-    - **Kind** to **Fix**.
+    - `Fictional Score` to `3.5`.
+    - **Kind** to 'Fix'.
   - **Notes:**
 
 - [ ] `841B` Select the **Features** page in the left-hand menu.
   - **Expected:** The page is titled **Features**.
   - **Notes:**
 
-- [ ] `C498` Point at the row **Usage Alerts**, and select the details button at the right of its **Name** cell.
+- [ ] `C498` Point at the row 'Usage Alerts', and select the details button at the right of its **Name** cell.
   - **Expected:**
-    - The side panel lists **Fictional Score** and **Kind**.
+    - The side panel lists `Fictional Score` and **Kind**.
     - Each shows the drafted value, with the live value under it.
   - **Notes:**
 
@@ -650,11 +635,11 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Notes:**
 
 - [ ] `14F1` Select **Publish** in the top bar.
-  - **Expected:** The dots before **3.5** and **Fix** on the row **Usage Alerts** are now solid yellow.
+  - **Expected:** The dots before `3.5` and 'Fix' on the row 'Usage Alerts' are now solid yellow.
   - **Notes:**
 
 - [ ] `BDC2` Select **New feature**.
-  - **Expected:** The form offers **Kind** and **Fictional Score**.
+  - **Expected:** The form offers **Kind** and `Fictional Score`.
   - **Notes:**
 
 - [ ] `1F6F` Select **Cancel**.
@@ -662,14 +647,14 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Notes:**
 
 - [ ] `9B59` Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads **Project Manager**.
+  - **Expected:** The top bar's right end reads "Project Manager".
   - **Notes:**
 
 - [ ] `3E9D` Select the **Features** page in the left-hand menu.
   - **Expected:** The page is titled **Features**.
   - **Notes:**
 
-- [ ] `5E03` Open the **⋯** menu of the row **Usage Alerts**, and select **Approve…**.
+- [ ] `5E03` Open the **⋯** menu of the row 'Usage Alerts', and select **Approve…**.
   - **Expected:**
     - A dialog opens.
     - It has an **Approve** button.
@@ -679,7 +664,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:**
     - The row has no dot.
     - The row has no Live row under it.
-    - It still shows **3.5** and **Fix**.
+    - It still shows `3.5` and 'Fix'.
   - **Notes:**
 
 ### FEAT-19: Deleting a Column Removes It From Features
@@ -688,7 +673,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 **Preconditions:** Signed in with this account. **Features** page open.
 
-- [ ] `8B94` Open the **Fictional Score** column menu and select **Edit column**.
+- [ ] `8B94` Open the `Fictional Score` column menu and select **Edit column**.
   - **Expected:**
     - The **Edit column** dialog opens.
     - It has a red **Delete column** button.
@@ -697,17 +682,17 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 - [ ] `0D9A` Select **Delete column**.
   - **Expected:**
     - The dialog closes.
-    - A notice reads **Deleted the Fictional Score column.**
+    - A notice reads "Deleted the Fictional Score column."
     - The column stays in the table.
     - A hollow yellow dot is before its name.
     - The column's name is struck through.
   - **Notes:**
 
 - [ ] `C886` Select **Publish** in the top bar.
-  - **Expected:** The dot before **Fictional Score** is now solid yellow.
+  - **Expected:** The dot before `Fictional Score` is now solid yellow.
   - **Notes:**
 
-- [ ] `09CF` Open the **Fictional Score** column menu, and select **Approve…**.
+- [ ] `09CF` Open the `Fictional Score` column menu, and select **Approve…**.
   - **Expected:**
     - A dialog opens.
     - It has an **Approve** button.
@@ -715,7 +700,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `B052` Select **Approve**.
   - **Expected:**
-    - The **Fictional Score** column is gone.
+    - The `Fictional Score` column is gone.
     - The table ends with **Kind**.
   - **Notes:**
 
@@ -732,7 +717,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
     - The **New feature** panel opens beside the table.
     - Each label is at the left of its row.
     - The rows are under the headings **Details** and **Columns**.
-    - The **Notes** row has **None** as its value.
+    - The **Notes** row has "None" as its value.
     - It has a pencil button at its right.
     - There is no text box for the note.
   - **Notes:**
@@ -743,31 +728,23 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `BCF1` Select the pencil button in the **Notes** row.
   - **Expected:**
-    - A second panel opens under **New feature**, titled **Notes for New feature**.
+    - A second panel opens under **New feature**, titled "Notes for New feature".
     - **Note**, **Editor** and **Markdown** are at its top.
     - **Editor** is chosen.
     - A toolbar is under the text.
-    - **Fictional Atlas** is still in **Name**.
-  - **Notes:**
-
-- [ ] `F72D` Choose **Dark** in the Appearance menu.
-  - **Expected:** Both panels are easy to read.
-  - **Notes:**
-
-- [ ] `5BC1` Choose **Light** in the Appearance menu.
-  - **Expected:** Both panels are easy to read.
+    - `Fictional Atlas` is still in **Name**.
   - **Notes:**
 
 - [ ] `7CD5` Type `First words` in the editor.
-  - **Expected:** The editor holds **First words**.
+  - **Expected:** The editor holds `First words`.
   - **Notes:**
 
-- [ ] `ECC4` Select the words **First words** in the editor.
+- [ ] `ECC4` Select the words `First words` in the editor.
   - **Expected:** The words are highlighted.
   - **Notes:**
 
 - [ ] `0C65` Select **Bold** in the toolbar.
-  - **Expected:** **First words** is bold in the editor.
+  - **Expected:** `First words` is bold in the editor.
   - **Notes:**
 
 - [ ] `C7AB` In the **New feature** panel, change **Name** to `Fictional Atlas Two`.
@@ -779,8 +756,8 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 - [ ] `1D2A` Select **Save** in the note's panel.
   - **Expected:**
     - The note's panel closes.
-    - The **Notes** row shows **First words** in bold.
-    - **Name** still reads **Fictional Atlas Two**.
+    - The **Notes** row shows `First words` in bold.
+    - **Name** still reads `Fictional Atlas Two`.
   - **Notes:**
 
 - [ ] `3CFC` Select the pencil button in the **Notes** row.
@@ -790,7 +767,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Notes:**
 
 - [ ] `77D6` Select **Editor**.
-  - **Expected:** The editor shows **First words**.
+  - **Expected:** The editor shows `First words`.
   - **Notes:**
 
 - [ ] `3A7F` Type more words in the editor.
@@ -799,7 +776,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `ACB6` Select **Cancel** in the **New feature** panel.
   - **Expected:**
-    - A box asks **Discard the new feature?**
+    - A box asks "Discard the new feature?"
     - It offers **Keep adding** and **Discard**.
   - **Notes:**
 
@@ -812,14 +789,14 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 - [ ] `A098` Select **Cancel** in the note's panel.
   - **Expected:**
     - The note's panel closes.
-    - The **Notes** row still shows only **First words**.
+    - The **Notes** row still shows only `First words`.
   - **Notes:**
 
 - [ ] `886E` Select **Add** at the foot of the **New feature** panel.
   - **Expected:**
     - The feature is added as a draft.
     - Its details show beside the table.
-    - **First words** is in bold under **Notes**.
+    - `First words` is in bold under **Notes**.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -830,25 +807,25 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 **Preconditions:** Restore the Seed Data run after FEAT-20. **Features** page open.
 
-- [ ] `B9CA` Find the **Effort** column, after **Needed by**, and look at the rows **Audit Export**, **Usage Alerts** and **Scheduler API**.
+- [ ] `B9CA` Find the **Effort** column, after **Needed by**, and look at the rows 'Audit Export', 'Usage Alerts' and 'Scheduler API'.
   - **Expected:**
-    - **Audit Export** reads **316 h**.
-    - **Usage Alerts** reads **424 h**.
-    - **Scheduler API** is empty.
+    - 'Audit Export' reads "316 h".
+    - 'Usage Alerts' reads "424 h".
+    - 'Scheduler API' is empty.
   - **Notes:**
 
-- [ ] `2B82` Rest the pointer on **316 h**.
-  - **Expected:** A tooltip reads **316 hours**, and nothing more.
+- [ ] `2B82` Rest the pointer on "316 h".
+  - **Expected:** A tooltip reads "316 hours", and nothing more.
   - **Notes:**
 
-- [ ] `707E` Select the **Release** cell of **Audit Export**.
+- [ ] `707E` Select the **Release** cell of 'Audit Export'.
   - **Expected:** The cell is selected.
   - **Notes:**
 
 - [ ] `160C` Press the Right arrow key once.
   - **Expected:**
-    - The **Effort** cell of **Audit Export** is selected.
-    - A tooltip beside it reads **316 hours**.
+    - The **Effort** cell of 'Audit Export' is selected.
+    - A tooltip beside it reads "316 hours".
   - **Notes:**
 
 - [ ] `9BDC` Open the column menu of **Effort**.
@@ -863,61 +840,61 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 - [ ] `55AF` Select **Person-days**.
   - **Expected:**
     - The menu closes.
-    - **Audit Export** reads **39.5 PD**.
-    - **Usage Alerts** reads **53 PD**.
+    - 'Audit Export' reads "39.5 PD".
+    - 'Usage Alerts' reads "53 PD".
   - **Notes:**
 
-- [ ] `970D` Rest the pointer on **39.5 PD**.
-  - **Expected:** A tooltip reads **316 hours**.
+- [ ] `970D` Rest the pointer on "39.5 PD".
+  - **Expected:** A tooltip reads "316 hours".
   - **Notes:**
 
 - [ ] `920C` Open the column menu of **Effort**, and select **Person-weeks**.
   - **Expected:**
-    - **Audit Export** reads **8 PW**.
-    - **Usage Alerts** reads **10.6 PW**.
+    - 'Audit Export' reads "8 PW".
+    - 'Usage Alerts' reads "10.6 PW".
   - **Notes:**
 
-- [ ] `1FFD` Rest the pointer on **8 PW**.
-  - **Expected:** A tooltip reads **316 hours, rounded up**.
+- [ ] `1FFD` Rest the pointer on "8 PW".
+  - **Expected:** A tooltip reads "316 hours, rounded up".
   - **Notes:**
 
 - [ ] `EDEA` Open the column menu of **Effort**, and select **Person-months**.
   - **Expected:**
-    - **Audit Export** reads **2 PM**.
-    - **Usage Alerts** reads **2.65 PM**.
-    - **Bulk Import** reads **1.5 PM**.
+    - 'Audit Export' reads "2 PM".
+    - 'Usage Alerts' reads "2.65 PM".
+    - 'Bulk Import' reads "1.5 PM".
   - **Notes:**
 
 - [ ] `6ACA` Open the column menu of **Effort**, and select **Person-quarters**.
   - **Expected:**
-    - **Audit Export** reads **0.67 PQ**.
-    - **Usage Alerts** reads **0.89 PQ**.
-    - **Bulk Import** reads **0.5 PQ**.
+    - 'Audit Export' reads "0.67 PQ".
+    - 'Usage Alerts' reads "0.89 PQ".
+    - 'Bulk Import' reads "0.5 PQ".
   - **Notes:**
 
 - [ ] `EA7D` Open the column menu of **Effort**, and select **Person-months**.
-  - **Expected:** **Usage Alerts** reads **2.65 PM**.
+  - **Expected:** 'Usage Alerts' reads "2.65 PM".
   - **Notes:**
 
 - [ ] `0F3F` Open the column menu of **Effort**, and select **1** under **Decimal places**.
   - **Expected:**
-    - **Audit Export** reads **2 PM**.
-    - **Usage Alerts** reads **2.7 PM**.
-    - **Bulk Import** reads **1.5 PM**.
+    - 'Audit Export' reads "2 PM".
+    - 'Usage Alerts' reads "2.7 PM".
+    - 'Bulk Import' reads "1.5 PM".
   - **Notes:**
 
-- [ ] `F7C5` Rest the pointer on **2.7 PM**.
-  - **Expected:** A tooltip reads **424 hours, rounded up**.
+- [ ] `F7C5` Rest the pointer on "2.7 PM".
+  - **Expected:** A tooltip reads "424 hours, rounded up".
   - **Notes:**
 
 - [ ] `7B2E` Open the column menu of **Effort**, and select **0** under **Decimal places**.
   - **Expected:**
-    - **Usage Alerts** reads **3 PM**.
-    - **Bulk Import** reads **2 PM**.
+    - 'Usage Alerts' reads "3 PM".
+    - 'Bulk Import' reads "2 PM".
   - **Notes:**
 
 - [ ] `66F0` Reload the page.
-  - **Expected:** **Effort** still shows person-months with no decimal places: **Usage Alerts** reads **3 PM**.
+  - **Expected:** **Effort** still shows person-months with no decimal places: 'Usage Alerts' reads "3 PM".
   - **Notes:**
 
 - [ ] `D9D3` Open the **Views** menu.
@@ -928,28 +905,8 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:** The menu closes.
   - **Notes:**
 
-- [ ] `B9DC` Choose **Dark** in the Appearance menu.
-  - **Expected:** The page turns dark.
-  - **Notes:**
-
-- [ ] `14E4` Rest the pointer on **3 PM**.
-  - **Expected:** The tooltip is easy to read.
-  - **Notes:**
-
-- [ ] `C04F` Open the column menu of **Effort**.
-  - **Expected:** The column menu is easy to read.
-  - **Notes:**
-
-- [ ] `E948` Press Escape.
-  - **Expected:** The menu closes.
-  - **Notes:**
-
-- [ ] `796E` Choose **Light** in the Appearance menu.
-  - **Expected:** The page is light.
-  - **Notes:**
-
 - [ ] `0A18` Open the **Views** menu, and select **Units: Effort in person-months to 0 decimal places**.
-  - **Expected:** **Audit Export** reads **316 h** again.
+  - **Expected:** 'Audit Export' reads "316 h" again.
   - **Notes:**
 
 ### FEAT-22: Effort Is Typed in the Unit Shown and Rounded Up
@@ -959,48 +916,48 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 **Preconditions:** **Features** page open, **Effort** shown in hours to 2 decimal places, as the column menu of **Effort** shows with ticks beside **Hours** and **2**.
 
 - [ ] `9BF3` Open the column menu of **Effort**, and select **Person-days**.
-  - **Expected:** **Audit Export** reads **39.5 PD**.
+  - **Expected:** 'Audit Export' reads "39.5 PD".
   - **Notes:**
 
-- [ ] `45AB` In the row **Scheduler API**, select the **Effort** cell, type `2.2`, then press Enter.
+- [ ] `45AB` In the row 'Scheduler API', select the **Effort** cell, type `2.2`, then press Enter.
   - **Expected:**
-    - The cell reads **2.5 PD**.
+    - The cell reads "2.5 PD".
     - A hollow yellow dot is before it.
     - A light green Live row under the row shows an empty **Effort**.
   - **Notes:**
 
-- [ ] `FFD8` Select the **Effort** cell of **Scheduler API** reading **2.5 PD**, above the Live row, and press Enter.
+- [ ] `FFD8` Select the **Effort** cell of 'Scheduler API' reading "2.5 PD", above the Live row, and press Enter.
   - **Expected:**
-    - A field opens in the cell holding **2.5**.
-    - **PD** is after it.
+    - A field opens in the cell holding "2.5".
+    - "PD" is after it.
   - **Notes:**
 
 - [ ] `A9FB` Press Enter without changing the field.
   - **Expected:**
     - The field closes.
-    - The cell still reads **2.5 PD**.
+    - The cell still reads "2.5 PD".
   - **Notes:**
 
-- [ ] `9DC2` Select the **Effort** cell of **Scheduler API** reading **2.5 PD** again, type `-1`, then press Enter.
+- [ ] `9DC2` Select the **Effort** cell of 'Scheduler API' reading "2.5 PD" again, type `-1`, then press Enter.
   - **Expected:**
     - The value is refused.
-    - The message reads **Effort: use 0 or more**.
+    - The message reads "Effort: use 0 or more".
   - **Notes:**
 
 - [ ] `CDAD` Press Escape.
-  - **Expected:** The cell reads **2.5 PD** again.
+  - **Expected:** The cell reads "2.5 PD" again.
   - **Notes:**
 
-- [ ] `95FD` Select **Show details** in the **⋯** menu of **Scheduler API**.
+- [ ] `95FD` Select **Show details** in the **⋯** menu of 'Scheduler API'.
   - **Expected:**
     - The details panel opens beside the table.
-    - Its **Effort** row reads **2.5 person-days (20 hours)**.
+    - Its **Effort** row reads "2.5 person-days (20 hours)".
   - **Notes:**
 
 - [ ] `D165` Select the pencil button in the **Effort** row.
   - **Expected:**
-    - A field opens holding **2.5**.
-    - A menu beside it reads **person-days**.
+    - A field opens holding "2.5".
+    - A menu beside it reads "person-days".
   - **Notes:**
 
 - [ ] `01D7` Press Tab twice, past the field's **×**.
@@ -1012,31 +969,31 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 - [ ] `ED15` Press Escape.
   - **Expected:**
     - The field closes.
-    - The **Effort** row still reads **2.5 person-days (20 hours)**.
+    - The **Effort** row still reads "2.5 person-days (20 hours)".
   - **Notes:**
 
 - [ ] `BBDD` Select the pencil button in the **Effort** row.
   - **Expected:**
-    - A field opens holding **2.5**.
-    - A menu beside it reads **person-days**.
+    - A field opens holding "2.5".
+    - A menu beside it reads "person-days".
   - **Notes:**
 
 - [ ] `CF2C` Select **hours** in the menu beside the field.
   - **Expected:**
-    - The field now holds **20**.
-    - The menu reads **hours**.
+    - The field now holds "20".
+    - The menu reads "hours".
   - **Notes:**
 
 - [ ] `6EA5` Change the field to `28`, then press Enter.
   - **Expected:**
-    - The **Effort** row reads **3.5 person-days (28 hours)**.
-    - In the table **Scheduler API** reads **3.5 PD**.
+    - The **Effort** row reads "3.5 person-days (28 hours)".
+    - In the table 'Scheduler API' reads "3.5 PD".
   - **Notes:**
 
 - [ ] `9DFC` Select the pencil button in the **Effort** row.
   - **Expected:**
-    - A field opens holding **3.5**.
-    - A menu beside it reads **person-days**.
+    - A field opens holding "3.5".
+    - A menu beside it reads "person-days".
   - **Notes:**
 
 - [ ] `C1C3` Press Tab twice.
@@ -1045,8 +1002,8 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `70BA` Using only the keyboard, choose **person-weeks** in the menu.
   - **Expected:**
-    - The menu reads **person-weeks**.
-    - The field holds **0.8**.
+    - The menu reads "person-weeks".
+    - The field holds "0.8".
   - **Notes:**
 
 - [ ] `6D53` Press Shift+Tab twice.
@@ -1054,19 +1011,19 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Notes:**
 
 - [ ] `E4AD` Type `1` in place of what the field holds.
-  - **Expected:** The field holds **1**.
+  - **Expected:** The field holds `1`.
   - **Notes:**
 
 - [ ] `6B90` Press Tab three times, until neither the field nor the menu has focus.
   - **Expected:**
     - The field closes.
-    - The **Effort** row reads **5 person-days (40 hours)**.
+    - The **Effort** row reads "5 person-days (40 hours)".
   - **Notes:**
 
 - [ ] `A7B1` Close the details panel.
   - **Expected:**
     - The panel closes.
-    - **Scheduler API** reads **5 PD**.
+    - 'Scheduler API' reads "5 PD".
   - **Notes:**
 
 - [ ] `121F` Open the column menu of **Effort**.
@@ -1074,19 +1031,19 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Notes:**
 
 - [ ] `EF23` Select **Hours**.
-  - **Expected:** **Scheduler API** reads **40 h**.
+  - **Expected:** 'Scheduler API' reads "40 h".
   - **Notes:**
 
-- [ ] `18EF` Select **Show details** in the **⋯** menu of **Scheduler API**.
-  - **Expected:** The panel's **Effort** row reads **40 hours**, with nothing after it.
+- [ ] `18EF` Select **Show details** in the **⋯** menu of 'Scheduler API'.
+  - **Expected:** The panel's **Effort** row reads "40 hours", with nothing after it.
   - **Notes:**
 
 - [ ] `B976` Close the details panel.
   - **Expected:** The panel closes.
   - **Notes:**
 
-- [ ] `66EC` Select the **Drafts** page in the left-hand menu, and find the draft of **Scheduler API**.
-  - **Expected:** Its details read **Effort** set to **40 hours**.
+- [ ] `66EC` Select the **Drafts** page in the left-hand menu, and find the draft of 'Scheduler API'.
+  - **Expected:** Its details read "Effort set to 40 hours".
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -1098,14 +1055,14 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 **Preconditions:** Restore the Seed Data run after FEAT-22. **Features** page open.
 
 - [ ] `F8F2` Open the column menu of **Effort**, and select **Person-weeks**.
-  - **Expected:** **Audit Export** reads **8 PW**.
+  - **Expected:** 'Audit Export' reads "8 PW".
   - **Notes:**
 
 - [ ] `584A` Select **New feature**.
   - **Expected:**
     - The **New feature** panel opens.
     - Its **Effort** row has an empty field.
-    - A menu beside it reads **person-weeks**.
+    - A menu beside it reads "person-weeks".
   - **Notes:**
 
 - [ ] `4B1D` Type `Fictional Effort` in **Name**.
@@ -1113,7 +1070,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Notes:**
 
 - [ ] `EED6` Type `2` in **Effort**.
-  - **Expected:** **Effort** shows **2**.
+  - **Expected:** **Effort** shows `2`.
   - **Notes:**
 
 - [ ] `3D99` Open the menu beside **Effort**.
@@ -1122,8 +1079,8 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `C208` Select **person-days**.
   - **Expected:**
-    - The menu reads **person-days**.
-    - **Effort** still holds **2**.
+    - The menu reads "person-days".
+    - **Effort** still holds `2`.
     - The table's **Effort** column still shows person-weeks.
   - **Notes:**
 
@@ -1131,8 +1088,8 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:**
     - The feature is added as a draft.
     - Its details show beside the table.
-    - The **Effort** row reads **0.4 person-weeks (16 hours)**.
-    - In the table, **Fictional Effort** reads **0.4 PW**.
+    - The **Effort** row reads "0.4 person-weeks (16 hours)".
+    - In the table, `Fictional Effort` reads "0.4 PW".
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -1153,20 +1110,20 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:**
     - The button reads **Group by: Release**.
     - The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2 LTS**, **Platform: Harbor 3**, **Platform: Not released yet** and **Later**.
-    - Each of the three **Harbor** headings is followed by a comma, **ships** and a date with its day, month and year, such as **ships 31 Mar 2027**.
-    - The counts beside the headings read **1**, **4**, **2**, **2** and **3**.
-    - No heading names **Harbor 4** or a **Patches** release.
+    - Each of the three 'Harbor' headings is followed by a comma, "ships" and a date with its day, month and year, such as "ships 31 Mar 2027".
+    - The counts beside the headings read "1", "4", "2", "2" and "3".
+    - No heading names 'Harbor 4' or a 'Patches' release.
   - **Notes:**
 
 - [ ] `80BD` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The streams table shows **Platform**.
+  - **Expected:** The streams table shows 'Platform'.
   - **Notes:**
 
-- [ ] `451F` Select **Platform** in the table.
+- [ ] `451F` Select 'Platform' in the table.
   - **Expected:**
-    - A side panel for **Platform** opens.
-    - Under **Releases**, each **Harbor** row ends with **ships** and a day, such as **26.3 to 26.4 · ships 2026-12-31**.
-    - The rows naming **Harbor 1**, **Harbor 2 LTS** and **Harbor 3**, not their Live rows, each ship on the day their heading on the Features page shows, written year first, such as **ships 2027-03-31** for **ships 31 Mar 2027**.
+    - A side panel for 'Platform' opens.
+    - Under **Releases**, each 'Harbor' row ends with "ships" and a day, such as "26.3 to 26.4 · ships 2026-12-31".
+    - The rows naming 'Harbor 1', 'Harbor 2 LTS' and 'Harbor 3', not their Live rows, each ship on the day their heading on the Features page shows, written year first, such as "ships 2027-03-31" for "ships 31 Mar 2027".
   - **Notes:**
 
 - [ ] `DCB7` Select the **Features** page in the left-hand menu.
@@ -1176,11 +1133,11 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 - [ ] `F508` Select **Group by: Cycle** above the table, then **Release**.
   - **Expected:**
     - The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2 LTS**, **Platform: Harbor 3**, **Platform: Not released yet** and **Later**.
-    - Each of the three **Harbor** headings is followed by a comma, **ships** and a date with its day, month and year, such as **ships 31 Mar 2027**.
-    - The counts beside the headings read **1**, **4**, **2**, **2** and **3**.
+    - Each of the three 'Harbor' headings is followed by a comma, "ships" and a date with its day, month and year, such as "ships 31 Mar 2027".
+    - The counts beside the headings read "1", "4", "2", "2" and "3".
   - **Notes:**
 
-- [ ] `7D6A` In the row **Report Builder**, under **Platform: Harbor 3**, select the **Target cycle** cell and choose the cycle two after the one it shows.
+- [ ] `7D6A` In the row 'Report Builder', under **Platform: Harbor 3**, select the **Target cycle** cell and choose the cycle two after the one it shows.
   - **Expected:**
     - The new cycle has a hollow yellow dot before it.
     - A light green Live row under the row shows the old cycle.
@@ -1189,10 +1146,10 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `E829` Reload the page.
   - **Expected:**
-    - **Platform: Not released yet** now counts **3**.
-    - **Platform: Harbor 3** now counts **1**.
-    - **Report Builder** is under **Platform: Not released yet**.
-    - **Report Builder**'s Live row under it shows the old cycle.
+    - **Platform: Not released yet** now counts "3".
+    - **Platform: Harbor 3** now counts "1".
+    - 'Report Builder' is under **Platform: Not released yet**.
+    - The Live row of 'Report Builder' under it shows the old cycle.
   - **Notes:**
 
 - [ ] `13D0` Select **Group by: Release**, then **None**.
@@ -1208,25 +1165,25 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
     - The last heading is **Later**.
   - **Notes:**
 
-- [ ] `26A0` Find the **Release** column, before **Target cycle**, and look at the rows **Report Builder**, **Offline Sync** and **Voice Notes**.
+- [ ] `26A0` Find the **Release** column, before **Target cycle**, and look at the rows 'Report Builder', 'Offline Sync' and 'Voice Notes'.
   - **Expected:**
-    - In **Report Builder**'s row, **Release** reads **Platform: Not released yet**.
-    - In its Live row, **Release** reads **Platform: Harbor 3**.
-    - **Offline Sync** reads **Platform: Harbor 2 LTS**, with no date.
-    - **Voice Notes**' **Release** is empty.
+    - In the row of 'Report Builder', **Release** reads "Platform: Not released yet".
+    - In its Live row, **Release** reads "Platform: Harbor 3".
+    - 'Offline Sync' reads "Platform: Harbor 2 LTS", with no date.
+    - The **Release** of 'Voice Notes' is empty.
   - **Notes:**
 
-- [ ] `C184` Select the small button with an arrow out of a box at the right of **Report Builder**'s **Name** cell.
+- [ ] `C184` Select the small button with an arrow out of a box at the right of the **Name** cell of 'Report Builder'.
   - **Expected:**
     - The side panel lists **Release** before **Target cycle**.
-    - **Release** reads **Platform: Not released yet**.
+    - **Release** reads "Platform: Not released yet".
     - It is underlined as a link.
   - **Notes:**
 
 - [ ] `F521` Select **Platform: Not released yet** in the side panel.
   - **Expected:**
     - The **Releases** page opens.
-    - The **Platform** side panel is open beside its table.
+    - The 'Platform' side panel is open beside its table.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -1237,69 +1194,69 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 **Preconditions:** Restore the Seed Data run after FEAT-24. **Features** page open.
 
-- [ ] `D750` Read the **Priority**, **Size** and **Risk** cells of **Offline Sync**.
+- [ ] `D750` Read the **Priority**, **Size** and **Risk** cells of 'Offline Sync'.
   - **Expected:**
-    - **Priority** reads **Critical**.
-    - **Size** reads **L**.
-    - **Risk** reads **High**.
+    - **Priority** reads "Critical".
+    - **Size** reads "L".
+    - **Risk** reads "High".
   - **Notes:**
 
-- [ ] `967C` Read the **Priority**, **Size** and **Risk** cells of **Voice Notes**.
+- [ ] `967C` Read the **Priority**, **Size** and **Risk** cells of 'Voice Notes'.
   - **Expected:**
-    - **Priority** reads **Low**.
+    - **Priority** reads "Low".
     - **Size** is empty.
     - **Risk** is empty.
   - **Notes:**
 
-- [ ] `5C6D` Point at the row **Voice Notes**, and select the details button at the right of its **Name** cell.
+- [ ] `5C6D` Point at the row 'Voice Notes', and select the details button at the right of its **Name** cell.
   - **Expected:**
-    - Under **Planning**, **Priority** reads **Low**.
-    - **Size** reads **None**, dimmed.
-    - **Risk** reads **None**, dimmed.
+    - Under **Planning**, **Priority** reads "Low".
+    - **Size** reads "None", dimmed.
+    - **Risk** reads "None", dimmed.
   - **Notes:**
 
 - [ ] `B488` Close the side panel.
   - **Expected:** The side panel closes.
   - **Notes:**
 
-- [ ] `F7EB` Select the **Size** cell of **Scheduler API**, and press Enter.
+- [ ] `F7EB` Select the **Size** cell of 'Scheduler API', and press Enter.
   - **Expected:**
     - A list of choices opens.
     - Its options read, from the top:
-      - None, with a line under it
-      - XS
-      - S
-      - M
-      - L
-      - XL
+      - **None**, with a line under it
+      - **XS**
+      - **S**
+      - **M**
+      - **L**
+      - **XL**
   - **Notes:**
 
 - [ ] `0B6B` Choose **L**.
   - **Expected:**
-    - The cell shows **L**.
+    - The cell shows "L".
     - A hollow yellow dot is before it.
-    - A light green Live row under the row reads **M** under **Size**.
+    - A light green Live row under the row reads "M" under **Size**.
   - **Notes:**
 
-- [ ] `10CC` Select the **Risk** cell of **Scheduler API**, and press Enter.
+- [ ] `10CC` Select the **Risk** cell of 'Scheduler API', and press Enter.
   - **Expected:**
     - A list of choices opens.
     - Its options read, from the top:
-      - None, with a line under it
-      - Low
-      - Medium
-      - High
+      - **None**, with a line under it
+      - **Low**
+      - **Medium**
+      - **High**
     - Each choice is on one line.
   - **Notes:**
 
 - [ ] `7E1F` Press Esc.
   - **Expected:**
     - The list closes.
-    - The **Risk** cell still reads **Medium**.
+    - The **Risk** cell still reads "Medium".
   - **Notes:**
 
 - [ ] `B09A` Sign out, and sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads **Engineering Operations Manager**.
+  - **Expected:** The top bar's right end reads "Engineering Operations Manager".
   - **Notes:**
 
 - [ ] `4C27` Select the **Lists** page in the left-hand menu.
@@ -1310,7 +1267,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:**
     - The panel opens with **Feature sizes** at the top.
     - Its choices read, from the top, **XS**, **S**, **M**, **L** and **XL**.
-    - Under the choices, in grey, a line reads **A feature's rough size, before it is estimated, smallest first.**
+    - Under the choices, in grey, a line reads "A feature's rough size, before it is estimated, smallest first."
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -1343,20 +1300,20 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `690E` Reload the page.
   - **Expected:** The table's columns read, from left to right:
-    - Name
-    - Description
-    - Status
-    - Notes
-    - Kind
-    - Customers
-    - Projects
-    - Priority
-    - Proposals
-    - Needed by
-    - Effort
-    - Size
-    - Risk
-    - Release
-    - Target cycle
-    - Feature team
+    - **Name**
+    - **Description**
+    - **Status**
+    - **Notes**
+    - **Kind**
+    - **Customers**
+    - **Projects**
+    - **Priority**
+    - **Proposals**
+    - **Needed by**
+    - **Effort**
+    - **Size**
+    - **Risk**
+    - **Release**
+    - **Target cycle**
+    - **Feature team**
   - **Notes:**
