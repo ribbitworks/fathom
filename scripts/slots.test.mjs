@@ -3,7 +3,8 @@
 // Tests of the limits on how much of one kind of work runs at once on this computer, which
 // packages/test-utils/src/slots.ts sets: no more runs together than the limit, a slot is freed
 // whether or not its run succeeds, a slot whose process has ended is taken over, a slot is freed
-// only by its holder, and a long wait says what it waits to do and which processes hold the slots.
+// only by its holder, and a long wait says what it waits to do and which processes hold the slots;
+// and work run in its turn says how long it waited, and runs at once within a run holding the slot.
 
 import assert from "node:assert/strict";
 import {
@@ -19,7 +20,11 @@ import { tmpdir, userInfo } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
-import { inSlot, machineSlots } from "../packages/test-utils/src/slots.ts";
+import {
+  inSlot,
+  inTurn,
+  machineSlots,
+} from "../packages/test-utils/src/slots.ts";
 
 // A process number no process holds, above the largest any system gives out.
 const endedProcess = 99_999_999;
@@ -187,5 +192,45 @@ describe("running in slots", () => {
       }).folder,
       join(tmpdir(), `fathom-test-database-starts-${String(userInfo().uid)}`),
     );
+  });
+});
+
+describe("running in turn", () => {
+  const marker = "FATHOM_TEST_SLOT";
+  const turnOptions = () =>
+    options({ atOnce: 1, reportAfterMilliseconds: 0, waitingTo: "run a test" });
+
+  it("says how long it waited once its turn comes, and gives the work the marked environment", async () => {
+    // Given another running process holding the one slot
+    writeFileSync(join(folder, "slot-0"), `${String(process.pid)}:held`);
+
+    // When work asks for its turn
+    const running = inTurn(
+      (environment) => environment,
+      turnOptions(),
+      marker,
+      { OTHER: "kept" },
+    );
+    while (reports.length === 0) await delay(5);
+    rmSync(join(folder, "slot-0"));
+
+    // Then it runs once the slot is free, saying how long it waited, with the marker set
+    assert.deepEqual(await running, { OTHER: "kept", [marker]: "1" });
+    assert.match(reports[1] ?? "", /^Waited \d+s to run a test$/);
+    assert.deepEqual(readdirSync(folder), []);
+  });
+
+  it("says nothing of waiting when the slot is free", async () => {
+    assert.equal(await inTurn(() => "ran", turnOptions(), marker, {}), "ran");
+    assert.deepEqual(reports, []);
+  });
+
+  it("runs at once within a run holding the slot", async () => {
+    writeFileSync(join(folder, "slot-0"), `${String(process.pid)}:held`);
+    assert.equal(
+      await inTurn(() => "ran", turnOptions(), marker, { [marker]: "1" }),
+      "ran",
+    );
+    assert.deepEqual(reports, []);
   });
 });

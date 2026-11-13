@@ -14,7 +14,7 @@
     "lint:shell": "bash scripts/lint-shell.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "bash scripts/check.sh",
+    "check": "node scripts/check-turn.mjs bash scripts/check.sh",
     "lint:powershell": "bash scripts/lint-powershell.sh",
     "lint:licences": "bash scripts/lint-licences.sh",
     "security": "bash scripts/security-report.sh",

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests of scripts/package-tests.mjs: package tests wait, saying so at once and how long they waited,
-// while another copy of the repository runs them, then run, reporting whether they passed; package
-// tests run from within a run do not wait on it; and pnpm failing to start is reported.
+// while another copy of the repository runs them, then run, reporting whether they passed;
+// each package's tests get a share of the cores; and pnpm failing to start is reported.
 
 import assert from "node:assert/strict";
 import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -10,7 +10,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
-import { packageTestRuns, runPackageTests, runPnpm } from "./package-tests.mjs";
+import {
+  packageTestRuns,
+  runPackageTests,
+  runPnpm,
+  workersPerPackage,
+} from "./package-tests.mjs";
 
 let folder;
 let reports;
@@ -74,27 +79,33 @@ describe("running package tests", () => {
     assert.deepEqual(reports, []);
   });
 
-  it("does not wait on the slot their own run holds, when run from within it", async () => {
-    // Given a run's processes, marked as holding the slot, while it holds it
+  it("limits each package's workers, unless told how many, an empty setting saying nothing", async () => {
     await runPackageTests(["test"], options());
-    const { environment } = runs[0] ?? {};
-    writeFileSync(join(folder, "slot-0"), `${String(process.pid)}:held`);
-
-    // When package tests are run from within it
-    const nested = await runPackageTests(["test"], {
+    await runPackageTests(["test"], {
       ...options(),
-      environment,
+      environment: { VITEST_MAX_WORKERS: "7" },
     });
-
-    // Then they run at once
-    assert.equal(nested, true);
-    assert.equal(runs.length, 2);
+    await runPackageTests(["test"], {
+      ...options(),
+      environment: { VITEST_MAX_WORKERS: "" },
+    });
+    assert.deepEqual(
+      runs.map(({ environment }) => environment.VITEST_MAX_WORKERS),
+      [String(workersPerPackage()), "7", String(workersPerPackage())],
+    );
   });
 
-  it("says when pnpm cannot start", (context) => {
+  it("shares the cores but two among the four packages that run longest, giving each at least one", () => {
+    assert.equal(workersPerPackage(18), 4);
+    assert.equal(workersPerPackage(10), 2);
+    assert.equal(workersPerPackage(4), 1);
+    assert.equal(workersPerPackage(1), 1);
+  });
+
+  it("says when pnpm cannot start", async (context) => {
     const problems = context.mock.method(console, "error", () => undefined);
     context.mock.method(console, "log", () => undefined);
-    assert.equal(runPnpm(["--version"], { PATH: folder }), false);
+    assert.equal(await runPnpm(["--version"], { PATH: folder }), false);
     assert.match(
       String(problems.mock.calls[0]?.arguments[0]),
       /^error: pnpm did not start: /,

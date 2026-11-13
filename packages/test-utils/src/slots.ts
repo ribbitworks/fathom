@@ -17,6 +17,8 @@ import { tmpdir, userInfo } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
+export const millisecondsPerSecond = 1_000;
+
 export interface SlotOptions {
   folder: string;
   atOnce: number;
@@ -158,4 +160,39 @@ export async function inSlot<T>(
   } finally {
     removeIfHolding(slot, token);
   }
+}
+
+// Runs the work in this computer's one slot for it, or at once when the environment shows a run that
+// already holds that slot, as for processes the work itself starts. The work is given the
+// environment marked so. A run that had to wait says so, and once it starts, how long it waited.
+export async function inTurn<T>(
+  work: (environment: NodeJS.ProcessEnv) => T | Promise<T>,
+  options: SlotOptions,
+  marker: string,
+  environment: NodeJS.ProcessEnv,
+): Promise<T> {
+  const marked = { ...environment, [marker]: "1" };
+  const inHeldSlot = Object.entries(environment).some(
+    ([name, value]) => name === marker && value === "1",
+  );
+  if (inHeldSlot) return work(marked);
+  const asked = Date.now();
+  let waited = false;
+  return inSlot(
+    async () => {
+      if (waited) {
+        options.report(
+          `Waited ${String(Math.round((Date.now() - asked) / millisecondsPerSecond))}s to ${options.waitingTo}`,
+        );
+      }
+      return work(marked);
+    },
+    {
+      ...options,
+      report: (message) => {
+        waited = true;
+        options.report(message);
+      },
+    },
+  );
 }
