@@ -2,7 +2,7 @@
 
 **Status:** Draft for HR review
 **Prepared by:** Director, software organization
-**Last updated:** 2026-11-11
+**Last updated:** 2026-11-13
 
 ## Purpose of This Document
 
@@ -70,7 +70,7 @@ The levels in the table above are where each detail starts. The organization may
 Under the proposed roles, [Roles](../product/roles.md#what-each-role-can-do) sets out who maintains employee details, teams, reporting lines, the hiring plan, work assignments, and feature teams, and who approves them:
 
 - **Changes waiting for approval:** Changes to employee details, teams' names, reporting lines, and the hiring plan wait for approval, by someone whose role lets them approve changes of that kind and see that information, before they take effect. The approver must be someone other than whoever changed the draft, unless their role allows approving their own. Until then, they are seen by everyone who may see that information. A rejected change is kept, with the approver's reason, until it is changed or discarded. A team's colour on the org chart is not a detail of anyone, so it changes at once, without approval.
-- **User accounts and roles** are managed by an administrator role that does not, by itself, give access to Personal or Confidential information. Roles can be changed in Fathom, by whoever may edit them, held as [Roles](../product/roles.md#what-each-role-can-do) sets out. Some roles see accounts, roles, and settings, read only, without changing them. An administrator, or anyone whose role lets them manage accounts, could still reach such information by giving their own account another role, by widening the role they hold, or by creating another account or resetting another user's password and signing in as them, so every such change is recorded in the access history. At first, only the Fathom Administrator account, made when Fathom is installed, holds this role, so the safeguards on granting access rely on the access history. A person given this role later can take over from it. A change granting Confidential data takes effect at once, without anyone else confirming it, until HR asks for such a check; the access history marks every account created, every change to an account's roles, and every change to a role as worth checking.
+- **User accounts and roles** are managed by an administrator role that does not, by itself, give access to Personal or Confidential information. Roles can be changed in Fathom, by whoever may edit them, held as [Roles](../product/roles.md#what-each-role-can-do) sets out. Once Fathom is in use with real data, an update to Fathom never changes them. Some roles see accounts, roles, and settings, read only, without changing them. An administrator, or anyone whose role lets them manage accounts, could still reach such information by giving their own account another role, by widening the role they hold, or by creating another account or resetting another user's password and signing in as them, so every such change is recorded in the access history. At first, only the Fathom Administrator account, made when Fathom is installed, holds this role, so the safeguards on granting access rely on the access history. A person given this role later can take over from it. A change granting Confidential data takes effect at once, without anyone else confirming it, until HR asks for such a check; the access history marks every account created, every change to an account's roles, and every change to a role as worth checking.
 
 ## How the Information Is Protected
 

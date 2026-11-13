@@ -1,7 +1,7 @@
 # Fathom — Roles
 
 **Status:** Starting roles, with open points marked **proposal**
-**Last updated:** 2026-11-12
+**Last updated:** 2026-11-13
 
 The roles Fathom starts with, for controlling what each user can see, edit, and approve, built on the access decisions in the [Decisions Log](decisions.md). Roles are editable sets of permissions, as the Decisions Log records, decided by the owner on 2026-11-04, so these are a starting set: they can be edited and copied to make new roles, within the safeguards below, and each keeps what it grants today until it is changed. An account holds one or more roles, any roles, starting or made later, one of them its default, and acts as one of them at a time: what a user may do reads from the role they act as alone, never from their roles added up. Signing in acts as the role last chosen on that browser, or else the default, and a user switches role from their account's menu, as the [Decisions Log](decisions.md#people-and-privacy) records, decided by the owner on 2026-11-07. There is one starting role for each persona, granting what that persona's roles granted together when accounts held several building-block roles, decided by the owner on 2026-11-06. The owner has confirmed that Engineering Managers and the Executive see Personal data, that the Engineering Director plans, and the split between planning the plan and planning allocations. Items marked **proposal** are not yet agreed.
 
@@ -78,6 +78,8 @@ Columns on Features are added and changed by the Product Manager and the Enginee
 ## Safeguards for Administrators
 
 **Decided:** Whoever may manage accounts, under any role that grants it, gives accounts their roles: any roles, their own account included. So any role that lets its holders manage accounts can reach every role's access, including editing roles and every tier of data; the access history, which marks each change to an account's roles as worth checking, is the safeguard. Managing accounts and editing roles are one permission, Edit Administration, since the 29 permissions. Those who may manage accounts manage their own account like any other: they can change its roles, default role, name, and email address, and deactivate it. Two guards remain: no change to an account or a role may leave no active account with Edit Administration, so no one can lock everyone out, and nobody resets their own password from the Accounts page, since changing one's own password needs the current one. A change granting Confidential data takes effect at once; a second person's confirmation is deferred in [issue #232](https://github.com/jlarue26/fathom/issues/232).
+
+**Decided:** From the first deployment, a role's grants change only from within Fathom, never by an update, as **Migrations and roles' grants** in the [Decisions Log](decisions.md#platform-and-operations) sets out.
 
 **Decided:** The first Administrator is the Fathom Administrator account, which the install creates, holding the Administrator role, as the [Decisions Log](decisions.md#people-and-privacy) records, decided by the owner on 2026-11-06; no person's account is. A person later given the Administrator role can take over from it.
 
