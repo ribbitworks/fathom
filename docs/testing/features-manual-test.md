@@ -1192,7 +1192,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-24 ended with. Step `B09A` signs in as another account.
 
-**Preconditions:** Restore the Seed Data run after FEAT-24. **Features** page open.
+**Preconditions:** Restore the Seed Data run after FEAT-24, which ends on the **Releases** page. Signed in with this account. **Features** page open from the left-hand menu, as it opens: grouped by **Cycle**, nothing in the search box and no filters.
 
 - [ ] `D750` Read the **Priority**, **Size** and **Risk** cells of 'Offline Sync'.
   - **Expected:**
