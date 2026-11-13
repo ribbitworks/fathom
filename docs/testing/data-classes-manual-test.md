@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/shared/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: Data Classes
@@ -55,7 +55,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - It lists **Start date**, **End date**, **Past managers**, **Feature team dates**, **Future reorganizations** and **Hiring plan**
     - **Start date**'s class is a grey box with a lock and **Personal**
-    - **Start date**'s **Needed by** starts **Org chart on other dates**
+    - **Start date**'s **Needed by** starts "Org chart on other dates"
     - **Hiring plan**'s class is a grey box with a lock and **Confidential**
     - **Hiring plan**'s **Needed by** is empty
   - **Notes:**
@@ -64,29 +64,19 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - It lists People's added columns, such as **Site**
     - Each column's class reads **General**
-    - **Site**'s third column reads **People, with the class of Sites**
+    - **Site**'s third column reads "People, with the class of Sites"
     - **Site** has no **Change class…** button
   - **Notes:**
 
 - [ ] `2A27` Look at the **Lists** section.
   - **Expected:**
-    - It lists the lists, such as **Sites**
-    - **Sites**' third column reads **Site**
+    - It lists the lists, such as 'Sites'
+    - The third column of 'Sites' reads "Site"
     - Each list's row ends with a **Change class…** button
   - **Notes:**
 
-- [ ] `66B5` Choose **Dark** in the Appearance menu.
-  - **Expected:**
-    - The page and the grey boxes are easy to read
-    - Each lock lines up with its word
-  - **Notes:**
-
-- [ ] `ABD7` Choose **Light** in the Appearance menu.
-  - **Expected:** The page is light.
-  - **Notes:**
-
 - [ ] `CA89` Sign out, and sign in as the Engineering Manager, `engineering.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads **Engineering Manager**.
+  - **Expected:** The top bar's right end reads "Engineering Manager".
   - **Notes:**
 
 - [ ] `7EC0` Look at the left-hand menu.
@@ -100,7 +90,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 **Preconditions:** Signed in with this account.
 
 - [ ] `035D` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
-  - **Expected:** The top bar's right end reads **Engineering Director**.
+  - **Expected:** The top bar's right end reads "Engineering Director".
   - **Notes:**
 
 - [ ] `C38C` Select **Data classes** under **Administration** in the left-hand menu.
@@ -113,7 +103,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `3A94` Press Enter.
   - **Expected:**
-    - A dialog titled **Change the class of Start date** opens
+    - A dialog titled "Change the class of Start date" opens
     - **Personal** is chosen
     - **General**, **Personal** and **Confidential** each have a line saying what the class holds
   - **Notes:**
@@ -156,21 +146,21 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `605E` Sign out, and sign in as the Engineering Manager, `engineering.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads **Engineering Manager**.
+  - **Expected:** The top bar's right end reads "Engineering Manager".
   - **Notes:**
 
 - [ ] `C812` Select the **Org chart** page in the left-hand menu.
-  - **Expected:** In place of the date row, a line reads **Other dates need Confidential access.**
+  - **Expected:** In place of the date row, a line reads "Other dates need Confidential access."
   - **Notes:**
 
 - [ ] `17BB` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
-  - **Expected:** The top bar's right end reads **Engineering Director**.
+  - **Expected:** The top bar's right end reads "Engineering Director".
   - **Notes:**
 
 - [ ] `8F30` Select the **Access history** page in the left-hand menu.
   - **Expected:**
     - The newest entry has a yellow dot before it
-    - It says the Engineering Director moved **Start date from Personal to Confidential**
+    - It says the Engineering Director moved "Start date from Personal to Confidential"
   - **Notes:**
 
 ### CLASS-03: Changing a Column's Class Marks Its Heading
@@ -184,7 +174,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `668B` Type `Portfolio` in **Name**.
-  - **Expected:** **Name** reads **Portfolio**.
+  - **Expected:** **Name** reads `Portfolio`.
   - **Notes:**
 
 - [ ] `394F` Choose **Web link** in **Type**.
@@ -202,7 +192,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `71F0` Select the Publish button.
-  - **Expected:** A notice reads **Published 1 change.**
+  - **Expected:** A notice reads "Published 1 change."
   - **Notes:**
 
 - [ ] `525B` Open the **Portfolio** column menu, and select **Approve…**.
@@ -212,12 +202,12 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `4ED3` Select **Approve**.
-  - **Expected:** A notice reads **Approved 1 draft.**
+  - **Expected:** A notice reads "Approved 1 draft."
   - **Notes:**
 
 - [ ] `F2C4` Open the **Portfolio** column menu, and select **Change class…**.
   - **Expected:**
-    - A dialog titled **Change the class of Portfolio** opens
+    - A dialog titled "Change the class of Portfolio" opens
     - **General** is chosen
   - **Notes:**
 
@@ -235,7 +225,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `EAD1` Open the column menu of **Site**, which draws on a list.
   - **Expected:**
     - **Change class…** is greyed out
-    - **Takes the class of its list** is under it
+    - "Takes the class of its list" is under it
   - **Notes:**
 
 - [ ] `D938` Select the **Data classes** page in the left-hand menu.

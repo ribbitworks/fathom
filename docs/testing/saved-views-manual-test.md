@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: Saved Views
@@ -23,8 +23,8 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
 
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
-- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as **Second Engineering Operations Manager**
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
+- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as "Second Engineering Operations Manager"
 - **Feature Lead:** `feature.lead@fathom.test`
 
 ## Common Procedures
@@ -33,7 +33,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu and the column menu. This test adds:
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the column menu. This test adds:
 
 - **Main window:** the browser window the test starts in.
 - **Second window:** the second browser or private window.
@@ -51,7 +51,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `751F` Type `an` in the search box above the table.
   - **Expected:**
-    - The table shows only the rows matching **an**.
+    - The table shows only the rows matching `an`.
     - A **Views** button shows above the table.
   - **Notes:**
 
@@ -60,7 +60,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `A68D` Select **Save view…**.
-  - **Expected:** A dialog titled **Save view** shows:
+  - **Expected:** A dialog titled "Save view" shows:
     - **Name**.
     - Under **Includes**, the search.
     - No choice about sharing.
@@ -75,19 +75,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `D243` Select **Save view** in the dialog.
   - **Expected:**
     - The dialog closes.
-    - The Views menu's button says **Fictional planner view**.
+    - The Views menu's button says `Fictional planner view`.
   - **Notes:**
 
 - [ ] `1D08` Open the Views menu.
   - **Expected:**
-    - The heading **My views** is above **Fictional planner view**.
-    - **Fictional planner view** has a check mark.
+    - The heading **My views** is above `Fictional planner view`.
+    - `Fictional planner view` has a check mark.
     - **Rename…** and **Delete view** are offered.
     - **Share current view** is not offered.
   - **Notes:**
 
 - [ ] `0AEE` In the second window, sign in as Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, changed from this case's first account.
-  - **Expected:** The top bar's right end reads **Second Engineering Operations Manager**.
+  - **Expected:** The top bar's right end reads "Second Engineering Operations Manager".
   - **Notes:**
 
 - [ ] `6F55` In the second window, select the **People** page in the left-hand menu.
@@ -101,7 +101,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `F318` In the second window, open the Views menu.
-  - **Expected:** **Fictional planner view** is not listed.
+  - **Expected:** `Fictional planner view` is not listed.
   - **Notes:**
 
 ### VIEW-02: A Shared View Is Saved and Seen by Others
@@ -111,7 +111,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** The second window is signed in as Second Workforce Administrator, as VIEW-01 leaves it. In the main window, sign out, sign in with this case's account, and select the **People** page in the left-hand menu.
 
 - [ ] `752E` In the main window, type `el` in the search box above the table.
-  - **Expected:** The table shows only the rows matching **el**.
+  - **Expected:** The table shows only the rows matching `el`.
   - **Notes:**
 
 - [ ] `5C51` Open the Views menu.
@@ -137,17 +137,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `DAD1` Select **Save view** in the dialog.
   - **Expected:**
     - The dialog closes.
-    - The Views menu's button says **Fictional team view**.
+    - The Views menu's button says `Fictional team view`.
   - **Notes:**
 
 - [ ] `C808` Open the Views menu.
   - **Expected:**
-    - The heading **Shared views** is above **Fictional team view**.
+    - The heading **Shared views** is above `Fictional team view`.
     - The stop-sharing item is offered.
   - **Notes:**
 
 - [ ] `AA2A` In the second window, sign out, and sign in as Feature Lead, `feature.lead@fathom.test`, changed from this case's first account.
-  - **Expected:** The top bar's right end reads **Feature Lead**.
+  - **Expected:** The top bar's right end reads "Feature Lead".
   - **Notes:**
 
 - [ ] `3ECC` In the second window, select the **People** page in the left-hand menu.
@@ -156,12 +156,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `E787` In the second window, open the Views menu.
   - **Expected:**
-    - **My views** lists **Fictional planner view**.
-    - Below it, **Shared views** lists **Fictional team view**.
+    - **My views** lists `Fictional planner view`.
+    - Below it, **Shared views** lists `Fictional team view`.
   - **Notes:**
 
-- [ ] `9FDA` In the second window, select **Fictional team view**.
-  - **Expected:** The search box shows **el**.
+- [ ] `9FDA` In the second window, select `Fictional team view`.
+  - **Expected:** The search box shows `el`.
   - **Notes:**
 
 - [ ] `1AF5` In the second window, open the Views menu.
@@ -178,7 +178,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** In the main window, this account is signed in on **People**. In the second window, Feature Lead, `feature.lead@fathom.test` is signed in on **People**, as VIEW-02 leaves it.
 
 - [ ] `CEDD` In the main window, replace the text in the search box above the table with `ar`.
-  - **Expected:** The table shows only the rows matching **ar**.
+  - **Expected:** The table shows only the rows matching `ar`.
   - **Notes:**
 
 - [ ] `E7E3` Open the Views menu.
@@ -187,7 +187,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `3AB9` Select **Save view…**.
   - **Expected:**
-    - A dialog titled **Save view** shows.
+    - A dialog titled "Save view" shows.
     - **Share with everyone who sees this table** is not ticked.
   - **Notes:**
 
@@ -200,24 +200,24 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `72CD` Select **Save view** in the dialog.
   - **Expected:**
     - The dialog closes.
-    - The Views menu's button says **Fictional passed round**.
+    - The Views menu's button says `Fictional passed round`.
   - **Notes:**
 
 - [ ] `AE09` Open the Views menu.
   - **Expected:**
-    - **Fictional passed round** is under **My views**.
+    - `Fictional passed round` is under **My views**.
     - **Share current view** is offered.
   - **Notes:**
 
 - [ ] `019D` Select **Share current view**.
   - **Expected:** A notice shows at the top right:
-    - It says **Shared the Fictional passed round view.**
+    - It says "Shared the Fictional passed round view."
     - It offers **Undo**.
   - **Notes:**
 
 - [ ] `9A64` Open the Views menu.
   - **Expected:**
-    - **Fictional passed round** is under **Shared views**.
+    - `Fictional passed round` is under **Shared views**.
     - The stop-sharing item is offered.
     - **Share current view** is not offered.
   - **Notes:**
@@ -227,17 +227,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `910D` In the second window, open the Views menu.
-  - **Expected:** **Fictional passed round** is under **Shared views**.
+  - **Expected:** `Fictional passed round` is under **Shared views**.
   - **Notes:**
 
 - [ ] `13B2` In the main window, select the stop-sharing item from the Views menu.
   - **Expected:** A notice shows:
-    - It names **Fictional passed round**.
+    - It names `Fictional passed round`.
     - It offers **Undo**.
   - **Notes:**
 
 - [ ] `CF63` In the main window, open the Views menu.
-  - **Expected:** **Fictional passed round** is under **My views** again.
+  - **Expected:** `Fictional passed round` is under **My views** again.
   - **Notes:**
 
 - [ ] `7A01` In the second window, reload the page.
@@ -245,17 +245,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `4E5A` In the second window, open the Views menu.
-  - **Expected:** **Fictional passed round** is not listed.
+  - **Expected:** `Fictional passed round` is not listed.
   - **Notes:**
 
 ### VIEW-04: Sharing a View Whose Name Is Taken Says So
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as VIEW-03.
 
-**Preconditions:** In the main window, this account is signed in on **People**, with **Fictional team view** saved as VIEW-02 leaves it.
+**Preconditions:** In the main window, this account is signed in on **People**, with `Fictional team view` saved as VIEW-02 leaves it.
 
 - [ ] `7FD6` Replace the text in the search box above the table with `ma`.
-  - **Expected:** The table shows only the rows matching **ma**.
+  - **Expected:** The table shows only the rows matching `ma`.
   - **Notes:**
 
 - [ ] `3F47` Open the Views menu.
@@ -264,7 +264,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `DC7D` Select **Save view…**.
   - **Expected:**
-    - A dialog titled **Save view** shows.
+    - A dialog titled "Save view" shows.
     - **Share with everyone who sees this table** is not ticked.
   - **Notes:**
 
@@ -277,29 +277,29 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `237C` Select **Save view** in the dialog.
   - **Expected:**
     - The dialog closes.
-    - The Views menu's button says **Fictional team view**.
+    - The Views menu's button says `Fictional team view`.
   - **Notes:**
 
 - [ ] `9A6D` Open the Views menu.
   - **Expected:**
-    - **Fictional team view** is listed under **My views**.
+    - `Fictional team view` is listed under **My views**.
     - It has a check mark.
-    - **Fictional team view** is listed under **Shared views**.
+    - `Fictional team view` is listed under **Shared views**.
   - **Notes:**
 
 - [ ] `CCA5` Select **Share current view**.
-  - **Expected:** A notice says **There is already a shared view named Fictional team view**.
+  - **Expected:** A notice says "There is already a shared view named Fictional team view".
   - **Notes:**
 
 - [ ] `F098` Open the Views menu.
   - **Expected:** The view with the check mark is still under **My views**.
   - **Notes:**
 
-### VIEW-05: The Menu and Dialog Read Well in Light and Dark
+### VIEW-05: The Menu and Dialog Read Well
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as VIEW-04.
 
-**Preconditions:** In the main window, this account is signed in on **People**, with views saved as the earlier cases leave them. **Light** chosen in the Appearance menu.
+**Preconditions:** In the main window, this account is signed in on **People**, with views saved as the earlier cases leave them.
 
 - [ ] `6F7C` Open the Views menu.
   - **Expected:**
@@ -309,26 +309,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `7B89` Press Esc to close the menu.
   - **Expected:** The menu closes.
-  - **Notes:**
-
-- [ ] `93D2` Choose **Dark** in the Appearance menu.
-  - **Expected:** Fathom turns dark.
-  - **Notes:**
-
-- [ ] `AC21` Open the Views menu.
-  - **Expected:** The headings and names are easy to read.
-  - **Notes:**
-
-- [ ] `3CE0` Select **Save view…**.
-  - **Expected:** The dialog and its checkbox are easy to read.
-  - **Notes:**
-
-- [ ] `BC21` Select **Cancel**.
-  - **Expected:** The dialog closes.
-  - **Notes:**
-
-- [ ] `BFB5` Choose **Light** in the Appearance menu.
-  - **Expected:** The page is light.
   - **Notes:**
 
 ### VIEW-06: The Menu and Dialog Work by Keyboard
@@ -446,14 +426,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `D207` Select **Save view** in the dialog.
   - **Expected:**
     - The dialog closes.
-    - The Views menu's button says **Fictional moved columns**.
+    - The Views menu's button says `Fictional moved columns`.
   - **Notes:**
 
 - [ ] `E128` Select **Clear all** above the table.
   - **Expected:** **Position** is back in its original place.
   - **Notes:**
 
-- [ ] `58C2` Open the Views menu and select **Fictional moved columns**.
+- [ ] `58C2` Open the Views menu and select `Fictional moved columns`.
   - **Expected:** **Position** moves one place to the right again.
   - **Notes:**
 
@@ -467,46 +447,46 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** In the main window, this account is signed in on **People**. In the second window, Feature Lead, `feature.lead@fathom.test` is signed in on **People**.
 
-- [ ] `258A` In the main window, open the Views menu and select **Fictional passed round**.
-  - **Expected:** The Views menu's button says **Fictional passed round**.
+- [ ] `258A` In the main window, open the Views menu and select `Fictional passed round`.
+  - **Expected:** The Views menu's button says `Fictional passed round`.
   - **Notes:**
 
 - [ ] `DABB` Open the Views menu and select **Delete view**.
-  - **Expected:** **Fictional passed round** is gone from the Views menu.
+  - **Expected:** `Fictional passed round` is gone from the Views menu.
   - **Notes:**
 
-- [ ] `F51B` Open the Views menu and select **Fictional team view** under **My views**.
-  - **Expected:** The Views menu's button says **Fictional team view**.
+- [ ] `F51B` Open the Views menu and select `Fictional team view` under **My views**.
+  - **Expected:** The Views menu's button says `Fictional team view`.
   - **Notes:**
 
 - [ ] `BD8F` Open the Views menu and select **Delete view**.
-  - **Expected:** **Fictional team view** is listed only under **Shared views**.
+  - **Expected:** `Fictional team view` is listed only under **Shared views**.
   - **Notes:**
 
-- [ ] `71DC` Open the Views menu and select **Fictional team view** under **Shared views**.
-  - **Expected:** The Views menu's button says **Fictional team view**.
+- [ ] `71DC` Open the Views menu and select `Fictional team view` under **Shared views**.
+  - **Expected:** The Views menu's button says `Fictional team view`.
   - **Notes:**
 
 - [ ] `0F34` Open the Views menu and select **Delete view**.
-  - **Expected:** **Fictional team view** is gone from the Views menu.
+  - **Expected:** `Fictional team view` is gone from the Views menu.
   - **Notes:**
 
 - [ ] `C435` In the second window, reload the page.
   - **Expected:** The People table shows.
   - **Notes:**
 
-- [ ] `52B0` In the second window, open the Views menu and select **Fictional planner view**.
-  - **Expected:** The Views menu's button says **Fictional planner view**.
+- [ ] `52B0` In the second window, open the Views menu and select `Fictional planner view`.
+  - **Expected:** The Views menu's button says `Fictional planner view`.
   - **Notes:**
 
 - [ ] `56CA` In the second window, open the Views menu and select **Delete view**.
-  - **Expected:** **Fictional planner view** is gone from the Views menu.
+  - **Expected:** `Fictional planner view` is gone from the Views menu.
   - **Notes:**
 
-- [ ] `FC1D` In the second window, open the Views menu and select **Fictional moved columns**.
-  - **Expected:** The Views menu's button says **Fictional moved columns**.
+- [ ] `FC1D` In the second window, open the Views menu and select `Fictional moved columns`.
+  - **Expected:** The Views menu's button says `Fictional moved columns`.
   - **Notes:**
 
 - [ ] `B00D` In the second window, open the Views menu and select **Delete view**.
-  - **Expected:** **Fictional moved columns** is gone from the Views menu.
+  - **Expected:** `Fictional moved columns` is gone from the Views menu.
   - **Notes:**

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/visual-design.md", "docs/product/decisions.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: Exports
@@ -22,7 +22,7 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, and a 
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Engineering Director:** `engineering.director@fathom.test`, who sees Personal and Confidential data
-- **Administrator:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**, who sees the access history
+- **Administrator:** `fathom.administrator@fathom.test`, shown in Fathom as "Fathom Administrator", who sees the access history
 - **Product Manager:** `product.manager@fathom.test`
 
 ## Common Procedures
@@ -52,14 +52,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `BA09` Choose **CSV file**.
   - **Expected:**
-    - A dialog titled **Export Confidential and Personal data?** opens.
-    - It reads **This file holds Confidential data (Hiring plan) and Personal data (**, the columns holding Personal data, including **Start** and **End**, then **).**
+    - A dialog titled "Export Confidential and Personal data?" opens.
+    - It reads "This file holds Confidential data (Hiring plan) and Personal data (", the columns holding Personal data, including **Start** and **End**, then ")."
     - **Confidential** is in red and **Personal** in orange, both in semibold, and the column names are in semibold.
     - It offers **Cancel** and **Export**.
-  - **Notes:**
-
-- [ ] `13C3` Switch Fathom to Dark in the Appearance menu.
-  - **Expected:** The dialog's words, **Confidential** and **Personal** included, read clearly on its dark background.
   - **Notes:**
 
 - [ ] `C4A6` Press Esc.
@@ -71,7 +67,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `F3D0` Select **Export**.
-  - **Expected:** The Save dialog opens, with the name **fathom_people_engineering-director_drafts-and-live_** and today's date, such as **fathom_people_engineering-director_drafts-and-live_2027-03-31.csv**.
+  - **Expected:** The Save dialog opens, with the name `fathom_people_engineering-director_drafts-and-live_` and today's date, such as `fathom_people_engineering-director_drafts-and-live_2027-03-31.csv`.
   - **Notes:**
 
 - [ ] `65AA` Select **Save** in the Save dialog.
@@ -81,10 +77,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `24E9` Open the file in the spreadsheet application.
   - **Expected:**
     - The first row holds the column headings: **Row**, **Change**, then the People table's columns, in the order it shows them.
-    - **西尾 亮**, who has a draft, is on two rows: the first with **Draft** in **Row** and **Changed** in **Change**, the second with **Live** in **Row**.
+    - '西尾 亮', who has a draft, is on two rows: the first with "Draft" in **Row** and "Changed" in **Change**, the second with "Live" in **Row**.
     - A person without a draft is on one row, with **Row** and **Change** empty.
-    - Names in other scripts, such as **西尾 亮**, read as they do in Fathom.
-    - Start and End dates read as digits, such as **2027-03-31**, or as the spreadsheet shows dates.
+    - Names in other scripts, such as '西尾 亮', read as they do in Fathom.
+    - Start and End dates read as digits, such as "2027-03-31", or as the spreadsheet shows dates.
     - Each Onboarding note is in one cell, its lines kept.
   - **Notes:**
 
@@ -93,7 +89,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `55F5` Select the **Access history** page in the left-hand menu.
-  - **Expected:** The newest entry reads **Engineering Director (`engineering.director@fathom.test`) exported People with Confidential data (Hiring plan) and Personal data (**, the same columns as the dialog in Step `BA09`, then **)**.
+  - **Expected:** The newest entry reads "Engineering Director (`engineering.director@fathom.test`) exported People with Confidential data (Hiring plan) and Personal data (", the same columns as the dialog in Step `BA09`, then ")".
   - **Notes:**
 
 ### EXP-02: Exporting General Data Saves at Once
@@ -105,14 +101,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `C2BF` Choose **TSV file** from the Export button's menu.
   - **Expected:**
     - No question from Fathom opens.
-    - The browser saves a file named **fathom_features_product-manager_drafts-and-live_** and today's date, such as **fathom_features_product-manager_drafts-and-live_2027-03-31.tsv**, or first opens the Save dialog with that name.
+    - The browser saves a file named `fathom_features_product-manager_drafts-and-live_` and today's date, such as `fathom_features_product-manager_drafts-and-live_2027-03-31.tsv`, or first opens the Save dialog with that name.
   - **Notes:**
 
 - [ ] `73A6` Open the file in the spreadsheet application.
   - **Expected:**
     - Each column is in a column of its own, headed as on the Features table, after **Row** and **Change**, with **Effort** followed by its unit, such as **Effort (h)**.
     - Effort cells hold numbers alone, without a unit.
-    - Cells naming several customers or projects list them separated by **;**.
+    - Cells naming several customers or projects list them separated by `;`.
     - **Notes** cells hold the notes' words without formatting.
   - **Notes:**
 
@@ -127,11 +123,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `626C` Choose **CSV file** from the Export button's menu.
-  - **Expected:** The browser saves a file named **fathom_features_product-manager_** and today's date, without **drafts**, or first opens the Save dialog with that name.
+  - **Expected:** The browser saves a file named `fathom_features_product-manager_` and today's date, without `drafts`, or first opens the Save dialog with that name.
   - **Notes:**
 
 - [ ] `6DE4` Open the file in the spreadsheet application.
   - **Expected:**
-    - Every row has **Live** in **Row**.
-    - A feature with a green dot on the table has words in **Change**, such as **A change is waiting for approval.**
+    - Every row has "Live" in **Row**.
+    - A feature with a green dot on the table has words in **Change**, such as "A change is waiting for approval."
   - **Notes:**

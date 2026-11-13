@@ -11,7 +11,7 @@ last_updated: "2026-11-13"
 
 ## Scope
 
-Verifies the Lists page's built-in lists, Positions, Hiring states, Proposal statuses, Feature statuses, Feature priorities, Feature sizes and Feature risks: their grey **Built in** box, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, the rules that keep a choice offered for every meaning, when drafting and when approving, and each size's weight.
+Verifies the Lists page's built-in lists, **Positions**, **Hiring states**, **Proposal statuses**, **Feature statuses**, **Feature priorities**, **Feature sizes** and **Feature risks**: their grey **Built in** box, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, the rules that keep a choice offered for every meaning, when drafting and when approving, and each size's weight.
 
 ## Test Environment
 
@@ -21,7 +21,7 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
 - **Engineering Director:** `engineering.director@fathom.test`
 - **Feature Lead:** `feature.lead@fathom.test`
 
@@ -36,7 +36,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 - **Panel:** the area that opens beside the table of lists when a list's name is selected, showing the list's choices.
 - **Empty row:** the last row of the panel's choices, starting with a **+**, where new choices are typed.
 - **Meaning menu:** the drop-down at the end of a choice's row while it is being edited, and at the end of the empty row.
-- **Weight box:** the box at the end of a Feature sizes choice's row while it is being edited, and at the end of the empty row.
+- **Weight box:** the box at the end of a **Feature sizes** choice's row while it is being edited, and at the end of the empty row.
 
 ## Test Cases
 
@@ -58,7 +58,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - The panel opens with **Positions** at the top.
     - A grey **Built in** box is after it.
-    - Under the choices, in grey, a line reads **Every person and planned hire has one of these positions.**
+    - Under the choices, in grey, a line reads "Every person and planned hire has one of these positions."
   - **Notes:**
 
 - [ ] `4E5E` Select **Hiring states**.
@@ -66,8 +66,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - The panel opens with **Hiring states** at the top.
     - A grey **Built in** box is after it.
     - No description is shown under the name.
-    - Under the choices, in grey, a line reads **Proposed: the request to hire is not yet approved.**
-    - Under it, in grey, a line reads **Open: the request to hire is approved.**
+    - Under the choices, in grey, a line reads "Proposed: the request to hire is not yet approved."
+    - Under it, in grey, a line reads "Open: the request to hire is approved."
   - **Notes:**
 
 ### LIST-02: Each Hiring State Shows Its Meaning
@@ -78,8 +78,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `C4C0` Read each choice's row in the panel.
   - **Expected:**
-    - **Request to hire** shows **Proposed** at the end of its row.
-    - **Approved to hire** shows **Open** at the end of its row.
+    - **Request to hire** shows "Proposed" at the end of its row.
+    - **Approved to hire** shows "Open" at the end of its row.
   - **Notes:**
 
 ### LIST-03: A New Choice Takes the Meaning Chosen
@@ -89,16 +89,16 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 **Preconditions:** As LIST-01, with the **Hiring states** panel open.
 
 - [ ] `889C` In the empty row's meaning menu, choose **Open**.
-  - **Expected:** The empty row's meaning menu reads **Open**.
+  - **Expected:** The empty row's meaning menu reads "Open".
   - **Notes:**
 
-- [ ] `F477` Type **Fictional Interviewing** in the empty row's **Name** box and press Enter.
+- [ ] `F477` Type `Fictional Interviewing` in the empty row's **Name** box and press Enter.
   - **Expected:**
-    - A row **Fictional Interviewing** appears above the empty row
+    - A row `Fictional Interviewing` appears above the empty row
     - It has a hollow yellow dot in its slot
-    - It has **Open** at the end of the row
+    - It has "Open" at the end of the row
     - The empty row is empty again
-    - Its meaning menu still reads **Open**
+    - Its meaning menu still reads "Open"
   - **Notes:**
 
 ### LIST-04: The Last Choice for a Meaning Is Kept
@@ -110,7 +110,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `B11B` Select the **⋯** button at the end of the **Request to hire** row.
   - **Expected:**
     - **Retire** and **Remove** are greyed out.
-    - **Needed for Proposed** is under them.
+    - "Needed for Proposed" is under them.
   - **Notes:**
 
 ### LIST-05: A Choice Can Be Retired When Another Has the Same Meaning
@@ -143,13 +143,13 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 **Preconditions:** LIST-05 done. Signed in with this account. **Lists** page open, with the **Hiring states** panel open.
 
 - [ ] `95B3` Select the **⋯** button at the end of the **Approved to hire** row, then select **Approve…**.
-  - **Expected:** A dialog titled **Approve 1 draft?** opens.
+  - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
 - [ ] `DCBD` Select **Approve**.
   - **Expected:**
     - The dialog stays open.
-    - It reads **This would leave Hiring states with no choice that means Open.**
+    - It reads "This would leave Hiring states with no choice that means Open."
   - **Notes:**
 
 - [ ] `113E` Select **Cancel**.
@@ -177,7 +177,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `BE18` Select **Change class…**.
   - **Expected:**
-    - A dialog titled **Change the class of Positions** opens
+    - A dialog titled "Change the class of Positions" opens
     - **General** is chosen
     - **Personal** and **Confidential** can each be chosen
     - **Personal** and **Confidential** each have a line saying what it holds
@@ -197,7 +197,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `EACE` Sign out, and sign in as the Feature Lead, `feature.lead@fathom.test`.
-  - **Expected:** The top bar's right end reads **Feature Lead**.
+  - **Expected:** The top bar's right end reads "Feature Lead".
   - **Notes:**
 
 - [ ] `B349` Select the **People** page in the left-hand menu.
@@ -205,7 +205,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `50D4` Sign out, and sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads **Engineering Operations Manager**.
+  - **Expected:** The top bar's right end reads "Engineering Operations Manager".
   - **Notes:**
 
 - [ ] `DACD` Select the **People** page in the left-hand menu.
@@ -229,7 +229,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `DB05` In the switch beside **Search lists**, select **Built in**.
   - **Expected:**
     - The table shows only **Feature priorities**, **Feature risks**, **Feature sizes**, **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses**.
-    - The count reads **7 of 15**.
+    - The count reads "7 of 15".
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.
@@ -269,7 +269,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `C962` Type `6` in the empty row's weight box and press Enter.
   - **Expected:**
-    - A row **Fictional XXL** appears above the empty row
+    - A row `Fictional XXL` appears above the empty row
     - It has a hollow yellow dot in its slot
     - It ends with `6`
     - The empty row is empty again
