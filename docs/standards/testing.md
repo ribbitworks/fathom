@@ -75,6 +75,10 @@ While working, run `pnpm test:changed`, `pnpm lint`, `pnpm format:check`, `pnpm 
 
 A change that affects the containers runs `pnpm test:containers` with the test step before the code review, and again only if a later fix changes the containers. A change to documentation only may skip the test step, as [agent-workflow.md](shared/agent-workflow.md#autonomous-mode) allows.
 
+## Problems Found
+
+A problem a test finds that the change does not fix, whether a failing manual test step, a test that fails now and then, or a gap in coverage, is filed as a GitHub issue through its form, as [Issues](../issues.md) sets out, never left in a document or a test's notes.
+
 ## Manual Tests
 
 A manual test is a test specification a test engineer, including one new to Fathom, runs by hand in a browser. Each is kept in `docs/testing/`, named `<feature>-manual-test.md`, such as [Drafts](../testing/drafts-manual-test.md), and has these sections:

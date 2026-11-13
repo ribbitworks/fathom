@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/shared/code-review.md", "docs/standards/testing.md"]
-last_updated: "2026-11-07"
+last_updated: "2026-11-12"
 ---
 
 # Code Review Standards
@@ -60,7 +60,7 @@ The reviewer goes through each document `AGENTS.md` lists, and every other Markd
 - **Development Setup:** Every command, setting, and folder the change adds, renames, or removes is listed.
 - **Implementation Plan and Roadmap:** Slice progress is recorded, and notes about work that is now done no longer read as future work.
 - **Open questions and proposals:** Any the change answers or decides are resolved in the document that owns them, and any it raises are added there.
-- **Issues:** Deferred work and accepted findings are recorded in the [issues document](../issues.md), and items the change resolves are removed.
+- **Issues:** Deferred work, accepted findings and debt to record are filed as GitHub issues, as [Issues](../issues.md) sets out, and the pull request says `Fixes #n` in its description for each issue the change resolves, which closes it on merge. Where the shared standards speak of the project's issues document, and of removing resolved items from it, that means these issues and closing them.
 - **Summaries for IT and HR:** Kept consistent with every fact they summarize that the change affects.
 - **Architecture, ADRs, and Domain Model:** Updated for new parts, decisions, and entities, with the revision noted where an ADR is revised. The Security Plan is covered under [Security](#security).
 - **Product and operations documents:** New terms, decisions, roles, use cases, platforms, and deployment needs are recorded in the documents that own them.

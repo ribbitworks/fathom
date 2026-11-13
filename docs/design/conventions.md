@@ -29,7 +29,7 @@ A short lookup of the conventions every screen follows, for those who build scre
   - **Drawn by:** `draftRowClass` in `apps/web/src/list-drafts.tsx`, with the row of the table or panel that holds it.
   - **Example:** Salvador Quiñones Méndez on People.
 - **A part a draft adds or removes:** A part of a record, such as a feature team's member, a manager's direct report or a team in a month's cell, has the draft's dot before it, struck through when the draft takes it away. Screen readers read added, removed or changed after it, since the dot and the line are only seen. A record whose parts have drafts, such as a list and its choices, has one dot before its parts, waiting while any part's draft waits, and rejected only once every one was.
-  - **Drawn by:** `DraftedPartItem` and `partsMark` in `apps/web/src/status-mark.tsx`, as `TeamLabels` in `apps/web/src/team-labels.tsx`, `AllocationLines` in `apps/web/src/allocation-months.tsx`, `PartsCell` in `apps/web/src/summary-row.tsx`, and the Person and feature team panels use them. Feature assignments doesn't yet show Live only's green dots, as [Issues](../issues.md#people) records.
+  - **Drawn by:** `DraftedPartItem` and `partsMark` in `apps/web/src/status-mark.tsx`, as `TeamLabels` in `apps/web/src/team-labels.tsx`, `AllocationLines` in `apps/web/src/allocation-months.tsx`, `PartsCell` in `apps/web/src/summary-row.tsx`, and the Person and feature team panels use them. Feature assignments doesn't yet show Live only's green dots, as [issue #323](https://github.com/jlarue26/fathom/issues/323) records.
   - **Example:** Mobile apps on the Org chart's feature teams: Atmananda Ganaka added, Priscille Adam taken away.
 - **A move:** A moved item has its dot and the Moved box, with a dimmed copy in its old place after a green dot. On the org chart, a person drafted to another manager is drawn under them, with a Live copy under the manager they report to now.
   - **Drawn by:** the list's panel in `apps/web/src/list-panel.tsx`, and `chartPeople` in `apps/web/src/org-chart.ts`.
@@ -98,7 +98,7 @@ A short lookup of the conventions every screen follows, for those who build scre
   - **Drawn by:** `formatMonth` in `apps/web/src/table-view.ts`.
   - **Example:** Offline Sync's Needed by.
 - **Typing a day or month:** Days and months are typed as their digits, laid out as typed, such as 2026-10-31 and 2027-03, whatever the reader's language.
-  - **Drawn by:** `DayInput` in `apps/web/src/day-input.tsx`. People's date cells and Person details still have their own fields, as [Issues](../issues.md#development) records.
+  - **Drawn by:** `DayInput` in `apps/web/src/day-input.tsx`. People's date cells and Person details still have their own fields, as [issue #464](https://github.com/jlarue26/fathom/issues/464) records.
   - **Example:** a milestone's Date.
 - **A time:** History entries give the day, its year and the time, in the reader's language.
   - **Drawn by:** `EntryRow` in `apps/web/src/history-entries.tsx`.
@@ -145,7 +145,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
   - **Drawn by:** `RecordLink` in `apps/web/src/record-details.tsx`.
   - **Example:** a customer in Offline Sync's details opens Projects' Customers tab with that customer's details.
 - **Opening from a table:** A table's row opens its own record's details from the show-details arrow, on every table; another record named in a cell, such as a stream's releases or a project's features, is a link that opens that record's details on its own page, as Following a link sets out. Decided by the owner on 2026-11-11.
-  - **Drawn by:** `ShowDetailsButton` in `apps/web/src/show-details-button.tsx`; links in cells are not built yet, and Releases opens a stream from its name, as [Issues](../issues.md#releases) records.
+  - **Drawn by:** `ShowDetailsButton` in `apps/web/src/show-details-button.tsx`. Links in cells are not built yet. Releases opens a stream from its name, as [issue #440](https://github.com/jlarue26/fathom/issues/440) records.
   - **Example:** the arrow at the start of any row on People.
 - **Several records in a cell:** A cell naming several records lists them in one line, cut short where they don't fit, with every name in its tooltip, one to a line; a details panel lists them one to a line.
   - **Drawn by:** the cell's kind in `apps/web/src/cell-kinds.tsx`, with the tip from `TableTips` in `apps/web/src/table-tips.tsx`, and `RecordLinkList` in `apps/web/src/record-details.tsx` in a panel.
@@ -177,7 +177,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 
 ## Fields
 
-- **An × to empty a field:** Every field typed into shows an × at its right to empty it while it holds any text, except those for passwords and on the Sign in page. Choosing the × keeps focus in the field. Decided by the owner on 2026-11-07. A table's cells aren't fields: Delete or Backspace empties one, so they show no ×, and neither do the choices in a list's panel, where Delete removes a choice. Decided by the owner on 2026-11-11. The fields that still have none are listed in [Issues](../issues.md#development).
+- **An × to empty a field:** Every field typed into shows an × at its right to empty it while it holds any text, except those for passwords and on the Sign in page. Choosing the × keeps focus in the field. Decided by the owner on 2026-11-07. A table's cells aren't fields: Delete or Backspace empties one, so they show no ×, and neither do the choices in a list's panel, where Delete removes a choice. Decided by the owner on 2026-11-11. The fields that still have none are listed in issues [#460](https://github.com/jlarue26/fathom/issues/460) and [#478](https://github.com/jlarue26/fathom/issues/478).
   - **Drawn by:** `ClearableInput` in `apps/web/src/clearable-input.tsx`.
   - **Example:** Name in Offline Sync's details, once its pencil opens it.
 

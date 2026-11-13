@@ -143,6 +143,7 @@ Automate every repeatable setup, development, and operations task with a script 
 ## Documentation
 
 - Follow the shared standards in `docs/standards/shared/` and Fathom's additions in `docs/standards/` when writing or editing files they cover
+- File known problems and deferred work as GitHub issues through the issue forms, with the labels [Issues](docs/issues.md) sets out, rather than in a document, and link to the issue from any document that needs it. A pull request that fixes one says `Fixes #n` in its description, never in commit messages or code comments
 - Record each fact in one document only, and link to it from others instead of repeating it. Each document owns:
   - Product brief (`docs/product/brief.md`): problem, vision, users, goals, scope, and constraints, with one-line key decisions that link to the decisions log or an ADR
   - Domain concepts (`docs/product/domain.md`): definitions of terms
@@ -157,7 +158,7 @@ Automate every repeatable setup, development, and operations task with a script 
   - UI conventions (`docs/design/conventions.md`): the conventions every screen shares, each with the shared piece that draws it and an example
   - Implementation plan (`docs/design/implementation-plan.md`): how the roadmap's stages are built, slice by slice
   - Architecture decision records (`docs/adr/`): technical decisions
-  - Issues (`docs/issues.md`): known problems and deferred work not yet scheduled in the implementation plan
+  - Issues ([GitHub Issues](https://github.com/jlarue26/fathom/issues), as `docs/issues.md` sets out): known problems and deferred work not yet scheduled in the implementation plan
   - Security plan (`docs/security/security-plan.md`): threat model, vulnerability scanning, source code assurance, and enforcement
   - Manual tests (`docs/testing/`): lasting step-by-step tests of a feature by hand in a real browser, following [Testing Standards § Manual Tests](docs/standards/testing.md#manual-tests)
   - Manual test results (`docs/testing/results/`): the marked copy of each manual test run, saved when its marks are cleared, as [Manual Test Basics](docs/testing/manual-test-basics.md#recording-results) sets out
