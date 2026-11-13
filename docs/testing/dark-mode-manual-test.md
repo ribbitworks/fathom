@@ -45,10 +45,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Light** chosen in the Appearance menu. **People** page open from the left-hand menu.
 
-- [ ] `EEF1` Open the account menu.
+- [ ] `EEF1` Press Tab until the account button in the top bar has focus, and press Enter.
   - **Expected:**
     - Under **Appearance** are **System**, **Light** and **Dark**.
     - The tick is beside **Light** only.
+    - The first item in the menu has focus.
   - **Notes:**
 
 - [ ] `B4C6` Press the Down arrow key until **Dark** has focus, and press Enter.
@@ -72,7 +73,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `E94C` Choose **System** in the Appearance menu.
-  - **Expected:** The page turns light, as the computer is set.
+  - **Expected:**
+    - The page turns light, as the computer is set.
+    - In the account menu, the tick is beside **System** only.
   - **Notes:**
 
 - [ ] `FECD` Set the computer's appearance to dark.
@@ -81,6 +84,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `C349` Set the computer's appearance to light.
   - **Expected:** Fathom turns light again.
+  - **Notes:**
+
+- [ ] `DBAE` Choose **Light** in the Appearance menu, and reload the page.
+  - **Expected:**
+    - The page stays light.
+    - In the account menu, the tick is beside **Light** only.
   - **Notes:**
 
 - [ ] `A8A1` Choose **Dark** in the Appearance menu.
@@ -426,25 +435,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** Every person is listed.
   - **Notes:**
 
-- [ ] `6C56` Choose **Allocations** in the mode switch.
-  - **Expected:** The table shows each person's allocations by month.
-  - **Notes:**
-
-- [ ] `AC30` Choose **None** in the Group by menu.
-  - **Expected:** In the current month's column, these are easy to read and to tell apart:
-    - the feature names
-    - the percentages
-    - the red, bold **Over** lines and the grey **Under** lines
-  - **Notes:**
-
-- [ ] `957F` Choose **Feature team** in the Group by menu.
-  - **Expected:** The rows are grouped by feature team.
-  - **Notes:**
-
-- [ ] `CB94` Scroll the table to the bottom.
-  - **Expected:** The total rows, the **Organization** row at the foot included, are easy to read and to tell apart from the rows above them.
-  - **Notes:**
-
 ### DARK-06: The Plan Pages
 
 **Account:** Superuser, `superuser@fathom.test`, the same as DARK-05.
@@ -582,6 +572,27 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `D1A7` Select the **Capacity** page in the left-hand menu.
+  - **Expected:**
+    - The mode switch reads **People** and **Settings**, with **People** chosen.
+    - The switch, the headings and the names are easy to read.
+  - **Notes:**
+
+- [ ] `D5E4` Choose **None** in the Group by menu.
+  - **Expected:** In the current month's column, these are easy to read and to tell apart:
+    - the feature names
+    - the percentages
+    - the red, bold "Over" lines and the grey "Under" lines
+  - **Notes:**
+
+- [ ] `8CC8` Choose **Feature team** in the Group by menu.
+  - **Expected:** The rows are grouped by feature team.
+  - **Notes:**
+
+- [ ] `6D09` Scroll the table to the bottom.
+  - **Expected:** The total rows, headed **Total, PM**, and the **Organization, PM** row at the foot are easy to read and to tell apart from the rows above them.
+  - **Notes:**
+
+- [ ] `04E5` Select **Settings** in the mode switch.
   - **Expected:**
     - The headings and values are easy to read.
     - The labels are dimmed beside their values.
