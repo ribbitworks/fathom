@@ -19,7 +19,7 @@ Fathom's additions to the shared [Testing Standards](shared/testing.md), which d
 | Integration | The API and data access working together against a real database of the same kind as production | Every change |
 | Access control | Every role's access to every protected operation and every level of protected data, allowed and denied | Every change |
 | Security | Input handling, sessions, request forgery protection, rate limiting, audit records, and log contents | Every change |
-| Container | Behavior that needs the built containers, such as network isolation | Every change that affects the containers, and before a stage is complete |
+| Container | Behaviour that needs the built containers, such as network isolation | Every change that affects the containers, and before a stage is complete |
 | UI | Key user journeys in a real browser | Not required for each change and not run in the workflow's test step; run when the user asks, and passing before a stage is complete |
 | Manual | What a person sees and does in a feature, by hand in a real browser, as [Manual Tests](#manual-tests) describes | Before a stage that changes the feature is complete, and when the owner asks |
 
@@ -110,7 +110,7 @@ Rules:
   - 'Single quotes' for seed data, such as people, teams, release streams and releases.
   - **Bold** labels for **Account:**, **Preconditions:**, **Expected:**, **Notes:** and **Afterwards:**.
 - **Must** give every action and expected result precisely enough for a junior test engineer to run and judge without knowing Fathom: what to select, where, and the exact text shown, marked as the rule above sets out. Every fact a step relies on, such as a URL or a supported browser, comes from the document that owns it, never from assumption.
-- **Must** keep each test case to one behavior, and make its preconditions enough to start it.
+- **Must** keep each test case to one behaviour, and make its preconditions enough to start it.
 - **Must** give each step one action: one interaction with one control, such as choosing in a list by opening it, typing and pressing Enter, or a path through menus to one place, when only its end result is checked. These also count as one action each: switching to another account (signing out and in), clearing a box and typing in it, choosing in a cell's list (selecting the cell, pressing Enter, choosing and pressing Enter), and pressing and holding. Anything whose result is checked on its way is a step of its own. Writing down a value seen, such as a name to use later, is not an action. Decided by the owner on 2026-11-11.
 - **Must** name, in every test case's **Account:** line, the account by its role and email address, and say whether it is the account the previous test case ended with or a change from it, such as "Feature Lead, `feature.lead@fathom.test`, changed from HIRE-06". A step that signs in as another account says so, naming the account the same way.
 - **Must** say exactly where to act and what to look for: which row when a record shows a draft row and a live row, which heading a button sits beside, what to type in a search box to find an entry on a long page, and each column of a table to check, in order.
@@ -120,7 +120,7 @@ Rules:
 - **Must** say only what to do and what to see: no explanations of why, design rationale, or history of fixes.
 - **Must Not** repeat facts other documents own, such as the contents of the seed data, or what [Manual Test Basics](../testing/manual-test-basics.md) holds for every test; link to them.
 - **Must** save a run's marked copy in `docs/testing/results/` before clearing its marks and notes, as [Recording Results](../testing/manual-test-basics.md#recording-results) sets out.
-- **Must** be updated in the same change as the behavior or the seed data it tests, together with [Visual Design](../design/visual-design.md) where that changes too. When a step fails because the behavior is wrong, the behavior is fixed, not the step.
+- **Must** be updated in the same change as the behaviour or the seed data it tests, together with [Visual Design](../design/visual-design.md) where that changes too. When a step fails because the behaviour is wrong, the behaviour is fixed, not the step.
 - **Must Not** depend on data a tester adds by hand, other than through the steps themselves, or on real data.
 - **Must Not** re-check what automated tests prove: each validation message, each refusal of a rule, API responses, permissions by typing addresses, each access-history sentence, or each combination of settings. One case for a rule is enough to confirm the screen shows it.
 - **Must** cover what only a person can judge: how screens look and read in light and dark mode, journeys across pages, accounts and browsers, keyboard and focus, and what tests stub out, such as the clipboard.

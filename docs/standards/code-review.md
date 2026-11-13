@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/shared/code-review.md", "docs/standards/testing.md"]
-last_updated: "2026-11-12"
+last_updated: "2026-11-13"
 ---
 
 # Code Review Standards
@@ -50,7 +50,7 @@ When the change affects the user interface, it follows the principles and rules 
 
 ## Manual Tests
 
-When the change affects what a manual test in `docs/testing/` covers, or the seed data it relies on, the test is updated in the same change and still follows [Testing Standards § Manual Tests](testing.md#manual-tests): its test cases still test the feature's behavior, not this change, and every count, name and label they expect still matches the seed and the screens. A change that adds a feature a person must check by hand, before a stage is complete, adds or extends a manual test. The review also checks that a manual test re-checks nothing that automated tests prove, covers what only a person can judge, and stays short enough to run in about 30 minutes.
+When the change affects what a manual test in `docs/testing/` covers, or the seed data it relies on, the test is updated in the same change and still follows [Testing Standards § Manual Tests](testing.md#manual-tests): its test cases still test the feature's behaviour, not this change, and every count, name and label they expect still matches the seed and the screens. A change that adds a feature a person must check by hand, before a stage is complete, adds or extends a manual test. The review also checks that a manual test re-checks nothing that automated tests prove, covers what only a person can judge, and stays short enough to run in about 30 minutes.
 
 ## Documentation Kept Current
 

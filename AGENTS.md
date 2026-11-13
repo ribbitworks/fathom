@@ -145,6 +145,7 @@ Automate every repeatable setup, development, and operations task with a script 
 ## Documentation
 
 - Follow the shared standards in `docs/standards/shared/` and Fathom's additions in `docs/standards/` when writing or editing files they cover
+- Write documents and on-screen text in Canadian English, such as colour, harbour, centre, and licence as a noun, decided by the owner on 2026-11-11
 - File known problems and deferred work as GitHub issues through the issue forms, with the labels [Issues](docs/issues.md) sets out, rather than in a document, and link to the issue from any document that needs it. A pull request that fixes one says `Fixes #n` in its description, never in commit messages or code comments
 - Record each fact in one document only, and link to it from others instead of repeating it. Each document owns:
   - Product brief (`docs/product/brief.md`): problem, vision, users, goals, scope, and constraints, with one-line key decisions that link to the decisions log or an ADR

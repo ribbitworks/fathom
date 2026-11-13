@@ -61,6 +61,6 @@ Releases are made by hand with the project's scripts, which prepare the changelo
 
 Fathom runs as Linux containers. See [Supported Platforms](docs/operations/supported-platforms.md) for where it is tested and supported.
 
-## License
+## Licence
 
 Copyright 2026 Jared La Rue. Licensed under the [Apache License, Version 2.0](LICENSE).

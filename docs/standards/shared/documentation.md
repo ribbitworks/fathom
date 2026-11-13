@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*.md"]
 dependencies: ["markdown-style-guidelines.md"]
-last_updated: "2026-11-01"
+last_updated: "2026-11-13"
 ---
 
 # Documentation Standards
@@ -117,6 +117,9 @@ frontmatter.
   `ExampleService` in pattern examples, so they are not copied as real code.
 - **Plain punctuation:** no emoji, and no em dashes; use a comma, colon,
   semicolon, parentheses or a new sentence instead.
+- **One spelling:** documents and on-screen text use the one variety of
+  English the project's own standards name, such as Canadian or American
+  English. Where they name none, ask the owner.
 - **Full paths:** refer to files by their full path from the repository root,
   such as `docs/design/data-model.md`, not a bare file name.
 - **Descriptive links:** link text says what the target is, such as
