@@ -11,7 +11,7 @@ last_updated: "2026-11-13"
 
 ## Scope
 
-Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls in light and dark mode, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, the page left out of the menu for a role without Personal details, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, the page left out of the menu for a role without Personal details, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -23,7 +23,7 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
 
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
 - **Engineering Manager:** `engineering.manager@fathom.test`
 - **Engineering Director:** `engineering.director@fathom.test`
 - **Executive:** `executive@fathom.test`
@@ -84,10 +84,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `E780` Look at the labels in the current month's column.
   - **Expected:** Each label names a feature team, in its colour:
-    - **Mobile apps** orange
-    - **Payments core** teal
-    - **Search** indigo
-    - **Platform reliability**, which has no colour, neutral
+    - 'Mobile apps' orange
+    - 'Payments core' teal
+    - 'Search' indigo
+    - 'Platform reliability', which has no colour, neutral
   - **Notes:**
 
 - [ ] `18C9` Hold the pointer over a label.
@@ -96,21 +96,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### FA-04: The Table Reads Well in Light and Dark Mode
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-03.
-
-**Preconditions:** **Feature assignments** open.
-
-- [ ] `A95E` Select **Light** in the Appearance menu.
-  - **Expected:** The labels, headings, group names and shaded cells are easy to read.
-  - **Notes:**
-
-- [ ] `67CB` Select **Dark** in the Appearance menu.
-  - **Expected:** The labels, headings, group names and shaded cells are easy to read.
-  - **Notes:**
+Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 ### FA-05: Rows Group by Manager, Feature Team or Not at All
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-04.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-03.
 
 **Preconditions:** **Feature assignments** open.
 
@@ -138,9 +128,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
-- [ ] `40E2` Type **Search** in the search box.
+- [ ] `40E2` Type `Search` in the search box.
   - **Expected:**
-    - Only people with a **Search** label in some month are listed.
+    - Only people with a 'Search' label in some month are listed.
     - The count of rows above the table goes down.
   - **Notes:**
 
@@ -158,8 +148,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** A list of the feature teams opens.
   - **Notes:**
 
-- [ ] `D6AF` Select **Payments core**.
-  - **Expected:** Only people on **Payments core** that month are listed.
+- [ ] `D6AF` Select 'Payments core'.
+  - **Expected:** Only people on 'Payments core' that month are listed.
   - **Notes:**
 
 - [ ] `621A` Press Esc.
@@ -203,7 +193,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Feature assignments** open, with **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
 
-- [ ] `BA7E` Under the **Search** group, note the people with a **Search** label in the column for the month before the current one.
+- [ ] `BA7E` Under the **Search** group, note the people with a 'Search' label in the column for the month before the current one.
   - **Expected:** The people are listed under the **Search** group.
   - **Notes:**
 
@@ -217,7 +207,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `6D7D` Select the left arrow beside the timeline once.
   - **Expected:**
-    - A card names **Search and discovery**.
+    - A card names 'Search and discovery'.
     - A yellow dot is before it.
     - The lead and the members stacked under that card are the same people as noted in step `BA7E`.
   - **Notes:**
@@ -282,17 +272,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FA-13.
 
-**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch; it shows today.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch; it shows today.
 
 - [ ] `8E7F` Select the left arrow, left of the timeline above the chart, once.
   - **Expected:**
     - The **Date** box shows the first day of last month.
-    - The text below the timeline ends **Changes take effect from this date.**
+    - The text below the timeline ends "Changes take effect from this date."
   - **Notes:**
 
-- [ ] `6B75` Select the Feature teams button, then **Payments core**. Note the first name in the **Members** row that is not the one in **Feature lead**: the leaver.
+- [ ] `6B75` Select the Feature teams button, then 'Payments core'. Note the first name in the **Members** row that is not the one in **Feature lead**: the leaver.
   - **Expected:**
-    - The team panel opens, titled **Payments core**.
+    - The team panel opens, titled 'Payments core'.
     - Its members are listed in the **Members** row.
   - **Notes:**
 
@@ -349,15 +339,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `38D9` Look along the joiner's row, from two months ago to the right.
   - **Expected:**
-    - The cell two months ago holds no **Payments core** label.
+    - The cell two months ago holds no 'Payments core' label.
     - The labels in the cell two months ago have no dot.
-    - From last month on, each cell holds a **Payments core** label, beside any other labels.
-    - Each of those **Payments core** labels has a hollow yellow dot inside it, before the name.
+    - From last month on, each cell holds a 'Payments core' label, beside any other labels.
+    - Each of those 'Payments core' labels has a hollow yellow dot inside it, before the name.
   - **Notes:**
 
 - [ ] `868D` Look along the light green row under it.
   - **Expected:**
-    - Its cells hold no **Payments core** label.
+    - Its cells hold no 'Payments core' label.
     - Any other labels are in their colours.
   - **Notes:**
 
@@ -370,18 +360,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - From last month on, the cells of the leaver hold a 'Payments core' label with a hollow yellow dot inside it.
     - The name in the label is struck through.
     - In the light green row under it, from last month on, each 'Payments core' label has a green dot inside it, before the name.
-  - **Notes:**
-
-- [ ] `F5E5` Select **Dark** in the Appearance menu.
-  - **Expected:**
-    - The tinted row, the dots in the labels and the struck-through label are easy to make out.
-    - Every label is easy to read.
-  - **Notes:**
-
-- [ ] `54F4` Select **Light** in the Appearance menu.
-  - **Expected:**
-    - The tinted row, the dots in the labels and the struck-through label are easy to make out.
-    - Every label is easy to read.
   - **Notes:**
 
 ### FA-15: The Draft Menu Shows Drafts or Leaves Them Out
@@ -406,7 +384,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `AD18` Open the Draft menu and select **Drafts applied**.
   - **Expected:**
-    - From last month on, the leaver's cells hold no **Payments core** label.
+    - From last month on, the leaver's cells hold no 'Payments core' label.
     - There is no light green row.
   - **Notes:**
 
@@ -431,8 +409,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `18D3` Open the Draft menu and select **Drafts beside live**.
   - **Expected:**
     - The joiner and the leaver are both listed under **Payments core**.
-    - The joiner's **Payments core** labels from last month on have a hollow yellow dot inside them.
-    - The leaver's **Payments core** labels from last month on have a hollow yellow dot inside them.
+    - The joiner's 'Payments core' labels from last month on have a hollow yellow dot inside them.
+    - The leaver's 'Payments core' labels from last month on have a hollow yellow dot inside them.
     - The leaver's name is struck through.
     - Each of their rows has a light green Live row under it.
   - **Notes:**
@@ -443,7 +421,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from FA-15.
 
-**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. Select the **Feature assignments** page in the left-hand menu, with nothing in the search box and no filters.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. Select the **Feature assignments** page in the left-hand menu, with nothing in the search box and no filters.
 
 - [ ] `FB0D` Select **Feature team** in the Group by menu.
   - **Expected:** The last group is **No feature team**.
@@ -477,7 +455,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The person's row is tinted faint yellow.
     - A light green Live row is under it.
     - The cells before the one selected hold no label.
-    - From the cell selected on, each cell holds a **Payments core** label with a hollow yellow dot inside it, before the name.
+    - From the cell selected on, each cell holds a 'Payments core' label with a hollow yellow dot inside it, before the name.
   - **Notes:**
 
 - [ ] `68BF` Press Cmd+Z, or Ctrl+Z outside a Mac.
@@ -499,7 +477,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The person's row is tinted faint yellow.
     - A light green Live row is under it.
-    - From the cell selected on, each cell holds a **Payments core** label with a hollow yellow dot inside it.
+    - From the cell selected on, each cell holds a 'Payments core' label with a hollow yellow dot inside it.
   - **Notes:**
 
 - [ ] `D42A` Select the **Org chart** page in the left-hand menu.
@@ -510,12 +488,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The chart shows feature teams.
   - **Notes:**
 
-- [ ] `9ACF` Select the Feature teams button, then **Payments core**.
+- [ ] `9ACF` Select the Feature teams button, then 'Payments core'.
   - **Expected:**
-    - The team panel opens, titled **Payments core**.
+    - The team panel opens, titled 'Payments core'.
     - The person is in the **Members** row.
     - A hollow yellow dot is before the person's name.
-    - After the name, in grey, **from** and the first day of the month two months after the current one, such as **from Jan 1, 2027**.
+    - After the name, in grey, "from" and the first day of the month two months after the current one, such as "from Jan 1, 2027".
   - **Notes:**
 
 ### FA-17: The Current Month Changes From Today
@@ -524,21 +502,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
-- [ ] `5AF9` Select a cell in the current month's column that holds one label, **Payments core**, in a row with no tint.
+- [ ] `5AF9` Select a cell in the current month's column that holds one label, 'Payments core', in a row with no tint.
   - **Expected:** The cell has a blue outline.
   - **Notes:**
 
 - [ ] `8E9A` Press Delete.
   - **Expected:**
     - The row is tinted faint yellow.
-    - In the cell and every cell to its right, the **Payments core** label has a hollow yellow dot inside it.
+    - In the cell and every cell to its right, the 'Payments core' label has a hollow yellow dot inside it.
     - The label's name is struck through.
   - **Notes:**
 
 - [ ] `2F9C` Press Cmd+Z, or Ctrl+Z outside a Mac.
   - **Expected:**
     - The row has no tint.
-    - In the cell and every cell to its right, the **Payments core** label has no dot.
+    - In the cell and every cell to its right, the 'Payments core' label has no dot.
     - The label's name is not struck through.
   - **Notes:**
 
@@ -555,17 +533,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `E664` Press Enter.
   - **Expected:**
     - The team list opens.
-    - **Payments core** is shown as chosen.
+    - 'Payments core' is shown as chosen.
   - **Notes:**
 
 - [ ] `562D` Type `Pay`, and press Enter.
-  - **Expected:** **Payments core** is no longer shown as chosen.
+  - **Expected:** 'Payments core' is no longer shown as chosen.
   - **Notes:**
 
 - [ ] `822C` Select the person's name with the mouse.
   - **Expected:**
-    - Fathom refuses the change, saying that the draft of **Payments core** already changes the person from another month, and to approve or discard that draft first.
-    - The cell still holds the **Payments core** label.
+    - Fathom refuses the change, saying that the draft of 'Payments core' already changes the person from another month, and to approve or discard that draft first.
+    - The cell still holds the 'Payments core' label.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
