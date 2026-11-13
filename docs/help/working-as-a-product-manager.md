@@ -29,4 +29,4 @@ A Product Manager shapes the plan: the projects customers need, the proposals th
 
 ## Approve Others' Drafts
 
-Approve or reject drafts of projects, proposals, features and releases on the **Drafts** page, as [How Work Moves Between Roles](how-work-moves-between-roles.md#approve-the-drafts) sets out. A Product Manager's own drafts need another approver.
+Approve or reject drafts of projects, proposals, features and releases on the **Drafts** page, as [Drafts page](drafts-page.md#approve-drafts) sets out. A Product Manager's own drafts need another approver.

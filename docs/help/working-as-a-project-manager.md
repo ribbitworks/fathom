@@ -19,6 +19,6 @@ A Project Manager sees projects through to delivery: their milestones, the featu
 ## Approve Others' Drafts
 
 1. Select the **Drafts** page.
-1. Approve or reject the drafts waiting, as [How Work Moves Between Roles](how-work-moves-between-roles.md#approve-the-drafts) sets out.
+1. Approve or reject the drafts waiting, as [Drafts page](drafts-page.md#approve-drafts) sets out.
 
 A Project Manager's own drafts need another approver, and a draft holding Confidential data needs the Engineering Director.

@@ -4,29 +4,19 @@ An Administrator manages who can sign in to Fathom and what each role lets them 
 
 ## Make an Account
 
-1. Select the **Accounts** page, then **New account**.
-1. Type the **Name** and **Email address**, and tick each role the account holds.
-1. If it holds more than one, choose its **Default role**, the one it signs in as at first.
-1. Select **Create account**.
-1. Select **Copy**, give the password to its holder, and select **Done**.
+1. Select the **Accounts** page.
+1. Make the account, ticking each role it holds, as [Accounts](accounts.md#make-an-account) sets out.
+1. Give the password to its holder.
 
-The password is shown only once, and must be changed at the first sign-in.
+## Look After Accounts
 
-## Change an Account
-
-Select **Edit** in the account's row on **Accounts**. There:
-
-- Change the name, email address, roles or default role, and select **Save**.
-- Select **Reset password** to have Fathom make a new one, shown once, as for a new account. The holder is signed out everywhere, and changes it at the next sign-in.
-- Select **Deactivate** to stop the account signing in, and **Reactivate** to let it again.
+On **Accounts**, change an account's name or roles, reset its password, or deactivate it, as [Accounts](accounts.md#main-tasks) sets out.
 
 ## Change What a Role Lets Its Holders Do
 
-1. Select the **Roles** page, then **Edit** in the role's row.
-1. Tick or untick what the role may do in each area: **View**, **Approve** or **Edit**.
-1. Select **Save**, check what the change gives and takes away, and select **Save changes**.
-
-To make a new role, select **Copy** in the row of the role closest to it, then **Create role**, and change the copy. **Roles** under **Help** in the left-hand menu says what each starting role lets its holders do.
+1. Select the **Roles** page.
+1. Change the role, checking what each account holding it gains and loses, as [Roles](roles.md#change-a-role) sets out.
+1. To make a new role, copy the closest one and change the copy, as [Roles](roles.md#make-a-new-role) sets out.
 
 ## Change the Settings
 
@@ -34,4 +24,4 @@ Select the **Settings** page to set Fathom's time zone and the rules for passwor
 
 ## Check the Access History
 
-Select the **Access history** page. It lists each change to an account, a role, a setting or a data class, and each export, newest first, with who made it, and marks those worth checking, such as an account given more access.
+Select the **Access history** page, and look for the entries marked as worth a second look, as [Access history](access-history.md#check-what-deserves-a-second-look) sets out.

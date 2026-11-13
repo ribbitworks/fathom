@@ -36,6 +36,6 @@ Columns pick their choices from lists. A new Fathom has only the lists its own c
 Most of these changes are drafts: nobody else sees them until they're published, and they go live once approved.
 
 1. Select **Publish** in the top bar, which says how many changes are waiting.
-1. Ask the Engineering Director to approve them on the **Drafts** page, as [How Work Moves Between Roles](how-work-moves-between-roles.md#approve-the-drafts) sets out.
+1. Ask the Engineering Director to approve them on the **Drafts** page, as [Drafts page](drafts-page.md#approve-drafts) sets out.
 
 The planning settings on **Capacity**, and a team's colour, change at once, with no draft. [Drafts](drafts.md) explains the marks drafts show while they wait.

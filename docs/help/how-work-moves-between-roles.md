@@ -16,10 +16,9 @@ A Product Manager adds a feature and plans it.
 An Engineering Director, or another role that approves the plan, decides on the drafts.
 
 1. Select the **Drafts** page.
-1. Tick each draft to decide on.
-1. Select the button that reads **Approve** and the number ticked, such as **Approve 3 drafts**, then **Approve** in the dialog. The changes go live.
+1. Approve the drafts, or reject them with a reason, as [Drafts page](drafts-page.md#approve-drafts) sets out.
 
-To send a draft back instead, select **Reject…**, type the **Reason**, and select **Reject**. The draft goes back to the person who made it, who can change it and resubmit it, or discard it. A draft an account changed itself needs another approver, unless the account is acting as Engineering Director.
+A rejected draft goes back to the person who made it, as [Drafts](drafts.md#what-happens-to-a-draft) sets out.
 
 ## Staff the Feature
 
