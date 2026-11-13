@@ -37,13 +37,14 @@ A new role is held by no one until it's given to accounts on [Accounts](accounts
 - **View** lets the role see the area, and **Edit** change it, as drafts where the area has them. **Edit** brings **View** with it.
 - **Approve** lets the role approve or reject others' drafts in the area. **Administration** has none, since its changes aren't drafts. It doesn't let the role see anything: a draft can be approved only by a role that sees all its data.
 - **Data classification** rows say which classes of data the role sees and changes within the areas it reaches. **General** comes with every area. **Personal** and **Confidential** are each ticked on their own, as [Data classes](data-classes.md) explains.
+- **Hiring plan** also needs the class the hiring plan is kept in, **Confidential** unless it's changed on [Data classes](data-classes.md): **View** and **Approve** need **View** on that class, and **Edit** needs **Edit** on it. Without them, planned hires show only as placeholders.
 - **Classify data** lets the role move details, lists and columns between the classes it sees.
 - **Approve own drafts** lets the role approve drafts its holders changed themselves, in the areas it approves, which otherwise need another approver.
 
 ## Reading the Summary
 
 - **Sees** lists the pages the role opens, and the views on them its classes allow, such as **Org chart on other dates**.
-- **Doesn't see** lists the pages the role doesn't open, and each view it misses, with the permissions and classes that view needs. A page the role's permissions reach but whose data it can't see, such as **Capacity** without Personal details, is listed here too, since the role doesn't have it.
+- **Doesn't see** lists the pages the role doesn't open, and each view it misses, with the permissions and classes that view needs. A page the role's permissions reach but whose data it can't see, such as **Capacity** without Personal details, is listed here too, since the role doesn't have it. So is each box ticked on **Hiring plan** that does nothing without the hiring plan's class, with what it needs.
 - **Can** and **Cannot** say, in a sentence each, what the role does and doesn't do.
 - **Highlighted** lines are new since the dialog opened, and **struck-through** lines are taken away.
 

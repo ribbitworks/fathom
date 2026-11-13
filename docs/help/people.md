@@ -76,6 +76,7 @@ Select **Remove person** or **Remove planned hire** in the row's **⋯** menu. F
 - **State** says whether a row is a person, **Hired** or **Left**, or a planned hire, in one of the organization's hiring states.
 - **A planned hire with no name** shows its position and ID in grey, such as **SDET, TBD-5**. **TBD-** and a number is a temporary ID, until the hire has its own.
 - **Expected** gives the month a planned hire is expected.
+- **A planned hire's Start** is the date it's planned to start. You see it, and the hire's drafts, only if your role sees the hiring plan and the class the hiring plan is kept in. Otherwise you see the hire's name, ID, position, state, manager and **Expected** month.
 - **Manager?** is ticked for those who can be someone's manager.
 - **A red Left box** after a manager's name means they've left, with people still reporting to them.
 - **A lock with Personal or Confidential**, in a grey box after a column's heading, gives its class: only roles that see that class see the column.

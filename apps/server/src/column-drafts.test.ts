@@ -874,7 +874,7 @@ describe("undoing changes to columns saved before columns had drafts", () => {
 
 describe("what decides and keeps column drafts safe", () => {
   it("needs an Approver who sees people, and the column's values", async () => {
-    const { list } = await liveList(["A"], "confidential");
+    const { list } = await liveList(["A"], "personal");
     const { field } = await draftColumn(list.id);
     const listsOnly = await test.signedIn(generalApprover);
     expect(

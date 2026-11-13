@@ -1,6 +1,6 @@
 # Working as an Engineering Manager
 
-An Engineering Manager staffs the work: who is on which feature team, month by month, and what the features they build will take. Engineering Managers see everyone's Personal details and the hiring plan, and their changes to teams are drafts that a Project Manager or the Engineering Director approves.
+An Engineering Manager staffs the work: who is on which feature team, month by month, and what the features they build will take. Engineering Managers see everyone's Personal and Confidential data and the hiring plan, and their changes to teams are drafts that a Project Manager or the Engineering Director approves.
 
 ## Staff a Feature Team
 

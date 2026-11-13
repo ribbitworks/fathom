@@ -8,7 +8,7 @@ Data classes shows the class of everything Fathom keeps in one, and changes it. 
 
 The page has three sections:
 
-- **Built-in details**, such as **Start date** or **Hiring plan**, each with the pages, views and columns that need it. A page or view that needs a detail opens only for roles that see its class.
+- **Built-in details**, such as **Start date** or **Hiring plan**, each with the pages, views and columns that need it. A page or view that needs a detail opens only for roles that see its class, and planned hires' target dates, drafts and history show only to roles that see the **Hiring plan**'s class.
 - **Columns** added to People. A column that picks from a list takes that list's class.
 - **Lists**, each with People's columns that use it.
 

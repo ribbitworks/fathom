@@ -35,6 +35,7 @@ import {
   generalApprover,
   generalReader,
   builtInChoice,
+  personalReader,
   startTestApp,
   type TestApp,
   testPosition,
@@ -624,8 +625,8 @@ describe("adding a feature team", () => {
     expect(response.statusCode).toBe(400);
     expect(refusal(response)).toBe("Choose members from People");
 
-    const personalReader = await test.signedIn("engineering-manager");
-    await drafted({ members: [starting] }, personalReader);
+    const manager = await test.signedIn("engineering-manager");
+    await drafted({ members: [starting] }, manager);
   });
 
   it("records members joining from the day given by someone who may change Personal details", async () => {
@@ -2729,7 +2730,7 @@ describe("teams on a chosen day", () => {
     const current = await person();
     const starter = await person({ startDate: "2098-06-01" });
     const id = await liveTeam({ members: [current, starter] });
-    const manager = await test.signedIn("engineering-manager");
+    const manager = await test.signedIn(personalReader);
 
     expect((await teamOn(id, "2099-01-01"))?.members).toEqual(
       [current, starter].sort(),
@@ -2911,7 +2912,7 @@ describe("feature teams month by month", () => {
     (await monthsOf(from, to, who)).people.find((one) => one.id === id);
 
   it("sends each month's managers only to those who see Confidential data, since later lines are future reorganizations", async () => {
-    const manager = await test.signedIn("engineering-manager");
+    const manager = await test.signedIn(personalReader);
     const read = await monthsOf("2026-05", "2026-07", manager);
     expect(read.people.length).toBeGreaterThan(0);
     expect(read.people.every((one) => one.managers === undefined)).toBe(true);

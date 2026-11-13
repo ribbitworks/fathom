@@ -232,7 +232,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `D8F5` Select the **Capacity** page in the left-hand menu.
   - **Expected:**
     - The mode switch has **People** chosen.
-    - Above the table, in order: a search box, a **Draft** button, **Metrics**, and **Group by: Feature team**.
+    - Above the table, in order: a search box, a **Draft** button, **Metrics**, and **Group by: Manager**.
     - The table opens at the current month.
   - **Notes:**
 
@@ -293,7 +293,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `7C51` Select the **Capacity** page in the left-hand menu.
   - **Expected:**
     - The mode switch has **People** chosen.
-    - **Group by: Feature team** shows.
+    - **Group by: Manager** shows.
+  - **Notes:**
+
+- [ ] `B241` Select **Feature team** in the Group by menu.
+  - **Expected:** **Group by: Feature team** shows.
   - **Notes:**
 
 - [ ] `AD30` Type `Payments tester` in the search box.
@@ -392,7 +396,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `C806` Select the **Feature assignments** page in the left-hand menu.
   - **Expected:**
     - The cells show feature teams as labels.
-    - **Group by: Feature team** shows.
+    - **Group by: Manager** shows.
+  - **Notes:**
+
+- [ ] `0FFA` Select **Feature team** in the Group by menu.
+  - **Expected:** **Group by: Feature team** shows.
   - **Notes:**
 
 - [ ] `A582` Under the 'Mobile apps' group, find the person whose 'Mobile apps' labels stop before the current month, and note their name and the last month with the label.
@@ -402,8 +410,12 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `5122` Select the **Capacity** page in the left-hand menu.
   - **Expected:**
     - The mode switch has **People** chosen.
-    - **Group by: Feature team** shows.
+    - **Group by: Manager** shows.
     - The cells list features, each with its percentage.
+  - **Notes:**
+
+- [ ] `243D` Select **Feature team** in the Group by menu.
+  - **Expected:** **Group by: Feature team** shows.
   - **Notes:**
 
 - [ ] `F18D` Type the name noted in step `A582` in the search box.

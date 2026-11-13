@@ -608,24 +608,25 @@ const routes: Route[] = [
   {
     method: "POST",
     pattern: "/api/planned-hires",
-    needs: allOf("people:edit", "hiring-plan:edit"),
+    // The hiring plan is changed only with Edit on its class too, Confidential until moved.
+    needs: allOf("people:edit", "hiring-plan:edit", "confidential:edit"),
     body: () => ({ hires: [{ positionId: testPosition }] }),
   },
   {
     method: "PATCH",
     pattern: "/api/planned-hires/:hireId",
-    needs: allOf("people:edit", "hiring-plan:edit"),
+    needs: allOf("people:edit", "hiring-plan:edit", "confidential:edit"),
     body: () => ({ targetDate: null }),
   },
   ...["", "/draft", "/draft/rejection"].map((end): Route => ({
     method: "DELETE",
     pattern: `/api/planned-hires/:hireId${end}`,
-    needs: allOf("people:edit", "hiring-plan:edit"),
+    needs: allOf("people:edit", "hiring-plan:edit", "confidential:edit"),
   })),
   {
     method: "POST",
     pattern: "/api/planned-hires/:hireId/fill",
-    needs: allOf("people:edit", "hiring-plan:edit"),
+    needs: allOf("people:edit", "hiring-plan:edit", "confidential:edit"),
     body: () => ({
       by: "new person",
       preferredName: "Fictional Starter",

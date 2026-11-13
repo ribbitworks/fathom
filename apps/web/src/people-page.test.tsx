@@ -50,7 +50,9 @@ const editor = session([
 const hiringEditor = session([
   "configuration:view",
   "hiring-plan:edit",
+  "confidential:edit",
   "hiring-plan:view",
+  "confidential:view",
   "people:edit",
   "people:view",
   "plan:view",
@@ -4509,7 +4511,9 @@ describe("adding from New", () => {
       session([
         "configuration:view",
         "hiring-plan:edit",
+        "confidential:edit",
         "hiring-plan:view",
+        "confidential:view",
         "people:edit",
         "people:view",
         "plan:view",

@@ -11,9 +11,11 @@ import {
   changeHistoryViews,
   type ClassAccess,
   changesField,
+  changesHiringPlan,
   historySearchLength,
   editsField,
   seesEmployment,
+  seesHiringPlan,
   whyMissing,
   type Permission,
   personLengths,
@@ -565,13 +567,12 @@ const peopleRoute = createRoute({
       <PeoplePage
         canEdit={permissions.includes("people:edit")}
         canEditHires={
-          permissions.includes("people:edit") &&
-          permissions.includes("hiring-plan:edit")
+          permissions.includes("people:edit") && changesHiringPlan(access)
         }
         approves={approvableKinds(permissions)}
         canEditColumns={permissions.includes("configuration:edit")}
         showDates={seesEmployment(access)}
-        showHireDates={permissions.includes("hiring-plan:view")}
+        showHireDates={seesHiringPlan(access)}
         {...viewProps(search, (next, replace) => {
           void navigate({ search: { ...next, open }, replace });
         })}

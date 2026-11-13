@@ -8,15 +8,18 @@ import { describe, expect, it } from "vitest";
 import type { Permission } from "./access.ts";
 import {
   builtInColumnTiers,
+  changesHiringPlan,
   changesField,
   type ClassAccess,
   type DataClasses,
   defaultClasses,
   editsClass,
   editsField,
+  hiringPlanWithoutClass,
   seesClass,
   seesEmployment,
   seesField,
+  seesHiringPlan,
   seesView,
   shownIn,
   viewsOfRole,
@@ -130,6 +133,89 @@ describe("seesEmployment", () => {
       false,
     );
     expect(seesEmployment(access([], { startDate: "general" }))).toBe(false);
+  });
+});
+
+describe("the hiring plan", () => {
+  it("is seen with View Hiring plan and its class", () => {
+    expect(seesHiringPlan(access(["hiring-plan:view", ...everything]))).toBe(
+      true,
+    );
+    expect(seesHiringPlan(access(["hiring-plan:view", ...personal]))).toBe(
+      false,
+    );
+    expect(seesHiringPlan(access(everything))).toBe(false);
+    expect(
+      seesHiringPlan(access(["hiring-plan:view"], { hiringPlan: "general" })),
+    ).toBe(true);
+  });
+
+  it("is changed with Edit Hiring plan and Edit on its class", () => {
+    const editor: Permission[] = ["hiring-plan:edit", "confidential:view"];
+    expect(changesHiringPlan(access(editor))).toBe(false);
+    expect(changesHiringPlan(access([...editor, "confidential:edit"]))).toBe(
+      true,
+    );
+    expect(
+      changesHiringPlan(access(["confidential:edit", "confidential:view"])),
+    ).toBe(false);
+    expect(
+      changesHiringPlan(
+        access(["hiring-plan:edit"], { hiringPlan: "general" }),
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("the hiring plan's permissions without its class", () => {
+  it("say why each does nothing", () => {
+    const missed = hiringPlanWithoutClass(
+      access([
+        "hiring-plan:view",
+        "hiring-plan:edit",
+        "hiring-plan:approve",
+        ...personal,
+      ]),
+    );
+    expect([...missed]).toEqual([
+      [
+        "hiring-plan:view",
+        {
+          name: "Hiring plan",
+          page: "People",
+          why: "Hiring plan: needs Confidential",
+        },
+      ],
+      [
+        "hiring-plan:edit",
+        {
+          name: "Changing the hiring plan",
+          page: "People",
+          why: "Changing the hiring plan: needs Edit Confidential data",
+        },
+      ],
+      [
+        "hiring-plan:approve",
+        {
+          name: "Approving drafts of planned hires",
+          page: "People",
+          why: "Approving drafts of planned hires: needs Confidential",
+        },
+      ],
+    ]);
+  });
+
+  it("are none for a role holding the class, or with the hiring plan in General", () => {
+    expect(
+      hiringPlanWithoutClass(
+        access(["hiring-plan:edit", "confidential:edit", ...everything]),
+      ).size,
+    ).toBe(0);
+    expect(
+      hiringPlanWithoutClass(
+        access(["hiring-plan:edit"], { hiringPlan: "general" }),
+      ).size,
+    ).toBe(0);
   });
 });
 

@@ -178,6 +178,32 @@ describe("what a role allows", () => {
     expect(cannot).not.toContain(without("feature-teams:view"));
   });
 
+  it("gives the hiring plan only to a role that sees and changes its class", () => {
+    const hiringPlan: Permission[] = [
+      "people:edit",
+      "hiring-plan:edit",
+      "hiring-plan:approve",
+    ];
+    const { can, cannot, doesNotSee } = allowed(hiringPlan);
+    expect(can).not.toContain(allows("hiring-plan:view"));
+    expect(can).not.toContain(allows("hiring-plan:edit"));
+    expect(can).not.toContain(allows("hiring-plan:approve"));
+    expect(cannot).toContain(without("hiring-plan:view"));
+    expect(cannot).not.toContain(without("hiring-plan:approve"));
+    const whys = [
+      "Hiring plan: needs Confidential",
+      "Changing the hiring plan: needs Edit Confidential data",
+      "Approving drafts of planned hires: needs Confidential",
+    ];
+    expect(doesNotSee).toEqual(expect.arrayContaining(whys));
+    const withClass = allowed([...hiringPlan, "confidential:edit"]);
+    expect(withClass.can).toContain(allows("hiring-plan:edit"));
+    expect(withClass.can).toContain(allows("hiring-plan:approve"));
+    expect(withClass.doesNotSee.filter((line) => whys.includes(line))).toEqual(
+      [],
+    );
+  });
+
   it("leaves pages out of what its holders cannot do", () => {
     expect(allowed([]).cannot.filter((line) => line.includes("page"))).toEqual(
       [],

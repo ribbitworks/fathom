@@ -305,7 +305,11 @@ describe("the State column", () => {
       stateId: await openState(),
     });
     expect(drafted.statusCode, drafted.body).toBe(200);
-    const plan = await grantedOnly(["people:view", "hiring-plan:view"]);
+    const plan = await grantedOnly([
+      "people:view",
+      "hiring-plan:view",
+      "confidential:view",
+    ]);
     expect((await hireSeen(plan, id))?.draft?.changed.toSorted()).toEqual([
       "positionId",
       "stateId",
@@ -361,7 +365,11 @@ describe("changes to positions and states", () => {
       targetDate: "2027-05-15",
     });
     const { changeSetId } = changed.json<{ changeSetId: string }>();
-    const plan = await grantedOnly(["people:view", "hiring-plan:view"]);
+    const plan = await grantedOnly([
+      "people:view",
+      "hiring-plan:view",
+      "confidential:view",
+    ]);
     const name = async () =>
       (await entryFor(plan, changeSetId))?.records[0]?.name;
     expect(await name()).toMatch(/^.+, TBD-\d+$/);
@@ -401,7 +409,9 @@ describe("changes to positions and states", () => {
       "people:view",
       "people:edit",
       "hiring-plan:view",
+      "confidential:view",
       "hiring-plan:edit",
+      "confidential:edit",
     ]);
     const id = await liveHire();
     const add = () =>
@@ -468,6 +478,7 @@ describe("changes to positions and states", () => {
     const unseeing = await grantedOnly([
       "people:view",
       "hiring-plan:view",
+      "confidential:view",
       "hiring-plan:approve",
     ]);
     const refused = await send(unseeing, "POST", "/api/drafts/approval", {
@@ -488,7 +499,9 @@ describe("changes to positions and states", () => {
       "people:view",
       "people:edit",
       "hiring-plan:view",
+      "confidential:view",
       "hiring-plan:edit",
+      "confidential:edit",
     ]);
     const made = await test.request(
       hireEditor.cookie,
@@ -572,7 +585,9 @@ describe("changing a position", () => {
       "people:view",
       "people:edit",
       "hiring-plan:view",
+      "confidential:view",
       "hiring-plan:edit",
+      "confidential:edit",
     ]);
     const drafted = await send(
       hireEditor,

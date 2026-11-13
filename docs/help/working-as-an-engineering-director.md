@@ -7,7 +7,7 @@ An Engineering Director runs the organization's plan and people: they change and
 1. Select the **Drafts** page.
 1. Approve or reject the drafts waiting, as [Drafts page](drafts-page.md#approve-drafts) sets out.
 
-Of the roles Fathom starts with, the Engineering Director is the one that approves its own drafts, and the one that approves drafts holding Confidential data.
+Of the roles Fathom starts with, the Engineering Director is the one that approves its own drafts.
 
 ## Change Reporting Lines
 

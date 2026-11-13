@@ -17,12 +17,14 @@ import type {
 } from "@fathom/shared";
 import {
   changesField,
-  classPermissions,
+  changesHiringPlan,
   defaultClasses,
+  editsClass,
   roleSchema,
   seesClass,
   seesEmployment,
   seesField,
+  seesHiringPlan,
   startingRoles,
   tierSchema,
   whyMissing,
@@ -91,26 +93,36 @@ export function requireAnyPermission(
     throw new ForbiddenError();
 }
 
-// What lets a user see and change some data: its tier, or, for the hiring plan's own details, which
-// are Confidential, the hiring plan's permissions, since the hiring plan is a permission area of
-// its own, as the Decisions Log sets out.
+// What lets a user see and change some data: its tier, or, for the hiring plan's own details, the
+// hiring plan's permissions with its class, since the hiring plan is a permission area of its own,
+// as the Decisions Log sets out.
 export type Sensitivity = Tier | "hiring-plan";
 
-// The permissions that let a user see and change data of each sensitivity. General people data
-// comes with seeing and editing people. Every sensitivity must be listed, which the compiler checks.
-const sensitivityPermissions: Record<
+// Whether a user sees and changes data of a class beyond General.
+const classAccess = (dataClass: Exclude<Tier, "general">) => ({
+  sees: (actor: Actor) => seesClass(actor.permissions, dataClass),
+  edits: (actor: Actor) => editsClass(actor.permissions, dataClass),
+});
+
+// Whether a user sees and changes data of each sensitivity. General people data comes with seeing
+// and editing people. Every sensitivity must be listed, which the compiler checks.
+const sensitivityAccess: Record<
   Sensitivity,
-  { view: Permission; edit: Permission }
+  { sees: (actor: Actor) => boolean; edits: (actor: Actor) => boolean }
 > = {
-  general: { view: "people:view", edit: "people:edit" },
-  ...classPermissions,
-  "hiring-plan": { view: "hiring-plan:view", edit: "hiring-plan:edit" },
+  general: {
+    sees: (actor) => actor.permissions.includes("people:view"),
+    edits: (actor) => actor.permissions.includes("people:edit"),
+  },
+  personal: classAccess("personal"),
+  confidential: classAccess("confidential"),
+  "hiring-plan": { sees: seesHiringPlan, edits: changesHiringPlan },
 };
 
-const permissionsOf = (sensitivity: Sensitivity) =>
+const accessOf = (sensitivity: Sensitivity) =>
   // The sensitivity is always one of the fixed sensitivities listed above.
   // eslint-disable-next-line security/detect-object-injection
-  sensitivityPermissions[sensitivity];
+  sensitivityAccess[sensitivity];
 
 const tierRank: readonly Tier[] = ["general", "personal", "confidential"];
 
@@ -118,9 +130,11 @@ const tierRank: readonly Tier[] = ["general", "personal", "confidential"];
 export const storedTier = (value: unknown): Tier =>
   tierSchema.catch("confidential").parse(value);
 
-// The tier data of a sensitivity is recorded at: the hiring plan is Confidential.
-export const tierOfSensitivity = (sensitivity: Sensitivity): Tier =>
-  sensitivity === "hiring-plan" ? "confidential" : sensitivity;
+// The tier of a sensitivity's data: for the hiring plan, the class the organization keeps it in.
+export const tierOfSensitivity =
+  (dataClasses: DataClasses) =>
+  (sensitivity: Sensitivity): Tier =>
+    sensitivity === "hiring-plan" ? dataClasses.hiringPlan : sensitivity;
 
 // The most sensitive of some tiers, or General when there are none.
 export function mostSensitive(tiers: readonly Tier[]): Tier {
@@ -131,15 +145,10 @@ export function mostSensitive(tiers: readonly Tier[]): Tier {
   );
 }
 
-// Personal and Confidential data are seen as their classes are, the rest with their own permission.
-export function seesSensitivity(
+export const seesSensitivity = (
   actor: Actor,
   sensitivity: Sensitivity,
-): boolean {
-  return sensitivity === "personal" || sensitivity === "confidential"
-    ? seesClass(actor.permissions, sensitivity)
-    : actor.permissions.includes(permissionsOf(sensitivity).view);
-}
+): boolean => accessOf(sensitivity).sees(actor);
 
 // Whether the actor sees people's employment and their past managers, as the org chart draws them.
 export const seesPeopleOverTime = (actor: Actor): boolean =>
@@ -154,7 +163,7 @@ export function requireSensitivityEdit(
   actor: Actor,
   sensitivity: Sensitivity,
 ): void {
-  requirePermission(actor, permissionsOf(sensitivity).edit);
+  if (!accessOf(sensitivity).edits(actor)) throw new ForbiddenError();
 }
 
 // Refuses a page or view the actor's role does not see every class of data for, saying why.

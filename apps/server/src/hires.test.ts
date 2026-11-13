@@ -1917,9 +1917,13 @@ describe("who may change the hiring plan", () => {
     },
   );
 
-  it("lets those who may edit people and the hiring plan change it", async () => {
+  it("lets those who may edit people, the hiring plan and its class change it", async () => {
     const who = await test.signedIn([]);
-    await test.holdOnly(who.id, ["people:edit", "hiring-plan:edit"]);
+    await test.holdOnly(who.id, [
+      "people:edit",
+      "hiring-plan:edit",
+      "confidential:edit",
+    ]);
     expect(
       (await send(who, "POST", "/api/planned-hires", hireRequest({})))
         .statusCode,
@@ -1928,9 +1932,13 @@ describe("who may change the hiring plan", () => {
 });
 
 describe("undoing changes to the hiring plan", () => {
-  it("needs only the rights to edit people and the hiring plan to undo, discard, and resubmit", async () => {
+  it("needs only the rights to edit people, the hiring plan and its class to undo, discard, and resubmit", async () => {
     const who = await test.signedIn([]);
-    await test.holdOnly(who.id, ["people:edit", "hiring-plan:edit"]);
+    await test.holdOnly(who.id, [
+      "people:edit",
+      "hiring-plan:edit",
+      "confidential:edit",
+    ]);
     const id = await liveHire();
     const dated = await ok<{ changeSetId: string }>(
       await change(id, { targetDate: "2027-07-15" }, who),
@@ -2099,9 +2107,9 @@ describe("values in People's columns", () => {
     expect(response.json<{ field: Field }>().field.onPlannedHires).toBe(true);
   });
 
-  it("shows an Engineering Manager, who sees the hiring plan but not Confidential data, the whole plan and its history, without values in Confidential columns", async () => {
-    const manager = await test.signedIn("engineering-manager");
-    const secret = await linkColumn({ visibility: "confidential" });
+  it("shows those who see the hiring plan but not Personal data the whole plan and its history, without values in Personal columns", async () => {
+    const manager = await test.signedIn(generalApprover);
+    const secret = await linkColumn({ visibility: "personal" });
     const requisition = unique("Fictional-Managed");
     const id = await liveHire({
       requisition,
@@ -2122,13 +2130,14 @@ describe("values in People's columns", () => {
     expect(history).not.toContain("managed-secret");
   });
 
-  it("lets an Approver who sees the hiring plan, but not Confidential data, decide a hire's draft only when it changes nothing in a Confidential column", async () => {
+  it("lets an Approver who sees the hiring plan, but not Personal data, decide a hire's draft only when it changes nothing in a Personal column", async () => {
     const deciding = await test.signedIn([
       "hiring-plan:approve",
       "people:view",
       "hiring-plan:view",
+      "confidential:view",
     ]);
-    const secret = await linkColumn({ visibility: "confidential" });
+    const secret = await linkColumn({ visibility: "personal" });
     const reason = unique("Fictional reason");
     const own = await draftHire({ requisition: unique("Fictional-Own") });
     await ok(

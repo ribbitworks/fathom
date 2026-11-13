@@ -5,7 +5,13 @@
 // together. Also tests building a user's permissions from what their stored role grants, and the
 // permission checks the data access layer makes.
 
-import { type Permission, permissionSchema, type Role } from "@fathom/shared";
+import {
+  defaultClasses,
+  type Permission,
+  permissionSchema,
+  type Role,
+  type Tier,
+} from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
   actorFor,
@@ -24,7 +30,7 @@ const user = {
   name: "Fictional Person",
   email: "person@example.test",
 };
-// What each starting role lets a user do, as the owner decided on 2026-11-07.
+// What each starting role lets a user do, as docs/product/roles.md sets out.
 const expected: [Role, Permission[]][] = [
   [
     "team-member",
@@ -82,6 +88,7 @@ const expected: [Role, Permission[]][] = [
       "configuration:view",
       "configuration:approve",
       "personal:view",
+      "confidential:view",
     ],
   ],
   [
@@ -99,6 +106,7 @@ const expected: [Role, Permission[]][] = [
       "hiring-plan:view",
       "configuration:view",
       "personal:view",
+      "confidential:view",
     ],
   ],
   [
@@ -193,6 +201,8 @@ describe("what each role lets a user do", () => {
 
   it("names the roles that grant a permission", () => {
     expect(rolesGranting("confidential:view")).toEqual([
+      "project-manager",
+      "engineering-manager",
       "engineering-director",
       "workforce-administrator",
       "executive",
@@ -256,26 +266,63 @@ describe("permission checks", () => {
 });
 
 describe("the hiring plan's permissions", () => {
+  const hiringPlanIn = (dataClass: Tier) => ({
+    ...defaultClasses,
+    hiringPlan: dataClass,
+  });
+
   it("are apart from Confidential data's", () => {
-    const viewer = actorWith(user, ["people:view", "hiring-plan:view"]);
-    expect(seesSensitivity(viewer, "hiring-plan")).toBe(true);
-    expect(seesSensitivity(viewer, "confidential")).toBe(false);
-    expect(
-      seesSensitivity(actorWith(user, ["confidential:edit"]), "hiring-plan"),
-    ).toBe(false);
+    const viewer = actorWith(user, ["people:view", "confidential:edit"]);
+    expect(seesSensitivity(viewer, "confidential")).toBe(true);
+    expect(seesSensitivity(viewer, "hiring-plan")).toBe(false);
     expect(() => {
       requireSensitivityEdit(viewer, "hiring-plan");
     }).toThrow(ForbiddenError);
+  });
+
+  it("show the hiring plan only with its class", () => {
+    const viewer = actorWith(user, ["people:view", "hiring-plan:view"]);
+    expect(seesSensitivity(viewer, "hiring-plan")).toBe(false);
+    expect(
+      seesSensitivity(
+        actorWith(user, [...viewer.permissions, "confidential:view"]),
+        "hiring-plan",
+      ),
+    ).toBe(true);
+    expect(
+      seesSensitivity(
+        actorWith(user, viewer.permissions, null, hiringPlanIn("general")),
+        "hiring-plan",
+      ),
+    ).toBe(true);
+  });
+
+  it("change the hiring plan only with Edit on its class", () => {
+    const editor = actorWith(user, ["hiring-plan:edit", "confidential:view"]);
+    expect(() => {
+      requireSensitivityEdit(editor, "hiring-plan");
+    }).toThrow(ForbiddenError);
     expect(() => {
       requireSensitivityEdit(
-        actorWith(user, ["hiring-plan:edit"]),
+        actorWith(user, [...editor.permissions, "confidential:edit"]),
+        "hiring-plan",
+      );
+    }).not.toThrow();
+    expect(() => {
+      requireSensitivityEdit(
+        actorWith(user, ["hiring-plan:edit"], null, hiringPlanIn("general")),
         "hiring-plan",
       );
     }).not.toThrow();
   });
 
-  it("cover data recorded as Confidential", () => {
-    expect(tierOfSensitivity("hiring-plan")).toBe("confidential");
-    expect(tierOfSensitivity("personal")).toBe("personal");
+  it("keep the hiring plan in its class", () => {
+    expect(tierOfSensitivity(defaultClasses)("hiring-plan")).toBe(
+      "confidential",
+    );
+    expect(tierOfSensitivity(hiringPlanIn("personal"))("hiring-plan")).toBe(
+      "personal",
+    );
+    expect(tierOfSensitivity(defaultClasses)("personal")).toBe("personal");
   });
 });

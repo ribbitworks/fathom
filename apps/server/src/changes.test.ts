@@ -286,8 +286,8 @@ describe("the change history", () => {
     const expected: [Role, boolean[]][] = [
       ["product-manager", [true, false, false, true]],
       ["feature-lead", [true, false, false, false]],
-      ["project-manager", [true, true, false, true]],
-      ["engineering-manager", [true, true, false, true]],
+      ["project-manager", [true, true, true, true]],
+      ["engineering-manager", [true, true, true, true]],
       ["engineering-director", [true, true, true, true]],
       ["workforce-administrator", [true, true, true, true]],
       ["executive", [true, true, true, true]],

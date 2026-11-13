@@ -698,7 +698,7 @@ export async function readHiresIn(
 // sets out.
 function requireHiringEdit(actor: Actor): void {
   requirePermission(actor, "people:edit");
-  requirePermission(actor, "hiring-plan:edit");
+  requireSensitivityEdit(actor, "hiring-plan");
 }
 
 // Hired and Left are people's states, and a hire is hired only by filling it.

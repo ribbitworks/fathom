@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/org-chart*", "apps/web/src/feature-team*", "apps/web/src/choice-picker.tsx", "apps/server/src/data/feature-teams.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: Feature Teams
@@ -646,12 +646,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `EDF7` Select **Today**.
   - **Expected:** **Today** is greyed out.
-  - **Notes:**
-
-- [ ] `E537` Choose **Reporting teams** in the teams switch.
-  - **Expected:**
-    - The right arrow is greyed out.
-    - A line in grey under the row reads **Future dates need Confidential access.**
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.

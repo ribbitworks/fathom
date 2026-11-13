@@ -345,7 +345,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-10 ended with.
 
-**Preconditions:** Team Member granted only **View** on **People** and **View** on **Hiring plan** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Team Member granted only **View** on **People**, **View** on **Hiring plan** and **View** on **Confidential** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] `B7D8` Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
   - **Expected:**
@@ -376,7 +376,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-11 ended with.
 
-**Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Hiring plan** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Team Member granted only **Edit** on **People**, **Edit** on **Hiring plan** and **Edit** on **Confidential** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] `0AF4` Look at the top right of the page.
   - **Expected:** **New** is shown.

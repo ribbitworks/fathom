@@ -594,7 +594,9 @@ async function visibleRows(
       row.recordType === "planned-hire"
         ? hireSensitivities(row.field, tiers)
         : tiers;
-    const tier = mostSensitive(sensitivities.map(tierOfSensitivity));
+    const tier = mostSensitive(
+      sensitivities.map(tierOfSensitivity(actor.dataClasses)),
+    );
     const seen = seesRowOfKind(
       actor,
       row,

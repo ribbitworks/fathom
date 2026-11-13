@@ -1,6 +1,6 @@
 # Working as a Project Manager
 
-A Project Manager sees projects through to delivery: their milestones, the features they need, and the people and teams working on them. Project Managers approve drafts of the plan, features and releases, people and planned hires, feature teams, and lists.
+A Project Manager sees projects through to delivery: their milestones, the features they need, and the people and teams working on them. Project Managers see people with their Personal and Confidential data and the hiring plan, and approve drafts of the plan, features and releases, people and planned hires, feature teams, and lists.
 
 ## Keep a Project on Track
 
@@ -21,4 +21,4 @@ A Project Manager sees projects through to delivery: their milestones, the featu
 1. Select the **Drafts** page.
 1. Approve or reject the drafts waiting, as [Drafts page](drafts-page.md#approve-drafts) sets out.
 
-A Project Manager's own drafts need another approver, and a draft holding Confidential data needs the Engineering Director.
+A Project Manager's own drafts need another approver.

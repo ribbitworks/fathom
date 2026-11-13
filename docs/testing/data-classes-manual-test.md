@@ -22,7 +22,8 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Engineering Director:** `engineering.director@fathom.test`, who may Classify data and sees Personal and Confidential data
-- **Engineering Manager:** `engineering.manager@fathom.test`, who sees Personal data but not Confidential data
+- **Engineering Manager:** `engineering.manager@fathom.test`, who sees Personal and Confidential data but may not Classify data
+- **Feature Lead:** `feature.lead@fathom.test`, who sees neither Personal nor Confidential data
 
 ## Common Procedures
 
@@ -85,9 +86,17 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 ### CLASS-02: Changing a Detail's Class Changes What Another Role Sees
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CLASS-01 ended with. Steps `035D`, `605E` and `17BB` sign in as other accounts.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CLASS-01 ended with. Steps `2401`, `035D`, `605E` and `17BB` sign in as other accounts.
 
 **Preconditions:** Signed in with this account.
+
+- [ ] `2401` Sign out, and sign in as the Feature Lead, `feature.lead@fathom.test`.
+  - **Expected:** The top bar's right end reads "Feature Lead".
+  - **Notes:**
+
+- [ ] `A892` Select the **People** page in the left-hand menu, and read the column headers.
+  - **Expected:** There are no **Start** and **End** columns.
+  - **Notes:**
 
 - [ ] `035D` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
   - **Expected:** The top bar's right end reads "Engineering Director".
@@ -121,8 +130,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **Personal** is chosen
   - **Notes:**
 
-- [ ] `DDCB` Select **Confidential**.
-  - **Expected:** **Confidential** is chosen.
+- [ ] `DDCB` Select **General**.
+  - **Expected:** **General** is chosen.
   - **Notes:**
 
 - [ ] `C2A4` Select **Change**.
@@ -130,27 +139,43 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - The dialog closes
     - No notice shows
     - The Publish button doesn't appear
-    - **Start date**'s class is a grey box with a lock and **Confidential**
+    - **Start date**'s class reads **General**, with no grey box or lock
   - **Notes:**
 
 - [ ] `B18D` Select **Change class…** on the **Start date** row.
   - **Expected:**
     - The dialog opens
-    - **Confidential** is chosen
+    - **General** is chosen
   - **Notes:**
 
 - [ ] `B86B` Select **Change**.
   - **Expected:**
     - The dialog closes
-    - The class is still **Confidential**
+    - The class is still **General**
   - **Notes:**
 
-- [ ] `605E` Sign out, and sign in as the Engineering Manager, `engineering.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Engineering Manager".
+- [ ] `54A3` Select **Change class…** on the **End date** row.
+  - **Expected:**
+    - A dialog titled "Change the class of End date" opens
+    - **Personal** is chosen
   - **Notes:**
 
-- [ ] `C812` Select the **Org chart** page in the left-hand menu.
-  - **Expected:** In place of the date row, a line reads "Other dates need Confidential access."
+- [ ] `2466` Select **General**.
+  - **Expected:** **General** is chosen.
+  - **Notes:**
+
+- [ ] `4155` Select **Change**.
+  - **Expected:**
+    - The dialog closes
+    - **End date**'s class reads **General**, with no grey box or lock
+  - **Notes:**
+
+- [ ] `605E` Sign out, and sign in as the Feature Lead, `feature.lead@fathom.test`.
+  - **Expected:** The top bar's right end reads "Feature Lead".
+  - **Notes:**
+
+- [ ] `C812` Select the **People** page in the left-hand menu, and read the column headers.
+  - **Expected:** **Start** and **End** columns are shown.
   - **Notes:**
 
 - [ ] `17BB` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
@@ -160,7 +185,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `8F30` Select the **Access history** page in the left-hand menu.
   - **Expected:**
     - The newest entry has a yellow dot before it
-    - It says the Engineering Director moved "Start date from Personal to Confidential"
+    - It says the Engineering Director moved "End date from Personal to General"
+    - The entry under it says the Engineering Director moved "Start date from Personal to General"
   - **Notes:**
 
 ### CLASS-03: Changing a Column's Class Marks Its Heading

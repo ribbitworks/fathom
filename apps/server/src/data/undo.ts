@@ -127,15 +127,15 @@ const isTeamDay = ({ recordType, field }: StoredChange) =>
   recordType === "feature-team" &&
   (field === "memberFrom" || field === "leadFrom");
 
-// The permissions each kind of record needs to change it: planned hires, those to edit people and
-// the hiring plan.
+// The permissions each kind of record needs to change it. Planned hires also need the hiring plan,
+// checked with its class.
 const editPermissions = {
   list: ["configuration:edit"],
   "list-item": ["configuration:edit"],
   "choice-order": ["configuration:edit"],
   field: ["configuration:edit"],
   person: ["people:edit"],
-  "planned-hire": ["people:edit", "hiring-plan:edit"],
+  "planned-hire": ["people:edit"],
   // Editing them is checked for the teams themselves.
   "feature-team": ["feature-teams:view"],
   // Who may change each view is checked for the view itself.
@@ -909,6 +909,9 @@ async function undoIn(
     ]) {
       requirePermission(actor, permission);
     }
+  }
+  if (records.some(({ recordType }) => recordType === "planned-hire")) {
+    requireSensitivityEdit(actor, "hiring-plan");
   }
   const draftRecords = records.filter(({ draft }) => draft);
   const liveRecords = records.filter(({ draft }) => !draft);

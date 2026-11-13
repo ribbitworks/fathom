@@ -171,6 +171,71 @@ export const changesField = (
   field: ClassifiedField,
 ): boolean => seesField(access, field) && editsField(access, field);
 
+// Whether a role sees the hiring plan, and changes it: the hiring plan is an area of its own, and
+// still kept in a class, so each needs both.
+export const seesHiringPlan = (access: ClassAccess): boolean =>
+  access.permissions.includes("hiring-plan:view") &&
+  seesField(access, "hiringPlan");
+
+export const changesHiringPlan = (access: ClassAccess): boolean =>
+  access.permissions.includes("hiring-plan:edit") &&
+  changesField(access, "hiringPlan");
+
+// The hiring plan's permissions, what each is named as on the Roles page, and whether a role's
+// class access lets it do what the permission grants.
+const hiringPlanActions: readonly {
+  permission: Permission;
+  name: string;
+  done: (access: ClassAccess) => boolean;
+  needs: (dataClass: Exclude<Tier, "general">) => string;
+}[] = [
+  {
+    permission: "hiring-plan:view",
+    name: "Hiring plan",
+    done: seesHiringPlan,
+    // The class is always one of the fixed classes listed above.
+    // eslint-disable-next-line security/detect-object-injection
+    needs: (dataClass) => classNames[dataClass],
+  },
+  {
+    permission: "hiring-plan:edit",
+    name: "Changing the hiring plan",
+    done: changesHiringPlan,
+    needs: (dataClass) =>
+      // The class is always one of the fixed classes listed above.
+      // eslint-disable-next-line security/detect-object-injection
+      permissionLabel(classPermissions[dataClass].edit),
+  },
+  {
+    permission: "hiring-plan:approve",
+    name: "Approving drafts of planned hires",
+    done: seesHiringPlan,
+    // The class is always one of the fixed classes listed above.
+    // eslint-disable-next-line security/detect-object-injection
+    needs: (dataClass) => classNames[dataClass],
+  },
+];
+
+// The hiring plan's permissions a role holds that do nothing without the hiring plan's class, each
+// as a view of People the role misses, with why, such as "Hiring plan: needs Confidential".
+export function hiringPlanWithoutClass(
+  access: ClassAccess,
+): Map<Permission, RoleView> {
+  const dataClass = classOf(access, "hiringPlan");
+  if (dataClass === "general") return new Map();
+  return new Map(
+    hiringPlanActions
+      .filter(
+        ({ permission, done }) =>
+          access.permissions.includes(permission) && !done(access),
+      )
+      .map(({ permission, name, needs }) => [
+        permission,
+        { name, page: "People", why: `${name}: needs ${needs(dataClass)}` },
+      ]),
+  );
+}
+
 // Whether a role sees people who have not started yet and those who have left, which their start
 // and end dates would reveal. Both are needed, so a person is shown or hidden as a whole.
 export const seesEmployment = (access: ClassAccess): boolean =>

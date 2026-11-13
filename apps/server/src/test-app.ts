@@ -57,10 +57,15 @@ export const generalReader: Permission[] = [
   "feature-teams:view",
 ];
 
-// An Approver who sees people and the hiring plan, but not their Personal data.
+// An Approver who sees people, Confidential data and the hiring plan, but not Personal data.
 export const generalApprover: Permission[] = startingRoles[
   "project-manager"
 ].permissions.filter((permission) => permission !== "personal:view");
+
+// A reader who sees Personal data but not Confidential data: an Engineering Manager without it.
+export const personalReader: Permission[] = startingRoles[
+  "engineering-manager"
+].permissions.filter((permission) => permission !== "confidential:view");
 
 // A name no other in the run has, so tests never collide on a name that must be unique.
 export const unique = (prefix: string) => {

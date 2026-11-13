@@ -28,6 +28,7 @@ import {
   generalApprover,
   generalReader,
   otherTestPosition,
+  personalReader,
   startTestApp,
   type TestApp,
   testPosition,
@@ -365,7 +366,7 @@ describe("the org chart on a chosen day", () => {
   });
 
   it("is refused on a later day to readers who do not see Confidential data", async () => {
-    const reader = await test.signedIn("engineering-manager");
+    const reader = await test.signedIn(personalReader);
 
     const response = await test.request(
       reader.cookie,
@@ -1087,13 +1088,14 @@ describe("planned hires on the chart", () => {
     });
     await test.connection
       .update(lists)
-      .set({ visibility: "confidential" })
+      .set({ visibility: "personal" })
       .where(eq(lists.builtIn, "positions"));
     try {
       const planReader = await test.signedIn([
         "people:view",
         "feature-teams:view",
         "hiring-plan:view",
+        "confidential:view",
       ]);
       expect((await chart(planReader.cookie)).get(id)).toMatchObject({
         position: null,
@@ -1135,6 +1137,7 @@ describe("planned hires on the chart", () => {
       "people:view",
       "feature-teams:view",
       "hiring-plan:view",
+      "confidential:view",
     ]);
     await chart(planReader.cookie);
     expect(await plansViewed(planReader.id)).toHaveLength(1);
@@ -1190,6 +1193,7 @@ describe("planned hires on the chart", () => {
       "people:view",
       "feature-teams:view",
       "hiring-plan:view",
+      "confidential:view",
     ]);
     expect((await chart(viewer.cookie)).get(moving)?.draft?.managerId).toBe(
       second,

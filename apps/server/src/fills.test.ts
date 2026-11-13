@@ -387,7 +387,9 @@ describe("filling a planned hire with someone already in Fathom", () => {
       "people:view",
       "people:edit",
       "hiring-plan:view",
+      "confidential:view",
       "hiring-plan:edit",
+      "confidential:edit",
     ]);
 
     const response = await fill(id, existing(former), actor);
@@ -403,7 +405,9 @@ describe("filling a planned hire with someone already in Fathom", () => {
       "people:view",
       "people:edit",
       "hiring-plan:view",
+      "confidential:view",
       "hiring-plan:edit",
+      "confidential:edit",
     ]);
 
     const response = await fill(id, existing(starter), actor);
@@ -762,6 +766,32 @@ describe("a fill's draft", () => {
     );
   });
 
+  it("is not discarded through its person by a role that doesn't change the hiring plan's class", async () => {
+    const id = await hire();
+    const body = newPerson();
+    await filled(id, body);
+    const added = String((await rowNamed(body.preferredName))?.id);
+    const withoutClass = await test.signedIn([
+      "people:view",
+      "people:edit",
+      "personal:view",
+      "personal:edit",
+      "hiring-plan:view",
+      "hiring-plan:edit",
+    ]);
+
+    const response = await send(
+      withoutClass,
+      "DELETE",
+      `/api/people/${added}/draft`,
+    );
+
+    expect(response.statusCode).toBe(403);
+    expect(refusal(response)).toBe(
+      "This draft is part of filling a planned hire, which this role can't change",
+    );
+  });
+
   it("is not approved through its person by an Approver who approves people but not planned hires", async () => {
     const id = await hire();
     const body = newPerson();
@@ -1099,6 +1129,7 @@ describe("a fill and other users' changes", () => {
       "people:view",
       "personal:view",
       "hiring-plan:view",
+      "confidential:view",
       "hiring-plan:approve",
     ]);
 

@@ -5,7 +5,7 @@
 // Classify data that see both classes move a built-in detail, a list, or a column with a class of its
 // own; each move is recorded in the access history; lists' and columns' moves are in the change
 // history and their drafts, and are moved back rather than undone; and the views that need a
-// detail follow its class.
+// detail, and who sees and changes the hiring plan, follow its class.
 
 import { accessHistory, dataClasses, fields, lists } from "@fathom/db";
 import {
@@ -291,6 +291,107 @@ describe("people who have left", () => {
     await move("/api/data-classes/startDate", "general");
     await move("/api/data-classes/endDate", "general");
     expect((await listedFor(reader.cookie, id))?.endDate).toBe("2021-01-29");
+  });
+});
+
+describe("the hiring plan", () => {
+  const wholePlanFor = async (cookie: string) =>
+    (await test.request(cookie, "GET", "/api/planned-hires")).json<{
+      wholePlan: boolean;
+    }>().wholePlan;
+
+  const added = async (cookie: string) =>
+    (
+      await test.request(cookie, "POST", "/api/planned-hires", {
+        hires: [{ positionId: testPosition }],
+      })
+    ).statusCode;
+
+  it("is seen only by roles that see its class", async () => {
+    const reader = await test.signedIn([
+      "people:view",
+      "hiring-plan:view",
+      "personal:view",
+    ]);
+    expect(await wholePlanFor(reader.cookie)).toBe(false);
+    await move("/api/data-classes/hiringPlan", "personal");
+    expect(await wholePlanFor(reader.cookie)).toBe(true);
+  });
+
+  it("keeps hires' drafts, their history and deciding them from roles that don't see its class", async () => {
+    // Given a hire drafted with a requisition, and a reader who sees and approves the hiring plan
+    // but not Confidential data
+    const requisition = unique("REQ-Class");
+    const drafted = await test.request(
+      classifier.cookie,
+      "POST",
+      "/api/planned-hires",
+      { hires: [{ positionId: testPosition, requisition }] },
+    );
+    expect(drafted.statusCode, drafted.body).toBe(201);
+    const [id = ""] = drafted.json<{ ids: string[] }>().ids;
+    const reader = await test.signedIn([
+      "people:view",
+      "feature-teams:view",
+      "personal:view",
+      "hiring-plan:view",
+      "hiring-plan:approve",
+    ]);
+    const onChart = async () =>
+      (await test.request(reader.cookie, "GET", "/api/org-chart"))
+        .json<{ drafted: { id: string }[] }>()
+        .drafted.some((hire) => hire.id === id);
+    const inHistory = async () =>
+      (await test.request(reader.cookie, "GET", "/api/changes")).body.includes(
+        requisition,
+      );
+    const approve = async () =>
+      (
+        await test.request(reader.cookie, "POST", "/api/drafts/approval", {
+          plannedHires: [id],
+        })
+      ).statusCode;
+    // Then
+    expect(await onChart()).toBe(false);
+    expect(await inHistory()).toBe(false);
+    expect(await approve()).toBe(404);
+    // When the hiring plan moves to a class the reader sees
+    await move("/api/data-classes/hiringPlan", "personal");
+    // Then
+    expect(await onChart()).toBe(true);
+    expect(await inHistory()).toBe(true);
+    expect(await approve()).toBe(200);
+  });
+
+  it("is undone only by roles that still change its class", async () => {
+    await move("/api/data-classes/hiringPlan", "general");
+    const editor = await test.signedIn(["people:edit", "hiring-plan:edit"]);
+    const made = await test.request(
+      editor.cookie,
+      "POST",
+      "/api/planned-hires",
+      { hires: [{ positionId: testPosition }] },
+    );
+    expect(made.statusCode, made.body).toBe(201);
+    const { changeSetId } = made.json<{ changeSetId: string }>();
+    await move("/api/data-classes/hiringPlan", "confidential");
+    expect(
+      (
+        await test.request(
+          editor.cookie,
+          "POST",
+          `/api/undo/${changeSetId}`,
+          {},
+        )
+      ).statusCode,
+    ).toBe(403);
+  });
+
+  it("is changed only by roles that change its class", async () => {
+    const editor = await test.signedIn(["people:edit", "hiring-plan:edit"]);
+    expect(await added(editor.cookie)).toBe(403);
+    await move("/api/data-classes/hiringPlan", "general");
+    expect(await added(editor.cookie)).toBe(201);
   });
 });
 

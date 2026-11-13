@@ -7,6 +7,7 @@
 
 import {
   type DataClasses,
+  hiringPlanWithoutClass,
   type Permission,
   permissionDescriptions,
   permissionGrid,
@@ -86,18 +87,19 @@ export function consequences(
   const access = { permissions: held, dataClasses };
   const opened = pagesOpened(access);
   const reached = pagesReached(held);
+  const withoutClass = hiringPlanWithoutClass(access);
+  const grants = (permission: Permission) =>
+    held.includes(permission) && !withoutClass.has(permission);
   const can: string[] = [];
   const cannot: string[] = [];
   for (const { actions } of permissionGrid) {
     const permissions = Object.values(actions);
-    const missing = permissions.filter(
-      (permission) => !held.includes(permission),
-    );
+    const missing = permissions.filter((permission) => !grants(permission));
     for (const permission of permissions) {
       // The permission is always one of the shared list.
       // eslint-disable-next-line security/detect-object-injection
       const { allows, without } = permissionDescriptions[permission];
-      if (held.includes(permission)) can.push(allows);
+      if (grants(permission)) can.push(allows);
       // An area the role reaches not at all needs saying only once.
       else if (
         missing.length < permissions.length ||
@@ -107,7 +109,10 @@ export function consequences(
       }
     }
   }
-  const views = viewsOfRole(access, reached);
+  const views = [
+    ...viewsOfRole(access, reached),
+    ...[...withoutClass.values()].filter(({ page }) => reached.includes(page)),
+  ];
   const whysOn = (page: string) =>
     views.flatMap((view) =>
       view.page === page && view.why !== undefined ? [view.why] : [],

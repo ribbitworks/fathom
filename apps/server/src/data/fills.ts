@@ -11,12 +11,17 @@ import { refuseFillingAllocated } from "./allocations.ts";
 import { type Database, plannedHires } from "@fathom/db";
 import {
   approvePermissions,
+  changesHiringPlan,
   type DraftsRequest,
   type HireFill,
   seesEmployment,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
-import { type Actor, requirePermission } from "../access.ts";
+import {
+  type Actor,
+  requirePermission,
+  requireSensitivityEdit,
+} from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
@@ -247,7 +252,7 @@ export async function fillHire(
   asOf?: string,
 ): Promise<string | null> {
   requirePermission(actor, "people:edit");
-  requirePermission(actor, "hiring-plan:edit");
+  requireSensitivityEdit(actor, "hiring-plan");
   const today = asOf ?? (await readToday(database));
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
@@ -361,12 +366,10 @@ async function fillOf(
 // Refuses changing a fill to a role that may not change both people and the hiring plan, naming
 // the fill, rather than whichever of its records comes first.
 function requireFillRights(actor: Actor): void {
-  for (const permission of ["people:edit", "hiring-plan:edit"] as const) {
-    if (!actor.permissions.includes(permission)) {
-      throw new ForbiddenError(
-        "This draft is part of filling a planned hire, which this role can't change",
-      );
-    }
+  if (!actor.permissions.includes("people:edit") || !changesHiringPlan(actor)) {
+    throw new ForbiddenError(
+      "This draft is part of filling a planned hire, which this role can't change",
+    );
   }
 }
 
