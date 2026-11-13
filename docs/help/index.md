@@ -1,6 +1,12 @@
 # Help
 
-How to use each page of Fathom.
+How to use each page of Fathom, and the work each role does most.
+
+## Working in Fathom
+
+- [Setting up Fathom](setting-up-fathom.md): a new Fathom, from an empty database to an organization ready to plan.
+- [How work moves between roles](how-work-moves-between-roles.md): a change drafted, approved, and staffed.
+- [Working as an Administrator](working-as-an-administrator.md): accounts, roles, settings and the access history.
 
 ## Plan
 
