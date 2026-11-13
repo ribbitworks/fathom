@@ -32,8 +32,7 @@ import { fictionalOrganization } from "@fathom/fixtures";
 import { noteProblem } from "@fathom/shared";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { and, count, eq, inArray, isNotNull, isNull, ne } from "drizzle-orm";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   afterAll,
@@ -58,23 +57,24 @@ import {
 } from "./drafts.ts";
 import { seedHires } from "./hires.ts";
 import { describeFailure, seed, seedCommand, unseed } from "./seed.ts";
+import { type TestSeedCommand, testSeedCommand } from "./test-seed-command.ts";
 
 let database: TestDatabase;
 let pool: ReturnType<typeof createPool>;
 let connection: Database;
-let folder: string;
+let command: TestSeedCommand;
 
 beforeAll(async () => {
   database = await startTestDatabase();
   pool = createPool(database.app, () => undefined);
   connection = createDatabase(pool);
-  folder = mkdtempSync(join(tmpdir(), "fathom-seed-"));
+  command = testSeedCommand(database);
 });
 
 afterAll(async () => {
   await pool.end();
   await database.remove();
-  rmSync(folder, { recursive: true, force: true });
+  command.remove();
 });
 
 const organization = fictionalOrganization({ size: 20 });
@@ -82,10 +82,6 @@ const organization = fictionalOrganization({ size: 20 });
 const handPosition = String(
   organization.positions.find(({ label }) => label === "Software Engineer")?.id,
 );
-
-// A session secret and an account password used only by tests.
-const sessionSecret = "fictional-session-secret-for-tests-only-0123456789";
-const accountPassword = "fictional-seed-password";
 
 async function totalOf(
   table:
@@ -632,27 +628,10 @@ describe("seed drafts", () => {
 });
 
 describe("the seed command", () => {
-  const environment = () => {
-    writeFileSync(join(folder, "password"), database.app.password);
-    writeFileSync(join(folder, "secret"), sessionSecret);
-    writeFileSync(join(folder, "accounts"), `${accountPassword}\n`);
-    return {
-      FATHOM_PUBLIC_URL: "https://fathom.example.test",
-      FATHOM_AUTH_SECRET_FILE: join(folder, "secret"),
-      FATHOM_SEED_PASSWORD_FILE: join(folder, "accounts"),
-      FATHOM_DB_HOST: database.app.host,
-      FATHOM_DB_PORT: String(database.app.port),
-      FATHOM_DB_NAME: database.app.database,
-      FATHOM_DB_USER: database.app.user,
-      FATHOM_DB_PASSWORD_FILE: join(folder, "password"),
-    };
-  };
-
   // Starts each test without the fictional data, even when the test before stopped part way, and
   // without what tests add by hand: the choice that keeps the Levels list, and a list named as the
-  // seed's Sites is. Removing the data needs the personas' accounts, which it leaves deactivated.
+  // seed's Sites is.
   beforeEach(async () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
     await connection
       .delete(listItems)
       .where(eq(listItems.label, "Fictional Hand Choice"));
@@ -664,14 +643,12 @@ describe("the seed command", () => {
           ne(lists.id, String(organization.lists[0]?.id)),
         ),
       );
-    expect(await seedCommand(["accounts"], environment())).toBe(0);
-    expect(await seedCommand(["unseed"], environment())).toBe(0);
-    vi.restoreAllMocks();
+    await command.startClean();
   });
 
   it("seeds, says when it already has, and unseeds", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
-    expect(await seedCommand(["seed"], environment())).toBe(0);
+    expect(await seedCommand(["seed"], command.environment())).toBe(0);
     // The drafts of the plan and feature teams, which plan-drafts.test.ts tries, are left out.
     const peopleAndLists = [
       "person",
@@ -744,7 +721,7 @@ describe("the seed command", () => {
     expect(heldPeople.map(({ id }) => id).sort()).toEqual(
       [String(seededPeople[0]?.id), String(seededPeople[5]?.id)].sort(),
     );
-    expect(await seedCommand(["seed"], environment())).toBe(0);
+    expect(await seedCommand(["seed"], command.environment())).toBe(0);
     expect(await totalOf(people)).toBe(150);
     expect(await ofPeopleAndLists()).toHaveLength(30);
     const reportingDrafts = made.filter(
@@ -811,7 +788,7 @@ describe("the seed command", () => {
         },
       ],
     );
-    expect(await seedCommand(["seed"], environment())).toBe(0);
+    expect(await seedCommand(["seed"], command.environment())).toBe(0);
     // The two rejected drafts of people, the one being changed, the one given a skill, the one made
     // by hand, the fourteen of lists, the four of columns, and the three of planned hires.
     expect(await ofPeopleAndLists()).toHaveLength(26);
@@ -847,7 +824,7 @@ describe("the seed command", () => {
     await connection
       .delete(people)
       .where(eq(people.employeeId, String(seeded.newcomers[0]?.employeeId)));
-    expect(await seedCommand(["unseed"], environment())).toBe(0);
+    expect(await seedCommand(["unseed"], command.environment())).toBe(0);
     const addresses = personaAccounts.map(({ email }) => email);
     expect(log.mock.calls.map(([line]) => line as string)).toEqual([
       "Added 150 fictional people, with their lists and columns",
@@ -885,7 +862,7 @@ describe("the seed command", () => {
       .where(eq(drafts.recordId, handColumn.recordId));
     // With nothing left to discard, unseeding again says nothing of drafts.
     log.mockClear();
-    expect(await seedCommand(["unseed"], environment())).toBe(0);
+    expect(await seedCommand(["unseed"], command.environment())).toBe(0);
     expect(log.mock.calls.map(([line]) => line as string)).not.toContainEqual(
       expect.stringMatching(/^Discarded/),
     );
@@ -906,15 +883,15 @@ describe("the seed command", () => {
             "field",
           ]),
         );
-    expect(await seedCommand(["seed"], environment())).toBe(0);
+    expect(await seedCommand(["seed"], command.environment())).toBe(0);
     await createDataAccess(connection).unpublished.publish(
       await actorOf(connection, "engineering.operations.manager@fathom.test"),
     );
 
     // When the seed data is removed and added again
-    expect(await seedCommand(["unseed"], environment())).toBe(0);
+    expect(await seedCommand(["unseed"], command.environment())).toBe(0);
     const listDraftsAfterRemoving = await ofLists();
-    expect(await seedCommand(["seed"], environment())).toBe(0);
+    expect(await seedCommand(["seed"], command.environment())).toBe(0);
 
     // Then removing it took back every list draft, and adding it made them all anew
     expect(listDraftsAfterRemoving).toHaveLength(0);
@@ -924,7 +901,7 @@ describe("the seed command", () => {
   it("removes the seed data while filling a planned manager waits for approval", async () => {
     // Given a fill that drafts several planned hires together
     vi.spyOn(console, "log").mockImplementation(() => undefined);
-    expect(await seedCommand(["seed"], environment())).toBe(0);
+    expect(await seedCommand(["seed"], command.environment())).toBe(0);
     const data = createDataAccess(connection);
     const editor = await actorOf(
       connection,
@@ -955,7 +932,7 @@ describe("the seed command", () => {
     await data.unpublished.publish(editor);
 
     // When the seed data is removed
-    const removed = await seedCommand(["unseed"], environment());
+    const removed = await seedCommand(["unseed"], command.environment());
 
     // Then it finishes, leaving no draft of a planned hire
     expect(removed).toBe(0);
@@ -971,13 +948,13 @@ describe("the seed command", () => {
     const problems = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
-    writeFileSync(join(folder, "short"), "too-short\n");
+    writeFileSync(join(command.folder, "short"), "too-short\n");
     for (const changed of [
       { FATHOM_PUBLIC_URL: undefined },
-      { FATHOM_SEED_PASSWORD_FILE: join(folder, "short") },
+      { FATHOM_SEED_PASSWORD_FILE: join(command.folder, "short") },
     ]) {
       expect(
-        await seedCommand(["seed"], { ...environment(), ...changed }),
+        await seedCommand(["seed"], { ...command.environment(), ...changed }),
       ).toBe(1);
     }
     expect(await totalOf(people)).toBe(0);
@@ -992,16 +969,16 @@ describe("the seed command", () => {
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
     vi.spyOn(console, "log").mockImplementation(() => undefined);
-    expect(await seedCommand(["grow"], environment())).toBe(1);
+    expect(await seedCommand(["grow"], command.environment())).toBe(1);
     expect(await seedCommand(["seed"], {})).toBe(1);
     const withoutPassword = {
-      ...environment(),
+      ...command.environment(),
       FATHOM_SEED_PASSWORD_FILE: undefined,
     };
     expect(await seedCommand(["seed"], withoutPassword)).toBe(1);
     expect(await totalOf(people)).toBe(0);
     await connection.insert(lists).values({ name: "Sites" });
-    expect(await seedCommand(["seed"], environment())).toBe(1);
+    expect(await seedCommand(["seed"], command.environment())).toBe(1);
     expect(problems.mock.calls.map(([line]) => line as string)).toEqual([
       "error: Usage: seed.ts seed | unseed | accounts",
       expect.stringMatching(/^error: /),
@@ -1013,7 +990,7 @@ describe("the seed command", () => {
   it("adds only the personas' accounts when asked, with no fictional data", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     const before = await totalOf(people);
-    expect(await seedCommand(["accounts"], environment())).toBe(0);
+    expect(await seedCommand(["accounts"], command.environment())).toBe(0);
     expect(log.mock.calls.map(([line]) => line as string)).toEqual(
       personaAccounts.map(({ email }) => `Account ready: ${email}`),
     );

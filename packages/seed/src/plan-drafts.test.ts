@@ -16,9 +16,6 @@ import { fictionalOrganization } from "@fathom/fixtures";
 import { createDataAccess } from "@fathom/server/data";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { eq, inArray } from "drizzle-orm";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import {
   afterAll,
   beforeAll,
@@ -44,44 +41,25 @@ import {
   unseedPlanDrafts,
 } from "./plan-drafts.ts";
 import { developmentSize, seedCommand } from "./seed.ts";
+import { type TestSeedCommand, testSeedCommand } from "./test-seed-command.ts";
 
 let database: TestDatabase;
 let pool: ReturnType<typeof createPool>;
 let connection: Database;
-let folder: string;
+let command: TestSeedCommand;
 
 beforeAll(async () => {
   database = await startTestDatabase();
   pool = createPool(database.app, () => undefined);
   connection = createDatabase(pool);
-  folder = mkdtempSync(join(tmpdir(), "fathom-plan-drafts-"));
+  command = testSeedCommand(database);
 });
 
 afterAll(async () => {
   await pool.end();
   await database.remove();
-  rmSync(folder, { recursive: true, force: true });
+  command.remove();
 });
-
-// A session secret and an account password used only by tests.
-const sessionSecret = "fictional-session-secret-for-tests-only-0123456789";
-const accountPassword = "fictional-seed-password";
-
-const environment = () => {
-  writeFileSync(join(folder, "password"), database.app.password);
-  writeFileSync(join(folder, "secret"), sessionSecret);
-  writeFileSync(join(folder, "accounts"), `${accountPassword}\n`);
-  return {
-    FATHOM_PUBLIC_URL: "https://fathom.example.test",
-    FATHOM_AUTH_SECRET_FILE: join(folder, "secret"),
-    FATHOM_SEED_PASSWORD_FILE: join(folder, "accounts"),
-    FATHOM_DB_HOST: database.app.host,
-    FATHOM_DB_PORT: String(database.app.port),
-    FATHOM_DB_NAME: database.app.database,
-    FATHOM_DB_USER: database.app.user,
-    FATHOM_DB_PASSWORD_FILE: join(folder, "password"),
-  };
-};
 
 const planDrafts = () =>
   connection
@@ -129,18 +107,15 @@ describe("the seed's drafts of the plan and feature teams", () => {
   ];
 
   // Starts each test without the seed data or the drafts made by hand, even when the test before
-  // stopped part way. Removing the data needs the personas' accounts, which it leaves deactivated.
+  // stopped part way.
   beforeEach(async () => {
-    vi.spyOn(console, "log").mockImplementation(() => undefined);
     await connection.delete(drafts).where(
       inArray(
         drafts.recordId,
         handDrafts.map(({ recordId }) => recordId),
       ),
     );
-    expect(await seedCommand(["accounts"], environment())).toBe(0);
-    expect(await seedCommand(["unseed"], environment())).toBe(0);
-    vi.restoreAllMocks();
+    await command.startClean();
   });
 
   it("make nothing while the records they change are not there", async () => {
@@ -154,7 +129,7 @@ describe("the seed's drafts of the plan and feature teams", () => {
   it("are drafted, held, and rejected once, and discarded leaving drafts made by hand", async () => {
     // Given the seed data, with its drafts
     vi.spyOn(console, "log").mockImplementation(() => undefined);
-    expect(await seedCommand(["seed"], environment())).toBe(0);
+    expect(await seedCommand(["seed"], command.environment())).toBe(0);
 
     // Then each persona's drafts wait or are rejected, and some changes are left unpublished
     const made = await planDrafts();
@@ -251,12 +226,12 @@ describe("the seed's drafts of the plan and feature teams", () => {
   it("are discarded when the seed data is removed, unpublished changes included", async () => {
     // Given the seed data, with its drafts
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
-    expect(await seedCommand(["seed"], environment())).toBe(0);
+    expect(await seedCommand(["seed"], command.environment())).toBe(0);
     expect(await planDrafts()).toHaveLength(15);
     log.mockClear();
 
     // When the seed data is removed
-    expect(await seedCommand(["unseed"], environment())).toBe(0);
+    expect(await seedCommand(["unseed"], command.environment())).toBe(0);
 
     // Then it says what it discarded, and leaves no draft or unpublished change of the plan
     expect(log.mock.calls.map(([line]) => line as string)).toContain(

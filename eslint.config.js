@@ -50,7 +50,12 @@ export default defineConfig(
   },
   {
     // Scripts and tests read and write files in folders they create themselves, not paths from users.
-    files: ["scripts/**", "**/*.test.ts", "packages/test-utils/**"],
+    files: [
+      "scripts/**",
+      "**/*.test.ts",
+      "packages/test-utils/**",
+      "packages/seed/src/test-seed-command.ts",
+    ],
     rules: { "security/detect-non-literal-fs-filename": "off" },
   },
   {

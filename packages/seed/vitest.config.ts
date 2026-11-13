@@ -17,7 +17,8 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      exclude: ["src/**/*.test.ts"],
+      // test-seed-command.ts only serves the tests, so its own coverage says nothing.
+      exclude: ["src/**/*.test.ts", "src/test-seed-command.ts"],
       thresholds: {
         branches: 100,
         functions: 100,
