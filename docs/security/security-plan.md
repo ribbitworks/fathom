@@ -1,7 +1,7 @@
 # Fathom: Security Plan
 
 **Status:** Proposal for review by the owner and IT
-**Last updated:** 2026-11-12
+**Last updated:** 2026-11-13
 
 How Fathom is protected: what it must protect, the threats against it, how each threat is mitigated and verified, how its technology is scanned for vulnerabilities, how confidence in its source code is established, and how the plan is enforced. It builds on [ADR 0001](../adr/0001-tech-stack.md), the [Decisions Log](../product/decisions.md), and [Roles](../product/roles.md). Everything here is proposed until reviewed.
 
@@ -143,8 +143,8 @@ The aim is to scan every part of Fathom's technology. Coverage of some parts dep
 How IT and the company can be confident in Fathom's source code:
 
 - **Open source:** Fathom is licensed under Apache 2.0, and IT will be given read access to its full source code.
-- **AI-assisted development:** Fathom is built with an AI coding assistant, working in a mode Fathom's owner chooses for each session. In Autonomous mode the assistant runs the tests and has each change reviewed by a separate AI agent before asking for approval. In Restrictive mode the assistant only edits files; the owner runs the tests, decides whether to request a separate AI review, and commits. In both modes the owner is the human reviewer and approves every change before it is committed.
-- **Development workflow:** Every change follows the [Agent Workflow](../standards/shared/agent-workflow.md). Once code exists, the tests run on every change: by the assistant in Autonomous mode, and by the owner in Restrictive mode.
+- **AI-assisted development:** Fathom is built with an AI coding assistant, working in a mode Fathom's owner chooses for each session. In Autonomous mode the assistant runs the tests and has each change reviewed by a separate AI agent before asking for approval. In Restrictive mode the assistant only edits files; the owner runs the tests, decides whether to request a separate AI review, and commits. In both modes the owner is the human reviewer and approves every change before it is committed. The one exception is a [batch of issue fixes](../issues.md#issue-batches) in Autonomous mode: each fix is committed on its own, then the whole batch is reviewed by a separate AI agent and approved by the owner before its pull request is opened.
+- **Development workflow:** Every change follows the [Agent Workflow](../standards/shared/agent-workflow.md), with the batch exception above. Once code exists, the tests run on every change: by the assistant in Autonomous mode, and by the owner in Restrictive mode.
 - **Planned from the first code:** Security tests for every role and data tier, and static analysis on every change.
 - **Releases:** Each release is tagged, and its images are built from exactly that tag by project scripts, labelled with their source and commit, scanned, and published to a container registry, as [ADR 0011](../adr/0011-releases-and-images.md) sets out, so IT can match what is running to its source code.
 - **Planned once where builds run is decided:** Pinned dependency versions from trusted sources, a list of every component in each release (a software bill of materials), and images built byte for byte repeatably; today each build takes the security fixes released by that day.

@@ -1,7 +1,7 @@
 # Fathom: Issues
 
 **Status:** Moved to GitHub Issues
-**Last updated:** 2026-11-12
+**Last updated:** 2026-11-13
 
 Known problems and deferred work not yet scheduled in the [Implementation Plan](design/implementation-plan.md) are kept in [GitHub Issues](https://github.com/jlarue26/fathom/issues), moved there from this document on 2026-11-12, as the owner decided.
 
@@ -34,4 +34,20 @@ Known problems and deferred work not yet scheduled in the [Implementation Plan](
 
 ## Fixing an Issue
 
-A pull request that fixes an issue says `Fixes #n` in its description, so merging it closes the issue. Never in commit messages or code comments.
+- **Before a task:** List the open issues for each area the task touches, with `gh issue list -R jlarue26/fathom --label "area: <area>" --state open`, and search the issues for the files it will change.
+- **Along the way:** Fix the area's P2 bugs, and its cheap `later` items too if they add little to the pull request. Check a `may-be-fixed` issue first, as [Labels](#labels) sets out.
+- **The pull request:** Says `Fixes #n` in its description for each issue it fixes, so merging it closes the issue, never in commit messages or code comments. It names any open issues it leaves in its areas, and why.
+
+## Issue Batches
+
+A task that is a set of issues in one area is a batch, worked in Autonomous mode only. A batch is an exception to the [Autonomous workflow](standards/shared/agent-workflow.md#autonomous-mode), which reviews each change and has the owner approve it before it is committed, as the owner decided on 2026-11-13:
+
+- **One branch per area:** Such as `fix/releases-issues`, holding one area only and under about 1,500 added lines.
+- **Each issue:** Fixed, checked with `pnpm test:changed`, the linters and type checking, as [Testing Standards](standards/testing.md#running-tests) runs them while working, and committed on its own.
+- **Once, for the whole branch:**
+  1. The owner's screen check, if any screen changed
+  1. One full `pnpm check`
+  1. One separate-agent review of the whole branch
+  1. The owner's approval of the batch
+  1. The pull request, as [Fixing an Issue](#fixing-an-issue) sets out
+- **Failures found at the end:** Fixed in a new commit, never by changing earlier ones.

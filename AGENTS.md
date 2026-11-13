@@ -127,6 +127,8 @@ cannot say. Never narrate names, UI, tickets, use-case numbers or history. See
 
 Changes reach `main` only through a pull request, as [agent-workflow.md](docs/standards/shared/agent-workflow.md) requires. Pull request titles, descriptions and comments follow the commit message rules and carry no AI attribution.
 
+Before starting a task, find and fix the issues in its areas, as [Issues § Fixing an Issue](docs/issues.md#fixing-an-issue) sets out. In Autonomous mode, a set of issues in one area is worked as a batch. A batch commits each fix on its own, then has one review and one approval for the whole branch, as an exception to the Autonomous workflow that [Issues § Issue Batches](docs/issues.md#issue-batches) sets out.
+
 ## Data
 
 Fathom holds company and employee data, so the shared data rule covers these in particular:
