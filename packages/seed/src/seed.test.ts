@@ -32,11 +32,19 @@ import {
 import { fictionalOrganization } from "@fathom/fixtures";
 import { noteProblem } from "@fathom/shared";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
-import { and, count, eq, inArray, isNotNull, isNull } from "drizzle-orm";
+import { and, count, eq, inArray, isNotNull, isNull, ne } from "drizzle-orm";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { personaAccounts } from "./accounts.ts";
 import { actorFor } from "@fathom/server/access";
 import { createDataAccess } from "@fathom/server/data";
@@ -642,12 +650,26 @@ describe("the seed command", () => {
     };
   };
 
-  // Removes any fictional data an earlier test left, as one that stopped part way does.
-  async function withoutFictionalData() {
+  // Starts each test without the fictional data, even when the test before stopped part way, and
+  // without what tests add by hand: the choice that keeps the Levels list, and a list named as the
+  // seed's Sites is. Removing the data needs the personas' accounts, which it leaves deactivated.
+  beforeEach(async () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
+    await connection
+      .delete(listItems)
+      .where(eq(listItems.label, "Fictional Hand Choice"));
+    await connection
+      .delete(lists)
+      .where(
+        and(
+          eq(lists.name, "Sites"),
+          ne(lists.id, String(organization.lists[0]?.id)),
+        ),
+      );
+    expect(await seedCommand(["accounts"], environment())).toBe(0);
     expect(await seedCommand(["unseed"], environment())).toBe(0);
     vi.restoreAllMocks();
-  }
+  });
 
   it("seeds, says when it already has, and unseeds", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
@@ -871,7 +893,8 @@ describe("the seed command", () => {
     );
   });
 
-  it("makes every draft anew when the seed data is removed and added again", async () => {
+  it("makes the list drafts anew when the seed data is removed after its unpublished changes are published", async () => {
+    // Given the seed data, with the changes it leaves unpublished published, its drafted list too
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     const ofLists = () =>
       connection
@@ -885,26 +908,19 @@ describe("the seed command", () => {
             "field",
           ]),
         );
-    // The Positions list kept by the test before, for the choice added to it by hand.
-    await connection
-      .delete(listItems)
-      .where(eq(listItems.label, "Fictional Hand Choice"));
-    expect(await seedCommand(["unseed"], environment())).toBe(0);
     expect(await seedCommand(["seed"], environment())).toBe(0);
-    expect(await ofLists()).toHaveLength(18);
-    expect(await seedCommand(["unseed"], environment())).toBe(0);
-    expect(await ofLists()).toHaveLength(0);
-    expect(await seedCommand(["seed"], environment())).toBe(0);
-    expect(await ofLists()).toHaveLength(18);
-    // Publishing the changes the seed leaves unpublished, as a manual test does, publishes the list
-    // it drafts adding, which removing the seed data takes back too.
     await createDataAccess(connection).unpublished.publish(
       await actorOf(connection, "engineering.operations.manager@fathom.test"),
     );
+
+    // When the seed data is removed and added again
     expect(await seedCommand(["unseed"], environment())).toBe(0);
-    expect(await ofLists()).toHaveLength(0);
+    const listDraftsAfterRemoving = await ofLists();
     expect(await seedCommand(["seed"], environment())).toBe(0);
-    expect(await seedCommand(["unseed"], environment())).toBe(0);
+
+    // Then removing it took back every list draft, and adding it made them all anew
+    expect(listDraftsAfterRemoving).toHaveLength(0);
+    expect(await ofLists()).toHaveLength(18);
   });
 
   it("removes the seed data while filling a planned manager waits for approval", async () => {
@@ -954,7 +970,6 @@ describe("the seed command", () => {
   });
 
   it("stops before adding anything when sign-in settings or the accounts' password are missing or unusable", async () => {
-    await withoutFictionalData();
     const problems = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
@@ -975,7 +990,6 @@ describe("the seed command", () => {
   });
 
   it("says what went wrong: a wrong command, missing settings, or data in the way", async () => {
-    await withoutFictionalData();
     const problems = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);

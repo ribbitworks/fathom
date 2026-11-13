@@ -20,7 +20,15 @@ import { eq, inArray } from "drizzle-orm";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { actorOf, rejection } from "./drafts.ts";
 import {
   addedCustomer,
@@ -105,18 +113,49 @@ const holders = async () =>
     .sort();
 
 describe("the seed's drafts of the plan and feature teams", () => {
+  // Drafts of records the seed never made, which the data access layer would refuse, so they are
+  // written directly.
+  const handDrafts = [
+    {
+      recordType: "customer",
+      recordId: "00000000-0000-4000-8000-0000000000d1",
+      action: "changed",
+      fields: { name: "Fictional Hand Customer" },
+    },
+    {
+      recordType: "customer",
+      recordId: "00000000-0000-4000-8000-0000000000d2",
+      action: "created",
+      fields: { name: "Fictional Hand Added" },
+    },
+  ];
+
+  // Starts each test without the seed data or the drafts made by hand, even when the test before
+  // stopped part way. Removing the data needs the personas' accounts, which it leaves deactivated.
+  beforeEach(async () => {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    await connection.delete(drafts).where(
+      inArray(
+        drafts.recordId,
+        handDrafts.map(({ recordId }) => recordId),
+      ),
+    );
+    expect(await seedCommand(["accounts"], environment())).toBe(0);
+    expect(await seedCommand(["unseed"], environment())).toBe(0);
+    vi.restoreAllMocks();
+  });
+
   it("make nothing while the records they change are not there", async () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
-    expect(await seedCommand(["accounts"], environment())).toBe(0);
     const organization = fictionalOrganization({ size: developmentSize });
     expect(await seedPlanDrafts(connection, organization)).toBe(false);
     expect(await seedUnpublishedPlan(connection, organization)).toBe(false);
     expect(await unseedPlanDrafts(connection, organization)).toBe(0);
   });
 
-  it("are drafted, held, and rejected once, and discarded with the seed data", async () => {
+  it("are drafted, held, and rejected once, and discarded leaving drafts made by hand", async () => {
     // Given the seed data, with its drafts
-    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
     expect(await seedCommand(["seed"], environment())).toBe(0);
 
     // Then each persona's drafts wait or are rejected, and some changes are left unpublished
@@ -196,22 +235,6 @@ describe("the seed's drafts of the plan and feature teams", () => {
     expect(await planDrafts()).toHaveLength(15);
 
     // When a draft of another record is made by hand, and the seed's are discarded
-    // These are drafts of records the seed never made, which the data access layer would refuse, so
-    // they are written directly.
-    const handDrafts = [
-      {
-        recordType: "customer",
-        recordId: "00000000-0000-4000-8000-0000000000d1",
-        action: "changed",
-        fields: { name: "Fictional Hand Customer" },
-      },
-      {
-        recordType: "customer",
-        recordId: "00000000-0000-4000-8000-0000000000d2",
-        action: "created",
-        fields: { name: "Fictional Hand Added" },
-      },
-    ];
     await connection.insert(drafts).values(handDrafts);
     await data.unpublished.discard(
       await actorOf(connection, "project.manager@fathom.test"),
@@ -225,19 +248,19 @@ describe("the seed's drafts of the plan and feature teams", () => {
     expect((await planDrafts()).map(({ recordId }) => recordId).sort()).toEqual(
       handDrafts.map(({ recordId }) => recordId),
     );
-    await connection.delete(drafts).where(
-      inArray(
-        drafts.recordId,
-        handDrafts.map(({ recordId }) => recordId),
-      ),
-    );
+  });
 
-    // And removing the seed data says what it discarded, unpublished changes included
-    expect(await seedCommand(["unseed"], environment())).toBe(0);
+  it("are discarded when the seed data is removed, unpublished changes included", async () => {
+    // Given the seed data, with its drafts
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     expect(await seedCommand(["seed"], environment())).toBe(0);
     expect(await planDrafts()).toHaveLength(15);
     log.mockClear();
+
+    // When the seed data is removed
     expect(await seedCommand(["unseed"], environment())).toBe(0);
+
+    // Then it says what it discarded, and leaves no draft or unpublished change of the plan
     expect(log.mock.calls.map(([line]) => line as string)).toContain(
       "Discarded 15 drafts of releases, projects, features, and feature teams",
     );
