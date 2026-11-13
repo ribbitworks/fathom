@@ -1,7 +1,7 @@
 # Fathom — Roles
 
 **Status:** Starting roles, with open points marked **proposal**
-**Last updated:** 2026-11-11
+**Last updated:** 2026-11-12
 
 The roles Fathom starts with, for controlling what each user can see, edit, and approve, built on the access decisions in the [Decisions Log](decisions.md). Roles are editable sets of permissions, as the Decisions Log records, decided by the owner on 2026-11-04, so these are a starting set: they can be edited and copied to make new roles, within the safeguards below, and each keeps what it grants today until it is changed. An account holds one or more roles, any roles, starting or made later, one of them its default, and acts as one of them at a time: what a user may do reads from the role they act as alone, never from their roles added up. Signing in acts as the role last chosen on that browser, or else the default, and a user switches role from their account's menu, as the [Decisions Log](decisions.md#people-and-privacy) records, decided by the owner on 2026-11-07. There is one starting role for each persona, granting what that persona's roles granted together when accounts held several building-block roles, decided by the owner on 2026-11-06. The owner has confirmed that Engineering Managers and the Executive see Personal data, that the Engineering Director plans, and the split between planning the plan and planning allocations. Items marked **proposal** are not yet agreed.
 
@@ -45,6 +45,8 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | Saved views of tables the role sees | Save personal views, and change their own | Save personal views, and change their own | Save personal views, and change their own | Save personal views, and change their own | Save personal views, and change their own | Save personal and shared views, share their own or take them back, and change their own and any shared view | Save personal and shared views, share their own or take them back, and change their own and any shared view | Save personal views, and change their own | None |
 | Administration: user accounts and the role each holds, roles and what each grants, system settings, and the access history | None | None | None | None | None | View | None | View | Edit |
 
+Of the starting roles, only the Engineering Director is to hold Export, in every area, as [A permission to export](decisions.md#people-and-privacy) sets out. Decided by the owner on 2026-11-12, and not built yet.
+
 Allocations, Feature assignments, and the Org chart on other dates also need View on Personal details, and the Org chart's reporting view on future dates, and grouping Feature assignments by manager, View on Confidential data too, as [Data classes](decisions.md#people-and-privacy) sets out; a role without them reaches the page, which says why in place of what it needs.
 
 Approving is granted area by area, and rejecting with it, as [Approving by area](decisions.md#people-and-privacy) records. Seeing data comes only from viewing permissions, never from approving. A user can approve only drafts whose values their role lets them see, so a draft holding a Personal detail, such as an end date, needs an Approver whose role also sees Personal data, such as the Engineering Director, and drafts of People's columns, and the values in them, need an Approver whose role sees people. Project Managers, who see people with their Personal details and the hiring plan, approve drafts of people's details, Personal details included, of People's columns, and of planned hires, decided by the owner on 2026-11-07 and 2026-11-11, and can approve feature teams too, which the owner accepted on 2026-10-31.
@@ -57,7 +59,9 @@ Every starting role but Administrator sees people's General details, on People a
 
 ## Custom Fields and Tables
 
-**Proposal:** The Workforce Administrator defines custom fields on people, teams, and planned hires, and any custom field or table that links to people or holds personal information. Roles that edit the plan define other custom fields on the plan, such as on projects and features, and custom tables for reference lists. A user can assign a field or table only to a tier their own role lets them see. This waits for the [Roadmap](roadmap.md)'s stage for custom fields and tables.
+Columns on Features are added and changed by the Product Manager and the Engineering Director, through a permission of their own, and no longer by the Workforce Administrator, nor by the Project Manager, Engineering Manager or Feature Lead, who edit features, as [Columns on Features](decisions.md#configuration) sets out. Decided by the owner on 2026-11-09, and not built yet: until it is, the table above holds.
+
+**Proposal:** The Workforce Administrator defines custom fields on people, teams, and planned hires, and any custom field or table that links to people or holds personal information. Roles that edit the plan define other custom fields on the plan, such as on projects, and custom tables for reference lists. A user can assign a field or table only to a tier their own role lets them see. This waits for the [Roadmap](roadmap.md)'s stage for custom fields and tables.
 
 ## Releases
 

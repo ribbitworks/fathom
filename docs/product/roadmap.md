@@ -3,7 +3,7 @@
 **Status:** Proposal for the owner's review
 **Last updated:** 2026-11-12
 
-A proposed order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. The principles, stage contents, and order are not yet agreed. The privacy approval gate is agreed.
+A proposed order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. The principles, stage contents, and order are not yet agreed. The privacy approval gate is agreed. Each stage is to become a GitHub milestone, as [Issues](../issues.md) sets out.
 
 ## Guiding Principles
 
