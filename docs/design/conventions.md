@@ -1,7 +1,7 @@
 # Fathom: UI Conventions
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-12
+**Last updated:** 2026-11-13
 
 A short lookup of the conventions every screen follows, for those who build screens. Each entry gives the rule, the shared piece that draws it, so a new screen reuses it rather than drawing its own, and an example from the [fictional seed data](development-setup.md#fictional-seed-data), or the steps that make one. The principles behind them, and how each page is laid out, are in [Visual Design](visual-design.md).
 
@@ -258,6 +258,12 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **Controls turned off:** A control for a change the server would refuse is turned off, with a line saying why wherever the reason isn't plain to see. A control the reader might expect, such as Fill on a planned hire or New under Live only, is turned off with its reason rather than hidden; a control is hidden only when the role can never use it. Decided by the owner on 2026-11-11.
   - **Drawn by:** each page; no shared piece yet.
   - **Example:** in a list with meanings, such as Feature statuses, Retire and Remove are greyed out on the only choice that means Possible, with a line saying why.
+
+## Tables
+
+- **Moving columns:** Every table's columns can be moved, as [Column order](../product/decisions.md#configuration) sets out. A new table is drawn by the shared table, so its columns move too.
+  - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx`.
+  - **Example:** on Features, select Move left in the Priority column's menu.
 
 ## Staying Put
 

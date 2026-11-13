@@ -282,7 +282,7 @@ describe("the table of lists", () => {
         .getByRole("menuitem", { name: startsWith("Remove") })
         .hasAttribute("data-disabled"),
     ).toBe(true);
-    expect(within(menu).getByText("The last choice")).toBeTruthy();
+    expect(within(menu).getByText("Positions needs a choice")).toBeTruthy();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
@@ -292,7 +292,7 @@ describe("the table of lists", () => {
     await waitFor(() => {
       expect(document.activeElement?.getAttribute("aria-label")).toBe("name");
     });
-    expect(screen.queryByText("The last choice")).toBeNull();
+    expect(screen.queryByText("Positions needs a choice")).toBeNull();
   });
 
   const builtInPositions = {
@@ -855,7 +855,7 @@ describe("the side panel", () => {
     await userEvent.click(row("c1"));
     expect(screen.queryByLabelText("name")).toBeNull();
     history.push("/lists/l3");
-    expect(await screen.findByText("No choices yet")).toBeDefined();
+    expect(await screen.findByText("None")).toBeDefined();
   });
 
   it("shows retired choices only when asked", async () => {
@@ -3802,10 +3802,14 @@ describe("built-in lists and lists with meanings", () => {
     });
     renderApp("/lists/l3");
     await screen.findByRole("heading", { name: "Empty List", level: 2 });
+    const button = screen.getByRole<HTMLButtonElement>("button", {
+      name: "Change class…",
+    });
+    expect(button.disabled).toBe(true);
     expect(
-      screen.getByRole<HTMLButtonElement>("button", { name: "Change class…" })
-        .disabled,
-    ).toBe(true);
+      document.getElementById(String(button.getAttribute("aria-describedby")))
+        ?.textContent,
+    ).toBe("Fictional Editor is changing this list");
   });
 
   it("keeps a list a column on Features draws on General, saying why", async () => {
@@ -4066,5 +4070,151 @@ describe("built-in lists and lists with meanings", () => {
         ([, init]) => init?.method !== "GET" && init?.method !== undefined,
       ),
     ).toEqual([]);
+  });
+});
+
+describe("the weights of feature sizes", () => {
+  const changedTo = (live: object) => ({
+    action: "changed",
+    changed: ["weight"],
+    live,
+    state: "waiting",
+    madeBy: "Fictional Editor",
+    madeAt: "2026-11-01T10:00:00.000Z",
+  });
+  const sizes = {
+    id: "l6",
+    name: "Feature sizes",
+    description: "",
+    visibility: "general",
+    retired: false,
+    builtIn: "feature-sizes",
+    choices: [
+      choice("c20", "S", { weight: 1 }),
+      choice("c21", "M", { weight: 2.5, draft: changedTo({ weight: 2 }) }),
+      choice("c22", "Unknown"),
+    ],
+  };
+
+  async function openSizes(answers: Answers = {}, path = "/lists/l6") {
+    const fetch = serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () => Response.json({ lists: [sizes] }),
+      ...answers,
+    });
+    renderApp(path);
+    await screen.findByRole("heading", { name: "Feature sizes", level: 2 });
+    await waitFor(() => {
+      expect(panel().contains(document.activeElement)).toBe(true);
+    });
+    return fetch;
+  }
+
+  const weightOf = (element: Element | null) =>
+    element?.querySelector("[data-field='weight']")?.textContent ??
+    element?.lastElementChild?.textContent;
+
+  const entryWeight = () =>
+    screen.getByLabelText<HTMLInputElement>("New choice weight");
+
+  it("shows each size's weight, and a changed weight's live one under it", async () => {
+    await openSizes();
+    expect(weightOf(row("c20"))).toBe("1");
+    expect(weightOf(row("c21"))).toBe("2.5");
+    expect(weightOf(row("c21").nextElementSibling)).toBe("2");
+    expect(weightOf(row("c22"))).toBe("");
+  });
+
+  it("shows the live weights with Live only chosen", async () => {
+    await openSizes({}, "/lists/l6?show=live");
+    expect(weightOf(row("c21"))).toBe("2");
+  });
+
+  it("adds a size with the weight typed, and pasted sizes take it", async () => {
+    const fetch = await openSizes({
+      "POST /api/lists/l6/choices": () =>
+        Response.json({ choices: [], changeSetId: s1 }, { status: 201 }),
+    });
+    await userEvent.type(entryWeight(), "6");
+    await userEvent.type(entryName(), "XXL{Enter}");
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/lists/l6/choices")).toEqual([
+        { choices: [{ label: "XXL", description: "", weight: 6 }] },
+      ]);
+    });
+    expect(entryWeight().value).toBe("");
+    await userEvent.type(entryWeight(), "8");
+    act(() => {
+      entryName().focus();
+    });
+    await userEvent.paste("XXXL\nHuge");
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/lists/l6/choices")[1]).toEqual({
+        choices: [
+          { label: "XXXL", description: "", weight: 8 },
+          { label: "Huge", description: "", weight: 8 },
+        ],
+      });
+    });
+  });
+
+  it("says what is wrong with a weight, and adds nothing until it will do", async () => {
+    const fetch = await openSizes();
+    await userEvent.type(entryName(), "XXL{Enter}");
+    expect(screen.getByRole("alert").textContent).toBe("Weight needed");
+    expect(document.activeElement).toBe(entryWeight());
+    expect(entryWeight().getAttribute("aria-invalid")).toBe("true");
+    for (const [typed, problem] of [
+      ["abc", "Weight: use a number such as 1234.5"],
+      ["0", "Weight: use 0.01 to 9999.99"],
+      ["10000", "Weight: use 0.01 to 9999.99"],
+      ["1.234", "Weight: use at most 2 digits after the point"],
+    ] as const) {
+      await userEvent.clear(entryWeight());
+      await userEvent.type(entryWeight(), `${typed}{Enter}`);
+      expect(screen.getByRole("alert").textContent).toBe(problem);
+    }
+    await userEvent.clear(entryName());
+    await userEvent.clear(entryWeight());
+    act(() => {
+      entryName().focus();
+    });
+    await userEvent.paste("XXXL\nHuge");
+    expect(screen.getByRole("alert").textContent).toBe("Weight needed");
+    expect(entryName().value).toBe("");
+    await userEvent.type(entryWeight(), "3{Escape}");
+    expect(entryWeight().value).toBe("");
+    expect(screen.queryByRole("alert")).toBe(null);
+    // Leaving the empty row with a size's name but no weight adds nothing, leaving focus where it went.
+    await userEvent.type(entryName(), "Big");
+    focusRow("c20");
+    expect(screen.getByRole("alert").textContent).toBe("Weight needed");
+    expect(document.activeElement).toBe(row("c20"));
+    expect(
+      fetch.mock.calls.filter(([, init]) => init?.method === "POST"),
+    ).toEqual([]);
+  });
+
+  it("changes a size's weight when edited from it, and refuses one that will not do", async () => {
+    const fetch = await openSizes({
+      "PUT /api/lists/l6/choices/c20": () =>
+        Response.json({
+          choice: choice("c20", "S", { weight: 1.5 }),
+          changeSetId: s1,
+        }),
+    });
+    await userEvent.click(within(row("c20")).getByText("1"));
+    const weight = screen.getByLabelText<HTMLInputElement>("weight");
+    expect(document.activeElement).toBe(weight);
+    await userEvent.clear(weight);
+    await userEvent.keyboard("{Enter}");
+    expect(screen.getByRole("alert").textContent).toBe("Weight needed");
+    expect(weight.getAttribute("aria-invalid")).toBe("true");
+    await userEvent.type(weight, "1.5{Tab}");
+    await waitFor(() => {
+      expect(bodyOf(fetch, "PUT", "/api/lists/l6/choices/c20")).toEqual([
+        { label: "S", description: "", weight: 1.5 },
+      ]);
+    });
   });
 });

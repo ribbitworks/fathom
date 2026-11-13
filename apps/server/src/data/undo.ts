@@ -178,8 +178,8 @@ const textOrNull: Convert = (value) =>
   typeof value === "string" ? value : null;
 // A tier the server no longer knows is put back as the most sensitive.
 const sensitiveTier: Convert = (value) => storedTier(value);
-// Put back as recorded: a hire's temporary number, a number or none, and a view's definition,
-// read back through the view's own checks whenever it is read.
+// Put back as recorded: a hire's temporary number and a size's weight, each a number or none, and a
+// view's definition, read back through the view's own checks whenever it is read.
 const asStored: Convert = (value) => value;
 
 // The database columns each kind of record has, as the change history names its fields, and how to
@@ -201,6 +201,7 @@ const columnsOf: Record<
     description: text,
     retired: flag,
     meaning: textOrNull,
+    weight: asStored,
   },
   field: {
     tableName: text,

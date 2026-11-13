@@ -19,6 +19,8 @@ Lists holds the lists of choices that columns offer, such as **Sites** or **Leve
 
 To add many at once, paste lines into the empty row, one choice per line. A tab on a line starts its description.
 
+In **Feature sizes**, type each size's **Weight** too, such as 2.5. Pasted lines all take the weight typed in the empty row.
+
 ### Change a Choice
 
 Select the choice, or select **Edit** in its **⋯** menu. Press Enter to save, or Esc to leave it as it was.
@@ -48,7 +50,8 @@ For a role that may classify data, select **Change class…** in the list's pane
 
 - **Built in** marks a list Fathom needs, such as **Positions** or **Hiring states**. It can't be retired or deleted, but its choices are the organization's own.
 - **A meaning**, such as **Proposed** or **Open**, ends each choice in a list with meanings. Fathom acts on the meaning and shows the choice's name. Choose the meaning when adding or changing the choice.
-- **Needed for** and a meaning, under a choice's greyed-out **Retire** and **Remove**, means it's the last choice with that meaning, so it stays. **The last choice** says the same for a list that must keep one.
+- **A weight**, such as **2**, ends each choice in **Feature sizes**: how many of the size S it counts as.
+- **Needed for** and a meaning, under a choice's greyed-out **Retire** and **Remove**, means it's the last choice with that meaning, so it stays. A list's name and **needs a choice**, such as **Positions needs a choice**, says the same for a list that must keep one.
 - **Retired**, in a yellow box, marks a list or choice drafted to be retired.
 - **A lock with Personal or Confidential**, in a grey box after a list's name, gives its class: only roles that see that class see the values picked from it. A General list has none.
 

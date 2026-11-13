@@ -42,6 +42,7 @@ import {
   meaningName,
   meaningSchema,
   meaningsOf,
+  weighs,
   eitherOf,
   type Tier,
   tierSchema,
@@ -128,6 +129,7 @@ export const choiceFields = [
   "description",
   "retired",
   "meaning",
+  "weight",
 ] as const;
 
 // The details of lists and choices are General data, whatever the visibility of the values chosen
@@ -179,6 +181,7 @@ export const choiceRecord = (row: ChoiceRow): Recorded => ({
   description: row.description,
   retired: row.retired,
   meaning: row.meaning,
+  weight: row.weight,
 });
 
 // Every list and choice, live and in drafts, and each list's draft of its order, read together, as
@@ -619,6 +622,22 @@ function refuseMeaningMisfit(
   }
 }
 
+// Refuses a choice's weight that does not fit its list: feature sizes need one for each choice, and
+// any other list takes none.
+function refuseWeightMisfit(
+  state: ListsState,
+  listId: string,
+  weight: number | null,
+): void {
+  if (!weighs(builtInKey(state.builtIn.get(listId)))) {
+    if (weight !== null) {
+      throw new BadRequestError("Only feature sizes have weights");
+    }
+  } else if (weight === null) {
+    throw new BadRequestError("Give the size a weight");
+  }
+}
+
 // What a list must keep a choice offered for, as its built-in key says.
 const keptIn = (state: ListsState, listId: string) =>
   keptOf(builtInKey(state.builtIn.get(listId)));
@@ -830,6 +849,7 @@ const shownChoiceFields = [
   "description",
   "retired",
   "meaning",
+  "weight",
 ] as const;
 
 const withMeaning = (meaning: Meaning | null) =>
@@ -842,6 +862,12 @@ const meaningOf = (choice: Recorded): Meaning | null =>
     .nullable()
     .catch(null)
     .parse(choice.meaning ?? null);
+
+const weightOf = (choice: Recorded): number | null =>
+  typeof choice.weight === "number" ? choice.weight : null;
+
+const withWeight = (weight: number | null) =>
+  weight === null ? {} : { weight };
 
 interface Makers {
   list: Map<string, Maker>;
@@ -861,6 +887,7 @@ function choiceOut(state: ListsState, makers: Makers, id: string): Choice {
     description: String(choice.description),
     retired: choice.retired === true,
     ...withMeaning(meaningOf(choice)),
+    ...withWeight(weightOf(choice)),
     ...(draft === undefined
       ? {}
       : {
@@ -1449,8 +1476,9 @@ export async function addChoices(
     ) {
       throw new ConflictError(duplicateChoice);
     }
-    for (const { meaning } of requests) {
+    for (const { meaning, weight } of requests) {
       refuseMeaningMisfit(state, listId, meaning ?? null);
+      refuseWeightMisfit(state, listId, weight ?? null);
     }
     const added = requests.map((request) => ({
       id: randomUUID(),
@@ -1460,6 +1488,7 @@ export async function addChoices(
         description: request.description,
         retired: false,
         meaning: request.meaning ?? null,
+        weight: request.weight ?? null,
       },
     }));
     await addDrafts(
@@ -1531,9 +1560,14 @@ export async function updateChoice(
     if (choiceLabelTaken(state, listId, request.label, id)) {
       throw new ConflictError(duplicateChoice);
     }
-    const { meaning = meaningOf(choice), ...details } = request;
+    const {
+      meaning = meaningOf(choice),
+      weight = weightOf(choice),
+      ...details
+    } = request;
     refuseMeaningMisfit(state, listId, meaning);
-    return { ...choice, ...details, meaning };
+    refuseWeightMisfit(state, listId, weight);
+    return { ...choice, ...details, meaning, weight };
   });
 }
 

@@ -497,14 +497,16 @@ export function ListsPage({
           ...current,
           choices: current.choices.map((other) => {
             if (other.id !== choice.id) return other;
-            const { meaning, ...details } = request;
-            return meaning === undefined || meaning === null
-              ? drafting({ ...other, ...details }, ["label", "description"])
-              : drafting({ ...other, ...details, meaning }, [
-                  "label",
-                  "description",
-                  "meaning",
-                ]);
+            const { meaning, weight, ...details } = request;
+            const given = {
+              ...(meaning === undefined || meaning === null ? {} : { meaning }),
+              ...(weight === undefined || weight === null ? {} : { weight }),
+            };
+            return drafting({ ...other, ...details, ...given }, [
+              "label",
+              "description",
+              ...Object.keys(given),
+            ]);
           }),
         }),
         () => updateChoice(list.id, choice.id, request),

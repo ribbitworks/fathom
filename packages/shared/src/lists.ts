@@ -6,10 +6,12 @@
 // be retired. Lists, choices, and the order of each list's choices have drafts, shown in place of
 // the live values, with the draft beside. In a built-in list with meanings, each choice is tied to
 // one of the meanings Fathom fixes for it, which Fathom acts on while showing the choice's name.
+// Each choice of feature sizes has a weight, how many of the size S it counts as.
 
 import { z } from "zod";
 import { tierSchema } from "./access.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
+import { numberProblem, outOfRange } from "./numbers.ts";
 
 export const listLengths = {
   name: 40,
@@ -65,6 +67,7 @@ export const choiceDraftSchema = configDraft({
   description: z.string(),
   retired: z.boolean(),
   meaning: meaningSchema.nullable(),
+  weight: z.number().nullable(),
 });
 
 export type ChoiceDraft = z.infer<typeof choiceDraftSchema>;
@@ -80,6 +83,8 @@ export const choiceSchema = z.object({
   retired: z.boolean(),
   // The meaning it is tied to, in a list with meanings; absent in any other list.
   meaning: meaningSchema.optional(),
+  // Its weight, in feature sizes; absent in any other list.
+  weight: z.number().optional(),
   draft: choiceDraftSchema.optional(),
   heldBy: heldBySchema,
 });
@@ -146,6 +151,34 @@ export const listMeanings: Readonly<Record<BuiltInList, readonly Meaning[]>> = {
   "feature-risks": [],
 };
 
+export const weighs = (builtIn: BuiltInList | null | undefined) =>
+  builtIn === "feature-sizes";
+
+// A weight as the database keeps it: more than 0, below 10,000, to two places.
+export const weightLimits = { most: 9999.99, places: 2 } as const;
+
+const weightRange = outOfRange("Weight", {
+  least: 10 ** -weightLimits.places,
+  most: weightLimits.most,
+});
+
+export const weightSchema = z
+  .number()
+  .gte(10 ** -weightLimits.places, weightRange)
+  .lte(weightLimits.most, weightRange)
+  .refine(
+    (weight) =>
+      Number.isInteger(Number((weight * 10 ** weightLimits.places).toFixed(6))),
+    `Weight: use at most ${String(weightLimits.places)} digits after the point`,
+  );
+
+export function weightProblem(text: string): string | undefined {
+  if (text.trim() === "") return "Weight needed";
+  const form = numberProblem(text);
+  if (form !== undefined) return `Weight: ${form}`;
+  return weightSchema.safeParse(Number(text.trim())).error?.issues[0]?.message;
+}
+
 // The meanings a list's choices are tied to, by its built-in key: none for any other list.
 export const meaningsOf = (
   builtIn: BuiltInList | null | undefined,
@@ -211,12 +244,13 @@ export const listRequestSchema = z.object({
 
 export type ListRequest = z.infer<typeof listRequestSchema>;
 
-// A choice's meaning is required in a list with meanings, refused in any other, and kept as it is
-// when a change leaves it out.
+// A choice's meaning is required in a list with meanings, and its weight in feature sizes; each is
+// refused in any other list, and kept as it is when a change leaves it out.
 export const choiceRequestSchema = z.object({
   label: z.string().trim().min(1).max(listLengths.choice),
   description,
   meaning: meaningSchema.nullable().optional(),
+  weight: weightSchema.nullable().optional(),
 });
 
 export type ChoiceRequest = z.infer<typeof choiceRequestSchema>;

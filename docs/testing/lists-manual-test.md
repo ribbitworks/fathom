@@ -11,7 +11,7 @@ last_updated: "2026-11-13"
 
 ## Scope
 
-Verifies the Lists page's built-in lists, Positions, Hiring states, Proposal statuses, Feature statuses, Feature priorities, Feature sizes and Feature risks: their grey **Built in** box, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
+Verifies the Lists page's built-in lists, Positions, Hiring states, Proposal statuses, Feature statuses, Feature priorities, Feature sizes and Feature risks: their grey **Built in** box, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, the rules that keep a choice offered for every meaning, when drafting and when approving, and each size's weight.
 
 ## Test Environment
 
@@ -36,6 +36,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 - **Panel:** the area that opens beside the table of lists when a list's name is selected, showing the list's choices.
 - **Empty row:** the last row of the panel's choices, starting with a **+**, where new choices are typed.
 - **Meaning menu:** the drop-down at the end of a choice's row while it is being edited, and at the end of the empty row.
+- **Weight box:** the box at the end of a Feature sizes choice's row while it is being edited, and at the end of the empty row.
 
 ## Test Cases
 
@@ -229,6 +230,49 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - The table shows only **Feature priorities**, **Feature risks**, **Feature sizes**, **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses**.
     - The count reads **7 of 15**.
+  - **Notes:**
+
+**Afterwards:** Run Reset the Database.
+
+### LIST-09: Each Size Has a Weight
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as LIST-08.
+
+**Preconditions:** LIST-08 done, so the database is as Reset the Database leaves it. Signed in with this account. **Lists** page open from the left-hand menu.
+
+- [ ] `4A00` Select **Feature sizes**.
+  - **Expected:** The choices' rows end, in order:
+    - **XS** with `0.5`
+    - **S** with `1`
+    - **M** with `2`
+    - **L** with `3`
+    - **XL** with `4`
+  - **Notes:**
+
+- [ ] `1011` Select **2** at the end of the **M** row.
+  - **Expected:** The row opens for editing, with the cursor in its weight box.
+  - **Notes:**
+
+- [ ] `A8B2` Replace `2` with `2.5` and press Enter.
+  - **Expected:**
+    - The **M** row ends with `2.5`
+    - It has a hollow yellow dot in its slot
+    - A light green Live row under it ends with `2`
+  - **Notes:**
+
+- [ ] `F2C1` Type `Fictional XXL` in the empty row's **Name** box and press Enter.
+  - **Expected:**
+    - No row is added
+    - "Weight needed" is under the empty row's **Name** box, in red
+    - The cursor is in the empty row's weight box
+  - **Notes:**
+
+- [ ] `C962` Type `6` in the empty row's weight box and press Enter.
+  - **Expected:**
+    - A row **Fictional XXL** appears above the empty row
+    - It has a hollow yellow dot in its slot
+    - It ends with `6`
+    - The empty row is empty again
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

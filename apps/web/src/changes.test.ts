@@ -241,6 +241,20 @@ describe("a feature's estimate in the change history", () => {
   });
 });
 
+describe("a size's weight in the change history", () => {
+  it("is named Weight and written as the reader's language writes numbers", () => {
+    expect(
+      describeField({ field: "weight", oldValue: "1200", newValue: "2.5" }),
+    ).toEqual([
+      { strong: "Weight" },
+      " from ",
+      { value: "1,200" },
+      " to ",
+      { value: "2.5" },
+    ]);
+  });
+});
+
 describe("the planning settings in the change history", () => {
   it("names them as one record, changed for everyone", () => {
     expect(

@@ -143,6 +143,7 @@ const asChoice = (id: string, choice: Record<string, unknown>) => ({
   description: String(choice.description),
   retired: choice.retired === true,
   meaning: typeof choice.meaning === "string" ? choice.meaning : null,
+  weight: typeof choice.weight === "number" ? choice.weight : null,
 });
 
 // Approves the drafts asked for and those they use, applying them to the live lists and choices,
@@ -210,15 +211,20 @@ export async function approveListDrafts(
         .values({ ...asChoice(id, choice), position: end + 1 });
       made.push(...choiceChanges(id, "created", undefined, choice));
     } else {
-      const { label, description, retired, meaning } = asChoice(id, choice);
+      // A draft saved before choices had weights keeps the live one.
+      const drafted = { ...live, ...choice };
+      const { label, description, retired, meaning, weight } = asChoice(
+        id,
+        drafted,
+      );
       if (peoplesMeaning(meaning) && !peoplesMeaning(live.meaning)) {
         await refusePeoplesMeaningWhileHeld(transaction, id, meaning);
       }
       await transaction
         .update(listItems)
-        .set({ label, description, retired, meaning })
+        .set({ label, description, retired, meaning, weight })
         .where(eq(listItems.id, id));
-      made.push(...choiceChanges(id, "changed", live, choice));
+      made.push(...choiceChanges(id, "changed", live, drafted));
     }
   }
   for (const listId of approved.orders) {

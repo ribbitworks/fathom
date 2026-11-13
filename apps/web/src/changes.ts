@@ -32,7 +32,7 @@ import { getJson } from "./api.ts";
 import type { Phrase } from "./phrase.tsx";
 import { effortColumnUnits } from "./effort.ts";
 import { formatDay, unitAmountWords } from "./table-view.ts";
-import { count, percentage } from "./numbers.ts";
+import { count, decimal, percentage } from "./numbers.ts";
 import { nameAs } from "./names.ts";
 import { colourName } from "./releases.ts";
 
@@ -90,6 +90,7 @@ const fieldNames = new Map([
   ["colour", "Colour"],
   ["note", "Note"],
   ["meaning", "Meaning"],
+  ["weight", "Weight"],
   // A planned hire's ID, start date, and the person who filled it.
   ["requisition", "ID"],
   ["temporaryNumber", "ID"],
@@ -187,6 +188,7 @@ const valueWords = new Map<string, (value: string) => string | undefined>([
       return meaning.success ? meaningName(meaning.data) : undefined;
     },
   ],
+  ["weight", (value) => decimal(Number(value))],
   [
     "estimateHours",
     (value) => unitAmountWords(value, Number(value), effortColumnUnits[0]),

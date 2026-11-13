@@ -217,6 +217,7 @@ function withDraftsUndone(
       if (choiceDraft.action === "created") return [];
       const was = choiceDraft.action === "changed" ? choiceDraft.live : {};
       const meaning = was.meaning ?? live.meaning;
+      const weight = was.weight ?? live.weight;
       return [
         {
           ...live,
@@ -224,6 +225,7 @@ function withDraftsUndone(
           description: was.description ?? live.description,
           retired: was.retired ?? live.retired,
           ...(meaning === undefined ? {} : { meaning }),
+          ...(weight === undefined ? {} : { weight }),
         },
       ];
     });

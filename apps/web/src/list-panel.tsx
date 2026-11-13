@@ -11,7 +11,8 @@
 // name and in each choice's menu. A list or choice a draft removes is struck through and read only.
 // A built-in list is marked so. In a list with meanings, each choice shows its meaning, chosen
 // when it is added or edited, and the last choice offered for a meaning cannot be retired, removed,
-// or given another meaning.
+// or given another meaning. In feature sizes, each choice shows its weight, typed when it is added
+// or edited; pasted choices take the weight typed in the empty row.
 
 import { movedItem } from "./table-view.ts";
 import {
@@ -28,6 +29,9 @@ import {
   keptOf,
   type List,
   listLengths,
+  typedNumber,
+  weighs,
+  weightProblem,
   type Meaning,
   meaningName,
   meaningSchema,
@@ -38,6 +42,7 @@ import {
   Button,
   FocusTrap,
   Menu,
+  Stack,
   Text,
   VisuallyHidden,
 } from "@mantine/core";
@@ -87,7 +92,7 @@ import {
 import { liveLists, retiredLive, sameName, withRetiring } from "./lists.ts";
 import { closesOnBlankClick } from "./app-menu.tsx";
 import classes from "./pages.module.css";
-import { count } from "./numbers.ts";
+import { count, decimal } from "./numbers.ts";
 
 export interface ChoiceActions {
   // Adds choices; if they cannot be saved, gives back what was typed.
@@ -120,7 +125,10 @@ const shortcuts = shortcutsFor(navigator.userAgent);
 
 export const entryNameId = "choice-entry-name";
 const editNameId = "choice-edit-name";
+const entryWeightId = "choice-entry-weight";
+const editWeightId = "choice-edit-weight";
 export const titleId = "list-panel-title";
+const classHeldId = "list-panel-class-held";
 export const rowId = (choice: { id: string }) => `choice-${choice.id}`;
 const actionsId = (choice: { id: string }) => `choice-actions-${choice.id}`;
 const duplicate = "Already in this list";
@@ -195,6 +203,12 @@ export function ListFacts({ list }: { list: List }) {
 const meaningText = (meaning: Meaning | undefined) =>
   meaning === undefined ? "" : meaningName(meaning);
 
+const weightText = (weight: number | undefined) =>
+  weight === undefined ? "" : decimal(weight);
+
+const typedWeight = (weight: number | undefined) =>
+  weight === undefined ? "" : String(weight);
+
 // What a list's panel shows of the list, each marked before it where a draft changes it.
 const listFields = new Set(["name", "description"]);
 
@@ -244,9 +258,11 @@ interface Draft {
   description: string;
   // In a list with meanings; null in any other.
   meaning: Meaning | null;
+  // As typed, in feature sizes; empty in any other list.
+  weight: string;
 }
 
-type Field = "label" | "description" | "meaning";
+type Field = "label" | "description" | "meaning" | "weight";
 
 function Fields({
   idPrefix,
@@ -255,6 +271,8 @@ function Fields({
   label,
   meanings,
   meaningKept,
+  weighed,
+  weightProblem: weightWrong,
   onChange,
   onKeyDown,
   onFocus,
@@ -268,12 +286,16 @@ function Fields({
   meanings: readonly Meaning[];
   // The meaning a choice must keep, as the last one offered for it.
   meaningKept?: Meaning | undefined;
+  weighed: boolean;
+  weightProblem: string | undefined;
   onChange: (draft: Draft) => void;
   onKeyDown: (event: KeyboardEvent, field: Field) => void;
   onFocus?: () => void;
   onPaste?: (event: ClipboardEvent<HTMLInputElement>) => void;
 }) {
   const entry = idPrefix === "choice-entry";
+  // A refused weight's reason is under the row's first cell, as any refused value's is.
+  const shownProblem = problem ?? weightWrong;
   return (
     <>
       <span className={classes.choiceName} role="gridcell">
@@ -295,15 +317,15 @@ function Fields({
           onFocus={onFocus}
           onPaste={onPaste}
         />
-        {(problem ?? draft.label.length >= listLengths.choice - 5) && (
+        {(shownProblem ?? draft.label.length >= listLengths.choice - 5) && (
           <span className={classes.cellBelow}>
-            {problem && (
+            {shownProblem && (
               <span
                 className={classes.problem}
                 id={`${idPrefix}-problem`}
                 role="alert"
               >
-                {problem}
+                {shownProblem}
               </span>
             )}
             <Count
@@ -371,6 +393,28 @@ function Fields({
           )}
         </span>
       )}
+      {weighed && (
+        <span className={classes.choiceWeight} role="gridcell">
+          <input
+            id={`${idPrefix}-weight`}
+            className={classes.cellInput}
+            value={draft.weight}
+            inputMode="decimal"
+            aria-label={`${label}weight`}
+            aria-invalid={weightWrong !== undefined}
+            aria-describedby={weightWrong ? `${idPrefix}-problem` : undefined}
+            placeholder={entry ? "Weight" : undefined}
+            autoComplete="off"
+            onChange={(event) => {
+              onChange({ ...draft, weight: event.currentTarget.value });
+            }}
+            onKeyDown={(event) => {
+              onKeyDown(event, "weight");
+            }}
+            onFocus={onFocus}
+          />
+        </span>
+      )}
     </>
   );
 }
@@ -417,7 +461,18 @@ export function ListPanel({
   const canMove = canEdit && list.orderHeldBy === undefined;
   const meanings = meaningsOf(list.builtIn);
   const [firstMeaning = null] = meanings;
-  const empty: Draft = { label: "", description: "", meaning: firstMeaning };
+  const weighed = weighs(list.builtIn);
+  const shape = [
+    classes.choice,
+    meanings.length > 0 ? classes.choiceWithMeaning : "",
+    weighed ? classes.choiceWithWeight : "",
+  ];
+  const empty: Draft = {
+    label: "",
+    description: "",
+    meaning: firstMeaning,
+    weight: "",
+  };
   // The choices a draft of the order moves, with their live places.
   const moved = movedChoices(list);
   const original = drafted;
@@ -439,8 +494,10 @@ export function ListPanel({
   const [editing, setEditing] = useState<string>();
   const [draft, setDraft] = useState<Draft>(empty);
   const [editProblem, setEditProblem] = useState<string>();
+  const [editWeightProblem, setEditWeightProblem] = useState<string>();
   const [entry, setEntry] = useState<Draft>(empty);
   const [entryProblem, setEntryProblem] = useState<string>();
+  const [entryWeightProblem, setEntryWeightProblem] = useState<string>();
   const [menuFor, setMenuFor] = useState<string>();
   const shownRetired = showRetired ? retired : [];
   // The rows arrow keys move through, in order, with the empty row between offered and retired.
@@ -494,8 +551,10 @@ export function ListPanel({
       label: choice.label,
       description: choice.description,
       meaning: choice.meaning ?? null,
+      weight: typedWeight(choice.weight),
     });
     setEditProblem(undefined);
+    setEditWeightProblem(undefined);
     setMenuFor(undefined);
     // A meaning that cannot change takes no focus, so its name is edited instead.
     const editable = field === "meaning" && kept(choice) ? "label" : field;
@@ -510,16 +569,25 @@ export function ListPanel({
       focusSoon(editNameId);
       return;
     }
+    const weightWrong = weighed ? weightProblem(draft.weight) : undefined;
+    if (weightWrong !== undefined) {
+      setEditWeightProblem(weightWrong);
+      focusSoon(editWeightId);
+      return;
+    }
     setEditing(undefined);
+    const weight = typedNumber(draft.weight);
     const request = {
       label: draft.label.trim(),
       description: draft.description.trim(),
       ...(draft.meaning === null ? {} : { meaning: draft.meaning }),
+      ...(weight === undefined ? {} : { weight }),
     };
     if (
       request.label !== choice.label ||
       request.description !== choice.description ||
-      (draft.meaning ?? undefined) !== choice.meaning
+      (draft.meaning ?? undefined) !== choice.meaning ||
+      weight !== choice.weight
     ) {
       actions.edit(choice, request);
     }
@@ -532,29 +600,50 @@ export function ListPanel({
   };
 
   // Adds what was typed or pasted, giving it back to the empty row if it cannot be saved, and
-  // keeps focus there unless it has left. Pasted choices take the meaning chosen in the empty row.
+  // keeps focus there unless it has left. Pasted choices take the meaning chosen and the weight typed
+  // in the empty row.
   const add = (requests: ChoiceRequest[], typed: Draft, refocus = true) => {
-    const meant =
-      typed.meaning === null
-        ? requests
-        : requests.map((request) => ({ ...request, meaning: typed.meaning }));
-    actions.add(meant, () => {
-      setEntry(typed);
-    });
+    const weight = typedNumber(typed.weight);
+    const given = {
+      ...(typed.meaning === null ? {} : { meaning: typed.meaning }),
+      ...(weight === undefined ? {} : { weight }),
+    };
+    actions.add(
+      requests.map((request) => ({ ...request, ...given })),
+      () => {
+        setEntry(typed);
+      },
+    );
     // The meaning chosen stays for the next choice.
     setEntry({ ...empty, meaning: typed.meaning });
     setEntryProblem(undefined);
+    setEntryWeightProblem(undefined);
     if (refocus) focusSoon(entryNameId);
   };
 
+  const refusedWeight = (refocus: boolean) => {
+    const weightWrong = weighed ? weightProblem(entry.weight) : undefined;
+    if (weightWrong === undefined) return false;
+    setEntryWeightProblem(weightWrong);
+    if (refocus) focusSoon(entryWeightId);
+    return true;
+  };
+
   const addEntry = (refocus = true) => {
-    if (entry.label.trim() === "" && entry.description.trim() === "") return;
+    if (
+      entry.label.trim() === "" &&
+      entry.description.trim() === "" &&
+      entry.weight.trim() === ""
+    ) {
+      return;
+    }
     const problem = problemFor(entry.label);
     if (problem !== undefined) {
       setEntryProblem(problem);
       if (refocus) focusSoon(entryNameId);
       return;
     }
+    if (refusedWeight(refocus)) return;
     add(
       [{ label: entry.label.trim(), description: entry.description.trim() }],
       entry,
@@ -592,6 +681,7 @@ export function ListPanel({
       }
       seen.push(choice.label);
     }
+    if (refusedWeight(true)) return;
     add(choices, entry);
   };
 
@@ -666,10 +756,12 @@ export function ListPanel({
     }
   };
 
-  // The field Tab leaves a row from, forwards: the meaning, in a list with meanings, unless it
-  // cannot change and so takes no focus.
-  const lastField = (choice: Choice): Field =>
-    meanings.length > 0 && !kept(choice) ? "meaning" : "description";
+  // The field Tab leaves a row from, forwards: the weight, in feature sizes, or the meaning, in a
+  // list with meanings, unless it cannot change and so takes no focus.
+  const lastField = (choice: Choice): Field => {
+    if (weighed) return "weight";
+    return meanings.length > 0 && !kept(choice) ? "meaning" : "description";
+  };
 
   const onEditKey = (event: KeyboardEvent, field: Field, choice: Choice) => {
     const leaving =
@@ -691,10 +783,17 @@ export function ListPanel({
       event.preventDefault();
       addEntry();
     } else if (event.key === "Escape") {
-      if (entry.label === "" && entry.description === "") return;
+      if (
+        entry.label === "" &&
+        entry.description === "" &&
+        entry.weight === ""
+      ) {
+        return;
+      }
       event.preventDefault();
       setEntry({ ...empty, meaning: entry.meaning });
       setEntryProblem(undefined);
+      setEntryWeightProblem(undefined);
     } else if (field === "label" && event.key === "ArrowUp" && !event.altKey) {
       event.preventDefault();
       select(offered.at(-1));
@@ -861,7 +960,7 @@ export function ListPanel({
               {keptFor !== undefined && (
                 <Text fz="xs" c="dimmed" px="sm" py={4}>
                   {keptFor === "any"
-                    ? "The last choice"
+                    ? `${list.name} needs a choice`
                     : `Needed for ${meaningName(keptFor)}`}
                 </Text>
               )}
@@ -947,9 +1046,12 @@ export function ListPanel({
             label=""
             meanings={meanings}
             meaningKept={meaningKeptBy(list, choice)}
+            weighed={weighed}
+            weightProblem={editWeightProblem}
             onChange={(next) => {
               setDraft(next);
               setEditProblem(undefined);
+              setEditWeightProblem(undefined);
             }}
             onKeyDown={(event, field) => {
               onEditKey(event, field, choice);
@@ -1017,6 +1119,15 @@ export function ListPanel({
                 {meaningText(choice.meaning)}
               </span>
             )}
+            {weighed && (
+              <span
+                className={classes.choiceWeight}
+                role={cellRole}
+                data-field="weight"
+              >
+                {weightText(choice.weight)}
+              </span>
+            )}
           </>
         )}
         {(canEdit ||
@@ -1030,8 +1141,7 @@ export function ListPanel({
       role: "row",
       "aria-selected": canEdit ? isSelected : undefined,
       className: [
-        classes.choice,
-        meanings.length > 0 ? classes.choiceWithMeaning : "",
+        ...shape,
         choice.retired ? classes.choiceRetired : "",
         isSelected || isEditing ? classes.selectedRow : "",
         draftRowClass(
@@ -1058,7 +1168,9 @@ export function ListPanel({
                 ?.getAttribute("data-field");
               startEdit(
                 choice,
-                field === "description" || field === "meaning"
+                field === "description" ||
+                  field === "meaning" ||
+                  field === "weight"
                   ? field
                   : "label",
               );
@@ -1109,14 +1221,11 @@ export function ListPanel({
   );
   const liveRow = (choice: Choice, key: string) => {
     const liveMeaning = choice.draft?.live.meaning ?? choice.meaning;
+    const liveWeight = choice.draft?.live.weight ?? choice.weight;
     return (
       <div
         key={key}
-        className={[
-          classes.choice,
-          meanings.length > 0 ? classes.choiceWithMeaning : "",
-          classes.choiceLive,
-        ].join(" ")}
+        className={[...shape, classes.choiceLive].join(" ")}
         aria-hidden="true"
       >
         <span className={classes.choiceName}>
@@ -1148,6 +1257,9 @@ export function ListPanel({
           <span className={classes.choiceMeaning}>
             {meaningText(liveMeaning)}
           </span>
+        )}
+        {weighed && (
+          <span className={classes.choiceWeight}>{weightText(liveWeight)}</span>
         )}
       </div>
     );
@@ -1230,15 +1342,24 @@ export function ListPanel({
             {onMoveClass &&
               list.draft?.action !== "created" &&
               list.draft?.action !== "deleted" && (
-                <Button
-                  variant="default"
-                  size="compact-sm"
-                  // Until someone else publishes or discards their changes, as its lock says.
-                  disabled={list.heldBy !== undefined}
-                  onClick={onMoveClass}
-                >
-                  Change class…
-                </Button>
+                <Stack gap={2} align="flex-end">
+                  <Button
+                    variant="default"
+                    size="compact-sm"
+                    disabled={list.heldBy !== undefined}
+                    aria-describedby={
+                      list.heldBy === undefined ? undefined : classHeldId
+                    }
+                    onClick={onMoveClass}
+                  >
+                    Change class…
+                  </Button>
+                  {list.heldBy !== undefined && (
+                    <Text id={classHeldId} fz="xs" c="dimmed" ta="right">
+                      {list.heldBy} is changing this list
+                    </Text>
+                  )}
+                </Stack>
               )}
             {(list.draft ?? list.orderDraft) && (
               <ListDraftMenu
@@ -1285,7 +1406,7 @@ export function ListPanel({
         <div className={classes.panelBody}>
           {offered.length === 0 && !canEdit && (
             <Text fz="sm" c="dimmed" p="md">
-              No choices yet
+              None
             </Text>
           )}
           <div role={gridRole} aria-label="Choices">
@@ -1313,11 +1434,7 @@ export function ListPanel({
             {canEdit && (
               <div
                 role="row"
-                className={[
-                  classes.choice,
-                  meanings.length > 0 ? classes.choiceWithMeaning : "",
-                  classes.entry,
-                ].join(" ")}
+                className={[...shape, classes.entry].join(" ")}
                 // Leaving the empty row, by clicking or tabbing elsewhere, adds what was typed, as
                 // leaving a choice being edited saves it.
                 onBlur={(event) => {
@@ -1334,9 +1451,12 @@ export function ListPanel({
                   problem={entryProblem}
                   label="New choice "
                   meanings={meanings}
+                  weighed={weighed}
+                  weightProblem={entryWeightProblem}
                   onChange={(next) => {
                     setEntry(next);
                     setEntryProblem(undefined);
+                    setEntryWeightProblem(undefined);
                   }}
                   onKeyDown={onEntryKey}
                   onFocus={() => {

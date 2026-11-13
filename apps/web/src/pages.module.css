@@ -319,6 +319,15 @@
   grid-template-columns: minmax(8rem, 13rem) 1fr 6.5rem 28px;
 }
 
+.choiceWithWeight {
+  grid-template-columns: minmax(8rem, 13rem) 1fr 5rem 28px;
+}
+
+.choiceWeight {
+  min-width: 0;
+  padding-top: 4px;
+}
+
 .choiceMeaning {
   min-width: 0;
   padding-top: 4px;
@@ -326,6 +335,7 @@
 
 .choiceRetired .choiceName,
 .choiceRetired .choiceMeaning,
+.choiceRetired .choiceWeight,
 .choiceRetired .choiceDescription {
   color: var(--mantine-color-dimmed);
 }
