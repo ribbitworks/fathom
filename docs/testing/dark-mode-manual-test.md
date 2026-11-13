@@ -22,6 +22,7 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with a
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Superuser:** `superuser@fathom.test`
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
 - **Feature Lead:** `feature.lead@fathom.test`
 
 ## Common Procedures
@@ -650,11 +651,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The box closes.
   - **Notes:**
 
-### DARK-08: The Role Menu
+### DARK-08: Other Accounts' Marks and Menus
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from DARK-07.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DARK-07. Step `6A94` signs in as another account.
 
-**Preconditions:** **Dark** chosen in the Appearance menu.
+**Preconditions:** Signed in as the Superuser, as DARK-07 ends; the first step signs in as this account. **Dark** chosen in the Appearance menu.
+
+- [ ] `00B7` Sign out, and sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
+  - **Expected:** The page is dark.
+  - **Notes:**
+
+- [ ] `4A37` Select the **People** page in the left-hand menu.
+  - **Expected:** The table of people shows.
+  - **Notes:**
+
+- [ ] `09ED` Type `Mariana Metz` in the search box.
+  - **Expected:** The hollow yellow dot before her new **Site** is easy to see.
+  - **Notes:**
 
 - [ ] `6A94` Sign out, and sign in as the Feature Lead, `feature.lead@fathom.test`.
   - **Expected:** The page is dark.
