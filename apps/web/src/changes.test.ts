@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for how the change history words a new order of a list's choices, one choice moved, drafted
-// or approved, how it names the plan's records, such as release streams, and how it words a
-// release's colour, and the words for a feature team's changes.
+// or approved, how it names the plan's records, such as release streams and proposals, and their
+// fields, how it words a release's colour, and the words for a feature team's changes.
 
 import type { ChangedRecord } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
@@ -108,8 +108,88 @@ describe("the plan's records in the change history", () => {
       planRecord("feature", "Fictional Offline Sync", null),
       "drafted adding the feature Fictional Offline Sync",
     ],
+    [
+      "a customer",
+      planRecord("customer", "Fictional Clinics", null),
+      "drafted adding the customer Fictional Clinics",
+    ],
+    [
+      "a project",
+      planRecord("project", "Fictional Cranes", null),
+      "drafted adding the project Fictional Cranes",
+    ],
+    [
+      "a proposal",
+      planRecord("proposal", "Fictional Bid", null),
+      "drafted adding the proposal Fictional Bid",
+    ],
+    [
+      "a milestone with its project",
+      planRecord("milestone", "Fictional Handover", "Fictional Cranes"),
+      "drafted adding the milestone Fictional Handover of Fictional Cranes",
+    ],
+    [
+      "a milestone whose project is not named",
+      planRecord("milestone", "Fictional Handover", null),
+      "drafted adding the milestone Fictional Handover",
+    ],
+    [
+      "an allocation by who it puts on which feature",
+      planRecord("allocation", "Fictional Person on Fictional Sync", null),
+      "drafted adding the allocation of Fictional Person on Fictional Sync",
+    ],
+    [
+      "an allocation the reader may not name",
+      planRecord("allocation", null, null),
+      "drafted adding an allocation",
+    ],
   ])("names %s", (_case, record, sentence) => {
     expect(describeRecord(record).sentence).toBe(sentence);
+  });
+});
+
+describe("the plan's fields in the change history", () => {
+  it("names them as their columns are", () => {
+    expect(
+      describeField({
+        field: "featureIds",
+        oldValue: ["Fictional Sync", "Fictional Export"],
+        newValue: ["Fictional Export"],
+      }),
+    ).toEqual([
+      { strong: "Features" },
+      " from ",
+      { value: "Fictional Sync, Fictional Export" },
+      " to ",
+      { value: "Fictional Export" },
+    ]);
+    expect(describeValue("statusId", "Fictional Planned")?.at(0)).toEqual({
+      strong: "Status",
+    });
+  });
+
+  it("names a field by its kind's column where kinds differ", () => {
+    const named = (kind: string) =>
+      describeField({ field: "note", oldValue: null, newValue: "x" }, kind).at(
+        0,
+      );
+    expect([named("feature"), named("release")]).toEqual([
+      { strong: "Notes" },
+      { strong: "Note" },
+    ]);
+  });
+
+  it("names a project's and a proposal's own ID as its column does", () => {
+    const named = (kind?: string) =>
+      describeField(
+        { field: "externalId", oldValue: null, newValue: "X-1" },
+        kind,
+      ).at(0);
+    expect([named("project"), named("proposal"), named()]).toEqual([
+      { strong: "Project ID" },
+      { strong: "Proposal ID" },
+      { strong: "ID" },
+    ]);
   });
 });
 

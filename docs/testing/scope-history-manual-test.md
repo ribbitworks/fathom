@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-12"
 ---
 
 # Manual Test: Scope History
 
 ## Scope
 
-Verifies a feature's customers and notes in its side panel on the Features page, and the scope history in a project's and a proposal's side panel: the features given to it and taken off it, with the reason given for removing a feature from a proposal, while a draft and once approved. Following the links and changing a feature's projects and proposals are verified in [Feature Links](feature-links-manual-test.md).
+Verifies a feature's customers and notes in its side panel on the Features page, and the scope history in a project's and a proposal's side panel: the features given to it and taken off it, with the reason for removing a feature from a proposal, added once the removal is drafted, while a draft and once approved. Following the links and changing a feature's projects and proposals are verified in [Feature Links](feature-links-manual-test.md).
 
 ## Test Environment
 
@@ -155,7 +155,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Each of those three rows reads **Added** and a date, in grey.
   - **Notes:**
 
-### SCOPE-03: Taking a Feature off a Proposal Asks for a Reason
+### SCOPE-03: Taking a Feature off a Proposal Saves at Once
 
 **Account:** Product Manager, `product.manager@fathom.test`, the same as SCOPE-02.
 
@@ -179,87 +179,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 4.** Press Enter.
   - **Expected:**
-    - A dialog titled **Reason for the removal** opens.
-    - It reads **Offline Sync is removed from Harbour Cranes Upgrade.**
-    - Its box is labelled **Reason (optional)**.
-    - The cursor is in the **Reason (optional)** box.
-    - Its buttons read, from left to right:
-      - Cancel
-      - Save
-  - **Notes:**
-
-- [ ] **Step 5.** Select **Cancel**.
-  - **Expected:**
-    - The dialog closes.
-    - The **Proposals** cell of **Offline Sync** still names **Harbour Cranes Upgrade** and **Clinic Scheduling Pilot**.
-  - **Notes:**
-
-- [ ] **Step 6.** Select the **Proposals** cell of **Offline Sync**.
-  - **Expected:** The cell is selected.
-  - **Notes:**
-
-- [ ] **Step 7.** Press Enter.
-  - **Expected:**
-    - The list of proposals opens.
-    - **PR-101 Harbour Cranes Upgrade** and **PR-102 Clinic Scheduling Pilot** are picked.
-  - **Notes:**
-
-- [ ] **Step 8.** Unpick **PR-101 Harbour Cranes Upgrade**.
-  - **Expected:** **PR-101 Harbour Cranes Upgrade** is no longer picked.
-  - **Notes:**
-
-- [ ] **Step 9.** Press Enter.
-  - **Expected:** The **Reason for the removal** dialog opens.
-  - **Notes:**
-
-- [ ] **Step 10.** Type `x` in **Reason (optional)**, and press Esc.
-  - **Expected:**
-    - A dialog titled **Discard the reason?** opens.
-    - Its buttons read, from left to right:
-      - Keep writing
-      - Discard
-  - **Notes:**
-
-- [ ] **Step 11.** Select **Discard**.
-  - **Expected:**
-    - Both dialogs close.
-    - The **Proposals** cell of **Offline Sync** still names **Harbour Cranes Upgrade** and **Clinic Scheduling Pilot**.
-    - The keyboard focus is back on the **Proposals** cell of **Offline Sync**.
-  - **Notes:**
-
-- [ ] **Step 12.** Select the **Proposals** cell of **Offline Sync**.
-  - **Expected:** The cell is selected.
-  - **Notes:**
-
-- [ ] **Step 13.** Press Enter.
-  - **Expected:**
-    - The list of proposals opens.
-    - **PR-101 Harbour Cranes Upgrade** and **PR-102 Clinic Scheduling Pilot** are picked.
-  - **Notes:**
-
-- [ ] **Step 14.** Unpick **PR-101 Harbour Cranes Upgrade**.
-  - **Expected:** **PR-101 Harbour Cranes Upgrade** is no longer picked.
-  - **Notes:**
-
-- [ ] **Step 15.** Press Enter.
-  - **Expected:** The **Reason for the removal** dialog opens.
-  - **Notes:**
-
-- [ ] **Step 16.** Type `Customer chose another supplier` in **Reason (optional)**, and press Enter.
-  - **Expected:**
-    - The dialog closes.
+    - The list closes.
+    - No dialog opens.
     - The **Proposals** cell names **Clinic Scheduling Pilot** alone.
   - **Notes:**
 
-- [ ] **Step 17.** Select the **Projects** page in the left-hand menu.
+- [ ] **Step 5.** Select the **Projects** page in the left-hand menu.
   - **Expected:** The **Projects** page opens.
   - **Notes:**
 
-- [ ] **Step 18.** Select the **Proposals** tab.
+- [ ] **Step 6.** Select the **Proposals** tab.
   - **Expected:** The table lists the proposals.
   - **Notes:**
 
-- [ ] **Step 19.** Select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
+- [ ] **Step 7.** Select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
   - **Expected:**
     - Under **Scope history**, the rows read, from the top:
       - Offline Sync
@@ -269,35 +202,61 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - A hollow yellow dot
       - **Offline Sync**
     - The first row's next line reads **Removed** and today's date, in grey.
-    - The first row's last line reads **Reason: Customer chose another supplier**.
-    - A **Change reason** button is at the first row's right.
-    - The button has an outline.
+    - The first row shows no reason.
+    - A pencil button is at the first row's right.
     - The second row reads **Added** and a date, in grey.
     - The third row reads **Added** and a date, in grey.
     - No row is struck through.
   - **Notes:**
 
-### SCOPE-04: Changing the Reason While the Removal Is a Draft
+### SCOPE-04: Giving the Reason After the Removal
 
 **Account:** Product Manager, `product.manager@fathom.test`, the same as SCOPE-03.
 
 **Preconditions:** As SCOPE-03 ends, the side panel of **Harbour Cranes Upgrade** open.
 
-- [ ] **Step 1.** Select **Change reason** in the first row under **Scope history**.
+- [ ] **Step 1.** Select the pencil button at the right of the first row under **Scope history**.
   - **Expected:**
-    - A dialog titled **Change the reason for the removal** opens.
-    - **Reason (optional)** holds **Customer chose another supplier**.
-    - Its buttons read, from left to right:
-      - Cancel
-      - Save
+    - An empty box opens under **Removed** and today's date.
+    - The cursor is in the box.
+    - The pencil button is gone.
   - **Notes:**
 
-- [ ] **Step 2.** Replace the reason with `Customer delayed the upgrade`.
-  - **Expected:** **Reason (optional)** holds **Customer delayed the upgrade**.
+- [ ] **Step 2.** Type `Customer chose another supplier`, and press Enter.
+  - **Expected:**
+    - The box closes.
+    - The first row's last line reads **Reason: Customer chose another supplier**.
+    - The keyboard focus is on the pencil button at the first row's right.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Save**.
-  - **Expected:** The first row under **Scope history** reads **Reason: Customer delayed the upgrade**.
+- [ ] **Step 3.** Select **Reason: Customer chose another supplier**.
+  - **Expected:**
+    - The box opens, holding **Customer chose another supplier**.
+    - The cursor is in the box.
+  - **Notes:**
+
+- [ ] **Step 4.** Clear the box, and type `x`.
+  - **Expected:** The box holds **x**.
+  - **Notes:**
+
+- [ ] **Step 5.** Press Esc.
+  - **Expected:**
+    - The box closes.
+    - The first row's last line reads **Reason: Customer chose another supplier**.
+  - **Notes:**
+
+- [ ] **Step 6.** Select the pencil button at the right of the first row.
+  - **Expected:** The box opens, holding **Customer chose another supplier**.
+  - **Notes:**
+
+- [ ] **Step 7.** Clear the box, and type `Customer delayed the upgrade`.
+  - **Expected:** The box holds **Customer delayed the upgrade**.
+  - **Notes:**
+
+- [ ] **Step 8.** Select the heading **Scope history**.
+  - **Expected:**
+    - The box closes.
+    - The first row's last line reads **Reason: Customer delayed the upgrade**.
   - **Notes:**
 
 ### SCOPE-05: Removing a Feature from a Proposal's Details, with No Reason
@@ -324,45 +283,27 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 4.** Press Enter.
   - **Expected:**
-    - The **Reason for the removal** dialog opens.
-    - It reads **Scheduler API is removed from Clinic Scheduling Pilot.**
-  - **Notes:**
-
-- [ ] **Step 5.** Type `x` in **Reason (optional)**.
-  - **Expected:** The box holds **x**.
-  - **Notes:**
-
-- [ ] **Step 6.** Select the **×** at the right of the box.
-  - **Expected:** The box is empty.
-  - **Notes:**
-
-- [ ] **Step 7.** Select **Save**.
-  - **Expected:**
-    - The dialog closes.
+    - No dialog opens.
     - **Features** in the side panel names **Offline Sync** alone.
-  - **Notes:**
-
-- [ ] **Step 8.** Look under **Scope history** in the side panel.
-  - **Expected:**
     - The first row under **Scope history** names **Scheduler API**.
     - The first row has a hollow yellow dot before **Scheduler API**.
     - The first row reads **Removed** and today's date, in grey.
     - The first row shows no reason.
   - **Notes:**
 
-- [ ] **Step 9.** Open the Draft menu, and select **Live only**.
+- [ ] **Step 5.** Open the Draft menu, and select **Live only**.
   - **Expected:**
     - No row has a yellow dot.
     - No row reads **Removed**.
   - **Notes:**
 
-- [ ] **Step 10.** Select **Drafts beside live**.
+- [ ] **Step 6.** Select **Drafts beside live**.
   - **Expected:**
     - The **Scheduler API** row reading **Removed** is back at the top.
     - It has a hollow yellow dot before **Scheduler API**.
   - **Notes:**
 
-- [ ] **Step 11.** Run Publish.
+- [ ] **Step 7.** Run Publish.
   - **Expected:** The dot before **Scheduler API** is now solid yellow.
   - **Notes:**
 
@@ -375,7 +316,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 1.** Select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
   - **Expected:**
     - The first row under **Scope history** reads **Reason: Customer delayed the upgrade**.
-    - It has no **Change reason** button.
+    - It has no pencil button.
   - **Notes:**
 
 ### SCOPE-07: An Approved Removal Is Dated, with Its Reason
@@ -405,13 +346,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The first row has no dot.
     - The first row reads **Removed** and today's date, in grey.
     - The first row reads **Reason: Customer delayed the upgrade**.
-    - The first row has no **Change reason** button.
+    - The first row has no pencil button.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **Change history** page in the left-hand menu.
   - **Expected:**
-    - The newest entry, the approval, names **Harbour Cranes Upgrade**.
-    - It shows **Reasons for removing features** set to **Offline Sync: Customer delayed the upgrade**.
+    - The newest entry reads **Engineering Director as Engineering Director approved changes to the proposal Harbour Cranes Upgrade**.
+    - After a colon, its details read, dimmed, in this order:
+      - **Features** from **Audit Export, Offline Sync** to **Audit Export**
+      - **Reasons for removing features** set to **Offline Sync: Customer delayed the upgrade**
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

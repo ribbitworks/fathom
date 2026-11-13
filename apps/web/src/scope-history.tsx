@@ -2,22 +2,27 @@
 
 // A project's or proposal's scope history, in its details: a row for each feature given or removed,
 // a draft's first, after its dot and dated when drafted, then each as approved, newest first,
-// with the reason given for removing a feature from a proposal. A row is never removed.
+// with the reason given for removing a feature from a proposal, which a pencil changes in place while
+// the removal is a draft. A row is never removed.
 
-import type {
-  Feature,
-  Project,
-  Proposal,
-  RecordDraft,
-  Show,
+import {
+  type Feature,
+  type Project,
+  projectLengths,
+  type Proposal,
+  type RecordDraft,
+  type Show,
 } from "@fathom/shared";
-import { Button, Stack, Text } from "@mantine/core";
+import { ActionIcon, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { focusSoon } from "./focus.ts";
 import { LoadProblem } from "./load-problem.tsx";
 import { livePlanRecords } from "./project-grids.tsx";
 import { scopeHistoryQuery } from "./projects.ts";
-import { RecordLink } from "./record-details.tsx";
+import { changeButton, RecordLink } from "./record-details.tsx";
 import details from "./record-details.module.css";
+import { ValueField } from "./record-editing.tsx";
 import { DraftedItem } from "./status-mark.tsx";
 import { formatMomentDay } from "./table-view.ts";
 
@@ -69,6 +74,8 @@ function draftedRows(record: Scoped): ScopeRow[] {
   ];
 }
 
+const fieldId = "scope-reason-field";
+
 export function ScopeHistory({
   type,
   record,
@@ -83,12 +90,21 @@ export function ScopeHistory({
   features: readonly Feature[];
   show: Show;
   onShow: (featureId: string) => void;
-  // Asks for a new reason for a draft removing a feature from a proposal, for those who may.
-  onChangeReason?: ((featureId: string) => void) | undefined;
+  // Saves the reason for a draft removing a feature from a proposal, for those who may change it.
+  onChangeReason?:
+    ((featureId: string, reason: string | null) => void) | undefined;
 }) {
   const history = useQuery(scopeHistoryQuery(type, record.id));
+  // Held with its record, so a box left open closes when another record's details are shown.
+  const [editing, setEditing] = useState<{
+    recordId: string;
+    featureId: string;
+    text: string;
+  }>();
+  const featureOf = (featureId: string) =>
+    features.find(({ id }) => id === featureId);
   const nameOf = (featureId: string, name: string | null) => {
-    const feature = features.find(({ id }) => id === featureId);
+    const feature = featureOf(featureId);
     return feature === undefined ? (
       (name ?? "A removed feature")
     ) : (
@@ -109,6 +125,26 @@ export function ScopeHistory({
     onChangeReason !== undefined &&
     record.heldBy === undefined &&
     record.draft?.action !== "deleted";
+  const changeId = (featureId: string) => `scope-reason-change-${featureId}`;
+  // A drafted row carries no name of its own, so a feature gone from the plan reads as removed.
+  const removalOf = (row: ScopeRow) =>
+    `removing ${featureOf(row.featureId)?.name ?? "a removed feature"}`;
+  const start = (row: ScopeRow) => {
+    setEditing({
+      recordId: record.id,
+      featureId: row.featureId,
+      text: row.reason ?? "",
+    });
+    focusSoon(fieldId);
+  };
+  const stop = (featureId: string) => {
+    setEditing(undefined);
+    focusSoon(changeId(featureId));
+  };
+  const finish = (row: ScopeRow, text: string) => {
+    const reason = text.trim() === "" ? null : text.trim();
+    if (reason !== row.reason) onChangeReason?.(row.featureId, reason);
+  };
   return (
     <section aria-labelledby="scope-history">
       <h3 className={details.heading} id="scope-history">
@@ -130,6 +166,11 @@ export function ScopeHistory({
       <Stack gap={0}>
         {rows.map((row, index) => {
           const { draft } = row;
+          const canChange = draft !== undefined && !row.added && changeable;
+          const open =
+            canChange &&
+            editing?.recordId === record.id &&
+            editing.featureId === row.featureId;
           return (
             <div
               key={`${row.featureId}-${String(index)}`}
@@ -144,20 +185,54 @@ export function ScopeHistory({
                 <Text fz="xs" c="dimmed">
                   {rowWords(row)}
                 </Text>
-                {row.reason !== null && (
-                  <Text fz="sm">Reason: {row.reason}</Text>
+                {open ? (
+                  <ValueField
+                    id={fieldId}
+                    label={`Reason for ${removalOf(row)}`}
+                    clearLabel="Clear the reason"
+                    text={editing.text}
+                    maxLength={projectLengths.removalReason}
+                    onText={(text) => {
+                      setEditing({ ...editing, text });
+                    }}
+                    onEnter={() => {
+                      finish(row, editing.text);
+                      stop(row.featureId);
+                    }}
+                    onCancel={() => {
+                      stop(row.featureId);
+                    }}
+                    onLeave={() => {
+                      finish(row, editing.text);
+                      setEditing(undefined);
+                    }}
+                  />
+                ) : (
+                  row.reason !== null && (
+                    <Text
+                      fz="sm"
+                      className={canChange ? details.editable : undefined}
+                      onClick={
+                        canChange
+                          ? () => {
+                              start(row);
+                            }
+                          : undefined
+                      }
+                    >
+                      Reason: {row.reason}
+                    </Text>
+                  )
                 )}
               </div>
-              {draft !== undefined && !row.added && changeable && (
-                <Button
-                  variant="default"
-                  size="compact-xs"
+              {canChange && !open && (
+                <ActionIcon
+                  id={changeId(row.featureId)}
+                  {...changeButton(`reason for ${removalOf(row)}`)}
                   onClick={() => {
-                    onChangeReason(row.featureId);
+                    start(row);
                   }}
-                >
-                  Change reason
-                </Button>
+                />
               )}
             </div>
           );

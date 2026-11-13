@@ -23,6 +23,8 @@ import {
   type Meaning,
   type Milestone,
   needsFeatureTeam,
+  planColumnNames,
+  planIdNames,
   type Project,
   type ProjectRequest,
   projectLengths,
@@ -276,7 +278,7 @@ const merged = (changes: PlanChange[]): PlanChange =>
 const nameColumn = <Rec extends PlanRecord>(
   onOpen: ((record: Rec) => void) | undefined,
 ): Column<Rec, PlanChange> => ({
-  ...field<Rec>("name", "Name", "text", {
+  ...field<Rec>("name", planColumnNames.name, "text", {
     required: true,
     maxLength: projectLengths.name,
   }),
@@ -345,7 +347,7 @@ const idColumn = <Rec extends PlanRecord>(label: string) =>
   });
 
 const ownerColumn = <Rec extends PlanRecord>(people: Choice[]) =>
-  field<Rec>("ownerId", "Owner", "choice", {
+  field<Rec>("ownerId", planColumnNames.ownerId, "choice", {
     choices: people,
     emptyLabel: "No owner",
   });
@@ -353,7 +355,7 @@ const ownerColumn = <Rec extends PlanRecord>(people: Choice[]) =>
 const customersColumn = <Rec extends PlanRecord>(
   customers: readonly Customer[],
 ) =>
-  field<Rec>("customerIds", "Customers", "choice", {
+  field<Rec>("customerIds", planColumnNames.customerIds, "choice", {
     choices: identified(customers),
     multiple: true,
   });
@@ -441,11 +443,19 @@ export function projectColumns(
 ): Column<Project, PlanChange>[] {
   return [
     nameColumn(onOpen),
-    idColumn<Project>("Project ID"),
+    idColumn<Project>(planIdNames.project),
     ownerColumn<Project>(choices.people),
     customersColumn<Project>(choices.customers),
-    pickedColumn<Project>("proposalIds", "Proposals", choices.proposals),
-    pickedColumn<Project>("featureIds", "Features", choices.features),
+    pickedColumn<Project>(
+      "proposalIds",
+      planColumnNames.proposalIds,
+      choices.proposals,
+    ),
+    pickedColumn<Project>(
+      "featureIds",
+      planColumnNames.featureIds,
+      choices.features,
+    ),
     ...projectDateColumns.map(([key, label]) => projectDateColumn(key, label)),
   ];
 }
@@ -492,19 +502,23 @@ export function proposalColumns(
 ): Column<Proposal, PlanChange>[] {
   return [
     nameColumn(onOpen),
-    idColumn<Proposal>("Proposal ID"),
-    field<Proposal>("link", "Link", "link"),
+    idColumn<Proposal>(planIdNames.proposal),
+    field<Proposal>("link", planColumnNames.link, "link"),
     ownerColumn<Proposal>(choices.people),
     customersColumn<Proposal>(choices.customers),
     {
-      ...field<Proposal>("statusId", "Status", "choice", {
+      ...field<Proposal>("statusId", planColumnNames.statusId, "choice", {
         required: true,
         choices: choices.statuses,
       }),
       // A new proposal starts in the first status offered.
       newRowValue: () => firstStatus(choices.statuses),
     },
-    pickedColumn<Proposal>("featureIds", "Features", choices.features),
+    pickedColumn<Proposal>(
+      "featureIds",
+      planColumnNames.featureIds,
+      choices.features,
+    ),
   ];
 }
 
@@ -529,12 +543,12 @@ export function milestoneColumns(
   filteredTo?: string,
 ): Column<Milestone, PlanChange>[] {
   return [
-    field<Milestone>("name", "Name", "text", {
+    field<Milestone>("name", planColumnNames.name, "text", {
       required: true,
       maxLength: projectLengths.name,
     }),
     {
-      ...field<Milestone>("projectId", "Project", "choice", {
+      ...field<Milestone>("projectId", planColumnNames.projectId, "choice", {
         required: true,
         choices: identified(projects),
       }),
@@ -542,10 +556,15 @@ export function milestoneColumns(
       readOnlyOn: (kind) => kind === savedKind,
       ...(filteredTo === undefined ? {} : { newRowValue: () => [filteredTo] }),
     },
-    field<Milestone>("date", "Date", "date", { required: true }),
-    field<Milestone>("customerDelivery", "Customer delivery", "flag", {
-      emptyLabel: "No",
-    }),
+    field<Milestone>("date", planColumnNames.date, "date", { required: true }),
+    field<Milestone>(
+      "customerDelivery",
+      planColumnNames.customerDelivery,
+      "flag",
+      {
+        emptyLabel: "No",
+      },
+    ),
   ];
 }
 
@@ -612,7 +631,11 @@ function effortColumn(
     const inUnit = (estimate: unknown) =>
       typeof estimate === "number" ? String(amountOf(estimate)) : "";
     return {
-      ...field<Feature>("estimateHours", "Effort", "number"),
+      ...field<Feature>(
+        "estimateHours",
+        planColumnNames.estimateHours,
+        "number",
+      ),
       unit,
       least: 0,
       most: largestIn(largestEstimateHours, effortUnit, converting),
@@ -733,22 +756,32 @@ export function featureColumns(
   const builtIn: Column<Feature, PlanChange>[] = [
     nameColumn<Feature>(onOpen),
     {
-      ...field<Feature>("statusId", "Status", "choice", {
+      ...field<Feature>("statusId", planColumnNames.statusId, "choice", {
         required: true,
         choices: choices.featureStatuses,
       }),
       newRowValue: () => firstStatus(choices.featureStatuses, "possible"),
     },
-    field<Feature>("neededBy", "Needed by", "month"),
+    field<Feature>("neededBy", planColumnNames.neededBy, "month"),
     customersColumn<Feature>(choices.customers),
-    namersColumn("projectIds", "Projects", choices.projects, editsNamers),
-    namersColumn("proposalIds", "Proposals", choices.proposals, editsNamers),
-    field<Feature>("description", "Description", "text", {
+    namersColumn(
+      "projectIds",
+      planColumnNames.projectIds,
+      choices.projects,
+      editsNamers,
+    ),
+    namersColumn(
+      "proposalIds",
+      planColumnNames.proposalIds,
+      choices.proposals,
+      editsNamers,
+    ),
+    field<Feature>("description", planColumnNames.description, "text", {
       maxLength: featureLengths.description,
     }),
-    field<Feature>("note", "Notes", "note"),
+    field<Feature>("note", planColumnNames.note, "note"),
     {
-      ...field<Feature>("targetCycle", "Target cycle", "choice", {
+      ...field<Feature>("targetCycle", planColumnNames.targetCycle, "choice", {
         choices: choices.cycles,
         emptyLabel: "Later",
       }),
@@ -759,10 +792,15 @@ export function featureColumns(
     releaseColumn(choices.releaseOfCycle),
     effortColumn(choices.effortConversions),
     {
-      ...field<Feature>("featureTeamId", "Feature team", "choice", {
-        choices: choices.featureTeams,
-        emptyLabel: "No feature team",
-      }),
+      ...field<Feature>(
+        "featureTeamId",
+        planColumnNames.featureTeamId,
+        "choice",
+        {
+          choices: choices.featureTeams,
+          emptyLabel: "No feature team",
+        },
+      ),
       status: (feature) =>
         needsFeatureTeam(meaningOf.get(feature.statusId), feature.featureTeamId)
           ? { words: "No team", spoken: "it needs a feature team to own it" }

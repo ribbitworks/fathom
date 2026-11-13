@@ -117,7 +117,6 @@ import {
   tableChoices,
   withNamers,
 } from "./projects.ts";
-import { proposalRemovalOf } from "./proposal-removal.ts";
 import { ScopeHistory } from "./scope-history.tsx";
 import {
   inUnitsWords,
@@ -125,10 +124,6 @@ import {
   RecordSection,
   Row,
 } from "./record-details.tsx";
-import {
-  type ReasonAsked,
-  RemovalReasonModal,
-} from "./removal-reason-dialog.tsx";
 import {
   type Column,
   heldBack,
@@ -389,15 +384,10 @@ export function ProjectsPage({
     { project: Project; milestone?: Milestone } | undefined
   >();
   const [dialogOpened, setDialogOpened] = useState(false);
-  const [reasonAsked, setReasonAsked] = useState<ReasonAsked>();
   const changes = useSaving<ProjectPlan>({
     queryKey: projectPlanQuery.queryKey,
     removed: "Someone else has removed this. The plan has been refreshed.",
-    blocked:
-      deciding ||
-      dialogOpened ||
-      columnDialog.opened ||
-      reasonAsked !== undefined,
+    blocked: deciding || dialogOpened || columnDialog.opened,
   });
   const { save, shown, undoable, done } = changes;
   const canEdit = query.data !== undefined && page.mayEdit(query.data);
@@ -433,33 +423,27 @@ export function ProjectsPage({
     });
   };
 
-  const changeReason = (featureId: string, proposal: Proposal) => {
+  const changeReason = (
+    featureId: string,
+    proposal: Proposal,
+    removalReason: string | null,
+  ) => {
     const features = namesOf((query.data as ProjectPlan).features, [featureId]);
-    setReasonAsked({
-      removal: { features, proposals: [proposal.name] },
-      reason: new Map(Object.entries(proposal.removalReasons)).get(featureId),
-      changing: true,
-      onSave: (removalReason) => {
-        save({
-          next: (plan) =>
-            withRecord(plan, "proposal", proposal.id, (shown) => ({
-              ...shown,
-              removalReasons: withRemovalReason(
-                proposal.removalReasons,
-                featureId,
-                removalReason,
-              ),
-            })),
-          save: async () =>
-            (
-              await changeRemovalReason(featureId, proposal.id, {
-                removalReason,
-              })
-            ).changeSetId,
-          failure: `Fathom could not change the reason for removing ${allOf(features)} from ${proposal.name}. Try again in a moment.`,
-          onSaved: undoable,
-        });
-      },
+    save({
+      next: (plan) =>
+        withRecord(plan, "proposal", proposal.id, (shown) => ({
+          ...shown,
+          removalReasons: withRemovalReason(
+            proposal.removalReasons,
+            featureId,
+            removalReason,
+          ),
+        })),
+      save: async () =>
+        (await changeRemovalReason(featureId, proposal.id, { removalReason }))
+          .changeSetId,
+      failure: `Fathom could not change the reason for removing ${allOf(features)} from ${proposal.name}. Try again in a moment.`,
+      onSaved: undoable,
     });
   };
 
@@ -509,31 +493,14 @@ export function ProjectsPage({
           onSaved: undoable,
         });
       },
-      // A change that removes features from proposals first asks for the reason.
       update: (record, change) => {
-        const saveWith = (removalReason?: string | null) => {
-          save({
-            next: (plan) => withRecordChange(plan, type, record.id, change),
-            save: async () =>
-              (
-                await operationsOf(type).change(
-                  record,
-                  removalReason === undefined
-                    ? change
-                    : { ...change, removalReason },
-                )
-              ).changeSetId,
-            failure: `Fathom could not change ${record.name}.`,
-            onSaved: undoable,
-          });
-        };
-        const removal = proposalRemovalOf(
-          query.data as ProjectPlan,
-          record,
-          change,
-        );
-        if (removal === undefined) saveWith();
-        else setReasonAsked({ removal, changing: false, onSave: saveWith });
+        save({
+          next: (plan) => withRecordChange(plan, type, record.id, change),
+          save: async () =>
+            (await operationsOf(type).change(record, change)).changeSetId,
+          failure: `Fathom could not change ${record.name}.`,
+          onSaved: undoable,
+        });
       },
       decide,
       remove: (record) => {
@@ -889,12 +856,6 @@ export function ProjectsPage({
       )}
       <Fragment key={tab}>{content}</Fragment>
       {question.dialog}
-      <RemovalReasonModal
-        asked={reasonAsked}
-        onClose={() => {
-          setReasonAsked(undefined);
-        }}
-      />
       <DecisionModal
         decision={decision}
         opened={deciding}
@@ -1098,8 +1059,12 @@ function recordPanel({
     record: PlanRecord,
     change: PlanChange,
   ) => void;
-  // Asks for a new reason for a draft removing a feature from a proposal.
-  changeReason: (featureId: string, proposal: Proposal) => void;
+  // Saves the reason for a draft removing a feature from a proposal.
+  changeReason: (
+    featureId: string,
+    proposal: Proposal,
+    reason: string | null,
+  ) => void;
   notes: Pick<NoteEditing, "start">;
 }): SidePanel | undefined {
   if (open === undefined) return undefined;
@@ -1170,8 +1135,8 @@ function recordPanel({
         }}
         onChangeReason={
           isProposal(shown) && canEdit
-            ? (featureId) => {
-                changeReason(featureId, shown);
+            ? (featureId, reason) => {
+                changeReason(featureId, shown, reason);
               }
             : undefined
         }

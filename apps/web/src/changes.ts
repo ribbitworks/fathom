@@ -17,7 +17,11 @@ import {
   meaningName,
   meaningSchema,
   percentSettingFields,
+  planColumnKinds,
+  planColumnNames,
+  planIdNames,
   planningSettingNames,
+  projectSubjects,
   recordSearchText,
   tierSchema,
   type ViewScope,
@@ -96,14 +100,50 @@ const fieldNames = new Map([
   ["members", "Members"],
   ["memberFrom", "Joining and leaving dates"],
   ["leadFrom", "Date the feature lead changes"],
-  ["estimateHours", "Effort"],
   ...Object.entries(planningSettingNames),
   ["removalReasons", "Reasons for removing features"],
+  ["externalId", "ID"],
+  ["targetStreamId", "Target stream"],
+  ["streamId", "Stream"],
+  ["shipsOn", "Ships on"],
+  ["cyclesUntil", "Planned to"],
+  ["personId", "Person"],
+  ["plannedHireId", "Planned hire"],
+  ["featureId", "Feature"],
+  ["months", "Months"],
 ]);
 
-function fieldName({ field, column }: ChangedField): string {
+const planFieldNames: ReadonlyMap<string, string> = new Map(
+  Object.entries(planColumnNames),
+);
+
+const planIdNameOf: ReadonlyMap<string, string> = new Map(
+  Object.entries(planIdNames),
+);
+
+// The fields of each of the plan's kinds of record, named as its table's columns are.
+const kindFieldNames = new Map(
+  planColumnKinds.map((kind): [string, ReadonlyMap<string, string>] => {
+    const idName = planIdNameOf.get(kind);
+    return [
+      kind,
+      new Map([
+        ...planFieldNames,
+        ...(idName === undefined ? [] : [["externalId", idName] as const]),
+      ]),
+    ];
+  }),
+);
+
+function fieldName({ field, column }: ChangedField, kind?: string): string {
   if (field === "value") return column ?? "A deleted column";
-  return builtInColumnNames.get(field) ?? fieldNames.get(field) ?? field;
+  return (
+    kindFieldNames.get(kind ?? "")?.get(field) ??
+    builtInColumnNames.get(field) ??
+    fieldNames.get(field) ??
+    planFieldNames.get(field) ??
+    field
+  );
 }
 
 // A value in words, or null when there is none.
@@ -159,7 +199,7 @@ const valueWords = new Map<string, (value: string) => string | undefined>([
 // What changed in one field of a record of the kind given, such as "Name from Sites to Locations",
 // with the field and its values marked.
 export function describeField(change: ChangedField, kind?: string): Phrase {
-  const name = { strong: fieldName(change) };
+  const name = { strong: fieldName(change, kind) };
   if (
     kind === "release" &&
     change.field === "colour" &&
@@ -226,13 +266,25 @@ function thing({ kind, name, list }: ChangedRecord): string {
         ? `the release ${called}`
         : `the release ${called} in ${list}`;
     case "feature":
-      return `the feature ${called}`;
+      return projectSubjects.feature(called);
     case "planned-hire":
       return name === null ? "a planned hire" : `the planned hire ${name}`;
     case "feature-team":
       return `the feature team ${called}`;
     case "planning-settings":
       return "the planning settings";
+    case "customer":
+      return projectSubjects.customer(called);
+    case "project":
+      return projectSubjects.project(called);
+    case "proposal":
+      return projectSubjects.proposal(called);
+    case "milestone":
+      return list === null
+        ? `the milestone ${called}`
+        : projectSubjects.milestone(called, list);
+    case "allocation":
+      return name === null ? "an allocation" : `the allocation of ${name}`;
     default:
       return "a record";
   }

@@ -27,6 +27,42 @@ export const projectLengths = {
 } as const;
 
 // How drafts and decisions name each kind of record, in the server and the browser alike.
+// The labels of the plan's built-in columns, shared so its tables and the change history name them
+// alike, and each kind's own ID.
+export const planColumnNames = {
+  name: "Name",
+  ownerId: "Owner",
+  customerIds: "Customers",
+  projectIds: "Projects",
+  proposalIds: "Proposals",
+  featureIds: "Features",
+  link: "Link",
+  statusId: "Status",
+  projectId: "Project",
+  date: "Date",
+  customerDelivery: "Customer delivery",
+  estimateHours: "Effort",
+  neededBy: "Needed by",
+  description: "Description",
+  note: "Notes",
+  targetCycle: "Target cycle",
+  featureTeamId: "Feature team",
+} as const;
+
+export const planIdNames = {
+  project: "Project ID",
+  proposal: "Proposal ID",
+} as const;
+
+// The plan's kinds of record whose columns those are.
+export const planColumnKinds = [
+  "customer",
+  "project",
+  "proposal",
+  "milestone",
+  "feature",
+] as const;
+
 export const projectSubjects = {
   customer: (customer: string) => `the customer ${customer}`,
   project: (project: string) => `the project ${project}`,
@@ -177,15 +213,14 @@ export type PlanChoices = z.infer<typeof planChoicesSchema>;
 
 const externalId = optionalText(projectLengths.externalId);
 
-// The reason given for removing features from a proposal, kept for each feature removed by the
-// change that gives it, or null for none.
-const givenReason = z
+// The reason for removing a feature from a proposal, given once a draft removes it, or null for none.
+const removalReason = z
   .string()
   .trim()
   .max(projectLengths.removalReason)
   .nullable()
+  .default(null)
   .transform((value) => (value === "" ? null : value));
-const removalReason = givenReason.default(null);
 
 export const customerRequestSchema = z.object({ name: recordName });
 
@@ -235,7 +270,6 @@ export const proposalRequestSchema = z.object({
   customerIds: picked,
   statusId: z.uuid().optional(),
   featureIds: picked,
-  removalReason,
 });
 
 export type ProposalRequest = z.infer<typeof proposalRequestSchema>;
@@ -246,7 +280,6 @@ export type ProposalRequest = z.infer<typeof proposalRequestSchema>;
 export const featureProjectsRequestSchema = z.object({
   projectIds: pickedIfNamed,
   proposalIds: pickedIfNamed,
-  removalReason: givenReason.optional(),
 });
 
 export type FeatureProjectsRequest = z.infer<
@@ -262,27 +295,17 @@ export type RemovalReasonRequest = z.infer<typeof removalReasonRequestSchema>;
 export const removalReasonsIn = (value: unknown): Record<string, string> =>
   z.record(z.string(), z.string()).catch({}).parse(value);
 
-// The reasons a proposal keeps once it proposes the features given rather than those it had: each
-// feature removed that the live proposal proposes keeps the reason given, if any, and a feature it
-// proposes keeps none. A feature only a draft added has nothing to remove, so no reason.
+// The reasons a proposal keeps once it proposes the features given rather than those it had: a
+// feature removed now starts with no reason, given afterwards, and a feature it proposes keeps none.
 export function removalReasonsAfter(
   reasons: Readonly<Record<string, string>>,
   had: readonly string[],
   featureIds: readonly string[],
-  reason: string | null,
-  live: readonly string[],
 ): Record<string, string> {
-  const taken = had.filter(
-    (id) => !featureIds.includes(id) && live.includes(id),
-  );
-  const given = taken.map((id): [string, string | null] => [id, reason]);
+  const taken = had.filter((id) => !featureIds.includes(id));
   return Object.fromEntries(
-    [
-      ...Object.entries(reasons).filter(([id]) => !taken.includes(id)),
-      ...given,
-    ].filter(
-      (entry): entry is [string, string] =>
-        entry[1] !== null && !featureIds.includes(entry[0]),
+    Object.entries(reasons).filter(
+      ([id]) => !taken.includes(id) && !featureIds.includes(id),
     ),
   );
 }

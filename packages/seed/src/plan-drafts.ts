@@ -187,7 +187,6 @@ const proposalRequest = (proposal: Proposal) => ({
   customerIds: proposal.customerIds,
   statusId: proposal.statusId,
   featureIds: proposal.featureIds,
-  removalReason: null,
 });
 
 const featureRequest = (feature: Feature): FeatureRequest => ({

@@ -14,6 +14,7 @@ import {
   projectLengths,
   projectSubjects,
   proposalRequestSchema,
+  removalReasonRequestSchema,
   removalReasonsAfter,
   removalReasonsIn,
   sameDates,
@@ -150,60 +151,51 @@ describe("a feature's projects and proposals", () => {
     ).toBe(false);
   });
 
-  it("keep a reason for removing it trimmed, and an empty one as none", () => {
+  it("take no reason for removing a feature, which is given afterwards", () => {
     expect(
-      featureProjectsRequestSchema.parse({ removalReason: " Too costly " }),
+      featureProjectsRequestSchema.parse({ removalReason: "Too costly" }),
+    ).toEqual({});
+  });
+});
+
+describe("the reason for removing a feature from a proposal", () => {
+  it("is kept trimmed, and an empty one as none", () => {
+    expect(
+      removalReasonRequestSchema.parse({ removalReason: " Too costly " }),
     ).toEqual({ removalReason: "Too costly" });
-    expect(featureProjectsRequestSchema.parse({ removalReason: " " })).toEqual({
+    expect(removalReasonRequestSchema.parse({ removalReason: " " })).toEqual({
+      removalReason: null,
+    });
+    expect(removalReasonRequestSchema.parse({})).toEqual({
       removalReason: null,
     });
   });
 
-  it("refuse a reason too long to read beside the removal", () => {
+  it("is refused when too long to read beside the removal", () => {
     const removalReason = "a".repeat(projectLengths.removalReason + 1);
     expect(
-      featureProjectsRequestSchema.safeParse({ removalReason }).success,
+      removalReasonRequestSchema.safeParse({ removalReason }).success,
     ).toBe(false);
   });
 });
 
 describe("the reasons kept for features removed from a proposal", () => {
-  it("give each feature removed the reason given", () => {
+  it("give a feature removed now no reason, dropping any it had", () => {
     expect(
-      removalReasonsAfter({}, [first, second], [], "Too costly", [
-        first,
-        second,
-      ]),
-    ).toEqual({
-      [first]: "Too costly",
-      [second]: "Too costly",
-    });
-  });
-
-  it("keep no reason for a feature removed without one", () => {
-    expect(
-      removalReasonsAfter({ [first]: "Old reason" }, [first], [], null, [
-        first,
-      ]),
+      removalReasonsAfter({ [first]: "Old reason" }, [first, second], []),
     ).toEqual({});
   });
 
   it("keep the reasons of features removed before", () => {
     expect(
-      removalReasonsAfter({ [first]: "Too costly" }, [second], [], null, [
-        second,
-      ]),
+      removalReasonsAfter({ [first]: "Too costly" }, [second], []),
     ).toEqual({ [first]: "Too costly" });
   });
 
-  it("give no reason to a feature only a draft added, then removed", () => {
-    expect(removalReasonsAfter({}, [first], [], "Too costly", [])).toEqual({});
-  });
-
   it("drop the reason of a feature proposed again", () => {
-    expect(
-      removalReasonsAfter({ [first]: "Too costly" }, [], [first], null, []),
-    ).toEqual({});
+    expect(removalReasonsAfter({ [first]: "Too costly" }, [], [first])).toEqual(
+      {},
+    );
   });
 });
 

@@ -53,8 +53,65 @@ export type SaveChange<Rec extends GridRecord, Change> = (
   value: CellValue,
 ) => void;
 
-// Editing text or a date, which Enter or leaving the field saves and Esc leaves as it was, with an ×
-// to empty it. It names its own problem, which Mantine ties to the field.
+// A panel's field for a value typed in place, which Enter or leaving it saves and Esc leaves as it
+// was, with an × to empty it. It names its own problem, which Mantine ties to the field.
+export function ValueField({
+  id,
+  label,
+  clearLabel,
+  hint,
+  problem,
+  text,
+  maxLength,
+  onText,
+  onEnter,
+  onCancel,
+  onLeave,
+}: {
+  id: string;
+  label: string;
+  clearLabel: string;
+  hint?: string | undefined;
+  problem?: string | undefined;
+  text: string;
+  maxLength?: number | undefined;
+  onText: (text: string) => void;
+  onEnter: () => void;
+  onCancel: () => void;
+  onLeave?: (() => void) | undefined;
+}) {
+  return (
+    <ClearableInput
+      id={id}
+      size="sm"
+      aria-label={label}
+      clearLabel={clearLabel}
+      placeholder={hint}
+      maxLength={maxLength}
+      onClear={() => {
+        onText("");
+      }}
+      error={problem}
+      value={text}
+      autoComplete="off"
+      onChange={(event) => {
+        onText(event.currentTarget.value);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onCancel();
+        } else if (event.key === "Enter") {
+          event.preventDefault();
+          onEnter();
+        }
+      }}
+      onBlur={onLeave}
+    />
+  );
+}
+
+// Editing text or a date in its row's field. A column that offers units has their menu beside it.
 function TextEditor({
   id,
   column,
@@ -86,33 +143,22 @@ function TextEditor({
     onDone(given(text), "leave");
   };
   const field = (
-    <ClearableInput
+    <ValueField
       id={id}
-      size="sm"
-      aria-label={fieldLabel(column)}
+      label={fieldLabel(column)}
       clearLabel={`Clear ${column.label}`}
-      placeholder={hint}
-      onClear={() => {
-        setTyped("");
-      }}
-      error={problem}
-      value={text}
-      autoComplete="off"
-      onChange={(event) => {
-        const typed = event.currentTarget.value;
+      hint={hint}
+      problem={problem}
+      text={text}
+      onText={(typed) => {
         setTyped(asTyped?.(typed) ?? typed);
       }}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          onCancel();
-        } else if (event.key === "Enter") {
-          event.preventDefault();
-          onDone(given(text), "enter");
-        }
+      onEnter={() => {
+        onDone(given(text), "enter");
       }}
+      onCancel={onCancel}
       // With a menu of units beside it, the field is left only once neither has focus.
-      onBlur={choosesUnit ? undefined : leave}
+      onLeave={choosesUnit ? undefined : leave}
     />
   );
   const { unit } = column;

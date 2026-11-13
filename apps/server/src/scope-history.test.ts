@@ -2,8 +2,8 @@
 
 // Tests for a project's and proposal's scope history, against a PostgreSQL server of their own: the
 // features given and removed, read from approved changes, newest first, and the reason for taking
-// a feature off a proposal, given from either side, kept on the proposal's draft, changed while the
-// removal is a draft, and named in the change history.
+// a feature off a proposal, given once the removal is drafted, kept on the proposal's draft, and
+// named in the change history.
 
 import type {
   ChangeHistory,
@@ -116,13 +116,15 @@ describe("a project's and proposal's scope history", () => {
   it("lists each feature given and removed, newest first, with the reason for a proposal's", async () => {
     // Given a feature in a proposal and a project
     const { feature, proposal, project } = await liveLinks();
-    // When it is removed from both, with a reason, and that is approved
+    // When it is removed from both, the proposal's removal given a reason, and that is approved
     const response = await changeNamers(feature.id, {
       projectIds: [],
       proposalIds: [],
-      removalReason: " Too costly ",
     });
     expect(response.statusCode).toBe(200);
+    await changeReason(feature.id, proposal.id, {
+      removalReason: " Too costly ",
+    });
     await approve([
       { type: "proposal", id: proposal.id },
       { type: "project", id: project.id },
@@ -248,7 +250,7 @@ describe("a project's and proposal's scope history", () => {
 });
 
 describe("the reason for removing a feature from a proposal", () => {
-  it("is kept on the proposal's draft, and given from the proposal's side too", async () => {
+  it("starts empty when a feature is removed, whatever the change sends", async () => {
     // Given two features in a live proposal
     const { feature, proposal } = await liveLinks();
     const other = await added("features", (plan) => plan.features);
@@ -258,23 +260,27 @@ describe("the reason for removing a feature from a proposal", () => {
       featureIds: [feature.id, other.id],
     });
     await approve([{ type: "proposal", id: proposal.id }]);
-    // When the proposal removes one, with a reason
-    const response = await send("PUT", `/api/proposals/${proposal.id}`, {
+    // When the proposal removes one, and the feature's side removes the other, each sending a reason
+    const fromProposal = await send("PUT", `/api/proposals/${proposal.id}`, {
       name: proposal.name,
       featureIds: [other.id],
       removalReason: "Out of scope",
     });
-    // Then its draft keeps the reason for that feature alone
-    expect(response.statusCode).toBe(200);
-    expect((await proposalOf(proposal.id)).removalReasons).toEqual({
-      [feature.id]: "Out of scope",
+    const fromFeature = await changeNamers(other.id, {
+      proposalIds: [],
+      removalReason: "Too costly",
     });
+    // Then neither reason is kept, since a reason is given once the removal is drafted
+    expect([fromProposal.statusCode, fromFeature.statusCode]).toEqual([
+      200, 200,
+    ]);
+    expect((await proposalOf(proposal.id)).removalReasons).toEqual({});
   });
 
   it("is dropped when the feature is added again", async () => {
     const { feature, proposal } = await liveLinks();
-    await changeNamers(feature.id, {
-      proposalIds: [],
+    await changeNamers(feature.id, { proposalIds: [] });
+    await changeReason(feature.id, proposal.id, {
       removalReason: "Too costly",
     });
     await changeNamers(feature.id, { proposalIds: [proposal.id] });
@@ -296,20 +302,15 @@ describe("the reason for removing a feature from a proposal", () => {
     expect((await proposalOf(proposal.id)).removalReasons).toEqual({});
   });
 
-  it("is not kept for a feature only a draft added, then removed", async () => {
+  it("can't be given for a feature only a draft added, then removed", async () => {
     // Given a live proposal and a feature it never proposed
     const { proposal } = await liveLinks();
     const other = await added("features", (plan) => plan.features);
     await approve([{ type: "feature", id: other.id }]);
-    // When a draft adds the feature and then removes it, with a reason
+    // When a draft adds the feature and then removes it
     await changeNamers(other.id, { proposalIds: [proposal.id] });
-    await changeNamers(other.id, {
-      proposalIds: [],
-      removalReason: "Added by mistake",
-    });
-    // Then no reason is kept, since the live proposal never had it
-    expect((await proposalOf(proposal.id)).removalReasons).toEqual({});
-    // And it has no reason to change
+    await changeNamers(other.id, { proposalIds: [] });
+    // Then it has no reason to give, since the live proposal never had it
     const response = await changeReason(other.id, proposal.id, {
       removalReason: "Too costly",
     });
@@ -378,8 +379,8 @@ describe("the reason for removing a feature from a proposal", () => {
 
   it("is named in the change history after the feature it is for", async () => {
     const { feature, proposal } = await liveLinks();
-    await changeNamers(feature.id, {
-      proposalIds: [],
+    await changeNamers(feature.id, { proposalIds: [] });
+    await changeReason(feature.id, proposal.id, {
       removalReason: "Too costly",
     });
     const response = await test.request(planner.cookie, "GET", "/api/changes");

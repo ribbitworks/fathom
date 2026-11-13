@@ -1,7 +1,7 @@
 # Fathom: UI Conventions
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-11
+**Last updated:** 2026-11-12
 
 A short lookup of the conventions every screen follows, for those who build screens. Each entry gives the rule, the shared piece that draws it, so a new screen reuses it rather than drawing its own, and an example from the [fictional seed data](development-setup.md#fictional-seed-data), or the steps that make one. The principles behind them, and how each page is laid out, are in [Visual Design](visual-design.md).
 
@@ -166,7 +166,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 ## Details Panels
 
 - **Follow the Person panel:** Every record's details follow Person details: the record's name and draft mark at the top; headed sections of rows, each label beside its value while the panel is wide and over it once narrow; the columns an organization added under Columns. Each value that can be changed has a pencil at its right, named Change and the label, and a click on the value does the same. A panel never mixes in another layout, such as labels over form fields. Decided by the owner on 2026-11-11.
-  - **Drawn by:** `RecordSection`, `Row` and `RecordLink` in `apps/web/src/record-details.tsx`, with `useRecordEditing` in `apps/web/src/record-editing.tsx` for the pencils.
+  - **Drawn by:** `RecordSection`, `Row` and `RecordLink` in `apps/web/src/record-details.tsx`, with `useRecordEditing` in `apps/web/src/record-editing.tsx` for the pencils, and `ValueField` there for a value typed in place, which a scope history's reason for a removal uses too.
   - **Example:** any seeded person's details beside People.
 - **Columns follow the panel's order:** A table's default column order follows its details panel's sections and rows, and the other way round, defined once and used by both.
   - **Drawn by:** `featureColumnGroups` in `apps/web/src/project-grids.tsx`.

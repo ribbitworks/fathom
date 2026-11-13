@@ -114,11 +114,7 @@ export const featureNamers = {
 >;
 
 const namerKinds = Object.values(featureNamers);
-// The reason for removing a feature from proposals goes with the change to them.
-const namerKeys: readonly string[] = [
-  ...Object.values(featureNamerKeys),
-  "removalReason",
-];
+const namerKeys: readonly string[] = Object.values(featureNamerKeys);
 
 // A project or proposal, as one that names features.
 export interface FeatureNamer {
@@ -272,7 +268,6 @@ export const proposalRequest = (proposal: Proposal): ProposalRequest => ({
   customerIds: proposal.customerIds,
   statusId: proposal.statusId,
   featureIds: proposal.featureIds,
-  removalReason: null,
 });
 
 export const milestoneRequest = (milestone: Milestone): MilestoneRequest => ({

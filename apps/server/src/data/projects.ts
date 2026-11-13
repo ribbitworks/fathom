@@ -518,13 +518,12 @@ async function statusFor(
   return firstOfferedOrRefused(transaction, list, meaning, missing);
 }
 
-// A proposal as a request makes it, from the version shown and the live one, if any.
+// A proposal as a request makes it, from the version shown, if any.
 async function proposalRecord(
   transaction: Transaction,
   state: RecordsState,
   request: ProposalRequest,
   current?: Recorded,
-  live?: Recorded,
 ) {
   await checkOwner(transaction, request.ownerId);
   checkRoadmapFeatures(state, request.featureIds);
@@ -545,8 +544,6 @@ async function proposalRecord(
       reasonsOf(current),
       linkedIds(current, "featureIds"),
       request.featureIds,
-      request.removalReason,
-      linkedIds(live, "featureIds"),
     ),
   };
 }
@@ -582,13 +579,7 @@ export async function changeProposal(
       state,
       "proposal",
       id,
-      await proposalRecord(
-        transaction,
-        state,
-        request,
-        proposal,
-        stateOf(state, "proposal").live.get(id),
-      ),
+      await proposalRecord(transaction, state, request, proposal),
     );
   });
 }
@@ -700,22 +691,15 @@ export async function changeFeature(
 const keptWithScope: Readonly<
   Record<
     keyof typeof featureNamerKeys,
-    (change: {
-      record: Recorded;
-      live: Recorded | undefined;
-      featureIds: readonly string[];
-      reason: string | null;
-    }) => Recorded
+    (change: { record: Recorded; featureIds: readonly string[] }) => Recorded
   >
 > = {
   project: () => ({}),
-  proposal: ({ record, live, featureIds, reason }) => ({
+  proposal: ({ record, featureIds }) => ({
     removalReasons: removalReasonsAfter(
       reasonsOf(record),
       linkedIds(record, "featureIds"),
       featureIds,
-      reason,
-      linkedIds(live, "featureIds"),
     ),
   }),
 };
@@ -771,9 +755,7 @@ export async function changeFeatureProjects(
         // eslint-disable-next-line security/detect-object-injection
         const kept = keptWithScope[type]({
           record,
-          live: stateOf(state, type).live.get(id),
           featureIds,
-          reason: request.removalReason ?? null,
         });
         return { type, id, record: { ...record, featureIds, ...kept } };
       });

@@ -56,7 +56,7 @@ Select **Remove feature** in the feature's **⋯** menu. Fathom refuses while a 
 - **No team** marks a planned or in-progress feature that has no feature team yet.
 - **Needed by** gives the month the feature is wanted. Type it as digits, such as 2027-03, and it shows as Mar 2027. It's a rough wish; **Target cycle** is the commitment.
 - **Status** says how far along the feature is. The statuses are the organization's own, and each one means Possible, Planned, In progress, Done or Cancelled. A new feature starts on the first status that means Possible.
-- **Projects** and **Proposals** name the projects that need the feature and the proposals that propose it. A change to them changes that project or proposal, and removing a proposal asks for a reason, as in [Projects](projects.md).
+- **Projects** and **Proposals** name the projects that need the feature and the proposals that propose it. A change to them changes that project or proposal; the reason for removing a proposal is given afterwards, as [Projects](projects.md#give-a-reason-for-removing-a-feature-from-a-proposal) sets out.
 - **Effort** gives the work the feature needs, such as 2.5 PD for person-days. Rest the pointer on it to see the hours.
 - **Release** follows from **Target cycle**, so it can't be changed.
 
