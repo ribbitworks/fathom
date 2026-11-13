@@ -107,15 +107,26 @@ export const orderDraftSchema = z.object({
 export type OrderDraft = z.infer<typeof orderDraftSchema>;
 
 // The lists Fathom builds in, each drawn on by a built-in column: Positions, for people and planned
-// hires, the hiring states and the feature statuses, lists with meanings, and proposals' statuses.
+// hires, the hiring states and the feature statuses, lists with meanings, proposals' statuses, and
+// features' priorities, sizes and risks.
 export const builtInListSchema = z.enum([
   "positions",
   "hiring-states",
   "proposal-statuses",
   "feature-statuses",
+  "feature-priorities",
+  "feature-sizes",
+  "feature-risks",
 ]);
 
 export type BuiltInList = z.infer<typeof builtInListSchema>;
+
+// The built-in lists features' optional choices draw on: their priorities, sizes and risks.
+export const featureBuiltInLists = [
+  "feature-priorities",
+  "feature-sizes",
+  "feature-risks",
+] as const satisfies readonly BuiltInList[];
 
 // The meanings each built-in list's choices are tied to, in the order its choices start in; a list
 // with none is not a list with meanings.
@@ -130,6 +141,9 @@ export const listMeanings: Readonly<Record<BuiltInList, readonly Meaning[]>> = {
     "done",
     "cancelled",
   ],
+  "feature-priorities": [],
+  "feature-sizes": [],
+  "feature-risks": [],
 };
 
 // The meanings a list's choices are tied to, by its built-in key: none for any other list.

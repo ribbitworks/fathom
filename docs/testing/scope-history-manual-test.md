@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-12"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: Scope History
@@ -57,13 +57,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - Projects
       - Proposals
     - Under the heading **Planning**, the rows read, from the top:
+      - Priority
       - Needed by
       - Effort
+      - Size
+      - Risk
       - Release
       - Target cycle
       - Feature team
     - Under the heading **Columns**, the rows read, from the top:
-      - Complexity
+      - Kind
     - **Customers** lists these links, each on a line of its own, from the top:
       - Bluefin Harbour Authority
       - Cedar Valley Clinics

@@ -185,7 +185,7 @@ describe("reading", () => {
 });
 
 describe("choices", () => {
-  it("give those who see the plan owners by name alone, those who have left retired, and proposal statuses", async () => {
+  it("give those who see the plan owners by name alone, those who have left retired, proposal statuses, and features' priorities, sizes and risks", async () => {
     const current = await addPerson();
     const left = await addPerson();
     await test.connection
@@ -203,9 +203,18 @@ describe("choices", () => {
       "featureStatuses",
       "featureTeams",
       "owners",
+      "priorities",
+      "risks",
+      "sizes",
       "statuses",
     ]);
-    for (const choice of [...choices.owners, ...choices.statuses]) {
+    for (const choice of [
+      ...choices.owners,
+      ...choices.statuses,
+      ...choices.priorities,
+      ...choices.sizes,
+      ...choices.risks,
+    ]) {
       expect(Object.keys(choice).sort()).toEqual(["id", "name", "retired"]);
     }
     const [person] = await test.connection

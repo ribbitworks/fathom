@@ -5,7 +5,7 @@
 // draft, its first cell with the record's marks and name, and the cell naming its parts, such as a
 // list's choices, after the mark of their drafts.
 
-import { Fragment, type ReactNode } from "react";
+import { Fragment, type ReactElement, type ReactNode } from "react";
 import { draftRowClass } from "./list-drafts.tsx";
 import classes from "./pages.module.css";
 import {
@@ -36,7 +36,7 @@ export function RowWithLive({
   // The draft the row is tinted by, beside live, when it or anything in it has one.
   tint: { action: string; state?: string } | undefined;
   // The cells of the record's live row, where a draft changes it.
-  liveCells?: ReactNode;
+  liveCells?: ReactElement | undefined;
   // Attributes of the row, such as its role.
   rowProps?: Readonly<Record<string, string | undefined>>;
   onOpen?: () => void;
@@ -81,7 +81,7 @@ export function SummaryRow({
   selected: boolean;
   retired: boolean;
   tint: { action: string; state?: string } | undefined;
-  liveCells?: ReactNode;
+  liveCells?: ReactElement | undefined;
   // Attributes of the row, such as one telling a click on it from a click outside.
   rowProps?: Readonly<Record<`data-${string}`, string>>;
   onOpen: () => void;

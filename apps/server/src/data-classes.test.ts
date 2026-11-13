@@ -450,6 +450,18 @@ describe("a list's class", () => {
     expect(response.statusCode).toBe(409);
   });
 
+  it("stays General when a built-in column on Features draws on it", async () => {
+    const [risks] = await test.connection
+      .select({ id: lists.id })
+      .from(lists)
+      .where(eq(lists.builtIn, "feature-risks"));
+    const response = await move(
+      `/api/lists/${String(risks?.id)}/class`,
+      "personal",
+    );
+    expect(response.statusCode).toBe(409);
+  });
+
   it("is not found for a list that does not exist", async () => {
     const response = await move(
       "/api/lists/00000000-0000-4000-8000-000000000000/class",

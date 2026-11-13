@@ -214,6 +214,9 @@ const builtInListList = sqlList([
   "hiring-states",
   "proposal-statuses",
   "feature-statuses",
+  "feature-priorities",
+  "feature-sizes",
+  "feature-risks",
 ]);
 const meaningList = sqlList([
   "proposed",
@@ -259,7 +262,8 @@ export const lists = fathomSchema.table(
 // The choices in each list, in the order set for it. Labels are unique within a list, ignoring
 // letter case, so two people saving at once cannot add the same choice twice. A retired choice stays
 // on records that have it, but is no longer offered. In a list with meanings, each choice is tied to
-// one of them, which the server checks, as it does that each meaning keeps a choice offered.
+// one of them, which the server checks, as it does that each meaning keeps a choice offered. A
+// choice of feature sizes has a weight, how many of the size S it counts as.
 // Deleting a list deletes its choices; the change history keeps a record of both.
 export const listItems = fathomSchema.table(
   "list_items",
@@ -274,6 +278,7 @@ export const listItems = fathomSchema.table(
     position: integer("position").notNull().default(0),
     retired: boolean("retired").notNull().default(false),
     meaning: text("meaning"),
+    weight: numeric("weight", { mode: "number", precision: 6, scale: 2 }),
   },
   (table) => [
     uniqueIndex("list_items_list_label_index").on(
@@ -283,6 +288,10 @@ export const listItems = fathomSchema.table(
     check(
       "list_items_meaning_known",
       sql`${table.meaning} IS NULL OR ${table.meaning} IN (${sql.raw(meaningList)})`,
+    ),
+    check(
+      "list_items_weight_positive",
+      sql`${table.weight} > 0 AND ${table.weight} <> 'NaN'`,
     ),
   ],
 );
@@ -492,7 +501,8 @@ export const milestones = fathomSchema.table(
 // Features: the planned work on the roadmap. A feature's name is unique, ignoring letter case. A
 // project's general feature has no name of its own, since it shows its project's and follows it. A
 // target cycle is known by its stream and start date, as cycles are worked out rather than stored;
-// a feature with none is in Later. Its status is a choice of the built-in list of feature statuses.
+// a feature with none is in Later. Its status is a choice of the built-in list of feature statuses,
+// and its priority, size and risk, each optional, choices of their built-in lists.
 // The month it is needed by is kept as text such as 2027-03. Its note is Markdown checked by the
 // server. The estimate is one value, in hours, whichever unit it is shown in; PostgreSQL ranks NaN
 // above every number, so it must be refused by name.
@@ -504,6 +514,15 @@ export const features = fathomSchema.table(
     statusId: uuid("status_id")
       .notNull()
       .references(() => listItems.id, { onDelete: "restrict" }),
+    priorityId: uuid("priority_id").references(() => listItems.id, {
+      onDelete: "restrict",
+    }),
+    sizeId: uuid("size_id").references(() => listItems.id, {
+      onDelete: "restrict",
+    }),
+    riskId: uuid("risk_id").references(() => listItems.id, {
+      onDelete: "restrict",
+    }),
     neededBy: text("needed_by"),
     customerIds: uuid("customer_ids")
       .array()

@@ -233,6 +233,7 @@ export {
 } from "./drafts.ts";
 export {
   featuresListGeneral,
+  featureBuiltInLists,
   type BuiltInList,
   builtInListSchema,
   type Choice,

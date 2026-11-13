@@ -723,8 +723,11 @@ export const featureColumnGroups: readonly {
   {
     title: "Planning",
     keys: [
+      "priorityId",
       "neededBy",
       "estimateHours",
+      "sizeId",
+      "riskId",
       releaseColumnKey,
       "targetCycle",
       "featureTeamId",
@@ -762,6 +765,15 @@ export function featureColumns(
       }),
       newRowValue: () => firstStatus(choices.featureStatuses, "possible"),
     },
+    field<Feature>("priorityId", planColumnNames.priorityId, "choice", {
+      choices: choices.priorities,
+    }),
+    field<Feature>("sizeId", planColumnNames.sizeId, "choice", {
+      choices: choices.sizes,
+    }),
+    field<Feature>("riskId", planColumnNames.riskId, "choice", {
+      choices: choices.risks,
+    }),
     field<Feature>("neededBy", planColumnNames.neededBy, "month"),
     customersColumn<Feature>(choices.customers),
     namersColumn(
@@ -811,17 +823,18 @@ export function featureColumns(
     (a, b) =>
       featureColumnOrder.indexOf(a.key) - featureColumnOrder.indexOf(b.key),
   );
-  return inOrder(
-    [
-      ...inGroups,
+  // The built-in columns follow the details' groups; the server's order places the added ones.
+  return [
+    ...inGroups,
+    ...inOrder(
       // A value can be given only in a column already approved.
-      ...fields.map((added) => ({
+      fields.map((added) => ({
         ...addedColumn<Feature, CellChange>(added, lists),
         readOnly: added.draft?.action === "created",
       })),
-    ],
-    order,
-  );
+      order,
+    ),
+  ];
 }
 
 // After every group, for the features that target no cycle, or one no longer offered.

@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: Features
 
 ## Scope
 
-Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later, by release and by the month needed, the Release column, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, columns added to Features, writing a note in New feature, and a feature's effort, shown and typed in the unit chosen. The projects and proposals that name a feature are verified in [Feature Links](feature-links-manual-test.md).
+Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later, by release and by the month needed, the Release column, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, columns added to Features, writing a note in New feature, a feature's effort, shown and typed in the unit chosen, and its priority, size and risk, from their built-in lists. The projects and proposals that name a feature are verified in [Feature Links](feature-links-manual-test.md).
 
 ## Test Environment
 
@@ -59,12 +59,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - Customers
       - Projects
       - Proposals
+      - Priority
       - Needed by
       - Effort
+      - Size
+      - Risk
       - Release
       - Target cycle
       - Feature team
-      - Complexity
+      - Kind
     - Beside the search box, the count reads **12 features**.
   - **Notes:**
 
@@ -81,7 +84,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Every word is easy to read.
     - The group headings are clearly set apart from the rows.
     - Each line between rows, above and below the group headings too, is one thin line running straight across the whole table.
-    - No line is heavier under **Name** than under the other columns.
   - **Notes:**
 
 - [ ] **Step 5.** Choose **Light** in the Appearance menu.
@@ -93,7 +95,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Every word is easy to read.
     - The group headings are clearly set apart from the rows.
     - Each line between rows, above and below the group headings too, is one thin line running straight across the whole table.
-    - No line is heavier under **Name** than under the other columns.
   - **Notes:**
 
 ### FEAT-02: Features Are Grouped by Cycle, With Later Last
@@ -407,23 +408,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 6.** Look at the **Notes** cell of the row **Offline Sync**.
-  - **Expected:**
-    - The cell shows the start of the note as plain words.
-    - The words are easy to read.
-  - **Notes:**
-
-- [ ] **Step 7.** Choose **Dark** in the Appearance menu.
-  - **Expected:** The page turns dark.
-  - **Notes:**
-
-- [ ] **Step 8.** Look at the **Notes** cell of the row **Offline Sync**.
-  - **Expected:**
-    - The cell shows the start of the note as plain words.
-    - The words are easy to read.
-  - **Notes:**
-
-- [ ] **Step 9.** Choose **Light** in the Appearance menu.
-  - **Expected:** The page is light.
+  - **Expected:** The cell shows the start of the note as plain words.
   - **Notes:**
 
 ### FEAT-12: Features Group by the Month They Are Needed
@@ -501,41 +486,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### FEAT-14: A Feature's Details Open Beside the Table
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-13.
-
-**Preconditions:** Run Restore the Seed Data first. Signed in with this account. **Features** page open.
-
-- [ ] **Step 1.** Point at the row **Offline Sync**, and select the details button at the right of its **Name** cell.
-  - **Expected:**
-    - A side panel titled **Offline Sync** opens beside the table.
-    - Under the heading **Details**, the rows read, from the top:
-      - Name
-      - Status
-      - Description
-      - Notes
-    - Under the heading **Customers and commitments**, the rows read, from the top:
-      - Customers
-      - Projects
-      - Proposals
-    - Under the heading **Planning**, the rows read, from the top:
-      - Needed by
-      - Effort
-      - Release
-      - Target cycle
-      - Feature team
-    - Under the heading **Columns**, the rows read, from the top:
-      - Complexity
-  - **Notes:**
-
-- [ ] **Step 2.** In the side panel, select a customer's name under **Customers**.
-  - **Expected:**
-    - The **Projects** page opens on its **Customers** tab.
-    - That customer's details are in the side panel.
-  - **Notes:**
+Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers-and-notes-in-its-details) in Scope History.
 
 ### FEAT-15: Those Who Only See the Plan See Added Columns
 
-**Account:** Team Member, `team.member@fathom.test`, changed from FEAT-14.
+**Account:** Team Member, `team.member@fathom.test`, changed from FEAT-13.
 
 **Preconditions:** Run Restore the Seed Data first. Signed in with this account.
 
@@ -543,36 +498,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The page is titled **Features**.
   - **Notes:**
 
-- [ ] **Step 2.** Scroll right to the **Complexity** column.
+- [ ] **Step 2.** Scroll right to the **Kind** column.
   - **Expected:**
     - There is no **New column** button.
-    - The row **Offline Sync** shows **L**.
-    - **Mobile Approvals** shows **M**.
-    - **Data Retention Controls** shows **S**.
-    - **Report Builder** shows **XL**.
+    - The row **Offline Sync** shows **New**.
+    - **Mobile Approvals** shows **Improvement**.
+    - **Data Retention Controls** shows **Fix**.
+    - **Report Builder** shows **New**.
     - **Usage Alerts** is empty.
   - **Notes:**
 
-- [ ] **Step 3.** Open the **Complexity** column menu.
+- [ ] **Step 3.** Open the **Kind** column menu.
   - **Expected:**
     - The menu offers sorting and filtering.
     - It has no **Edit column**, **Move left** or **Move right**.
-  - **Notes:**
-
-- [ ] **Step 4.** Choose **Dark** in the Appearance menu.
-  - **Expected:** The page turns dark.
-  - **Notes:**
-
-- [ ] **Step 5.** Look at the **Complexity** column.
-  - **Expected:** The header and values read as clearly as the columns beside them.
-  - **Notes:**
-
-- [ ] **Step 6.** Choose **Light** in the Appearance menu.
-  - **Expected:** The page is light.
-  - **Notes:**
-
-- [ ] **Step 7.** Look at the **Complexity** column.
-  - **Expected:** The header and values read as clearly as the columns beside them.
   - **Notes:**
 
 ### FEAT-16: A Column Is Added to Features as a Draft
@@ -590,7 +529,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 2.** Open the **List** box.
   - **Expected:**
-    - **Complexity** is offered.
+    - **Kind** is offered.
     - No list marked **Personal** or **Confidential** is offered.
   - **Notes:**
 
@@ -600,23 +539,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No box asking who may see the values appears.
   - **Notes:**
 
-- [ ] **Step 4.** Type `Fictional Risk` in **Name**.
-  - **Expected:** **Name** holds **Fictional Risk**.
+- [ ] **Step 4.** Type `Fictional Score` in **Name**.
+  - **Expected:** **Name** holds **Fictional Score**.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Add column**.
   - **Expected:**
     - The dialog closes.
-    - A **Fictional Risk** column is added at the right end of the table.
+    - A **Fictional Score** column is added at the right end of the table.
     - The column is tinted faint yellow.
-    - A hollow yellow dot is before **Fictional Risk** in its header.
+    - A hollow yellow dot is before **Fictional Score** in its header.
   - **Notes:**
 
-- [ ] **Step 6.** Double-click the **Fictional Risk** cell of any row.
+- [ ] **Step 6.** Double-click the **Fictional Score** cell of any row.
   - **Expected:** The cell does not open for editing while the column is a draft.
   - **Notes:**
 
-- [ ] **Step 7.** Open the **Fictional Risk** column menu.
+- [ ] **Step 7.** Open the **Fictional Score** column menu.
   - **Expected:**
     - The menu offers **Edit column**.
     - It has no **Move left** or **Move right**.
@@ -636,7 +575,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 10.** Select **Publish** in the top bar.
-  - **Expected:** The dot before **Fictional Risk** is now solid yellow.
+  - **Expected:** The dot before **Fictional Score** is now solid yellow.
   - **Notes:**
 
 ### FEAT-17: An Approver Approves a Column on Features
@@ -647,7 +586,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Select the **Drafts** page in the left-hand menu.
   - **Expected:**
-    - The list has an entry naming **the column Fictional Risk on Features**.
+    - The list has an entry naming **the column Fictional Score on Features**.
     - The entry is drafted by **Engineering Operations Manager**.
   - **Notes:**
 
@@ -655,7 +594,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The page is titled **Features**.
   - **Notes:**
 
-- [ ] **Step 3.** Open the **Fictional Risk** column menu.
+- [ ] **Step 3.** Open the **Fictional Score** column menu.
   - **Expected:** The menu offers **Approve…** and **Reject…**.
   - **Notes:**
 
@@ -667,9 +606,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 5.** Select **Approve**.
   - **Expected:**
-    - The **Fictional Risk** header has no dot.
+    - The **Fictional Score** header has no dot.
     - The column is no longer tinted.
-    - **Fictional Risk** stays at the right end of the table, after **Complexity**.
+    - **Fictional Score** stays at the right end of the table, after **Kind**.
   - **Notes:**
 
 ### FEAT-18: A Value in an Added Column Is Part of a Feature's Draft
@@ -678,23 +617,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Features** page open.
 
-- [ ] **Step 1.** Double-click the **Fictional Risk** cell of the row **Usage Alerts**, type `3.5` and press Enter.
+- [ ] **Step 1.** Double-click the **Fictional Score** cell of the row **Usage Alerts**, type `3.5` and press Enter.
   - **Expected:**
     - The cell shows **3.5**.
     - A hollow yellow dot is before it.
-    - A light green Live row under the row has an empty **Fictional Risk** cell.
+    - A light green Live row under the row has an empty **Fictional Score** cell.
   - **Notes:**
 
-- [ ] **Step 2.** Double-click the **Complexity** cell of the same row, and choose **XS**.
+- [ ] **Step 2.** Double-click the **Kind** cell of the same row, and choose **Fix**.
   - **Expected:**
-    - The cell shows **XS**.
-    - The Live row's **Complexity** cell stays empty.
+    - The cell shows **Fix**.
+    - The Live row's **Kind** cell stays empty.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **Drafts** page in the left-hand menu, and find **the feature Usage Alerts**.
   - **Expected:** Its entry names both changes:
-    - **Fictional Risk** to **3.5**.
-    - **Complexity** to **XS**.
+    - **Fictional Score** to **3.5**.
+    - **Kind** to **Fix**.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **Features** page in the left-hand menu.
@@ -703,7 +642,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 5.** Point at the row **Usage Alerts**, and select the details button at the right of its **Name** cell.
   - **Expected:**
-    - The side panel lists **Fictional Risk** and **Complexity**.
+    - The side panel lists **Fictional Score** and **Kind**.
     - Each shows the drafted value, with the live value under it.
   - **Notes:**
 
@@ -712,11 +651,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 7.** Select **Publish** in the top bar.
-  - **Expected:** The dots before **3.5** and **XS** on the row **Usage Alerts** are now solid yellow.
+  - **Expected:** The dots before **3.5** and **Fix** on the row **Usage Alerts** are now solid yellow.
   - **Notes:**
 
 - [ ] **Step 8.** Select **New feature**.
-  - **Expected:** The form offers **Complexity** and **Fictional Risk**.
+  - **Expected:** The form offers **Kind** and **Fictional Score**.
   - **Notes:**
 
 - [ ] **Step 9.** Select **Cancel**.
@@ -741,7 +680,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The row has no dot.
     - The row has no Live row under it.
-    - It still shows **3.5** and **XS**.
+    - It still shows **3.5** and **Fix**.
   - **Notes:**
 
 ### FEAT-19: Deleting a Column Removes It From Features
@@ -750,7 +689,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Features** page open.
 
-- [ ] **Step 1.** Open the **Fictional Risk** column menu and select **Edit column**.
+- [ ] **Step 1.** Open the **Fictional Score** column menu and select **Edit column**.
   - **Expected:**
     - The **Edit column** dialog opens.
     - It has a red **Delete column** button.
@@ -759,17 +698,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] **Step 2.** Select **Delete column**.
   - **Expected:**
     - The dialog closes.
-    - A notice reads **Deleted the Fictional Risk column.**
+    - A notice reads **Deleted the Fictional Score column.**
     - The column stays in the table.
     - A hollow yellow dot is before its name.
     - The column's name is struck through.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Publish** in the top bar.
-  - **Expected:** The dot before **Fictional Risk** is now solid yellow.
+  - **Expected:** The dot before **Fictional Score** is now solid yellow.
   - **Notes:**
 
-- [ ] **Step 4.** Open the **Fictional Risk** column menu, and select **Approve…**.
+- [ ] **Step 4.** Open the **Fictional Score** column menu, and select **Approve…**.
   - **Expected:**
     - A dialog opens.
     - It has an **Approve** button.
@@ -777,8 +716,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 5.** Select **Approve**.
   - **Expected:**
-    - The **Fictional Risk** column is gone.
-    - The table ends with **Complexity**.
+    - The **Fictional Score** column is gone.
+    - The table ends with **Kind**.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -995,9 +934,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 20.** Rest the pointer on **3 PM**.
-  - **Expected:**
-    - The cells are easy to read.
-    - The tooltip is easy to read.
+  - **Expected:** The tooltip is easy to read.
   - **Notes:**
 
 - [ ] **Step 21.** Open the column menu of **Effort**.
@@ -1291,6 +1228,90 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The **Releases** page opens.
     - The **Platform** side panel is open beside its table.
+  - **Notes:**
+
+**Afterwards:** Run Restore the Seed Data.
+
+### FEAT-25: Priority, Size and Risk
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-24 ended with. Step 9 signs in as another account.
+
+**Preconditions:** Restore the Seed Data run after FEAT-24. **Features** page open.
+
+- [ ] **Step 1.** Read the **Priority**, **Size** and **Risk** cells of **Offline Sync**.
+  - **Expected:**
+    - **Priority** reads **Critical**.
+    - **Size** reads **L**.
+    - **Risk** reads **High**.
+  - **Notes:**
+
+- [ ] **Step 2.** Read the **Priority**, **Size** and **Risk** cells of **Voice Notes**.
+  - **Expected:**
+    - **Priority** reads **Low**.
+    - **Size** is empty.
+    - **Risk** is empty.
+  - **Notes:**
+
+- [ ] **Step 3.** Point at the row **Voice Notes**, and select the details button at the right of its **Name** cell.
+  - **Expected:**
+    - Under **Planning**, **Priority** reads **Low**.
+    - **Size** reads **None**, dimmed.
+    - **Risk** reads **None**, dimmed.
+  - **Notes:**
+
+- [ ] **Step 4.** Close the side panel.
+  - **Expected:** The side panel closes.
+  - **Notes:**
+
+- [ ] **Step 5.** Select the **Size** cell of **Scheduler API**, and press Enter.
+  - **Expected:**
+    - A list of choices opens.
+    - Its options read, from the top:
+      - None, with a line under it
+      - XS
+      - S
+      - M
+      - L
+      - XL
+  - **Notes:**
+
+- [ ] **Step 6.** Choose **L**.
+  - **Expected:**
+    - The cell shows **L**.
+    - A hollow yellow dot is before it.
+    - A light green Live row under the row reads **M** under **Size**.
+  - **Notes:**
+
+- [ ] **Step 7.** Select the **Risk** cell of **Scheduler API**, and press Enter.
+  - **Expected:**
+    - A list of choices opens.
+    - Its options read, from the top:
+      - None, with a line under it
+      - Low
+      - Medium
+      - High
+    - Each choice is on one line.
+  - **Notes:**
+
+- [ ] **Step 8.** Press Esc.
+  - **Expected:**
+    - The list closes.
+    - The **Risk** cell still reads **Medium**.
+  - **Notes:**
+
+- [ ] **Step 9.** Sign out, and sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
+  - **Expected:** The top bar's right end reads **Engineering Operations Manager**.
+  - **Notes:**
+
+- [ ] **Step 10.** Select the **Lists** page in the left-hand menu.
+  - **Expected:** The page is titled **Lists**.
+  - **Notes:**
+
+- [ ] **Step 11.** Select **Feature sizes**.
+  - **Expected:**
+    - The panel opens with **Feature sizes** at the top.
+    - Its choices read, from the top, **XS**, **S**, **M**, **L** and **XL**.
+    - Under the choices, in grey, a line reads **A feature's rough size, before it is estimated, smallest first.**
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.

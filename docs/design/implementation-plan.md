@@ -167,7 +167,7 @@ Features will take saved views, personal and shared, as People's table does, in 
 
 [The Roadmap and the Plan](../product/decisions.md#planning), as [Visual Design](visual-design.md#components) and [UI Conventions](conventions.md#timelines) set out, start once three pull requests of [Demand Forecasting](#demand-forecasting) have merged, each step its own pull request, decided by the owner on 2026-11-11:
 
-1. **Size, Priority, and Risk:** built-in columns on Features, with the seed's Complexity becoming Risk.
+1. **Size, Priority, and Risk:** built-in columns on Features, with the seed's Complexity becoming Kind. Done, apart from changing Size's weights on the Lists page, its own pull request next.
 2. **The shared timeline:** the timeline and its strip taken out of the Releases timeline, changing what Releases shows only by the strip and the page's layout, which puts the timeline above the table, each scrolling on its own. A wide change. Done, brought forward on 2026-11-11.
 3. **The Features Board.**
 4. **Capacity's Work mode:** the Plan, with the allocations grid moved in as the People mode, coordinated with the work on the allocations grid.

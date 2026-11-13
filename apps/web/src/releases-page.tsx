@@ -40,7 +40,13 @@ import {
 } from "@mantine/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { type MouseEvent, type ReactNode, useEffect, useState } from "react";
+import {
+  type MouseEvent,
+  type ReactElement,
+  type ReactNode,
+  useEffect,
+  useState,
+} from "react";
 import { describeProblem } from "./api.ts";
 import { DecisionModal } from "./decision-dialog.tsx";
 import { type Decision, decisionFor, noDrafts } from "./drafts.ts";
@@ -228,7 +234,7 @@ function PanelRow({
   children,
 }: {
   draft: RecordDraft | undefined;
-  liveRow: ReactNode;
+  liveRow: ReactElement | undefined;
   children: ReactNode;
 }) {
   return (
@@ -857,7 +863,7 @@ function StreamTable({
         liveCells={
           live !== undefined &&
           hasDrafts(stream) &&
-          stream.draft?.action !== "deleted" && (
+          stream.draft?.action !== "deleted" ? (
             <>
               <LiveSummaryName marked={slot !== undefined} draft={stream.draft}>
                 {live.name}
@@ -876,7 +882,7 @@ function StreamTable({
                 names={kept.map(({ name }) => name)}
               />
             </>
-          )
+          ) : undefined
         }
       >
         <SummaryName mark={slot} draft={original.draft} heldBy={stream.heldBy}>

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: Drafts of People, Lists and Columns
@@ -268,7 +268,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** Open the Draft menu, and select **Drafts applied**.
   - **Expected:**
-    - The count beside the search box reads **9 lists**.
+    - The count beside the search box reads **12 lists**.
     - Certifications and Languages are not in the table.
     - No Live rows.
     - No green dots.

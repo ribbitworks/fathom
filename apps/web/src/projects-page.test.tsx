@@ -113,6 +113,9 @@ async function openPage(
         statuses: [{ id: statusId, name: "Open", retired: false }],
         featureStatuses: [],
         featureTeams: [],
+        priorities: [],
+        sizes: [],
+        risks: [],
       }),
     ...answers,
   });
@@ -189,6 +192,9 @@ describe("the page's tabs", () => {
           statuses: [],
           featureStatuses: [],
           featureTeams: [],
+          priorities: [],
+          sizes: [],
+          risks: [],
         }),
     });
     renderApp("/projects");
@@ -1563,11 +1569,17 @@ describe("the Features page", () => {
         },
       ],
       featureTeams: [{ id: teamId, name: "Fictional Team", retired: false }],
+      priorities: [],
+      sizes: [],
+      risks: [],
     });
   const feature = (name: string, targetCycle: string | null) => ({
     id: crypto.randomUUID(),
     name,
     statusId: possibleId,
+    priorityId: null,
+    sizeId: null,
+    riskId: null,
     neededBy: null,
     customerIds: [],
     targetStreamId: targetCycle === null ? null : streamId,
@@ -3269,6 +3281,9 @@ describe("the Features page", () => {
       {
         name: "Fictional Later",
         statusId: plannedId,
+        priorityId: null,
+        sizeId: null,
+        riskId: null,
         neededBy: null,
         customerIds: [],
         estimateHours: 40,
@@ -3306,6 +3321,9 @@ describe("the Features page", () => {
     expect(sent(fetch, "POST /api/features")).toEqual([
       {
         name: "Fictional New",
+        priorityId: null,
+        sizeId: null,
+        riskId: null,
         neededBy: null,
         customerIds: [],
         estimateHours: null,

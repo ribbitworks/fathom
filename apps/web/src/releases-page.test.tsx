@@ -349,6 +349,36 @@ describe("the table of release streams", () => {
     expect(link.closest("[role=row]")?.className).toMatch(/draftRow/);
   });
 
+  it("gives only a stream with a draft a Live row", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer([
+        fictionalStream({
+          id: "00000000-0000-4000-8000-0000000000a2",
+          name: "Fictional Minors",
+        }),
+        fictionalStream({
+          releases: [fictionalRelease({ draft: recordDraft() })],
+        }),
+      ]),
+    });
+    renderApp("/releases");
+    const drafted = await screen.findByRole("link", {
+      name: "Fictional Majors",
+    });
+    const plain = screen.getByRole("link", { name: "Fictional Minors" });
+    expect(
+      drafted
+        .closest("[role=row]")
+        ?.nextElementSibling?.getAttribute("aria-hidden"),
+    ).toBe("true");
+    expect(
+      plain
+        .closest("[role=row]")
+        ?.nextElementSibling?.getAttribute("aria-hidden"),
+    ).not.toBe("true");
+  });
+
   it("says when there are no streams yet", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
@@ -1270,6 +1300,9 @@ describe("drafts in a stream's panel", () => {
                 id: featureId,
                 name: "Fictional Moving",
                 statusId: "s1",
+                priorityId: null,
+                sizeId: null,
+                riskId: null,
                 neededBy: null,
                 customerIds: [],
                 note: null,

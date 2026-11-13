@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/views.ts", "packages/shared/src/views.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: Metrics, Frozen Columns, and Column Widths on the People Table
@@ -316,7 +316,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The shadow is beside them.
     - The header row stays at the top.
     - Rows tinted faint yellow or faint red for a draft keep their tint in the frozen columns.
-    - Each line between rows is one thin line running straight across the frozen columns into the others, no heavier under **Name** and **ID**.
+    - Each line between rows is one thin line running straight across the frozen columns into the others.
     - The dashed line between a draft row and its light green Live row is dashed all the way across.
   - **Notes:**
 

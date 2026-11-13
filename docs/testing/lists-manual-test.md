@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: Built-in Lists and Lists with Meanings
 
 ## Scope
 
-Verifies the Lists page's built-in lists, Positions, Hiring states, Proposal statuses and Feature statuses: their grey **Built in** box, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
+Verifies the Lists page's built-in lists, Positions, Hiring states, Proposal statuses, Feature statuses, Feature priorities, Feature sizes and Feature risks: their grey **Built in** box, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
 
 ## Test Environment
 
@@ -47,7 +47,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** Signed in with this account. **Lists** page open from the left-hand menu.
 
-- [ ] **Step 1.** Read the **Name** column of the **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses** rows.
+- [ ] **Step 1.** Read the **Name** column of the **Feature priorities**, **Feature risks**, **Feature sizes**, **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses** rows.
   - **Expected:**
     - Each name has a grey **Built in** box after it
     - No other list has one
@@ -227,8 +227,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] **Step 1.** In the switch beside **Search lists**, select **Built in**.
   - **Expected:**
-    - The table shows only **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses**.
-    - The count reads **4 of 12**.
+    - The table shows only **Feature priorities**, **Feature risks**, **Feature sizes**, **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses**.
+    - The count reads **7 of 15**.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

@@ -34,6 +34,7 @@ import type {
 } from "@fathom/shared";
 import {
   featuresListGeneral,
+  featureBuiltInLists,
   builtInListSchema,
   type Kept,
   keptOf,
@@ -1165,14 +1166,18 @@ async function changeList(
   });
 }
 
-// The lists a column on Features draws on, live or in a draft, published or not. Anyone's
-// unpublished drafts count, since raising such a list is refused whoever's draft it is, so telling
-// readers says no more than the refusal would.
+// The lists a column on Features draws on, built in or added, live or in a draft, published or not.
+// Anyone's unpublished drafts count, since raising such a list is refused whoever's draft it is, so
+// telling readers says no more than the refusal would.
 export async function featureListIds(reader: Reader): Promise<Set<string>> {
   const live = await reader
     .select({ listId: fields.listId })
     .from(fields)
     .where(eq(fields.tableName, "features"));
+  const builtIn = await reader
+    .select({ listId: lists.id })
+    .from(lists)
+    .where(inArray(lists.builtIn, [...featureBuiltInLists]));
   const drafted: { listId: string | null }[] = [];
   // One after the other, since a transaction runs one query at a time.
   for (const table of [drafts, unpublishedDrafts]) {
@@ -1189,7 +1194,7 @@ export async function featureListIds(reader: Reader): Promise<Set<string>> {
     );
   }
   return new Set(
-    [...live, ...drafted]
+    [...live, ...builtIn, ...drafted]
       .map(({ listId }) => listId)
       .filter((listId): listId is string => listId !== null),
   );

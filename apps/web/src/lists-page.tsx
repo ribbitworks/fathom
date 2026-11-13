@@ -243,7 +243,7 @@ function ListsTable({
         liveCells={
           live !== undefined &&
           mark !== undefined &&
-          list.draft?.action !== "deleted" && (
+          list.draft?.action !== "deleted" ? (
             <>
               <LiveSummaryName
                 marked={slotMark !== undefined}
@@ -265,7 +265,7 @@ function ListsTable({
                 names={liveOffered.map((choice) => choice.label)}
               />
             </>
-          )
+          ) : undefined
         }
       >
         <SummaryName

@@ -23,7 +23,13 @@ import {
   valueField,
 } from "@fathom/db";
 import { fictionalId } from "@fathom/fixtures";
-import { addMonths, cyclesOf, type Meaning, monthOf } from "@fathom/shared";
+import {
+  addMonths,
+  cyclesOf,
+  featureBuiltInLists,
+  type Meaning,
+  monthOf,
+} from "@fathom/shared";
 import { and, arrayOverlaps, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { customerId, featureId, linksAny } from "./projects.ts";
 import { filledIn, recorded, type SeededChange } from "./recorded.ts";
@@ -31,22 +37,26 @@ import { type SeededStream, seededStreams, streamId } from "./releases.ts";
 
 const streamName = "Platform";
 
-const complexitySizes = ["XS", "S", "M", "L", "XL"] as const;
-const complexityListId = fictionalId("list:complexity");
-const complexityColumnId = fictionalId("field:complexity");
-const sizeId = (size: string) => fictionalId(`list-item:complexity:${size}`);
+const kinds = ["New", "Improvement", "Fix"] as const;
+const kindListId = fictionalId("list:kind");
+const kindColumnId = fictionalId("field:kind");
+const kindId = (kind: string) => fictionalId(`list-item:kind:${kind}`);
 
 // Each feature's cycle is counted from the one the seed day falls in, before it when negative, or
 // null for Later. Its feature team is by its place among the organization's, if it has one. The
-// month it is needed by is counted from the seed day's.
+// month it is needed by is counted from the seed day's. Its priority, size and risk are choices of
+// their built-in lists as Fathom starts them, by name.
 export const seededFeatures: readonly {
   key: string;
   name: string;
   status: Meaning;
+  priority: "Critical" | "High" | "Medium" | "Low";
+  size?: "XS" | "S" | "M" | "L" | "XL";
+  risk?: "Low" | "Medium" | "High";
   neededIn?: number;
   customers?: readonly string[];
   note?: string;
-  complexity?: (typeof complexitySizes)[number];
+  kind?: (typeof kinds)[number];
   cycle: number | null;
   hours: number | null;
   team: number | null;
@@ -56,6 +66,9 @@ export const seededFeatures: readonly {
     key: "audit-export",
     name: "Audit Export",
     status: "done",
+    priority: "High",
+    size: "M",
+    risk: "Low",
     cycle: -2,
     hours: 316,
     team: 0,
@@ -65,6 +78,9 @@ export const seededFeatures: readonly {
     key: "sign-on",
     name: "Single Sign-On Setup",
     status: "done",
+    priority: "Critical",
+    size: "M",
+    risk: "Medium",
     cycle: -1,
     hours: 480,
     team: 1,
@@ -74,6 +90,9 @@ export const seededFeatures: readonly {
     key: "bulk-import",
     name: "Bulk Import",
     status: "cancelled",
+    priority: "Low",
+    size: "L",
+    risk: "High",
     cycle: -1,
     hours: 240,
     team: null,
@@ -83,8 +102,11 @@ export const seededFeatures: readonly {
     key: "offline-sync",
     name: "Offline Sync",
     status: "in-progress",
+    priority: "Critical",
+    size: "L",
+    risk: "High",
     neededIn: 1,
-    complexity: "L",
+    kind: "New",
     customers: ["harbour", "clinics"],
     note: "**Field crews** asked for this first.\n\n- Queue changes while offline\n- Show what is waiting to send",
     cycle: 0,
@@ -96,6 +118,9 @@ export const seededFeatures: readonly {
     key: "usage-alerts",
     name: "Usage Alerts",
     status: "in-progress",
+    priority: "Medium",
+    size: "S",
+    risk: "Low",
     cycle: 0,
     hours: 424,
     team: 1,
@@ -105,8 +130,11 @@ export const seededFeatures: readonly {
     key: "mobile-approvals",
     name: "Mobile Approvals",
     status: "planned",
+    priority: "High",
+    size: "M",
+    risk: "Medium",
     neededIn: 3,
-    complexity: "M",
+    kind: "Improvement",
     customers: ["air"],
     cycle: 1,
     hours: 640,
@@ -117,6 +145,9 @@ export const seededFeatures: readonly {
     key: "scheduler-api",
     name: "Scheduler API",
     status: "planned",
+    priority: "Medium",
+    size: "M",
+    risk: "Medium",
     cycle: 1,
     hours: null,
     team: null,
@@ -126,8 +157,11 @@ export const seededFeatures: readonly {
     key: "retention-controls",
     name: "Data Retention Controls",
     status: "planned",
+    priority: "High",
+    size: "S",
+    risk: "Low",
     neededIn: 3,
-    complexity: "S",
+    kind: "Fix",
     customers: ["transit"],
     cycle: 2,
     hours: 560,
@@ -138,8 +172,11 @@ export const seededFeatures: readonly {
     key: "report-builder",
     name: "Report Builder",
     status: "possible",
+    priority: "Medium",
+    size: "XL",
+    risk: "High",
     neededIn: 9,
-    complexity: "XL",
+    kind: "New",
     cycle: 3,
     hours: 1200,
     team: null,
@@ -149,6 +186,7 @@ export const seededFeatures: readonly {
     key: "voice-notes",
     name: "Voice Notes",
     status: "possible",
+    priority: "Low",
     cycle: null,
     hours: null,
     team: null,
@@ -158,6 +196,9 @@ export const seededFeatures: readonly {
     key: "partner-portal",
     name: "Partner Portal",
     status: "possible",
+    priority: "High",
+    size: "XL",
+    risk: "High",
     neededIn: 14,
     customers: ["mining", "transit"],
     cycle: null,
@@ -169,35 +210,35 @@ export const seededFeatures: readonly {
 
 const seededIds = () => seededFeatures.map(({ key }) => featureId(key));
 
-// Adds Complexity, a list of sizes and a column on Features drawing on it, with no link to effort.
-async function seedComplexity(
+// Adds Kind, a list and a column on Features drawing on it, as an organization adds its own.
+async function seedKind(
   transaction: Pick<Database, "insert" | "select">,
 ): Promise<SeededChange[]> {
   const [listHeld] = await transaction
     .select({ id: lists.id })
     .from(lists)
-    .where(eq(lists.id, complexityListId));
+    .where(eq(lists.id, kindListId));
   const made: SeededChange[] = [];
   if (listHeld === undefined) {
     const list = {
-      name: "Complexity",
+      name: "Kind",
       description: "",
       visibility: "general",
       retired: false,
     };
-    await transaction.insert(lists).values({ id: complexityListId, ...list });
-    made.push(...recorded("list", complexityListId, "created", list));
-    for (const [index, label] of complexitySizes.entries()) {
-      const id = sizeId(label);
+    await transaction.insert(lists).values({ id: kindListId, ...list });
+    made.push(...recorded("list", kindListId, "created", list));
+    for (const [index, label] of kinds.entries()) {
+      const id = kindId(label);
       await transaction.insert(listItems).values({
         id,
-        listId: complexityListId,
+        listId: kindListId,
         label,
         position: index + 1,
       });
       made.push(
         ...recorded("list-item", id, "created", {
-          listId: complexityListId,
+          listId: kindListId,
           label,
           description: "",
           retired: false,
@@ -208,23 +249,37 @@ async function seedComplexity(
   const [columnHeld] = await transaction
     .select({ id: fields.id })
     .from(fields)
-    .where(eq(fields.id, complexityColumnId));
+    .where(eq(fields.id, kindColumnId));
   if (columnHeld !== undefined) return made;
   const column = {
     tableName: "features",
-    name: "Complexity",
+    name: "Kind",
     type: "choice",
-    listId: complexityListId,
+    listId: kindListId,
     visibility: null,
     multiple: false,
     required: false,
     onPlannedHires: false,
   };
-  await transaction
-    .insert(fields)
-    .values({ id: complexityColumnId, ...column });
-  made.push(...recorded("field", complexityColumnId, "created", column));
+  await transaction.insert(fields).values({ id: kindColumnId, ...column });
+  made.push(...recorded("field", kindColumnId, "created", column));
   return made;
+}
+
+// The choices of the lists the seeded features draw on, by list and name, as Fathom starts them.
+async function builtInChoiceIds(
+  reader: Pick<Database, "select">,
+): Promise<(list: string, name: string | undefined) => string | null> {
+  const choices = await reader
+    .select({ id: listItems.id, label: listItems.label, list: lists.builtIn })
+    .from(listItems)
+    .innerJoin(lists, eq(lists.id, listItems.listId))
+    .where(inArray(lists.builtIn, [...featureBuiltInLists]));
+  const ids = new Map(
+    choices.map(({ id, label, list }) => [`${String(list)}:${label}`, id]),
+  );
+  return (list, name) =>
+    name === undefined ? null : (ids.get(`${list}:${name}`) ?? null);
 }
 
 // Adds the features, once, if the Platform stream is there to target. Returns whether it added
@@ -267,7 +322,8 @@ export async function seedFeatures(
     for (const { id, meaning } of statuses) {
       if (!statusIdOf.has(meaning)) statusIdOf.set(meaning, id);
     }
-    const made: SeededChange[] = await seedComplexity(transaction);
+    const choiceIdOf = await builtInChoiceIds(transaction);
+    const made: SeededChange[] = await seedKind(transaction);
     for (const feature of seededFeatures) {
       const id = featureId(feature.key);
       const statusId = statusIdOf.get(feature.status);
@@ -279,6 +335,9 @@ export async function seedFeatures(
       const row = {
         name: feature.name,
         statusId,
+        priorityId: choiceIdOf("feature-priorities", feature.priority),
+        sizeId: choiceIdOf("feature-sizes", feature.size),
+        riskId: choiceIdOf("feature-risks", feature.risk),
         neededBy:
           feature.neededIn === undefined
             ? null
@@ -293,20 +352,20 @@ export async function seedFeatures(
         note: feature.note ?? null,
       };
       await transaction.insert(features).values({ id, ...row });
-      const size = feature.complexity;
-      if (size !== undefined) {
+      const { kind } = feature;
+      if (kind !== undefined) {
         await transaction.insert(fieldValues).values({
-          fieldId: complexityColumnId,
+          fieldId: kindColumnId,
           featureId: id,
-          choiceId: sizeId(size),
+          choiceId: kindId(kind),
         });
       }
       made.push(
         ...recorded("feature", id, "created", {
           ...filledIn(row),
-          ...(size === undefined
+          ...(kind === undefined
             ? {}
-            : { [valueField(complexityColumnId)]: [sizeId(size)] }),
+            : { [valueField(kindColumnId)]: [kindId(kind)] }),
         }),
       );
     }
@@ -315,22 +374,22 @@ export async function seedFeatures(
   });
 }
 
-// Removes the Complexity column, with its values on features added by hand and every draft of it or
+// Removes the Kind column, with its values on features added by hand and every draft of it or
 // that gives it a value, and its list, unless another column draws on the list or it has choices
 // added by hand. Returns what it kept, in words.
-async function unseedComplexity(
+async function unseedKind(
   transaction: Parameters<Parameters<Database["transaction"]>[0]>[0],
 ): Promise<string[]> {
   const [column] = await transaction
     .select()
     .from(fields)
-    .where(eq(fields.id, complexityColumnId));
+    .where(eq(fields.id, kindColumnId));
   if (column === undefined) return [];
-  const valueKey = valueField(complexityColumnId);
+  const valueKey = valueField(kindColumnId);
   const handValues = await transaction
     .select()
     .from(fieldValues)
-    .where(eq(fieldValues.fieldId, complexityColumnId));
+    .where(eq(fieldValues.fieldId, kindColumnId));
   const cleared = handValues.map(({ featureId, choiceId }) => ({
     recordType: "feature",
     recordId: String(featureId),
@@ -345,10 +404,7 @@ async function unseedComplexity(
       .delete(table)
       .where(
         or(
-          and(
-            eq(table.recordType, "field"),
-            eq(table.recordId, complexityColumnId),
-          ),
+          and(eq(table.recordType, "field"), eq(table.recordId, kindColumnId)),
           and(
             eq(table.recordType, "feature"),
             sql`${table.fields} ? ${valueKey}::text`,
@@ -356,30 +412,30 @@ async function unseedComplexity(
         ),
       );
   }
-  await transaction.delete(fields).where(eq(fields.id, complexityColumnId));
+  await transaction.delete(fields).where(eq(fields.id, kindColumnId));
   const { id, ...columnFields } = column;
   const made: SeededChange[] = recorded("field", id, "deleted", columnFields);
   const kept: string[] = [];
   const drawing = await transaction
     .select({ id: fields.id })
     .from(fields)
-    .where(eq(fields.listId, complexityListId));
+    .where(eq(fields.listId, kindListId));
   const choices = await transaction
     .select()
     .from(listItems)
-    .where(eq(listItems.listId, complexityListId));
-  const seededSizes = complexitySizes.map(sizeId);
-  if (drawing.length > 0) kept.push("The Complexity list, which a column uses");
-  else if (choices.some(({ id }) => !seededSizes.includes(id))) {
-    kept.push("The Complexity list, which has choices added by hand");
+    .where(eq(listItems.listId, kindListId));
+  const seededKinds = kinds.map(kindId);
+  if (drawing.length > 0) kept.push("The Kind list, which a column uses");
+  else if (choices.some(({ id }) => !seededKinds.includes(id))) {
+    kept.push("The Kind list, which has choices added by hand");
   } else {
     const [list] = await transaction
       .select()
       .from(lists)
-      .where(eq(lists.id, complexityListId));
-    await transaction.delete(lists).where(eq(lists.id, complexityListId));
+      .where(eq(lists.id, kindListId));
+    await transaction.delete(lists).where(eq(lists.id, kindListId));
     made.push(
-      ...recorded("list", complexityListId, "deleted", {
+      ...recorded("list", kindListId, "deleted", {
         name: list?.name,
         description: list?.description,
         visibility: list?.visibility,
@@ -499,14 +555,14 @@ export async function unseedFeatures(
       .update(features)
       .set({ featureTeamId: null })
       .where(inArray(features.featureTeamId, [...teamIds]));
-    const sizes = new Map(
+    const kindsOf = new Map(
       (
         await transaction
           .select()
           .from(fieldValues)
           .where(
             and(
-              eq(fieldValues.fieldId, complexityColumnId),
+              eq(fieldValues.fieldId, kindColumnId),
               inArray(fieldValues.featureId, ids),
             ),
           )
@@ -530,12 +586,12 @@ export async function unseedFeatures(
       ...removed.flatMap(({ id, ...values }) =>
         recorded("feature", id, "deleted", {
           ...filledIn(values),
-          ...(sizes.has(id)
-            ? { [valueField(complexityColumnId)]: [sizes.get(id)] }
+          ...(kindsOf.has(id)
+            ? { [valueField(kindColumnId)]: [kindsOf.get(id)] }
             : {}),
         }),
       ),
     ]);
-    return unseedComplexity(transaction);
+    return unseedKind(transaction);
   });
 }

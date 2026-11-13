@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The lists Fathom builds in, which its built-in columns draw on: Positions, for people and planned
-// hires, the hiring states and the feature statuses, lists with meanings, and proposals' statuses.
+// hires, the hiring states and the feature statuses, lists with meanings, proposals' statuses, and
+// features' priorities, sizes and risks.
 // Part of the data access layer. A built-in column takes only a live choice of its list, since the
 // database refers to the choice itself.
 
@@ -24,6 +25,9 @@ export const builtInColumns: ReadonlyMap<string, string> = new Map([
   ["hiring-states", "State"],
   ["proposal-statuses", "Status"],
   ["feature-statuses", "Status"],
+  ["feature-priorities", "Priority"],
+  ["feature-sizes", "Size"],
+  ["feature-risks", "Risk"],
 ]);
 
 const columnName = (key: BuiltInList) =>

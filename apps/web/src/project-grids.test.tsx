@@ -60,6 +60,9 @@ const choices = (more: Partial<TableChoices> = {}): TableChoices => ({
     { ...cycleChoice("planned", "Planned"), meaning: "planned" },
   ],
   featureTeams: [],
+  priorities: [],
+  sizes: [],
+  risks: [],
   cycles: [],
   releaseOfCycle: new Map(),
   featureColumns: noFeatureColumns,
@@ -70,6 +73,9 @@ const feature = (more: Partial<Feature> = {}): Feature => ({
   id: "f1",
   name: "Fictional Feature",
   statusId: "planned",
+  priorityId: null,
+  sizeId: null,
+  riskId: null,
   neededBy: null,
   customerIds: [],
   targetStreamId: null,
@@ -215,12 +221,36 @@ describe("the Features table", () => {
       "customerIds",
       "projectIds",
       "proposalIds",
+      "priorityId",
       "neededBy",
       "estimateHours",
+      "sizeId",
+      "riskId",
       "release",
       "targetCycle",
       "featureTeamId",
     ]);
+  });
+
+  it("offers a priority, size and risk from their lists, none of them required", () => {
+    const offered = featureColumns(
+      choices({
+        priorities: [cycleChoice("high", "High")],
+        sizes: [cycleChoice("medium", "M")],
+        risks: [cycleChoice("low", "Low")],
+      }),
+    );
+    for (const [key, id] of [
+      ["priorityId", "high"],
+      ["sizeId", "medium"],
+      ["riskId", "low"],
+    ] as const) {
+      const column = offered.find((one) => one.key === key);
+      expect(column?.required).toBe(false);
+      expect(column?.choices.map((offer) => offer.id)).toEqual([id]);
+      expect(column?.change([id])).toEqual({ [key]: id });
+      expect(column?.change([])).toEqual({ [key]: null });
+    }
   });
 
   it("starts a new feature in the first status offered that means Possible", () => {
@@ -724,12 +754,18 @@ describe("columns added to Features", () => {
   const column = (key: string) =>
     featureColumns(added).find((one) => one.key === key);
 
-  it("come in the order given, after the built-in columns it does not name", () => {
-    expect(
-      featureColumns(added)
-        .map(({ key }) => key)
-        .slice(0, 3),
-    ).toEqual(["name", "size", "score"]);
+  it("come after the built-in columns, in the order given", () => {
+    const keys = featureColumns(
+      choices({
+        featureColumns: {
+          fields: [size, score],
+          order: ["score", "name", "size"],
+          lists: [sizes],
+        },
+      }),
+    ).map(({ key }) => key);
+    expect(keys.slice(0, 2)).toEqual(["name", "statusId"]);
+    expect(keys.slice(-2)).toEqual(["score", "size"]);
   });
 
   it("offer their list's choices and say whether they are required", () => {
@@ -741,7 +777,7 @@ describe("columns added to Features", () => {
   });
 
   it("hold no value while only drafted to be added", () => {
-    const [column] = featureColumns(
+    const drafted = featureColumns(
       choices({
         featureColumns: {
           fields: [
@@ -754,8 +790,8 @@ describe("columns added to Features", () => {
           lists: [sizes],
         },
       }),
-    );
-    expect(column?.readOnly).toBe(true);
+    ).find(({ key }) => key === "size");
+    expect(drafted?.readOnly).toBe(true);
   });
 
   it("save a value by its column", () => {

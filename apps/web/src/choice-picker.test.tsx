@@ -2,13 +2,14 @@
 
 // Tests for picking choices in a cell: where several can be picked, a check marks each one picked,
 // and Enter after picking one finishes; a choice's description shows under it and finds it; and a
-// value that need not have a choice offers none first, which Enter never picks unasked.
+// value that need not have a choice offers none first, which Enter never picks unasked; and the list
+// is at least as wide as its cell, growing to fit its choices up to a limit.
 
 import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { ChoicePicker } from "./choice-picker.tsx";
+import { ChoicePicker, fitList } from "./choice-picker.tsx";
 import { testTheme } from "./test-support.tsx";
 
 const options = [
@@ -169,5 +170,21 @@ describe("choosing none", () => {
     ).toBe(true);
     await userEvent.keyboard("{Enter}");
     expect(onDone).toHaveBeenCalledExactlyOnceWith(["a"], "enter");
+  });
+});
+
+describe("the list's width", () => {
+  const fitted = (cell: number) => {
+    const floating = document.createElement("div");
+    fitList({ rects: { reference: { width: cell } }, elements: { floating } });
+    return [floating.style.minWidth, floating.style.maxWidth];
+  };
+
+  it("is at least the cell's, growing to 320 pixels to fit a choice", () => {
+    expect(fitted(80)).toEqual(["80px", "320px"]);
+  });
+
+  it("grows no wider than a cell wider than that", () => {
+    expect(fitted(400)).toEqual(["400px", "400px"]);
   });
 });

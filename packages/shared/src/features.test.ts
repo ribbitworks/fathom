@@ -15,9 +15,12 @@ const parse = (body: object) =>
   featureRequestSchema.safeParse({ name: "Fictional Feature", ...body });
 
 describe("a feature request", () => {
-  it("leaves out everything but a name, as Later with no estimate or team", () => {
+  it("leaves out everything but a name, as Later with no estimate, team, priority, size or risk", () => {
     expect(parse({}).data).toEqual({
       name: "Fictional Feature",
+      priorityId: null,
+      sizeId: null,
+      riskId: null,
       neededBy: null,
       customerIds: [],
       target: null,

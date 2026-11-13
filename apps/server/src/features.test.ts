@@ -10,11 +10,13 @@ import {
   features,
   featureTeams,
   listItems,
+  lists,
   recordChanges,
   releaseStreams,
 } from "@fathom/db";
 import { noteLength } from "@fathom/shared";
 import type {
+  BuiltInList,
   ChangeHistory,
   Feature,
   Meaning,
@@ -183,6 +185,9 @@ describe("adding and changing", () => {
   it("starts a feature in the first status meaning Possible, in Later, with nothing else filled in", async () => {
     expect(await draftFeature()).toMatchObject({
       statusId: await statusMeaning("possible"),
+      priorityId: null,
+      sizeId: null,
+      riskId: null,
       neededBy: null,
       customerIds: [],
       targetStreamId: null,
@@ -286,24 +291,31 @@ describe("adding and changing", () => {
     expect((await shown(feature.id)).statusId).toBe(possible);
   });
 
-  async function retiredStatus(): Promise<string> {
-    const possible = await statusMeaning("possible");
-    const [choice] = await test.connection
-      .select({ listId: listItems.listId })
-      .from(listItems)
-      .where(eq(listItems.id, possible));
+  // A choice of its own in a built-in list, so retiring or removing it leaves the list's others be.
+  async function addedChoice(
+    key: BuiltInList,
+    meaning: Meaning | null = null,
+  ): Promise<{ id: string; listId: string }> {
+    const [list] = await test.connection
+      .select({ id: lists.id })
+      .from(lists)
+      .where(eq(lists.builtIn, key));
+    const listId = String(list?.id);
     const [added] = await test.connection
       .insert(listItems)
       .values({
-        listId: String(choice?.listId),
-        label: unique("Fictional Status"),
+        listId,
+        label: unique("Fictional Choice"),
         position: 100,
-        meaning: "possible",
+        meaning,
         retired: false,
       })
       .returning({ id: listItems.id });
-    return String(added?.id);
+    return { id: String(added?.id), listId };
   }
+
+  const retiredStatus = async () =>
+    (await addedChoice("feature-statuses", "possible")).id;
 
   const retire = (statusId: string) =>
     test.connection
@@ -337,6 +349,92 @@ describe("adding and changing", () => {
     });
     expect(response.statusCode).toBe(400);
     expect(errorOf(response)).toBe("Choose a status from its list");
+  });
+
+  const offeredNames = (
+    choices: readonly { name: string; retired: boolean }[],
+  ) => choices.filter(({ retired }) => !retired).map(({ name }) => name);
+
+  it("offers features' priorities, sizes and risks in their lists' order", async () => {
+    const response = await test.request(
+      planner.cookie,
+      "GET",
+      "/api/projects/choices",
+    );
+    const { priorities, sizes, risks } = response.json<PlanChoices>();
+    expect(offeredNames(priorities)).toEqual([
+      "Critical",
+      "High",
+      "Medium",
+      "Low",
+    ]);
+    expect(offeredNames(sizes)).toEqual(["XS", "S", "M", "L", "XL"]);
+    expect(offeredNames(risks)).toEqual(["Low", "Medium", "High"]);
+  });
+
+  it("keeps a feature's priority, size and risk, and clears them", async () => {
+    const priorityId = await builtInChoice(
+      test.connection,
+      "feature-priorities",
+    );
+    const sizeId = await builtInChoice(test.connection, "feature-sizes");
+    const riskId = await builtInChoice(test.connection, "feature-risks");
+    const feature = await liveFeature({ priorityId, sizeId, riskId });
+    expect(feature).toMatchObject({ priorityId, sizeId, riskId });
+    await put(feature.id, {
+      name: feature.name,
+      priorityId: null,
+      sizeId: null,
+      riskId: null,
+    });
+    expect(await shown(feature.id)).toMatchObject({
+      priorityId: null,
+      sizeId: null,
+      riskId: null,
+    });
+  });
+
+  it("refuses a size from another list", async () => {
+    const response = await post({
+      name: unique("Fictional Feature"),
+      sizeId: await builtInChoice(test.connection, "feature-risks"),
+    });
+    expect(response.statusCode).toBe(400);
+    expect(errorOf(response)).toBe("Choose a size from its list");
+  });
+
+  it("keeps a retired priority a feature already has", async () => {
+    const { id: priorityId } = await addedChoice("feature-priorities");
+    const feature = await liveFeature({ priorityId });
+    await retire(priorityId);
+    const response = await put(feature.id, { name: feature.name, priorityId });
+    expect(response.statusCode).toBe(200);
+  });
+
+  it("refuses a retired priority a feature does not have", async () => {
+    const { id: priorityId } = await addedChoice("feature-priorities");
+    await retire(priorityId);
+    const response = await post({
+      name: unique("Fictional Feature"),
+      priorityId,
+    });
+    expect(response.statusCode).toBe(400);
+    expect(errorOf(response)).toBe("Choose a priority that is offered");
+  });
+
+  it("keeps a size a feature's draft has from being removed", async () => {
+    const size = await addedChoice("feature-sizes");
+    await draftFeature({ sizeId: size.id });
+    const editor = await test.signedIn("workforce-administrator");
+    const response = await test.request(
+      editor.cookie,
+      "DELETE",
+      `/api/lists/${size.listId}/choices/${size.id}`,
+    );
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe(
+      "This choice cannot be removed while it is in use; retire it instead",
+    );
   });
 
   it("refuses a name another feature has, ignoring letter case", async () => {

@@ -42,6 +42,9 @@ export const planColumnNames = {
   date: "Date",
   customerDelivery: "Customer delivery",
   estimateHours: "Effort",
+  priorityId: "Priority",
+  sizeId: "Size",
+  riskId: "Risk",
   neededBy: "Needed by",
   description: "Description",
   note: "Notes",
@@ -206,6 +209,9 @@ export const planChoicesSchema = z.object({
   owners: z.array(planChoiceSchema),
   statuses: z.array(planChoiceSchema),
   featureStatuses: z.array(planChoiceSchema.extend({ meaning: meaningSchema })),
+  priorities: z.array(planChoiceSchema),
+  sizes: z.array(planChoiceSchema),
+  risks: z.array(planChoiceSchema),
   featureTeams: z.array(planChoiceSchema),
 });
 

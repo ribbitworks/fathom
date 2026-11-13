@@ -58,6 +58,10 @@ Select **Remove feature** in the feature's **⋯** menu. Fathom refuses while a 
 - **Status** says how far along the feature is. The statuses are the organization's own, and each one means Possible, Planned, In progress, Done or Cancelled. A new feature starts on the first status that means Possible.
 - **Projects** and **Proposals** name the projects that need the feature and the proposals that propose it. A change to them changes that project or proposal; the reason for removing a proposal is given afterwards, as [Projects](projects.md#give-a-reason-for-removing-a-feature-from-a-proposal) sets out.
 - **Effort** gives the work the feature needs, such as 2.5 PD for person-days. Rest the pointer on it to see the hours.
+- **Priority** says how much the feature matters to the organization, apart from its status, from **Critical** to **Low**.
+- **Size** gives the feature's rough size before it's estimated, from **XS** to **XL**.
+- **Risk** says how much could go wrong in building it, from **Low** to **High**.
+- Priority, Size and Risk are optional, and their choices are the organization's own, kept on the **Lists** page.
 - **Release** follows from **Target cycle**, so it can't be changed.
 
 ## Where Changes Go

@@ -281,6 +281,9 @@ export type FeatureFields = Pick<
   Feature,
   | "name"
   | "statusId"
+  | "priorityId"
+  | "sizeId"
+  | "riskId"
   | "neededBy"
   | "customerIds"
   | "targetStreamId"
@@ -297,6 +300,9 @@ export const featureRequest = (
   {
     name,
     statusId,
+    priorityId,
+    sizeId,
+    riskId,
     neededBy,
     customerIds,
     estimateHours,
@@ -310,6 +316,9 @@ export const featureRequest = (
 ): FeatureRequest => ({
   name,
   ...(statusId === "" ? {} : { statusId }),
+  priorityId,
+  sizeId,
+  riskId,
   neededBy,
   customerIds,
   estimateHours,
@@ -503,6 +512,9 @@ const planRecordOperations: Readonly<
     blank: {
       name: "",
       statusId: "",
+      priorityId: null,
+      sizeId: null,
+      riskId: null,
       neededBy: null,
       customerIds: [],
       targetStreamId: null,
@@ -561,6 +573,10 @@ export interface TableChoices {
   statuses: Choice[];
   // In their list's order, each with its meaning.
   featureStatuses: Choice[];
+  // Each in its list's order.
+  priorities: Choice[];
+  sizes: Choice[];
+  risks: Choice[];
   featureTeams: Choice[];
   // Every cycle a feature can target.
   cycles: Choice[];
@@ -693,6 +709,9 @@ export const tableChoices = (
       meaning,
     }),
   ),
+  priorities: asChoices(picks.priorities),
+  sizes: asChoices(picks.sizes),
+  risks: asChoices(picks.risks),
   featureTeams: asChoices(picks.featureTeams),
   cycles: cycleChoices(streams),
   releaseOfCycle: releaseOfCycle(streams),

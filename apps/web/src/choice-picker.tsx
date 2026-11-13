@@ -10,10 +10,12 @@
 // its name, and is found by it too. A value that takes one choice and need not have one offers its
 // word for none first, set apart by a line, until something is typed; nothing is highlighted then
 // until the arrow keys move, and Down goes first to the choice after none, so none is always in
-// sight but never what Enter picks unasked.
+// sight but never what Enter picks unasked. The list is at least as wide as the cell, and wider
+// where a choice needs it, up to a limit past which a choice wraps.
 
 import { CheckIcon, Combobox, Group, Text, useCombobox } from "@mantine/core";
 import {
+  type ComponentProps,
   type KeyboardEvent,
   type ReactNode,
   useEffect,
@@ -33,6 +35,27 @@ export interface Option {
 }
 
 const descriptionOpacity = 0.75;
+
+// The widest the list grows to fit its choices, in pixels, unless its cell is wider.
+const widestList = 320;
+
+// Sizes the list to its cell, as the list's floating position is worked out.
+export function fitList({
+  rects,
+  elements,
+}: {
+  rects: { reference: { width: number } };
+  elements: { floating: HTMLElement };
+}): void {
+  const cell = rects.reference.width;
+  Object.assign(elements.floating.style, {
+    minWidth: `${String(cell)}px`,
+    maxWidth: `${String(Math.max(cell, widestList))}px`,
+  });
+}
+
+const listWidths: NonNullable<ComponentProps<typeof Combobox>["middlewares"]> =
+  { size: { apply: fitList } };
 
 // A choice's name, with its description, if any, on a smaller line under it, as every list of
 // choices shows them.
@@ -178,6 +201,8 @@ export function ChoicePicker({
       onOptionSubmit={pick}
       withinPortal
       hideDetached={false}
+      width="max-content"
+      middlewares={listWidths}
     >
       <Combobox.Target>
         <input

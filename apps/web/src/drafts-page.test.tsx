@@ -137,6 +137,9 @@ const noPlanChoices = () =>
     statuses: [],
     featureStatuses: [],
     featureTeams: [],
+    priorities: [],
+    sizes: [],
+    risks: [],
   });
 
 type Answers = Parameters<typeof serverAnswers>[0];
@@ -717,6 +720,9 @@ describe("the Drafts page", () => {
               id: "00000000-0000-4000-8000-0000000000f1",
               name: "Fictional Moving",
               statusId: "s1",
+              priorityId: null,
+              sizeId: null,
+              riskId: null,
               neededBy: null,
               customerIds: [],
               note: null,

@@ -170,6 +170,12 @@ function builtInNote(key: BuiltInList, mayChange: boolean): string {
       return `${invitation}Every proposal has one of these statuses.\nKeep at least one.`;
     case "feature-statuses":
       return `${invitation}Possible: the feature may come, and needs no feature team yet.\nPlanned: the feature is planned, and needs a feature team.\nIn progress: work has started, and the feature needs a feature team.\nDone: the feature is finished.\nCancelled: the feature won't be built.\nKeep at least one choice for each.`;
+    case "feature-priorities":
+      return `${invitation}How much a feature matters to the organization, apart from its status, highest first.\nKeep at least one.`;
+    case "feature-sizes":
+      return `${invitation}A feature's rough size, before it is estimated, smallest first.\nKeep at least one.`;
+    case "feature-risks":
+      return `${invitation}How much could go wrong in building a feature, lowest first.\nKeep at least one.`;
   }
 }
 

@@ -290,6 +290,9 @@ function featureOut(state: RecordsState, makers: Makers, id: string): Feature {
     id,
     name: String(feature.name),
     statusId: String(feature.statusId),
+    priorityId: text(feature.priorityId),
+    sizeId: text(feature.sizeId),
+    riskId: text(feature.riskId),
     neededBy: text(feature.neededBy),
     customerIds: linkedIds(feature, "customerIds"),
     targetStreamId: text(feature.targetStreamId),
@@ -623,6 +626,17 @@ async function featureValues(
   return tidy(values);
 }
 
+// A choice of a built-in list a record need not have: none, or one offered or the record already has.
+async function optionalChoice(
+  transaction: Transaction,
+  list: BuiltInList,
+  asked: string | null,
+  had: unknown,
+): Promise<string | null> {
+  if (asked !== null) await checkBuiltInChoice(transaction, list, asked, had);
+  return asked;
+}
+
 async function featureRecord(
   transaction: Transaction,
   request: FeatureRequest,
@@ -638,6 +652,24 @@ async function featureRecord(
       "feature-statuses",
       request.statusId,
       current?.statusId,
+    ),
+    priorityId: await optionalChoice(
+      transaction,
+      "feature-priorities",
+      request.priorityId,
+      current?.priorityId,
+    ),
+    sizeId: await optionalChoice(
+      transaction,
+      "feature-sizes",
+      request.sizeId,
+      current?.sizeId,
+    ),
+    riskId: await optionalChoice(
+      transaction,
+      "feature-risks",
+      request.riskId,
+      current?.riskId,
     ),
     neededBy: request.neededBy,
     customerIds: request.customerIds,
@@ -910,8 +942,8 @@ export async function removeMilestone(
 }
 
 // People as owners, by name alone, those whose end date has passed retired, the proposal and feature
-// statuses, in their lists' order, and the live feature teams by name, those drafted to be removed
-// retired.
+// statuses and features' priorities, sizes and risks, in their lists' order, and the live feature
+// teams by name, those drafted to be removed retired.
 export async function readPlanChoices(
   database: Database,
   asOf?: string,
@@ -925,8 +957,13 @@ export async function readPlanChoices(
     })
     .from(people)
     .orderBy(asc(people.preferredName), asc(people.id));
-  const statuses = await listChoices(database, "proposal-statuses");
   const featureStatuses = await listChoices(database, "feature-statuses");
+  const offered = async (key: BuiltInList) =>
+    (await listChoices(database, key)).map(({ id, name, retired }) => ({
+      id,
+      name,
+      retired,
+    }));
   const teams = await database
     .select({ id: featureTeams.id, name: featureTeams.name })
     .from(featureTeams)
@@ -938,11 +975,14 @@ export async function readPlanChoices(
       name,
       retired: endDate !== null && endDate < today,
     })),
-    statuses: statuses.map(({ id, name, retired }) => ({ id, name, retired })),
+    statuses: await offered("proposal-statuses"),
     featureStatuses: featureStatuses.map((status) => ({
       ...status,
       meaning: meaningSchema.parse(status.meaning),
     })),
+    priorities: await offered("feature-priorities"),
+    sizes: await offered("feature-sizes"),
+    risks: await offered("feature-risks"),
     featureTeams: teams.map((team) => ({
       ...team,
       retired: teamDrafts.get(team.id)?.action === "deleted",

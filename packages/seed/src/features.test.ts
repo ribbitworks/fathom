@@ -23,7 +23,7 @@ import {
 } from "@fathom/db";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { addMonths, monthOf } from "@fathom/shared";
-import { eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { seededFeatures, seedFeatures, unseedFeatures } from "./features.ts";
@@ -86,15 +86,15 @@ const addHandFeature = async (featureTeamId: string | null = null) => {
 
 const everyFeature = () => connection.select().from(features);
 
-describe("Complexity", () => {
-  it("adds its list, a column on Features, and sizes on some features", async () => {
+describe("Kind", () => {
+  it("adds its list, a column on Features, and kinds on some features", async () => {
     await seedReleases(connection, today);
     await seedFeatures(connection, today, []);
     const [column] = await connection
       .select()
       .from(fields)
       .where(eq(fields.tableName, "features"));
-    expect(column?.name).toBe("Complexity");
+    expect(column?.name).toBe("Kind");
     expect(await connection.select().from(fieldValues)).not.toEqual([]);
   });
 
@@ -126,7 +126,7 @@ describe("Complexity", () => {
       listId,
     });
     expect(await unseedFeatures(connection, [])).toEqual([
-      "The Complexity list, which a column uses",
+      "The Kind list, which a column uses",
     ]);
     await connection.delete(fields).where(eq(fields.id, handColumn));
     await connection.delete(listItems).where(eq(listItems.listId, listId));
@@ -138,11 +138,11 @@ describe("Complexity", () => {
       .where(eq(fields.tableName, "features"));
     await connection.insert(listItems).values({
       listId: String(again?.listId),
-      label: "Fictional Hand Size",
+      label: "Fictional Hand Kind",
       position: 100,
     });
     expect(await unseedFeatures(connection, [])).toEqual([
-      "The Complexity list, which has choices added by hand",
+      "The Kind list, which has choices added by hand",
     ]);
     await connection
       .delete(listItems)
@@ -211,6 +211,66 @@ describe("seeding features", () => {
       .from(features)
       .where(eq(features.id, featureId("offline-sync")));
     expect(inProgress?.targetCycle).toBe("2026-10-01");
+  });
+
+  it("gives each feature its priority, size and risk from the built-in lists, or none", async () => {
+    await seedReleases(connection, today);
+    await seedFeatures(connection, today, []);
+    const labels = new Map(
+      (
+        await connection
+          .select({ id: listItems.id, label: listItems.label })
+          .from(listItems)
+      ).map(({ id, label }) => [id, label]),
+    );
+    const labelOf = (id: string | null) =>
+      id === null ? null : labels.get(id);
+    const [offline] = await connection
+      .select()
+      .from(features)
+      .where(eq(features.id, featureId("offline-sync")));
+    expect(labelOf(offline?.priorityId ?? null)).toBe("Critical");
+    expect(labelOf(offline?.sizeId ?? null)).toBe("L");
+    expect(labelOf(offline?.riskId ?? null)).toBe("High");
+    const [voice] = await connection
+      .select()
+      .from(features)
+      .where(eq(features.id, featureId("voice-notes")));
+    expect(labelOf(voice?.priorityId ?? null)).toBe("Low");
+    expect(voice?.sizeId).toBeNull();
+    expect(voice?.riskId).toBeNull();
+  });
+
+  it("gives a feature no priority when its choice has been renamed", async () => {
+    await seedReleases(connection, today);
+    const [critical] = await connection
+      .select({ id: listItems.id })
+      .from(listItems)
+      .innerJoin(lists, eq(lists.id, listItems.listId))
+      .where(
+        and(
+          eq(lists.builtIn, "feature-priorities"),
+          eq(listItems.label, "Critical"),
+        ),
+      );
+    const criticalId = String(critical?.id);
+    await connection
+      .update(listItems)
+      .set({ label: "Fictional Urgent" })
+      .where(eq(listItems.id, criticalId));
+    try {
+      await seedFeatures(connection, today, []);
+      const [offline] = await connection
+        .select()
+        .from(features)
+        .where(eq(features.id, featureId("offline-sync")));
+      expect(offline?.priorityId).toBeNull();
+    } finally {
+      await connection
+        .update(listItems)
+        .set({ label: "Critical" })
+        .where(eq(listItems.id, criticalId));
+    }
   });
 
   it("uses every status a feature can have", async () => {

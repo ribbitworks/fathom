@@ -501,6 +501,33 @@ describe("the table of lists", () => {
     ).toBeTruthy();
   });
 
+  it.each([
+    [
+      "feature-priorities",
+      "Feature priorities",
+      /How much a feature matters to the organization, apart from its status, highest first\.\s+Keep at least one\./,
+    ],
+    [
+      "feature-sizes",
+      "Feature sizes",
+      /A feature's rough size, before it is estimated, smallest first\.\s+Keep at least one\./,
+    ],
+    [
+      "feature-risks",
+      "Feature risks",
+      /How much could go wrong in building a feature, lowest first\.\s+Keep at least one\./,
+    ],
+  ])("says what the %s list is for", async (builtIn, name, note) => {
+    serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/lists": () =>
+        Response.json({ lists: [{ ...locations, builtIn, name }] }),
+    });
+    renderApp("/lists/l1");
+    await screen.findByRole("heading", { name, level: 2 });
+    expect(screen.getByText(note)).toBeTruthy();
+  });
+
   it("shows each current list with its description and offered choices in order", async () => {
     serverAnswers({
       "GET /api/session": viewer,
@@ -2479,6 +2506,11 @@ describe("drafts on the Lists page", () => {
     const table = await screen.findByRole("table", { name: "Lists" });
     // Under the renamed list, and under the list whose choices have drafts.
     expect(within(table).getAllByText(", live")).toHaveLength(2);
+    // Those two alone: a list with no draft has no Live row, not even an empty one.
+    expect(
+      within(table).getAllByRole("row", { hidden: true }).length -
+        within(table).getAllByRole("row").length,
+    ).toBe(2);
     const menu = await listMenu("Talents");
     expect(within(menu).getByText("Reason: Keep Skills")).toBeDefined();
     await userEvent.click(

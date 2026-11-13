@@ -2,8 +2,9 @@
 
 // Features, the planned work on the roadmap, as the Decisions Log sets out: each one of the plan's
 // records, changed through drafts, with a status from the built-in list of feature statuses, and
-// optionally the month it is needed by, customers, a target cycle, an estimate kept in hours, a
-// feature team, a short description, and a note. A feature that targets no cycle is in Later.
+// optionally a priority, a size and a risk from their built-in lists, the month it is needed by,
+// customers, a target cycle, an estimate kept in hours, a feature team, a short description, and a
+// note. A feature that targets no cycle is in Later.
 
 import { z } from "zod";
 import { daySchema, monthSchema } from "./days.ts";
@@ -26,16 +27,19 @@ import {
   recordShape,
 } from "./record-fields.ts";
 
-// The keys of Features' built-in columns, in the order they start in.
+// The keys of a feature's own built-in fields.
 export const featureColumnKeys = [
   "name",
   "statusId",
-  "neededBy",
-  "customerIds",
   "description",
   "note",
-  "targetCycle",
+  "customerIds",
+  "priorityId",
+  "neededBy",
   "estimateHours",
+  "sizeId",
+  "riskId",
+  "targetCycle",
   "featureTeamId",
 ] as const;
 
@@ -74,6 +78,9 @@ export const featureSchema = z.object({
   draft: featureDraftSchema.optional(),
   name: z.string(),
   statusId: z.string(),
+  priorityId: z.string().nullable(),
+  sizeId: z.string().nullable(),
+  riskId: z.string().nullable(),
   neededBy: z.string().nullable(),
   customerIds: z.array(z.string()),
   targetStreamId: z.string().nullable(),
@@ -97,6 +104,9 @@ const hundredths = 100;
 export const featureRequestSchema = z.object({
   name: recordName,
   statusId: z.uuid().optional(),
+  priorityId: z.uuid().nullable().default(null),
+  sizeId: z.uuid().nullable().default(null),
+  riskId: z.uuid().nullable().default(null),
   neededBy: monthSchema.nullable().default(null),
   customerIds: picked,
   target: z

@@ -192,6 +192,9 @@ const proposalRequest = (proposal: Proposal) => ({
 const featureRequest = (feature: Feature): FeatureRequest => ({
   name: feature.name,
   statusId: feature.statusId,
+  priorityId: feature.priorityId,
+  sizeId: feature.sizeId,
+  riskId: feature.riskId,
   neededBy: feature.neededBy,
   customerIds: feature.customerIds,
   target:
@@ -339,6 +342,9 @@ async function draftFeatures(
     type: "feature",
     request: {
       name: addedFeature,
+      priorityId: null,
+      sizeId: null,
+      riskId: null,
       neededBy: null,
       customerIds: [],
       target: null,

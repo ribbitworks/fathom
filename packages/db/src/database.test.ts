@@ -837,6 +837,21 @@ describe("planned hires", () => {
       );
       expect(lists.rows).toEqual([
         {
+          name: "Feature priorities",
+          built_in: "feature-priorities",
+          visibility: "general",
+        },
+        {
+          name: "Feature risks",
+          built_in: "feature-risks",
+          visibility: "general",
+        },
+        {
+          name: "Feature sizes",
+          built_in: "feature-sizes",
+          visibility: "general",
+        },
+        {
           name: "Feature statuses",
           built_in: "feature-statuses",
           visibility: "general",
@@ -897,6 +912,51 @@ describe("planned hires", () => {
           ),
         ),
       ).toBe(uniqueViolation);
+    });
+  });
+
+  it("starts features' priorities, sizes and risks with their choices, each size with a weight", async () => {
+    await withClient(database.app, async (client) => {
+      const choicesOf = async (list: string) =>
+        (
+          await client.query(
+            "SELECT label, weight FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = $1 ORDER BY i.position",
+            [list],
+          )
+        ).rows.map(({ label, weight }) => ({
+          label: String(label),
+          weight: weight === null ? null : Number(weight),
+        }));
+      expect(await choicesOf("feature-priorities")).toEqual(
+        ["Critical", "High", "Medium", "Low"].map((label) => ({
+          label,
+          weight: null,
+        })),
+      );
+      expect(await choicesOf("feature-sizes")).toEqual([
+        { label: "XS", weight: 0.5 },
+        { label: "S", weight: 1 },
+        { label: "M", weight: 2 },
+        { label: "L", weight: 3 },
+        { label: "XL", weight: 4 },
+      ]);
+      expect(await choicesOf("feature-risks")).toEqual(
+        ["Low", "Medium", "High"].map((label) => ({ label, weight: null })),
+      );
+    });
+  });
+
+  it("keeps every choice's weight above zero", async () => {
+    await withClient(database.app, async (client) => {
+      for (const weight of ["0", "-1", "'NaN'"]) {
+        expect(
+          await errorCodeOf(
+            client.query(
+              `UPDATE list_items SET weight = ${weight} WHERE label = 'XS'`,
+            ),
+          ),
+        ).toBe(checkViolation);
+      }
     });
   });
 

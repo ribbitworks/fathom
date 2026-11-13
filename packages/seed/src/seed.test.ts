@@ -99,8 +99,8 @@ describe("seeding", () => {
   it("adds the lists, columns, and people, recorded as made by Fathom itself, and adds nothing the second time", async () => {
     expect(await seed(connection, organization)).toBe(true);
     expect(await totalOf(people)).toBe(20);
-    // With the three lists Fathom builds in, Positions holding the seeded positions.
-    expect(await totalOf(lists)).toBe(9);
+    // With the seven lists Fathom builds in, Positions holding the seeded positions.
+    expect(await totalOf(lists)).toBe(12);
     expect(await totalOf(fields)).toBe(4);
     const [order] = await connection.select().from(columnOrders);
     expect(order?.keys.slice(0, 4)).toEqual([
@@ -576,7 +576,7 @@ describe("seeding", () => {
     ]);
     expect(await totalOf(people)).toBe(1);
     expect(await totalOf(fields)).toBe(1);
-    expect(await totalOf(lists)).toBe(6);
+    expect(await totalOf(lists)).toBe(9);
     expect(await unseed(connection, organization)).toEqual(kept);
   });
 
