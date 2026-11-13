@@ -4582,6 +4582,9 @@ describe("exporting People", () => {
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Cancel" }),
     );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
     await chooseInDraftMenu("Live only");
     await userEvent.click(screen.getByRole("button", { name: "Export" }));
     await userEvent.click(
