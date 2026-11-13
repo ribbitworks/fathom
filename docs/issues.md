@@ -7,6 +7,7 @@ Known problems and deferred work not yet scheduled in the [Implementation Plan](
 
 ## Filing an Issue
 
+- **Owner's approval:** An agent files an issue only with the owner's explicit approval. It proposes the title, labels and body to the owner first, and files only those the owner approves; one not approved is named in the pull request or the agent's report instead. A gap in a document is fixed on the branch in hand rather than proposed. Decided by the owner on 2026-11-13.
 - **Forms:** [New issue](https://github.com/jlarue26/fathom/issues/new/choose) offers one form for each kind: Bug, Quality of life, Feature and Debt. Blank issues are turned off.
 - **What each asks:** What happens or what is wanted, why it matters, where, the background someone new to Fathom needs, with links, and how to tell it is done. A bug adds its steps, what was expected, its probability and its severity; the others add when.
 - **Links:** Every link in an issue is a full GitHub link to a file or heading on `main`.
@@ -28,7 +29,7 @@ Known problems and deferred work not yet scheduled in the [Implementation Plan](
 
 ## Triage and Milestones
 
-- **Who decides:** The owner decides stages and priorities. Whoever files an issue suggests its labels.
+- **Who decides:** The owner decides stages and priorities. Whoever proposes an issue suggests its labels.
 - **Milestones:** Each stage of the [Roadmap](product/roadmap.md) is a [GitHub milestone](https://github.com/jlarue26/fathom/milestones), holding a Feature issue for each feature in it. An issue in no milestone is not yet placed.
 - **No project board** at first.
 

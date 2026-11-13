@@ -77,7 +77,7 @@ A change that affects the containers runs `pnpm test:containers` with the test s
 
 ## Problems Found
 
-A problem a test finds that the change does not fix, whether a failing manual test step, a test that fails now and then, or a gap in coverage, is filed as a GitHub issue through its form, as [Issues](../issues.md) sets out, never left in a document or a test's notes.
+A problem a test finds that the change does not fix, whether a failing manual test step, a test that fails now and then, or a gap in coverage, is proposed to the owner as a GitHub issue and filed through its form once approved, as [Issues](../issues.md) sets out, never left in a document or a test's notes.
 
 ## Manual Tests
 
