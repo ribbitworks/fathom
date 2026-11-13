@@ -1,0 +1,64 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# The form for a Feature issue: something Fathom doesn't do yet, including features on the roadmap.
+
+name: Feature
+description: Something Fathom doesn't do yet.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What's wanted
+      description: What Fathom should do.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where
+      description: The screen, or the file with a link to it on GitHub.
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Access history
+        - Account administration
+        - Dependencies
+        - Development
+        - Drafts
+        - Error pages
+        - Lists
+        - Manual tests
+        - People
+        - Planning
+        - Releases
+        - Roles
+    validations:
+      required: true
+  - type: dropdown
+    id: when
+    attributes:
+      label: When
+      description: Now for the current work, Next for soon after, Later for when its area is next changed or it is wanted, Maybe for only if a need arises.
+      options:
+        - Now
+        - Next
+        - Later
+        - Maybe
+    validations:
+      required: true
+  - type: input
+    id: found
+    attributes:
+      label: Found
+      description: Who found it and when, such as conventions audit, 2026-11-11.

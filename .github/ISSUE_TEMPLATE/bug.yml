@@ -1,0 +1,97 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# The form for a Bug issue, with its probability and severity, which give its priority.
+
+name: Bug
+description: Something that doesn't work as it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A bug's priority comes from its probability and its severity. P1 is fixed next, P2 in the next change that touches its area, and P3 and P4 in a cleanup pass.
+
+        | Probability | Severe | Moderate | Minor |
+        | --- | --- | --- | --- |
+        | Likely | P1 | P2 | P3 |
+        | Possible | P2 | P3 | P4 |
+        | Rare | P3 | P4 | P4 |
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: What goes wrong.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where
+      description: The screen, or the file with a link to it on GitHub.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Access history
+        - Account administration
+        - Dependencies
+        - Development
+        - Drafts
+        - Error pages
+        - Lists
+        - Manual tests
+        - People
+        - Planning
+        - Releases
+        - Roles
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps
+      description: Each step to make it happen, numbered.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: dropdown
+    id: probability
+    attributes:
+      label: Probability
+      description: With the severity, gives the priority in the table above.
+      options:
+        - Likely
+        - Possible
+        - Rare
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: With the probability, gives the priority in the table above.
+      options:
+        - Severe
+        - Moderate
+        - Minor
+    validations:
+      required: true
+  - type: input
+    id: found
+    attributes:
+      label: Found
+      description: Who found it and when, such as conventions audit, 2026-11-11.

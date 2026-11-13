@@ -1,7 +1,7 @@
 # Fathom — Development Setup
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-11
+**Last updated:** 2026-11-12
 
 How Fathom's repository is organized, how developers run it locally, and how fictional data is generated. It applies the libraries in [ADR 0002](../adr/0002-libraries.md) and the platforms in [Supported Platforms](../operations/supported-platforms.md).
 
@@ -27,6 +27,7 @@ deploy/
   docker/                 Container image definitions and database initialization
 scripts/                  Development, check, and release scripts
 .github/workflows/        The workflows that publish a release's images and scan images daily on GitHub
+.github/ISSUE_TEMPLATE/   The forms for filing issues on GitHub, one for each kind
 docs/                     Documentation
 LICENSES/                 Licence texts, as the REUSE specification requires
 ```

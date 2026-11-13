@@ -48,7 +48,7 @@ apps/       Applications (front end and server)
 packages/   Shared packages
 deploy/     Deployment configuration
 scripts/    Automation scripts
-.github/    GitHub workflows that publish a release's images and scan images daily
+.github/    GitHub workflows that publish and scan images, and the forms for filing issues
 docs/       Documentation, standards, and decision records
 LICENSES/   Licence texts, as the REUSE specification requires
 ```
