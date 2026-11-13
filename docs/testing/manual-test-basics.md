@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["docs/testing/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-12"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test Basics
@@ -21,6 +21,25 @@ What every manual test in `docs/testing/` shares: the environment, where the acc
 ## Test Accounts
 
 [Restore the Seed Data](#restore-the-seed-data), [Reset the Database](#reset-the-database) and [Start From an Empty Database](#start-from-an-empty-database) create every account [Development Accounts](../design/development-setup.md#development-accounts) lists, with the name Fathom shows for each and the roles it holds, as [Roles](../product/roles.md#starting-roles) sets out. They share one password, which each of them prints when it finishes. Each test names the accounts it uses by role and email address.
+
+## Reading a Step
+
+Each step starts with its ID, such as `7C2E`, which stays the same when steps are added or removed around it. Name a step by its test case and ID, such as REL-11 `7C2E`, in notes and issues.
+
+```markdown
+- [ ] `7C2E` Select **Approve**.
+  - **Expected:**
+    - A notification says "Approved 1 draft."
+    - In the table, 'Patches' is under a **Retired** heading.
+  - **Notes:**
+```
+
+In short, the text in a step is marked as [Testing Standards](../standards/testing.md#manual-tests) sets out:
+
+- **Bold:** something to select or read on screen, such as a button, menu, page, field or column.
+- `Backticks`: something to type, an exact value, or a step's ID.
+- "Double quotes": the exact text to check on screen, such as a notification.
+- 'Single quotes': seed data, such as a person, team, release stream or release.
 
 ## Recording Results
 
@@ -101,13 +120,13 @@ Run only where a test says so. This deletes every account and record in the deve
 ### Publish
 
 1. Select the Publish button.
-2. Confirm that a notification says **Published** followed by the number of changes, and that the button is gone.
+2. Confirm that a notification says "Published" followed by the number of changes, and that the button is gone.
 
 ### Discard the Unpublished Changes
 
 1. Select the **⋯** button beside the Publish button, then **Discard all…**.
 2. In the dialog titled **Discard** followed by the number of changes, select **Discard**.
-3. Confirm that a notice says **Discarded** followed by the number of changes, and that the Publish button is gone.
+3. Confirm that a notice says "Discarded" followed by the number of changes, and that the Publish button is gone.
 
 ## Terms
 
@@ -142,5 +161,5 @@ Run only where a test says so. This deletes every account and record in the deve
 - **Team panel:** the panel that opens to the right of the chart when a feature team is chosen, titled with the team's name, with a **Details** section and a **Members** section.
 - **Mode switch:** the switch under the **Feature assignments** heading, reading **Teams** and **Allocations**.
 - **Team list:** the list of feature teams that opens below a month's cell on the **Feature assignments** page for editing, with a box to type in at its top.
-- **Seeded dates:** the seed data is dated from the day it is added, as [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) sets out, so its cycles and releases move with today, and steps name them by where they fall. A cycle's name is the year it ends in and its number in that year, such as **27.1**.
-- **Dates:** steps type dates as digits, such as `2030-03-15`; tables and panels show them as the browser's language writes them, such as **15 Mar 2030** or **Mar 15, 2030**.
+- **Seeded dates:** the seed data is dated from the day it is added, as [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) sets out, so its cycles and releases move with today, and steps name them by where they fall. A cycle's name is the year it ends in and its number in that year, such as '27.1'.
+- **Dates:** steps type dates as digits, such as `2030-03-15`; tables and panels show them as the browser's language writes them, such as `15 Mar 2030` or `Mar 15, 2030`.

@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/shared/testing.md", "docs/standards/shared/typescript/typescript.md"]
-last_updated: "2026-11-12"
+last_updated: "2026-11-13"
 ---
 
 # Testing Standards
@@ -88,11 +88,28 @@ A manual test is a test specification a test engineer, including one new to Fath
 - **Test Accounts:** each account the test uses, named by its role in Fathom, with its email address, and its name as Fathom shows it where that differs from the role. [Manual Test Basics](../testing/manual-test-basics.md#test-accounts) says where the accounts come from, links to the roles they hold, and where their password comes from.
 - **Common Procedures:** the procedures the test cases refer to: those [Manual Test Basics](../testing/manual-test-basics.md#common-procedures) holds, such as starting Fathom and restoring or resetting the data, by link, and any of this test's own, each with the exact commands, which terminal runs them, how to confirm they worked, and what each deletes. A procedure is named for what it does, such as Restore the Seed Data, and steps refer to it by that name, never by a code such as R1 or P1. Signing in and out are not procedures: steps just say which account to sign in as.
 - **Terms:** where on screen any menu or control the steps name is found, when its label alone does not say, linking to [Manual Test Basics](../testing/manual-test-basics.md#terms) for the terms every test uses and adding only this test's own. Steps name a page as the left-hand menu shows it, such as "Select the **Drafts** page in the left-hand menu", never by its position or the item next to it, since the menu's order changes as pages are added. A step that leaves a page and comes back says again what to choose there, such as the grouping, since a page opened from the menu starts afresh.
-- **Test Cases:** each with an ID, such as `DRAFT-01`, a title saying what it verifies, an **Account:** line naming the account it starts with, its preconditions (the page and view, and any procedure to run first), its steps, and any procedure to run afterwards. Each step is an unticked checkbox with the step's number and one action, followed by an **Expected:** line and an empty **Notes:** line for the tester. Steps are never laid out as tables.
+- **Test Cases:** each with an ID, such as `DRAFT-01`, a title saying what it verifies, an **Account:** line naming the account it starts with, its preconditions (the page and view, and any procedure to run first), its steps, and any procedure to run afterwards. Each step is an unticked checkbox with the step's ID and one action, followed by an **Expected:** line and an empty **Notes:** line for the tester. Steps are never laid out as tables.
+
+A step in this form:
+
+```markdown
+- [ ] `7C2E` Select **Approve**.
+  - **Expected:**
+    - A notification says "Approved 1 draft."
+    - In the table, 'Patches' is under a **Retired** heading.
+  - **Notes:**
+```
 
 Rules:
 
-- **Must** give every action and expected result precisely enough for a junior test engineer to run and judge without knowing Fathom: what to select, where, and the exact text shown, in bold. Every fact a step relies on, such as a URL or a supported browser, comes from the document that owns it, never from assumption.
+- **Must** give each step an ID of 4 upper-case hexadecimal characters in backticks, such as `A3F9`, chosen at random when the step is written and unique within its file. An ID is never reused or changed; a removed step's ID goes with it. Steps are never numbered, and a step is referred to by its test case and ID, such as REL-11 `7C2E`. Results already saved in `docs/testing/results/` keep their step numbers. Decided by the owner on 2026-11-12.
+- **Must** mark text this way in manual tests and [Manual Test Basics](../testing/manual-test-basics.md), with no italics or underlines. Decided by the owner on 2026-11-12.
+  - **Bold** for what to select or read on screen: buttons, menus, pages, fields and columns.
+  - `Backticks` for what to type, exact values, and step IDs.
+  - "Double quotes" for exact text on screen to check, such as a notification or a refusal.
+  - 'Single quotes' for seed data, such as people, teams, release streams and releases.
+  - **Bold** labels for **Account:**, **Preconditions:**, **Expected:**, **Notes:** and **Afterwards:**.
+- **Must** give every action and expected result precisely enough for a junior test engineer to run and judge without knowing Fathom: what to select, where, and the exact text shown, marked as the rule above sets out. Every fact a step relies on, such as a URL or a supported browser, comes from the document that owns it, never from assumption.
 - **Must** keep each test case to one behavior, and make its preconditions enough to start it.
 - **Must** give each step one action: one interaction with one control, such as choosing in a list by opening it, typing and pressing Enter, or a path through menus to one place, when only its end result is checked. These also count as one action each: switching to another account (signing out and in), clearing a box and typing in it, choosing in a cell's list (selecting the cell, pressing Enter, choosing and pressing Enter), and pressing and holding. Anything whose result is checked on its way is a step of its own. Writing down a value seen, such as a name to use later, is not an action. Decided by the owner on 2026-11-11.
 - **Must** name, in every test case's **Account:** line, the account by its role and email address, and say whether it is the account the previous test case ended with or a change from it, such as "Feature Lead, `feature.lead@fathom.test`, changed from HIRE-06". A step that signs in as another account says so, naming the account the same way.
