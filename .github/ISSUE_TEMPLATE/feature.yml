@@ -26,25 +26,16 @@ body:
       description: The screen, or the file with a link to it on GitHub.
     validations:
       required: false
-  - type: dropdown
-    id: area
+  - type: textarea
+    id: background
     attributes:
-      label: Area
-      options:
-        - Access history
-        - Account administration
-        - Dependencies
-        - Development
-        - Drafts
-        - Error pages
-        - Lists
-        - Manual tests
-        - People
-        - Planning
-        - Releases
-        - Roles
-    validations:
-      required: true
+      label: Background
+      description: What someone new to Fathom needs to know to build it, with links to the help page, decisions, conventions and related issues.
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: How to tell it's finished, such as what a person checks and which tests and commands pass.
   - type: dropdown
     id: when
     attributes:

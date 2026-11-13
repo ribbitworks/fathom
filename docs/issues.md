@@ -15,7 +15,7 @@ Each item starts with a label, such as **Bug · P3** or **Debt · Next**. A **Bu
 
 On 2026-11-12 the owner decided this list moves to GitHub Issues:
 
-- **Issue forms:** One for each kind, Bug, Quality of life, Feature and Debt, with blank issues turned off. Each asks what happens or what is wanted, why it matters, and where. A bug adds its steps, what was expected, its probability and its severity; the others add when, as Now, Next, Later or Maybe.
+- **Issue forms:** One for each kind, Bug, Quality of life, Feature and Debt, with blank issues turned off. Each asks what happens or what is wanted, why it matters, where, the background someone new needs, and when it is done. A bug adds its steps, what was expected, its probability and its severity; the others add when, as Now, Next, Later or Maybe.
 - **Labels:** The kind; P1 to P4 for a bug, or `now`, `next`, `later` or `maybe`; and the area, from this list's sections.
 - **Fixing an issue:** A pull request that fixes one says `Fixes #n` in its description, never in its commits or in code comments.
 - **The roadmap:** Each stage of the [Roadmap](product/roadmap.md) becomes a GitHub milestone, and each feature on it a Feature issue in its stage's milestone; an issue in no milestone is not yet placed. The roadmap keeps each stage's goals and why, and links to its milestones. No project board at first.
