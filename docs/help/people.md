@@ -12,7 +12,9 @@ People lists everyone in the organization, one row each, and the planned hires b
 
 **Hired** or **Left** adds a person, and a hiring state, such as **Request to hire**, adds a planned hire.
 
-To add many quickly, type in the empty row at the end of the table and press Enter after each. Rows copied from a spreadsheet can be pasted there too.
+To add many quickly, type in the empty row at the end of the table and press Enter after each.
+
+You can also paste rows copied from a spreadsheet. Put the spreadsheet's columns in the same order as the table's, from **Name** across, and make each value that comes from a list match a choice's name. Capitals and spaces at either end don't matter. Then select the **Name** cell of the empty row, and paste.
 
 ### Change a Person
 
@@ -22,6 +24,8 @@ To add many quickly, type in the empty row at the end of the table and press Ent
 To work in a person's details instead, point at the row and select the button at the right of the **Name** cell, or select **Show details** in the row's **⋯** menu. Each value there has a pencil that changes it.
 
 ### Give Someone a New Manager
+
+Fathom only lets you choose someone as a manager once their **Manager?** tick is approved. For someone new to managing, tick **Manager?** on their row, select **Publish**, and have it approved first. See [Drafts](drafts.md). Then:
 
 1. Choose the manager in **Manager**.
 1. To date the change earlier than today, type the day in **Manager assigned**.

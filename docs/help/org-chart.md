@@ -64,4 +64,4 @@ On any date but today, a line under the date row says what can be done:
 
 ## Where Changes Go
 
-A change of manager, a team's name, and every feature team change are drafts, approved before they go live. A colour changes at once, for everyone, and offers **Undo**. See [Drafts](drafts.md).
+A change of manager, a team's name, and every other feature team change are drafts, approved before they go live. A team's colour changes at once, for everyone, and offers **Undo**. That goes for a feature team's colour too. See [Drafts](drafts.md).

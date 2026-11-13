@@ -40,7 +40,7 @@ A column that uses a list takes the list's class. Any other new column starts as
 
 The quickest way to add everyone is to paste them in from a spreadsheet.
 
-1. Put your spreadsheet's columns in the same order as the table's, from **Name** across. Make each value that comes from a list match a choice's name exactly.
+1. Put your spreadsheet's columns in the same order as the table's, from **Name** across. Make each value that comes from a list match a choice's name. Capitals and spaces at either end don't matter.
 1. On **People**, select the **Name** cell of the empty row at the end of the table, and paste the rows there.
 1. Tick **Manager?** for everyone who manages others.
 1. Add your planned hires: the jobs you plan to fill. Give each one a hiring state in **State**, such as **Request to hire**.
