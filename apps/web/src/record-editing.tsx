@@ -9,7 +9,7 @@ import { type ReactNode, useState } from "react";
 import { cellKinds, type EditorProps, startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { ClearableInput } from "./clearable-input.tsx";
-import { focusSoon } from "./focus.ts";
+import { focusSoon, selectSoon } from "./focus.ts";
 import {
   type Column,
   type GridRecord,
@@ -454,7 +454,7 @@ export function useRecordEditing<
         onStart: () => {
           setProblem(id, column.key);
           setOpen({ id, key: column.key });
-          focusSoon(editorId(column));
+          selectSoon(editorId(column));
         },
         problem: ownField ? undefined : wrong,
       };

@@ -2,11 +2,14 @@
 
 // Tests for changing a record's values in a details panel where no case is reached from a page.
 
-import { renderHook } from "@testing-library/react";
+import { MantineProvider } from "@mantine/core";
+import { render, renderHook, screen, waitFor } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { PlanChange } from "./project-grids.tsx";
 import { cellColumn, type CellRecord } from "./record-grid.tsx";
 import { useRecordEditing } from "./record-editing.tsx";
+import { testTheme } from "./test-support.tsx";
 
 describe("a note column", () => {
   it("cannot be changed where no notes can be written", () => {
@@ -28,5 +31,52 @@ describe("a note column", () => {
       recordProblem: () => undefined,
     });
     expect(editing(note)).toBeUndefined();
+  });
+});
+
+describe("a value opened for changing", () => {
+  const code = cellColumn<CellRecord, PlanChange>("code", "text", {
+    label: "Code",
+    required: false,
+    multiple: false,
+    choices: [],
+  });
+
+  function CodeRow() {
+    const { editingOf } = useRecordEditing<CellRecord, PlanChange>();
+    const editing = editingOf({
+      id: "a",
+      kind: "",
+      values: { code: "FX-100" },
+      save: vi.fn(),
+      others: () => [],
+      recordProblem: () => undefined,
+    })(code);
+    return editing?.open === true ? (
+      editing.editor
+    ) : (
+      <button type="button" onClick={editing?.onStart}>
+        Change Code
+      </button>
+    );
+  }
+
+  it("opens with its text selected, so typing replaces it", async () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <CodeRow />
+      </MantineProvider>,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Change Code" }));
+
+    const field = await screen.findByRole("textbox", { name: "Code" });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(field);
+    });
+    expect([
+      (field as HTMLInputElement).selectionStart,
+      (field as HTMLInputElement).selectionEnd,
+    ]).toEqual([0, "FX-100".length]);
   });
 });

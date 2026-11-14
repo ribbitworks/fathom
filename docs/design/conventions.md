@@ -318,8 +318,8 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **Opening and closing:** Choosing a record opens its details in a side panel, at its own address. Esc, the close button, or a click on the page outside the panel, the rows and the controls closes it. On a narrow screen, the panel covers the screen and keeps focus until it is closed. A panel listing records, such as the Org chart's Teams, is a side panel at its own address too, never a drawer. Decided by the owner on 2026-11-11.
   - **Drawn by:** `WithSidePanel` and `SidePanelFrame` in `apps/web/src/side-panel.tsx`.
   - **Example:** Offline Sync's details on Features.
-- **Focus goes where expected:** Opening a panel or dialog puts focus on its first thing to read or change, such as the record's name. Closing it puts focus back where it was opened from, such as the record's Name cell. Choosing the × in a field keeps focus in the field.
-  - **Drawn by:** `focusSoon` in `apps/web/src/focus.ts`, with `SidePanelFrame` in `apps/web/src/side-panel.tsx`.
+- **Focus goes where expected:** Opening a panel or dialog puts focus on its first thing to read or change, such as the record's name. Closing it puts focus back where it was opened from, such as the record's Name cell. Choosing the × in a field keeps focus in the field. A value opened for changing in a details panel opens with its text selected, so typing replaces it.
+  - **Drawn by:** `focusSoon` and `selectSoon` in `apps/web/src/focus.ts`, with `SidePanelFrame` in `apps/web/src/side-panel.tsx`.
   - **Example:** close Offline Sync's details: focus is back on its Name cell.
 
 ## Publishing
