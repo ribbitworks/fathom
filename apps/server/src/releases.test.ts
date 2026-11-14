@@ -15,6 +15,7 @@ import {
 import {
   defaultClasses,
   type ChangeHistory,
+  type Permission,
   dayIn,
   defaultTimeZone,
   horizonFrom,
@@ -187,6 +188,30 @@ describe("who may change what", () => {
   });
 
   const path = () => `/api/release-streams/${stream.id}`;
+
+  it("shows releases in the change history only to those who see features and releases, and streams also to those who see configuration", async () => {
+    const live = await liveStream();
+    const name = unique("Fictional Shown");
+    await draftRelease(live.id, { name, ...firstHalf });
+    await approveAll(
+      (await readStream(live.id, planner.cookie)) as ReleaseStream,
+    );
+    const historyOf = async (permissions: Permission[]) => {
+      const reader = await test.signedIn(permissions);
+      const response = await test.request(reader.cookie, "GET", "/api/changes");
+      return response
+        .json<ChangeHistory>()
+        .entries.flatMap((entry) => entry.records)
+        .map((record) => record.name);
+    };
+
+    const configuration = await historyOf(["configuration:view"]);
+    const features = await historyOf(["features:view"]);
+
+    expect(configuration).toContain(live.name);
+    expect(configuration).not.toContain(name);
+    expect(features).toContain(name);
+  });
 
   it("refuses reading streams to those who see neither the plan nor planning configuration", async () => {
     const reader = await test.signedIn("administrator");

@@ -165,13 +165,9 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     asked: () => ({ columns: [id()] }),
   },
   {
-    // Releases are seen with features and releases, or with planning configuration.
+    // Releases are seen with features and releases, not with planning configuration.
     variant: "records",
-    needs: {
-      kind: "permissions",
-      all: ["features:approve"],
-      any: ["features:view", "configuration:view"],
-    },
+    needs: allOf("features:approve", "features:view"),
     asked: () => ({ records: [{ type: "release", id: id() }] }),
   },
   {

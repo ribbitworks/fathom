@@ -66,7 +66,7 @@ const onCycles = [
   },
 ] as const;
 
-// Release streams and cycles are seen with features and releases, and with configuration.
+// Release streams and cycles are seen with features and releases, and with planning configuration.
 const featuresOrConfiguration = [
   "features:view",
   "configuration:view",
@@ -170,7 +170,8 @@ export const releaseKind: RecordKind = {
       message: "This stream already has a release with that name",
     },
   ],
-  readWith: featuresOrConfiguration,
+  // Releases themselves are seen with features, not with planning configuration, as Roles sets out.
+  readWith: ["features:view"],
   subject: (state, id) => {
     const release = shownVersion(state, "release", id);
     return planSubjects.release(
