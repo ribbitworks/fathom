@@ -10,6 +10,7 @@
 
 import { LoadProblem } from "./load-problem.tsx";
 import {
+  allOf,
   type Asking,
   type ChangeValue,
   type Choice,
@@ -106,12 +107,6 @@ function draftedPeople(data: PeopleData): Drafted[] {
     .sort((a, b) => (b.draft.madeAt ?? "").localeCompare(a.draft.madeAt ?? ""));
 }
 
-// Names in a sentence: "A", "A and B", or "A, B and C".
-export function joinedNames(names: readonly string[]): string {
-  if (names.length <= 1) return names.join("");
-  return `${names.slice(0, -1).join(", ")} and ${String(names.at(-1))}`;
-}
-
 // What a draft did, after who made it.
 function verb(action: PersonDraft["action"] | undefined): string {
   if (action === "created") return "drafted adding";
@@ -163,7 +158,7 @@ function entry(
   heldBy?: string,
 ): Entry {
   // Everyone who changed the draft, since several people's changes to one record make one draft.
-  const who = joinedNames(makerNames(draft));
+  const who = allOf(makerNames(draft));
   const reason = draft.state === "rejected" ? draft.reason : undefined;
   const rejected = draft.state === "rejected" ? draftWords(draft) : "";
   const did = verb(draft.action);

@@ -1012,7 +1012,7 @@ describe("the Drafts page", () => {
       ]),
     });
     expect(await entries()).toEqual([
-      "Ann Fictional, Fathom and Ben Fictional drafted removing Finley Fictional, Draft: removed",
+      "Ann Fictional, Fathom, and Ben Fictional drafted removing Finley Fictional, Draft: removed",
       "Ann Fictional drafted removing Gray Fictional, Draft: removed",
     ]);
   });
