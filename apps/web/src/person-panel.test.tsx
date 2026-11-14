@@ -104,7 +104,6 @@ const peopleAnswer =
       people,
       fields: [background, profile],
       order: ["preferredName", "employeeId", "positionId", "f1", "f2"],
-      views: [],
     });
 const positions = {
   id: "positions",
@@ -168,7 +167,6 @@ function answers(
             people: people ?? [robin, sasha, uma],
             fields: [],
             order: [],
-            views: [],
             positionHidden: true,
           })
       : peopleAnswer(people),
@@ -1338,7 +1336,6 @@ describe("changing a person's details", () => {
           ],
           fields: [skills],
           order: [],
-          views: [],
         }),
       "GET /api/lists": () =>
         Response.json({
@@ -1374,7 +1371,6 @@ describe("changing a person's details", () => {
           people: [robin, sasha, uma],
           fields: [background, { ...profile, draft: drafting("deleted") }],
           order: [],
-          views: [],
         }),
     });
     renderApp("/people?open=E2&show=drafts");
@@ -1604,7 +1600,6 @@ describe("changing a person's details", () => {
             people: [robin, sasha, uma],
             fields: [{ ...background, required: true }],
             order: [],
-            views: [],
           }),
       });
       renderApp("/people?open=E2");
@@ -1630,7 +1625,6 @@ describe("changing a person's details", () => {
             people: [robin, sasha, uma],
             fields: [background, plans],
             order: [],
-            views: [],
           }),
       });
     }
@@ -1679,7 +1673,6 @@ describe("changing a person's details", () => {
             people: [robin, sasha, uma],
             fields: [{ ...background, required: true }],
             order: [],
-            views: [],
           }),
       });
       renderApp("/people?open=E2");

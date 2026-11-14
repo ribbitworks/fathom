@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for saved views of the People table, against a PostgreSQL server of their own: saving,
-// renaming, updating, and deleting them; who may change them; keeping a view on columns a reader may
-// not see from that reader; personal and shared views, and who may share them; and undoing each
-// change. General readers stand for readers who see people's General details and no more, and
+// Tests for saved views, against a PostgreSQL server of their own: saving, renaming, updating, and
+// deleting them, on People and on every other table that keeps them; who may change them; keeping a
+// view on columns a reader may not see from that reader, and sending its maker what's missing;
+// personal and shared views, and who may share them; every starting role on every table; and
+// undoing each change. General readers stand for readers who see people's General details and no more, and
 // Workforce Administrators for those who may change planning configuration.
 
 import {
@@ -11,13 +12,24 @@ import {
   type Choice,
   type Field,
   type List,
+  type ListedView,
+  type Permission,
+  type Role,
   roleSchema,
   type SavedView,
   type ViewScope,
+  type ViewTable,
+  viewTableSchema,
 } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { findStartingRole } from "./data/roles.ts";
-import { generalReader, startTestApp, type TestApp } from "./test-app.ts";
+import {
+  generalReader,
+  missingRecord,
+  startTestApp,
+  type TestApp,
+  unique,
+} from "./test-app.ts";
 
 let test: TestApp;
 
@@ -35,9 +47,7 @@ interface Saved {
 }
 
 const viewsOf = async (cookie: string) =>
-  (await test.request(cookie, "GET", "/api/people")).json<{
-    views: SavedView[];
-  }>().views;
+  (await test.request(cookie, "GET", "/api/views/people")).json<SavedView[]>();
 
 const save = (
   cookie: string,
@@ -45,7 +55,7 @@ const save = (
   definition: unknown,
   scope: ViewScope = "personal",
 ) =>
-  test.request(cookie, "POST", "/api/people/views", {
+  test.request(cookie, "POST", "/api/views/people", {
     name,
     scope,
     definition,
@@ -55,10 +65,10 @@ const share = (cookie: string, name: string, definition: unknown) =>
   save(cookie, name, definition, "shared");
 
 const change = (cookie: string, id: string, body: object) =>
-  test.request(cookie, "PUT", `/api/people/views/${id}`, body);
+  test.request(cookie, "PUT", `/api/views/people/${id}`, body);
 
 const remove = (cookie: string, id: string) =>
-  test.request(cookie, "DELETE", `/api/people/views/${id}`);
+  test.request(cookie, "DELETE", `/api/views/people/${id}`);
 
 const demote = async (id: string) => {
   const accounts = await test.signedIn("administrator");
@@ -72,9 +82,9 @@ const demote = async (id: string) => {
 };
 
 const notSharer =
-  "Only someone who may change planning configuration can share a view they saved, or take it back";
+  "Only someone who may share views on its table can share a view they saved, or take it back";
 const notSharedViewMaker =
-  "Only someone who may change planning configuration can save a shared view";
+  "Only someone who may share views on this table can save a shared view";
 const sharers: readonly string[] = [
   "engineering-director",
   "workforce-administrator",
@@ -113,7 +123,7 @@ describe("saved views", () => {
     const renamed = await test.request(
       cookie,
       "PUT",
-      `/api/people/views/${view.id}`,
+      `/api/views/people/${view.id}`,
       { name: "Names", definition: { sort: ["employeeId"] } },
     );
     expect(renamed.statusCode).toBe(200);
@@ -125,7 +135,7 @@ describe("saved views", () => {
     const same = await test.request(
       cookie,
       "PUT",
-      `/api/people/views/${view.id}`,
+      `/api/views/people/${view.id}`,
       { name: "Names" },
     );
     expect(same.json<Saved>().changeSetId).toBeNull();
@@ -138,7 +148,7 @@ describe("saved views", () => {
     const deleted = await test.request(
       cookie,
       "DELETE",
-      `/api/people/views/${view.id}`,
+      `/api/views/people/${view.id}`,
     );
     expect(deleted.statusCode).toBe(200);
     expect((await viewsOf(cookie)).some((other) => other.id === view.id)).toBe(
@@ -156,7 +166,7 @@ describe("saved views", () => {
     expect(changeSetId).not.toBeNull();
   });
 
-  it("may be changed, when shared, only by their maker or by someone who may change planning configuration", async () => {
+  it("may be changed, when shared, only by their maker or by someone who may share views on its table", async () => {
     const maker = await test.signedIn("workforce-administrator");
     const other = await test.signedIn(generalReader);
     const administrator = await test.signedIn("workforce-administrator");
@@ -171,7 +181,7 @@ describe("saved views", () => {
     const refused = await test.request(
       other.cookie,
       "PUT",
-      `/api/people/views/${view.id}`,
+      `/api/views/people/${view.id}`,
       { name: "Mine now" },
     );
     expect(refused.statusCode).toBe(403);
@@ -180,7 +190,7 @@ describe("saved views", () => {
         await test.request(
           other.cookie,
           "DELETE",
-          `/api/people/views/${view.id}`,
+          `/api/views/people/${view.id}`,
         )
       ).statusCode,
     ).toBe(403);
@@ -188,7 +198,7 @@ describe("saved views", () => {
     const renamed = await test.request(
       administrator.cookie,
       "PUT",
-      `/api/people/views/${view.id}`,
+      `/api/views/people/${view.id}`,
       { name: "Shared by all" },
     );
     expect(renamed.statusCode).toBe(200);
@@ -199,7 +209,7 @@ describe("saved views", () => {
     await demote(administrator.id);
     expect((await undo(administrator.cookie, changeSetId)).json()).toEqual({
       error:
-        "Only the person who saved a view, or someone who may change planning configuration, can change it",
+        "Only the person who saved a view, or someone who may share views on its table, can change it",
     });
     const accounts = await test.signedIn("administrator");
     expect((await save(accounts.cookie, "No", {})).statusCode).toBe(403);
@@ -208,7 +218,7 @@ describe("saved views", () => {
         await test.request(
           maker.cookie,
           "PUT",
-          "/api/people/views/00000000-0000-4000-8000-000000000000",
+          "/api/views/people/00000000-0000-4000-8000-000000000000",
           { name: "Gone" },
         )
       ).statusCode,
@@ -235,7 +245,7 @@ describe("saved views", () => {
         await test.request(
           viewer.cookie,
           "DELETE",
-          `/api/people/views/${view.id}`,
+          `/api/views/people/${view.id}`,
         )
       ).statusCode,
     ).toBe(404);
@@ -321,7 +331,7 @@ describe("saved views", () => {
         await test.request(
           maker.cookie,
           "PUT",
-          `/api/people/views/${view.id}`,
+          `/api/views/people/${view.id}`,
           {
             definition: { widths: { preferredName: 300 } },
           },
@@ -457,13 +467,11 @@ describe("saved views", () => {
     let readers = 0;
     for (const role of roleSchema.options) {
       const { cookie } = await test.signedIn(role);
-      const answer = await test.request(cookie, "GET", "/api/people");
+      const answer = await test.request(cookie, "GET", "/api/views/people");
       if (answer.statusCode !== 200) continue;
       readers += 1;
       expect(
-        answer
-          .json<{ views: SavedView[] }>()
-          .views.find(({ id }) => id === view.id)?.definition,
+        answer.json<SavedView[]>().find(({ id }) => id === view.id)?.definition,
         role,
       ).toEqual(view.definition);
     }
@@ -500,6 +508,7 @@ describe("saved views", () => {
         filters: { [field.id]: { any: [String(choice?.id)] } },
         sort: [field.id],
         breakdown: [field.id],
+        grouping: field.id,
       })
     ).json<Saved>();
     expect(
@@ -522,7 +531,7 @@ describe("saved views", () => {
     // Its deleted column cannot be saved into it again.
     expect(
       (
-        await test.request(cookie, "PUT", `/api/people/views/${view.id}`, {
+        await test.request(cookie, "PUT", `/api/views/people/${view.id}`, {
           definition: view.definition,
         })
       ).statusCode,
@@ -559,8 +568,8 @@ describe("saved views", () => {
       ).statusCode,
     ).toBe(200);
     expect(
-      (await viewsOf(viewer.cookie)).some(({ id }) => id === view.id),
-    ).toBe(false);
+      (await viewsOf(viewer.cookie)).find(({ id }) => id === view.id),
+    ).toEqual({ id: view.id, name: "By team", missing: { columns: ["Team"] } });
     expect((await undo(viewer.cookie, changeSetId)).statusCode).toBe(403);
   });
 
@@ -574,7 +583,7 @@ describe("saved views", () => {
         filters: { employeeId: { from: "2026-02-30" } },
       }),
       await save(cookie, "Bad sort", { sort: ["a b"] }),
-      await test.request(cookie, "PUT", "/api/people/views/not-a-view", {
+      await test.request(cookie, "PUT", "/api/views/people/not-a-view", {
         name: "Fictional",
       }),
     ];
@@ -600,7 +609,7 @@ describe("personal and shared views", () => {
     let readers = 0;
     for (const role of roleSchema.options) {
       const { cookie } = await test.signedIn(role);
-      const answer = await test.request(cookie, "GET", "/api/people");
+      const answer = await test.request(cookie, "GET", "/api/views/people");
       if (answer.statusCode !== 200) continue;
       readers += 1;
       expect(await namesSeen(cookie), role).not.toContain("Only mine");
@@ -618,7 +627,7 @@ describe("personal and shared views", () => {
     for (const role of roleSchema.options) {
       // Given someone in the role who sees people
       const { cookie } = await test.signedIn(role);
-      const answer = await test.request(cookie, "GET", "/api/people");
+      const answer = await test.request(cookie, "GET", "/api/views/people");
       if (answer.statusCode !== 200) continue;
       tried += 1;
       const allowed = sharers.includes(role);
@@ -903,4 +912,400 @@ describe("built-in columns in saved views", () => {
       (await save(viewer.cookie, "Since", { sort: ["managerFrom"] })).json(),
     ).toEqual({ error: "Choose only columns this role can see" });
   });
+});
+
+const onTable = (table: ViewTable) => ({
+  path: `/api/views/${table}`,
+  list: async (cookie: string) =>
+    (await test.request(cookie, "GET", `/api/views/${table}`)).json<
+      ListedView[]
+    >(),
+  save: (
+    cookie: string,
+    name: string,
+    definition: unknown,
+    scope: ViewScope = "personal",
+  ) =>
+    test.request(cookie, "POST", `/api/views/${table}`, {
+      name,
+      scope,
+      definition,
+    }),
+  change: (cookie: string, id: string, body: object) =>
+    test.request(cookie, "PUT", `/api/views/${table}/${id}`, body),
+  remove: (cookie: string, id: string) =>
+    test.request(cookie, "DELETE", `/api/views/${table}/${id}`),
+});
+
+const features = onTable("features");
+const assignments = onTable("feature-assignments");
+const accounts = onTable("accounts");
+
+const nameOf = (key: string) => String(builtInColumnNames.get(key));
+
+// Sees feature assignments, which need Personal data, and so may group them by manager only with
+// Confidential data too.
+const assignmentsReader: Permission[] = ["feature-teams:view", "personal:view"];
+
+describe("views of every table", () => {
+  it("are saved, listed, renamed, updated, and deleted on a table besides People", async () => {
+    const { cookie } = await test.signedIn(generalReader);
+    const definition = {
+      search: "fictional",
+      grouping: "status",
+      hidden: ["size"],
+      choices: { mode: "board", hide: ["status"] },
+    };
+    const made = await features.save(cookie, unique("Board"), definition);
+    expect(made.statusCode).toBe(201);
+    const { view } = made.json<Saved>();
+    expect(view.definition).toEqual(definition);
+    expect(await features.list(cookie)).toContainEqual(view);
+
+    const renamed = await features.change(cookie, view.id, { name: "Ours" });
+    expect(renamed.statusCode).toBe(200);
+    const updated = await features.change(cookie, view.id, {
+      definition: { choices: { mode: "table" } },
+    });
+    expect(updated.json<Saved>().view).toMatchObject({
+      name: "Ours",
+      definition: { choices: { mode: "table" } },
+    });
+
+    expect((await features.remove(cookie, view.id)).statusCode).toBe(200);
+    expect((await features.list(cookie)).some(({ id }) => id === view.id)).toBe(
+      false,
+    );
+  });
+
+  it("answers that a table keeping no views is no such page", async () => {
+    const { cookie } = await test.signedIn("administrator");
+    for (const [method, url] of [
+      ["GET", "/api/views/roles"],
+      ["POST", "/api/views/roles"],
+      ["DELETE", `/api/views/roles/${missingRecord}`],
+    ] as const) {
+      const response = await test.request(cookie, method, url, {
+        name: "Mine",
+        scope: "personal",
+        definition: {},
+      });
+      expect(response.statusCode, url).toBe(404);
+      expect(response.json(), url).toEqual({ error: "There is no such page" });
+    }
+  });
+
+  it("are kept from a role that doesn't open their page, and named only on their own table", async () => {
+    const { cookie } = await test.signedIn(generalReader);
+    expect((await test.request(cookie, "GET", accounts.path)).statusCode).toBe(
+      403,
+    );
+    expect((await accounts.save(cookie, "Mine", {})).statusCode).toBe(403);
+
+    const { view } = (await save(cookie, unique("People's"), {})).json<Saved>();
+    expect(
+      (await features.change(cookie, view.id, { name: "Moved" })).statusCode,
+    ).toBe(404);
+    expect((await features.remove(cookie, view.id)).statusCode).toBe(404);
+    expect((await features.list(cookie)).some(({ id }) => id === view.id)).toBe(
+      false,
+    );
+  });
+
+  it("refuse choices their page doesn't offer", async () => {
+    const { cookie } = await test.signedIn(generalReader);
+    for (const [table, choices] of [
+      ["features", { from: "2026-01-01" }],
+      ["features", { mode: "timeline" }],
+      ["people", { mode: "board" }],
+    ] as const) {
+      const response = await onTable(table).save(cookie, "Choices", {
+        choices,
+      });
+      expect(response.json(), table).toEqual({
+        error: "Choose only what this page offers",
+      });
+    }
+  });
+
+  it("keep names unique within each table, allowing one name on two tables", async () => {
+    const { cookie } = await test.signedIn(generalReader);
+    const name = unique("Mine");
+    expect((await save(cookie, name, {})).statusCode).toBe(201);
+    expect((await features.save(cookie, name, {})).statusCode).toBe(201);
+    expect(
+      (await features.save(cookie, name.toUpperCase(), {})).json(),
+    ).toEqual({ error: "There is already a view with that name" });
+  });
+
+  it("keep their grouping and send it, and are kept from readers who can't see the column grouped by", async () => {
+    const maker = await test.signedIn("workforce-administrator");
+    const viewer = await test.signedIn(generalReader);
+    const { view } = (
+      await share(maker.cookie, unique("By end"), { grouping: "endDate" })
+    ).json<Saved>();
+    expect(view.definition).toEqual({ grouping: "endDate" });
+    expect(await viewsOf(maker.cookie)).toContainEqual(view);
+    expect(
+      (await test.historyOf(view.id)).every(({ tier }) => tier === "personal"),
+    ).toBe(true);
+    expect(
+      (await viewsOf(viewer.cookie)).some(({ id }) => id === view.id),
+    ).toBe(false);
+    expect(
+      (await save(viewer.cookie, "By end", { grouping: "endDate" })).json(),
+    ).toEqual({ error: "Choose only columns this role can see" });
+    expect(
+      (await save(maker.cookie, "Unknown", { grouping: "nothing" })).statusCode,
+    ).toBe(400);
+  });
+
+  it("group Feature assignments by manager only for readers who see the data it needs", async () => {
+    const maker = await test.signedIn([
+      ...assignmentsReader,
+      "confidential:view",
+      "configuration:edit",
+    ]);
+    const viewer = await test.signedIn(assignmentsReader);
+    const { view } = (
+      await assignments.save(
+        maker.cookie,
+        unique("By manager"),
+        { grouping: "manager" },
+        "shared",
+      )
+    ).json<Saved>();
+    expect(await assignments.list(maker.cookie)).toContainEqual(view);
+    expect(
+      (await test.historyOf(view.id)).every(
+        ({ tier }) => tier === "confidential",
+      ),
+    ).toBe(true);
+    expect(
+      (await assignments.list(viewer.cookie)).some(({ id }) => id === view.id),
+    ).toBe(false);
+    expect(
+      (
+        await assignments.save(viewer.cookie, "By manager", {
+          grouping: "manager",
+        })
+      ).json(),
+    ).toEqual({ error: "Choose only columns this role can see" });
+  });
+
+  it("send each reader only the hidden columns they can see, keeping the others when that reader updates them", async () => {
+    const maker = await test.signedIn("workforce-administrator");
+    const sharer = await test.signedIn([
+      ...generalReader,
+      "configuration:edit",
+    ]);
+    const { view } = (
+      await share(maker.cookie, unique("Hiding"), {
+        hidden: ["endDate", "employeeId"],
+      })
+    ).json<Saved>();
+    const sent = (await viewsOf(sharer.cookie)).find(
+      ({ id }) => id === view.id,
+    );
+    expect(sent?.definition).toEqual({ hidden: ["employeeId"] });
+
+    await change(sharer.cookie, view.id, {
+      definition: { hidden: ["preferredName"] },
+    });
+    expect(
+      (await viewsOf(maker.cookie)).find(({ id }) => id === view.id)
+        ?.definition,
+    ).toEqual({ hidden: ["endDate", "preferredName"] });
+  });
+
+  it("send their maker a personal view they can no longer use by name and what's missing, to rename or delete alone", async () => {
+    // Given a maker who saves views on Personal columns, and another's shared view on one
+    const maker = await test.signedIn([...generalReader, "personal:view"]);
+    const other = await test.signedIn("workforce-administrator");
+    const filtered = (
+      await save(maker.cookie, unique("Starting"), {
+        filters: { startDate: { from: "2026-11-01" } },
+        sort: ["endDate"],
+      })
+    ).json<Saved>().view;
+    const grouped = (
+      await save(maker.cookie, unique("Grouped"), { grouping: "endDate" })
+    ).json<Saved>().view;
+    const theirs = (
+      await share(other.cookie, unique("Theirs"), { sort: ["endDate"] })
+    ).json<Saved>().view;
+
+    // When the maker's role no longer sees Personal data
+    await test.holdOnly(maker.id, generalReader);
+
+    // Then their own views come by name and what's missing, and the other's not at all
+    const listed = await viewsOf(maker.cookie);
+    expect(listed).toContainEqual({
+      id: filtered.id,
+      name: filtered.name,
+      missing: { columns: [nameOf("startDate"), nameOf("endDate")] },
+    });
+    expect(listed).toContainEqual({
+      id: grouped.id,
+      name: grouped.name,
+      missing: { columns: [], grouping: nameOf("endDate") },
+    });
+    expect(listed.some(({ id }) => id === theirs.id)).toBe(false);
+
+    // And they may rename or delete one, but not change or share it
+    for (const body of [{ definition: {} }, { scope: "shared" }]) {
+      expect(
+        (await change(maker.cookie, filtered.id, body)).statusCode,
+        JSON.stringify(body),
+      ).toBe(404);
+    }
+    const renamed = await change(maker.cookie, filtered.id, {
+      name: "Renamed",
+    });
+    expect(renamed.json<{ view: ListedView }>().view).toEqual({
+      id: filtered.id,
+      name: "Renamed",
+      missing: { columns: [nameOf("startDate"), nameOf("endDate")] },
+    });
+    // Its history holds the columns the role can't see, so renaming it can't be undone
+    expect(
+      (
+        await undo(
+          maker.cookie,
+          renamed.json<{ changeSetId: string }>().changeSetId,
+        )
+      ).statusCode,
+    ).toBe(403);
+    expect((await remove(maker.cookie, filtered.id)).statusCode).toBe(200);
+    expect((await remove(other.cookie, grouped.id)).statusCode).toBe(404);
+  });
+
+  it("name a grouping whose data the maker no longer sees as what's missing", async () => {
+    const maker = await test.signedIn([
+      ...assignmentsReader,
+      "confidential:view",
+    ]);
+    const { view } = (
+      await assignments.save(maker.cookie, unique("Managers"), {
+        grouping: "manager",
+      })
+    ).json<Saved>();
+    await test.holdOnly(maker.id, assignmentsReader);
+    expect(await assignments.list(maker.cookie)).toContainEqual({
+      id: view.id,
+      name: view.name,
+      missing: { columns: [], grouping: "Manager" },
+    });
+  });
+
+  it("are shared on Accounts by those who may edit administration, not by those who may change configuration", async () => {
+    const administrator = await test.signedIn("administrator");
+    expect(
+      (
+        await accounts.save(
+          administrator.cookie,
+          unique("Deactivated"),
+          {},
+          "shared",
+        )
+      ).statusCode,
+    ).toBe(201);
+    const configurer = await test.signedIn([
+      "administration:view",
+      "configuration:edit",
+    ]);
+    expect(
+      (await accounts.save(configurer.cookie, "Ours", {}, "shared")).json(),
+    ).toEqual({
+      error:
+        "Only someone who may share views on this table can save a shared view",
+    });
+    expect(
+      (await accounts.save(configurer.cookie, unique("Mine"), {})).statusCode,
+    ).toBe(201);
+  });
+});
+
+describe("every starting role on every view table", () => {
+  const everyoneButAdministrator = roleSchema.options.filter(
+    (role) => role !== "administrator",
+  );
+  const seesConfiguration: readonly Role[] = [
+    "product-manager",
+    "project-manager",
+    "engineering-manager",
+    "engineering-director",
+    "workforce-administrator",
+    "executive",
+  ];
+  const seesAssignments: readonly Role[] = [
+    "project-manager",
+    "engineering-manager",
+    "engineering-director",
+    "workforce-administrator",
+    "executive",
+  ];
+  const configurers: readonly Role[] = [
+    "engineering-director",
+    "workforce-administrator",
+  ];
+  // Who opens each table's page, and who of them shares its views, as the Roles page sets out.
+  const expected: Record<
+    ViewTable,
+    { opens: readonly Role[]; shares: readonly Role[] }
+  > = {
+    people: { opens: everyoneButAdministrator, shares: configurers },
+    features: { opens: everyoneButAdministrator, shares: configurers },
+    projects: { opens: everyoneButAdministrator, shares: configurers },
+    proposals: { opens: everyoneButAdministrator, shares: configurers },
+    customers: { opens: everyoneButAdministrator, shares: configurers },
+    milestones: { opens: everyoneButAdministrator, shares: configurers },
+    "release-streams": { opens: everyoneButAdministrator, shares: configurers },
+    lists: { opens: seesConfiguration, shares: configurers },
+    "feature-assignments": { opens: seesAssignments, shares: configurers },
+    capacity: { opens: seesAssignments, shares: configurers },
+    "org-chart": { opens: everyoneButAdministrator, shares: configurers },
+    accounts: {
+      opens: ["engineering-director", "executive", "administrator"],
+      shares: ["administrator"],
+    },
+  };
+
+  it.each(
+    roleSchema.options.flatMap((role) =>
+      viewTableSchema.options.map((table) => [role, table] as const),
+    ),
+  )(
+    "%s on %s reads, saves, shares, changes, and deletes only as its page and sharing allow",
+    async (role, table) => {
+      // Given someone in the role, and what it opens and shares
+      const { cookie } = await test.signedIn(role);
+      // The table is always one of the fixed tables.
+      // eslint-disable-next-line security/detect-object-injection
+      const { opens: openers, shares: tableSharers } = expected[table];
+      const opens = openers.includes(role);
+      const sharing = tableSharers.includes(role);
+      const views = onTable(table);
+
+      // When they read, save, share, change, and delete
+      const read = await test.request(cookie, "GET", views.path);
+      const saved = await views.save(cookie, unique("Mine"), {});
+      const shared = await views.save(cookie, unique("Ours"), {}, "shared");
+
+      // Then each is allowed only as the page and sharing allow
+      expect(read.statusCode).toBe(opens ? 200 : 403);
+      expect(saved.statusCode).toBe(opens ? 201 : 403);
+      expect(shared.statusCode).toBe(sharing ? 201 : 403);
+      if (!opens) return;
+      const { view } = saved.json<Saved>();
+      expect(
+        (await views.change(cookie, view.id, { name: unique("Renamed") }))
+          .statusCode,
+      ).toBe(200);
+      expect(
+        (await views.change(cookie, view.id, { scope: "shared" })).statusCode,
+      ).toBe(sharing ? 200 : 403);
+      expect((await views.remove(cookie, view.id)).statusCode).toBe(200);
+    },
+  );
 });

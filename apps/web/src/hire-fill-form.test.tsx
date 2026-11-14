@@ -101,7 +101,6 @@ function answers(
         people,
         fields: options.fields ?? [],
         order: [],
-        views: [],
         ...(options.positionHidden === true ? { positionHidden: true } : {}),
       }),
     "GET /api/lists": () =>
@@ -784,7 +783,6 @@ describe("after filling", () => {
             : [robin, hire()],
           fields: [],
           order: [],
-          views: [],
         });
       }
       if (url === "/api/lists") {

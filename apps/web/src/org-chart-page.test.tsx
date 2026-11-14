@@ -86,7 +86,6 @@ const peopleAnswers = {
       ],
       fields: [],
       order: [],
-      views: [],
     }),
   "GET /api/lists": () => Response.json({ lists: [] }),
 };

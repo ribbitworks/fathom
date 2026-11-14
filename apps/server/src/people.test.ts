@@ -293,11 +293,11 @@ describe("who may read and change people", () => {
   });
 
   // Saved views need only seeing people, so each role is tried on its own.
-  const view = `/api/people/views/${randomUUID()}`;
+  const view = `/api/views/people/${randomUUID()}`;
   const viewChanges: [Method, string, object | undefined][] = [
     [
       "POST",
-      "/api/people/views",
+      "/api/views/people",
       { name: "Fictional", scope: "personal", definition: {} },
     ],
     ["PUT", view, { name: "Fictional" }],
@@ -331,9 +331,9 @@ describe("signed-out requests", () => {
     ["POST", "/api/people/columns"],
     ["PUT", `/api/people/columns/${randomUUID()}`],
     ["DELETE", `/api/people/columns/${randomUUID()}`],
-    ["POST", "/api/people/views"],
-    ["PUT", `/api/people/views/${randomUUID()}`],
-    ["DELETE", `/api/people/views/${randomUUID()}`],
+    ["POST", "/api/views/people"],
+    ["PUT", `/api/views/people/${randomUUID()}`],
+    ["DELETE", `/api/views/people/${randomUUID()}`],
     ["POST", `/api/undo/${randomUUID()}`],
   ] as [Method, string][])(
     "refuses %s %s without a session",

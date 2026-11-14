@@ -25,6 +25,7 @@ import {
   type DraftKind,
   type RecordType as PlanRecordType,
   recordTypeSchema,
+  seesClass,
   type Tier,
 } from "@fathom/shared";
 import { and, asc, count, eq, gt, inArray, or, sql } from "drizzle-orm";
@@ -34,8 +35,8 @@ import {
   requirePermission,
   requireSensitivityEdit,
   type Sensitivity,
-  seesSensitivity,
   storedTier,
+  tierOfSensitivity,
 } from "../access.ts";
 import { choicesWithAdded, columnsWithAdded } from "./added-columns.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
@@ -101,7 +102,7 @@ import {
 } from "./reporting.ts";
 import { typeOf } from "./column-types.ts";
 import { type ColumnInfo, fieldOfValue, writeValues } from "./values.ts";
-import { requireViewUndo, viewTierNow } from "./views.ts";
+import { requireViewUndo, type ViewNow, viewNow } from "./views.ts";
 import { stateOf, versionOf } from "./record-state.ts";
 import { readRecordsState } from "./records.ts";
 import { readToday } from "./settings.ts";
@@ -142,8 +143,8 @@ const editPermissions = {
   "planned-hire": ["people:edit"],
   // Editing them is checked for the teams themselves.
   "feature-team": ["feature-teams:view"],
-  // Who may change each view is checked for the view itself.
-  "saved-view": ["people:view"],
+  // Who may change each view, by opening its table's page, is checked for the view itself.
+  "saved-view": [],
   "planning-settings": ["configuration:edit"],
 } as const;
 
@@ -951,7 +952,7 @@ async function undoIn(
   const tierNow = personTier(await columnsWithAdded(transaction, undefined));
   const hireTierNow = await readHireTier(transaction);
   // So is a saved view's history, as sensitive as the columns it uses are now.
-  const viewTiers = new Map<string, Tier>();
+  const views = new Map<string, ViewNow>();
   for (const record of records) {
     if (record.recordType === "saved-view") {
       const held = rows
@@ -959,7 +960,7 @@ async function undoIn(
           (row) => row.recordId === record.id && row.field === "definition",
         )
         .flatMap((row) => [row.oldValue, row.newValue]);
-      viewTiers.set(record.id, await viewTierNow(transaction, record.id, held));
+      views.set(record.id, await viewNow(transaction, actor, record.id, held));
     }
   }
   const undoing = reversed(rows).map((change) => {
@@ -976,7 +977,10 @@ async function undoIn(
       ? {
           ...change,
           // Every view the change set changed has its tier, found just above.
-          tier: higher(change.tier, viewTiers.get(change.recordId) as Tier),
+          tier: higher(
+            change.tier,
+            (views.get(change.recordId) as ViewNow).tier,
+          ),
         }
       : change;
   });
@@ -995,14 +999,21 @@ async function undoIn(
       ]);
     }
     if (change.recordType === "saved-view") {
-      return [recorded, viewTiers.get(change.recordId) as Tier];
+      return [recorded, (views.get(change.recordId) as ViewNow).tier];
     }
     return [recorded];
   };
   for (const change of rows) {
     for (const tier of new Set(tiersOf(change))) {
       if (change.recordType === "saved-view") {
-        if (!seesSensitivity(actor, tier)) throw new ForbiddenError();
+        if (
+          !seesClass(
+            actor.permissions,
+            tierOfSensitivity(actor.dataClasses)(tier),
+          )
+        ) {
+          throw new ForbiddenError();
+        }
       } else if (tier !== "general" && !isTeamDay(change)) {
         requireSensitivityEdit(actor, tier);
       }
@@ -1010,7 +1021,14 @@ async function undoIn(
   }
   for (const record of records) {
     if (record.recordType === "saved-view") {
-      await requireViewUndo(transaction, actor, record.id, record.old);
+      await requireViewUndo(
+        transaction,
+        actor,
+        record.id,
+        // Every view the change set changed has its table, found above.
+        (views.get(record.id) as ViewNow).table,
+        record.old,
+      );
     }
   }
   // Only changes the user may see count: another user's unpublished changes stay theirs, and a

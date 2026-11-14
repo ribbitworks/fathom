@@ -5,7 +5,7 @@
 // the changes each reader's roles let them see, with Personal and Confidential changes recorded in
 // the access history. Readers with generalReader's permissions see people's General details only.
 
-import { accessHistory, recordChanges } from "@fathom/db";
+import { accessHistory, recordChanges, savedViews } from "@fathom/db";
 import {
   type ChangeEntry,
   type ChangeHistory,
@@ -505,7 +505,7 @@ describe("the change history", () => {
     const saved = await test.request(
       manager.cookie,
       "POST",
-      "/api/people/views",
+      "/api/views/people",
       {
         name: "Leaving soon",
         scope: "shared",
@@ -525,7 +525,7 @@ describe("the change history", () => {
     const renamed = await test.request(
       manager.cookie,
       "PUT",
-      `/api/people/views/${view.id}`,
+      `/api/views/people/${view.id}`,
       { name: "Leaving", definition: { sort: ["-endDate"] } },
     );
     expect(
@@ -548,7 +548,7 @@ describe("the change history", () => {
     const saved = await test.request(
       manager.cookie,
       "POST",
-      "/api/people/views",
+      "/api/views/people",
       {
         name: "By Eta site",
         scope: "shared",
@@ -560,7 +560,7 @@ describe("the change history", () => {
       await test.request(
         manager.cookie,
         "PUT",
-        `/api/people/views/${view.id}`,
+        `/api/views/people/${view.id}`,
         {
           name: "Eta sites",
         },
@@ -584,7 +584,7 @@ describe("the change history", () => {
   it("shows changes to a personal view only to its maker, even once it is deleted, and says when it is shared", async () => {
     const maker = await test.signedIn("workforce-administrator");
     const other = await test.signedIn("workforce-administrator");
-    const views = "/api/people/views";
+    const views = "/api/views/people";
     const made = await test.request(maker.cookie, "POST", views, {
       name: "Private plans",
       scope: "personal",
@@ -619,11 +619,124 @@ describe("the change history", () => {
     expect(await entryFor(maker.cookie, deleted.changeSetId)).toBeDefined();
   });
 
+  it("shows a view's changes on a table besides People to those who open its page, and a personal view's to its maker alone", async () => {
+    // Given a shared and a personal view on Features
+    const maker = await test.signedIn(["features:view", "configuration:edit"]);
+    const featuresReader = await test.signedIn(["features:view"]);
+    const peopleReader = await test.signedIn(["people:view"]);
+    const views = "/api/views/features";
+    const save = async (name: string, scope: string) =>
+      (
+        await test.request(maker.cookie, "POST", views, {
+          name,
+          scope,
+          definition: {},
+        })
+      ).json<{ changeSetId: string }>().changeSetId;
+    const shared = await save("Features we share", "shared");
+    const personal = await save("Features of mine", "personal");
+
+    // Then those who open Features see the shared view's changes, and only its maker the personal's
+    expect(
+      (await entryFor(featuresReader.cookie, shared))?.records[0],
+    ).toMatchObject({ kind: "saved-view", name: "Features we share" });
+    expect(await entryFor(peopleReader.cookie, shared)).toBeUndefined();
+    expect(await entryFor(featuresReader.cookie, personal)).toBeUndefined();
+    expect(await entryFor(maker.cookie, personal)).toBeDefined();
+  });
+
+  it("shows a deleted view's changes only to those who open its table's page", async () => {
+    const maker = await test.signedIn(["features:view", "configuration:edit"]);
+    const featuresReader = await test.signedIn(["features:view"]);
+    const peopleReader = await test.signedIn(["people:view"]);
+    const views = "/api/views/features";
+    const { view } = (
+      await test.request(maker.cookie, "POST", views, {
+        name: "Deleted on Features",
+        scope: "shared",
+        definition: {},
+      })
+    ).json<{ view: { id: string } }>();
+    const { changeSetId } = (
+      await test.request(maker.cookie, "DELETE", `${views}/${view.id}`)
+    ).json<{ changeSetId: string }>();
+    expect(await entryFor(featuresReader.cookie, changeSetId)).toBeDefined();
+    expect(await entryFor(peopleReader.cookie, changeSetId)).toBeUndefined();
+  });
+
+  it("shows a view's changes to nobody once its table is one Fathom doesn't know", async () => {
+    // Given a view kept on a table that is no longer known
+    const maker = await test.signedIn(["features:view", "configuration:edit"]);
+    const { view, changeSetId } = (
+      await test.request(maker.cookie, "POST", "/api/views/features", {
+        name: "On a table gone",
+        scope: "shared",
+        definition: {},
+      })
+    ).json<{ view: { id: string }; changeSetId: string }>();
+    await test.connection
+      .update(savedViews)
+      .set({ tableName: "gone" })
+      .where(eq(savedViews.id, view.id));
+
+    // Then not even its maker sees its changes or undoes them
+    expect(await entryFor(maker.cookie, changeSetId)).toBeUndefined();
+    expect(
+      (await test.request(maker.cookie, "POST", `/api/undo/${changeSetId}`, {}))
+        .statusCode,
+    ).toBe(403);
+  });
+
+  it("keeps a view grouped by manager on Feature assignments from readers without the data it needs", async () => {
+    const maker = await test.signedIn([
+      "feature-teams:view",
+      "personal:view",
+      "confidential:view",
+      "configuration:edit",
+    ]);
+    const reader = await test.signedIn(["feature-teams:view", "personal:view"]);
+    const { changeSetId } = (
+      await test.request(
+        maker.cookie,
+        "POST",
+        "/api/views/feature-assignments",
+        {
+          name: "Assignments by manager",
+          scope: "shared",
+          definition: { grouping: "manager" },
+        },
+      )
+    ).json<{ changeSetId: string }>();
+    expect(await entryFor(maker.cookie, changeSetId)).toBeDefined();
+    expect(await entryFor(reader.cookie, changeSetId)).toBeUndefined();
+  });
+
+  it("lets a view's change be undone only by someone who still opens its table's page", async () => {
+    const maker = await test.signedIn(["features:view", "configuration:edit"]);
+    const { changeSetId } = (
+      await test.request(maker.cookie, "POST", "/api/views/features", {
+        name: "Undone on Features",
+        scope: "shared",
+        definition: {},
+      })
+    ).json<{ changeSetId: string }>();
+    await test.holdOnly(maker.id, ["people:view", "configuration:edit"]);
+    expect(
+      (await test.request(maker.cookie, "POST", `/api/undo/${changeSetId}`, {}))
+        .statusCode,
+    ).toBe(403);
+    await test.holdOnly(maker.id, ["features:view", "configuration:edit"]);
+    expect(
+      (await test.request(maker.cookie, "POST", `/api/undo/${changeSetId}`, {}))
+        .statusCode,
+    ).toBe(200);
+  });
+
   it("shows nothing of a view's private past once it is shared, nor the name it is shared under in place of an old one", async () => {
     // Given a personal view, renamed in private
     const maker = await test.signedIn("workforce-administrator");
     const other = await test.signedIn("workforce-administrator");
-    const views = "/api/people/views";
+    const views = "/api/views/people";
     const put = async (id: string, body: object) =>
       (await test.request(maker.cookie, "PUT", `${views}/${id}`, body)).json<{
         changeSetId: string;
@@ -674,7 +787,7 @@ describe("the change history", () => {
     // Given a view shared, then the sharing undone
     const maker = await test.signedIn("workforce-administrator");
     const other = await test.signedIn("workforce-administrator");
-    const views = "/api/people/views";
+    const views = "/api/views/people";
     const { view } = (
       await test.request(maker.cookie, "POST", views, {
         name: "Undone sharing",

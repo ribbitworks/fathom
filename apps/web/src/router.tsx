@@ -25,6 +25,8 @@ import {
   seesView,
   showSchema,
   daySchema,
+  cardPartSchema,
+  planModeSchema,
 } from "@fathom/shared";
 import {
   createRootRouteWithContext,
@@ -55,7 +57,6 @@ import {
   capacityModes,
   shownCapacityMode,
 } from "./capacity.ts";
-import { cardPartSchema, planModeSchema } from "./feature-board.ts";
 import { SettingsPage } from "./settings-page.tsx";
 import { DataClassesPage } from "./data-classes-page.tsx";
 import { setTimeZone, shownDay, today } from "./today.ts";

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A table's view, its search, filters, sort, breakdown, frozen columns, the order of its columns,
-// the widths set for them, the unit and decimal places each column that offers units is shown in,
-// and whether its retired records show, as the page address holds it and as a saved view keeps it,
-// and the saved views themselves. A saved view is personal, seen and changed only by its maker, or
-// shared: seen by everyone who sees the table, except those it filters, sorts, or breaks down by a
-// column they may not see, and changed by its maker and those who may change planning
-// configuration.
+// A table's view, its search, filters, sort, breakdown, grouping, frozen columns, the order of its
+// columns, those hidden, the widths set for them, the unit and decimal places each column that
+// offers units is shown in, whether its retired records show, and its page's own choices, as the
+// page address holds it and as a saved view keeps it, and the saved views themselves. A saved view
+// is personal, seen and changed only by its maker, or shared: seen by everyone who opens its page,
+// except those it filters, sorts, breaks down, or groups by a column they may not see, and changed
+// by its maker and those who may share views on its table.
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
@@ -36,6 +36,16 @@ const unit = z.string().regex(/^[a-z-]{1,64}$/);
 // The most decimal places a column's numbers show, as far as a number can be typed with.
 const places = z.number().int().min(0).max(numberDigits.afterPoint);
 
+// A page's choice, by the name its address gives it, such as Features' `mode`: one value or several.
+const choiceValuesLimit = 20;
+const choiceValue = z.union([
+  z.string().max(textLimit),
+  z.array(z.string().max(textLimit)).max(choiceValuesLimit),
+]);
+
+// A choice left out is left as the page starts.
+export type ViewChoices = Record<string, string | string[] | undefined>;
+
 // A column's filter. A row matches when its value matches any part that is set: for text, when it
 // contains the text; for dates, when it falls between from and to, and for numbers, between
 // atLeast and atMost, either of which may be left open; for choices, when it holds any of them.
@@ -56,6 +66,9 @@ const sortLevel = z.string().regex(/^-?[\w-]{1,64}$/);
 const columnKey = z.string().regex(/^[\w-]{1,64}$/);
 // More than any table has columns, as only a hand-made address reaches.
 const columnsLimit = 100;
+// More than any page has choices, as only a hand-made address reaches; an address keeps as many as
+// it keeps of any part by column.
+const choicesLimit = columnsLimit;
 
 // Column keys as an address or saved view holds them: each that does not fit is dropped, as is any
 // repeat.
@@ -154,10 +167,12 @@ export const viewDefinitionSchema = z.object({
   grouping: columnKey.optional().catch(undefined),
   frozen: frozen.optional().catch(undefined),
   order: looseColumnKeys(columnsLimit),
+  hidden: looseColumnKeys(columnsLimit),
   widths: looseByColumn(width),
   units: looseByColumn(unit),
   places: looseByColumn(places),
   retired: z.literal(true).optional().catch(undefined),
+  choices: looseByColumn(choiceValue),
 });
 
 // The view as read from the address or a saved view, and as written to them.
@@ -170,10 +185,12 @@ export interface ViewDefinition {
   grouping?: string | undefined;
   frozen?: number | undefined;
   order?: string[] | undefined;
+  hidden?: string[] | undefined;
   widths?: Record<string, number> | undefined;
   units?: Record<string, string> | undefined;
   places?: Record<string, number> | undefined;
   retired?: true | undefined;
+  choices?: ViewChoices | undefined;
 }
 
 // A view as a request sends it, which must fit as a whole, since a page sends only views it made.
@@ -192,6 +209,7 @@ const strictDefinitionSchema = z.object({
   grouping: columnKey.optional(),
   frozen: frozen.optional(),
   order: columnKeys(columnsLimit).optional(),
+  hidden: columnKeys(columnsLimit).optional(),
   widths: z
     .record(columnKey, width)
     .refine(
@@ -214,6 +232,14 @@ const strictDefinitionSchema = z.object({
     )
     .optional(),
   retired: z.literal(true).optional(),
+  // Checked against the view's table where it is saved.
+  choices: z
+    .record(columnKey, choiceValue.optional())
+    .refine(
+      (choices) => Object.keys(choices).length <= choicesLimit,
+      "Too many choices",
+    )
+    .optional(),
 });
 
 // The key of the People table's filter on drafts, which filters people by whether they have a
@@ -236,14 +262,15 @@ export function inPlacesOf(
   ];
 }
 
-// The keys of the columns a view filters, sorts, or breaks down on, and of any filter that is not a
-// column.
+// The keys of the columns a view filters, sorts, breaks down, or groups by, and of any filter that
+// is not a column.
 export function viewColumnKeys(definition: ViewDefinition): string[] {
   return [
     ...new Set([
       ...Object.keys(definition.filters ?? {}),
       ...(definition.sort ?? []).map((level) => level.replace(/^-/, "")),
       ...(definition.breakdown ?? []),
+      ...(definition.grouping === undefined ? [] : [definition.grouping]),
     ]),
   ];
 }
@@ -264,6 +291,23 @@ export const savedViewSchema = z.object({
 });
 
 export type SavedView = z.infer<typeof savedViewSchema>;
+
+// A personal view its maker can no longer apply, since it uses columns, or a grouping, their role
+// can't see now: sent by name, with what is missing, to be renamed or deleted, never its definition.
+export const unusableViewSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  missing: z.object({
+    columns: z.array(z.string()),
+    grouping: z.string().optional(),
+  }),
+});
+
+export type UnusableView = z.infer<typeof unusableViewSchema>;
+
+export const listedViewSchema = z.union([savedViewSchema, unusableViewSchema]);
+
+export type ListedView = z.infer<typeof listedViewSchema>;
 
 const viewName = z.string().trim().min(1).max(viewLengths.name);
 

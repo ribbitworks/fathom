@@ -2755,7 +2755,6 @@ describe("drafts on the Lists page", () => {
           },
         ],
         order: ["preferredName", "employeeId", "f9"],
-        views: [],
       }),
     );
     await waitFor(async () => {

@@ -124,18 +124,24 @@ export async function readColumns(
 }
 
 // Each of People's columns, built-in and added, by key, with its name and the class of its values.
+// A column as its class is checked: its name, as people read it, and its tier.
+export interface ClassedColumn {
+  name: string;
+  tier: Tier;
+}
+
 export function columnClasses(
   columns: PeopleColumns,
-): Map<string, { name: string; tier: Tier }> {
+): Map<string, ClassedColumn> {
   return new Map([
     ...[...builtInColumnTiers(columns)].map(
-      ([key, tier]): [string, { name: string; tier: Tier }] => [
+      ([key, tier]): [string, ClassedColumn] => [
         key,
         // Every built-in column of People is named.
         { name: String(builtInColumnNames.get(key)), tier },
       ],
     ),
-    ...columns.map((column): [string, { name: string; tier: Tier }] => [
+    ...columns.map((column): [string, ClassedColumn] => [
       column.id,
       { name: column.name, tier: column.tier },
     ]),

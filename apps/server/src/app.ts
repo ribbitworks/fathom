@@ -41,6 +41,7 @@ import { projectRoutes } from "./routes/projects.ts";
 import { featureTeamRoutes } from "./routes/feature-teams.ts";
 import { releaseRoutes } from "./routes/releases.ts";
 import { undoRoutes } from "./routes/undo.ts";
+import { viewRoutes } from "./routes/views.ts";
 import { unpublishedRoutes } from "./routes/unpublished.ts";
 import { pageFallback, webRoutes } from "./routes/web.ts";
 
@@ -204,6 +205,7 @@ export async function buildApp(options: AppOptions) {
   await app.register(listRoutes(options.data.lists));
   await app.register(draftRoutes(options.data.drafts));
   await app.register(peopleRoutes(options.data.people));
+  await app.register(viewRoutes(options.data.views));
   await app.register(hireRoutes(options.data.hires));
   await app.register(featureTeamRoutes(options.data.featureTeams));
   await app.register(

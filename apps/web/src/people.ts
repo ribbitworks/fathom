@@ -11,9 +11,11 @@ import {
   peopleColumnsSchema,
   peopleSchema,
   savedSchema,
+  type SavedView,
   type SavedViewChange,
   type SavedViewRequest,
   savedViewSchema,
+  listedViewSchema,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
@@ -74,16 +76,27 @@ export async function resubmitDraft(id: string): Promise<string | null> {
     .changeSetId;
 }
 
-const viewPath = (id: string) => `/api/people/views/${encodeURIComponent(id)}`;
+const viewsPath = "/api/views/people";
+const viewPath = (id: string) => `${viewsPath}/${encodeURIComponent(id)}`;
 const viewResponse = z.object({
   view: savedViewSchema,
   changeSetId: changeSetIdSchema,
 });
 
+// The People table's saved views the user may apply, under the people's key, so whatever reloads
+// the people reloads them.
+export const peopleViewsQuery = queryOptions({
+  queryKey: [...peopleQuery.queryKey, "views"],
+  queryFn: async (): Promise<SavedView[]> =>
+    (await getJson(viewsPath, z.array(listedViewSchema))).filter(
+      (view): view is SavedView => "definition" in view,
+    ),
+});
+
 export async function createView(
   request: SavedViewRequest,
 ): Promise<z.infer<typeof viewResponse>> {
-  return sendJsonFor("POST", "/api/people/views", request, viewResponse);
+  return sendJsonFor("POST", viewsPath, request, viewResponse);
 }
 
 // Renames a saved view, saves a new view over it, or both.

@@ -1,7 +1,7 @@
 # Fathom: Domain Concepts
 
 **Status:** Draft
-**Last updated:** 2026-11-11
+**Last updated:** 2026-11-14
 
 The terms Fathom uses, defined so they fit any software organization, whatever its titles and practices. How an organization works with them, such as who leads what or how often it releases, is its own configuration. See also the [Product Brief](brief.md) and the [Decisions Log](decisions.md).
 
@@ -46,7 +46,7 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **Draft row:** A row to be added, changed, or removed, waiting for an Approver to approve it, which makes it live, or reject it, which marks it Rejected, with a reason, until it is changed or discarded.
 - **Live:** Approved, and so part of the plan everyone works from.
 - **Approver:** Anyone whose role lets them approve drafts of that data. Not a role of its own.
-- **Saved view:** A view saved under a name, personal to the user who saved it or shared with everyone who sees the table, and applied again from the table's Views menu.
+- **Saved view:** A view of one table saved under a name, personal to the user who saved it or shared with everyone who opens the table's page, and applied again from the table's Views menu.
 
 ## Access Terms
 

@@ -76,7 +76,6 @@ const peopleAnswer =
       people,
       fields: [score],
       order: ["preferredName", "employeeId", "f1"],
-      views: [],
     });
 
 afterEach(() => {

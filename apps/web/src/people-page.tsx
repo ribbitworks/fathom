@@ -114,6 +114,7 @@ import {
   type PeopleData,
   peopleQuery,
   peopleQueryOn,
+  peopleViewsQuery,
   updateView,
 } from "./people.ts";
 import { useSaving } from "./saving.ts";
@@ -344,7 +345,16 @@ export function PeoplePage({
     removed: "Someone else has removed this. The people have been refreshed.",
     blocked: columnDialog.opened || namingOpened || deciding,
   });
-  const { save, shown, undoable, done } = changes;
+  const { save, undoable, done } = changes;
+  const views = useQuery(peopleViewsQuery);
+  // Until the views load, the page offers none, and a view's name is checked against none.
+  const savedList = views.data ?? [];
+  const viewChanges = useSaving<SavedView[]>({
+    queryKey: peopleViewsQuery.queryKey,
+    removed:
+      "Someone else has removed this view. The views have been refreshed.",
+    blocked: columnDialog.opened || namingOpened || deciding,
+  });
 
   // A row by name, as menus and notices name it, once the lists, which a row's actions wait for,
   // are loaded.
@@ -542,42 +552,37 @@ export function PeoplePage({
     },
     onUpdate: (saved, shown) => {
       const definition = savedFor(shown);
-      save({
-        next: (data) => ({
-          ...data,
-          views: withView(data.views, { ...saved, definition }),
-        }),
+      viewChanges.save({
+        next: (data) => withView(data, { ...saved, definition }),
         save: async () =>
           (await updateView(saved.id, { definition })).changeSetId,
         failure: `Fathom could not update ${saved.name}.`,
         onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
+          viewChanges.undoable(changeSetId, before);
         },
       });
     },
     onDelete: (saved) => {
-      save({
-        next: (data) => ({
-          ...data,
-          views: data.views.filter((other) => other.id !== saved.id),
-        }),
+      viewChanges.save({
+        next: (data) => data.filter((other) => other.id !== saved.id),
         save: () => deleteView(saved.id),
         failure: `Fathom could not delete ${saved.name}.`,
         onSaved: (changeSetId, before) => {
-          done(`Deleted the ${saved.name} view.`, changeSetId, before);
+          viewChanges.done(
+            `Deleted the ${saved.name} view.`,
+            changeSetId,
+            before,
+          );
         },
       });
     },
     onScope: (saved, scope) => {
-      save({
-        next: (data) => ({
-          ...data,
-          views: withView(data.views, { ...saved, scope }),
-        }),
+      viewChanges.save({
+        next: (data) => withView(data, { ...saved, scope }),
         save: async () => (await updateView(saved.id, { scope })).changeSetId,
         failure: `Fathom could not change ${saved.name}.`,
         onSaved: (changeSetId, before) => {
-          done(
+          viewChanges.done(
             `${viewScopes[saved.scope].changedVerb} the ${saved.name} view.`,
             changeSetId,
             before,
@@ -591,11 +596,11 @@ export function PeoplePage({
   // applied.
   const named = ({ view: saved, changeSetId }: SavedViewResult) => {
     setNamingOpened(false);
-    shown(
-      (data) => ({ ...data, views: withView(data.views, saved) }),
+    viewChanges.shown(
+      (data) => withView(data, saved),
       changeSetId,
       (_saved, before) => {
-        undoable(changeSetId, before);
+        viewChanges.undoable(changeSetId, before);
       },
     );
     if (naming?.saved === undefined && naming) {
@@ -857,7 +862,7 @@ export function PeoplePage({
               </>
             ) : undefined
           }
-          saved={savedViews(query.data.views)}
+          saved={savedViews(savedList)}
         />
         {question.dialog}
         <DecisionModal
@@ -900,7 +905,7 @@ export function PeoplePage({
                       [draftColumn],
                     ),
                   })}
-              views={query.data.views}
+              views={savedList}
               save={(name, scope) =>
                 naming.saved
                   ? updateView(naming.saved.id, { name })

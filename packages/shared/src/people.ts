@@ -14,7 +14,6 @@ import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { type Link, linkValueSchema } from "./links.ts";
 import { listLengths } from "./lists.ts";
 import { numberValueSchema } from "./numbers.ts";
-import { savedViewSchema } from "./views.ts";
 
 export const personLengths = {
   preferredName: 100,
@@ -212,7 +211,7 @@ export type Person = z.infer<typeof personSchema>;
 
 // Everyone the user may see, by preferred name, with the added columns whose values they may see,
 // the order of the columns they see: built-in ones by name, such as "employeeId", and added ones
-// by identifier, and the saved views of the People table they may see, by name.
+// by identifier.
 // The People table's added columns as their drafts make them, and their order, without the people.
 export const peopleColumnsSchema = z.object({
   fields: z.array(fieldSchema),
@@ -223,7 +222,6 @@ export const peopleSchema = peopleColumnsSchema.extend({
   people: z.array(personSchema),
   // Set for users who cannot see the Positions list's tier, who see no Position column.
   positionHidden: z.literal(true).optional(),
-  views: z.array(savedViewSchema),
 });
 
 // The prefix of planned hires' temporary IDs, such as TBD-7, which no ID typed in starts with,

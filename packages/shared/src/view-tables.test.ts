@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Tests for each view table's choices: the parameters its page keeps in a view, which a request
+// must fit as a whole.
+
+import { describe, expect, it } from "vitest";
+import { viewChoiceSchemas, viewTableSchema } from "./view-tables.ts";
+
+const stream = "6f1d6a52-0c1e-4a51-9b0f-1d2c3e4f5a6b";
+
+describe("Features' choices", () => {
+  const fits = (choices: object) =>
+    viewChoiceSchemas.features.safeParse(choices).success;
+
+  it("accepts the table or the board, a stream, and the card parts hidden", () => {
+    expect(fits({ mode: "board", stream, hide: ["status", "size"] })).toBe(
+      true,
+    );
+    expect(fits({})).toBe(true);
+  });
+
+  it.each([
+    ["a mode it doesn't have", { mode: "timeline" }],
+    ["a stream that isn't an identifier", { stream: "Platform" }],
+    ["a card part it doesn't have", { hide: ["colour"] }],
+    ["a card part twice", { hide: ["status", "status"] }],
+    ["a choice it doesn't keep", { from: "2026-01-01" }],
+  ])("refuses %s", (_, choices) => {
+    expect(fits(choices)).toBe(false);
+  });
+});
+
+describe("the choices of tables whose pages keep none", () => {
+  it.each(viewTableSchema.options.filter((table) => table !== "features"))(
+    "refuses any choice on %s, and accepts none",
+    (table) => {
+      // The table is always one of the fixed tables.
+      // eslint-disable-next-line security/detect-object-injection
+      const choices = viewChoiceSchemas[table];
+      expect(choices.safeParse({}).success).toBe(true);
+      expect(choices.safeParse({ mode: "board" }).success).toBe(false);
+    },
+  );
+});

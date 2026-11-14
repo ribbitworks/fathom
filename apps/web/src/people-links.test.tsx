@@ -73,7 +73,6 @@ const peopleAnswer =
       people,
       fields: [profile],
       order: ["preferredName", "employeeId", "f1"],
-      views: [],
     });
 const saved = () => Response.json({ changeSetId: s1 });
 // The built-in Positions list, with the one position everyone here has.
@@ -196,7 +195,6 @@ describe("a web link column", () => {
           people: [avery],
           fields: [{ ...profile, required: true }],
           order: ["preferredName", "employeeId", "f1"],
-          views: [],
         }),
     });
     const name = document.querySelector(
@@ -455,7 +453,6 @@ describe("a web link column", () => {
               { ...profile, id: "f2", name: "Portfolio" },
             ],
             order: ["preferredName", "employeeId", "f1", "f2"],
-            views: [],
           }),
         "PUT /api/columns/f1/class": () => {
           moved = true;
@@ -545,7 +542,6 @@ describe("a web link column", () => {
               },
             ],
             order: ["preferredName", "employeeId", "f1"],
-            views: [],
           }),
       },
       classifier,
@@ -567,7 +563,6 @@ describe("a web link column", () => {
             people: [avery, blake],
             fields: [{ ...profile, heldBy: "Fictional Editor" }],
             order: ["preferredName", "employeeId", "f1"],
-            views: [],
           }),
       },
       classifier,
@@ -601,7 +596,6 @@ describe("a web link column", () => {
             people: [avery, blake],
             fields: [added],
             order: ["preferredName", "employeeId", "f1"],
-            views: [],
           }),
       },
       classifier,

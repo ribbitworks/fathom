@@ -79,6 +79,7 @@ export {
   seesField,
   seesHiringPlan,
   seesView,
+  classesOfView,
   shownIn,
   type RoleView,
   viewsOfRole,
@@ -92,6 +93,7 @@ export {
   capacityModeNeeds,
   type GuardedPage,
   opensWith,
+  type PageNeeds,
   pageNeeds,
   reaches,
 } from "./page-access.ts";
@@ -458,7 +460,21 @@ export {
   viewScopeSchema,
   type ViewScope,
   viewLengths,
+  type ListedView,
+  listedViewSchema,
+  type UnusableView,
+  unusableViewSchema,
+  type ViewChoices,
 } from "./views.ts";
+export {
+  type CardPart,
+  cardPartSchema,
+  type PlanMode,
+  planModeSchema,
+  viewChoiceSchemas,
+  type ViewTable,
+  viewTableSchema,
+} from "./view-tables.ts";
 export { allOf, eitherOf } from "./words.ts";
 export {
   type ClassifiedColumns,

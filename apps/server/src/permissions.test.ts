@@ -19,6 +19,8 @@ import {
   permissionSchema,
   planningSettingsId,
   startingPlanningSettings,
+  type ViewTable,
+  viewTableSchema,
 } from "@fathom/shared";
 import { users } from "@fathom/db";
 import { eq } from "drizzle-orm";
@@ -86,6 +88,28 @@ const anyOf = (...any: Permission[]): Needs => ({
   all: [],
   any,
 });
+
+// What opens each table's page, and so its views.
+const viewTableNeeds: Record<ViewTable, Needs> = {
+  people: allOf("people:view"),
+  features: allOf("features:view"),
+  projects: allOf("plan:view"),
+  proposals: allOf("plan:view"),
+  customers: allOf("plan:view"),
+  milestones: allOf("plan:view"),
+  "release-streams": anyOf("features:view", "configuration:view"),
+  lists: allOf("configuration:view"),
+  // Feature assignments' start and end dates, past managers, and team dates are Personal.
+  "feature-assignments": allOf("feature-teams:view", "personal:view"),
+  capacity: allOf(
+    "allocations:view",
+    "feature-teams:view",
+    "people:view",
+    "personal:view",
+  ),
+  "org-chart": allOf("people:view"),
+  accounts: allOf("administration:view"),
+};
 
 let count = 0;
 // The role a new account is given, which must exist, read once the server has started.
@@ -558,25 +582,46 @@ const routes: Route[] = [
     needs: allOf("configuration:edit"),
   })),
 
-  // Changing or deleting someone else's view also needs configuration:edit, as the views tests
-  // check.
-  {
-    method: "POST",
-    pattern: "/api/people/views",
-    needs: allOf("people:view"),
-    body: () => ({ ...named(), scope: "personal", definition: {} }),
-  },
-  {
-    method: "PUT",
-    pattern: "/api/people/views/:viewId",
-    needs: allOf("people:view"),
-    body: named,
-  },
-  {
-    method: "DELETE",
-    pattern: "/api/people/views/:viewId",
-    needs: allOf("people:view"),
-  },
+  // Each table's views need what opens its page. Sharing, and changing or deleting someone else's
+  // view, also need what shares views on the table, as the views tests check.
+  ...viewTableSchema.options.flatMap((table): Route[] => {
+    // The table is always one of the fixed tables.
+    // eslint-disable-next-line security/detect-object-injection
+    const needs = viewTableNeeds[table];
+    const view = `/api/views/${table}/${randomUUID()}`;
+    return [
+      {
+        method: "GET",
+        pattern: "/api/views/:table",
+        variant: table,
+        url: `/api/views/${table}`,
+        needs,
+      },
+      {
+        method: "POST",
+        pattern: "/api/views/:table",
+        variant: table,
+        url: `/api/views/${table}`,
+        needs,
+        body: () => ({ ...named(), scope: "personal", definition: {} }),
+      },
+      {
+        method: "PUT",
+        pattern: "/api/views/:table/:viewId",
+        variant: table,
+        url: view,
+        needs,
+        body: named,
+      },
+      {
+        method: "DELETE",
+        pattern: "/api/views/:table/:viewId",
+        variant: table,
+        url: view,
+        needs,
+      },
+    ];
+  }),
 
   // Those who see people see hires as placeholders; the hiring plan's details need
   // hiring-plan:view, as the hires tests check.

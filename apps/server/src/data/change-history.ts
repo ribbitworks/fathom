@@ -74,7 +74,13 @@ import { builtInTier } from "./values.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { type RecordKind, readsKind } from "./record-state.ts";
 import { recordKinds } from "./records.ts";
-import { readKeptViewChanges, viewTiersNow } from "./views.ts";
+import {
+  opensAnyViews,
+  readKeptViewChanges,
+  seesViewHistory,
+  type ViewNow,
+  viewsNow,
+} from "./views.ts";
 
 // The most recent change sets shown at once; older ones are read by naming the last one read. When
 // change sets read are hidden or, in a search, do not match, reading goes on, up to ten times as
@@ -82,15 +88,15 @@ import { readKeptViewChanges, viewTiersNow } from "./views.ts";
 const shownChangeSets = 200;
 const searchedChangeSets = 2000;
 
-// Configuration is seen by those who may open the configuration pages, and people and their saved
-// views by those who may see people.
+// Configuration is seen by those who may open the configuration pages, and people by those who may
+// see people. Saved views are seen by those who open their table's page.
 const configurationKinds: readonly RecordType[] = [
   "list",
   "list-item",
   "choice-order",
   "field",
 ];
-const peopleKinds: readonly RecordType[] = ["person", "saved-view"];
+const peopleKinds: readonly RecordType[] = ["person"];
 // The hiring plan, by those who see people and the hiring plan.
 const hiringKinds: readonly RecordType[] = ["planned-hire"];
 
@@ -462,17 +468,14 @@ function shown(
 
 // Whether the actor sees a change, by the rule of its kind of record. Feature teams' details are
 // seen with View Feature teams and the classes they are kept in, whether or not the reader sees
-// people, but their drafts only with people. Changes to a saved view are kept from others as long
-// as it is, or was then, personal.
+// people, but their drafts only with people.
 function seesRowOfKind(
   actor: Actor,
   row: StoredChange,
   tier: Tier,
   sensitivities: readonly Sensitivity[],
   seenPlan: readonly RecordType[],
-  keptViewChange: (row: StoredChange) => boolean,
 ): boolean {
-  if (row.recordType === "saved-view" && keptViewChange(row)) return false;
   if (row.recordType === "feature-team") {
     return (
       (!row.draft || actor.permissions.includes("people:view")) &&
@@ -546,10 +549,10 @@ async function visibleRows(
       (held.get(recordId) as unknown[]).push(oldValue, newValue);
     }
   }
-  const viewTiers =
+  const views =
     held.size === 0
-      ? new Map<string, Tier>()
-      : await viewTiersNow(database, held);
+      ? new Map<string, ViewNow>()
+      : await viewsNow(database, actor, held);
   const keptViewChange = await readKeptViewChanges(database, actor, viewIds);
   const seenPlan = seenPlanKinds(actor);
   return rows.flatMap((row) => {
@@ -571,7 +574,7 @@ async function visibleRows(
         : []),
       ...(row.recordType === "saved-view"
         ? // Every view in the rows has its tier, found just above.
-          [viewTiers.get(row.recordId) as Tier]
+          [(views.get(row.recordId) as ViewNow).tier]
         : []),
     ];
     // A hire's own details are seen with the hiring plan, whatever tier they were recorded at.
@@ -582,14 +585,15 @@ async function visibleRows(
     const tier = mostSensitive(
       sensitivities.map(tierOfSensitivity(actor.dataClasses)),
     );
-    const seen = seesRowOfKind(
-      actor,
-      row,
-      tier,
-      sensitivities,
-      seenPlan,
-      keptViewChange,
-    );
+    const seen =
+      row.recordType === "saved-view"
+        ? !keptViewChange(row) &&
+          seesViewHistory(
+            actor,
+            views.get(row.recordId) as ViewNow,
+            sensitivities.map(tierOfSensitivity(actor.dataClasses)),
+          )
+        : seesRowOfKind(actor, row, tier, sensitivities, seenPlan);
     return seen ? [{ row, tier }] : [];
   });
 }
@@ -1037,7 +1041,8 @@ export async function readChangeHistory(
   const tiers = tierSchema.options.filter((tier) =>
     seesSensitivity(actor, tier),
   );
-  if (kinds.length === 0 && plan.length === 0 && !teams) {
+  const views = opensAnyViews(actor);
+  if (kinds.length === 0 && plan.length === 0 && !teams && !views) {
     return { entries: [], next: null, includedSensitive: false };
   }
   const mayShow = or(
@@ -1065,6 +1070,18 @@ export async function readChangeHistory(
       : undefined,
     plan.length > 0
       ? and(inArray(changes.recordType, plan), eq(changes.tier, "general"))
+      : undefined,
+    // Which table's views, and the classes they use now, are checked change by change.
+    views
+      ? and(
+          eq(changes.recordType, "saved-view"),
+          inArray(
+            changes.tier,
+            tierSchema.options.filter((tier) =>
+              seesClass(actor.permissions, tier),
+            ),
+          ),
+        )
       : undefined,
   );
   const words = searchWords(search);

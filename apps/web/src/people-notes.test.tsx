@@ -72,7 +72,6 @@ const peopleAnswer =
       people,
       fields: [background],
       order: ["preferredName", "employeeId", "f1"],
-      views: [],
     });
 const saved = () => Response.json({ changeSetId: s1 });
 const positions = {
@@ -411,7 +410,6 @@ describe("a Note column", () => {
           people: [avery, blake],
           fields: [{ ...background, required: true }],
           order: ["preferredName", "employeeId", "f1"],
-          views: [],
         }),
     });
     fireEvent.click(cell("p1"));

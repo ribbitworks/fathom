@@ -416,13 +416,18 @@ export function shownIn(field: ClassifiedField): string[] {
   return [...views, ...columns, ...heldElsewhere[field]];
 }
 
-// The classes a view needs that a role does not see, least sensitive first.
-function missingClasses(view: ClassifiedView, access: ClassAccess): Tier[] {
+// The classes the details a view needs are kept in.
+export const classesOfView = (
+  view: ClassifiedView,
+  access: Pick<ClassAccess, "dataClasses">,
+): Tier[] =>
   // The view is always one of the fixed views listed above.
   // eslint-disable-next-line security/detect-object-injection
-  const needed = viewNeeds[view].map((field: ClassifiedField) =>
-    classOf(access, field),
-  );
+  viewNeeds[view].map((field: ClassifiedField) => access.dataClasses[field]);
+
+// The classes a view needs that a role does not see, least sensitive first.
+function missingClasses(view: ClassifiedView, access: ClassAccess): Tier[] {
+  const needed = classesOfView(view, access);
   return tierSchema.options.filter(
     (dataClass) =>
       needed.includes(dataClass) && !seesClass(access.permissions, dataClass),

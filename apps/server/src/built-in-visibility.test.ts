@@ -229,7 +229,7 @@ describe("the Position column", () => {
   it("refuses a saved view using the position to those who cannot see it", async () => {
     const saver = await grantedOnly(["people:view"]);
     const save = () =>
-      send(saver, "POST", "/api/people/views", {
+      send(saver, "POST", "/api/views/people", {
         name: unique("Fictional View"),
         scope: "personal",
         definition: { sort: ["positionId"] },
@@ -256,7 +256,7 @@ describe("the State column", () => {
   it("refuses a saved view using State to those who cannot see the Hiring states list's tier", async () => {
     const saver = await grantedOnly(["people:view"]);
     const save = () =>
-      send(saver, "POST", "/api/people/views", {
+      send(saver, "POST", "/api/views/people", {
         name: unique("Fictional View"),
         scope: "personal",
         definition: { filters: { stateId: { empty: true } } },

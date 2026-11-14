@@ -182,7 +182,6 @@ const peopleAnswer = () =>
     people: [avery, blake],
     fields: [site, role],
     order,
-    views: [],
   });
 const savedAs =
   (changeSetId: string | null = s1) =>
@@ -291,7 +290,6 @@ describe("who sees the People page", () => {
           fields: [site],
           order: ["employeeId", "preferredName", "f1"],
           positionHidden: true,
-          views: [],
         }),
       "GET /api/lists": listsAnswer,
     });
@@ -326,7 +324,6 @@ describe("who sees the People page", () => {
           people: [{ ...avery, startDate: undefined, endDate: undefined }],
           fields: [site],
           order: ["employeeId", "preferredName", "f1"],
-          views: [],
         }),
       "GET /api/lists": listsAnswer,
     });
@@ -408,8 +405,7 @@ describe("who sees the People page", () => {
     expect(
       await screen.findByText("Fathom could not load the people."),
     ).toBeDefined();
-    answer = () =>
-      Response.json({ people: [], fields: [], order: [], views: [] });
+    answer = () => Response.json({ people: [], fields: [], order: [] });
     await userEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("No people yet")).toBeDefined();
   });
@@ -589,7 +585,6 @@ describe("editing people", () => {
             people: [blake, { ...avery, preferredName: "Zed Fictional" }],
             fields: [site, role],
             order,
-            views: [],
           });
         return savedAs()();
       },
@@ -775,7 +770,6 @@ describe("adding people", () => {
           people: saved ? [avery, blake, casey] : [avery, blake],
           fields: [site, role],
           order,
-          views: [],
         }),
     });
     // Adding is the page's main action, beside adding a column.
@@ -1152,7 +1146,6 @@ describe("drafts", () => {
           ],
           fields: [site, role],
           order,
-          views: [],
         }),
       "DELETE /api/people/p2": () => {
         removed = true;
@@ -1217,7 +1210,6 @@ describe("drafts", () => {
           ],
           fields: [site, role],
           order,
-          views: [],
         }),
     });
     expect(cell("p1", "f1").textContent).toBe(
@@ -1330,7 +1322,6 @@ describe("drafts", () => {
           ],
           fields: [site, role],
           order,
-          views: [],
         }),
       "POST /api/drafts/approval": savedAs(),
       "POST /api/drafts/rejection": savedAs(),
@@ -1439,7 +1430,6 @@ describe("drafts", () => {
           people: [avery, { ...blake, draft: draftOf({ action: "created" }) }],
           fields: [site, role],
           order,
-          views: [],
         }),
       "PATCH /api/people/p1": () =>
         new Promise<Response>((resolve) => {
@@ -1465,7 +1455,6 @@ describe("drafts", () => {
           people: [avery, { ...blake, draft: draftOf({ action: "deleted" }) }],
           fields: [site, role],
           order,
-          views: [],
         }),
     });
     expect(cell("p2", "employeeId").getAttribute("aria-readonly")).toBe("true");
@@ -1504,7 +1493,6 @@ describe("drafts", () => {
           ],
           fields: [site, role],
           order,
-          views: [],
         }),
       "DELETE /api/people/p1/draft": () => {
         discarded = true;
@@ -1536,7 +1524,6 @@ describe("drafts", () => {
           people: [avery, { ...blake, draft: draftOf({ action: "created" }) }],
           fields: [site, role],
           order,
-          views: [],
         }),
       "DELETE /api/people/p2/draft": savedAs(),
     });
@@ -1943,6 +1930,7 @@ describe("searching, sorting, and filtering", () => {
     const fetch = serverAnswers({
       "GET /api/session": editor,
       "GET /api/people": peopleAnswer,
+      "GET /api/views/people": () => Response.json([]),
       "GET /api/lists": listsAnswer,
       ...answers,
     });
@@ -2140,7 +2128,6 @@ describe("searching, sorting, and filtering", () => {
             ],
             fields: [site, role],
             order,
-            views: [],
           });
         return Response.json({ ids: ["p9"], changeSetId: s1 }, { status: 201 });
       },
@@ -2345,7 +2332,6 @@ describe("searching, sorting, and filtering", () => {
           ],
           fields: [site, role],
           order,
-          views: [],
         }),
     });
     const names = () =>
@@ -2465,7 +2451,6 @@ describe("searching, sorting, and filtering", () => {
           ],
           fields: [site, role],
           order,
-          views: [],
         }),
     });
     const liveRows = () =>
@@ -2527,7 +2512,6 @@ describe("searching, sorting, and filtering", () => {
           ],
           fields: [site, role],
           order,
-          views: [],
         }),
     });
     await userEvent.click(await findRowActions("Avery Drafted"));
@@ -2646,7 +2630,6 @@ describe("searching, sorting, and filtering", () => {
             people: [{ ...avery, values: { f1: ["c2"] } }, blake],
             fields: [site, role],
             order,
-            views: [],
           });
         return savedAs()();
       },
@@ -2678,7 +2661,6 @@ describe("searching, sorting, and filtering", () => {
           ],
           fields: [site],
           order,
-          views: [],
         }),
       "GET /api/lists": listsAnswer,
     });
@@ -2746,13 +2728,7 @@ describe("searching, sorting, and filtering", () => {
       canChange: false,
       canShare: false,
     };
-    const withViews = (views: object[]) => () =>
-      Response.json({
-        people: [avery, blake],
-        fields: [site, role],
-        order,
-        views,
-      });
+    const withViews = (views: object[]) => () => Response.json(views);
 
     it("offers nothing to save or apply until there is a view or a saved one", async () => {
       await openAt("/people");
@@ -2768,8 +2744,8 @@ describe("searching, sorting, and filtering", () => {
       const { fetch, history } = await openAt(
         '/people?filters={"f1":{"any":["c1"]}}',
         {
-          "GET /api/people": () => withViews(views)(),
-          "POST /api/people/views": () => {
+          "GET /api/views/people": () => withViews(views)(),
+          "POST /api/views/people": () => {
             views = [harbour];
             return Response.json(
               { view: harbour, changeSetId: s1 },
@@ -2789,7 +2765,7 @@ describe("searching, sorting, and filtering", () => {
       await waitFor(() => {
         expect(address(history)).toContain(`view=${v1}`);
       });
-      expect(bodyOf(fetch, "POST", "/api/people/views")).toEqual([
+      expect(bodyOf(fetch, "POST", "/api/views/people")).toEqual([
         {
           name: "Harbour",
           scope: "personal",
@@ -2814,7 +2790,10 @@ describe("searching, sorting, and filtering", () => {
 
     it("sets what may be done with the user's own view apart from the views, even with nothing in it", async () => {
       await openAt(`/people?view=${v1}`, {
-        "GET /api/people": withViews([{ ...harbour, definition: {} }, theirs]),
+        "GET /api/views/people": withViews([
+          { ...harbour, definition: {} },
+          theirs,
+        ]),
       });
       expect(await viewsMenuLayout()).toEqual([
         "Shared views",
@@ -2832,17 +2811,17 @@ describe("searching, sorting, and filtering", () => {
       const { fetch, history } = await openAt(
         `/people?filters={"f1":{"any":["c1"]}}&view=${v1}`,
         {
-          "GET /api/people": () => withViews([mine, theirs])(),
-          [`PUT /api/people/views/${v1}`]: () => {
+          "GET /api/views/people": () => withViews([mine, theirs])(),
+          [`PUT /api/views/people/${v1}`]: () => {
             const [change] = bodyOf(
               fetch,
               "PUT",
-              `/api/people/views/${v1}`,
+              `/api/views/people/${v1}`,
             ).slice(-1) as object[];
             mine = { ...mine, ...change };
             return Response.json({ view: mine, changeSetId: s1 });
           },
-          [`DELETE /api/people/views/${v1}`]: savedAs(),
+          [`DELETE /api/views/people/${v1}`]: savedAs(),
         },
       );
       expect(viewsButton().getAttribute("aria-label")).toBe("Views: Harbour");
@@ -2852,7 +2831,7 @@ describe("searching, sorting, and filtering", () => {
       );
       expect(address(history)).toContain(`view=${v1}`);
       await chooseView("Update Harbour");
-      expect(bodyOf(fetch, "PUT", `/api/people/views/${v1}`)).toEqual([
+      expect(bodyOf(fetch, "PUT", `/api/views/people/${v1}`)).toEqual([
         {
           definition: {
             filters: { f1: { any: ["c1"] } },
@@ -2875,13 +2854,13 @@ describe("searching, sorting, and filtering", () => {
       await waitFor(() => {
         expect(screen.queryByRole("dialog")).toBeNull();
       });
-      expect(bodyOf(fetch, "PUT", `/api/people/views/${v1}`)).toContainEqual({
+      expect(bodyOf(fetch, "PUT", `/api/views/people/${v1}`)).toContainEqual({
         name: "Home",
       });
 
       await chooseView("Delete view");
       expect(fetch).toHaveBeenCalledWith(
-        `/api/people/views/${v1}`,
+        `/api/views/people/${v1}`,
         expect.objectContaining({ method: "DELETE" }),
       );
       await screen.findByText("Deleted the Home view.");
@@ -2893,7 +2872,7 @@ describe("searching, sorting, and filtering", () => {
 
     it("lists views under My views and Shared views", async () => {
       await openAt("/people", {
-        "GET /api/people": withViews([
+        "GET /api/views/people": withViews([
           { ...harbour, scope: "personal" },
           theirs,
         ]),
@@ -2907,7 +2886,21 @@ describe("searching, sorting, and filtering", () => {
     });
 
     it("leaves out a group with no views", async () => {
-      await openAt("/people", { "GET /api/people": withViews([theirs]) });
+      await openAt("/people", { "GET /api/views/people": withViews([theirs]) });
+      expect(await viewsMenuLayout()).toEqual(["Shared views", "Theirs"]);
+    });
+
+    it("leaves out a view of the user's own that their role can no longer use", async () => {
+      await openAt("/people", {
+        "GET /api/views/people": withViews([
+          theirs,
+          {
+            id: "00000000-0000-4000-8000-0000000000a3",
+            name: "Leaving soon",
+            missing: { columns: ["End"] },
+          },
+        ]),
+      });
       expect(await viewsMenuLayout()).toEqual(["Shared views", "Theirs"]);
     });
 
@@ -2918,9 +2911,9 @@ describe("searching, sorting, and filtering", () => {
         canShare: true,
         definition: {},
       };
-      const url = `/api/people/views/${v1}`;
+      const url = `/api/views/people/${v1}`;
       const { fetch } = await openAt(`/people?view=${v1}`, {
-        "GET /api/people": withViews([mine]),
+        "GET /api/views/people": withViews([mine]),
         [`PUT ${url}`]: () =>
           Response.json({
             view: { ...mine, scope: "shared" },
@@ -2938,9 +2931,9 @@ describe("searching, sorting, and filtering", () => {
 
     it("takes back the applied view, offering Undo", async () => {
       const shared = { ...harbour, canShare: true, definition: {} };
-      const url = `/api/people/views/${v1}`;
+      const url = `/api/views/people/${v1}`;
       const { fetch } = await openAt(`/people?view=${v1}`, {
-        "GET /api/people": withViews([shared]),
+        "GET /api/views/people": withViews([shared]),
         [`PUT ${url}`]: () =>
           Response.json({
             view: { ...shared, scope: "personal" },
@@ -2964,8 +2957,8 @@ describe("searching, sorting, and filtering", () => {
         definition: {},
       };
       await openAt(`/people?view=${v1}`, {
-        "GET /api/people": withViews([mine]),
-        [`PUT /api/people/views/${v1}`]: () =>
+        "GET /api/views/people": withViews([mine]),
+        [`PUT /api/views/people/${v1}`]: () =>
           Response.json(
             { error: "There is already a shared view named Harbour" },
             { status: 409 },
@@ -2978,7 +2971,7 @@ describe("searching, sorting, and filtering", () => {
 
     it("offers no sharing of a view the user may not share", async () => {
       await openAt(`/people?view=${v1}`, {
-        "GET /api/people": withViews([{ ...harbour, definition: {} }]),
+        "GET /api/views/people": withViews([{ ...harbour, definition: {} }]),
       });
       const items = await viewsMenuItems();
       expect(items).toContain("Rename…");
@@ -2987,8 +2980,8 @@ describe("searching, sorting, and filtering", () => {
 
     it("saves a view as shared when the box is ticked", async () => {
       const { fetch } = await openAt("/people?search=avery", {
-        "GET /api/people": withViews([]),
-        "POST /api/people/views": () =>
+        "GET /api/views/people": withViews([]),
+        "POST /api/views/people": () =>
           Response.json({ view: harbour, changeSetId: s1 }, { status: 201 }),
       });
       await chooseView("Save view…");
@@ -3003,7 +2996,7 @@ describe("searching, sorting, and filtering", () => {
         "Harbour{Enter}",
       );
       await waitFor(() => {
-        expect(bodyOf(fetch, "POST", "/api/people/views")).toEqual([
+        expect(bodyOf(fetch, "POST", "/api/views/people")).toEqual([
           { name: "Harbour", scope: "shared", definition: { search: "avery" } },
         ]);
       });
@@ -3012,7 +3005,7 @@ describe("searching, sorting, and filtering", () => {
     it("offers no choice of sharing to those who may not save shared views", async () => {
       await openAt("/people?search=avery", {
         "GET /api/session": viewer,
-        "GET /api/people": withViews([]),
+        "GET /api/views/people": withViews([]),
       });
       await chooseView("Save view…");
       const dialog = await screen.findByRole("dialog", { name: "Save view" });
@@ -3022,7 +3015,7 @@ describe("searching, sorting, and filtering", () => {
 
     it("checks a name only against views kept the same way", async () => {
       await openAt("/people?search=avery", {
-        "GET /api/people": withViews([theirs]),
+        "GET /api/views/people": withViews([theirs]),
       });
       await chooseView("Save view…");
       const dialog = await screen.findByRole("dialog", { name: "Save view" });
@@ -3042,8 +3035,8 @@ describe("searching, sorting, and filtering", () => {
 
     it("stops showing a name as taken once the view would be kept the other way", async () => {
       await openAt("/people?search=avery", {
-        "GET /api/people": withViews([]),
-        "POST /api/people/views": () =>
+        "GET /api/views/people": withViews([]),
+        "POST /api/views/people": () =>
           Response.json(
             { error: "There is already a view with that name" },
             { status: 409 },
@@ -3063,8 +3056,8 @@ describe("searching, sorting, and filtering", () => {
 
     it("saves a moved column in the view", async () => {
       const { fetch } = await openAt("/people", {
-        "GET /api/people": withViews([]),
-        "POST /api/people/views": () =>
+        "GET /api/views/people": withViews([]),
+        "POST /api/views/people": () =>
           Response.json({ view: harbour, changeSetId: s1 }, { status: 201 }),
       });
       await userEvent.click(
@@ -3083,7 +3076,7 @@ describe("searching, sorting, and filtering", () => {
         within(dialog).getByRole("button", { name: "Save view" }),
       );
       await waitFor(() => {
-        expect(bodyOf(fetch, "POST", "/api/people/views")).toEqual([
+        expect(bodyOf(fetch, "POST", "/api/views/people")).toEqual([
           {
             name: "Moved",
             scope: "personal",
@@ -3110,7 +3103,7 @@ describe("searching, sorting, and filtering", () => {
     it("names moved columns in the menu, and puts them back from it", async () => {
       const { history } = await openAt(
         '/people?order=["employeeId","preferredName"]',
-        { "GET /api/people": withViews([]) },
+        { "GET /api/views/people": withViews([]) },
       );
       await chooseView(/^Columns moved/);
       await waitFor(() => {
@@ -3120,7 +3113,7 @@ describe("searching, sorting, and filtering", () => {
 
     it("lets a new view, which is personal, take the name of a shared one", async () => {
       await openAt("/people?search=avery", {
-        "GET /api/people": withViews([harbour]),
+        "GET /api/views/people": withViews([harbour]),
       });
       await chooseView("Save view…");
       const dialog = await screen.findByRole("dialog", { name: "Save view" });
@@ -3132,7 +3125,7 @@ describe("searching, sorting, and filtering", () => {
 
     it("starts the menu with clearing the view when there are no saved views", async () => {
       await openAt("/people?show=drafts", {
-        "GET /api/people": withViews([]),
+        "GET /api/views/people": withViews([]),
       });
       await userEvent.click(viewsButton());
       const menu = await screen.findByRole("menu");
@@ -3141,7 +3134,7 @@ describe("searching, sorting, and filtering", () => {
 
     it("lets others apply a view without changing it, save it as their own, and clear it", async () => {
       await openAt(`/people?sort=["-preferredName"]&view=${v2}`, {
-        "GET /api/people": withViews([harbour, theirs]),
+        "GET /api/views/people": withViews([harbour, theirs]),
       });
       await userEvent.click(viewsButton());
       const offered = await screen.findAllByRole("menuitem");
@@ -3183,8 +3176,8 @@ describe("searching, sorting, and filtering", () => {
     it("refuses a name someone has just taken, and says when a view cannot be saved", async () => {
       let status = 409;
       await openAt("/people?search=avery", {
-        "GET /api/people": withViews([]),
-        "POST /api/people/views": () =>
+        "GET /api/views/people": withViews([]),
+        "POST /api/views/people": () =>
           Response.json(
             { error: "There is already a view with that name" },
             { status },
@@ -3287,7 +3280,6 @@ describe("drafts of columns", () => {
       people: [avery, blake],
       fields: [site, renamed, added],
       order: draftedOrder,
-      views: [],
     });
 
   // The Draft menu above the table, opened.
@@ -3397,7 +3389,6 @@ describe("drafts of columns", () => {
             "startDate",
             "endDate",
           ],
-          views: [],
         }),
     });
     const header = (name: string) =>
@@ -3450,7 +3441,6 @@ describe("drafts of columns", () => {
           ],
           fields: [site, remade],
           order,
-          views: [],
         }),
     });
     const liveCells = [
@@ -3501,7 +3491,6 @@ describe("drafts of columns", () => {
             },
           ],
           order: draftedOrder.filter((key) => key !== "f3"),
-          views: [],
         }),
     });
     await userEvent.click(await findRowActions("Avery Fictional"));
@@ -3536,7 +3525,6 @@ describe("drafts of columns", () => {
             },
           ],
           order,
-          views: [],
         }),
       "GET /api/lists": listsAnswer,
     });
@@ -3565,7 +3553,6 @@ describe("drafts of columns", () => {
           people: [avery, blake],
           fields: [site, remade],
           order,
-          views: [],
         }),
       "GET /api/lists": () => Response.json({ lists: [sites] }),
     });
@@ -3621,7 +3608,6 @@ describe("drafts of columns", () => {
             { ...renamed, draft: { ...renamed.draft, state: "waiting" } },
           ],
           order,
-          views: [],
         }),
       "GET /api/lists": listsAnswer,
     });
@@ -3652,7 +3638,6 @@ describe("drafts of columns", () => {
           ],
           fields: [site, renamed],
           order: draftedOrder.filter((key) => key !== "f3"),
-          views: [],
         }),
       "GET /api/lists": listsAnswer,
     });
@@ -3754,7 +3739,6 @@ describe("unpublished and held changes", () => {
           ],
           fields: [site, role],
           order,
-          views: [],
         }),
     });
     expect(cell("p1", "preferredName").textContent).toContain(
@@ -3808,7 +3792,6 @@ describe("unpublished and held changes", () => {
             "startDate",
             "endDate",
           ],
-          views: [],
         }),
     });
     expect(
@@ -3894,7 +3877,6 @@ describe("planned hires", () => {
             "startDate",
             "expected",
           ],
-          views: [],
         }),
       "GET /api/lists": () =>
         Response.json({ lists: [sites, roles, positions, states] }),
@@ -4228,7 +4210,6 @@ describe("adding from New", () => {
           people: added ? [avery, blake, casey] : [avery, blake],
           fields: [site, role],
           order,
-          views: [],
         }),
     });
     await typeInto("Name", "Casey Fictional");
@@ -4529,7 +4510,6 @@ describe("adding from New", () => {
           people: [{ ...avery, isManager: true }, blake],
           fields: [site, role],
           order,
-          views: [],
         }),
     });
     await typeInto("End", "2027-01-31");
@@ -4638,7 +4618,6 @@ describe("exporting People", () => {
           people: [avery, moved],
           fields: [site, role],
           order,
-          views: [],
         }),
     });
 
@@ -4684,7 +4663,6 @@ describe("on another date", () => {
         people: [managingAvery, blake],
         fields: [site, role],
         order,
-        views: [],
       }),
   };
   const reader = session([
@@ -4762,7 +4740,6 @@ describe("on another date", () => {
           people: [managingAvery, lineToday],
           fields: [site, role],
           order,
-          views: [],
         }),
       "GET /api/lists": listsAnswer,
       ...peopleOnDay,

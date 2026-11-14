@@ -12,6 +12,7 @@ import {
   needsStaffing,
   type PlanChoices,
   type ReleaseStream,
+  type CardPart,
 } from "@fathom/shared";
 import { Button, Group, Paper, Text, UnstyledButton } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
@@ -20,7 +21,6 @@ import { AppMenu, MenuChoices, MenuToggle } from "./app-menu.tsx";
 import {
   type BoardColumn,
   boardColumns,
-  type CardPart,
   cardOrder,
   cardPartLabels,
   columnOf,

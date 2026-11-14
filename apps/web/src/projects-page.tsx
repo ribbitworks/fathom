@@ -19,7 +19,12 @@ import type {
   RecordRef,
   Show,
 } from "@fathom/shared";
-import { allOf, withRemovalReason } from "@fathom/shared";
+import {
+  allOf,
+  cardPartSchema,
+  type PlanMode,
+  withRemovalReason,
+} from "@fathom/shared";
 import {
   Button,
   Group,
@@ -37,7 +42,7 @@ import {
   cardId,
   FeatureBoard,
 } from "./feature-board-view.tsx";
-import { cardPartSchema, type PlanMode, planModes } from "./feature-board.ts";
+import { planModes } from "./feature-board.ts";
 import { today } from "./today.ts";
 import { TableTips } from "./table-tips.tsx";
 import {

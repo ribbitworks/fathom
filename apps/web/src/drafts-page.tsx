@@ -652,7 +652,7 @@ export function DraftsPage({
   let content: ReactNode;
   const peopleData: PeopleData | undefined = seesPeople
     ? people.data
-    : { people: [], fields: [], order: [], views: [] };
+    : { people: [], fields: [], order: [] };
   const streams = seesPlan ? releases.data?.streams : [];
   if (
     (seesPeople && people.isPending) ||

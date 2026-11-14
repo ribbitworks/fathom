@@ -55,9 +55,10 @@ import type {
   ReleaseStreamRequest,
   ReleaseStreams,
   RetiredRequest,
-  SavedView,
+  ListedView,
   SavedViewChange,
   SavedViewRequest,
+  ViewTable,
   PasswordOwner,
   PasswordSettings,
   Settings,
@@ -193,6 +194,7 @@ export interface DataAccess {
   drafts: DraftAccess;
   // People, and the columns on the People table.
   people: PeopleAccess;
+  views: ViewAccess;
   // Planned hires: the hiring plan, or its placeholders.
   hires: HireAccess;
   // Feature teams, drafted by those who edit them.
@@ -433,9 +435,8 @@ export interface ListAccess {
 }
 
 export interface PeopleAccess {
-  // Everyone the actor may see, with the columns whose values they may see, and the saved views
-  // they may see, today or on another day. Reading anyone's Personal details, or another day, is
-  // recorded in the access history.
+  // Everyone the actor may see, with the columns whose values they may see, today or on another
+  // day. Reading anyone's Personal details, or another day, is recorded in the access history.
   read(
     actor: Actor,
     on?: string,
@@ -444,7 +445,6 @@ export interface PeopleAccess {
     fields: Field[];
     order: string[];
     positionHidden?: true;
-    views: SavedView[];
   }>;
   // Today's reporting lines as approved, with General details only, each person's draft of their
   // manager and team name beside, and the chart as drafts make it, as the reader may see them.
@@ -480,18 +480,24 @@ export interface PeopleAccess {
   // Discards a draft of a column, or sends a rejected one for approval again.
   discardColumnDraft(actor: Actor, id: string): Promise<ChangeSetId>;
   resubmitColumnDraft(actor: Actor, id: string): Promise<ChangeSetId>;
-  // Saved views of the People table, which anyone who sees people may save, and only their maker,
-  // or someone who may change planning configuration, may change or delete.
-  createView(
+}
+
+// Saved views of each table that keeps them, seen and saved by those who open its page; only
+// their maker, or someone who may share views on the table, may change or delete them.
+export interface ViewAccess {
+  read(actor: Actor, table: ViewTable): Promise<ListedView[]>;
+  create(
     actor: Actor,
+    table: ViewTable,
     request: SavedViewRequest,
-  ): Promise<Saved<SavedView>>;
-  updateView(
+  ): Promise<Saved<ListedView>>;
+  update(
     actor: Actor,
+    table: ViewTable,
     id: string,
     change: SavedViewChange,
-  ): Promise<Saved<SavedView>>;
-  deleteView(actor: Actor, id: string): Promise<ChangeSetId>;
+  ): Promise<Saved<ListedView>>;
+  delete(actor: Actor, table: ViewTable, id: string): Promise<ChangeSetId>;
 }
 
 // Every change to planned hires is a draft, which reaches the live hires once approved. Reading the
@@ -996,7 +1002,6 @@ function createPeopleAccess(database: Database): PeopleAccess {
         people: read.people,
         ...columns,
         ...(read.positionHidden ? { positionHidden: true as const } : {}),
-        views: await views.readViews(database, actor),
       };
     },
     readOrgChart: async (actor, on) => {
@@ -1057,18 +1062,6 @@ function createPeopleAccess(database: Database): PeopleAccess {
       columnDrafts.discardColumnDraft(database, editor(actor), { id }),
     resubmitColumnDraft: async (actor, id) =>
       columnDrafts.resubmitColumnDraft(database, editor(actor), { id }),
-    createView: async (actor, request) => {
-      requirePermission(actor, "people:view");
-      return views.createView(database, actor, request);
-    },
-    updateView: async (actor, id, change) => {
-      requirePermission(actor, "people:view");
-      return views.updateView(database, actor, id, change);
-    },
-    deleteView: async (actor, id) => {
-      requirePermission(actor, "people:view");
-      return views.deleteView(database, actor, id);
-    },
   };
 }
 
@@ -1149,6 +1142,15 @@ export function createDataAccess(database: Database): DataAccess {
         rejectDrafts(database, actor, draftsRequestSchema.parse(asked), reason),
     },
     people: createPeopleAccess(database),
+    views: {
+      read: async (actor, table) => views.readViews(database, actor, table),
+      create: async (actor, table, request) =>
+        views.createView(database, actor, table, request),
+      update: async (actor, table, id, change) =>
+        views.updateView(database, actor, table, id, change),
+      delete: async (actor, table, id) =>
+        views.deleteView(database, actor, table, id),
+    },
     hires: createHireAccess(database),
     featureTeams: createFeatureTeamAccess(database),
     unpublished: {

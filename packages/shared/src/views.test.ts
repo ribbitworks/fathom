@@ -85,6 +85,28 @@ describe("viewDefinitionSchema", () => {
     expect(viewDefinitionSchema.parse({ frozen: "2" }).frozen).toBe(undefined);
   });
 
+  it("reads hidden columns, dropping a repeat or a key that does not fit", () => {
+    expect(
+      viewDefinitionSchema.parse({ hidden: ["site", "site", "no good", 7] }),
+    ).toEqual({ hidden: ["site"] });
+    expect(viewDefinitionSchema.parse({ hidden: "site" })).toEqual({});
+  });
+
+  it("reads a page's choices, dropping each that does not fit on its own", () => {
+    expect(
+      viewDefinitionSchema.parse({
+        choices: {
+          mode: "board",
+          hide: ["status", "size"],
+          stream: 7,
+          "no good": "board",
+          long: "x".repeat(textLimit + 1),
+        },
+      }),
+    ).toEqual({ choices: { mode: "board", hide: ["status", "size"] } });
+    expect(viewDefinitionSchema.parse({ choices: ["board"] })).toEqual({});
+  });
+
   it("keeps showing retired records only when asked for, dropping anything else", () => {
     expect([
       viewDefinitionSchema.parse({ retired: true }).retired,
@@ -219,6 +241,30 @@ describe("savedViewRequestSchema", () => {
     ]).toEqual([true, false]);
   });
 
+  it("accepts hidden columns, and refuses a repeat or a key that does not fit", () => {
+    expect(request({ hidden: ["site", "level"] }).success).toBe(true);
+    expect(request({ hidden: ["site", "site"] }).success).toBe(false);
+    expect(request({ hidden: ["no good"] }).success).toBe(false);
+  });
+
+  it("accepts choices of one value or several, and refuses others", () => {
+    expect(
+      request({ choices: { mode: "board", hide: ["status"] } }).success,
+    ).toBe(true);
+    expect(request({ choices: { mode: 7 } }).success).toBe(false);
+    expect(request({ choices: { "no good": "board" } }).success).toBe(false);
+    expect(
+      request({
+        choices: Object.fromEntries(
+          Array.from({ length: 101 }, (_, index) => [
+            `choice${String(index)}`,
+            "on",
+          ]),
+        ),
+      }).success,
+    ).toBe(false);
+  });
+
   it("refuses a number of frozen columns that is not whole or is negative", () => {
     expect(request({ frozen: 1.5 }).success).toBe(false);
     expect(request({ frozen: -1 }).success).toBe(false);
@@ -238,14 +284,15 @@ describe("savedViewRequestSchema", () => {
 });
 
 describe("viewColumnKeys", () => {
-  it("names each column a view filters, sorts, or breaks down on once", () => {
+  it("names each column a view filters, sorts, breaks down, or groups by once", () => {
     expect(
       viewColumnKeys({
         filters: { site: {}, draft: {} },
         sort: ["-level", "site"],
         breakdown: ["team", "level"],
+        grouping: "manager",
       }),
-    ).toEqual(["site", "draft", "level", "team"]);
+    ).toEqual(["site", "draft", "level", "team", "manager"]);
     expect(viewColumnKeys({})).toEqual([]);
   });
 });

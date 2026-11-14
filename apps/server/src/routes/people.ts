@@ -17,9 +17,6 @@ import {
   peopleSchema,
   personChangeSchema,
   savedSchema,
-  savedViewChangeSchema,
-  savedViewRequestSchema,
-  savedViewSchema,
   teamColourRequestSchema,
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
@@ -31,11 +28,6 @@ const noContent = 204;
 
 const personParams = z.object({ personId: z.uuid() });
 const fieldParams = z.object({ fieldId: z.uuid() });
-const viewParams = z.object({ viewId: z.uuid() });
-const viewResponse = z.object({
-  view: savedViewSchema,
-  changeSetId: changeSetIdSchema,
-});
 const fieldResponse = z.object({
   field: fieldSchema,
   changeSetId: changeSetIdSchema,
@@ -227,53 +219,6 @@ export function peopleRoutes(people: PeopleAccess): FastifyPluginCallbackZod {
         changeSetId: await people.resubmitColumnDraft(
           request.actor,
           request.params.fieldId,
-        ),
-      }),
-    );
-
-    app.post(
-      "/api/people/views",
-      {
-        schema: {
-          body: savedViewRequestSchema,
-          response: { [created]: viewResponse },
-        },
-      },
-      async (request, reply) => {
-        const { result, changeSetId } = await people.createView(
-          request.actor,
-          request.body,
-        );
-        return reply.status(created).send({ view: result, changeSetId });
-      },
-    );
-
-    app.put(
-      "/api/people/views/:viewId",
-      {
-        schema: {
-          params: viewParams,
-          body: savedViewChangeSchema,
-          response: { 200: viewResponse },
-        },
-      },
-      async (request) => {
-        const { result, changeSetId } = await people.updateView(
-          request.actor,
-          request.params.viewId,
-          request.body,
-        );
-        return { view: result, changeSetId };
-      },
-    );
-
-    app.delete(
-      "/api/people/views/:viewId",
-      { schema: { params: viewParams, response: saved } },
-      async (request) => ({
-        changeSetId: await people.deleteView(
-          request.actor,
-          request.params.viewId,
         ),
       }),
     );

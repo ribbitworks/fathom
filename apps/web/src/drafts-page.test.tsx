@@ -121,7 +121,7 @@ const rejected = person("p4", "Drew Fictional", {
 const live = person("p5", "Emery Fictional");
 
 const peopleWith = (people: object[]) => () =>
-  Response.json({ people, fields: [site], order: [], views: [] });
+  Response.json({ people, fields: [site], order: [] });
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -314,7 +314,6 @@ describe("the Drafts page", () => {
           people: [given],
           fields: [site, guild],
           order: [],
-          views: [],
         }),
       "GET /api/release-streams": noStreams,
       "GET /api/lists": () => Response.json({ lists: [sites, guilds] }),
@@ -379,7 +378,6 @@ describe("the Drafts page", () => {
           people: [given],
           fields: [site, guild],
           order: [],
-          views: [],
         }),
     });
     const fetch = await openDrafts(answers(["people:approve"]));
@@ -426,7 +424,6 @@ describe("the Drafts page", () => {
           people: [given],
           fields: [site, guild],
           order: [],
-          views: [],
         }),
     });
     await userEvent.click(
@@ -496,7 +493,6 @@ describe("the Drafts page", () => {
             },
           ],
           order: ["preferredName", "f2", "employeeId", "f1", "f3", "f4"],
-          views: [],
         }),
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
