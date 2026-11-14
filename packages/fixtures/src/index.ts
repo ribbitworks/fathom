@@ -24,7 +24,7 @@ import {
   sv,
   zh_CN,
 } from "@faker-js/faker";
-import { addDays, addMonths } from "@fathom/shared";
+import { addDays, addMonths, type Tier } from "@fathom/shared";
 import { createHash } from "node:crypto";
 
 // The fixed namespace every fictional identifier is made in.
@@ -51,6 +51,7 @@ export function fictionalId(name: string): string {
 export interface FictionalList {
   id: string;
   name: string;
+  visibility: Tier;
   choices: { id: string; label: string }[];
 }
 
@@ -158,10 +159,16 @@ export interface FictionalOrganization {
 // How many newcomers an organization has.
 export const newcomerCount = 2;
 
-function list(key: string, name: string, labels: string[]): FictionalList {
+function list(
+  key: string,
+  name: string,
+  labels: string[],
+  visibility: Tier = "general",
+): FictionalList {
   return {
     id: fictionalId(`list:${key}`),
     name,
+    visibility,
     choices: labels.map((label) => ({
       id: fictionalId(`list:${key}:${label}`),
       label,
@@ -208,6 +215,13 @@ const certifications = list("certifications", "Certifications", [
   "Fictional Test Analyst",
 ]);
 const languages = list("languages", "Languages", ["English", "French"]);
+// A Personal list, so a list, its column and its values in a class beyond General are seeded.
+const workPatterns = list(
+  "work-patterns",
+  "Work patterns",
+  ["Full time", "Part time", "Compressed hours"],
+  "personal",
+);
 
 function column(
   key: string,
@@ -228,6 +242,18 @@ function column(
 const siteColumn = column("site", "Site", sites);
 const levelColumn = column("level", "Level", levels);
 const teamRoleColumn = column("team-role", "Role on team", teamRoles, true);
+const workPatternColumn = column("work-pattern", "Work pattern", workPatterns);
+
+// Most work full time; a few part time or compressed hours. Picked by a person's place rather than
+// at random, so adding the column changes nothing else the seed makes.
+const partTimeEvery = 9;
+const compressedEvery = 13;
+const workPatternOf = (index: number): string =>
+  index % partTimeEvery === 4
+    ? "Part time"
+    : index % compressedEvery === 7
+      ? "Compressed hours"
+      : "Full time";
 const onboardingColumn: FictionalColumn = {
   id: fictionalId("column:onboarding"),
   name: "Onboarding",
@@ -704,6 +730,7 @@ export function fictionalOrganization({
             ),
           ],
           [levelColumn.id]: [choice(levels, level)],
+          [workPatternColumn.id]: [choice(workPatterns, workPatternOf(index))],
           ...(roles.length > 0
             ? {
                 [teamRoleColumn.id]: roles.map((label) =>
@@ -767,9 +794,15 @@ export function fictionalOrganization({
   );
   return {
     referenceDate,
-    lists: [sites, levels, teamRoles, certifications, languages],
+    lists: [sites, levels, teamRoles, certifications, languages, workPatterns],
     positions: positions.choices,
-    columns: [siteColumn, levelColumn, teamRoleColumn, onboardingColumn],
+    columns: [
+      siteColumn,
+      levelColumn,
+      teamRoleColumn,
+      onboardingColumn,
+      workPatternColumn,
+    ],
     people,
     ...lines,
     newcomers: everyone.slice(size),

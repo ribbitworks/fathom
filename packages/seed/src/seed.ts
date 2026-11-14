@@ -184,7 +184,7 @@ export async function seed(
         id: list.id,
         name: list.name,
         description: "",
-        visibility: "general",
+        visibility: list.visibility,
         retired: false,
       };
       await transaction.insert(lists).values(row);

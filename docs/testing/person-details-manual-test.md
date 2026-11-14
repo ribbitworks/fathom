@@ -80,6 +80,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **Grade** 'M1'
       - **Site** 'Ashgrove'
       - **Role on team** 'Design Authority'
+      - **Work pattern** 'Full time'
   - **Notes:**
 
 - [ ] `D843` Select 'Tanushree Patel-Singh' under **Direct reports**.

@@ -20,6 +20,7 @@
 
 import { changes, type Database, drafts, lists } from "@fathom/db";
 import type { FictionalList, FictionalOrganization } from "@fathom/fixtures";
+import { tierSchema } from "@fathom/shared";
 import { createDataAccess } from "@fathom/server/data";
 import { and, eq, gt, inArray, sql } from "drizzle-orm";
 import type { Actor } from "@fathom/server/access";
@@ -55,12 +56,17 @@ export async function positionsList(
   organization: FictionalOrganization,
 ): Promise<FictionalList> {
   const [builtIn] = await reader
-    .select({ id: lists.id, name: lists.name })
+    .select({
+      id: lists.id,
+      name: lists.name,
+      visibility: lists.visibility,
+    })
     .from(lists)
     .where(eq(lists.builtIn, "positions"));
   return {
     id: String(builtIn?.id),
     name: String(builtIn?.name),
+    visibility: tierSchema.parse(builtIn?.visibility),
     choices: organization.positions,
   };
 }

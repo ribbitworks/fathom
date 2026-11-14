@@ -65,7 +65,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `A726` Look at the **Columns** section.
   - **Expected:**
     - It lists People's added columns, such as **Site**
-    - Each column's class is an open eye, then **General**
+    - Each column's class is an open eye, then **General**, except **Work pattern**'s
+    - **Work pattern**'s class is an eye with a line through it, then **Personal**
     - **Site**'s third column reads "People shows it. It has the class of its list, Sites."
     - **Site** has no **Change class…** button
   - **Notes:**
@@ -74,6 +75,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - It lists the lists, such as 'Sites'
     - The third column of 'Sites' reads "These People columns use it: Site."
+    - The class of 'Work patterns' is an eye with a line through it, then **Personal**
     - Each list's row ends with a **Change class…** button
   - **Notes:**
 

@@ -104,6 +104,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Site**
     - **Grade**
     - **Onboarding**
+    - **Work pattern**
     - **State**
     - **Start**
     - **Expected**
@@ -135,6 +136,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Level**
     - **Role on team**
     - **Onboarding**
+    - **Work pattern**
     - **State**
     - **Start**
     - **Expected**
