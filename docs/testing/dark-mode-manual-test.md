@@ -536,6 +536,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The tint and this quarter's underline are clear against the dark page.
   - **Notes:**
 
+- [ ] `82FD` Select the box for the quarter after next in the strip, such as **Q2 2027**.
+  - **Expected:** That quarter's box is filled blue, and its white name is easy to read.
+  - **Notes:**
+
 - [ ] `36A8` Select the details button at the right of the **Stream** cell of 'Platform'.
   - **Expected:** The panel of 'Platform' opens.
   - **Notes:**

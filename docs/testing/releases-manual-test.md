@@ -780,16 +780,6 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - A box too narrow for its name shows only its quarter, such as **Q1**, or no name.
   - **Notes:**
 
-- [ ] `FFF3` Choose **Dark** in the Appearance menu.
-  - **Expected:**
-    - The strip's names are easy to read.
-    - The tint and this quarter's underline are clear against the dark page.
-  - **Notes:**
-
-- [ ] `F97C` Choose **Light** in the Appearance menu.
-  - **Expected:** The page is light again.
-  - **Notes:**
-
 - [ ] `5A51` Select **Year**.
   - **Expected:** **Year** is highlighted.
   - **Notes:**
