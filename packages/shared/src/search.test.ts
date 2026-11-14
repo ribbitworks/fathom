@@ -13,6 +13,11 @@ describe("search", () => {
     expect(folded("한국")).toBe("한국");
   });
 
+  it("folds letters drawn with a stroke to the plain letter", () => {
+    expect(folded("Holm-Schrøder")).toBe("holm-schroder");
+    expect(folded("ĐŁØ")).toBe("dlo");
+  });
+
   it("splits a search into folded words, leaving out empty ones", () => {
     expect(searchWords("  Café   Noir ")).toEqual(["cafe", "noir"]);
     expect(searchWords("   ")).toEqual([]);

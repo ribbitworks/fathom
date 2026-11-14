@@ -188,3 +188,37 @@ describe("the list's width", () => {
     expect(fitted(400)).toEqual(["400px", "400px"]);
   });
 });
+
+describe("finding a choice", () => {
+  it("ignores accents and letters drawn with a stroke, as every search does", async () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <ChoicePicker
+          id="picker"
+          label="Members"
+          options={[
+            { value: "s", label: "Silje Holm-Schrøder" },
+            { value: "e", label: "Élodie Marchand" },
+            { value: "o", label: "Other Fictional" },
+          ]}
+          multiple
+          initial={[]}
+          typed=""
+          onDone={() => undefined}
+          onCancel={() => undefined}
+        />
+      </MantineProvider>,
+    );
+
+    await userEvent.type(screen.getByLabelText("Members"), "schroder");
+    expect(
+      screen.getAllByRole("option").map(({ textContent }) => textContent),
+    ).toEqual(["Silje Holm-Schrøder"]);
+
+    await userEvent.clear(screen.getByLabelText("Members"));
+    await userEvent.type(screen.getByLabelText("Members"), "elodie");
+    expect(
+      screen.getAllByRole("option").map(({ textContent }) => textContent),
+    ).toEqual(["Élodie Marchand"]);
+  });
+});

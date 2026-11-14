@@ -204,7 +204,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 
 ## Choices
 
-- **A choice with a description:** In a picker, a choice's description shows dimmed under its name, and typing finds a choice by its description too.
+- **A choice with a description:** In a picker, a choice's description shows dimmed under its name, and typing finds a choice by its description too, ignoring letter case and accents, as [Finding rows](#search) does.
   - **Drawn by:** `ChoicePicker` in `apps/web/src/choice-picker.tsx`, which the feature team change gives descriptions.
   - **Example:** a cell's choices on People, once that change is merged and a choice has a description.
 - **Choosing none:** A picker for a value that takes one choice and need not have one offers the column's word for an empty value, such as None, No manager or Later, as its first option, with a line under it, until something is typed. Nothing is highlighted until a key is pressed or an option pointed at, and once something is typed the first match is highlighted, so none is always in sight but Enter never picks it unasked. Choosing it empties the value. Decided by the owner on 2026-11-11.
