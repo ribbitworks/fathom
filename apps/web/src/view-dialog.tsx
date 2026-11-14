@@ -11,11 +11,10 @@ import classes from "./pages.module.css";
 import { useMutation } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
-import { Count, nameProblem } from "./list-dialog.tsx";
+import { Count, nameProblem, nameTaken } from "./list-dialog.tsx";
 import { sameName } from "./lists.ts";
 
 const conflict = 409;
-const duplicate = "Another view already has that name";
 const includesId = "view-dialog-includes";
 
 export interface SavedViewResult {
@@ -70,9 +69,12 @@ export function ViewDialog({
     saving.error.status === conflict &&
     sent.scope === scope &&
     sameName(sent.name, name);
-  const problem =
-    nameProblem(name, viewLengths.name, taken, duplicate) ??
-    (refusedAsTaken ? duplicate : undefined);
+  const problem = nameProblem(
+    name,
+    viewLengths.name,
+    taken || refusedAsTaken,
+    nameTaken("view"),
+  );
 
   return (
     <form

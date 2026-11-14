@@ -34,13 +34,12 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
-import { Count, nameProblem } from "./list-dialog.tsx";
+import { Count, nameProblem, nameTaken } from "./list-dialog.tsx";
 import { sameName } from "./lists.ts";
 import { ClassChoice } from "./move-class-dialog.tsx";
 import { createField, updateField } from "./column-requests.ts";
 
 const conflict = 409;
-const duplicate = "Already a column";
 
 // Every type must be named, which the compiler checks.
 const typeNames: Record<FieldType, string> = {
@@ -121,9 +120,12 @@ export function ColumnDialog({
     saving.error.status === conflict &&
     saving.error.serverMessage === "There is already a column with that name";
   const nameRefused = refusedAsTaken && sameName(sentName, name);
-  const problem =
-    nameProblem(name, personLengths.column, taken, duplicate) ??
-    (nameRefused ? duplicate : undefined);
+  const problem = nameProblem(
+    name,
+    personLengths.column,
+    taken || nameRefused,
+    nameTaken("column"),
+  );
   const shownProblem = tried || name !== "" ? problem : undefined;
   // Retired lists, and lists drafted to be removed, are not offered, except the one the column
   // already draws on. A list only drafted to be added is offered, and is approved with the column.

@@ -1671,14 +1671,18 @@ describe("columns", () => {
     expect(within(dialog).getByText("Name needed")).toBeDefined();
     expect(within(dialog).getByText("List needed")).toBeDefined();
     await userEvent.type(within(dialog).getByLabelText("Name"), "site");
-    expect(within(dialog).getByText("Already a column")).toBeDefined();
+    expect(
+      within(dialog).getByText("Another column already has that name"),
+    ).toBeDefined();
     await userEvent.clear(within(dialog).getByLabelText("Name"));
     await userEvent.type(within(dialog).getByLabelText("Name"), "Desk");
     await chooseIn(dialog, "List", "Sites");
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Add column" }),
     );
-    expect(await within(dialog).findByText("Already a column")).toBeDefined();
+    expect(
+      await within(dialog).findByText("Another column already has that name"),
+    ).toBeDefined();
     // A name the server says is taken must change before trying again.
     await userEvent.type(within(dialog).getByLabelText("Name"), "s");
     answer = refused(

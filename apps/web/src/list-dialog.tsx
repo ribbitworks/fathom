@@ -53,6 +53,10 @@ export function nameProblem(
   return taken ? duplicate : undefined;
 }
 
+// What a name says when another of its kind, such as a view, already has it.
+export const nameTaken = (kind: string) =>
+  `Another ${kind} already has that name`;
+
 export function ListDialog({
   list,
   lists,
@@ -103,9 +107,12 @@ export function ListDialog({
   );
   const refusedAsTaken =
     saving.error instanceof ApiError && saving.error.status === conflict;
-  const problem =
-    nameProblem(name, listLengths.name, taken, "Already a list") ??
-    (refusedAsTaken ? "Already a list" : undefined);
+  const problem = nameProblem(
+    name,
+    listLengths.name,
+    taken || refusedAsTaken,
+    nameTaken("list"),
+  );
   const shownProblem = tried || name !== "" ? problem : undefined;
   const descriptionTooLong =
     description.trim().length > listLengths.description;
