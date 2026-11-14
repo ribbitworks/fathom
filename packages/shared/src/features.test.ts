@@ -8,6 +8,7 @@ import {
   featureRequestSchema,
   largestEstimateHours,
   needsFeatureTeam,
+  needsStaffing,
 } from "./features.ts";
 import { projectSubjects } from "./projects.ts";
 
@@ -98,6 +99,26 @@ describe("a feature request", () => {
       parse({ description: "a".repeat(featureLengths.description + 1) })
         .success,
     ).toBe(false);
+  });
+});
+
+describe("which features need staffing", () => {
+  it.each(["planned", "in-progress"] as const)(
+    "needs it for a %s feature with no month allocated",
+    (meaning) => {
+      expect(needsStaffing(meaning, false)).toBe(true);
+    },
+  );
+
+  it.each(["possible", "done", "cancelled", null] as const)(
+    "does not need it for a %s feature",
+    (meaning) => {
+      expect(needsStaffing(meaning, false)).toBe(false);
+    },
+  );
+
+  it("does not need it for a planned feature that is staffed", () => {
+    expect(needsStaffing("planned", true)).toBe(false);
   });
 });
 

@@ -1457,6 +1457,8 @@ describe("drafts in a stream's panel", () => {
                 sizeId: null,
                 riskId: null,
                 neededBy: null,
+                staffed: false,
+                staffedLive: false,
                 customerIds: [],
                 note: null,
                 values: {},

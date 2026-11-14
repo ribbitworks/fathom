@@ -100,6 +100,8 @@ describe("a change to a feature", () => {
       note: null,
       values: {},
       links: {},
+      staffed: false,
+      staffedLive: false,
     };
     await operationsOf("feature").change(feature, {
       proposalIds: [otherId],

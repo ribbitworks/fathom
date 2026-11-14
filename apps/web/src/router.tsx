@@ -52,6 +52,7 @@ import {
   capacityModes,
   shownCapacityMode,
 } from "./capacity.ts";
+import { cardPartSchema, planModeSchema } from "./feature-board.ts";
 import { SettingsPage } from "./settings-page.tsx";
 import { DataClassesPage } from "./data-classes-page.tsx";
 import { setTimeZone } from "./today.ts";
@@ -468,15 +469,26 @@ const planAddress = (next: PlanTab, record?: string) =>
     ? { to: "/features" as const, search: { open: record } }
     : { to: "/projects" as const, search: projectsTabSearch(next, record) };
 
+// Features' address adds whether it shows a board, and the board's stream, the cycle it starts from,
+// and the parts of its cards hidden.
+const featuresSearch = planRecordSearch.extend({
+  mode: planModeSchema.optional().catch(undefined),
+  stream: z.uuid().optional().catch(undefined),
+  from: daySchema.optional().catch(undefined),
+  hide: z.array(cardPartSchema).optional().catch(undefined),
+});
+
 const featuresRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/features",
-  validateSearch: planRecordSearch,
+  validateSearch: featuresSearch,
   beforeLoad: requiring("features:view"),
   component: function Features() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = featuresRoute.useNavigate();
-    const { open, ...search } = featuresRoute.useSearch();
+    const { open, mode, stream, from, hide, ...search } =
+      featuresRoute.useSearch();
+    const board = { mode, stream, from, hide };
     return (
       <ProjectsPage
         tab="features"
@@ -489,11 +501,28 @@ const featuresRoute = createRoute({
         }}
         approves={approvableKinds(permissions)}
         {...viewProps(search, (next, replace) => {
-          void navigate({ search: { ...next, open }, replace });
+          void navigate({ search: { ...next, ...board, open }, replace });
         })}
         open={open}
         onOpen={(next) => {
-          void navigate({ search: { ...search, open: next } });
+          void navigate({ search: { ...search, ...board, open: next } });
+        }}
+        board={{
+          mode,
+          onMode: (next) => {
+            void navigate({
+              search: {
+                ...search,
+                ...board,
+                open,
+                mode: next === "board" ? next : undefined,
+              },
+            });
+          },
+          place: { stream, from, hide },
+          onPlace: (place) => {
+            void navigate({ search: { ...search, mode, ...place, open } });
+          },
         }}
       />
     );

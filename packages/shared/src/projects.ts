@@ -210,7 +210,8 @@ export const planChoicesSchema = z.object({
   statuses: z.array(planChoiceSchema),
   featureStatuses: z.array(planChoiceSchema.extend({ meaning: meaningSchema })),
   priorities: z.array(planChoiceSchema),
-  sizes: z.array(planChoiceSchema),
+  // Each size with its weight, how many of the list's S it is.
+  sizes: z.array(planChoiceSchema.extend({ weight: z.number().nullable() })),
   risks: z.array(planChoiceSchema),
   featureTeams: z.array(planChoiceSchema),
 });

@@ -796,6 +796,8 @@ describe("the Drafts page", () => {
               sizeId: null,
               riskId: null,
               neededBy: null,
+              staffed: false,
+              staffedLive: false,
               customerIds: [],
               note: null,
               values: {},

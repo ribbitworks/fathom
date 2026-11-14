@@ -35,7 +35,26 @@ Choose a team in **Feature team**.
 ### Group the Table
 
 1. Select **Group by**.
-1. Choose **Cycle**, **Release**, **Needed by** or **None**.
+1. Choose **Cycle**, **Release**, **Needed by**, a list such as **Status**, **Priority** or **Feature team**, or **None**.
+
+### See Features as a Board
+
+#### What to Know First
+
+- A release stream is a line of releases, such as **Platform**, split into cycles of a set length.
+- A cycle is one period of a stream, such as a quarter. A feature targets the cycle it's planned for.
+- **Later** holds the features that don't target a cycle yet.
+
+The board shows one stream's cycles side by side, with a card for each feature in the cycle it targets, and **Later** as its last column.
+
+1. Choose **Board** beside the **Features** heading.
+1. To see another stream, select **Stream** and choose one.
+1. To see other cycles, select **‹** or **›**, or a cycle in the row of cycles.
+1. To go back to the current cycle, select **Today**.
+1. To choose what the cards show, select **Card** and tick or untick each part.
+1. To put the cards in rows, select **Group by** and choose, such as **Feature team**.
+
+A card marked **Not staffed** is planned or in progress but has nobody allocated to it yet. Select a card to see the feature's details. The search, the **Draft** menu and **Metrics** work on the board as they do on the table. You're done when the board shows the stream and cycles you want.
 
 ### Export Features
 

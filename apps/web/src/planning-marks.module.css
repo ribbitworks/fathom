@@ -1,0 +1,76 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* A feature's Size and Risk marks: the word, then its blocks or segments filling the space left,
+   lined up one under the other, since each word takes the same width. */
+
+.mark {
+  display: flex;
+  gap: var(--fathom-mark-gap);
+  align-items: center;
+  width: 100%;
+  font-size: var(--mantine-font-size-xs);
+}
+
+.word {
+  flex: none;
+  width: 2.5em;
+  color: var(--mantine-color-dimmed);
+}
+
+/* Four blocks, each in two halves, so half an S takes half a block. */
+.sizeBlocks {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  column-gap: 3px;
+  min-width: 0;
+}
+
+.sizeBlock {
+  height: 8px;
+  border-radius: 2px;
+}
+
+.sizeBlock[data-shade="1"] {
+  background: var(--fathom-size-1);
+}
+
+.sizeBlock[data-shade="2"] {
+  background: var(--fathom-size-2);
+}
+
+.sizeBlock[data-shade="3"] {
+  background: var(--fathom-size-3);
+}
+
+.sizeBlock[data-shade="4"] {
+  background: var(--fathom-size-4);
+}
+
+.riskSegments {
+  display: grid;
+  flex: 1;
+  column-gap: 3px;
+  min-width: 0;
+}
+
+.riskSegment {
+  height: 5px;
+  border-radius: 2px;
+}
+
+.riskSegment[data-shade="low"] {
+  background: var(--mantine-color-green-6);
+}
+
+.riskSegment[data-shade="lowMiddle"] {
+  background: var(--mantine-color-yellow-6);
+}
+
+.riskSegment[data-shade="highMiddle"] {
+  background: var(--mantine-color-orange-6);
+}
+
+.riskSegment[data-shade="high"] {
+  background: var(--mantine-color-red-6);
+}

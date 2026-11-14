@@ -1590,6 +1590,8 @@ describe("the Features page", () => {
     note: null,
     values: {},
     links: {},
+    staffed: false,
+    staffedLive: false,
   });
   const later = feature("Fictional Later", null);
   const second = feature("Fictional Second", cycleTwo);

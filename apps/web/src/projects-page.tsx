@@ -2,10 +2,10 @@
 
 // The plan's records, each a table edited like People's: the Projects page, with its projects,
 // proposals, customers, and milestones, a tab each, a record's details beside it, and a project's
-// milestones there too; and the Features page, grouped by cycle. Every change is a draft, shown in
-// place until an Approver approves it, from a record's menu or the Draft menu. Those who only see
-// the plan see the same tables, read only. The tab, the table's view, and the record shown are kept
-// in the page address.
+// milestones there too; and the Features page, grouped by cycle, or shown as a board of one stream's
+// cycles. Every change is a draft, shown in place until an Approver approves it, from a record's menu
+// or the Draft menu. Those who only see the plan see the same tables, read only. The tab, the
+// table's view, the board's place, and the record shown are kept in the page address.
 
 import type {
   Asking,
@@ -26,12 +26,24 @@ import {
   Loader,
   Menu,
   Modal,
+  SegmentedControl,
   Stack,
   Tabs,
   Text,
 } from "@mantine/core";
 import { useIsMutating, useMutation, useQuery } from "@tanstack/react-query";
 import { effortConversionsQuery } from "./effort.ts";
+import {
+  type BoardPlace,
+  cardId,
+  FeatureBoard,
+} from "./feature-board-view.tsx";
+import {
+  cardPartSchema,
+  type PlanMode,
+  planModeSchema,
+} from "./feature-board.ts";
+import { today } from "./today.ts";
 import { TableTips } from "./table-tips.tsx";
 import {
   Fragment,
@@ -283,6 +295,7 @@ export function ProjectsPage({
   onMilestonesOf,
   onFeaturesOf,
   onReleaseStream,
+  board,
 }: {
   tab: PlanTab;
   // Shows another of the plan's pages or tabs, with a record's details open if one is named.
@@ -302,6 +315,13 @@ export function ProjectsPage({
   onFeaturesOf?: (namer: FeatureNamer) => void;
   // Shows a release stream on Releases, with its releases and cycles.
   onReleaseStream?: (streamId: string) => void;
+  // How Features shows its features, as a table or a board, and where the board is.
+  board?: {
+    mode: PlanMode | undefined;
+    onMode: (mode: PlanMode) => void;
+    place: BoardPlace;
+    onPlace: (place: BoardPlace) => void;
+  };
 }) {
   const page = planPages[tab === "features" ? "features" : "projects"];
   const query = useQuery(projectPlanQuery);
@@ -314,6 +334,9 @@ export function ProjectsPage({
     ...effortConversionsQuery,
     enabled: page.loadsEffort,
   });
+  const mode = board?.mode ?? "table";
+  const onBoard = tab === "features" && mode === "board";
+  const [now] = useState(today);
   const settingsPending =
     (page.loadsStreams && streamsQuery.isPending) ||
     (page.loadsEffort && effortQuery.isPending);
@@ -545,16 +568,13 @@ export function ProjectsPage({
     );
   } else {
     const plan = query.data;
+    // The release streams, which only Features loads.
+    const streams = streamsQuery.data?.streams ?? [];
     const asShown = <Rec extends PlanRecord>(records: readonly Rec[]) =>
       recordsAsShown(view.show, records, livePlanRecords);
     // Projects and proposals as the view shows them, so the features they name follow the view.
     const choices = {
-      ...tableChoices(
-        plan,
-        choicesQuery.data,
-        streamsQuery.data?.streams ?? [],
-        effortQuery.data,
-      ),
+      ...tableChoices(plan, choicesQuery.data, streams, effortQuery.data),
       projects: asShown(plan.projects),
       proposals: asShown(plan.proposals),
     };
@@ -590,7 +610,7 @@ export function ProjectsPage({
       nodes,
       onClose: () => {
         onOpen?.(undefined);
-        focusSoon(`cell-${String(open)}-name`);
+        focusSoon(onBoard ? cardId(String(open)) : `cell-${String(open)}-name`);
       },
       menu: {
         decide: (asking, ref) => {
@@ -718,7 +738,12 @@ export function ProjectsPage({
     const filteredTo = view.filters.projectId?.any?.at(0);
     const grids: Readonly<Record<PlanTab, () => ReactElement>> = {
       features: () => {
-        const table = featureTable(choices, openRecord, plan.canEdit);
+        const table = featureTable(choices, {
+          onOpen: openRecord,
+          editsNamers: plan.canEdit,
+          board: onBoard,
+        });
+        const offeredParts = cardPartSchema.options;
         const actions: RecordActions<Feature, PlanChange, FeatureFields> = {
           ...actionsFor<Feature, FeatureFields>("feature"),
           ...columnDraftActions("features", changes),
@@ -731,6 +756,8 @@ export function ProjectsPage({
           <>
             <TableTips>
               <RecordGrid
+                // The table is drawn afresh in each mode, so it measures what it shows.
+                key={mode}
                 {...shared}
                 panels={panelsWith("feature", table, plan.features, actions)}
                 records={plan.features}
@@ -740,6 +767,23 @@ export function ProjectsPage({
                 order={order}
                 lists={lists}
                 canEditColumns={canEditColumns}
+                body={
+                  onBoard && board !== undefined
+                    ? (shown) => (
+                        <FeatureBoard
+                          shown={shown}
+                          streams={streams}
+                          choices={choicesQuery.data}
+                          place={board.place}
+                          onPlace={board.onPlace}
+                          offeredParts={offeredParts}
+                          open={open}
+                          onOpen={openRecord}
+                          today={now}
+                        />
+                      )
+                    : undefined
+                }
               />
             </TableTips>
             <ColumnModal<ProjectPlan>
@@ -802,6 +846,22 @@ export function ProjectsPage({
     <Stack gap="md" className={classes.tablePage}>
       <PageHeader
         title={page.title}
+        beside={
+          tab === "features" &&
+          board !== undefined && (
+            <SegmentedControl
+              aria-label="What the page shows"
+              value={mode}
+              onChange={(next) => {
+                board.onMode(planModeSchema.parse(next));
+              }}
+              data={[
+                { value: "table", label: "Table" },
+                { value: "board", label: "Board" },
+              ]}
+            />
+          )
+        }
         action={
           <Group gap="xs">
             {editsFeatureColumns && (

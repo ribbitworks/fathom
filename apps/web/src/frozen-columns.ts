@@ -59,7 +59,8 @@ const sameMeasure = (first: Measured, second: Measured) =>
 // The table in its scrolling box, measured whenever its header's cells change, named by `cells`,
 // and whenever it or its box is resized, such as when rows are added or the window narrows, except
 // while held, as while a column's edge is dragged, and once more as it is let go. The table, and so
-// its box, is always shown.
+// its box, is shown unless its rows are drawn another way, such as on a board, which the table is
+// mounted afresh to leave.
 export function useMeasured(
   cells: string,
 ): [RefObject<HTMLDivElement | null>, Measured, (held: boolean) => void] {
@@ -71,8 +72,8 @@ export function useMeasured(
     height: 0,
   });
   const update = useCallback(() => {
-    if (held.current) return;
-    const next = measure(scroll.current as HTMLDivElement);
+    if (held.current || scroll.current === null) return;
+    const next = measure(scroll.current);
     setMeasured((current) => (sameMeasure(current, next) ? current : next));
   }, []);
   const hold = useCallback(
@@ -84,7 +85,8 @@ export function useMeasured(
   );
   useLayoutEffect(update, [update, cells]);
   useEffect(() => {
-    const box = scroll.current as HTMLDivElement;
+    const box = scroll.current;
+    if (box === null) return undefined;
     const observer = new ResizeObserver(update);
     observer.observe(box);
     observer.observe(box.querySelector("table") as HTMLElement);

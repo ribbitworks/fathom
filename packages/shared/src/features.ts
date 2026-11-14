@@ -48,14 +48,23 @@ export const featureLengths = { description: 200 } as const;
 // The largest estimate, in hours: about 125,000 person-days, more than any feature needs.
 export const largestEstimateHours = 999_999;
 
-// A feature being planned or worked on needs a feature team to own it, as the Decisions Log sets
-// out; a possible one need not have one yet, and a done or cancelled one raises no warnings.
+// Whether a feature's status commits to it: planned or being worked on, rather than possible, done
+// or cancelled.
+export const isCommitted = (meaning: Meaning | null | undefined): boolean =>
+  meaning === "planned" || meaning === "in-progress";
+
+// A committed feature needs a feature team to own it, as the Decisions Log sets out; a possible one
+// need not have one yet, and a done or cancelled one raises no warnings.
 export const needsFeatureTeam = (
   meaning: Meaning | undefined,
   featureTeamId: string | null,
-): boolean =>
-  featureTeamId === null &&
-  (meaning === "planned" || meaning === "in-progress");
+): boolean => featureTeamId === null && isCommitted(meaning);
+
+// A committed feature with no month allocated is Not staffed, as the Decisions Log sets out.
+export const needsStaffing = (
+  meaning: Meaning | null | undefined,
+  staffed: boolean,
+): boolean => !staffed && isCommitted(meaning);
 
 // A feature's draft, naming added columns as a person's draft does: by column, with their live
 // values held by type beside the live values of the feature's own fields.
@@ -93,6 +102,10 @@ export const featureSchema = z.object({
   links: linksSchema.default({}),
   notes: notesSchema.optional(),
   numbers: numbersSchema.optional(),
+  // Whether any allocation gives the feature a month, as drafts make the allocations, and as they
+  // are live: a fact about the feature, seen by all who see it, though the allocations aren't.
+  staffed: z.boolean(),
+  staffedLive: z.boolean(),
 });
 
 export type Feature = z.infer<typeof featureSchema>;

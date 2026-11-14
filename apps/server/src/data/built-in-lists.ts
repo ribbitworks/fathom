@@ -72,6 +72,7 @@ export const listChoices = (reader: Reader, key: BuiltInList) =>
       name: listItems.label,
       retired: listItems.retired,
       meaning: listItems.meaning,
+      weight: listItems.weight,
     })
     .from(listItems)
     .innerJoin(lists, eq(lists.id, listItems.listId))

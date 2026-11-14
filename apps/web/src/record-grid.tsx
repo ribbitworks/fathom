@@ -371,8 +371,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // so the count above the table and the metrics count it once.
   countedAs?: (record: Rec) => string;
   // The ways the rows can be grouped under headings, the first of which is the table's own, for a
-  // table that groups them.
+  // table that groups them, unless its rows are in one list until one is chosen.
   groupings?: readonly RowGrouping<Rec>[];
+  ungrouped?: boolean;
   // For a table that can be exported: the table the server records an export holding Personal or
   // Confidential data as, and the classified details its rows hold apart from their columns, such
   // as the hiring plan, which planned hires' rows are. A table without it offers no export.
@@ -1244,6 +1245,19 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   viewItems?: ReactNode;
   // What the page shows under the bar above the table, such as a timeline, as tall as it needs.
   above?: ReactNode;
+  // Draws the rows the view shows in place of the table, such as a board, under the same bar.
+  body?: ((shown: ShownRows<Rec>) => ReactNode) | undefined;
+}
+
+// The rows a view shows, for a page that draws them its own way: in the view's order, each with its
+// group, its draft whatever the view, which its marks are worked out from, and as it is live; and
+// whether a side panel is open beside them.
+export interface ShownRows<Rec extends GridRecord> {
+  records: readonly Rec[];
+  panelOpen: boolean;
+  groupOf: ((record: Rec) => RowGroup) | undefined;
+  draftOf: (record: Rec) => DraftOf<Rec> | undefined;
+  liveOf: (record: Rec) => Rec | undefined;
 }
 
 const nothing = () => undefined;
@@ -1316,6 +1330,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   panels = [],
   viewItems,
   above,
+  body,
 }: RecordGridProps<Rec, Change, Request>) {
   // An address may ask for drafts of a table that has none.
   const asked = withDrafts
@@ -1549,7 +1564,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const groupOf = useSteadyGroups(
     records,
     rowView,
-    activeGrouping(view, table.groupings),
+    activeGrouping(view, table.groupings, table.ungrouped),
     stableId,
   );
   const { countedAs } = table;
@@ -2982,6 +2997,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       total={countedOnce(records).length}
       counted={table.counted?.counted(countedOnce(records))}
       groupings={table.groupings}
+      ungrouped={table.ungrouped}
       withDrafts={withDrafts}
       onLeave={() => {
         moveTo(active.row, active.column);
@@ -3009,19 +3025,41 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       }
     />
   );
+  const bar =
+    above === undefined ? (
+      viewBar
+    ) : (
+      <div>
+        {viewBar}
+        {above}
+      </div>
+    );
+  if (body !== undefined) {
+    return (
+      <DraftView show={known.show}>
+        <WithSidePanel
+          panels={sidePanels}
+          storageKey="fathom-table-panel-width"
+        >
+          {bar}
+          {body({
+            records: shownRecords,
+            panelOpen: sidePanels.length > 0,
+            groupOf,
+            draftOf: (record) => draftById.get(record.id),
+            liveOf: (record) => liveById.get(record.id),
+          })}
+        </WithSidePanel>
+        {exportQuestion}
+      </DraftView>
+    );
+  }
   // Menus and choices stay shown beside their cell however the table scrolls, so they are not hidden
   // when the cell is partly out of view.
   return (
     <DraftView show={known.show}>
       <WithSidePanel panels={sidePanels} storageKey="fathom-table-panel-width">
-        {above === undefined ? (
-          viewBar
-        ) : (
-          <div>
-            {viewBar}
-            {above}
-          </div>
-        )}
+        {bar}
         <Paper
           ref={panelRef}
           withBorder

@@ -65,6 +65,30 @@ const type = "allocation";
 const monthsOf = (record: Recorded | undefined): AllocationMonths =>
   (record?.months ?? {}) as AllocationMonths;
 
+// The features some allocation gives a month: as the reader's view of drafts makes the allocations,
+// and as they are live.
+export function staffedFeatures(state: RecordsState): {
+  drafted: ReadonlySet<string>;
+  live: ReadonlySet<string>;
+} {
+  const { live } = stateOf(state, type);
+  const staffing = (version: (id: string) => Recorded | undefined) =>
+    new Set(
+      shownIds(state, type).flatMap((id) => {
+        const record = version(id);
+        return Object.values(monthsOf(record)).some(
+          (percentage) => percentage !== null,
+        )
+          ? [String(record?.featureId)]
+          : [];
+      }),
+    );
+  return {
+    drafted: staffing((id) => versionOf(state, type, id)),
+    live: staffing((id) => live.get(id)),
+  };
+}
+
 // The first and last months someone can be allocated: a person's start and end months, which every
 // reader of allocations sees, and a planned hire's month it is expected.
 interface Bounds {

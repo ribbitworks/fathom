@@ -212,10 +212,17 @@ describe("choices", () => {
       ...choices.owners,
       ...choices.statuses,
       ...choices.priorities,
-      ...choices.sizes,
       ...choices.risks,
     ]) {
       expect(Object.keys(choice).sort()).toEqual(["id", "name", "retired"]);
+    }
+    for (const size of choices.sizes) {
+      expect(Object.keys(size).sort()).toEqual([
+        "id",
+        "name",
+        "retired",
+        "weight",
+      ]);
     }
     const [person] = await test.connection
       .select({ name: people.preferredName })

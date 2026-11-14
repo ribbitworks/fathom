@@ -1316,7 +1316,7 @@ th.liveColumn {
   top: 0;
   bottom: 0;
   z-index: 1;
-  border-left: 2px solid var(--mantine-color-red-6);
+  border-left: 2px solid var(--fathom-today);
   pointer-events: none;
 }
 
@@ -1376,18 +1376,15 @@ th.liveColumn {
   color: var(--mantine-color-text);
 }
 
+/* The current period, underlined in today's red, as today's line is on a timeline. */
 .stripPeriod[aria-current] {
-  box-shadow: inset 0 -2px 0 var(--mantine-primary-color-filled);
+  box-shadow: inset 0 -2px 0 var(--fathom-today);
   font-weight: 600;
 }
 
 .stripPeriod[data-selected] {
   background: var(--mantine-primary-color-filled);
   color: var(--mantine-primary-color-contrast);
-}
-
-.stripPeriod[data-selected][aria-current] {
-  box-shadow: inset 0 -2px 0 var(--mantine-primary-color-contrast);
 }
 
 .stripShort {

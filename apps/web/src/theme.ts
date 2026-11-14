@@ -100,6 +100,8 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-dot-size": "7px",
     "--fathom-mark-gap": "6px",
     "--fathom-ring-room": "3px",
+    // Today, only ever as a thin line: a timeline's line, a strip's underline, a board's heading.
+    "--fathom-today": "var(--mantine-color-red-6)",
     // A side panel's name, at its top, and the line it and its marks stand on.
     "--fathom-panel-name-size": "18px",
     "--fathom-panel-name-line": "28px",
@@ -114,6 +116,11 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-draft-cell-tint": "var(--fathom-draft-tint)",
     "--fathom-rejected-tint": "var(--mantine-color-red-0)",
     "--fathom-rejected-cell-tint": "var(--fathom-rejected-tint)",
+    // A size's blocks, light to dark blue-grey by position.
+    "--fathom-size-1": "#b4c3d0",
+    "--fathom-size-2": "#8399ad",
+    "--fathom-size-3": "#566f86",
+    "--fathom-size-4": "#2f4659",
   },
   dark: {
     "--mantine-color-body": "#17212a",
@@ -125,5 +132,10 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-rejected-tint":
       "color-mix(in srgb, var(--mantine-color-red-5) 6%, transparent)",
     "--fathom-rejected-cell-tint": "transparent",
+    // Dark to light, so the last block still stands out most against the dark panel.
+    "--fathom-size-1": "#3e5266",
+    "--fathom-size-2": "#5d7792",
+    "--fathom-size-3": "#86a0ba",
+    "--fathom-size-4": "#b9cde0",
   },
 });

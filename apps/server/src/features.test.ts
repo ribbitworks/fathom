@@ -372,6 +372,26 @@ describe("adding and changing", () => {
     expect(offeredNames(risks)).toEqual(["Low", "Medium", "High"]);
   });
 
+  it("offers each size with its weight", async () => {
+    const response = await test.request(
+      planner.cookie,
+      "GET",
+      "/api/projects/choices",
+    );
+    const { sizes } = response.json<PlanChoices>();
+    expect(
+      sizes
+        .filter(({ retired }) => !retired)
+        .map(({ name, weight }) => [name, weight]),
+    ).toEqual([
+      ["XS", 0.5],
+      ["S", 1],
+      ["M", 2],
+      ["L", 3],
+      ["XL", 4],
+    ]);
+  });
+
   it("keeps a feature's priority, size and risk, and clears them", async () => {
     const priorityId = await builtInChoice(
       test.connection,

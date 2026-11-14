@@ -19,6 +19,7 @@ import {
   type ChangeHistory,
   type Meaning,
   monthOf,
+  type ProjectPlan,
   type Role,
   startingRoles,
 } from "@fathom/shared";
@@ -811,6 +812,63 @@ describe("approving", () => {
     );
     expect(response.statusCode).toBe(200);
     expect(await allocationOf({ personId }, featureId)).toBeUndefined();
+  });
+});
+
+describe("a feature's staffing on the plan", () => {
+  // Seen by everyone who sees features, though the allocations themselves aren't.
+  const staffingOf = async (
+    featureId: string,
+    who: Account,
+  ): Promise<[boolean, boolean]> => {
+    const response = await test.request(who.cookie, "GET", "/api/projects");
+    expect(response.statusCode).toBe(200);
+    const feature = response
+      .json<ProjectPlan>()
+      .features.find(({ id }) => id === featureId);
+    return [Boolean(feature?.staffed), Boolean(feature?.staffedLive)];
+  };
+
+  it("is not staffed with no allocation, to a role that doesn't see allocations", async () => {
+    const featureLead = await test.signedIn("feature-lead");
+    const featureId = await addFeature();
+    expect(await staffingOf(featureId, featureLead)).toEqual([false, false]);
+  });
+
+  it("is staffed as drafted while an allocation's draft waits, and live once approved", async () => {
+    const featureLead = await test.signedIn("feature-lead");
+    const personId = await addPerson();
+    const featureId = await addFeature();
+    await changed({ personId, featureId, percentage: 50, from: month(0) });
+    expect(await staffingOf(featureId, featureLead)).toEqual([true, false]);
+    const id = String((await allocationOf({ personId }, featureId))?.id);
+    expect((await decide(projectManager, "approval", [id])).statusCode).toBe(
+      200,
+    );
+    expect(await staffingOf(featureId, featureLead)).toEqual([true, true]);
+  });
+
+  it("is staffed only to its maker while the change is unpublished", async () => {
+    const featureLead = await test.signedIn("feature-lead");
+    const personId = await addPerson();
+    const featureId = await addFeature();
+    const response = await change(
+      { personId, featureId, percentage: 50, from: month(0) },
+      allocator,
+      false,
+    );
+    expect(response.statusCode).toBe(200);
+    expect(await staffingOf(featureId, allocator)).toEqual([true, false]);
+    expect(await staffingOf(featureId, featureLead)).toEqual([false, false]);
+  });
+
+  it("is not staffed by an allocation drafted to stop from its first month", async () => {
+    const featureLead = await test.signedIn("feature-lead");
+    const personId = await addPerson();
+    const featureId = await addFeature();
+    await changed({ personId, featureId, percentage: 50, from: month(0) });
+    await changed({ personId, featureId, percentage: null, from: month(0) });
+    expect(await staffingOf(featureId, featureLead)).toEqual([false, false]);
   });
 });
 

@@ -374,8 +374,10 @@ export {
   featureLengths,
   featureRequestSchema,
   featureSchema,
+  isCommitted,
   largestEstimateHours,
   needsFeatureTeam,
+  needsStaffing,
 } from "./features.ts";
 export {
   type OrgChart,

@@ -510,6 +510,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The panel closes.
   - **Notes:**
 
+- [ ] `D381` Select **Board** beside the **Features** heading.
+  - **Expected:**
+    - The column headings, their release boxes and the cards are easy to read.
+    - The current cycle's red line along its heading, and the strip's red underline, are clear against the dark page.
+    - The **Later** column's shade is clear, and its cards stand out from it.
+    - The blocks after **Size**, from dark to light, and the bars after **Risk**, green to red, are clear.
+    - The red "Not staffed" box on 'Scheduler API' is easy to read.
+  - **Notes:**
+
+- [ ] `2514` Select **Table** beside the **Features** heading.
+  - **Expected:** The table of features shows.
+  - **Notes:**
+
 - [ ] `37DA` Select the **Projects** page in the left-hand menu.
   - **Expected:** The **Projects** tab is chosen.
   - **Notes:**

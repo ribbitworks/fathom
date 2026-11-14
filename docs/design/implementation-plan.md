@@ -169,7 +169,7 @@ Features will take saved views, personal and shared, as People's table does, in 
 
 1. **Size, Priority, and Risk:** built-in columns on Features, with the seed's Complexity becoming Kind. Done.
 2. **The shared timeline:** the timeline and its strip taken out of the Releases timeline, changing what Releases shows only by the strip and the page's layout, which puts the timeline above the table, each scrolling on its own. A wide change. Done, brought forward on 2026-11-11.
-3. **The Features Board.**
+3. **The Features Board:** in four pull requests: the board, read only, with cycles as its columns, done on 2026-11-13; months needed by as its columns, the default; moving cards; and Needed by as a year alone, decided by the owner on 2026-11-13.
 4. **Capacity's Work mode:** the Plan, with the allocations grid moved in as the People mode, coordinated with the work on the allocations grid.
 5. **The project timeline.**
 6. **The Releases timeline's changes:** its Ships on diamonds under the bars, drafts by the draft marks following the page's Draft view, and bars that name the release alone, brought forward to follow the shared timeline. Done on 2026-11-11.

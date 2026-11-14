@@ -899,6 +899,8 @@ describe("the dialog changing one cycle's length", () => {
       sizeId: null,
       riskId: null,
       neededBy: null,
+      staffed: false,
+      staffedLive: false,
       customerIds: [],
       note: null,
       values: {},

@@ -86,6 +86,8 @@ const feature = (more: Partial<Feature> = {}): Feature => ({
   note: null,
   values: {},
   links: {},
+  staffed: false,
+  staffedLive: false,
   ...more,
 });
 

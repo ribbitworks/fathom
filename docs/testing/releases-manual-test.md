@@ -687,7 +687,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - Under the zoom buttons, the strip shows a box for each quarter of the timeline, such as **Q1 2027**, from its first quarter to its last.
     - **‹** is before the strip, and **›** and **Today** are after it.
     - The quarters in view on the timeline are tinted blue, and the others are not.
-    - This quarter's box is underlined and its name in bold.
+    - This quarter's box is underlined in red and its name in bold.
   - **Notes:**
 
 - [ ] `7A96` Select the box for the quarter after next in the strip, such as **Q2 2027**.

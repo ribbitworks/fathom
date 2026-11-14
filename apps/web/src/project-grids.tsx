@@ -63,6 +63,7 @@ import {
   targetOf,
 } from "./projects.ts";
 import { ShowDetailsButton } from "./show-details-button.tsx";
+import { emptiedWords } from "./status-mark.tsx";
 import { tipAttribute } from "./table-tips.tsx";
 import {
   fieldColumn,
@@ -237,6 +238,7 @@ function planTable<Rec extends PlanRecord, Request>({
   menuItems,
   kinds,
   groupings,
+  ungrouped = false,
   nameOf = (record) => (record as { name: string }).name,
 }: {
   type: PlanRecordKind;
@@ -248,6 +250,7 @@ function planTable<Rec extends PlanRecord, Request>({
   menuItems: (record: Rec) => ReactNode;
   kinds?: readonly string[];
   groupings?: readonly RowGrouping<Rec>[];
+  ungrouped?: boolean;
   nameOf?: (record: Rec) => string;
 }): RecordTable<Rec, PlanChange, Request> {
   return {
@@ -258,7 +261,7 @@ function planTable<Rec extends PlanRecord, Request>({
     // nothing; Features is named for recording all the same, so no classified column escapes it.
     exported: type === "feature" ? { recordedAs: "features" } : {},
     ...(kinds === undefined ? {} : { kinds, kindOf: () => savedKind }),
-    ...(groupings === undefined ? {} : { groupings }),
+    ...(groupings === undefined ? {} : { groupings, ungrouped }),
     newRowLabel: () => `New ${one}`,
     removeLabel: () => `Remove ${one}`,
     nameOf,
@@ -894,21 +897,70 @@ const byNeededBy: RowGrouping<Feature> = {
         },
 };
 
+// The rows' groups by the one choice a column holds, in its list's order, then those with none.
+function byChoice(column: Column<Feature, PlanChange>): RowGrouping<Feature> {
+  const none: RowGroup = {
+    key: "no-choice",
+    label: emptiedWords(column.label, column.emptyLabel),
+    rank: Number.MAX_SAFE_INTEGER,
+  };
+  return {
+    key: column.key,
+    label: column.label,
+    of: (feature) => {
+      const [chosen] = column.value(feature) as string[];
+      const choice = column.choices.find(({ id }) => id === chosen);
+      return choice === undefined
+        ? none
+        : {
+            key: choice.id,
+            label: choice.label,
+            rank: column.choices.indexOf(choice),
+          };
+    },
+  };
+}
+
+// The columns whose one choice the rows can be grouped by, apart from the target cycle and its
+// release, grouped by their own; a column holding several choices has a row's place in several
+// groups, which a grouping can't give it.
+const groupedByChoice = (column: Column<Feature, PlanChange>) =>
+  column.kind === "choice" &&
+  !column.multiple &&
+  column.key !== "targetCycle" &&
+  column.key !== releaseColumnKey;
+
+// Features' table, or, for the board, whose columns are cycles, its rows grouped by anything else,
+// and in one list until a grouping is chosen.
 export function featureTable(
   choices: TableChoices,
-  onOpen?: (feature: Feature) => void,
-  editsNamers = false,
+  {
+    onOpen,
+    editsNamers = false,
+    board = false,
+  }: {
+    onOpen?: (feature: Feature) => void;
+    // Whether the projects and proposals that name a feature can be changed here.
+    editsNamers?: boolean;
+    // Whether the rows are a board's, whose columns are cycles.
+    board?: boolean;
+  } = {},
 ): RecordTable<Feature, PlanChange, FeatureFields> {
+  const byListed = featureColumns(choices)
+    .filter(groupedByChoice)
+    .map(byChoice);
   return planTable<Feature, FeatureFields>({
     type: "feature",
     ...wordsOf("features"),
     kinds: [newKind, savedKind],
     columns: (shown) => featureColumns(choices, { onOpen, shown, editsNamers }),
     groupings: [
-      byCycle(choices.cycles),
+      ...(board ? [] : [byCycle(choices.cycles)]),
       byTarget("release", "Release", choices.releaseOfCycle),
       byNeededBy,
+      ...byListed,
     ],
+    ungrouped: board,
     request: (changes) => {
       const request: PlanChange = {
         ...merged(changes),

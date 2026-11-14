@@ -349,14 +349,17 @@ export function isActive(filter: Filter | undefined): boolean {
 // What a view's grouping is when the rows show as one list.
 export const notGrouped = "none";
 
-// The grouping a view puts the rows under: the one it names, or else the table's first.
+// The grouping a view puts the rows under: the one it names, or else the table's first, or none for
+// a table whose rows are in one list until a grouping is chosen.
 export function activeGrouping<Grouping extends { key: string }>(
   view: Pick<View, "grouping">,
   groupings: readonly Grouping[] | undefined,
+  ungrouped = false,
 ): Grouping | undefined {
   if (view.grouping === notGrouped) return undefined;
   return (
-    groupings?.find(({ key }) => key === view.grouping) ?? groupings?.at(0)
+    groupings?.find(({ key }) => key === view.grouping) ??
+    (ungrouped ? undefined : groupings?.at(0))
   );
 }
 

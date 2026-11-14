@@ -47,6 +47,7 @@ import {
 } from "./built-in-lists.ts";
 import type { Saved, Transaction } from "./changes.ts";
 import { type Recorded, tidy } from "./drafts.ts";
+import { staffedFeatures } from "./allocations.ts";
 import { checkTeamForFeature, readTeamDrafts } from "./feature-teams.ts";
 import { readColumnsOut } from "./column-drafts.ts";
 import { liveValuesOf, typeOf } from "./column-types.ts";
@@ -283,7 +284,12 @@ function proposalOut(
   };
 }
 
-function featureOut(state: RecordsState, makers: Makers, id: string): Feature {
+function featureOut(
+  state: RecordsState,
+  makers: Makers,
+  staffed: ReturnType<typeof staffedFeatures>,
+  id: string,
+): Feature {
   const feature = shownVersion(state, "feature", id) as Recorded;
   const { draft, ...heldBy } = extras(state, makers, "feature", id);
   return {
@@ -306,6 +312,8 @@ function featureOut(state: RecordsState, makers: Makers, id: string): Feature {
     links: linksOf(feature),
     notes: notesOf(feature),
     numbers: numbersOf(feature),
+    staffed: staffed.drafted.has(id),
+    staffedLive: staffed.live.has(id),
     ...(draft === undefined ? {} : { draft: featureDraftOf(draft) }),
     ...heldBy,
   };
@@ -318,6 +326,7 @@ async function planOut(
   today: string,
 ): Promise<PlanRecords> {
   const makers = await readRecordMakers(transaction, state, viewer);
+  const staffed = staffedFeatures(state);
   return {
     customers: inOrder(state, "customer").map((id): Customer => ({
       id,
@@ -332,7 +341,7 @@ async function planOut(
     ),
     features: inOrder(state, "feature")
       .filter((id) => !isGeneralFeature(state, id))
-      .map((id) => featureOut(state, makers, id)),
+      .map((id) => featureOut(state, makers, staffed, id)),
     featureColumns: await featureColumnsOut(transaction, viewer),
   };
 }
@@ -942,8 +951,8 @@ export async function removeMilestone(
 }
 
 // People as owners, by name alone, those whose end date has passed retired, the proposal and feature
-// statuses and features' priorities, sizes and risks, in their lists' order, and the live feature
-// teams by name, those drafted to be removed retired.
+// statuses and features' priorities, sizes, with their weights, and risks, in their lists' order,
+// and the live feature teams by name, those drafted to be removed retired.
 export async function readPlanChoices(
   database: Database,
   asOf?: string,
@@ -981,7 +990,9 @@ export async function readPlanChoices(
       meaning: meaningSchema.parse(status.meaning),
     })),
     priorities: await offered("feature-priorities"),
-    sizes: await offered("feature-sizes"),
+    sizes: (await listChoices(database, "feature-sizes")).map(
+      ({ id, name, retired, weight }) => ({ id, name, retired, weight }),
+    ),
     risks: await offered("feature-risks"),
     featureTeams: teams.map((team) => ({
       ...team,

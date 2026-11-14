@@ -904,34 +904,40 @@ function DraftFilterItems({
 // Chooses what the rows are grouped by, or that they show as one list.
 function GroupingMenu({
   groupings,
+  ungrouped,
   view,
   onView,
 }: {
   groupings: readonly { key: string; label: string }[];
+  ungrouped: boolean;
   view: View;
   onView: ChangeView;
 }) {
-  const inUse = activeGrouping(view, groupings);
+  const inUse = activeGrouping(view, groupings, ungrouped);
   const none = { key: notGrouped, label: "None" };
   const shown = inUse ?? none;
+  // The view names a grouping only when it isn't the table's own, which the menu lists first.
+  const ownKey = ungrouped ? none.key : groupings[0]?.key;
   return (
     <AppMenu position="bottom-start" hideDetached={false}>
       <AppMenu.Target>
         <Button variant="default">Group by: {shown.label}</Button>
       </AppMenu.Target>
       <AppMenu.Dropdown>
-        {[...groupings, none].map(({ key, label }, place) => (
-          <Menu.Item
-            key={key}
-            leftSection={check(key === shown.key)}
-            onClick={() => {
-              onView({ ...view, grouping: place === 0 ? undefined : key });
-            }}
-          >
-            {label}
-            {key === shown.key && <VisuallyHidden>, on</VisuallyHidden>}
-          </Menu.Item>
-        ))}
+        {(ungrouped ? [none, ...groupings] : [...groupings, none]).map(
+          ({ key, label }) => (
+            <Menu.Item
+              key={key}
+              leftSection={check(key === shown.key)}
+              onClick={() => {
+                onView({ ...view, grouping: key === ownKey ? undefined : key });
+              }}
+            >
+              {label}
+              {key === shown.key && <VisuallyHidden>, on</VisuallyHidden>}
+            </Menu.Item>
+          ),
+        )}
       </AppMenu.Dropdown>
     </AppMenu>
   );
@@ -955,6 +961,7 @@ export function ViewBar({
   draftItems,
   viewItems,
   groupings,
+  ungrouped = false,
   withDrafts = true,
 }: {
   // What the rows are, one and several, such as "person" and "people".
@@ -971,8 +978,10 @@ export function ViewBar({
   // For rows of several kinds, how many of each there are in all, such as "150 people and 6
   // planned hires".
   counted?: string | undefined;
-  // What the rows can be grouped by, for a table that groups them, its own grouping first.
+  // What the rows can be grouped by, for a table that groups them, its own grouping first, unless its
+  // rows are in one list until one is chosen.
   groupings?: readonly { key: string; label: string }[] | undefined;
+  ungrouped?: boolean | undefined;
   // Goes back to the table from the search field.
   onLeave: () => void;
   saved?: SavedViews | undefined;
@@ -1028,7 +1037,12 @@ export function ViewBar({
         Metrics
       </Button>
       {groupings !== undefined && (
-        <GroupingMenu groupings={groupings} view={view} onView={onView} />
+        <GroupingMenu
+          groupings={groupings}
+          ungrouped={ungrouped}
+          view={view}
+          onView={onView}
+        />
       )}
       {/* Last of the buttons, so it moves none of them when it appears. */}
       <ViewsMenu

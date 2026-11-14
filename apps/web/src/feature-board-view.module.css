@@ -1,0 +1,132 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The Features Board: its columns' headers, its rows' labels and cells, and the cards in them, the
+   board scrolling on its own, as the table does, its headers staying in view. The lines between
+   them are the grid's own background showing through a one-pixel gap, so every line is one width. */
+
+.board {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.panel {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.grid {
+  display: grid;
+  gap: 1px;
+  background: var(--mantine-color-default-border);
+}
+
+.corner,
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--mantine-color-body);
+}
+
+.header {
+  padding: 8px 10px;
+}
+
+/* The current cycle, marked as today is, by a red line. */
+.header[aria-current] {
+  box-shadow: inset 0 3px 0 var(--fathom-today);
+}
+
+/* Room for a release's box, kept when a cycle is in none, so every header's lines line up. */
+.release {
+  display: flex;
+  flex-direction: column;
+  min-height: 1.4rem;
+  margin-bottom: 2px;
+}
+
+/* A release a draft moves away from the column, as it is live, dimmed. */
+.liveRelease {
+  margin-bottom: 2px;
+  opacity: 0.6;
+}
+
+.rowLabel {
+  padding: 10px;
+  font-weight: 600;
+  font-size: var(--mantine-font-size-sm);
+  background: var(--mantine-color-body);
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 60px;
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+  background: var(--mantine-color-body);
+}
+
+.cell[data-later] {
+  background: var(--fathom-canvas);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 6px 8px;
+  /* A card with a draft takes its row's tint, as a table's row does. */
+  background: var(--row-tint, var(--mantine-color-body));
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-sm);
+}
+
+.card:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 2px;
+}
+
+/* The card whose details are open, as a selected row is: the hover grey and the accent's bar. */
+.selected {
+  background: var(--mantine-color-default-hover);
+  box-shadow: inset var(--fathom-selected-bar-width) 0 0
+    var(--mantine-primary-color-filled);
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* A line of words with values between them, such as a status and a priority, kept inline so the
+   spaces around the dot between them stay. */
+.words {
+  display: block;
+}
+
+/* A status meaning Possible, in italics, so the likely and the committed are told apart, with room
+   for its slant before what follows. */
+.possible {
+  padding-right: 0.15em;
+  font-style: italic;
+}
+
+.liveCard {
+  opacity: 0.6;
+}
+
+.none {
+  padding: 12px;
+}

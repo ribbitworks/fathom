@@ -6,7 +6,7 @@
 // The periods are one stop for Tab, the arrow keys, Home and End moving between them.
 
 import { ActionIcon, Button, Group, UnstyledButton } from "@mantine/core";
-import { type KeyboardEvent, useRef, useState } from "react";
+import { type KeyboardEvent, type ReactNode, useRef, useState } from "react";
 import classes from "./pages.module.css";
 
 // The strip's name and its arrows' names, such as Quarters and Previous quarter.
@@ -47,12 +47,15 @@ const keyMoves = new Map<string, (focused: number, last: number) => number>([
 
 export function TimelineStrip({
   words,
+  before,
   periods,
   onPrevious,
   onNext,
   onToday,
 }: {
   words: StripWords;
+  // What the view puts at the start of the strip's row, such as its own menus, so it adds no row.
+  before?: ReactNode;
   periods: readonly StripPeriod[];
   // Each arrow is turned off while undefined, and Today left out.
   onPrevious: (() => void) | undefined;
@@ -81,6 +84,7 @@ export function TimelineStrip({
   };
   return (
     <Group gap="xs" wrap="nowrap" mb="xs">
+      {before}
       <ActionIcon
         variant="default"
         aria-label={words.previous}
