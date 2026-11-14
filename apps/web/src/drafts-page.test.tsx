@@ -1109,6 +1109,39 @@ describe("the Drafts page", () => {
     ).toBeDefined();
   });
 
+  it("reloads the release streams after an approval, so a release's approved draft leaves the page", async () => {
+    const fetch = await openDrafts({
+      "GET /api/session": session([
+        "people:approve",
+        "people:view",
+        "personal:view",
+        "features:view",
+      ]),
+      "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
+    });
+    await userEvent.click(
+      await screen.findByRole("checkbox", {
+        name: "Select the draft of Avery Fictional",
+      }),
+    );
+    const streamReads = () =>
+      fetch.mock.calls.filter(([url]) => url === "/api/release-streams").length;
+    const before = streamReads();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
+    );
+    await userEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Approve",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(streamReads()).toBeGreaterThan(before);
+    });
+  });
+
   it("approves the drafts selected, after asking", async () => {
     const fetch = await openDrafts({
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
