@@ -12,7 +12,7 @@ As a Workforce Administrator, you keep your organization's records: its people a
 
 1. On **People**, add each new starter. See [People](people.md#add-a-person-or-a-planned-hire).
 1. Give someone who leaves an **End** date. Don't remove them. See [People](people.md#remove-a-person-or-planned-hire).
-1. When someone moves, change their **Manager**. A new manager needs their **Manager?** tick approved first. See [People](people.md#give-someone-a-new-manager).
+1. When someone moves, change their **Manager**. If the new manager hasn't managed before, tick their **Manager?** and get that approved first, in a round of its own. See [People](people.md#give-someone-a-new-manager).
 1. Select **Publish** in the top bar.
 
 ## Keep the Hiring Plan

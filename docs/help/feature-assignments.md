@@ -30,7 +30,7 @@ Someone on two feature teams has a row under each team. Grouped by **Manager**, 
 1. Press Enter. The team list opens.
 1. Type part of the team's name, such as `Pay`, and press Tab.
 
-The person is on the team from that month on. The change starts on the first day of the month, or today if it's the current month.
+The person is on the team from that month on. The change starts on the first day of the month, or today if it's the current month. You can change earlier months only if your role changes Personal details.
 
 To take someone off a team from a month on, select their cell in that month, and press Delete.
 

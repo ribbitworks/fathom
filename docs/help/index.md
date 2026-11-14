@@ -16,7 +16,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 - [Working as a Project Manager](working-as-a-project-manager.md): projects to delivery, and approving drafts.
 - [Working as an Engineering Manager](working-as-an-engineering-manager.md): feature teams, allocations and estimates.
 - [Working as an Engineering Director](working-as-an-engineering-director.md): approving, reporting lines, hiring and data classes.
-- [Working as a Workforce Administrator](working-as-a-workforce-administrator.md): people, the hiring plan, lists and feature teams.
+- [Working as a Workforce Administrator](working-as-a-workforce-administrator.md): people, the hiring plan, lists, feature teams, planning settings and data classes.
 - [Working as an Executive](working-as-an-executive.md): the plan, the organization and what changed, to read.
 - [Working as an Administrator](working-as-an-administrator.md): accounts, roles, settings and the access history.
 

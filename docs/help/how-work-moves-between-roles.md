@@ -12,13 +12,14 @@ See [Drafts](drafts.md) for more.
 
 ## Draft a Change
 
-A Product Manager adds the feature and plans it.
+A Product Manager adds the feature and plans it, and adds the project that needs it, if it's new.
 
 1. On **Features**, select **New feature**.
 1. Type the feature's **Name**.
 1. Select **Add**.
 1. In the feature's **Target cycle**, choose the cycle it's planned to ship in.
 1. In its **Feature team**, choose the team that builds it.
+1. If the project is new, add it on **Projects**. See [Projects](projects.md#add-a-project-proposal-customer-or-milestone).
 1. On **Projects**, select the **Features** cell of the project that needs it.
 1. Press Enter.
 1. Pick the feature.
@@ -46,7 +47,7 @@ An approved draft goes live straight away. A rejected draft goes back to the per
 An Engineering Manager puts people on the feature team that builds it.
 
 1. Select the **Feature assignments** page.
-1. Select a person's cell in the month they start on the team. That's this month or a later one, since an Engineering Manager's role can't change earlier months.
+1. Select a person's cell in the month they start on the team, this month or later.
 1. Press Enter. The team list opens.
 1. Type part of the team's name, and press Tab.
 1. Do the same for each person.

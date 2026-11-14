@@ -1,6 +1,6 @@
 # Working as a Team Member
 
-As a Team Member, you see the plan and people's General details, such as their names, positions and teams. You read; you don't change any records. General details are the ones everyone who can open a page sees, rather than private or unannounced ones.
+As a Team Member, you see the plan and people's General details, such as their names, positions and teams. You read; you don't change any records. General details are those not kept as Personal, for private and HR details, or Confidential, for business data not yet announced.
 
 ## What to Know First
 

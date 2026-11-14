@@ -14,9 +14,11 @@ As an Administrator, you manage who can sign in to Fathom and what each role let
 1. Type the person's **Name**.
 1. Type their **Email address**.
 1. Tick each role the account holds.
+1. If you ticked more than one, choose the **Default role**.
 1. Select **Create account**.
 1. Select **Copy** to copy the password Fathom shows.
 1. Give the password to its holder. They change it when they first sign in.
+1. Select **Done**.
 
 The account is ready once its row shows **Active**. See [Accounts](accounts.md#make-an-account).
 

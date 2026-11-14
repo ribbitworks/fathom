@@ -22,6 +22,7 @@ As an Executive, you see the whole plan and organization, with every person's Pe
 
 1. On **Change history**, search for a person, a value or who made the change. See [Change history](change-history.md#find-a-change).
 1. On **Access history**, see who changed an account, a role or a setting. See [Access history](access-history.md).
+1. Under **Administration**, look at the accounts, roles and settings. You can see them, but not change them.
 
 ## Keep a View
 

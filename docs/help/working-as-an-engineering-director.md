@@ -14,7 +14,7 @@ As an Engineering Director, you run your organization's plan and people. You cha
 
 ## Change Reporting Lines
 
-1. On **People**, choose the person's new **Manager**. A new manager needs their **Manager?** tick approved first. See [People](people.md#give-someone-a-new-manager).
+1. On **People**, choose the person's new **Manager**. If the new manager hasn't managed before, tick their **Manager?** and get that approved first, in a round of its own. See [People](people.md#give-someone-a-new-manager).
 1. If the change took effect before today, type that day in **Manager assigned**.
 1. Check the result on the **Org chart**. You can also change a manager there, on an earlier date. See [Org chart](org-chart.md#see-another-date).
 1. Select **Publish** in the top bar.
