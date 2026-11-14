@@ -2,6 +2,10 @@
 
 How to use each page of Fathom, and the work each role does most.
 
+## Finding Your Way
+
+- [Pages](pages.md): every page of Fathom, where it is in the left-hand menu, and the permission that shows it.
+
 ## Working in Fathom
 
 - [Setting up Fathom](setting-up-fathom.md): a new Fathom, from an empty database to an organization ready to plan.
