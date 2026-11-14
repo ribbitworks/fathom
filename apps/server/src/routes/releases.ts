@@ -13,6 +13,7 @@ import {
   cyclePatternRequestSchema,
   cyclesUntilRequestSchema,
   daySchema,
+  recordRefIdSchema,
   recordTypeSchema,
   releaseNoteRequestSchema,
   releaseRequestSchema,
@@ -42,7 +43,10 @@ const streamResponse = z.object({
 const streamParams = z.object({ streamId: z.uuid() });
 const memberParams = z.object({ streamId: z.uuid(), id: z.uuid() });
 const cycleParams = z.object({ streamId: z.uuid(), startsOn: daySchema });
-const recordParams = z.object({ type: recordTypeSchema, id: z.uuid() });
+const recordParams = z.object({
+  type: recordTypeSchema,
+  id: recordRefIdSchema,
+});
 const saved = { 200: savedSchema };
 
 export function releaseRoutes(

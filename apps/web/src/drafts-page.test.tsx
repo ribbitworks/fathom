@@ -5,6 +5,7 @@
 // drafts, and approving or rejecting them after asking, with a reason for rejecting; who may; what
 // the page says when there are none or they cannot be loaded; and drafts of feature teams.
 
+import { startingPlanningSettings } from "@fathom/shared";
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -538,6 +539,8 @@ describe("the Drafts page", () => {
         "configuration:view",
       ]),
       "GET /api/release-streams": noStreams,
+      "GET /api/planning-settings": () =>
+        Response.json(startingPlanningSettings),
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -557,6 +560,75 @@ describe("the Drafts page", () => {
     expect(fetch.mock.calls.some(([url]) => url.endsWith("/api/people"))).toBe(
       false,
     );
+  });
+
+  it("lists a draft of the planning settings in words, for Approvers of configuration to approve", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": session([
+        "configuration:view",
+        "configuration:approve",
+      ]),
+      "GET /api/release-streams": noStreams,
+      "GET /api/lists": () => Response.json({ lists: [] }),
+      "GET /api/planning-settings": () =>
+        Response.json({
+          ...startingPlanningSettings,
+          hoursPerDay: 7.5,
+          draft: recordDraft({
+            changed: ["hoursPerDay"],
+            live: { hoursPerDay: 8 },
+          }),
+        }),
+      "POST /api/drafts/approval": () =>
+        Response.json({ changeSetId: "20000000-0000-4000-8000-000000000001" }),
+    });
+    renderApp("/drafts");
+    expect(await entries()).toEqual([
+      "Fictional Editor drafted changes to the planning settings: Hours a day from 8 to 7.5, Draft",
+    ]);
+    await userEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Select the draft of the planning settings",
+      }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Approve 1 draft" }),
+    );
+    await userEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Approve",
+      }),
+    );
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
+        expect.objectContaining({
+          records: [{ type: "planning-settings", id: "planning-settings" }],
+        }),
+      ]);
+    });
+  });
+
+  it("tries the planning settings again when they could not be loaded", async () => {
+    let healthy = false;
+    serverAnswers({
+      "GET /api/session": session([
+        "configuration:view",
+        "configuration:approve",
+      ]),
+      "GET /api/release-streams": noStreams,
+      "GET /api/lists": () => Response.json({ lists: [] }),
+      "GET /api/planning-settings": () =>
+        healthy
+          ? Response.json(startingPlanningSettings)
+          : Response.json({ error: "Down" }, { status: 500 }),
+    });
+    renderApp("/drafts");
+    const again = await screen.findByRole("button", { name: "Try again" });
+    healthy = true;
+    await userEvent.click(again);
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    });
   });
 
   it("lists drafts of customers, proposals, projects, and milestones in words", async () => {

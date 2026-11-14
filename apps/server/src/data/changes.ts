@@ -29,7 +29,6 @@ export type RecordType =
   | "planned-hire"
   | "feature-team"
   | "saved-view"
-  | "planning-settings"
   | PlanRecordType;
 
 export interface Change {

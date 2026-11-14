@@ -698,6 +698,7 @@ const recordEditors: Record<RecordType, Permission> = {
   project: "plan:edit",
   milestone: "plan:edit",
   allocation: "allocations:edit",
+  "planning-settings": "configuration:edit",
 };
 
 function recordEditor(actor: Actor, type: RecordType): Actor {

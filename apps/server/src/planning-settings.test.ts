@@ -1,40 +1,68 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the planning settings through the API, against a migrated PostgreSQL server: those who
-// see configuration read them, and everyone who sees the plan the conversions between units of effort
-// alone; those who change configuration change some of them straight away, leaving the rest; each
-// change is recorded in the change history for those who see configuration, and its maker can undo
-// it.
+// see configuration read them with their draft in place, and everyone who sees the plan the
+// conversions between units of effort alone, as they are live; those who change configuration
+// draft some of them, leaving the rest, live once approved with Approve Configuration; each change
+// is recorded in the change history for those who see configuration, and its maker can undo it.
 
 import {
   type ChangeEntry,
   type ChangeHistory,
-  type PlanningSettings,
+  type EffortConversions,
   type PlanningSettingsChange,
+  type PlanningSettingsShown,
+  planningSettingsId,
   roleSchema,
   type SavedPlanningSettings,
   startingPlanningSettings,
 } from "@fathom/shared";
-import { planningSettings } from "@fathom/db";
+import {
+  changeSets,
+  changes,
+  drafts,
+  planningSettings,
+  planningSettingsId as rowId,
+  unpublishedDrafts,
+} from "@fathom/db";
+import { eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { actorFor, rolesGranting } from "./access.ts";
-import { readPlanningSettings } from "./data/planning-settings.ts";
+import {
+  readEffortConversions,
+  readPlanningSettings,
+} from "./data/planning-settings.ts";
 import { startTestApp, type TestApp } from "./test-app.ts";
 
 const path = "/api/planning-settings";
 const conversionsPath = "/api/effort-conversions";
+const draftPath = `/api/records/planning-settings/${planningSettingsId}/draft`;
+const asked = {
+  records: [{ type: "planning-settings", id: planningSettingsId }],
+};
 const changed: PlanningSettingsChange = {
   hoursPerDay: 7.5,
   focusPercent: 70,
   rampUpPercents: [25, 50, 75],
 };
+const drafted = { ...startingPlanningSettings, ...changed };
+const startingConversions = {
+  hoursPerDay: 8,
+  daysPerWeek: 5,
+  daysPerMonth: 20,
+};
 
 let test: TestApp;
 let editor: { id: string; cookie: string };
+let approver: { id: string; cookie: string };
 
 beforeAll(async () => {
   test = await startTestApp();
   editor = await test.signedIn("workforce-administrator");
+  approver = await test.signedIn([
+    "configuration:view",
+    "configuration:approve",
+  ]);
 });
 
 afterAll(async () => {
@@ -42,17 +70,34 @@ afterAll(async () => {
 });
 
 afterEach(async () => {
+  await test.connection
+    .delete(unpublishedDrafts)
+    .where(eq(unpublishedDrafts.recordType, "planning-settings"));
+  await test.connection
+    .delete(drafts)
+    .where(eq(drafts.recordType, "planning-settings"));
   await test.connection.update(planningSettings).set(startingPlanningSettings);
 });
 
 const read = async (cookie: string) =>
-  (await test.request(cookie, "GET", path)).json<PlanningSettings>();
+  (await test.request(cookie, "GET", path)).json<PlanningSettingsShown>();
 
-const change = (cookie: string, settings: object) =>
-  test.request(cookie, "PATCH", path, settings);
+const change = (
+  cookie: string,
+  settings: object,
+  options?: { publish?: boolean },
+) => test.request(cookie, "PATCH", path, settings, options);
 
 const saved = async (cookie: string, settings: object) =>
   (await change(cookie, settings)).json<SavedPlanningSettings>();
+
+const conversions = async (cookie: string) =>
+  (
+    await test.request(cookie, "GET", conversionsPath)
+  ).json<EffortConversions>();
+
+const approve = (cookie: string) =>
+  test.request(cookie, "POST", "/api/drafts/approval", asked);
 
 // Roles that see the change history and configuration.
 const configurationHistoryReaders = rolesGranting("plan:view").filter((role) =>
@@ -88,9 +133,7 @@ describe("reading the settings", () => {
     "gives %s the conversions alone",
     async (role) => {
       const { cookie } = await test.signedIn(role);
-      expect(
-        (await test.request(cookie, "GET", conversionsPath)).json(),
-      ).toEqual({ hoursPerDay: 8, daysPerWeek: 5, daysPerMonth: 20 });
+      expect(await conversions(cookie)).toEqual(startingConversions);
     },
   );
 
@@ -105,32 +148,76 @@ describe("reading the settings", () => {
   );
 });
 
-describe("changing the settings", () => {
+describe("drafting a change to the settings", () => {
   it.each(rolesGranting("configuration:edit"))(
-    "lets %s change some for everyone, leaving the rest",
+    "lets %s draft some, leaving the rest",
     async (role) => {
       const { cookie } = await test.signedIn(role);
       const response = await change(cookie, changed);
       expect(response.statusCode).toBe(200);
-      const expected = { ...startingPlanningSettings, ...changed };
-      expect(response.json<SavedPlanningSettings>().settings).toEqual(expected);
-      const reader = await test.signedIn("executive");
-      expect(await read(reader.cookie)).toEqual(expected);
+      expect(response.json<SavedPlanningSettings>().settings).toMatchObject(
+        drafted,
+      );
     },
   );
 
-  it("keeps a change someone else made to another setting", async () => {
-    // Given one person changes the buffer
+  it("shows those who see configuration the draft in place, with the live values it changes", async () => {
+    await change(editor.cookie, changed);
+    const reader = await test.signedIn("executive");
+    expect(await read(reader.cookie)).toMatchObject({
+      ...drafted,
+      draft: {
+        action: "changed",
+        changed: ["hoursPerDay", "focusPercent", "rampUpPercents"],
+        live: { hoursPerDay: 8, focusPercent: 80, rampUpPercents: [50, 75] },
+        state: "waiting",
+        madeBy: expect.any(String) as unknown,
+      },
+    });
+  });
+
+  it("leaves the conversions estimates are shown with as they are live", async () => {
+    await change(editor.cookie, changed);
+    const reader = await test.signedIn("product-manager");
+    expect(await conversions(reader.cookie)).toEqual(startingConversions);
+  });
+
+  it("keeps a change someone else drafted to another setting", async () => {
+    // Given one person drafts a buffer
     await change(editor.cookie, { bufferPercent: 20 });
 
-    // When another changes the focus
+    // When another drafts a focus
     const other = await test.signedIn("engineering-director");
     await change(other.cookie, { focusPercent: 60 });
 
-    // Then both changes are kept
+    // Then the draft holds both
     expect(await read(editor.cookie)).toMatchObject({
       bufferPercent: 20,
       focusPercent: 60,
+      draft: { changed: ["focusPercent", "bufferPercent"] },
+    });
+  });
+
+  it("holds the settings for their maker until published, refusing anyone else's change", async () => {
+    // Given a change not yet published
+    await change(editor.cookie, { bufferPercent: 20 }, { publish: false });
+
+    // When someone else reads and changes the settings
+    const other = await test.signedIn("engineering-director");
+    const seen = await read(other.cookie);
+    const refused = await change(other.cookie, { focusPercent: 60 });
+
+    // Then they see them as they were, held, and their change is refused
+    expect(seen).toMatchObject({
+      bufferPercent: 0,
+      heldBy: expect.any(String) as unknown,
+    });
+    expect(seen.draft).toBeUndefined();
+    expect(refused.statusCode).toBe(409);
+    expect(await read(editor.cookie)).toMatchObject({
+      bufferPercent: 20,
+      focusPercent: 80,
+      draft: { unpublished: true },
     });
   });
 
@@ -173,13 +260,97 @@ describe("changing the settings", () => {
       (await saved(editor.cookie, startingPlanningSettings)).changeSetId,
     ).toBeNull();
   });
+
+  it("takes the draft away once changed back to the live settings", async () => {
+    await change(editor.cookie, { bufferPercent: 20 });
+    await change(editor.cookie, { bufferPercent: 0 });
+    expect(await read(editor.cookie)).toEqual(startingPlanningSettings);
+  });
+});
+
+describe("deciding a draft of the settings", () => {
+  it.each(rolesGranting("configuration:approve"))(
+    "lets %s approve it, making the settings and conversions live",
+    async (role) => {
+      await change(editor.cookie, changed);
+      const { cookie } = await test.signedIn(role);
+      expect((await approve(cookie)).statusCode).toBe(200);
+      expect(await read(editor.cookie)).toEqual(drafted);
+      expect(await conversions(editor.cookie)).toEqual({
+        ...startingConversions,
+        hoursPerDay: 7.5,
+      });
+    },
+  );
+
+  it("refuses a role that approves other areas but not configuration", async () => {
+    await change(editor.cookie, changed);
+    const other = await test.signedIn([
+      "configuration:view",
+      "plan:view",
+      "plan:approve",
+      "features:approve",
+    ]);
+    expect((await approve(other.cookie)).statusCode).toBe(403);
+    expect(await conversions(editor.cookie)).toEqual(startingConversions);
+  });
+
+  it("rejects it with a reason, leaving the live settings", async () => {
+    await change(editor.cookie, changed);
+    const response = await test.request(
+      approver.cookie,
+      "POST",
+      "/api/drafts/rejection",
+      { ...asked, reason: "Keep a full day" },
+    );
+    expect(response.statusCode).toBe(200);
+    expect(await read(editor.cookie)).toMatchObject({
+      ...drafted,
+      draft: { state: "rejected", reason: "Keep a full day" },
+    });
+    expect(await conversions(editor.cookie)).toEqual(startingConversions);
+  });
+
+  it("resubmits a rejected draft", async () => {
+    await change(editor.cookie, changed);
+    await test.request(approver.cookie, "POST", "/api/drafts/rejection", {
+      ...asked,
+      reason: "Keep a full day",
+    });
+    const response = await test.request(
+      editor.cookie,
+      "DELETE",
+      `${draftPath}/rejection`,
+    );
+    expect(response.statusCode).toBe(200);
+    expect((await read(editor.cookie)).draft?.state).toBe("waiting");
+  });
+
+  it("discards it, leaving the live settings", async () => {
+    await change(editor.cookie, changed);
+    const response = await test.request(editor.cookie, "DELETE", draftPath);
+    expect(response.statusCode).toBe(200);
+    expect(await read(editor.cookie)).toEqual(startingPlanningSettings);
+  });
+
+  it("names the settings among the user's unpublished changes", async () => {
+    await change(editor.cookie, changed, { publish: false });
+    const response = await test.request(
+      editor.cookie,
+      "GET",
+      "/api/unpublished",
+    );
+    expect(response.json()).toEqual({
+      changes: [{ subject: "the planning settings", action: "changed" }],
+    });
+  });
 });
 
 describe("the history of the settings", () => {
   it.each(configurationHistoryReaders)(
-    "shows %s each setting changed",
+    "shows %s each setting drafted",
     async (role) => {
-      // Given a change to three of the settings
+      // Given a draft of three of the settings
       const { changeSetId } = await saved(editor.cookie, changed);
 
       // When someone who sees configuration and the change history reads it
@@ -227,7 +398,26 @@ describe("undoing a change to the settings", () => {
   const undo = (cookie: string, changeSetId: string | null) =>
     test.request(cookie, "POST", `/api/undo/${String(changeSetId)}`, {});
 
-  it("puts back the settings as they were", async () => {
+  it("puts back the draft as it was", async () => {
+    // Given a draft of the buffer, then a change to it and the focus
+    await change(editor.cookie, { bufferPercent: 20 });
+    const { changeSetId } = await saved(editor.cookie, {
+      bufferPercent: 30,
+      focusPercent: 70,
+    });
+
+    // When the second is undone
+    expect((await undo(editor.cookie, changeSetId)).statusCode).toBe(200);
+
+    // Then the draft holds the buffer alone, as before
+    expect(await read(editor.cookie)).toMatchObject({
+      bufferPercent: 20,
+      focusPercent: 80,
+      draft: { changed: ["bufferPercent"] },
+    });
+  });
+
+  it("takes the draft away once nothing is left to change", async () => {
     const { changeSetId } = await saved(editor.cookie, changed);
     expect((await undo(editor.cookie, changeSetId)).statusCode).toBe(200);
     expect(await read(editor.cookie)).toEqual(startingPlanningSettings);
@@ -240,6 +430,42 @@ describe("undoing a change to the settings", () => {
     expect((await read(editor.cookie)).hoursPerDay).toBe(6);
   });
 
+  it("is refused once the draft has been approved", async () => {
+    const { changeSetId } = await saved(editor.cookie, changed);
+    await approve(approver.cookie);
+    expect((await undo(editor.cookie, changeSetId)).statusCode).toBe(409);
+    expect(await read(editor.cookie)).toEqual(drafted);
+  });
+
+  it("is refused once someone else has changed the settings", async () => {
+    const { changeSetId } = await saved(editor.cookie, changed);
+    const other = await test.signedIn("engineering-director");
+    await change(other.cookie, { bufferPercent: 20 });
+    expect((await undo(editor.cookie, changeSetId)).statusCode).toBe(409);
+    expect(await read(editor.cookie)).toMatchObject({
+      ...changed,
+      bufferPercent: 20,
+    });
+  });
+
+  it("is refused for a change saved live, before the settings were drafted", async () => {
+    const [set] = await test.connection
+      .insert(changeSets)
+      .values({ madeBy: editor.id })
+      .returning({ id: changeSets.id });
+    await test.connection.insert(changes).values({
+      changeSetId: String(set?.id),
+      recordType: "planning-settings",
+      recordId: planningSettingsId,
+      action: "changed",
+      field: "hoursPerDay",
+      tier: "internal",
+      oldValue: "8",
+      newValue: "7.5",
+    });
+    expect((await undo(editor.cookie, set?.id ?? null)).statusCode).toBe(409);
+  });
+
   it("is refused once its maker may no longer change configuration", async () => {
     const maker = await test.signedIn("workforce-administrator");
     const { changeSetId } = await saved(maker.cookie, changed);
@@ -249,16 +475,22 @@ describe("undoing a change to the settings", () => {
   });
 });
 
+describe("the settings' identifier", () => {
+  it("is the one the database names their row by", () => {
+    expect(planningSettingsId).toBe(rowId);
+  });
+});
+
 describe("a database the migrations have not given settings", () => {
-  it("fails clearly", async () => {
+  const executive = actorFor({ id: "", name: "", email: "" }, "executive");
+
+  it.each([
+    ["the settings", readPlanningSettings],
+    ["the conversions", readEffortConversions],
+  ])("fails clearly to read %s", async (_case, reading) => {
     await test.connection.delete(planningSettings);
     try {
-      await expect(
-        readPlanningSettings(
-          test.connection,
-          actorFor({ id: "", name: "", email: "" }, "executive"),
-        ),
-      ).rejects.toThrow(
+      await expect(reading(test.connection, executive)).rejects.toThrow(
         "The planning settings are missing; apply the migrations",
       );
     } finally {

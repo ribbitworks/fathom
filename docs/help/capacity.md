@@ -33,8 +33,16 @@ Each group ends with a total row. **Manager** is offered to roles that see Confi
 
 1. In **Settings**, select the pencil at the right of the setting, or the value itself.
 1. Type the new value, then press Enter.
+1. Select **Publish** in the top bar.
 
-Esc leaves the value as it was. A value that won't do stays in its field, with the reason in red under it.
+Esc leaves the value as it was. A value that won't do stays in its field, with the reason in red under it. While someone else has unpublished changes to the settings, they're read only, and **Being changed by** names who.
+
+### Approve or Reject a Draft of the Settings
+
+1. In **Settings**, select the **⋯** at the right of a changed setting.
+1. Select **Approve…** or **Reject…**, then confirm.
+
+The menu lists every change in the draft, and approving or rejecting takes them all. The draft is on the [Drafts page](drafts-page.md) too. Approving needs Approve Configuration.
 
 ### Add or Remove a Month of Ramp-Up
 
@@ -65,7 +73,8 @@ Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before lea
 - **Default buffer** is a percentage added to a feature's effort before forecasting. The effort entered stays as it is.
 - **Ramp-up for new starters** is the share of full output a new starter delivers in each of their first months. The last row, such as **From month 3**, shows that they deliver **100%** from then on.
 - Nothing forecasts with focus, buffer or ramp-up yet.
+- **A yellow dot** marks a setting a draft changes, with the live value under it after a green dot. **No month 3**, or the like, marks a month the draft adds or removes. **Draft** above **Working time** chooses how drafts show, as [Drafts](drafts.md) sets out.
 
 ## Where Changes Go
 
-A change to a setting takes effect at once, for everyone, and is recorded in the change history.
+A change to a setting is a draft. Once published, it waits for someone whose role approves configuration, and takes effect for everyone once approved. Until then, the **Effort** column on Features keeps using the approved settings, which **Show in** names, such as **Person-days (8 hours)**. Every change is recorded in the change history. See [Drafts](drafts.md).

@@ -13,6 +13,8 @@ import {
   draftsRequestSchema,
   draftsWhere,
   kindsAsked,
+  planningSettingsId,
+  recordRefSchema,
   rejectionRequestSchema,
 } from "./drafts.ts";
 
@@ -115,6 +117,7 @@ describe("approving by area", () => {
           "allocation",
         ] as const
       ).map((type) => ({ type, id: randomUUID() })),
+      { type: "planning-settings", id: planningSettingsId },
     ],
   });
 
@@ -169,5 +172,21 @@ describe("approving by area", () => {
       "milestone",
     ]);
     expect(approvableKinds(["features:edit", "people:view"])).toEqual([]);
+  });
+});
+
+describe("naming a record", () => {
+  it("takes a record's identifier, or the planning settings' name", () => {
+    for (const id of [randomUUID(), planningSettingsId]) {
+      expect(recordRefSchema.safeParse({ type: "release", id }).success).toBe(
+        true,
+      );
+    }
+  });
+
+  it("refuses any other name", () => {
+    expect(
+      recordRefSchema.safeParse({ type: "release", id: "settings" }).success,
+    ).toBe(false);
   });
 });

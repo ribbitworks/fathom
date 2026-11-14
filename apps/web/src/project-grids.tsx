@@ -44,7 +44,7 @@ import {
 } from "./added-columns.ts";
 import { type CellChange, cellKinds, flagChoice } from "./cell-kinds.tsx";
 import { EffortCell } from "./effort-cell.tsx";
-import { effortColumnUnits, hoursWords } from "./effort.ts";
+import { effortColumnUnits, hoursWords, unitLabel } from "./effort.ts";
 import { decimalUpTo } from "./numbers.ts";
 import type { DraftField } from "./draft-details.tsx";
 import { noDrafts } from "./drafts.ts";
@@ -615,6 +615,11 @@ const effortPlacesAtFirst = 2;
 // What floating point leaves of an amount that was not rounded, far below any place shown.
 const roundingLeft = 1e-9;
 
+const labelled = (
+  unit: (typeof effortColumnUnits)[number],
+  conversions: EffortConversions,
+) => ({ ...unit, label: unitLabel(unit, conversions) });
+
 // A feature's estimate, kept in hours and shown in the unit the view names, in which it is typed.
 // Without the conversions, as for a draft's details, it is offered in hours alone, which need none.
 function effortColumn(
@@ -674,7 +679,13 @@ function effortColumn(
     // Breaking down by effort counts only whether features have an estimate, which says little.
     breaksDown: false,
     units: {
-      offered: conversions === undefined ? [hours] : [hours, ...others],
+      offered:
+        conversions === undefined
+          ? [hours]
+          : [
+              labelled(hours, conversions),
+              ...others.map((unit) => labelled(unit, conversions)),
+            ],
       places: { offered: effortPlaces, starting: effortPlacesAtFirst },
       shownIn,
     },

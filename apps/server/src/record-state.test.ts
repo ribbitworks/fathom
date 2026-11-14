@@ -47,6 +47,7 @@ const recordsState = (parts: Partial<RecordsState>): RecordsState => ({
   project: kindState(),
   milestone: kindState(),
   allocation: kindState(),
+  "planning-settings": kindState(),
   ...parts,
 });
 

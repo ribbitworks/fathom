@@ -17,6 +17,7 @@ import {
 import { decidable, noDrafts, waitsForRejected } from "./drafts.ts";
 import { Icon } from "./icons.tsx";
 import { DraftItems, madeVerb, makers } from "./list-drafts.tsx";
+import type { Phrase } from "./phrase.tsx";
 import type { RecordNode } from "./record-drafts.ts";
 
 export interface RecordMenuActions {
@@ -36,11 +37,14 @@ export function RecordMenu({
   node,
   canEditDraft,
   actions,
+  lines,
   children,
 }: {
   id?: string;
   title: string;
   node: RecordNode;
+  // What the draft changes, where saying who made it is not enough.
+  lines?: readonly Phrase[];
   // Whether the user may discard or resubmit the record's draft.
   canEditDraft: boolean;
   actions: RecordMenuActions;
@@ -102,7 +106,9 @@ export function RecordMenu({
             {children !== undefined && <Menu.Divider />}
             <MenuDraftLines
               draft={draft}
-              lines={[[`${madeVerb(draft.action)} by ${makers(draft)}`]]}
+              lines={
+                lines ?? [[`${madeVerb(draft.action)} by ${makers(draft)}`]]
+              }
               divider={false}
             />
             {heldBy !== undefined && <HeldNote by={heldBy} />}

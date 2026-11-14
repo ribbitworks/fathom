@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The planning settings for the whole of Fathom, seen by those who see configuration, with the
-// conversions between units of effort among them seen with the plan, and changed straight away,
-// rather than as drafts, by those who change configuration, each change recorded in the change
-// history so it can be undone. Estimates keep
-// their hours when a conversion changes. Part of the data access layer, the only server code that
-// queries the database.
+// The planning settings for the whole of Fathom, seen by those who see configuration with their
+// draft in place, and drafted by those who change configuration, each change live only once
+// approved with Approve Configuration. The conversions between units of effort among them are seen
+// with the plan as they are live, so estimates follow a draft's conversions only once it is
+// approved. Estimates keep their hours when a conversion changes. Part of the data access layer,
+// the only server code that queries the database.
 
 import {
   type Database,
@@ -16,8 +16,8 @@ import {
   type EffortConversions,
   type PlanningSettings,
   type PlanningSettingsChange,
+  type PlanningSettingsShown,
   changedSettings,
-  planningSettingFields,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import {
@@ -25,36 +25,57 @@ import {
   requireAnyPermission,
   requirePermission,
 } from "../access.ts";
-import { changesBetween, recordChanges, type Saved } from "./changes.ts";
+import type { Saved, Transaction } from "./changes.ts";
+import { planningSettingsKind } from "./planning-settings-kind.ts";
+import { type RecordsState, versionOf } from "./record-state.ts";
+import {
+  changeableRecord,
+  drafting,
+  readRecordMakers,
+  readRecordsState,
+  recordDraftOut,
+  recordHeldBy,
+  saveRecordDraft,
+} from "./records.ts";
 
-// Locked for a change when asked, so two changes made at once are recorded one after the other.
-async function readSettings(
-  reader: Pick<Database, "select">,
-  { lock = false } = {},
-): Promise<PlanningSettings> {
-  const query = reader
-    .select({
-      hoursPerDay: planningSettings.hoursPerDay,
-      daysPerWeek: planningSettings.daysPerWeek,
-      daysPerMonth: planningSettings.daysPerMonth,
-      focusPercent: planningSettings.focusPercent,
-      bufferPercent: planningSettings.bufferPercent,
-      rampUpPercents: planningSettings.rampUpPercents,
-    })
-    .from(planningSettings)
-    .where(eq(planningSettings.id, planningSettingsId));
-  const [row] = await (lock ? query.for("update") : query);
-  if (row === undefined)
-    throw new Error("The planning settings are missing; apply the migrations");
-  return row;
+const missing = "The planning settings are missing; apply the migrations";
+
+// The settings as the reader sees them, with their draft in place.
+async function settingsOut(
+  transaction: Transaction,
+  reader: Actor,
+  state: RecordsState,
+): Promise<PlanningSettingsShown> {
+  const settings = versionOf(state, "planning-settings", planningSettingsId);
+  if (settings === undefined) throw new Error(missing);
+  const draft = recordDraftOut(
+    planningSettingsKind,
+    state,
+    await readRecordMakers(transaction, state, reader),
+    planningSettingsId,
+  );
+  return {
+    ...(settings as PlanningSettings),
+    ...(draft === undefined ? {} : { draft }),
+    ...recordHeldBy(state, "planning-settings", planningSettingsId),
+  };
 }
 
 export async function readPlanningSettings(
   database: Database,
   actor: Actor,
-): Promise<PlanningSettings> {
+): Promise<PlanningSettingsShown> {
   requirePermission(actor, "configuration:view");
-  return readSettings(database);
+  // Read as of one moment, so an approval saved meanwhile is seen whole or not at all.
+  return database.transaction(
+    async (transaction) =>
+      settingsOut(
+        transaction,
+        actor,
+        await readRecordsState(transaction, actor.user.id),
+      ),
+    { isolationLevel: "repeatable read", accessMode: "read only" },
+  );
 }
 
 export async function readEffortConversions(
@@ -63,36 +84,47 @@ export async function readEffortConversions(
 ): Promise<EffortConversions> {
   // Estimates on features and projects alike are read in these units.
   requireAnyPermission(actor, ["plan:view", "features:view"]);
-  const { hoursPerDay, daysPerWeek, daysPerMonth } =
-    await readSettings(database);
-  return { hoursPerDay, daysPerWeek, daysPerMonth };
+  const [row] = await database
+    .select({
+      hoursPerDay: planningSettings.hoursPerDay,
+      daysPerWeek: planningSettings.daysPerWeek,
+      daysPerMonth: planningSettings.daysPerMonth,
+    })
+    .from(planningSettings)
+    .where(eq(planningSettings.id, planningSettingsId));
+  if (row === undefined) throw new Error(missing);
+  return row;
 }
 
-// Changes the settings given, leaving the others as they are, so two people changing different
-// settings at once keep both changes.
+// Drafts the settings given, leaving the others as the editor's draft has them, so two people
+// changing different settings keep both changes.
 export async function changePlanningSettings(
   database: Database,
   actor: Actor,
   change: PlanningSettingsChange,
-): Promise<Saved<PlanningSettings>> {
+): Promise<Saved<PlanningSettingsShown>> {
   requirePermission(actor, "configuration:edit");
-  return database.transaction(async (transaction) => {
-    const before = await readSettings(transaction, { lock: true });
-    const after = changedSettings(before, change);
-    const made = changesBetween(
+  return drafting(database, actor.user.id, async (transaction, state) => {
+    const before = changeableRecord(
+      state,
       "planning-settings",
       planningSettingsId,
-      "changed",
-      before,
-      after,
-      planningSettingFields,
+    ) as PlanningSettings;
+    const changeSetId = await saveRecordDraft(
+      transaction,
+      actor,
+      state,
+      "planning-settings",
+      planningSettingsId,
+      changedSettings(before, change),
     );
-    if (made.length === 0) return { result: before, changeSetId: null };
-    await transaction
-      .update(planningSettings)
-      .set(after)
-      .where(eq(planningSettings.id, planningSettingsId));
-    const changeSetId = await recordChanges(transaction, actor, made);
-    return { result: after, changeSetId };
+    return {
+      result: await settingsOut(
+        transaction,
+        actor,
+        await readRecordsState(transaction, actor.user.id),
+      ),
+      changeSetId,
+    };
   });
 }

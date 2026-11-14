@@ -30,7 +30,7 @@ Choose a team in **Feature team**.
 ### Give an Estimate
 
 1. Type a number in **Effort**, in the unit the column shows.
-1. To show another unit, open the **Effort** column's menu and choose one under **Show in**.
+1. To show another unit, open the **Effort** column's menu and choose one under **Show in**. Each unit names what it stands for, from the planning settings on [Capacity](capacity.md), such as **Person-days (8 hours)**.
 
 ### Group the Table
 

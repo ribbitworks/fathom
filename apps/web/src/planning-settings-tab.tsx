@@ -3,23 +3,32 @@
 // The Capacity page's Settings tab, for those who see configuration: the working time effort is
 // converted with, the defaults forecasts start from, and how new starters ramp up, month by month.
 // Those who change configuration change each setting in place, as a details panel's values are
-// changed, saved at once for everyone and undone with Cmd+Z or Ctrl+Z; anyone else sees them read
-// only.
+// changed, each change a draft of the settings, undone with Cmd+Z or Ctrl+Z and live once approved
+// with Approve Configuration; anyone else sees them read only. The Draft menu chooses how the draft
+// shows, and each changed row's menu offers what may be done with the draft as a whole.
 
 import {
+  type Asking,
+  type DraftKind,
   type PlanningSettings,
   type PlanningSettingsChange,
+  type PlanningSettingsShown,
+  type RecordDraft,
   planningSettingLimits,
   planningSettingNames,
+  planningSettingsId,
   planningSettingsSchema,
+  type Show,
   typedNumber,
   changedSettings,
   fullOutputPercent,
 } from "@fathom/shared";
-import { ActionIcon, Button, Stack, Text } from "@mantine/core";
+import { ActionIcon, Button, Group, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import type { ReactNode } from "react";
-import { effortConversionsQuery } from "./effort.ts";
+import { type ReactNode, useState } from "react";
+import { DecisionModal } from "./decision-dialog.tsx";
+import { configDraftFields, draftLines } from "./draft-details.tsx";
+import { type Decision, decisionFor, noDrafts } from "./drafts.ts";
 import { focusSoon } from "./focus.ts";
 import { Icon } from "./icons.tsx";
 import { LoadProblem } from "./load-problem.tsx";
@@ -27,25 +36,32 @@ import { noOthers } from "./new-plan-record-panel.tsx";
 import { percentage } from "./numbers.ts";
 import {
   changePlanningSettings,
+  planningSettingsNode,
   planningSettingsQuery,
+  planningSettingsRef as ref,
+  planningSettingsSubject as subject,
+  settingsDraftWords,
 } from "./planning-settings.ts";
 import { RecordSection, Row } from "./record-details.tsx";
+import { RecordMenu, type RecordMenuActions } from "./record-menu.tsx";
 import {
   changeId,
   type RecordEditingContext,
   useRecordEditing,
 } from "./record-editing.tsx";
-import { type Column, fieldColumn } from "./record-grid.tsx";
+import { type Column, fieldColumn, withLiveFields } from "./record-grid.tsx";
 import classes from "./planning-settings-tab.module.css";
+import { discardRecordDraft, resubmitRecordDraft } from "./releases.ts";
 import { useSaving } from "./saving.ts";
 import { settingsPageWidth } from "./settings-page.tsx";
+import { DraftedItem, DraftView } from "./status-mark.tsx";
+import { DraftMenu } from "./table-controls.tsx";
 import type { CellValue } from "./table-view.ts";
 
-type Settings = PlanningSettings & { id: string };
+type Settings = PlanningSettingsShown & { id: string };
 type SettingColumn = Column<Settings, PlanningSettingsChange>;
 type SingleSetting = Exclude<keyof PlanningSettings, "rampUpPercents">;
 
-const settingsId = "planning-settings";
 const onlyKind = "";
 const addMonthId = "add-ramp-up-month";
 const monthsLimitId = "ramp-up-months-limit";
@@ -108,7 +124,7 @@ const fullOutputColumn = (month: number) =>
 
 // The settings as the rows hold them, each as text, and ramp-up by month.
 function valuesOf(settings: PlanningSettings): Record<string, CellValue> {
-  const { rampUpPercents, ...rest } = settings;
+  const { rampUpPercents, ...rest } = planningSettingsSchema.parse(settings);
   return Object.fromEntries<CellValue>([
     ...Object.entries(rest).map(
       ([key, value]) => [key, String(value)] as const,
@@ -154,13 +170,42 @@ function Percentage({ value }: { value: number }) {
   return <Text>{percentage(value)}</Text>;
 }
 
-export function PlanningSettingsTab({ canEdit }: { canEdit: boolean }) {
+// The settings as they are live, with their draft taken back.
+function liveSettings(settings: Settings): Settings {
+  const { draft, ...rest } = settings;
+  return draft === undefined
+    ? settings
+    : withLiveFields<Settings>(settings, draft, rest);
+}
+
+// The settings as the Draft view shows them: as drafted, or as they are live, Live only and, once
+// rejected, Drafts applied, which takes a rejected draft back.
+function shownSettings(settings: Settings, show: Show): Settings {
+  const takenBack =
+    show === "live" ||
+    (show === "drafts" && settings.draft?.state === "rejected");
+  return takenBack ? liveSettings(settings) : settings;
+}
+
+export function PlanningSettingsTab({
+  canEdit,
+  approves,
+  show,
+  onShow,
+}: {
+  canEdit: boolean;
+  // The kinds of draft the user may approve and reject.
+  approves: readonly DraftKind[];
+  show: Show;
+  onShow: (show: Show) => void;
+}) {
   const settings = useQuery(planningSettingsQuery);
-  const { save, undoable, done } = useSaving<PlanningSettings>({
+  const [decision, setDecision] = useState<Decision>();
+  const [deciding, setDeciding] = useState(false);
+  const { save, undoable, done } = useSaving<PlanningSettingsShown>({
     queryKey: planningSettingsQuery.queryKey,
-    refreshes: [effortConversionsQuery.queryKey],
     removed: "Fathom could not find the planning settings. Reload the page.",
-    blocked: false,
+    blocked: deciding,
   });
   const { editingOf } = useRecordEditing<Settings, PlanningSettingsChange>();
   if (settings.isError) {
@@ -174,16 +219,27 @@ export function PlanningSettingsTab({ canEdit }: { canEdit: boolean }) {
     );
   }
   if (settings.data === undefined) return null;
-  const current = settings.data;
+  const original: Settings = { ...settings.data, id: planningSettingsId };
+  const { draft, heldBy } = original;
+  const current = shownSettings(original, show);
   const rampUp = current.rampUpPercents;
+  const live = liveSettings(original);
+  // The draft, where it changes a setting.
+  const draftOf = (key: keyof PlanningSettings) =>
+    draft?.changed.includes(key) === true ? draft : undefined;
+  const editable = canEdit && show !== "live" && heldBy === undefined;
 
-  // Saves a change at once, then offers Undo, with focus going back where the change was made.
+  // Saves a change at once, as a draft, then offers Undo, with focus going back where the change
+  // was made.
   const saveChange = (
     change: PlanningSettingsChange,
-    onSaved: (changeSetId: string | null, before: PlanningSettings) => void,
+    onSaved: (
+      changeSetId: string | null,
+      before: PlanningSettingsShown,
+    ) => void,
   ) => {
     save({
-      next: (data) => changedSettings(data, change),
+      next: (data) => ({ ...data, ...changedSettings(data, change) }),
       save: async () => changePlanningSettings(change),
       failure: "Fathom could not save the planning settings.",
       onSaved,
@@ -191,43 +247,139 @@ export function PlanningSettingsTab({ canEdit }: { canEdit: boolean }) {
   };
   const undoableAt =
     (focus: string) =>
-    (changeSetId: string | null, before: PlanningSettings) => {
+    (changeSetId: string | null, before: PlanningSettingsShown) => {
       undoable(changeSetId, before, focus);
     };
+  const run = (work: () => Promise<string | null>, failure: string) => {
+    save({
+      next: (data) => data,
+      save: work,
+      failure,
+      onSaved: (changeSetId, before) => {
+        undoable(changeSetId, before);
+      },
+    });
+  };
+  const node = planningSettingsNode(original);
+  const actions: RecordMenuActions = {
+    approves,
+    nodes: [node],
+    decide: (asking: Asking) => {
+      setDecision(
+        decisionFor(asking, { ...noDrafts(), records: [ref] }, approves, [], {
+          fields: [],
+          records: [node],
+        }),
+      );
+      setDeciding(true);
+    },
+    resubmit: () => {
+      run(
+        () => resubmitRecordDraft(ref),
+        `Fathom could not send the draft of ${subject} for approval again.`,
+      );
+    },
+    discard: () => {
+      run(
+        () => discardRecordDraft(ref),
+        `Fathom could not discard the draft of ${subject}.`,
+      );
+    },
+  };
+  // A changed row's menu, for the draft of the settings as a whole, so it names every change the
+  // draft makes, since approving it from any changed row approves them all.
+  const draftMenu = (drafted: RecordDraft | undefined) =>
+    drafted !== undefined &&
+    show !== "live" && (
+      <RecordMenu
+        title="Planning settings"
+        node={node}
+        canEditDraft={canEdit}
+        actions={actions}
+        lines={draftLines(
+          drafted,
+          configDraftFields(...settingsDraftWords(drafted, original)),
+        )}
+      />
+    );
 
   const context: RecordEditingContext<Settings, PlanningSettingsChange> = {
-    id: settingsId,
+    id: planningSettingsId,
     kind: onlyKind,
     values: valuesOf(current),
     others: noOthers,
     recordProblem: (values, _others, changed) =>
       settingsProblem(values, changed),
-    save: canEdit
+    save: editable
       ? (change, column) => {
           saveChange(change, undoableAt(changeId(column)));
         }
       : undefined,
   };
   const editing = editingOf(context);
+  // A setting's row, marked where the draft changes it, with its live value beside it.
   const row = (
     column: SettingColumn,
-    value: number,
-    asPercent = false,
-    action?: ReactNode,
-  ) => (
-    <Row
-      key={column.key}
-      column={column}
-      value={String(value)}
-      editing={editing(column)}
-      action={action}
-    >
-      {asPercent ? <Percentage value={value} /> : undefined}
-    </Row>
-  );
-  const months = rampUp.map((share, index) => ({
-    column: monthColumn(rampUp, index + 1),
-    share,
+    value: number | undefined,
+    liveValue: number | undefined,
+    {
+      asPercent = false,
+      drafted,
+      action,
+      canChange = true,
+    }: {
+      asPercent?: boolean;
+      drafted?: RecordDraft | undefined;
+      action?: ReactNode;
+      canChange?: boolean;
+    } = {},
+  ) => {
+    const menu = draftMenu(drafted);
+    return (
+      <Row
+        key={column.key}
+        column={column}
+        value={value === undefined ? "" : String(value)}
+        changed={
+          drafted
+            ? {
+                draft: drafted,
+                live: liveValue === undefined ? "" : String(liveValue),
+              }
+            : undefined
+        }
+        editing={canChange ? editing(column) : undefined}
+        action={
+          menu || action ? (
+            <>
+              {menu}
+              {action}
+            </>
+          ) : undefined
+        }
+      >
+        {asPercent && value !== undefined ? (
+          <Percentage value={value} />
+        ) : undefined}
+      </Row>
+    );
+  };
+  const settingRow = (key: SingleSetting, asPercent = false) =>
+    // The key is one of the typed settings.
+    // eslint-disable-next-line security/detect-object-injection
+    row(columns[key], current[key], live[key], {
+      asPercent,
+      drafted: draftOf(key),
+    });
+  // Beside live, a month the draft removes still shows, emptied, with its live share under it.
+  const monthsShown =
+    show === "both"
+      ? Math.max(rampUp.length, live.rampUpPercents.length)
+      : rampUp.length;
+  const months = Array.from({ length: monthsShown }, (_none, index) => ({
+    month: index + 1,
+    share: rampUp.at(index),
+    liveShare: live.rampUpPercents.at(index),
   }));
   const lastMonth = rampUp.length;
   const full = rampUp.length >= rampUpMonths.most;
@@ -260,63 +412,86 @@ export function PlanningSettingsTab({ canEdit }: { canEdit: boolean }) {
     );
   };
   return (
-    <Stack gap="lg" maw={settingsPageWidth} className={classes.settings}>
-      <RecordSection id="planning-working-time" title="Working time">
-        {row(columns.hoursPerDay, current.hoursPerDay)}
-        {row(columns.daysPerWeek, current.daysPerWeek)}
-        {row(columns.daysPerMonth, current.daysPerMonth)}
-      </RecordSection>
-      <RecordSection id="planning-forecasts" title="Forecasts">
-        {row(columns.focusPercent, current.focusPercent, true)}
-        {row(columns.bufferPercent, current.bufferPercent, true)}
-      </RecordSection>
-      <Stack gap="xs">
-        <RecordSection id="planning-ramp-up" title="Ramp-up for new starters">
-          {months.map(({ column, share }, index) =>
-            row(
-              column,
-              share,
-              true,
-              canEdit && (
-                <ActionIcon
-                  id={removeMonthId(index + 1)}
-                  variant="subtle"
-                  color="gray"
-                  size="sm"
-                  aria-label={`Remove ${monthName(index + 1).toLowerCase()}`}
-                  onClick={() => {
-                    removeMonth(index + 1);
-                  }}
-                >
-                  <Icon name="close" />
-                </ActionIcon>
-              ),
-            ),
-          )}
-          <Row column={fullOutputColumn(lastMonth + 1)} value="">
-            <Percentage value={fullOutputPercent} />
-          </Row>
-        </RecordSection>
-        {canEdit && (
-          <Stack gap={4} align="flex-start">
-            <Button
-              id={addMonthId}
-              variant="default"
-              size="compact-sm"
-              disabled={full}
-              aria-describedby={full ? monthsLimitId : undefined}
-              onClick={addMonth}
-            >
-              Add month
-            </Button>
-            {full && (
-              <Text id={monthsLimitId} size="sm" c="dimmed">
-                Ramp-up holds up to {String(rampUpMonths.most)} months.
+    <DraftView show={show}>
+      <Stack gap="lg" maw={settingsPageWidth} className={classes.settings}>
+        <Group gap="sm">
+          <DraftMenu show={show} onShow={onShow} />
+          {heldBy !== undefined && (
+            <DraftedItem heldBy={heldBy}>
+              <Text size="sm" c="dimmed">
+                Being changed by {heldBy}
               </Text>
+            </DraftedItem>
+          )}
+        </Group>
+        <RecordSection id="planning-working-time" title="Working time">
+          {settingRow("hoursPerDay")}
+          {settingRow("daysPerWeek")}
+          {settingRow("daysPerMonth")}
+        </RecordSection>
+        <RecordSection id="planning-forecasts" title="Forecasts">
+          {settingRow("focusPercent", true)}
+          {settingRow("bufferPercent", true)}
+        </RecordSection>
+        <Stack gap="xs">
+          <RecordSection id="planning-ramp-up" title="Ramp-up for new starters">
+            {months.map(({ month, share, liveShare }) =>
+              row(monthColumn(rampUp, month), share, liveShare, {
+                asPercent: true,
+                drafted:
+                  share === liveShare ? undefined : draftOf("rampUpPercents"),
+                canChange: share !== undefined,
+                action: editable && share !== undefined && (
+                  <ActionIcon
+                    id={removeMonthId(month)}
+                    variant="subtle"
+                    color="gray"
+                    size="sm"
+                    aria-label={`Remove ${monthName(month).toLowerCase()}`}
+                    onClick={() => {
+                      removeMonth(month);
+                    }}
+                  >
+                    <Icon name="close" />
+                  </ActionIcon>
+                ),
+              }),
             )}
-          </Stack>
-        )}
+            <Row column={fullOutputColumn(lastMonth + 1)} value="">
+              <Percentage value={fullOutputPercent} />
+            </Row>
+          </RecordSection>
+          {editable && (
+            <Stack gap={4} align="flex-start">
+              <Button
+                id={addMonthId}
+                variant="default"
+                size="compact-sm"
+                disabled={full}
+                aria-describedby={full ? monthsLimitId : undefined}
+                onClick={addMonth}
+              >
+                Add month
+              </Button>
+              {full && (
+                <Text id={monthsLimitId} size="sm" c="dimmed">
+                  Ramp-up holds up to {String(rampUpMonths.most)} months.
+                </Text>
+              )}
+            </Stack>
+          )}
+        </Stack>
       </Stack>
-    </Stack>
+      <DecisionModal
+        decision={decision}
+        opened={deciding}
+        onClose={() => {
+          setDeciding(false);
+        }}
+        onDone={() => {
+          setDeciding(false);
+        }}
+      />
+    </DraftView>
   );
 }

@@ -12,7 +12,6 @@ import {
   changeSets,
   type Database,
   databaseCodes,
-  planningSettings,
   fields,
   fieldValues,
   hasDatabaseCode,
@@ -103,6 +102,8 @@ import {
 import { typeOf } from "./column-types.ts";
 import { type ColumnInfo, fieldOfValue, writeValues } from "./values.ts";
 import { requireViewUndo, viewTierNow } from "./views.ts";
+import { stateOf, versionOf } from "./record-state.ts";
+import { readRecordsState } from "./records.ts";
 import { readToday } from "./settings.ts";
 import { recordTeamDayChanges, undoTeamDrafts } from "./feature-teams.ts";
 import {
@@ -115,8 +116,11 @@ import {
   undoHireDrafts,
 } from "./hires.ts";
 
-// Kinds of the plan's records, whose changes are not undone yet.
-const planRecordTypes: ReadonlySet<string> = new Set(recordTypeSchema.options);
+// Kinds of the plan's records, whose changes are not undone yet. The planning settings are left
+// out: they link to nothing, so putting back their draft breaks no rule across records.
+const planRecordTypes: ReadonlySet<string> = new Set(
+  recordTypeSchema.options.filter((type) => type !== "planning-settings"),
+);
 
 const changedSince =
   "This has been changed since, so it can no longer be undone";
@@ -154,7 +158,6 @@ const kindOrder: readonly RecordType[] = [
   "planned-hire",
   "feature-team",
   "saved-view",
-  "planning-settings",
 ];
 
 // The table each kind of record is kept in. A list's choice order is only ever changed live by
@@ -166,7 +169,6 @@ const tables = {
   person: people,
   "planned-hire": plannedHires,
   "saved-view": savedViews,
-  "planning-settings": planningSettings,
 } as const;
 const tableOf = (record: Undone) =>
   tables[record.recordType as keyof typeof tables];
@@ -241,14 +243,6 @@ const columnsOf: Record<
     definition: asStored,
     createdBy: text,
   },
-  "planning-settings": {
-    hoursPerDay: asStored,
-    daysPerWeek: asStored,
-    daysPerMonth: asStored,
-    focusPercent: asStored,
-    bufferPercent: asStored,
-    rampUpPercents: asStored,
-  },
 };
 
 type StoredChange = typeof changes.$inferSelect;
@@ -291,7 +285,8 @@ const isClassMove = ({ recordType, draft, action, old }: Undone): boolean =>
 
 // The record's database columns as they were before the change.
 function columnValues(record: Undone): Record<string, unknown> {
-  // Changes to the plan's records are refused before any is put back.
+  // Changes to the plan's records, and the planning settings' live ones, are refused before any is
+  // put back.
   const columns = columnsOf[record.recordType as keyof typeof columnsOf];
   return Object.fromEntries(
     [...record.old].flatMap(([field, value]) =>
@@ -793,6 +788,31 @@ async function undoColumnDrafts(
   }
 }
 
+// Puts back the draft of the planning settings a change set changed, with the settings it changed as
+// they were. The settings are only ever changed, and each value was checked when drafted.
+async function undoSettingsDrafts(
+  transaction: Transaction,
+  editor: string,
+  records: readonly Undone[],
+): Promise<void> {
+  const state = await readRecordsState(transaction, editor);
+  for (const record of records) {
+    const live = stateOf(state, "planning-settings").live.get(record.id);
+    const wanted = {
+      ...(versionOf(state, "planning-settings", record.id) as Recorded),
+      ...Object.fromEntries(withoutRejection(record.old)),
+    };
+    await writeDraft(
+      transaction,
+      editor,
+      "planning-settings",
+      record.id,
+      live,
+      wanted,
+    );
+  }
+}
+
 const byKind = (record: Undone) => kindOrder.indexOf(record.recordType);
 
 // The more sensitive of two tiers.
@@ -852,11 +872,6 @@ async function lockRecords(
     .where(inArray(savedViews.id, idsOf(records, "saved-view")))
     .orderBy(asc(savedViews.id))
     .for("update");
-  await transaction
-    .select({ id: planningSettings.id })
-    .from(planningSettings)
-    .where(inArray(planningSettings.id, idsOf(records, "planning-settings")))
-    .for("update");
 }
 
 async function undoIn(
@@ -901,6 +916,17 @@ async function undoIn(
   if (records.some(({ recordType }) => planRecordTypes.has(recordType))) {
     throw new ConflictError(
       "Changes to the plan and allocations can't be undone yet; change or discard the draft instead",
+    );
+  }
+  // Before the planning settings were drafted, their changes were saved live, with nothing to put
+  // back but the live row.
+  if (
+    records.some(
+      ({ recordType, draft }) => recordType === "planning-settings" && !draft,
+    )
+  ) {
+    throw new ConflictError(
+      "This change to the planning settings can't be undone; change them instead",
     );
   }
   for (const record of records) {
@@ -1075,6 +1101,12 @@ async function undoIn(
   }
   if (columnDrafts.length > 0) {
     await undoColumnDrafts(transaction, actor, columnDrafts);
+  }
+  const settingsDrafts = draftRecords.filter(
+    ({ recordType }) => recordType === "planning-settings",
+  );
+  if (settingsDrafts.length > 0) {
+    await undoSettingsDrafts(transaction, actor.user.id, settingsDrafts);
   }
   // Hires come before people, so undoing a fill puts a planned manager's hires back under it before
   // its person's Manager? mark comes off.

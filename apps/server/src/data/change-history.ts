@@ -28,14 +28,12 @@ import {
   type ChangeEntry,
   changeKindSchema,
   type ChangeValue,
-  type ClassifiedView,
   hireCalled,
   isLink,
   isNoteField,
   linkInWords,
   matchesWords,
   notePlainText,
-  type Permission,
   recordSearchText,
   recordTypeSchema,
   searchWords,
@@ -99,25 +97,14 @@ const hiringKinds: readonly RecordType[] = ["planned-hire"];
 // The fields a planned hire is named by: its position and its ID.
 const hireNameFields = ["name", "positionId", "requisition", "temporaryNumber"];
 
-// Planning configuration changed live rather than drafted, seen with the permissions each kind is
-// read with, as the plan's records are.
-const livePlanKinds: readonly {
-  type: RecordType;
-  readWith: readonly Permission[];
-  view?: ClassifiedView;
-}[] = [{ type: "planning-settings", readWith: ["configuration:view"] }];
-
-// The plan's records, such as release streams, and its configuration changed live.
-const planKinds: readonly RecordType[] = [
-  ...recordTypeSchema.options,
-  ...livePlanKinds.map(({ type }) => type),
-];
+// The plan's records, such as release streams, and the planning settings.
+const planKinds: readonly RecordType[] = recordTypeSchema.options;
 
 // The kinds of the plan's records the actor sees: General plan data, seen with the permissions each
 // kind is read with rather than through the tiers of people's data, and, for a kind that needs one,
 // with every class of data its view needs.
 const seenPlanKinds = (actor: Actor): RecordType[] =>
-  [...recordKinds, ...livePlanKinds]
+  recordKinds
     .filter(
       (kind) =>
         kind.readWith.some((permission) =>

@@ -4,6 +4,7 @@
 // planning settings that capacity and forecasts are worked out with. A switch picks the mode for a
 // role that sees both; a role that sees one sees it alone.
 
+import type { DraftKind } from "@fathom/shared";
 import { Group, SegmentedControl, Stack } from "@mantine/core";
 import { useState } from "react";
 import { type CapacityMode, capacityModeSchema } from "./capacity.ts";
@@ -27,6 +28,7 @@ export function CapacityPage({
   view,
   onView,
   canEditSettings,
+  approves,
 }: {
   // The modes the role sees, in order.
   modes: readonly CapacityMode[];
@@ -37,6 +39,8 @@ export function CapacityPage({
   view: View;
   onView: (view: View, replace?: boolean) => void;
   canEditSettings: boolean;
+  // The kinds of draft the user may approve and reject.
+  approves: readonly DraftKind[];
 }) {
   const [now] = useState(today);
   return (
@@ -64,7 +68,14 @@ export function CapacityPage({
         </Group>
       )}
       {mode === "settings" ? (
-        <PlanningSettingsTab canEdit={canEditSettings} />
+        <PlanningSettingsTab
+          canEdit={canEditSettings}
+          approves={approves}
+          show={view.show}
+          onShow={(show) => {
+            onView({ ...view, show }, true);
+          }}
+        />
       ) : (
         <CapacityPeople
           byManager={byManager}

@@ -27,6 +27,13 @@ A Workforce Administrator keeps the organization's records: its people and plann
 1. Add, rename or remove teams on the **Org chart**, as [Org chart](org-chart.md#change-a-feature-team) sets out.
 1. Select **Publish** in the top bar.
 
+## Keep the Planning Settings
+
+1. On **Capacity**, in **Settings**, change the settings, as [Capacity](capacity.md#change-a-setting) sets out.
+1. Select **Publish** in the top bar.
+
+Estimates and forecasts follow the change once it's approved.
+
 ## Decide Who Sees What
 
 On **Data classes**, under **Administration**, change the class of a detail, column or list, as [Data classes](data-classes.md#change-a-class) sets out.

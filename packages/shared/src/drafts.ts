@@ -2,8 +2,8 @@
 
 // Drafts: changes waiting for approval, at most one for each record, as the Decisions Log sets out.
 // People, lists, choices, the People table's columns, the order of each list's choices and of the
-// People table's columns, and the plan's records, such as release streams, have drafts, which an
-// Approver approves or rejects, several kinds at once.
+// People table's columns, the plan's records, such as release streams, and the planning settings
+// have drafts, which an Approver approves or rejects, several kinds at once.
 
 import { z } from "zod";
 import { linkShape } from "./links.ts";
@@ -49,7 +49,7 @@ export const heldBySchema = z.string().optional();
 export const draftActionSchema = z.enum(["created", "changed", "deleted"]);
 
 // The kinds of the plan's records that have drafts through one set of rules for all of them, each
-// with its own fields, which may link to other records.
+// with its own fields, which may link to other records, and the planning settings, one record.
 export const recordTypeSchema = z.enum([
   "release-stream",
   "cycle-pattern",
@@ -60,13 +60,22 @@ export const recordTypeSchema = z.enum([
   "project",
   "milestone",
   "allocation",
+  "planning-settings",
 ]);
 
 export type RecordType = z.infer<typeof recordTypeSchema>;
 
+// The planning settings' one record, kept under this name rather than a generated identifier.
+export const planningSettingsId = "planning-settings";
+
+export const recordRefIdSchema = z.union([
+  z.uuid(),
+  z.literal(planningSettingsId),
+]);
+
 export const recordRefSchema = z.object({
   type: recordTypeSchema,
-  id: z.uuid(),
+  id: recordRefIdSchema,
 });
 
 export type RecordRef = z.infer<typeof recordRefSchema>;
@@ -86,6 +95,8 @@ export const recordDraftSchema = z.object({
       z.boolean(),
       z.null(),
       z.array(z.string()),
+      // Shares by month, such as the planning settings' ramp-up.
+      z.array(z.number()),
       linkShape,
       // Text by record, such as the reasons a proposal keeps by feature.
       z.record(z.string(), z.string()),
@@ -194,6 +205,7 @@ export const approvePermissions = {
   project: "plan:approve",
   milestone: "plan:approve",
   allocation: "allocations:approve",
+  "planning-settings": "configuration:approve",
 } as const satisfies Record<DraftKind, Permission>;
 
 export type ApprovePermission = (typeof approvePermissions)[DraftKind];
@@ -257,6 +269,7 @@ export function kindsAsked(asked: DraftsRequest): DraftKind[] {
     project: records.has("project"),
     milestone: records.has("milestone"),
     allocation: records.has("allocation"),
+    "planning-settings": records.has("planning-settings"),
   };
   // The kind is always one of the fixed list above.
   // eslint-disable-next-line security/detect-object-injection

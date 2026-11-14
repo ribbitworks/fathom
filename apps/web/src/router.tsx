@@ -302,6 +302,7 @@ const draftsRoute = createRoute({
           permissions.includes("people:view")
         }
         seesProjects={permissions.includes("plan:view")}
+        seesSettings={permissions.includes("configuration:view")}
         search={draftsRoute.useSearch().search ?? ""}
         onSearch={(search, replace) => {
           void navigate({ search: { search: search || undefined }, replace });
@@ -436,6 +437,7 @@ const capacityRoute = createRoute({
         view={view}
         onView={onView}
         canEditSettings={permissions.includes("configuration:edit")}
+        approves={approvableKinds(permissions)}
       />
     );
   },

@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The Drafts page: every draft the user may see, of people, planned hires, People's columns, lists,
-// choices, the order of lists' choices and of People's columns, and the plan's records, such as
-// release streams, newest first, each a sentence saying who drafted what, with what it changes from
-// its live value, and rejected drafts marked with their reason. A search narrows them. Approvers
-// select drafts, one or several at once, and approve or reject them, as they can on the People
-// table and the Lists page too. Approving or rejecting names any other drafts it includes.
+// choices, the order of lists' choices and of People's columns, the plan's records, such as release
+// streams, and the planning settings, newest first, each a sentence saying who drafted what, with
+// what it changes from its live value, and rejected drafts marked with their reason. A search
+// narrows them. Approvers select drafts, one or several at once, and approve or reject them, as
+// they can on the People table and the Lists page too. Approving or rejecting names any other
+// drafts it includes.
 
 import { LoadProblem } from "./load-problem.tsx";
 import {
@@ -26,6 +27,7 @@ import {
   type Person,
   type PersonDraft,
   type PlanChoices,
+  type PlanningSettingsShown,
   type ProjectPlan,
   type RecordDraft,
   type RecordType,
@@ -76,6 +78,13 @@ import {
   tableChoices,
 } from "./projects.ts";
 import { PageHeader } from "./page-header.tsx";
+import {
+  planningSettingsNode,
+  planningSettingsQuery,
+  planningSettingsRef,
+  planningSettingsSubject,
+  settingsDraftWords,
+} from "./planning-settings.ts";
 import { type PeopleData, peopleQuery } from "./people.ts";
 import { isHire, rowName } from "./people-rows.ts";
 import classes from "./pages.module.css";
@@ -410,6 +419,25 @@ function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
   ]);
 }
 
+// The draft of the planning settings, as an entry, with each setting it changes.
+function settingsEntries(settings: PlanningSettingsShown): Entry[] {
+  const { draft } = settings;
+  if (draft === undefined) return [];
+  return [
+    entry(
+      `planning-settings ${planningSettingsRef.id}`,
+      draft,
+      planningSettingsSubject,
+      configFields(...settingsDraftWords(draft, settings), "planning-settings"),
+      { records: [planningSettingsRef] },
+      settings.heldBy,
+    ),
+  ];
+}
+
+const settingsNodes = (settings: PlanningSettingsShown | undefined) =>
+  settings === undefined ? [] : [planningSettingsNode(settings)];
+
 const nothingLeftInTeamDraft: Phrase = [
   "Nothing is left to change, since the people it named have left",
 ];
@@ -586,6 +614,7 @@ export function DraftsPage({
   seesPlan = true,
   seesTeams = false,
   seesProjects = seesPlan,
+  seesSettings = false,
   search,
   onSearch,
 }: {
@@ -601,6 +630,8 @@ export function DraftsPage({
   seesTeams?: boolean;
   // Whether the user sees the plan itself, so its customers, proposals, projects, and milestones.
   seesProjects?: boolean;
+  // Whether the user sees configuration, so the planning settings.
+  seesSettings?: boolean;
   search: string;
   onSearch: (search: string, replace: boolean) => void;
 }) {
@@ -614,6 +645,10 @@ export function DraftsPage({
   const chart = useQuery({ ...orgChartQuery, enabled: seesTeams });
   const plan = useQuery({ ...projectPlanQuery, enabled: seesProjects });
   const choices = useQuery({ ...planChoicesQuery, enabled: seesProjects });
+  const settings = useQuery({
+    ...planningSettingsQuery,
+    enabled: seesSettings,
+  });
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [decision, setDecision] = useState<Decision>();
   const [opened, setOpened] = useState(false);
@@ -628,7 +663,8 @@ export function DraftsPage({
     lists.isPending ||
     (seesPlan && releases.isPending) ||
     (seesTeams && (featureTeams.isPending || chart.isPending)) ||
-    (seesProjects && (plan.isPending || choices.isPending))
+    (seesProjects && (plan.isPending || choices.isPending)) ||
+    (seesSettings && settings.isPending)
   ) {
     content = <Loader role="status" aria-label="Loading" />;
   } else if (
@@ -638,15 +674,16 @@ export function DraftsPage({
     featureTeams.isError ||
     chart.isError ||
     plan.isError ||
-    choices.isError
+    choices.isError ||
+    settings.isError
   ) {
     content = (
       <LoadProblem
         what="the drafts"
         onRetry={() => {
-          void people.refetch();
-          void lists.refetch();
-          void releases.refetch();
+          if (seesPeople) void people.refetch();
+          if (seesLists) void lists.refetch();
+          if (seesPlan) void releases.refetch();
           if (seesTeams) {
             void featureTeams.refetch();
             void chart.refetch();
@@ -655,6 +692,7 @@ export function DraftsPage({
             void plan.refetch();
             void choices.refetch();
           }
+          if (seesSettings) void settings.refetch();
         }}
       />
     );
@@ -686,6 +724,7 @@ export function DraftsPage({
             streams as ReleaseStream[],
           )
         : []),
+      ...(settings.data === undefined ? [] : settingsEntries(settings.data)),
     ].sort((a, b) => (b.madeAt ?? "").localeCompare(a.madeAt ?? ""));
     const shown = all.filter(({ text }) => matchesWords(text, words));
     // Loaded, or empty for those who see only lists.
@@ -699,6 +738,7 @@ export function DraftsPage({
     const records = [
       ...recordNodes(streams as ReleaseStream[]),
       ...(seesProjects && plan.data !== undefined ? planNodes(plan.data) : []),
+      ...settingsNodes(settings.data),
     ];
     // A draft that depends on a rejected draft cannot be approved until that one is resubmitted.
     const waits = ({ state, selects }: Entry) =>

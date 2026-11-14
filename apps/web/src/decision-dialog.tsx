@@ -27,10 +27,12 @@ import {
   draftTotal,
   rejectDrafts,
 } from "./drafts.ts";
+import { effortConversionsQuery } from "./effort.ts";
 import { listsQuery } from "./lists.ts";
 import { notifySuccess } from "./notices.tsx";
 import { count } from "./numbers.ts";
 import { peopleQuery } from "./people.ts";
+import { planningSettingsQuery } from "./planning-settings.ts";
 
 // What a decision did, as its notification says.
 const decided = (asking: "approve" | "reject", total: number) =>
@@ -92,6 +94,12 @@ function DecisionDialog({
         queryKey: projectPlanQuery.queryKey,
       });
       await queryClient.invalidateQueries({ queryKey: ["changes"] });
+      await queryClient.invalidateQueries({
+        queryKey: planningSettingsQuery.queryKey,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: effortConversionsQuery.queryKey,
+      });
     },
   });
   const missing = asking === "reject" && reason.trim() === "";

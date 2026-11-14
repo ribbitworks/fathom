@@ -57,6 +57,7 @@ import {
   writeDraft,
 } from "./drafts.ts";
 import { allocationKind, allocationProblem } from "./allocation-kinds.ts";
+import { planningSettingsKind } from "./planning-settings-kind.ts";
 import { projectKinds } from "./project-kinds.ts";
 import { releaseKinds, releaseProblem } from "./release-kinds.ts";
 import {
@@ -94,6 +95,7 @@ export const recordKinds: readonly RecordKind[] = [
   ...releaseKinds,
   ...projectKinds,
   allocationKind,
+  planningSettingsKind,
 ];
 
 // A record removed while another, as shown, still links to it, such as a customer a project names.

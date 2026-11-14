@@ -17,6 +17,7 @@ import {
   impliedPermissions,
   type Permission,
   permissionSchema,
+  planningSettingsId,
   startingPlanningSettings,
 } from "@fathom/shared";
 import { users } from "@fathom/db";
@@ -184,13 +185,20 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     needs: allOf("allocations:approve", "allocations:view", "personal:view"),
     asked: () => ({ records: [{ type: "allocation", id: id() }] }),
   },
+  {
+    variant: "planning settings",
+    needs: allOf("configuration:approve", "configuration:view"),
+    asked: () => ({
+      records: [{ type: "planning-settings", id: planningSettingsId }],
+    }),
+  },
 ];
 
 // Those who edit feature teams change them, seeing people.
 const changingTeams = allOf("people:view", "feature-teams:edit");
 
 // Who may discard and resend drafts of each kind of the plan's records.
-const recordKinds: { type: string; needs: Needs }[] = [
+const recordKinds: { type: string; needs: Needs; recordId?: string }[] = [
   { type: "release-stream", needs: allOf("configuration:edit") },
   { type: "cycle-pattern", needs: allOf("configuration:edit") },
   { type: "release", needs: allOf("features:edit") },
@@ -200,6 +208,11 @@ const recordKinds: { type: string; needs: Needs }[] = [
   { type: "project", needs: allOf("plan:edit") },
   { type: "milestone", needs: allOf("plan:edit") },
   { type: "allocation", needs: allOf("allocations:edit") },
+  {
+    type: "planning-settings",
+    needs: allOf("configuration:edit"),
+    recordId: planningSettingsId,
+  },
 ];
 
 // Every API route, with what it needs. The web routes are left out: the test app serves no front
@@ -853,11 +866,11 @@ const routes: Route[] = [
     needs: allOf("plan:edit"),
   },
   ...["/draft", "/draft/rejection"].flatMap((end) =>
-    recordKinds.map(({ type, needs }): Route => ({
+    recordKinds.map(({ type, needs, recordId }): Route => ({
       method: "DELETE",
       pattern: `/api/records/:type/:id${end}`,
       variant: type,
-      url: `/api/records/${type}/${id()}${end}`,
+      url: `/api/records/${type}/${recordId ?? id()}${end}`,
       needs,
     })),
   ),

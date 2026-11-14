@@ -4,9 +4,11 @@
 // units of effort, which double as a working month's days and a working day's hours; the default
 // share of a person's time that goes to feature work at all; the share a new starter delivers in
 // each of their first months, full from the month after the last; and the default buffer added to
-// effort before forecasting, which leaves the effort entered as it is.
+// effort before forecasting, which leaves the effort entered as it is. A change is a draft, live
+// once approved with Approve Configuration.
 
 import { z } from "zod";
+import { heldBySchema, recordDraftSchema } from "./drafts.ts";
 import {
   effortConversionNames,
   effortConversionsSchema,
@@ -111,8 +113,17 @@ export const startingPlanningSettings: PlanningSettings = {
   rampUpPercents: [50, 75],
 };
 
+// The settings as the reader sees them, with their draft, waiting for approval, in place, and what
+// it changes from the live settings, and who holds them, when someone else has unpublished changes.
+export const planningSettingsShownSchema = planningSettingsSchema.extend({
+  draft: recordDraftSchema.optional(),
+  heldBy: heldBySchema,
+});
+
+export type PlanningSettingsShown = z.infer<typeof planningSettingsShownSchema>;
+
 export const savedPlanningSettingsSchema = z.object({
-  settings: planningSettingsSchema,
+  settings: planningSettingsShownSchema,
   changeSetId: changeSetIdSchema,
 });
 

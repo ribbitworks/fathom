@@ -830,14 +830,14 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `9BDC` Open the column menu of **Effort**.
   - **Expected:**
-    - Under **Show in**, the menu lists **Hours**, **Person-days**, **Person-weeks**, **Person-months** and **Person-quarters**, in that order.
+    - Under **Show in**, the menu lists **Hours**, **Person-days (8 hours)**, **Person-weeks (8h / PD, 5 days / PW)**, **Person-months (8h / PD, 20 days / PM)** and **Person-quarters (8h / PD, 60 days / PQ)**, in that order.
     - A tick is beside **Hours** only.
     - Under **Decimal places**, it lists **0**, **1** and **2**.
     - A tick is beside **2** only.
     - It has no **Break down by**.
   - **Notes:**
 
-- [ ] `55AF` Select **Person-days**.
+- [ ] `55AF` Select **Person-days (8 hours)**.
   - **Expected:**
     - The menu closes.
     - 'Audit Export' reads "39.5 PD".
@@ -848,7 +848,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:** A tooltip reads "316 hours".
   - **Notes:**
 
-- [ ] `920C` Open the column menu of **Effort**, and select **Person-weeks**.
+- [ ] `920C` Open the column menu of **Effort**, and select **Person-weeks (8h / PD, 5 days / PW)**.
   - **Expected:**
     - 'Audit Export' reads "8 PW".
     - 'Usage Alerts' reads "10.6 PW".
@@ -858,21 +858,21 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:** A tooltip reads "316 hours, rounded up".
   - **Notes:**
 
-- [ ] `EDEA` Open the column menu of **Effort**, and select **Person-months**.
+- [ ] `EDEA` Open the column menu of **Effort**, and select **Person-months (8h / PD, 20 days / PM)**.
   - **Expected:**
     - 'Audit Export' reads "2 PM".
     - 'Usage Alerts' reads "2.65 PM".
     - 'Bulk Import' reads "1.5 PM".
   - **Notes:**
 
-- [ ] `6ACA` Open the column menu of **Effort**, and select **Person-quarters**.
+- [ ] `6ACA` Open the column menu of **Effort**, and select **Person-quarters (8h / PD, 60 days / PQ)**.
   - **Expected:**
     - 'Audit Export' reads "0.67 PQ".
     - 'Usage Alerts' reads "0.89 PQ".
     - 'Bulk Import' reads "0.5 PQ".
   - **Notes:**
 
-- [ ] `EA7D` Open the column menu of **Effort**, and select **Person-months**.
+- [ ] `EA7D` Open the column menu of **Effort**, and select **Person-months (8h / PD, 20 days / PM)**.
   - **Expected:** 'Usage Alerts' reads "2.65 PM".
   - **Notes:**
 
@@ -915,7 +915,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 **Preconditions:** **Features** page open, **Effort** shown in hours to 2 decimal places, as the column menu of **Effort** shows with ticks beside **Hours** and **2**.
 
-- [ ] `9BF3` Open the column menu of **Effort**, and select **Person-days**.
+- [ ] `9BF3` Open the column menu of **Effort**, and select **Person-days (8 hours)**.
   - **Expected:** 'Audit Export' reads "39.5 PD".
   - **Notes:**
 
@@ -1027,7 +1027,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Notes:**
 
 - [ ] `121F` Open the column menu of **Effort**.
-  - **Expected:** It ticks **Person-days**.
+  - **Expected:** It ticks **Person-days (8 hours)**.
   - **Notes:**
 
 - [ ] `EF23` Select **Hours**.
@@ -1054,7 +1054,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 **Preconditions:** Restore the Seed Data run after FEAT-22. **Features** page open.
 
-- [ ] `F8F2` Open the column menu of **Effort**, and select **Person-weeks**.
+- [ ] `F8F2` Open the column menu of **Effort**, and select **Person-weeks (8h / PD, 5 days / PW)**.
   - **Expected:** 'Audit Export' reads "8 PW".
   - **Notes:**
 

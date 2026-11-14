@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The planning settings, read by those who see configuration and changed by those who change it, a
-// few at a time, and the conversions between units of effort alone, read by those who see the plan
-// to convert estimates. A change answers with the change set it was saved in, which undoing it
-// names. The data access layer checks the actor's permissions.
+// The planning settings, read by those who see configuration with their draft in place, and drafted
+// by those who change it, a few at a time, and the conversions between units of effort alone, as
+// they are live, read by those who see the plan to convert estimates. A change answers with the
+// change set it was saved in, which undoing it names. The data access layer checks the actor's
+// permissions.
 
 import {
   effortConversionsSchema,
   planningSettingsChangeSchema,
-  planningSettingsSchema,
+  planningSettingsShownSchema,
   savedPlanningSettingsSchema,
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
@@ -22,7 +23,7 @@ export function planningSettingsRoutes(
   return (app, _options, done) => {
     app.get(
       path,
-      { schema: { response: { 200: planningSettingsSchema } } },
+      { schema: { response: { 200: planningSettingsShownSchema } } },
       async (request) => data.readPlanningSettings(request.actor),
     );
     app.patch(

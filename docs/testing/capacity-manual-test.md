@@ -11,7 +11,7 @@ last_updated: "2026-11-13"
 
 ## Scope
 
-Verifies the Capacity page's two modes. Settings holds the planning settings: how it reads for someone who may only see it, changing a setting and seeing the Effort column on Features follow it, undoing a change, a value refused, adding and removing months of ramp-up, and the change in the change history. People is the table of allocations by month: switching between the modes, its over- and under-allocated months, planned hires, the capacity totals of each group and of the organization, rows for someone who changed team or manager, and the page left out of the menu for a role that sees neither mode. The seeded allocations are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies the Capacity page's two modes. Settings holds the planning settings: how it reads for someone who may only see it, drafting a change and undoing it, a value refused, adding and removing months of ramp-up, the change in the change history, and approving a draft and seeing the Effort column on Features follow it once approved. People is the table of allocations by month: switching between the modes, its over- and under-allocated months, planned hires, the capacity totals of each group and of the organization, rows for someone who changed team or manager, and the page left out of the menu for a role that sees neither mode. The seeded allocations are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -29,7 +29,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 ## Common Procedures
 
-[Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Reset the Database](manual-test-basics.md#reset-the-database), from Manual Test Basics. The planning settings are not part of the seed data, so Restore the Seed Data leaves them as they are.
+[Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish), from Manual Test Basics. The planning settings are not part of the seed data, so Restore the Seed Data leaves them as they are.
 
 ## Terms
 
@@ -37,6 +37,8 @@ As [Manual Test Basics](manual-test-basics.md#terms) sets out, such as the mode 
 
 - **Change button:** as [Manual Test Basics](manual-test-basics.md#terms) sets out, here at the right of a setting's row.
 - **× button:** the small × after the change button of a month of ramp-up, which removes that month.
+- **Draft button:** the button above **Working time** on **Settings**, which opens a menu choosing how drafts show.
+- **Row menu:** the ⋯ button at the right of a setting's row that a draft changes, which opens a menu of the whole draft of the settings and what can be done with it.
 - **Total row:** in **People**, a row in bold at the end of each group, headed **Total, PM** in the **Person** column, and one at the foot of the table, headed **Organization, PM**. PM stands for person-months.
 
 ## Test Cases
@@ -71,18 +73,15 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
       - **Month 2**: "75%"
       - **From month 3**: "100%"
     - No row has a change button.
+    - Above **Working time** is a **Draft** button.
     - There are no buttons under the rows.
   - **Notes:**
 
-### CAP-02: A Change Undone, Then Followed on Features
+### CAP-02: A Change Drafted, Undone and Published
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from CAP-01.
 
-**Preconditions:** Signed in with this account. **Features** page open.
-
-- [ ] `A2D4` Open the column menu of **Effort**, and select **Person-days** under **Show in**.
-  - **Expected:** 'Audit Export' reads "39.5 PD".
-  - **Notes:**
+**Preconditions:** Signed in with this account.
 
 - [ ] `DCBC` Select the **Capacity** page in the left-hand menu.
   - **Expected:** The mode switch has **People** chosen.
@@ -107,14 +106,16 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `08BD` Replace the value with `4`, and press Enter.
   - **Expected:**
-    - **Hours a day** reads "4".
+    - **Hours a day** reads "4" after a hollow yellow mark.
+    - Under it, "8" follows a green mark.
     - The change button of **Hours a day** has focus.
     - No notification shows.
+    - The Publish button reads **Publish 1 change**.
   - **Notes:**
 
 - [ ] `B912` Press Cmd+Z on a Mac, or Ctrl+Z elsewhere.
   - **Expected:**
-    - **Hours a day** reads "8".
+    - **Hours a day** reads "8", with no mark and nothing under it.
     - The change button of **Hours a day** has focus.
   - **Notes:**
 
@@ -125,15 +126,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `318F` Replace the value with `4`, and press Enter.
-  - **Expected:** **Hours a day** reads "4".
+  - **Expected:** **Hours a day** reads "4" after a hollow yellow mark.
   - **Notes:**
 
-- [ ] `5C4A` Select the **Features** page in the left-hand menu.
-  - **Expected:** The **Features** page opens.
-  - **Notes:**
-
-- [ ] `8F7A` Open the column menu of **Effort**, and select **Person-days** under **Show in**.
-  - **Expected:** 'Audit Export' reads "79 PD".
+- [ ] `E18C` Run Publish.
+  - **Expected:** The mark before "4" beside **Hours a day** is filled yellow.
   - **Notes:**
 
 ### CAP-03: A Value Refused
@@ -173,7 +170,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - Under **Ramp-up for new starters**, the rows read, from the top:
       - **Month 1**: "50%"
       - **Month 2**: "75%"
-      - **Month 3**: "100%"
+      - **Month 3**: "100%" after a hollow yellow mark, with "No month 3" under it after a green mark
       - **From month 4**: "100%"
     - The change button of **Month 3** has focus.
     - **Month 3** has an × button after its change button.
@@ -186,7 +183,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `3F77` Replace the value with `90`, and press Enter.
-  - **Expected:** **Month 3** reads "90%".
+  - **Expected:** **Month 3** reads "90%" after a hollow yellow mark.
   - **Notes:**
 
 - [ ] `2E12` Select the × button of **Month 3**.
@@ -205,7 +202,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - Under **Ramp-up for new starters**, the rows read, from the top:
       - **Month 1**: "50%"
       - **Month 2**: "75%"
-      - **Month 3**: "90%"
+      - **Month 3**: "90%" after a hollow yellow mark
       - **From month 4**: "100%"
   - **Notes:**
 
@@ -217,7 +214,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `D295` Select the **Change history** page in the left-hand menu.
   - **Expected:**
-    - The newest entry reads "Engineering Operations Manager changed the planning settings".
+    - The newest entry reads "Engineering Operations Manager drafted changes to the planning settings".
     - Its details read "Ramp-up from 50%, 75% to 50%, 75%, 90%".
   - **Notes:**
 
@@ -523,3 +520,86 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - It shows **People**, **Org chart** and **Drafts**.
     - There is no **Capacity**.
   - **Notes:**
+
+### CAP-15: A Draft Approved, Then Followed on Features
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from CAP-14. Step `2C26` signs in as another account.
+
+**Preconditions:** Signed in with this account. Reset the Database has been run, as CAP-05 ends. **Features** page open.
+
+- [ ] `02DD` Open the column menu of **Effort**, and select **Person-days (8 hours)** under **Show in**.
+  - **Expected:** 'Audit Export' reads "39.5 PD".
+  - **Notes:**
+
+- [ ] `E60D` Select the **Capacity** page in the left-hand menu.
+  - **Expected:** The mode switch has **People** chosen.
+  - **Notes:**
+
+- [ ] `887A` Select **Settings** in the mode switch.
+  - **Expected:** **Hours a day** reads "8".
+  - **Notes:**
+
+- [ ] `5DF7` Select "8" beside **Hours a day**.
+  - **Expected:**
+    - A field in place of "8" holds "8".
+    - The focus is in the field.
+  - **Notes:**
+
+- [ ] `DA6A` Replace the value with `4`, and press Enter.
+  - **Expected:** **Hours a day** reads "4" after a hollow yellow mark.
+  - **Notes:**
+
+- [ ] `6AB7` Run Publish.
+  - **Expected:** The mark before "4" beside **Hours a day** is filled yellow.
+  - **Notes:**
+
+- [ ] `6D1E` Select the **Features** page in the left-hand menu, then open the column menu of **Effort**.
+  - **Expected:**
+    - Under **Show in**, **Person-days (8 hours)** is ticked.
+    - **Person-weeks (8h / PD, 5 days / PW)** is under it.
+    - 'Audit Export' still reads "39.5 PD".
+  - **Notes:**
+
+- [ ] `2C26` Sign in as the Engineering Director, `engineering.director@fathom.test`.
+  - **Expected:** The right end of the top bar reads "Engineering Director".
+  - **Notes:**
+
+- [ ] `C7B3` Select the **Capacity** page in the left-hand menu.
+  - **Expected:** The mode switch has **People** chosen.
+  - **Notes:**
+
+- [ ] `B2C3` Select **Settings** in the mode switch.
+  - **Expected:**
+    - **Hours a day** reads "4" after a yellow mark.
+    - Under it, "8" follows a green mark.
+  - **Notes:**
+
+- [ ] `7CF7` Select the row menu of **Hours a day**.
+  - **Expected:**
+    - A menu headed **Planning settings** opens.
+    - Under the heading, a yellow mark and "Draft: changed".
+    - Under that, "Hours a day from 8 to 4, by Engineering Operations Manager".
+    - Then **Approve…**, **Reject…** and **Discard draft**.
+    - No other row has a row menu.
+  - **Notes:**
+
+- [ ] `8FB0` Select **Approve…**.
+  - **Expected:**
+    - A dialog headed "Approve 1 draft?" opens.
+    - It has an **Approve** button.
+  - **Notes:**
+
+- [ ] `77B6` Select **Approve**.
+  - **Expected:**
+    - The dialog closes.
+    - A notification says "Approved 1 draft."
+    - **Hours a day** reads "4", with no mark and nothing under it.
+  - **Notes:**
+
+- [ ] `3F90` Select the **Features** page in the left-hand menu, then open the column menu of **Effort**.
+  - **Expected:**
+    - Under **Show in**, **Person-days (4 hours)** is ticked.
+    - 'Audit Export' reads "79 PD".
+  - **Notes:**
+
+**Afterwards:** Run Reset the Database, to leave the planning settings as Fathom starts them.
