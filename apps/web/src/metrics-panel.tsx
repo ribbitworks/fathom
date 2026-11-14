@@ -6,7 +6,7 @@
 // figure counts the rows as their drafts show them, with the live figure beside it where it
 // differs. Esc, from anywhere in the panel, or its close button closes it.
 
-import { NativeSelect, SegmentedControl, Table, Text } from "@mantine/core";
+import { SegmentedControl, Select, Table, Text } from "@mantine/core";
 import { useState } from "react";
 import { MarkedItem } from "./status-mark.tsx";
 import classes from "./metrics.module.css";
@@ -119,9 +119,12 @@ export function MetricsPanel<Row>({
     choices: typeof offered,
     onPick: (key: string | undefined) => void,
   ) => (
-    <NativeSelect
+    // A drop-down list that opens on Enter, and cuts a long column name short rather than widening
+    // the panel, as the browser's own list does neither.
+    <Select
       label={label}
       size="sm"
+      allowDeselect={false}
       data={[
         { value: "", label: none },
         ...choices.map((column) => ({
@@ -130,8 +133,8 @@ export function MetricsPanel<Row>({
         })),
       ]}
       value={picked?.key ?? ""}
-      onChange={(event) => {
-        onPick(event.currentTarget.value || undefined);
+      onChange={(value) => {
+        onPick(value || undefined);
       }}
     />
   );

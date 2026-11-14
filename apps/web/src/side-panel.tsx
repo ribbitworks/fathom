@@ -292,13 +292,29 @@ function usePanelSlide(
   return { shown: open ? panel : closing?.node, opening, closing, slid };
 }
 
+// The layout's width as if the page had no scroll bar, given the window's width and the page's
+// beside any scroll bar, so the panels keep their width as the page's scroll bar comes and goes.
+// While it shows, the content beside the panels may have that much less than its least.
+export const roomWithoutScrollBar = (
+  layoutWidth: number,
+  windowWidth: number,
+  pageWidth: number,
+) => layoutWidth + Math.max(0, windowWidth - pageWidth);
+
+const roomOf = (layout: HTMLDivElement) =>
+  roomWithoutScrollBar(
+    layout.getBoundingClientRect().width,
+    window.innerWidth,
+    document.documentElement.clientWidth,
+  );
+
 // The layout's width, so the panels leave the content its least however wide they were left.
 function useRoom(layout: RefObject<HTMLDivElement | null>) {
   const [room, setRoom] = useState(0);
   useLayoutEffect(() => {
     const element = layout.current as HTMLDivElement;
     const measure = () => {
-      setRoom(element.getBoundingClientRect().width);
+      setRoom(roomOf(element));
     };
     measure();
     const observer = new ResizeObserver(measure);
@@ -343,8 +359,7 @@ export function WithSidePanel({
   // While the panels slide, the content keeps the width it has once they are closed.
   const sliding = opening || closing !== undefined;
   const resize = (wanted: number) => {
-    const room = (layout.current as HTMLDivElement).getBoundingClientRect();
-    setWidth(panelWidth(wanted, room.width));
+    setWidth(panelWidth(wanted, roomOf(layout.current as HTMLDivElement)));
   };
   return (
     <div

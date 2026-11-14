@@ -15,6 +15,7 @@ import {
   type SidePanel,
   stackShares,
   WithSidePanel,
+  roomWithoutScrollBar,
 } from "./side-panel.tsx";
 import { testTheme } from "./test-support.tsx";
 
@@ -326,5 +327,15 @@ describe("stacked panels", () => {
     expect(item.className).toMatch(/stackItemArriving/u);
     fireEvent(item, new Event("transitioncancel", { bubbles: true }));
     expect(item.className).not.toMatch(/stackItemArriving/u);
+  });
+});
+
+describe("the room beside the panels", () => {
+  it("is the same whether the page's scroll bar shows or not", () => {
+    const withoutBar = roomWithoutScrollBar(1000, 1000, 1000);
+
+    const withBar = roomWithoutScrollBar(985, 1000, 985);
+
+    expect(withBar).toBe(withoutBar);
   });
 });

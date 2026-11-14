@@ -223,6 +223,48 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The panel opens again at the width it was left.
   - **Notes:**
 
+- [ ] `A71C` Press Tab until **Break down by** has the keyboard focus.
+  - **Expected:** A blue outline shows round **Break down by**.
+  - **Notes:**
+
+- [ ] `5D2E` Press Enter.
+  - **Expected:** The list of columns opens under **Break down by**.
+  - **Notes:**
+
+- [ ] `C0B9` Press the Down arrow until **Site** is highlighted, and press Enter.
+  - **Expected:**
+    - The list closes.
+    - **Break down by** reads **Site**.
+    - The panel's width does not change.
+  - **Notes:**
+
+- [ ] `7E4D` Set **Break down by** to the column whose name is longest in its list.
+  - **Expected:**
+    - **Break down by** shows as much of the column's name as fits.
+    - The panel's width does not change.
+  - **Notes:**
+
+- [ ] `B38F` Set **Break down by** to **Choose a column**.
+  - **Expected:** The panel's width does not change.
+  - **Notes:**
+
+- [ ] `E05B` Point at the first row of the table, and select its details button.
+  - **Expected:**
+    - The person's details open at the top of the panel.
+    - The Metrics panel is under them.
+  - **Notes:**
+
+- [ ] `D4E7` Drag the panel edge to the left as far as it goes.
+  - **Expected:** The panels widen until the table beside them is about 320 pixels wide.
+  - **Notes:**
+
+- [ ] `6A1F` Select the Metrics panel's close button, an **×** at its top right.
+  - **Expected:**
+    - The Metrics panel closes.
+    - The person's details stay open.
+    - The panel's width does not change, while the Metrics panel closes or after.
+  - **Notes:**
+
 ### METRICS-07: Metrics Are Kept in Saved Views
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-06.

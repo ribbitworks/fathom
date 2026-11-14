@@ -7,6 +7,7 @@
 import type { Field, List, Person, PersonDraft } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -20,6 +21,7 @@ import { share } from "./metrics.ts";
 import { panelWidth, panelWidths } from "./side-panel.tsx";
 import { PeopleGrid } from "./people-grid.tsx";
 import { emptyView, type View } from "./table-view.ts";
+import { chooseIn, optionsIn, testTheme } from "./test-support.tsx";
 
 const level: Field = {
   id: "f1",
@@ -119,7 +121,7 @@ function Table({
 }) {
   const [view, setView] = useState(start);
   return (
-    <MantineProvider>
+    <MantineProvider theme={testTheme}>
       <PeopleGrid
         people={people}
         fields={fields}
@@ -169,9 +171,7 @@ describe("the Metrics panel", () => {
     await user.click(button);
     expect(panel().textContent).toContain("4 people");
     expect(button.getAttribute("aria-expanded")).toBe("true");
-    await user.click(
-      within(panel()).getByRole("combobox", { name: "Break down by" }),
-    );
+    await user.click(within(panel()).getByLabelText("Break down by"));
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("region", { name: "Metrics" })).toBeNull();
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -196,15 +196,27 @@ describe("the Metrics panel", () => {
   });
 
   it("breaks people down by a column, each choice with its count and share, and empty values", async () => {
-    const user = userEvent.setup();
     render(<Table start={{ ...emptyView, breakdown: [] }} />);
-    await user.selectOptions(
-      within(panel()).getByRole("combobox", { name: "Break down by" }),
-      "Level",
-    );
+    await chooseIn(panel(), "Break down by", "Level");
     expect(figures("P4")).toEqual(["2", share(2, 4)]);
     expect(figures("P3")).toEqual(["1", share(1, 4)]);
     expect(figures("Empty")).toEqual(["1", share(1, 4)]);
+  });
+
+  it("opens a column's list on Enter, and picks from it with the arrow keys and Enter", async () => {
+    const user = userEvent.setup();
+    render(<Table start={{ ...emptyView, breakdown: [] }} />);
+    act(() => {
+      within(panel()).getByLabelText("Break down by").focus();
+    });
+
+    await user.keyboard("{Enter}");
+    await screen.findByRole("option", { name: "Level" });
+    await user.keyboard("{ArrowUp}{Enter}");
+
+    expect(
+      within(panel()).getByLabelText<HTMLInputElement>("Break down by").value,
+    ).toBe("Expected");
   });
 
   it("crosses two columns, with totals, as counts or shares", async () => {
@@ -217,10 +229,7 @@ describe("the Metrics panel", () => {
     expect(figures("All")).toEqual(["3", "1", "4"]);
     await user.click(within(panel()).getByRole("radio", { name: "Share" }));
     expect(figures("P4")).toEqual([share(1, 4), share(1, 4), share(2, 4)]);
-    await user.selectOptions(
-      within(panel()).getByRole("combobox", { name: "and by" }),
-      "Nothing more",
-    );
+    await chooseIn(panel(), "and by", "Nothing more");
     expect(figures("P4")).toEqual(["2", share(2, 4)]);
   });
 
@@ -298,18 +307,14 @@ describe("the Metrics panel", () => {
     expect(figures("P4")).toEqual(["4", share(4, 6)]);
   });
 
-  it("offers only the columns the table has, and drops one it does not", () => {
+  it("offers only the columns the table has, and drops one it does not", async () => {
     render(
       <Table fields={[level]} start={{ ...emptyView, breakdown: ["f2"] }} />,
     );
-    const picker = within(panel()).getByRole("combobox", {
-      name: "Break down by",
-    });
-    expect(
-      within(picker)
-        .getAllByRole("option")
-        .map((option) => option.textContent),
-    ).toEqual([
+    const picker =
+      within(panel()).getByLabelText<HTMLInputElement>("Break down by");
+    expect(picker.value).toBe("Choose a column");
+    expect(await optionsIn(panel(), "Break down by")).toEqual([
       "Choose a column",
       "Position",
       "Manager",
@@ -318,7 +323,6 @@ describe("the Metrics panel", () => {
       "Level",
       "Expected",
     ]);
-    expect((picker as HTMLSelectElement).value).toBe("");
     expect(panel().textContent).not.toContain("Choose a column to count");
   });
 
@@ -327,10 +331,8 @@ describe("the Metrics panel", () => {
       <Table start={{ ...emptyView, breakdown: ["preferredName", "f1"] }} />,
     );
     expect(
-      within(panel()).getByRole<HTMLSelectElement>("combobox", {
-        name: "Break down by",
-      }).value,
-    ).toBe("f1");
+      within(panel()).getByLabelText<HTMLInputElement>("Break down by").value,
+    ).toBe("Level");
     expect(figures("P4")).toEqual(["2", share(2, 4)]);
   });
 
@@ -373,36 +375,19 @@ describe("the Metrics panel", () => {
       "A person may hold several choices of Role, so shares can add up to more than 100%.",
     );
     expect(figures("Test engineer")).toEqual(["1", share(1, 1)]);
-    await user.selectOptions(
-      within(panel()).getByRole("combobox", { name: "and by" }),
-      "Level",
-    );
+    await chooseIn(panel(), "and by", "Level");
     expect(panel().textContent).toContain(
       "A person may hold several choices of Role, so figures can add up to more than their total.",
     );
-    await user.selectOptions(
-      within(panel()).getByRole("combobox", { name: "Break down by" }),
-      "Level",
-    );
+    await chooseIn(panel(), "Break down by", "Level");
     expect(
-      within(panel()).queryByRole("combobox", { name: "and by" }),
-    ).toBeTruthy();
-    expect(
-      within(panel()).getByRole<HTMLSelectElement>("combobox", {
-        name: "and by",
-      }).value,
-    ).toBe("");
-    await user.selectOptions(
-      within(panel()).getByRole("combobox", { name: "and by" }),
-      "Role",
-    );
+      within(panel()).getByLabelText<HTMLInputElement>("and by").value,
+    ).toBe("Nothing more");
+    await chooseIn(panel(), "and by", "Role");
     expect(panel().textContent).toContain(
       "A person may hold several choices of Role, so figures can add up to more than their total.",
     );
-    await user.selectOptions(
-      within(panel()).getByRole("combobox", { name: "Break down by" }),
-      "Choose a column",
-    );
+    await chooseIn(panel(), "Break down by", "Choose a column");
     expect(panel().textContent).not.toContain("Choose a column to count");
     await user.keyboard("{Tab}");
     expect(panel()).toBeTruthy();

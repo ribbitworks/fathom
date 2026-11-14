@@ -36,6 +36,10 @@ if (typeof window !== "undefined") {
       ready: Promise.resolve(),
     },
   });
+  // The simulated browser lays nothing out, so its page is as wide as its window, with no scroll bar.
+  Object.defineProperty(document.documentElement, "clientWidth", {
+    get: () => window.innerWidth,
+  });
   window.ResizeObserver = class {
     observe() {}
     unobserve() {}
