@@ -365,6 +365,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Every word on it is easy to read.
   - **Notes:**
 
+- [ ] `E0F5` Select the name 'Simone Jean' on that card.
+  - **Expected:**
+    - Her details open beside the chart.
+    - Every label, value, link, mark and change button in them is easy to read.
+  - **Notes:**
+
+- [ ] `272D` Select the **×** at the top right of the details.
+  - **Expected:** The details close.
+  - **Notes:**
+
 - [ ] `55E6` On the card for 'Viktoria Holmberg', select **Show 3 reports**.
   - **Expected:**
     - The faded light green card of 'Simone Jean', with a dashed edge, is easy to tell apart from the untinted cards.
