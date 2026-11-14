@@ -17,7 +17,7 @@ To add one quickly, type its name in the empty row at the end of the table and p
 1. Select a cell, then type, or press Enter, to change it.
 1. Press Enter to save, or Esc to leave it as it was.
 
-To work in a feature's details instead, point at its row and select the button at the right of its **Name** cell, or select **Show details** in its **⋯** menu. The details group its values under **Details**, **Customers and commitments**, **Planning** and **Columns**, in the order the table starts with. Each value there has a pencil that changes it.
+To work in a feature's details instead, point at its row and select the details button, a box, at the right of its **Name** cell. You can also right-click the row and select **Show details**. The details group its values under **Details**, **Customers and commitments**, **Planning** and **Columns**, in the order the table starts with. Select a value there to change it.
 
 ### Plan When a Feature Ships
 

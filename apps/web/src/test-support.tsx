@@ -21,7 +21,7 @@ import {
 import { mergeThemeOverrides } from "@mantine/core";
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory } from "@tanstack/react-router";
-import { render, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { vi } from "vitest";
 import { App } from "./app.tsx";
 import { theme } from "./theme.ts";
@@ -292,3 +292,22 @@ export const fictionalTeamMonths: TeamMonths = {
     },
   ],
 };
+
+// The ⋯ at the end of a record's row, apart from the one over its Name cell, which has its name.
+const atRowsEnd = (buttons: HTMLElement[], name: string) => {
+  const found = buttons.find((button) => button.closest("td[id]") === null);
+  if (found === undefined) throw new Error(`No ⋯ at the end of ${name}'s row`);
+  return found;
+};
+
+export const rowActions = (name: string) =>
+  atRowsEnd(
+    screen.getAllByRole("button", { name: `Actions for ${name}` }),
+    name,
+  );
+
+export const findRowActions = async (name: string) =>
+  atRowsEnd(
+    await screen.findAllByRole("button", { name: `Actions for ${name}` }),
+    name,
+  );

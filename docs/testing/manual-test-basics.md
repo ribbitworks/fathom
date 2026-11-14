@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["docs/testing/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test Basics
@@ -148,9 +148,9 @@ Run only where a test says so. This deletes every account and record in the deve
 - **Group heading:** the full-width row above each group of rows in a grouped table, naming the group, with how many rows it holds at its right.
 - **Column menu:** the menu that opens from a column's name in a table's header.
 - **⋯ menu:** the menu that opens from a **⋯** button, such as the one at the end of a table row, beside a list's name at the top of its panel, or beside the Publish button.
-- **Details button:** the small button with an arrow out of a box at the right of a row's first cell, such as its **Name** or **Stream** cell, shown while the row is pointed at.
+- **Details button:** the small button drawn as a box with a line down its right side, at the right of a row's **Name** or **Stream** cell, with a **⋯** button after it, both shown while the row is pointed at.
 - **Side panel:** the panel on the right that opens from **Show details** in a row's ⋯ menu, or from the details button. Steps also call it the details panel. It is headed with the record's name, and its close button, an **×**, is at its top right.
-- **Change button:** a small pencil at the right of a value in a side panel, shown to accounts that may change it.
+- **Change button:** a small pencil at the right of a value in a side panel, shown to accounts that may change it while the value's row is pointed at or has focus. Selecting the row anywhere does the same.
 - **Grid:** the table on the left of the role dialog, with an area in each row and the columns **Area**, **View**, **Approve** and **Edit**. Under a **Data classification** heading, its last rows are the classes **General**, **Personal** and **Confidential**.
 - **Chart:** on the **Org chart** page, the large panel under the heading that holds the cards.
 - **Finder:** the box reading **Find a person or team** at the top left of the **Org chart** page, above the chart.

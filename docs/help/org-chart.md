@@ -25,7 +25,7 @@ The chart opens out to the card and centres it, with a blue ring around it. Choo
 
 ### See Someone's Details
 
-Select a person's name on their card. Their details open beside the chart. Each value with a pencil can be changed there, as on People.
+Select a person's name on their card. Their details open beside the chart. When you point at a value you can change, it shows a pencil. Select the value to change it, as on People.
 
 ### Name a Reporting Team or Choose Its Colour
 
@@ -37,7 +37,7 @@ Select a person's name on their card. Their details open beside the chart. Each 
 
 1. Select **Feature teams** in the switch.
 1. Select the **Feature teams** button, then the team. The team's panel opens beside the chart.
-1. Select the pencil beside **Name**, **Colour**, **Feature lead** or **Members**, and make the change.
+1. Point at **Name**, **Colour**, **Feature lead** or **Members**, select the pencil that shows at its right, and make the change.
 
 To add a team, select **New feature team** in the **Feature teams** button's menu, fill in the panel, and select **Add**. To remove one, select **Remove feature team** at the foot of its panel.
 

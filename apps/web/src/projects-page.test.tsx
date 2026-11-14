@@ -15,6 +15,7 @@ import {
   bodyOf,
   fictionalRelease,
   fictionalUser,
+  findRowActions,
   noFeatureColumns,
   recordDraft,
   renderApp,
@@ -143,9 +144,7 @@ const newButton = (name: string) =>
   screen.findByRole("button", { name: `New ${name}` });
 
 const rowMenu = async (name: string) => {
-  await userEvent.click(
-    await screen.findByRole("button", { name: `Actions for ${name}` }),
-  );
+  await userEvent.click(await findRowActions(name));
   return screen.findByRole("menu");
 };
 

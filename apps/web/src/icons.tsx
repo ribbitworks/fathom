@@ -94,7 +94,12 @@ const paths = {
   ),
   close: <path d="M4 4l8 8M12 4l-8 8" />,
   edit: <path d="M10.5 2.5l3 3L6 13H3v-3zM9 4l3 3" />,
-  open: <path d="M9 3h4v4M13 3L7.5 8.5M11.5 9.5V13h-9V4.5H6" />,
+  sidePanel: (
+    <>
+      <rect x="2" y="3" width="12" height="10" rx="1.5" />
+      <path d="M9.5 3v10M10.8 6h1.7M10.8 8h1.7M10.8 10h1.7" />
+    </>
+  ),
   link: (
     <path d="M6.5 9.5l3-3M7 4.5l1-1a2.5 2.5 0 0 1 3.5 3.5l-1 1M9 11.5l-1 1A2.5 2.5 0 0 1 4.5 9l1-1" />
   ),

@@ -19,8 +19,10 @@ import {
   bodyOf,
   detailRow,
   fictionalUser,
+  findRowActions,
   greeting,
   renderApp,
+  rowActions,
   savedFiles,
   serverAnswers,
   wholeText,
@@ -817,8 +819,8 @@ describe("adding people", () => {
     expect(within(row).queryByRole("textbox")).toBeNull();
     // A menu shows a frame after it opens, too late to check it stays shut, so look for its button.
     expect(
-      within(row).queryByRole("button", { name: /^Actions for/ }),
-    ).toBeNull();
+      within(row).queryAllByRole("button", { name: /^Actions for/ }),
+    ).toHaveLength(0);
     expect(inRow(row, "Name").textContent).toContain("Casey");
     // Once saved, they keep their place and focus, under their own identifier, and can be changed.
     saved = true;
@@ -1337,9 +1339,7 @@ describe("drafts", () => {
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
     });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for Casey Fictional" }),
-    );
+    await userEvent.click(rowActions("Casey Fictional"));
     expect(await screen.findByText("Reason: Fictional reason")).toBeDefined();
     expect(
       screen.queryAllByRole("menuitem").map(({ textContent }) => textContent),
@@ -1348,9 +1348,7 @@ describe("drafts", () => {
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
     });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for Avery Fictional" }),
-    );
+    await userEvent.click(rowActions("Avery Fictional"));
     expect(
       (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
@@ -1363,9 +1361,7 @@ describe("drafts", () => {
     await userEvent.click(within(one).getByRole("button", { name: "Approve" }));
     expect(await screen.findByText("Approved 1 draft.")).toBeDefined();
     // Rejecting one asks for a reason too, and can be cancelled.
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for Avery Fictional" }),
-    );
+    await userEvent.click(rowActions("Avery Fictional"));
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Reject draft…" }),
     );
@@ -1559,9 +1555,7 @@ describe("drafts", () => {
 
   it("opens a person's menu from its button and with the menu key", async () => {
     await openPeople();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for Avery Fictional" }),
-    );
+    await userEvent.click(rowActions("Avery Fictional"));
     expect(await screen.findByRole("menu")).toBeDefined();
     await userEvent.keyboard("{Escape}");
     focusCell("p1", "f1");
@@ -2494,9 +2488,7 @@ describe("searching, sorting, and filtering", () => {
           views: [],
         }),
     });
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Actions for Avery Drafted" }),
-    );
+    await userEvent.click(await findRowActions("Avery Drafted"));
     const line = await screen.findByText(
       wholeText("Name from Avery Fictional to Avery Drafted, by Ann Fictional"),
     );
@@ -3450,11 +3442,7 @@ describe("drafts of columns", () => {
           views: [],
         }),
     });
-    await userEvent.click(
-      await screen.findByRole("button", {
-        name: "Actions for Avery Fictional",
-      }),
-    );
+    await userEvent.click(await findRowActions("Avery Fictional"));
     const row = await screen.findByRole("menu");
     expect(disabled(row, "Approve draft")).toBe(true);
     expect(within(row).getByText(note)).toBeDefined();
@@ -3719,9 +3707,7 @@ describe("unpublished and held changes", () => {
     expect(
       within(cell("p2", "preferredName")).queryByText("Unpublished"),
     ).toBeNull();
-    let menu = await menuOf(
-      screen.getByRole("button", { name: "Actions for Avery Fictional" }),
-    );
+    let menu = await menuOf(rowActions("Avery Fictional"));
     expect(within(menu).getByText(held)).toBeDefined();
     for (const item of ["Approve draft", "Discard draft", "Remove person"]) {
       expect(within(menu).queryByRole("menuitem", { name: item })).toBeNull();
@@ -3729,9 +3715,7 @@ describe("unpublished and held changes", () => {
     // Nothing follows the draft's lines, so no divider ends the menu.
     expect(menu.lastElementChild?.className).not.toMatch(/divider/);
     await userEvent.keyboard("{Escape}");
-    menu = await menuOf(
-      screen.getByRole("button", { name: "Actions for Blake Fictional" }),
-    );
+    menu = await menuOf(rowActions("Blake Fictional"));
     expect(within(menu).getByText(mine)).toBeDefined();
     expect(
       within(menu).queryByRole("menuitem", { name: "Approve draft" }),

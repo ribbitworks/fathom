@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/product/decisions.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Release Streams, Cycles and Releases
@@ -37,7 +37,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Start From a
 
 - **Seeded dates in this test:** **This quarter** is the quarter today is in, and **the first half** is Platform's first half-year cycle, three quarters after this quarter. Patches' cycles are named such as **P24.3**. The examples after "such as" are as the seed data is when added on 7 November 2026.
 - **Streams table:** the table on the Releases page, under the timeline, with a row for each release stream and the columns **Stream**, **Cycle schedule**, **Releases**, **Next release** and **Planned to**. Its rows are under a **Current** heading, and, while retired streams are shown, a **Retired** heading. The search field, the Draft menu, **Metrics**, **Group by** and **Views** are in the bar above the timeline; while any stream is retired, **Show retired** and how many are retired is first in the **Views** menu.
-- **Selecting a stream in the table:** selecting the arrow button at the right of the stream's **Stream** cell, which opens the stream in the side panel.
+- **Selecting a stream in the table:** selecting the details button at the right of the stream's **Stream** cell, which opens the stream in the side panel.
 - **Side panel on Releases:** the panel beside the timeline and the streams table for the selected stream, which they narrow to make room for, with the sections **Cycle schedule**, **Releases** and **Cycles**. Dragging its left edge resizes it.
 - **Timeline:** the section headed **Timeline** above the streams table, with **−** and **+** buttons and the zoom buttons **All**, **Year**, **6 months**, **Quarter**, **Month**, **Week** and **Days** at its top right, and the strip under them. It has a row for each stream that is not retired, named on the left, with a lane of the stream's cycles above a lane of its releases, under an axis of two rows of dates. Hovering over a cycle or a release shows its name and dates.
 - **Strip:** the row between the timeline's zoom buttons and its rows: **‹**, a box for each quarter of the timeline, **›**, and **Today** while today is on the timeline.

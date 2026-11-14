@@ -62,7 +62,6 @@ import {
   type TableChoices,
   targetOf,
 } from "./projects.ts";
-import { ShowDetailsButton } from "./show-details-button.tsx";
 import { emptiedWords } from "./status-mark.tsx";
 import { tipAttribute } from "./table-tips.tsx";
 import {
@@ -236,6 +235,7 @@ function planTable<Rec extends PlanRecord, Request>({
   columns,
   request,
   menuItems,
+  showDetails,
   kinds,
   groupings,
   ungrouped = false,
@@ -247,7 +247,8 @@ function planTable<Rec extends PlanRecord, Request>({
   noun: string;
   columns: (shown: AddedColumns) => Column<Rec, PlanChange>[];
   request: (changes: PlanChange[]) => Request;
-  menuItems: (record: Rec) => ReactNode;
+  menuItems?: (record: Rec) => ReactNode;
+  showDetails?: ((record: Rec) => void) | undefined;
   kinds?: readonly string[];
   groupings?: readonly RowGrouping<Rec>[];
   ungrouped?: boolean;
@@ -265,6 +266,7 @@ function planTable<Rec extends PlanRecord, Request>({
     newRowLabel: () => `New ${one}`,
     removeLabel: () => `Remove ${one}`,
     nameOf,
+    nameColumn: "name",
     columnsFor: (fields, lists, order) => columns({ fields, lists, order }),
     liveRecords: livePlanRecords,
     draftFields: (record, draft, fields, lists) =>
@@ -272,34 +274,19 @@ function planTable<Rec extends PlanRecord, Request>({
     recordProblem: noRecordProblem,
     request: (changes) => request(changes),
     drafts: drafts(type),
-    menuItems,
+    ...(menuItems === undefined ? {} : { menuItems }),
+    ...(showDetails === undefined ? {} : { showDetails }),
   };
 }
 
 const merged = (changes: PlanChange[]): PlanChange =>
   Object.assign({}, ...changes) as PlanChange;
 
-const nameColumn = <Rec extends PlanRecord>(
-  onOpen: ((record: Rec) => void) | undefined,
-): Column<Rec, PlanChange> => ({
-  ...field<Rec>("name", planColumnNames.name, "text", {
+const nameColumn = <Rec extends PlanRecord>(): Column<Rec, PlanChange> =>
+  field<Rec>("name", planColumnNames.name, "text", {
     required: true,
     maxLength: projectLengths.name,
-  }),
-  ...(onOpen === undefined
-    ? {}
-    : {
-        mark: (record: Rec) =>
-          !isPending(record) && (
-            <ShowDetailsButton
-              name={(record as { name: string }).name}
-              onOpen={() => {
-                onOpen(record);
-              }}
-            />
-          ),
-      }),
-});
+  });
 
 function menuItem<Rec extends PlanRecord>(
   label: string,
@@ -329,19 +316,15 @@ const recordMenu =
       <Fragment key={label}>{menuItem(label, onClick, record)}</Fragment>
     ));
 
-const detailsItem = <Rec extends PlanRecord>(
-  onOpen: ((record: Rec) => void) | undefined,
-) => recordMenu<Rec>([["Show details", onOpen]]);
-
 export function customerTable(
   onOpen?: (customer: Customer) => void,
 ): RecordTable<Customer, PlanChange, CustomerRequest> {
   return planTable<Customer, CustomerRequest>({
     type: "customer",
     ...wordsOf("customers"),
-    columns: () => [nameColumn(onOpen)],
+    columns: () => [nameColumn()],
     request: (changes) => merged(changes) as CustomerRequest,
-    menuItems: detailsItem(onOpen),
+    showDetails: onOpen,
   });
 }
 
@@ -443,10 +426,9 @@ export const projectDateColumn = (
 
 export function projectColumns(
   choices: TableChoices,
-  onOpen?: (project: Project) => void,
 ): Column<Project, PlanChange>[] {
   return [
-    nameColumn(onOpen),
+    nameColumn(),
     idColumn<Project>(planIdNames.project),
     ownerColumn<Project>(choices.people),
     customersColumn<Project>(choices.customers),
@@ -481,10 +463,10 @@ export function projectTable(
   return planTable<Project, ProjectRequest>({
     type: "project",
     ...wordsOf("projects"),
-    columns: () => projectColumns(choices, onOpen),
+    columns: () => projectColumns(choices),
     request: (changes) => merged(changes) as ProjectRequest,
+    showDetails: onOpen,
     menuItems: recordMenu<Project>([
-      ["Show details", onOpen],
       ["Show milestones", onMilestones],
       ["Show features", onFeatures],
     ]),
@@ -502,10 +484,9 @@ function firstStatus(statuses: readonly Choice[], meaning?: Meaning): string[] {
 
 export function proposalColumns(
   choices: TableChoices,
-  onOpen?: (proposal: Proposal) => void,
 ): Column<Proposal, PlanChange>[] {
   return [
-    nameColumn(onOpen),
+    nameColumn(),
     idColumn<Proposal>(planIdNames.proposal),
     field<Proposal>("link", planColumnNames.link, "link"),
     ownerColumn<Proposal>(choices.people),
@@ -533,12 +514,10 @@ export function proposalTable(
   return planTable<Proposal, ProposalRequest>({
     type: "proposal",
     ...wordsOf("proposals"),
-    columns: () => proposalColumns(choices, onOpen),
+    columns: () => proposalColumns(choices),
     request: (changes) => merged(changes) as ProposalRequest,
-    menuItems: recordMenu<Proposal>([
-      ["Show details", onOpen],
-      ["Show features", onFeatures],
-    ]),
+    showDetails: onOpen,
+    menuItems: recordMenu<Proposal>([["Show features", onFeatures]]),
   });
 }
 
@@ -758,11 +737,9 @@ const featureColumnOrder = featureColumnGroups.flatMap(({ keys }) => keys);
 export function featureColumns(
   choices: TableChoices,
   {
-    onOpen,
     shown: { fields, lists, order } = choices.featureColumns,
     editsNamers = false,
   }: {
-    onOpen?: ((feature: Feature) => void) | undefined;
     shown?: AddedColumns;
     // Whether the projects and proposals that name a feature can be changed here.
     editsNamers?: boolean;
@@ -772,7 +749,7 @@ export function featureColumns(
     choices.featureStatuses.map(({ id, meaning }) => [id, meaning]),
   );
   const builtIn: Column<Feature, PlanChange>[] = [
-    nameColumn<Feature>(onOpen),
+    nameColumn<Feature>(),
     {
       ...field<Feature>("statusId", planColumnNames.statusId, "choice", {
         required: true,
@@ -953,7 +930,7 @@ export function featureTable(
     type: "feature",
     ...wordsOf("features"),
     kinds: [newKind, savedKind],
-    columns: (shown) => featureColumns(choices, { onOpen, shown, editsNamers }),
+    columns: (shown) => featureColumns(choices, { shown, editsNamers }),
     groupings: [
       ...(board ? [] : [byCycle(choices.cycles)]),
       byTarget("release", "Release", choices.releaseOfCycle),
@@ -968,7 +945,7 @@ export function featureTable(
       };
       return request as FeatureFields;
     },
-    menuItems: detailsItem(onOpen),
+    showDetails: onOpen,
   });
 }
 
@@ -1005,7 +982,7 @@ const draftColumns: Readonly<
     (choices: TableChoices) => readonly Column<never, PlanChange>[]
   >
 > = {
-  customer: () => [nameColumn<Customer>(undefined)],
+  customer: () => [nameColumn<Customer>()],
   project: projectColumns,
   proposal: proposalColumns,
   milestone: (choices) => milestoneColumns(choices.projects),

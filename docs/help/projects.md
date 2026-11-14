@@ -14,11 +14,11 @@ To add one quickly, type in the empty row at the end of the table.
 
 ### See a Record's Details
 
-Point at the record's row and select the button at the right of its **Name** cell, or select **Show details** in its **⋯** menu. The details open beside the table. Each customer, proposal and feature named there is a link to its own details. Milestones have no details of their own.
+Point at the record's row and select the details button, a box, at the right of its **Name** cell. You can also right-click the row and select **Show details**. The details open beside the table. Each customer, proposal and feature named there is a link to its own details. Milestones have no details of their own.
 
 ### Change a Record
 
-1. Select a cell and type, or select the pencil beside a value in the details.
+1. Select a cell and type, or select a value in the details.
 1. Press Enter to save, or Esc to leave it as it was.
 
 ### Choose the Features a Project Needs

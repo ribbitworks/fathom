@@ -1461,10 +1461,10 @@ describe("the buttons over a Name cell", () => {
   // The simulated browser neither lays out the page nor applies :active, so the stylesheet is read.
   it("are not placed with a transform, which Mantine replaces while a button is pressed", () => {
     const stylesheet = readFileSync(
-      join(import.meta.dirname, "show-details-button.module.css"),
+      join(import.meta.dirname, "row-controls.module.css"),
       "utf8",
     );
-    const rule = /\.showDetails,\s*\.fillHire\s*\{([^}]*)\}/.exec(
+    const rule = /\.rowControls,\s*\.fillHire\s*\{([^}]*)\}/.exec(
       stylesheet,
     )?.[1];
     expect(rule).toContain("position: absolute");

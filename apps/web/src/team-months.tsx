@@ -221,6 +221,7 @@ export function monthGridTable<
     newRowLabel: () => "",
     removeLabel: () => "",
     nameOf: (record) => record.name || (standIn?.(record) ?? ""),
+    nameColumn: "name",
     countedAs: ({ personId }) => personId,
     columnsFor: () => columns,
     liveRecords: (records) => records.map((record) => record.live ?? record),

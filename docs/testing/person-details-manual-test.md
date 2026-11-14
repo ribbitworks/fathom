@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/person-panel*", "apps/web/src/person-change.ts", "apps/web/src/people-grid.tsx", "apps/web/src/org-chart-page.tsx", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Person Details
@@ -204,19 +204,42 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `69F4` Point at her row, without selecting anything.
-  - **Expected:** A small button, an arrow pointing out of a box, appears at the right of her **Name** cell.
+  - **Expected:**
+    - Two small buttons appear at the right of her **Name** cell: a box with a line down its right side, then **⋯**.
+    - Her name stays clear of the two buttons, not under them.
+    - A **⋯** button is also at the end of her row.
   - **Notes:**
 
 - [ ] `DCAD` Point away from the row.
-  - **Expected:** The arrow button is hidden again.
+  - **Expected:** The two buttons in her **Name** cell are hidden again.
+  - **Notes:**
+
+- [ ] `0EF4` Point at her row again, and select the **⋯** in her **Name** cell.
+  - **Expected:**
+    - A menu opens under it, headed 'Lorenza Thiel'.
+    - **Show details** is its first item.
+  - **Notes:**
+
+- [ ] `7636` Press Esc.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
+- [ ] `3B96` Right-click her **Site** cell.
+  - **Expected:**
+    - The same menu opens beside the pointer, headed 'Lorenza Thiel'.
+    - The browser's own menu does not open.
+  - **Notes:**
+
+- [ ] `AAB1` Press Esc.
+  - **Expected:** The menu closes.
   - **Notes:**
 
 - [ ] `7C3E` Point at her row again.
-  - **Expected:** The arrow button appears again at the right of her **Name** cell.
+  - **Expected:** The two buttons appear again at the right of her **Name** cell.
   - **Notes:**
 
-- [ ] `E607` Put the pointer on the arrow button, and press the mouse button without letting go.
-  - **Expected:** The arrow button stays under the pointer.
+- [ ] `E607` Put the pointer on the box button, and press the mouse button without letting go.
+  - **Expected:** The box button stays under the pointer.
   - **Notes:**
 
 - [ ] `39EF` Let go of the mouse button.
@@ -330,14 +353,34 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu, searched for `E10026`, with the details of 'Lorenza Thiel' open beside the table.
 
-- [ ] `AC8F` Read the panel.
+- [ ] `AC8F` Read the panel, with the pointer away from it.
   - **Expected:**
-    - Every value under **Reporting**, **Details** and **Columns** has a change button at its right, except **Team** and **Direct reports**.
+    - No value shows a change button.
     - **Details** starts with **Name** 'Lorenza Thiel'.
-    - **Manager?** shows a ticked checkbox and "Yes" instead of a change button.
+    - **Manager?** shows a ticked checkbox and "Yes".
   - **Notes:**
 
-- [ ] `228A` Select the change button beside **Site**, which reads 'Corran Quay'.
+- [ ] `C23D` Point at the **Site** row, which reads 'Corran Quay'.
+  - **Expected:**
+    - The row is shaded grey.
+    - A change button, a pencil, shows at the right of 'Corran Quay'.
+  - **Notes:**
+
+- [ ] `7540` Point at the **Team** row.
+  - **Expected:**
+    - The row is not shaded.
+    - No change button shows.
+  - **Notes:**
+
+- [ ] `4FF9` Select the label **Site**, whose value reads 'Corran Quay'.
+  - **Expected:** A list of sites opens in place of the value.
+  - **Notes:**
+
+- [ ] `B146` Press Esc.
+  - **Expected:** **Site** reads 'Corran Quay' again.
+  - **Notes:**
+
+- [ ] `228A` Point at the **Site** row, and select the change button beside 'Corran Quay'.
   - **Expected:** A list of sites opens in place of the value.
   - **Notes:**
 
@@ -427,8 +470,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `A318` Press Esc.
   - **Expected:**
     - The Draft menu closes.
-    - The panel shows no change buttons.
     - **Manager?** reads "Yes" with no checkbox.
+  - **Notes:**
+
+- [ ] `F8BF` Point at the **Site** row.
+  - **Expected:**
+    - The row is not shaded.
+    - No change button shows.
   - **Notes:**
 
 - [ ] `24A6` Select **Draft**, then **Drafts beside live**.
@@ -438,9 +486,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `CA4C` Press Esc.
-  - **Expected:**
-    - The Draft menu closes.
-    - The change buttons show again.
+  - **Expected:** The Draft menu closes.
+  - **Notes:**
+
+- [ ] `1FA1` Point at the **Site** row.
+  - **Expected:** A change button shows at the right of its value.
   - **Notes:**
 
 ### DETAILS-09: Changing a Person's Details Beside the Org Chart
@@ -560,7 +610,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'SDET, TBD-5', with 'Engineering Manager, TBD-3' in **Manager**
   - **Notes:**
 
-- [ ] `F91F` Select the details button in the row for 'Engineering Manager, TBD-3', the arrow out of a box that shows at the right of its **Name** cell while the row is pointed at.
+- [ ] `F91F` Select the details button in the row for 'Engineering Manager, TBD-3', the box with a line down its right side that shows at the right of its **Name** cell while the row is pointed at.
   - **Expected:**
     - The details panel opens, headed 'Engineering Manager, TBD-3'.
     - Under the heading, 'Engineering Manager', then a grey box reading **Planned, expected** and this month, such as **Nov 2026**.
@@ -577,7 +627,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **Expected** "Nov 2026"
       - no **End**
     - **Manager?** shows a ticked checkbox and "Yes".
-    - Every other value has a change button, except **Team**, **Expected** and **Direct reports**.
+  - **Notes:**
+
+- [ ] `82AE` Point at the **Expected** row.
+  - **Expected:** No change button shows.
   - **Notes:**
 
 - [ ] `72F0` Select 'SDET, TBD-5' under **Direct reports**.
@@ -610,11 +663,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The details panel opens, headed **New person**.
     - Its first row is **State**, reading "Hired".
-    - **State** has a change button.
     - **Name**, **ID**, **Start**, **End**, **Manager assigned** and **Team name** are empty boxes to type in.
     - **Manager?** is an empty checkbox.
-    - The other values have change buttons.
     - **Cancel** and **Add** are at the foot of the panel.
+  - **Notes:**
+
+- [ ] `6EA7` Point at the **State** row.
+  - **Expected:** A change button shows at the right of "Hired".
   - **Notes:**
 
 - [ ] `E80E` Type `Fictional Newcomer` in **Name**, and press Tab.

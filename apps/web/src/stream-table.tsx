@@ -33,7 +33,6 @@ import {
   markedDraft,
   releaseDate,
 } from "./releases.ts";
-import { ShowDetailsButton } from "./show-details-button.tsx";
 import {
   DraftedItem,
   type DraftLike,
@@ -329,10 +328,7 @@ const groupings: RowGrouping<StreamRow>[] = [
   },
 ];
 
-function columns(
-  day: string,
-  onOpen: (stream: ReleaseStream) => void,
-): Column<StreamRow, never>[] {
+function columns(): Column<StreamRow, never>[] {
   const text = (key: keyof StreamValues, label: string) =>
     fieldColumn<StreamRow, never>(key, "text", {
       label,
@@ -341,17 +337,7 @@ function columns(
       choices: [],
     });
   return [
-    {
-      ...text("name", "Stream"),
-      mark: (row) => (
-        <ShowDetailsButton
-          name={row.name}
-          onOpen={() => {
-            onOpen(row.stream);
-          }}
-        />
-      ),
-    },
+    text("name", "Stream"),
     {
       ...text("schedule", "Cycle schedule"),
       emptyLabel: noSchedule,
@@ -405,7 +391,7 @@ export function streamTable({
   day: string;
   onOpen: (stream: ReleaseStream) => void;
 }): RecordTable<StreamRow, never, undefined> {
-  const shownColumns = columns(day, onOpen);
+  const shownColumns = columns();
   const drafts = (ids: string[]): DraftSelection => ({
     ...noDrafts(),
     records: streams
@@ -424,6 +410,10 @@ export function streamTable({
     newRowLabel: () => "New release stream",
     removeLabel: () => "Remove release stream",
     nameOf: (row) => row.name,
+    nameColumn: "name",
+    showDetails: (row) => {
+      onOpen(row.stream);
+    },
     columnsFor: () => shownColumns,
     liveRecords: (rows) => liveRows(rows, streams, day),
     draftFields: (row, draft) => draftFieldsOf(shownColumns, row, draft),

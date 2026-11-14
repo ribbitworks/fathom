@@ -1,7 +1,7 @@
 # Fathom: Implementation Plan
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-13
+**Last updated:** 2026-11-14
 
 A proposed way to build the first stage of the [Roadmap](../product/roadmap.md): groundwork first, then a sequence of thin vertical slices. Each slice goes through every layer (browser, server, database, deployment), follows the roadmap's [Guiding Principles](../product/roadmap.md#guiding-principles), the [Agent Workflow](../standards/shared/agent-workflow.md), and the [Data](../../AGENTS.md#data) rules.
 
@@ -174,7 +174,7 @@ Features will take saved views, personal and shared, as People's table does, in 
 5. **The project timeline.**
 6. **The Releases timeline's changes:** its Ships on diamonds under the bars, drafts by the draft marks following the page's Draft view, and bars that name the release alone, brought forward to follow the shared timeline. Done on 2026-11-11.
 7. **A realistic release seed:** the seed's release drafts become a realistic plan: Harbor 3's draft ends a cycle later rather than moving, Harbor 4 follows straight after it, and the retirement is drafted on a stream that has finished. Decided by the owner on 2026-11-11, as its own pull request after step 6, which agent 1 recommended to keep each pull request under its size and the owner accepted in advance on 2026-11-11, to be confirmed.
-8. **The Releases page on the shared table:** the streams table moves onto the shared table, as every other page's is, with its search, show-details arrow, column menus, Group by, Metrics and saved views, and the page is brought in line with the conventions, taking the Releases items in issues [#219](https://github.com/jlarue26/fathom/issues/219), [#438](https://github.com/jlarue26/fathom/issues/438), [#440](https://github.com/jlarue26/fathom/issues/440), [#441](https://github.com/jlarue26/fathom/issues/441) and [#443](https://github.com/jlarue26/fathom/issues/443) and the retired streams in [issue #277](https://github.com/jlarue26/fathom/issues/277). Decided by the owner on 2026-11-11, as its own pull request in the same way. Done on 2026-11-13, apart from saved views, which follow in a pull request of their own that makes saved views work on any table, decided by the owner on 2026-11-13.
+8. **The Releases page on the shared table:** the streams table moves onto the shared table, as every other page's is, with its search, details button, column menus, Group by, Metrics and saved views, and the page is brought in line with the conventions, taking the Releases items in issues [#219](https://github.com/jlarue26/fathom/issues/219), [#438](https://github.com/jlarue26/fathom/issues/438), [#440](https://github.com/jlarue26/fathom/issues/440), [#441](https://github.com/jlarue26/fathom/issues/441) and [#443](https://github.com/jlarue26/fathom/issues/443) and the retired streams in [issue #277](https://github.com/jlarue26/fathom/issues/277). Decided by the owner on 2026-11-11, as its own pull request in the same way. Done on 2026-11-13, apart from saved views, which follow in a pull request of their own that makes saved views work on any table, decided by the owner on 2026-11-13.
 9. **The Lists page on the shared table:** the lists table moved onto the shared table in the same way, taking sorting, filtering and saved views of lists in [issue #317](https://github.com/jlarue26/fathom/issues/317). Decided by the owner on 2026-11-11.
 
 ### General Features

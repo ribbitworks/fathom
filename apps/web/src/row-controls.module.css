@@ -1,0 +1,71 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The controls over a record's Name cell: showing its details and opening its menu, shown while the
+   row is pointed at or the Name cell itself has focus, so only one row shows them while another is
+   pointed at, and filling a planned hire. They sit over the cell rather than beside its text, so a
+   narrow column cuts the name short instead of moving a button under it, and the text makes room
+   for them while they show. A frozen cell is placed already. */
+
+.rowControls,
+.fillHire {
+  position: absolute;
+  /* Centred without a transform, which Mantine replaces while a button is pressed, moving it from
+     under the pointer. */
+  top: 0;
+  bottom: 0;
+  margin-block: auto;
+}
+
+.rowControls {
+  right: 4px;
+  display: flex;
+  gap: 2px;
+  height: var(--fathom-small-button-size);
+  opacity: 0;
+}
+
+td:has(> .rowControls) {
+  /* The buttons' own size, which the cell does not inherit from them, and a little room beside
+     them. */
+  --row-controls-room: calc(
+    var(--row-controls-count) * var(--fathom-small-button-size) +
+      var(--row-controls-count) * 2px + 4px
+  );
+
+  position: relative;
+}
+
+td:has(> .rowControls > :nth-child(1)) {
+  --row-controls-count: 1;
+}
+
+td:has(> .rowControls > :nth-child(2)) {
+  --row-controls-count: 2;
+}
+
+tr:hover .rowControls,
+td:focus-within > .rowControls,
+.rowControls:has(:focus-visible, [aria-expanded="true"]) {
+  opacity: 1;
+}
+
+tr:hover td:has(> .rowControls > *),
+td:focus-within:has(> .rowControls > *),
+td:has(> .rowControls [aria-expanded="true"]),
+td:has(> .fillHire) {
+  padding-right: calc(
+    var(--table-horizontal-spacing, var(--mantine-spacing-sm)) +
+      var(--row-controls-room, 0px) + var(--fill-hire-room, 0px)
+  );
+}
+
+/* The Fill button of a planned hire that can be filled, always shown, left of the controls' place.
+   The name makes room for both. */
+
+.fillHire {
+  right: calc(4px + var(--row-controls-room, 0px));
+}
+
+td:has(> .fillHire) {
+  --fill-hire-room: 3rem;
+}

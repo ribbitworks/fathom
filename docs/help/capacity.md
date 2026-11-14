@@ -46,7 +46,7 @@ The menu lists every change in the draft, and approving or rejecting takes them 
 
 ### Add or Remove a Month of Ramp-Up
 
-- **Add:** Select **Add month**. The new month starts at 100%; change it with its pencil. Ramp-up holds up to 12 months, and **Add month** is turned off once it's full.
+- **Add:** Select **Add month**. The new month starts at 100%; point at it and select its pencil to change it. Ramp-up holds up to 12 months, and **Add month** is turned off once it's full.
 - **Remove:** Select the **×** at the right of the month's row. The months after it move up one. A notification offers **Undo**.
 
 ### Undo a Change

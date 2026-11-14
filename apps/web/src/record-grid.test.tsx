@@ -40,7 +40,7 @@ import {
   type RecordTable,
 } from "./record-grid.tsx";
 import { emptyView, formatDay, notGrouped, type View } from "./table-view.ts";
-import { testTheme } from "./test-support.tsx";
+import { rowActions, testTheme } from "./test-support.tsx";
 
 interface Gadget extends CellRecord {
   name: string;
@@ -141,6 +141,7 @@ function gadgetTable(
     newRowLabel: () => "New gadget",
     removeLabel: () => "Remove gadget",
     nameOf: (one) => one.name,
+    nameColumn: "name",
     columnsFor: gadgetColumns,
     liveRecords: liveGadgets,
     draftFields: () => [],
@@ -386,16 +387,12 @@ describe("a table of another kind of record", () => {
       given: actions({ remove, decide }),
       approves: draftKinds,
     });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for Gadget g1" }),
-    );
+    await userEvent.click(rowActions("Gadget g1"));
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Remove gadget" }),
     );
     expect(remove).toHaveBeenCalledWith(expect.objectContaining({ id: "g1" }));
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for Gadget g2" }),
-    );
+    await userEvent.click(rowActions("Gadget g2"));
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Approve draft" }),
     );
@@ -1289,8 +1286,8 @@ describe("clearing a new row", () => {
     const add = vi.fn();
     renderGadgets({ gadgets: [], given: actions({ add }) });
     expect(
-      screen.queryByRole("button", { name: "Actions for new gadget" }),
-    ).toBeNull();
+      screen.queryAllByRole("button", { name: "Actions for new gadget" }),
+    ).toHaveLength(0);
     act(() => {
       document.getElementById("cell-new-0-code")?.focus();
     });
@@ -1302,9 +1299,7 @@ describe("clearing a new row", () => {
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
     });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for new gadget" }),
-    );
+    await userEvent.click(rowActions("new gadget"));
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Clear row" }),
     );
@@ -1320,11 +1315,18 @@ describe("clearing a new row", () => {
       document.getElementById("cell-new-0-name")?.focus();
     });
     await userEvent.paste("Widget\tW1\nFar too long a name\tS1");
-    const buttons = screen.getAllByRole("button", {
-      name: "Actions for new gadget",
-    });
-    expect(buttons).toHaveLength(2);
-    await userEvent.click(buttons[1] as HTMLElement);
+    const filled = screen.getAllByRole("row", { name: "New gadget" }).filter(
+      (row) =>
+        within(row).queryAllByRole("button", {
+          name: "Actions for new gadget",
+        }).length > 0,
+    );
+    expect(filled).toHaveLength(2);
+    await userEvent.click(
+      within(filled[1] as HTMLElement).getAllByRole("button", {
+        name: "Actions for new gadget",
+      })[0] as HTMLElement,
+    );
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Clear row" }),
     );
@@ -1339,9 +1341,7 @@ describe("clearing a new row", () => {
     });
     await userEvent.keyboard("Widget{Tab}{Escape}");
     expect(screen.getByText("Widget")).toBeTruthy();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for new gadget" }),
-    );
+    await userEvent.click(rowActions("new gadget"));
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Clear row" }),
     );
@@ -1826,16 +1826,14 @@ describe("what a table can ask of its columns and rows", () => {
 
       expect(screen.getByRole("textbox", { name: "Name" })).toBeDefined();
       expect(
-        screen.queryByRole("button", { name: "Actions for Gadget a" }),
-      ).toBeNull();
+        screen.queryAllByRole("button", { name: "Actions for Gadget a" }),
+      ).toHaveLength(0);
     });
 
     it("keeps the row menu for a table with them", () => {
       renderTable(gadgetTable(), [gadget("a")], { canEdit: true });
 
-      expect(
-        screen.getByRole("button", { name: "Actions for Gadget a" }),
-      ).toBeDefined();
+      expect(rowActions("Gadget a")).toBeDefined();
     });
   });
 
@@ -1903,5 +1901,182 @@ describe("what a table can ask of its columns and rows", () => {
 
       expect(screen.getAllByText("2 gadgets")).toHaveLength(2);
     });
+  });
+});
+
+describe("the row's controls", () => {
+  const withDetails = (showDetails: (one: Gadget) => void) => ({
+    ...gadgetTable(),
+    showDetails,
+  });
+
+  it("shows a record's details from the button over its Name cell", async () => {
+    const showDetails = vi.fn();
+    renderGadgets({ gadgets: [gadget("a")], table: withDetails(showDetails) });
+
+    await userEvent.click(
+      within(document.getElementById("cell-a-name") as HTMLElement).getByRole(
+        "button",
+        { name: "Show details of Gadget a" },
+      ),
+    );
+
+    expect(showDetails).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "a" }),
+    );
+  });
+
+  it("offers Show details first in the row's menu", async () => {
+    const showDetails = vi.fn();
+    renderGadgets({ gadgets: [gadget("a")], table: withDetails(showDetails) });
+
+    await userEvent.click(rowActions("Gadget a"));
+    const items = within(await screen.findByRole("menu")).getAllByRole(
+      "menuitem",
+    );
+    expect(items.map((item) => item.textContent)).toEqual([
+      "Show details",
+      "Remove gadget",
+    ]);
+    await userEvent.click(items[0] as HTMLElement);
+
+    expect(showDetails).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "a" }),
+    );
+  });
+
+  it("opens the row's menu from the ⋯ over its Name cell", async () => {
+    renderGadgets({ gadgets: [gadget("a")] });
+
+    await userEvent.click(
+      within(document.getElementById("cell-a-name") as HTMLElement).getByRole(
+        "button",
+        { name: "Actions for Gadget a" },
+      ),
+    );
+
+    expect(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Remove gadget",
+      }),
+    ).toBeDefined();
+  });
+
+  it("opens the row's menu where any of its cells is right-clicked", async () => {
+    renderGadgets({ gadgets: [gadget("a")] });
+
+    const shown = fireEvent.contextMenu(
+      document.getElementById("cell-a-code") as HTMLElement,
+      { clientX: 40, clientY: 60 },
+    );
+
+    expect(shown).toBe(false);
+    expect(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Remove gadget",
+      }),
+    ).toBeDefined();
+  });
+
+  it("opens a new row's menu where it is right-clicked, once it holds something", async () => {
+    renderGadgets({ gadgets: [] });
+    act(() => {
+      document.getElementById("cell-new-0-name")?.focus();
+    });
+    await userEvent.keyboard("Widget{Tab}{Escape}");
+
+    fireEvent.contextMenu(
+      document.getElementById("cell-new-0-code") as HTMLElement,
+    );
+
+    expect(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Clear row",
+      }),
+    ).toBeDefined();
+  });
+
+  it("leaves the browser's own menu in a cell being typed in", async () => {
+    renderGadgets({ gadgets: [gadget("a")] });
+    act(() => {
+      document.getElementById("cell-a-code")?.focus();
+    });
+    await userEvent.keyboard("{Enter}");
+
+    const shown = fireEvent.contextMenu(
+      screen.getByRole("textbox", { name: "Code" }),
+    );
+
+    expect(shown).toBe(true);
+  });
+
+  it("leaves the browser's own menu on a row with no menu", () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <RecordGrid
+          records={[gadget("a")]}
+          table={gadgetTable()}
+          fields={[]}
+          order={[]}
+          lists={[]}
+          canEdit={false}
+          approves={[]}
+          canEditColumns={false}
+          view={emptyView}
+          onView={noop}
+          actions={actions()}
+        />
+      </MantineProvider>,
+    );
+
+    const shown = fireEvent.contextMenu(
+      document.getElementById("cell-a-code") as HTMLElement,
+    );
+
+    expect(shown).toBe(true);
+    expect(
+      screen.queryAllByRole("button", { name: "Actions for Gadget a" }),
+    ).toHaveLength(0);
+  });
+
+  it("puts focus back on the cell right-clicked when its menu closes", async () => {
+    renderGadgets({ gadgets: [gadget("a")] });
+    const cell = document.getElementById("cell-a-code") as HTMLElement;
+    act(() => {
+      cell.focus();
+    });
+    fireEvent.contextMenu(cell, { clientX: 40, clientY: 60 });
+    await screen.findByRole("menu");
+
+    await userEvent.keyboard("{Escape}");
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(cell);
+    });
+  });
+
+  it("keeps a menu open where it is when right-clicked in", async () => {
+    renderGadgets({ gadgets: [gadget("a")] });
+    await userEvent.click(rowActions("Gadget a"));
+    const menu = await screen.findByRole("menu");
+
+    const shown = fireEvent.contextMenu(within(menu).getByText("Gadget a"));
+
+    expect(shown).toBe(true);
+    expect(rowActions("Gadget a").getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("opens nothing from Shift+F10 on a row with no menu", async () => {
+    renderGadgets({ gadgets: [] });
+    act(() => {
+      document.getElementById("cell-new-0-name")?.focus();
+    });
+
+    await userEvent.keyboard("{Shift>}{F10}{/Shift}");
+
+    expect(
+      screen.queryAllByRole("button", { name: "Actions for new gadget" }),
+    ).toHaveLength(0);
+    expect(screen.queryByRole("menu")).toBeNull();
   });
 });

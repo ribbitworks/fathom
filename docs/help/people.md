@@ -34,7 +34,7 @@ You can also paste rows from a spreadsheet:
 1. Type, or press Enter, to change it.
 1. Press Enter to save the change, or Esc to leave it as it was.
 
-You can also work in a person's details beside the table. Point at their row, and select the button at the right of the **Name** cell, or select **Show details** in the row's **⋯** menu. To change a value there, select its pencil.
+You can also work in a person's details beside the table. Point at their row, and select the details button, a box, at the right of the **Name** cell. You can also right-click the row and select **Show details**. To change a value there, select it.
 
 ### Give Someone a New Manager
 

@@ -179,12 +179,13 @@ export function RecordLinkList({
 }
 
 // What a row's change button is, named Change and the row's label, for a row's own control, such as a
-// menu, that changes its value.
+// menu, that changes its value. It shows while its row is pointed at or has focus.
 export const changeButton = (label: string) =>
   ({
     variant: "subtle",
     color: "gray",
     size: "sm",
+    className: classes.change,
     "aria-label": `Change ${label}`,
     children: <Icon name="edit" />,
   }) as const;
@@ -222,31 +223,34 @@ export function Row({
       ? { ...changed, live: changed.live }
       : undefined;
   const start = editing?.open === true ? undefined : editing?.onStart;
-  // A click on the value, but not on a link in it, opens its editor, as the button beside it does.
+  // A click anywhere on the row, but not on a link or a control in it, opens its editor, as the
+  // button beside it does; a click in its own menu, drawn elsewhere, still reaches it, and is left.
   const onClick =
     start === undefined
       ? undefined
       : (event: MouseEvent) => {
-          if ((event.target as HTMLElement).closest("a, button") === null) {
+          const target = event.target as HTMLElement;
+          if (
+            event.currentTarget.contains(target) &&
+            target.closest("a, button") === null
+          ) {
             start();
           }
         };
   const checkbox = editing !== undefined && editing.onStart === undefined;
   return (
     <div
-      className={classes.row}
+      className={[
+        classes.row,
+        onClick === undefined ? "" : classes.editable,
+      ].join(" ")}
       data-field={editing?.open === true || undefined}
+      onClick={onClick}
     >
       <dt id={labelId(column)} className={classes.label}>
         {column.label}
       </dt>
-      <dd
-        className={[
-          classes.value,
-          onClick === undefined ? "" : classes.editable,
-        ].join(" ")}
-        onClick={onClick}
-      >
+      <dd className={classes.value}>
         {editing?.open === true ? (
           editing.editor
         ) : (

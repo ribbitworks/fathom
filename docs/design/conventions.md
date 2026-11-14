@@ -1,7 +1,7 @@
 # Fathom: UI Conventions
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-13
+**Last updated:** 2026-11-14
 
 A short lookup of the conventions every screen follows, for those who build screens. Each entry gives the rule, the shared piece that draws it, so a new screen reuses it rather than drawing its own, and an example from the [fictional seed data](development-setup.md#fictional-seed-data), or the steps that make one. The principles behind them, and how each page is laid out, are in [Visual Design](visual-design.md).
 
@@ -165,9 +165,9 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **Following a link:** A record named in a details panel is a link that opens that record's details, on its own page or tab, and the browser's back button goes back. A link from one page to a record on another, such as Show in People on the Org chart, opens that page with the record's details open, not only a search for it. A project or proposal named in a feature's details on Features opens on Projects in the same way, and Back returns to Features as it was. Decided by the owner on 2026-11-11.
   - **Drawn by:** `RecordLink` in `apps/web/src/record-details.tsx`.
   - **Example:** a customer in Offline Sync's details opens Projects' Customers tab with that customer's details.
-- **Opening from a table:** A table's row opens its own record's details from the show-details arrow, on every table; another record named in a cell, such as a stream's releases or a project's features, is a link that opens that record's details on its own page, as Following a link sets out. Decided by the owner on 2026-11-11.
-  - **Drawn by:** `ShowDetailsButton` in `apps/web/src/show-details-button.tsx`. Links in cells are not built yet.
-  - **Example:** the arrow at the start of any row on People.
+- **Opening from a table:** A table's row opens its own record's details from the details button over its Name cell, or Show details in its menu, on every table, as [A row's controls](#tables) sets out; another record named in a cell, such as a stream's releases or a project's features, is a link that opens that record's details on its own page, as Following a link sets out. Decided by the owner on 2026-11-11.
+  - **Drawn by:** `RowControls` in `apps/web/src/row-controls.tsx`, through the table's `showDetails` in `apps/web/src/record-grid.tsx`. Links in cells are not built yet.
+  - **Example:** point at any row on People.
 - **Several records in a cell:** A cell naming several records lists them in one line, cut short where they don't fit, with every name in its tooltip, one to a line; a details panel lists them one to a line.
   - **Drawn by:** the cell's kind in `apps/web/src/cell-kinds.tsx`, with the tip from `TableTips` in `apps/web/src/table-tips.tsx`, and `RecordLinkList` in `apps/web/src/record-details.tsx` in a panel.
   - **Example:** Crane Control's Features cell.
@@ -186,8 +186,8 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 
 ## Details Panels
 
-- **Follow the Person panel:** Every record's details follow Person details: the record's name and draft mark at the top; headed sections of rows, each label beside its value while the panel is wide and over it once narrow; the columns an organization added under Columns. Each value that can be changed has a pencil at its right, named Change and the label, and a click on the value does the same. A panel never mixes in another layout, such as labels over form fields. Decided by the owner on 2026-11-11.
-  - **Drawn by:** `RecordSection`, `Row` and `RecordLink` in `apps/web/src/record-details.tsx`, with `useRecordEditing` in `apps/web/src/record-editing.tsx` for the pencils, and `ValueField` there for a value typed in place, which a scope history's reason for a removal uses too.
+- **Follow the Person panel:** Every record's details follow Person details: the record's name and draft mark at the top; headed sections of rows, each label beside its value while the panel is wide and over it once narrow; the columns an organization added under Columns. Each value that can be changed has a pencil at its right, named Change and the label, shown while its row is pointed at or has focus, or always on a screen that can't be pointed at; a click anywhere on the row, its label included, does the same, and the row is marked in the hover grey while pointed at. A panel never mixes in another layout, such as labels over form fields. Decided by the owner on 2026-11-11; the pencil shown on hover or focus decided on 2026-11-13.
+  - **Drawn by:** `RecordSection`, `Row`, `changeButton` and `RecordLink` in `apps/web/src/record-details.tsx`, with `useRecordEditing` in `apps/web/src/record-editing.tsx` for the pencils, and `ValueField` there for a value typed in place, which a scope history's reason for a removal uses too.
   - **Example:** any seeded person's details beside People.
 - **Columns follow the panel's order:** A table's default column order follows its details panel's sections and rows, and the other way round, defined once and used by both.
   - **Drawn by:** `featureColumnGroups` in `apps/web/src/project-grids.tsx`.
@@ -282,6 +282,9 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 
 ## Tables
 
+- **A row's controls:** While a table's row is pointed at, or its Name cell has focus, two buttons show at the right of the Name cell: the details button, a box with its right side marked, as the details open beside the table, on a table whose records have details; and a ⋯ that opens the row's menu, so it's in reach without scrolling to the row's end. The ⋯ at the row's end stays, always shown. A right-click anywhere on the row opens the same menu beside the pointer, except in a cell being typed in, which keeps the browser's own; Shift+F10 and the menu key open it from the keyboard. A record's menu offers Show details, where it has details. There is no row header at the left: the slot before the first value keeps the draft's dot. Decided by the owner on 2026-11-13, settling [issue #485](https://github.com/jlarue26/fathom/issues/485).
+  - **Drawn by:** `RowControls` and `MoreButton` in `apps/web/src/row-controls.tsx`, placed by `RecordGrid` in `apps/web/src/record-grid.tsx` in the column its table names as `nameColumn`, with the record's details from the table's `showDetails`.
+  - **Example:** on People, point at any row, or right-click its Start cell.
 - **Moving columns:** Every table's columns can be moved, as [Column order](../product/decisions.md#configuration) sets out. A new table is drawn by the shared table, so its columns move too.
   - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx`.
   - **Example:** on Features, select Move left in the Priority column's menu.

@@ -1490,3 +1490,11 @@ th.liveColumn {
 .recordUnitCode {
   color: var(--mantine-color-dimmed);
 }
+
+/* Where a row was right-clicked, which its menu opens beside. */
+.pointerAnchor {
+  position: fixed;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}

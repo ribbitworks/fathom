@@ -20,7 +20,7 @@ The page shows a timeline of every stream, with a table of the streams under it.
 ### Find and Open a Stream
 
 1. Type part of the stream's name in the search field at the top of the page. Cmd+F on a Mac, or Ctrl+F elsewhere, takes you there.
-1. Select the arrow at the right of the stream's name. The stream opens in a panel beside the table.
+1. Point at the stream's row, and select the details button, a box, at the right of its name. You can also right-click the row and select **Show details**. The stream opens in a panel beside the table.
 
 Press Esc in the search field to clear it. To group the streams another way, choose **Group by**, then **Status** or **Cycle schedule**.
 

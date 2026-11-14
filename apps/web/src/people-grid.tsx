@@ -12,7 +12,7 @@
 // cannot look like a temporary one.
 
 import { dayNeeded } from "./day-input.tsx";
-import { FillHireButton, ShowDetailsButton } from "./show-details-button.tsx";
+import { FillHireButton } from "./row-controls.tsx";
 import type {
   Choice,
   DataClasses,
@@ -29,7 +29,6 @@ import {
   personLengths,
   temporaryIdPrefix,
 } from "@fathom/shared";
-import { Menu } from "@mantine/core";
 import { addedColumn, cellRequest } from "./added-columns.ts";
 import { notShown, personDraftFields } from "./draft-details.tsx";
 import { leftWarning } from "./status-mark.tsx";
@@ -706,6 +705,7 @@ function peopleTable(
     removeLabel: (row) =>
       isHire(row) ? "Remove planned hire" : "Remove person",
     nameOf: (row) => rowName(row, lists),
+    nameColumn: "preferredName",
     readOnlyRecord: (row) => isHire(row) && !canEditHires,
     columnsFor: (fields, lists, order, records) =>
       columnsFor(
@@ -720,27 +720,20 @@ function peopleTable(
       )
         .map(classed(lists))
         .map((column) =>
-          column.key === "preferredName" && onOpen !== undefined
+          column.key === "preferredName" &&
+          onOpen !== undefined &&
+          onFill !== undefined
             ? {
                 ...column,
                 mark: (row: Person) =>
-                  !isPending(row) && (
-                    <>
-                      {onFill !== undefined && canFill(row, lists) && (
-                        <FillHireButton
-                          name={rowName(row, lists)}
-                          onFill={() => {
-                            onFill(row);
-                          }}
-                        />
-                      )}
-                      <ShowDetailsButton
-                        name={row.preferredName}
-                        onOpen={() => {
-                          onOpen(row);
-                        }}
-                      />
-                    </>
+                  !isPending(row) &&
+                  canFill(row, lists) && (
+                    <FillHireButton
+                      name={rowName(row, lists)}
+                      onFill={() => {
+                        onFill(row);
+                      }}
+                    />
                   ),
               }
             : column,
@@ -757,21 +750,7 @@ function peopleTable(
       people: ids.filter((id) => !hireIds.has(id)),
       plannedHires: ids.filter((id) => hireIds.has(id)),
     }),
-    // A row not saved yet has no details to show.
-    ...(onOpen === undefined
-      ? {}
-      : {
-          menuItems: (row: Person) =>
-            !isPending(row) && (
-              <Menu.Item
-                onClick={() => {
-                  onOpen(row);
-                }}
-              >
-                Show details
-              </Menu.Item>
-            ),
-        }),
+    ...(onOpen === undefined ? {} : { showDetails: onOpen }),
   };
 }
 

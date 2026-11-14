@@ -45,9 +45,37 @@
   margin: 0;
 }
 
-/* A value that opens its editor when clicked. */
+/* A row whose value opens its editor when clicked anywhere on it, marked while pointed at. */
 .editable {
   cursor: pointer;
+}
+
+/* The mark reaches a little past the row's sides, so its text doesn't touch its edges, without
+   moving the row. */
+.row.editable:hover {
+  --row-hover-reach: var(--mantine-spacing-xs);
+
+  background: var(--mantine-color-default-hover);
+  box-shadow:
+    calc(-1 * var(--row-hover-reach)) 0 0 var(--mantine-color-default-hover),
+    var(--row-hover-reach) 0 0 var(--mantine-color-default-hover);
+}
+
+/* A value's change button shows while its row is pointed at or has focus, or while its menu is
+   open, and always where nothing can be pointed at. */
+.change {
+  opacity: 0;
+}
+
+.row:is(:hover, :focus-within) .change,
+.change:is(:focus-visible, [aria-expanded="true"]) {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .change {
+    opacity: 1;
+  }
 }
 
 /* People's cell editors reach past their cell's text to meet its edges; here they reach the

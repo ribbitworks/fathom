@@ -41,19 +41,13 @@ import type {
   Tier,
 } from "@fathom/shared";
 import { draftFilterKey, type ExportedTable } from "@fathom/shared";
-import {
-  ActionIcon,
-  Menu,
-  Paper,
-  Table,
-  Text,
-  VisuallyHidden,
-} from "@mantine/core";
+import { Menu, Paper, Table, Text, VisuallyHidden } from "@mantine/core";
 import {
   type ClipboardEvent,
   type CSSProperties,
   type DragEvent,
   type KeyboardEvent,
+  type MouseEvent,
   type ReactNode,
   useLayoutEffect,
   useRef,
@@ -101,6 +95,7 @@ import {
 } from "./frozen-columns.ts";
 import { shortcutsFor } from "./list-panel.tsx";
 import { Icon } from "./icons.tsx";
+import { MoreButton, RowControls } from "./row-controls.tsx";
 import { draftedLists, liveLists } from "./lists.ts";
 import {
   type ChangeView,
@@ -331,6 +326,11 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // What removing a record is called in its menu, such as "Remove person".
   removeLabel: (record: Rec) => string;
   nameOf: (record: Rec) => string;
+  // The key of the column naming each record, whose cell holds the row's controls.
+  nameColumn: string;
+  // Shows a record's details beside the table, from its Name cell and its menu, for a table whose
+  // records have them.
+  showDetails?: (record: Rec) => void;
   // Whether a record cannot be changed by this user, though others of the table can.
   readOnlyRecord?: (record: Rec) => boolean;
   // The table's columns, from its added columns and their lists, and the records, live or as
@@ -616,6 +616,22 @@ interface NewRow {
 
 type Row<Rec> =
   { record: Rec; newRow?: never } | { newRow: NewRow; record?: never };
+
+// Where a row's menu is open from: the ⋯ at the row's end, which the keyboard opens it from too,
+// the ⋯ over its Name cell, or the pointer, where the row was right-clicked.
+type MenuPlace = "end" | "name" | PointedAt;
+
+interface PointedAt {
+  x: number;
+  y: number;
+}
+
+const notPointed: PointedAt = { x: 0, y: 0 };
+
+interface OpenMenu {
+  key: string;
+  place: MenuPlace;
+}
 
 // A cell by the keys of its row and column.
 interface Place {
@@ -1636,7 +1652,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     value: CellValue;
   }>();
   const [problem, setProblem] = useState<ShownProblem>();
-  const [menuFor, setMenuFor] = useState<string>();
+  const [menuFor, setMenuFor] = useState<OpenMenu>();
+  const [pointedAt, setPointedAt] = useState<OpenMenu & { place: PointedAt }>();
   const [dragging, setDragging] = useState<string>();
   // Whether the table is scrolled sideways, which the frozen columns' edge shows with a shadow.
   const [scrolled, setScrolled] = useState(false);
@@ -1647,7 +1664,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const withActions =
     (canEdit && rowActions) ||
     approves.length > 0 ||
-    table.menuItems !== undefined;
+    table.menuItems !== undefined ||
+    table.showDetails !== undefined;
   // Whether the user may change a record, as they may the table's others, unless it is one they
   // may only view.
   const mayChange = (record: Rec) =>
@@ -1658,7 +1676,22 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     !isPending(record) &&
     ((rowActions && mayChange(record)) ||
       (record.draft !== undefined && approvesRecord(record)) ||
-      Boolean(table.menuItems?.(record)));
+      ownItemsOf(record).length > 0);
+  // What a record's menu offers of the table's own: its details, then whatever else the table offers.
+  const ownItemsOf = (record: Rec): ReactNode[] =>
+    [
+      table.showDetails !== undefined && !isPending(record) && (
+        <Menu.Item
+          key="details"
+          onClick={() => {
+            table.showDetails?.(record);
+          }}
+        >
+          Show details
+        </Menu.Item>
+      ),
+      table.menuItems?.(record),
+    ].filter(Boolean);
   // Whether a record's cells cannot be changed: by those who may only view it, while it is drafted
   // to be removed, until the draft is discarded, or while it is being added.
   const locked = (record: Rec) => !mayChange(record) || heldBack(record);
@@ -2204,8 +2237,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       (event.shiftKey && event.key === "F10")
     ) {
       event.preventDefault();
-      if (row.record && hasMenu(row.record)) setMenuFor(row.record.id);
-      if (row.newRow && clearable(row.newRow)) setMenuFor(rowKey(row));
+      if (hasRowMenu(row)) setMenuFor({ key: rowKey(row), place: "end" });
       return;
     }
     if (!plain) return;
@@ -2628,48 +2660,6 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       : undefined;
   };
 
-  const newRowMenu = (row: Row<Rec> & { newRow: NewRow }) => {
-    const key = rowKey(row);
-    return (
-      <Menu
-        opened={menuFor === key}
-        onChange={(opened) => {
-          setMenuFor(opened ? key : undefined);
-        }}
-        position="bottom-end"
-        withinPortal
-        hideDetached={false}
-      >
-        <Menu.Target>
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            size="sm"
-            // Tab moves between cells; the menu also opens with Shift+F10 on any of the row's cells.
-            tabIndex={-1}
-            aria-label={`Actions for ${table.newRowLabel(rowKind(row)).toLowerCase()}`}
-          >
-            <Icon name="more" />
-          </ActionIcon>
-        </Menu.Target>
-        <Menu.Dropdown
-          onClick={closesOnBlankClick(() => {
-            setMenuFor(undefined);
-          })}
-        >
-          <MenuTitle>{table.newRowLabel(rowKind(row))}</MenuTitle>
-          <Menu.Item
-            onClick={() => {
-              clearNewRow(row.newRow);
-            }}
-          >
-            Clear row
-          </Menu.Item>
-        </Menu.Dropdown>
-      </Menu>
-    );
-  };
-
   const editor = (
     cell: Cell,
     column: Column<Rec, Change>,
@@ -2733,37 +2723,16 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     );
   };
 
-  const rowMenu = (
-    record: Rec,
-    draft = record.draft as DraftOf<Rec> | undefined,
-    ownItems = table.menuItems?.(record),
-  ) => (
-    <Menu
-      opened={menuFor === record.id}
-      onChange={(opened) => {
-        setMenuFor(opened ? record.id : undefined);
-      }}
-      position="bottom-end"
-      withinPortal
-      hideDetached={false}
-    >
-      <Menu.Target>
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          size="sm"
-          // Tab moves between cells; the menu also opens with Shift+F10 on any of the row's cells.
-          tabIndex={-1}
-          aria-label={`Actions for ${table.nameOf(record)}`}
-        >
-          <Icon name="more" />
-        </ActionIcon>
-      </Menu.Target>
-      <Menu.Dropdown
-        onClick={closesOnBlankClick(() => {
-          setMenuFor(undefined);
-        })}
-      >
+  // Whether a row has a menu: a record with anything in it to offer, or a new row with something in
+  // it to clear.
+  const hasRowMenu = (row: Row<Rec>) =>
+    row.newRow ? clearable(row.newRow) : hasMenu(row.record);
+
+  const recordMenuItems = (record: Rec) => {
+    const draft = record.draft as DraftOf<Rec> | undefined;
+    const ownItems = ownItemsOf(record);
+    return (
+      <>
         {/* Names whose menu it is, and gives every menu somewhere to click that closes it. */}
         <MenuTitle>{table.nameOf(record)}</MenuTitle>
         {/* Who holds the record matters only to those who may change or decide it. */}
@@ -2783,7 +2752,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             divider={
               (mayChange(record) && record.heldBy === undefined) ||
               (decidableRow(record) && approvesRecord(record)) ||
-              Boolean(ownItems)
+              ownItems.length > 0
             }
           />
         )}
@@ -2803,7 +2772,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         {/* A rejected draft is back with its makers, until they send it again. */}
         {decidableRow(record) && approvesRecord(record) && (
           <>
-            {Boolean(ownItems) && <Menu.Divider />}
+            {ownItems.length > 0 && <Menu.Divider />}
             <Menu.Item
               disabled={record.draft?.needsOtherApprover === true}
               onClick={() => {
@@ -2825,7 +2794,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         {rowActions && mayChange(record) && record.heldBy === undefined && (
           <>
             {((decidableRow(record) && approvesRecord(record)) ||
-              Boolean(ownItems)) && <Menu.Divider />}
+              ownItems.length > 0) && <Menu.Divider />}
             {draft?.state === "rejected" && (
               <Menu.Item
                 onClick={() => {
@@ -2858,9 +2827,130 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             )}
           </>
         )}
+      </>
+    );
+  };
+
+  const newRowMenuItems = (newRow: NewRow) => (
+    <>
+      <MenuTitle>{table.newRowLabel(rowKind({ newRow }))}</MenuTitle>
+      <Menu.Item
+        onClick={() => {
+          clearNewRow(newRow);
+        }}
+      >
+        Clear row
+      </Menu.Item>
+    </>
+  );
+
+  const rowMenuItems = (row: Row<Rec>) =>
+    row.newRow ? newRowMenuItems(row.newRow) : recordMenuItems(row.record);
+
+  // The menu of the row keyed, opened from the place given, from the target there.
+  const rowMenu = (
+    key: string,
+    place: MenuPlace,
+    target: ReactNode,
+    items: ReactNode,
+  ) => (
+    <Menu
+      opened={
+        menuFor !== undefined && menuFor.key === key && menuFor.place === place
+      }
+      onChange={(opened) => {
+        setMenuFor(opened ? { key, place } : undefined);
+      }}
+      position={typeof place === "string" ? "bottom-end" : "bottom-start"}
+      withinPortal
+      hideDetached={false}
+    >
+      <Menu.Target>{target}</Menu.Target>
+      <Menu.Dropdown
+        onClick={closesOnBlankClick(() => {
+          setMenuFor(undefined);
+        })}
+      >
+        {items}
       </Menu.Dropdown>
     </Menu>
   );
+
+  // What a row's ⋯ is called, at its end and over its Name cell alike, as both open its menu.
+  const menuLabel = (row: Row<Rec>) => {
+    const name = row.record
+      ? table.nameOf(row.record)
+      : table.newRowLabel(rowKind(row)).toLowerCase();
+    return `Actions for ${name}`;
+  };
+
+  // The controls over a row's Name cell: its details' button and its menu's ⋯, where it has them.
+  const nameCellControls = (row: Row<Rec>) => {
+    const { record } = row;
+    const { showDetails } = table;
+    const details =
+      record && showDetails !== undefined && !isPending(record)
+        ? {
+            name: table.nameOf(record),
+            onShow: () => {
+              showDetails(record);
+            },
+          }
+        : undefined;
+    const menu =
+      hasRowMenu(row) &&
+      rowMenu(
+        rowKey(row),
+        "name",
+        <MoreButton label={menuLabel(row)} inCell />,
+        rowMenuItems(row),
+      );
+    return (
+      (details !== undefined || menu !== false) && (
+        <RowControls details={details} menu={menu} />
+      )
+    );
+  };
+
+  // The menu of the row last right-clicked, beside the pointer. It is drawn before any right-click
+  // and stays drawn once closed, since the menu notes where focus was only as it opens, to put it
+  // back when it closes. Mantine's Menu.ContextMenu would do the same, but it stops text being
+  // selected in whatever it opens from, here every row.
+  const pointerMenu = () => {
+    const { key, place } = pointedAt ?? { key: "", place: notPointed };
+    const row = rows.find((one) => rowKey(one) === key);
+    return rowMenu(
+      key,
+      place,
+      <span
+        aria-hidden="true"
+        className={classes.pointerAnchor}
+        style={{ left: place.x, top: place.y }}
+      />,
+      row !== undefined && rowMenuItems(row),
+    );
+  };
+
+  // A right-click on a row opens its menu beside the pointer, except in a field being typed in,
+  // which keeps the browser's own, and in the row's menus, drawn elsewhere, whose clicks still reach
+  // the row.
+  const onRowContextMenu = (event: MouseEvent, row: Row<Rec>) => {
+    const target = event.target as HTMLElement;
+    if (
+      !hasRowMenu(row) ||
+      !event.currentTarget.contains(target) ||
+      target.closest("input, textarea") !== null
+    ) {
+      return;
+    }
+    event.preventDefault();
+    const opened = {
+      key: rowKey(row),
+      place: { x: event.clientX, y: event.clientY },
+    };
+    setPointedAt(opened);
+    setMenuFor(opened);
+  };
 
   // The drafts waiting among the records and columns shown, which Approvers approve or reject all at
   // once.
@@ -3245,6 +3335,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                       aria-label={
                         row.newRow ? table.newRowLabel(rowKind(row)) : undefined
                       }
+                      onContextMenu={(event) => {
+                        onRowContextMenu(event, row);
+                      }}
                     >
                       {columns.flatMap((column, columnIndex) => {
                         const cell = { row: rowIndex, column: columnIndex };
@@ -3430,6 +3523,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                 </MarkedItem>
                               </DraftedItem>
                             </DraftedItem>
+                            {column.key === table.nameColumn &&
+                              !editingHere &&
+                              nameCellControls(row)}
                             {row.record &&
                               !editingHere &&
                               column.mark?.(row.record)}
@@ -3466,12 +3562,13 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                             classes.recordActionsCell,
                           ].join(" ")}
                         >
-                          {row.record &&
-                            hasMenu(row.record) &&
-                            rowMenu(row.record)}
-                          {row.newRow &&
-                            clearable(row.newRow) &&
-                            newRowMenu({ newRow: row.newRow })}
+                          {hasRowMenu(row) &&
+                            rowMenu(
+                              rowKey(row),
+                              "end",
+                              <MoreButton label={menuLabel(row)} />,
+                              rowMenuItems(row),
+                            )}
                         </Table.Td>
                       )}
                     </Table.Tr>,
@@ -3588,6 +3685,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
               style={{ height: measured.height }}
             />
           )}
+          {pointerMenu()}
         </Paper>
       </WithSidePanel>
       {exportQuestion}
