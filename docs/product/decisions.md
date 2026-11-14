@@ -228,6 +228,7 @@ flowchart TD
   - **A page a role reaches without its classes** stayed in its menu and opened to the line saying why, until the owner decided on 2026-11-13 that a page, mode, view or grouping a role would find empty is left out with nothing said, as [A page without its data](../design/conventions.md#access) sets out; the Roles page keeps its lines saying what each view needs.
   - **Two grids:** A role is set on two grids, each with the actions View, Edit and Approve: areas, which say what the role reaches, such as the plan, allocations or people; and data classes, which say which data it may see and change within them.
   - **Three classes:** Every piece of data belongs to one class. General: anyone whose role reaches the page sees it. Personal: people's private and HR details. Confidential: business data not yet announced, about the organization rather than one person.
+  - **Two more classes, planned:** Highly Personal, for details such as salary or performance reviews, and Highly Confidential, making five with General, Personal and Confidential. Each has its own View and Edit permissions, and seeing Highly Personal needs View Personal too, and Highly Confidential View Confidential. No built-in detail starts in either; they are for the organization's own columns and lists. How an organization uses the classes, and tells those who need to know, is up to it. Decided by the owner on 2026-11-13, and not built yet.
   - **The organization classifies its data:** Fathom starts every built-in field, added column and list in a default class. A role with Classify data moves any of them to another class, built-in fields and the hiring plan included. Classify data is one permission across every class; moving a field needs View on both the class it leaves and the class it enters, and every move is recorded in the access history, marked worth checking.
   - **Marks:** A column in Personal or Confidential carries a small mark beside its heading, such as a lock with "Personal", for those who see it, so nobody shares it by mistake. The Lists and Columns pages show each one's class.
   - **Whole pages, views and columns:** A page or view shows only when the role sees every class of data it needs, and a column only when the role sees its class. Fathom never shows a page with some of its data blurred, rounded or replaced, so months-only dates, today's manager in every month, and who has left judged by today all go.
@@ -252,11 +253,11 @@ flowchart TD
 
 ## Privacy Law Context
 
-The company is a private company in British Columbia, so BC PIPA is expected to govern employee personal information, unless the company is federally regulated. Employees in other countries may bring their own local laws. In particular, the company has employees and managers in India, whose personal data may be subject to Indian law, such as India's Digital Personal Data Protection Act, 2023. These notes are a general understanding, not legal advice, and are to be confirmed in the privacy review:
+Employee personal information is expected to be governed by the privacy law where the company is based. Employees in other countries may bring their own local laws. These notes are a general understanding of such laws, not legal advice, and are to be confirmed in the privacy review:
 
-- Employers can generally collect and use employee information that is reasonably needed to manage employment without consent, if employees are told beforehand and given the purposes.
-- Employees can ask to see or correct their information.
-- Personal information used to make a decision that directly affects someone must be kept for at least one year after the decision, then destroyed or anonymized once no longer needed for legal or business purposes.
+- Employers can commonly collect and use employee information that is reasonably needed to manage employment without consent, if employees are told beforehand and given the purposes.
+- Employees can commonly ask to see or correct their information.
+- Personal information used to make a decision that directly affects someone may have to be kept for a set time after the decision, then destroyed or anonymized once no longer needed for legal or business purposes.
 
 ## Configuration
 
