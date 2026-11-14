@@ -11,7 +11,7 @@ last_updated: "2026-11-13"
 
 ## Scope
 
-Verifies Fathom's common use by every persona in [Roles](../product/roles.md#roles-by-persona), in journeys that pass work from one account to the next: hiring and People, saved views, the org chart, feature teams and feature assignments, the plan from projects to releases, and administration. An organization setting Fathom up from an empty database is verified by [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) and [Work Between Roles](acceptance-work-between-roles-manual-test.md). Each feature is run once as it is usually used and once in a less usual way. The feature manual tests in `docs/testing/` cover each feature in depth.
+Verifies Fathom's common use by every persona in [Roles](../product/roles.md#roles-by-persona), in journeys that pass work from one account to the next: hiring and People, saved views, the org chart, feature teams and feature assignments, lists, the plan as an Executive reads it, and administration. An organization setting Fathom up from an empty database is verified by [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) and [Work Between Roles](acceptance-work-between-roles-manual-test.md). Each feature is run once as it is usually used and once in a less usual way. The feature manual tests in `docs/testing/` cover each feature in depth.
 
 ## Test Environment
 
@@ -30,9 +30,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 - **Feature Lead:** `feature.lead@fathom.test`, holding the Feature Lead role, its default, and the Engineering Manager role
 - **Engineering Director:** `engineering.director@fathom.test`
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
-- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as "Second Engineering Operations Manager"
 - **Executive:** `executive@fathom.test`
-- **Team Member:** `team.member@fathom.test`
 - **Administrator:** `fathom.administrator@fathom.test`, shown in Fathom as "Fathom Administrator"
 
 This test creates:
@@ -45,17 +43,15 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the account menu, marks, the lock, boxes, a row's slot, Draft rows and Live rows, the Publish button, the finder, the teams switch, the team panel and seeded dates. This test adds:
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the account menu, marks, the lock, boxes, a row's slot, Draft rows and Live rows, the Publish button, the finder, the teams switch and the team panel. This test adds:
 
-- **Seeded dates in this test:** **Next quarter's cycle** is the 'Platform' stream's cycle for the quarter after the one today is in. The examples after "such as" are as the seed data is when added in November 2026.
-- **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20300315`.
 - **Months from today:** the steps name months by where they fall from the current month: **last month** is the one before it, and **two months after the current month** the second month after it.
 - **Empty row:** the row at the end of a table or a list's panel, with blank cells, where a new record or choice is typed.
 - **Date box:** the box labelled **Date** between the **Org chart** heading and the chart, before the left arrow, timeline, right arrow and **Today**. Accounts that don't see Personal details have the arrows, timeline and **Today** without it.
 
 ## Test Cases
 
-Run the test cases in order, in about two hours and 50 minutes. Start with Start Fathom, then Reset the Database; the last test case runs Reset the Database to put everything back. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order, in about an hour and a half. Start with Start Fathom, then Reset the Database; the last test case runs Reset the Database to put everything back. Check each step whose expected result you see, and write anything else under its notes.
 
 ### Journey 1: Hiring and People
 
@@ -540,78 +536,11 @@ Run the test cases in order, in about two hours and 50 minutes. Start with Start
 
 #### ACC-09: A Personal View Keeps Frozen Columns, Widths and Column Order
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ACC-08.
-
-**Preconditions:** Restore the Seed Data run after ACC-08. Signed in with this account. **People** page open, with no view applied.
-
-- [ ] `FAFD` Open the **ID** column menu, and select **Freeze up to this column**.
-  - **Expected:** The menu closes.
-  - **Notes:**
-
-- [ ] `AF91` Scroll the table sideways to the right.
-  - **Expected:**
-    - **Name** and **ID** stay in place.
-    - A thin grey line and a soft shadow are at the right of **ID**.
-    - The other columns pass under them.
-  - **Notes:**
-
-- [ ] `D989` Scroll back to the left.
-  - **Expected:** The table is back at its left end.
-  - **Notes:**
-
-- [ ] `22D8` Drag the right edge of the **Name** column's name to the right by about the width of the column.
-  - **Expected:**
-    - A short blue line shows on the edge.
-    - **Name** widens with the pointer.
-  - **Notes:**
-
-- [ ] `BC20` Select **Position** in the header, then **Move right**.
-  - **Expected:**
-    - **Position** moves one place to the right.
-    - No dot shows before its name.
-    - No Publish button is in the top bar.
-  - **Notes:**
-
-- [ ] `7C12` Open the Views menu, and select **Save view…**.
-  - **Expected:**
-    - A dialog titled "Save view" shows **Name**.
-    - Under **Includes**, it shows **Frozen** up to **ID**, **Column order** **Moved**, and **Widths** **Name**.
-    - It offers no choice about sharing.
-  - **Notes:**
-
-- [ ] `3B23` Type `Fictional layout` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `B685` Select **Save view**.
-  - **Expected:**
-    - The dialog closes.
-    - The Views button reads `Fictional layout`.
-  - **Notes:**
-
-- [ ] `C305` Open the Views menu, and select **Clear view**.
-  - **Expected:**
-    - Only **Name** stays in place when the table scrolls sideways.
-    - **Position** is in its original place.
-    - **Name** is at its original width.
-  - **Notes:**
-
-- [ ] `C860` Open the Views menu, and select `Fictional layout` under **My views**.
-  - **Expected:**
-    - **Name** and **ID** are frozen.
-    - **Name** is about twice its original width.
-    - **Position** is one place to the right of its original place.
-  - **Notes:**
-
-- [ ] `89C7` Open the Views menu, and select **Delete view**.
-  - **Expected:**
-    - A notice reads "Deleted the Fictional layout view."
-    - The notice offers **Undo**.
-  - **Notes:**
+Moved to [Team Member](acceptance-team-member-manual-test.md), MEMBER-04.
 
 #### ACC-10: A Shared View Is Seen by Others Until It Is Taken Back
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, in the main browser, changed from ACC-09. The second browser signs in as another account in step `F3B1`.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, in the main browser, the same as ACC-08. The second browser signs in as another account in step `F3B1`.
 
 **Preconditions:** Signed in with this account in the main browser. **People** page open, with no view applied.
 
@@ -694,61 +623,11 @@ Run the test cases in order, in about two hours and 50 minutes. Start with Start
 
 #### ACC-11: A Team Member Reads the Org Chart
 
-**Account:** Team Member, `team.member@fathom.test`, changed from ACC-10.
-
-**Preconditions:** Signed in with this account, in the main browser.
-
-- [ ] `E5D8` Select the **Org chart** page in the left-hand menu.
-  - **Expected:** The chart shows each person's name, position, and the team they lead.
-  - **Notes:**
-
-- [ ] `62C8` Select the name on the card for 'Lorenza Thiel'.
-  - **Expected:**
-    - The details panel slides out on the right, headed 'Lorenza Thiel'.
-    - The panel shows no pencils.
-  - **Notes:**
-
-- [ ] `BB88` Select the **Show only this team** button at the top right of the card for 'Lorenza Thiel'.
-  - **Expected:**
-    - 'Lorenza Thiel' is at the top of the chart.
-    - Her reports are under her.
-    - To the right of the heading, the page reads "Only the team of Lorenza Thiel is shown."
-    - **Show everyone** is beside it.
-  - **Notes:**
-
-- [ ] `1DBB` Select **Show everyone**.
-  - **Expected:**
-    - 'Silje Holm-Schrøder' is at the top of the chart.
-    - The line "Only the team of Lorenza Thiel is shown." is gone.
-  - **Notes:**
-
-- [ ] `67F5` In the finder, type `Gloria`, and select 'Gloria Armas Guardado'.
-  - **Expected:**
-    - The chart moves until the card for 'Gloria Armas Guardado' is in the middle of the panel.
-    - A blue ring is around the card.
-  - **Notes:**
-
-- [ ] `C68D` Choose **Feature teams** in the teams switch.
-  - **Expected:**
-    - The chart shows four feature teams side by side, each first card naming its team:
-      - 'Mobile apps'
-      - 'Payments core'
-      - 'Search and discovery', with a yellow dot before it
-      - 'Platform reliability', with a grey lock before it
-    - Above the chart, a line in grey reads "Other dates need Personal access."
-    - There is no date control.
-  - **Notes:**
-
-- [ ] `DAD8` Choose **Reporting teams** in the teams switch.
-  - **Expected:**
-    - The chart shows managers' teams.
-    - Above the chart, a line in grey reads "Other dates need Personal access."
-    - There is no date control.
-  - **Notes:**
+Moved to [Team Member](acceptance-team-member-manual-test.md), MEMBER-01.
 
 #### ACC-12: An Engineering Manager Reads a Note Beside the Chart
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ACC-11.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ACC-10.
 
 **Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
 
@@ -796,110 +675,15 @@ Run the test cases in order, in about two hours and 50 minutes. Start with Start
 
 #### ACC-14: A Feature Lead Proposes a Lead and a Member
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, changed from ACC-13. Step `76A1` signs in as another account in the second browser.
-
-**Preconditions:** Signed in with this account, acting as **Feature Lead**. Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch.
-
-- [ ] `DAF2` Select the Feature teams button, then 'Platform reliability'.
-  - **Expected:**
-    - The team panel opens, titled 'Platform reliability', with a grey lock before it.
-    - Pointing at the lock shows "Being changed by Second Engineering Operations Manager".
-    - No row has a change button.
-  - **Notes:**
-
-- [ ] `76A1` In the second browser, sign in as the Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`.
-  - **Expected:** The top bar shows the **Publish** button.
-  - **Notes:**
-
-- [ ] `F276` In the second browser, run Discard the Unpublished Changes.
-  - **Expected:**
-    - A notice says "Discarded" followed by the number of changes.
-    - The **Publish** button is gone.
-  - **Notes:**
-
-- [ ] `9C39` In the main browser, reload the page.
-  - **Expected:**
-    - The team panel is titled 'Platform reliability', with no lock.
-    - **Feature lead** reads "None".
-    - **Name**, **Feature lead** and **Members** each have a change button.
-  - **Notes:**
-
-- [ ] `62AD` Select the change button in the **Feature lead** row, type `Polly`, and press Enter.
-  - **Expected:**
-    - **Feature lead** reads 'Polly Smith', with a hollow yellow dot before it.
-    - On the chart, the card reading 'Platform reliability' and "No feature lead" is gone.
-    - The card of 'Polly Smith' is at the top of the team in its place.
-    - 'Platform reliability' is under her position.
-    - The team's members are under her.
-  - **Notes:**
-
-- [ ] `9A03` Select the change button in the **Members** row.
-  - **Expected:**
-    - A list of people opens under the row.
-    - The cursor is in a box above it.
-  - **Notes:**
-
-- [ ] `496D` Type `Rosendo`, and press Enter.
-  - **Expected:** 'Rosendo Champlin' has a tick.
-  - **Notes:**
-
-- [ ] `34DE` Press Enter.
-  - **Expected:**
-    - **Members** lists 'Rosendo Champlin', with a hollow yellow dot before his name.
-    - On the chart, a card for him is under 'Polly Smith', with a hollow yellow dot before his name.
-    - His card in 'Mobile apps' is still there.
-  - **Notes:**
-
-- [ ] `20F5` Run Publish.
-  - **Expected:** The **Publish** button is gone.
-  - **Notes:**
+Moved to [Feature Lead](acceptance-feature-lead-manual-test.md), LEAD-01.
 
 #### ACC-15: A Project Manager Approves the Feature Team
 
-**Account:** Project Manager, `project.manager@fathom.test`, changed from ACC-14.
-
-**Preconditions:** ACC-14 done. Signed in with this account.
-
-- [ ] `2C45` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
-  - **Notes:**
-
-- [ ] `2EBA` Type `Platform reliability` in the search box.
-  - **Expected:**
-    - One entry is shown, "the feature team Platform reliability".
-    - A line sets **Feature lead** to "Polly Smith".
-    - A line for **Members** adds "Rosendo Champlin".
-    - It was made by "Feature Lead".
-  - **Notes:**
-
-- [ ] `D2E4` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
-  - **Notes:**
-
-- [ ] `47EF` Select **Approve 1 draft**.
-  - **Expected:** A dialog titled "Approve 1 draft?" opens.
-  - **Notes:**
-
-- [ ] `DC0A` Select **Approve** in the dialog.
-  - **Expected:**
-    - The dialog closes.
-    - A notice begins "Approved".
-  - **Notes:**
-
-- [ ] `B3E6` Select the **Org chart** page in the left-hand menu.
-  - **Expected:** The chart opens.
-  - **Notes:**
-
-- [ ] `CB16` Choose **Feature teams** in the teams switch.
-  - **Expected:**
-    - 'Platform reliability' is led by 'Polly Smith'.
-    - 'Rosendo Champlin' is among the cards under her.
-    - There are no dots.
-  - **Notes:**
+Moved to [Feature Lead](acceptance-feature-lead-manual-test.md), LEAD-02.
 
 #### ACC-16: A Member Joins a Feature Team From an Earlier Date
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-15. Step `2A2C` signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-13. Step `2A2C` signs in as another account.
 
 **Preconditions:** Signed in with this account. Select the **Org chart** page in the left-hand menu, and choose **Feature teams** in the teams switch; it shows today.
 
@@ -975,21 +759,7 @@ Run the test cases in order, in about two hours and 50 minutes. Start with Start
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-16.
 
-**Preconditions:** ACC-16 done. Signed in with this account.
-
-- [ ] `369C` Select the **Feature assignments** page in the left-hand menu.
-  - **Expected:**
-    - The page is headed **Feature assignments**.
-    - **Group by: Manager** is above the table.
-    - The table has a **Person** column on the left.
-    - The table has a column for each month, starting with the current month.
-  - **Notes:**
-
-- [ ] `E06A` Select **Feature team** in the Group by menu.
-  - **Expected:**
-    - The rows are grouped under the feature teams in order of name, then **No feature team**.
-    - Each label names a feature team, in a box tinted with the team's colour, or grey for a team with none.
-  - **Notes:**
+**Preconditions:** ACC-16 done. Signed in with this account. **Feature assignments** page open from the left-hand menu, with **Feature team** chosen in the Group by menu.
 
 - [ ] `264A` Open the **Person** column menu, and select **Filter…**.
   - **Expected:** A box for the name opens.
@@ -1014,37 +784,11 @@ Run the test cases in order, in about two hours and 50 minutes. Start with Start
 
 #### ACC-18: Allocations Show Each Month's Features and Their Totals
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as ACC-17.
-
-**Preconditions:** ACC-17 done.
-
-- [ ] `1D47` Select the **Capacity** page in the left-hand menu.
-  - **Expected:**
-    - The mode switch has **People** chosen.
-    - The table opens at the current month.
-  - **Notes:**
-
-- [ ] `5181` Select **Feature team** in the Group by menu.
-  - **Expected:**
-    - It is grouped by **Feature team**.
-    - Cells list features, each on a line of its own with its percentage at the right, such as "50%".
-  - **Notes:**
-
-- [ ] `7E22` In the current month's column, find a cell that lists two features.
-  - **Expected:**
-    - Under the two features, a last line gives the two percentages added up, at the right.
-    - A thin line above it sets it off.
-  - **Notes:**
-
-- [ ] `FBBB` In the current month's column, find a cell whose last line reads "Over", and one whose last line reads "Under".
-  - **Expected:**
-    - "Over" and its percentage are red and bold.
-    - "Under" and its percentage are grey.
-  - **Notes:**
+Moved to [Project Manager](acceptance-project-manager-manual-test.md), PROJECT-02.
 
 #### ACC-19: The Feature Lead, Acting as Engineering Manager, Plans a Team Change in Feature Assignments
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-18.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-17.
 
 **Preconditions:** ACC-16 done. Signed in with this account, acting as **Engineering Manager**. Select the **Feature assignments** page in the left-hand menu, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
@@ -1084,373 +828,33 @@ Run the test cases in order, in about two hours and 50 minutes. Start with Start
 
 #### ACC-20: A Team Member Has No Feature Assignments or Capacity Page
 
-**Account:** Team Member, `team.member@fathom.test`, changed from ACC-19.
-
-**Preconditions:** Signed in with this account.
-
-- [ ] `5318` Look at the **People** section of the left-hand menu.
-  - **Expected:**
-    - It shows **People**, **Org chart** and **Drafts**.
-    - There is no **Feature assignments** and no **Capacity**.
-  - **Notes:**
-
-**Afterwards:** Run Restore the Seed Data.
+Covered by [Team Member](acceptance-team-member-manual-test.md), MEMBER-02.
 
 ### Journey 4: The Plan
 
 #### ACC-21: A Product Manager Adds a Customer, a Proposal and a Project With Milestones
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-20.
-
-**Preconditions:** Restore the Seed Data run after ACC-20. Signed in with this account. **Projects** page open from the left-hand menu.
-
-- [ ] `8F09` Select the **Customers** tab.
-  - **Expected:** The **Customers** tab is selected.
-  - **Notes:**
-
-- [ ] `2E2F` Select **New customer**.
-  - **Expected:** The side panel opens, headed **New customer**.
-  - **Notes:**
-
-- [ ] `0D40` Type `Fictional Ferry Co-op` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `79BF` Select **Add**.
-  - **Expected:**
-    - The side panel is headed with a hollow yellow dot before `Fictional Ferry Co-op`.
-    - The table has a row for it, with a hollow yellow dot in its slot.
-  - **Notes:**
-
-- [ ] `70AF` Select the **Proposals** tab.
-  - **Expected:** The **Proposals** tab is selected.
-  - **Notes:**
-
-- [ ] `90B4` Select **New proposal**.
-  - **Expected:** The side panel opens, headed **New proposal**.
-  - **Notes:**
-
-- [ ] `CE3D` Type `Fictional Ferry Proposal` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `52A3` Select **Add**.
-  - **Expected:**
-    - The side panel is headed with a hollow yellow dot before `Fictional Ferry Proposal`.
-    - **Status** reads "Open".
-  - **Notes:**
-
-- [ ] `6AB9` Select the **Projects** tab.
-  - **Expected:** The **Projects** tab is selected.
-  - **Notes:**
-
-- [ ] `80B1` Select **New project**.
-  - **Expected:** The side panel opens, headed **New project**.
-  - **Notes:**
-
-- [ ] `428B` Type `Fictional Harbour Lights` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `4B05` Type `FHL-1` in **Project ID**.
-  - **Expected:** **Project ID** shows what was typed.
-  - **Notes:**
-
-- [ ] `33A4` Select the pencil button in the **Owner** row, and pick any person. Write the owner's name in the notes.
-  - **Expected:** **Owner** shows the name picked.
-  - **Notes:**
-
-- [ ] `962A` Select the pencil button in the **Customers** row, and pick `Fictional Ferry Co-op`.
-  - **Expected:** **Customers** shows `Fictional Ferry Co-op`.
-  - **Notes:**
-
-- [ ] `9C9C` Select the pencil button in the **Proposals** row, and pick `Fictional Ferry Proposal`.
-  - **Expected:** **Proposals** shows `Fictional Ferry Proposal`.
-  - **Notes:**
-
-- [ ] `73F0` Select **Add**.
-  - **Expected:**
-    - The side panel is headed with a hollow yellow dot before `Fictional Harbour Lights`.
-    - **First milestone**, **Last milestone** and **Next delivery** read "None".
-    - Under **Milestones**, "No milestones yet" and an **Add milestone** button.
-  - **Notes:**
-
-- [ ] `659F` Select **Add milestone**.
-  - **Expected:** A dialog titled "New milestone" opens.
-  - **Notes:**
-
-- [ ] `172F` Type `Pilot` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `CC76` Type `20300315` in **Date**.
-  - **Expected:** **Date** shows the date typed.
-  - **Notes:**
-
-- [ ] `FE62` Tick **Customer delivery**.
-  - **Expected:** **Customer delivery** is ticked.
-  - **Notes:**
-
-- [ ] `2A4D` Select **Add milestone** in the dialog.
-  - **Expected:**
-    - Under **Milestones**, a hollow yellow dot before `Pilot`.
-    - Under `Pilot`, the date for `2030-03-15` and ", customer delivery".
-  - **Notes:**
-
-- [ ] `A3C4` Select **Add milestone**.
-  - **Expected:** A dialog titled "New milestone" opens.
-  - **Notes:**
-
-- [ ] `886C` Type `Go live` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `D5E8` Type `20300630` in **Date**.
-  - **Expected:** **Date** shows the date typed.
-  - **Notes:**
-
-- [ ] `43B4` Leave **Customer delivery** unticked, and select **Add milestone** in the dialog.
-  - **Expected:**
-    - `Go live` is listed after `Pilot`.
-    - **First milestone** shows "2030-03-15".
-    - **Last milestone** shows "2030-06-30".
-    - **Next delivery** shows "2030-03-15".
-    - The table's row for `Fictional Harbour Lights` shows "2030-03-15" as **First milestone**, "2030-06-30" as **Last milestone** and "2030-03-15" as **Next delivery**.
-  - **Notes:**
-
-- [ ] `8CE5` Run Publish.
-  - **Expected:** The dots before the project and both milestones are now filled yellow.
-  - **Notes:**
+Moved to [Product Manager](acceptance-product-manager-manual-test.md), PRODUCT-01.
 
 #### ACC-22: A Project Manager Approves the Project and Its Milestones
 
-**Account:** Project Manager, `project.manager@fathom.test`, changed from ACC-21.
-
-**Preconditions:** ACC-21 done. Signed in with this account. **Projects** page open, on the **Projects** tab.
-
-- [ ] `2F40` Open the ⋯ menu of `Fictional Harbour Lights`, and select **Approve draft**.
-  - **Expected:**
-    - A dialog asks to approve the drafts.
-    - Under "Also approves the drafts these depend on:", it lists "the proposal Fictional Ferry Proposal" and "the customer Fictional Ferry Co-op".
-  - **Notes:**
-
-- [ ] `D1D9` Select **Approve** in the dialog.
-  - **Expected:** `Fictional Harbour Lights` has no dot.
-  - **Notes:**
-
-- [ ] `150E` Select the **Milestones** tab.
-  - **Expected:**
-    - The **Milestones** tab is selected.
-    - The table of milestones is under the tab.
-  - **Notes:**
-
-- [ ] `FA29` Type `Fictional Harbour Lights` in the search box.
-  - **Expected:** `Pilot` and `Go live` are listed, each with a yellow dot in its slot.
-  - **Notes:**
-
-- [ ] `76BA` Open the Draft menu.
-  - **Expected:** The menu offers **Approve 2 drafts…**.
-  - **Notes:**
-
-- [ ] `5DBB` Select **Approve 2 drafts…**.
-  - **Expected:** A dialog titled "Approve 2 drafts?" opens.
-  - **Notes:**
-
-- [ ] `22C1` Select **Approve** in the dialog.
-  - **Expected:**
-    - `Pilot` and `Go live` have no dots.
-    - Each has `Fictional Harbour Lights` under **Project**, with `FHL-1` in grey before it.
-  - **Notes:**
+Moved to [Product Manager](acceptance-product-manager-manual-test.md), PRODUCT-02.
 
 #### ACC-23: A Product Manager Adds a Feature With a Formatted Note
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-22. Step `C828` signs in as another account.
-
-**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
-
-- [ ] `4C9D` Select **New feature**.
-  - **Expected:**
-    - The **New feature** panel opens beside the table.
-    - Labels are at the left of each row, under the headings **Details** and **Columns**.
-    - The **Notes** row reads "None".
-    - A pencil button is at the right of the **Notes** row.
-  - **Notes:**
-
-- [ ] `87FB` Type `Fictional Atlas` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `F6DB` Select the pencil button in the **Notes** row.
-  - **Expected:**
-    - A second panel opens under **New feature**, titled "Notes for New feature".
-    - **Note**, **Editor** and **Markdown** are at its top.
-    - **Editor** is chosen.
-    - A toolbar is under the text.
-  - **Notes:**
-
-- [ ] `A31D` Type `Ferry routes first`.
-  - **Expected:** The note shows what was typed.
-  - **Notes:**
-
-- [ ] `13B4` Select those words.
-  - **Expected:** The words are highlighted.
-  - **Notes:**
-
-- [ ] `FD71` Select **Bold** in the toolbar.
-  - **Expected:** The words are in bold.
-  - **Notes:**
-
-- [ ] `ED38` Select **Save** in the note's panel.
-  - **Expected:**
-    - The note's panel closes.
-    - The **Notes** row shows `Ferry routes first` in bold.
-    - **Name** still reads `Fictional Atlas`.
-  - **Notes:**
-
-- [ ] `D041` Select **Add** at the foot of the **New feature** panel.
-  - **Expected:**
-    - The feature's details show beside the table, headed with a hollow yellow dot before `Fictional Atlas`.
-    - `Ferry routes first` is in bold under **Notes**.
-  - **Notes:**
-
-- [ ] `D82C` Run Publish.
-  - **Expected:** The Publish button is gone.
-  - **Notes:**
-
-- [ ] `9D64` Reload the page.
-  - **Expected:**
-    - `Fictional Atlas` is under the heading **Later**.
-    - Its row has a filled yellow dot in its slot.
-  - **Notes:**
-
-- [ ] `C828` Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Project Manager".
-  - **Notes:**
-
-- [ ] `08A4` Select the **Features** page in the left-hand menu.
-  - **Expected:** The **Features** page opens.
-  - **Notes:**
-
-- [ ] `A988` Open the ⋯ menu of `Fictional Atlas`, and select **Approve draft**.
-  - **Expected:** A dialog titled "Approve 1 draft?" opens.
-  - **Notes:**
-
-- [ ] `49CE` Select **Approve** in the dialog.
-  - **Expected:**
-    - A notice reads "Approved 1 draft."
-    - `Fictional Atlas` has no dot.
-  - **Notes:**
+Covered by [Product Manager](acceptance-product-manager-manual-test.md), PRODUCT-03, and the [Notes](notes-manual-test.md) manual test.
 
 #### ACC-24: Leaving the New Feature Panel Asks First
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-23.
-
-**Preconditions:** Signed in with this account. **Features** page open.
-
-- [ ] `A31F` Select **New feature**.
-  - **Expected:** The **New feature** panel opens beside the table.
-  - **Notes:**
-
-- [ ] `441A` Type `Fictional Compass` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `5C46` Select **Cancel** at the foot of the panel.
-  - **Expected:**
-    - A box asks "Discard the new feature?"
-    - The box offers **Keep adding** and **Discard**.
-  - **Notes:**
-
-- [ ] `D802` Select **Keep adding**.
-  - **Expected:**
-    - The box closes.
-    - **Name** still reads `Fictional Compass`.
-  - **Notes:**
-
-- [ ] `EA07` Select **Cancel**.
-  - **Expected:** A box asks "Discard the new feature?"
-  - **Notes:**
-
-- [ ] `7B5C` Select **Discard**.
-  - **Expected:**
-    - The panel closes.
-    - No row for `Fictional Compass` is in the table.
-    - No Publish button is in the top bar.
-  - **Notes:**
+Covered by the [Features](features-manual-test.md) manual test.
 
 #### ACC-25: A Feature Linked From Features Is Found From Its Project
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as ACC-24. Step `40DC` signs in as another account.
-
-**Preconditions:** ACC-22 and ACC-23 done. **Features** page open.
-
-- [ ] `DBA8` Select the **Projects** cell of `Fictional Atlas`, and press Enter.
-  - **Expected:**
-    - A list of projects opens, with a search box.
-    - Each project is named by its ID, where it has one, then its name, such as `FHL-1 Fictional Harbour Lights`.
-  - **Notes:**
-
-- [ ] `D85F` Pick `FHL-1 Fictional Harbour Lights`, and press Enter.
-  - **Expected:** The **Projects** cell names `Fictional Harbour Lights`, with `FHL-1` in grey before it.
-  - **Notes:**
-
-- [ ] `9CCD` Select the **Proposals** cell of `Fictional Atlas`, press Enter, pick `Fictional Ferry Proposal`, and press Enter.
-  - **Expected:**
-    - The **Proposals** cell names `Fictional Ferry Proposal`.
-    - `Fictional Atlas` has no dot.
-  - **Notes:**
-
-- [ ] `FA37` Run Publish.
-  - **Expected:** The Publish button is gone.
-  - **Notes:**
-
-- [ ] `40DC` Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Project Manager".
-  - **Notes:**
-
-- [ ] `1A2E` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
-  - **Notes:**
-
-- [ ] `DA98` Type `Fictional` in the search box.
-  - **Expected:**
-    - Two entries are shown, one for the project `Fictional Harbour Lights` and one for the proposal `Fictional Ferry Proposal`.
-    - Each entry has a checkbox.
-  - **Notes:**
-
-- [ ] `35CA` Select the checkbox of the entry for `Fictional Harbour Lights`.
-  - **Expected:** The checkbox is ticked.
-  - **Notes:**
-
-- [ ] `7D09` Select the checkbox of the entry for `Fictional Ferry Proposal`.
-  - **Expected:** The checkbox is ticked.
-  - **Notes:**
-
-- [ ] `55FF` Select **Approve 2 drafts**.
-  - **Expected:** A dialog titled "Approve 2 drafts?" opens.
-  - **Notes:**
-
-- [ ] `945C` Select **Approve** in the dialog.
-  - **Expected:** A notice reads "Approved 2 drafts."
-  - **Notes:**
-
-- [ ] `872C` Select the **Projects** page in the left-hand menu.
-  - **Expected:** The **Projects** page opens.
-  - **Notes:**
-
-- [ ] `8A70` On the **Projects** tab, select **Show features** in the ⋯ menu of `Fictional Harbour Lights`.
-  - **Expected:**
-    - The **Features** page opens showing only `Fictional Atlas`.
-    - A pill above the table reads "Projects: FHL-1 Fictional Harbour Lights".
-  - **Notes:**
-
-- [ ] `57DA` Select the **×** on the pill.
-  - **Expected:** The pill is gone, and the table lists every feature.
-  - **Notes:**
+Covered by [Product Manager](acceptance-product-manager-manual-test.md), PRODUCT-04, and the [Feature Links](feature-links-manual-test.md) manual test.
 
 #### ACC-26: A Feature Status Is Added to Its List
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-25. Step `A33C` signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-19. Step `A33C` signs in as another account.
 
 **Preconditions:** Signed in with this account. **Lists** page open from the left-hand menu.
 
@@ -1527,264 +931,29 @@ Run the test cases in order, in about two hours and 50 minutes. Start with Start
 
 #### ACC-28: A Feature Lead's Change Is Rejected With a Reason
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-27. Step `5AB9` signs in as another account.
-
-**Preconditions:** ACC-26 done. Signed in with this account, acting as **Feature Lead**. **Features** page open.
-
-- [ ] `189B` In the row 'Partner Portal', select the **Status** cell, press Enter, choose `Long shot`, and press Enter.
-  - **Expected:**
-    - The cell reads `Long shot`, with a hollow yellow dot before it.
-    - The row is faintly yellow.
-    - A Live row under it reads "Possible".
-  - **Notes:**
-
-- [ ] `67D2` Run Publish.
-  - **Expected:** The dot before `Long shot` in the 'Partner Portal' row is filled yellow.
-  - **Notes:**
-
-- [ ] `5AB9` Sign out, and sign in as the Product Manager, `product.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Product Manager".
-  - **Notes:**
-
-- [ ] `FBED` Select the **Features** page in the left-hand menu.
-  - **Expected:** The **Features** page opens.
-  - **Notes:**
-
-- [ ] `312A` Open the ⋯ menu of 'Partner Portal'.
-  - **Expected:**
-    - The menu names the change to **Status**.
-    - It offers **Approve draft** and **Reject draft…**.
-  - **Notes:**
-
-- [ ] `F5B3` Select **Reject draft…**.
-  - **Expected:**
-    - A dialog titled "Reject 1 draft?" opens.
-    - It has a **Reason** box.
-  - **Notes:**
-
-- [ ] `EC9E` Type `Fictional reason: wait for the customer day.` in **Reason**.
-  - **Expected:** **Reason** shows what was typed.
-  - **Notes:**
-
-- [ ] `55A4` Select **Reject**.
-  - **Expected:**
-    - A notice reads "Rejected 1 draft."
-    - In the 'Partner Portal' row, `Long shot` has a red dot in a ring before it.
-    - The row is faintly red.
-  - **Notes:**
+Moved to [Product Manager](acceptance-product-manager-manual-test.md), PRODUCT-06.
 
 #### ACC-29: A Rejected Change Is Resubmitted and Approved
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-28. Step `4F03` signs in as another account.
-
-**Preconditions:** ACC-28 done. Signed in with this account, acting as **Feature Lead**. **Features** page open.
-
-- [ ] `1ADD` Open the ⋯ menu of 'Partner Portal'.
-  - **Expected:**
-    - The menu shows a red dot in a ring, then "Rejected".
-    - Under it, "Reason: Fictional reason: wait for the customer day."
-    - The menu offers **Resubmit** and **Discard draft**.
-  - **Notes:**
-
-- [ ] `6A10` Select **Resubmit**.
-  - **Expected:**
-    - The dot before `Long shot` is solid yellow.
-    - The row is faintly yellow.
-  - **Notes:**
-
-- [ ] `4F03` Sign out, and sign in as the Product Manager, `product.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Product Manager".
-  - **Notes:**
-
-- [ ] `3F3E` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
-  - **Notes:**
-
-- [ ] `65C0` Type `Partner Portal` in the search box.
-  - **Expected:**
-    - One entry is shown, for the feature 'Partner Portal'.
-    - It was made by "Feature Lead".
-    - It has a checkbox.
-  - **Notes:**
-
-- [ ] `DDD3` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
-  - **Notes:**
-
-- [ ] `F240` Select **Approve 1 draft**.
-  - **Expected:** A dialog titled "Approve 1 draft?" opens.
-  - **Notes:**
-
-- [ ] `AD8D` Select **Approve** in the dialog.
-  - **Expected:**
-    - A notice reads "Approved 1 draft."
-    - The page says "No drafts match the search."
-  - **Notes:**
-
-- [ ] `AFA2` Select **Features**.
-  - **Expected:**
-    - 'Partner Portal' reads `Long shot` in **Status**.
-    - It has no dot.
-  - **Notes:**
+Moved to [Product Manager](acceptance-product-manager-manual-test.md), PRODUCT-07.
 
 #### ACC-30: The Change History Tells How a Draft Went
 
-**Account:** Engineering Director, `engineering.director@fathom.test`, changed from ACC-29.
-
-**Preconditions:** ACC-29 done. Signed in with this account.
-
-- [ ] `ABF7` Select the **Change history** page in the left-hand menu.
-  - **Expected:** The **Change history** page opens.
-  - **Notes:**
-
-- [ ] `E6DA` Type `Partner Portal` in the search box.
-  - **Expected:** The entries, newest first, say that:
-    - "Product Manager" approved the changes to 'Partner Portal'
-    - "Feature Lead" sent its draft for approval again
-    - "Product Manager" rejected its draft, with the reason "Fictional reason: wait for the customer day."
-    - "Feature Lead" drafted changing **Status** from "Possible" to `Long shot`
-  - **Notes:**
+Moved to [Product Manager](acceptance-product-manager-manual-test.md), PRODUCT-08.
 
 #### ACC-31: A Shorter Cycle Moves a Release and Its Features
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, in the main browser, changed from ACC-30. The second browser is still signed in as the Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, from ACC-14; steps `63FA` and `572B` act there. Step `0EDF` signs in as another account in the main browser.
-
-**Preconditions:** Signed in with this account. **Releases** page open from the left-hand menu, with 'Platform' open in the side panel.
-
-- [ ] `6A3F` Look at the side panel's heading and its **Cycles** table.
-  - **Expected:**
-    - The heading reads 'Platform', with a grey lock before it.
-    - The rows of the **Cycles** table have no **⋯** button.
-  - **Notes:**
-
-- [ ] `63FA` In the second browser, reload the page.
-  - **Expected:** The top bar shows the Publish button.
-  - **Notes:**
-
-- [ ] `572B` In the second browser, run Discard the Unpublished Changes.
-  - **Expected:**
-    - A notice says "Discarded" followed by the number of changes.
-    - The Publish button is gone.
-  - **Notes:**
-
-- [ ] `537F` In the main browser, reload the page.
-  - **Expected:**
-    - The side panel's heading reads 'Platform'.
-    - No lock is before it.
-  - **Notes:**
-
-- [ ] `E757` In the side panel's **Cycles** table, select the **⋯** button at the end of next quarter's cycle, then **Change length…**.
-  - **Expected:**
-    - A dialog titled "Change the length of" that cycle opens.
-    - **Length** reads "3", followed by "months".
-    - Under **Later cycles**, **Move with it** is selected.
-  - **Notes:**
-
-- [ ] `A8A7` Replace `3` in **Length** with `2`.
-  - **Expected:**
-    - **New dates** lists that cycle two months long.
-    - Each later cycle in **New dates** starts the day after the one before it ends.
-    - **Releases that move** names 'Harbor 3' and 'Harbor 4'.
-    - **Features that move** names 'Data Retention Controls' and 'Report Builder'.
-  - **Notes:**
-
-- [ ] `5B2C` Select **Change length**.
-  - **Expected:** A notification says "Drafted the new length."
-  - **Notes:**
-
-- [ ] `563B` Run Publish.
-  - **Expected:** Under **Releases**, in the 'Harbor 3' row:
-    - A yellow dot in its slot, then 'Harbor 3' and the yellow **Moved** box
-    - Its cycles run from the cycle after next quarter's to the second half-year cycle
-    - It ships on the second half-year cycle's new last day
-  - **Notes:**
-
-- [ ] `0EDF` Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Project Manager".
-  - **Notes:**
-
-- [ ] `1EC6` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The **Releases** page opens.
-  - **Notes:**
-
-- [ ] `F3E0` Select the details button at the right of the **Stream** cell of 'Platform'.
-  - **Expected:** The side panel's heading reads 'Platform'.
-  - **Notes:**
-
-- [ ] `AACC` Select the **⋯** button at the end of the 'Harbor 3' row, then **Approve…**.
-  - **Expected:** A dialog titled "Approve 6 drafts?" says "Also approves the drafts these depend on:", listing:
-    - Three entries for "the cycles of Platform from" a day
-    - "the feature Data Retention Controls"
-    - "the feature Report Builder"
-  - **Notes:**
-
-- [ ] `3EAA` Select **Approve**.
-  - **Expected:**
-    - A notification says "Approved 6 drafts."
-    - No row under **Cycle schedule** has a dot.
-    - 'Harbor 3' has no dot and no box.
-    - 'Harbor 3' still ships on the second half-year cycle's new last day.
-  - **Notes:**
+Covered by the [Releases](releases-manual-test.md) manual test.
 
 #### ACC-32: A Product Manager Makes a Release
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-31. Step `3DB5` signs in as another account.
-
-**Preconditions:** Signed in with this account. **Releases** page open from the left-hand menu, with 'Platform' open in the side panel.
-
-- [ ] `38DB` Select **New release…** under **Releases** in the side panel.
-  - **Expected:**
-    - A dialog titled "New release in Platform" opens.
-    - It has **Name**, **First cycle**, **Last cycle** and an empty **Ships on**.
-  - **Notes:**
-
-- [ ] `B1A8` Type `Fictional Harbor 4` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `1FE0` Choose the last cycle in the list in **First cycle**.
-  - **Expected:** **First cycle** shows the cycle chosen.
-  - **Notes:**
-
-- [ ] `D146` Choose the last cycle in the list in **Last cycle**.
-  - **Expected:** Under **Ships on**, the dialog reads "Leave empty to ship at the end of its last cycle, on" that cycle's last day.
-  - **Notes:**
-
-- [ ] `C642` Select **Make release**.
-  - **Expected:** A notification says "Drafted the new release."
-  - **Notes:**
-
-- [ ] `FF3E` Run Publish.
-  - **Expected:** Under **Releases**, a row reads `Fictional Harbor 4`, with a yellow dot in its slot.
-  - **Notes:**
-
-- [ ] `3DB5` Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Project Manager".
-  - **Notes:**
-
-- [ ] `119A` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The **Releases** page opens.
-  - **Notes:**
-
-- [ ] `3F69` Select the details button at the right of the **Stream** cell of 'Platform'.
-  - **Expected:** The side panel's heading reads 'Platform'.
-  - **Notes:**
-
-- [ ] `5E58` Select the **⋯** button at the end of the `Fictional Harbor 4` row, then **Approve…**.
-  - **Expected:** A dialog titled "Approve 1 draft?" opens.
-  - **Notes:**
-
-- [ ] `B441` Select **Approve** in the dialog.
-  - **Expected:**
-    - A notification says "Approved 1 draft."
-    - `Fictional Harbor 4` has no dot.
-  - **Notes:**
+Moved to [Product Manager](acceptance-product-manager-manual-test.md), PRODUCT-05.
 
 #### ACC-33: An Executive Reads the Plan
 
-**Account:** Executive, `executive@fathom.test`, changed from ACC-32.
+**Account:** Executive, `executive@fathom.test`, changed from ACC-27.
 
-**Preconditions:** ACC-32 done. Signed in with this account.
+**Preconditions:** Signed in with this account.
 
 - [ ] `4CE3` Look at the page and the left-hand menu.
   - **Expected:**
@@ -1804,22 +973,19 @@ Run the test cases in order, in about two hours and 50 minutes. Start with Start
   - **Expected:**
     - There is no **New release stream** button.
     - There is no **New release…** button.
-    - 'Harbor 1', 'Harbor 3' and `Fictional Harbor 4` have no **⋯** button at their end.
+    - 'Harbor 1' has no **⋯** button at its end.
   - **Notes:**
 
 - [ ] `7C20` Close the side panel.
   - **Expected:** The side panel closes.
   - **Notes:**
 
-- [ ] `D30B` Select **All** on the timeline.
-  - **Expected:**
-    - The whole timeline fits across.
-    - `Fictional Harbor 4` is at the right end of the releases lane of 'Platform'.
-    - A diamond is under the right end of `Fictional Harbor 4`.
+- [ ] `0CAA` Select **All** on the timeline.
+  - **Expected:** Each stream's lane shows from its first cycle to its last without scrolling.
   - **Notes:**
 
-- [ ] `52F5` Hover over `Fictional Harbor 4`'s span.
-  - **Expected:** A tooltip names `Fictional Harbor 4`, its cycle and the day it ships.
+- [ ] `E950` Hover over the span of 'Harbor 3'.
+  - **Expected:** A tooltip names 'Harbor 3', its cycles and the day it ships.
   - **Notes:**
 
 - [ ] `3A6C` Select **Features**.
@@ -1870,83 +1036,17 @@ Run the test cases in order, in about two hours and 50 minutes. Start with Start
 
 #### ACC-35: A Team Member Reads the Plan Without Changing It
 
-**Account:** Team Member, `team.member@fathom.test`, changed from ACC-34.
-
-**Preconditions:** Signed in with this account.
-
-- [ ] `83BF` Look at the left-hand menu.
-  - **Expected:**
-    - The **Plan** section shows **Overview**, **Projects**, **Features** and **Releases**.
-    - The **People** section shows **People**, **Org chart**, **Feature assignments** and **Drafts**.
-    - The **History** section shows **Change history**.
-    - The menu shows the **Help** section.
-  - **Notes:**
-
-- [ ] `8C54` Select **Features**.
-  - **Expected:**
-    - The table shows `Fictional Atlas` and 'Partner Portal' reading `Long shot`.
-    - There is no **New feature** button.
-    - There is no empty row at the table's end.
-  - **Notes:**
-
-- [ ] `7DB7` Double-click the **Status** cell of any row.
-  - **Expected:** The cell does not open for editing.
-  - **Notes:**
-
-- [ ] `5D0B` Select **Releases**.
-  - **Expected:** The **Releases** page opens.
-  - **Notes:**
-
-- [ ] `9A61` Select the details button at the right of the **Stream** cell of 'Platform'.
-  - **Expected:**
-    - `Fictional Harbor 4` is under **Releases**.
-    - 'Harbor 1', 'Harbor 3' and `Fictional Harbor 4` have no **⋯** button.
-    - There is no **New release…** button.
-  - **Notes:**
+Moved to [Team Member](acceptance-team-member-manual-test.md), MEMBER-02.
 
 #### ACC-36: Removing a Project Removes Its Milestones
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-35. Step `EB87` signs in as another account.
-
-**Preconditions:** ACC-22 done. Signed in with this account. **Projects** page open, on the **Projects** tab.
-
-- [ ] `6A2C` Open the ⋯ menu of `Fictional Harbour Lights`, and select **Remove project**.
-  - **Expected:**
-    - `Fictional Harbour Lights` has a hollow yellow dot in its slot.
-    - Its row is struck through.
-  - **Notes:**
-
-- [ ] `C9BE` Run Publish.
-  - **Expected:** The dot is filled yellow.
-  - **Notes:**
-
-- [ ] `EB87` Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Project Manager".
-  - **Notes:**
-
-- [ ] `34A2` Select the **Projects** page in the left-hand menu.
-  - **Expected:** The **Projects** page opens.
-  - **Notes:**
-
-- [ ] `AEA6` Open the ⋯ menu of `Fictional Harbour Lights`, and select **Approve draft**.
-  - **Expected:**
-    - The dialog names the removal of "the project Fictional Harbour Lights".
-    - As drafts it includes, it names the removal of `Pilot` and `Go live`.
-  - **Notes:**
-
-- [ ] `E15A` Select **Approve** in the dialog.
-  - **Expected:** `Fictional Harbour Lights` is no longer listed.
-  - **Notes:**
-
-- [ ] `A939` Select the **Milestones** tab.
-  - **Expected:** `Pilot` and `Go live` of `Fictional Harbour Lights` are no longer listed.
-  - **Notes:**
+Covered by the [Projects](projects-manual-test.md) manual test.
 
 ### Journey 5: Administration
 
 #### ACC-37: A New Account Signs In for the First Time
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, changed from ACC-36. The second browser signs in as the new account in step `BC14`.
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, changed from ACC-34. The second browser signs in as the new account in step `BC14`.
 
 **Preconditions:** Signed in with this account in the main browser.
 
@@ -2170,79 +1270,11 @@ Run the test cases in order, in about two hours and 50 minutes. Start with Start
 
 #### ACC-42: Switching Role Changes What Can Be Done at Once
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, changed from ACC-41.
-
-**Preconditions:** Signed in with this account, acting as **Feature Lead**. **Releases** page open, with 'Platform' open in the side panel.
-
-- [ ] `95E5` Open the account menu.
-  - **Expected:**
-    - **Role** lists **Engineering Manager** and **Feature Lead**.
-    - A tick is beside **Feature Lead** only.
-  - **Notes:**
-
-- [ ] `A523` Press Esc, and look under **Releases** in the side panel.
-  - **Expected:**
-    - 'Harbor 1', 'Harbor 3' and `Fictional Harbor 4` have no **⋯** button.
-    - There is no **New release…** button.
-  - **Notes:**
-
-- [ ] `FDE2` Choose **Engineering Manager** in the role menu.
-  - **Expected:**
-    - The menu closes.
-    - The page stays on **Releases** with 'Platform' open, without the browser reloading.
-    - Each row under **Releases** now ends with a **⋯** button.
-    - **New release…** shows.
-  - **Notes:**
+Moved to [Feature Lead](acceptance-feature-lead-manual-test.md), LEAD-06.
 
 #### ACC-43: The Change History Names the Role a Change Was Made As
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as ACC-42.
-
-**Preconditions:** ACC-42 done, acting as **Engineering Manager**. **Releases** page open, with 'Platform' open in the side panel.
-
-- [ ] `2E35` Select the **⋯** button at the end of the 'Harbor 3' row, then **Change…**.
-  - **Expected:**
-    - A dialog titled "Change Harbor 3" opens.
-    - **Name** holds 'Harbor 3'.
-  - **Notes:**
-
-- [ ] `507D` Replace the name with `Fictional Harbor Three`.
-  - **Expected:** **Name** holds `Fictional Harbor Three`.
-  - **Notes:**
-
-- [ ] `DE68` Select **Save**.
-  - **Expected:**
-    - A notification says "Drafted the change to the release."
-    - The row reads `Fictional Harbor Three`, with a hollow yellow dot before it.
-  - **Notes:**
-
-- [ ] `CB6B` Run Publish.
-  - **Expected:** The **Publish** button is gone.
-  - **Notes:**
-
-- [ ] `DC52` Select the **Change history** page in the left-hand menu.
-  - **Expected:**
-    - The latest entry names `Fictional Harbor Three`.
-    - It starts with "Feature Lead as Engineering Manager".
-  - **Notes:**
-
-- [ ] `E452` Select **Releases**.
-  - **Expected:** The **Releases** page opens.
-  - **Notes:**
-
-- [ ] `D9AF` Select the details button at the right of the **Stream** cell of 'Platform'.
-  - **Expected:** The side panel's heading reads 'Platform'.
-  - **Notes:**
-
-- [ ] `BB58` Select the **⋯** button at the end of the `Fictional Harbor Three` row, then **Discard draft**.
-  - **Expected:**
-    - A notification says "Discarded the draft."
-    - The row reads 'Harbor 3', with no dot.
-  - **Notes:**
-
-- [ ] `04D0` Choose **Feature Lead** in the role menu.
-  - **Expected:** 'Harbor 1', 'Harbor 3' and `Fictional Harbor 4` have no **⋯** button.
-  - **Notes:**
+Moved to [Feature Lead](acceptance-feature-lead-manual-test.md), LEAD-07.
 
 #### ACC-44: Each Browser Keeps Its Own Appearance
 
@@ -2250,7 +1282,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 #### ACC-45: Put Everything Back
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, changed from ACC-43. Step `B5CA` signs in again with this account.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ACC-41. Step `B5CA` signs in again with this account.
 
 **Preconditions:** All the test cases above run.
 

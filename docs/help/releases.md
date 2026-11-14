@@ -11,7 +11,7 @@ Releases holds your release streams. Here you set up each stream's cycles, make 
 - **Planned to:** the last day a stream's cycles are made up to. Features far ahead can only target a cycle that's made.
 - **Panel:** a stream's details open in a panel beside the timeline and the table. Close it with the **×** at its top right, or press Esc.
 - **Draft:** every change you make here is a draft. It goes live once someone whose role approves features and releases approves it.
-- **Who changes what:** if your role changes planning settings, you add streams and change their cycles. If your role changes the plan, you make and change releases. Others see the page without these buttons.
+- **Who changes what:** if your role changes planning settings, you add streams and change their cycles. If your role changes features, you make and change releases. Others see the page without these buttons.
 
 The page shows a timeline of every stream, with a table of the streams under it. The table lists each stream's cycle schedule, its releases, the next release to ship, and its **Planned to** day. Above the timeline are the search field and the **Draft**, **Metrics**, **Group by** and **Views** menus.
 

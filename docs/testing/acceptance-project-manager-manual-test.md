@@ -1,0 +1,234 @@
+---
+title: "Manual Test: Acceptance, Project Manager"
+category: "How-To"
+audience: "AI Coding Assistant"
+applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
+dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-project-manager.md", "docs/product/roles.md"]
+last_updated: "2026-11-13"
+---
+
+# Manual Test: Acceptance, Project Manager
+
+## Scope
+
+Verifies the workflows of [Working as a Project Manager](../help/working-as-a-project-manager.md) on the seed data: keeping a project on track with a new milestone, its scope history and its features, approved by a Product Manager; seeing who works on what in Feature assignments and Capacity; and approving and rejecting others' drafts.
+
+## Test Environment
+
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
+
+## Test Accounts
+
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
+
+- **Project Manager:** `project.manager@fathom.test`
+- **Product Manager:** `product.manager@fathom.test`
+
+## Common Procedures
+
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
+
+## Terms
+
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button, the Group by menu, the details button, the side panel, the mode switch and seeded dates. This test adds:
+
+- **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20300315`.
+
+## Test Cases
+
+Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
+
+### PROJECT-01: A Project Is Kept on Track
+
+**Account:** Project Manager, `project.manager@fathom.test`; the first test case. Step `0DC4` signs in as another account.
+
+**Preconditions:** Reset the Database run. Signed in with this account.
+
+- [ ] `E13F` Select the **Projects** page in the left-hand menu.
+  - **Expected:** The **Projects** tab is chosen.
+  - **Notes:**
+
+- [ ] `DE76` Select the details button at the right of the **Name** cell of 'Crane Control'.
+  - **Expected:**
+    - The side panel is headed 'Crane Control'.
+    - Under **Milestones** are 'Kickoff', 'Factory test' and 'First crane live', each with its date.
+    - 'Second crane live' and 'Final handover' are there too, each with a yellow dot before it.
+    - 'First crane live' is followed by ", customer delivery".
+  - **Notes:**
+
+- [ ] `CECC` Select **Add milestone**.
+  - **Expected:** A dialog titled "New milestone" opens.
+  - **Notes:**
+
+- [ ] `1B84` Type `Fictional site survey` in **Name**.
+  - **Expected:** **Name** shows what was typed.
+  - **Notes:**
+
+- [ ] `823B` Type `20300315` in **Date**.
+  - **Expected:** **Date** shows the date typed.
+  - **Notes:**
+
+- [ ] `B1A3` Leave **Customer delivery** unticked, and select **Add milestone** in the dialog.
+  - **Expected:**
+    - Under **Milestones**, a hollow yellow dot before `Fictional site survey`.
+    - Under it, the date for `2030-03-15`.
+  - **Notes:**
+
+- [ ] `096F` Read **Scope history**, at the end of the panel.
+  - **Expected:**
+    - 'Audit Export' and 'Offline Sync' are listed.
+    - Each is followed in grey by "Added" and a date.
+  - **Notes:**
+
+- [ ] `99A7` Open the **⋯** menu of 'Crane Control' in the table, and select **Show features**.
+  - **Expected:**
+    - The **Features** page opens, showing only 'Audit Export' and 'Offline Sync'.
+    - A pill above the table reads "Projects: P-2001 Crane Control".
+  - **Notes:**
+
+- [ ] `D014` Select the **×** on the pill.
+  - **Expected:** The pill is gone, and the table lists every feature.
+  - **Notes:**
+
+- [ ] `C73C` Run Publish.
+  - **Expected:** The Publish button is gone.
+  - **Notes:**
+
+- [ ] `0DC4` Sign out, and sign in as the Product Manager, `product.manager@fathom.test`.
+  - **Expected:** The top bar's right end reads "Product Manager".
+  - **Notes:**
+
+- [ ] `5A60` Select the **Drafts** page in the left-hand menu.
+  - **Expected:** The **Drafts** page opens.
+  - **Notes:**
+
+- [ ] `34BB` Type `Fictional site survey` in the search box.
+  - **Expected:**
+    - One entry is shown, adding the milestone `Fictional site survey`.
+    - It was made by "Project Manager".
+  - **Notes:**
+
+- [ ] `6F30` Select the entry's checkbox.
+  - **Expected:** The checkbox is ticked.
+  - **Notes:**
+
+- [ ] `B83C` Select **Approve 1 draft**.
+  - **Expected:** A dialog titled "Approve 1 draft?" opens.
+  - **Notes:**
+
+- [ ] `C3C3` Select **Approve** in the dialog.
+  - **Expected:** A notice reads "Approved 1 draft."
+  - **Notes:**
+
+### PROJECT-02: Who Works on What, by Month and by Team
+
+**Account:** Project Manager, `project.manager@fathom.test`, changed from PROJECT-01.
+
+**Preconditions:** Signed in with this account.
+
+- [ ] `369C` Select the **Feature assignments** page in the left-hand menu.
+  - **Expected:**
+    - The page is headed **Feature assignments**.
+    - **Group by: Manager** is above the table.
+    - The table has a **Person** column on the left.
+    - The table has a column for each month, starting with the current month.
+  - **Notes:**
+
+- [ ] `E06A` Select **Feature team** in the Group by menu.
+  - **Expected:**
+    - The rows are grouped under the feature teams in order of name, then **No feature team**.
+    - Each label names a feature team, in a box tinted with the team's colour, or grey for a team with none.
+  - **Notes:**
+
+- [ ] `1D47` Select the **Capacity** page in the left-hand menu.
+  - **Expected:**
+    - The mode switch has **People** chosen.
+    - The table opens at the current month.
+  - **Notes:**
+
+- [ ] `5181` Select **Feature team** in the Group by menu.
+  - **Expected:**
+    - It is grouped by **Feature team**.
+    - Cells list features, each on a line of its own with its percentage at the right, such as "50%".
+  - **Notes:**
+
+- [ ] `7E22` In the current month's column, find a cell that lists two features.
+  - **Expected:**
+    - Under the two features, a last line gives the two percentages added up, at the right.
+    - A thin line above it sets it off.
+  - **Notes:**
+
+- [ ] `FBBB` In the current month's column, find a cell whose last line reads "Over", and one whose last line reads "Under".
+  - **Expected:**
+    - "Over" and its percentage are red and bold.
+    - "Under" and its percentage are grey.
+  - **Notes:**
+
+### PROJECT-03: Others' Drafts Are Approved and Rejected
+
+**Account:** Project Manager, `project.manager@fathom.test`, the same as PROJECT-02.
+
+**Preconditions:** None beyond PROJECT-02.
+
+- [ ] `AF7A` Select the **Drafts** page in the left-hand menu.
+  - **Expected:** The **Drafts** page opens.
+  - **Notes:**
+
+- [ ] `59A3` Type `Search and discovery` in the search box.
+  - **Expected:**
+    - One entry is shown: "Engineering Operations Manager drafted changes to the feature team Search and discovery".
+    - A line under it sets **Name** from "Search" to "Search and discovery".
+    - The entry has a checkbox.
+  - **Notes:**
+
+- [ ] `BE6F` Select the entry's checkbox.
+  - **Expected:** The checkbox is ticked.
+  - **Notes:**
+
+- [ ] `9D51` Select **Approve 1 draft**.
+  - **Expected:** A dialog titled "Approve 1 draft?" opens.
+  - **Notes:**
+
+- [ ] `D32E` Select **Approve** in the dialog.
+  - **Expected:** A notice reads "Approved 1 draft."
+  - **Notes:**
+
+- [ ] `4CBA` Type `Simone Jean` in the search box.
+  - **Expected:**
+    - One entry is shown: "Engineering Operations Manager drafted changes to Simone Jean".
+    - A line under it changes **Manager** from "Viktoria Holmberg" to "Silje Holm-Schrøder".
+    - The entry has a checkbox.
+  - **Notes:**
+
+- [ ] `F85F` Select the entry's checkbox.
+  - **Expected:** The checkbox is ticked.
+  - **Notes:**
+
+- [ ] `ADC8` Select **Reject…**.
+  - **Expected:**
+    - A dialog titled "Reject 1 draft?" opens.
+    - It has a **Reason** box.
+  - **Notes:**
+
+- [ ] `5B0B` Type `Fictional reason: wait for the new team plan.` in **Reason**.
+  - **Expected:** **Reason** shows what was typed.
+  - **Notes:**
+
+- [ ] `5B7D` Select **Reject**.
+  - **Expected:**
+    - A notice reads "Rejected 1 draft."
+    - The entry for 'Simone Jean' has a red dot in a ring before it.
+    - Under it, "Reason: Fictional reason: wait for the new team plan."
+  - **Notes:**
+
+- [ ] `C6D2` Select the **Org chart** page in the left-hand menu.
+  - **Expected:** The chart opens.
+  - **Notes:**
+
+- [ ] `9B65` Choose **Feature teams** in the teams switch.
+  - **Expected:**
+    - A team's first card names 'Search and discovery'.
+    - No dot is before the name.
+  - **Notes:**
+
+**Afterwards:** Run Reset the Database.

@@ -1,6 +1,6 @@
 # Working as a Project Manager
 
-A Project Manager sees projects through to delivery: their milestones, the features they need, and the people and teams working on them. Project Managers see people with their Personal and Confidential data and the hiring plan, and approve drafts of the plan, features and releases, people and planned hires, feature teams, lists, and the planning settings.
+A Project Manager sees projects through to delivery: their milestones, the features they need, and the people and teams working on them. Project Managers see people with their Personal and Confidential data and the hiring plan, and approve drafts of the plan, features and releases, allocations, people and planned hires, feature teams, lists, and the planning settings.
 
 ## Keep a Project on Track
 
