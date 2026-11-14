@@ -124,7 +124,7 @@ const panel = () => screen.findByRole("region", { name: "Background" });
 describe("a Note column", () => {
   it("asks before Add discards a new person's note being changed", async () => {
     await openPeople();
-    await userEvent.click(screen.getByRole("button", { name: "New" }));
+    await userEvent.click(screen.getByRole("button", { name: "New person" }));
     await userEvent.type(
       await screen.findByRole("textbox", { name: "Name" }),
       "Fictional Starter",
@@ -164,7 +164,7 @@ describe("a Note column", () => {
 
   it("keeps what is entered in a new person's form while its note is written", async () => {
     await openPeople();
-    await userEvent.click(screen.getByRole("button", { name: "New" }));
+    await userEvent.click(screen.getByRole("button", { name: "New person" }));
     await userEvent.click(
       await screen.findByRole("button", { name: "Change Background" }),
     );

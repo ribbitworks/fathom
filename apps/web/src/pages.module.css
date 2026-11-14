@@ -475,6 +475,17 @@ select.cellInput {
   min-height: 24rem;
 }
 
+/* Tabs beside a page's title stay within the heading's height, with no line under the list, as the
+   chosen tab's own underline marks it. */
+.headingTabs::before {
+  display: none;
+}
+
+.headingTab {
+  height: var(--fathom-heading-height);
+  padding-block: 0;
+}
+
 /* Never so short that the table hides its rows; the page scrolls first. */
 .tableScrollPanel {
   position: relative;

@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies a person's or planned hire's details in the side panel beside the org chart and People: what it shows of them, moving to another person, drafted values beside live ones and following the Draft menu, the red **Left** box on someone who has left, opening and closing it with the mouse and the keyboard, how it reads, resized, and in a narrow window, changing their details there, beside People and the org chart, being asked before a changed note is discarded, and adding a person or planned hire from **New**.
+Verifies a person's or planned hire's details in the side panel beside the org chart and People: what it shows of them, moving to another person, drafted values beside live ones and following the Draft menu, the red **Left** box on someone who has left, opening and closing it with the mouse and the keyboard, how it reads, resized, and in a narrow window, changing their details there, beside People and the org chart, being asked before a changed note is discarded, and adding a person or planned hire from **New person**.
 
 ## Test Environment
 
@@ -166,10 +166,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No value has a yellow dot.
   - **Notes:**
 
-- [ ] `5A62` Select **Draft**, then **Drafts beside live**.
+- [ ] `5A62` Select **Draft**, then **Drafts & Live**.
   - **Expected:**
     - The Draft menu stays open.
-    - A tick is before **Drafts beside live**.
+    - A tick is before **Drafts & Live**.
   - **Notes:**
 
 - [ ] `8FA4` Press Esc.
@@ -479,10 +479,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No change button shows.
   - **Notes:**
 
-- [ ] `24A6` Select **Draft**, then **Drafts beside live**.
+- [ ] `24A6` Select **Draft**, then **Drafts & Live**.
   - **Expected:**
     - The Draft menu stays open.
-    - A tick is before **Drafts beside live**.
+    - A tick is before **Drafts & Live**.
   - **Notes:**
 
 - [ ] `CA4C` Press Esc.
@@ -659,7 +659,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **People** page open from the left-hand menu.
 
-- [ ] `E8C4` Select **New** at the top right of the page.
+- [ ] `E8C4` Select **New person** at the top right of the page.
   - **Expected:**
     - The details panel opens, headed **New person**.
     - Its first row is **State**, reading "Hired".
@@ -721,7 +721,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **People** page open from the left-hand menu.
 
-- [ ] `AFE6` Select **New**.
+- [ ] `AFE6` Select **New person**.
   - **Expected:** The details panel opens, headed **New person**.
   - **Notes:**
 

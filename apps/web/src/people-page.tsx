@@ -256,7 +256,9 @@ export function PeoplePage({
   // Adding a person or a planned hire waits for the people and lists, and needs positions seen.
   const addButton = {
     disabled: !query.isSuccess || !lists.isSuccess || positionHidden,
-    "aria-describedby": positionHidden ? cannotAddId : undefined,
+    // The line saying why is above the table, drawn once the lists have loaded too.
+    "aria-describedby":
+      positionHidden && lists.isSuccess ? cannotAddId : undefined,
   };
   const columnDialog = useColumnDialog();
   const [busy, setBusy] = useState(false);
@@ -601,6 +603,18 @@ export function PeoplePage({
     }
   };
 
+  const dateRow = dates !== undefined && (
+    <DateControl
+      day={day}
+      laterDays={dates.laterDays}
+      changes={changesFrom !== undefined}
+      onDay={(next) => {
+        leave(() => {
+          dates.onDay(next);
+        });
+      }}
+    />
+  );
   let content: ReactNode;
   if (query.isPending || lists.isPending) {
     content = <Loader role="status" aria-label="Loading" />;
@@ -616,11 +630,14 @@ export function PeoplePage({
     );
   } else if (query.data.people.length === 0 && !changesRows) {
     content = (
-      <Paper withBorder p="xl">
-        <Text fz="sm" c="dimmed" ta="center">
-          No people yet
-        </Text>
-      </Paper>
+      <div>
+        {dateRow}
+        <Paper withBorder p="xl">
+          <Text fz="sm" c="dimmed" ta="center">
+            No people yet
+          </Text>
+        </Paper>
+      </div>
     );
   } else {
     // The column dialog is part of the loaded page, since it needs the columns and lists.
@@ -828,6 +845,18 @@ export function PeoplePage({
           actions={actions}
           view={view}
           onView={onView}
+          above={
+            dateRow !== false || (changesRows && positionHidden) ? (
+              <>
+                {dateRow}
+                {changesRows && positionHidden && (
+                  <Text size="sm" c="dimmed" mb="sm" id={cannotAddId}>
+                    This role can't add people, since it can't see positions.
+                  </Text>
+                )}
+              </>
+            ) : undefined
+          }
           saved={savedViews(query.data.views)}
         />
         {question.dialog}
@@ -905,63 +934,43 @@ export function PeoplePage({
 
   return (
     <Stack gap="md" className={classes.tablePage}>
-      {/* The heading and the date control sit together, as on the Org chart, with nothing between. */}
-      <div>
-        <PageHeader
-          title="People"
-          action={
-            (changesRows || canEditColumns) && (
-              <Group gap="xs">
-                {canEditColumns && (
-                  <Button
-                    id={newColumnId}
-                    variant={changesRows ? "default" : "filled"}
-                    onClick={() => {
-                      columnDialog.open({ kind: "new" });
-                    }}
-                  >
-                    New column
-                  </Button>
-                )}
-                {/* The live people alone are read only. */}
-                {changesRows && view.show !== "live" && (
-                  <Button
-                    id={newRecordButtonId}
-                    variant="filled"
-                    {...addButton}
-                    onClick={() => {
-                      leave(() => {
-                        onOpen?.(undefined);
-                        setForms((count) => count + 1);
-                        setBeingAdded(newRecord());
-                      });
-                    }}
-                  >
-                    New
-                  </Button>
-                )}
-              </Group>
-            )
-          }
-        />
-        {dates !== undefined && (
-          <DateControl
-            day={day}
-            laterDays={dates.laterDays}
-            changes={changesFrom !== undefined}
-            onDay={(next) => {
-              leave(() => {
-                dates.onDay(next);
-              });
-            }}
-          />
-        )}
-      </div>
-      {changesRows && positionHidden && (
-        <Text size="sm" c="dimmed" id={cannotAddId}>
-          This role can't add people, since it can't see positions.
-        </Text>
-      )}
+      <PageHeader
+        title="People"
+        action={
+          (changesRows || canEditColumns) && (
+            <Group gap="xs">
+              {canEditColumns && (
+                <Button
+                  id={newColumnId}
+                  variant={changesRows ? "default" : "filled"}
+                  onClick={() => {
+                    columnDialog.open({ kind: "new" });
+                  }}
+                >
+                  New column
+                </Button>
+              )}
+              {/* The live people alone are read only. */}
+              {changesRows && view.show !== "live" && (
+                <Button
+                  id={newRecordButtonId}
+                  variant="filled"
+                  {...addButton}
+                  onClick={() => {
+                    leave(() => {
+                      onOpen?.(undefined);
+                      setForms((count) => count + 1);
+                      setBeingAdded(newRecord());
+                    });
+                  }}
+                >
+                  New person
+                </Button>
+              )}
+            </Group>
+          )
+        }
+      />
       {content}
     </Stack>
   );

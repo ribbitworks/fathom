@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/org-chart*", "apps/web/src/feature-team*", "apps/web/src/choice-picker.tsx", "apps/server/src/data/feature-teams.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Feature Teams
@@ -513,22 +513,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **Date** box shows today's date.
   - **Notes:**
 
-### FT-07: Readers Without Personal Details Are Told Why There Is No Other Date
+### FT-07: Readers Without Personal Details Have No Other Date
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from FT-06.
 
 **Preconditions:** Signed in with this account. Select the **Org chart** page in the left-hand menu; it shows reporting teams.
 
-- [ ] `7FB0` Look at the area between the page's heading and the chart.
-  - **Expected:**
-    - A line in grey reads "Other dates need Personal access."
-    - There is no date control.
+- [ ] `7FB0` Look at the area between the finder and the chart.
+  - **Expected:** There is no date row.
   - **Notes:**
 
 - [ ] `F46D` Select **Feature teams** in the teams switch.
-  - **Expected:**
-    - A line in grey reads "Other dates need Personal access."
-    - There is still no date control.
+  - **Expected:** There is still no date row.
   - **Notes:**
 
 ### FT-08: Changes Take Effect From the Date Shown

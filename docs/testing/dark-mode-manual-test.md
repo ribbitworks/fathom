@@ -263,7 +263,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** Every person and planned hire is listed.
   - **Notes:**
 
-- [ ] `F11A` Select **New**.
+- [ ] `F11A` Select **New person**.
   - **Expected:** The side panel opens, headed **New person**.
   - **Notes:**
 

@@ -18,6 +18,11 @@ export const planModeSchema = z.enum(["table", "board"]);
 
 export type PlanMode = z.infer<typeof planModeSchema>;
 
+export const planModes: readonly { value: PlanMode; label: string }[] = [
+  { value: "table", label: "Table" },
+  { value: "board", label: "Board" },
+];
+
 // What a card may show besides its name, in the order it shows them, each chosen in the Card menu.
 export const cardPartSchema = z.enum([
   "status",

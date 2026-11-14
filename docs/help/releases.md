@@ -131,4 +131,4 @@ You're done when the stream's heading shows your draft: a dot before a new name,
 
 - **A diamond** under a release on the timeline marks the day it ships. A dashed line joins it to the release when it ships on another day.
 - **A dot** before a stream's or release's name marks its draft, on the timeline and in the table.
-- With **Drafts beside live** chosen in the **Draft** menu, a release that a draft moves also shows faded, after a green dot, in a lane under its stream's releases, where it is now. A release that a draft removes stays, struck through.
+- With **Drafts & Live** chosen in the **Draft** menu, a release that a draft moves also shows faded, after a green dot, in a lane under its stream's releases, where it is now. A release that a draft removes stays, struck through.

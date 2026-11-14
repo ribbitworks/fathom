@@ -5,11 +5,11 @@
 // role that sees both; a role that sees one sees it alone.
 
 import type { DraftKind } from "@fathom/shared";
-import { Group, SegmentedControl, Stack } from "@mantine/core";
+import { Stack } from "@mantine/core";
 import { useState } from "react";
-import { type CapacityMode, capacityModeSchema } from "./capacity.ts";
+import type { CapacityMode } from "./capacity.ts";
 import { CapacityPeople } from "./capacity-people.tsx";
-import { PageHeader } from "./page-header.tsx";
+import { ModeSwitch, PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { PlanningSettingsTab } from "./planning-settings-tab.tsx";
 import type { View } from "./table-view.ts";
@@ -48,25 +48,23 @@ export function CapacityPage({
       gap="md"
       className={mode === "people" ? classes.tablePage : undefined}
     >
-      <PageHeader title="Capacity" />
-      {modes.length > 1 && (
-        <Group>
-          <SegmentedControl
-            aria-label="What the page shows"
-            size="xs"
-            value={mode}
-            onChange={(next) => {
-              onMode(capacityModeSchema.parse(next));
-            }}
-            data={modes.map((one) => ({
-              value: one,
-              // The mode is always one of the typed modes, each a key of the labels.
-              // eslint-disable-next-line security/detect-object-injection
-              label: modeLabels[one],
-            }))}
-          />
-        </Group>
-      )}
+      <PageHeader
+        title="Capacity"
+        beside={
+          modes.length > 1 && (
+            <ModeSwitch
+              modes={modes.map((one) => ({
+                value: one,
+                // The mode is always one of the typed modes, each a key of the labels.
+                // eslint-disable-next-line security/detect-object-injection
+                label: modeLabels[one],
+              }))}
+              mode={mode}
+              onMode={onMode}
+            />
+          )
+        }
+      />
       {mode === "settings" ? (
         <PlanningSettingsTab
           canEdit={canEditSettings}

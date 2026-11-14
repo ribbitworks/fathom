@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["packages/shared/src/access.ts", "apps/web/src/layout.tsx", "apps/web/src/router.tsx", "apps/web/src/*-page.tsx", "apps/server/src/access.ts", "apps/server/src/data/**", "apps/server/src/routes/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/testing/roles-manual-test.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: What Each Permission Allows
@@ -195,7 +195,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `BE13` Read the column headers, and the top right of the page.
   - **Expected:**
     - **Start**, **End** and **Manager assigned** are not shown
-    - There is no **New** and no **New column** button
+    - There is no **New person** and no **New column** button
   - **Notes:**
 
 - [ ] `1BAF` Search for 'Viktoria Holmberg'.
@@ -218,7 +218,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `F859` Look at the column headers and the top right of the page.
   - **Expected:**
-    - **New** is at the top right, and there is no **New column** button
+    - **New person** is at the top right, and there is no **New column** button
     - **Start**, **End** and **Manager assigned** are not shown
   - **Notes:**
 
@@ -257,7 +257,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The chart shows each person's name, position, and the team they lead.
   - **Notes:**
 
-- [ ] `EEC1` Select **Feature teams** in the switch at the heading's right.
+- [ ] `EEC1` Select **Feature teams** in the teams switch.
   - **Expected:**
     - The chart shows the feature teams 'Payments core', 'Search', 'Platform reliability' and 'Mobile apps', with their members
     - There is no **New feature team**, and no way to change a team
@@ -280,7 +280,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `E73F` Look at the column headers and the top right of the page.
   - **Expected:**
     - **Start**, **End** and **Manager assigned** are shown
-    - There is no **New** button
+    - There is no **New person** button
   - **Notes:**
 
 - [ ] `F2BD` Search for 'Viktoria Holmberg'.
@@ -304,7 +304,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `DD13` Look at the column headers and the top right of the page.
   - **Expected:**
     - **Start**, **End** and **Manager assigned** are shown
-    - **New** is at the top right, and there is no **New column** button
+    - **New person** is at the top right, and there is no **New column** button
   - **Notes:**
 
 - [ ] `7527` Search for 'Max Munk'.
@@ -339,7 +339,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:**
     - An **Offer letter** column is shown
     - **Start**, **End** and **Manager assigned** are not shown
-    - There is no **New** button
+    - There is no **New person** button
   - **Notes:**
 
 - [ ] `F8AA` Select the **State** column's name, then **Filter…**.
@@ -376,7 +376,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `512C` Look at the column headers and the top right of the page.
   - **Expected:**
     - An **Offer letter** column is shown
-    - **New** is at the top right
+    - **New person** is at the top right
     - **Start**, **End** and **Manager assigned** are not shown
   - **Notes:**
 
@@ -426,7 +426,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - One row has 'REQ-2050' in its **ID** cell
     - 'REQ-2050' has a yellow dot in its slot
     - 'Backend engineer 1' has a yellow dot before its **State**, "Approved to hire"
-    - There is no **New** button
+    - There is no **New person** button
   - **Notes:**
 
 - [ ] `6BFB` Read the column headers, then the **Start** cell of 'REQ-2050'.
@@ -464,7 +464,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `0AF4` Look at the top right of the page.
-  - **Expected:** **New** is shown.
+  - **Expected:** **New person** is shown.
   - **Notes:**
 
 - [ ] `D42A` Search for 'Backend engineer 2'.

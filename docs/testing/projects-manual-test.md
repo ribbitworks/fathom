@@ -33,7 +33,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Draft menu, the ⋯ menu, the side panel and dates. This test adds:
 
-- **Tabs:** **Projects**, **Proposals**, **Customers** and **Milestones**, in a row under the page's heading. The tab chosen is underlined.
+- **Tabs:** **Projects**, **Proposals**, **Customers** and **Milestones**, just after the page's heading, on the same line. The tab chosen is underlined.
 - **Milestone ⋯ menu:** the menu that opens from the **⋯** button at the end of a milestone in a project's side panel.
 - **New record panel:** the side panel while a record is being added, headed **New customer** or the like.
 

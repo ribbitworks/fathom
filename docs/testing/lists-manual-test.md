@@ -212,7 +212,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `DACD` Select the **People** page in the left-hand menu.
   - **Expected:**
     - The **Position** column's heading is followed by a grey box with a lock and **Personal**
-    - **New** is not greyed out
+    - **New person** is not greyed out
   - **Notes:**
 
 - [ ] `0F88` Run Reset the Database.

@@ -25,6 +25,7 @@ import { Icon } from "./icons.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { DraftedItem, MarkedItem } from "./status-mark.tsx";
+import { showLabel } from "./table-controls.tsx";
 
 const sensitivities: [string, string][] = [
   ["General", "Everything not marked Personal or Confidential."],
@@ -116,7 +117,7 @@ const marks: [string, ReactNode, string][] = [
         {example}
       </MarkedItem>
     </span>,
-    "A faint yellow row, column or card, or faint red once rejected: it has a draft. Shown only with drafts beside live, where changed values are in bold too.",
+    "A faint yellow row, column or card, or faint red once rejected: it has a draft. Shown only with Drafts & Live, where changed values are in bold too.",
   ],
 ];
 
@@ -145,12 +146,12 @@ const lifecycle: [string, string][] = [
 
 // What the Draft menu above each table with drafts shows.
 const views: [string, string][] = [
-  ["Drafts beside live", "Each draft next to how the record is now."],
+  [showLabel("both"), "Each draft next to how the record is now."],
   [
-    "Drafts applied",
+    showLabel("drafts"),
     "Everything as it will be once the waiting drafts are approved.",
   ],
-  ["Live only", "Everything as it is now."],
+  [showLabel("live"), "Everything as it is now."],
 ];
 
 function Rows({ rows }: { rows: [string, ReactNode, string][] }) {

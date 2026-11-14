@@ -80,7 +80,7 @@ You're done when the change shows in the team's panel. A change of colour applie
 
 The chart can show your organization on another day, in the past or the future.
 
-1. In the date row under the heading, type a day in **Date**. You can also select an arrow to move a month, or drag the timeline.
+1. In the date row under **Find a person or team**, type a day in **Date**. You can also select an arrow to move a month, or drag the timeline.
 1. To come back to today, select **Today**.
 
 On any date but today, a line under the date row says what you can do:
@@ -102,7 +102,6 @@ You're done when the chart shows the day you chose.
 - **A red Left box** after a manager's name means they've left, and people still report to them. Only roles that see Personal details see it.
 - **A light green card**, faded, with a dashed edge, shows where someone is now, when a draft moves them to another manager.
 - **from** and a day, after a member's name in a team's panel, says when a drafted change takes effect, if that's not the date shown.
-- **A grey line**, such as **Other dates need Personal access.**, says why something isn't shown.
 
 ## Where Changes Go
 

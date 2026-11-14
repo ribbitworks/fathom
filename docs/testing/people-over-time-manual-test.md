@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies reading the **People** page on another date: the date row under its heading, who is listed on an earlier and a later date, planned hires on later dates, a person's details beside the table on that date, changing a manager from an earlier date in the table, and a role that sees no other dates.
+Verifies reading the **People** page on another date: the date row above its table, who is listed on an earlier and a later date, planned hires on later dates, a person's details beside the table on that date, changing a manager from an earlier date in the table, and a role that sees no other dates.
 
 ## Test Environment
 
@@ -33,7 +33,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks and the Draft menu. This test adds:
 
-- **Date row:** the row under the page's heading, holding a **Date** box, a left arrow, a timeline, a right arrow and **Today**.
+- **Date row:** the row under the search box, above the table, holding a **Date** box, a left arrow, a timeline, a right arrow and **Today**.
 
 ## Test Cases
 
@@ -47,7 +47,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `5CE0` Read the top of the page.
   - **Expected:**
-    - The date row is under the heading **People**.
+    - The date row is under the search box and the buttons beside it, above the table.
     - The **Date** box holds today's date, such as `2026-11-14`.
     - **Today** is turned off.
     - No line of text is under the date row.
@@ -63,7 +63,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The **Date** box shows the first day of last month, such as `2026-10-01`.
     - Under the row, text reads "Showing" with that date, then "Nothing can be changed on this date."
-    - No **New** button is at the top right.
+    - No **New person** button is at the top right.
     - The table shows without a loading spinner taking its place.
   - **Notes:**
 
@@ -159,7 +159,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `44FA` In the date row, select the left arrow once.
   - **Expected:**
     - Under the row, text reads "Showing" with the first day of last month, then "Changes take effect from this date."
-    - No **New** or **New column** button is at the top right.
+    - No **New person** or **New column** button is at the top right.
   - **Notes:**
 
 - [ ] `C0C2` Type `Candice` in the search box.
@@ -199,5 +199,5 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - There is no date row.
     - Nothing says why it is missing.
-    - The table starts right under the heading's row.
+    - The table starts right under the search box's row.
   - **Notes:**

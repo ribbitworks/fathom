@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-workforce-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Acceptance, Workforce Administrator
@@ -47,7 +47,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** Reset the Database run. Signed in with this account. **People** page open from the left-hand menu.
 
-- [ ] `72EE` Select **New** at the top right of the page.
+- [ ] `72EE` Select **New person** at the top right of the page.
   - **Expected:** The details panel opens, headed **New person**.
   - **Notes:**
 

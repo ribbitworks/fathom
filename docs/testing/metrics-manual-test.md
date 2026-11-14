@@ -172,10 +172,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **People** page open. Metrics panel open.
 
-- [ ] `612A` Open the Draft menu, and select **Drafts beside live**.
+- [ ] `612A` Open the Draft menu, and select **Drafts & Live**.
   - **Expected:**
     - The Draft menu stays open.
-    - A tick is before **Drafts beside live**.
+    - A tick is before **Drafts & Live**.
   - **Notes:**
 
 - [ ] `CE2C` Press Esc.

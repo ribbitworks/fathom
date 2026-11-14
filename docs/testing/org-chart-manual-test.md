@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/org-chart*", "apps/server/src/data/org-chart.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Org Chart
@@ -33,7 +33,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks and the Publish button. This test adds:
 
-- **Date row:** the row between the page's heading and the chart, holding a **Date** box, a left arrow, a timeline, a right arrow and **Today**.
+- **Date row:** the row between the finder and the chart, holding a **Date** box, a left arrow, a timeline, a right arrow and **Today**.
 
 ## Test Cases
 
@@ -234,10 +234,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
 
-- [ ] `7A96` Look at the area between the page's heading and the chart.
-  - **Expected:**
-    - A line in grey reads "Other dates need Personal access."
-    - There is no date control.
+- [ ] `7A96` Look at the area between the finder and the chart.
+  - **Expected:** There is no date row.
   - **Notes:**
 
 - [ ] `C89C` Type `Viktoria` in **Find a person or team**, and choose 'Viktoria Holmberg'.
@@ -442,8 +440,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `0BA8` Select **Draft**.
   - **Expected:**
-    - A menu opens with **Drafts beside live**, **Drafts applied** and **Live only** under **Show**.
-    - **Drafts beside live** has a tick.
+    - A menu opens with **Drafts & Live**, **Drafts applied** and **Live only** under **Show**.
+    - **Drafts & Live** has a tick.
   - **Notes:**
 
 - [ ] `E344` Select **Drafts applied**.
@@ -453,7 +451,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `990C` Press Esc.
   - **Expected:**
     - The menu closes.
-    - A dot follows **Draft** on its button.
+    - The **Draft** button reads **Drafts applied**.
     - The address bar ends with `show=drafts`.
     - The card for 'Simone Jean' under 'Silje Holm-Schrøder' is no longer tinted.
     - It still has a yellow dot before her name.
@@ -491,14 +489,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `1E2E` Read the buttons just right of the finder.
   - **Expected:**
-    - **Draft** is there.
+    - The **Draft** button is there, reading **Live only**.
     - **Teams** is not.
   - **Notes:**
 
 - [ ] `AE0B` On the card for 'Silje Holm-Schrøder', select the name.
   - **Expected:**
     - Her details slide out in a panel on the right.
-    - **Draft** still has a dot after it.
+    - The **Draft** button still reads **Live only**.
     - Her card still ends with "Hide 7 reports".
     - 'Simone Jean' is not under her in **Direct reports** in the panel.
   - **Notes:**

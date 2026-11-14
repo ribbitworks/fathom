@@ -3422,7 +3422,7 @@ describe("drafts on the Lists page", () => {
       );
       await userEvent.keyboard("{Escape}");
     };
-    await choose("Drafts beside live");
+    await choose("Drafts & Live");
     await waitFor(() => {
       expect(history.location.search).not.toContain("show");
     });

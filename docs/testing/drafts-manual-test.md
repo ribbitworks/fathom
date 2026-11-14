@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Drafts of People, Lists and Columns
@@ -116,7 +116,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Skills**
   - **Notes:**
 
-- [ ] `EE9B` Select **Drafts beside live**.
+- [ ] `EE9B` Select **Drafts & Live**.
   - **Expected:** **Role on team** and **Previous site** are among the columns again.
   - **Notes:**
 
@@ -152,7 +152,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Its choices are greyed out.
   - **Notes:**
 
-- [ ] `332F` Select **Drafts beside live**.
+- [ ] `332F` Select **Drafts & Live**.
   - **Expected:** **Grade**, **Previous site** and **Skills** are among the columns again.
   - **Notes:**
 
@@ -274,7 +274,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No green dots.
   - **Notes:**
 
-- [ ] `242E` Select **Drafts beside live**.
+- [ ] `242E` Select **Drafts & Live**.
   - **Expected:** 'Certifications' and 'Languages' are in the table again.
   - **Notes:**
 

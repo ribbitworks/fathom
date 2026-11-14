@@ -288,7 +288,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No row reads "Removed".
   - **Notes:**
 
-- [ ] `735D` Select **Drafts beside live**.
+- [ ] `735D` Select **Drafts & Live**.
   - **Expected:**
     - The 'Scheduler API' row reading "Removed" is back at the top.
     - It has a hollow yellow dot before 'Scheduler API'.

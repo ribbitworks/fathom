@@ -29,7 +29,6 @@ import {
   Group,
   Loader,
   Paper,
-  SegmentedControl,
   Stack,
   Text,
   Tooltip,
@@ -104,7 +103,7 @@ import {
 } from "./org-chart.ts";
 import classes from "./org-chart.module.css";
 import { focusSoon } from "./focus.ts";
-import { PageHeader } from "./page-header.tsx";
+import { ModeSwitch, PageHeader } from "./page-header.tsx";
 import { personUpdate } from "./person-change.ts";
 import { noteQuestion } from "./note-editing.tsx";
 import { usePersonNotes, useShownId } from "./person-editing.tsx";
@@ -125,7 +124,6 @@ import {
 import { plannedWords } from "./table-view.ts";
 import { DraftMenu } from "./table-controls.tsx";
 import { today } from "./today.ts";
-import { WhyMissing } from "./why-missing.tsx";
 
 interface CardData extends Record<string, unknown> {
   person: ChartPerson;
@@ -490,7 +488,9 @@ function Chart({
   onSearch,
   teamsList,
   fixedDay,
+  dateRow,
 }: {
+  dateRow: ReactNode;
   // Whether the chart shows another day on which nothing can be changed, drawn as approved, with no
   // drafts to choose among.
   fixedDay: boolean;
@@ -867,6 +867,7 @@ function Chart({
           centreOnSpace(false);
         }}
       />
+      {dateRow}
       <Paper
         withBorder
         className={classes.chart}
@@ -923,12 +924,17 @@ const undatedChangesLeftOut = (edits: FeatureTeamEdits): FeatureTeamEdits => ({
   undated: false,
 });
 
+const chartModes = [
+  { value: "reporting", label: "Reporting teams" },
+  { value: "feature-teams", label: "Feature teams" },
+] as const;
+
 export function OrgChartPage({
   search,
   onSearch,
   showDates = false,
-  whyNoOtherDates,
-  whyNoFutureDates,
+  otherDates = true,
+  futureDates = true,
   canEdit = false,
   changesDates = false,
   featureTeamEdits = noFeatureTeamEdits,
@@ -941,17 +947,16 @@ export function OrgChartPage({
   changesDates?: boolean;
   // Whether the reader sees Personal details, such as dates, in a person's details.
   showDates?: boolean;
-  // Why the role does not get the chart on other dates, or on future ones, when it does not see
-  // every class of data they need.
-  whyNoOtherDates?: string | undefined;
-  whyNoFutureDates?: string | undefined;
+  // Whether the role sees the chart on other dates, and on future ones, which need classes of data
+  // beyond General.
+  otherDates?: boolean;
+  futureDates?: boolean;
   onSearch: (search: ChartSearch, replace: boolean) => void;
 }) {
   const featureView = search.view === "feature-teams";
-  const futureLines = whyNoFutureDates === undefined;
   const { day, peopleDay } = chartDays(search.day, {
-    otherDates: whyNoOtherDates === undefined,
-    futureLines,
+    otherDates,
+    futureLines: futureDates,
     featureTeams: featureView,
   });
   // Feature teams and reporting lines change from the day shown for those who may date changes
@@ -1042,101 +1047,99 @@ export function OrgChartPage({
     () => (everyone === undefined ? new Map() : reportColours(everyone)),
     [everyone],
   );
+  const dateRow = otherDates && (
+    <DateControl
+      day={day}
+      laterDays={featureView || futureDates}
+      changes={changesOnDay}
+      onDay={(next) => {
+        setCreating(false);
+        go({ ...search, day: next }, false);
+      }}
+    />
+  );
   return (
     <DraftView show={show}>
       <Box mb="md">
         <PageHeader
           title="Org chart"
+          beside={
+            <ModeSwitch
+              label="Teams drawn"
+              modes={chartModes}
+              mode={featureView ? "feature-teams" : "reporting"}
+              onMode={(mode) => {
+                // The person found, or whose details are open, stays found, so the chart starts at
+                // them.
+                go(
+                  {
+                    show: search.show,
+                    open: search.open,
+                    person: search.person ?? search.open,
+                    day: search.day,
+                    ...(mode === "feature-teams"
+                      ? { view: "feature-teams" as const }
+                      : {}),
+                  },
+                  false,
+                );
+              }}
+            />
+          }
           action={
-            <Group gap="sm">
-              <SegmentedControl
-                aria-label="Teams drawn"
-                data={[
-                  { value: "reporting", label: "Reporting teams" },
-                  { value: "feature-teams", label: "Feature teams" },
-                ]}
-                value={featureView ? "feature-teams" : "reporting"}
-                onChange={(value) => {
-                  // The person found, or whose details are open, stays found, so the chart starts at
-                  // them.
-                  go(
-                    {
-                      show: search.show,
-                      open: search.open,
-                      person: search.person ?? search.open,
-                      day: search.day,
-                      ...(value === "feature-teams"
-                        ? { view: "feature-teams" as const }
-                        : {}),
-                    },
-                    false,
-                  );
-                }}
-              />
-              {lead !== undefined && (
-                <Group gap="sm">
-                  <Text size="sm">
-                    Only the team of {lead.preferredName} is shown.
-                  </Text>
-                  <Button
-                    variant="default"
-                    onClick={() => {
-                      go(
-                        {
-                          person: search.person,
-                          show: search.show,
-                          open: search.open,
-                          day: search.day,
-                        },
-                        false,
-                      );
-                    }}
-                  >
-                    Show everyone
-                  </Button>
-                </Group>
-              )}
-            </Group>
+            lead !== undefined && (
+              <Group gap="sm">
+                <Text size="sm">
+                  Only the team of {lead.preferredName} is shown.
+                </Text>
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    go(
+                      {
+                        person: search.person,
+                        show: search.show,
+                        open: search.open,
+                        day: search.day,
+                      },
+                      false,
+                    );
+                  }}
+                >
+                  Show everyone
+                </Button>
+              </Group>
+            )
           }
         />
       </Box>
-      {whyNoOtherDates === undefined ? (
-        <DateControl
-          day={day}
-          laterDays={featureView || futureLines}
-          changes={changesOnDay}
-          onDay={(next) => {
-            setCreating(false);
-            go({ ...search, day: next }, false);
-          }}
-        />
-      ) : (
-        <WhyMissing why={whyNoOtherDates} />
-      )}
-      {whyNoOtherDates === undefined &&
-        !featureView &&
-        whyNoFutureDates !== undefined && <WhyMissing why={whyNoFutureDates} />}
       {query.isPending || (featureView && teamsQuery.isPending) ? (
         <Loader role="status" aria-label="Loading" />
       ) : query.isError || tree === undefined || everyone === undefined ? (
-        <Alert color="red" role="alert">
-          <Group justify="space-between">
-            Fathom could not load the org chart.
-            <Button
-              variant="light"
-              color="red"
-              size="xs"
-              onClick={() => {
-                void query.refetch();
-                if (featureView) void teamsQuery.refetch();
-              }}
-            >
-              Try again
-            </Button>
-          </Group>
-        </Alert>
+        <div>
+          {dateRow}
+          <Alert color="red" role="alert">
+            <Group justify="space-between">
+              Fathom could not load the org chart.
+              <Button
+                variant="light"
+                color="red"
+                size="xs"
+                onClick={() => {
+                  void query.refetch();
+                  if (featureView) void teamsQuery.refetch();
+                }}
+              >
+                Try again
+              </Button>
+            </Group>
+          </Alert>
+        </div>
       ) : tree.people.size === 0 && !featureView ? (
-        <Text c="dimmed">Nobody is on the org chart yet.</Text>
+        <div>
+          {dateRow}
+          <Text c="dimmed">Nobody is on the org chart yet.</Text>
+        </div>
       ) : (
         <WithSidePanel
           storageKey="fathom-table-panel-width"
@@ -1262,6 +1265,7 @@ export function OrgChartPage({
               fixedDay={fixedDay}
               search={search}
               onSearch={go}
+              dateRow={dateRow}
               {...(featureView
                 ? {
                     teamsList: (

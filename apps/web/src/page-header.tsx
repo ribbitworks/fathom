@@ -6,7 +6,7 @@
 // own under it: each page puts the same gap after it, so the row under the heading starts at the
 // same place on every page.
 
-import { Group, Title } from "@mantine/core";
+import { Group, SegmentedControl, Title } from "@mantine/core";
 import type { ReactNode } from "react";
 import { PageExportMenu } from "./page-export.tsx";
 
@@ -37,5 +37,28 @@ export function PageHeader({
         {action}
       </Group>
     </Group>
+  );
+}
+
+// The switch between the ways a page shows its records, such as Table and Board, for the heading's
+// beside.
+export function ModeSwitch<Mode extends string>({
+  label = "What the page shows",
+  modes,
+  mode,
+  onMode,
+}: {
+  label?: string;
+  modes: readonly { value: Mode; label: string }[];
+  mode: Mode;
+  onMode: (mode: Mode) => void;
+}) {
+  return (
+    <SegmentedControl<Mode>
+      aria-label={label}
+      value={mode}
+      onChange={onMode}
+      data={[...modes]}
+    />
   );
 }

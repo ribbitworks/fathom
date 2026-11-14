@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/visual-design.md", "docs/product/decisions.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Exports
@@ -33,7 +33,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses. This test adds:
 
-- **Export button:** the button showing an arrow pointing down onto a line, at the right of the page's heading, before the page's main button, such as **New**. Pointing at it shows **Export**.
+- **Export button:** the button showing an arrow pointing down onto a line, at the right of the page's heading, before the page's main button, such as **New person**. Pointing at it shows **Export**.
 - **Save dialog:** the browser's own dialog asking where to save a file. Chrome and Edge always open it for an export; Safari and Firefox open it only when their settings ask before each download, and otherwise save to the Downloads folder.
 
 ## Test Cases

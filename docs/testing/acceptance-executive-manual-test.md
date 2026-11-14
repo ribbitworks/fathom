@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-executive.md", "docs/product/roles.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Acceptance, Executive
@@ -82,7 +82,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
     - No release on the timeline has a yellow dot.
   - **Notes:**
 
-- [ ] `175B` Choose **Drafts beside live** in the Draft menu.
+- [ ] `175B` Choose **Drafts & Live** in the Draft menu.
   - **Expected:** 'Harbor 4' is on the timeline again, with a yellow dot.
   - **Notes:**
 
@@ -147,7 +147,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Expected:**
     - Her row is shown, with a date after today in **Start**.
     - The table has **Start** and **End** columns.
-    - There is no **New** and no **New column** button.
+    - There is no **New person** and no **New column** button.
   - **Notes:**
 
 - [ ] `CAC5` Select **Drafts**.

@@ -1,6 +1,6 @@
 # Capacity
 
-**Capacity** is about how much feature work people can deliver. It has two modes, and the switch under the heading chooses between them:
+**Capacity** is about how much feature work people can deliver. It has two modes, and the switch beside the heading chooses between them:
 
 - **People** shows what each person and planned hire works on, month by month, and how much of their month it takes.
 - **Settings** holds the planning settings for your whole organization.
@@ -19,7 +19,7 @@ See [Drafts](drafts.md) for more.
 
 ### Choose a Mode
 
-Select **People** or **Settings** in the switch under the heading. The page opens on **People** for a role that sees it.
+Select **People** or **Settings** in the switch beside the heading. The page opens on **People** for a role that sees it.
 
 ### Read Who Works on What
 

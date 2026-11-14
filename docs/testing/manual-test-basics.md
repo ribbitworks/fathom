@@ -140,10 +140,10 @@ Run only where a test says so. This deletes every account and record in the deve
 - **Class mark:** a small grey box with a lock and a class's name, **Personal** or **Confidential**, after a column's heading or a list's name, giving the class of its data. It is not the lock above.
 - **Box:** a small outlined word just after an item: yellow for **Moved**, **Reordered**, **Retired** or **Restored**; red for a warning, such as **Left** or **No team**; grey for a fact, such as **Built in** or **Planned, expected** and a month.
 - **Slot:** the narrow space at the start of a table's row, before its first value, holding the mark of a draft that adds, removes, retires or moves the record. A draft that only changes values the row shows leaves the slot empty, with a dot before each changed value.
-- **Draft row and Live row:** while **Drafts beside live** is chosen in the Draft menu, as each page starts, a row with a draft is tinted faint yellow, or faint red once the draft is rejected, and its changed values are in semibold; under it, a light green Live row shows the record as it is now, with a green dot before each live value the draft changes, or in its slot. **Drafts applied** and **Live only** show no tints and no Live rows.
+- **Draft row and Live row:** while **Drafts & Live** is chosen in the Draft menu, as each page starts, a row with a draft is tinted faint yellow, or faint red once the draft is rejected, and its changed values are in semibold; under it, a light green Live row shows the record as it is now, with a green dot before each live value the draft changes, or in its slot. **Drafts applied** and **Live only** show no tints and no Live rows.
 - **Search for:** type the text in the search box above a table, so only the matching rows show.
 - **Views menu:** the menu that opens from the last of the buttons after the search box above a table. The button reads **Views**, or the name of the view applied.
-- **Draft menu:** the menu that opens from the **Draft** button above a table, beside the search box, or, on the **Org chart** page, just right of the finder.
+- **Draft menu:** the menu that opens from the **Draft** button above a table, beside the search box, or, on the **Org chart** page, just right of the finder. The button, with a funnel icon, names the choice shown, such as **Drafts & Live**, and has a dot after it while a draft filter is in use.
 - **Group by menu:** the menu that opens from the button above a table whose label starts **Group by:**, such as **Group by: Cycle**, naming the grouping in use.
 - **Group heading:** the full-width row above each group of rows in a grouped table, naming the group, with how many rows it holds at its right.
 - **Column menu:** the menu that opens from a column's name in a table's header.
@@ -152,14 +152,14 @@ Run only where a test says so. This deletes every account and record in the deve
 - **Side panel:** the panel on the right that opens from **Show details** in a row's ⋯ menu, or from the details button. Steps also call it the details panel. It is headed with the record's name, and its close button, an **×**, is at its top right.
 - **Change button:** a small pencil at the right of a value in a side panel, shown to accounts that may change it while the value's row is pointed at or has focus. Selecting the row anywhere does the same, except under **Scope history**, where only the reason does. To check whether a value or row has a change button, or whether a panel shows any, point at each row the step names, or at each of the panel's rows.
 - **Grid:** the table on the left of the role dialog, with an area in each row and the columns **Area**, **View**, **Approve** and **Edit**. Under a **Data classification** heading, its last rows are the classes **General**, **Personal** and **Confidential**.
-- **Chart:** on the **Org chart** page, the large panel under the heading that holds the cards.
-- **Finder:** the box reading **Find a person or team** at the top left of the **Org chart** page, above the chart.
-- **Teams switch:** the two-part switch reading **Reporting teams** and **Feature teams** at the top right of the **Org chart** page.
+- **Chart:** on the **Org chart** page, the large panel under the finder and the date row that holds the cards.
+- **Finder:** the box reading **Find a person or team** at the left, just under the **Org chart** heading.
+- **Teams switch:** the two-part switch reading **Reporting teams** and **Feature teams** just after the **Org chart** heading, on the same line.
 - **Card:** the box for one person on the chart, showing their name, their position under it, and the team's name under that on the card of a reporting team's manager, when the team has a name, and on a feature team's first card.
 - **Band:** the strip of colour along the top edge of a card.
 - **Feature teams button:** the button reading **Feature teams** above the chart, at its left, just right of the finder and of the **Draft** button where that is shown, once the chart shows feature teams. It lists the feature teams, and **New feature team** to those who may add one.
 - **Team panel:** the panel that opens to the right of the chart when a feature team is chosen, titled with the team's name, with a **Details** section and a **Members** section.
-- **Mode switch:** the switch under the **Capacity** heading, reading **People** and **Settings**.
+- **Mode switch:** the switch just after the **Capacity** heading, on the same line, reading **People** and **Settings**.
 - **Team list:** the list of feature teams that opens below a month's cell on the **Feature assignments** page for editing, with a box to type in at its top.
 - **Seeded dates:** the seed data is dated from the day it is added, as [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) sets out, so its cycles and releases move with today, and steps name them by where they fall. A cycle's name is the year it ends in and its number in that year, such as '27.1'.
 - **Dates:** steps type dates as digits, such as `2030-03-15`; tables and panels show them as the browser's language writes them, such as `15 Mar 2030` or `Mar 15, 2030`.

@@ -199,7 +199,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account BOARD-02 ended with.
 
-**Preconditions:** **Features** page open, showing the board from the current cycle, with **Drafts beside live** chosen in the Draft menu; select **Today** in the strip if it doesn't show the current cycle first.
+**Preconditions:** **Features** page open, showing the board from the current cycle, with **Drafts & Live** chosen in the Draft menu; select **Today** in the strip if it doesn't show the current cycle first.
 
 - [ ] `72C8` Select **›** in the strip.
   - **Expected:**
@@ -379,7 +379,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'Shift Handover Notes' isn't shown.
   - **Notes:**
 
-**Afterwards:** Select **Draft**, then **Drafts beside live**, and run Discard the Unpublished Changes.
+**Afterwards:** Select **Draft**, then **Drafts & Live**, and run Discard the Unpublished Changes.
 
 ### BOARD-07: A Role That Doesn't See Allocations Still Sees Not Staffed
 

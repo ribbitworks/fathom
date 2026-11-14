@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Acceptance, Setting Up Fathom
@@ -388,7 +388,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The cell reads `Lamp crew`, with a hollow yellow dot before it.
   - **Notes:**
 
-- [ ] `564E` Select **New** at the top right of the page.
+- [ ] `564E` Select **New person** at the top right of the page.
   - **Expected:** The details panel opens, headed **New person**.
   - **Notes:**
 

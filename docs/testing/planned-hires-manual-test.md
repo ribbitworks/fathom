@@ -196,7 +196,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] `508D` Select **New** at the top right.
+- [ ] `508D` Select **New person** at the top right.
   - **Expected:** A panel opens beside the table.
   - **Notes:**
 

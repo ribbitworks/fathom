@@ -303,7 +303,7 @@ describe("who sees the People page", () => {
         .map((header) => header.textContent),
     ).not.toContain("Position");
     const newPerson = screen.getByRole<HTMLButtonElement>("button", {
-      name: "New",
+      name: "New person",
     });
     expect(newPerson.disabled).toBe(true);
     expect(newPerson.getAttribute("aria-describedby")).toBe(
@@ -350,7 +350,7 @@ describe("who sees the People page", () => {
       "Actions",
     ]);
     expect(screen.queryByRole("button", { name: "New column" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "New" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
     expect(screen.queryByRole("row", { name: "New person" })).toBeNull();
     focusCell("p1", "preferredName");
     await userEvent.keyboard("{Enter}x");
@@ -375,7 +375,7 @@ describe("who sees the People page", () => {
     });
     renderApp("/people");
     await screen.findByRole("grid", { name: "People" });
-    expect(screen.queryByRole("button", { name: "New" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
     expect(
       screen
         .getByRole("button", { name: "New column" })
@@ -780,7 +780,9 @@ describe("adding people", () => {
     });
     // Adding is the page's main action, beside adding a column.
     expect(
-      screen.getByRole("button", { name: "New" }).getAttribute("data-variant"),
+      screen
+        .getByRole("button", { name: "New person" })
+        .getAttribute("data-variant"),
     ).toBe("filled");
     expect(
       screen
@@ -877,7 +879,7 @@ describe("adding people", () => {
       "GET /api/lists": () => new Promise<Response>(() => undefined),
     });
     renderApp("/people");
-    const button = await screen.findByRole("button", { name: "New" });
+    const button = await screen.findByRole("button", { name: "New person" });
     expect(button).toHaveProperty("disabled", true);
   });
 
@@ -2344,7 +2346,9 @@ describe("searching, sorting, and filtering", () => {
     });
     const names = () =>
       shownNames().map((name) => name.replace(/,? (Draft|Rejected).*/, ""));
-    const button = screen.getByRole("button", { name: "Draft" });
+    const button = screen.getByRole("button", {
+      name: "Draft: Drafts & Live",
+    });
     await userEvent.click(button);
     const item = async (name: string) =>
       screen.findByRole("menuitem", {
@@ -2355,7 +2359,7 @@ describe("searching, sorting, and filtering", () => {
         one.textContent.replace("✓", ""),
       ),
     ).toEqual([
-      "Drafts beside live, on",
+      "Drafts & Live, on",
       "Drafts applied",
       "Live only",
       "Waiting",
@@ -2387,7 +2391,7 @@ describe("searching, sorting, and filtering", () => {
       expect(names()).toEqual(["Casey Fictional"]);
     });
     expect(
-      screen.getByRole("button", { name: "Draft, changed" }),
+      screen.getByRole("button", { name: "Draft: Drafts & Live, filtered" }),
     ).toBeDefined();
     // Drafts are filtered on, but neither searched, since their states are not shown in words, nor
     // sorted on, even from a hand-made address.
@@ -2396,7 +2400,9 @@ describe("searching, sorting, and filtering", () => {
       expect(screen.getByText("0 of 3").getAttribute("role")).toBe("status");
     });
     expect(screen.queryByText("Draft ↑")).toBeNull();
-    expect(screen.getByRole("button", { name: "Draft" })).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Draft: Drafts & Live" }),
+    ).toBeDefined();
   });
 
   it("shows choices by their live names in live rows and the live people alone", async () => {
@@ -2484,7 +2490,7 @@ describe("searching, sorting, and filtering", () => {
     });
     expect(screen.getByText("Avery Fictional")).toBeDefined();
     expect(screen.queryByText("Casey Fictional")).toBeNull();
-    expect(screen.queryByRole("button", { name: "New" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
     // The live people have no drafts, so a filter on drafts in the address is set aside.
     history.push('/people?show=live&filters={"draft":{"any":["waiting"]}}');
     await waitFor(() => {
@@ -2535,7 +2541,9 @@ describe("searching, sorting, and filtering", () => {
 
   it("turns draft filters off again from the Draft menu", async () => {
     const { history } = await openAt("/people");
-    await userEvent.click(screen.getByRole("button", { name: "Draft" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Draft: Drafts & Live" }),
+    );
     const item = async (name: string) =>
       screen.findByRole("menuitem", {
         name: (shown) => shown.startsWith(name),
@@ -4118,7 +4126,7 @@ describe("adding from New", () => {
       ...answers,
     });
     const button = screen.getByRole<HTMLButtonElement>("button", {
-      name: "New",
+      name: "New person",
     });
     await waitFor(() => {
       expect(button.disabled).toBe(false);
@@ -4271,7 +4279,7 @@ describe("adding from New", () => {
     // Then the form stays
     expect(await form("New person")).toBeDefined();
     // When New is pressed, the add discarded, and the add then fails
-    await userEvent.click(screen.getByRole("button", { name: "New" }));
+    await userEvent.click(screen.getByRole("button", { name: "New person" }));
     await answerQuestion("Discard the new person?", "Discard");
     await typeInto("Name", "Dee Fictional");
     act(() => {
@@ -4302,7 +4310,7 @@ describe("adding from New", () => {
     await choose("Site", "Harbour");
     await userEvent.click(screen.getByRole("button", { name: "Add" }));
     // When New is pressed, the add asked about, and the add then saved
-    await userEvent.click(screen.getByRole("button", { name: "New" }));
+    await userEvent.click(screen.getByRole("button", { name: "New person" }));
     await answerQuestion("Discard the new person?", "Discard");
     await typeInto("Name", "Dee Fictional");
     act(() => {
@@ -4327,7 +4335,7 @@ describe("adding from New", () => {
     });
     await waitFor(() => {
       expect(document.activeElement).toBe(
-        screen.getByRole("button", { name: "New" }),
+        screen.getByRole("button", { name: "New person" }),
       );
     });
   });
@@ -4718,7 +4726,7 @@ describe("on another date", () => {
         "Showing Mar 1, 2025. Changes take effect from this date.",
       ),
     ).toBeDefined();
-    expect(screen.queryByRole("button", { name: "New" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
     expect(screen.getByRole("button", { name: /^Draft/ })).toBeDefined();
     expect(cell("p2", "preferredName").getAttribute("aria-readonly")).toBe(
       "true",

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/feature-assignments-page*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Feature Assignments
@@ -404,7 +404,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
     - The joiner is not.
   - **Notes:**
 
-- [ ] `18D3` Open the Draft menu and select **Drafts beside live**.
+- [ ] `18D3` Open the Draft menu and select **Drafts & Live**.
   - **Expected:**
     - The joiner and the leaver are both listed under **Payments core**.
     - The joiner's 'Payments core' labels from last month on have a hollow yellow dot inside them.

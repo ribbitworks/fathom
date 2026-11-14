@@ -1283,7 +1283,7 @@ describe("the Draft menu", () => {
       "Fictional Back",
     ]);
     expect(cellOf("Fictional Back", 0).textContent).toContain("Retired");
-    await choose("Drafts beside live");
+    await choose("Drafts & Live");
     await waitFor(() => {
       expect(history.location.search).not.toContain("show");
     });

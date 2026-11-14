@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Capacity
@@ -54,8 +54,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `E86E` Select the **Capacity** page in the left-hand menu.
   - **Expected:**
     - The page is headed **Capacity**.
-    - Under the heading, the mode switch reads **People** and **Settings**, with **People** chosen.
-    - A table of people by month is under it.
+    - Just after the heading, on the same line, the mode switch reads **People** and **Settings**, with **People** chosen.
+    - A table of people by month is under the heading.
   - **Notes:**
 
 - [ ] `662D` Select **Settings** in the mode switch.

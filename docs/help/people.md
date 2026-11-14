@@ -17,7 +17,7 @@ See [Drafts](drafts.md) for more.
 
 ### Add a Person or a Planned Hire
 
-1. Select **New**.
+1. Select **New person**.
 1. In **State**, choose **Hired** for a person, or a hiring state, such as **Request to hire**, for a planned hire.
 1. Fill in the rest of the form.
 1. Select **Add**.
@@ -71,7 +71,7 @@ You're done once it's approved. The person's **Team** then shows their new manag
 
 People can show your organization on another day, in the past or the future. Your role needs to see Personal data for past days, and Confidential data for future ones.
 
-1. In the date row under the heading, type a day in **Date**. You can also select an arrow to move a month, or drag the timeline.
+1. In the date row above the table, type a day in **Date**. You can also select an arrow to move a month, or drag the timeline.
 1. To come back to today, select **Today**.
 
 On another day, the table lists the people employed then, with their managers and teams as they were, or will be. A future day also lists every planned hire not yet filled. A past day lists none, since past plans aren't kept. A person's details beside the table show them as on that day.
@@ -152,7 +152,7 @@ Exporting saves the table as a file you can open in a spreadsheet.
 
 If the file would hold Personal or Confidential data, such as start dates or planned hires, Fathom asks first, and names what the file holds. Select **Export** to go ahead. That export is recorded in the access history, which roles that see administration can read.
 
-The file holds what the table shows, in the same order. Rows that your search or filters hide are left out. If the table shows drafts beside live, each changed row comes twice, the draft first and then the live row. The **Row** column says which is which, so you can filter out either one in a spreadsheet, and the **Change** column says what each draft does.
+The file holds what the table shows, in the same order. Rows that your search or filters hide are left out. If the table shows **Drafts & Live**, each changed row comes twice, the draft first and then the live row. The **Row** column says which is which, so you can filter out either one in a spreadsheet, and the **Change** column says what each draft does.
 
 The file is named after the page, the saved view if you applied one, who exported it and the day, such as **fathom_people_engineering-director_drafts-and-live_2027-03-31.csv**.
 

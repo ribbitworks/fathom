@@ -29,6 +29,7 @@ import {
   numberProblem,
   type SavedView,
   type Show,
+  showSchema,
   typedNumber,
   type ViewScope,
 } from "@fathom/shared";
@@ -171,9 +172,6 @@ export function viewParts(
   const sort = view.sort.flatMap(({ key, descending }) =>
     labelOf(key).map((label) => `${label} ${descending ? "↓" : "↑"}`),
   );
-  const show = showOptions.filter(
-    (option) => option.value === view.show && option.value !== "both",
-  );
   const breakdown = (view.breakdown ?? []).flatMap(labelOf);
   const widths = widened(view, columns);
   const shownIn = unitsShown(view, columns);
@@ -183,7 +181,9 @@ export function viewParts(
       : [{ name: "Search", value: `“${view.search.trim()}”` }]),
     ...filters.map((value) => ({ name: "Filter", value })),
     ...(sort.length === 0 ? [] : [{ name: "Sort", value: sort.join(", ") }]),
-    ...show.map(({ label }) => ({ name: "Draft", value: label })),
+    ...(view.show === "both"
+      ? []
+      : [{ name: "Draft", value: showLabel(view.show) }]),
     ...(breakdown.length === 0
       ? []
       : [{ name: "Metrics", value: breakdown.join(" by ") }]),
@@ -690,11 +690,16 @@ export function ViewsMenu({
   );
 }
 
-const showOptions: { value: Show; label: string }[] = [
-  { value: "both", label: "Drafts beside live" },
-  { value: "drafts", label: "Drafts applied" },
-  { value: "live", label: "Live only" },
-];
+const showLabels: Record<Show, string> = {
+  both: "Drafts & Live",
+  drafts: "Drafts applied",
+  live: "Live only",
+};
+
+export const showLabel = (show: Show) =>
+  // The choice is always one of the typed choices, each a key of the labels.
+  // eslint-disable-next-line security/detect-object-injection
+  showLabels[show];
 
 const check = (on: boolean) => (
   <span className={classes.appliedMark} aria-hidden>
@@ -705,8 +710,8 @@ const check = (on: boolean) => (
 // The Draft button of a table with drafts: a menu choosing which version of each record shows, the
 // draft beside the live record, the draft applied, as everything will be once approved, or the
 // live record alone, as everything is now, which is read only; and, where the table filters by
-// draft, which rows show, which the live records alone have no drafts for. Marked while either is
-// not the default.
+// draft, which rows show, which the live records alone have no drafts for. The button names the
+// choice, and is marked while the filter is in use.
 export function DraftMenu({
   show,
   onShow,
@@ -720,8 +725,8 @@ export function DraftMenu({
   children?: ReactNode;
 }) {
   const marked =
-    show !== "both" ||
-    (filter !== undefined && isActive(filter.view.filters[filter.column.key]));
+    filter !== undefined && isActive(filter.view.filters[filter.column.key]);
+  const shown = showLabel(show);
   return (
     <AppMenu
       position="bottom-start"
@@ -732,9 +737,9 @@ export function DraftMenu({
         <Button
           variant="default"
           leftSection={<Icon name="filter" />}
-          aria-label={`Draft${marked ? ", changed" : ""}`}
+          aria-label={`Draft: ${shown}${marked ? ", filtered" : ""}`}
         >
-          Draft
+          {shown}
           {marked && (
             <span aria-hidden="true" className={classes.changedMark}>
               •
@@ -744,16 +749,16 @@ export function DraftMenu({
       </AppMenu.Target>
       <AppMenu.Dropdown>
         <Menu.Label>Show</Menu.Label>
-        {showOptions.map((option) => (
+        {showSchema.options.map((each) => (
           <Menu.Item
-            key={option.value}
-            leftSection={check(option.value === show)}
+            key={each}
+            leftSection={check(each === show)}
             onClick={() => {
-              onShow(option.value);
+              onShow(each);
             }}
           >
-            {option.label}
-            {option.value === show && <VisuallyHidden>, on</VisuallyHidden>}
+            {showLabel(each)}
+            {each === show && <VisuallyHidden>, on</VisuallyHidden>}
           </Menu.Item>
         ))}
         {filter && (

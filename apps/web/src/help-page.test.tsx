@@ -169,7 +169,7 @@ describe("Help's Drafts page", () => {
       "Discarded",
     ]);
     expect(views?.map(([view]) => view)).toEqual([
-      "Drafts beside live",
+      "Drafts & Live",
       "Drafts applied",
       "Live only",
     ]);

@@ -539,13 +539,15 @@ describe("the org chart", () => {
     expect(
       liveCopyOf("Uma Fictional").querySelector("[data-coloured]"),
     ).not.toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Draft" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Draft: Drafts & Live" }),
+    );
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Drafts applied" }),
     );
     expect(history.location.search).toContain("show=drafts");
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Drafts beside live" }),
+      await screen.findByRole("menuitem", { name: "Drafts & Live" }),
     );
     expect(history.location.search).not.toContain("show=");
   });
@@ -607,7 +609,7 @@ describe("the org chart", () => {
     openEditableAt("/org-chart?show=live", chartAnswer);
     await screen.findByRole("link", { name: "Sasha Fictional" });
     expect(
-      screen.getByRole("button", { name: "Draft, changed" }),
+      screen.getByRole("button", { name: "Draft: Live only" }),
     ).toBeDefined();
     expect(screen.queryByRole("button", { name: "Teams" })).toBeNull();
     expect(
@@ -652,10 +654,10 @@ describe("the org chart", () => {
     );
     await screen.findByRole("link", { name: "Sasha Fictional" });
     await userEvent.click(
-      screen.getByRole("button", { name: "Draft, changed" }),
+      screen.getByRole("button", { name: "Draft: Drafts applied" }),
     );
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Drafts beside live" }),
+      await screen.findByRole("menuitem", { name: "Drafts & Live" }),
     );
     expect(
       await within(card("Sasha Fictional")).findByRole("button", {
@@ -677,10 +679,10 @@ describe("the org chart", () => {
     await screen.findByRole("link", { name: "Sasha Fictional" });
     await showLevels("All levels");
     await userEvent.click(
-      screen.getByRole("button", { name: "Draft, changed" }),
+      screen.getByRole("button", { name: "Draft: Drafts applied" }),
     );
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Drafts beside live" }),
+      await screen.findByRole("menuitem", { name: "Drafts & Live" }),
     );
     expect(
       await within(card("Sasha Fictional")).findByRole("button", {
@@ -952,7 +954,9 @@ describe("the org chart", () => {
     ).toBeDefined();
     await userEvent.keyboard("{Escape}");
 
-    await userEvent.click(screen.getByRole("button", { name: "Draft" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Draft: Drafts & Live" }),
+    );
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Drafts applied" }),
     );
@@ -2150,28 +2154,25 @@ describe("feature teams on the org chart", () => {
       ).toBeDefined();
     });
 
-    it("says why there is no other date, and draws today, for those who do not see Personal details", async () => {
+    it("leaves out the date row, and draws today, for those who do not see Personal details", async () => {
       const { fetch } = await openFeatureTeams({
         path: `/org-chart?view=feature-teams&day=${onDay}`,
         signedInAs: seesChart,
       });
-      expect(
-        await screen.findByText("Other dates need Personal access."),
-      ).toBeDefined();
+      await screen.findByRole("link", { name: "Sasha Fictional" });
       expect(screen.queryByRole("button", { name: "Today" })).toBeNull();
       expect(screen.queryByText(/^Showing/)).toBeNull();
       expect(urls(fetch).join(" ")).not.toContain("?on=");
     });
 
-    it("says why there is no later date, and draws today, for those who do not see Confidential data", async () => {
+    it("draws today, saying nothing of later dates, for those who do not see Confidential data", async () => {
       const { fetch } = await openFeatureTeams({
         path: "/org-chart?day=2099-03-01",
         signedInAs: seesDetails,
       });
       expect(
-        await screen.findByText("Future dates need Confidential access."),
+        await screen.findByRole("button", { name: "Today" }),
       ).toBeDefined();
-      expect(screen.getByRole("button", { name: "Today" })).toBeDefined();
       expect(urls(fetch).join(" ")).not.toContain("?on=");
     });
 
@@ -2198,6 +2199,33 @@ describe("feature teams on the org chart", () => {
       expect(urls(fetch)).toContain(`/api/org-chart?on=${onDay}`);
       expect(screen.queryByRole("button", { name: /^Draft/ })).toBeNull();
     });
+
+    it.each([
+      [
+        "nobody was on it",
+        () => chartJson({ people: [] }),
+        "Nobody is on the org chart yet.",
+      ],
+      [
+        "it cannot load",
+        () => Response.json({ error: "Down" }, { status: 500 }),
+        "Fathom could not load the org chart.",
+      ],
+    ])(
+      "keeps the date row on a day when %s, to go back to today",
+      async (_, answer, said) => {
+        const { history } = await openFeatureTeams({
+          path: `/org-chart?day=${onDay}`,
+          signedInAs: seesDetails,
+          answers: { [`GET /api/org-chart?on=${onDay}`]: answer },
+        });
+        expect(await screen.findByText(said)).toBeDefined();
+        await userEvent.click(screen.getByRole("button", { name: "Today" }));
+        await waitFor(() => {
+          expect(history.location.search).not.toContain("day=");
+        });
+      },
+    );
 
     it("changes reporting lines from an earlier day for those who change people and Personal details", async () => {
       await openFeatureTeams({

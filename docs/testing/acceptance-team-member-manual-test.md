@@ -76,15 +76,13 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
       - 'Payments core'
       - 'Search and discovery', with a yellow dot before it
       - 'Platform reliability', with a grey lock before it
-    - Above the chart, a line in grey reads "Other dates need Personal access."
-    - There is no date control.
+    - There is no date row between the finder and the chart.
   - **Notes:**
 
 - [ ] `DAD8` Choose **Reporting teams** in the teams switch.
   - **Expected:**
     - The chart shows managers' teams.
-    - Above the chart, a line in grey reads "Other dates need Personal access."
-    - There is no date control.
+    - There is no date row between the finder and the chart.
   - **Notes:**
 
 ### MEMBER-02: A Team Member Reads the Plan Without Changing It

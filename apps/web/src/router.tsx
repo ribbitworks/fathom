@@ -17,7 +17,6 @@ import {
   editsField,
   seesEmployment,
   seesHiringPlan,
-  whyMissing,
   type Permission,
   personLengths,
   seesView,
@@ -665,8 +664,8 @@ const orgChartRoute = createRoute({
     return (
       <OrgChartPage
         showDates={seesEmployment(access)}
-        whyNoOtherDates={whyMissing("orgChartOtherDates", access)}
-        whyNoFutureDates={whyMissing("orgChartFutureDates", access)}
+        otherDates={seesView("orgChartOtherDates", access)}
+        futureDates={seesView("orgChartFutureDates", access)}
         canEdit={permissions.includes("people:edit")}
         changesDates={changesField(access, "managerHistory")}
         featureTeamEdits={featureTeamEdits}

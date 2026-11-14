@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Acceptance, Engineering Manager
@@ -273,10 +273,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** **People** page open, with the Metrics panel open.
 
-- [ ] `F2CD` Open the Draft menu, and select **Drafts beside live**.
+- [ ] `F2CD` Open the Draft menu, and select **Drafts & Live**.
   - **Expected:**
     - The Draft menu stays open.
-    - A tick is before **Drafts beside live**.
+    - A tick is before **Drafts & Live**.
   - **Notes:**
 
 - [ ] `ACCE` Press Esc.

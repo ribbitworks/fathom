@@ -29,9 +29,9 @@ Approvers approve and reject drafts on the [Drafts page](drafts-page.md).
 
 ## What the Draft Menu Shows
 
-Each table has a **Draft** menu, which chooses how drafts show:
+Each table has a **Draft** menu, which chooses how drafts show. Its button names the choice, such as **Drafts & Live**:
 
-- **Drafts beside live** shows each draft next to how the record is now.
+- **Drafts & Live** shows each draft next to how the record is now.
 - **Drafts applied** shows everything as it will be once the waiting drafts are approved. You see the drafts' dots, but no tints, bold or Live rows.
 - **Live only** shows everything as it is now. A green dot marks each record or value a waiting draft would change. Point at it to see what kind of change is waiting.
 

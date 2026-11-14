@@ -638,7 +638,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - No release on the timeline has a yellow dot.
   - **Notes:**
 
-- [ ] `278F` Choose **Drafts beside live** in the Draft menu.
+- [ ] `278F` Choose **Drafts & Live** in the Draft menu.
   - **Expected:** The faded **Harbor 3** is back in **Platform**'s third lane.
   - **Notes:**
 

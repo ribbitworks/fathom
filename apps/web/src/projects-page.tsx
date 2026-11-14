@@ -26,7 +26,6 @@ import {
   Loader,
   Menu,
   Modal,
-  SegmentedControl,
   Stack,
   Tabs,
   Text,
@@ -38,11 +37,7 @@ import {
   cardId,
   FeatureBoard,
 } from "./feature-board-view.tsx";
-import {
-  cardPartSchema,
-  type PlanMode,
-  planModeSchema,
-} from "./feature-board.ts";
+import { cardPartSchema, type PlanMode, planModes } from "./feature-board.ts";
 import { today } from "./today.ts";
 import { TableTips } from "./table-tips.tsx";
 import {
@@ -75,7 +70,7 @@ import {
 import { Icon } from "./icons.tsx";
 import { listsQuery } from "./lists.ts";
 import { LoadProblem } from "./load-problem.tsx";
-import { PageHeader } from "./page-header.tsx";
+import { ModeSwitch, PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import details from "./record-details.module.css";
 import {
@@ -847,19 +842,32 @@ export function ProjectsPage({
       <PageHeader
         title={page.title}
         beside={
-          tab === "features" &&
-          board !== undefined && (
-            <SegmentedControl
-              aria-label="What the page shows"
-              value={mode}
-              onChange={(next) => {
-                board.onMode(planModeSchema.parse(next));
+          page.tabbed ? (
+            <Tabs
+              value={tab}
+              classNames={{
+                list: classes.headingTabs,
+                tab: classes.headingTab,
               }}
-              data={[
-                { value: "table", label: "Table" },
-                { value: "board", label: "Board" },
-              ]}
-            />
+              onChange={(next) => {
+                leave(() => {
+                  onTab?.(projectTabSchema.parse(next));
+                });
+              }}
+            >
+              <Tabs.List>
+                {projectTabs.map((one) => (
+                  <Tabs.Tab key={one} value={one}>
+                    {wordsOf(one).label}
+                  </Tabs.Tab>
+                ))}
+              </Tabs.List>
+            </Tabs>
+          ) : (
+            tab === "features" &&
+            board !== undefined && (
+              <ModeSwitch modes={planModes} mode={mode} onMode={board.onMode} />
+            )
           )
         }
         action={
@@ -896,24 +904,6 @@ export function ProjectsPage({
           </Group>
         }
       />
-      {page.tabbed && (
-        <Tabs
-          value={tab}
-          onChange={(next) => {
-            leave(() => {
-              onTab?.(projectTabSchema.parse(next));
-            });
-          }}
-        >
-          <Tabs.List>
-            {projectTabs.map((one) => (
-              <Tabs.Tab key={one} value={one}>
-                {wordsOf(one).label}
-              </Tabs.Tab>
-            ))}
-          </Tabs.List>
-        </Tabs>
-      )}
       <Fragment key={tab}>{content}</Fragment>
       {question.dialog}
       <DecisionModal
