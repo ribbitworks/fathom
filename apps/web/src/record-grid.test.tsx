@@ -682,6 +682,52 @@ describe("frozen columns", () => {
     expect(disconnect).toHaveBeenCalled();
   });
 
+  describe("fades at an edge with more columns beyond it", () => {
+    const scrolledTo = (
+      scroll: HTMLElement,
+      scrollLeft: number,
+      widths = { clientWidth: 300, scrollWidth: 900 },
+    ) => {
+      Object.defineProperty(scroll, "clientWidth", {
+        value: widths.clientWidth,
+        configurable: true,
+      });
+      Object.defineProperty(scroll, "scrollWidth", {
+        value: widths.scrollWidth,
+        configurable: true,
+      });
+      scroll.scrollLeft = scrollLeft;
+      fireEvent.scroll(scroll);
+    };
+    const fade = (side: string) =>
+      document.querySelector(`[data-side="${side}"]`);
+
+    it("fades the right edge while columns lie that way, and the left once scrolled", () => {
+      renderGadgets({
+        gadgets: [gadget("g1")],
+        view: { ...emptyView, frozen: 0 },
+      });
+      const scroll = screen.getByRole("grid").parentElement as HTMLElement;
+
+      scrolledTo(scroll, 0);
+      expect(fade("after")).not.toBeNull();
+      expect(fade("before")).toBeNull();
+
+      scrolledTo(scroll, 600);
+      expect(fade("after")).toBeNull();
+      expect(fade("before")).not.toBeNull();
+    });
+
+    it("leaves the left edge to the frozen columns' shadow", () => {
+      renderGadgets({ gadgets: [gadget("g1")] });
+      const scroll = screen.getByRole("grid").parentElement as HTMLElement;
+
+      scrolledTo(scroll, 40);
+
+      expect(fade("before")).toBeNull();
+    });
+  });
+
   it("shadows the frozen columns' edge once the table scrolls sideways", () => {
     renderGadgets({ gadgets: [gadget("g1")] });
     const scroll = screen.getByRole("grid").parentElement as HTMLElement;

@@ -107,6 +107,9 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     // A side panel's name, at its top, and the line it and its marks stand on.
     "--fathom-panel-name-size": "18px",
     "--fathom-panel-name-line": "28px",
+    // A table's slim scroll bars, and the fade at an edge with more columns beyond it.
+    "--fathom-scrollbar-size": "10px",
+    "--fathom-scroll-fade-width": "24px",
   },
   light: {
     "--mantine-color-body": "#ffffff",
@@ -123,6 +126,7 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-size-2": "#8399ad",
     "--fathom-size-3": "#566f86",
     "--fathom-size-4": "#2f4659",
+    "--fathom-scrollbar-thumb": "var(--mantine-color-gray-4)",
   },
   dark: {
     "--mantine-color-body": "#17212a",
@@ -139,5 +143,6 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-size-2": "#5d7792",
     "--fathom-size-3": "#86a0ba",
     "--fathom-size-4": "#b9cde0",
+    "--fathom-scrollbar-thumb": "var(--mantine-color-dark-3)",
   },
 });

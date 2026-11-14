@@ -50,6 +50,22 @@ function measure(scroll: HTMLElement): Measured {
   };
 }
 
+// Whether a scrolling box has more of its content out of view to its left, and to its right, a
+// pixel's rounding aside.
+export interface ScrollEdges {
+  before: boolean;
+  after: boolean;
+}
+
+export const scrollEdges = ({
+  scrollLeft,
+  clientWidth,
+  scrollWidth,
+}: Pick<HTMLElement, "scrollLeft" | "clientWidth" | "scrollWidth">) => ({
+  before: scrollLeft > 0,
+  after: scrollLeft + clientWidth < scrollWidth - 1,
+});
+
 const sameMeasure = (first: Measured, second: Measured) =>
   first.room === second.room &&
   first.height === second.height &&

@@ -91,6 +91,8 @@ import {
   frozenLeft,
   scrollBesideFrozen,
   frozenVariables,
+  type ScrollEdges,
+  scrollEdges,
   useMeasured,
 } from "./frozen-columns.ts";
 import { shortcutsFor } from "./list-panel.tsx";
@@ -1655,8 +1657,13 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const [menuFor, setMenuFor] = useState<OpenMenu>();
   const [pointedAt, setPointedAt] = useState<OpenMenu & { place: PointedAt }>();
   const [dragging, setDragging] = useState<string>();
-  // Whether the table is scrolled sideways, which the frozen columns' edge shows with a shadow.
-  const [scrolled, setScrolled] = useState(false);
+  // Whether the table has columns out of view to either side: those to its left once scrolled
+  // sideways, which the frozen columns' edge shows with a shadow, or else a fade, and those to its
+  // right, which a fade shows.
+  const [edges, setEdges] = useState<ScrollEdges>({
+    before: false,
+    after: false,
+  });
   // The column whose filter is open, by key.
   const [filtering, setFiltering] = useState<string>();
 
@@ -1718,6 +1725,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   );
   const frozenAsked = Math.min(view.frozen ?? frozenByDefault, columns.length);
   const frozen = frozenLayout(measured, headerCells, frozenAsked);
+  useLayoutEffect(() => {
+    const box = scrollRef.current;
+    if (box !== null) setEdges(scrollEdges(box));
+  }, [measured, scrollRef]);
   const openedAtColumn = useRef(false);
   useLayoutEffect(() => {
     if (opensAtColumn === undefined || openedAtColumn.current) return;
@@ -3169,7 +3180,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
               )} * ${headerLineHeight} + ${headerPadding})`,
             }}
             onScroll={(event) => {
-              setScrolled(event.currentTarget.scrollLeft > 0);
+              setEdges(scrollEdges(event.currentTarget));
             }}
           >
             <Table
@@ -3681,7 +3692,23 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             <div
               aria-hidden="true"
               className={classes.frozenEdge}
-              data-scrolled={scrolled || undefined}
+              data-scrolled={edges.before || undefined}
+              style={{ height: measured.height }}
+            />
+          )}
+          {frozen.frozen === 0 && edges.before && (
+            <div
+              aria-hidden="true"
+              className={classes.scrollFade}
+              data-side="before"
+              style={{ height: measured.height }}
+            />
+          )}
+          {edges.after && (
+            <div
+              aria-hidden="true"
+              className={classes.scrollFade}
+              data-side="after"
               style={{ height: measured.height }}
             />
           )}
