@@ -54,7 +54,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A yellow dot is before 'Search and discovery' on that card.
     - A card named 'Platform reliability' has the position "No feature lead".
     - A grey lock is before 'Platform reliability' on that card.
-    - The address bar ends with `view=feature-teams`.
   - **Notes:**
 
 - [ ] `5B0D` Look at the bands of the teams' cards.

@@ -67,7 +67,7 @@ Run once, before the first test case.
    pnpm dev
    ```
 
-2. Confirm that the browser opens Fathom at the address `pnpm dev` prints, showing the **Sign in** page or the page last open.
+2. Confirm that the browser opens Fathom, showing the **Sign in** page or the page last open. If it doesn't open, open the web address `pnpm dev` prints.
 3. Leave the terminal running for the whole test.
 
 ### Restore the Seed Data

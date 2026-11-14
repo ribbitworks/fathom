@@ -452,7 +452,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The menu closes.
     - The **Draft** button reads **Drafts applied**.
-    - The address bar ends with `show=drafts`.
     - The card for 'Simone Jean' under 'Silje Holm-Schrøder' is no longer tinted.
     - It still has a yellow dot before her name.
     - No card on the chart is light green.

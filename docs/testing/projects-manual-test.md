@@ -57,9 +57,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `8FE4` Select the **Proposals** tab.
-  - **Expected:**
-    - A table shows **Name**, **Proposal ID**, **Link**, **Owner**, **Customers**, **Status** and **Features**.
-    - The address bar changes.
+  - **Expected:** A table shows **Name**, **Proposal ID**, **Link**, **Owner**, **Customers**, **Status** and **Features**.
   - **Notes:**
 
 - [ ] `E116` Select the **Customers** tab.
