@@ -1,4 +1,4 @@
-# Fathom — Architecture
+# Fathom: Architecture
 
 **Status:** Proposal for the owner's review
 **Last updated:** 2026-10-30

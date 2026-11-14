@@ -1,4 +1,4 @@
-# Fathom — Supported Platforms
+# Fathom: Supported Platforms
 
 **Status:** Draft
 **Last updated:** 2026-11-11

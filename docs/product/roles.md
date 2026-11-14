@@ -1,4 +1,4 @@
-# Fathom — Roles
+# Fathom: Roles
 
 **Status:** Starting roles, with open points marked **proposal**
 **Last updated:** 2026-11-13

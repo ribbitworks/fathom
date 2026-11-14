@@ -1,4 +1,4 @@
-# Fathom — Product Brief
+# Fathom: Product Brief
 
 **Status:** Draft
 **Last updated:** 2026-11-12
@@ -13,7 +13,7 @@ Fathom is the single place where a software organization's managers plan project
 
 ## Users
 
-About 20–30 users at first, mostly managers and leads, in one private company operating in British Columbia, with employees in several countries. Team members may be given accounts later. Not all users can edit; [Roles](roles.md) sets out who can do what.
+About 20 to 30 users at first, mostly managers and leads, in one private company, with employees in several countries. Team members may be given accounts later. Not all users can edit; [Roles](roles.md) sets out who can do what.
 
 Personas are named as they are widely known in the software industry. Each organization matches them to its own titles, such as those shown.
 
@@ -68,7 +68,7 @@ Personas are named as they are widely known in the software industry. Each organ
 - **Deployment:** Runs on-premises, on a server shared with other applications. No managed cloud services can be assumed. Details are in [Deployment](../operations/deployment.md).
 - **Network:** Fathom must be reachable only from the internal network, never from the internet, even though its server has internet access. Fathom must not depend on internet services at runtime, including CDNs, fonts, or external APIs, so personal data stays inside the company.
 - **Scale:** Small. Tens of users and a modest amount of data. Simple, easy-to-run choices matter more than horizontal scaling.
-- **Personal data:** Fathom holds personal information about employees, including employees and managers in India. It is expected to be governed by BC's Personal Information Protection Act (PIPA), and Indian law may also apply. Access is limited by role, and personal data not needed for planning is kept out of logs and other output.
+- **Personal data:** Fathom holds personal information about employees, who may work in several countries. It is expected to be governed by the privacy law where the company is based, and the law of other countries where employees work may also apply. Access is limited by role, and personal data not needed for planning is kept out of logs and other output.
 - **Configurability:** Fathom needs to be as configurable as possible, to suit multiple domains and organizational structures, but must meet the owner's requirements and use cases first.
 - **Front end:** The UI needs rich, interactive timeline, Gantt, org chart, and capacity views. This is the biggest driver of the front-end technology choice.
 
@@ -99,7 +99,7 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md). The order 
 
 1. **What-if scenarios:** The owner wants to compare a draft with the approved plan, and drafts with each other. Each row has only one draft, as the [Decisions Log](decisions.md#planning) sets out, so comparing alternative plans would be a separate feature, such as named scenarios. It could mature incrementally across versions of Fathom.
 1. **Roles and approval:** Which roles exist, and what can each see, edit, and approve? See the proposal in [Roles](roles.md). Which changes need approval is decided in the [Decisions Log](decisions.md#planning).
-1. **Privacy review:** A document describing the personal data Fathom holds and how it is protected will be prepared for HR to review and approve. Which laws apply, in Canada, India, and other countries, is to be confirmed in that review.
+1. **Privacy review:** A document describing the personal data Fathom holds and how it is protected will be prepared for HR to review and approve. Which laws apply, in each country where employees work, is to be confirmed in that review.
 1. **Backup location:** Where are backup files kept?
 1. **Project Manager input:** How do Project Managers give input on whether teams are in place, beyond what [Roles](roles.md) grants, such as comments or proposals?
 1. **Timeline changes:** The timeline goal asks for drag and drop to change dates and assignments. [The Roadmap and the Plan](decisions.md#planning) move features between cycles, and between the rows of the Features Board, first. Is dragging to shift a feature's allocations by months also needed?

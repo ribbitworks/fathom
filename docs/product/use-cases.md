@@ -1,4 +1,4 @@
-# Fathom — Use Cases
+# Fathom: Use Cases
 
 **Status:** Draft
 **Last updated:** 2026-11-09
