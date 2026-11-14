@@ -137,7 +137,7 @@ const kindFieldNames = new Map(
 );
 
 function fieldName({ field, column }: ChangedField, kind?: string): string {
-  if (field === "value") return column ?? "A deleted column";
+  if (field === "value") return column ?? "A removed column";
   return (
     kindFieldNames.get(kind ?? "")?.get(field) ??
     builtInColumnNames.get(field) ??
@@ -335,15 +335,15 @@ const plurals = new Map([
   ["release", "releases"],
 ]);
 
-// What was done to a record added or deleted, by what the change set did: "added" or "deleted" for
+// What was done to a record added or removed, by what the change set did: "added" or "removed" for
 // saved changes, and, for drafts, "drafted adding", "approved removing", and so on.
-function addedOrDeleted(record: ChangedRecord, kind: ChangeKind): string {
+function addedOrRemoved(record: ChangedRecord, kind: ChangeKind): string {
   const added = record.action === "created";
   if (kind === "approval")
     return added ? "approved adding" : "approved removing";
   if (kind === "discard") return "discarded the draft of";
   if (record.draft) return added ? "drafted adding" : "drafted removing";
-  return added ? "added" : "deleted";
+  return added ? "added" : "removed";
 }
 
 // Records of one kind added or deleted together, put in one sentence that names them all, such as
@@ -353,7 +353,7 @@ function describeGroup(
   kind: ChangeKind,
 ): RecordWords {
   const [first] = records as [ChangedRecord];
-  const verb = addedOrDeleted(first, kind);
+  const verb = addedOrRemoved(first, kind);
   const lists = new Set(records.map(({ list }) => list));
   const [list] = lists;
   const where =
@@ -412,7 +412,7 @@ function recordWords(
   const named = thing(record);
   if (record.action === "created" || record.action === "deleted") {
     return {
-      sentence: `${addedOrDeleted(record, kind)} ${named}`,
+      sentence: `${addedOrRemoved(record, kind)} ${named}`,
       details: [],
     };
   }
@@ -422,7 +422,7 @@ function recordWords(
       sentence: `rejected the draft of ${named}`,
       details:
         typeof reason?.newValue === "string"
-          ? [["Reason: ", { strong: reason.newValue }]]
+          ? [[{ strong: "Reason" }, ": ", { value: reason.newValue }]]
           : [],
     };
   }

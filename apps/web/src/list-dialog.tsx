@@ -3,7 +3,7 @@
 // The dialog for creating a list or editing one: its name, description, and, for a list not yet
 // approved and a role with Classify data, the class of the values chosen from it; an approved list
 // changes class from its panel instead. Editing also offers retiring or restoring the list, and
-// deleting it, except for a built-in list, which is kept. The name is checked against the other
+// removing it, except for a built-in list, which is kept. The name is checked against the other
 // lists as it is typed. The dialog cannot be closed while a change is being saved.
 
 import {
@@ -189,7 +189,7 @@ export function ListDialog({
                   onDelete(list);
                 }}
               >
-                Delete list
+                Remove list
               </Button>
             </>
           )}

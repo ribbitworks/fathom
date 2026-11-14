@@ -180,7 +180,7 @@ export function UnpublishedControl() {
       >
         <Stack gap="md">
           <Text fz="sm">
-            The unpublished changes are deleted. This cannot be undone.
+            The unpublished changes are discarded. This cannot be undone.
           </Text>
           <Group justify="flex-end">
             <Button

@@ -35,7 +35,7 @@ Select **Retire** or **Remove** in the choice's **⋯** menu. A retired choice s
 
 ### Change, Retire or Delete a List
 
-Select **Edit list** in the list's panel. Change the name or description, and select **Save**. **Retire list** and **Delete list** are at the foot. A list can't be retired or deleted while a column uses it.
+Select **Edit list** in the list's panel. Change the name or description, and select **Save**. **Retire list** and **Remove list** are at the foot. A list can't be retired or removed while a column uses it.
 
 ### Change a List's Class
 
@@ -48,7 +48,7 @@ For a role that may classify data, select **Change class…** in the list's pane
 
 ## Marks and Terms
 
-- **Built in** marks a list Fathom needs, such as **Positions** or **Hiring states**. It can't be retired or deleted, but its choices are the organization's own.
+- **Built in** marks a list Fathom needs, such as **Positions** or **Hiring states**. It can't be retired or removed, but its choices are the organization's own.
 - **A meaning**, such as **Proposed** or **Open**, ends each choice in a list with meanings. Fathom acts on the meaning and shows the choice's name. Choose the meaning when adding or changing the choice.
 - **A weight**, such as **2**, ends each choice in **Feature sizes**: how many of the size S it counts as.
 - **Needed for** and a meaning, under a choice's greyed-out **Retire** and **Remove**, means it's the last choice with that meaning, so it stays. A list's name and **needs a choice**, such as **Positions needs a choice**, says the same for a list that must keep one.

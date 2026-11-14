@@ -1761,7 +1761,7 @@ describe("creating and editing lists", () => {
       await screen.findByRole("button", { name: "Edit list" }),
     );
     await userEvent.click(
-      await screen.findByRole("button", { name: "Delete list" }),
+      await screen.findByRole("button", { name: "Remove list" }),
     );
     expect(await within(panel()).findByText(/Draft: removed/)).toBeDefined();
     expect(
@@ -1808,7 +1808,7 @@ describe("creating and editing lists", () => {
       await screen.findByRole("button", { name: "Edit list" }),
     );
     await userEvent.click(
-      await screen.findByRole("button", { name: "Delete list" }),
+      await screen.findByRole("button", { name: "Remove list" }),
     );
     expect(await screen.findByText("Discarded Regions.")).toBeDefined();
     await waitFor(() => {
@@ -1872,7 +1872,7 @@ describe("creating and editing lists", () => {
       await screen.findByRole("button", { name: "Edit list" }),
     );
     await userEvent.click(
-      await screen.findByRole("button", { name: "Delete list" }),
+      await screen.findByRole("button", { name: "Remove list" }),
     );
     expect(
       await screen.findByText("Fathom could not delete Skills."),
@@ -3661,7 +3661,7 @@ describe("built-in lists and lists with meanings", () => {
     expect(within(dialog).queryByRole("button", { name: "Retire list" })).toBe(
       null,
     );
-    expect(within(dialog).queryByRole("button", { name: "Delete list" })).toBe(
+    expect(within(dialog).queryByRole("button", { name: "Remove list" })).toBe(
       null,
     );
     expect(within(dialog).queryByRole("radio")).toBe(null);

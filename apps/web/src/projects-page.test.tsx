@@ -2963,7 +2963,7 @@ describe("the Features page", () => {
       });
       const dialog = await editColumn();
       await userEvent.click(
-        within(dialog).getByRole("button", { name: "Delete column" }),
+        within(dialog).getByRole("button", { name: "Remove column" }),
       );
       await waitFor(() => {
         expect(
@@ -2977,7 +2977,7 @@ describe("the Features page", () => {
       await openWith(withColumns({ canEditFeatures: false }));
       const dialog = await editColumn();
       expect(
-        within(dialog).queryByRole("button", { name: "Delete column" }),
+        within(dialog).queryByRole("button", { name: "Remove column" }),
       ).toBeNull();
     });
 

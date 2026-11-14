@@ -549,7 +549,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:**
     - The **Edit column** dialog opens.
     - **Type** is greyed out.
-    - There is no **Delete column** button.
+    - There is no **Remove column** button.
   - **Notes:**
 
 - [ ] `1BF3` Select **Cancel**.
@@ -676,10 +676,10 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 - [ ] `8B94` Open the `Fictional Score` column menu and select **Edit column**.
   - **Expected:**
     - The **Edit column** dialog opens.
-    - It has a red **Delete column** button.
+    - It has a red **Remove column** button.
   - **Notes:**
 
-- [ ] `0D9A` Select **Delete column**.
+- [ ] `0D9A` Select **Remove column**.
   - **Expected:**
     - The dialog closes.
     - A notice reads "Deleted the Fictional Score column."

@@ -241,9 +241,10 @@ function configFields(
   );
 }
 
-// A new order, from the live one, with each order marked.
+// A new order, from the live one, named as a field is, with each order marked.
 const orderPhrase = (live: string[], drafted: string[]): Phrase => [
-  "From ",
+  { strong: "Order" },
+  " from ",
   { value: live.join(", ") },
   " to ",
   { value: drafted.join(", ") },

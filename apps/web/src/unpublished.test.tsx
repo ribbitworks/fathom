@@ -144,7 +144,7 @@ describe("unpublished changes", () => {
     let dialog = await chooseDiscard();
     expect(
       within(dialog).getByText(
-        "The unpublished changes are deleted. This cannot be undone.",
+        "The unpublished changes are discarded. This cannot be undone.",
       ),
     ).toBeDefined();
     await userEvent.click(

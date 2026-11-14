@@ -1785,7 +1785,7 @@ describe("columns", () => {
     );
     dialog = await screen.findByRole("dialog", { name: "Edit column" });
     await userEvent.click(
-      within(dialog).getByRole("button", { name: "Delete column" }),
+      within(dialog).getByRole("button", { name: "Remove column" }),
     );
     expect(
       await screen.findByText("Deleted the Role on team column."),

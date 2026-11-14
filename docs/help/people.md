@@ -92,14 +92,14 @@ You're done once the fill is approved. The person then takes the hire's place.
 
 You're done when the new column shows in the table, with a hollow dot until you publish it.
 
-### Change or Delete a Column
+### Change or Remove a Column
 
 1. Open the menu on the column's heading.
 1. Select **Edit column**.
 1. Make your change.
 1. Select **Save**.
 
-To delete the column instead, select **Delete column** in that dialog.
+To remove the column instead, select **Remove column** in that dialog.
 
 You're done when the column shows your change, with a hollow dot until you publish it.
 

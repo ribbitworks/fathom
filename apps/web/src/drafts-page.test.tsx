@@ -167,7 +167,7 @@ describe("the Drafts page", () => {
   it("puts each draft in words, newest first, with what it changes", async () => {
     await openDrafts();
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to Avery Fictional: Start set to Nov 2, 2026; Site from Northmere to Harbour; A deleted column changed, Draft",
+      "Fictional Editor drafted changes to Avery Fictional: Start set to Nov 2, 2026; Site from Northmere to Harbour; A removed column changed, Draft",
       "Fictional Editor drafted adding Blake Fictional: ID set to E-p2; Site set to Harbour, Draft: added",
       "Fathom drafted removing Casey Fictional, Draft: removed",
       "Fictional Editor drafted changes to Drew Fictional: Name from Drew Before to Drew Fictional, RejectedReason: Fictional reason",
@@ -232,7 +232,7 @@ describe("the Drafts page", () => {
       "Fictional Editor drafted changes to the choice Northmere Labs in Sites: Name from Northmere to Northmere Labs; gone changed, Draft",
     );
     expect(shown).toContain(
-      "Fictional Editor drafted a new order for Sites: From Harbour, Northmere, a removed choice to Northmere Labs, Harbour, Rejected, reorderedReason: Keep the order",
+      "Fictional Editor drafted a new order for Sites: Order from Harbour, Northmere, a removed choice to Northmere Labs, Harbour, Rejected, reorderedReason: Keep the order",
     );
     expect(shown).toContain(
       "Fictional Editor drafted adding the list Teams, Draft: added",

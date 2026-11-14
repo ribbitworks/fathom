@@ -6,7 +6,7 @@
 // in, are offered it, and, for a web link, note, or number column not yet approved and a role with
 // Classify data, the class of its values; an approved column changes class from its menu instead.
 // A column on Features is General, so it offers only General lists. Changing a column also offers
-// deleting it, to those who may. The name is checked against the other columns as it is typed. The
+// removing it, to those who may. The name is checked against the other columns as it is typed. The
 // dialog cannot be closed while a change is being saved.
 
 import {
@@ -70,7 +70,7 @@ export function ColumnDialog({
   lists: List[];
   // Given the column as saved, and the change set it was saved in.
   onSaved: (saved: Field, changeSetId: string | null) => void;
-  // Absent for those who may not delete the column.
+  // Absent for those who may not remove the column.
   onDelete?: ((field: Field) => void) | undefined;
   onCancel: () => void;
   onBusy: (busy: boolean) => void;
@@ -283,7 +283,7 @@ export function ColumnDialog({
                 onDelete(field);
               }}
             >
-              Delete column
+              Remove column
             </Button>
           )}
           <Group gap="xs" ml="auto">
