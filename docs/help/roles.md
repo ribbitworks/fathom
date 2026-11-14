@@ -1,60 +1,75 @@
 # Roles
 
-Roles lists the roles accounts can hold, and what each lets its holders see and do. Roles that see administration see the page, under **Administration**, and roles that manage accounts, such as Administrator, change roles and make new ones. Which accounts hold a role is chosen on [Accounts](accounts.md).
+The **Roles** page lists the roles accounts can hold, and what each one lets its holders see and do. You find it under **Administration** in the left-hand menu, if your role sees administration. If your role also manages accounts, as the Administrator does, you can change roles and make new ones.
 
-## Main Tasks
+## What to Know First
 
-### See What a Role Gives
+- **Areas:** Fathom's data is split into areas, such as the plan, people and configuration. A role is given access area by area.
+- **Drafts:** most changes in Fathom are drafts. Nobody else sees them until they're published, and they take effect once someone approves them.
+- **View, Approve and Edit:** **View** lets the role see an area. **Edit** lets it change the area, as drafts where the area has them. **Approve** lets it approve or reject other people's drafts there.
+- **Data classes:** each piece of data has a class, **General**, **Personal** or **Confidential**, which decides who sees it. A role sees an area's **Personal** or **Confidential** data only if it's also given that class. See [Data classes](data-classes.md).
+- **Who holds a role:** you give roles to accounts on the [Accounts](accounts.md) page.
 
-Select **View** in the role's row. Roles that may change roles see **Edit** and **Copy** there instead. The dialog shows the role's grid on the left and a summary on the right. **Roles** under **Help** in the left-hand menu says what each role Fathom starts with is for.
+## See What a Role Gives
 
-### Change a Role
+1. Select **View** in the role's row. If you may change roles, select **Edit** instead.
+
+The dialog shows a grid of boxes on the left, and a summary of what the role sees and does on the right. **Roles** under **Help** in the left-hand menu says what each role Fathom starts with is for.
+
+## Change a Role
 
 1. Select **Edit** in the role's row.
-1. Tick or untick boxes in the grid, and change the **Name** or **Description** if needed. The summary marks what each change adds and takes away.
+1. Tick or untick boxes in the grid. The summary marks what each change adds and takes away.
+1. Change the **Name** or **Description**, if you need to.
 1. Select **Save**.
-1. If the change alters what any account may do, a list says what each of those accounts **Gains** and **Loses**. Check it, then select **Save changes**, or **Cancel** to go back to the grid. Otherwise the role is saved at once.
 
-### Undo Changes Before Saving
+If the change alters what any account may do, Fathom lists those accounts first, with what each one **Gains** and **Loses**. Check the list, then select **Save changes**. Select **Cancel** to go back to the grid instead.
 
-- **Reset** puts the boxes back as they were when the dialog opened. It leaves the name and description as they are.
-- **Restore template**, on a role Fathom starts with, puts back Fathom's own name, description and boxes for it, keeping ticked any box that must stay, such as **Edit** on **Administration** when no other active account would keep it.
+If no account is affected, Fathom saves the role straight away.
 
-Neither changes the role until **Save**. **Cancel** closes the dialog without saving, and is the way back from a name or description changed by mistake.
+## Go Back Before Saving
 
-### Make a New Role
+- **Reset** puts the boxes back as they were when you opened the dialog. It leaves the name and description alone.
+- **Restore template** puts back Fathom's own name, description and boxes for a role Fathom starts with.
+- **Cancel** closes the dialog without saving anything.
 
-1. Select **Copy** in the row of the role closest to what's needed, or **New role** to start with nothing ticked.
-1. Type the **Name**, and a **Description** if it helps.
+## Make a New Role
+
+The quickest way is to copy the role closest to what you need.
+
+1. Select **Copy** in that role's row. To start with nothing ticked, select **New role** instead.
+1. Type the **Name**. No other role can have the same one.
+1. Type a **Description**, if it helps.
 1. Tick the boxes the role needs.
-1. Select **Create role**. Each role needs a name no other role has.
+1. Select **Create role**.
 
-A new role is held by no one until it's given to accounts on [Accounts](accounts.md).
+Nobody holds a new role until you give it to accounts.
 
 ## Reading the Grid
 
-- **Rows** are the areas a role may reach: **Plan**, **Features and releases**, **Allocations**, **People**, **Feature teams**, **Hiring plan**, **Configuration** and **Administration**.
-- **View** lets the role see the area, and **Edit** change it, as drafts where the area has them. **Edit** brings **View** with it.
-- **Approve** lets the role approve or reject others' drafts in the area. **Administration** has none, since its changes aren't drafts. It doesn't let the role see anything: a draft can be approved only by a role that sees all its data.
-- **Data classification** rows say which classes of data the role sees and changes within the areas it reaches. **General** comes with every area. **Personal** and **Confidential** are each ticked on their own, as [Data classes](data-classes.md) explains.
-- **Hiring plan** also needs the class the hiring plan is kept in, **Confidential** unless it's changed on [Data classes](data-classes.md): **View** and **Approve** need **View** on that class, and **Edit** needs **Edit** on it. Without them, planned hires show only as placeholders.
-- **Classify data** lets the role move details, lists and columns between the classes it sees.
-- **Approve own drafts** lets the role approve drafts its holders changed themselves, in the areas it approves, which otherwise need another approver.
+- **Rows** are the areas: **Plan**, **Features and releases**, **Allocations**, **People**, **Feature teams**, **Hiring plan**, **Configuration** and **Administration**.
+- **Edit** brings **View** with it, so ticking **Edit** ticks **View** too.
+- **Approve** doesn't let the role see anything. A role can approve a draft only if it sees all the draft's data.
+- **Administration** has no **Approve**, since changes to accounts, roles and settings aren't drafts.
+- Under **Data classification**, **General** comes with every area. You tick **Personal** and **Confidential** on their own.
+- **Hiring plan** also needs the hiring plan's class, which is **Confidential** unless someone changes it. Without that class, planned hires show only as placeholders.
+- **Classify data**, under the grid, lets the role change the class of details, lists and columns.
+- **Approve own drafts**, under the grid, lets the role approve drafts its holders made themselves, which otherwise need someone else.
 
 ## Reading the Summary
 
-- **Sees** lists the pages the role opens, and the views on them its classes allow, such as **Org chart on other dates**.
-- **Doesn't see** lists the pages the role doesn't open, and each view it misses, with the permissions and classes that view needs. A page the role's permissions reach but whose data it can't see, such as **Capacity** without Personal details, is listed here too, since the role doesn't have it. So is each box ticked on **Hiring plan** that does nothing without the hiring plan's class, with what it needs.
+- **Sees** lists the pages the role opens, and the views its classes allow, such as **Org chart on other dates**.
+- **Doesn't see** lists the pages it doesn't open, and each view it misses, with what that view needs.
 - **Can** and **Cannot** say, in a sentence each, what the role does and doesn't do.
-- **Highlighted** lines are new since the dialog opened, and **struck-through** lines are taken away.
+- A line in bold teal is new since you opened the dialog. A line struck through in red is taken away.
 
-## Marks and Terms
+## Marks on the Page
 
-- **A greyed-out tick** comes with another box, such as **View** with **Edit**, or must stay, such as **Edit** on **Administration** when no other active account would keep it. Fathom always keeps one account that manages accounts.
-- **A greyed-out, unticked box** needs another first, such as **Approve** on **People**, which needs **View** on **People**. Unticking a box also unticks those that need it.
+- **A greyed-out tick** comes with another box, such as **View** with **Edit**. It can also mean the box must stay: Fathom always keeps one active account that manages accounts.
+- **A greyed-out empty box** needs another box first, such as **Approve** on **People**, which needs **View** on **People**. Unticking a box also unticks the ones that need it.
 - **Accounts** gives how many active accounts hold the role.
 - **Personal** and **Confidential** are coloured in descriptions, so the classes stand out.
 
-## Where Changes Go
+A change to a role takes effect at once for every account that holds it. It isn't a draft, so nobody approves it. Each change is recorded in the access history, and marked as worth checking. See [Access history](access-history.md).
 
-A change to a role takes effect at once for every account that holds it, with no draft. Each is recorded in the [access history](access-history.md), and marked as worth a second look.
+You're done when the summary shows what the role should see and do, and the role's row is back in the list.

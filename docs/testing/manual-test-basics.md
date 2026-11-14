@@ -126,7 +126,7 @@ Run only where a test says so. This deletes every account and record in the deve
 
 1. Select the **⋯** button beside the Publish button, then **Discard all…**.
 2. In the dialog titled **Discard** followed by the number of changes, select **Discard**.
-3. Confirm that a notice says "Discarded" followed by the number of changes, and that the Publish button is gone.
+3. Confirm that a notification says "Discarded" followed by the number of changes, and that the Publish button is gone.
 
 ## Terms
 
@@ -151,7 +151,7 @@ Run only where a test says so. This deletes every account and record in the deve
 - **Details button:** the small button with an arrow out of a box at the right of a row's first cell, such as its **Name** or **Stream** cell, shown while the row is pointed at.
 - **Side panel:** the panel on the right that opens from **Show details** in a row's ⋯ menu, or from the details button. Steps also call it the details panel. It is headed with the record's name, and its close button, an **×**, is at its top right.
 - **Change button:** a small pencil at the right of a value in a side panel, shown to accounts that may change it.
-- **Grid:** the table on the left of the role dialog, with an area in each row and the columns **View**, **Draft**, **Approve** and **Edit**.
+- **Grid:** the table on the left of the role dialog, with an area in each row and the columns **Area**, **View**, **Approve** and **Edit**. Under a **Data classification** heading, its last rows are the classes **General**, **Personal** and **Confidential**.
 - **Chart:** on the **Org chart** page, the large panel under the heading that holds the cards.
 - **Finder:** the box reading **Find a person or team** at the top left of the **Org chart** page, above the chart.
 - **Teams switch:** the two-part switch reading **Reporting teams** and **Feature teams** at the top right of the **Org chart** page.

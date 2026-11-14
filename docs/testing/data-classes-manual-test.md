@@ -94,7 +94,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:** The top bar's right end reads "Feature Lead".
   - **Notes:**
 
-- [ ] `A892` Select the **People** page in the left-hand menu, and read the column headers.
+- [ ] `25D8` Select the **People** page in the left-hand menu.
+  - **Expected:** The **People** table shows.
+  - **Notes:**
+
+- [ ] `A892` Read the column headers.
   - **Expected:** There are no **Start** and **End** columns.
   - **Notes:**
 
@@ -137,7 +141,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `C2A4` Select **Change**.
   - **Expected:**
     - The dialog closes
-    - No notice shows
+    - No notification shows
     - The Publish button doesn't appear
     - **Start date**'s class reads **General**, with no grey box or lock
   - **Notes:**
@@ -174,7 +178,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:** The top bar's right end reads "Feature Lead".
   - **Notes:**
 
-- [ ] `C812` Select the **People** page in the left-hand menu, and read the column headers.
+- [ ] `3577` Select the **People** page in the left-hand menu.
+  - **Expected:** The **People** table shows.
+  - **Notes:**
+
+- [ ] `C812` Read the column headers.
   - **Expected:** **Start** and **End** columns are shown.
   - **Notes:**
 
@@ -218,7 +226,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `71F0` Select the Publish button.
-  - **Expected:** A notice reads "Published 1 change."
+  - **Expected:** A notification reads "Published 1 change."
   - **Notes:**
 
 - [ ] `525B` Open the **Portfolio** column menu, and select **Approve…**.
@@ -228,7 +236,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `4ED3` Select **Approve**.
-  - **Expected:** A notice reads "Approved 1 draft."
+  - **Expected:** A notification reads "Approved 1 draft."
   - **Notes:**
 
 - [ ] `F2C4` Open the **Portfolio** column menu, and select **Change class…**.
@@ -248,7 +256,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - The box lines up with the heading's text
   - **Notes:**
 
-- [ ] `EAD1` Open the column menu of **Site**, which draws on a list.
+- [ ] `EAD1` Open the column menu of **Site**.
   - **Expected:**
     - **Change class…** is greyed out
     - "Takes the class of its list" is under it
