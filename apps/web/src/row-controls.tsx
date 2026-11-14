@@ -11,14 +11,10 @@ import type { MouseEvent, ReactNode } from "react";
 import { Icon } from "./icons.tsx";
 import classes from "./row-controls.module.css";
 
-const keptFromCell = {
-  onMouseDown: (event: MouseEvent) => {
-    event.stopPropagation();
-  },
-};
-
+// A button over a cell, which the cell would otherwise take a click on as choosing or editing it.
+// Only the click is kept from it: the press reaches the page, so an open menu closes, as on any
+// click outside it.
 const overCell = (onSelect: () => void) => ({
-  ...keptFromCell,
   onClick: (event: MouseEvent) => {
     event.stopPropagation();
     onSelect();
@@ -59,11 +55,9 @@ export const actionsFor = (name: string) => `Actions for ${name}`;
 // The ⋯ that opens a menu, such as a record's, its drafts' or the unpublished changes'.
 export function MoreButton({
   label,
-  inCell = false,
   ...button
 }: {
   label: string;
-  inCell?: boolean;
   size?: "sm";
   id?: string;
   tabIndex?: number;
@@ -76,7 +70,6 @@ export function MoreButton({
       aria-label={label}
       // What the menu gives its target, such as opening it on a click.
       {...button}
-      {...(inCell ? keptFromCell : {})}
     >
       <Icon name="more" />
     </ActionIcon>

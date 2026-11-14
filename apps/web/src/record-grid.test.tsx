@@ -1970,6 +1970,27 @@ describe("the row's controls", () => {
     );
   });
 
+  it("closes an open menu when the details button is pressed", async () => {
+    const showDetails = vi.fn();
+    renderGadgets({ gadgets: [gadget("a")], table: withDetails(showDetails) });
+    await userEvent.click(rowActions("Gadget a"));
+    await screen.findByRole("menu");
+
+    await userEvent.click(
+      within(document.getElementById("cell-a-name") as HTMLElement).getByRole(
+        "button",
+        { name: "Show details of Gadget a" },
+      ),
+    );
+
+    expect(showDetails).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(rowActions("Gadget a").getAttribute("aria-expanded")).toBe(
+        "false",
+      );
+    });
+  });
+
   it("offers Show details first in the row's menu", async () => {
     const showDetails = vi.fn();
     renderGadgets({ gadgets: [gadget("a")], table: withDetails(showDetails) });
