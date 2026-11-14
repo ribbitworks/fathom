@@ -1651,7 +1651,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, in the main browser, changed from ACC-30. The second browser is still signed in as the Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, from ACC-14; steps `63FA` and `572B` act there. Step `0EDF` signs in as another account in the main browser.
 
-**Preconditions:** Signed in with this account. **Releases** page open from the left-hand menu, with 'Platform' selected in the streams table.
+**Preconditions:** Signed in with this account. **Releases** page open from the left-hand menu, with 'Platform' open in the side panel.
 
 - [ ] `6A3F` Look at the side panel's heading and its **Cycles** table.
   - **Expected:**
@@ -1709,7 +1709,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] `F3E0` Select 'Platform' in the streams table.
+- [ ] `F3E0` Select the details button at the right of the **Stream** cell of 'Platform'.
   - **Expected:** The side panel's heading reads 'Platform'.
   - **Notes:**
 
@@ -1732,7 +1732,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-31. Step `3DB5` signs in as another account.
 
-**Preconditions:** Signed in with this account. **Releases** page open from the left-hand menu, with 'Platform' selected in the streams table.
+**Preconditions:** Signed in with this account. **Releases** page open from the left-hand menu, with 'Platform' open in the side panel.
 
 - [ ] `38DB` Select **New release…** under **Releases** in the side panel.
   - **Expected:**
@@ -1768,7 +1768,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] `3F69` Select 'Platform' in the streams table.
+- [ ] `3F69` Select the details button at the right of the **Stream** cell of 'Platform'.
   - **Expected:** The side panel's heading reads 'Platform'.
   - **Notes:**
 
@@ -1802,7 +1802,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] `7DFE` Select 'Platform' in the streams table.
+- [ ] `7DFE` Select the details button at the right of the **Stream** cell of 'Platform'.
   - **Expected:**
     - There is no **New release stream** button.
     - There is no **New release…** button.
@@ -1899,7 +1899,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] `9A61` Select 'Platform' in the streams table.
+- [ ] `9A61` Select the details button at the right of the **Stream** cell of 'Platform'.
   - **Expected:**
     - `Fictional Harbor 4` is under **Releases**.
     - 'Harbor 1', 'Harbor 3' and `Fictional Harbor 4` have no **⋯** button.
@@ -2174,7 +2174,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, changed from ACC-41.
 
-**Preconditions:** Signed in with this account, acting as **Feature Lead**. **Releases** page open, with 'Platform' selected in the streams table.
+**Preconditions:** Signed in with this account, acting as **Feature Lead**. **Releases** page open, with 'Platform' open in the side panel.
 
 - [ ] `95E5` Open the account menu.
   - **Expected:**
@@ -2200,7 +2200,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as ACC-42.
 
-**Preconditions:** ACC-42 done, acting as **Engineering Manager**. **Releases** page open, with 'Platform' selected in the streams table.
+**Preconditions:** ACC-42 done, acting as **Engineering Manager**. **Releases** page open, with 'Platform' open in the side panel.
 
 - [ ] `2E35` Select the **⋯** button at the end of the 'Harbor 3' row, then **Change…**.
   - **Expected:**
@@ -2232,7 +2232,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] `D9AF` Select 'Platform' in the streams table.
+- [ ] `D9AF` Select the details button at the right of the **Stream** cell of 'Platform'.
   - **Expected:** The side panel's heading reads 'Platform'.
   - **Notes:**
 
@@ -2792,7 +2792,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] `F456` Select `Fictional Mainline` in the streams table.
+- [ ] `F456` Select the details button at the right of the **Stream** cell of `Fictional Mainline`.
   - **Expected:**
     - No row in the side panel has a dot.
     - `Fictional Mainline 1` still ships on "2027-06-15", "15 days before 27.2 ends".

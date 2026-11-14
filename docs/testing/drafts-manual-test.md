@@ -625,7 +625,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Project Manager, `project.manager@fathom.test`, changed from DRAFT-24. Step `B553` signs in as another account.
 
-**Preconditions:** Run Reset the Database first. Signed in with this account. **Releases** page open from the left-hand menu, with 'Platform' selected in the streams table.
+**Preconditions:** Run Reset the Database first. Signed in with this account. **Releases** page open from the left-hand menu, with 'Platform' open in the side panel.
 
 - [ ] `D7A6` Under **Releases** in the side panel, select the **⋯** button at the end of the row of 'Harbor 1', then **Change…**.
   - **Expected:**

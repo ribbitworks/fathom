@@ -106,7 +106,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The table of release streams shows.
   - **Notes:**
 
-- [ ] `50E9` Select 'Platform' in the table.
+- [ ] `50E9` Select the details button at the right of the **Stream** cell of 'Platform'.
   - **Expected:**
     - Under **Releases**, the side panel lists 'Harbor 1', 'Harbor 2 LTS', 'Harbor 3' and 'Harbor 4'
     - A light green Live row is under 'Harbor 2 LTS' and under 'Harbor 3'
@@ -139,7 +139,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The table of release streams shows.
   - **Notes:**
 
-- [ ] `F936` Select 'Platform' in the table.
+- [ ] `F936` Select the details button at the right of the **Stream** cell of 'Platform'.
   - **Expected:** The side panel opens, with **New release…** under **Releases**, and there is no **New release stream** button at the top right of the page.
   - **Notes:**
 
@@ -454,7 +454,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-14 ended with.
 
-**Preconditions:** Team Member granted only **Edit** on **Features and releases**, **Approve** on **Features and releases** and **Approve own drafts** through Grant Team Member Only Some Permissions, signed in with this account. **Releases** page open, with 'Platform' selected in the streams table.
+**Preconditions:** Team Member granted only **Edit** on **Features and releases**, **Approve** on **Features and releases** and **Approve own drafts** through Grant Team Member Only Some Permissions, signed in with this account. **Releases** page open, with 'Platform' open in the side panel.
 
 - [ ] `A0FF` Under **Releases** in the side panel, select the **⋯** button at the end of the 'Harbor 1' row, then **Change…**.
   - **Expected:** A dialog titled "Change Harbor 1" opens.

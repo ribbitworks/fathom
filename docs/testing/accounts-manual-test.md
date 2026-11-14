@@ -341,7 +341,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] `DAAD` Select 'Platform' in the table.
+- [ ] `DAAD` Select the details button at the right of the **Stream** cell of 'Platform'.
   - **Expected:** In the panel beside the table, under **Releases**:
     - The 'Harbor 1' row has no **⋯** button
     - There is no **New release…** button

@@ -265,7 +265,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'Platform' has no grey lock in its slot.
   - **Notes:**
 
-- [ ] `AE97` Select 'Platform' in the table.
+- [ ] `AE97` Select the details button at the right of the **Stream** cell of 'Platform'.
   - **Expected:** The side panel opens, headed 'Platform'.
   - **Notes:**
 
@@ -1119,7 +1119,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:** The streams table shows 'Platform'.
   - **Notes:**
 
-- [ ] `451F` Select 'Platform' in the table.
+- [ ] `451F` Select the details button at the right of the **Stream** cell of 'Platform'.
   - **Expected:**
     - A side panel for 'Platform' opens.
     - Under **Releases**, each 'Harbor' row ends with "ships" and a day, such as "26.3 to 26.4 · ships 2026-12-31".

@@ -536,7 +536,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The tint and this quarter's underline are clear against the dark page.
   - **Notes:**
 
-- [ ] `36A8` Select 'Platform' in the streams table.
+- [ ] `36A8` Select the details button at the right of the **Stream** cell of 'Platform'.
   - **Expected:** The panel of 'Platform' opens.
   - **Notes:**
 
@@ -545,6 +545,34 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A panel titled 'Harbor 2' opens above the stream's panel.
     - The note's headings, bullets, checklist, red text and link are easy to read.
     - Both panels read well.
+  - **Notes:**
+
+- [ ] `CD9F` Select the details button at the right of the **Stream** cell of 'Patches'.
+  - **Expected:**
+    - The panel of 'Patches' opens, and the panel of 'Harbor 2' closes.
+    - The yellow **Retired** box in its heading is easy to read.
+  - **Notes:**
+
+- [ ] `9AAE` Select the **⋯** button beside the close button at the top of the side panel, then **Approve…**.
+  - **Expected:** A dialog titled "Approve 1 draft?" opens, and is easy to read.
+  - **Notes:**
+
+- [ ] `9009` Select **Approve**.
+  - **Expected:**
+    - A notification says "Approved 1 draft."
+    - The grey **Retired** box in the heading of the side panel is easy to read.
+  - **Notes:**
+
+- [ ] `07F1` Select **Views**.
+  - **Expected:** **Show retired (1)** is easy to read in the menu.
+  - **Notes:**
+
+- [ ] `0D38` Select **Show retired (1)**.
+  - **Expected:** The **Current** and **Retired** headings, and the counts at their right, are easy to read.
+  - **Notes:**
+
+- [ ] `A5EF` Select **Views**, then **Clear view**.
+  - **Expected:** The **Retired** heading is gone.
   - **Notes:**
 
 ### DARK-07: The Other Pages
