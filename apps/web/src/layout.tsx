@@ -12,12 +12,15 @@ import { AboutBox, build } from "./about.tsx";
 import { AppMenu, MenuChoices } from "./app-menu.tsx";
 import {
   type AccountRole,
-  changeHistoryViews,
   type ClassAccess,
   type DataClasses,
   draftingPermissions,
+  opensWith,
+  type GuardedPage,
+  pageNeeds,
   type PasswordRules,
   type Permission,
+  reaches,
 } from "@fathom/shared";
 import {
   Alert,
@@ -46,8 +49,6 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Brand } from "./brand.tsx";
-import { capacityNeeds } from "./capacity.ts";
-import { opensWith, type PageNeeds, reaches } from "./page-access.ts";
 import { PageExportProvider } from "./page-export.tsx";
 import { DevBadge, devLabel } from "./dev-label.tsx";
 import { Icon, type IconName } from "./icons.tsx";
@@ -93,9 +94,8 @@ type Page =
 type Item = {
   label: string;
   icon: IconName;
-  // The permission the page needs, or several, any one of which opens it, each with the data it
-  // needs where the page would show nothing without it.
-  permission?: PageNeeds;
+  // The page whose needs decide who opens it; a page with none is open to everyone signed in.
+  page?: GuardedPage;
   // Pages with addresses below their own, such as each list's, are marked as the current page for
   // all of them.
   nested?: boolean;
@@ -103,7 +103,7 @@ type Item = {
 
 // Whether the user's access opens an item's page.
 function opens(item: Item, access: ClassAccess): boolean {
-  return item.permission === undefined || opensWith(item.permission, access);
+  return item.page === undefined || opensWith(pageNeeds[item.page], access);
 }
 
 const sections: { label: string; items: Item[] }[] = [
@@ -114,26 +114,26 @@ const sections: { label: string; items: Item[] }[] = [
         label: "Overview",
         icon: "overview",
         to: "/",
-        permission: "plan:view",
+        page: "overview",
       },
       {
         label: "Projects",
         icon: "projects",
         to: "/projects",
-        permission: "plan:view",
+        page: "projects",
       },
       {
         label: "Features",
         icon: "features",
         to: "/features",
-        permission: "features:view",
+        page: "features",
       },
       {
         label: "Releases",
         icon: "releases",
         to: "/releases/{-$streamId}",
         nested: true,
-        permission: ["features:view", "configuration:view"],
+        page: "releases",
       },
     ],
   },
@@ -144,45 +144,37 @@ const sections: { label: string; items: Item[] }[] = [
         label: "People",
         icon: "people",
         to: "/people",
-        permission: "people:view",
+        page: "people",
       },
       {
         label: "Org chart",
         icon: "orgChart",
         to: "/org-chart",
-        permission: "people:view",
+        page: "org-chart",
       },
       {
         label: "Feature assignments",
         icon: "assignments",
         to: "/feature-assignments",
-        permission: [
-          { permission: "feature-teams:view", view: "featureAssignments" },
-        ],
+        page: "feature-assignments",
       },
       {
         label: "Drafts",
         icon: "drafts",
         to: "/drafts",
-        // Drafts of people and feature teams, of lists, which Approvers see, and of the plan's records.
-        permission: [
-          "people:view",
-          "configuration:view",
-          "plan:view",
-          "features:view",
-        ],
+        page: "drafts",
       },
       {
         label: "Capacity",
         icon: "capacity",
         to: "/capacity",
-        permission: capacityNeeds,
+        page: "capacity",
       },
       {
         label: "Lists",
         icon: "lists",
         to: "/lists/{-$listId}",
-        permission: "configuration:view",
+        page: "lists",
         nested: true,
       },
     ],
@@ -194,25 +186,25 @@ const sections: { label: string; items: Item[] }[] = [
         label: "Accounts",
         icon: "accounts",
         to: "/accounts",
-        permission: "administration:view",
+        page: "accounts",
       },
       {
         label: "Roles",
         icon: "roles",
         to: "/roles",
-        permission: "administration:view",
+        page: "roles",
       },
       {
         label: "Settings",
         icon: "settings",
         to: "/settings",
-        permission: "administration:view",
+        page: "settings",
       },
       {
         label: "Data classes",
         icon: "lock",
         to: "/data-classes",
-        permission: "data:classify",
+        page: "data-classes",
       },
     ],
   },
@@ -223,13 +215,13 @@ const sections: { label: string; items: Item[] }[] = [
         label: "Change history",
         icon: "changes",
         to: "/changes",
-        permission: changeHistoryViews,
+        page: "changes",
       },
       {
         label: "Access history",
         icon: "history",
         to: "/history",
-        permission: "administration:view",
+        page: "history",
       },
     ],
   },
@@ -277,7 +269,7 @@ export function firstPage(access: ClassAccess): Page | undefined {
       (item) =>
         item.to !== undefined &&
         item.to !== "/" &&
-        item.permission !== undefined &&
+        item.page !== undefined &&
         opens(item, access),
     )?.to;
 }
@@ -287,7 +279,7 @@ export function firstPage(access: ClassAccess): Page | undefined {
 export function pagesOpened(access: ClassAccess): string[] {
   return sections.flatMap(({ items }) =>
     items
-      .filter((item) => item.permission !== undefined && opens(item, access))
+      .filter((item) => item.page !== undefined && opens(item, access))
       .map((item) => item.label),
   );
 }
@@ -299,8 +291,7 @@ export function pagesReached(permissions: readonly Permission[]): string[] {
     items
       .filter(
         (item) =>
-          item.permission !== undefined &&
-          reaches(item.permission, permissions),
+          item.page !== undefined && reaches(pageNeeds[item.page], permissions),
       )
       .map((item) => item.label),
   );
@@ -326,7 +317,7 @@ function placeAt(
 }
 
 // Whether some access opens the page at an address. Pages outside the sidebar are open to all.
-export function opensPage(pathname: string, access: ClassAccess) {
+function opensPage(pathname: string, access: ClassAccess) {
   const place = placeAt(pathname);
   return place === undefined || opens(place.item, access);
 }

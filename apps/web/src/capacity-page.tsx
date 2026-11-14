@@ -4,10 +4,9 @@
 // planning settings that capacity and forecasts are worked out with. A switch picks the mode for a
 // role that sees both; a role that sees one sees it alone.
 
-import type { DraftKind } from "@fathom/shared";
+import type { CapacityMode, DraftKind } from "@fathom/shared";
 import { Stack } from "@mantine/core";
 import { useState } from "react";
-import type { CapacityMode } from "./capacity.ts";
 import { CapacityPeople } from "./capacity-people.tsx";
 import { ModeSwitch, PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";

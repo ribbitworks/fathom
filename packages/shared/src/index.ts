@@ -85,6 +85,15 @@ export {
   whyNoMove,
 } from "./data-classes.ts";
 export {
+  type CapacityMode,
+  capacityModeNames,
+  capacityModeNeeds,
+  type GuardedPage,
+  opensWith,
+  pageNeeds,
+  reaches,
+} from "./page-access.ts";
+export {
   type RoleChange,
   roleChangeSchema,
   roleEffectsRequestSchema,

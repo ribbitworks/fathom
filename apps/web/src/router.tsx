@@ -8,13 +8,16 @@
 import type { QueryClient } from "@tanstack/react-query";
 import {
   approvableKinds,
-  changeHistoryViews,
   type ClassAccess,
   changesField,
   changesLinesOn,
   changesHiringPlan,
+  type GuardedPage,
   historySearchLength,
   editsField,
+  opensWith,
+  pageNeeds,
+  reaches,
   seesEmployment,
   seesHiringPlan,
   type Permission,
@@ -41,7 +44,7 @@ import { ChangeHistoryPage } from "./change-history-page.tsx";
 import { DraftsPage } from "./drafts-page.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
-import { firstPage, Layout, opensPage } from "./layout.tsx";
+import { firstPage, Layout } from "./layout.tsx";
 import { ListsPage } from "./lists-page.tsx";
 import { listKindSchema } from "./lists.ts";
 import { FeatureAssignmentsPage } from "./feature-assignments-page.tsx";
@@ -92,25 +95,25 @@ const chartSearch = z.object({
   day: daySchema.optional().catch(undefined),
 });
 
-// Pages only for users whose access opens them, as the sidebar decides; anyone else is told there is
-// no such page.
-function opening({
-  context,
-  location,
-}: {
-  context: { access: ClassAccess };
-  location: { pathname: string };
-}) {
-  if (!opensPage(location.pathname, context.access)) {
-    // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to say so
-    throw notFound();
-  }
+// Pages only for users whose access opens them; anyone else is told there is no such page.
+function opening(page: GuardedPage) {
+  return ({ context }: { context: { access: ClassAccess } }) => {
+    // The page is always one of the fixed pages.
+    // eslint-disable-next-line security/detect-object-injection
+    if (!opensWith(pageNeeds[page], context.access)) {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to say so
+      throw notFound();
+    }
+  };
 }
 
-// Pages only for users with a permission; anyone else is told there is no such page.
-function requiring(...permissions: Permission[]) {
+// Pages only for users with a permission that would open them; anyone else is told there is no such
+// page.
+function reaching(page: GuardedPage) {
   return ({ context }: { context: { permissions: Permission[] } }) => {
-    if (!permissions.some((one) => context.permissions.includes(one))) {
+    // The page is always one of the fixed pages.
+    // eslint-disable-next-line security/detect-object-injection
+    if (!reaches(pageNeeds[page], context.permissions)) {
       // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to say so
       throw notFound();
     }
@@ -179,7 +182,10 @@ const homeRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/",
   beforeLoad: ({ context }) => {
-    if (context.mustChangePassword || context.permissions.includes("plan:view"))
+    if (
+      context.mustChangePassword ||
+      reaches(pageNeeds.overview, context.permissions)
+    )
       return;
     // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
     throw redirect({
@@ -193,7 +199,7 @@ const homeRoute = createRoute({
 const accountsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/accounts",
-  beforeLoad: requiring("administration:view"),
+  beforeLoad: reaching("accounts"),
   component: function Accounts() {
     const { user, permissions } = signedIn.useRouteContext();
     return (
@@ -208,7 +214,7 @@ const accountsRoute = createRoute({
 const rolesRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/roles",
-  beforeLoad: requiring("administration:view"),
+  beforeLoad: reaching("roles"),
   component: function Roles() {
     const { user, permissions, access } = signedIn.useRouteContext();
     return (
@@ -224,7 +230,7 @@ const rolesRoute = createRoute({
 const dataClassesRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/data-classes",
-  beforeLoad: requiring("data:classify"),
+  beforeLoad: reaching("data-classes"),
   component: function DataClasses() {
     const { access } = signedIn.useRouteContext();
     return <DataClassesPage access={access} />;
@@ -234,7 +240,7 @@ const dataClassesRoute = createRoute({
 const settingsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/settings",
-  beforeLoad: requiring("administration:view"),
+  beforeLoad: reaching("settings"),
   component: function Settings() {
     const { timeZone, passwords, permissions } = signedIn.useRouteContext();
     return (
@@ -257,7 +263,7 @@ const changesRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/changes",
   validateSearch: historySearch,
-  beforeLoad: requiring(...changeHistoryViews),
+  beforeLoad: reaching("changes"),
   component: function Changes() {
     const navigate = changesRoute.useNavigate();
     return (
@@ -277,12 +283,7 @@ const draftsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/drafts",
   validateSearch: historySearch,
-  beforeLoad: requiring(
-    "people:view",
-    "configuration:view",
-    "plan:view",
-    "features:view",
-  ),
+  beforeLoad: reaching("drafts"),
   component: function Drafts() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = draftsRoute.useNavigate();
@@ -317,7 +318,7 @@ const historyRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/history",
   validateSearch: historySearch,
-  beforeLoad: requiring("administration:view"),
+  beforeLoad: reaching("history"),
   component: function AccessHistory() {
     const navigate = historyRoute.useNavigate();
     return (
@@ -341,7 +342,7 @@ const listsRoute = createRoute({
     search: z.string().max(historySearchLength).optional().catch(undefined),
     kind: listKindSchema.exclude(["all"]).optional().catch(undefined),
   }),
-  beforeLoad: requiring("configuration:view"),
+  beforeLoad: reaching("lists"),
   component: function Lists() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = listsRoute.useNavigate();
@@ -386,7 +387,7 @@ const releasesRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/releases/{-$streamId}",
   validateSearch: viewSearchSchema,
-  beforeLoad: requiring("features:view", "configuration:view"),
+  beforeLoad: reaching("releases"),
   component: function Releases() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = releasesRoute.useNavigate();
@@ -416,7 +417,7 @@ const capacityRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/capacity",
   validateSearch: capacitySearch,
-  beforeLoad: opening,
+  beforeLoad: opening("capacity"),
   component: function Capacity() {
     const { permissions, access } = signedIn.useRouteContext();
     const navigate = capacityRoute.useNavigate();
@@ -482,7 +483,7 @@ const featuresRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/features",
   validateSearch: featuresSearch,
-  beforeLoad: requiring("features:view"),
+  beforeLoad: reaching("features"),
   component: function Features() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = featuresRoute.useNavigate();
@@ -533,7 +534,7 @@ const projectsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/projects",
   validateSearch: projectsSearch,
-  beforeLoad: requiring("plan:view"),
+  beforeLoad: reaching("projects"),
   component: function Projects() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = projectsRoute.useNavigate();
@@ -589,7 +590,7 @@ const peopleRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/people",
   validateSearch: peopleSearch,
-  beforeLoad: requiring("people:view"),
+  beforeLoad: reaching("people"),
   component: function People() {
     const { permissions, access } = signedIn.useRouteContext();
     const navigate = people.useNavigate();
@@ -648,7 +649,7 @@ const orgChartRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/org-chart",
   validateSearch: chartSearch,
-  beforeLoad: requiring("people:view"),
+  beforeLoad: reaching("org-chart"),
   component: function OrgChart() {
     const { permissions, access } = signedIn.useRouteContext();
     const navigate = orgChartRoute.useNavigate();
@@ -688,7 +689,7 @@ const featureAssignmentsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/feature-assignments",
   validateSearch: featureAssignmentsSearch,
-  beforeLoad: ({ context, location, search: { mode, ...shown } }) => {
+  beforeLoad: ({ context, search: { mode, ...shown } }) => {
     if (mode !== undefined) {
       // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
       throw redirect({
@@ -697,7 +698,7 @@ const featureAssignmentsRoute = createRoute({
         replace: true,
       });
     }
-    opening({ context, location });
+    opening("feature-assignments")({ context });
   },
   component: function FeatureAssignments() {
     const { permissions, access } = signedIn.useRouteContext();
