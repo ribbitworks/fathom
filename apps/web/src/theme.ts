@@ -65,7 +65,7 @@ export const theme = createTheme({
     }),
     // Every dialog's × is named for assistive technology, which otherwise hears only "button".
     Modal: Modal.extend({
-      defaultProps: { closeButtonProps: { "aria-label": "Close" } },
+      defaultProps: { closeButtonProps: { "aria-label": "Close dialog" } },
     }),
     Table: Table.extend({
       classNames: { table: tableClasses.table },

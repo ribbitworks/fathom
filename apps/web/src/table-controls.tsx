@@ -616,11 +616,11 @@ export function ViewsMenu({
                     .map((each) => ({ value: each.id, label: each.name }))}
                   chosen={saved.applied}
                   onChoose={(id) => {
-                    // The id is always one of the group's views, offered above.
-                    const chosenView = grouped.find(
-                      (each) => each.id === id,
-                    ) as (typeof grouped)[number];
-                    saved.onApply(shownAs(chosenView), id);
+                    for (const each of grouped.filter(
+                      (view) => view.id === id,
+                    )) {
+                      saved.onApply(shownAs(each), id);
+                    }
                   }}
                 />
               )

@@ -682,7 +682,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 - [ ] `0D9A` Select **Remove column**.
   - **Expected:**
     - The dialog closes.
-    - A notice reads "Deleted the Fictional Score column."
+    - A notice reads "Removed the Fictional Score column."
     - The column stays in the table.
     - A hollow yellow dot is before its name.
     - The column's name is struck through.

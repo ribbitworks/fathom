@@ -1875,7 +1875,7 @@ describe("creating and editing lists", () => {
       await screen.findByRole("button", { name: "Remove list" }),
     );
     expect(
-      await screen.findByText("Fathom could not delete Skills."),
+      await screen.findByText("Fathom could not remove Skills."),
     ).toBeDefined();
   });
 
@@ -2918,10 +2918,7 @@ describe("drafts on the Lists page", () => {
         .map((item) => item.textContent),
     ).toEqual(["the list Teams", "the choice Platform in Teams"]);
     await userEvent.click(
-      // The dialog's own Close, after the × at its top.
-      within(dialog)
-        .getAllByRole("button", { name: "Close" })
-        .at(-1) as HTMLElement,
+      within(dialog).getByRole("button", { name: "Close" }),
     );
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
@@ -3019,10 +3016,7 @@ describe("drafts on the Lists page", () => {
       ),
     ).toBeDefined();
     await userEvent.click(
-      // The dialog's own Close, after the × at its top.
-      within(dialog)
-        .getAllByRole("button", { name: "Close" })
-        .at(-1) as HTMLElement,
+      within(dialog).getByRole("button", { name: "Close" }),
     );
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();

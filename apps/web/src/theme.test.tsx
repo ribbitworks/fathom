@@ -77,7 +77,7 @@ describe("dialogs", () => {
 
     expect(
       within(await screen.findByRole("dialog")).getByRole("button", {
-        name: "Close",
+        name: "Close dialog",
       }),
     ).toBeDefined();
   });

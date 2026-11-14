@@ -13,7 +13,7 @@
 // sight but never what Enter picks unasked. The list is at least as wide as the cell, and wider
 // where a choice needs it, up to a limit past which a choice wraps.
 
-import { folded } from "@fathom/shared";
+import { matchesWords, searchWords } from "@fathom/shared";
 import { CheckIcon, Combobox, Group, Text, useCombobox } from "@mantine/core";
 import {
   type ComponentProps,
@@ -116,14 +116,13 @@ export function ChoicePicker({
   const store = useCombobox({ opened: true });
   const [search, setSearch] = useState(typed);
   const [picked, setPicked] = useState(initial);
-  const wanted = folded(search.trim());
-  const noneShown = none !== undefined && !multiple && wanted === "";
+  // Every word typed, found anywhere in a choice's name or description, as a search finds rows.
+  const wanted = searchWords(search);
+  const noneShown = none !== undefined && !multiple && wanted.length === 0;
   const shown = [
     ...(noneShown ? [{ value: noneValue, label: none }] : []),
-    ...options.filter(
-      (option) =>
-        folded(option.label).includes(wanted) ||
-        folded(option.description ?? "").includes(wanted),
+    ...options.filter((option) =>
+      matchesWords(`${option.label} ${option.description ?? ""}`, wanted),
     ),
   ];
 

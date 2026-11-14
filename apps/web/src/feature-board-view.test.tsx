@@ -399,13 +399,11 @@ describe("the strip and the Stream menu", () => {
       (await screen.findAllByRole("menuitem")).map(({ textContent }) =>
         textContent.replace(", chosen", ""),
       ),
-    ).toEqual([
-      "Fictional Majors",
-      // A stream drafted to be retired is marked so, as on Releases.
-      "Fictional MinorsRetired, Draft: retired",
-    ]);
+    ).toEqual(["Fictional Majors", "Fictional MinorsRetired, Draft: retired"]);
     await userEvent.click(
-      screen.getByRole("menuitem", { name: /^Fictional Minors/u }),
+      screen.getByRole("menuitem", {
+        name: "Fictional Minors, Draft: retired",
+      }),
     );
     expect(
       screen.getByRole("button", { name: "Stream: Fictional Minors" }),

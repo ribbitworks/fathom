@@ -26,6 +26,9 @@ describe("focusing a field opened to change its value", () => {
   });
 });
 
+// About one frame, so a frame passes before the control is drawn.
+const framesTime = 20;
+
 describe("focusing a control a change draws", () => {
   it("waits for a control drawn a few frames after the change, such as a panel opened through the address", () => {
     vi.useFakeTimers();
@@ -39,6 +42,24 @@ describe("focusing a control a change draws", () => {
     vi.runAllTimers();
 
     expect(document.activeElement).toBe(title);
+  });
+
+  it("gives way to focus put elsewhere while it waits", () => {
+    vi.useFakeTimers();
+    const elsewhere = document.createElement("input");
+    document.body.append(elsewhere);
+    focusSoon("panel-title");
+    vi.advanceTimersByTime(0);
+
+    elsewhere.focus();
+    vi.advanceTimersByTime(framesTime);
+    const title = document.createElement("h2");
+    title.id = "panel-title";
+    title.tabIndex = -1;
+    document.body.append(title);
+    vi.runAllTimers();
+
+    expect(document.activeElement).toBe(elsewhere);
   });
 
   it("stops waiting for a control that is never drawn", () => {

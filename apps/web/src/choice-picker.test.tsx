@@ -190,7 +190,7 @@ describe("the list's width", () => {
 });
 
 describe("finding a choice", () => {
-  it("ignores accents and letters drawn with a stroke, as every search does", async () => {
+  it("finds every word typed, ignoring accents and letters drawn with a stroke, as every search does", async () => {
     render(
       <MantineProvider theme={testTheme}>
         <ChoicePicker
@@ -211,6 +211,12 @@ describe("finding a choice", () => {
     );
 
     await userEvent.type(screen.getByLabelText("Members"), "schroder");
+    expect(
+      screen.getAllByRole("option").map(({ textContent }) => textContent),
+    ).toEqual(["Silje Holm-Schrøder"]);
+
+    await userEvent.clear(screen.getByLabelText("Members"));
+    await userEvent.type(screen.getByLabelText("Members"), "silje schroder");
     expect(
       screen.getAllByRole("option").map(({ textContent }) => textContent),
     ).toEqual(["Silje Holm-Schrøder"]);

@@ -898,42 +898,51 @@ describe("the seed command", () => {
     expect(await ofLists()).toHaveLength(18);
   });
 
-  it("seeds again after the drafted Skills list is approved, keeping it and not drafting it again", async () => {
-    // Given the seed data, with its draft adding the Skills list approved
+  it("seeds again after the drafted Skills and Equipment lists are approved, keeping them and not drafting them again", async () => {
+    // Given the seed data, with its drafts adding the Skills list and the Equipment list, once
+    // published, approved
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     expect(await seedCommand(["seed"], command.environment())).toBe(0);
-    const skills = async () =>
-      connection.select().from(lists).where(eq(lists.name, "Skills"));
+    await createDataAccess(connection).unpublished.publish(
+      await actorOf(connection, "engineering.operations.manager@fathom.test"),
+    );
+    const called = async (name: string) =>
+      connection.select().from(lists).where(eq(lists.name, name));
+    const skills = () => called("Skills");
     const listDrafts = await connection
       .select()
       .from(drafts)
       .where(inArray(drafts.recordType, ["list", "list-item"]));
-    const skillsId = String(
-      listDrafts.find(
-        ({ recordType, fields }) =>
-          recordType === "list" && fields.name === "Skills",
-      )?.recordId,
+    const drafted = ["Skills", "Equipment"].map((name) =>
+      String(
+        listDrafts.find(
+          ({ recordType, fields }) =>
+            recordType === "list" && fields.name === name,
+        )?.recordId,
+      ),
     );
     await createDataAccess(connection).drafts.approve(
       await actorOf(connection, "engineering.director@fathom.test"),
       {
         people: [],
-        lists: [skillsId],
+        lists: drafted,
         choices: listDrafts
-          .filter(({ fields }) => fields.listId === skillsId)
+          .filter(({ fields }) => drafted.includes(String(fields.listId)))
           .map(({ recordId }) => recordId),
         orders: [],
       },
     );
     expect(await skills()).toHaveLength(1);
+    expect(await called("Equipment")).toHaveLength(1);
 
     // When the seed data is removed and added again
     expect(await seedCommand(["unseed"], command.environment())).toBe(0);
     const seededAgain = await seedCommand(["seed"], command.environment());
 
-    // Then it is added again, with the one Skills list
+    // Then it is added again, with one of each list
     expect(seededAgain).toBe(0);
     expect(await skills()).toHaveLength(1);
+    expect(await called("Equipment")).toHaveLength(1);
   });
 
   it("removes the seed data while filling a planned manager waits for approval", async () => {

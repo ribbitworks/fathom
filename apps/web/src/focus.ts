@@ -10,12 +10,17 @@ const framesToWait = 10;
 
 function soon(ids: readonly string[], act: (element: HTMLElement) => void) {
   let framesLeft = framesToWait;
+  const focusedAtFirst = document.activeElement;
+  // Focus put somewhere since, such as by a click elsewhere, stays where it is: waiting gives way.
+  const movedSince = () =>
+    document.activeElement !== focusedAtFirst &&
+    document.activeElement !== document.body;
   const attempt = () => {
     const element = ids
       .map((id) => document.getElementById(id))
       .find((found) => found !== null);
     if (element !== undefined) act(element);
-    else if (framesLeft > 0) {
+    else if (framesLeft > 0 && !movedSince()) {
       framesLeft -= 1;
       requestAnimationFrame(attempt);
     }

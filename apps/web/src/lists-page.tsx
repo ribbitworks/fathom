@@ -596,7 +596,7 @@ export function ListsPage({
         list,
         (current) => drafting(current, [], "deleted"),
         () => deleteList(list.id),
-        `Fathom could not delete ${list.name}.`,
+        `Fathom could not remove ${list.name}.`,
         { focus: titleId },
       );
       focusSoon(titleId);
@@ -607,7 +607,7 @@ export function ListsPage({
     save({
       next: (current) => current.filter((other) => other.id !== list.id),
       save: () => deleteList(list.id),
-      failure: `Fathom could not delete ${list.name}.`,
+      failure: `Fathom could not remove ${list.name}.`,
       onSaved: (changeSetId, before) => {
         // Undoing brings the list back as it was, and opens it again.
         done(`Discarded ${list.name}.`, changeSetId, before, undefined, () => {

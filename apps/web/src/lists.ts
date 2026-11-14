@@ -53,8 +53,8 @@ export const isKind = (list: List, kind: ListKind): boolean =>
 
 // The lists Fathom needs first, then an organization's own, each kept in the order given.
 export const builtInFirst = (lists: readonly List[]): List[] => [
-  ...lists.filter((list) => list.builtIn != null),
-  ...lists.filter((list) => list.builtIn == null),
+  ...lists.filter((list) => isKind(list, "built-in")),
+  ...lists.filter((list) => isKind(list, "custom")),
 ];
 
 export const listsQuery = queryOptions({

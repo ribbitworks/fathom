@@ -3,7 +3,8 @@
 // A table's first columns frozen on the left while the rest scroll sideways under them: how many
 // fit, where each frozen cell sits, measured from the header's cells, how wide a frozen column may
 // be made, and how many stay frozen once a column moves, a column moved into the frozen ones
-// joining them and one moved out leaving.
+// joining them and one moved out leaving; and whether the table has columns out of view to either
+// side.
 
 import {
   type RefObject,

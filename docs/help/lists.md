@@ -33,7 +33,7 @@ Drag a choice by its handle, or use **Move up**, **Move down**, **Move to top** 
 
 Select **Retire** or **Remove** in the choice's **⋯** menu. A retired choice stays on the records that hold it, but is no longer offered. **Show retired** lists them, and **Restore** in a choice's menu brings it back. Remove is only for a choice nothing uses.
 
-### Change, Retire or Delete a List
+### Change, Retire or Remove a List
 
 Select **Edit list** in the list's panel. Change the name or description, and select **Save**. **Retire list** and **Remove list** are at the foot. A list can't be retired or removed while a column uses it.
 

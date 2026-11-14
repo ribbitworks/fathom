@@ -1807,7 +1807,7 @@ describe("the timeline", () => {
     );
     const releases = items(timeline, "Releases of Fictional Majors");
     // Each release's words are its tip in the timeline's one tooltip, which a draft's dot inside it
-    // takes over while pointed at, rather than the browser's own tip shown on top of the dot's.
+    // takes over while pointed at, so only one tip shows.
     expect(releases.map((item) => item.hasAttribute("title"))).toEqual([
       false,
       false,

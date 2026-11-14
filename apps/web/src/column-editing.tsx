@@ -134,9 +134,9 @@ export function ColumnModal<Data>({
           fields: shown.filter((other) => other.id !== field.id),
         })),
       save: () => deleteField(field.id, table),
-      failure: `Fathom could not delete ${field.name}.`,
+      failure: `Fathom could not remove ${field.name}.`,
       onSaved: (changeSetId, before) => {
-        done(`Deleted the ${field.name} column.`, changeSetId, before);
+        done(`Removed the ${field.name} column.`, changeSetId, before);
       },
     });
   };

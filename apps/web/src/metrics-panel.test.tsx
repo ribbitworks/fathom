@@ -6,7 +6,13 @@
 
 import type { Field, List, Person, PersonDraft } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -101,12 +107,15 @@ function Table({
   start = emptyView,
   showDates = false,
   listsShown = lists,
+  drawnLater = false,
 }: {
   people?: Person[];
   fields?: Field[];
   start?: View;
   showDates?: boolean;
   listsShown?: List[];
+  // Whether a new view is drawn a few frames after it is asked for, as one kept in the address is.
+  drawnLater?: boolean;
 }) {
   const [view, setView] = useState(start);
   return (
@@ -120,12 +129,21 @@ function Table({
         canEditColumns={false}
         showDates={showDates}
         view={view}
-        onView={setView}
+        onView={(next) => {
+          if (drawnLater) {
+            setTimeout(() => {
+              setView(next);
+            }, laterMilliseconds);
+          } else setView(next);
+        }}
         actions={actions}
       />
     </MantineProvider>
   );
 }
+
+// Longer than focusing waits before its first look, shorter than the frames it waits for after.
+const laterMilliseconds = 30;
 
 const panel = () => screen.getByRole("region", { name: "Metrics" });
 // The figures of a row of the panel's table, by the name of its group.
@@ -158,6 +176,23 @@ describe("the Metrics panel", () => {
     expect(screen.queryByRole("region", { name: "Metrics" })).toBeNull();
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(document.activeElement).toBe(button);
+  });
+
+  it("closes with Esc pressed straight after opening, though the panel is drawn a little later", async () => {
+    const user = userEvent.setup();
+    render(<Table drawnLater />);
+    const button = screen.getByRole("button", { name: "Metrics" });
+
+    await user.click(button);
+    await screen.findByRole("region", { name: "Metrics" });
+    await waitFor(() => {
+      expect(panel().contains(document.activeElement)).toBe(true);
+    });
+    await user.keyboard("{Escape}");
+
+    await waitFor(() => {
+      expect(screen.queryByRole("region", { name: "Metrics" })).toBeNull();
+    });
   });
 
   it("breaks people down by a column, each choice with its count and share, and empty values", async () => {

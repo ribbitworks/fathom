@@ -1718,6 +1718,23 @@ describe("columns", () => {
     expect(within(dialog).queryByText("List needed")).toBeNull();
   });
 
+  it("opens the List list on Enter, rather than adding the column", async () => {
+    await openPeople();
+    const dialog = await newColumnDialog();
+    act(() => {
+      within(dialog).getByLabelText("List").focus();
+    });
+
+    await userEvent.keyboard("{Enter}");
+
+    expect(
+      (await screen.findAllByRole("option")).map(
+        ({ textContent }) => textContent,
+      ),
+    ).toContain("Sites");
+    expect(within(dialog).queryByText("List needed")).toBeNull();
+  });
+
   it("closes the column dialog with Esc", async () => {
     await openPeople();
     await userEvent.click(screen.getByRole("button", { name: "New column" }));
@@ -1801,7 +1818,7 @@ describe("columns", () => {
       within(dialog).getByRole("button", { name: "Remove column" }),
     );
     expect(
-      await screen.findByText("Deleted the Role on team column."),
+      await screen.findByText("Removed the Role on team column."),
     ).toBeDefined();
     await userEvent.click(screen.getByRole("button", { name: "Undo" }));
     await waitFor(() => {

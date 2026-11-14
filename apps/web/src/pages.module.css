@@ -509,7 +509,8 @@ select.cellInput {
 }
 
 .tableScroll::-webkit-scrollbar-thumb {
-  border: 2px solid transparent;
+  /* A clear edge around the thumb, so it sits slimmer than its track. */
+  border: calc(var(--fathom-scrollbar-size) / 5) solid transparent;
   border-radius: var(--fathom-scrollbar-size);
   background: var(--fathom-scrollbar-thumb) padding-box;
 }

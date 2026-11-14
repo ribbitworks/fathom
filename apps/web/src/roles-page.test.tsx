@@ -1035,10 +1035,7 @@ describe("seeing roles without editing them", () => {
     expect(summaryLines(dialog, "Sees")).toContain("People");
     expect(within(dialog).queryByRole("button", { name: "Save" })).toBeNull();
     await userEvent.click(
-      // The dialog's own Close, after the × at its top.
-      within(dialog)
-        .getAllByRole("button", { name: "Close" })
-        .at(-1) as HTMLElement,
+      within(dialog).getByRole("button", { name: "Close" }),
     );
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
