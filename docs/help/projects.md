@@ -55,7 +55,7 @@ You're done when the cell lists the features, with a hollow dot.
 When you take a feature off a proposal, here or on **Features**, it happens straight away, as a draft. You can say why while the removal is still a draft.
 
 1. Open the proposal's details.
-1. Under **Scope history**, select the reason, or point at the removal's row and select the pencil that shows at its right.
+1. Under **Scope history**, select the removal's row.
 1. Type the reason.
 1. Press Enter.
 

@@ -20,7 +20,7 @@ import { focusSoon } from "./focus.ts";
 import { LoadProblem } from "./load-problem.tsx";
 import { livePlanRecords } from "./project-grids.tsx";
 import { scopeHistoryQuery } from "./projects.ts";
-import { changeButton, RecordLink } from "./record-details.tsx";
+import { changeButton, opensOnClick, RecordLink } from "./record-details.tsx";
 import details from "./record-details.module.css";
 import { ValueField } from "./record-editing.tsx";
 import { DraftedItem } from "./status-mark.tsx";
@@ -174,7 +174,18 @@ export function ScopeHistory({
           return (
             <div
               key={`${row.featureId}-${String(index)}`}
-              className={[details.row, details.itemRow].join(" ")}
+              className={[
+                details.row,
+                details.itemRow,
+                canChange && !open ? details.editable : "",
+              ].join(" ")}
+              onClick={opensOnClick(
+                canChange && !open
+                  ? () => {
+                      start(row);
+                    }
+                  : undefined,
+              )}
             >
               <div>
                 <Text fz="sm">
@@ -209,19 +220,7 @@ export function ScopeHistory({
                   />
                 ) : (
                   row.reason !== null && (
-                    <Text
-                      fz="sm"
-                      className={canChange ? details.editable : undefined}
-                      onClick={
-                        canChange
-                          ? () => {
-                              start(row);
-                            }
-                          : undefined
-                      }
-                    >
-                      Reason: {row.reason}
-                    </Text>
+                    <Text fz="sm">Reason: {row.reason}</Text>
                   )
                 )}
               </div>

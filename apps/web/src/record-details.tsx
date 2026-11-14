@@ -190,6 +190,22 @@ export const changeButton = (label: string) =>
     children: <Icon name="edit" />,
   }) as const;
 
+// A row's click handler that opens its editor from a click anywhere on it, but not on a link or a
+// control in it, as the button beside it does; a click in its own menu, drawn elsewhere, still
+// reaches it, and is left. None for a row with no editor to open.
+export const opensOnClick = (start: (() => void) | undefined) =>
+  start === undefined
+    ? undefined
+    : (event: MouseEvent) => {
+        const target = event.target as HTMLElement;
+        if (
+          event.currentTarget.contains(target) &&
+          target.closest("a, button") === null
+        ) {
+          start();
+        }
+      };
+
 export function Row({
   column,
   value,
@@ -223,20 +239,7 @@ export function Row({
       ? { ...changed, live: changed.live }
       : undefined;
   const start = editing?.open === true ? undefined : editing?.onStart;
-  // A click anywhere on the row, but not on a link or a control in it, opens its editor, as the
-  // button beside it does; a click in its own menu, drawn elsewhere, still reaches it, and is left.
-  const onClick =
-    start === undefined
-      ? undefined
-      : (event: MouseEvent) => {
-          const target = event.target as HTMLElement;
-          if (
-            event.currentTarget.contains(target) &&
-            target.closest("a, button") === null
-          ) {
-            start();
-          }
-        };
+  const onClick = opensOnClick(start);
   const checkbox = editing !== undefined && editing.onStart === undefined;
   return (
     <div

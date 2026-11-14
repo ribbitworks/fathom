@@ -1993,6 +1993,21 @@ describe("the Features page", () => {
         });
       });
 
+      it("opens the reason from a click anywhere on its removal's row", async () => {
+        await openPage(
+          `/projects?tab=proposals&open=${proposalId}`,
+          removing(),
+          { ...answers, ...history() },
+          planEditor,
+        );
+
+        await userEvent.click(
+          await rows().findByText(`Removed ${day("2026-10-30T15:00:00.000Z")}`),
+        );
+
+        expect(reasonBox().value).toBe("Too costly");
+      });
+
       it("opens the reason from a click on it, and Esc leaves it as it was", async () => {
         const { fetch } = await openPage(
           `/projects?tab=proposals&open=${proposalId}`,
