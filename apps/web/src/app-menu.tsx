@@ -72,17 +72,20 @@ export function MenuChoices<Value extends string>({
   choices,
   chosen,
   onChoose,
+  divided = true,
 }: {
   label: string;
   // Each choice's words, with any marks they carry, such as a draft's dot.
   choices: readonly { value: Value; label: ReactNode }[];
   chosen: Value | undefined;
   onChoose: (value: Value) => void;
+  // False where the menu sets the group apart itself.
+  divided?: boolean;
 }) {
   const labelId = useId();
   return (
     <>
-      <Menu.Divider />
+      {divided && <Menu.Divider />}
       <Menu.Label id={labelId}>{label}</Menu.Label>
       <div role="group" aria-labelledby={labelId}>
         {choices.map((choice) => (

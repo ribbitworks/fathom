@@ -483,7 +483,6 @@ export function ViewsMenu({
   items?: ReactNode;
 }) {
   const views = saved?.views ?? [];
-  const groupId = useId();
   // Each level of the sort, in order, with its column; a column the table does not have is left
   // out.
   const sorts = view.sort.flatMap(({ key, descending }) =>
@@ -608,35 +607,22 @@ export function ViewsMenu({
             const grouped = views.filter((each) => each.scope === scope);
             return (
               grouped.length > 0 && (
-                <div
+                <MenuChoices
                   key={scope}
-                  role="group"
-                  aria-labelledby={`${groupId}-${scope}`}
-                >
-                  <Menu.Label id={`${groupId}-${scope}`}>{heading}</Menu.Label>
-                  {grouped.sort(byName).map((each) => (
-                    <Menu.Item
-                      key={each.id}
-                      // Room for the applied view's check mark only while one is applied, so the
-                      // names line up.
-                      leftSection={
-                        current && (
-                          <span className={classes.appliedMark} aria-hidden>
-                            {each.id === saved.applied ? "✓" : ""}
-                          </span>
-                        )
-                      }
-                      onClick={() => {
-                        saved.onApply(shownAs(each), each.id);
-                      }}
-                    >
-                      {each.name}
-                      {each.id === saved.applied && (
-                        <VisuallyHidden>, applied</VisuallyHidden>
-                      )}
-                    </Menu.Item>
-                  ))}
-                </div>
+                  label={heading}
+                  divided={false}
+                  choices={grouped
+                    .sort(byName)
+                    .map((each) => ({ value: each.id, label: each.name }))}
+                  chosen={saved.applied}
+                  onChoose={(id) => {
+                    // The id is always one of the group's views, offered above.
+                    const chosenView = grouped.find(
+                      (each) => each.id === id,
+                    ) as (typeof grouped)[number];
+                    saved.onApply(shownAs(chosenView), id);
+                  }}
+                />
               )
             );
           })}

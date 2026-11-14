@@ -678,12 +678,6 @@ th[data-centred] .recordHeadButton {
   color: var(--mantine-color-sea-4);
 }
 
-/* Marks the saved view applied, keeping every view's name aligned. */
-.appliedMark {
-  display: inline-block;
-  width: 1em;
-}
-
 .choiceFilter {
   min-width: 12rem;
 }

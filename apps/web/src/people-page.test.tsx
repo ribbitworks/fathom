@@ -2774,7 +2774,7 @@ describe("searching, sorting, and filtering", () => {
       });
       expect(await viewsMenuLayout()).toEqual([
         "Shared views",
-        "✓Harbour, applied",
+        "Harbour, chosen",
         "Theirs",
         "—",
         "Rename…",
@@ -2823,7 +2823,9 @@ describe("searching, sorting, and filtering", () => {
       const name = within(dialog).getByRole("textbox", { name: "Name" });
       await userEvent.clear(name);
       await userEvent.type(name, "theirs");
-      expect(within(dialog).getByText("Already a view")).toBeDefined();
+      expect(
+        within(dialog).getByText("Another view already has that name"),
+      ).toBeDefined();
       await userEvent.clear(name);
       await userEvent.type(name, "Home{Enter}");
       await waitFor(() => {
@@ -2981,11 +2983,17 @@ describe("searching, sorting, and filtering", () => {
       await chooseView("Save view…");
       const dialog = await screen.findByRole("dialog", { name: "Save view" });
       await userEvent.keyboard("theirs");
-      expect(within(dialog).queryByText("Already a view")).toBeNull();
+      expect(
+        within(dialog).queryByText("Another view already has that name"),
+      ).toBeNull();
       await userEvent.click(within(dialog).getByRole("checkbox"));
-      expect(within(dialog).getByText("Already a view")).toBeDefined();
+      expect(
+        within(dialog).getByText("Another view already has that name"),
+      ).toBeDefined();
       await userEvent.click(within(dialog).getByRole("checkbox"));
-      expect(within(dialog).queryByText("Already a view")).toBeNull();
+      expect(
+        within(dialog).queryByText("Another view already has that name"),
+      ).toBeNull();
     });
 
     it("stops showing a name as taken once the view would be kept the other way", async () => {
@@ -3000,9 +3008,13 @@ describe("searching, sorting, and filtering", () => {
       await chooseView("Save view…");
       const dialog = await screen.findByRole("dialog", { name: "Save view" });
       await userEvent.keyboard("Taken{Enter}");
-      expect(await within(dialog).findByText("Already a view")).toBeDefined();
+      expect(
+        await within(dialog).findByText("Another view already has that name"),
+      ).toBeDefined();
       await userEvent.click(within(dialog).getByRole("checkbox"));
-      expect(within(dialog).queryByText("Already a view")).toBeNull();
+      expect(
+        within(dialog).queryByText("Another view already has that name"),
+      ).toBeNull();
     });
 
     it("saves a moved column in the view", async () => {
@@ -3069,7 +3081,9 @@ describe("searching, sorting, and filtering", () => {
       await chooseView("Save view…");
       const dialog = await screen.findByRole("dialog", { name: "Save view" });
       await userEvent.keyboard("harbour");
-      expect(within(dialog).queryByText("Already a view")).toBeNull();
+      expect(
+        within(dialog).queryByText("Another view already has that name"),
+      ).toBeNull();
     });
 
     it("starts the menu with clearing the view when there are no saved views", async () => {
@@ -3089,12 +3103,12 @@ describe("searching, sorting, and filtering", () => {
       const offered = await screen.findAllByRole("menuitem");
       expect(offered.map((item) => item.textContent)).toEqual([
         "Harbour",
-        "✓Theirs, applied",
+        "Theirs, chosen",
         "Name ↓descending, remove sort",
         "Clear view",
         "Save view…",
       ]);
-      // While a view is applied, every saved view keeps room for the check mark, so names line up.
+      // Every saved view keeps room for the tick, so names line up.
       expect(
         offered
           .slice(0, 2)
@@ -3110,7 +3124,7 @@ describe("searching, sorting, and filtering", () => {
       });
       await chooseView("Clear view");
       expect(viewsButton().getAttribute("aria-label")).toBe("Views");
-      // With no view applied, no room is kept for a check mark, so names sit where other items do.
+      // With no view applied, none is ticked.
       await userEvent.click(viewsButton());
       const items = await screen.findAllByRole("menuitem");
       expect(items.map((item) => item.textContent)).toEqual([
@@ -3118,7 +3132,7 @@ describe("searching, sorting, and filtering", () => {
         "Theirs",
       ]);
       expect(
-        items.filter((item) => item.querySelector("[data-position='left']")),
+        items.filter((item) => item.querySelector("[data-chosen]")),
       ).toEqual([]);
     });
 
@@ -3135,7 +3149,9 @@ describe("searching, sorting, and filtering", () => {
       await chooseView("Save view…");
       const dialog = await screen.findByRole("dialog", { name: "Save view" });
       await userEvent.keyboard("Taken{Enter}");
-      expect(await within(dialog).findByText("Already a view")).toBeDefined();
+      expect(
+        await within(dialog).findByText("Another view already has that name"),
+      ).toBeDefined();
       status = 500;
       await userEvent.keyboard("!{Enter}");
       expect(await within(dialog).findByRole("alert")).toBeDefined();

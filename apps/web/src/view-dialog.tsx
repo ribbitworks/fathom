@@ -15,7 +15,7 @@ import { Count, nameProblem } from "./list-dialog.tsx";
 import { sameName } from "./lists.ts";
 
 const conflict = 409;
-const duplicate = "Already a view";
+const duplicate = "Another view already has that name";
 const includesId = "view-dialog-includes";
 
 export interface SavedViewResult {
