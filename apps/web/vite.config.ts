@@ -89,6 +89,9 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
   },
   test: {
+    // Each package keeps its own cache of compiled modules, as packages' tests start at once and
+    // would otherwise race to write the one cache at the repository's root.
+    fsModuleCachePath: "node_modules/.vitest-cache",
     environment: "jsdom",
     // Dates and times are shown in the computer's time zone, so tests fix one.
     env: { TZ: "UTC" },
