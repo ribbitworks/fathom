@@ -11,6 +11,7 @@ import {
   changeHistoryViews,
   type ClassAccess,
   changesField,
+  changesLinesOn,
   changesHiringPlan,
   historySearchLength,
   editsField,
@@ -55,7 +56,7 @@ import {
 import { cardPartSchema, planModeSchema } from "./feature-board.ts";
 import { SettingsPage } from "./settings-page.tsx";
 import { DataClassesPage } from "./data-classes-page.tsx";
-import { setTimeZone } from "./today.ts";
+import { setTimeZone, shownDay, today } from "./today.ts";
 import { ReleasesPage } from "./releases-page.tsx";
 import { PeoplePage } from "./people-page.tsx";
 import { ProjectsPage, projectTabSchema } from "./projects-page.tsx";
@@ -582,6 +583,7 @@ const projectsRoute = createRoute({
 // People's address: its view, and the person whose details are shown beside it, by Employee ID.
 const peopleSearch = viewSearchSchema.extend({
   open: z.string().max(personLengths.employeeId).optional().catch(undefined),
+  day: daySchema.optional().catch(undefined),
 });
 
 const peopleRoute = createRoute({
@@ -592,25 +594,46 @@ const peopleRoute = createRoute({
   component: function People() {
     const { permissions, access } = signedIn.useRouteContext();
     const navigate = people.useNavigate();
-    const { open, ...search } = people.useSearch();
+    const { open, day: asked, ...search } = people.useSearch();
+    const otherDates = seesView("orgChartOtherDates", access);
+    const futureDates = seesView("orgChartFutureDates", access);
+    const day = shownDay(asked, { otherDates, futureDates });
+    // Columns and planned hires are changed on today alone; people's managers change from another
+    // day too, for roles that may date a change then.
+    const onToday = day === undefined;
     return (
       <PeoplePage
         canEdit={permissions.includes("people:edit")}
         canEditHires={
-          permissions.includes("people:edit") && changesHiringPlan(access)
+          onToday &&
+          permissions.includes("people:edit") &&
+          changesHiringPlan(access)
         }
         approves={approvableKinds(permissions)}
-        canEditColumns={permissions.includes("configuration:edit")}
+        canEditColumns={onToday && permissions.includes("configuration:edit")}
+        dates={
+          otherDates
+            ? {
+                day,
+                laterDays: futureDates,
+                changes:
+                  day !== undefined && changesLinesOn(access, day, today()),
+                onDay: (next) => {
+                  void navigate({ search: { ...search, open, day: next } });
+                },
+              }
+            : undefined
+        }
         showDates={seesEmployment(access)}
         showHireDates={seesHiringPlan(access)}
         {...viewProps(search, (next, replace) => {
-          void navigate({ search: { ...next, open }, replace });
+          void navigate({ search: { ...next, open, day }, replace });
         })}
         open={open}
         seesFeatureTeams={permissions.includes("feature-teams:view")}
         access={access}
         onOpen={(next, replace = false) => {
-          void navigate({ search: { ...search, open: next }, replace });
+          void navigate({ search: { ...search, day, open: next }, replace });
         }}
       />
     );

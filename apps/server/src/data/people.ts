@@ -17,7 +17,12 @@ import {
   inChunks,
   people,
 } from "@fathom/db";
-import { monthOf, seesEmployment, seesField } from "@fathom/shared";
+import {
+  changesLinesOn,
+  monthOf,
+  seesEmployment,
+  seesField,
+} from "@fathom/shared";
 import {
   isLink,
   type FieldType,
@@ -38,6 +43,7 @@ import {
   mostSensitive,
   requirePermission,
   requireSensitivityEdit,
+  requireView,
   seesSensitivity,
 } from "../access.ts";
 import {
@@ -99,6 +105,7 @@ import {
   changedReporting,
   checkLine,
   defaultFrom,
+  draftedLineOn,
   readLines,
   readManagers,
   readTeams,
@@ -110,6 +117,7 @@ import {
   reportingFields,
   reportingOf,
   shownReporting,
+  text,
 } from "./reporting.ts";
 import {
   type ColumnInfo,
@@ -637,11 +645,82 @@ export async function readPeople(
   );
 }
 
+// People on another day: those employed then, as their manager, team, and state were then, with
+// every planned hire not yet filled on a later day and none on an earlier one, since past plans are
+// not kept. Other days need the classes the Org chart's do, as the Decisions Log's People over time
+// sets out, and show drafts only to those who may make changes from the day, as the Org chart does.
+export async function readPeopleOn(
+  database: Database,
+  actor: Actor,
+  day: string,
+  asOf?: string,
+): Promise<PeopleRead> {
+  const today = asOf ?? (await readToday(database));
+  if (day === today) return readPeople(database, actor, today);
+  requireView(
+    actor,
+    day > today ? "orgChartFutureDates" : "orgChartOtherDates",
+  );
+  const read = await database.transaction(
+    (transaction) => readPeopleIn(transaction, actor, today, day),
+    { isolationLevel: "repeatable read", accessMode: "read only" },
+  );
+  // Another day tells who was or will be employed then, which is Personal.
+  return { ...read, includedPersonal: true };
+}
+
+// Drafts as they stand on another day: a drafted line counts only from its date, as the Org chart
+// draws it, so a manager changed from a later day is no draft on the days before.
+async function draftsOn(
+  reader: Transaction,
+  drafts: ReadonlyMap<string, Draft>,
+  live: ReadonlyMap<string, Recorded>,
+  { today, day }: { today: string; day: string },
+): Promise<Map<string, Draft>> {
+  const changesLine = (draft: Draft) =>
+    draft.action === "changed" &&
+    ("managerId" in draft.fields || "managerFrom" in draft.fields);
+  const lines = await readLines(
+    reader,
+    [...drafts].flatMap(([id, draft]) => (changesLine(draft) ? [id] : [])),
+  );
+  return new Map(
+    [...drafts].flatMap(([id, draft]): [string, Draft][] => {
+      const before = live.get(id);
+      if (before === undefined || !changesLine(draft)) return [[id, draft]];
+      const rest = Object.fromEntries(
+        Object.entries(draft.fields).filter(
+          ([field]) => field !== "managerId" && field !== "managerFrom",
+        ),
+      );
+      const on = draftedLineOn(lines.get(id) ?? [], draft.fields, {
+        today,
+        day,
+      });
+      const managerId = on?.inForce?.managerId ?? null;
+      const from = on?.inForce?.fromDate ?? on?.drafted.fromDate;
+      // Having no manager on the day is unchanged whatever date the drafted line starts from.
+      const unchanged =
+        from === undefined ||
+        (managerId === text(before.managerId) &&
+          (managerId === null || from === text(before.managerFrom)));
+      const fields = unchanged
+        ? rest
+        : { ...rest, managerId, managerFrom: from };
+      return Object.keys(fields).length === 0
+        ? []
+        : [[id, { ...draft, fields }]];
+    }),
+  );
+}
+
 async function readPeopleIn(
   database: Transaction,
   actor: Actor,
   today: string,
+  on?: string,
 ): Promise<PeopleRead> {
+  const day = on ?? today;
   const allColumns = await columnsWithAdded(database, actor.user.id);
   // Judged by the classes read with the columns, so rows and their fields follow the same classes.
   const access = {
@@ -665,9 +744,18 @@ async function readPeopleIn(
     ),
     ...columns.map(({ id }) => valueField(id)),
   ]);
-  const live = await readLive(database, allColumns, { asOf: today });
-  const draftsNow = await readPersonDrafts(database, undefined, actor.user.id);
-  const held = await readHeld(database, "person", actor.user.id);
+  const live = await readLive(database, allColumns, { asOf: day });
+  const withDrafts = on === undefined || changesLinesOn(actor, on, today);
+  const draftsRead = withDrafts
+    ? await readPersonDrafts(database, undefined, actor.user.id)
+    : new Map<string, Draft>();
+  const draftsNow =
+    on === undefined
+      ? draftsRead
+      : await draftsOn(database, draftsRead, live, { today, day });
+  const held = withDrafts
+    ? await readHeld(database, "person", actor.user.id)
+    : new Map();
   const makers = await draftMakers(
     database,
     "person",
@@ -699,7 +787,7 @@ async function readPeopleIn(
         ...person,
         endDate: (seesPersonal ? person : (before ?? person)).endDate,
       },
-      today,
+      day,
     );
   const shown = ids.flatMap((id): Person[] => {
     const before = live.get(id);
@@ -710,7 +798,7 @@ async function readPeopleIn(
     // dates while a draft waits, so a draft changing only Personal dates reveals nothing.
     if (
       person === undefined ||
-      (!seesPersonal && !currentOn(before ?? person, today))
+      ((on !== undefined || !seesPersonal) && !currentOn(before ?? person, day))
     ) {
       return [];
     }
@@ -734,7 +822,7 @@ async function readPeopleIn(
           everyone,
           live,
           seesPersonal: seesPersonal && seesField(access, "managerHistory"),
-          today,
+          today: day,
         }),
         values: Object.fromEntries(
           [...valuesOf(person)].filter(([fieldId]) =>
@@ -840,7 +928,13 @@ async function readPeopleIn(
       byName.compare(a.preferredName, b.preferredName) ||
       a.id.localeCompare(b.id),
   );
-  const hiring = await readHiresIn(database, actor, today);
+  // A later day shows the hires as approved, since nothing is changed then.
+  const hiring =
+    on === undefined || on > today
+      ? await readHiresIn(database, actor, day, {
+          approvedOnly: on !== undefined,
+        })
+      : { hires: [], includedPersonal: false, wholePlan: false };
   const teamOf = new Map(
     shown.map(({ id, teamName }) => [id, teamName ?? null]),
   );

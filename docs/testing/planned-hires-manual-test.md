@@ -68,10 +68,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'Backend engineer 1', 'Backend engineer 2' and 'Payments tester' in the usual colour.
   - **Notes:**
 
-- [ ] `D2C9` Read a hire row's **End**, **Manager?**, **Manager assigned** and **Team name** cells, and the **Expected** cell of a person.
+- [ ] `D2C9` Read the **End**, **Manager?**, **Manager assigned** and **Team name** cells of the row for 'Payments tester', and the **Expected** cell of a person.
   - **Expected:**
     - All are blank.
-    - The hire row's **Expected** cell holds a month and year, such as "Jan 2027".
+    - The **Expected** cell of 'Payments tester' holds a month and year, such as "Feb 2027".
   - **Notes:**
 
 ### HIRE-02: A Hire's Name Can Be Typed and Cleared

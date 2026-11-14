@@ -76,6 +76,7 @@ describe("what a role allows", () => {
       allowed(["people:view", "feature-teams:view", "personal:view"]).sees,
     ).toEqual([
       "People",
+      "People on other dates",
       "Org chart",
       "Org chart on other dates",
       "Feature assignments",
@@ -93,6 +94,7 @@ describe("what a role allows", () => {
     ]);
     expect(engineeringManager.sees).toEqual([
       "People",
+      "People on other dates",
       "Org chart",
       "Org chart on other dates",
       "Feature assignments",
@@ -106,6 +108,7 @@ describe("what a role allows", () => {
       "Projects",
       "Features",
       "Releases",
+      "People on future dates: needs Confidential",
       "Org chart on future dates: needs Confidential",
       "Feature assignments grouped by manager: needs Confidential",
       "Allocations grouped by manager: needs Confidential",

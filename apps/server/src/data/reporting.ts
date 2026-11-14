@@ -186,6 +186,19 @@ export function draftedLines(
     : withLine(lines, line.managerId, line.fromDate, today);
 }
 
+// What a draft changing a person's line makes of it on a day: the line it gives, and the line in
+// force then with it in place, none before any starts; undefined for a draft that gives no line.
+export function draftedLineOn(
+  lines: readonly Line[],
+  fields: Recorded,
+  { today, day }: { today: string; day: string },
+): { drafted: Line; inForce: Line | undefined } | undefined {
+  const drafted = draftedLine(lines, fields, today);
+  return drafted === undefined
+    ? undefined
+    : { drafted, inForce: inForceOn(draftedLines(lines, fields, today), day) };
+}
+
 // Who a person reports to, and their team, as a reader sees them: the live manager for those who
 // see only General details, since a draft's manager is Personal until approved, and, for those who
 // see Personal details, since when, and whether the manager has left. Managers are found among

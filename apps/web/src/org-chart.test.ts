@@ -2,13 +2,14 @@
 
 // Tests for the org chart's tree: who sits under whom, the managers above someone, whose reports
 // are hidden when it opens, where the people shown are placed when managers are collapsed, and the
-// people the Draft menu's choice draws.
+// people the Draft menu's choice draws, and the days the chart is drawn as of.
 
 import type { OrgChartPerson } from "@fathom/shared";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   cardHeight,
   cardWidth,
+  chartDays,
   chartPeople,
   heightOf,
   collapsedBelow,
@@ -379,5 +380,37 @@ describe("the people the Draft menu draws", () => {
     expect(card("new")?.added).toEqual(draft);
     expect(card("m1")?.moved).toBeUndefined();
     expect(heightOf(card("r1"))).toBe(cardHeight);
+  });
+});
+
+describe("chartDays", () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-03-10T12:00:00Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const later = "2028-03-15";
+  it.each([
+    [
+      "draws people on a later day for a role that sees future lines",
+      { otherDates: true, futureLines: true, featureTeams: false },
+      { day: later, peopleDay: later },
+    ],
+    [
+      "draws people as today on feature teams' later day without future lines",
+      { otherDates: true, futureLines: false, featureTeams: true },
+      { day: later, peopleDay: undefined },
+    ],
+    [
+      "draws no later day on reporting teams without future lines",
+      { otherDates: true, futureLines: false, featureTeams: false },
+      { day: undefined, peopleDay: undefined },
+    ],
+  ])("%s", (_, sees, expected) => {
+    expect(chartDays(later, sees)).toEqual(expected);
   });
 });

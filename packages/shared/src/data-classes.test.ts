@@ -10,6 +10,7 @@ import {
   builtInColumnTiers,
   changesHiringPlan,
   changesField,
+  changesLinesOn,
   type ClassAccess,
   type DataClasses,
   defaultClasses,
@@ -97,6 +98,7 @@ describe("the classes of People's built-in columns", () => {
 describe("what shows a built-in detail", () => {
   it("names the views needing it and People's columns holding it", () => {
     expect(shownIn("futureReorganizations")).toEqual([
+      "People on future dates",
       "Org chart on future dates",
       "Feature assignments grouped by manager",
       "Allocations grouped by manager",
@@ -123,6 +125,38 @@ describe("changing a built-in detail", () => {
     expect(
       changesField(access([], { managerHistory: "general" }), "managerHistory"),
     ).toBe(true);
+  });
+});
+
+describe("changing reporting lines on a day", () => {
+  const today = "2026-06-15";
+  const changer = access([
+    "people:view",
+    "people:edit",
+    "personal:view",
+    "personal:edit",
+  ]);
+
+  it("needs changing people and past managers' class on an earlier day", () => {
+    expect(changesLinesOn(changer, "2026-01-01", today)).toBe(true);
+    expect(
+      changesLinesOn(
+        access(["people:view", "personal:view", "personal:edit"]),
+        "2026-01-01",
+        today,
+      ),
+    ).toBe(false);
+    expect(
+      changesLinesOn(
+        access(["people:view", "people:edit", "personal:view"]),
+        "2026-01-01",
+        today,
+      ),
+    ).toBe(false);
+  });
+
+  it("is refused on a later day, since lines are not dated ahead", () => {
+    expect(changesLinesOn(changer, "2026-07-01", today)).toBe(false);
   });
 });
 
@@ -304,7 +338,13 @@ describe("the views on the pages a role reaches", () => {
 
   it("names each view with its page, and why the role misses it", () => {
     expect(viewsOfRole(access(personal), orgChart)).toEqual([
+      { name: "People on other dates", page: "People" },
       { name: "Org chart on other dates", page: "Org chart" },
+      {
+        name: "People on future dates",
+        page: "People",
+        why: "People on future dates: needs Confidential",
+      },
       {
         name: "Org chart on future dates",
         page: "Org chart",
@@ -315,7 +355,9 @@ describe("the views on the pages a role reaches", () => {
 
   it("names every class a view needs, never the details kept in each", () => {
     expect(whys(["people:view"])).toEqual([
+      "People on other dates: needs Personal",
       "Org chart on other dates: needs Personal",
+      "People on future dates: needs Personal and Confidential",
       "Org chart on future dates: needs Personal and Confidential",
     ]);
   });
@@ -327,11 +369,16 @@ describe("the views on the pages a role reaches", () => {
         endDate: "general",
         featureTeamDates: "confidential",
       })[0],
-    ).toBe("Org chart on other dates: needs Personal and Confidential");
+    ).toBe("People on other dates: needs Personal and Confidential");
   });
 
   it("leaves out views on pages the role does not reach", () => {
-    expect(whys(everything)).toEqual([undefined, undefined]);
+    expect(whys(everything)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]);
     expect(viewsOfRole(access(everything), [])).toEqual([]);
   });
 

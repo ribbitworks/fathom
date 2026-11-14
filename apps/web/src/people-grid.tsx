@@ -60,6 +60,7 @@ import {
 } from "./people-rows.ts";
 import { type CellValue, formatMonth } from "./table-view.ts";
 import { today } from "./today.ts";
+import { type ChangesFrom, managerChangesFrom } from "./person-change.ts";
 
 export type PeopleActions = RecordActions<Person, RowChange, RowRequest>;
 
@@ -248,7 +249,13 @@ function makeReportingColumns(
 // The months planned hires are expected, earliest first, as choices named as people read them, such
 // as Mar 2027, so the column sorts and filters by month.
 function monthChoices(people: readonly Person[]): Choice[] {
-  return [...new Set(people.flatMap(({ expected }) => expected ?? []))]
+  return [
+    ...new Set(
+      people.flatMap(({ expected, undated }) =>
+        expected === undefined || undated === true ? [] : expected,
+      ),
+    ),
+  ]
     .sort()
     .map((expected) => choice(expected, formatMonth(expected), false));
 }
@@ -365,7 +372,8 @@ export function columnsFor(
     multiple: false,
     choices: monthChoices(people),
     readOnly: true,
-    value: (row) => chosen(row.expected),
+    // A month from no date moves with the day shown, so it is left empty.
+    value: (row) => chosen(row.undated === true ? undefined : row.expected),
     live: () => [],
     change: () => ({}),
     offeredOn: hiresOnly,
@@ -435,6 +443,18 @@ export function columnsFor(
 // detail and column a draft changes has its live value back, with each person's manager, and their
 // team, named as the manager's live team name has it.
 const liveMade = new WeakMap<readonly Person[], Person[]>();
+
+// Changes made from a day, judged by today's people as they are live, before today's are read too.
+export const changesFromDay = (
+  day: string | undefined,
+  today: readonly Person[] | undefined,
+): ChangesFrom | undefined =>
+  day === undefined
+    ? undefined
+    : {
+        day,
+        today: new Map(livePeople(today ?? []).map((one) => [one.id, one])),
+      };
 
 export function livePeople(people: readonly Person[]): Person[] {
   const made = liveMade.get(people);
@@ -637,6 +657,9 @@ function requestFor(parts: readonly RowChange[]): RowRequest {
   };
 }
 
+// The only value changed from another day, since the rest take no date.
+export const datedKey = "managerId";
+
 function peopleTable(
   showDates: boolean,
   showHireDates: boolean,
@@ -647,6 +670,7 @@ function peopleTable(
   onOpen: ((person: Person) => void) | undefined,
   onFill: ((hire: Person) => void) | undefined,
   dataClasses: DataClasses,
+  changesFrom: ChangesFrom | undefined,
 ): RecordTable<Person, RowChange, RowRequest> {
   const kindOf = (row: Person) => row.kind ?? personKind;
   // Each built-in column's class, as the server decides who is sent it. A Start column showing
@@ -706,7 +730,11 @@ function peopleTable(
       isHire(row) ? "Remove planned hire" : "Remove person",
     nameOf: (row) => rowName(row, lists),
     nameColumn: "preferredName",
-    readOnlyRecord: (row) => isHire(row) && !canEditHires,
+    // On another day only people's managers change, from that day, while their line can.
+    readOnlyRecord: (row) =>
+      changesFrom === undefined
+        ? isHire(row) && !canEditHires
+        : isHire(row) || !managerChangesFrom(row.id, changesFrom),
     columnsFor: (fields, lists, order, records) =>
       columnsFor(
         fields,
@@ -719,6 +747,11 @@ function peopleTable(
         canEditHires,
       )
         .map(classed(lists))
+        .map((column) =>
+          changesFrom === undefined || column.key === datedKey
+            ? column
+            : { ...column, readOnly: true },
+        )
         .map((column) =>
           column.key === "preferredName" &&
           onOpen !== undefined &&
@@ -775,6 +808,8 @@ type PeopleGridProps = Omit<
   onOpen?: ((person: Person) => void) | undefined;
   // Starts filling a planned hire in its details, for those who may.
   onFill?: ((hire: Person) => void) | undefined;
+  // The day People shows, when a change of manager is made from it rather than today.
+  changesFrom?: ChangesFrom | undefined;
 };
 
 export function PeopleGrid({
@@ -786,6 +821,7 @@ export function PeopleGrid({
   dataClasses = defaultClasses,
   onOpen,
   onFill,
+  changesFrom,
   ...props
 }: PeopleGridProps) {
   return (
@@ -801,8 +837,10 @@ export function PeopleGrid({
         onOpen,
         onFill,
         dataClasses,
+        changesFrom,
       )}
-      canAdd={showPosition}
+      canAdd={showPosition && changesFrom === undefined}
+      rowActions={changesFrom === undefined}
       {...props}
     />
   );

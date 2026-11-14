@@ -174,6 +174,8 @@ export const personSchema = z.object({
   stateId: z.string().optional(),
   // The first month a planned hire can be allocated.
   expected: monthSchema.optional(),
+  // Set when the expected month comes from no date, so it moves with the day.
+  undated: z.literal(true).optional(),
   // A choice in the built-in Positions list, left out for users who cannot see the list's tier.
   positionId: z.string().optional(),
   // Left out for users who cannot see Personal details; null when not set.

@@ -76,7 +76,7 @@ import { colourVariable } from "./colours.ts";
 import { Icon } from "./icons.tsx";
 import { ChartControls } from "./org-chart-controls.tsx";
 import { PersonMarks, TeamMarks } from "./org-chart-marks.tsx";
-import { OrgChartDate } from "./org-chart-date.tsx";
+import { DateControl } from "./date-control.tsx";
 import {
   hasApprovedName,
   cardWidth,
@@ -122,7 +122,7 @@ import {
   MarkedItem,
   MarkRow,
 } from "./status-mark.tsx";
-import { formatMonth } from "./table-view.ts";
+import { plannedWords } from "./table-view.ts";
 import { DraftMenu } from "./table-controls.tsx";
 import { today } from "./today.ts";
 import { WhyMissing } from "./why-missing.tsx";
@@ -425,10 +425,7 @@ function PersonCard({ data }: NodeProps<CardNode>) {
         </Text>
       )}
       {planned !== undefined && (
-        <MarkedItem
-          tone="planned"
-          words={`Planned, expected ${formatMonth(planned.expected)}`}
-        />
+        <MarkedItem tone="planned" words={plannedWords(planned)} />
       )}
       <TeamRow
         person={person}
@@ -1104,13 +1101,13 @@ export function OrgChartPage({
         />
       </Box>
       {whyNoOtherDates === undefined ? (
-        <OrgChartDate
+        <DateControl
           day={day}
           laterDays={featureView || futureLines}
           changes={changesOnDay}
           onDay={(next) => {
             setCreating(false);
-            go({ ...search, day: next }, true);
+            go({ ...search, day: next }, false);
           }}
         />
       ) : (
@@ -1152,6 +1149,7 @@ export function OrgChartPage({
                     name: "details",
                     node: (
                       <PersonPanel
+                        shownOn={peopleDay}
                         employeeId={search.open}
                         teams={featureView ? "feature-teams" : "reporting"}
                         show={show}

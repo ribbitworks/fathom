@@ -23,7 +23,7 @@ import {
 } from "@fathom/shared";
 import { dayQuery, sendJson } from "./api.ts";
 import { formatDay } from "./table-view.ts";
-import { today } from "./today.ts";
+import { shownDay, today } from "./today.ts";
 
 // The chart as it is today, with drafts, or as approved on a chosen day, for readers who see
 // Personal details, with drafts laid over it where reporting lines change from that day.
@@ -451,18 +451,6 @@ export interface ChartSearch {
   day?: string | undefined;
 }
 
-// The day the chart should be drawn as of, or undefined for today: only a day the reader's role sees
-// the classes of data for.
-export function chartDay(
-  asked: string | undefined,
-  sees: { otherDates: boolean; futureDates: boolean },
-): string | undefined {
-  if (asked === undefined || asked === today() || !sees.otherDates) {
-    return undefined;
-  }
-  return asked > today() && !sees.futureDates ? undefined : asked;
-}
-
 // The day the chart is drawn as of, and the day its people are drawn as of. Later dates of
 // reporting lines are future reorganizations; feature teams on a later date need only what other
 // dates do, drawing people as they are today for a role that does not see future reorganizations.
@@ -470,7 +458,7 @@ export function chartDays(
   asked: string | undefined,
   sees: { otherDates: boolean; futureLines: boolean; featureTeams: boolean },
 ): { day: string | undefined; peopleDay: string | undefined } {
-  const day = chartDay(asked, {
+  const day = shownDay(asked, {
     otherDates: sees.otherDates,
     futureDates: sees.featureTeams || sees.futureLines,
   });

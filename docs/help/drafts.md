@@ -22,7 +22,7 @@ Approvers approve and reject drafts on the [Drafts page](drafts-page.md).
 - **A red dot in a ring** means the draft was rejected. Point at it to see what was rejected and why. The reason is in the record's menu too.
 - **A grey lock** means someone else has unpublished changes to this. Point at it to see who. You can't change it until they publish or discard their changes.
 - **Moved**, **Reordered**, **Retired** or **Restored**, in a yellow box after the name of a draft waiting for approval, says what a dot can't.
-- **A grey or red box** after a name is a fact about it, not a draft. It can be **Built in**, **Planned, expected** and a month, a lock with a [data class](data-classes.md), or a warning such as **Left**.
+- **A grey or red box** after a name is a fact about it, not a draft. It can be **Built in**, **Planned, expected** and a month or **Planned, no date**, a lock with a [data class](data-classes.md), or a warning such as **Left**.
 - **A date** after the name, such as **from Dec 1, 2026**, says when a change takes effect, where that's not the date shown.
 - **A green dot** marks the value or record as it is now, without the draft. It's in the light green row or line under the draft.
 - **A faint yellow tint**, while drafts are shown beside live, marks a row, column or card with a draft. It's faintly red once the draft is rejected, and the changed values are in bold.

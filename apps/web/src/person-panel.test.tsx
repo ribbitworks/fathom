@@ -773,10 +773,12 @@ describe("changing a manager beside the org chart on an earlier day", () => {
     permissions = changesDates,
     shown = day,
     people = [robin, sasha, uma],
+    peopleThen = people,
   ) {
     const fetch = serverAnswers({
       "GET /api/session": session(permissions),
       "GET /api/people": peopleAnswer(people),
+      [`GET /api/people?on=${shown}`]: peopleAnswer(peopleThen),
       "GET /api/lists": () => Response.json({ lists: [positions] }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": () =>
@@ -808,6 +810,30 @@ describe("changing a manager beside the org chart on an earlier day", () => {
       ]);
     });
   });
+
+  it.each([
+    ["by name, as today's People has them", "E3", "Uma Fictional"],
+    ["by ID, when today's People has nobody with it", "E9", "E9"],
+  ])(
+    "says someone isn't employed on that day %s",
+    async (_case, employeeId, called) => {
+      serverAnswers({
+        "GET /api/session": session(changesDates),
+        "GET /api/people": peopleAnswer([robin, sasha, uma]),
+        [`GET /api/people?on=${day}`]: peopleAnswer([robin, sasha]),
+        "GET /api/lists": () => Response.json({ lists: [positions] }),
+        "GET /api/unpublished": () => Response.json({ changes: [] }),
+        [`GET /api/org-chart?on=${day}`]: () =>
+          Response.json({ people: chart, drafted: chart }),
+      });
+      renderApp(`/org-chart?open=${employeeId}&day=${day}`);
+      expect(
+        await screen.findByText((text) =>
+          text.startsWith(`${called} isn't employed on `),
+        ),
+      ).toBeDefined();
+    },
+  );
 
   it("withdraws a drafted move when the live manager is chosen again, keeping the live line's date", async () => {
     // Given Uma drafted from Sasha, since 2024-05-01, to Robin
@@ -846,8 +872,13 @@ describe("changing a manager beside the org chart on an earlier day", () => {
   });
 
   it("offers no change to someone whose current line started after that day", async () => {
-    // Given Sasha's current line, from 2024-03-01
-    onDay(changesDates, "2024-02-29");
+    // Given Sasha's current line, from 2024-03-01, after an earlier line in force on the day shown
+    onDay(
+      changesDates,
+      "2024-02-29",
+      [robin, sasha, uma],
+      [robin, { ...sasha, managerFrom: "2023-01-01" }, uma],
+    );
     renderApp("/org-chart?open=E2&day=2024-02-29");
     await panel("Sasha Fictional");
     expect(change("Manager")).toBeNull();
@@ -1928,6 +1959,21 @@ describe("changing a planned hire's details", () => {
         Response.json({ changeSetId: "00000000-0000-4000-8000-0000000000c2" }),
     });
   }
+
+  it("marks a planned hire with no date as Planned, no date", async () => {
+    serverAnswers({
+      "GET /api/session": hiringEditor,
+      "GET /api/people": peopleAnswer([robin, { ...opening, undated: true }]),
+      "GET /api/lists": () => Response.json({ lists: [positions, states] }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": () =>
+        Response.json({ people: chart, drafted: chart }),
+    });
+    renderApp("/people?open=REQ-7");
+    const details = await panel("Fictional Opening");
+    expect(within(details).getByText("Planned, no date")).toBeDefined();
+    expect(within(details).queryByText(/^Planned, expected/)).toBeNull();
+  });
 
   it("offers a planned hire only the hiring states", async () => {
     hireAnswers(hiringEditor);

@@ -1231,6 +1231,21 @@ describe("planned hires beside people", () => {
     },
   ];
 
+  it("leaves the Expected month empty for a hire with no date, since it moves with the day shown", () => {
+    const undated = {
+      ...(rows[1] as Person),
+      id: "h2",
+      undated: true as const,
+    };
+    const expected = columnsFor([], [positions], [], true, [
+      ...rows,
+      undated,
+    ]).find((column) => column.key === "expected") as Column;
+    expect(expected.value(rows[1] as Person)).toEqual(["2027-03"]);
+    expect(expected.value(undated)).toEqual([]);
+    expect(expected.choices.map(({ id }) => id)).toEqual(["2027-03"]);
+  });
+
   it("offers a hire the added columns switched on for planned hires, never required of it", () => {
     const required = { ...site, required: true };
     const off = { ...site, id: "f2", name: "Office", onPlannedHires: false };

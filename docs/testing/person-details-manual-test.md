@@ -613,7 +613,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `F91F` Select the details button in the row for 'Engineering Manager, TBD-3', the box with a line down its right side that shows at the right of its **Name** cell while the row is pointed at.
   - **Expected:**
     - The details panel opens, headed 'Engineering Manager, TBD-3'.
-    - Under the heading, 'Engineering Manager', then a grey box reading **Planned, expected** and this month, such as **Nov 2026**.
+    - Under the heading, 'Engineering Manager', then a grey box reading **Planned, no date**.
     - There is no **Show on org chart** link.
   - **Notes:**
 
@@ -624,7 +624,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Details** shows:
       - **ID** 'TBD-3'
       - **State** "Request to hire"
-      - **Expected** "Nov 2026"
+      - no **Expected**
       - no **End**
     - **Manager?** shows a ticked checkbox and "Yes".
   - **Notes:**

@@ -14,6 +14,7 @@ import {
   within,
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+import { addToMonth, monthOf } from "@fathom/shared";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   bodyOf,
@@ -29,6 +30,7 @@ import {
   serverAnswers,
   wholeText,
 } from "./test-support.tsx";
+import { today } from "./today.ts";
 
 const s1 = "00000000-0000-4000-8000-000000000001";
 const u1 = "00000000-0000-4000-8000-000000000002";
@@ -2391,7 +2393,7 @@ describe("searching, sorting, and filtering", () => {
     // sorted on, even from a hand-made address.
     history.push('/people?search=waiting&sort=["draft"]');
     await waitFor(() => {
-      expect(screen.getByRole("status").textContent).toBe("0 of 3");
+      expect(screen.getByText("0 of 3").getAttribute("role")).toBe("status");
     });
     expect(screen.queryByText("Draft ↑")).toBeNull();
     expect(screen.getByRole("button", { name: "Draft" })).toBeDefined();
@@ -4406,6 +4408,30 @@ describe("adding from New", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("asks before another date discards a person being added, which it then closes", async () => {
+    // Given a new person with a name, on a page with a date row
+    const lastMonth = `${addToMonth(monthOf(today()), -1)}-01`;
+    await openNew(hiringEditor, {
+      [`GET /api/people?on=${lastMonth}`]: peopleAnswer,
+    });
+    await typeInto("Name", "Casey Fictional");
+    // When an earlier month is chosen, and adding kept
+    const earlier = screen.getByRole("button", { name: "Previous month" });
+    await userEvent.click(earlier);
+    await answerQuestion("Discard the new person?", "Keep adding");
+    // Then the form stays, on today
+    expect(field("Name").value).toBe("Casey Fictional");
+    expect(screen.queryByText(/^Showing/)).toBeNull();
+    // When the month is chosen again, and adding discarded
+    await userEvent.click(earlier);
+    await answerQuestion("Discard the new person?", "Discard");
+    // Then the form closes, and the earlier date shows
+    await waitFor(() => {
+      expect(screen.queryByRole("region", { name: "New person" })).toBeNull();
+    });
+    expect(await screen.findByText(/^Showing/)).toBeDefined();
+  });
+
   it("asks before discarding a person being added, keeping them until Discard", async () => {
     // Given a new person with a name
     await openNew();
@@ -4630,5 +4656,125 @@ describe("exporting People", () => {
       (await screen.findByRole("dialog", { name: "Export Personal data?" }))
         .textContent,
     ).not.toContain("Past managers");
+  });
+});
+
+describe("on another date", () => {
+  const onDay = "2025-03-01";
+  const managingAvery = { ...avery, isManager: true };
+  const peopleOnDay = {
+    [`GET /api/people?on=${onDay}`]: () =>
+      Response.json({
+        people: [managingAvery, blake],
+        fields: [site, role],
+        order,
+        views: [],
+      }),
+  };
+  const reader = session([
+    "people:view",
+    "configuration:view",
+    "plan:view",
+    "features:view",
+    "personal:view",
+  ]);
+
+  async function openOn(
+    signedInAs: () => Response,
+    path = `/people?day=${onDay}`,
+  ) {
+    const fetch = serverAnswers({
+      "GET /api/session": signedInAs,
+      "GET /api/people": peopleAnswer,
+      "GET /api/lists": listsAnswer,
+      ...peopleOnDay,
+      "PATCH /api/people/p2": savedAs(),
+    });
+    const history = renderApp(path);
+    await screen.findByRole("grid", { name: "People" });
+    return { fetch, history };
+  }
+
+  it("lists People as on that date, read only, for those who may not change it then", async () => {
+    const { fetch } = await openOn(reader);
+    expect(
+      await screen.findByText(
+        "Showing Mar 1, 2025. Nothing can be changed on this date.",
+      ),
+    ).toBeDefined();
+    expect(fetch.mock.calls.map(([url]) => url)).toContain(
+      `/api/people?on=${onDay}`,
+    );
+    focusCell("p2", "managerId");
+    await userEvent.keyboard("{Enter}");
+    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Draft/ })).toBeNull();
+  });
+
+  it("changes only managers from an earlier date, dated from it", async () => {
+    const { fetch } = await openOn(editor);
+    expect(
+      await screen.findByText(
+        "Showing Mar 1, 2025. Changes take effect from this date.",
+      ),
+    ).toBeDefined();
+    expect(screen.queryByRole("button", { name: "New" })).toBeNull();
+    expect(screen.getByRole("button", { name: /^Draft/ })).toBeDefined();
+    expect(cell("p2", "preferredName").getAttribute("aria-readonly")).toBe(
+      "true",
+    );
+    focusCell("p2", "managerId");
+    await userEvent.keyboard("{Enter}");
+    await pick("Avery Fictional");
+    await waitFor(() => {
+      expect(bodyOf(fetch, "PATCH", "/api/people/p2")).toEqual([
+        { managerId: "p1", managerFrom: onDay },
+      ]);
+    });
+  });
+
+  it("keeps a manager whose line today started after that date", async () => {
+    const lineToday = {
+      ...blake,
+      manager: { id: "p1", preferredName: "Avery Fictional" },
+      managerFrom: "2025-06-01",
+    };
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/people": () =>
+        Response.json({
+          people: [managingAvery, lineToday],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+      "GET /api/lists": listsAnswer,
+      ...peopleOnDay,
+    });
+    renderApp(`/people?day=${onDay}`);
+    await screen.findByRole("grid", { name: "People" });
+    await waitFor(() => {
+      expect(cell("p2", "managerId").getAttribute("aria-readonly")).toBe(
+        "true",
+      );
+    });
+  });
+
+  it("goes back to the earlier date with the browser's Back after Today", async () => {
+    const { history } = await openOn(editor);
+    await userEvent.click(await screen.findByRole("button", { name: "Today" }));
+    await waitFor(() => {
+      expect(history.location.search).not.toContain("day=");
+    });
+    history.back();
+    await waitFor(() => {
+      expect(history.location.search).toContain(`day=${onDay}`);
+    });
+  });
+
+  it("offers no date to those who may not see other dates", async () => {
+    await openOn(viewer, "/people");
+    expect(screen.queryByRole("button", { name: "Today" })).toBeNull();
+    expect(screen.queryByText(/^Showing/)).toBeNull();
   });
 });

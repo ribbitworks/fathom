@@ -53,6 +53,7 @@ export {
   type BuiltInTiers,
   type ClassAccess,
   changesField,
+  changesLinesOn,
   changesHiringPlan,
   type ClassifiedField,
   classDescriptions,

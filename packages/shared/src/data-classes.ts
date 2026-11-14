@@ -13,6 +13,7 @@ import {
   tierSchema,
 } from "./access.ts";
 import { builtInColumnNames } from "./changes.ts";
+import { mayDateLineChange } from "./days.ts";
 import { allOf } from "./words.ts";
 
 // The built-in details whose class is stored and can be moved. Lists and columns hold their own.
@@ -171,6 +172,16 @@ export const changesField = (
   field: ClassifiedField,
 ): boolean => seesField(access, field) && editsField(access, field);
 
+// Whether a role changes people's reporting lines from a day other than today, as the Org chart and
+// People both let it: it changes people, and may date a change then.
+export const changesLinesOn = (
+  access: ClassAccess,
+  day: string,
+  today: string,
+): boolean =>
+  access.permissions.includes("people:edit") &&
+  mayDateLineChange(changesField(access, "managerHistory"), day, today);
+
 // Whether a role sees the hiring plan, and changes it: the hiring plan is an area of its own, and
 // still kept in a class, so each needs both.
 export const seesHiringPlan = (access: ClassAccess): boolean =>
@@ -309,8 +320,12 @@ const viewPlaces: Record<
   ClassifiedView,
   readonly { page: string; name: string; needs?: readonly Permission[] }[]
 > = {
-  orgChartOtherDates: [{ page: "Org chart", name: "Org chart on other dates" }],
+  orgChartOtherDates: [
+    { page: "People", name: "People on other dates" },
+    { page: "Org chart", name: "Org chart on other dates" },
+  ],
   orgChartFutureDates: [
+    { page: "People", name: "People on future dates" },
     { page: "Org chart", name: "Org chart on future dates" },
   ],
   featureAssignments: [

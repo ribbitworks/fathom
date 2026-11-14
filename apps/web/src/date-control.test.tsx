@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Org chart's date control: which day a chart is drawn as of, stepping by month, typing
-// a day, stopping at today for roles that do not see future dates, and what it says while the chart
-// shows another day.
+// Tests for the date control the Org chart and People share: stepping by month, typing a day,
+// stopping at today for roles that do not see future dates, and what it says while the page shows
+// another day.
 
 import { MantineProvider } from "@mantine/core";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { OrgChartDate } from "./org-chart-date.tsx";
-import { chartDay, chartDays } from "./org-chart.ts";
+import { DateControl } from "./date-control.tsx";
 import { testTheme } from "./test-support.tsx";
 
 const now = "2027-03-10";
@@ -23,64 +22,11 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("chartDay", () => {
-  const every = { otherDates: true, futureDates: true };
-  it.each([
-    ["none asked", undefined, every, undefined],
-    ["today", now, every, undefined],
-    ["an earlier day", "2025-03-15", every, "2025-03-15"],
-    ["a later day", "2028-03-15", every, "2028-03-15"],
-    [
-      "no other day without other dates",
-      "2025-03-15",
-      { otherDates: false, futureDates: false },
-      undefined,
-    ],
-    [
-      "an earlier day without future dates",
-      "2025-03-15",
-      { otherDates: true, futureDates: false },
-      "2025-03-15",
-    ],
-    [
-      "no later day without future dates",
-      "2028-03-15",
-      { otherDates: true, futureDates: false },
-      undefined,
-    ],
-  ])("%s", (_, asked, sees, expected) => {
-    expect(chartDay(asked, sees)).toBe(expected);
-  });
-});
-
-describe("chartDays", () => {
-  const later = "2028-03-15";
-  it.each([
-    [
-      "draws people on a later day for a role that sees future lines",
-      { otherDates: true, futureLines: true, featureTeams: false },
-      { day: later, peopleDay: later },
-    ],
-    [
-      "draws people as today on feature teams' later day without future lines",
-      { otherDates: true, futureLines: false, featureTeams: true },
-      { day: later, peopleDay: undefined },
-    ],
-    [
-      "draws no later day on reporting teams without future lines",
-      { otherDates: true, futureLines: false, featureTeams: false },
-      { day: undefined, peopleDay: undefined },
-    ],
-  ])("%s", (_, sees, expected) => {
-    expect(chartDays(later, sees)).toEqual(expected);
-  });
-});
-
 function control(day: string | undefined, laterDays = true, changes = false) {
   const onDay = vi.fn();
   render(
     <MantineProvider theme={testTheme}>
-      <OrgChartDate
+      <DateControl
         day={day}
         laterDays={laterDays}
         changes={changes}
@@ -211,7 +157,7 @@ describe("the date control", () => {
   it("moves the handle with the date once it has been dragged and let go", () => {
     const shown = (day: string | undefined) => (
       <MantineProvider theme={testTheme}>
-        <OrgChartDate day={day} laterDays changes={false} onDay={vi.fn()} />
+        <DateControl day={day} laterDays changes={false} onDay={vi.fn()} />
       </MantineProvider>
     );
     const { rerender } = render(shown(undefined));

@@ -518,6 +518,19 @@ export function formatMonth(value: string): string {
   return month.format(new Date(`${value}-01T00:00:00Z`));
 }
 
+// What marks a planned hire: the month it is expected, or no date when that month comes from none,
+// since it would move with the day shown.
+export const plannedWords = ({
+  expected,
+  undated,
+}: {
+  expected: string;
+  undated?: true | undefined;
+}): string =>
+  undated === true
+    ? "Planned, no date"
+    : `Planned, expected ${formatMonth(expected)}`;
+
 // Each kind's values are of one type: text and dates are strings, choices are lists, and links are
 // links or null.
 export const asText = (value: CellValue) => value as string;

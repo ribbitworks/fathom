@@ -12,12 +12,7 @@
 // only read. Beside the org chart on an earlier day, only a person's manager changes, from that day,
 // while their current line was already in force then.
 
-import {
-  lineChangesFrom,
-  type PaletteColour,
-  type Person,
-  type Show,
-} from "@fathom/shared";
+import { type PaletteColour, type Person, type Show } from "@fathom/shared";
 import { Alert, Button, Group, Loader, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useEffectEvent } from "react";
@@ -30,15 +25,17 @@ import { orgChartQuery } from "./org-chart.ts";
 import {
   columnsFor,
   type Column,
+  changesFromDay,
+  datedKey,
   livePeople,
   peopleAsShown,
   personKind,
   recordProblem,
 } from "./people-grid.tsx";
 import { isHire, rowName, type RowChange } from "./people-rows.ts";
-import { datedChange } from "./person-change.ts";
+import { changedFrom, managerChangesFrom } from "./person-change.ts";
 import type { NoteEditing } from "./note-editing.tsx";
-import { peopleQuery } from "./people.ts";
+import { peopleQuery, peopleQueryOn } from "./people.ts";
 import {
   personPanelId,
   type EditingContext,
@@ -57,7 +54,7 @@ import {
   MarkedItem,
   MarkRow,
 } from "./status-mark.tsx";
-import { type CellValue, formatDay, formatMonth } from "./table-view.ts";
+import { type CellValue, formatDay, plannedWords } from "./table-view.ts";
 import { today } from "./today.ts";
 
 export { personPanelId };
@@ -90,9 +87,6 @@ export const detailKeys = [
   "isManager",
 ];
 
-// The only value changed from an earlier day of the org chart beside, since the rest take no date.
-const datedKey = "managerId";
-
 const sameId = (person: Person, employeeId: string) =>
   person.employeeId.toLowerCase() === employeeId.toLowerCase();
 
@@ -113,8 +107,11 @@ export function PersonPanel({
   changesFrom,
   notes,
   hireFill,
+  shownOn,
 }: {
-  // The earlier day the org chart beside shows, from which only a change of manager is made.
+  // The day the page beside it shows, or none for today.
+  shownOn?: string | undefined;
+  // The earlier day the page beside shows, from which only a change of manager is made.
   changesFrom?: string | undefined;
   employeeId: string;
   // What the Draft menu of the page beside it shows.
@@ -150,12 +147,21 @@ export function PersonPanel({
       ) => { action?: ReactNode; form?: ReactNode })
     | undefined;
 }) {
-  const query = useQuery(peopleQuery);
+  const query = useQuery(peopleQueryOn(shownOn));
   const lists = useQuery(listsQuery);
   const chart = useQuery(orgChartQuery);
   const { closeStale, editingOf } = usePersonEditing(notes);
   const people = query.data?.people ?? [];
   const found = people.find((one) => sameId(one, employeeId));
+  // Today's people, while another day is shown: to judge a change from it by the line today, and
+  // to name someone not employed then.
+  const todays = useQuery({
+    ...peopleQuery,
+    enabled:
+      shownOn !== undefined &&
+      (changesFrom !== undefined ||
+        (query.data !== undefined && found === undefined)),
+  });
   const shownId = useShownId(employeeId, query.data?.people);
   const drafted = people.find(({ id }) => id === shownId);
   const renamed = found === undefined ? drafted?.employeeId : undefined;
@@ -206,9 +212,14 @@ export function PersonPanel({
   const person = asShown.find(({ id }) => id === drafted?.id);
   if (person === undefined) {
     if (drafted === undefined) {
+      const today = todays.data?.people.find((one) => sameId(one, employeeId));
       return frame(
         "Details",
-        <Text>{`Nobody in People has the ID ${employeeId}.`}</Text>,
+        <Text>
+          {shownOn === undefined
+            ? `Nobody in People has the ID ${employeeId}.`
+            : `${today === undefined ? employeeId : rowName(today, lists.data)} isn't employed on ${formatDay(shownOn)}.`}
+        </Text>,
       );
     }
     const name = rowName(drafted, lists.data);
@@ -248,7 +259,7 @@ export function PersonPanel({
   const nameOf = (one: Person) => rowName(one, lists.data);
   // Today's reports, and those who have not started yet, by name; those who have left are not. A
   // person's planned reports are on People, beside them; a planned manager's are its only reports.
-  const day = today();
+  const day = shownOn ?? today();
   const reportsAmong = (among: readonly Person[]) =>
     among.filter(
       (one) =>
@@ -292,15 +303,14 @@ export function PersonPanel({
   // record drafted to be removed or held by another's changes, and a planned hire to those who may
   // not change planned hires. Its values are checked beside everyone else's, as People shows them.
   const live = livePeople(query.data.people).find(({ id }) => id === person.id);
-  // How a change is sent: as made, or, from an earlier day, dated, while the person's line can
-  // change from it.
+  // How a change is sent: as made, or, from an earlier day, dated, while the person's line today
+  // can change from it.
+  const from = changesFromDay(changesFrom, todays.data?.people);
   const sent: ((change: RowChange) => RowChange) | undefined =
-    changesFrom === undefined
+    from === undefined
       ? (change) => change
-      : !isHire(person) &&
-          live !== undefined &&
-          lineChangesFrom(live, changesFrom)
-        ? (change) => datedChange(change, live, changesFrom)
+      : !isHire(person) && managerChangesFrom(person.id, from)
+        ? (change) => changedFrom(change, person.id, from)
         : undefined;
   const context: EditingContext = {
     id: person.id,
@@ -406,7 +416,10 @@ export function PersonPanel({
                 ? leftWarning.words
                 : person.expected === undefined
                   ? undefined
-                  : `Planned, expected ${formatMonth(person.expected)}`
+                  : plannedWords({
+                      expected: person.expected,
+                      undated: person.undated,
+                    })
             }
             spoken={left ? leftWarning.spoken : undefined}
           >
@@ -466,6 +479,7 @@ export function PersonPanel({
           )}
           {!isHire(person) && (
             <PersonFeatureTeams
+              shownOn={shownOn}
               personId={person.id}
               employeeId={person.employeeId}
               seesFeatureTeams={seesFeatureTeams}

@@ -43,6 +43,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Note Columns | Done |
 | Number Columns | Done |
 | Teams and Reporting Lines | In progress: schema, server, seed, Drafts, People's columns, the Manager flag, the org chart, and manual tests |
+| People Over Time | In progress: People on a date, sharing the Org chart's date row and its rules for other dates; next columns that change over time, then availability as a dated value |
 | Org Chart Additions | In progress: team colours, drafts on the chart, and person details; next chart fields, filters, and sort |
 | Projects and Feature Teams | In progress: feature teams on the org chart, with the feature team chart, a team's panel, its members and lead as drafts, a person's feature teams in their details, and the Feature assignments page, showing feature team drafts, with its cells edited one at a time, and the Org chart's date setting when feature team changes take effect; projects next |
 | General Features | Done |
@@ -114,6 +115,14 @@ A fourth type of column on People and planned hires, Number: each value is one n
 ### Teams and Reporting Lines
 
 People managers and their current direct reports: each person's reporting line, with the date it takes effect from, shown as Manager and Team columns on People, the Manager flag that decides who can be a manager, teams' optional names, and the rules, drafts, and warnings in the [Decisions Log](../product/decisions.md#workforce). The seed data gains managers, reports, named and unnamed teams, a person with no manager, and a manager whose end date has passed while people still report to them. Reporting lines set the pattern for records that link to other records, which features, feature teams, and planned hires reuse, and for records in force from a date until the next one starts, which feature team membership and allocations reuse. The Org chart page draws today's approved reporting lines with React Flow, as [ADR 0004](../adr/0004-ui-components.md) chooses, and as the [Decisions Log](../product/decisions.md#workforce) describes, with a [manual test](../testing/org-chart-manual-test.md). Planned hires join the chart as placeholders, with planned managers heading their planned teams, as the [Hiring Plan](#hiring-plan) slice builds. The [Org Chart Additions](#org-chart-additions) slice builds on it. Future dates come with planned reporting changes in [The Organization](../product/roadmap.md#stage-the-organization) stage, which also shows the chart on a chosen date.
+
+### People Over Time
+
+People read as of a date, and columns that keep their history, as [People over time](../product/decisions.md#workforce) sets out, built in this order, each step its own pull request:
+
+1. **People on a date:** the Org chart's date row on People, with the same rules on both pages for who is listed, which drafts show, and what can be changed on another date.
+2. **Columns that change over time:** Position and the added columns set to change over time, and a person's changes in one list.
+3. **Availability:** each person's and planned hire's availability by month, kept as a dated value.
 
 ### Org Chart Additions
 

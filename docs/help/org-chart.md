@@ -97,7 +97,7 @@ You're done when the chart shows the day you chose.
 
 - **A card** shows a person's name, their position, and the name of the team they lead, if any.
 - **A band of colour** along the top of a card shows its team's colour. Under a team with no colour, cards take the colour of the team above.
-- **A dashed card**, with **Planned, expected** and a month, is a planned hire: a job you plan to fill.
+- **A dashed card**, with **Planned, expected** and a month, is a planned hire: a job you plan to fill. **Planned, no date** marks one with no target date.
 - **No feature lead** heads a feature team with no lead.
 - **A red Left box** after a manager's name means they've left, and people still report to them. Only roles that see Personal details see it.
 - **A light green card**, faded, with a dashed edge, shows where someone is now, when a draft moves them to another manager.

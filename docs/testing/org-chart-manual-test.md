@@ -11,7 +11,7 @@ last_updated: "2026-11-13"
 
 ## Scope
 
-Verifies the **Org chart** page: the levels it opens on, each person's card, showing reports, finding a person or team, one team shown alone, teams' colours and choosing them, naming teams, panning and zooming, showing a person's details beside the chart from a card, the red **Left** box on a manager who has left, drafts of managers, positions and team names drawn beside the chart, applied to it, or left out with the Draft menu, and changing a manager from an earlier date.
+Verifies the **Org chart** page: the levels it opens on, each person's card, showing reports, finding a person or team, one team shown alone, teams' colours and choosing them, naming teams, panning and zooming, showing a person's details beside the chart from a card, the red **Left** box on a manager who has left, drafts of managers, positions and team names drawn beside the chart, applied to it, or left out with the Draft menu, changing a manager from an earlier date, and planned hires drawn on later dates.
 
 ## Test Environment
 
@@ -529,7 +529,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The card has no shadow.
     - 'TBD-3' is grey and in italics.
     - 'Engineering Manager' is under 'TBD-3'.
-    - Under that, a grey box reads "Planned, expected" and this month, such as "Nov 2026".
+    - Under that, a grey box reads "Planned, no date".
     - It ends with "Hide 2 reports".
   - **Notes:**
 
@@ -624,3 +624,30 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
+
+### ORG-18: Planned Hires Are Drawn on Later Dates
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ORG-17.
+
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Org chart** page open from the left-hand menu, showing today, with **Reporting teams** selected.
+
+- [ ] `57FA` In the finder, type `Engineering Manager, TBD`, and select the one planned hire it offers.
+  - **Expected:** That planned Engineering Manager's card is in the middle of the panel, with a grey dashed edge.
+  - **Notes:**
+
+- [ ] `427E` In the date row, select the right arrow once.
+  - **Expected:**
+    - The **Date** box shows the first day of next month.
+    - The planned Engineering Manager's card is still drawn, with its two planned hires under it.
+    - Its grey box still reads "Planned, no date".
+  - **Notes:**
+
+- [ ] `F0D2` Select **Today** in the date row.
+  - **Expected:** The **Date** box shows today's date.
+  - **Notes:**
+
+- [ ] `6312` In the date row, select the left arrow once.
+  - **Expected:**
+    - The **Date** box shows the first day of last month.
+    - No card for the planned Engineering Manager or any other planned hire is drawn.
+  - **Notes:**

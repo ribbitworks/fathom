@@ -51,7 +51,12 @@ export const orgChartPersonSchema = z.object({
   // its own, whose name is made from its position and ID, that ID, which its card shows in place of
   // the made name, with the position under it, so the card's name fits.
   planned: z
-    .object({ expected: monthSchema, shownId: z.string().optional() })
+    .object({
+      expected: monthSchema,
+      // Set when the expected month comes from no date, so it moves with the day.
+      undated: z.literal(true).optional(),
+      shownId: z.string().optional(),
+    })
     .optional(),
   draft: orgChartDraftSchema.optional(),
   // Who holds the person by having unpublished changes to them, when it is someone other than the

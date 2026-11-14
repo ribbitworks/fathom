@@ -371,7 +371,7 @@ describe("the org chart", () => {
       }),
       person("h2", "Fictional Planned Report", "h1", {
         employeeId: null,
-        planned: { expected: "2026-11" },
+        planned: { expected: "2026-11", undated: true },
       }),
     ];
     serverAnswers({
@@ -396,6 +396,8 @@ describe("the org chart", () => {
     expect(within(placeholder).getByText("Fictional Engineer")).toBeDefined();
     const report = onCard("Fictional Planned Report").textContent;
     expect(report).toContain("Fictional Engineer");
+    expect(report).toContain("Planned, no date");
+    expect(report).not.toContain("Planned, expected");
     await userEvent.click(screen.getByRole("button", { name: "Teams" }));
     const panel = await screen.findByRole("dialog", { name: "Teams" });
     expect(within(panel).queryByText(/Fictional Engineer, TBD-7/)).toBeNull();

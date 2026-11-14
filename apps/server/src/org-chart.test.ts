@@ -877,11 +877,25 @@ describe("planned hires on the chart", () => {
     return id;
   };
 
-  it("are left out of the chart on a chosen day", async () => {
+  it("are left out of the chart on an earlier day", async () => {
     const id = await hire();
 
     expect((await chart()).has(id)).toBe(true);
     expect((await chartOn("2024-06-01")).has(id)).toBe(false);
+  });
+
+  it("are drawn on later days, whatever their target date, with an undated hire expected in the day's month", async () => {
+    const dated = await hire({ targetDate: "2026-07-10" });
+    const undated = await hire();
+
+    const later = await chartOn("2026-09-01");
+
+    expect(later.get(dated)?.planned?.expected).toBe("2026-07");
+    expect(later.get(dated)?.planned?.undated).toBeUndefined();
+    expect(later.get(undated)?.planned).toMatchObject({
+      expected: "2026-09",
+      undated: true,
+    });
   });
   const changeHire = async (id: string, body: object) => {
     const response = await test.request(
@@ -921,7 +935,10 @@ describe("planned hires on the chart", () => {
       preferredName: name,
       managerId: planned,
     });
-    expect(shown.get(report)?.planned).toEqual({ expected: "2026-06" });
+    expect(shown.get(report)?.planned).toEqual({
+      expected: "2026-06",
+      undated: true,
+    });
     const viewer = await test.signedIn(["people:view", "feature-teams:view"]);
     expect((await chart(viewer.cookie)).get(report)?.managerId).toBe(planned);
   });

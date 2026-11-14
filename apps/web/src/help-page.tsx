@@ -107,7 +107,7 @@ const marks: [string, ReactNode, string][] = [
     <MarkedItem slot tone="warning" words="Left">
       {example}
     </MarkedItem>,
-    "A grey or red box after a name: a fact about it, not a draft, such as Built in, Planned, expected and a month, or a warning such as Left.",
+    "A grey or red box after a name: a fact about it, not a draft, such as Built in, Planned, expected and a month or Planned, no date, or a warning such as Left.",
   ],
   [
     "tint",

@@ -137,6 +137,16 @@ export const expectedMonth = (
   today: string,
 ): string => monthOf(fillerStart ?? targetDate ?? today);
 
+// A month taken from no date moves with the day read, so it is shown as no date at all.
+export const undatedMark = ({
+  fillerStart,
+  targetDate,
+}: {
+  fillerStart: string | null;
+  targetDate: string | null;
+}): { undated?: true } =>
+  fillerStart === null && targetDate === null ? { undated: true } : {};
+
 export const hireFields = [
   "name",
   "requisition",
@@ -447,15 +457,19 @@ export async function readHiresIn(
   transaction: Reader,
   actor: Actor,
   today: string,
+  { approvedOnly = false }: { approvedOnly?: boolean } = {},
 ): Promise<Hires & { includedPersonal: boolean }> {
   const wholePlan = seesSensitivity(actor, "hiring-plan");
+  const withDrafts = wholePlan && !approvedOnly;
   const live = await readLiveHires(transaction);
-  const draftsNow = wholePlan
+  const draftsNow = withDrafts
     ? await readHireDrafts(transaction, undefined, actor.user.id)
     : new Map<string, Draft>();
-  const held = await readHeld(transaction, recordType, actor.user.id);
+  const held = approvedOnly
+    ? new Map()
+    : await readHeld(transaction, recordType, actor.user.id);
   // Columns drafted to be added are seen only by those who see the whole plan's drafts.
-  const columns = wholePlan
+  const columns = withDrafts
     ? await columnsWithAdded(transaction, actor.user.id)
     : await readColumns(transaction);
   const tierOf = await readHireTier(transaction, columns);
@@ -565,6 +579,7 @@ export async function readHiresIn(
           { fillerStart: filler?.startDate ?? null, targetDate },
           today,
         ),
+        ...undatedMark({ fillerStart: filler?.startDate ?? null, targetDate }),
         ...(seesStates ? { stateId: String(hire.stateId) } : {}),
         values: shownValues(valuesOf(hire)),
         links: shownValues(Object.entries(linksOf(hire))),
@@ -1991,6 +2006,7 @@ export function hireRow(
     ...(hire.positionId === undefined ? {} : { positionId: hire.positionId }),
     ...(hire.stateId === undefined ? {} : { stateId: hire.stateId }),
     expected: hire.expected,
+    ...(hire.undated === true ? { undated: true } : {}),
     ...(hire.targetDate === undefined ? {} : { startDate: hire.targetDate }),
     manager:
       hire.managerId === null

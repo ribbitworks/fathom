@@ -97,6 +97,8 @@ export const hireSchema = z.object({
   // The first month the hire can be allocated: that of its target date, or of its person's start
   // date once filled, or the current month for a hire with no target date.
   expected: monthSchema,
+  // Set when the month comes from neither a target date nor a start date, so it moves with the day.
+  undated: z.literal(true).optional(),
   targetDate: day.nullable().optional(),
   stateId: z.string().optional(),
   // Its values in the added columns offered on planned hires, each at its column's visibility, as a

@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The feature teams a person is on, in their details, read only: those they lead, then those they
-// are a member of, each with who leads it, each opening on the org chart's feature teams beside their
-// details. Shown only to readers who see feature teams.
+// The feature teams a person is on, on the day their details show, read only: those they lead, then
+// those they are a member of, each with who leads it, each opening on the org chart's feature teams
+// beside their details. Shown only to readers who see feature teams.
 
 import type { FeatureTeam } from "@fathom/shared";
 import { Anchor, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { featureTeamsQuery, someoneUnseen } from "./feature-teams.ts";
+import { featureTeamsQueryOn, someoneUnseen } from "./feature-teams.ts";
 import { orgChartQuery } from "./org-chart.ts";
 import classes from "./record-details.module.css";
 import { RecordSection } from "./record-details.tsx";
@@ -18,13 +18,19 @@ export function PersonFeatureTeams({
   personId,
   employeeId,
   seesFeatureTeams,
+  shownOn,
 }: {
+  // The day the details show, or none for today.
+  shownOn?: string | undefined;
   personId: string;
   // The person's Employee ID, which keeps their details open beside the team.
   employeeId: string;
   seesFeatureTeams: boolean;
 }) {
-  const query = useQuery({ ...featureTeamsQuery, enabled: seesFeatureTeams });
+  const query = useQuery({
+    ...featureTeamsQueryOn(shownOn),
+    enabled: seesFeatureTeams,
+  });
   const chart = useQuery({ ...orgChartQuery, enabled: seesFeatureTeams });
   const nameOf = (id: string) =>
     chart.data?.people.find((person) => person.id === id)?.preferredName ??

@@ -434,8 +434,12 @@ export interface ListAccess {
 
 export interface PeopleAccess {
   // Everyone the actor may see, with the columns whose values they may see, and the saved views
-  // they may see. Reading anyone's Personal details is recorded in the access history.
-  read(actor: Actor): Promise<{
+  // they may see, today or on another day. Reading anyone's Personal details, or another day, is
+  // recorded in the access history.
+  read(
+    actor: Actor,
+    on?: string,
+  ): Promise<{
     people: Person[];
     fields: Field[];
     order: string[];
@@ -967,9 +971,11 @@ function createPeopleAccess(database: Database): PeopleAccess {
       requirePermission(actor, "people:view");
       return readPeopleColumns(database, actor);
     },
-    read: async (actor) => {
+    read: async (actor, on) => {
       requirePermission(actor, "people:view");
-      const read = await peopleData.readPeople(database, actor);
+      const read = await (on === undefined
+        ? peopleData.readPeople(database, actor)
+        : peopleData.readPeopleOn(database, actor, on));
       if (read.includedPersonal) {
         await recordPersonalView(
           database,

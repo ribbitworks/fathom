@@ -511,6 +511,7 @@ describe("the summary of what a role allows", () => {
       "Overview",
       "Projects",
       "People",
+      "People on other dates",
       "Org chart",
       "Org chart on other dates",
       "Drafts",
@@ -547,6 +548,7 @@ describe("the summary of what a role allows", () => {
       "Overview",
       "Projects",
       "No longer: People",
+      "No longer: People on other dates",
       "No longer: Org chart",
       "No longer: Org chart on other dates",
       // Drafts and the change history stay, since viewing the plan opens them too.
@@ -569,6 +571,7 @@ describe("the summary of what a role allows", () => {
       "No longer: Overview",
       "No longer: Projects",
       "No longer: People",
+      "No longer: People on other dates",
       "No longer: Org chart",
       "No longer: Org chart on other dates",
       // Releases, Drafts and the change history stay, since configuration opens them too, and

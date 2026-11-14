@@ -19,12 +19,11 @@
 
 import { type Database, listItems, people, teams } from "@fathom/db";
 import {
-  changesField,
+  changesLinesOn,
   hireCalled,
   knownColour,
   type OrgChart,
   type OrgChartDraft,
-  mayDateLineChange,
   type OrgChartPerson,
   type PaletteColour,
 } from "@fathom/shared";
@@ -46,6 +45,7 @@ import {
 } from "./drafts.ts";
 import {
   expectedMonth,
+  undatedMark,
   hireIdOf,
   readHireDrafts,
   readLiveHires,
@@ -55,8 +55,7 @@ import { currentOn, notStarted, personalDetailFields } from "./people.ts";
 import {
   changesLine,
   changesLineFields,
-  draftedLine,
-  draftedLines,
+  draftedLineOn,
   readLines,
   readTeams,
   text,
@@ -98,6 +97,7 @@ interface HireRecord {
   position: string;
   managerId: string | null;
   expected: string;
+  undated?: true;
 }
 
 type ChartRecord = PersonRecord | HireRecord;
@@ -156,6 +156,7 @@ function chartOf(
           managerId: record.managerId,
           planned: {
             expected: record.expected,
+            ...(record.undated === undefined ? {} : { undated: true }),
             ...(record.shownId === undefined
               ? {}
               : { shownId: record.shownId }),
@@ -211,14 +212,11 @@ export async function readOrgChart(
   const today = await readToday(database);
   const shownDay = day ?? today;
   const seesPersonal = seesPeopleOverTime(actor);
-  const approvedOnly =
-    day !== undefined &&
-    !(
-      actor.permissions.includes("people:edit") &&
-      mayDateLineChange(changesField(actor, "managerHistory"), day, today)
-    );
-  const withHires = day === undefined;
-  const wholePlan = withHires && seesSensitivity(actor, "hiring-plan");
+  const approvedOnly = day !== undefined && !changesLinesOn(actor, day, today);
+  // Planned hires are plans, so are drawn today and on later days, as People lists them, and never
+  // on earlier ones, since past plans are not kept; their drafts only today.
+  const withHires = day === undefined || day > today;
+  const wholePlan = day === undefined && seesSensitivity(actor, "hiring-plan");
   // Read as of one moment, so an approval saved meanwhile is seen whole or not at all.
   const {
     rows,
@@ -318,16 +316,13 @@ export async function readOrgChart(
   ]);
   const managerShown = managerOnChart(startOf, shownDay);
   const managerOn: ManagerOn = (id, fields) => {
-    const own = lines.get(id) ?? [];
-    const line = draftedLine(own, fields, today);
-    return line === undefined
+    const on = draftedLineOn(lines.get(id) ?? [], fields, {
+      today,
+      day: shownDay,
+    });
+    return on === undefined
       ? undefined
-      : {
-          managerId:
-            inForceOn(draftedLines(own, fields, today), shownDay)?.managerId ??
-            null,
-          from: line.fromDate,
-        };
+      : { managerId: on.inForce?.managerId ?? null, from: on.drafted.fromDate };
   };
   const placeholder = placeholderOf(startOf, managerShown, labelOf, reader);
   const liveHires = hireRecords(hires, placeholder);
@@ -481,6 +476,10 @@ function placeholderOf(
         { fillerStart: fillerStart ?? null, targetDate: text(hire.targetDate) },
         today,
       ),
+      ...undatedMark({
+        fillerStart: fillerStart ?? null,
+        targetDate: text(hire.targetDate),
+      }),
     };
   };
 }

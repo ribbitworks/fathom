@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Org chart's date control: a timeline to step through by month, and a box for typing any day,
-// reaching days after today only for roles that see future dates. While the chart shows another
-// date, the control says whether changes made there take effect from it, or nothing can be changed.
+// The date control of a page read as of a day, the Org chart and People: a timeline to step through
+// by month, and a box for typing any day, reaching days after today only for roles that see future
+// dates. While the page shows another date, the control says whether changes made there take effect
+// from it, or nothing can be changed.
 
 import {
   addToMonth,
@@ -17,7 +18,7 @@ import { focusSoon } from "./focus.ts";
 import { formatDay, formatMonth } from "./table-view.ts";
 import { today } from "./today.ts";
 
-const dateBoxId = "org-chart-date";
+const dateBoxId = "date-shown";
 const monthsEachWay = 24;
 // Every month has a mark, and every twelfth its name, which is all there is room for.
 const monthsBetweenLabels = 12;
@@ -26,14 +27,14 @@ const dayBoxLabelHeight = 24;
 const handleOffset = 6;
 const noBreakSpace = "\u00a0";
 
-// The day the chart draws for the month this far from the current one: the first of that month, or
+// The day the page shows for the month this far from the current one: the first of that month, or
 // today in the current month.
 function dayOfMonthFromNow(months: number): string {
   const now = today();
   return dayReadingMonth(addToMonth(monthOf(now), months), now);
 }
 
-export function OrgChartDate({
+export function DateControl({
   day,
   laterDays,
   changes,
@@ -51,7 +52,7 @@ export function OrgChartDate({
   const fromNow = monthNumber(shown) - monthNumber(today());
   const offset = Math.max(-monthsEachWay, Math.min(monthsEachWay, fromNow));
   // Where the timeline was dragged to, and the month it was dragged from, so the handle stays where
-  // it was let go until the chart reaches that month, and the chart is only redrawn then.
+  // it was let go until the page reaches that month, and the page is only redrawn then.
   const [dragged, setDragged] = useState<{
     to: number;
     from: number;
@@ -171,7 +172,7 @@ export function OrgChartDate({
           Today
         </Button>
       </Group>
-      {/* The line keeps its place while empty, so the chart below does not move as dates change. */}
+      {/* The line keeps its place while empty, so what is below does not move as dates change. */}
       <Text size="sm" role="status">
         {day === undefined ? (
           noBreakSpace

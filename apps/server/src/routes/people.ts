@@ -46,8 +46,13 @@ export function peopleRoutes(people: PeopleAccess): FastifyPluginCallbackZod {
   return (app, _options, done) => {
     app.get(
       "/api/people",
-      { schema: { response: { 200: peopleSchema } } },
-      async (request) => people.read(request.actor),
+      {
+        schema: {
+          querystring: dayQuerySchema,
+          response: { 200: peopleSchema },
+        },
+      },
+      async (request) => people.read(request.actor, request.query.on),
     );
 
     app.get(

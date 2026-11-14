@@ -67,6 +67,22 @@ Once it's approved, give the person their new manager:
 
 You're done once it's approved. The person's **Team** then shows their new manager's team.
 
+### See Another Date
+
+People can show your organization on another day, in the past or the future. Your role needs to see Personal data for past days, and Confidential data for future ones.
+
+1. In the date row under the heading, type a day in **Date**. You can also select an arrow to move a month, or drag the timeline.
+1. To come back to today, select **Today**.
+
+On another day, the table lists the people employed then, with their managers and teams as they were, or will be. A future day also lists every planned hire not yet filled. A past day lists none, since past plans aren't kept. A person's details beside the table show them as on that day.
+
+A line under the date row says what you can do:
+
+- **Changes take effect from this date.** On a past day, you can change someone's manager in **Manager**, from the day shown, if your role changes Personal details. Everything else is changed on today.
+- **Nothing can be changed on this date.** The table shows people as they're approved.
+
+You're done when the table shows the day you chose.
+
 ### Fill a Planned Hire
 
 When you hire someone for a planned job, you fill the planned hire with them. **Fill** shows once the hire's **State** is approved, such as **Approved to hire**, and the hire has no rejected draft. It doesn't show while a draft that adds the hire, or changes its manager, is still waiting.
@@ -156,7 +172,7 @@ You're done when the row is struck through. It's removed once the removal is app
 ## Marks and Terms
 
 - **A planned hire with no name** shows its position and ID in grey, such as **SDET, TBD-5**. **TBD-** and a number is a temporary ID, used until the hire has its own.
-- **Expected** is the month the hire is expected to start, worked out from its **Start** date. You can't type it.
+- **Expected** is the month the hire is expected to start, worked out from its **Start** date. You can't type it. It's empty for a hire with no **Start**, which is marked **Planned, no date**.
 - **The hiring plan** holds your organization's planned hires. Some roles may see it, and some may not.
 - **A planned hire's Start** is the day it's planned to start. You see it, and the hire's drafts, only if your role may see the hiring plan. Otherwise you see the hire's name, ID, position, state, manager and **Expected** month.
 - **A red Left box** after a manager's name means they've left, and people still report to them.

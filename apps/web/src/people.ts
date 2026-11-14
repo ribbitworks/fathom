@@ -17,7 +17,7 @@ import {
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
-import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
+import { dayQuery, getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
 
 export type PeopleData = z.infer<typeof peopleSchema>;
 
@@ -25,6 +25,10 @@ export const peopleQuery = queryOptions({
   queryKey: ["people"],
   queryFn: () => getJson("/api/people", peopleSchema),
 });
+
+// People on another day, under the people's key, or today's with none, keeping what is shown while
+// another day's loads.
+export const peopleQueryOn = dayQuery("people", "/api/people", peopleSchema);
 
 // People's added columns alone, under the people's key, so whatever reloads the people reloads them.
 export const peopleColumnsQuery = queryOptions({

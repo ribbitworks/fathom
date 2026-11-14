@@ -34,7 +34,7 @@ import {
 } from "@mantine/core";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { kept } from "./added-columns.ts";
 import {
   columnDraftActions,
@@ -44,6 +44,7 @@ import {
 import { DecisionModal } from "./decision-dialog.tsx";
 import { listsQuery } from "./lists.ts";
 import { focusSoon } from "./focus.ts";
+import { DateControl } from "./date-control.tsx";
 import { PageHeader } from "./page-header.tsx";
 import {
   type NewRecord,
@@ -52,7 +53,7 @@ import {
   recordQuestion,
 } from "./new-person-panel.tsx";
 import { entered, newRecordId } from "./new-record-panel.tsx";
-import { personUpdate } from "./person-change.ts";
+import { changedFrom, personUpdate } from "./person-change.ts";
 import { afterNote, noteQuestion } from "./note-editing.tsx";
 import { usePersonNotes, useShownId } from "./person-editing.tsx";
 import { useDiscardQuestion } from "./discard-question.tsx";
@@ -76,7 +77,12 @@ import {
   type HireFilling,
   newFilling,
 } from "./hire-fill.ts";
-import { columnsFor, type PeopleActions, PeopleGrid } from "./people-grid.tsx";
+import {
+  columnsFor,
+  changesFromDay,
+  type PeopleActions,
+  PeopleGrid,
+} from "./people-grid.tsx";
 import {
   draftColumn,
   isPending,
@@ -107,6 +113,7 @@ import {
   resubmitDraft,
   type PeopleData,
   peopleQuery,
+  peopleQueryOn,
   updateView,
 } from "./people.ts";
 import { useSaving } from "./saving.ts";
@@ -188,7 +195,19 @@ export function PeoplePage({
   onOpen,
   seesFeatureTeams = false,
   access = { permissions: [], dataClasses: defaultClasses },
+  dates,
 }: {
+  // The day People is shown as of, and how to choose another, for a role that sees other dates.
+  // On another day only a person's manager changes, from that day, in their details, for a role
+  // that may date a change then, as on the Org chart; the rest is read only.
+  dates?:
+    | {
+        day: string | undefined;
+        laterDays: boolean;
+        changes: boolean;
+        onDay: (day: string | undefined) => void;
+      }
+    | undefined;
   canEdit: boolean;
   // Whether the user may change planned hires too.
   canEditHires?: boolean;
@@ -214,7 +233,21 @@ export function PeoplePage({
   // holding them and decide the classes a column may be moved to.
   access?: ClassAccess;
 }) {
-  const query = useQuery(peopleQuery);
+  const day = dates?.day;
+  const query = useQuery(peopleQueryOn(day));
+  // Changes to rows, columns, and anything undated are made on today.
+  const changesRows = canEdit && day === undefined;
+  const changesFrom =
+    day !== undefined && canEdit && dates?.changes === true ? day : undefined;
+  // Today's people, while changes are made from another day, whose lines today decide them.
+  const todays = useQuery({
+    ...peopleQuery,
+    enabled: changesFrom !== undefined,
+  });
+  const from = useMemo(
+    () => changesFromDay(changesFrom, todays.data?.people),
+    [changesFrom, todays.data],
+  );
   const narrow = useNarrow();
   const positionHidden = query.data?.positionHidden === true;
   const saving =
@@ -244,7 +277,7 @@ export function PeoplePage({
   const submitted = useRef<NewRecord>(undefined);
   // A planned hire being filled in its details.
   const [filling, setFilling] = useState<HireFilling>();
-  const mayFill = canEdit && canEditHires && view.show !== "live";
+  const mayFill = changesRows && canEditHires && view.show !== "live";
   const shownId = useShownId(open, query.data?.people);
   // Showing another record, as by Back, leaves the fill of the one before.
   const [fillShown, setFillShown] = useState(shownId);
@@ -253,6 +286,13 @@ export function PeoplePage({
     if (filling !== undefined && filling.hireId !== shownId) {
       setFilling(undefined);
     }
+  }
+  // Showing another day, as by Back, leaves an add or fill, which are made on today alone.
+  const [dayShown, setDayShown] = useState(day);
+  if (dayShown !== day) {
+    setDayShown(day);
+    setBeingAdded(undefined);
+    setFilling(undefined);
   }
   const shownRecord = query.data?.people.find(({ id }) => id === shownId);
   const note = notes.note(beingAdded === undefined ? shownId : newRecordId);
@@ -297,7 +337,8 @@ export function PeoplePage({
     onOpen?.(added.employeeId, true);
   }, [query.data, onOpen]);
   const changes = useSaving<PeopleData>({
-    queryKey: peopleQuery.queryKey,
+    queryKey: peopleQueryOn(day).queryKey,
+    refreshes: day === undefined ? [] : [peopleQuery.queryKey],
     removed: "Someone else has removed this. The people have been refreshed.",
     blocked: columnDialog.opened || namingOpened || deciding,
   });
@@ -365,7 +406,11 @@ export function PeoplePage({
         },
       });
     },
-    update: (person, change) => {
+    update: (person, given) => {
+      // From another day, a change of manager is dated from it, against the person's line today.
+      // The details panel dates its changes already, which dating again leaves as they are.
+      const change =
+        from === undefined ? given : changedFrom(given, person.id, from);
       save({
         ...personUpdate(person, change, nameOf(person)),
         onSaved: (changeSetId, before) => {
@@ -569,7 +614,7 @@ export function PeoplePage({
         }}
       />
     );
-  } else if (query.data.people.length === 0 && !canEdit) {
+  } else if (query.data.people.length === 0 && !changesRows) {
     content = (
       <Paper withBorder p="xl">
         <Text fz="sm" c="dimmed" ta="center">
@@ -583,6 +628,8 @@ export function PeoplePage({
       <>
         <PeopleGrid
           dataClasses={access.dataClasses}
+          // On a day where nothing can be changed, People is read as approved, as the Org chart is.
+          withDrafts={day === undefined || changesFrom !== undefined}
           onOpen={
             onOpen &&
             ((person) => {
@@ -663,6 +710,7 @@ export function PeoplePage({
                     name: "details",
                     node: (
                       <PersonPanel
+                        shownOn={day}
                         employeeId={open}
                         show={view.show}
                         showDates={showDates}
@@ -690,7 +738,12 @@ export function PeoplePage({
                         onFollow={(next) => {
                           onOpen(next, true);
                         }}
-                        onChange={canEdit ? actions.update : undefined}
+                        onChange={
+                          changesRows || changesFrom !== undefined
+                            ? actions.update
+                            : undefined
+                        }
+                        changesFrom={changesFrom}
                         notes={notes}
                         hireFill={(hire, shownPeople, columns) =>
                           filling?.hireId === hire.id
@@ -763,7 +816,8 @@ export function PeoplePage({
           fields={query.data.fields}
           order={query.data.order}
           lists={lists.data}
-          canEdit={canEdit}
+          canEdit={changesRows || changesFrom !== undefined}
+          changesFrom={from}
           canEditHires={canEditHires}
           approves={approves}
           saving={saving}
@@ -851,44 +905,59 @@ export function PeoplePage({
 
   return (
     <Stack gap="md" className={classes.tablePage}>
-      <PageHeader
-        title="People"
-        action={
-          (canEdit || canEditColumns) && (
-            <Group gap="xs">
-              {canEditColumns && (
-                <Button
-                  id={newColumnId}
-                  variant={canEdit ? "default" : "filled"}
-                  onClick={() => {
-                    columnDialog.open({ kind: "new" });
-                  }}
-                >
-                  New column
-                </Button>
-              )}
-              {/* The live people alone are read only. */}
-              {canEdit && view.show !== "live" && (
-                <Button
-                  id={newRecordButtonId}
-                  variant="filled"
-                  {...addButton}
-                  onClick={() => {
-                    leave(() => {
-                      onOpen?.(undefined);
-                      setForms((count) => count + 1);
-                      setBeingAdded(newRecord());
-                    });
-                  }}
-                >
-                  New
-                </Button>
-              )}
-            </Group>
-          )
-        }
-      />
-      {canEdit && positionHidden && (
+      {/* The heading and the date control sit together, as on the Org chart, with nothing between. */}
+      <div>
+        <PageHeader
+          title="People"
+          action={
+            (changesRows || canEditColumns) && (
+              <Group gap="xs">
+                {canEditColumns && (
+                  <Button
+                    id={newColumnId}
+                    variant={changesRows ? "default" : "filled"}
+                    onClick={() => {
+                      columnDialog.open({ kind: "new" });
+                    }}
+                  >
+                    New column
+                  </Button>
+                )}
+                {/* The live people alone are read only. */}
+                {changesRows && view.show !== "live" && (
+                  <Button
+                    id={newRecordButtonId}
+                    variant="filled"
+                    {...addButton}
+                    onClick={() => {
+                      leave(() => {
+                        onOpen?.(undefined);
+                        setForms((count) => count + 1);
+                        setBeingAdded(newRecord());
+                      });
+                    }}
+                  >
+                    New
+                  </Button>
+                )}
+              </Group>
+            )
+          }
+        />
+        {dates !== undefined && (
+          <DateControl
+            day={day}
+            laterDays={dates.laterDays}
+            changes={changesFrom !== undefined}
+            onDay={(next) => {
+              leave(() => {
+                dates.onDay(next);
+              });
+            }}
+          />
+        )}
+      </div>
+      {changesRows && positionHidden && (
         <Text size="sm" c="dimmed" id={cannotAddId}>
           This role can't add people, since it can't see positions.
         </Text>

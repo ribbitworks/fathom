@@ -3,7 +3,7 @@
 // Saving a change to one person or planned hire, as People's cells and the Person details panel both
 // do: shown at once, then saved as a draft, and dating a change of manager made from an earlier day.
 
-import type { Person } from "@fathom/shared";
+import { lineChangesFrom, type Person } from "@fathom/shared";
 import { withCellChange } from "./added-columns.ts";
 import { hireChange, updateHire } from "./hires.ts";
 import { isHire, personOnly, type RowChange } from "./people-rows.ts";
@@ -65,3 +65,24 @@ export function datedChange(
     change.managerId === (live.manager?.id ?? null) ? live.managerFrom : day;
   return typeof managerFrom === "string" ? { ...change, managerFrom } : change;
 }
+
+// Changes made while another day is shown: the day, and each person as live today, since the
+// server judges a change from the day against the line in force today, not the one shown.
+export interface ChangesFrom {
+  day: string;
+  today: ReadonlyMap<string, Person>;
+}
+
+// Whether a person's manager can change from the day shown, as their line today allows.
+export function managerChangesFrom(id: string, from: ChangesFrom): boolean {
+  const live = from.today.get(id);
+  return live !== undefined && lineChangesFrom(live, from.day);
+}
+
+// A change made while another day is shown, dated against the person's line today. Only a person
+// whose manager can change from the day is changed then, so they are live today.
+export const changedFrom = (
+  change: RowChange,
+  id: string,
+  from: ChangesFrom,
+): RowChange => datedChange(change, from.today.get(id) as Person, from.day);
