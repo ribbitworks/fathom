@@ -11,29 +11,29 @@ last_updated: "2026-11-13"
 
 ## Scope
 
-Verifies the workflows of [Working as an Engineering Director](../help/working-as-an-engineering-director.md) on the seed data: filling a planned hire and approving the director's own drafts, changing a reporting line from an earlier date and seeing it on the org chart, changing a detail's class, and sharing a view of People that another account sees until it is taken back.
+Verifies the workflows of [Working as an Engineering Director](../../help/working-as-an-engineering-director.md) on the seed data: filling a planned hire and approving the director's own drafts, changing a reporting line from an earlier date and seeing it on the org chart, changing a detail's class, and sharing a view of People that another account sees until it is taken back.
 
 ## Test Environment
 
-As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
+As [Manual Test Basics](../manual-test-basics.md#test-environment) sets out, with:
 
 - A browser window at least 1,440 pixels wide.
 - A second browser, or a private window, for signing in as a second account while the first stays signed in.
 
 ## Test Accounts
 
-As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
+As [Manual Test Basics](../manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Engineering Director:** `engineering.director@fathom.test`
 - **Engineering Manager:** `engineering.manager@fathom.test`
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
+This test uses [Start Fathom](../manual-test-basics.md#start-fathom), [Reset the Database](../manual-test-basics.md#reset-the-database) and [Publish](../manual-test-basics.md#publish).
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses. This test adds:
+[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses. This test adds:
 
 - **Months from today:** the steps name months by where they fall from the current month: **last month** is the one before it, and the **month before last month** the one before that. The examples after "such as" are for a run in November 2026.
 - **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20301231`.

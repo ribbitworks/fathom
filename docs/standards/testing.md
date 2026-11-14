@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/shared/testing.md", "docs/standards/shared/typescript/typescript.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Testing Standards
@@ -81,7 +81,7 @@ A problem a test finds that the change does not fix, whether a failing manual te
 
 ## Manual Tests
 
-A manual test is a test specification a test engineer, including one new to Fathom, runs by hand in a browser. Each is kept in `docs/testing/`, named `<feature>-manual-test.md`, such as [Drafts](../testing/drafts-manual-test.md), and has these sections:
+A manual test is a test specification a test engineer, including one new to Fathom, runs by hand in a browser. Each is kept in `docs/testing/`, named `<feature>-manual-test.md`, such as [Drafts](../testing/drafts-manual-test.md), apart from the acceptance tests, kept in `docs/testing/acceptance/` as the last rule below sets out, and has these sections:
 
 - **Scope:** one or two sentences on what the test verifies.
 - **Test Environment:** what must be running and set up, linking to [Manual Test Basics](../testing/manual-test-basics.md#test-environment) for what every test needs, and adding only what this test needs besides.
@@ -126,4 +126,4 @@ Rules:
 - **Must Not** re-check what automated tests prove: each validation message, each refusal of a rule, API responses, permissions by typing addresses, each access-history sentence, or each combination of settings. One case for a rule is enough to confirm the screen shows it.
 - **Must** cover what only a person can judge: how screens look and read, journeys across pages, accounts and browsers, keyboard and focus, and what tests stub out, such as the clipboard.
 - **Must Not** check dark or light mode in a feature's manual test. The [Dark Mode](../testing/dark-mode-manual-test.md) manual test checks every page, with its main panels, dialogs and menus, in dark mode in one pass, and a new page, panel or dialog adds its check there in the same change. Decided by the owner on 2026-11-13.
-- **Must** keep a feature's manual test short enough to run in about 30 minutes, and each acceptance test too. Each starting role has an acceptance test, `acceptance-<role>-manual-test.md`, that follows the workflows of its [Help page](../help/index.md), so running it checks the page still holds. [Setting Up Fathom](../testing/acceptance-setting-up-fathom-manual-test.md) runs first, from an empty database, and [Work Between Roles](../testing/acceptance-work-between-roles-manual-test.md) straight after it, on the organization it sets up. Decided by the owner on 2026-11-13.
+- **Must** keep a feature's manual test short enough to run in about 30 minutes, and each acceptance test too. Each starting role has an acceptance test, `docs/testing/acceptance/acceptance-<role>-manual-test.md`, that follows the workflows of its [Help page](../help/index.md), so running it checks the page still holds. [Setting Up Fathom](../testing/acceptance/acceptance-setting-up-fathom-manual-test.md) runs first, from an empty database, and [Work Between Roles](../testing/acceptance/acceptance-work-between-roles-manual-test.md) straight after it, on the organization it sets up. Decided by the owner on 2026-11-13.

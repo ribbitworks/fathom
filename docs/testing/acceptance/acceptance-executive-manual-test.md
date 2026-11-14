@@ -11,25 +11,25 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies the workflows of [Working as an Executive](../help/working-as-an-executive.md) on the seed data: reading the plan on Features and on the Releases timeline, live only or with drafts, looking at the organization on the org chart and in Metrics, seeing people and administration without changing them, and following what changed in both histories, and keeping a view of People.
+Verifies the workflows of [Working as an Executive](../../help/working-as-an-executive.md) on the seed data: reading the plan on Features and on the Releases timeline, live only or with drafts, looking at the organization on the org chart and in Metrics, seeing people and administration without changing them, and following what changed in both histories, and keeping a view of People.
 
 ## Test Environment
 
-As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
+As [Manual Test Basics](../manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
 
 ## Test Accounts
 
-As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
+As [Manual Test Basics](../manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Executive:** `executive@fathom.test`
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the Database](manual-test-basics.md#reset-the-database).
+This test uses [Start Fathom](../manual-test-basics.md#start-fathom) and [Reset the Database](../manual-test-basics.md#reset-the-database).
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses. This test adds:
+[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses. This test adds:
 
 - **Date box:** the box labelled **Date** between the **Org chart** heading and the chart, before the left arrow, timeline, right arrow and **Today**.
 

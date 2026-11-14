@@ -9,7 +9,7 @@ last_updated: "2026-11-14"
 
 # Manual Test Basics
 
-What every manual test in `docs/testing/` shares: the environment, where the accounts come from, the procedures the test cases refer to by name, and the terms they use. Each manual test links here and adds only what is its own.
+What every manual test in `docs/testing/` and `docs/testing/acceptance/` shares: the environment, where the accounts come from, the procedures the test cases refer to by name, and the terms they use. Each manual test links here and adds only what is its own.
 
 ## Test Environment
 

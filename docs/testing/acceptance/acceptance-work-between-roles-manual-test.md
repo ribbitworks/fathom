@@ -3,7 +3,7 @@ title: "Manual Test: Acceptance, Work Between Roles"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
-dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance-setting-up-fathom-manual-test.md", "docs/help/how-work-moves-between-roles.md", "docs/product/roles.md"]
+dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-setting-up-fathom-manual-test.md", "docs/help/how-work-moves-between-roles.md", "docs/product/roles.md"]
 last_updated: "2026-11-14"
 ---
 
@@ -11,15 +11,15 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies that work passes from one role to the next as [How Work Moves Between Roles](../help/how-work-moves-between-roles.md) describes: a Product Manager drafts a project and a feature with its cycle and team, the Engineering Director approves them, and an Engineering Manager staffs the feature teams, from next month and months ahead, for approval, on the organization [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) has just set up. It also verifies that the org chart and Feature assignments show each team month by month.
+Verifies that work passes from one role to the next as [How Work Moves Between Roles](../../help/how-work-moves-between-roles.md) describes: a Product Manager drafts a project and a feature with its cycle and team, the Engineering Director approves them, and an Engineering Manager staffs the feature teams, from next month and months ahead, for approval, on the organization [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) has just set up. It also verifies that the org chart and Feature assignments show each team month by month.
 
 ## Test Environment
 
-As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
+As [Manual Test Basics](../manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
 
 ## Test Accounts
 
-As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
+As [Manual Test Basics](../manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Product Manager:** `product.manager@fathom.test`
 - **Engineering Director:** `engineering.director@fathom.test`
@@ -28,11 +28,11 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 ## Common Procedures
 
-This test uses [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
+This test uses [Reset the Database](../manual-test-basics.md#reset-the-database) and [Publish](../manual-test-basics.md#publish).
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button, the teams switch, the team panel and the team list. This test adds:
+[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button, the teams switch, the team panel and the team list. This test adds:
 
 - **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20260501`.
 - **Months from today:** the steps name months by where they fall from the current month: **next month** is the one after it, **six months ago** the sixth month before it, **seven months ago** the seventh, and **two months from now** and **three months from now** the second and third months after it. The examples after "such as" are for a run in November 2026, such as `20260501` for the first day of six months ago.

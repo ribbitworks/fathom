@@ -11,15 +11,15 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies the workflows of [Working as a Workforce Administrator](../help/working-as-a-workforce-administrator.md) on the seed data: keeping people current with a leaving date and a new manager, keeping the hiring plan with a planned hire and its state, keeping a list current, putting someone on a feature team from an earlier month, and changing a planning setting, each approved by a Project Manager or the Engineering Director. Choosing classes is verified in [Engineering Director](acceptance-engineering-director-manual-test.md).
+Verifies the workflows of [Working as a Workforce Administrator](../../help/working-as-a-workforce-administrator.md) on the seed data: keeping people current with a leaving date and a new manager, keeping the hiring plan with a planned hire and its state, keeping a list current, putting someone on a feature team from an earlier month, and changing a planning setting, each approved by a Project Manager or the Engineering Director. Choosing classes is verified in [Engineering Director](acceptance-engineering-director-manual-test.md).
 
 ## Test Environment
 
-As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
+As [Manual Test Basics](../manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
 
 ## Test Accounts
 
-As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
+As [Manual Test Basics](../manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
 - **Project Manager:** `project.manager@fathom.test`
@@ -27,11 +27,11 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
+This test uses [Start Fathom](../manual-test-basics.md#start-fathom), [Reset the Database](../manual-test-basics.md#reset-the-database) and [Publish](../manual-test-basics.md#publish).
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses. This test adds:
+[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses. This test adds:
 
 - **Months from today:** the steps name months by where they fall from the current month: **last month** is the one before it, and the **month before last month** the one before that. The examples after "such as" are for a run in November 2026.
 - **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20301231`.

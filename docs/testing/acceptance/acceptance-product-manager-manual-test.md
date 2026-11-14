@@ -11,18 +11,18 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies the workflows of [Working as a Product Manager](../help/working-as-a-product-manager.md) on the seed data: keeping customers, proposals, projects and milestones current, planning a feature for a cycle, a team and a month, choosing a project's features and taking one off a proposal with a reason, as the scope history shows, making a release with a note, and approving and rejecting others' drafts, each sent on to an approver where the role needs one. It also checks that the Product Manager doesn't see someone who has not started.
+Verifies the workflows of [Working as a Product Manager](../../help/working-as-a-product-manager.md) on the seed data: keeping customers, proposals, projects and milestones current, planning a feature for a cycle, a team and a month, choosing a project's features and taking one off a proposal with a reason, as the scope history shows, making a release with a note, and approving and rejecting others' drafts, each sent on to an approver where the role needs one. It also checks that the Product Manager doesn't see someone who has not started.
 
 ## Test Environment
 
-As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
+As [Manual Test Basics](../manual-test-basics.md#test-environment) sets out, with:
 
 - A browser window at least 1,440 pixels wide.
 - A second browser, or a private window, for signing in as a second account while the first stays signed in.
 
 ## Test Accounts
 
-As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
+As [Manual Test Basics](../manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Product Manager:** `product.manager@fathom.test`
 - **Project Manager:** `project.manager@fathom.test`
@@ -33,11 +33,11 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database), [Publish](manual-test-basics.md#publish) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
+This test uses [Start Fathom](../manual-test-basics.md#start-fathom), [Reset the Database](../manual-test-basics.md#reset-the-database), [Publish](../manual-test-basics.md#publish) and [Discard the Unpublished Changes](../manual-test-basics.md#discard-the-unpublished-changes).
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, a row's slot, Draft rows and Live rows, the Publish button, the Draft menu, the details button, the side panel and seeded dates. This test adds:
+[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses, such as marks, a row's slot, Draft rows and Live rows, the Publish button, the Draft menu, the details button, the side panel and seeded dates. This test adds:
 
 - **Next quarter's cycle:** the 'Platform' stream's cycle for the quarter after the one today is in. The examples after "such as" are for a run in November 2026.
 - **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20300315`.

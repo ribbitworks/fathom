@@ -11,18 +11,18 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies that a Workforce Administrator can set up a brand-new Fathom as [Setting Up Fathom](../help/setting-up-fathom.md) describes, from an empty database. The Administrator makes the account and sets the time zone. The Workforce Administrator then adds the lists and a column, the people, their managers and team names, a release stream, the working time, and feature teams recorded from six months ago, each round approved before the next. A Team Member reads the organization that results. It is the first acceptance test; [Work Between Roles](acceptance-work-between-roles-manual-test.md) runs straight after it, on the organization it sets up.
+Verifies that a Workforce Administrator can set up a brand-new Fathom as [Setting Up Fathom](../../help/setting-up-fathom.md) describes, from an empty database. The Administrator makes the account and sets the time zone. The Workforce Administrator then adds the lists and a column, the people, their managers and team names, a release stream, the working time, and feature teams recorded from six months ago, each round approved before the next. A Team Member reads the organization that results. It is the first acceptance test; [Work Between Roles](acceptance-work-between-roles-manual-test.md) runs straight after it, on the organization it sets up.
 
 ## Test Environment
 
-As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
+As [Manual Test Basics](../manual-test-basics.md#test-environment) sets out, with:
 
 - A browser window at least 1,440 pixels wide.
 - A plain text editor, for typing lines to copy and paste into a table.
 
 ## Test Accounts
 
-As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
+As [Manual Test Basics](../manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Administrator:** `fathom.administrator@fathom.test`, shown in Fathom as "Fathom Administrator"
 - **Project Manager:** `project.manager@fathom.test`
@@ -35,11 +35,11 @@ This test creates:
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Start From an Empty Database](manual-test-basics.md#start-from-an-empty-database), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
+This test uses [Start Fathom](../manual-test-basics.md#start-fathom), [Start From an Empty Database](../manual-test-basics.md#start-from-an-empty-database), [Reset the Database](../manual-test-basics.md#reset-the-database) and [Publish](../manual-test-basics.md#publish).
 
 ## Terms
 
-[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the account menu, marks, the Publish button, the finder, the teams switch and the team panel. This test adds:
+[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses, such as the account menu, marks, the Publish button, the finder, the teams switch and the team panel. This test adds:
 
 - **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20270101`.
 - **Months from today:** the steps name months by where they fall from the current month: **next month** is the one after it, **six months ago** the sixth month before it, and **three months from now** the third month after it. The steps type a month's first day as digits; the examples after "such as" are for a run in November 2026, such as `20260501` for the first day of six months ago.
@@ -59,7 +59,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `734C` Select the **Accounts** page in the left-hand menu.
   - **Expected:**
-    - The table lists the development accounts, as [Development Setup](../design/development-setup.md#development-accounts) lists them, and no other.
+    - The table lists the development accounts, as [Development Setup](../../design/development-setup.md#development-accounts) lists them, and no other.
     - The filter beside the search box reads "All 12", "Active 12" and "Deactivated 0".
   - **Notes:**
 
