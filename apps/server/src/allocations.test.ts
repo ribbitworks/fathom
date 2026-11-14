@@ -251,6 +251,23 @@ async function liveAllocation(
 }
 
 describe("allocating", () => {
+  it("refuses in words to stop an allocation that was never made", async () => {
+    const personId = await addPerson();
+    const featureId = await addFeature();
+
+    const response = await change({
+      personId,
+      featureId,
+      percentage: null,
+      from: month(0),
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({
+      error: "There is no allocation to stop on that feature",
+    });
+  });
+
   it("saves a range as a draft of its first month and the month it stops, live once approved", async () => {
     const personId = await addPerson();
     const featureId = await addFeature();

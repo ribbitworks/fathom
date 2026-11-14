@@ -116,6 +116,8 @@ function outsideOf(
   return undefined;
 }
 
+const nothingToStop = "There is no allocation to stop on that feature";
+
 function draftingRefusal(outside: Outside, person: boolean): string {
   if ("after" in outside) {
     return `This person's last month is ${outside.after}. Choose a last month by then.`;
@@ -381,9 +383,13 @@ export async function changeAllocation(
     checkFeature(state, change.featureId);
     const bounds = await boundsFor(transaction, change, today);
     // Someone else's unpublished changes to it, if any, refuse the change as they hold it.
-    const id = allocationFor(state, change) ?? randomUUID();
+    const made = allocationFor(state, change);
+    const id = made ?? randomUUID();
     const before = monthsOf(versionOf(state, type, id));
     const months = withChange(before, change);
+    if (made === undefined && Object.keys(months).length === 0) {
+      throw new BadRequestError(nothingToStop);
+    }
     const outside = outsideOf(changedSpans(before, months), bounds);
     if (outside !== undefined) {
       throw new BadRequestError(
