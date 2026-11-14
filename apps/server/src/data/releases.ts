@@ -159,6 +159,15 @@ export function streamsOut(
     .map(({ id }) => streamOut(state, makers, id));
 }
 
+// A stream as the viewer may see it: its releases are seen with features and releases, not with
+// planning configuration, as Roles sets out.
+const asSeenBy =
+  (viewer: Actor) =>
+  (stream: ReleaseStream): ReleaseStream =>
+    viewer.permissions.includes("features:view")
+      ? stream
+      : { ...stream, releases: [] };
+
 // Every stream as the viewer sees it, with its patterns, cycles, and releases.
 export async function readReleaseStreams(
   database: Database,
@@ -171,7 +180,7 @@ export async function readReleaseStreams(
       return streamsOut(
         state,
         await readRecordMakers(transaction, state, viewer),
-      );
+      ).map(asSeenBy(viewer));
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
@@ -192,10 +201,12 @@ async function changingStream(
     const changeSetId = await change(transaction, state);
     const now = await readRecordsState(transaction, editor.user.id);
     return {
-      result: streamOut(
-        now,
-        await readRecordMakers(transaction, now, editor),
-        streamId,
+      result: asSeenBy(editor)(
+        streamOut(
+          now,
+          await readRecordMakers(transaction, now, editor),
+          streamId,
+        ),
       ),
       changeSetId,
     };

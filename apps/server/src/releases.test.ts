@@ -213,6 +213,26 @@ describe("who may change what", () => {
     expect(features).toContain(name);
   });
 
+  it("leaves releases out of the streams read by those who see configuration but not features", async () => {
+    const live = await liveStream();
+    await draftRelease(live.id, {
+      name: unique("Fictional Hidden"),
+      ...firstHalf,
+    });
+    await approveAll(
+      (await readStream(live.id, planner.cookie)) as ReleaseStream,
+    );
+    const streamFor = async (permissions: Permission[]) =>
+      readStream(live.id, (await test.signedIn(permissions)).cookie);
+
+    const configuration = await streamFor(["configuration:view"]);
+    const features = await streamFor(["features:view"]);
+
+    expect(configuration?.cycles.length).toBeGreaterThan(0);
+    expect(configuration?.releases).toEqual([]);
+    expect(features?.releases).toHaveLength(1);
+  });
+
   it("refuses reading streams to those who see neither the plan nor planning configuration", async () => {
     const reader = await test.signedIn("administrator");
     const response = await test.request(
