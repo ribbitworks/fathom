@@ -10,20 +10,30 @@ const framesToWait = 10;
 
 function soon(ids: readonly string[], act: (element: HTMLElement) => void) {
   let framesLeft = framesToWait;
-  const focusedAtFirst = document.activeElement;
-  // Focus put somewhere since, such as by a click elsewhere, stays where it is: waiting gives way.
-  const movedSince = () =>
-    document.activeElement !== focusedAtFirst &&
-    document.activeElement !== document.body;
+  // A key pressed or a click since, such as on another control, is the person moving on: waiting
+  // gives way. Focus a menu hands back by itself as it closes is not.
+  let movedOn = false;
+  const moveOn = () => {
+    movedOn = true;
+  };
+  const listen = { capture: true } as const;
+  document.addEventListener("keydown", moveOn, listen);
+  document.addEventListener("pointerdown", moveOn, listen);
+  const done = () => {
+    document.removeEventListener("keydown", moveOn, listen);
+    document.removeEventListener("pointerdown", moveOn, listen);
+  };
   const attempt = () => {
     const element = ids
       .map((id) => document.getElementById(id))
       .find((found) => found !== null);
-    if (element !== undefined) act(element);
-    else if (framesLeft > 0 && !movedSince()) {
+    if (element !== undefined) {
+      done();
+      act(element);
+    } else if (framesLeft > 0 && !movedOn) {
       framesLeft -= 1;
       requestAnimationFrame(attempt);
-    }
+    } else done();
   };
   setTimeout(attempt, 0);
 }

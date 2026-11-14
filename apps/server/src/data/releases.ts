@@ -56,6 +56,7 @@ import {
   cyclesUntilOf,
   streamPatterns,
   livePatterns,
+  releaseKind,
   streamFeatures,
   streamReleases,
 } from "./release-kinds.ts";
@@ -159,12 +160,14 @@ export function streamsOut(
     .map(({ id }) => streamOut(state, makers, id));
 }
 
-// A stream as the viewer may see it: its releases are seen with features and releases, not with
-// planning configuration, as Roles sets out.
+// A stream as the viewer may see it, its releases only to those who may read releases, as the
+// release kind sets out.
 const asSeenBy =
   (viewer: Actor) =>
   (stream: ReleaseStream): ReleaseStream =>
-    viewer.permissions.includes("features:view")
+    releaseKind.readWith.some((permission) =>
+      viewer.permissions.includes(permission),
+    )
       ? stream
       : { ...stream, releases: [] };
 

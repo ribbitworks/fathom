@@ -616,11 +616,13 @@ export function ViewsMenu({
                     .map((each) => ({ value: each.id, label: each.name }))}
                   chosen={saved.applied}
                   onChoose={(id) => {
-                    for (const each of grouped.filter(
-                      (view) => view.id === id,
-                    )) {
-                      saved.onApply(shownAs(each), id);
-                    }
+                    // The view chosen, always one of the group's: an early return for none
+                    // could never run, and an assertion would hide a mistake.
+                    grouped
+                      .filter((each) => each.id === id)
+                      .forEach((each) => {
+                        saved.onApply(shownAs(each), id);
+                      });
                   }}
                 />
               )

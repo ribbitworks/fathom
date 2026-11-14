@@ -343,6 +343,21 @@ describe("the Metrics panel", () => {
     );
     expect(figures("P4")).toEqual(["2", share(2, 4)]);
   });
+
+  it("takes focus when broken down from a column's menu, though drawn a little later", async () => {
+    const user = userEvent.setup();
+    render(<Table drawnLater />);
+    await user.click(screen.getByRole("button", { name: "Level column" }));
+
+    await user.click(
+      await screen.findByRole("menuitem", { name: "Break down by" }),
+    );
+
+    await waitFor(() => {
+      expect(panel().contains(document.activeElement)).toBe(true);
+    });
+  });
+
   it("says when one person is counted, and that someone may hold several choices", async () => {
     const user = userEvent.setup();
     const several = { ...role, multiple: true };

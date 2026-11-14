@@ -44,13 +44,14 @@ describe("focusing a control a change draws", () => {
     expect(document.activeElement).toBe(title);
   });
 
-  it("gives way to focus put elsewhere while it waits", () => {
+  it("gives way to a click elsewhere while it waits", () => {
     vi.useFakeTimers();
     const elsewhere = document.createElement("input");
     document.body.append(elsewhere);
     focusSoon("panel-title");
     vi.advanceTimersByTime(0);
 
+    elsewhere.dispatchEvent(new Event("pointerdown", { bubbles: true }));
     elsewhere.focus();
     vi.advanceTimersByTime(framesTime);
     const title = document.createElement("h2");
@@ -60,6 +61,24 @@ describe("focusing a control a change draws", () => {
     vi.runAllTimers();
 
     expect(document.activeElement).toBe(elsewhere);
+  });
+
+  it("keeps waiting while focus moves by itself, such as back to a menu's button", () => {
+    vi.useFakeTimers();
+    const button = document.createElement("button");
+    document.body.append(button);
+    focusSoon("panel-title");
+    vi.advanceTimersByTime(0);
+
+    button.focus();
+    vi.advanceTimersByTime(framesTime);
+    const title = document.createElement("h2");
+    title.id = "panel-title";
+    title.tabIndex = -1;
+    document.body.append(title);
+    vi.runAllTimers();
+
+    expect(document.activeElement).toBe(title);
   });
 
   it("stops waiting for a control that is never drawn", () => {

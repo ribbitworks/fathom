@@ -906,9 +906,9 @@ describe("the seed command", () => {
     await createDataAccess(connection).unpublished.publish(
       await actorOf(connection, "engineering.operations.manager@fathom.test"),
     );
-    const called = async (name: string) =>
+    const listsNamed = async (name: string) =>
       connection.select().from(lists).where(eq(lists.name, name));
-    const skills = () => called("Skills");
+    const skills = () => listsNamed("Skills");
     const listDrafts = await connection
       .select()
       .from(drafts)
@@ -933,7 +933,7 @@ describe("the seed command", () => {
       },
     );
     expect(await skills()).toHaveLength(1);
-    expect(await called("Equipment")).toHaveLength(1);
+    expect(await listsNamed("Equipment")).toHaveLength(1);
 
     // When the seed data is removed and added again
     expect(await seedCommand(["unseed"], command.environment())).toBe(0);
@@ -942,7 +942,7 @@ describe("the seed command", () => {
     // Then it is added again, with one of each list
     expect(seededAgain).toBe(0);
     expect(await skills()).toHaveLength(1);
-    expect(await called("Equipment")).toHaveLength(1);
+    expect(await listsNamed("Equipment")).toHaveLength(1);
   });
 
   it("removes the seed data while filling a planned manager waits for approval", async () => {

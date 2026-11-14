@@ -233,6 +233,33 @@ describe("who may change what", () => {
     expect(features?.releases).toHaveLength(1);
   });
 
+  it("leaves releases out of a stream answered after a change by one who edits configuration but doesn't see features", async () => {
+    const live = await liveStream();
+    await draftRelease(live.id, {
+      name: unique("Fictional Kept Back"),
+      ...firstHalf,
+    });
+    await approveAll(
+      (await readStream(live.id, planner.cookie)) as ReleaseStream,
+    );
+    const editor = await test.signedIn([
+      "configuration:view",
+      "configuration:edit",
+    ]);
+
+    const response = await test.request(
+      editor.cookie,
+      "PUT",
+      `/api/release-streams/${live.id}`,
+      { name: unique("Fictional Renamed Stream") },
+    );
+
+    expect(response.statusCode, response.body).toBe(200);
+    expect(response.json<{ stream: ReleaseStream }>().stream.releases).toEqual(
+      [],
+    );
+  });
+
   it("refuses reading streams to those who see neither the plan nor planning configuration", async () => {
     const reader = await test.signedIn("administrator");
     const response = await test.request(
