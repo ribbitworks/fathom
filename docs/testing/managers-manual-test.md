@@ -126,7 +126,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The entry's checkbox is ticked.
   - **Notes:**
 
-- [ ] `EA2A` Select **Approve 1 draft**.
+- [ ] `EA2A` Select **Approve 1 draft…**.
   - **Expected:**
     - A dialog headed "Approve 1 draft?" opens.
     - It has an **Approve** button.

@@ -36,7 +36,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 2. Select **New column**. Type `Offer letter` in **Name**, choose **Web link** in **Type**, choose **Confidential** under **Class**, and select **Add column**.
 3. Select the Publish button, which reads **Publish 4 changes**, and confirm that a notification reads "Published 4 changes."
 4. Sign in as the Engineering Director, `engineering.director@fathom.test`, select the **Drafts** page in the left-hand menu, and type `Offer letter` in the search box.
-5. Select the entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog titled "Approve 1 draft?".
+5. Select the entry's checkbox, then **Approve 1 draft…**, then **Approve** in the dialog titled "Approve 1 draft?".
 6. Confirm that a notification reads "Approved 1 draft."
 
 ### Grant Team Member Only Some Permissions
@@ -510,10 +510,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `0E6A` Select the entry's checkbox.
-  - **Expected:** The button above the list reads **Approve 1 draft**.
+  - **Expected:** The button above the list reads **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `42A2` Select **Approve 1 draft**.
+- [ ] `42A2` Select **Approve 1 draft…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
@@ -548,10 +548,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `5FA1` Select the checkbox of the 'Silje Holm-Schrøder' entry.
-  - **Expected:** The button above the list reads **Approve 1 draft**.
+  - **Expected:** The button above the list reads **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `219C` Select **Approve 1 draft**.
+- [ ] `219C` Select **Approve 1 draft…**.
   - **Expected:**
     - A dialog titled "Another approver needed" opens
     - It reads "This role can't approve these drafts:" above "the column Skills", "the list Skills" and "the choice Rust in Skills"
@@ -601,10 +601,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `7BBD` Select the `Harbor One` entry's checkbox.
-  - **Expected:** **Approve 1 draft** can be selected, and no line says another approver is needed.
+  - **Expected:** **Approve 1 draft…** can be selected, and no line says another approver is needed.
   - **Notes:**
 
-- [ ] `FAE2` Select **Approve 1 draft**.
+- [ ] `FAE2` Select **Approve 1 draft…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 

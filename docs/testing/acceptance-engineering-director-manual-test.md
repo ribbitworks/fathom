@@ -99,7 +99,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 
-- [ ] `36FF` Select **Approve 1 draft**.
+- [ ] `36FF` Select **Approve 1 draft…**.
   - **Expected:** The dialog reads "Also approves the drafts these depend on:" and names `Fictional new starter`.
   - **Notes:**
 
@@ -177,7 +177,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 
-- [ ] `03F9` Select **Approve 1 draft**.
+- [ ] `03F9` Select **Approve 1 draft…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 

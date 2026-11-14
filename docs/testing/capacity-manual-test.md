@@ -480,7 +480,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 
-- [ ] `740B` Select **Approve 1 draft**.
+- [ ] `740B` Select **Approve 1 draft…**.
   - **Expected:**
     - A dialog opens.
     - It has an **Approve** button.

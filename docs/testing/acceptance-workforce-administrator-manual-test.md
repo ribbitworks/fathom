@@ -96,7 +96,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 
-- [ ] `222E` Select **Approve 1 draft**.
+- [ ] `222E` Select **Approve 1 draft…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
@@ -192,7 +192,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 
-- [ ] `E68F` Select **Approve 1 draft**.
+- [ ] `E68F` Select **Approve 1 draft…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
@@ -352,7 +352,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 
-- [ ] `BD38` Select **Approve 1 draft**.
+- [ ] `BD38` Select **Approve 1 draft…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 

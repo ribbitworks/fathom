@@ -358,7 +358,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 
-- [ ] `897A` Select **Approve 1 draft**.
+- [ ] `897A` Select **Approve 1 draft…**.
   - **Expected:**
     - A dialog headed "Approve 1 draft?" opens.
     - It has an **Approve** button.

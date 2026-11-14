@@ -11,7 +11,7 @@ Type in the search box, such as a name, a value or who made the draft. Searching
 ### Approve Drafts
 
 1. Tick each draft to approve, or **Select all waiting** to tick every draft shown that can be approved.
-1. Select the button that reads **Approve** and the number ticked, such as **Approve 3 drafts**.
+1. Select the button that reads **Approve** and the number ticked, such as **Approve 3 drafts…**.
 1. Check the dialog, which lists any other drafts these depend on, approved with them.
 1. Select **Approve**.
 

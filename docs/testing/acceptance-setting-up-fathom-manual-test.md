@@ -255,10 +255,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `97E9` Tick **Select all waiting**.
-  - **Expected:** A button reads **Approve 5 drafts**.
+  - **Expected:** A button reads **Approve 5 drafts…**.
   - **Notes:**
 
-- [ ] `E55E` Select **Approve 5 drafts**.
+- [ ] `E55E` Select **Approve 5 drafts…**.
   - **Expected:** A dialog titled "Approve 5 drafts?" opens.
   - **Notes:**
 
@@ -333,10 +333,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `A5E6` Tick **Select all waiting**.
-  - **Expected:** A button reads **Approve 7 drafts**.
+  - **Expected:** A button reads **Approve 7 drafts…**.
   - **Notes:**
 
-- [ ] `6FA2` Select **Approve 7 drafts**.
+- [ ] `6FA2` Select **Approve 7 drafts…**.
   - **Expected:** A dialog titled "Approve 7 drafts?" opens.
   - **Notes:**
 
@@ -436,10 +436,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `5B3B` Tick **Select all waiting**.
-  - **Expected:** A button reads **Approve 8 drafts**.
+  - **Expected:** A button reads **Approve 8 drafts…**.
   - **Notes:**
 
-- [ ] `EEF7` Select **Approve 8 drafts**.
+- [ ] `EEF7` Select **Approve 8 drafts…**.
   - **Expected:** A dialog titled "Approve 8 drafts?" opens.
   - **Notes:**
 
@@ -707,10 +707,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `F842` Tick **Select all waiting**.
-  - **Expected:** A button reads **Approve 6 drafts**.
+  - **Expected:** A button reads **Approve 6 drafts…**.
   - **Notes:**
 
-- [ ] `30A0` Select **Approve 6 drafts**.
+- [ ] `30A0` Select **Approve 6 drafts…**.
   - **Expected:** A dialog titled "Approve 6 drafts?" opens.
   - **Notes:**
 

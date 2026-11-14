@@ -487,12 +487,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `800D` Select **Select all waiting**.
   - **Expected:**
-    - The button at the top right starts **Approve 32 drafts**.
+    - The button at the top right starts **Approve 32 drafts…**.
     - The entry for the new order of 'Sites' is not selected.
     - The entry for 'Viktoria Holmberg' is not selected.
   - **Notes:**
 
-- [ ] `5D0A` Select **Approve 32 drafts**.
+- [ ] `5D0A` Select **Approve 32 drafts…**.
   - **Expected:** A dialog titled "Approve 32 drafts?" opens.
   - **Notes:**
 
@@ -665,7 +665,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `4F66` Select that entry's checkbox.
   - **Expected:**
-    - **Approve 1 draft** is greyed out.
+    - **Approve 1 draft…** is greyed out.
     - **Reject…** is not greyed out.
     - A line under them says another approver must approve it.
   - **Notes:**
@@ -682,7 +682,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The entry's checkbox is ticked.
   - **Notes:**
 
-- [ ] `561B` Select **Approve 1 draft**.
+- [ ] `561B` Select **Approve 1 draft…**.
   - **Expected:**
     - A dialog opens.
     - It has an **Approve** button.

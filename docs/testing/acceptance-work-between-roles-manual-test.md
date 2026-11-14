@@ -138,10 +138,10 @@ Run the test cases in order, in about 30 minutes, straight after [Setting Up Fat
   - **Notes:**
 
 - [ ] `6CFD` Tick **Select all waiting**.
-  - **Expected:** A button reads **Approve 2 drafts**.
+  - **Expected:** A button reads **Approve 2 drafts…**.
   - **Notes:**
 
-- [ ] `655C` Select **Approve 2 drafts**.
+- [ ] `655C` Select **Approve 2 drafts…**.
   - **Expected:** A dialog titled "Approve 2 drafts?" opens.
   - **Notes:**
 
@@ -268,10 +268,10 @@ Run the test cases in order, in about 30 minutes, straight after [Setting Up Fat
   - **Notes:**
 
 - [ ] `2ED1` Tick **Select all waiting**.
-  - **Expected:** A button reads **Approve 3 drafts**.
+  - **Expected:** A button reads **Approve 3 drafts…**.
   - **Notes:**
 
-- [ ] `9D85` Select **Approve 3 drafts**.
+- [ ] `9D85` Select **Approve 3 drafts…**.
   - **Expected:** A dialog titled "Approve 3 drafts?" opens.
   - **Notes:**
 
@@ -440,10 +440,10 @@ Run the test cases in order, in about 30 minutes, straight after [Setting Up Fat
   - **Notes:**
 
 - [ ] `1C0E` Tick **Select all waiting**.
-  - **Expected:** A button reads **Approve 1 draft**.
+  - **Expected:** A button reads **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `AF6E` Select **Approve 1 draft**.
+- [ ] `AF6E` Select **Approve 1 draft…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 

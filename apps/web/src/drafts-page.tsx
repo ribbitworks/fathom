@@ -816,8 +816,8 @@ export function DraftsPage({
                 }}
               >
                 {chosen.length === 0
-                  ? "Approve"
-                  : `Approve ${drafts(chosen.length)}`}
+                  ? "Approve…"
+                  : `Approve ${drafts(chosen.length)}…`}
               </Button>
             </Group>
           </Group>

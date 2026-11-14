@@ -901,10 +901,10 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Notes:**
 
 - [ ] `DC38` Tick the entry for **the release Harbor 1 in Platform**.
-  - **Expected:** The button at the top right reads **Approve 1 draft**.
+  - **Expected:** The button at the top right reads **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `BF5D` Select **Approve 1 draft**.
+- [ ] `BF5D` Select **Approve 1 draft…**.
   - **Expected:**
     - A dialog headed **Approve 1 draft?** opens.
     - It has an **Approve** button.

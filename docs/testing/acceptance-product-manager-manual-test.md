@@ -578,7 +578,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 
-- [ ] `F240` Select **Approve 1 draft**.
+- [ ] `F240` Select **Approve 1 draft…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 

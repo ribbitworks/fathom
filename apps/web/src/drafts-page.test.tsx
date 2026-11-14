@@ -243,7 +243,7 @@ describe("the Drafts page", () => {
       }),
     );
     await userEvent.click(
-      screen.getByRole("button", { name: "Approve 1 draft" }),
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 2 drafts?",
@@ -321,7 +321,7 @@ describe("the Drafts page", () => {
       }),
     );
     await userEvent.click(
-      screen.getByRole("button", { name: "Approve 1 draft" }),
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 4 drafts?",
@@ -389,7 +389,7 @@ describe("the Drafts page", () => {
       }),
     ).toBeNull();
     await userEvent.click(
-      screen.getByRole("button", { name: "Approve 1 draft" }),
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Another approver needed",
@@ -592,7 +592,7 @@ describe("the Drafts page", () => {
       }),
     );
     await userEvent.click(
-      screen.getByRole("button", { name: "Approve 1 draft" }),
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
     );
     await userEvent.click(
       within(await screen.findByRole("dialog")).getByRole("button", {
@@ -969,7 +969,7 @@ describe("the Drafts page", () => {
       }),
     );
     await userEvent.click(
-      screen.getByRole("button", { name: "Approve 1 draft" }),
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 2 drafts?",
@@ -1081,7 +1081,7 @@ describe("the Drafts page", () => {
       }),
     );
     expect(
-      screen.getByRole("button", { name: "Approve 1 draft" }),
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
     ).toHaveProperty("disabled", true);
     expect(screen.getByRole("button", { name: "Reject…" })).toHaveProperty(
       "disabled",
@@ -1108,7 +1108,7 @@ describe("the Drafts page", () => {
     const fetch = await openDrafts({
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
-    const approve = await screen.findByRole("button", { name: "Approve" });
+    const approve = await screen.findByRole("button", { name: "Approve…" });
     expect(approve).toHaveProperty("disabled", true);
     await userEvent.click(
       screen.getByRole("checkbox", {
@@ -1127,7 +1127,7 @@ describe("the Drafts page", () => {
       }),
     ).toHaveProperty("disabled", true);
     await userEvent.click(
-      screen.getByRole("button", { name: "Approve 2 drafts" }),
+      screen.getByRole("button", { name: "Approve 2 drafts…" }),
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 2 drafts?",
@@ -1212,7 +1212,7 @@ describe("the Drafts page", () => {
       }),
     );
     await userEvent.click(
-      screen.getByRole("button", { name: "Approve 1 draft" }),
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 1 draft?",
@@ -1248,10 +1248,10 @@ describe("the Drafts page", () => {
     expect(all).toHaveProperty("indeterminate", true);
     await userEvent.click(all);
     expect(
-      screen.getByRole("button", { name: "Approve 3 drafts" }),
+      screen.getByRole("button", { name: "Approve 3 drafts…" }),
     ).toBeDefined();
     await userEvent.click(all);
-    expect(screen.getByRole("button", { name: "Approve" })).toHaveProperty(
+    expect(screen.getByRole("button", { name: "Approve…" })).toHaveProperty(
       "disabled",
       true,
     );
@@ -1265,7 +1265,7 @@ describe("the Drafts page", () => {
         name: "Select the draft of Avery Fictional",
       }),
     );
-    expect(screen.getByRole("button", { name: "Approve" })).toHaveProperty(
+    expect(screen.getByRole("button", { name: "Approve…" })).toHaveProperty(
       "disabled",
       true,
     );
@@ -1313,7 +1313,7 @@ describe("the Drafts page", () => {
     );
     expect(order).toHaveProperty("checked", false);
     await userEvent.click(
-      screen.getByRole("button", { name: "Approve 1 draft" }),
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 1 draft?",
@@ -1415,7 +1415,7 @@ describe("the Drafts page", () => {
       }),
     );
     await userEvent.click(
-      screen.getByRole("button", { name: "Approve 1 draft" }),
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
     );
     await userEvent.click(
       within(
@@ -1440,7 +1440,7 @@ describe("the Drafts page", () => {
       }),
     );
     await userEvent.click(
-      screen.getByRole("button", { name: "Approve 1 draft" }),
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 1 draft?",
@@ -1459,7 +1459,7 @@ describe("the Drafts page", () => {
     });
     // Escape closes it too.
     await userEvent.click(
-      screen.getByRole("button", { name: "Approve 1 draft" }),
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
     );
     await screen.findByRole("dialog", { name: "Approve 1 draft?" });
     await userEvent.keyboard("{Escape}");
@@ -1811,7 +1811,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     );
     await userEvent.click(
-      screen.getByRole("button", { name: "Approve 1 draft" }),
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 1 draft?",
@@ -1890,7 +1890,7 @@ describe("unpublished and held drafts on the Drafts page", () => {
     expect(box("Casey Fictional")).toHaveProperty("checked", true);
     expect(box("Avery Fictional")).toHaveProperty("checked", false);
     expect(
-      screen.getByRole("button", { name: "Approve 1 draft" }),
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
     ).toBeDefined();
   });
 });
