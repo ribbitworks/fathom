@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Feature Links
@@ -243,6 +243,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `A1E8` Select **Show details** in the **⋯** menu of 'Offline Sync'.
   - **Expected:**
-    - The side panel shows no pencil button beside **Projects** or **Proposals**.
+    - The side panel shows no change button beside **Projects** or **Proposals**.
     - It shows one beside **Name**.
   - **Notes:**

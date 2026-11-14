@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/views.ts", "packages/shared/src/views.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Metrics, Frozen Columns, and Column Widths on the People Table
@@ -383,8 +383,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `4DF2` Point at a person's row.
   - **Expected:**
-    - The details button shows at the right end of their **Name** cell.
-    - The name stops short of it.
+    - The details button and a **⋯** show at the right end of their **Name** cell.
+    - The name stops short of them.
     - The name ends in "…".
     - The row stays one line tall.
   - **Notes:**

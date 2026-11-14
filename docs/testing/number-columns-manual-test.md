@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Number Columns
@@ -105,7 +105,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:** The cell is empty again.
   - **Notes:**
 
-- [ ] `FCE6` Select the small button with an arrow out of a box at the right of the first row's **Name** cell.
+- [ ] `FCE6` Select the details button at the right of the first row's **Name** cell.
   - **Expected:** The panel lists **Score** with "1,234.5", or as the browser's language writes it.
   - **Notes:**
 

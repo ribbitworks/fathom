@@ -30,7 +30,7 @@ Choose a proposal's features the same way. Features shows the same links in its 
 
 ### Give a Reason for Removing a Feature From a Proposal
 
-Removing a feature from a proposal, here or on **Features**, happens at once, as a draft. To say why, open the proposal's details and select the pencil at the right of the removal's row under **Scope history**, or the reason itself, while the removal is a draft. Type the reason and press Enter; an empty box leaves no reason, and Esc leaves it as it was.
+Removing a feature from a proposal, here or on **Features**, happens at once, as a draft. To say why, open the proposal's details while the removal is a draft. Under **Scope history**, select the reason, or point at the removal's row and select the pencil that shows at its right. Type the reason and press Enter; an empty box leaves no reason, and Esc leaves it as it was.
 
 ### See How a Project's or Proposal's Scope Changed
 

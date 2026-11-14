@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance-setting-up-fathom-manual-test.md", "docs/help/how-work-moves-between-roles.md", "docs/product/roles.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Acceptance, Work Between Roles
@@ -69,7 +69,7 @@ Run the test cases in order, in about 30 minutes, straight after [Setting Up Fat
   - **Expected:** **Project ID** shows what was typed.
   - **Notes:**
 
-- [ ] `B848` Select the pencil button in the **Owner** row, and pick `Ada Quill`.
+- [ ] `B848` Select the change button in the **Owner** row, and pick `Ada Quill`.
   - **Expected:** **Owner** shows `Ada Quill`.
   - **Notes:**
 
@@ -94,15 +94,15 @@ Run the test cases in order, in about 30 minutes, straight after [Setting Up Fat
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `958E` Select the pencil button in the **Status** row, and choose **Planned**.
+- [ ] `958E` Select the change button in the **Status** row, and choose **Planned**.
   - **Expected:** **Status** shows "Planned".
   - **Notes:**
 
-- [ ] `1ABE` Select the pencil button in the **Target cycle** row, and choose **Fictional Mainline:** followed by next year's first cycle, such as **Fictional Mainline: 27.1**.
+- [ ] `1ABE` Select the change button in the **Target cycle** row, and choose **Fictional Mainline:** followed by next year's first cycle, such as **Fictional Mainline: 27.1**.
   - **Expected:** **Target cycle** shows the cycle chosen, such as "Fictional Mainline: 27.1".
   - **Notes:**
 
-- [ ] `D628` Select the pencil button in the **Feature team** row, and choose `Tide team`.
+- [ ] `D628` Select the change button in the **Feature team** row, and choose `Tide team`.
   - **Expected:** **Feature team** shows `Tide team`.
   - **Notes:**
 

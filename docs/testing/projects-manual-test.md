@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Projects, Proposals, Customers and Milestones
@@ -219,15 +219,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** **Project ID** shows what was typed.
   - **Notes:**
 
-- [ ] `F9B9` Select the pencil button in the **Owner** row, and pick any person, and write the name in the notes.
+- [ ] `F9B9` Select the change button in the **Owner** row, and pick any person, and write the name in the notes.
   - **Expected:** **Owner** shows the name picked.
   - **Notes:**
 
-- [ ] `10A4` Select the pencil button in the **Customers** row, and pick `Testing Customer`.
+- [ ] `10A4` Select the change button in the **Customers** row, and pick `Testing Customer`.
   - **Expected:** **Customers** shows `Testing Customer`.
   - **Notes:**
 
-- [ ] `28B5` Select the pencil button in the **Proposals** row, and pick `Testing Proposal`.
+- [ ] `28B5` Select the change button in the **Proposals** row, and pick `Testing Proposal`.
   - **Expected:** **Proposals** shows `Testing Proposal`.
   - **Notes:**
 
@@ -582,10 +582,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The side panel opens, headed 'Harbour Cranes Upgrade'.
     - Its first row is **Name**.
-    - Each row has a small pencil button at its right.
+    - Each row has a change button at its right.
   - **Notes:**
 
-- [ ] `CC32` Select the pencil beside **Proposal ID**.
+- [ ] `CC32` Select the change button beside **Proposal ID**.
   - **Expected:** A box opens for **Proposal ID**.
   - **Notes:**
 
@@ -602,13 +602,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The proposal's row in the table shows `PRO-9000` too.
   - **Notes:**
 
-- [ ] `DCAF` Select the pencil beside **Owner**, and choose a name from the list.
+- [ ] `DCAF` Select the change button beside **Owner**, and choose a name from the list.
   - **Expected:**
     - **Owner** shows the name chosen.
     - The list is gone.
   - **Notes:**
 
-- [ ] `D927` Select the pencil beside **Name**.
+- [ ] `D927` Select the change button beside **Name**.
   - **Expected:**
     - A box opens for **Name**.
     - It holds the proposal's name.
@@ -625,12 +625,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The box is gone.
     - **Name** shows 'Harbour Cranes Upgrade'.
-    - Focus is on the pencil beside **Name**.
+    - Focus is on the change button beside **Name**.
   - **Notes:**
 
 - [ ] `BD45` Open the **Draft** menu and select **Live only**.
   - **Expected:**
-    - The panel shows no pencil buttons.
+    - The panel shows no change buttons.
     - **Proposal ID** shows 'PR-101'.
   - **Notes:**
 

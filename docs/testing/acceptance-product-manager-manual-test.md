@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-product-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Acceptance, Product Manager
@@ -87,7 +87,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - **Status** reads "Open".
   - **Notes:**
 
-- [ ] `53F7` Select the pencil button in the **Status** row, and choose **Won**.
+- [ ] `53F7` Select the change button in the **Status** row, and choose **Won**.
   - **Expected:** **Status** shows "Won".
   - **Notes:**
 
@@ -107,15 +107,15 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** **Project ID** shows what was typed.
   - **Notes:**
 
-- [ ] `33A4` Select the pencil button in the **Owner** row, and pick any person. Write the owner's name in the notes.
+- [ ] `33A4` Select the change button in the **Owner** row, and pick any person. Write the owner's name in the notes.
   - **Expected:** **Owner** shows the name picked.
   - **Notes:**
 
-- [ ] `962A` Select the pencil button in the **Customers** row, and pick `Fictional Ferry Co-op`.
+- [ ] `962A` Select the change button in the **Customers** row, and pick `Fictional Ferry Co-op`.
   - **Expected:** **Customers** shows `Fictional Ferry Co-op`.
   - **Notes:**
 
-- [ ] `9C9C` Select the pencil button in the **Proposals** row, and pick `Fictional Ferry Proposal`.
+- [ ] `9C9C` Select the change button in the **Proposals** row, and pick `Fictional Ferry Proposal`.
   - **Expected:** **Proposals** shows `Fictional Ferry Proposal`.
   - **Notes:**
 
@@ -229,15 +229,15 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `E267` Select the pencil button in the **Target cycle** row, and choose next quarter's cycle, such as **Platform: 27.1**.
+- [ ] `E267` Select the change button in the **Target cycle** row, and choose next quarter's cycle, such as **Platform: 27.1**.
   - **Expected:** **Target cycle** shows the cycle chosen.
   - **Notes:**
 
-- [ ] `EF83` Select the pencil button in the **Feature team** row, and choose 'Mobile apps'.
+- [ ] `EF83` Select the change button in the **Feature team** row, and choose 'Mobile apps'.
   - **Expected:** **Feature team** shows 'Mobile apps'.
   - **Notes:**
 
-- [ ] `3C7F` Select the pencil button in the **Needed by** row, type `203003`, and press Enter.
+- [ ] `3C7F` Select the change button in the **Needed by** row, type `203003`, and press Enter.
   - **Expected:** **Needed by** shows "Mar 2030".
   - **Notes:**
 
@@ -322,10 +322,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - Under **Scope history**, the first row has a hollow yellow dot, then 'Audit Export'.
     - Its next line reads "Removed" and today's date, in grey.
-    - A pencil button is at the row's right.
+    - A change button is at the row's right.
   - **Notes:**
 
-- [ ] `291F` Select the pencil button at the right of the first row under **Scope history**.
+- [ ] `291F` Select the change button at the right of the first row under **Scope history**.
   - **Expected:**
     - An empty box opens under "Removed" and today's date.
     - The cursor is in the box.

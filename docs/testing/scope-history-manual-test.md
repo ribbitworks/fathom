@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Scope History
@@ -86,7 +86,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The side panel opens, headed 'Offline Sync'.
   - **Notes:**
 
-- [ ] `12F6` Select the pencil button beside **Notes**.
+- [ ] `12F6` Select the change button beside **Notes**.
   - **Expected:**
     - A panel titled **Notes for Offline Sync** opens beside the side panel.
     - It shows the note, starting "Field crews asked for this first."
@@ -194,7 +194,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - 'Offline Sync'
     - The first row's next line reads "Removed" and today's date, in grey.
     - The first row shows no reason.
-    - A pencil button is at the first row's right.
+    - A change button is at the first row's right.
     - The second row reads "Added" and a date, in grey.
     - The third row reads "Added" and a date, in grey.
     - No row is struck through.
@@ -206,18 +206,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As SCOPE-03 ends, the side panel of 'Harbour Cranes Upgrade' open.
 
-- [ ] `816B` Select the pencil button at the right of the first row under **Scope history**.
+- [ ] `816B` Select the change button at the right of the first row under **Scope history**.
   - **Expected:**
     - An empty box opens under "Removed" and today's date.
     - The cursor is in the box.
-    - The pencil button is gone.
+    - The change button is gone.
   - **Notes:**
 
 - [ ] `CBD4` Type `Customer chose another supplier`, and press Enter.
   - **Expected:**
     - The box closes.
     - The first row's last line reads "Reason: Customer chose another supplier".
-    - The keyboard focus is on the pencil button at the first row's right.
+    - The keyboard focus is on the change button at the first row's right.
   - **Notes:**
 
 - [ ] `3EB2` Select the line "Reason: Customer chose another supplier".
@@ -236,7 +236,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The first row's last line reads "Reason: Customer chose another supplier".
   - **Notes:**
 
-- [ ] `D346` Select the pencil button at the right of the first row.
+- [ ] `D346` Select the change button at the right of the first row.
   - **Expected:** The box opens, holding `Customer chose another supplier`.
   - **Notes:**
 
@@ -260,7 +260,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The side panel opens, headed 'Clinic Scheduling Pilot'.
   - **Notes:**
 
-- [ ] `C4EF` Select the pencil button beside **Features** in the side panel.
+- [ ] `C4EF` Select the change button beside **Features** in the side panel.
   - **Expected:**
     - A list of features opens.
     - These are picked:
@@ -307,7 +307,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `FBF0` Select **Show details** in the **⋯** menu of 'Harbour Cranes Upgrade'.
   - **Expected:**
     - The first row under **Scope history** reads "Reason: Customer delayed the upgrade".
-    - It has no pencil button.
+    - It has no change button.
   - **Notes:**
 
 ### SCOPE-07: An Approved Removal Is Dated, with Its Reason
@@ -337,7 +337,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The first row has no dot.
     - The first row reads "Removed" and today's date, in grey.
     - The first row reads "Reason: Customer delayed the upgrade".
-    - The first row has no pencil button.
+    - The first row has no change button.
   - **Notes:**
 
 - [ ] `A22D` Select the **Change history** page in the left-hand menu.

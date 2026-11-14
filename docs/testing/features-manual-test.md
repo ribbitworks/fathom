@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Features
@@ -718,7 +718,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
     - Each label is at the left of its row.
     - The rows are under the headings **Details** and **Columns**.
     - The **Notes** row has "None" as its value.
-    - It has a pencil button at its right.
+    - It has a change button at its right.
     - There is no text box for the note.
   - **Notes:**
 
@@ -726,7 +726,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `BCF1` Select the pencil button in the **Notes** row.
+- [ ] `BCF1` Select the change button in the **Notes** row.
   - **Expected:**
     - A second panel opens under **New feature**, titled "Notes for New feature".
     - **Note**, **Editor** and **Markdown** are at its top.
@@ -760,7 +760,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
     - **Name** still reads `Fictional Atlas Two`.
   - **Notes:**
 
-- [ ] `3CFC` Select the pencil button in the **Notes** row.
+- [ ] `3CFC` Select the change button in the **Notes** row.
   - **Expected:**
     - The note's panel opens.
     - It shows the note as it reads.
@@ -954,7 +954,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
     - Its **Effort** row reads "2.5 person-days (20 hours)".
   - **Notes:**
 
-- [ ] `D165` Select the pencil button in the **Effort** row.
+- [ ] `D165` Select the change button in the **Effort** row.
   - **Expected:**
     - A field opens holding "2.5".
     - A menu beside it reads "person-days".
@@ -972,7 +972,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
     - The **Effort** row still reads "2.5 person-days (20 hours)".
   - **Notes:**
 
-- [ ] `BBDD` Select the pencil button in the **Effort** row.
+- [ ] `BBDD` Select the change button in the **Effort** row.
   - **Expected:**
     - A field opens holding "2.5".
     - A menu beside it reads "person-days".
@@ -990,7 +990,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
     - In the table 'Scheduler API' reads "3.5 PD".
   - **Notes:**
 
-- [ ] `9DFC` Select the pencil button in the **Effort** row.
+- [ ] `9DFC` Select the change button in the **Effort** row.
   - **Expected:**
     - A field opens holding "3.5".
     - A menu beside it reads "person-days".
@@ -1173,7 +1173,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
     - The **Release** of 'Voice Notes' is empty.
   - **Notes:**
 
-- [ ] `C184` Select the small button with an arrow out of a box at the right of the **Name** cell of 'Report Builder'.
+- [ ] `C184` Select the details button at the right of the **Name** cell of 'Report Builder'.
   - **Expected:**
     - The side panel lists **Release** before **Target cycle**.
     - **Release** reads "Platform: Not released yet".

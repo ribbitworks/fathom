@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-team-member.md", "docs/product/roles.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Acceptance, Team Member
@@ -46,7 +46,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
 - [ ] `62C8` Select the name on the card for 'Lorenza Thiel'.
   - **Expected:**
     - The details panel slides out on the right, headed 'Lorenza Thiel'.
-    - The panel shows no pencils.
+    - The panel shows no change buttons.
   - **Notes:**
 
 - [ ] `BB88` Select the **Show only this team** button at the top right of the card for 'Lorenza Thiel'.
@@ -156,7 +156,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
     - The side panel is headed 'Crane Control'.
     - Under **Milestones** are 'Kickoff', 'Factory test' and 'First crane live', each with its date.
     - 'Second crane live' and 'Final handover' are there too, each with a yellow dot before it.
-    - The panel shows no pencils.
+    - The panel shows no change buttons.
   - **Notes:**
 
 - [ ] `60C5` Open the **⋯** menu of 'Crane Control' in the table, and select **Show milestones**.

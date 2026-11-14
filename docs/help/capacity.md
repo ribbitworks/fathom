@@ -31,7 +31,7 @@ Each group ends with a total row. **Manager** is offered to roles that see Confi
 
 ### Change a Setting
 
-1. In **Settings**, select the pencil at the right of the setting, or the value itself.
+1. In **Settings**, select the setting's value.
 1. Type the new value, then press Enter.
 1. Select **Publish** in the top bar.
 

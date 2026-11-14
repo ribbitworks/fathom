@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Planned Hires on People
@@ -588,7 +588,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Under **Fill this planned hire**, **New person** is selected next to **Existing person**.
     - The fields are **Name**, **ID**, **Position**, **Start** and **Manager**.
     - **Position** reads 'Software Engineer'.
-    - **Position** has no pencil.
+    - **Position** has no change button.
     - **Start** holds the date in the row's **Start** cell, visible beside the panel.
     - **Manager** holds the name in the row's **Manager** cell.
   - **Notes:**
@@ -610,7 +610,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The 'Backend engineer 2' row has a hollow yellow dot in its slot.
   - **Notes:**
 
-- [ ] `1AFD` Select the button with an arrow out of a box at the right of the 'Backend engineer 2' row's **Name** cell.
+- [ ] `1AFD` Select the details button at the right of the 'Backend engineer 2' row's **Name** cell.
   - **Expected:**
     - The panel is headed 'Backend engineer 2'.
     - A **Filled by** section under its heading reads `Fictional new starter` in **Name**.
@@ -693,12 +693,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `111D` In the panel, select **Existing person**.
   - **Expected:**
     - The **Person** row is empty.
-    - A pencil button is at its right.
+    - A change button is at its right.
     - **Position** reads the planned hire's position.
-    - **Position** has no pencil.
+    - **Position** has no change button.
   - **Notes:**
 
-- [ ] `5EC6` Select the pencil.
+- [ ] `5EC6` Select the change button.
   - **Expected:**
     - A list opens.
     - Each entry shows a name, an ID in brackets, and a position.
@@ -711,7 +711,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The list scrolls within itself.
   - **Notes:**
 
-- [ ] `70EB` Without typing, select the first person in the list. If no **Manager assigned** row then shows, select the pencil and choose the next person in the list.
+- [ ] `70EB` Without typing, select the first person in the list. If no **Manager assigned** row then shows, select the change button and choose the next person in the list.
   - **Expected:**
     - The panel stays the same width as the list closes.
     - The **Person** row shows the person chosen.
@@ -720,7 +720,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Manager assigned** holds today's date.
   - **Notes:**
 
-- [ ] `2C76` Select the pencil beside **Manager**, and choose a different name from the one shown.
+- [ ] `2C76` Select the change button beside **Manager**, and choose a different name from the one shown.
   - **Expected:**
     - The **Manager** row shows the name chosen.
     - **Manager assigned** still holds today's date.
@@ -768,7 +768,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** **ID** holds `EMP-9002`.
   - **Notes:**
 
-- [ ] `F905` Select the pencil beside **Grade**, and choose 'P1'.
+- [ ] `F905` Select the change button beside **Grade**, and choose 'P1'.
   - **Expected:** The form reads:
     - `Fictional new lead` in **Name**
     - `EMP-9002` in **ID**
@@ -866,11 +866,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - "Grade needed" shows in red under **Grade**.
   - **Notes:**
 
-- [ ] `D832` Select the pencil beside **Manager**, and choose the first name in the list.
+- [ ] `D832` Select the change button beside **Manager**, and choose the first name in the list.
   - **Expected:** The **Manager** row shows the name chosen.
   - **Notes:**
 
-- [ ] `AC97` Select the pencil beside **Grade**, and choose 'P1'.
+- [ ] `AC97` Select the change button beside **Grade**, and choose 'P1'.
   - **Expected:** **Grade** reads 'P1'.
   - **Notes:**
 

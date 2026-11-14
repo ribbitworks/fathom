@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/design/conventions.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Dark Mode
@@ -496,7 +496,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The **New feature** panel opens beside the table.
   - **Notes:**
 
-- [ ] `56C3` Select the pencil button in the **Notes** row.
+- [ ] `56C3` Select the change button in the **Notes** row.
   - **Expected:**
     - A second panel opens, titled "Notes for New feature".
     - Both panels are easy to read.
