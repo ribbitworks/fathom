@@ -221,10 +221,20 @@ export function FeatureBoard({
           <MenuChoices
             label="Release stream"
             choices={offeredStreams(shownStreams, retired, stream).map(
-              ({ id, name }) => ({
-                value: id,
-                label: name,
-              }),
+              ({ id, name }) => {
+                const own = streams.find((one) => one.id === id);
+                return {
+                  value: id,
+                  label: (
+                    <DraftedItem
+                      draft={markedDraft(own?.draft, own?.retired)}
+                      heldBy={own?.heldBy}
+                    >
+                      {name}
+                    </DraftedItem>
+                  ),
+                };
+              },
             )}
             chosen={stream?.id}
             onChoose={(next) => {

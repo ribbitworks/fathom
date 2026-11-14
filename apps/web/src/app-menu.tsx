@@ -74,7 +74,8 @@ export function MenuChoices<Value extends string>({
   onChoose,
 }: {
   label: string;
-  choices: readonly { value: Value; label: string }[];
+  // Each choice's words, with any marks they carry, such as a draft's dot.
+  choices: readonly { value: Value; label: ReactNode }[];
   chosen: Value | undefined;
   onChoose: (value: Value) => void;
 }) {

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/conventions.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Features Board
@@ -235,6 +235,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - A menu headed "Release stream" lists **Platform** and **Patches**.
     - **Platform** is ticked.
+    - **Patches** has a yellow dot before it and a yellow **Retired** box after it.
   - **Notes:**
 
 - [ ] `A0DA` Select **Patches**.
