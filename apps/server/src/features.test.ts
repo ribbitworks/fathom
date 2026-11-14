@@ -676,6 +676,17 @@ describe("feature teams", () => {
       `This feature team is named by the feature ${feature.name}; change that first`,
     );
   });
+
+  it("are refused removal without naming the feature to a role that can't see features", async () => {
+    const featureTeamId = await liveTeam();
+    await draftFeature({ featureTeamId });
+    const editor = await test.signedIn(["people:view", "feature-teams:edit"]);
+    const response = await removeTeam(featureTeamId, undefined, editor.cookie);
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe(
+      "This feature team is named by a feature; change that first",
+    );
+  });
 });
 
 describe("drafts", () => {

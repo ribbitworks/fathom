@@ -78,6 +78,7 @@ import {
   refKey,
   shownIds,
   stateOf,
+  subjectFor,
   type Touched,
   usesOf,
   takenValue,
@@ -107,6 +108,7 @@ export const recordKinds: readonly RecordKind[] = [
 function linkedProblem(
   state: RecordsState,
   touched: readonly Touched[],
+  permissions: readonly Permission[],
 ): string | undefined {
   for (const removed of touched) {
     if (versionOf(state, removed.type, removed.id) !== undefined) continue;
@@ -121,7 +123,7 @@ function linkedProblem(
         ),
       );
       if (user !== undefined) {
-        return `This is used by ${kind.subject(state, user)}; change that first`;
+        return `This is used by ${subjectFor(kind, state, user, permissions)}; change that first`;
       }
     }
   }
@@ -168,14 +170,14 @@ const ownFields = (kind: RecordKind, from: Recorded): Recorded =>
     kind.fields.map((name) => [name, from[name]]),
   );
 
-// How the Drafts page names the first record, live, in a draft, or in anyone's unpublished
-// changes, as the editor sees them, that names any of the people, choices, or feature teams given.
-export async function recordNaming(
+// The first record, live, in a draft, or in anyone's unpublished changes, as the editor sees them,
+// that names any of the people, choices, or feature teams given, with the records it was found in.
+async function namingRecord(
   reader: Reader,
   named: Referred,
   ids: readonly string[],
   editor?: Viewer,
-): Promise<string | undefined> {
+): Promise<{ kind: RecordKind; state: RecordsState; id: string } | undefined> {
   const state = await readRecordsState(reader, editor);
   const wanted = new Set(ids);
   for (const kind of recordKinds) {
@@ -187,20 +189,39 @@ export async function recordNaming(
         linkedIds(version, name).some((id) => wanted.has(id)),
       ),
     );
-    if (found !== undefined) return kind.subject(state, found[0]);
+    if (found !== undefined) return { kind, state, id: found[0] };
   }
   return undefined;
 }
 
-// Refuses removing people a record names, live or in a draft, published or not.
-export async function refuseRemovingNamedPeople(
+export const isNamedByRecord = async (
   reader: Reader,
+  named: Referred,
   ids: readonly string[],
+  editor: Viewer,
+): Promise<boolean> =>
+  (await namingRecord(reader, named, ids, editor)) !== undefined;
+
+const removedWords: Record<Exclude<Referred, "choice">, string> = {
+  person: "This person",
+  "feature-team": "This feature team",
+};
+
+// Refuses removing people or feature teams a record names, live or in a draft, published or not,
+// anyone's unpublished changes included, naming that record only to a role that reads its kind.
+export async function refuseRemovingNamed(
+  reader: Reader,
+  named: Exclude<Referred, "choice">,
+  ids: readonly string[],
+  actor: Actor,
 ): Promise<void> {
-  const naming = await recordNaming(reader, "person", ids);
+  const naming = await namingRecord(reader, named, ids, actor.user.id);
   if (naming !== undefined) {
+    const { kind, state, id } = naming;
     throw new ConflictError(
-      `This person is named by ${naming}; change that first`,
+      // The kind of record removed is one of the two named above.
+      // eslint-disable-next-line security/detect-object-injection
+      `${removedWords[named]} is named by ${subjectFor(kind, state, id, actor.permissions)}; change that first`,
     );
   }
 }
@@ -443,7 +464,7 @@ function misfitOf(
         }
         if (versionOf(state, type, target) === undefined) {
           return new ConflictError(
-            `This links to ${kindOf(type).subject(state, target)}, which is drafted to be removed; discard that draft first`,
+            `This links to ${subjectFor(kindOf(type), state, target, permissions)}, which is drafted to be removed; discard that draft first`,
           );
         }
       }
@@ -1015,12 +1036,13 @@ export function recordSubject(
   id: string,
   permissions: readonly Permission[],
 ): string {
-  const kind = kindOf(type);
-  if (!kind.readWith.some((permission) => permissions.includes(permission))) {
-    return kind.unseenSubject ?? "a record your role can't see";
-  }
   const seen = versionOf(mine, type, id) ?? stateOf(mine, type).live.get(id);
-  return kind.subject(seen === undefined ? theirs : mine, id);
+  return subjectFor(
+    kindOf(type),
+    seen === undefined ? theirs : mine,
+    id,
+    permissions,
+  );
 }
 
 // Whether a record as the user's draft makes it still fits the data as it is now, so it can be

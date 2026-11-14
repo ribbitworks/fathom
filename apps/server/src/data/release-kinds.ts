@@ -94,6 +94,7 @@ export const streamKind: RecordKind = {
     },
   ],
   readWith: featuresOrConfiguration,
+  unseenSubject: "a release stream",
   subject: (state, id) => planSubjects.stream(nameIn(state, id)),
   // A stream added goes at the end of the order.
   added: (rows) => ({
@@ -119,6 +120,7 @@ export const patternKind: RecordKind = {
     },
   ],
   readWith: featuresOrConfiguration,
+  unseenSubject: "a change of a stream's cycles",
   subject: (state, id) => {
     const pattern = shownVersion(state, "cycle-pattern", id);
     return planSubjects.pattern(
@@ -182,8 +184,6 @@ export const releaseKind: RecordKind = {
   ],
   // Releases themselves are seen with features, not with planning configuration, as Roles sets out.
   readWith: ["features:view"],
-  // Changing a stream's cycles drafts moving its releases, so one who sees only configuration makes
-  // drafts of releases.
   unseenSubject: "a release",
   subject: (state, id) => {
     const release = shownVersion(state, "release", id);
@@ -260,8 +260,6 @@ export const featureKind: RecordKind = {
     { field: "name", message: "There is already a feature with that name" },
   ],
   readWith: ["features:view"],
-  // Changing a stream's cycles drafts moving the features targeting them, so one who sees only
-  // configuration makes drafts of features.
   unseenSubject: "a feature",
   subject: (state, id) =>
     (isGeneralFeature(state, id)

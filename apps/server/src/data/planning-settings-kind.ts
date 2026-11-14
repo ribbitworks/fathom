@@ -15,5 +15,6 @@ export const planningSettingsKind: RecordKind = {
   fields: planningSettingFields,
   links: {},
   readWith: ["configuration:view"],
+  unseenSubject: "the planning settings",
   subject: () => "the planning settings",
 };

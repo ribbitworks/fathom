@@ -7,17 +7,23 @@
 // instead. Part of the data access layer; records.ts applies the rules every kind shares.
 
 import { allocations } from "@fathom/db";
-import { type AllocationMonths, capitalized } from "@fathom/shared";
+import {
+  type AllocationMonths,
+  capitalized,
+  type Permission,
+} from "@fathom/shared";
 import type { Recorded } from "./drafts.ts";
 import {
   type RecordKind,
   type RecordsState as State,
   shownIds,
   shownVersion,
+  subjectFor,
   type Touched,
   versionOf,
 } from "./record-state.ts";
-import { featureKind, projectSubject } from "./release-kinds.ts";
+import { projectKind } from "./project-kinds.ts";
+import { featureKind } from "./release-kinds.ts";
 
 export const allocationFields = [
   "personId",
@@ -55,6 +61,7 @@ export const allocationKind: RecordKind = {
   links: { featureId: "feature" },
   readWith: ["allocations:view"],
   view: "allocations",
+  unseenSubject: "an allocation",
   historyName: {
     fields: ["personId", "plannedHireId", "featureId"],
     name: ({ personId, plannedHireId, featureId }) => {
@@ -87,11 +94,14 @@ function removedProjectOf(state: State, featureId: string): string | undefined {
 // A feature or project removed while it, or its general feature, still has allocations, or an
 // allocation to the general feature of a project drafted to be removed, which, having no draft of
 // its own, is not caught as a link to a removed record. The count is left out, since it can include
-// people the editor does not see.
+// people the editor does not see. Records are named only to a role that reads their kind.
 export function allocationProblem(
   state: State,
   touched: readonly Touched[],
+  permissions: readonly Permission[],
 ): string | undefined {
+  const named = (kind: RecordKind, id: string) =>
+    subjectFor(kind, state, id, permissions);
   for (const { type, id } of touched) {
     if (type === "allocation") {
       const featureId = versionOf(state, type, id)?.featureId;
@@ -100,7 +110,7 @@ export function allocationProblem(
           ? removedProjectOf(state, featureId)
           : undefined;
       if (projectId === undefined) continue;
-      return `This links to ${projectSubject(state, projectId)}, which is drafted to be removed; discard that draft first`;
+      return `This links to ${named(projectKind, projectId)}, which is drafted to be removed; discard that draft first`;
     }
     if (type !== "feature" && type !== "project") continue;
     if (versionOf(state, type, id) !== undefined) continue;
@@ -109,8 +119,8 @@ export function allocationProblem(
     ).some((featureId) => allocationsTo(state, featureId).length > 0);
     if (!allocated) continue;
     return type === "project"
-      ? `${capitalized(projectSubject(state, id))} has allocations, so it can't be removed. Allocations are time spent, so the project stays.`
-      : `${capitalized(featureKind.subject(state, id))} has allocations, so it can't be removed. Allocations are time spent, so cancel the feature instead.`;
+      ? `${capitalized(named(projectKind, id))} has allocations, so it can't be removed. Allocations are time spent, so the project stays.`
+      : `${capitalized(named(featureKind, id))} has allocations, so it can't be removed. Allocations are time spent, so cancel the feature instead.`;
   }
   return undefined;
 }

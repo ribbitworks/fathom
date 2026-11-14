@@ -33,6 +33,7 @@ import type { Saved } from "./changes.ts";
 import type { Recorded } from "./drafts.ts";
 import {
   addedOnly,
+  readsKind,
   type RecordsState,
   shownIds,
   shownVersion,
@@ -166,9 +167,7 @@ export function streamsOut(
 const asSeenBy =
   (viewer: Actor) =>
   (stream: ReleaseStream): ReleaseStream =>
-    releaseKind.readWith.some((permission) =>
-      viewer.permissions.includes(permission),
-    )
+    readsKind(releaseKind, viewer.permissions)
       ? stream
       : { ...stream, releases: [] };
 

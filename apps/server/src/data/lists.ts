@@ -100,7 +100,7 @@ import {
   requireClassify,
   requireMove,
 } from "./data-classes.ts";
-import { recordNaming } from "./records.ts";
+import { isNamedByRecord } from "./records.ts";
 
 type ListRow = typeof lists.$inferSelect;
 type ChoiceRow = typeof listItems.$inferSelect;
@@ -549,7 +549,7 @@ export async function refuseIfChosen(
   if (
     Number(held?.total) + Number(positioned?.total) + Number(hired?.total) >
       0 ||
-    (await recordNaming(transaction, "choice", [id], editor)) !== undefined ||
+    (await isNamedByRecord(transaction, "choice", [id], editor)) ||
     (await draftsUse(transaction, { choice: id }, editor))
   ) {
     throw new ConflictError(choiceInUse);

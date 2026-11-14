@@ -100,7 +100,7 @@ import {
   refuseRemovingHiresPeople,
   refuseUnmarkingHireManagers,
 } from "./hires.ts";
-import { keptNote, refuseRemovingNamedPeople } from "./records.ts";
+import { keptNote, refuseRemovingNamed } from "./records.ts";
 import {
   changedReporting,
   checkLine,
@@ -1338,7 +1338,7 @@ export async function deletePerson(
       await refuseRemovingManagers(transaction, [id]);
     }
     await refuseRemovingHiresPeople(transaction, [id]);
-    await refuseRemovingNamedPeople(transaction, [id]);
+    await refuseRemovingNamed(transaction, "person", [id], actor);
     await refuseRemovingPeopleOnTeams(transaction, [id]);
     const made = [
       ...asDraft(personChanges(columns, id, "deleted", person, undefined)),

@@ -19,6 +19,8 @@ import {
   type DraftKind,
   draftingPermissions,
   hireCalled,
+  type Permission,
+  type RecordType,
   type Unpublished,
 } from "@fathom/shared";
 import { and, asc, eq, max } from "drizzle-orm";
@@ -229,7 +231,45 @@ function versionOf(
   return draftedField(mine.columns, id) ?? draftedField(theirs.columns, id);
 }
 
-// What a change is to, as the Drafts page names drafts.
+const holds =
+  (permission: Permission) =>
+  (actor: Actor): boolean =>
+    actor.permissions.includes(permission);
+
+// Planned hires are read as the change history reads them: with people, and the hiring plan's class.
+const readsHires = (actor: Actor): boolean =>
+  holds("people:view")(actor) && seesSensitivity(actor, "hiring-plan");
+
+interface OtherKind {
+  reads: (actor: Actor) => boolean;
+  unseen: string;
+}
+
+// Who reads each kind of draft kept outside the plan's records, and how a change to one is named to
+// a role that doesn't, since the change may have been made under another role.
+const otherKinds: Record<Exclude<DraftKind, RecordType>, OtherKind> = {
+  person: { reads: holds("people:view"), unseen: "a person" },
+  "planned-hire": { reads: readsHires, unseen: "a planned hire" },
+  "feature-team": {
+    reads: holds("feature-teams:view"),
+    unseen: "a feature team",
+  },
+  list: { reads: holds("configuration:view"), unseen: "a list" },
+  "list-item": { reads: holds("configuration:view"), unseen: "a choice" },
+  "choice-order": {
+    reads: holds("configuration:view"),
+    unseen: "the new order for a list",
+  },
+  field: { reads: holds("configuration:view"), unseen: "a column" },
+};
+
+const otherKindOf = new Map<string, OtherKind>(Object.entries(otherKinds));
+
+// A change of a kind Fathom no longer has, which no role reads, so one stored row can't keep the user
+// from seeing the rest of their changes, or discarding them.
+const unknownKind: OtherKind = { reads: () => false, unseen: "a change" };
+
+// What a change is to, as the Drafts page names drafts, by name only to a role that reads its kind.
 function subjectOf(versions: Versions, row: Row, actor: Actor): string {
   const id = row.recordId;
   // A list's name is always text.
@@ -244,6 +284,8 @@ function subjectOf(versions: Versions, row: Row, actor: Actor): string {
       actor.permissions,
     );
   }
+  const other = otherKindOf.get(row.recordType) ?? unknownKind;
+  if (!other.reads(actor)) return other.unseen;
   if (row.recordType === "person") {
     return String(versionOf(versions, "person", id)?.preferredName);
   }

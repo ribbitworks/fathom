@@ -7,7 +7,15 @@
 // unpublished; the change history shows unpublished changes only to their maker, who alone can undo
 // them; and publishing checks again that every draft still fits the data.
 
-import { drafts, fields, listItems, lists, people, users } from "@fathom/db";
+import {
+  drafts,
+  fields,
+  listItems,
+  lists,
+  people,
+  unpublishedDrafts,
+  users,
+} from "@fathom/db";
 import type {
   ChangeHistory,
   Choice,
@@ -17,6 +25,7 @@ import type {
   Unpublished,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   type Method,
@@ -898,6 +907,85 @@ describe("the list of unpublished changes", () => {
       { subject: name, action: "deleted" },
     ]);
     expect(await discard(alice)).toBe(4);
+  });
+
+  it("names no record of a kind the role now in use can't read", async () => {
+    // Given changes of every kind kept outside the plan's records, made under a role that reads them
+    const maker = await user("workforce-administrator");
+    await draftPeople(maker, [unique("Fictional Hidden Person")]);
+    await saved(maker, "POST", "/api/planned-hires", {
+      hires: [
+        {
+          name: unique("Fictional Hidden Hire"),
+          positionId: testPosition,
+          targetDate: "2027-03-15",
+        },
+      ],
+    });
+    const team = unique("Fictional Hidden Team");
+    await saved(maker, "POST", "/api/feature-teams", { name: team });
+    const { list } = await saved<{ list: List }>(maker, "POST", "/api/lists", {
+      name: unique("Fictional Hidden List"),
+    });
+    const { choices } = await saved<{ choices: Choice[] }>(
+      maker,
+      "POST",
+      `/api/lists/${list.id}/choices`,
+      {
+        choices: [
+          { label: "Fictional Hidden Choice" },
+          { label: "Fictional Hidden Second" },
+        ],
+      },
+    );
+    await saved(
+      maker,
+      "PUT",
+      `/api/lists/${list.id}/choices/${String(choices[1]?.id)}/position`,
+      { after: null },
+    );
+    await saved(maker, "POST", "/api/people/columns", {
+      name: unique("Fictional Hidden Column"),
+      listId: list.id,
+    });
+    const named = (await unpublished(maker)).map(({ subject }) => subject);
+
+    // When the user acts as a role that reads none of them
+    await test.holdOnly(maker.id, ["plan:edit"]);
+    const subjects = (await unpublished(maker)).map(({ subject }) => subject);
+
+    // Then each is named only by its kind
+    expect(named.join(" ")).toContain(team);
+    expect(subjects.sort()).toEqual(
+      [
+        "a choice",
+        "a choice",
+        "a column",
+        "a feature team",
+        "a list",
+        "a person",
+        "a planned hire",
+        "the new order for a list",
+      ].sort(),
+    );
+    await discard(maker);
+  });
+
+  it("names a change of a kind it doesn't know only as a change, and still lists and discards the rest", async () => {
+    const maker = await user("workforce-administrator");
+    const name = unique("Fictional Beside Unknown");
+    await draftPeople(maker, [name]);
+    await test.connection.insert(unpublishedDrafts).values({
+      recordType: "fictional-retired-kind",
+      recordId: randomUUID(),
+      userId: maker.id,
+      action: "created",
+    });
+
+    const subjects = (await unpublished(maker)).map(({ subject }) => subject);
+
+    expect(subjects.sort()).toEqual(["a change", name].sort());
+    expect(await discard(maker)).toBe(2);
   });
 
   it("names a published draft the user takes back as discarded", async () => {

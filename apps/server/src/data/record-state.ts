@@ -52,9 +52,8 @@ export interface RecordKind {
   addedColumns?: { owner: ValueOwner; table: ColumnTable };
   // The record as the Drafts page names it, such as "the release stream Major".
   subject: (state: RecordsState, id: string) => string;
-  // The record as named to its draft's maker when the role they act as can't read the kind, such
-  // as "a release", for a kind such a draft can be made of.
-  unseenSubject?: string;
+  // The record as named to a role that can't read the kind, such as "a release".
+  unseenSubject: string;
   // The drafts the record's draft uses beyond the records it links to, such as the cycle patterns
   // drafted that make a release's cycles, asked of a draft that removes the record too.
   alsoUses?: (state: RecordsState, id: string) => RecordRef[];
@@ -133,6 +132,27 @@ export const shownVersion = (
 ): Recorded | undefined =>
   // eslint-disable-next-line security/detect-object-injection
   versionOf(state, type, id) ?? state[type].live.get(id);
+
+// Whether a role reads records of the kind, and so may be told their names.
+export const readsKind = (
+  kind: RecordKind,
+  permissions: readonly Permission[],
+): boolean =>
+  kind.readWith.some((permission) => permissions.includes(permission));
+
+// A record as refusals and the Drafts page name it to a role: by its own name only to a role that
+// reads its kind, and only when the record is shown to them, not held in someone else's
+// unpublished changes alone.
+export const subjectFor = (
+  kind: RecordKind,
+  state: RecordsState,
+  id: string,
+  permissions: readonly Permission[],
+): string =>
+  readsKind(kind, permissions) &&
+  shownVersion(state, kind.type, id) !== undefined
+    ? kind.subject(state, id)
+    : kind.unseenSubject;
 
 // Whether a record is live, or drafted to be added.
 export const recordExists = (

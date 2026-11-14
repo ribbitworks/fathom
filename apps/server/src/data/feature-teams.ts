@@ -92,7 +92,7 @@ import {
 import { recordEvents } from "./history.ts";
 import { bySubject, inForceOn, inForceOrLater } from "./in-force.ts";
 import { currentOn, noPerson, notStarted } from "./people.ts";
-import { recordNaming } from "./records.ts";
+import { refuseRemovingNamed } from "./records.ts";
 import { text } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 
@@ -1552,7 +1552,7 @@ export async function deleteFeatureTeam(
       today,
     );
     if (team === undefined) return null;
-    await refuseRemovingNamedTeams(transaction, [id]);
+    await refuseRemovingNamed(transaction, "feature-team", [id], actor);
     const cleared = await clearedTeamRejection(
       transaction,
       id,
@@ -1926,11 +1926,13 @@ export async function undoTeamDrafts(
     }
     return { id: record.id, team, now };
   });
-  await refuseRemovingNamedTeams(
+  await refuseRemovingNamed(
     transaction,
+    "feature-team",
     undone
       .filter(({ id, team }) => team === undefined && live.has(id))
       .map(({ id }) => id),
+    actor,
   );
   const names = await readTeamNames(transaction);
   const everyone = await peopleOf(
@@ -1966,19 +1968,6 @@ export async function undoTeamDrafts(
       id,
       live.get(id),
       wanted,
-    );
-  }
-}
-
-// Refuses removing feature teams a record names, live or in a draft, published or not.
-async function refuseRemovingNamedTeams(
-  reader: Reader,
-  ids: readonly string[],
-): Promise<void> {
-  const naming = await recordNaming(reader, "feature-team", ids);
-  if (naming !== undefined) {
-    throw new ConflictError(
-      `This feature team is named by ${naming}; change that first`,
     );
   }
 }

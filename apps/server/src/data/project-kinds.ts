@@ -59,6 +59,7 @@ export const customerKind: RecordKind = {
     { field: "name", message: "There is already a customer with that name" },
   ],
   readWith: ["plan:view"],
+  unseenSubject: "a customer",
   subject: (state, id) =>
     projectSubjects.customer(nameOf(state, "customer", id)),
 };
@@ -89,6 +90,7 @@ export const proposalKind: RecordKind = {
     },
   ],
   readWith: ["plan:view"],
+  unseenSubject: "a proposal",
   subject: (state, id) =>
     projectSubjects.proposal(nameOf(state, "proposal", id)),
   // Each reason for removing a feature, after the feature's name.
@@ -128,6 +130,7 @@ export const projectKind: RecordKind = {
     },
   ],
   readWith: ["plan:view"],
+  unseenSubject: "a project",
   subject: projectSubject,
   onAdded: async (transaction, id) => {
     const statusId = await firstOfferedOrRefused(
@@ -160,6 +163,7 @@ export const milestoneKind: RecordKind = {
   links: { projectId: "project" },
   belongsTo: "projectId",
   readWith: ["plan:view"],
+  unseenSubject: "a milestone",
   subject: (state, id) => {
     const milestone = shownVersion(state, "milestone", id);
     return projectSubjects.milestone(

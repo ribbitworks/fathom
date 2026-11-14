@@ -2161,20 +2161,35 @@ describe("a draft rejected for changing someone who has not started", () => {
 });
 
 describe("a team a feature names", () => {
-  it("is not drafted to be removed again by undoing the discard of its removal", async () => {
-    const team = await liveTeam();
-    await ok(await remove(team));
-    const { changeSetId } = await ok<{ changeSetId: string }>(
-      await send(editor, "DELETE", `/api/feature-teams/${team}/draft`),
-    );
-    await test.connection.insert(features).values({
-      name: unique("Fictional Feature"),
-      featureTeamId: team,
-      statusId: await builtInChoice(test.connection, "feature-statuses"),
-    });
-    const undone = await send(editor, "POST", `/api/undo/${changeSetId}`);
-    expect(undone.statusCode).toBe(409);
-  });
+  it.each([
+    ["names the feature to a role that sees features", ["features:view"], true],
+    ["names no feature to a role that can't see features", [], false],
+  ] as const)(
+    "is not drafted to be removed again by undoing the discard of its removal, and %s",
+    async (_case, more, named) => {
+      const maker = await test.signedIn([
+        "people:view",
+        "feature-teams:edit",
+        ...more,
+      ]);
+      const team = await liveTeam();
+      await ok(await remove(team, maker));
+      const { changeSetId } = await ok<{ changeSetId: string }>(
+        await send(maker, "DELETE", `/api/feature-teams/${team}/draft`),
+      );
+      const feature = unique("Fictional Feature");
+      await test.connection.insert(features).values({
+        name: feature,
+        featureTeamId: team,
+        statusId: await builtInChoice(test.connection, "feature-statuses"),
+      });
+      const undone = await send(maker, "POST", `/api/undo/${changeSetId}`);
+      expect(undone.statusCode).toBe(409);
+      expect(refusal(undone)).toBe(
+        `This feature team is named by ${named ? `the feature ${feature}` : "a feature"}; change that first`,
+      );
+    },
+  );
 });
 
 describe("undoing a change to a team", () => {

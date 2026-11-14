@@ -91,7 +91,7 @@ import {
 import {
   approveRecordDrafts,
   kindOf,
-  refuseRemovingNamedPeople,
+  refuseRemovingNamed,
   rejectRecordDrafts,
 } from "./records.ts";
 import { inListOrder, readColumns, valueField, valueRows } from "./values.ts";
@@ -322,7 +322,7 @@ async function approvePeopleIn(
   );
   await refuseRemovingManagers(transaction, removed);
   await refuseRemovingHiresPeople(transaction, removed);
-  await refuseRemovingNamedPeople(transaction, removed);
+  await refuseRemovingNamed(transaction, "person", removed, actor);
   await refuseRemovingPeopleOnTeams(transaction, removed);
   made.push(...(await removeAllocationsOf(transaction, "personId", removed)));
   await apply(transaction, wanted);

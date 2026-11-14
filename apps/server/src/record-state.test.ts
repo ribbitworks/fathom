@@ -58,6 +58,7 @@ const linking: RecordKind = {
   fields: ["streamId", "label"],
   links: { streamId: "release-stream" },
   readWith: ["plan:view"],
+  unseenSubject: "a record",
   subject: () => "a fictional record",
 };
 

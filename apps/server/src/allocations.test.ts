@@ -964,6 +964,37 @@ describe("removing what allocations name", () => {
     );
   });
 
+  it("names no project drafted to be removed to a role that can't see the plan", async () => {
+    const general = await addGeneralFeature();
+    const removing = await test.request(
+      director.cookie,
+      "DELETE",
+      `/api/projects/${general.projectId}`,
+    );
+    expect(removing.statusCode, removing.body).toBe(200);
+    const allocating = await test.signedIn([
+      "allocations:edit",
+      "features:view",
+      "feature-teams:view",
+      "people:view",
+      "personal:view",
+      "confidential:view",
+    ]);
+    const refused = await change(
+      {
+        personId: await addPerson(),
+        featureId: general.featureId,
+        percentage: 50,
+        from: month(0),
+      },
+      allocating,
+    );
+    expect(refused.statusCode).toBe(409);
+    expect(errorOf(refused)).toBe(
+      "This links to a project, which is drafted to be removed; discard that draft first",
+    );
+  });
+
   it("refuses allocating to a project's general feature while another holds the project's removal", async () => {
     const general = await addGeneralFeature();
     const removing = await test.request(

@@ -72,7 +72,7 @@ import { readToday } from "./settings.ts";
 import { currentOn, personTier } from "./people.ts";
 import { builtInTier } from "./values.ts";
 import { columnsWithAdded } from "./added-columns.ts";
-import type { RecordKind } from "./record-state.ts";
+import { type RecordKind, readsKind } from "./record-state.ts";
 import { recordKinds } from "./records.ts";
 import { readKeptViewChanges, viewTiersNow } from "./views.ts";
 
@@ -107,9 +107,7 @@ const seenPlanKinds = (actor: Actor): RecordType[] =>
   recordKinds
     .filter(
       (kind) =>
-        kind.readWith.some((permission) =>
-          actor.permissions.includes(permission),
-        ) &&
+        readsKind(kind, actor.permissions) &&
         (kind.view === undefined || seesView(kind.view, actor)),
     )
     .map((kind) => kind.type);
