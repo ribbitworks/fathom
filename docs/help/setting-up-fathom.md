@@ -13,7 +13,7 @@ A few ideas come up on every step.
 - **Classes:** each list and column has a class, which decides who sees it. **General** is seen by everyone who can open the page. **Personal** is for people's private and HR details, and **Confidential** is for business data not yet announced; only roles allowed to see them do.
 - **Drafts:** most changes you make are drafts. Nobody else sees them until you select **Publish** in the top bar, and they go live once someone approves them. A hollow dot marks a change you haven't published yet, and a yellow dot one that's waiting for approval.
 
-Because columns pick from lists, you set things up in this order: the lists, then the columns that use them, then the people.
+Because columns pick from lists, you set things up in this order: the lists, then the columns that use them, then the people. New positions and hiring states need approving before anyone can be given them.
 
 ## Fill In the Lists
 
@@ -35,6 +35,13 @@ See [Lists](lists.md) for more.
 1. Select **Add column**.
 
 A column that uses a list takes the list's class. Any other new column starts as **General**, and you can choose another class as you add it. See [People](people.md#add-a-column).
+
+## Get the Lists Approved
+
+A person's **Position** and **State** can only be choices that are approved. So if you added positions or hiring states, get them approved before you add anyone:
+
+1. Select **Publish**.
+1. Ask your approver to approve the changes on the **Drafts** page.
 
 ## Add the People
 
@@ -66,6 +73,6 @@ See [Releases](releases.md), [Capacity](capacity.md) and [Org chart](org-chart.m
 1. Select **Publish**. It shows how many changes are waiting.
 1. Ask your approver to approve them on the **Drafts** page. A Project Manager or the Engineering Director can. See [Drafts page](drafts-page.md#approve-drafts).
 
-Some changes skip the draft and take effect straight away: the settings on **Capacity**, a team's colour, and a change of class.
+Some changes skip the draft and take effect straight away: a team's colour, and a change of class.
 
 You're done when **People** shows everyone with their manager and team, and the **Org chart** shows how they report.

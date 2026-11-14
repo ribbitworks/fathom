@@ -27,7 +27,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
 
 ## Terms
 
@@ -639,6 +639,28 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The headings and values are easy to read.
     - The labels are dimmed beside their values.
+  - **Notes:**
+
+- [ ] `E58F` Select "8" beside **Hours a day**.
+  - **Expected:** A field in place of "8" holds "8".
+  - **Notes:**
+
+- [ ] `A65D` Replace the value with `4`, and press Enter.
+  - **Expected:**
+    - The hollow yellow mark before "4" is easy to see.
+    - Under it, the green mark before "8" and the "8" are easy to see.
+  - **Notes:**
+
+- [ ] `4F75` Select the **⋯** button at the right of the **Hours a day** row.
+  - **Expected:** The menu headed **Planning settings**, its mark and every word in it are easy to read.
+  - **Notes:**
+
+- [ ] `D7BD` Press Esc.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
+- [ ] `C75D` Run Discard the Unpublished Changes.
+  - **Expected:** **Hours a day** reads "8", with no mark.
   - **Notes:**
 
 - [ ] `EA6B` Select the **Accounts** page in the left-hand menu.
