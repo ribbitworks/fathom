@@ -11,6 +11,7 @@ import {
   type CSSVariablesResolver,
   createTheme,
   type MantineColorsTuple,
+  Modal,
   Select,
   Table,
 } from "@mantine/core";
@@ -61,6 +62,10 @@ export const theme = createTheme({
     }),
     Select: Select.extend({
       classNames: { option: comboboxClasses.option },
+    }),
+    // Every dialog's × is named for assistive technology, which otherwise hears only "button".
+    Modal: Modal.extend({
+      defaultProps: { closeButtonProps: { "aria-label": "Close" } },
     }),
     Table: Table.extend({
       classNames: { table: tableClasses.table },

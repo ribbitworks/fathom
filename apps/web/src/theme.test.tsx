@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for what every page shares through the theme: each kind of drop-down list gives its options
-// the class that keeps the keyboard's option grey, rather than filled with the accent.
+// the class that keeps the keyboard's option grey, rather than filled with the accent, and every
+// dialog's close button has a name.
 
-import { Combobox, MantineProvider, Select, useCombobox } from "@mantine/core";
-import { render, screen } from "@testing-library/react";
+import {
+  Combobox,
+  MantineProvider,
+  Modal,
+  Select,
+  useCombobox,
+} from "@mantine/core";
+import { render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import comboboxClasses from "./combobox.module.css";
@@ -55,5 +62,23 @@ describe("the keyboard's option in a drop-down list", () => {
         comboboxClasses.option as string,
       ),
     ).toBe(true);
+  });
+});
+
+describe("dialogs", () => {
+  it("name their close button", async () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <Modal opened onClose={() => undefined} title="Fictional dialog">
+          Fictional text
+        </Modal>
+      </MantineProvider>,
+    );
+
+    expect(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Close",
+      }),
+    ).toBeDefined();
   });
 });
