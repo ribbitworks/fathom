@@ -1,74 +1,120 @@
 # Projects
 
-Projects holds the work delivered to customers, the proposals that may become projects, the customers themselves, and the projects' milestones. Each has its own tab: **Projects**, **Proposals**, **Customers** and **Milestones**.
+**Projects** holds the work your organization delivers to customers, and what goes with it. Each kind of record has its own tab.
+
+## What to Know First
+
+- **Projects:** a project is work delivered to one or more customers. A project with no customers is an internal project.
+- **Proposals:** a proposal is work offered or requested that may become a project, such as a bid or a customer's request.
+- **Customers:** a customer is who a project's work is for, outside your organization or inside it.
+- **Milestones:** the dated points in a project, such as a delivery to the customer.
+- **Features:** a project or proposal names the features it needs. Features are planned on the [Features](features.md) page.
+- **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. It goes live once someone whose role approves the plan approves it on the **Drafts** page. A hollow dot marks a change you haven't published yet.
+
+See [Drafts](drafts.md) for more.
 
 ## Main Tasks
 
 ### Add a Project, Proposal, Customer or Milestone
 
-1. Select the tab.
+1. Select the **Projects**, **Proposals**, **Customers** or **Milestones** tab.
 1. Select **New project**, **New proposal**, **New customer** or **New milestone**.
-1. Fill in the form, then select **Add**.
+1. Fill in the form.
+1. Select **Add**.
 
 To add one quickly, type in the empty row at the end of the table.
 
+You're done when the new row shows with a hollow dot.
+
 ### See a Record's Details
 
-Point at the record's row and select the details button, a box, at the right of its **Name** cell. You can also right-click the row and select **Show details**. The details open beside the table. Each customer, proposal and feature named there is a link to its own details. Milestones have no details of their own.
+1. Point at the record's row.
+1. Select the details button: the small box at the right of its **Name** cell.
+
+You can also right-click the row and select **Show details**. The details open beside the table. Each customer, proposal and feature named there is a link to its own details. Milestones have no details of their own.
 
 ### Change a Record
 
-1. Select a cell and type, or select a value in the details.
-1. Press Enter to save, or Esc to leave it as it was.
+1. Select a cell and start typing, or select a value in the details.
+1. Press Enter to keep the change, or Esc to leave the value as it was.
+
+You're done when the changed value shows a hollow dot.
 
 ### Choose the Features a Project Needs
 
-1. Select the project's **Features** cell and press Enter.
-1. Pick each feature the project needs, then press Esc.
+1. Select the project's **Features** cell, and press Enter.
+1. Pick each feature the project needs.
+1. Press Esc.
 
-Choose a proposal's features the same way. Features shows the same links in its **Projects** and **Proposals** columns.
+You choose a proposal's features the same way. The **Features** page shows the same links, in its **Projects** and **Proposals** columns.
+
+You're done when the cell lists the features, with a hollow dot.
 
 ### Give a Reason for Removing a Feature From a Proposal
 
-Removing a feature from a proposal, here or on **Features**, happens at once, as a draft. To say why, open the proposal's details while the removal is a draft. Under **Scope history**, select the reason, or point at the removal's row and select the pencil that shows at its right. Type the reason and press Enter; an empty box leaves no reason, and Esc leaves it as it was.
+When you take a feature off a proposal, here or on **Features**, it happens straight away, as a draft. You can say why while the removal is still a draft.
+
+1. Open the proposal's details.
+1. Under **Scope history**, select the reason, or point at the removal's row and select the pencil that shows at its right.
+1. Type the reason.
+1. Press Enter.
+
+To leave no reason, empty the box before you press Enter. Esc leaves the reason as it was.
+
+You're done when the reason shows on the removal's row.
 
 ### See How a Project's or Proposal's Scope Changed
 
-Open its details. **Scope history**, at the end, lists each feature added or removed, newest first, with the day the change was drafted and any reason for a removal. A change still waiting for approval has a yellow dot before it.
+Open its details. **Scope history**, at the end, lists each feature added or removed, newest first. Each row has the day the change was drafted, and the reason for a removal, if there is one. A change still waiting for approval has a yellow dot before it.
 
 ### Add a Milestone to a Project
 
 1. Open the project's details.
 1. Select **Add milestone**.
-1. Type the **Name** and **Date**, and tick **Customer delivery** if the customer receives something then.
+1. Type the milestone's **Name**.
+1. Type its **Date**.
+1. If the customer receives something then, tick **Customer delivery**.
 1. Select **Add milestone**.
+
+You're done when the milestone shows in the project's details.
 
 ### Go From a Project to Its Milestones or Features
 
-- **Show milestones** in a project's **⋯** menu opens **Milestones**, showing only that project's.
-- **Show features** in a project's or proposal's **⋯** menu opens **Features**, showing only the features it names.
-- **Show project** in a milestone's **⋯** menu opens its project's details.
+- To see a project's milestones, select **Show milestones** in the project's **⋯** menu. **Milestones** opens, showing only that project's.
+- To see the features a project or proposal names, select **Show features** in its **⋯** menu. **Features** opens, showing only those features.
+- To go from a milestone to its project, select **Show project** in the milestone's **⋯** menu. The project's details open.
 
 ### Export a Tab
 
-1. Choose the **Export** button, the arrow down onto a line, at the right of the page's heading.
-1. Choose **CSV file** or **TSV file**.
-1. Choose where to save it, if the browser asks.
+Exporting saves the tab's table as a file you can open in a spreadsheet.
 
-The file holds what the tab shows: the rows the search and filters leave, in their order, and the columns in theirs. While drafts show beside live, each changed row comes as its draft and then its live row, and the **Row** column says which, so a spreadsheet's filter can leave out either; the **Change** column says what each draft does. The file is named after the page, the saved view, who exported it and the day, such as **fathom_projects_project-manager_drafts-and-live_2027-03-31.csv**.
+1. Select the **Export** button at the right of the page's heading. Its icon is an arrow pointing down to a line.
+1. Choose **CSV file** or **TSV file**.
+1. Choose where to save it, if your browser asks.
+
+The file holds what the tab shows, and is named after the tab, such as **fathom_projects_project-manager_drafts-and-live_2027-03-31.csv** for the **Projects** tab. You're done when the file is saved.
+
+See [People](people.md#export-people) for what the file holds.
 
 ### Remove a Record
 
-Select **Remove** and the record's kind, such as **Remove project**, in its **⋯** menu. The row is struck through until the removal is approved, and a project takes its milestones with it. Fathom refuses to remove a customer or proposal that another record still names, and a project once people are allocated to it.
+1. Open the record's **⋯** menu.
+1. Select **Remove** and the record's kind, such as **Remove project**.
+
+The row is struck through until the removal is approved. A project takes its milestones with it.
+
+Fathom won't remove a customer or a proposal that another record still names. It also won't remove a project once people are allocated to it.
+
+You're done when the row is struck through.
 
 ## Marks and Terms
 
-- **Project ID** and **Proposal ID** show dimmed before the name wherever a project or proposal is named, so records with similar names can be told apart.
+- **Project ID** and **Proposal ID** show dimmed before the name wherever a project or proposal is named, so you can tell apart records with similar names.
 - **First milestone**, **Last milestone** and **Next delivery** are a project's dates, and they come from its milestones. **Next delivery** is the next milestone marked **Customer delivery**.
 - **Status** is a proposal's status, such as Open, Won, Lost or Withdrawn. Any status can follow any other.
 - **Owner** names the person who owns the project or proposal.
-- A project with no customers is an internal project. Nothing marks it.
+- **An internal project** has no customers. Nothing marks it.
 
 ## Where Changes Go
 
-Every change is a draft. It goes live once someone whose role approves the plan approves it. A change to the features a project needs is a draft of the project. See [Drafts](drafts.md).
+A change to the features a project needs is a draft of the project.

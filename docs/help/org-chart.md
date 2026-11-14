@@ -1,67 +1,109 @@
 # Org chart
 
-The Org chart draws the organization as cards, one per person. **Reporting teams** shows who reports to whom. **Feature teams** shows each feature team under its feature lead. The switch at the top right chooses between them.
+The **Org chart** draws your organization as cards, one for each person. It has two views, and the switch at the top right chooses between them.
+
+## What to Know First
+
+- **Reporting teams:** a reporting team is a manager and the people who report to them. **Reporting teams** shows who reports to whom.
+- **Feature teams:** a feature team is a group that works on features together, whoever its members report to. One member, the feature lead, leads the team's work. **Feature teams** shows each team under its lead.
+- **Drafts:** most changes you make here are drafts. Nobody else sees them until you select **Publish** in the top bar, and they go live once someone approves them. See [Drafts](drafts.md).
 
 ## Main Tasks
 
 ### Find a Person or Team
 
-1. Type a name in **Find a person or team**.
+1. Type part of a name in **Find a person or team**.
 1. Choose the person or team.
 
-The chart opens out to the card and centres it, with a blue ring around it. Choosing a reporting team finds its manager. Select the **×** to clear the box.
+The chart opens out to the card, centres it, and draws a blue ring around it. If you choose a reporting team, the chart finds its manager. To clear the box, select the **×** in it.
+
+You're done when the card is in the middle of the chart, with a blue ring.
 
 ### Move Around the Chart
 
-- Drag an empty part of the chart to move it, and scroll to zoom in or out.
-- **+** and **−** zoom, and **Fit to screen** fits the whole chart in view.
-- **Show levels** shows a number of levels, or **All levels**.
-- **Show 3 reports** or **Hide 3 reports** at the foot of a card shows or hides that manager's reports.
+- To move the chart, drag an empty part of it.
+- To zoom in or out, scroll, or select **+** or **−**.
+- To fit the whole chart in view, select **Fit to screen**.
+- To choose how many levels show, select **Show levels**, then a number, or **All levels**.
+- To show or hide a manager's reports, select **Show 3 reports** or **Hide 3 reports** at the foot of their card. The number is how many people report to them. In **Feature teams**, it reads **Show 3 members** or **Hide 3 members**.
 
 ### Show One Team Alone
 
-1. Select the small org chart button at the top right of a manager's card, **Show only this team**.
-1. Select **Show everyone** to go back.
+1. On a manager's card, select **Show only this team**: the small org chart button at the card's top right.
+1. To see everyone again, select **Show everyone**.
 
 ### See Someone's Details
 
-Select a person's name on their card. Their details open beside the chart. When you point at a value you can change, it shows a pencil. Select the value to change it, as on People.
+1. Select the person's name on their card. Their details open beside the chart.
+1. To change a value, point at it. A pencil shows if you can change it.
+1. Select the value, and make the change.
+
+You're done when the value shows your change, with a hollow dot.
 
 ### Name a Reporting Team or Choose Its Colour
 
-- Select the team's name on its manager's card, type the new name, and select **Save**.
-- Select the small square of colour before the team's name, and choose a colour.
-- **Teams** lists every reporting team, to name it or choose its colour.
+To rename a team:
+
+1. On the manager's card, select the team's name.
+1. Type the new name.
+1. Select **Save**.
+
+You can choose a team's colour once its name is approved, on today's chart:
+
+1. Select the small square of colour before the team's name.
+1. Choose a colour.
+
+The colour changes straight away, for everyone, with no draft, and a notification offers **Undo**. If your role changes people, you can also rename a team, or choose its colour, from **Teams**, which lists the reporting teams.
+
+You're done when the card shows the new name with a hollow dot, or the new colour.
 
 ### Change a Feature Team
 
-1. Select **Feature teams** in the switch.
-1. Select the **Feature teams** button, then the team. The team's panel opens beside the chart.
-1. Point at **Name**, **Colour**, **Feature lead** or **Members**, select the pencil that shows at its right, and make the change.
+1. Choose **Feature teams** in the switch.
+1. Select the **Feature teams** button.
+1. Choose the team. Its panel opens beside the chart.
+1. Point at what you want to change: **Name**, **Colour**, **Feature lead** or **Members**.
+1. Select the pencil that shows at its right.
+1. Make the change.
 
-To add a team, select **New feature team** in the **Feature teams** button's menu, fill in the panel, and select **Add**. To remove one, select **Remove feature team** at the foot of its panel.
+To add a feature team:
+
+1. Open the **Feature teams** button's menu, and select **New feature team**.
+1. Fill in the panel.
+1. Select **Add**.
+
+To remove a feature team, select **Remove feature team** at the foot of its panel.
+
+You're done when the change shows in the team's panel. A change of colour applies straight away; any other change is a draft until it's approved.
 
 ### See Another Date
 
-1. Use the date row under the heading: type a day in **Date**, select an arrow to move a month, or drag the timeline.
-1. Select **Today** to come back.
+The chart can show your organization on another day, in the past or the future.
 
-On any date but today, a line under the date row says what can be done:
+1. In the date row under the heading, type a day in **Date**. You can also select an arrow to move a month, or drag the timeline.
+1. To come back to today, select **Today**.
 
-- **Changes take effect from this date.** A feature team's members and lead, or someone's manager, change from the date shown. A team's name and colour, and removing a team, are only for today.
-- **Nothing can be changed on this date.** The chart shows the teams as approved.
+On any date but today, a line under the date row says what you can do:
+
+- **Changes take effect from this date.** A change you make starts on the day shown.
+  - In **Feature teams**, you can change a team's members or lead, or add a team.
+  - In **Reporting teams**, you can change someone's manager on an earlier day, if your role changes Personal details.
+  - You can change a team's name or colour, or remove a team, only on today's chart.
+- **Nothing can be changed on this date.** The chart shows the teams as they're approved.
+
+You're done when the chart shows the day you chose.
 
 ## Marks and Terms
 
 - **A card** shows a person's name, their position, and the name of the team they lead, if any.
-- **A band** of colour along the top of a card shows its team's colour. Under a team with no colour, cards take the colour of the team above.
-- **A dashed card**, with **Planned, expected** and a month, is a planned hire.
+- **A band of colour** along the top of a card shows its team's colour. Under a team with no colour, cards take the colour of the team above.
+- **A dashed card**, with **Planned, expected** and a month, is a planned hire: a job you plan to fill.
 - **No feature lead** heads a feature team with no lead.
-- **A red Left box** after a manager's name means they've left, with people still reporting to them. Only roles that see Personal details see it.
-- **A light green card**, faded, with a dashed edge, shows where a person drafted to another manager is now.
+- **A red Left box** after a manager's name means they've left, and people still report to them. Only roles that see Personal details see it.
+- **A light green card**, faded, with a dashed edge, shows where someone is now, when a draft moves them to another manager.
 - **from** and a day, after a member's name in a team's panel, says when a drafted change takes effect, if that's not the date shown.
-- A grey line, such as **Other dates need Personal access.**, says why something isn't shown.
+- **A grey line**, such as **Other dates need Personal access.**, says why something isn't shown.
 
 ## Where Changes Go
 
-A change of manager, a team's name, and every other feature team change are drafts, approved before they go live. A team's colour changes at once, for everyone, and offers **Undo**. That goes for a feature team's colour too. See [Drafts](drafts.md).
+A team's colour, for a reporting team or a feature team, is the one change here that isn't a draft. It changes straight away for everyone, and a notification offers **Undo**.

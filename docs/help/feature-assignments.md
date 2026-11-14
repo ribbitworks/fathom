@@ -1,24 +1,28 @@
 # Feature assignments
 
-Feature assignments shows who is on which feature team, month by month, with one row per person and a column for each month. What each person works on is on the [Capacity](capacity.md) page, in its **People** mode.
+**Feature assignments** shows who is on which feature team, month by month. It has one row for each person and a column for each month.
+
+A feature team is a group that works on features together, whoever its members report to. Being on a team doesn't say what someone works on. That's on the [Capacity](capacity.md) page, in its **People** mode.
 
 ## Main Tasks
 
 ### Read the Table
 
-The table opens at the current month. Scroll sideways for the 12 months before it and the 11 after.
+The table opens at the current month. Scroll sideways to see the 12 months before it and the 11 after.
 
 ### Group the Rows
 
 1. Select **Group by**.
 1. Choose **Manager**, **Feature team** or **None**.
 
-Someone on two feature teams has a row under each. Someone who reported to two managers in the months shown has a row under each, holding only that manager's months. **Manager** is offered to roles that see Confidential data, since later months' managers are future reorganizations.
+Someone on two feature teams has a row under each team. Grouped by **Manager**, each person is under the manager they report to today.
+
+**Manager** is offered only to roles that see Confidential data, since a later month's manager can be a reorganization not yet announced.
 
 ### Find People
 
-- Type in the search box to find people by name, or by a team in any month, such as **Payments core**.
-- To filter one month by team, open the month's column menu, select **Filter…**, and pick the teams.
+- To find people by name, type in the search box. You can also type a team's name, such as `Payments core`, to find everyone on it in any month.
+- To filter one month by team, open that month's column menu, select **Filter…**, and pick the teams.
 
 ### Put Someone on a Feature Team From a Month
 
@@ -26,23 +30,28 @@ Someone on two feature teams has a row under each. Someone who reported to two m
 1. Press Enter. The team list opens.
 1. Type part of the team's name, such as `Pay`, and press Tab.
 
-The person is on the team from that month on. Press Delete in a cell to take its team away from that month on. The change starts on the first day of the month, or today in the current month.
+The person is on the team from that month on. The change starts on the first day of the month, or today if it's the current month.
+
+To take someone off a team from a month on, select their cell in that month, and press Delete.
+
+You're done when the team's label shows in the cell, with a dot for your draft.
 
 ### Change Several Members or a Team's Lead
 
-Use the team's panel on the **Org chart**, under **Feature teams**. See [Org chart](org-chart.md).
+Use the team's panel on the **Org chart**, under **Feature teams**. See [Org chart](org-chart.md#change-a-feature-team).
 
 ## Marks and Terms
 
 - **A team's label** names the team in its colour, or in grey when it has none. Point at a label to see the team's whole name.
 - **Shaded months** come before someone started or after they left.
-- **No feature team**, grouped by **Feature team**, heads the people on no team in those months.
-- **A green dot inside a label**, in the light green Live row under a drafted row, marks a team the draft takes away. With **Live only** chosen in the Draft menu, it marks each team a waiting draft would take away; point at it to see the change.
+- **No feature team**, when grouped by **Feature team**, heads the people who are on no team in those months.
+- **No manager**, when grouped by **Manager**, heads the people who report to nobody today.
+- **A green dot inside a label**, in the light green Live row under a drafted row, marks a team the draft takes away. With **Live only** chosen in the **Draft** menu, it marks each team a waiting draft would take away. Point at it to see the change.
 
 ## Who Sees It
 
-The page needs Personal details, since it shows the months people join and leave feature teams. A role without them doesn't have the page.
+The page shows the months people join and leave feature teams, which are Personal details. So a role needs both View Feature teams and Personal details to have the page.
 
 ## Where Changes Go
 
-A change to someone's teams is a draft of the team, approved with the team's other changes. Each month a draft changes has the draft's dot inside the team's label. See [Drafts](drafts.md).
+A change to someone's teams is a draft of the team, and it's approved with the team's other changes. Each month the draft changes has the draft's dot inside the team's label. See [Drafts](drafts.md).

@@ -1,88 +1,124 @@
 # Features
 
-Features lists every feature the organization plans, one row each, grouped by the cycle it targets. A feature is a body of work that one feature team delivers, such as **Offline Sync**.
+**Features** lists every feature your organization plans, one row each, grouped by the cycle it targets. A feature is a body of work that one feature team delivers, such as **Offline Sync**.
+
+## What to Know First
+
+- **Release streams and cycles:** a release stream is a line of releases, such as **Platform**. Its work is planned in cycles of a set length, such as quarters. You set them up on [Releases](releases.md).
+- **Target cycle:** the cycle a feature is planned to ship in. **Later** holds the features that don't target a cycle yet.
+- **Feature team:** a group that works on features together, whoever its members report to.
+- **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. It goes live once someone whose role approves features and releases approves it on the **Drafts** page. A hollow dot marks a change you haven't published yet.
+
+See [Drafts](drafts.md) for more.
 
 ## Main Tasks
 
 ### Add a Feature
 
 1. Select **New feature**.
-1. Type the **Name**, and fill in anything else that is known.
+1. Type the feature's **Name**.
+1. Fill in anything else you know.
 1. Select **Add**.
 
-To add one quickly, type its name in the empty row at the end of the table and press Enter.
+To add one quickly, type its name in the empty row at the end of the table, and press Enter.
+
+You're done when the feature shows in the table with a hollow dot.
 
 ### Change a Feature
 
-1. Select a cell, then type, or press Enter, to change it.
-1. Press Enter to save, or Esc to leave it as it was.
+1. Select the cell you want to change.
+1. Start typing, or press Enter.
+1. Press Enter to keep the change, or Esc to leave the value as it was.
 
-To work in a feature's details instead, point at its row and select the details button, a box, at the right of its **Name** cell. You can also right-click the row and select **Show details**. The details group its values under **Details**, **Customers and commitments**, **Planning** and **Columns**, in the order the table starts with. Select a value there to change it.
+You can also make changes in a feature's details, which open beside the table:
+
+1. Point at the feature's row.
+1. Select the details button: the small box at the right of its **Name** cell.
+1. Select the value you want to change.
+
+Instead of the details button, you can also right-click the row and select **Show details**.
+
+The details group the values under **Details**, **Customers and commitments**, **Planning** and **Columns**, in the order the table starts with.
+
+You're done when the changed value shows a hollow dot.
 
 ### Plan When a Feature Ships
 
-Choose a cycle in **Target cycle**. The feature moves under that cycle's heading once the view changes, and **Release** names the release the cycle is in.
+Choose a cycle in the feature's **Target cycle**.
+
+**Release** then names the release that covers that cycle. Once the view changes, the feature moves under that cycle's heading.
+
+You're done when **Target cycle** shows the cycle, with a hollow dot.
 
 ### Give a Feature to a Team
 
-Choose a team in **Feature team**.
+Choose a team in the feature's **Feature team**.
+
+You're done when **Feature team** shows the team, with a hollow dot.
 
 ### Give an Estimate
 
-1. Type a number in **Effort**, in the unit the column shows.
-1. To show another unit, open the **Effort** column's menu and choose one under **Show in**. Each unit names what it stands for, from the planning settings on [Capacity](capacity.md), such as **Person-days (8 hours)**.
+An estimate is how much work the feature needs, in a unit such as person-days.
+
+1. Type a number in the feature's **Effort**, in the unit the column shows.
+1. To show another unit, open the **Effort** column's menu, and choose one under **Show in**.
+
+Each unit says what it stands for, such as **Person-days (8 hours)**. The hours come from the planning settings on [Capacity](capacity.md#in-settings).
+
+You're done when **Effort** shows your estimate, with a hollow dot.
 
 ### Group the Table
 
 1. Select **Group by**.
-1. Choose **Cycle**, **Release**, **Needed by**, a list such as **Status**, **Priority** or **Feature team**, or **None**.
+1. Choose **Cycle**, **Release**, **Needed by**, a list such as **Status** or **Priority**, **Feature team**, or **None**.
 
 ### See Features as a Board
 
-#### What to Know First
-
-- A release stream is a line of releases, such as **Platform**, split into cycles of a set length.
-- A cycle is one period of a stream, such as a quarter. A feature targets the cycle it's planned for.
-- **Later** holds the features that don't target a cycle yet.
-
-The board shows one stream's cycles side by side, with a card for each feature in the cycle it targets, and **Later** as its last column.
+The board shows one release stream's cycles side by side, with a card for each feature in the cycle it targets. **Later** is its last column.
 
 1. Choose **Board** beside the **Features** heading.
-1. To see another stream, select **Stream** and choose one.
+1. To see another stream, select **Stream**, and choose one.
 1. To see other cycles, select **‹** or **›**, or a cycle in the row of cycles.
 1. To go back to the current cycle, select **Today**.
-1. To choose what the cards show, select **Card** and tick or untick each part.
-1. To put the cards in rows, select **Group by** and choose, such as **Feature team**.
+1. To choose what the cards show, select **Card**, and tick or untick each part.
+1. To put the cards in rows, select **Group by**, and choose how, such as **Feature team**.
 
-A card marked **Not staffed** is planned or in progress but has nobody allocated to it yet. Select a card to see the feature's details. The search, the **Draft** menu and **Metrics** work on the board as they do on the table. You're done when the board shows the stream and cycles you want.
+While **Staffed months** is ticked under **Card**, a card marked **Not staffed** is planned or in progress, but nobody is allocated to it yet. Select a card to see the feature's details. The search, the **Draft** menu and **Metrics** work on the board as they do on the table.
+
+You're done when the board shows the stream and cycles you want.
 
 ### Export Features
 
-1. Choose the **Export** button, the arrow down onto a line, at the right of the page's heading.
-1. Choose **CSV file** or **TSV file**.
-1. Choose where to save it, if the browser asks.
+Exporting saves the table as a file you can open in a spreadsheet.
 
-The file holds what the table shows: the rows the search and filters leave, in their order, and the columns in theirs. While drafts show beside live, each changed row comes as its draft and then its live row, and the **Row** column says which, so a spreadsheet's filter can leave out either; the **Change** column says what each draft does. The file is named after the page, the saved view, who exported it and the day, such as **fathom_features_product-manager_drafts-and-live_2027-03-31.csv**.
+1. Select the **Export** button at the right of the page's heading. Its icon is an arrow pointing down to a line.
+1. Choose **CSV file** or **TSV file**.
+1. Choose where to save it, if your browser asks.
+
+The file holds what the table shows, and is named after the page, such as **fathom_features_product-manager_drafts-and-live_2027-03-31.csv**. You're done when the file is saved.
+
+See [People](people.md#export-people) for what the file holds.
 
 ### Remove a Feature
 
-Select **Remove feature** in the feature's **⋯** menu. Fathom refuses while a project or proposal names the feature. It also refuses once people are allocated to the feature, since that time was spent; choose a status that means Cancelled instead.
+1. Open the feature's **⋯** menu.
+1. Select **Remove feature**.
+
+Fathom won't remove a feature while a project or proposal names it. It also won't once people are allocated to it, since that time was spent. Choose a status that means Cancelled instead.
+
+You're done when the row is struck through. It's removed once the removal is approved.
 
 ## Marks and Terms
 
 - **Later** heads the features that target no cycle yet.
-- **Not released yet** means the feature's cycle is in no release.
+- **Not released yet**, after a stream's name, such as **Platform: Not released yet**, means the feature's cycle isn't in any release.
 - **No team** marks a planned or in-progress feature that has no feature team yet.
-- **Needed by** gives the month the feature is wanted. Type it as digits, such as 2027-03, and it shows as Mar 2027. It's a rough wish; **Target cycle** is the commitment.
-- **Status** says how far along the feature is. The statuses are the organization's own, and each one means Possible, Planned, In progress, Done or Cancelled. A new feature starts on the first status that means Possible.
-- **Projects** and **Proposals** name the projects that need the feature and the proposals that propose it. A change to them changes that project or proposal; the reason for removing a proposal is given afterwards, as [Projects](projects.md#give-a-reason-for-removing-a-feature-from-a-proposal) sets out.
-- **Effort** gives the work the feature needs, such as 2.5 PD for person-days. Rest the pointer on it to see the hours.
-- **Priority** says how much the feature matters to the organization, apart from its status, from **Critical** to **Low**.
-- **Size** gives the feature's rough size before it's estimated, from **XS** to **XL**.
+- **Needed by** is the month the feature is wanted. Type it as digits, such as `2027-03`, and it shows as Mar 2027. It's a rough wish; **Target cycle** is the commitment.
+- **Status** says how far along the feature is. Your organization names its own statuses, and each one means Possible, Planned, In progress, Done or Cancelled. A new feature starts on the first status that means Possible.
+- **Projects** and **Proposals** name the projects that need the feature, and the proposals that propose it. Changing them changes that project or proposal. If you take a feature off a proposal, you give the reason on the proposal; see [Projects](projects.md#give-a-reason-for-removing-a-feature-from-a-proposal).
+- **Effort** is the work the feature needs, such as 2.5 PD for person-days. Point at it to see the hours.
+- **Priority** says how much the feature matters to your organization, apart from its status, from **Critical** to **Low**.
+- **Size** is the feature's rough size before it's estimated, from **XS** to **XL**.
 - **Risk** says how much could go wrong in building it, from **Low** to **High**.
-- Priority, Size and Risk are optional, and their choices are the organization's own, kept on the **Lists** page.
-- **Release** follows from **Target cycle**, so it can't be changed.
-
-## Where Changes Go
-
-Every change is a draft. It goes live once someone whose role approves features and releases approves it. See [Drafts](drafts.md).
+- **Priority**, **Size** and **Risk** are optional. Your organization keeps their choices on the **Lists** page.
+- **Release** follows from **Target cycle**, so you can't change it.
