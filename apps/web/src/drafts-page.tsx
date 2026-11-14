@@ -669,14 +669,14 @@ export function DraftsPage({
   ) {
     content = <Loader role="status" aria-label="Loading" />;
   } else if (
-    people.isError ||
+    // Only the reads the role makes count: one it doesn't make may still hold an error from before
+    // its role changed.
+    (seesPeople && people.isError) ||
     lists.isError ||
-    releases.isError ||
-    featureTeams.isError ||
-    chart.isError ||
-    plan.isError ||
-    choices.isError ||
-    settings.isError
+    (seesPlan && releases.isError) ||
+    (seesTeams && (featureTeams.isError || chart.isError)) ||
+    (seesProjects && (plan.isError || choices.isError)) ||
+    (seesSettings && settings.isError)
   ) {
     content = (
       <LoadProblem

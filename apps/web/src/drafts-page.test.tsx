@@ -6,10 +6,14 @@
 // the page says when there are none or they cannot be loaded; and drafts of feature teams.
 
 import { startingPlanningSettings } from "@fathom/shared";
-import { screen, waitFor, within } from "@testing-library/react";
+import { MantineProvider } from "@mantine/core";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { drafts } from "./decision-dialog.tsx";
+import { DraftsPage } from "./drafts-page.tsx";
+import { peopleQuery } from "./people.ts";
 import {
   bodyOf,
   featureDraft,
@@ -22,6 +26,7 @@ import {
   renderApp,
   serverAnswers,
   streamId,
+  testTheme,
   wholeText,
 } from "./test-support.tsx";
 
@@ -1892,5 +1897,46 @@ describe("unpublished and held drafts on the Drafts page", () => {
     expect(
       screen.getByRole("button", { name: "Approve 1 draft…" }),
     ).toBeDefined();
+  });
+});
+
+describe("loading for a role that sees part of the drafts", () => {
+  it("ignores a failed read the role no longer makes, such as people's from before its role changed", async () => {
+    // Given people that could not be loaded, still held from before the role changed
+    serverAnswers({
+      "GET /api/people": () =>
+        Response.json({ error: "Down" }, { status: 503 }),
+      "GET /api/lists": () => Response.json({ lists: [] }),
+      "GET /api/release-streams": noStreams,
+      "GET /api/projects": noPlan,
+      "GET /api/projects/choices": noPlanChoices,
+    });
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    await queryClient.query(peopleQuery).catch(() => undefined);
+    expect(queryClient.getQueryState(peopleQuery.queryKey)?.status).toBe(
+      "error",
+    );
+
+    // When the Drafts page opens for a role that doesn't see people
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MantineProvider theme={testTheme}>
+          <DraftsPage
+            approves={[]}
+            seesPeople={false}
+            search=""
+            onSearch={() => undefined}
+          />
+        </MantineProvider>
+      </QueryClientProvider>,
+    );
+
+    // Then it loads
+    expect(
+      await screen.findByText("No drafts waiting for approval."),
+    ).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   });
 });
