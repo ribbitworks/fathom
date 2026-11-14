@@ -371,9 +371,7 @@ describe("a table of another kind of record", () => {
     });
     const panel = screen.getByRole("region", { name: "Metrics" });
     expect(panel.textContent).toContain("2 gadgets");
-    expect(panel.textContent).toContain(
-      "Choose a column to count gadgets by its values.",
-    );
+    expect(panel.textContent).not.toContain("Choose a column to count");
   });
 
   it("names each record's menu, removes it, and decides its draft through the table's drafts", async () => {

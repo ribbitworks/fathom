@@ -284,7 +284,7 @@ describe("the Metrics panel", () => {
       "Expected",
     ]);
     expect((picker as HTMLSelectElement).value).toBe("");
-    expect(panel().textContent).toContain("Choose a column to count people");
+    expect(panel().textContent).not.toContain("Choose a column to count");
   });
 
   it("drops a column the metrics do not offer, such as names, from the breakdown", () => {
@@ -353,7 +353,7 @@ describe("the Metrics panel", () => {
       within(panel()).getByRole("combobox", { name: "Break down by" }),
       "Choose a column",
     );
-    expect(panel().textContent).toContain("Choose a column to count people");
+    expect(panel().textContent).not.toContain("Choose a column to count");
     await user.keyboard("{Tab}");
     expect(panel()).toBeTruthy();
   });

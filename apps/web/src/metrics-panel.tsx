@@ -138,11 +138,7 @@ export function MetricsPanel<Row>({
 
   let body;
   if (first === undefined) {
-    body = (
-      <Text fz="sm" c="dimmed">
-        Choose a column to count {kinds?.noun ?? noun} by its values.
-      </Text>
-    );
+    body = undefined;
   } else if (second === undefined) {
     body = (
       <>
