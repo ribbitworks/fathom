@@ -68,9 +68,10 @@ describe("the strip", () => {
     within(within(timeline).getByRole("toolbar", { name: "Quarters" }))
       .getAllByRole("button")
       .map((quarter) => ({
-        name: quarter.getAttribute("aria-label")?.replace(/, in view$/, ""),
+        name: quarter.getAttribute("aria-label")?.split(", ")[0],
         inView: quarter.hasAttribute("data-in-view"),
         current: quarter.getAttribute("aria-current") === "date",
+        selected: quarter.hasAttribute("data-selected"),
       }));
 
   const inView = (timeline: HTMLElement) =>
@@ -78,33 +79,42 @@ describe("the strip", () => {
       .filter((quarter) => quarter.inView)
       .map(({ name }) => name);
 
+  const selected = (timeline: HTMLElement) =>
+    quarters(timeline)
+      .filter((quarter) => quarter.selected)
+      .map(({ name }) => name);
+
   const button = (timeline: HTMLElement, name: string) =>
     within(timeline).getByRole("button", { name });
 
-  // A quarter's button, whether or not it is in view.
+  // A quarter's button, whether or not it is in view or selected.
   const quarter = (timeline: HTMLElement, name: string) =>
     within(timeline).getByRole("button", {
-      name: (shown) => shown === name || shown === `${name}, in view`,
+      name: (shown) => shown.split(", ")[0] === name,
     });
 
   it("shows every quarter, tinting those in view and marking the current one", () => {
     const timeline = showTimeline();
     expect(view(timeline).scrollLeft).toBe(opened);
     expect(quarters(timeline)).toEqual([
-      { name: "Q1 2027", inView: false, current: false },
-      { name: "Q2 2027", inView: true, current: true },
-      { name: "Q3 2027", inView: true, current: false },
-      { name: "Q4 2027", inView: true, current: false },
+      { name: "Q1 2027", inView: false, current: false, selected: false },
+      { name: "Q2 2027", inView: true, current: true, selected: false },
+      { name: "Q3 2027", inView: true, current: false, selected: false },
+      { name: "Q4 2027", inView: true, current: false, selected: false },
     ]);
   });
 
-  it("names the quarters in view as in view", () => {
+  it("names the quarters in view as in view, and the one chosen as selected", async () => {
     const timeline = showTimeline();
     expect(quarter(timeline, "Q1 2027").getAttribute("aria-label")).toBe(
       "Q1 2027",
     );
     expect(quarter(timeline, "Q2 2027").getAttribute("aria-label")).toBe(
       "Q2 2027, in view",
+    );
+    await userEvent.click(quarter(timeline, "Q3 2027"));
+    expect(quarter(timeline, "Q3 2027").getAttribute("aria-label")).toBe(
+      "Q3 2027, in view, selected",
     );
   });
 
@@ -168,6 +178,62 @@ describe("the strip", () => {
     await userEvent.click(quarter(timeline, "Q3 2027"));
     expect(view(timeline).scrollLeft).toBe(sixthAcross(181));
     expect(inView(timeline)).toEqual(["Q2 2027", "Q3 2027", "Q4 2027"]);
+    expect(selected(timeline)).toEqual(["Q3 2027"]);
+  });
+
+  it("chooses the quarter focused with Enter or Space, the arrow keys only moving focus", async () => {
+    const timeline = showTimeline();
+    act(() => {
+      quarter(timeline, "Q1 2027").focus();
+    });
+    await userEvent.keyboard("{ArrowRight}{ArrowRight}");
+    expect(view(timeline).scrollLeft).toBe(opened);
+    expect(selected(timeline)).toEqual([]);
+    await userEvent.keyboard("{Enter}");
+    expect(view(timeline).scrollLeft).toBe(sixthAcross(181));
+    expect(selected(timeline)).toEqual(["Q3 2027"]);
+    await userEvent.keyboard("{ArrowLeft}[Space]");
+    expect(view(timeline).scrollLeft).toBe(sixthAcross(90));
+    expect(selected(timeline)).toEqual(["Q2 2027"]);
+  });
+
+  it("selects a quarter chosen with the view already at the timeline's end, though the view cannot move", async () => {
+    const timeline = showTimeline();
+    view(timeline).scrollLeft = furthest;
+    fireEvent.scroll(view(timeline));
+    act(() => {
+      quarter(timeline, "Q4 2027").focus();
+    });
+    await userEvent.keyboard("{Enter}");
+    expect(view(timeline).scrollLeft).toBe(furthest);
+    expect(selected(timeline)).toEqual(["Q4 2027"]);
+  });
+
+  it("selects no quarter once Today is chosen", async () => {
+    const timeline = showTimeline();
+    await userEvent.click(quarter(timeline, "Q3 2027"));
+    await userEvent.click(button(timeline, "Today"));
+    expect(selected(timeline)).toEqual([]);
+  });
+
+  it("selects no quarter once the zoom changes, though the view stays at the timeline's start", async () => {
+    const timeline = showTimeline();
+    await userEvent.click(quarter(timeline, "Q1 2027"));
+    expect(view(timeline).scrollLeft).toBe(0);
+    expect(selected(timeline)).toEqual(["Q1 2027"]);
+    // All fits the whole year across, so the view stays at its start.
+    await userEvent.click(within(timeline).getByRole("radio", { name: "All" }));
+    expect(view(timeline).scrollLeft).toBe(0);
+    expect(selected(timeline)).toEqual([]);
+  });
+
+  it("selects the quarter an arrow steps to, and none once the view moves elsewhere", async () => {
+    const timeline = showTimeline();
+    await userEvent.click(button(timeline, "Previous quarter"));
+    expect(selected(timeline)).toEqual(["Q2 2027"]);
+    view(timeline).scrollLeft = 0;
+    fireEvent.scroll(view(timeline));
+    expect(selected(timeline)).toEqual([]);
   });
 
   it("steps a quarter at a time, as far as the timeline goes", async () => {
@@ -193,6 +259,7 @@ describe("the strip", () => {
     const timeline = showTimeline({ today: "2027-11-15" });
     await userEvent.click(button(timeline, "Next quarter"));
     expect(view(timeline).scrollLeft).toBeCloseTo((365 * room) / 14 - room);
+    expect(selected(timeline)).toEqual([]);
   });
 
   it("follows the reader's scrolling", () => {

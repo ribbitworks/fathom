@@ -346,7 +346,8 @@ const quarterWords = {
 };
 
 // The strip of the timeline's quarters, following the view as it scrolls: a quarter chosen, or
-// reached by an arrow, is scrolled a sixth of the way across.
+// reached by an arrow, is scrolled a sixth of the way across, as far as the timeline goes, and
+// selected.
 function QuarterStrip({
   frame,
   view,
@@ -378,36 +379,49 @@ function QuarterStrip({
       scrolled.removeEventListener("scroll", follow);
     };
   }, [view, frame, px, room]);
-  const scrollTo = (at: number) => {
-    onScrollTo(at);
-    setLeft(view().scrollLeft);
+  // The quarter last chosen, by its first day, and where the view then was, so it shows as selected
+  // until the view moves, even when the timeline's end left the view where it was.
+  const [chosen, setChosen] = useState<{ day: string; left: number; px: Px }>();
+  // Scrolls to a quarter's start, choosing it, or, with no quarter, to the day given, choosing none.
+  const scrollTo = (
+    quarter: { at: number; day: string } | undefined,
+    otherwise: number,
+  ) => {
+    onScrollTo(quarter?.at ?? otherwise);
+    const landed = view().scrollLeft;
+    setLeft(landed);
+    setChosen(
+      quarter === undefined
+        ? undefined
+        : { day: quarter.day, left: landed, px },
+    );
   };
+  const isSelected = (day: string) =>
+    chosen?.day === day &&
+    chosen.px === px &&
+    Math.abs(chosen.left - left) <= edgeTolerance;
   const right = left + room;
   const furthest = furthestScroll(frame, { px, room });
   // Where a quarter chosen lands, a sixth of the way across, which the arrows step from.
   const mark = left + room * todayShare;
-  // The last quarter's start before the mark, or the timeline's start, and the next after it, or
-  // the timeline's end.
-  const previousAt = quarters.reduce(
-    (found, { at }) => (px.of(at) < mark - edgeTolerance ? at : found),
-    0,
+  // The last quarter starting before the mark, and the first starting after it.
+  const previous = quarters.findLast(
+    ({ at }) => px.of(at) < mark - edgeTolerance,
   );
-  const nextAt = quarters.reduceRight(
-    (found, { at }) => (px.of(at) > mark + edgeTolerance ? at : found),
-    frame.days,
-  );
+  const next = quarters.find(({ at }) => px.of(at) > mark + edgeTolerance);
   return (
     <TimelineStrip
       words={quarterWords}
       periods={quarters.map(({ day, label, short, at, days }) => ({
         key: day,
         onChoose: () => {
-          scrollTo(at);
+          scrollTo({ at, day }, at);
         },
         label,
         short,
         weight: days,
         inView: px.of(at) < right && px.of(at + days) > left,
+        selected: isSelected(day),
         current:
           frame.today !== undefined &&
           frame.today >= at &&
@@ -417,14 +431,14 @@ function QuarterStrip({
         left <= edgeTolerance
           ? undefined
           : () => {
-              scrollTo(previousAt);
+              scrollTo(previous, 0);
             }
       }
       onNext={
         left >= furthest - edgeTolerance
           ? undefined
           : () => {
-              scrollTo(nextAt);
+              scrollTo(next, frame.days);
             }
       }
       onToday={
@@ -432,6 +446,7 @@ function QuarterStrip({
         (() => {
           onToday();
           setLeft(view().scrollLeft);
+          setChosen(undefined);
         })
       }
     />
@@ -510,7 +525,10 @@ function Tracks({
           <ul key={name} className={classes.timelineRows} aria-label={name}>
             {rows.map(({ id, label, lanes }) => (
               <li key={id} className={classes.timelineRow}>
-                <div className={classes.timelineLabel}>{label}</div>
+                <div className={classes.timelineLabel}>
+                  {/* One line of text, so its marks sit on the name's line, as they do in text. */}
+                  <div>{label}</div>
+                </div>
                 <div className={classes.timelineTrack} style={width}>
                   {lanes(px)}
                 </div>

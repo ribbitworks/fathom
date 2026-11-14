@@ -107,8 +107,8 @@ You're done when the stream's heading shows your draft: a dot before a new name,
 ### Use the Timeline
 
 - Choose a zoom, from **All** to **Days**, or use **−** and **+**.
-- Select a quarter in the strip above the timeline to scroll to it. Use **‹** and **›** to move a quarter at a time. The quarters in view are tinted, and the current one is underlined.
-- From the keyboard, Tab reaches the strip's quarters, and the arrow keys move between them.
+- Select a quarter in the strip above the timeline to scroll to it. Use **‹** and **›** to move a quarter at a time. The quarters in view are tinted, and the current one is underlined. The quarter you chose is filled blue until you scroll somewhere else.
+- From the keyboard, Tab reaches the strip's quarters, and the arrow keys move between them. Press Enter or Space to choose the quarter you're on.
 - Select **Today**, at the end of the strip, to go back to today. A red line marks today.
 - Rest the pointer on a cycle or release to see its name and dates.
 

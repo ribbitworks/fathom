@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The strip above a view with time across it: its periods across the whole range, each as wide as
-// its share of it, those in view tinted and the current one underlined, with back and forward
-// arrows and Today. Choosing a period, an arrow or Today is left to the view. The periods are one
-// stop for Tab, the arrow keys, Home and End moving between them.
+// its share of it, those in view tinted, the one chosen filled and the current one underlined,
+// with back and forward arrows and Today. Choosing a period, an arrow or Today is left to the view.
+// The periods are one stop for Tab, the arrow keys, Home and End moving between them.
 
 import { ActionIcon, Button, Group, UnstyledButton } from "@mantine/core";
 import { type KeyboardEvent, useRef, useState } from "react";
@@ -25,8 +25,17 @@ export interface StripPeriod {
   // Its share of the strip's width, such as its days.
   weight: number;
   inView: boolean;
+  // Chosen, by itself or an arrow, while the view stays where choosing it put the view.
+  selected: boolean;
   current: boolean;
 }
+
+const spokenLabel = ({ label, inView, selected }: StripPeriod) =>
+  [
+    label,
+    ...(inView ? ["in view"] : []),
+    ...(selected ? ["selected"] : []),
+  ].join(", ");
 
 // Where each key moves focus among the periods, from the one focused and the last one's place.
 const keyMoves = new Map<string, (focused: number, last: number) => number>([
@@ -91,16 +100,27 @@ export function TimelineStrip({
           }
         }}
       >
-        {periods.map(
-          ({ key, onChoose, label, short, weight, inView, current }, index) => (
+        {periods.map((period, index) => {
+          const {
+            key,
+            onChoose,
+            label,
+            short,
+            weight,
+            inView,
+            selected,
+            current,
+          } = period;
+          return (
             <UnstyledButton
               key={key}
               className={classes.stripPeriod}
               style={{ "--strip-weight": weight }}
               tabIndex={index === tabStop ? 0 : -1}
               data-in-view={inView || undefined}
+              data-selected={selected || undefined}
               aria-current={current ? "date" : undefined}
-              aria-label={inView ? `${label}, in view` : label}
+              aria-label={spokenLabel(period)}
               onFocus={() => {
                 setFocusedKey(key);
               }}
@@ -116,8 +136,8 @@ export function TimelineStrip({
                 {short}
               </span>
             </UnstyledButton>
-          ),
-        )}
+          );
+        })}
       </div>
       <ActionIcon
         variant="default"

@@ -621,7 +621,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `A8FF` Read **Patches**' name on the left of the timeline.
   - **Expected:**
     - A yellow dot is before **Patches**.
-    - A **Retired** box is after it.
+    - A **Retired** box is after it, centred on the same line as **Patches**.
   - **Notes:**
 
 - [ ] `6CC2` Choose **Drafts applied** in the Draft menu.
@@ -694,12 +694,14 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Expected:**
     - The timeline scrolls so that quarter starts about a sixth of the way across, with the end of the quarter before it in sight.
     - The tint moves to the quarters in view: the one before, that quarter, and those after it.
+    - That quarter's box is filled blue, with its name in white.
   - **Notes:**
 
 - [ ] `528C` Select **›**.
   - **Expected:**
     - The timeline scrolls on by one quarter, so the next quarter starts about a sixth of the way across.
     - The tint moves with it.
+    - The next quarter's box is filled blue, and no other box is.
   - **Notes:**
 
 - [ ] `FC26` Select **‹**.
@@ -709,6 +711,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `D68B` Scroll the timeline sideways to its start, by dragging its scroll bar to the left.
   - **Expected:**
     - The tint moves as the timeline scrolls, over the quarters in view.
+    - No quarter's box is filled blue.
     - At the start, **‹** is greyed out.
   - **Notes:**
 
@@ -737,11 +740,37 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Notes:**
 
 - [ ] `5A49` Press Enter.
-  - **Expected:** The timeline scrolls so that quarter starts about a sixth of the way across.
+  - **Expected:**
+    - The timeline scrolls so that quarter starts about a sixth of the way across.
+    - That quarter's box is filled blue.
+  - **Notes:**
+
+- [ ] `F77A` Press End.
+  - **Expected:**
+    - Focus moves to the last quarter's box in the strip.
+    - The timeline does not scroll.
+  - **Notes:**
+
+- [ ] `4635` Press Enter.
+  - **Expected:**
+    - The timeline scrolls to its end.
+    - The last quarter's box is filled blue.
+    - The box has a focus ring.
+    - **›** is greyed out.
+  - **Notes:**
+
+- [ ] `3A9F` Press the left arrow key.
+  - **Expected:** Focus moves to the box before the last.
+  - **Notes:**
+
+- [ ] `F139` Press Enter.
+  - **Expected:**
+    - The timeline does not scroll.
+    - The box before the last is filled blue, and the last is not.
   - **Notes:**
 
 - [ ] `12EA` Press Tab.
-  - **Expected:** Focus moves past the other quarters to **›**.
+  - **Expected:** Focus moves past the other quarters to **Today**.
   - **Notes:**
 
 - [ ] `4A47` Select **All**.

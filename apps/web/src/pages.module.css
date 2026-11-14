@@ -1344,7 +1344,7 @@ th.liveColumn {
 }
 
 /* The strip above a timeline: its periods side by side, each as wide as its share, those in view
-   tinted with the accent and the current one underlined. A period too narrow for its label shows
+   tinted with the accent, the one chosen filled with it, and the current one underlined. A period too narrow for its label shows
    the shorter one, or none. */
 .strip {
   display: flex;
@@ -1379,6 +1379,15 @@ th.liveColumn {
 .stripPeriod[aria-current] {
   box-shadow: inset 0 -2px 0 var(--mantine-primary-color-filled);
   font-weight: 600;
+}
+
+.stripPeriod[data-selected] {
+  background: var(--mantine-primary-color-filled);
+  color: var(--mantine-primary-color-contrast);
+}
+
+.stripPeriod[data-selected][aria-current] {
+  box-shadow: inset 0 -2px 0 var(--mantine-primary-color-contrast);
 }
 
 .stripShort {
