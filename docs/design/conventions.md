@@ -336,6 +336,6 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 
 ## Search
 
-- **Finding rows:** A search field above a table finds rows with every word typed anywhere in them, ignoring letter case and accents. Cmd+F on a Mac, or Ctrl+F elsewhere, goes to it from anywhere but a dialog, and Esc clears it, then leaves it, going back to the table where it can. When nothing matches, the table says so. The Org chart's finder follows the same keys: Cmd+F or Ctrl+F goes to it, and Esc clears it. Decided by the owner on 2026-11-11.
-  - **Drawn by:** `TableSearch` in `apps/web/src/table-controls.tsx`.
+- **Finding rows:** A search field above a table finds rows with every word typed anywhere in them, ignoring letter case and accents. Cmd+F on a Mac, or Ctrl+F elsewhere, goes to it from anywhere but a dialog, and Esc clears it, then leaves it, going back to the table where it can. When nothing matches, the table says so. The Org chart's finder follows the same keys: Cmd+F or Ctrl+F goes to it, and Esc clears it. Decided by the owner on 2026-11-11. Typing in any drop-down list, such as the Org chart's finder, finds options the same way, decided by the owner on 2026-11-14.
+  - **Drawn by:** `TableSearch` in `apps/web/src/table-controls.tsx`; in a drop-down list, the `byWords` filter every `Select` takes from `apps/web/src/theme.ts`, which any other searchable Mantine list, such as `MultiSelect` or `Autocomplete`, needs too.
   - **Example:** type offline in the search field on Features.

@@ -13,8 +13,10 @@
 
 import {
   type Account,
+  matchesWords,
   newAccountSchema,
   type RoleSummary,
+  searchWords,
   staysManageable,
 } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -618,11 +620,10 @@ function DialogContent({ dialog, ...props }: DialogProps & { dialog: Dialog }) {
 type Filter = "all" | "active" | "deactivated";
 
 function matches(account: Account, search: string, filter: Filter): boolean {
-  const term = search.trim().toLowerCase();
-  const found =
-    term === "" ||
-    account.name.toLowerCase().includes(term) ||
-    account.email.toLowerCase().includes(term);
+  const found = matchesWords(
+    `${account.name} ${account.email}`,
+    searchWords(search),
+  );
   const shown = filter === "all" || (filter === "active") === account.active;
   return found && shown;
 }

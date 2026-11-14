@@ -18,6 +18,8 @@ import {
   type PaletteColour,
   type Show,
   allOf,
+  matchesWords,
+  searchWords,
 } from "@fathom/shared";
 import { dayQuery, sendJson } from "./api.ts";
 import { formatDay } from "./table-view.ts";
@@ -401,10 +403,10 @@ export function nothingFound(
   outside: readonly OrgChartPerson[],
   typed: string,
 ): string {
-  const wanted = typed.trim().toLowerCase();
+  const wanted = searchWords(typed);
   const names = outside
     .map((person) => person.preferredName)
-    .filter((name) => name.toLowerCase().includes(wanted))
+    .filter((name) => matchesWords(name, wanted))
     .sort(byName.compare);
   if (names.length === 0) return "Nobody has that name";
   if (names.length > 3) {

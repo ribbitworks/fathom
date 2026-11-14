@@ -4,14 +4,20 @@
 // neutrals with one sea-blue accent for actions and the current place; colour otherwise only for
 // meaning, or as chosen for a release; light and dark modes that follow the computer's setting
 // unless the person chooses one; tables that look alike, each header row staying in view; and
-// drop-down lists whose keyboard place is light grey, as pointing is.
+// drop-down lists whose keyboard place is light grey, as pointing is, and whose search finds options
+// as every search in Fathom does.
 
+import { matchesWords, searchWords } from "@fathom/shared";
 import {
   Combobox,
+  type ComboboxItem,
+  type ComboboxParsedItem,
   type CSSVariablesResolver,
   createTheme,
+  isOptionsGroup,
   type MantineColorsTuple,
   Modal,
+  type OptionsFilter,
   Select,
   Table,
 } from "@mantine/core";
@@ -45,6 +51,26 @@ const deepWater: MantineColorsTuple = [
   "#070c10",
 ];
 
+// A drop-down list's search finds the options holding every word typed, in any order, whatever
+// their accents, as every search in Fathom does, rather than by Mantine's own, which minds accents
+// and order. Like Mantine's, it shows no more than a list's limit.
+const byWords: OptionsFilter = ({ options, search, limit }) => {
+  const words = searchWords(search);
+  let left = limit;
+  const found = (items: readonly ComboboxItem[]) => {
+    const shown = items
+      .filter((item) => matchesWords(item.label, words))
+      .slice(0, left);
+    left -= shown.length;
+    return shown;
+  };
+  return options.flatMap<ComboboxParsedItem>((option) =>
+    isOptionsGroup(option)
+      ? [{ ...option, items: found(option.items) }]
+      : found([option]),
+  );
+};
+
 export const theme = createTheme({
   fontFamily:
     '"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
@@ -62,6 +88,7 @@ export const theme = createTheme({
     }),
     Select: Select.extend({
       classNames: { option: comboboxClasses.option },
+      defaultProps: { filter: byWords },
     }),
     // Every dialog's × is named for assistive technology, which otherwise hears only "button".
     Modal: Modal.extend({

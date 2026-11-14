@@ -210,6 +210,12 @@ describe("the finder's message when nobody on the chart has the name", () => {
     );
   });
 
+  it("finds a name whatever its accents", () => {
+    expect(
+      nothingFound([person("s", null, "Silje Holm-Schrøder")], "schroder"),
+    ).toBe("Silje Holm-Schrøder is not in this team");
+  });
+
   it("counts more than three", () => {
     expect(nothingFound(outside, "fictional")).toBe(
       "4 people with that name are not in this team",

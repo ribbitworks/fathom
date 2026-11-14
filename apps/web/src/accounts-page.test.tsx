@@ -567,6 +567,33 @@ describe("finding accounts", () => {
     expect(document.activeElement).not.toBe(search);
   });
 
+  it("finds an account whatever its name's accents, by every word typed", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": () =>
+        Response.json({
+          accounts: [
+            own,
+            planner,
+            {
+              ...former,
+              id: "user-4",
+              name: "Fictional Schrøder",
+              email: "fs@example.test",
+            },
+          ],
+        }),
+    });
+    renderApp("/accounts");
+    await userEvent.type(
+      await screen.findByLabelText("Search by name or email"),
+      "schroder fictional",
+    );
+    expect(screen.getByText("Fictional Schrøder")).toBeDefined();
+    expect(screen.queryByText("Fictional Planner")).toBeNull();
+  });
+
   it("shows only active or only deactivated accounts, with how many of each", async () => {
     serverAnswers({
       "GET /api/session": manager,

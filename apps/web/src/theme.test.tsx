@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for what every page shares through the theme: each kind of drop-down list gives its options
-// the class that keeps the keyboard's option grey, rather than filled with the accent, and every
-// dialog's close button has a name.
+// the class that keeps the keyboard's option grey, rather than filled with the accent, a Select's
+// search finds options whatever their accents, and every dialog's close button has a name.
 
 import {
   Combobox,
@@ -62,6 +62,85 @@ describe("the keyboard's option in a drop-down list", () => {
         comboboxClasses.option as string,
       ),
     ).toBe(true);
+  });
+});
+
+describe("a Select's search", () => {
+  const optionNames = async () =>
+    (await screen.findAllByRole("option")).map(
+      ({ textContent }) => textContent,
+    );
+
+  it("finds options whatever their accents, and words in any order", async () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <Select
+          label="Person"
+          searchable
+          data={["Silje Holm-Schrøder", "José Fictional", "Avery Fictional"]}
+        />
+      </MantineProvider>,
+    );
+
+    await userEvent.type(
+      screen.getByRole("combobox", { name: "Person" }),
+      "schroder silje",
+    );
+
+    expect(await optionNames()).toEqual(["Silje Holm-Schrøder"]);
+  });
+
+  it("finds options within groups", async () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <Select
+          label="Find"
+          searchable
+          data={[
+            { group: "People", items: ["José Fictional", "Avery Fictional"] },
+            { group: "Teams", items: ["Jose's Fictional team"] },
+          ]}
+        />
+      </MantineProvider>,
+    );
+
+    await userEvent.type(
+      screen.getByRole("combobox", { name: "Find" }),
+      "jose",
+    );
+
+    expect(await optionNames()).toEqual([
+      "José Fictional",
+      "Jose's Fictional team",
+    ]);
+  });
+  it("shows no more options than its limit, within groups too", async () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <Select
+          label="Find"
+          searchable
+          limit={2}
+          data={[
+            { group: "People", items: ["José Fictional"] },
+            {
+              group: "Teams",
+              items: ["Jose's Fictional team", "Jose's Fictional crew"],
+            },
+          ]}
+        />
+      </MantineProvider>,
+    );
+
+    await userEvent.type(
+      screen.getByRole("combobox", { name: "Find" }),
+      "jose",
+    );
+
+    expect(await optionNames()).toEqual([
+      "José Fictional",
+      "Jose's Fictional team",
+    ]);
   });
 });
 
