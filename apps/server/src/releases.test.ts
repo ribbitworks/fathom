@@ -1191,6 +1191,63 @@ describe("changing one cycle's length", () => {
     );
   });
 
+  it("names no release it moves among the unpublished changes of one who doesn't see features", async () => {
+    const stream = await withRelease();
+    const editor = await test.signedIn([
+      "configuration:view",
+      "configuration:edit",
+    ]);
+
+    await test.request(
+      editor.cookie,
+      "PUT",
+      `/api/release-streams/${stream.id}/cycles/2027-04-01/length`,
+      { length: 2, later: "move" },
+      { publish: false },
+    );
+    const unpublished = await test.request(
+      editor.cookie,
+      "GET",
+      "/api/unpublished",
+    );
+
+    const subjects = unpublished
+      .json<{ changes: { subject: string }[] }>()
+      .changes.map(({ subject }) => subject);
+    expect(subjects).toContain("a release");
+    expect(subjects.join(" ")).not.toContain("Fictional Later");
+  });
+
+  it("names no release it moves when refusing to publish the change to one who doesn't see features", async () => {
+    const stream = await withRelease();
+    const editor = await test.signedIn([
+      "configuration:view",
+      "configuration:edit",
+    ]);
+    await test.request(
+      editor.cookie,
+      "PUT",
+      `/api/release-streams/${stream.id}/cycles/2027-04-01/length`,
+      { length: 2, later: "move" },
+      { publish: false },
+    );
+    await test.connection
+      .update(releaseStreams)
+      .set({ cyclesUntil: "2027-05-31" })
+      .where(eq(releaseStreams.id, stream.id));
+
+    const response = await test.request(
+      editor.cookie,
+      "POST",
+      "/api/unpublished/publish",
+    );
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe(
+      `The change to the cycles of ${stream.name} from 2027-04-01 no longer fits the data as it is now; change or discard it, then publish again`,
+    );
+  });
+
   it("is refused to those who do not edit planning configuration", async () => {
     const stream = await liveStream();
     const response = await changeLength(

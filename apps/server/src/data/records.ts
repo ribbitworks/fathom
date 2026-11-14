@@ -1006,14 +1006,21 @@ export async function readRecordVersions(
 }
 
 // What a user's change to a record is to, as the Drafts page names it: as they see the record, or,
-// where their draft removes it, as everyone else does.
+// where their draft removes it, as everyone else does. Their drafts may be of records the role
+// they act as can't read, made under another role or by a change that moves them, which are named
+// without the record's own name.
 export function recordSubject(
   { mine, theirs }: RecordVersions,
   type: RecordType,
   id: string,
+  permissions: readonly Permission[],
 ): string {
+  const kind = kindOf(type);
+  if (!kind.readWith.some((permission) => permissions.includes(permission))) {
+    return kind.unseenSubject ?? "a record your role can't see";
+  }
   const seen = versionOf(mine, type, id) ?? stateOf(mine, type).live.get(id);
-  return kindOf(type).subject(seen === undefined ? theirs : mine, id);
+  return kind.subject(seen === undefined ? theirs : mine, id);
 }
 
 // Whether a record as the user's draft makes it still fits the data as it is now, so it can be

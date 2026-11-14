@@ -861,6 +861,55 @@ describe("when a stream's cycles change", () => {
     );
   });
 
+  it("names no feature a new pattern would leave off a cycle to one who doesn't see features", async () => {
+    const streamId = await liveStream();
+    await liveFeature(target(streamId, cycle.third));
+    const editor = await test.signedIn([
+      "configuration:view",
+      "configuration:edit",
+    ]);
+
+    const response = await test.request(
+      editor.cookie,
+      "POST",
+      `/api/release-streams/${streamId}/patterns`,
+      { startsOn: cycle.second, length: 2, unit: "months", naming: "{YY}.{N}" },
+    );
+
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe(
+      "Work planned on these cycles would no longer fit the stream's cycles",
+    );
+  });
+
+  it("names no feature it moves among the unpublished changes of one who doesn't see features", async () => {
+    const streamId = await liveStream();
+    const feature = await liveFeature(target(streamId, cycle.third));
+    const editor = await test.signedIn([
+      "configuration:view",
+      "configuration:edit",
+    ]);
+    await test.request(
+      editor.cookie,
+      "PUT",
+      `/api/release-streams/${streamId}/cycles/${cycle.second}/length`,
+      { length: 2, later: "move" },
+      { publish: false },
+    );
+
+    const response = await test.request(
+      editor.cookie,
+      "GET",
+      "/api/unpublished",
+    );
+
+    const subjects = response
+      .json<{ changes: { subject: string }[] }>()
+      .changes.map(({ subject }) => subject);
+    expect(subjects).toContain("a feature");
+    expect(subjects.join(" ")).not.toContain(feature.name);
+  });
+
   it("uses the drafts of cycles only they make", async () => {
     const streamId = await liveStream();
     await changeLength(streamId, cycle.second, 2);

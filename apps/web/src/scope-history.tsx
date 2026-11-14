@@ -171,21 +171,21 @@ export function ScopeHistory({
             canChange &&
             editing?.recordId === record.id &&
             editing.featureId === row.featureId;
+          const opening =
+            canChange && !open
+              ? () => {
+                  start(row);
+                }
+              : undefined;
           return (
             <div
               key={`${row.featureId}-${String(index)}`}
               className={[
                 details.row,
                 details.itemRow,
-                canChange && !open ? details.editable : "",
+                opening === undefined ? "" : details.editable,
               ].join(" ")}
-              onClick={opensOnClick(
-                canChange && !open
-                  ? () => {
-                      start(row);
-                    }
-                  : undefined,
-              )}
+              onClick={opensOnClick(opening)}
             >
               <div>
                 <Text fz="sm">
@@ -224,13 +224,11 @@ export function ScopeHistory({
                   )
                 )}
               </div>
-              {canChange && !open && (
+              {opening !== undefined && (
                 <ActionIcon
                   id={changeId(row.featureId)}
                   {...changeButton(`reason for ${removalOf(row)}`)}
-                  onClick={() => {
-                    start(row);
-                  }}
+                  onClick={opening}
                 />
               )}
             </div>

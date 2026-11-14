@@ -279,6 +279,9 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **Controls turned off:** A control for a change the server would refuse is turned off, with a line saying why wherever the reason isn't plain to see. A control the reader might expect, such as Fill on a planned hire or New under Live only, is turned off with its reason rather than hidden; a control is hidden only when the role can never use it. Decided by the owner on 2026-11-11.
   - **Drawn by:** each page; no shared piece yet.
   - **Example:** in a list with meanings, such as Feature statuses, Retire and Remove are greyed out on the only choice that means Possible, with a line saying why.
+- **Menu buttons:** A menu of actions on one thing opens from a ⋯, named "Actions for" the thing, such as Actions for Fictional Major. A ⋯ opening something else is named for what it opens, such as Unpublished changes.
+  - **Drawn by:** `MoreButton`, named through `actionsFor`, in `apps/web/src/row-controls.tsx`.
+  - **Example:** on Lists, the ⋯ beside each list.
 
 ## Tables
 

@@ -1109,6 +1109,29 @@ describe("drafts", () => {
     await test.request(planner.cookie, "POST", "/api/unpublished/discard");
   });
 
+  it("are named among the maker's unpublished changes without their name once their role no longer sees the plan", async () => {
+    const maker = await test.signedIn(["plan:view", "plan:edit"]);
+    const customer = unique("Fictional Hidden Customer");
+    await test.request(
+      maker.cookie,
+      "POST",
+      "/api/customers",
+      { name: customer },
+      { publish: false },
+    );
+    await test.holdOnly(maker.id, ["configuration:view", "configuration:edit"]);
+
+    const response = await test.request(
+      maker.cookie,
+      "GET",
+      "/api/unpublished",
+    );
+
+    expect(
+      response.json<Unpublished>().changes.map(({ subject }) => subject),
+    ).toEqual(["a record your role can't see"]);
+  });
+
   it("are shown in the change history only to those who see the plan, as release streams are also to those who see configuration", async () => {
     const customer = await addCustomer();
     const configurer = await test.signedIn("workforce-administrator");

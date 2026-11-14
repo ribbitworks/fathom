@@ -4,7 +4,7 @@
 // one shows the record's details beside the table, drawn as the panel it opens, and the ⋯ beside it
 // opens the row's menu, so neither needs the table scrolled to its end. From the keyboard, the
 // row's menu opens with Shift+F10 and offers the same. A planned hire's Fill button sits before
-// them.
+// them. Every other ⋯ that opens a menu, such as a list's or a cycle's, is the same button.
 
 import { ActionIcon, Button } from "@mantine/core";
 import type { MouseEvent, ReactNode } from "react";
@@ -49,7 +49,7 @@ export function RowControls({
   );
 }
 
-// What a record's menu is called, wherever its ⋯ is.
+// What a menu of one thing's actions is called.
 export const actionsFor = (name: string) => `Actions for ${name}`;
 
 // The ⋯ that opens a menu, such as a record's, its drafts' or the unpublished changes'.

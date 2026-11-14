@@ -74,7 +74,6 @@ const unnamedRefusals = {
   afterPlan: "Work is planned on cycles after that day",
   offCycles:
     "Work planned on these cycles would no longer fit the stream's cycles",
-  sharedCycles: "Work planned on these cycles would overlap",
 } as const;
 
 // Release streams and cycles are seen with features and releases, and with planning configuration.
@@ -183,6 +182,9 @@ export const releaseKind: RecordKind = {
   ],
   // Releases themselves are seen with features, not with planning configuration, as Roles sets out.
   readWith: ["features:view"],
+  // Changing a stream's cycles drafts moving its releases, so one who sees only configuration makes
+  // drafts of releases.
+  unseenSubject: "a release",
   subject: (state, id) => {
     const release = shownVersion(state, "release", id);
     return planSubjects.release(
@@ -258,6 +260,9 @@ export const featureKind: RecordKind = {
     { field: "name", message: "There is already a feature with that name" },
   ],
   readWith: ["features:view"],
+  // Changing a stream's cycles drafts moving the features targeting them, so one who sees only
+  // configuration makes drafts of features.
+  unseenSubject: "a feature",
   subject: (state, id) =>
     (isGeneralFeature(state, id)
       ? projectSubjects.project
@@ -453,11 +458,10 @@ export function releaseProblem(
         const clash = found.find(
           (other) => other.id !== id && overlaps(record, other.release),
         );
+        // Only one who sees releases changes a release onto another's cycles: a change of cycles
+        // moves a stream's releases together, so they never come to share one.
         if (clash !== undefined) {
-          return worded(
-            `The release ${String(clash.release.name)} already includes some of those cycles`,
-            unnamedRefusals.sharedCycles,
-          );
+          return `The release ${String(clash.release.name)} already includes some of those cycles`;
         }
       }
     }

@@ -237,7 +237,12 @@ function subjectOf(versions: Versions, row: Row, actor: Actor): string {
     (versionOf(versions, "list", listId)?.name as string | undefined) ??
     "a removed list";
   if (isRecordType(row.recordType)) {
-    return recordSubject(versions.records, row.recordType, id);
+    return recordSubject(
+      versions.records,
+      row.recordType,
+      id,
+      actor.permissions,
+    );
   }
   if (row.recordType === "person") {
     return String(versionOf(versions, "person", id)?.preferredName);
