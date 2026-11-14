@@ -15,9 +15,7 @@ Verifies feature teams on the **Org chart** page: how each team is drawn under i
 
 ## Test Environment
 
-As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
-
-- A mouse or trackpad, and a keyboard.
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 ## Test Accounts
 

@@ -15,9 +15,7 @@ Verifies the **Feature assignments** page: how the table of feature teams by mon
 
 ## Test Environment
 
-As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
-
-- A mouse or trackpad, and a keyboard.
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 ## Test Accounts
 

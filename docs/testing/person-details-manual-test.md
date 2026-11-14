@@ -15,9 +15,7 @@ Verifies a person's or planned hire's details in the side panel beside the org c
 
 ## Test Environment
 
-As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
-
-- A mouse or trackpad.
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 ## Test Accounts
 

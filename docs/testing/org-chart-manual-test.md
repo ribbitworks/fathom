@@ -15,9 +15,7 @@ Verifies the **Org chart** page: the levels it opens on, each person's card, sho
 
 ## Test Environment
 
-As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
-
-- A mouse or trackpad.
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 ## Test Accounts
 
