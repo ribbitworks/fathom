@@ -1,49 +1,71 @@
 # Saved views
 
-A view is how a table is set up: its search, filters, sort, grouping, metrics, the Draft menu's choice, and its columns' order, widths, frozen columns and units. People can save a view under a name, to apply it again later, and other tables are to follow. Views are saved from the **Views** menu, the last button after the search box, which shows once there's a view to save or apply.
+A view is how you've set up a table: its search, filters, sort and metrics, the **Draft** menu's choice, and its columns' order, widths, frozen columns, and units and decimal places. You can save a view under a name, and apply it again later. For now you can save views only on the **People** page. Other tables are to follow.
+
+You save and apply views from the **Views** menu: the last button after the search box. It shows once there's a view to save or apply.
+
+## What to Know First
+
+- **Personal views:** a view you save is yours alone, unless you share it. Your own views are under **My views**.
+- **Shared views:** a shared view is seen by everyone who sees the table. They're under **Shared views**. Someone who can't see a column the view uses doesn't see the view.
+- **Who can share:** you can share a view you saved yourself, if your role changes configuration. Only a view's maker, or such a role, can change, rename or delete a shared view.
 
 ## Main Tasks
 
 ### Save a View
 
-1. Set up the table.
-1. Select **Views**, then **Save view…**.
-1. Type the **Name**. **Includes** lists what the view keeps.
+1. Set up the table the way you want it.
+1. Select **Views**.
+1. Select **Save view…**.
+1. Type the view's **Name**.
+1. Check what the view keeps, under **Includes**.
 1. To share it, tick **Share with everyone who sees this table**.
 1. Select **Save view**.
 
+You're done when the **Views** button shows the view's name.
+
 ### Apply a View
 
-Select **Views**, then the view's name. The menu's button takes the view's name.
+1. Select **Views**.
+1. Select the view's name.
+
+You're done when the **Views** button shows the view's name, with a tick beside it in the menu.
 
 ### Change a View
 
-1. Apply the view, and change the table.
-1. Select **Views**, then **Update** followed by the view's name. It shows once the table has changed.
+1. Apply the view.
+1. Change the table.
+1. Select **Views**.
+1. Select **Update** followed by the view's name. It shows once the table has changed.
 
-**Rename…** changes its name, and **Delete view** deletes it.
+To rename the view, select **Rename…** in the same menu. To delete it, select **Delete view**.
+
+You're done when the dot after the button's name is gone.
 
 ### Share a View or Take It Back
 
-- Select **Share current view** in the **Views** menu to share the view applied.
-- Select **Take back current view** to make it personal again.
+1. Apply a view you saved.
+1. Select **Views**.
+1. Select **Share current view** to share it, or **Take back current view** to make it personal again.
+
+You're done when the view moves to **Shared views**, or back to **My views**.
 
 ### Go Back to the Table's Own View
 
-Select **Views**, then **Clear view**. **Clear all**, above the table, does the same but leaves the Metrics panel open.
+1. Select **Views**.
+1. Select **Clear view**.
+
+**Clear all**, above the table, does the same, but leaves the **Metrics** panel open.
 
 ### Undo One Part of a View
 
-Under **Sort**, the **Views** menu names each level of the sort, and then any frozen columns, moved columns, set widths and units. Select one to undo just that part.
+In the **Views** menu, under **Sort**, each level of the sort is named, and then any frozen columns, moved columns, set widths and units. Select one to undo just that part.
 
 ## Marks and Terms
 
-- **My views** are personal: nobody else sees them.
-- **Shared views** are seen by everyone who sees the table, except a view that uses a column someone can't see.
-- **A tick** marks the view applied.
-- **A dot** after the button's name means the table has changed since the view was applied, or, with no view applied, that there's something to save.
-- **Sharing a view** needs a role that changes configuration. Only the view's maker, or such a role, can change, rename or delete a shared view.
+- **A tick** in the menu marks the view applied.
+- **A dot** after the button's name means the table has changed since you applied the view. With no view applied, it means there's something to save.
 
 ## Where Changes Go
 
-A saved view isn't a draft. It's saved at once. Sharing, taking back and deleting each offer **Undo** for a few seconds.
+A saved view isn't a draft. It's saved straight away, without approval. Sharing, taking back and deleting a view each offer **Undo** for a few seconds.
