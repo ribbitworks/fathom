@@ -1,36 +1,49 @@
 # Working as an Engineering Director
 
-An Engineering Director runs the organization's plan and people: they change and approve almost anything, see all Personal and Confidential data, and decide which class each detail belongs to. They also see accounts, roles, settings and the access history, without changing them.
+As an Engineering Director, you run your organization's plan and people. You change and approve almost anything, you see all Personal and Confidential data, and you decide which class each detail belongs to. You also see accounts, roles, settings and the access history, but you don't change them.
+
+## What to Know First
+
+- **Drafts:** most of your changes are drafts. Nobody else sees them until you select **Publish** in the top bar. Of the roles Fathom starts with, yours is the only one that can approve its own drafts.
+- **Classes:** each detail, column and list has a class, which decides who sees it: **General**, **Personal** or **Confidential**.
 
 ## Approve the Drafts
 
 1. Select the **Drafts** page.
-1. Approve or reject the drafts waiting, as [Drafts page](drafts-page.md#approve-drafts) sets out.
-
-Of the roles Fathom starts with, the Engineering Director is the one that approves its own drafts.
+1. Approve or reject the drafts waiting. See [Drafts page](drafts-page.md#approve-drafts).
 
 ## Change Reporting Lines
 
-1. On **People**, choose the person's new **Manager**, dated earlier in **Manager assigned** if it took effect before today, as [People](people.md#give-someone-a-new-manager) sets out.
-1. Check the result on the **Org chart**. A change from a later date is made there, on that date, as [Org chart](org-chart.md#see-another-date) sets out.
+1. On **People**, choose the person's new **Manager**. A new manager needs their **Manager?** tick approved first. See [People](people.md#give-someone-a-new-manager).
+1. If the change took effect before today, type that day in **Manager assigned**.
+1. Check the result on the **Org chart**. You can also change a manager there, on an earlier date. See [Org chart](org-chart.md#see-another-date).
 1. Select **Publish** in the top bar.
 
-Someone who leaves keeps their row, with an **End** date, as [People](people.md#remove-a-person-or-planned-hire) sets out.
+When someone leaves, give them an **End** date, so their row stays. See [People](people.md#remove-a-person-or-planned-hire).
 
 ## Plan the Hiring
 
-1. On **People**, add each planned hire with its hiring state, as [People](people.md#add-a-person-or-a-planned-hire) sets out.
-1. Change its **State** as the hire is approved, as [People](people.md#change-a-person) sets out.
-1. Once the hire is made, fill it with the new person, as [People](people.md#fill-a-planned-hire) sets out.
+A planned hire goes through three rounds, each published and approved before the next. You can approve your own drafts on the **Drafts** page.
+
+1. On **People**, add the planned hire with a hiring state, such as **Request to hire**. See [People](people.md#add-a-person-or-a-planned-hire).
+1. Select **Publish**, and approve the draft.
+1. Once the hire is agreed, change its **State** to one that means approved, such as **Approved to hire**. See [People](people.md#change-a-person).
+1. Select **Publish**, and approve the draft.
+1. Once someone is hired, fill the planned hire with them. See [People](people.md#fill-a-planned-hire).
+1. Select **Publish**, and approve the draft.
 
 ## Decide Who Sees What
 
 1. Select the **Data classes** page, under **Administration**.
-1. Change the class of a detail, column or list, as [Data classes](data-classes.md#change-a-class) sets out.
+1. Change the class of a detail, column or list. See [Data classes](data-classes.md#change-a-class).
 
-The change takes effect at once, with no draft.
+The change takes effect straight away, with no draft.
 
 ## Share a View
 
+A view is how you've set up a table, such as its search, filters and columns. A shared view is seen by everyone who sees the table.
+
 1. Set up the **People** table the way others need it.
-1. Save the view, ticking **Share with everyone who sees this table**, as [Saved views](saved-views.md#save-a-view) sets out.
+1. Save the view, and tick **Share with everyone who sees this table**. See [Saved views](saved-views.md#save-a-view).
+
+You're done when the plan and people show what you approved, and no drafts are waiting.

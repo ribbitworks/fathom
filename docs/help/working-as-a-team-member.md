@@ -1,22 +1,31 @@
 # Working as a Team Member
 
-A Team Member sees the plan and people's General details, such as their names, positions and teams, and changes no records.
+As a Team Member, you see the plan and people's General details, such as their names, positions and teams. You read; you don't change any records. General details are the ones everyone who can open a page sees, rather than private or unannounced ones.
+
+## What to Know First
+
+- **Features and cycles:** a feature is a body of work one feature team delivers. It targets a cycle, a planning period such as a quarter.
+- **Releases:** a release ships the features that target its cycles. The **Releases** page shows them on a timeline.
+- **Dots:** a dot before a value or a row marks a change still waiting for approval.
 
 ## See What's Planned
 
-1. On **Features**, group by **Cycle** or **Release**, as [Features](features.md#group-the-table) sets out.
-1. On **Releases**, use the timeline to see when each release ships, as [Releases](releases.md#use-the-timeline) sets out.
+1. On **Features**, group by **Cycle** or **Release** to see what each holds. See [Features](features.md#group-the-table).
+1. On **Releases**, use the timeline to see when each release ships. See [Releases](releases.md#use-the-timeline).
 
 ## Look at a Project
 
-1. On **Projects**, open the project's details, as [Projects](projects.md#see-a-records-details) sets out.
-1. Select **Show milestones** in its **⋯** menu to see its milestones and their dates, as [Projects](projects.md#go-from-a-project-to-its-milestones-or-features) sets out.
+1. On **Projects**, open the project's details. See [Projects](projects.md#see-a-records-details).
+1. To see its milestones and their dates, select **Show milestones** in its **⋯** menu. See [Projects](projects.md#go-from-a-project-to-its-milestones-or-features).
 
 ## Find Someone
 
-1. On the **Org chart**, type their name in **Find a person or team**, as [Org chart](org-chart.md#find-a-person-or-team) sets out.
-1. Select their name on the card to see their details.
+1. On the **Org chart**, type their name in **Find a person or team**. See [Org chart](org-chart.md#find-a-person-or-team).
+1. Choose them. The chart centres their card.
+1. To see their details, select their name on the card. See [Org chart](org-chart.md#see-someones-details).
 
 ## Keep a View
 
-Save a view of **People** to come back to, as [Saved views](saved-views.md#save-a-view) sets out.
+A view is how you've set up a table, such as its search and filters. You can save one on **People** to come back to. Only you see it. See [Saved views](saved-views.md#save-a-view).
+
+You're done when you've found what you came for.
