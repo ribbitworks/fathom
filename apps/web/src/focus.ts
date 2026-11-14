@@ -2,15 +2,25 @@
 
 // Moves focus to a control once the page has drawn the result of a change, so the control exists by
 // then, and focus is never left behind on something that has gone. Given several, it focuses the
-// first that is drawn.
+// first that is drawn, waiting a few frames for one that is drawn later.
+
+// How many frames to wait for the control, which a change made through the address, such as
+// opening a panel, may draw a little after the change itself.
+const framesToWait = 10;
 
 function soon(ids: readonly string[], act: (element: HTMLElement) => void) {
-  setTimeout(() => {
+  let framesLeft = framesToWait;
+  const attempt = () => {
     const element = ids
       .map((id) => document.getElementById(id))
       .find((found) => found !== null);
     if (element !== undefined) act(element);
-  }, 0);
+    else if (framesLeft > 0) {
+      framesLeft -= 1;
+      requestAnimationFrame(attempt);
+    }
+  };
+  setTimeout(attempt, 0);
 }
 
 export function focusSoon(...ids: string[]): void {
