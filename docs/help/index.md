@@ -1,6 +1,6 @@
 # Help
 
-How to use each page of Fathom, and the work each role does most.
+Help explains how to use each page of Fathom, and the work each role does most. If you're new, start with the page for your role under Working in Fathom. If you can't find a page, Pages lists them all.
 
 ## Finding Your Way
 
@@ -30,7 +30,7 @@ How to use each page of Fathom, and the work each role does most.
 ## People
 
 - [People](people.md): everyone in the organization and the planned hires, as a table.
-- [Org chart](org-chart.md): reporting teams and feature teams as cards, on any date.
+- [Org chart](org-chart.md): reporting teams and feature teams as cards, today or on another date.
 - [Feature assignments](feature-assignments.md): who is on which feature team, month by month.
 - [Capacity](capacity.md): what each person works on, month by month, and the planning settings capacity and forecasts are worked out with.
 - [Lists](lists.md): the lists of choices that columns offer.

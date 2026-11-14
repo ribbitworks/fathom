@@ -23,7 +23,7 @@ The left-hand menu shows only the pages your role lets you open. A page your rol
 | Page | What it's for | Shown with | Starting roles that see it |
 | --- | --- | --- | --- |
 | [People](people.md) | It lists everyone in the organization and the planned hires, as a table. | **View People** | Every role but Administrator |
-| [Org chart](org-chart.md) | It draws reporting teams and feature teams as cards, on any date. | **View People** | Every role but Administrator |
+| [Org chart](org-chart.md) | It draws reporting teams and feature teams as cards, today or, with **View Personal details**, on other dates. | **View People** | Every role but Administrator |
 | [Feature assignments](feature-assignments.md) | It shows who is on which feature team, month by month. | **View Feature teams** with **View Personal details** | Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive |
 | [Drafts](drafts-page.md) | It lists the drafts waiting. Approvers approve or reject them there. | Any of **View Plan**, **View Features and releases**, **View People** or **View Configuration** | Every role but Administrator |
 | [Capacity](capacity.md) | It shows what each person works on, month by month, and the planning settings. | Its **People** mode needs **View Allocations**, **View Feature teams**, **View People** and **View Personal details**. Its **Settings** mode needs **View Configuration**. Either mode shows the page. | Product Manager, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive |

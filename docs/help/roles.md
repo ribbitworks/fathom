@@ -9,10 +9,11 @@ The **Roles** page lists the roles accounts can hold, and what each one lets its
 - **View, Approve and Edit:** **View** lets the role see an area. **Edit** lets it change the area, as drafts where the area has them. **Approve** lets it approve or reject other people's drafts there.
 - **Data classes:** each piece of data has a class, **General**, **Personal** or **Confidential**, which decides who sees it. A role sees an area's **Personal** or **Confidential** data only if it's also given that class. See [Data classes](data-classes.md).
 - **Who holds a role:** you give roles to accounts on the [Accounts](accounts.md) page.
+- **No drafts for roles:** a change to a role takes effect straight away, for every account that holds it. Nobody approves it. Each change is recorded in the access history, and a change to an existing role is marked as worth checking.
 
 ## See What a Role Gives
 
-1. Select **View** in the role's row. If you may change roles, select **Edit** instead.
+Select **View** in the role's row. If you may change roles, select **Edit** instead.
 
 The dialog shows a grid of boxes on the left, and a summary of what the role sees and does on the right. **Roles** under **Help** in the left-hand menu says what each role Fathom starts with is for.
 
@@ -23,9 +24,11 @@ The dialog shows a grid of boxes on the left, and a summary of what the role see
 1. Change the **Name** or **Description**, if you need to.
 1. Select **Save**.
 
-If the change alters what any account may do, Fathom lists those accounts first, with what each one **Gains** and **Loses**. Check the list, then select **Save changes**. Select **Cancel** to go back to the grid instead.
+If the change alters what any account may do, Fathom lists those accounts first, with what each one **Gains** and **Loses**. Check the list, then select **Save changes**. To go back to the grid instead, select **Cancel**.
 
 If no account is affected, Fathom saves the role straight away.
+
+You're done when the dialog closes, and the role's row is back in the list.
 
 ## Go Back Before Saving
 
@@ -37,13 +40,15 @@ If no account is affected, Fathom saves the role straight away.
 
 The quickest way is to copy the role closest to what you need.
 
-1. Select **Copy** in that role's row. To start with nothing ticked, select **New role** instead.
+1. Select **Copy** in that role's row, or **New role** to start with nothing ticked.
 1. Type the **Name**. No other role can have the same one.
 1. Type a **Description**, if it helps.
 1. Tick the boxes the role needs.
 1. Select **Create role**.
 
 Nobody holds a new role until you give it to accounts.
+
+You're done when the new role shows in the list.
 
 ## Reading the Grid
 
@@ -69,7 +74,3 @@ Nobody holds a new role until you give it to accounts.
 - **A greyed-out empty box** needs another box first, such as **Approve** on **People**, which needs **View** on **People**. Unticking a box also unticks the ones that need it.
 - **Accounts** gives how many active accounts hold the role.
 - **Personal** and **Confidential** are coloured in descriptions, so the classes stand out.
-
-A change to a role takes effect at once for every account that holds it. It isn't a draft, so nobody approves it. Each change is recorded in the access history, and marked as worth checking. See [Access history](access-history.md).
-
-You're done when the summary shows what the role should see and do, and the role's row is back in the list.

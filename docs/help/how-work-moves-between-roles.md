@@ -1,33 +1,57 @@
 # How Work Moves Between Roles
 
-Work in Fathom passes from one role to the next: one drafts a change, another approves it, and a third acts on it. This page follows a feature from a Product Manager to the people who build it.
+Work in Fathom passes from one role to the next. One person drafts a change, another approves it, and a third acts on it. This page follows a new feature from a Product Manager's draft to the people who build it.
+
+## What to Know First
+
+- **Drafts:** most changes in Fathom start as drafts. Nobody else sees a draft until its maker selects **Publish** in the top bar. It goes live once someone whose role approves that kind of change approves it. A yellow dot marks a draft waiting for approval.
+- **Features:** a feature is a body of work that one feature team delivers. It targets a cycle, a planning period such as a quarter.
+- **Feature teams:** a feature team is a group that works on features together, whoever its members report to.
+
+See [Drafts](drafts.md) for more.
 
 ## Draft a Change
 
-A Product Manager adds a feature and plans it.
+A Product Manager adds the feature and plans it.
 
-1. On **Features**, add the feature, as [Features](features.md#add-a-feature) sets out.
-1. Choose its **Target cycle**, as [Features](features.md#plan-when-a-feature-ships) sets out, and its **Feature team**.
-1. On **Projects**, choose the feature in the **Features** of the project that needs it, as [Projects](projects.md#choose-the-features-a-project-needs) sets out.
-1. Select **Publish** in the top bar. The changes are now drafts others can see.
+1. On **Features**, select **New feature**.
+1. Type the feature's **Name**.
+1. Select **Add**.
+1. In the feature's **Target cycle**, choose the cycle it's planned to ship in.
+1. In its **Feature team**, choose the team that builds it.
+1. On **Projects**, select the **Features** cell of the project that needs it.
+1. Press Enter.
+1. Pick the feature.
+1. Press Esc.
+1. Select **Publish** in the top bar.
+
+The changes are now drafts that others can see, each with a yellow dot. See [Features](features.md) for more.
 
 ## Approve the Drafts
 
-An Engineering Director, or another role that approves the plan, decides on the drafts.
+The Engineering Director, or another role that approves the plan and features, decides on the drafts.
 
 1. Select the **Drafts** page.
-1. Approve the drafts, or reject them with a reason, as [Drafts page](drafts-page.md#approve-drafts) sets out.
+1. Tick the drafts.
+1. Select **Approve 2 drafts…**. The number is how many you ticked.
+1. Check the dialog. It lists any other drafts these depend on, which are approved with them.
+1. Select **Approve**.
 
-A rejected draft goes back to the person who made it, as [Drafts](drafts.md#what-happens-to-a-draft) sets out.
+To reject the drafts instead, select **Reject…**, type the reason, and select **Reject**.
+
+An approved draft goes live straight away. A rejected draft goes back to the person who made it, who can change it and resubmit it. See [Drafts page](drafts-page.md#approve-drafts) for more.
 
 ## Staff the Feature
 
 An Engineering Manager puts people on the feature team that builds it.
 
 1. Select the **Feature assignments** page.
-1. Put each person on the team from the month they start, as [Feature assignments](feature-assignments.md#put-someone-on-a-feature-team-from-a-month) sets out.
+1. Select a person's cell in the month they start on the team. That's this month or a later one, since an Engineering Manager's role can't change earlier months.
+1. Press Enter. The team list opens.
+1. Type part of the team's name, and press Tab.
+1. Do the same for each person.
 1. Select **Publish** in the top bar.
 
-A Project Manager or the Engineering Director then approves the team's changes on the **Drafts** page, as above.
+A Project Manager or the Engineering Director then approves the team's changes on the **Drafts** page, the same way as above. See [Feature assignments](feature-assignments.md#put-someone-on-a-feature-team-from-a-month) for more.
 
-[Drafts](drafts.md) explains the marks a draft shows while it waits, and what happens to it.
+You're done when the feature shows on **Features** with its cycle and team, and its team's members show on **Feature assignments**, with no dots.
