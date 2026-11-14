@@ -136,7 +136,6 @@ import { type SidePanel, WithSidePanel } from "./side-panel.tsx";
 import {
   besideLive,
   changedValue,
-  ClassMark,
   classMarkChars,
   DraftedItem,
   type DraftLike,
@@ -2437,11 +2436,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                         draftedFields.find(({ id }) => id === field?.id)?.draft
                       }
                       heldBy={field?.heldBy}
-                      facts={
-                        column.dataClass && (
-                          <ClassMark dataClass={column.dataClass} />
-                        )
-                      }
+                      dataClass={column.dataClass}
                     >
                       <span className={classes.headerLabel}>
                         {column.label}

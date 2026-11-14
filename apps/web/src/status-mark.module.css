@@ -56,12 +56,25 @@
   font-weight: 400;
 }
 
+/* As lockSize in status-mark.tsx. */
+.held,
+.classSymbol {
+  --mark-size: 12px;
+}
+
 /* Someone else's unpublished changes lock the record, in grey, since nothing waits on the user. */
 .held {
-  /* As lockSize in status-mark.tsx. */
-  --mark-size: 12px;
-
   color: var(--mantine-color-gray-6);
+}
+
+/* A class's symbol, before what it classes, in the dimmed text's colour, as its name was in its box. */
+.classSymbol {
+  color: var(--mantine-color-dimmed);
+}
+
+/* A class named in words, kept on one line with its symbol, in running text too. */
+.className {
+  white-space: nowrap;
 }
 
 /* A rejected draft's dot sits inside a thin ring, with a gap of the page's colour between. */
@@ -122,12 +135,6 @@
   font-size: var(--mantine-font-size-xs);
   font-weight: 500;
   line-height: 1;
-}
-
-.classWords {
-  display: inline-flex;
-  gap: 2px;
-  align-items: center;
 }
 
 :where([data-mantine-color-scheme="dark"]) .kind {

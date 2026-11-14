@@ -118,7 +118,7 @@ const rowOf = (holder: HTMLElement, name: string) =>
   within(holder).getByRole("cell", { name }).closest("tr") as HTMLElement;
 
 describe("the Data classes page", () => {
-  it("shows each built-in detail's class, as a mark beyond General, and what needs it", async () => {
+  it("shows each built-in detail's class, as its symbol and name, and what needs it", async () => {
     openPage();
     const details = await section("Built-in details");
     expect(cellsOf(rowOf(details, "Start date"))).toEqual([
@@ -130,6 +130,16 @@ describe("the Data classes page", () => {
     expect(
       within(rowOf(details, "Hiring plan")).getByText("Confidential"),
     ).toBeTruthy();
+    // The symbol is seen only, so the class is read once, by its name.
+    const classCell = within(rowOf(details, "Start date")).getAllByRole(
+      "cell",
+    )[1] as HTMLElement;
+    expect(
+      classCell.querySelector("[class*='classSymbol'] svg"),
+    ).not.toBeNull();
+    expect(
+      within(details).getAllByRole("cell", { name: "Personal" }),
+    ).toContain(classCell);
   });
 
   it("shows People's added columns, a column taking its list's class with no change of its own", async () => {
@@ -140,16 +150,99 @@ describe("the Data classes page", () => {
       expect(cellsOf(rowOf(columns, "Site"))).toEqual([
         "Site",
         "General",
-        "People, with the class of Sites",
+        "People shows it. It has the class of its list, Sites.",
         "",
       ]);
     });
     expect(cellsOf(rowOf(columns, "Profile"))).toEqual([
       "Profile",
       "Personal",
-      "People",
+      "People shows it.",
       "Change class…",
     ]);
+  });
+
+  it("names the list a column takes its class from, for a role without the Lists section", async () => {
+    openPage({
+      "GET /api/session": session(
+        defaultClasses,
+        classifierPermissions.filter(
+          (permission) => permission !== "configuration:view",
+        ),
+      ),
+    });
+    const columns = await section("Columns");
+    expect(
+      cellsOf(
+        (await within(columns).findByRole("cell", { name: "Site" })).closest(
+          "tr",
+        ) as HTMLElement,
+      )[2],
+    ).toBe("People shows it. It has the class of its list, Sites.");
+    expect(screen.queryByRole("region", { name: "Lists" })).toBeNull();
+  });
+
+  it("says nothing of the columns using a list until they are read", async () => {
+    openPage({
+      "GET /api/people/columns": () =>
+        Response.json({ error: "Internal Server Error" }, { status: 500 }),
+    });
+    await screen.findByText("Fathom could not load the columns.");
+    const lists = await section("Lists");
+    await within(lists).findByRole("cell", { name: "Sites" });
+    expect(cellsOf(rowOf(lists, "Sites"))[2]).toBe("");
+  });
+
+  it("leaves out a column whose list isn't sent, rather than guess its class", async () => {
+    openPage({
+      "GET /api/lists": () => Response.json({ lists: [sizes] }),
+    });
+    const columns = await section("Columns");
+    await within(columns).findByRole("cell", { name: "Profile" });
+    expect(within(columns).queryByRole("cell", { name: "Site" })).toBeNull();
+  });
+
+  it("shows a column taking its list's class only once the lists are read, never as General first", async () => {
+    let answer: (response: Response) => void = () => undefined;
+    openPage({
+      "GET /api/lists": () =>
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
+    });
+    const columns = await section("Columns");
+    // Profile has a class of its own, so it would be shown as soon as the columns are read, were the
+    // columns not held for the lists; Site with it, as General.
+    await expect(
+      within(columns).findByRole("cell", { name: "Profile" }, { timeout: 500 }),
+    ).rejects.toThrow();
+    expect(within(columns).queryByRole("cell", { name: "Site" })).toBeNull();
+    answer(Response.json({ lists: [{ ...sites, visibility: "personal" }] }));
+    const site = await within(columns).findByRole("cell", { name: "Site" });
+    expect(cellsOf(site.closest("tr") as HTMLElement)[1]).toBe("Personal");
+  });
+
+  it("says why the columns can't be shown when the lists can't be read, and tries both again", async () => {
+    let failing = true;
+    openPage({
+      "GET /api/lists": () =>
+        failing
+          ? Response.json({ error: "Internal Server Error" }, { status: 500 })
+          : Response.json({ lists: [sites] }),
+    });
+    const columns = await screen.findByText(/the columns/u);
+    failing = false;
+    await userEvent.click(
+      within(columns.closest("[role='alert']") as HTMLElement).getByRole(
+        "button",
+        { name: "Try again" },
+      ),
+    );
+    expect(
+      await within(await section("Columns")).findByRole("cell", {
+        name: "Site",
+      }),
+    ).toBeTruthy();
   });
 
   it("shows the approved lists with the columns using them", async () => {
@@ -160,10 +253,11 @@ describe("the Data classes page", () => {
       expect(cellsOf(rowOf(lists, "Sites"))).toEqual([
         "Sites",
         "General",
-        "Site",
+        "These People columns use it: Site.",
         "Change class…",
       ]);
     });
+    expect(cellsOf(rowOf(lists, "Sizes"))[2]).toBe("No People column uses it.");
     expect(within(lists).queryByRole("cell", { name: "Drafted" })).toBe(null);
     expect(within(lists).queryByRole("cell", { name: "Removed" })).toBe(null);
   });
@@ -406,9 +500,18 @@ describe("the Data classes page", () => {
       await screen.findByText("Fathom could not load the lists."),
     ).toBeTruthy();
     failing = false;
-    for (const retry of screen.getAllByRole("button", { name: "Try again" })) {
-      await userEvent.click(retry);
-    }
+    const retry = (what: string) =>
+      userEvent.click(
+        within(
+          screen
+            .getByText(`Fathom could not load ${what}.`)
+            .closest("[role='alert']") as HTMLElement,
+        ).getByRole("button", { name: "Try again" }),
+      );
+    // The lists first, since trying the columns again reads the lists too.
+    await retry("the lists");
+    expect(await screen.findByRole("cell", { name: "Sizes" })).toBeTruthy();
+    await retry("the columns");
     expect(await screen.findByRole("cell", { name: "Profile" })).toBeTruthy();
     expect(await screen.findByRole("cell", { name: "Sizes" })).toBeTruthy();
   });

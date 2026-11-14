@@ -7,6 +7,8 @@
 import { describe, expect, it } from "vitest";
 import type { Permission } from "./access.ts";
 import {
+  classesNamedIn,
+  columnClass,
   builtInColumnTiers,
   changesHiringPlan,
   changesField,
@@ -420,5 +422,47 @@ describe("the views on the pages a role reaches", () => {
       ],
       ["Capacity", "Allocations grouped by manager: needs Confidential"],
     ]);
+  });
+});
+
+describe("classesNamedIn", () => {
+  it("splits a line into its words and the classes beyond General it names", () => {
+    expect(
+      classesNamedIn("Sees Personal and Confidential data, General too."),
+    ).toEqual([
+      { words: "Sees " },
+      { dataClass: "personal" },
+      { words: " and " },
+      { dataClass: "confidential" },
+      { words: " data, General too." },
+    ]);
+  });
+
+  it("leaves no empty words where a line starts or ends with a class", () => {
+    expect(classesNamedIn("Personal")).toEqual([{ dataClass: "personal" }]);
+  });
+
+  it("finds only whole words, and leaves a line naming none whole", () => {
+    expect(classesNamedIn("Personally confidential.")).toEqual([
+      { words: "Personally confidential." },
+    ]);
+  });
+});
+
+describe("columnClass", () => {
+  it("is a column's own class, whatever its list's", () => {
+    expect(
+      columnClass({ visibility: "confidential" }, { visibility: "general" }),
+    ).toBe("confidential");
+  });
+
+  it("is its list's class for a column with none of its own", () => {
+    expect(columnClass({ visibility: null }, { visibility: "personal" })).toBe(
+      "personal",
+    );
+  });
+
+  it("is unknown while its list isn't", () => {
+    expect(columnClass({ visibility: null }, undefined)).toBeUndefined();
   });
 });

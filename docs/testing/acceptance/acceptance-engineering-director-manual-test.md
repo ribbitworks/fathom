@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-director.md", "docs/product/roles.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Acceptance, Engineering Director
@@ -210,12 +210,12 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `EAFA` Select **Change**.
   - **Expected:**
     - The dialog closes.
-    - **End date**'s class reads **General**, with no grey box or lock.
+    - **End date**'s class is an open eye, then **General**.
     - No notification shows, and the Publish button doesn't appear.
   - **Notes:**
 
 - [ ] `FAC4` Select the **Access history** page in the left-hand menu.
-  - **Expected:** The newest entry says "Engineering Director" moved "End date from Personal to General", with a yellow dot before it.
+  - **Expected:** The newest entry reads "Engineering Director changed End date's class: from Personal to General", with a yellow dot before it.
   - **Notes:**
 
 ### DIRECTOR-04: A Shared View Is Seen by Others Until It Is Taken Back

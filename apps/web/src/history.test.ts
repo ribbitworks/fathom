@@ -152,17 +152,24 @@ describe("describeDetails", () => {
     });
   });
 
-  it("names what moved to another class, and the classes, marked worth checking", () => {
+  it("names whose class changed, and the classes, marked worth checking", () => {
     const moved = entry("data-class-moved", {
       moved: "Start date",
       dataClass: "general",
       previousDataClass: "personal",
     });
     expect(describeAction("data-class-moved")).toEqual({
-      verb: "moved",
+      verb: "changed",
       caution: true,
     });
-    expect(describeDetails(moved)).toBe("Start date from Personal to General");
+    expect(subjectName(moved)).toBe("Start date's class");
+    expect(describeDetails(moved)).toBe("from Personal to General");
+  });
+
+  it("names no subject for a change of class that lacks what changed", () => {
+    expect(
+      subjectName(entry("data-class-moved", { dataClass: "general" })),
+    ).toBeNull();
   });
 
   it("names a class this version does not know as it was stored", () => {
@@ -171,9 +178,7 @@ describe("describeDetails", () => {
       dataClass: "secret",
       previousDataClass: "general",
     });
-    expect(describeDetails(moved)).toBe(
-      "the Fictional Sites list from General to secret",
-    );
+    expect(describeDetails(moved)).toBe("from General to secret");
   });
 
   it("names the table exported and its classified columns, most sensitive first", () => {
@@ -214,8 +219,6 @@ describe("describeDetails", () => {
       moved: "End date",
       dataClass: "general",
     });
-    expect(describeDetails(moved)).toBe(
-      "End date from an unrecorded class to General",
-    );
+    expect(describeDetails(moved)).toBe("from an unrecorded class to General");
   });
 });

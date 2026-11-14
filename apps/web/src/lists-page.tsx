@@ -279,6 +279,7 @@ function ListsTable({
           draft={original.draft}
           unpublished={mark === undefined && original.draft?.unpublished}
           heldBy={list.heldBy}
+          dataClass={list.visibility}
           facts={<ListFacts list={list} />}
         >
           <Link

@@ -10,12 +10,11 @@ import { Modal, Stack, Text } from "@mantine/core";
 import { Fragment, useState } from "react";
 import { DialogActions } from "./dialog-actions.tsx";
 import { type ExportQuestionWords, failedExport } from "./exports.ts";
-// The Roles page's colours for the class words, shared rather than copied, as Issues records.
-import classWords from "./roles-page.module.css";
+import questionClasses from "./export-question.module.css";
 
 // The class is always one of the fixed classes, each a style of the module.
 // eslint-disable-next-line security/detect-object-injection
-const classColour = (dataClass: ClassifiedTier) => classWords[dataClass];
+const classColour = (dataClass: ClassifiedTier) => questionClasses[dataClass];
 
 // The class is always one of the fixed classes, each a key of the names.
 // eslint-disable-next-line security/detect-object-injection

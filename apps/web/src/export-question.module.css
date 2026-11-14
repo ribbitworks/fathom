@@ -1,0 +1,15 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The export question's styles. */
+
+/* Each class held, named in its own colour, deep in light mode and bright in dark, so it is seen in
+   both. */
+.personal {
+  color: var(--mantine-color-orange-text);
+  font-weight: 600;
+}
+
+.confidential {
+  color: var(--mantine-color-red-text);
+  font-weight: 600;
+}

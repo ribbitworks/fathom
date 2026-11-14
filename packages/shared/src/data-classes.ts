@@ -59,12 +59,46 @@ export const classNames: Record<Tier, string> = {
   confidential: "Confidential",
 };
 
-// What each class holds, as the Decisions Log's Data classes defines it.
-export const classDescriptions: Record<Tier, string> = {
-  general: "Seen by everyone whose role reaches the page",
-  personal: "People's private and HR details",
-  confidential: "Business data not yet announced",
-};
+// A column's class: its own, or that of the list it draws on, or nothing while that list isn't
+// known.
+export const columnClass = (
+  column: { readonly visibility: Tier | null },
+  list: { readonly visibility: Tier } | undefined,
+): Tier | undefined => column.visibility ?? list?.visibility;
+
+// A part of a line Fathom writes: its own words, or a class it names.
+export type ClassNamedPart = { words: string } | { dataClass: Tier };
+
+const classOfName = new Map(
+  tierSchema.options
+    .filter((dataClass) => dataClass !== "general")
+    // The class is always one of the fixed classes.
+    // eslint-disable-next-line security/detect-object-injection
+    .map((dataClass) => [classNames[dataClass], dataClass] as const),
+);
+
+// Longest first, so a class whose name holds another's is found whole. Built only from the fixed
+// classes' names, which hold no pattern characters.
+// eslint-disable-next-line security/detect-non-literal-regexp
+const classNamePattern = new RegExp(
+  `\\b(${[...classOfName.keys()]
+    .sort((first, second) => second.length - first.length)
+    .join("|")})\\b`,
+  "u",
+);
+
+// A line Fathom writes split into its words and the classes beyond
+// General it names, so each shows as a class. Words someone typed are never split, since theirs may
+// mean something else.
+export function classesNamedIn(line: string): ClassNamedPart[] {
+  return line
+    .split(classNamePattern)
+    .filter((part) => part !== "")
+    .map((part) => {
+      const dataClass = classOfName.get(part);
+      return dataClass === undefined ? { words: part } : { dataClass };
+    });
+}
 
 export const classMoveSchema = z.object({ dataClass: tierSchema });
 

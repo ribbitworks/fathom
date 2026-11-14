@@ -159,15 +159,16 @@ describe("the list of roles", () => {
     ).toBeDefined();
   });
 
-  it("marks the sensitivity tiers a description names in their own colours", async () => {
+  it("shows a description as typed, with no class marked in its words", async () => {
     serverAnswers({
       "GET /api/session": roleEditor,
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
-    await screen.findByText("Fictional Auditors");
-    expect(screen.getByText("Personal").className).toMatch(/personal/);
-    expect(screen.getByText("Confidential").className).toMatch(/confidential/);
+    const description = await screen.findByText(
+      "Checks Personal and Confidential data for audits.",
+    );
+    expect(description.querySelector("svg")).toBeNull();
   });
 
   it("shows a loading indicator until the roles arrive", async () => {
@@ -528,6 +529,30 @@ describe("the summary of what a role allows", () => {
       permissionDescriptions["people:view"].allows,
       permissionDescriptions["personal:view"].allows,
     ]);
+  });
+
+  it("marks a class named in a line Fathom writes with the class's symbol", async () => {
+    serverAnswers({
+      "GET /api/session": roleEditor,
+      "GET /api/roles": roleList,
+    });
+    renderApp("/roles");
+    const dialog = await openDialog(
+      "Edit Fictional Auditors",
+      "Edit Fictional Auditors",
+    );
+    const line = summaryLines(dialog, "Doesn't see").indexOf(
+      "Org chart on future dates: needs Confidential",
+    );
+    const summary = within(dialog).getByLabelText("What the role allows");
+    const item = within(summary)
+      .getByRole("heading", { name: "Doesn't see" })
+      .parentElement?.querySelectorAll("li")
+      .item(line);
+    expect(item?.querySelector("[class*='classSymbol'] svg")).not.toBeNull();
+    expect(item?.textContent).toBe(
+      "Org chart on future dates: needs Confidential",
+    );
   });
 
   it("marks lines added since the dialog opened, and keeps those taken away, struck through", async () => {

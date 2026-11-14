@@ -500,7 +500,13 @@ describe("a web link column", () => {
     const heading = await screen.findByRole("button", {
       name: "Profile column, Confidential",
     });
-    expect(within(heading).getByText("Confidential")).toBeTruthy();
+    expect(within(heading).getByText(", Confidential")).toBeTruthy();
+    const symbol = heading.querySelector("[class*='classSymbol']");
+    expect(symbol?.querySelector("svg")).not.toBeNull();
+    await userEvent.hover(symbol as HTMLElement);
+    expect((await screen.findByRole("tooltip")).textContent).toBe(
+      "Confidential",
+    );
   });
 
   it("offers no change of class to a role without Classify data, nor a class for a new column", async () => {

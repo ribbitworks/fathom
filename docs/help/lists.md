@@ -109,4 +109,4 @@ See [Data classes](data-classes.md) for more.
 - **Needed for** and a meaning, under a choice's greyed-out **Retire** and **Remove**, means it's the last choice with that meaning, so it has to stay.
 - **Needs a choice**, after a list's name, such as **Positions needs a choice**, says the same for a list that must keep at least one.
 - **Retired**, in a yellow box, marks a list or choice drafted to be retired.
-- **A lock with Personal or Confidential**, in a grey box after a list's name, gives its class. A **General** list has none.
+- **An eye with a line through it** before a list's name means its class is **Personal**, and **a lock with a keyhole** means **Confidential**. Point at it to see the class. A **General** list has none.

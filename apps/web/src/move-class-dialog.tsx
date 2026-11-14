@@ -6,7 +6,6 @@
 // column is given its class with the same choice.
 
 import {
-  classDescriptions,
   classNames,
   type Permission,
   type Tier,
@@ -29,7 +28,7 @@ export interface MoveSubject {
   refusal?: ((to: Tier) => string | undefined) | undefined;
 }
 
-// The classes data may be moved to from its class now, each described, or turned off with why.
+// The classes data may be moved to from its class now, each turned off with why where it can't be.
 export function ClassChoice({
   from,
   value,
@@ -65,8 +64,7 @@ export function ClassChoice({
               // The class is always one of the fixed classes.
               // eslint-disable-next-line security/detect-object-injection
               label={classNames[dataClass]}
-              // eslint-disable-next-line security/detect-object-injection
-              description={refused ?? classDescriptions[dataClass]}
+              description={refused}
               disabled={refused !== undefined}
             />
           );

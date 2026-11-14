@@ -1,0 +1,23 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The Data classes page's styles. */
+
+/* Its three tables share their columns' widths, so their columns line up down the page; what each
+   row is about takes the rest. */
+.classTable {
+  table-layout: fixed;
+}
+
+.nameColumn {
+  width: 16rem;
+  overflow-wrap: anywhere;
+}
+
+.classColumn {
+  width: 9rem;
+}
+
+/* As wide as Change class… with the reason under it that it can't be used. */
+.actionsColumn {
+  width: 12rem;
+}

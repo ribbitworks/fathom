@@ -19,8 +19,8 @@ Most changes in Fathom are drafts, which wait for someone to approve them before
 The page has up to three sections:
 
 - **Built-in details** are the details Fathom has from the start, such as **Start date** and **Hiring plan**. **Needed by** lists the pages, views and columns that need each one.
-- **Columns** are the columns your organization added to **People**. You see this section if your role sees people.
-- **Lists** are your organization's lists of choices, with the columns on **People** that use each one. You see this section if your role sees configuration.
+- **Columns** are the columns your organization added to **People**. **About** says where each one shows, and the list it takes its class from, if it has one. You see this section if your role sees people.
+- **Lists** are your organization's lists of choices. **About** names the columns on **People** that use each one. You see this section if your role sees configuration.
 
 A column that picks from a list takes that list's class. So it has no **Change class…** of its own; you change its list's class instead.
 
@@ -47,4 +47,5 @@ In the dialog, you can't choose a class your role can't see, so data never moves
 
 ## Marks on the Page
 
-- **A grey box with a lock and Personal or Confidential** gives a class other than **General**. You see it in **Class** on this page, after a column's heading on **People**, and after a list's name on **Lists**.
+- **A symbol before a class's name** shows the class: an open eye for **General**, an eye with a line through it for **Personal**, and a lock with a keyhole for **Confidential**.
+- **The same symbol before a column's or list's name** gives its class, on **People** and **Lists**. Point at it to see the class's name. A **General** column or list has no symbol there.

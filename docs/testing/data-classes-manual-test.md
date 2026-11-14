@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies what only a person can judge of changing the class of data: the Data classes page and its three sections, the dialog that changes a class, the lock marking a classified column or list, and how a change of class changes what another role sees. Changing a list's class from its panel is in [Lists](lists-manual-test.md) LIST-07.
+Verifies what only a person can judge of changing the class of data: the Data classes page and its three sections, the dialog that changes a class, the symbol marking a classified column or list, and how a change of class changes what another role sees. Changing a list's class from its panel is in [Lists](lists-manual-test.md) LIST-07.
 
 ## Test Environment
 
@@ -48,31 +48,32 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - Three sections follow the heading: **Built-in details**, **Columns** and **Lists**
     - Each section is a table with **Name**, **Class**, and a column saying what each row is about
     - Most rows end with a **Change class…** button
-    - **Name** and **Class** stay on one line
-    - Only the third column wraps
+    - **Name**, **Class** and the third column start at the same place in all three tables
+    - The **Change class…** buttons line up down the page
   - **Notes:**
 
 - [ ] `753A` Look at the **Built-in details** section.
   - **Expected:**
     - It lists **Start date**, **End date**, **Past managers**, **Feature team dates**, **Future reorganizations** and **Hiring plan**
-    - **Start date**'s class is a grey box with a lock and **Personal**
+    - **Start date**'s class is an eye with a line through it, then **Personal**
     - **Start date**'s **Needed by** starts "Org chart on other dates"
-    - **Hiring plan**'s class is a grey box with a lock and **Confidential**
+    - **Hiring plan**'s class is a lock with a keyhole, then **Confidential**
+    - The three class names in **Class** start at the same place
     - **Hiring plan**'s **Needed by** is empty
   - **Notes:**
 
 - [ ] `A726` Look at the **Columns** section.
   - **Expected:**
     - It lists People's added columns, such as **Site**
-    - Each column's class reads **General**
-    - **Site**'s third column reads "People, with the class of Sites"
+    - Each column's class is an open eye, then **General**
+    - **Site**'s third column reads "People shows it. It has the class of its list, Sites."
     - **Site** has no **Change class…** button
   - **Notes:**
 
 - [ ] `2A27` Look at the **Lists** section.
   - **Expected:**
     - It lists the lists, such as 'Sites'
-    - The third column of 'Sites' reads "Site"
+    - The third column of 'Sites' reads "These People columns use it: Site."
     - Each list's row ends with a **Change class…** button
   - **Notes:**
 
@@ -118,7 +119,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - A dialog titled "Change the class of Start date" opens
     - **Personal** is chosen
-    - **General**, **Personal** and **Confidential** each have a line saying what the class holds
+    - **General**, **Personal** and **Confidential** are listed, with no line under any of them
   - **Notes:**
 
 - [ ] `87E5` Press Esc.
@@ -143,7 +144,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - The dialog closes
     - No notification shows
     - The Publish button doesn't appear
-    - **Start date**'s class reads **General**, with no grey box or lock
+    - **Start date**'s class is an open eye, then **General**
   - **Notes:**
 
 - [ ] `B18D` Select **Change class…** on the **Start date** row.
@@ -171,14 +172,14 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `4155` Select **Change**.
   - **Expected:**
     - The dialog closes
-    - **End date**'s class reads **General**, with no grey box or lock
+    - **End date**'s class is an open eye, then **General**
   - **Notes:**
 
 - [ ] `8F30` Select the **Access history** page in the left-hand menu.
   - **Expected:**
     - The newest entry has a yellow dot before it
-    - It says the Engineering Director moved "End date from Personal to General"
-    - The entry under it says the Engineering Director moved "Start date from Personal to General"
+    - It reads "Engineering Director changed End date's class: from Personal to General"
+    - The entry under it reads "Engineering Director changed Start date's class: from Personal to General"
   - **Notes:**
 
 - [ ] `605E` Sign out, and sign in as the Feature Lead, `feature.lead@fathom.test`.
@@ -211,7 +212,6 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - **Class** is shown
     - **General** is chosen
-    - **Personal** and **Confidential** each have a line saying what the class holds
   - **Notes:**
 
 - [ ] `DC8C` Select **Add column**.
@@ -248,8 +248,12 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `58D9` Select **Change**.
   - **Expected:**
     - The dialog closes
-    - The **Portfolio** heading is followed by a grey box with a lock and **Personal**
-    - The box lines up with the heading's text
+    - An eye with a line through it is before **Portfolio** in its heading
+    - The eye is centred on the heading's text
+  - **Notes:**
+
+- [ ] `9C4E` Point at the eye before **Portfolio**.
+  - **Expected:** A tip reads "Personal".
   - **Notes:**
 
 - [ ] `EAD1` Open the column menu of **Site**.
@@ -259,7 +263,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `D938` Select the **Data classes** page in the left-hand menu.
-  - **Expected:** In the **Columns** section, **Portfolio**'s class is a grey box with a lock and **Personal**.
+  - **Expected:** In the **Columns** section, **Portfolio**'s class is an eye with a line through it, then **Personal**.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

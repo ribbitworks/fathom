@@ -15,6 +15,7 @@
 // opened.
 
 import {
+  classesNamedIn,
   classNames,
   type DataClasses,
   gridActions,
@@ -79,6 +80,7 @@ import {
   withNeedsMet,
 } from "./roles.ts";
 import { type SignedInUser, sessionQuery } from "./session.ts";
+import { ClassName } from "./status-mark.tsx";
 
 type Dialog =
   | { kind: "create"; from?: RoleSummary }
@@ -89,9 +91,17 @@ const detailsSchema = roleRequestSchema.pick({ name: true, description: true });
 
 type Details = z.infer<typeof detailsSchema>;
 
-// A line of the summary or the confirmation.
+// A line of the summary or the confirmation, which Fathom writes, with each class it names marked
+// as a class.
 function Line({ text }: { text: string }) {
-  return <TierWords text={text} />;
+  return classesNamedIn(text).map((part, index) =>
+    "dataClass" in part ? (
+      // Parts keep their place, since the line is split the same way each time.
+      <ClassName key={index} dataClass={part.dataClass} />
+    ) : (
+      part.words
+    ),
+  );
 }
 
 // The permission granted with another, such as viewing with editing, if a granted one brings it.
@@ -103,32 +113,6 @@ function impliedBy(
     // The permission is always one of the shared list.
     // eslint-disable-next-line security/detect-object-injection
     (other) => impliedPermissions[other] === permission,
-  );
-}
-
-// Text with the sensitivity tiers it names in their own colours, so Personal and Confidential
-// stand out.
-function TierWords({ text }: { text: string }) {
-  return (
-    <>
-      {text.split(/\b(Personal|Confidential)\b/u).map((part, index) =>
-        part === "Personal" || part === "Confidential" ? (
-          <span
-            // Parts keep their place, since the text is split the same way each time.
-            key={index}
-            className={
-              part === "Personal"
-                ? roleClasses.personal
-                : roleClasses.confidential
-            }
-          >
-            {part}
-          </span>
-        ) : (
-          part
-        ),
-      )}
-    </>
   );
 }
 
@@ -801,9 +785,7 @@ export function RolesPage({
                   <Table.Tr key={role.id}>
                     <Table.Td fw={600}>{role.name}</Table.Td>
                     <Table.Td>
-                      <Text fz="sm">
-                        <TierWords text={role.description} />
-                      </Text>
+                      <Text fz="sm">{role.description}</Text>
                     </Table.Td>
                     <Table.Td>{count(role.accounts)}</Table.Td>
                     <Table.Td>

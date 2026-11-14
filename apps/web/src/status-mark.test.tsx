@@ -450,11 +450,12 @@ describe("a row's values", () => {
 });
 
 describe("a class's mark", () => {
-  it("names a class beyond General, and takes room for its lock and box besides its words", () => {
+  it("names a class beyond General, and takes a symbol's room, not its words'", () => {
     expect(classWords("confidential")).toEqual(["Confidential"]);
     expect(classWords("general")).toEqual([]);
     expect(classWords(undefined)).toEqual([]);
-    expect(classMarkChars("personal")).toBeGreaterThan("Personal".length);
+    expect(classMarkChars("personal")).toBeLessThan("Personal".length);
+    expect(classMarkChars("personal")).toBeGreaterThan(0);
     expect(classMarkChars("general")).toBe(0);
   });
 });

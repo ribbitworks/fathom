@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/roles*.ts*", "apps/web/src/accounts-page.tsx", "apps/web/src/settings-page.tsx", "apps/server/src/data/settings.ts", "apps/server/src/data/role-administration.ts", "apps/server/src/routes/roles.ts", "packages/shared/src/access.ts", "packages/shared/src/roles.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Editing Roles
@@ -35,7 +35,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu and the account menu. This test adds:
 
 - **Summary:** the panel on the right of the role dialog, headed **Sees**, **Doesn't see**, **Can** and **Cannot**.
-- **Tier colours:** the word **Personal** in bold orange and the word **Confidential** in bold red.
+- **Class mark:** as [Manual Test Basics](manual-test-basics.md#terms) sets out, here before the word **Personal** or **Confidential** in a line of the summary.
 
 ## Test Cases
 
@@ -81,7 +81,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `DE52` Read the **Description** column.
   - **Expected:**
     - **Engineering Manager** reads "Edits the plan and allocations, sees people, with everyone's Personal and Confidential data, the hiring plan, and configuration, and proposes feature teams."
-    - Wherever **Personal** or **Confidential** appears, it is in its tier colour.
+    - **Personal** and **Confidential** are in the same plain text as the rest of the description, with no class mark.
   - **Notes:**
 
 ### ROLE-03: The Dialog Shows What a Role Grants
@@ -115,7 +115,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - **Doesn't see:** **Accounts**, **Roles**, **Settings**, **Data classes** and **Access history**.
     - **Can:** a line for each ticked box, such as seeing the plan, approving drafts of features and releases, and seeing feature teams.
     - **Cannot** includes "Cannot change allocations.", "Cannot change feature teams.", "Cannot reclassify data." and "Cannot approve their own drafted changes."
-    - **Cannot** also includes "Cannot change Confidential data.", with **Confidential** in its tier colour.
+    - **Cannot** also includes "Cannot change Confidential data.", with the class mark before **Confidential**.
     - **Cannot** includes neither "Personal details are hidden wherever they appear, and people who haven't started yet aren't listed." nor "Confidential data is hidden wherever it appears."
   - **Notes:**
 

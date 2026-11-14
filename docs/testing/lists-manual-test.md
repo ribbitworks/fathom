@@ -181,7 +181,6 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - A dialog titled "Change the class of Positions" opens
     - **General** is chosen
     - **Personal** and **Confidential** can each be chosen
-    - **Personal** and **Confidential** each have a line saying what it holds
   - **Notes:**
 
 - [ ] `784A` Select **Personal**.
@@ -193,8 +192,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - The dialog closes
     - No dot is beside **Positions**
     - The Publish button doesn't appear
-    - A grey box with a lock and **Personal** follows **Positions** in its panel
-    - A grey box with a lock and **Personal** follows **Positions** in the table of lists
+    - An eye with a line through it is before **Positions** in its panel
+    - An eye with a line through it is before **Positions** in the table of lists
   - **Notes:**
 
 - [ ] `EACE` Sign out, and sign in as the Feature Lead, `feature.lead@fathom.test`.
@@ -211,7 +210,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `DACD` Select the **People** page in the left-hand menu.
   - **Expected:**
-    - The **Position** column's heading is followed by a grey box with a lock and **Personal**
+    - An eye with a line through it is before **Position** in its column's heading
     - **New person** is not greyed out
   - **Notes:**
 

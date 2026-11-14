@@ -19,7 +19,7 @@ import { Text, VisuallyHidden } from "@mantine/core";
 import { createContext, type ReactNode, useContext } from "react";
 import classes from "./pages.module.css";
 import marks from "./status-mark.module.css";
-import { Icon } from "./icons.tsx";
+import { Icon, type IconName } from "./icons.tsx";
 import { Tipped } from "./table-tips.tsx";
 
 export interface DraftLike {
@@ -357,6 +357,7 @@ export function DraftedItem({
   unpublished = false,
   part,
   slot = false,
+  dataClass,
   facts,
   children,
 }: {
@@ -373,6 +374,8 @@ export function DraftedItem({
   unpublished?: boolean | string | undefined;
   part?: DraftedPart | undefined;
   slot?: boolean | undefined;
+  // The class of the item's values, marked between its draft's dots and the item.
+  dataClass?: Tier | undefined;
   // Facts about the item, such as Built in, in boxes after it and before the draft's own box, since
   // a fact tells what the item is and the draft's box what is about to happen to it.
   facts?: ReactNode;
@@ -402,6 +405,7 @@ export function DraftedItem({
     </>
   );
   const spoken = [
+    ...classWords(dataClass),
     ...(shown === undefined
       ? []
       : part === undefined
@@ -417,6 +421,7 @@ export function DraftedItem({
   return (
     <>
       {slot ? <MarkSlot>{dots}</MarkSlot> : dots}
+      {dataClass !== undefined && <ClassMark dataClass={dataClass} />}
       {children}
       {facts}
       {kind !== undefined && <KindBox hidden>{kind}</KindBox>}
@@ -560,27 +565,53 @@ export const classWords = (dataClass: Tier | undefined): string[] =>
       // eslint-disable-next-line security/detect-object-injection
       [classNames[dataClass]];
 
-// The characters a class's mark takes besides its words: its lock and its box's padding and border.
-const classFrameChars = 3;
+const classSymbols: Record<Tier, IconName> = {
+  general: "generalData",
+  personal: "personalData",
+  confidential: "confidentialData",
+};
 
-// How many characters a class's mark takes, as a header's width counts it.
+// How many characters a class's mark takes, as a header's width counts it: a symbol, as wide as a
+// draft's dot with its gap.
 export const classMarkChars = (dataClass: Tier | undefined): number =>
-  classWords(dataClass).reduce(
-    (chars, words) => chars + words.length + classFrameChars,
-    0,
-  );
+  classWords(dataClass).length * draftMarkChars;
 
-// The class of data an item's values belong to, as a lock and the class's name in a grey box after
-// it, so nobody shares them by mistake; nothing for General, which everyone reaching the page sees.
-export function ClassMark({ dataClass }: { dataClass: Tier }) {
+function ClassSymbol({ dataClass }: { dataClass: Tier }) {
+  return (
+    // The class is always one of the fixed classes.
+    // eslint-disable-next-line security/detect-object-injection
+    <Icon name={classSymbols[dataClass]} size={lockSize} />
+  );
+}
+
+// The class of data an item's values belong to, as its symbol before the item, so nobody shares
+// them by mistake, naming the class as its tip; nothing for General, which everyone reaching the page
+// sees. The item it marks says the class aloud.
+function ClassMark({ dataClass }: { dataClass: Tier }) {
   return classWords(dataClass).map((words) => (
-    <FactBox key={words}>
-      <span className={marks.classWords}>
-        <Icon name="lock" size={lockSize} />
-        {words}
-      </span>
-    </FactBox>
+    <Tipped
+      key={words}
+      tip={words}
+      className={[marks.classSymbol, marks.dotPlace].join(" ")}
+    >
+      <ClassSymbol dataClass={dataClass} />
+    </Tipped>
   ));
+}
+
+// A class named in words, its symbol before its name. General has a symbol here too, so no class in
+// a list of them is drawn differently, though an item in General is left unmarked.
+export function ClassName({ dataClass }: { dataClass: Tier }) {
+  return (
+    <span className={marks.className}>
+      <span className={[marks.classSymbol, marks.dotPlace].join(" ")}>
+        <ClassSymbol dataClass={dataClass} />
+      </span>
+      {/* The class is always one of the fixed classes. */}
+      {/* eslint-disable-next-line security/detect-object-injection */}
+      {classNames[dataClass]}
+    </span>
+  );
 }
 
 // What an empty value says, in grey, where a draft's mark would otherwise mark nothing, as where a
@@ -743,6 +774,7 @@ export function DraftedValue({
   fields,
   named,
   emptied,
+  dataClass,
   children,
 }: {
   // The record's draft, whatever the view.
@@ -753,11 +785,16 @@ export function DraftedValue({
   named?: string | undefined;
   // The value's name, given when it is empty.
   emptied?: string | undefined;
+  dataClass?: Tier | undefined;
   children?: ReactNode;
 }) {
   const changed = changedValue(draft, ...fields);
   return (
-    <DraftedItem draft={changed} was={wasOf(draft, fields[0], named)}>
+    <DraftedItem
+      draft={changed}
+      was={wasOf(draft, fields[0], named)}
+      dataClass={dataClass}
+    >
       {emptied !== undefined && changed !== undefined ? (
         <EmptiedValue name={emptied} />
       ) : (

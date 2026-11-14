@@ -4,7 +4,7 @@
 // added columns treats alike: each column's cells, a change applied to a record as the table shows
 // it before it is saved, and the values a new record is given.
 
-import type { Field, List } from "@fathom/shared";
+import { columnClass, type Field, type List } from "@fathom/shared";
 import type { CellChange, CellSource } from "./cell-kinds.tsx";
 import { cellColumn, type CellRecord, type Column } from "./record-grid.tsx";
 
@@ -40,7 +40,7 @@ export const addedColumn = <Rec extends CellRecord, Change extends CellChange>(
       choices: list?.choices ?? [],
       multiple: field.multiple,
     }),
-    dataClass: field.visibility ?? list?.visibility,
+    dataClass: columnClass(field, list),
   };
 };
 

@@ -6,6 +6,20 @@
 
 import type { ReactNode } from "react";
 
+const lock = (
+  <>
+    <rect x="3.5" y="7" width="9" height="7" rx="1.5" />
+    <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+  </>
+);
+
+const eye = (
+  <>
+    <path d="M1.5 8s2.4-4 6.5-4 6.5 4 6.5 4-2.4 4-6.5 4-6.5-4-6.5-4z" />
+    <circle cx="8" cy="8" r="1.8" />
+  </>
+);
+
 const paths = {
   overview: (
     <>
@@ -161,10 +175,19 @@ const paths = {
       <path d="M6.5 3v10" />
     </>
   ),
-  lock: (
+  lock,
+  generalData: eye,
+  personalData: (
     <>
-      <rect x="3.5" y="7" width="9" height="7" rx="1.5" />
-      <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+      {eye}
+      <path d="M2.5 13.5l11-11" />
+    </>
+  ),
+  // A keyhole tells it apart from the lock of a record someone else is changing.
+  confidentialData: (
+    <>
+      {lock}
+      <path d="M8 9.6v1.8" />
     </>
   ),
 } satisfies Record<string, ReactNode>;

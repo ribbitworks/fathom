@@ -3314,7 +3314,9 @@ describe("drafts of columns", () => {
       within(header("Previous site")).getByText(", Draft: added"),
     ).toBeDefined();
     expect(
-      within(header("Team roles")).getByText(", Rejected: Keep the name"),
+      within(header("Team roles")).getByText(
+        ", Personal, Rejected: Keep the name",
+      ),
     ).toBeDefined();
     // The renamed column is tinted, and stays one column, with its live name on a Live line under
     // its name.
@@ -3813,7 +3815,9 @@ describe("unpublished and held changes", () => {
       within(header("Site")).getByText(`, Draft, being changed by ${holder}`),
     ).toBeDefined();
     expect(
-      within(header("Role on team")).getByText(", Draft, unpublished"),
+      within(header("Role on team")).getByText(
+        ", Personal, Draft, unpublished",
+      ),
     ).toBeDefined();
     let menu = await menuOf(header("Site"));
     expect(within(menu).getAllByText(held)).toHaveLength(1);

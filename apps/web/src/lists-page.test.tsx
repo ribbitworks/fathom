@@ -541,7 +541,7 @@ describe("the table of lists", () => {
       .map((tableRow) => tableRow.textContent);
     expect(rows).toEqual([
       "LocationsOffices and labs.(3) Kestrel Bay, Northmere, Corran Quay",
-      "SkillsPersonal(1) Rust",
+      "Skills, Personal(1) Rust",
       "Empty List",
     ]);
   });
@@ -619,7 +619,7 @@ describe("the table of lists", () => {
         "(4) Fenwick, Kestrel Bay, Northmere, Corran QuayReordered, Draft: reordered",
       ],
       [
-        "SkillsPersonal",
+        "Skills, Personal",
         "What people know., Rejected, changed from no description: Not yet",
         "(1) Rust, Rejected",
       ],
@@ -641,7 +641,7 @@ describe("the table of lists", () => {
         "Offices and labs.",
         "(3) Kestrel Bay, Northmere, Corran QuayReordered, Draft: reordered",
       ],
-      ["SkillsPersonal", "No description", "(1) Go"],
+      ["Skills, Personal", "No description", "(1) Go"],
       ["Empty List", "No description", ", Draft"],
     ]);
   });
@@ -712,7 +712,7 @@ describe("the table of lists", () => {
     expect(await names()).toEqual([
       "LocationsRetired, Draft: retired",
       "Retired",
-      "RegionsConfidentialRestored, Draft: restored",
+      "Regions, ConfidentialRestored, Draft: restored",
     ]);
     await userEvent.click(screen.getByRole("link", { name: "Locations" }));
     const opened = await screen.findByRole("region", { name: /./ });
@@ -727,7 +727,7 @@ describe("the table of lists", () => {
     });
     await waitFor(async () => {
       expect(await names()).toEqual([
-        "RegionsConfidentialRestored, Draft: restored",
+        "Regions, ConfidentialRestored, Draft: restored",
         "Retired",
         "LocationsRetired, Draft: retired",
       ]);
@@ -3648,9 +3648,10 @@ describe("built-in lists and lists with meanings", () => {
       .getByRole("link", { name: "Hiring states" })
       .closest("[role='row']") as HTMLElement;
     expect(within(stateRow).getByText("Built in")).toBeTruthy();
-    expect(within(stateRow).getByText("Confidential")).toBeTruthy();
+    expect(within(stateRow).getByText(", Confidential")).toBeTruthy();
+    expect(stateRow.querySelector("[class*='classSymbol'] svg")).not.toBeNull();
     expect(within(panel()).getByText("Built in")).toBeTruthy();
-    expect(within(panel()).getByText("Confidential")).toBeTruthy();
+    expect(within(panel()).getByText(", Confidential")).toBeTruthy();
     // Without Classify data, an approved list's class is neither changed nor moved.
     expect(screen.queryByRole("button", { name: "Change class…" })).toBe(null);
     expect(

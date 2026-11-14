@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies that Fathom keeps the appearance chosen in each browser and follows the computer's on **System**, and that every page, with its main panels, dialogs and menus, its draft marks and its class words, reads well in dark mode: words easy to read, marks and tints easy to see and tell apart, and nothing left light. It is the one manual test that checks dark mode, as [Testing Standards § Manual Tests](../standards/testing.md#manual-tests) sets out.
+Verifies that Fathom keeps the appearance chosen in each browser and follows the computer's on **System**, and that every page, with its main panels, dialogs and menus, its draft marks and its class marks, reads well in dark mode: words easy to read, marks and tints easy to see and tell apart, and nothing left light. It is the one manual test that checks dark mode, as [Testing Standards § Manual Tests](../standards/testing.md#manual-tests) sets out.
 
 ## Test Environment
 
@@ -689,9 +689,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `F493` Select the **Roles** page in the left-hand menu.
-  - **Expected:**
-    - Every word is easy to read.
-    - Wherever **Personal** or **Confidential** is in a description, it is bold, **Personal** in orange and **Confidential** in red, each easy to read.
+  - **Expected:** Every word is easy to read.
   - **Notes:**
 
 - [ ] `7A65` Select the **Settings** page in the left-hand menu.
@@ -700,8 +698,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `602A` Select the **Data classes** page in the left-hand menu.
   - **Expected:**
-    - The page and the grey boxes are easy to read.
-    - Each lock lines up with its word.
+    - The page is easy to read.
+    - Each class's symbol is easy to see, and centred on its word.
   - **Notes:**
 
 - [ ] `A8E0` Select the **Change history** page in the left-hand menu.

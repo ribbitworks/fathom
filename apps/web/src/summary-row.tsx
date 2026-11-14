@@ -5,6 +5,7 @@
 // draft, its first cell with the record's marks and name, and the cell naming its parts, such as a
 // list's choices, after the mark of their drafts.
 
+import type { Tier } from "@fathom/shared";
 import { Fragment, type ReactElement, type ReactNode } from "react";
 import { draftRowClass } from "./list-drafts.tsx";
 import classes from "./pages.module.css";
@@ -116,6 +117,7 @@ export function SummaryName({
   draft,
   heldBy,
   unpublished,
+  dataClass,
   facts,
   children,
 }: {
@@ -125,6 +127,7 @@ export function SummaryName({
   draft: (DraftLike & { changed: readonly string[]; live: object }) | undefined;
   heldBy?: string | undefined;
   unpublished?: boolean | undefined;
+  dataClass?: Tier | undefined;
   facts?: ReactNode;
   children: ReactNode;
 }) {
@@ -136,7 +139,12 @@ export function SummaryName({
         unpublished={unpublished}
         facts={facts}
       >
-        <DraftedValue draft={draft} fields={["name"]} named="Name">
+        <DraftedValue
+          draft={draft}
+          fields={["name"]}
+          named="Name"
+          dataClass={dataClass}
+        >
           {children}
         </DraftedValue>
       </RowMarks>

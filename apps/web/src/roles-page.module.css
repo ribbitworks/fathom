@@ -1,19 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-/* The Roles page: the sensitivity tiers named in text, in their own colours, and the summary of what
-   a role allows, where a line added since the dialog opened is bold in an accent colour, and a line
-   taken away is struck through in red. Each colour is deep in light mode and bright in dark, so it
-   is seen in both. */
-
-.personal {
-  color: var(--mantine-color-orange-text);
-  font-weight: 600;
-}
-
-.confidential {
-  color: var(--mantine-color-red-text);
-  font-weight: 600;
-}
+/* The Roles page's summary of what a role allows, where a line added since the dialog opened is
+   bold in an accent colour, and a line taken away is struck through in red. Each colour is deep in
+   light mode and bright in dark, so it is seen in both. */
 
 .added {
   --added-colour: var(--mantine-color-teal-8);

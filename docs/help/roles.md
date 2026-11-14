@@ -73,4 +73,4 @@ You're done when the new role shows in the list.
 - **A greyed-out tick** comes with another box, such as **View** with **Edit**. It can also mean the box must stay: Fathom always keeps one active account that manages accounts.
 - **A greyed-out empty box** needs another box first, such as **Approve** on **People**, which needs **View** on **People**. Unticking a box also unticks the ones that need it.
 - **Accounts** gives how many active accounts hold the role.
-- **Personal** and **Confidential** are coloured in descriptions, so the classes stand out.
+- **Personal** and **Confidential** have their class's symbol before them in the lines Fathom writes about a role. A description shows exactly as it was typed.

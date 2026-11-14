@@ -82,7 +82,6 @@ import {
   DraftedItem,
   DraftedValue,
   emptiedWords,
-  ClassMark,
   FactBox,
   LiveLine,
   LiveRowMarks,
@@ -188,15 +187,9 @@ function builtInNote(key: BuiltInList, mayChange: boolean): string {
   }
 }
 
-// The facts about a list: whether Fathom builds it in, so it cannot be retired or removed, and the
-// class of the values chosen from it.
+// The facts about a list: whether Fathom builds it in, so it cannot be retired or removed.
 export function ListFacts({ list }: { list: List }) {
-  return (
-    <>
-      {list.builtIn && <FactBox>Built in</FactBox>}
-      <ClassMark dataClass={list.visibility} />
-    </>
-  );
+  return list.builtIn && <FactBox>Built in</FactBox>;
 }
 
 // A choice's meaning in words, or nothing for one the server no longer knows, which it sends
@@ -1317,6 +1310,7 @@ export function ListPanel({
                   draft={original.draft}
                   fields={["name"]}
                   named="Name"
+                  dataClass={list.visibility}
                 >
                   <h2
                     id={titleId}

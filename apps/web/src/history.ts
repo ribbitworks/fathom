@@ -119,7 +119,7 @@ const actionWords: Record<AccessAction, ActionWords> = {
   },
   // Worth checking, since a move can show data to more people.
   "data-class-moved": {
-    verb: "moved",
+    verb: "changed",
     caution: true,
   },
   "data-exported": {
@@ -152,8 +152,16 @@ export function nameOf(person: {
   return person.email ? `${name} (${person.email})` : name;
 }
 
-// Whom an entry names, if anyone: an account, or a person whose details changed.
-export function subjectName({ action, subject }: HistoryEntry): string | null {
+// Whom or what an entry names, if anything: an account, a person whose details changed, or the data
+// whose class changed.
+export function subjectName({
+  action,
+  subject,
+  details,
+}: HistoryEntry): string | null {
+  if (action === "data-class-moved") {
+    return details.moved === undefined ? null : `${details.moved}'s class`;
+  }
   // The verb already says whose password or name it was.
   if (
     subject === null ||
@@ -277,7 +285,7 @@ export function describeDetails({ action, details }: HistoryEntry): string {
     })}`;
   }
   if (details.moved !== undefined) {
-    return `${details.moved} from ${className(details.previousDataClass)} to ${className(details.dataClass)}`;
+    return `from ${className(details.previousDataClass)} to ${className(details.dataClass)}`;
   }
   return "";
 }
