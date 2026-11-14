@@ -74,6 +74,7 @@ import {
   draftedLists,
   isKind,
   type ListDraftTarget,
+  builtInFirst,
   type ListKind,
   listKindName,
   listKindSchema,
@@ -193,8 +194,8 @@ function ListsTable({
   // draft removes stays, struck through.
   const isRetired = (list: List) =>
     showLive ? retiredLive(list) : list.retired;
-  const current = lists.filter((list) => !isRetired(list));
-  const retired = lists.filter(isRetired);
+  const current = builtInFirst(lists.filter((list) => !isRetired(list)));
+  const retired = builtInFirst(lists.filter(isRetired));
   // A choice drafted to be removed is struck through, as in the panel, and not counted.
   const removed = (choice: List["choices"][number]) =>
     choice.draft?.action === "deleted";

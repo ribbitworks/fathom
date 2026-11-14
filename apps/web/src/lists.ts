@@ -51,6 +51,12 @@ export function listKindName(kind: ListKind): string {
 export const isKind = (list: List, kind: ListKind): boolean =>
   kind === "all" || (list.builtIn != null) === (kind === "built-in");
 
+// The lists Fathom needs first, then an organization's own, each kept in the order given.
+export const builtInFirst = (lists: readonly List[]): List[] => [
+  ...lists.filter((list) => list.builtIn != null),
+  ...lists.filter((list) => list.builtIn == null),
+];
+
 export const listsQuery = queryOptions({
   queryKey: ["lists"],
   queryFn: async () => (await getJson("/api/lists", listsSchema)).lists,

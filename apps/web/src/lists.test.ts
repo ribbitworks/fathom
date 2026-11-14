@@ -5,7 +5,12 @@
 
 import type { List } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import { draftedLists, retiredLive, withRetiring } from "./lists.ts";
+import {
+  builtInFirst,
+  draftedLists,
+  retiredLive,
+  withRetiring,
+} from "./lists.ts";
 
 const waiting = { state: "waiting" as const, madeBy: null, madeAt: null };
 const rejected = { ...waiting, state: "rejected" as const, reason: "Not yet" };
@@ -95,5 +100,33 @@ describe("drafts that retire or restore", () => {
     expect(withRetiring(retired).retiring).toBe(true);
     expect(withRetiring(restored).retiring).toBe(false);
     expect(withRetiring(renamed)).toBe(renamed.draft);
+  });
+});
+
+describe("the order of lists", () => {
+  const list = (name: string, builtIn: List["builtIn"] = null): List => ({
+    id: name,
+    name,
+    description: "",
+    visibility: "general",
+    retired: false,
+    builtIn,
+    choices: [],
+  });
+
+  it("puts the built-in lists first, then the custom ones, each in the order given", () => {
+    const lists = [
+      list("Department"),
+      list("Feature sizes", "feature-sizes"),
+      list("Equipment"),
+      list("Positions", "positions"),
+    ];
+
+    expect(builtInFirst(lists).map(({ name }) => name)).toEqual([
+      "Feature sizes",
+      "Positions",
+      "Department",
+      "Equipment",
+    ]);
   });
 });

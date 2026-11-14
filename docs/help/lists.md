@@ -44,7 +44,7 @@ For a role that may classify data, select **Change class…** in the list's pane
 ### Find a List
 
 - Type in **Search lists**.
-- Choose **All**, **Built in** or **Custom** in the switch beside it.
+- Choose **All**, **Built in** or **Custom** in the switch beside it. With **All**, the built-in lists come first, then your own.
 
 ## Marks and Terms
 

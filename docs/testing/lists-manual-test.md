@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Built-in Lists and Lists with Meanings
@@ -50,8 +50,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `97EB` Read the **Name** column of the **Feature priorities**, **Feature risks**, **Feature sizes**, **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses** rows.
   - **Expected:**
-    - Each name has a grey **Built in** box after it
-    - No other list has one
+    - Each name has a grey **Built in** box after it.
+    - These seven rows are the first in the table, in this order.
+    - No other list has a **Built in** box.
   - **Notes:**
 
 - [ ] `2C8A` Select **Positions**.
