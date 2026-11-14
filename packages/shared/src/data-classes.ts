@@ -286,7 +286,7 @@ export function hiringPlanWithoutClass(
 export const seesEmployment = (access: ClassAccess): boolean =>
   seesField(access, "startDate") && seesField(access, "endDate");
 
-export const needsClassify = "Moving data to another class needs Classify data";
+export const needsClassify = "Changing a class needs Classify data";
 
 // Why a role may not move data from one class to another, or undefined when it may: moving needs
 // Classify data and sight of both classes, so nobody moves data they cannot see, or out of sight.
@@ -385,7 +385,11 @@ const viewPlaces: Record<
   ],
 };
 
-// The views needing a built-in detail, and People's columns holding it, by name.
+// The planned hires, which the hiring plan's class shows or hides whole, with their drafts and
+// history.
+const hiringPlanRows = "Planned hires on People and the Org chart";
+
+// The views needing a built-in detail, and People's columns and rows holding it, by name.
 export function shownIn(field: ClassifiedField): string[] {
   const views = classifiedViewSchema.options.flatMap((view) =>
     // The view is always one of the fixed views listed above.
@@ -399,7 +403,8 @@ export function shownIn(field: ClassifiedField): string[] {
   const columns = [...builtInColumnNames].flatMap(([key, label]) =>
     classifiedColumns.get(key) === field ? [`People's ${label}`] : [],
   );
-  return [...views, ...columns];
+  const rows = field === "hiringPlan" ? [hiringPlanRows] : [];
+  return [...views, ...columns, ...rows];
 }
 
 // The classes a view needs that a role does not see, least sensitive first.

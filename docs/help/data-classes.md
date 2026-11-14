@@ -18,7 +18,7 @@ Most changes in Fathom are drafts, which wait for someone to approve them before
 
 The page has up to three sections:
 
-- **Built-in details** are the details Fathom has from the start, such as **Start date** and **Hiring plan**. **Needed by** lists the pages, views and columns that need each one.
+- **Built-in details** are the details Fathom has from the start, such as **Start date** and **Hiring plan**. **About** lists the pages, views, columns and rows that need each one.
 - **Columns** are the columns your organization added to **People**. **About** says where each one shows, and the list it takes its class from, if it has one. You see this section if your role sees people.
 - **Lists** are your organization's lists of choices. **About** names the columns on **People** that use each one. You see this section if your role sees configuration.
 

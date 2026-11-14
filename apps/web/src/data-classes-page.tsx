@@ -61,14 +61,11 @@ interface ClassRow {
 
 function ClassSection({
   title,
-  about,
   rows,
   access,
   onChange,
 }: {
   title: string;
-  // The heading of the column saying what each row is about.
-  about: string;
   rows: readonly ClassRow[];
   access: ClassAccess;
   onChange: (subject: MoveSubject) => void;
@@ -86,7 +83,7 @@ function ClassSection({
               <Table.Tr>
                 <Table.Th className={pageClasses.nameColumn}>Name</Table.Th>
                 <Table.Th className={pageClasses.classColumn}>Class</Table.Th>
-                <Table.Th>{about}</Table.Th>
+                <Table.Th>About</Table.Th>
                 <Table.Th className={pageClasses.actionsColumn}>
                   <VisuallyHidden>Actions</VisuallyHidden>
                 </Table.Th>
@@ -210,7 +207,7 @@ export function DataClassesPage({ access }: { access: ClassAccess }) {
     name: classifiedFieldNames[field],
     // eslint-disable-next-line security/detect-object-injection
     dataClass: access.dataClasses[field],
-    about: shownIn(field).join(", "),
+    about: `These need it: ${shownIn(field).join(", ")}.`,
     change: {
       move: (to) => moveFieldClass(field, to),
       moved: () => {
@@ -293,7 +290,6 @@ export function DataClassesPage({ access }: { access: ClassAccess }) {
       <Stack gap="lg">
         <ClassSection
           title="Built-in details"
-          about="Needed by"
           rows={details}
           access={access}
           onChange={classMove.open}
@@ -310,7 +306,6 @@ export function DataClassesPage({ access }: { access: ClassAccess }) {
           ) : (
             <ClassSection
               title="Columns"
-              about="About"
               rows={columns}
               access={access}
               onChange={classMove.open}
@@ -325,7 +320,6 @@ export function DataClassesPage({ access }: { access: ClassAccess }) {
           ) : (
             <ClassSection
               title="Lists"
-              about="About"
               rows={listRows}
               access={access}
               onChange={classMove.open}

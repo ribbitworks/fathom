@@ -124,12 +124,15 @@ describe("the Data classes page", () => {
     expect(cellsOf(rowOf(details, "Start date"))).toEqual([
       "Start date",
       "Personal",
-      "People on other dates, Org chart on other dates, People on future dates, Org chart on future dates, Feature assignments, Feature assignments grouped by manager, Allocations grouped by manager, Allocations, People's Start",
+      "These need it: People on other dates, Org chart on other dates, People on future dates, Org chart on future dates, Feature assignments, Feature assignments grouped by manager, Allocations grouped by manager, Allocations, People's Start.",
       "Change class…",
     ]);
-    expect(
-      within(rowOf(details, "Hiring plan")).getByText("Confidential"),
-    ).toBeTruthy();
+    expect(cellsOf(rowOf(details, "Hiring plan"))).toEqual([
+      "Hiring plan",
+      "Confidential",
+      "These need it: Planned hires on People and the Org chart.",
+      "Change class…This role can't see Confidential data",
+    ]);
     // The symbol is seen only, so the class is read once, by its name.
     const classCell = within(rowOf(details, "Start date")).getAllByRole(
       "cell",

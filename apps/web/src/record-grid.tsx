@@ -2605,7 +2605,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                     {ownClass === null ? (
                       <>
                         <Menu.Item disabled>Change class…</Menu.Item>
-                        <MenuNote>Takes the class of its list</MenuNote>
+                        <MenuNote>This column takes its list's class</MenuNote>
                       </>
                     ) : (
                       <Menu.Item

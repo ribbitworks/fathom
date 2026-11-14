@@ -108,8 +108,10 @@ describe("what shows a built-in detail", () => {
     expect(shownIn("managerHistory")).toContain("People's Manager assigned");
   });
 
-  it("names nothing for a detail no view needs yet", () => {
-    expect(shownIn("hiringPlan")).toEqual([]);
+  it("names the planned hires the hiring plan's class shows or hides", () => {
+    expect(shownIn("hiringPlan")).toEqual([
+      "Planned hires on People and the Org chart",
+    ]);
   });
 });
 
@@ -264,7 +266,7 @@ describe("why a role may not move data", () => {
 
   it("needs Classify data", () => {
     expect(whyNoMove(everything, "general", "personal")).toBe(
-      "Moving data to another class needs Classify data",
+      "Changing a class needs Classify data",
     );
   });
 

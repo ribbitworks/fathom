@@ -1780,7 +1780,7 @@ describe("columns", () => {
         await screen.findByRole("menuitem", { name: "Change class…" })
       ).hasAttribute("data-disabled"),
     ).toBe(true);
-    expect(screen.getByText("Takes the class of its list")).toBeTruthy();
+    expect(screen.getByText("This column takes its list's class")).toBeTruthy();
   });
 
   it("changes a column from its header's menu, and deletes it with Undo", async () => {

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Moving data to another class: a built-in detail, such as start dates, a list, or a column with a
+// Changing the class of data: a built-in detail, such as start dates, a list, or a column with a
 // class of its own. The data access layer checks the actor may.
 
 import {

@@ -31,7 +31,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 
 ## Stage: Snapshots, Exports, and Hiring
 
-The hiring workflow, moving planned hires between states as each role allows; snapshots of the plan; exports; and gender among people's details. Its features are in the [Snapshots, Exports, and Hiring](https://github.com/jlarue26/fathom/milestone/2) milestone.
+The hiring workflow, moving planned hires between states as each role allows; snapshots of the plan; and exports. Its features are in the [Snapshots, Exports, and Hiring](https://github.com/jlarue26/fathom/milestone/2) milestone.
 
 ## Stage: Your Own Fields and Tables
 

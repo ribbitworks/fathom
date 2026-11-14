@@ -56,10 +56,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - It lists **Start date**, **End date**, **Past managers**, **Feature team dates**, **Future reorganizations** and **Hiring plan**
     - **Start date**'s class is an eye with a line through it, then **Personal**
-    - **Start date**'s **Needed by** starts "Org chart on other dates"
+    - **Start date**'s **About** starts "These need it: People on other dates"
     - **Hiring plan**'s class is a lock with a keyhole, then **Confidential**
     - The three class names in **Class** start at the same place
-    - **Hiring plan**'s **Needed by** is empty
+    - **Hiring plan**'s **About** reads "These need it: Planned hires on People and the Org chart."
   - **Notes:**
 
 - [ ] `A726` Look at the **Columns** section.
@@ -259,7 +259,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `EAD1` Open the column menu of **Site**.
   - **Expected:**
     - **Change class…** is greyed out
-    - "Takes the class of its list" is under it
+    - "This column takes its list's class" is under it
   - **Notes:**
 
 - [ ] `D938` Select the **Data classes** page in the left-hand menu.

@@ -125,9 +125,7 @@ describe("a built-in detail's class", () => {
         other.cookie,
       );
       expect(response.statusCode).toBe(403);
-      expect(refusal(response)).toBe(
-        "Moving data to another class needs Classify data",
-      );
+      expect(refusal(response)).toBe("Changing a class needs Classify data");
       expect(await sessionClasses(other.cookie)).toEqual(defaultClasses);
     },
   );
