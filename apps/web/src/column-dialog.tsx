@@ -26,7 +26,7 @@ import {
   Button,
   Checkbox,
   Group,
-  NativeSelect,
+  Select,
   Stack,
   Text,
   TextInput,
@@ -181,12 +181,15 @@ export function ColumnDialog({
             setName(event.currentTarget.value);
           }}
         />
-        <NativeSelect
+        {/* Drop-down lists that open on Enter, as the browser's own list would take Enter as
+            adding the column. */}
+        <Select
           label="Type"
           description={
             field === undefined ? undefined : "A column's type cannot change"
           }
           disabled={field !== undefined}
+          allowDeselect={false}
           data={fieldTypeSchema.options.map((option) => ({
             value: option,
             // The type is always one of the fixed types named above.
@@ -194,8 +197,8 @@ export function ColumnDialog({
             label: typeNames[option],
           }))}
           value={type}
-          onChange={(event) => {
-            setType(fieldTypeSchema.parse(event.currentTarget.value));
+          onChange={(value) => {
+            setType(fieldTypeSchema.parse(value));
           }}
         />
         {type !== "choice" ? (
@@ -209,10 +212,9 @@ export function ColumnDialog({
           )
         ) : (
           <>
-            <NativeSelect
+            <Select
               label="List"
               data={[
-                { value: "", label: "" },
                 // A list in a class beyond General names it, and one only drafted to be added says
                 // it is new.
                 ...offered.map((list) => {
@@ -231,11 +233,9 @@ export function ColumnDialog({
                   };
                 }),
               ]}
-              value={listId ?? ""}
+              value={listId}
               error={listProblem}
-              onChange={(event) => {
-                setListId(event.currentTarget.value || null);
-              }}
+              onChange={setListId}
             />
             <Checkbox
               label="Several choices"

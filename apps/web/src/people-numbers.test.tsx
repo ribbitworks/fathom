@@ -11,6 +11,7 @@ import { cellKinds } from "./cell-kinds.tsx";
 import { decimal } from "./numbers.ts";
 import {
   bodyOf,
+  chooseIn,
   fictionalUser,
   renderApp,
   serverAnswers,
@@ -363,10 +364,7 @@ describe("a Number column", () => {
     await userEvent.click(screen.getByRole("button", { name: "New column" }));
     const dialog = await screen.findByRole("dialog", { name: "New column" });
     await userEvent.type(within(dialog).getByLabelText("Name"), "Rank");
-    await userEvent.selectOptions(
-      within(dialog).getByRole("combobox", { name: "Type" }),
-      "Number",
-    );
+    await chooseIn(dialog, "Type", "Number");
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Add column" }),
     );

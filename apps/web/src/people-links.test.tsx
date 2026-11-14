@@ -16,6 +16,7 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   bodyOf,
+  chooseIn,
   fictionalUser,
   renderApp,
   serverAnswers,
@@ -400,11 +401,8 @@ describe("a web link column", () => {
     await userEvent.click(screen.getByRole("button", { name: "New column" }));
     const dialog = await screen.findByRole("dialog", { name: "New column" });
     await userEvent.type(within(dialog).getByLabelText("Name"), "Reviews");
-    await userEvent.selectOptions(
-      within(dialog).getByRole("combobox", { name: "Type" }),
-      "Web link",
-    );
-    expect(within(dialog).queryByRole("combobox", { name: "List" })).toBeNull();
+    await chooseIn(dialog, "Type", "Web link");
+    expect(within(dialog).queryByLabelText("List")).toBeNull();
     expect(within(dialog).queryByLabelText("Several choices")).toBeNull();
     fireEvent.click(
       within(dialog).getByRole("radio", { name: /^Confidential/ }),
@@ -517,10 +515,7 @@ describe("a web link column", () => {
     await userEvent.keyboard("{Escape}");
     await userEvent.click(screen.getByRole("button", { name: "New column" }));
     const dialog = await screen.findByRole("dialog", { name: "New column" });
-    await userEvent.selectOptions(
-      within(dialog).getByRole("combobox", { name: "Type" }),
-      "Web link",
-    );
+    await chooseIn(dialog, "Type", "Web link");
     expect(within(dialog).queryByRole("radio")).toBe(null);
   });
 

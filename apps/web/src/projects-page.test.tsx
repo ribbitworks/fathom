@@ -13,10 +13,12 @@ import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   bodyOf,
+  chooseIn,
   fictionalRelease,
   fictionalUser,
   findRowActions,
   noFeatureColumns,
+  optionsIn,
   recordDraft,
   renderApp,
   savedFiles,
@@ -2876,20 +2878,13 @@ describe("the Features page", () => {
       expect(
         within(dialog).queryByLabelText("Offered on planned hires"),
       ).toBeNull();
-      const options = within(
-        within(dialog).getByLabelText("List"),
-      ).getAllByRole("option");
-      expect(options.map(({ textContent }) => textContent)).toEqual([
-        "",
-        "Fictional Sizes",
-      ]);
+      expect(await optionsIn(dialog, "List")).toEqual(["Fictional Sizes"]);
+      await userEvent.click(
+        screen.getByRole("option", { name: "Fictional Sizes" }),
+      );
       await userEvent.type(
         within(dialog).getByLabelText("Name"),
         "Fictional New",
-      );
-      await userEvent.selectOptions(
-        within(dialog).getByLabelText("List"),
-        sizes.id,
       );
       await userEvent.click(
         within(dialog).getByRole("button", { name: "Add column" }),
@@ -2914,10 +2909,7 @@ describe("the Features page", () => {
     it("asks no visibility for a column that holds its own values", async () => {
       await openWith(withColumns());
       const dialog = await newColumn();
-      await userEvent.selectOptions(
-        within(dialog).getByLabelText("Type"),
-        "number",
-      );
+      await chooseIn(dialog, "Type", "Number");
       expect(within(dialog).queryByLabelText("List")).toBeNull();
       expect(within(dialog).queryByRole("radiogroup")).toBeNull();
       expect(within(dialog).queryByLabelText(/visible|see/i)).toBeNull();

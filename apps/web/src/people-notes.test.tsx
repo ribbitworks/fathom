@@ -18,6 +18,7 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   bodyOf,
+  chooseIn,
   fictionalUser,
   renderApp,
   serverAnswers,
@@ -579,11 +580,8 @@ describe("a Note column", () => {
     await userEvent.click(screen.getByRole("button", { name: "New column" }));
     const dialog = await screen.findByRole("dialog", { name: "New column" });
     await userEvent.type(within(dialog).getByLabelText("Name"), "Reviews");
-    await userEvent.selectOptions(
-      within(dialog).getByRole("combobox", { name: "Type" }),
-      "Note",
-    );
-    expect(within(dialog).queryByRole("combobox", { name: "List" })).toBeNull();
+    await chooseIn(dialog, "Type", "Note");
+    expect(within(dialog).queryByLabelText("List")).toBeNull();
     fireEvent.click(within(dialog).getByRole("radio", { name: /^Personal/ }));
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Add column" }),

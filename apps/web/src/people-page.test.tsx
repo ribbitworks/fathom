@@ -17,10 +17,12 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   bodyOf,
+  chooseIn,
   detailRow,
   fictionalUser,
   findRowActions,
   greeting,
+  optionsIn,
   renderApp,
   rowActions,
   savedFiles,
@@ -1583,13 +1585,12 @@ describe("columns", () => {
     });
     const dialog = await newColumnDialog();
     await userEvent.type(within(dialog).getByLabelText("Name"), "Office");
-    const listSelect = within(dialog).getByRole("combobox", { name: "List" });
-    expect(
-      within(listSelect)
-        .getAllByRole("option")
-        .map((option) => option.textContent),
-    ).toEqual(["", "Sites", "Roles on the team (Personal)", "Positions"]);
-    await userEvent.selectOptions(listSelect, "Sites");
+    expect(await optionsIn(dialog, "List")).toEqual([
+      "Sites",
+      "Roles on the team (Personal)",
+      "Positions",
+    ]);
+    await userEvent.click(screen.getByRole("option", { name: "Sites" }));
     await userEvent.click(within(dialog).getByLabelText("Several choices"));
     await userEvent.click(within(dialog).getByLabelText("Must be filled in"));
     await userEvent.click(within(dialog).getByLabelText("Must be filled in"));
@@ -1647,11 +1648,11 @@ describe("columns", () => {
         }),
     });
     const dialog = await newColumnDialog();
-    expect(
-      within(within(dialog).getByRole("combobox", { name: "List" }))
-        .getAllByRole("option")
-        .map((option) => option.textContent),
-    ).toEqual(["", "Sites", "Guilds (new)", "Chapters (new, Confidential)"]);
+    expect(await optionsIn(dialog, "List")).toEqual([
+      "Sites",
+      "Guilds (new)",
+      "Chapters (new, Confidential)",
+    ]);
   });
 
   it("says what is wrong with a new column, and shows the server's refusals", async () => {
@@ -1669,10 +1670,7 @@ describe("columns", () => {
     expect(within(dialog).getByText("Already a column")).toBeDefined();
     await userEvent.clear(within(dialog).getByLabelText("Name"));
     await userEvent.type(within(dialog).getByLabelText("Name"), "Desk");
-    await userEvent.selectOptions(
-      within(dialog).getByRole("combobox", { name: "List" }),
-      "Sites",
-    );
+    await chooseIn(dialog, "List", "Sites");
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Add column" }),
     );
@@ -1692,10 +1690,8 @@ describe("columns", () => {
       ),
     ).toBeDefined();
     expect(bodyOf(fetch, "POST", "/api/people/columns")).toHaveLength(2);
-    await userEvent.selectOptions(
-      within(dialog).getByRole("combobox", { name: "List" }),
-      "",
-    );
+    // Choosing the list chosen again empties it.
+    await chooseIn(dialog, "List", "Sites");
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Add column" }),
     );
@@ -1703,6 +1699,23 @@ describe("columns", () => {
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Cancel" }),
     );
+  });
+
+  it("opens the Type list on Enter, rather than adding the column", async () => {
+    await openPeople();
+    const dialog = await newColumnDialog();
+    act(() => {
+      within(dialog).getByLabelText("Type").focus();
+    });
+
+    await userEvent.keyboard("{Enter}");
+
+    expect(
+      (await screen.findAllByRole("option")).map(
+        ({ textContent }) => textContent,
+      ),
+    ).toContain("Number");
+    expect(within(dialog).queryByText("List needed")).toBeNull();
   });
 
   it("closes the column dialog with Esc", async () => {

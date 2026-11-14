@@ -22,6 +22,7 @@ import { mergeThemeOverrides } from "@mantine/core";
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory } from "@tanstack/react-router";
 import { render, screen, within } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 import { vi } from "vitest";
 import { App } from "./app.tsx";
 import { theme } from "./theme.ts";
@@ -311,3 +312,22 @@ export const findRowActions = async (name: string) =>
     await screen.findAllByRole("button", { name: `Actions for ${name}` }),
     name,
   );
+
+// Opens a drop-down list, named by its label, within what holds it, and gives its options' words.
+export async function optionsIn(holder: HTMLElement, label: string) {
+  await userEvent.click(within(holder).getByLabelText(label));
+  return (await screen.findAllByRole("option")).map(
+    ({ textContent }) => textContent,
+  );
+}
+
+// Chooses an option, by its words, in a drop-down list named by its label, within what holds it;
+// choosing the one already chosen empties a list that may be empty.
+export async function chooseIn(
+  holder: HTMLElement,
+  label: string,
+  option: string,
+) {
+  await userEvent.click(within(holder).getByLabelText(label));
+  await userEvent.click(await screen.findByRole("option", { name: option }));
+}
