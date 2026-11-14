@@ -1806,10 +1806,21 @@ describe("the timeline", () => {
       "2027-02-15",
     );
     const releases = items(timeline, "Releases of Fictional Majors");
-    expect(releases.map((item) => item.getAttribute("title"))).toEqual([
+    // Each release's words are its tip in the timeline's one tooltip, which a draft's dot inside it
+    // takes over while pointed at, rather than the browser's own tip shown on top of the dot's.
+    expect(releases.map((item) => item.hasAttribute("title"))).toEqual([
+      false,
+      false,
+    ]);
+    expect(releases.map((item) => item.getAttribute("data-tip"))).toEqual([
       "Fictional One: 27.1 to 27.2, ships 2027-06-30.",
       "Fictional Two: 27.3, ships 2027-08-14. Draft.",
     ]);
+    expect(
+      releases[1]
+        ?.querySelector("[aria-hidden] [data-tip]")
+        ?.getAttribute("data-tip"),
+    ).toBe("Draft");
     const [one, two] = releases.map((item) =>
       [...item.querySelectorAll<HTMLElement>(":scope > [aria-hidden]")].map(
         ({ style }) => [style.left, style.width],
@@ -2195,7 +2206,7 @@ describe("the timeline", () => {
       });
 
     const names = (timeline: HTMLElement, list: string) =>
-      items(timeline, list).map((item) => item.getAttribute("title"));
+      items(timeline, list).map((item) => item.getAttribute("data-tip"));
 
     const liveList = "Releases of Fictional Majors as they are live";
 

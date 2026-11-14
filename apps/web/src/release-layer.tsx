@@ -27,7 +27,7 @@ import {
   useDraftView,
   viewedDraft,
 } from "./status-mark.tsx";
-import { Tipped } from "./table-tips.tsx";
+import { TableTips, Tipped, tipAttribute } from "./table-tips.tsx";
 import {
   charactersWidth,
   type DayRange,
@@ -98,7 +98,7 @@ function ReleaseBar({
         left: px(left),
         width: px(Math.max(end, shipsAt) - left),
       }}
-      title={words}
+      {...{ [tipAttribute]: words }}
     >
       <span
         className={[
@@ -146,8 +146,10 @@ function ReleaseLanes({
   markOf: (id: string) => BarMark;
   px: Px;
 }) {
+  // One tooltip for the stream's releases, showing the tip of what is pointed at, so a draft's dot
+  // shows its own tip alone, rather than with its release's.
   return (
-    <>
+    <TableTips>
       <ul
         className={classes.timelineLane}
         aria-label={`Cycles of ${stream.name}`}
@@ -200,7 +202,7 @@ function ReleaseLanes({
           ))}
         </ul>
       )}
-    </>
+    </TableTips>
   );
 }
 
