@@ -66,7 +66,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'Platform team' is under "Manager".
     - It ends with "Hide 8 reports".
     - Two cards with dashed edges are beside it at the top:
-      - 'TBD-3', with 'Engineering Manager' under it
+      - "TBD-" and a number, with 'Engineering Manager' under it
       - 'REQ-2047', with 'Software Engineer' under it
   - **Notes:**
 
@@ -521,12 +521,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
 
-- [ ] `A6AC` Read the card for 'TBD-3', at the top of the chart.
+- [ ] `A6AC` Read the card at the top of the chart that reads "TBD-" and a number, with 'Engineering Manager' under it.
   - **Expected:**
     - The card has a grey dashed edge.
     - The card has no shadow.
-    - 'TBD-3' is grey and in italics.
-    - 'Engineering Manager' is under 'TBD-3'.
+    - "TBD-" and its number are grey and in italics.
     - Under that, a grey box reads "Planned, no date".
     - It ends with "Hide 2 reports".
   - **Notes:**
@@ -535,21 +534,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The cards are:
       - 'Platform engineer', with 'Software Engineer' under the name
-      - 'TBD-5', in grey italics, with 'SDET' under it
+      - "TBD-" and a number, in grey italics, with 'SDET' under it
     - Each has a dashed edge.
-    - Each is joined to 'TBD-3' by a line.
+    - Each is joined to the planned Engineering Manager's card by a line.
     - 'Platform engineer' reads "Planned, expected" and the month six months after the month Restore the Seed Data was run, such as "May 2027" for a run in November 2026.
   - **Notes:**
 
-- [ ] `47AC` On the card for 'TBD-3', select the small org chart button at the top right.
+- [ ] `47AC` On the planned Engineering Manager's card, select the small org chart button at the top right.
   - **Expected:**
-    - 'TBD-3' is at the top of the chart.
+    - That card is at the top of the chart.
     - Its two planned hires are under it.
-    - The page reads "Only the team of Engineering Manager, TBD-3 is shown."
+    - The page reads "Only the team of Engineering Manager, TBD-", the card's number, then "is shown."
   - **Notes:**
 
 - [ ] `A9EE` Select **Show everyone**.
-  - **Expected:** "Only the team of Engineering Manager, TBD-3 is shown." is gone.
+  - **Expected:** The line starting "Only the team of Engineering Manager" is gone.
   - **Notes:**
 
 ### ORG-17: A Manager Is Changed From an Earlier Date

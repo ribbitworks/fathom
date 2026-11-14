@@ -114,7 +114,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 | Dashed outline | A target cycle only, not staffed |
 | Diamond | A day: a milestone, or a release's Ships on day |
 | Triangle under the bar, the size of a diamond, named such as Needed by May | Needed by, at the end of its month |
-| Red Late or Not staffed pill at the end of a bar | Ends after its Needed by, or after its project's last milestone; or [Not staffed](../product/decisions.md#planning). Never a faint red outline. |
+| Red Late or Not staffed pill at the end of a bar | [Late](../product/decisions.md#planning) or [Not staffed](../product/decisions.md#planning). Never a faint red outline. |
 | Red line | Today, and only ever a thin line, such as a timeline's line, the strip's underline and the line along the top of the Features Board's current heading, never red words, a red fill or a red box, which mean a problem, such as Late |
 
 - **The language:** Each mark in the table above means one thing on every timeline. Drafts are drawn with the draft marks, as [Drafts](#drafts) sets out, and a dashed edge never means a draft. Today is red, as a thin line only, so it never reads as a problem, decided by the owner on 2026-11-13.

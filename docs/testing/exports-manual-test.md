@@ -34,7 +34,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses. This test adds:
 
 - **Export button:** the button showing an arrow pointing down onto a line, at the right of the page's heading, before the page's main button, such as **New person**. Pointing at it shows **Export**.
-- **Save dialog:** the browser's own dialog asking where to save a file. Chrome and Edge always open it for an export; Safari and Firefox open it only when their settings ask before each download, and otherwise save to the Downloads folder.
+- **Save dialog:** the browser's own dialog asking where to save a file. Chrome and Edge always open it for an export; Safari and Firefox open it only when their settings ask before each download, and otherwise save to the Downloads folder. Safari may first ask "Do you want to allow downloads on "localhost"?"; select **Allow**.
 
 ## Test Cases
 
@@ -89,7 +89,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `55F5` Select the **Access history** page in the left-hand menu.
-  - **Expected:** The newest entry reads "Engineering Director (`engineering.director@fathom.test`) exported People with Confidential data (Hiring plan) and Personal data (", the same columns as the dialog in Step `BA09`, then ")".
+  - **Expected:**
+    - The newest entry reads "Fathom Administrator (`fathom.administrator@fathom.test`) signed in: as Administrator".
+    - The entry under it reads "Engineering Director (`engineering.director@fathom.test`) exported People with Confidential data (Hiring plan) and Personal data (", the columns holding Personal data, including **Start** and **End**, then ")".
   - **Notes:**
 
 ### EXP-02: Exporting General Data Saves at Once

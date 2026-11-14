@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies the workflows of [Working as a Product Manager](../help/working-as-a-product-manager.md) on the seed data: keeping customers, proposals, projects and milestones current, planning a feature for a cycle, a team and a month, choosing a project's features and taking one off a proposal with a reason, as the scope history shows, making a release with a note, and approving and rejecting others' drafts, each sent on to an approver where the role needs one.
+Verifies the workflows of [Working as a Product Manager](../help/working-as-a-product-manager.md) on the seed data: keeping customers, proposals, projects and milestones current, planning a feature for a cycle, a team and a month, choosing a project's features and taking one off a proposal with a reason, as the scope history shows, making a release with a note, and approving and rejecting others' drafts, each sent on to an approver where the role needs one. It also checks that the Product Manager doesn't see someone who has not started.
 
 ## Test Environment
 
@@ -28,6 +28,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 - **Project Manager:** `project.manager@fathom.test`
 - **Feature Lead:** `feature.lead@fathom.test`, holding the Feature Lead role, its default, and the Engineering Manager role
 - **Engineering Director:** `engineering.director@fathom.test`
+- **Engineering Manager:** `engineering.manager@fathom.test`
 - **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as "Second Engineering Operations Manager"
 
 ## Common Procedures
@@ -613,3 +614,17 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.
+
+### PRODUCT-09: Someone Who Has Not Started Is Listed Only for Those Who See Personal Details
+
+**Account:** Product Manager, `product.manager@fathom.test`, changed from PRODUCT-08, signed in again after Reset the Database.
+
+**Preconditions:** Reset the Database run after PRODUCT-08. Signed in with this account. **People** page open from the left-hand menu.
+
+- [ ] `4D1A` Search for `Chatura Abbott`.
+  - **Expected:**
+    - No row is shown.
+    - The table has no **Start** or **End** column.
+  - **Notes:**
+
+An account that sees Personal details does see her, as [EXECUTIVE-03](acceptance-executive-manual-test.md#executive-03-an-executive-sees-people-and-administration-without-changing-them) checks.

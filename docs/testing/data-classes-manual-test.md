@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/shared/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Data Classes
@@ -86,7 +86,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 ### CLASS-02: Changing a Detail's Class Changes What Another Role Sees
 
-**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CLASS-01 ended with. Steps `2401`, `035D`, `605E` and `17BB` sign in as other accounts.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CLASS-01 ended with. Steps `2401`, `035D` and `605E` sign in as other accounts.
 
 **Preconditions:** Signed in with this account.
 
@@ -174,6 +174,13 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **End date**'s class reads **General**, with no grey box or lock
   - **Notes:**
 
+- [ ] `8F30` Select the **Access history** page in the left-hand menu.
+  - **Expected:**
+    - The newest entry has a yellow dot before it
+    - It says the Engineering Director moved "End date from Personal to General"
+    - The entry under it says the Engineering Director moved "Start date from Personal to General"
+  - **Notes:**
+
 - [ ] `605E` Sign out, and sign in as the Feature Lead, `feature.lead@fathom.test`.
   - **Expected:** The top bar's right end reads "Feature Lead".
   - **Notes:**
@@ -186,20 +193,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:** **Start** and **End** columns are shown.
   - **Notes:**
 
-- [ ] `17BB` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
-  - **Expected:** The top bar's right end reads "Engineering Director".
-  - **Notes:**
-
-- [ ] `8F30` Select the **Access history** page in the left-hand menu.
-  - **Expected:**
-    - The newest entry has a yellow dot before it
-    - It says the Engineering Director moved "End date from Personal to General"
-    - The entry under it says the Engineering Director moved "Start date from Personal to General"
-  - **Notes:**
-
 ### CLASS-03: Changing a Column's Class Marks Its Heading
 
-**Account:** Engineering Director, `engineering.director@fathom.test`, the same as CLASS-02 ended with.
+**Account:** Engineering Director, `engineering.director@fathom.test`, changed from CLASS-02.
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 

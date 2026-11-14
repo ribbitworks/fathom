@@ -603,16 +603,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **People** page open from the left-hand menu.
 
-- [ ] `51CD` In the search box above the table, type `TBD-3`.
+- [ ] `51CD` In the search box above the table, type `Engineering Manager TBD`, and write down the number in the planned Engineering Manager's name.
   - **Expected:** Three rows show:
-    - 'Engineering Manager, TBD-3', its name in grey italics
-    - 'Platform engineer', with 'Engineering Manager, TBD-3' in **Manager**
-    - 'SDET, TBD-5', with 'Engineering Manager, TBD-3' in **Manager**
+    - "Engineering Manager, TBD-" and a number, its name in grey italics
+    - 'Platform engineer', with that planned Engineering Manager in **Manager**
+    - "SDET, TBD-" and another number, with that planned Engineering Manager in **Manager**
   - **Notes:**
 
-- [ ] `F91F` Select the details button in the row for 'Engineering Manager, TBD-3', the box with a line down its right side that shows at the right of its **Name** cell while the row is pointed at.
+- [ ] `F91F` Select the details button in the row for the planned Engineering Manager, the box with a line down its right side that shows at the right of its **Name** cell while the row is pointed at.
   - **Expected:**
-    - The details panel opens, headed 'Engineering Manager, TBD-3'.
+    - The details panel opens, headed "Engineering Manager, TBD-" and the number written down at `51CD`.
     - Under the heading, 'Engineering Manager', then a grey box reading **Planned, no date**.
     - There is no **Show on org chart** link.
   - **Notes:**
@@ -620,9 +620,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `162C` Read the **Reporting** and **Details** sections.
   - **Expected:**
     - **Manager** reads "No manager".
-    - **Direct reports** lists 'Platform engineer' and 'SDET, TBD-5'.
+    - **Direct reports** lists 'Platform engineer' and "SDET, TBD-" and its number.
     - **Details** shows:
-      - **ID** 'TBD-3'
+      - **ID** "TBD-" and the number written down at `51CD`
       - **State** "Request to hire"
       - no **Expected**
       - no **End**
@@ -633,10 +633,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** No change button shows.
   - **Notes:**
 
-- [ ] `72F0` Select 'SDET, TBD-5' under **Direct reports**.
+- [ ] `72F0` Select the SDET under **Direct reports**.
   - **Expected:**
-    - The panel shows 'SDET, TBD-5'.
-    - **Manager** reads 'Engineering Manager, TBD-3', as a link.
+    - The panel shows "SDET, TBD-" and its number.
+    - **Manager** reads "Engineering Manager, TBD-" and the number written down at `51CD`, as a link.
   - **Notes:**
 
 - [ ] `E26F` Select the change button beside **Name**.

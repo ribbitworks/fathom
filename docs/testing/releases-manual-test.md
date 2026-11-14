@@ -98,7 +98,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `4A29` In the side panel, select **Set up cycles…** under **Cycle schedule**.
   - **Expected:**
     - A dialog titled **Set up cycles for Testing Stream** opens.
-    - The **First cycle starts** box is empty, showing **2027-01-01** in grey.
+    - The **First cycle starts** box is empty, showing the example date **2027-01-01** in grey.
     - **Each cycle lasts** is set to **3**.
     - **Months** is selected.
     - **Names** is set to **{YY}.{N}**.

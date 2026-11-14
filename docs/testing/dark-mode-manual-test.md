@@ -391,11 +391,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Each is easy to tell apart from the card behind it.
   - **Notes:**
 
-- [ ] `52FF` Type `TBD-3` in the finder.
-  - **Expected:** 'TBD-3' is in the finder's list.
+- [ ] `52FF` Type `Engineering Manager, TBD` in the finder.
+  - **Expected:** The finder's list offers one planned hire, "Engineering Manager, TBD-" and a number.
   - **Notes:**
 
-- [ ] `9C06` Choose 'TBD-3' in the finder's list.
+- [ ] `9C06` Choose that planned hire in the finder's list.
   - **Expected:** The dashed edges and the grey boxes of the planned hires' cards are easy to see on the dark cards.
   - **Notes:**
 
