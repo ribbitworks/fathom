@@ -18,7 +18,7 @@ import { decidable, noDrafts, waitsForRejected } from "./drafts.ts";
 import { DraftItems, madeVerb, makers } from "./list-drafts.tsx";
 import type { Phrase } from "./phrase.tsx";
 import type { RecordNode } from "./record-drafts.ts";
-import { MoreButton } from "./row-controls.tsx";
+import { actionsFor, MoreButton } from "./row-controls.tsx";
 
 export interface RecordMenuActions {
   // The kinds of draft the user's role approves and rejects.
@@ -75,7 +75,7 @@ export function RecordMenu({
         <MoreButton
           // Menus give their buttons ids of their own, so the button is found by this instead.
           data-record-menu={id}
-          label={`Menu of ${title}`}
+          label={actionsFor(title)}
         />
       </Menu.Target>
       <Menu.Dropdown

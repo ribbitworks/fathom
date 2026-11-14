@@ -53,6 +53,9 @@ export function RowControls({
   );
 }
 
+// What a record's menu is called, wherever its ⋯ is.
+export const actionsFor = (name: string) => `Actions for ${name}`;
+
 // The ⋯ that opens a menu, such as a record's, its drafts' or the unpublished changes'.
 export function MoreButton({
   label,

@@ -187,7 +187,9 @@ const panel = () => screen.getByRole("region", { name: "Fictional Majors" });
 const section = (name: string) => within(panel()).getByRole("region", { name });
 
 async function chooseInMenu(of: string, item: string) {
-  await userEvent.click(screen.getByRole("button", { name: `Menu of ${of}` }));
+  await userEvent.click(
+    screen.getByRole("button", { name: `Actions for ${of}` }),
+  );
   await userEvent.click(await screen.findByRole("menuitem", { name: item }));
 }
 
@@ -1082,7 +1084,9 @@ describe("changing a stream's cycles", () => {
       { can: editsAll },
     );
     await userEvent.click(
-      screen.getByRole("button", { name: "Menu of Cycles from Jan 1, 2027" }),
+      screen.getByRole("button", {
+        name: "Actions for Cycles from Jan 1, 2027",
+      }),
     );
     const menu = await screen.findByRole("menu");
     expect(
@@ -1141,7 +1145,9 @@ describe("changing one cycle's length", () => {
     await openStream([fictionalStream()], {
       can: { canEditReleases: true },
     });
-    expect(screen.queryByRole("button", { name: "Menu of 27.2" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Actions for 27.2" }),
+    ).toBeNull();
   });
 });
 
@@ -1219,7 +1225,7 @@ describe("changing releases", () => {
       { can: editsAll },
     );
     expect(
-      screen.queryByRole("button", { name: "Menu of Fictional One" }),
+      screen.queryByRole("button", { name: "Actions for Fictional One" }),
     ).toBeNull();
   });
 });
@@ -1353,7 +1359,7 @@ describe("drafts in a stream's panel", () => {
       }),
     ]);
     await userEvent.click(
-      screen.getByRole("button", { name: "Menu of Fictional One" }),
+      screen.getByRole("button", { name: "Actions for Fictional One" }),
     );
     const menu = await screen.findByRole("menu");
     await userEvent.click(
@@ -1417,7 +1423,7 @@ describe("drafts in a stream's panel", () => {
       { can: editsAll },
     );
     await userEvent.click(
-      screen.getByRole("button", { name: "Menu of Fictional One" }),
+      screen.getByRole("button", { name: "Actions for Fictional One" }),
     );
     const menu = await screen.findByRole("menu");
     expect([
@@ -1433,7 +1439,9 @@ describe("drafts in a stream's panel", () => {
       }),
     ]);
     await userEvent.click(
-      screen.getByRole("button", { name: "Menu of Fictional Majors" }),
+      within(panel()).getByRole("button", {
+        name: "Actions for Fictional Majors",
+      }),
     );
     expect(
       await screen.findByText(
@@ -1585,7 +1593,7 @@ describe("drafts in a stream's panel", () => {
     });
     await openStream([stream], { answers: { "GET /api/session": approver } });
     await userEvent.click(
-      screen.getByRole("button", { name: "Menu of Fictional One" }),
+      screen.getByRole("button", { name: "Actions for Fictional One" }),
     );
     const menu = await screen.findByRole("menu");
     expect([
@@ -1609,7 +1617,7 @@ describe("drafts in a stream's panel", () => {
     });
     await openStream([stream], { answers: { "GET /api/session": approver } });
     await userEvent.click(
-      screen.getByRole("button", { name: "Menu of Fictional One" }),
+      screen.getByRole("button", { name: "Actions for Fictional One" }),
     );
     const menu = await screen.findByRole("menu");
     const approve = within(menu).getByRole("menuitem", { name: "Approve…" });
@@ -1636,7 +1644,7 @@ describe("drafts in a stream's panel", () => {
       }),
     ]);
     await userEvent.click(
-      screen.getByRole("button", { name: "Menu of Fictional One" }),
+      screen.getByRole("button", { name: "Actions for Fictional One" }),
     );
     await screen.findByRole("menu");
     await userEvent.keyboard("{Escape}");
@@ -1656,7 +1664,7 @@ describe("drafts in a stream's panel", () => {
       { can: editsAll },
     );
     await userEvent.click(
-      screen.getByRole("button", { name: "Menu of Fictional One" }),
+      screen.getByRole("button", { name: "Actions for Fictional One" }),
     );
     await screen.findByRole("menu");
     await userEvent.keyboard("{ArrowDown}{ArrowDown}");
@@ -1676,7 +1684,9 @@ describe("drafts in a stream's panel", () => {
       { can: editsAll },
     );
     await userEvent.click(
-      screen.getByRole("button", { name: "Menu of Cycles from Jan 1, 2027" }),
+      screen.getByRole("button", {
+        name: "Actions for Cycles from Jan 1, 2027",
+      }),
     );
     const menu = await screen.findByRole("menu");
     expect(
@@ -2415,7 +2425,7 @@ describe("a release's note", () => {
       can: editsAll,
     });
     await userEvent.click(
-      screen.getByRole("button", { name: "Menu of Fictional One" }),
+      screen.getByRole("button", { name: "Actions for Fictional One" }),
     );
     expect(
       await screen.findByRole("menuitem", { name: "Change…" }),
@@ -2505,7 +2515,7 @@ describe("a release's note", () => {
     );
     await waitFor(() => {
       expect(document.activeElement).toBe(
-        screen.getByRole("button", { name: "Menu of Fictional One" }),
+        screen.getByRole("button", { name: "Actions for Fictional One" }),
       );
     });
   });

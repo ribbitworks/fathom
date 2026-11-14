@@ -724,7 +724,9 @@ describe("a project's milestones in its panel", () => {
       [`PUT ${path}/${milestoneId}`]: saved(() => start),
     });
     await userEvent.click(
-      await screen.findByRole("button", { name: "Menu of Fictional Kickoff" }),
+      await screen.findByRole("button", {
+        name: "Actions for Fictional Kickoff",
+      }),
     );
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Edit…" }),
@@ -751,7 +753,9 @@ describe("a project's milestones in its panel", () => {
       [`DELETE ${path}/${milestoneId}`]: deleted,
     });
     await userEvent.click(
-      await screen.findByRole("button", { name: "Menu of Fictional Kickoff" }),
+      await screen.findByRole("button", {
+        name: "Actions for Fictional Kickoff",
+      }),
     );
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Remove milestone" }),
@@ -768,7 +772,7 @@ describe("a project's milestones in its panel", () => {
     ]);
     await screen.findByText("Fictional Kickoff");
     expect(
-      screen.queryByRole("button", { name: "Menu of Fictional Kickoff" }),
+      screen.queryByRole("button", { name: "Actions for Fictional Kickoff" }),
     ).toBeNull();
   });
 
@@ -789,7 +793,9 @@ describe("a project's milestones in its panel", () => {
       withMilestone({ draft: recordDraft({ action: "deleted" }) }),
     );
     await userEvent.click(
-      await screen.findByRole("button", { name: "Menu of Fictional Kickoff" }),
+      await screen.findByRole("button", {
+        name: "Actions for Fictional Kickoff",
+      }),
     );
     const menu = await screen.findByRole("menu");
     expect(within(menu).queryByRole("menuitem", { name: "Edit…" })).toBeNull();
@@ -804,7 +810,9 @@ describe("a project's milestones in its panel", () => {
       withMilestone({ draft: recordDraft({ action: "created" }) }),
     );
     await userEvent.click(
-      await screen.findByRole("button", { name: "Menu of Fictional Kickoff" }),
+      await screen.findByRole("button", {
+        name: "Actions for Fictional Kickoff",
+      }),
     );
     const menu = await screen.findByRole("menu");
     expect(within(menu).getByRole("menuitem", { name: "Edit…" })).toBeTruthy();
@@ -819,7 +827,9 @@ describe("a project's milestones in its panel", () => {
       [`DELETE /api/records/milestone/${milestoneId}/draft`]: deleted,
     });
     await userEvent.click(
-      await screen.findByRole("button", { name: "Menu of Fictional Kickoff" }),
+      await screen.findByRole("button", {
+        name: "Actions for Fictional Kickoff",
+      }),
     );
     await userEvent.click(
       await screen.findByRole("menuitem", { name: /Discard/ }),
@@ -839,7 +849,9 @@ describe("a project's milestones in its panel", () => {
       [`DELETE /api/records/milestone/${milestoneId}/draft/rejection`]: deleted,
     });
     await userEvent.click(
-      await screen.findByRole("button", { name: "Menu of Fictional Kickoff" }),
+      await screen.findByRole("button", {
+        name: "Actions for Fictional Kickoff",
+      }),
     );
     await userEvent.click(
       await screen.findByRole("menuitem", { name: /Resubmit/ }),
@@ -861,7 +873,7 @@ describe("a project's milestones in its panel", () => {
     const open = async () => {
       await userEvent.click(
         await screen.findByRole("button", {
-          name: "Menu of Fictional Kickoff",
+          name: "Actions for Fictional Kickoff",
         }),
       );
       return screen.findByRole("menu");
@@ -887,7 +899,9 @@ describe("a project's milestones in its panel", () => {
       }),
     );
     await userEvent.click(
-      await screen.findByRole("button", { name: "Menu of Fictional Kickoff" }),
+      await screen.findByRole("button", {
+        name: "Actions for Fictional Kickoff",
+      }),
     );
     expect(
       within(await screen.findByRole("menu")).getByText(/Someone Else/),
@@ -1294,7 +1308,9 @@ describe("a milestone's menu", () => {
       }),
     );
     await userEvent.click(
-      await screen.findByRole("button", { name: "Menu of Fictional Kickoff" }),
+      await screen.findByRole("button", {
+        name: "Actions for Fictional Kickoff",
+      }),
     );
     const menu = await screen.findByRole("menu");
     expect(

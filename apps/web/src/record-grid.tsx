@@ -97,7 +97,7 @@ import {
 } from "./frozen-columns.ts";
 import { shortcutsFor } from "./list-panel.tsx";
 import { Icon } from "./icons.tsx";
-import { MoreButton, RowControls } from "./row-controls.tsx";
+import { actionsFor, MoreButton, RowControls } from "./row-controls.tsx";
 import { draftedLists, liveLists } from "./lists.ts";
 import {
   type ChangeView,
@@ -2890,11 +2890,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // A row's ⋯, at its end or over its Name cell, both opening its menu.
   const rowMoreButton = (row: Row<Rec>, inCell: boolean) => (
     <MoreButton
-      label={`Actions for ${
+      label={actionsFor(
         row.record
           ? table.nameOf(row.record)
-          : table.newRowLabel(rowKind(row)).toLowerCase()
-      }`}
+          : table.newRowLabel(rowKind(row)).toLowerCase(),
+      )}
       size="sm"
       // Tab moves between cells; the menu also opens with Shift+F10 on any of the row's cells.
       tabIndex={-1}

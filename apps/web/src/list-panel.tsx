@@ -14,7 +14,7 @@
 // or given another meaning. In feature sizes, each choice shows its weight, typed when it is added
 // or edited; pasted choices take the weight typed in the empty row.
 
-import { MoreButton } from "./row-controls.tsx";
+import { actionsFor, MoreButton } from "./row-controls.tsx";
 import { movedItem } from "./table-view.ts";
 import {
   DragDropContext,
@@ -855,7 +855,7 @@ export function ListPanel({
           <MoreButton
             id={actionsId(choice)}
             tabIndex={choice.id === tabStop ? 0 : -1}
-            label={`Actions for ${choice.label}`}
+            label={actionsFor(choice.label)}
           />
         </Menu.Target>
         <Menu.Dropdown

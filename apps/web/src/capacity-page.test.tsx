@@ -378,7 +378,7 @@ describe("a draft of the settings", () => {
     expect(screen.queryByRole("button", { name: "Add month" })).toBeNull();
   });
 
-  const rowMenu = "Menu of Planning settings";
+  const rowMenu = "Actions for Planning settings";
 
   async function openRowMenu() {
     const [first] = screen.getAllByRole("button", { name: rowMenu });
