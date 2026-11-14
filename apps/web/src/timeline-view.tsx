@@ -43,6 +43,7 @@ import {
   timelineQuarters,
   type TimelineRow,
 } from "./timeline.ts";
+import { MarkRow } from "./status-mark.tsx";
 import { TimelineStrip } from "./timeline-strip.tsx";
 
 type Preset = "all" | "year" | "half" | "quarter" | "month" | "week" | "days";
@@ -527,8 +528,9 @@ function Tracks({
             {rows.map(({ id, label, lanes }) => (
               <li key={id} className={classes.timelineRow}>
                 <div className={classes.timelineLabel}>
-                  {/* One line of text, so its marks sit on the name's line, as they do in text. */}
-                  <div className={classes.timelineLabelLine}>{label}</div>
+                  <MarkRow className={classes.timelineLabelLine}>
+                    {label}
+                  </MarkRow>
                 </div>
                 <div className={classes.timelineTrack} style={width}>
                   {lanes(px)}

@@ -1223,12 +1223,8 @@ th.liveColumn {
   font-size: var(--mantine-font-size-sm);
 }
 
-/* A label stays on one line, its marks after its name, on its baseline, since marks centre
-   themselves on the name's capitals from there. */
+/* A label stays on one line, its marks after its name. */
 .timelineLabelLine {
-  display: flex;
-  align-items: baseline;
-  min-width: 0;
   white-space: nowrap;
 }
 
