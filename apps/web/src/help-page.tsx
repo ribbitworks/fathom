@@ -194,7 +194,7 @@ export function RolesHelpPage({ role }: { role: SessionResponse["role"] }) {
     role === null || roleSchema.safeParse(role.key).success ? [] : [role];
   return (
     <Stack gap="xl" maw={960}>
-      <Stack gap={0}>
+      <Stack gap="md">
         <PageHeader title="Roles" />
         <Rows
           rows={[
@@ -231,7 +231,7 @@ export function RolesHelpPage({ role }: { role: SessionResponse["role"] }) {
 export function DraftsHelpPage() {
   return (
     <Stack gap="xl" maw={960}>
-      <Stack gap={0}>
+      <Stack gap="md">
         <PageHeader title="Drafts" />
         <Rows rows={marks} />
       </Stack>

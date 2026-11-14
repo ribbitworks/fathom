@@ -542,7 +542,7 @@ describe("the table of lists", () => {
     expect(rows).toEqual([
       "LocationsOffices and labs.(3) Kestrel Bay, Northmere, Corran Quay",
       "SkillsPersonal(1) Rust",
-      "Empty List(0) ",
+      "Empty List",
     ]);
   });
 
@@ -642,7 +642,7 @@ describe("the table of lists", () => {
         "(3) Kestrel Bay, Northmere, Corran QuayReordered, Draft: reordered",
       ],
       ["SkillsPersonal", "No description", "(1) Go"],
-      ["Empty List", "No description", "(0) , Draft"],
+      ["Empty List", "No description", ", Draft"],
     ]);
   });
 

@@ -268,48 +268,53 @@ export function DataClassesPage({ access }: { access: ClassAccess }) {
   }));
 
   return (
-    <Stack gap="lg">
+    <Stack gap="md">
       <PageHeader title="Data classes" />
-      <ClassSection
-        title="Built-in details"
-        about="Needed by"
-        rows={details}
-        access={access}
-        onChange={classMove.open}
-      />
-      {seesColumns &&
-        (columnsRead.isError ? (
-          <LoadProblem
-            what="the columns"
-            onRetry={() => void columnsRead.refetch()}
-          />
-        ) : (
-          <ClassSection
-            title="Columns"
-            about="Shown on"
-            rows={columns}
-            access={access}
-            onChange={classMove.open}
-          />
-        ))}
-      {seesLists &&
-        (lists.isError ? (
-          <LoadProblem what="the lists" onRetry={() => void lists.refetch()} />
-        ) : (
-          <ClassSection
-            title="Lists"
-            about="People's columns using it"
-            rows={listRows}
-            access={access}
-            onChange={classMove.open}
-          />
-        ))}
-      <MoveClassModal
-        moving={classMove.dialog}
-        opened={classMove.opened}
-        permissions={access.permissions}
-        onClose={classMove.close}
-      />
+      <Stack gap="lg">
+        <ClassSection
+          title="Built-in details"
+          about="Needed by"
+          rows={details}
+          access={access}
+          onChange={classMove.open}
+        />
+        {seesColumns &&
+          (columnsRead.isError ? (
+            <LoadProblem
+              what="the columns"
+              onRetry={() => void columnsRead.refetch()}
+            />
+          ) : (
+            <ClassSection
+              title="Columns"
+              about="Shown on"
+              rows={columns}
+              access={access}
+              onChange={classMove.open}
+            />
+          ))}
+        {seesLists &&
+          (lists.isError ? (
+            <LoadProblem
+              what="the lists"
+              onRetry={() => void lists.refetch()}
+            />
+          ) : (
+            <ClassSection
+              title="Lists"
+              about="People's columns using it"
+              rows={listRows}
+              access={access}
+              onChange={classMove.open}
+            />
+          ))}
+        <MoveClassModal
+          moving={classMove.dialog}
+          opened={classMove.opened}
+          permissions={access.permissions}
+          onClose={classMove.close}
+        />
+      </Stack>
     </Stack>
   );
 }

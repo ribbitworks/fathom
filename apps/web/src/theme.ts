@@ -102,6 +102,8 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-ring-room": "3px",
     // Today, only ever as a thin line: a timeline's line, a strip's underline, a board's heading.
     "--fathom-today": "var(--mantine-color-red-6)",
+    // A page's heading, as tall as a button beside it, so every page's heading is one height.
+    "--fathom-heading-height": "calc(2.25rem * var(--mantine-scale))",
     // A side panel's name, at its top, and the line it and its marks stand on.
     "--fathom-panel-name-size": "18px",
     "--fathom-panel-name-line": "28px",

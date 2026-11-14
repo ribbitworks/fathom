@@ -174,7 +174,8 @@ export interface SummaryPart {
 }
 
 // A record's parts: how many, leaving out those a draft takes away, then their names, those struck
-// through, after the mark of the parts' drafts.
+// through, after the mark of the parts' drafts; for a record with none, no count, as an empty cell
+// is blank but for its mark.
 export function Parts({
   mark,
   parts,
@@ -184,15 +185,19 @@ export function Parts({
 }) {
   return (
     <DraftedItem draft={mark}>
-      <span className={classes.listCount}>
-        ({parts.filter(({ removed }) => !removed).length})
-      </span>{" "}
-      {parts.map(({ id, name, removed }, index) => (
-        <Fragment key={id}>
-          {index > 0 && ", "}
-          {removed ? <span className={classes.struck}>{name}</span> : name}
-        </Fragment>
-      ))}
+      {parts.length > 0 && (
+        <>
+          <span className={classes.listCount}>
+            ({parts.filter(({ removed }) => !removed).length})
+          </span>{" "}
+          {parts.map(({ id, name, removed }, index) => (
+            <Fragment key={id}>
+              {index > 0 && ", "}
+              {removed ? <span className={classes.struck}>{name}</span> : name}
+            </Fragment>
+          ))}
+        </>
+      )}
     </DraftedItem>
   );
 }
@@ -218,8 +223,12 @@ export function LiveParts({
 }) {
   return (
     <MarkedItem tone={marked ? "live" : undefined}>
-      <span className={classes.listCount}>({names.length})</span>{" "}
-      {names.join(", ")}
+      {names.length > 0 && (
+        <>
+          <span className={classes.listCount}>({names.length})</span>{" "}
+          {names.join(", ")}
+        </>
+      )}
     </MarkedItem>
   );
 }

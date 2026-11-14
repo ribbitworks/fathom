@@ -15,12 +15,14 @@ import { TimelineView } from "./timeline-view.tsx";
 // The view leaves 540 pixels for the tracks beside the rows' labels, and Month shows 180 days
 // across them: three pixels a day.
 const room = 540;
+// The rows' labels' column beside the tracks.
+const names = 180;
 const zoomKey = "fathom-test-timeline-zoom";
 
 beforeEach(() => {
   localStorage.setItem(zoomKey, '"month"');
   vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(
-    () => 140 + room,
+    () => names + room,
   );
 });
 

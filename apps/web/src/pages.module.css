@@ -1182,6 +1182,21 @@ th.liveColumn {
   font-size: var(--mantine-font-size-sm);
 }
 
+/* A label stays on one line, its marks after its name. */
+.timelineLabelLine {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+/* A row's name, cut short where the column is too narrow, so the marks after it stay whole. */
+.timelineLabelName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .timelineTrack {
   position: relative;
   flex: none;
@@ -1369,6 +1384,17 @@ th.liveColumn {
 
 .stripPeriod + .stripPeriod {
   border-left: 1px solid var(--mantine-color-default-border);
+}
+
+/* The strip clips what is drawn outside a period, so its focus ring is drawn inside it, a full box
+   rather than a sliver at one edge. */
+.stripPeriod:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: -2px;
+}
+
+.stripPeriod[data-selected]:focus-visible {
+  outline-color: var(--mantine-primary-color-contrast);
 }
 
 .stripPeriod[data-in-view] {

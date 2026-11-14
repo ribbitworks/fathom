@@ -24,6 +24,7 @@ import {
   ActionIcon,
   Alert,
   Anchor,
+  Box,
   Button,
   Group,
   Loader,
@@ -1046,60 +1047,62 @@ export function OrgChartPage({
   );
   return (
     <DraftView show={show}>
-      <PageHeader
-        title="Org chart"
-        action={
-          <Group gap="sm">
-            <SegmentedControl
-              aria-label="Teams drawn"
-              data={[
-                { value: "reporting", label: "Reporting teams" },
-                { value: "feature-teams", label: "Feature teams" },
-              ]}
-              value={featureView ? "feature-teams" : "reporting"}
-              onChange={(value) => {
-                // The person found, or whose details are open, stays found, so the chart starts at
-                // them.
-                go(
-                  {
-                    show: search.show,
-                    open: search.open,
-                    person: search.person ?? search.open,
-                    day: search.day,
-                    ...(value === "feature-teams"
-                      ? { view: "feature-teams" as const }
-                      : {}),
-                  },
-                  false,
-                );
-              }}
-            />
-            {lead !== undefined && (
-              <Group gap="sm">
-                <Text size="sm">
-                  Only the team of {lead.preferredName} is shown.
-                </Text>
-                <Button
-                  variant="default"
-                  onClick={() => {
-                    go(
-                      {
-                        person: search.person,
-                        show: search.show,
-                        open: search.open,
-                        day: search.day,
-                      },
-                      false,
-                    );
-                  }}
-                >
-                  Show everyone
-                </Button>
-              </Group>
-            )}
-          </Group>
-        }
-      />
+      <Box mb="md">
+        <PageHeader
+          title="Org chart"
+          action={
+            <Group gap="sm">
+              <SegmentedControl
+                aria-label="Teams drawn"
+                data={[
+                  { value: "reporting", label: "Reporting teams" },
+                  { value: "feature-teams", label: "Feature teams" },
+                ]}
+                value={featureView ? "feature-teams" : "reporting"}
+                onChange={(value) => {
+                  // The person found, or whose details are open, stays found, so the chart starts at
+                  // them.
+                  go(
+                    {
+                      show: search.show,
+                      open: search.open,
+                      person: search.person ?? search.open,
+                      day: search.day,
+                      ...(value === "feature-teams"
+                        ? { view: "feature-teams" as const }
+                        : {}),
+                    },
+                    false,
+                  );
+                }}
+              />
+              {lead !== undefined && (
+                <Group gap="sm">
+                  <Text size="sm">
+                    Only the team of {lead.preferredName} is shown.
+                  </Text>
+                  <Button
+                    variant="default"
+                    onClick={() => {
+                      go(
+                        {
+                          person: search.person,
+                          show: search.show,
+                          open: search.open,
+                          day: search.day,
+                        },
+                        false,
+                      );
+                    }}
+                  >
+                    Show everyone
+                  </Button>
+                </Group>
+              )}
+            </Group>
+          }
+        />
+      </Box>
       {whyNoOtherDates === undefined ? (
         <OrgChartDate
           day={day}

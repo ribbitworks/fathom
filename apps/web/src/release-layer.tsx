@@ -27,6 +27,7 @@ import {
   useDraftView,
   viewedDraft,
 } from "./status-mark.tsx";
+import { Tipped } from "./table-tips.tsx";
 import {
   charactersWidth,
   type DayRange,
@@ -248,7 +249,9 @@ export function useReleaseLayer(releaseStreams: readonly ReleaseStream[]): {
             )}
             heldBy={heldBy.get(row.stream.id)}
           >
-            {row.stream.name}
+            <Tipped tip={row.stream.name} className={classes.timelineLabelName}>
+              {row.stream.name}
+            </Tipped>
           </DraftedItem>
         ),
         lanes: (px) => <ReleaseLanes row={row} markOf={markOf} px={px} />,

@@ -89,8 +89,9 @@ const shownDays = (zoom: Zoom, days: number): number =>
 // The least room for the tracks, so a narrow screen still shows a few weeks.
 const leastRoom = 320;
 
-// The rows' labels' column, which the tracks scroll under.
-const namesWidth = 140;
+// The rows' labels' column, which the tracks scroll under, wide enough for most streams' names with
+// their marks, such as a Retired box, on one line; a longer name is cut short, its marks kept.
+const namesWidth = 180;
 
 // A day held halfway across the view while the zoom or the view's width changes, counted from
 // 1970-01-01, so it stays put when the timeline's first day moves.
@@ -527,7 +528,7 @@ function Tracks({
               <li key={id} className={classes.timelineRow}>
                 <div className={classes.timelineLabel}>
                   {/* One line of text, so its marks sit on the name's line, as they do in text. */}
-                  <div>{label}</div>
+                  <div className={classes.timelineLabelLine}>{label}</div>
                 </div>
                 <div className={classes.timelineTrack} style={width}>
                   {lanes(px)}

@@ -138,8 +138,8 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 
 ## The Page Heading
 
-- **The row under the heading stays put:** Every page's heading is one line: its title, then, where the page shows its records more than one way, the switch between them, its words on the title's baseline, and the page's actions at the right. Nothing adds a row between the heading and the search row, so the search row starts at the same place on every page, and moving between pages doesn't shift it. Decided by the owner on 2026-11-13. Features follows it so far; Capacity's and the Org chart's switches move to it with the shared mode switch.
-  - **Drawn by:** `PageHeader` in `apps/web/src/page-header.tsx`, with the switch in its `beside`.
+- **The row under the heading stays put:** Every page's heading is one line: its title, then, where the page shows its records more than one way, the switch between them, centred on the title's line, and the page's actions at the right. Nothing adds a row between the heading and the search row, so the search row starts at the same place on every page, and moving between pages doesn't shift it. The heading is one height on every page, as tall as a button, and the gap under it is the same on every page, the theme's medium spacing. Decided by the owner on 2026-11-13. A page's tabs, such as Projects', sit there too, after the title, decided by the owner on 2026-11-13. Features follows it so far; Projects' tabs, and Capacity's and the Org chart's switches, move to it with the shared mode switch.
+  - **Drawn by:** `PageHeader` in `apps/web/src/page-header.tsx`, with the switch in its `beside`, and its height from the theme's `--fathom-heading-height` in `apps/web/src/theme.ts`; each page puts the gap after it.
   - **Example:** Table and Board beside the Features heading.
 
 ## Boards

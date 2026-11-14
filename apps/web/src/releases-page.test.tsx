@@ -239,6 +239,20 @@ describe("the table of release streams", () => {
     ]);
   });
 
+  it("leaves the Releases cell blank for a stream with no releases", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer([fictionalStream()]),
+    });
+    renderApp("/releases");
+    await streamsGrid();
+    expect(rowTexts().at(1)).toBe(
+      "Fictional MajorsEvery 3 months, named {YY}.{N}Dec 31, 2027",
+    );
+  });
+
   it("hides retired streams until Show retired is chosen in the Views menu, keeping the choice in the address", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
@@ -1677,9 +1691,11 @@ describe("the timeline", () => {
   // The view leaves 540 pixels for the tracks beside the streams' names, and the tests start at
   // Month, which shows 180 days across them: three pixels a day.
   const room = 540;
-  let viewWidth = 140 + room;
+  // The streams' names' column beside the tracks.
+  const names = 180;
+  let viewWidth = names + room;
   beforeEach(() => {
-    viewWidth = 140 + room;
+    viewWidth = names + room;
     localStorage.setItem(zoomKey, '"month"');
     vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(
       () => viewWidth,
@@ -1959,7 +1975,7 @@ describe("the timeline", () => {
         }),
       ]),
     );
-    expect(view(timeline).scrollLeft).toBe((180 + 184) * 3 - room / 2);
+    expect(view(timeline).scrollLeft).toBe((names + 184) * 3 - room / 2);
   });
 
   it("zooms, keeping the zoom for next time and the middle of the view in place", async () => {
@@ -2036,7 +2052,7 @@ describe("the timeline", () => {
       },
     );
     const timeline = await showTimeline([fictionalStream()], "2027-02-15");
-    viewWidth = 140 + 2 * room;
+    viewWidth = names + 2 * room;
     act(() => {
       for (const watcher of watchers) watcher();
     });
@@ -2053,7 +2069,7 @@ describe("the timeline", () => {
 
   it("names each level's own period above the next smaller one", async () => {
     localStorage.setItem(zoomKey, '"year"');
-    viewWidth = 140 + 2 * room;
+    viewWidth = names + 2 * room;
     const timeline = await showTimeline(
       [
         fictionalStream({ cycles: quarters(12) }),
@@ -2096,7 +2112,7 @@ describe("the timeline", () => {
 
   it("names periods by their first months at All, when their names do not fit", async () => {
     localStorage.setItem(zoomKey, '"all"');
-    viewWidth = 140 + 2 * room;
+    viewWidth = names + 2 * room;
     const timeline = await showTimeline(
       [fictionalStream({ cycles: quarters(40) })],
       "2027-02-15",
@@ -2126,7 +2142,7 @@ describe("the timeline", () => {
 
   it("names each day at Days, when the view has room", async () => {
     localStorage.setItem(zoomKey, '"days"');
-    viewWidth = 140 + 2 * room;
+    viewWidth = names + 2 * room;
     const timeline = await showTimeline([fictionalStream()], "2027-02-15");
     const days = tierOf(timeline, "Mon 15");
     expect(days.style.backgroundImage).toBe("");
