@@ -1,6 +1,16 @@
 # Fathom
 
-Fathom is a tool for high-level software project planning, resource assignment, and roadmapping.
+Fathom plans software work over time: what a team will build, who will build it, and when.
+
+## What Fathom Is For
+
+Fathom gives a software organization one place to plan its roadmap and its people together:
+
+- **A roadmap:** features grouped into releases on release streams, shown on a timeline and a board.
+- **Resource planning over time:** who is assigned to which feature or project, for which months, and how much of their time. Assignments start and end, people join and leave, and teams change, so every plan is a plan for a period, not a snapshot.
+- **Capacity:** whether the people planned can do the work planned, month by month, including planned hires.
+- **Drafts before changes go live:** planners try changes as drafts, compare them with what's live, and publish when they agree.
+- **Access by role and data class:** each role sees and changes only what it needs, and personal or confidential data is shown only to those allowed to see it.
 
 ## Status
 
