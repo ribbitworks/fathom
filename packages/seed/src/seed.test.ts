@@ -898,6 +898,44 @@ describe("the seed command", () => {
     expect(await ofLists()).toHaveLength(18);
   });
 
+  it("seeds again after the drafted Skills list is approved, keeping it and not drafting it again", async () => {
+    // Given the seed data, with its draft adding the Skills list approved
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    expect(await seedCommand(["seed"], command.environment())).toBe(0);
+    const skills = async () =>
+      connection.select().from(lists).where(eq(lists.name, "Skills"));
+    const listDrafts = await connection
+      .select()
+      .from(drafts)
+      .where(inArray(drafts.recordType, ["list", "list-item"]));
+    const skillsId = String(
+      listDrafts.find(
+        ({ recordType, fields }) =>
+          recordType === "list" && fields.name === "Skills",
+      )?.recordId,
+    );
+    await createDataAccess(connection).drafts.approve(
+      await actorOf(connection, "engineering.director@fathom.test"),
+      {
+        people: [],
+        lists: [skillsId],
+        choices: listDrafts
+          .filter(({ fields }) => fields.listId === skillsId)
+          .map(({ recordId }) => recordId),
+        orders: [],
+      },
+    );
+    expect(await skills()).toHaveLength(1);
+
+    // When the seed data is removed and added again
+    expect(await seedCommand(["unseed"], command.environment())).toBe(0);
+    const seededAgain = await seedCommand(["seed"], command.environment());
+
+    // Then it is added again, with the one Skills list
+    expect(seededAgain).toBe(0);
+    expect(await skills()).toHaveLength(1);
+  });
+
   it("removes the seed data while filling a planned manager waits for approval", async () => {
     // Given a fill that drafts several planned hires together
     vi.spyOn(console, "log").mockImplementation(() => undefined);

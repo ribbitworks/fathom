@@ -95,6 +95,39 @@ async function draftedBefore(
   return found.length > 0;
 }
 
+// Whether a list the seed drafts adding is live, approved from an earlier seed's draft, which
+// removing the seed data keeps, so the seed doesn't draft it again.
+async function liveList(database: Database, name: string): Promise<boolean> {
+  const found = await database
+    .select({ one: sql`1` })
+    .from(lists)
+    .where(eq(lists.name, name))
+    .limit(1);
+  return found.length > 0;
+}
+
+// Adds the Skills list as a draft with its two choices, and returns the list and Rust, unless the
+// list is live already.
+async function draftSkills(
+  database: Database,
+  editor: Actor,
+): Promise<{ listId: string; rustId: string } | undefined> {
+  if (await liveList(database, draftedListName)) return undefined;
+  const data = createDataAccess(database);
+  const { result: skills } = await data.lists.create(editor, {
+    name: draftedListName,
+    description: "What people are skilled in.",
+    visibility: "general",
+  });
+  const [rust] = (
+    await data.lists.addChoices(editor, skills.id, [
+      { label: "Rust", description: "" },
+      { label: "TypeScript", description: "" },
+    ])
+  ).result;
+  return { listId: skills.id, rustId: String(rust?.id) };
+}
+
 // Makes the seed's drafts of lists, unless it has made them before, and returns whether it did.
 export async function seedListDrafts(
   database: Database,
@@ -109,17 +142,7 @@ export async function seedListDrafts(
   const positions = await positionsList(database, organization);
   const teamRoles = listCalled(organization, "Roles on the team");
 
-  const { result: skills } = await data.lists.create(editor, {
-    name: draftedListName,
-    description: "What people are skilled in.",
-    visibility: "general",
-  });
-  const [rust] = (
-    await data.lists.addChoices(editor, skills.id, [
-      { label: "Rust", description: "" },
-      { label: "TypeScript", description: "" },
-    ])
-  ).result;
+  const skills = await draftSkills(database, editor);
   await data.lists.updateChoice(
     editor,
     sites.id,
@@ -194,7 +217,15 @@ export async function seedListDrafts(
   // Sent again on its own, so it waits on Harbourside, which stays rejected.
   await data.lists.resubmitDraft(second, { kind: "order", listId: sites.id });
   await seedColumnDrafts(database, organization, editor, approver);
-  await seedSkills(database, organization, editor, skills.id, String(rust?.id));
+  if (skills !== undefined) {
+    await seedSkills(
+      database,
+      organization,
+      editor,
+      skills.listId,
+      skills.rustId,
+    );
+  }
   return true;
 }
 
@@ -285,7 +316,10 @@ export async function seedUnpublishedList(
   database: Database,
   organization: FictionalOrganization,
 ): Promise<boolean> {
-  if (await draftedBefore(database, organization, unpublishedListName)) {
+  if (
+    (await draftedBefore(database, organization, unpublishedListName)) ||
+    (await liveList(database, unpublishedListName))
+  ) {
     return false;
   }
   const data = createDataAccess(database);
