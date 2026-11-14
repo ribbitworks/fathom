@@ -96,7 +96,7 @@ A step in this form:
 - [ ] `7C2E` Select **Approve**.
   - **Expected:**
     - A notification says "Approved 1 draft."
-    - In the table, 'Patches' is under a **Retired** heading.
+    - In the table, 'Patches' is no longer listed.
   - **Notes:**
 ```
 

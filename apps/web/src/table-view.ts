@@ -128,6 +128,8 @@ export interface View {
   // the decimal places, for those not shown to as many as they start with.
   units?: Record<string, string> | undefined;
   places?: Record<string, number> | undefined;
+  // Set when the table's retired records show too, for a table that has them.
+  retired?: true | undefined;
 }
 
 export const emptyView: View = {
@@ -167,6 +169,7 @@ export function viewFrom(search: ViewDefinition): View {
     ...(hasEntries(search.widths) ? { widths: search.widths } : {}),
     ...(hasEntries(search.units) ? { units: search.units } : {}),
     ...(hasEntries(search.places) ? { places: search.places } : {}),
+    ...(search.retired === true ? { retired: true } : {}),
   };
 }
 
@@ -295,6 +298,7 @@ export function searchFor(view: View): ViewDefinition {
     ...(hasEntries(view.widths) ? { widths: view.widths } : {}),
     ...(hasEntries(view.units) ? { units: view.units } : {}),
     ...(hasEntries(view.places) ? { places: view.places } : {}),
+    ...(view.retired === true ? { retired: true } : {}),
   };
 }
 
@@ -357,8 +361,8 @@ export function activeGrouping<Grouping extends { key: string }>(
 }
 
 // Whether the view sorts the rows, or sets which columns are frozen, their order, how wide they are,
-// or the units and decimal places they are shown in, which the Views menu names and Clear all clears
-// with the filters.
+// the units and decimal places they are shown in, or whether retired records show, which the Views
+// menu names and Clear all clears with the filters.
 export function setsApart(view: View): boolean {
   return (
     view.sort.length > 0 ||
@@ -367,7 +371,8 @@ export function setsApart(view: View): boolean {
     view.order !== undefined ||
     view.widths !== undefined ||
     view.units !== undefined ||
-    view.places !== undefined
+    view.places !== undefined ||
+    view.retired !== undefined
   );
 }
 

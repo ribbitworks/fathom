@@ -175,7 +175,7 @@ export interface SummaryPart {
 
 // A record's parts: how many, leaving out those a draft takes away, then their names, those struck
 // through, after the mark of the parts' drafts.
-export function PartsCell({
+export function Parts({
   mark,
   parts,
 }: {
@@ -183,24 +183,33 @@ export function PartsCell({
   parts: readonly SummaryPart[];
 }) {
   return (
+    <DraftedItem draft={mark}>
+      <span className={classes.listCount}>
+        ({parts.filter(({ removed }) => !removed).length})
+      </span>{" "}
+      {parts.map(({ id, name, removed }, index) => (
+        <Fragment key={id}>
+          {index > 0 && ", "}
+          {removed ? <span className={classes.struck}>{name}</span> : name}
+        </Fragment>
+      ))}
+    </DraftedItem>
+  );
+}
+
+export function PartsCell(props: {
+  mark: DraftLike | undefined;
+  parts: readonly SummaryPart[];
+}) {
+  return (
     <span role="cell" className={classes.listCell}>
-      <DraftedItem draft={mark}>
-        <span className={classes.listCount}>
-          ({parts.filter(({ removed }) => !removed).length})
-        </span>{" "}
-        {parts.map(({ id, name, removed }, index) => (
-          <Fragment key={id}>
-            {index > 0 && ", "}
-            {removed ? <span className={classes.struck}>{name}</span> : name}
-          </Fragment>
-        ))}
-      </DraftedItem>
+      <Parts {...props} />
     </span>
   );
 }
 
-// The same cell in the record's live row: its live parts, after Live's dot where drafts change them.
-export function LivePartsCell({
+// A record's parts as they are live, after Live's dot where drafts change them.
+export function LiveParts({
   marked,
   names,
 }: {
@@ -208,11 +217,21 @@ export function LivePartsCell({
   names: readonly string[];
 }) {
   return (
+    <MarkedItem tone={marked ? "live" : undefined}>
+      <span className={classes.listCount}>({names.length})</span>{" "}
+      {names.join(", ")}
+    </MarkedItem>
+  );
+}
+
+// The same cell in the record's live row.
+export function LivePartsCell(props: {
+  marked: boolean;
+  names: readonly string[];
+}) {
+  return (
     <span role="cell" className={classes.listCell}>
-      <MarkedItem tone={marked ? "live" : undefined}>
-        <span className={classes.listCount}>({names.length})</span>{" "}
-        {names.join(", ")}
-      </MarkedItem>
+      <LiveParts {...props} />
     </span>
   );
 }

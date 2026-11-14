@@ -378,29 +378,28 @@ const listsRoute = createRoute({
 });
 
 // Release streams, with their cycles and releases, seen with the plan or planning configuration,
-// with the stream in the address, if any, open in its side panel.
+// with the table's view in the address, and the stream in the address, if any, open in its side
+// panel.
 const releasesRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/releases/{-$streamId}",
-  validateSearch: z.object({
-    show: showSchema.optional().catch(undefined),
-  }),
+  validateSearch: viewSearchSchema,
   beforeLoad: requiring("features:view", "configuration:view"),
   component: function Releases() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = releasesRoute.useNavigate();
-    const { show } = releasesRoute.useSearch();
+    const { view, onView } = viewProps(
+      releasesRoute.useSearch(),
+      (next, replace) => {
+        void navigate({ search: next, replace });
+      },
+    );
     return (
       <ReleasesPage
         streamId={releasesRoute.useParams().streamId}
         approves={approvableKinds(permissions)}
-        show={show ?? "both"}
-        onShow={(next) => {
-          void navigate({
-            search: { show: next === "both" ? undefined : next },
-            replace: true,
-          });
-        }}
+        view={view}
+        onView={onView}
       />
     );
   },

@@ -172,6 +172,7 @@ function sentTo(
       definition.widths && widthsSeen(actor, tiers, definition.widths, true),
     units: definition.units,
     places: definition.places,
+    retired: definition.retired,
   });
 }
 

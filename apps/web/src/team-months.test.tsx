@@ -13,7 +13,7 @@ import {
   featureTeamGrouping,
   gridMonthsAround,
   monthChange,
-  noWholeRecordActions,
+  readOnlyMonthActions,
   peopleManagers,
   type PersonMonths,
   personDraft,
@@ -52,7 +52,7 @@ describe("the table", () => {
     expect(table.recordProblem({}, () => [])).toBeUndefined();
     expect(table.removeLabel({} as never)).toBe("");
     expect(() => {
-      (noWholeRecordActions.add as () => void)();
+      (readOnlyMonthActions.add as () => void)();
     }).not.toThrow();
   });
 

@@ -295,6 +295,19 @@ describe("saved views", () => {
     ).toEqual(shown);
   });
 
+  it("keep whether retired records show, sending it to every reader", async () => {
+    const sharer = await test.signedIn("workforce-administrator");
+    const viewer = await test.signedIn(generalReader);
+    const { view } = (
+      await share(sharer.cookie, "With retired", { retired: true })
+    ).json<Saved>();
+    expect(view.definition).toEqual({ retired: true });
+    expect(
+      (await viewsOf(viewer.cookie)).find(({ id }) => id === view.id)
+        ?.definition,
+    ).toEqual({ retired: true });
+  });
+
   it("keep the widths of columns a reader may not see when that reader updates them", async () => {
     const maker = await test.signedIn("workforce-administrator");
     const { view } = (

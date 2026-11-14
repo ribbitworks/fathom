@@ -16,8 +16,8 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **The lock:** A record someone else has unpublished changes to has a grey lock before it, its tip Being changed by and their name, and is read only until they publish or discard them. Its menu says the same, and that it can be changed once they do.
   - **Drawn by:** `DraftedItem`'s `heldBy` in `apps/web/src/status-mark.tsx`, with the menu's words from `apps/web/src/draft-details.tsx`.
   - **Example:** Viktoria Holmberg on People, held by the second Engineering Operations Manager.
-- **A summary row:** A table of records with few columns, such as the Lists page's lists or the Releases page's streams, draws each record's row, its Live row under it beside live, and a cell naming its parts, such as a list's choices, the same way.
-  - **Drawn by:** `SummaryRow`, `PartsCell` and `LivePartsCell` in `apps/web/src/summary-row.tsx`.
+- **A summary row:** A table of records with few columns, such as the Lists page's lists, draws each record's row, its Live row under it beside live, and a cell naming its parts, such as a list's choices, the same way.
+  - **Drawn by:** `SummaryRow`, `PartsCell` and `LivePartsCell` in `apps/web/src/summary-row.tsx`. On the shared table, a cell naming a record's parts draws them with `Parts` and `LiveParts` there, marking each part itself, as the Releases column on Releases does.
   - **Example:** Sites on the Lists page.
 - **A row's slot:** Each row of a table, of the Lists page, of a list's panel, of Releases and of the Drafts page starts with a slot of two places, kept even when empty: the record's own mark first, then the dot of its first value where a draft changes that, which hangs back into the slot, so every row's first value starts at the same place and a changed name never looks set in under the row above. The record's own mark shows only where its draft changes something the row doesn't show, such as adding, removing, retiring or moving it; a draft that changes only values the row shows leaves the slot empty, since each of those values has its own dot, so two dots never sit side by side. Decided by the owner on 2026-11-11.
   - **Drawn by:** `RowMarks` and `DraftedItem`'s `slot` in `apps/web/src/status-mark.tsx`, with `recordMark`; the sizes are the theme's `--fathom-dot-size`, `--fathom-mark-gap` and `--fathom-ring-room` in `apps/web/src/theme.ts`.
@@ -145,7 +145,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
   - **Drawn by:** `RecordLink` in `apps/web/src/record-details.tsx`.
   - **Example:** a customer in Offline Sync's details opens Projects' Customers tab with that customer's details.
 - **Opening from a table:** A table's row opens its own record's details from the show-details arrow, on every table; another record named in a cell, such as a stream's releases or a project's features, is a link that opens that record's details on its own page, as Following a link sets out. Decided by the owner on 2026-11-11.
-  - **Drawn by:** `ShowDetailsButton` in `apps/web/src/show-details-button.tsx`. Links in cells are not built yet. Releases opens a stream from its name, as [issue #440](https://github.com/jlarue26/fathom/issues/440) records.
+  - **Drawn by:** `ShowDetailsButton` in `apps/web/src/show-details-button.tsx`. Links in cells are not built yet.
   - **Example:** the arrow at the start of any row on People.
 - **Several records in a cell:** A cell naming several records lists them in one line, cut short where they don't fit, with every name in its tooltip, one to a line; a details panel lists them one to a line.
   - **Drawn by:** the cell's kind in `apps/web/src/cell-kinds.tsx`, with the tip from `TableTips` in `apps/web/src/table-tips.tsx`, and `RecordLinkList` in `apps/web/src/record-details.tsx` in a panel.
@@ -264,6 +264,9 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **Moving columns:** Every table's columns can be moved, as [Column order](../product/decisions.md#configuration) sets out. A new table is drawn by the shared table, so its columns move too.
   - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx`.
   - **Example:** on Features, select Move left in the Priority column's menu.
+- **What the Views menu holds:** Beside the sort, saved views and Clear view, the Views menu may hold a choice of which records the table shows, beyond its filters, such as Show retired: a ticked item, first in the menu, kept in the address and saved with the view. Its words say how many records it adds, such as Show retired (1). A page's modes and switches stay where they are. Decided by the owner on 2026-11-13.
+  - **Drawn by:** the `viewItems` of `RecordGrid` in `apps/web/src/record-grid.tsx`, shown by `ViewsMenu` in `apps/web/src/table-controls.tsx`, each a `MenuToggle` from `apps/web/src/app-menu.tsx`.
+  - **Example:** Show retired (1) in the Views menu on Releases, once Patches' retirement is approved.
 
 ## Staying Put
 

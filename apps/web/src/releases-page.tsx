@@ -20,7 +20,6 @@ import type {
   RecordRef,
   Release,
   ReleaseStream,
-  Show,
 } from "@fathom/shared";
 import {
   ActionIcon,
@@ -32,14 +31,13 @@ import {
   Loader,
   Menu,
   Modal,
-  Paper,
   Stack,
   Table,
   Text,
   VisuallyHidden,
 } from "@mantine/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import {
   type MouseEvent,
   type ReactElement,
@@ -56,7 +54,7 @@ import { NotePanel } from "./note-editor.tsx";
 import { notifyFailure, notifySuccess } from "./notices.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
-import { originalOf, type RecordNode } from "./record-drafts.ts";
+import type { RecordNode } from "./record-drafts.ts";
 import {
   CycleLengthDialog,
   CyclesUntilDialog,
@@ -72,7 +70,6 @@ import {
   slotDraft,
   streamRowFields,
   draftsById,
-  liveStreams,
   streamsShown,
   recordNodes,
   includesCycle,
@@ -89,32 +86,33 @@ import {
   setStreamRetired,
 } from "./releases.ts";
 import { Swatch } from "./colour-swatch.tsx";
-import { useNarrow, WithSidePanel } from "./side-panel.tsx";
-import { retiredLive } from "./lists.ts";
-import { undoDrafts } from "./record-grid.tsx";
+import { useNarrow } from "./side-panel.tsx";
+import { noRecordActions, RecordGrid, undoDrafts } from "./record-grid.tsx";
 import {
   DraftedItem,
   DraftedValue,
-  DraftView,
+  FactBox,
   LiveRowMarks,
   LiveValue,
-  MarkedItem,
-  partsMark,
   RowMarks,
-  useBesideLive,
 } from "./status-mark.tsx";
-import {
-  LivePartsCell,
-  LiveSummaryName,
-  PartsCell,
-  RowWithLive,
-  SummaryName,
-  SummaryRow,
-} from "./summary-row.tsx";
-import { DraftMenu } from "./table-controls.tsx";
+import { RowWithLive } from "./summary-row.tsx";
 import { unpublishedQuery } from "./unpublished.tsx";
 import { TimelineView } from "./timeline-view.tsx";
 import { today } from "./today.ts";
+import type { ChangeView } from "./table-controls.tsx";
+import { formatDay, type View } from "./table-view.ts";
+import { TableTips } from "./table-tips.tsx";
+import { MenuToggle } from "./app-menu.tsx";
+import { count } from "./numbers.ts";
+import {
+  patternWords,
+  shownUnlessRetired,
+  streamColumnOrder,
+  type StreamRow,
+  streamRows,
+  streamTable,
+} from "./stream-table.tsx";
 import { planNodes, projectPlanQuery } from "./projects.ts";
 
 type Dialog =
@@ -126,7 +124,7 @@ type Dialog =
 
 const panelId = "release-stream-panel";
 const panelTitleId = "release-stream-panel-title";
-const linkId = (stream: { id: string }) => `release-stream-link-${stream.id}`;
+const nameCellId = (stream: { id: string }) => `cell-${stream.id}-name`;
 const noteId = "release-note";
 const timelineZoomKey = "fathom-releases-timeline-zoom";
 const noteButtonId = (release: { id: string }) =>
@@ -162,7 +160,7 @@ const dialogTitle = (dialog: Dialog): string => {
       ? dialog.stream.patterns.length === 0
         ? `Set up cycles for ${dialog.stream.name}`
         : `Change the length or names of ${dialog.stream.name}'s cycles`
-      : `Cycles from ${dialog.pattern.startsOn}`;
+      : `Cycles from ${formatDay(dialog.pattern.startsOn)}`;
   }
   return dialog.release === undefined
     ? `New release in ${dialog.stream.name}`
@@ -192,24 +190,17 @@ function monthsInWords(months: readonly { month: string; share: number }[]) {
     .join(", ");
 }
 
-const patternWords = (pattern: CyclePattern) =>
-  `Every ${String(pattern.length)} ${pattern.unit === "weeks" ? "week" : "month"}${pattern.length === 1 ? "" : "s"}, named ${pattern.naming}`;
-
-// The pattern in force today, or the first, when none has started yet.
-function patternNow(stream: ReleaseStream): CyclePattern | undefined {
-  const kept = stream.patterns.filter(
-    ({ draft }) => draft?.action !== "deleted",
-  );
-  return kept.filter(({ startsOn }) => startsOn <= today()).at(-1) ?? kept[0];
-}
+// The day a release ships, or nothing while its last cycle is not made.
+const shipDay = (stream: ReleaseStream, release: Release) => {
+  const day = releaseDate(stream, release);
+  return day === undefined ? "" : formatDay(day);
+};
 
 // What can be done on the page, for the menus to offer.
 interface Actions extends RecordMenuActions {
   // A record's draft, whatever the view, which its marks are worked out from, so the Draft view
   // decides how they show.
   draftOf: (id: string) => RecordDraft | undefined;
-  // The page address's search, kept as streams are opened.
-  search: { show?: Show };
   canEditStreams: boolean;
   canEditReleases: boolean;
   open: (dialog: Dialog) => void;
@@ -327,7 +318,7 @@ function Patterns({
                     <span className={classes.figures}>
                       <LiveRowMarks marked={slot !== undefined}>
                         <LiveValue draft={pattern.draft} fields={["startsOn"]}>
-                          From {live.startsOn}
+                          From {formatDay(live.startsOn)}
                         </LiveValue>
                       </LiveRowMarks>
                     </span>
@@ -346,7 +337,7 @@ function Patterns({
               <span className={classes.figures}>
                 <RowMarks mark={slot} heldBy={pattern.heldBy}>
                   <DraftedValue draft={draft} fields={["startsOn"]}>
-                    From {pattern.startsOn}
+                    From {formatDay(pattern.startsOn)}
                   </DraftedValue>
                 </RowMarks>
               </span>
@@ -359,7 +350,7 @@ function Patterns({
                 </DraftedValue>
               </span>
               <RecordMenu
-                title={`Cycles from ${pattern.startsOn}`}
+                title={`Cycles from ${formatDay(pattern.startsOn)}`}
                 node={node}
                 canEditDraft={actions.canEditStreams}
                 actions={actions}
@@ -378,7 +369,7 @@ function Patterns({
                         actions.run(
                           () =>
                             removeFromStream(stream.id, "patterns", pattern.id),
-                          `Drafted removing the cycles from ${pattern.startsOn}.`,
+                          `Drafted removing the cycles from ${formatDay(pattern.startsOn)}.`,
                         );
                       }}
                     >
@@ -394,7 +385,9 @@ function Patterns({
       <Group gap="xs" mih={36}>
         <Text fz="sm">
           Planned to{" "}
-          <span className={classes.figures}>{stream.cyclesUntil}</span>
+          <span className={classes.figures}>
+            {formatDay(stream.cyclesUntil)}
+          </span>
         </Text>
       </Group>
       {editable && stream.patterns.length > 0 && (
@@ -467,7 +460,7 @@ function Releases({
               {releaseCycles(stream, shown)}
               <Text span c="dimmed" fz="sm" className={classes.figures}>
                 {" "}
-                · ships {releaseDate(stream, shown) ?? ""}
+                · ships {shipDay(stream, shown)}
                 {shipsOffCycle(stream, shown) !== undefined && (
                   <Text span inherit fw={700}>
                     , {shipsOffCycle(stream, shown)}
@@ -629,12 +622,12 @@ function Cycles({
                 <Table.Td
                   className={[classes.figures, classes.cycleCell].join(" ")}
                 >
-                  {cycle.startsOn}
+                  {formatDay(cycle.startsOn)}
                 </Table.Td>
                 <Table.Td
                   className={[classes.figures, classes.cycleCell].join(" ")}
                 >
-                  {cycle.endsOn}
+                  {formatDay(cycle.endsOn)}
                 </Table.Td>
                 <Table.Td className={classes.cycleCell}>
                   {releaseOf(cycle.startsOn)}
@@ -746,11 +739,7 @@ function StreamPanel({
               {/* A draft retiring the stream says so in its own box. */}
               {stream.retired &&
                 markedDraft(stream.draft, stream.retired)?.retiring ===
-                  undefined && (
-                  <Text span fz="xs" fw={600} c="dimmed" mr={6}>
-                    Retired
-                  </Text>
-                )}
+                  undefined && <FactBox>Retired</FactBox>}
             </div>
             {editable && (
               <>
@@ -805,156 +794,20 @@ function StreamPanel({
   );
 }
 
-// Whether the stream, or any of its patterns or releases, has a draft.
-const hasDrafts = (stream: ReleaseStream) =>
-  stream.draft !== undefined ||
-  [...stream.patterns, ...stream.releases].some(
-    ({ draft }) => draft !== undefined,
-  );
-
-const draftsOf = (records: readonly { draft?: RecordDraft | undefined }[]) =>
-  records.map(({ draft }) => draft);
-
-// Every stream: its name and marks, how its cycles are made now, and its releases, with retired
-// streams after the rest.
-function StreamTable({
-  streams,
-  actions,
-  selected,
-  originalOf,
-  onOpen,
-}: {
-  streams: readonly ReleaseStream[];
-  actions: Actions;
-  selected: string | undefined;
-  // The stream with every draft, whatever the view, which its marks are worked out from, so the
-  // Draft view decides how they show.
-  originalOf: (stream: ReleaseStream) => ReleaseStream;
-  onOpen: (stream: ReleaseStream) => void;
-}) {
-  // Beside live, a stream a draft retires or restores stays where it is live until approved.
-  const showLive = useBesideLive();
-  const isRetired = (stream: ReleaseStream) =>
-    showLive ? retiredLive(stream) : stream.retired;
-  const current = streams.filter((stream) => !isRetired(stream));
-  const retired = streams.filter(isRetired);
-  const row = (stream: ReleaseStream) => {
-    const now = patternNow(stream);
-    const original = originalOf(stream);
-    const slot = slotDraft(original.draft, streamRowFields, stream.retired);
-    const patternsMark = partsMark(draftsOf(original.patterns));
-    const releasesMark = partsMark(draftsOf(original.releases));
-    const [live] = liveStreams([stream]);
-    const liveNow = live && patternNow(live);
-    const kept = live?.releases ?? [];
-    return (
-      <SummaryRow
-        key={stream.id}
-        selected={stream.id === selected}
-        retired={stream.retired}
-        tint={
-          hasDrafts(stream)
-            ? (stream.draft ?? { action: "changed" })
-            : undefined
-        }
-        onOpen={() => {
-          onOpen(stream);
-        }}
-        liveCells={
-          live !== undefined &&
-          hasDrafts(stream) &&
-          stream.draft?.action !== "deleted" ? (
-            <>
-              <LiveSummaryName marked={slot !== undefined} draft={stream.draft}>
-                {live.name}
-              </LiveSummaryName>
-              <span role="cell" className={classes.listCellDim}>
-                <MarkedItem
-                  tone={patternsMark === undefined ? undefined : "live"}
-                >
-                  {liveNow === undefined
-                    ? "No cycles yet"
-                    : patternWords(liveNow)}
-                </MarkedItem>
-              </span>
-              <LivePartsCell
-                marked={releasesMark !== undefined}
-                names={kept.map(({ name }) => name)}
-              />
-            </>
-          ) : undefined
-        }
-      >
-        <SummaryName mark={slot} draft={original.draft} heldBy={stream.heldBy}>
-          <Link
-            id={linkId(stream)}
-            to="/releases/{-$streamId}"
-            params={{ streamId: stream.id }}
-            search={actions.search}
-            className={classes.listLink}
-          >
-            {stream.name}
-          </Link>
-        </SummaryName>
-        <span role="cell" className={classes.listCellDim}>
-          <DraftedItem draft={patternsMark}>
-            {now === undefined ? "No cycles yet" : patternWords(now)}
-          </DraftedItem>
-        </span>
-        <PartsCell
-          mark={releasesMark}
-          parts={stream.releases.map((release) => ({
-            id: release.id,
-            name: release.name,
-            removed: release.draft?.action === "deleted",
-          }))}
-        />
-      </SummaryRow>
-    );
-  };
-  return (
-    <Paper withBorder className={classes.streamsPanel}>
-      <div
-        role="table"
-        aria-label="Release streams"
-        className={classes.listTable}
-      >
-        <div role="row" className={classes.listHead}>
-          <span role="columnheader">Stream</span>
-          <span role="columnheader">Cycle schedule</span>
-          <span role="columnheader">Releases</span>
-        </div>
-        {current.map(row)}
-        {retired.length > 0 && (
-          <>
-            <div role="row" className={classes.listGroup}>
-              <span role="cell" aria-colspan={3}>
-                Retired
-              </span>
-            </div>
-            {retired.map(row)}
-          </>
-        )}
-      </div>
-    </Paper>
-  );
-}
-
 export function ReleasesPage({
   streamId,
   approves,
-  show = "both",
-  onShow,
+  view,
+  onView,
 }: {
   // The stream open in the side panel, if any.
   streamId?: string | undefined;
   // The kinds of draft the user's role approves and rejects.
   approves: readonly DraftKind[];
-  show?: Show;
-  onShow?: (show: Show) => void;
+  view: View;
+  onView: ChangeView;
 }) {
-  // What to show stays in the address as streams are opened and closed.
-  const search = show === "both" ? {} : { show };
+  const { show } = view;
   const queryClient = useQueryClient();
   const query = useQuery(releaseStreamsQuery);
   // Drafts of features move with cycles; those who see only configuration are sent none.
@@ -985,18 +838,20 @@ export function ReleasesPage({
     ]);
   };
   const openStream = (stream: { id: string }) => {
+    // While a note is being changed, nothing in the stream changes, so nothing written is lost.
+    if (writingNote) return;
     void navigate({
       to: "/releases/{-$streamId}",
       params: { streamId: stream.id },
-      search,
+      search: true,
     });
   };
   const closePanel = (stream: ReleaseStream) => {
-    focusSoon(linkId(stream));
+    focusSoon(nameCellId(stream));
     void navigate({
       to: "/releases/{-$streamId}",
       params: { streamId: undefined },
-      search,
+      search: true,
     });
   };
 
@@ -1022,14 +877,19 @@ export function ReleasesPage({
   }
 
   const { streams: all, canEditStreams, canEditReleases } = query.data;
-  const allById = new Map(all.map((stream) => [stream.id, stream]));
-  const streams = streamsShown(all, show);
+  const day = today();
+  const kept = view.retired === true ? all : all.filter(shownUnlessRetired);
+  const retiredCount = all.length - all.filter(shownUnlessRetired).length;
+  const rows = streamRows(kept, show, day);
+  const table = streamTable({ streams: kept, day, onOpen: openStream });
   const drafts = draftsById(all);
   const nodes = [
     ...recordNodes(all),
     ...(plan.data === undefined ? [] : planNodes(plan.data)),
   ];
-  const open = streams.find(({ id }) => id === streamId);
+  // A stream named in the address opens even while retired streams are hidden, such as from a
+  // release's link on Features.
+  const open = streamsShown(all, show).find(({ id }) => id === streamId);
   // A note belongs to the stream open beside it, so opening another stream closes it.
   const noted =
     noteOf?.streamId === open?.id
@@ -1038,7 +898,6 @@ export function ReleasesPage({
   const writing = writingNote && noted !== undefined;
   const actions: Actions = {
     draftOf: (id) => drafts.get(id),
-    search,
     canEditStreams: canEditStreams && show !== "live",
     canEditReleases: canEditReleases && show !== "live",
     approves,
@@ -1111,7 +970,7 @@ export function ReleasesPage({
       open &&
       !writing &&
       event.currentTarget.contains(target) &&
-      !target.closest("[role=row], [data-side-panel], section, button, a")
+      !target.closest("tr, [data-side-panel], section, button, a, input")
     ) {
       closePanel(open);
     }
@@ -1172,6 +1031,40 @@ export function ReleasesPage({
           },
         ];
 
+  const panels = open
+    ? [
+        ...notePanel,
+        {
+          key: "stream",
+          id: panelId,
+          name: "the stream's panel",
+          node: (
+            <StreamPanel
+              key={open.id}
+              stream={open}
+              actions={actions}
+              narrow={narrow}
+              waiting={writing}
+              onClose={() => {
+                closePanel(open);
+              }}
+            />
+          ),
+        },
+      ]
+    : [];
+  const gridActions = noRecordActions<StreamRow, never, undefined>(
+    (asking, selection) => {
+      setDecision(
+        decisionFor(asking, selection, approves, [], {
+          fields: [],
+          records: nodes,
+        }),
+      );
+      setDeciding(true);
+    },
+  );
+
   return (
     <Stack gap="md" className={classes.tablePage} onClick={onPageClick}>
       <PageHeader
@@ -1188,63 +1081,52 @@ export function ReleasesPage({
           )
         }
       />
-      <DraftView show={show}>
-        <WithSidePanel
-          storageKey="fathom-record-panel-width"
-          panels={
-            open
-              ? [
-                  ...notePanel,
-                  {
-                    key: "stream",
-                    id: panelId,
-                    name: "the stream's panel",
-                    node: (
-                      <StreamPanel
-                        key={open.id}
-                        stream={open}
-                        actions={actions}
-                        narrow={narrow}
-                        waiting={writing}
-                        onClose={() => {
-                          closePanel(open);
-                        }}
-                      />
-                    ),
-                  },
-                ]
-              : []
-          }
-        >
-          {streams.length === 0 ? (
-            <Text fz="sm" c="dimmed">
-              No release streams yet.
-            </Text>
-          ) : (
-            // While a note is being changed, the streams wait, as a table waits for a note's panel.
-            <div className={classes.releasesContent} inert={writing}>
-              {onShow && (
-                <Group gap="sm" className={classes.releasesBar}>
-                  <DraftMenu show={show} onShow={onShow} />
-                </Group>
-              )}
-              <TimelineView
-                title="Timeline"
-                zoomKey={timelineZoomKey}
-                releaseStreams={all}
-                today={today()}
-              />
-              <StreamTable
-                streams={streams}
-                actions={actions}
-                selected={open?.id}
-                originalOf={(stream) => originalOf(allById, stream)}
-                onOpen={openStream}
-              />
-            </div>
-          )}
-        </WithSidePanel>
-      </DraftView>
+      {all.length === 0 ? (
+        <Text fz="sm" c="dimmed">
+          No release streams yet.
+        </Text>
+      ) : (
+        <TableTips>
+          <RecordGrid
+            records={rows}
+            table={table}
+            fields={[]}
+            order={streamColumnOrder}
+            lists={[]}
+            canEdit={false}
+            canAdd={false}
+            rowActions={false}
+            approves={approves}
+            canEditColumns={false}
+            actions={gridActions}
+            view={view}
+            onView={onView}
+            panels={panels}
+            above={
+              // While a note is being changed, the timeline waits, as the streams do.
+              <div className={classes.releasesTimeline} inert={writing}>
+                <TimelineView
+                  title="Timeline"
+                  zoomKey={timelineZoomKey}
+                  releaseStreams={all}
+                  today={day}
+                />
+              </div>
+            }
+            viewItems={
+              retiredCount > 0 || view.retired === true ? (
+                <MenuToggle
+                  label={`Show retired (${count(retiredCount)})`}
+                  on={view.retired === true}
+                  onToggle={(on) => {
+                    onView({ ...view, retired: on ? true : undefined });
+                  }}
+                />
+              ) : undefined
+            }
+          />
+        </TableTips>
+      )}
       <Modal
         opened={dialog !== undefined}
         onClose={() => {
@@ -1258,7 +1140,7 @@ export function ReleasesPage({
         {dialog?.kind === "stream" && (
           <StreamDialog
             stream={dialog.stream}
-            streams={streams}
+            streams={all}
             onSaved={
               dialog.stream === undefined
                 ? saved("Drafted the new release stream.", true)

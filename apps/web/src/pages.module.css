@@ -1334,31 +1334,13 @@ th.liveColumn {
   line-height: 16px;
 }
 
-/* The Releases page: the timeline, then the streams table, each scrolling on its own within the
-   window, the table's header staying in view. */
-.releasesContent {
+/* The Releases timeline, between the table's bar and the table: as tall as its rows need, up to
+   about half the window, its rows scrolling under its axis beyond that, so the table keeps room. */
+.releasesTimeline {
   display: flex;
   flex-direction: column;
-  gap: var(--mantine-spacing-lg);
-  max-height: 100%;
-  min-height: 0;
-}
-
-.releasesBar {
-  flex: none;
-}
-
-.streamsPanel {
-  flex: 0 1 auto;
-  min-height: 8rem;
-  overflow: auto;
-}
-
-.streamsPanel .listHead {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--mantine-color-body);
+  max-height: 45dvh;
+  margin-bottom: var(--mantine-spacing-sm);
 }
 
 /* The strip above a timeline: its periods side by side, each as wide as its share, those in view

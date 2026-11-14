@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // A table's view, its search, filters, sort, breakdown, frozen columns, the order of its columns,
-// the widths set for them, and the unit and decimal places each column that offers units is shown
-// in, as the page address holds it and as a saved view keeps it, and the saved views themselves. A
-// saved view is personal, seen and changed only by its maker, or shared: seen by everyone who sees
-// the table, except those it filters, sorts, or breaks down by a column they may not see, and
-// changed by its maker and those who may change planning configuration.
+// the widths set for them, the unit and decimal places each column that offers units is shown in,
+// and whether its retired records show, as the page address holds it and as a saved view keeps it,
+// and the saved views themselves. A saved view is personal, seen and changed only by its maker, or
+// shared: seen by everyone who sees the table, except those it filters, sorts, or breaks down by a
+// column they may not see, and changed by its maker and those who may change planning
+// configuration.
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
@@ -156,6 +157,7 @@ export const viewDefinitionSchema = z.object({
   widths: looseByColumn(width),
   units: looseByColumn(unit),
   places: looseByColumn(places),
+  retired: z.literal(true).optional().catch(undefined),
 });
 
 // The view as read from the address or a saved view, and as written to them.
@@ -171,6 +173,7 @@ export interface ViewDefinition {
   widths?: Record<string, number> | undefined;
   units?: Record<string, string> | undefined;
   places?: Record<string, number> | undefined;
+  retired?: true | undefined;
 }
 
 // A view as a request sends it, which must fit as a whole, since a page sends only views it made.
@@ -210,6 +213,7 @@ const strictDefinitionSchema = z.object({
       "Too many places",
     )
     .optional(),
+  retired: z.literal(true).optional(),
 });
 
 // The key of the People table's filter on drafts, which filters people by whether they have a

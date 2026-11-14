@@ -57,6 +57,15 @@ function AppMenuDropdown(props: MenuDropdownProps) {
 AppMenu.Target = Menu.Target;
 AppMenu.Dropdown = AppMenuDropdown;
 
+// The tick before a menu item, shown while it is chosen.
+function Tick({ chosen }: { chosen: boolean }) {
+  return (
+    <span className={classes.choiceTick} data-chosen={chosen || undefined}>
+      <Icon name="check" />
+    </span>
+  );
+}
+
 // A group of choices in a menu, under a label, the chosen one ticked.
 export function MenuChoices<Value extends string>({
   label,
@@ -78,14 +87,7 @@ export function MenuChoices<Value extends string>({
         {choices.map((choice) => (
           <Menu.Item
             key={choice.value}
-            leftSection={
-              <span
-                className={classes.choiceTick}
-                data-chosen={chosen === choice.value || undefined}
-              >
-                <Icon name="check" />
-              </span>
-            }
+            leftSection={<Tick chosen={chosen === choice.value} />}
             onClick={() => {
               onChoose(choice.value);
             }}
@@ -98,5 +100,28 @@ export function MenuChoices<Value extends string>({
         ))}
       </div>
     </>
+  );
+}
+
+// A choice in a menu that is on or off, ticked while on.
+export function MenuToggle({
+  label,
+  on,
+  onToggle,
+}: {
+  label: string;
+  on: boolean;
+  onToggle: (on: boolean) => void;
+}) {
+  return (
+    <Menu.Item
+      leftSection={<Tick chosen={on} />}
+      onClick={() => {
+        onToggle(!on);
+      }}
+    >
+      {label}
+      {on && <VisuallyHidden>, chosen</VisuallyHidden>}
+    </Menu.Item>
   );
 }

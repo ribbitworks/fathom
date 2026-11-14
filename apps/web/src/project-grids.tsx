@@ -71,6 +71,7 @@ import {
   withLiveFields,
   liveRecordsOf,
   type Column,
+  type GridRecord,
   isPending,
   RecordGrid,
   type RecordGridProps,
@@ -197,13 +198,13 @@ const newKind = "new";
 const savedKind = "saved";
 
 // What a record's draft changes, field by field, with each value as the table shows it.
-function draftFieldsOf<Rec extends PlanRecord>(
-  columns: readonly Column<Rec, PlanChange>[],
+export function draftFieldsOf<Rec extends GridRecord, Change>(
+  columns: readonly Column<Rec, Change>[],
   record: Rec,
-  draft: NonNullable<PlanRecord["draft"]>,
+  draft: NonNullable<Rec["draft"]>,
 ): DraftField[] {
   if (draft.action !== "changed") return [];
-  const words = (column: Column<Rec, PlanChange>, value: CellValue) =>
+  const words = (column: Column<Rec, Change>, value: CellValue) =>
     cellKinds[column.kind].inDetail?.(column, value) ?? (value as ChangeValue);
   return columns
     .filter(({ key }) => draft.changed.includes(key))
@@ -957,5 +958,5 @@ export function planDraftFields(
   // The kind is always one of the fixed kinds above.
   // eslint-disable-next-line security/detect-object-injection
   const columns = draftColumns[kind](choices);
-  return draftFieldsOf(columns, record as never, record.draft);
+  return draftFieldsOf(columns, record as never, record.draft as never);
 }

@@ -29,6 +29,7 @@ import {
   cellColumn,
   type CellRecord,
   type Column,
+  noRecordActions,
   type RecordActions,
   type RecordTable,
   type RowGrouping,
@@ -265,8 +266,6 @@ export function monthGroupings<Rec extends MonthRow>(
   ];
 }
 
-const nothing = () => undefined;
-
 // A month's teams as a cell changes them: the teams added and removed, from the day the month is
 // read as of; undefined when the cell changes nothing.
 export function monthChange(
@@ -333,27 +332,12 @@ export function withMonthChange(
   };
 }
 
-// The table never adds, removes or decides on whole records, so these are never called.
-export const noWholeRecordActions: Omit<
-  RecordActions<MonthRow, CellChange, CellChange>,
-  "update"
-> = {
-  add: nothing,
-  remove: nothing,
-  discard: nothing,
-  resubmit: nothing,
-  decide: nothing,
-  editColumn: nothing,
-  discardColumn: nothing,
-  resubmitColumn: nothing,
-};
-
 // A mode of the grid that changes nothing never calls these.
-export const readOnlyMonthActions: RecordActions<
+export const readOnlyMonthActions = noRecordActions<
   MonthRow,
   CellChange,
   CellChange
-> = { ...noWholeRecordActions, update: nothing };
+>();
 
 // Changing a month's teams, shown at once and saved as the team drafts, which can be undone; the
 // table changes nothing else.
@@ -370,7 +354,7 @@ export function useTeamMonthActions(
     blocked: false,
   });
   return {
-    ...noWholeRecordActions,
+    ...noRecordActions<PersonMonths, CellChange, CellChange>(),
     update: (record, change) => {
       const changing = monthChange(record, change, today);
       if (changing === undefined) return;

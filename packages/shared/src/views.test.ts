@@ -85,6 +85,14 @@ describe("viewDefinitionSchema", () => {
     expect(viewDefinitionSchema.parse({ frozen: "2" }).frozen).toBe(undefined);
   });
 
+  it("keeps showing retired records only when asked for, dropping anything else", () => {
+    expect([
+      viewDefinitionSchema.parse({ retired: true }).retired,
+      viewDefinitionSchema.parse({ retired: false }).retired,
+      viewDefinitionSchema.parse({ retired: "yes" }).retired,
+    ]).toEqual([true, undefined, undefined]);
+  });
+
   it("drops filters, sorts, and breakdowns that are not lists or records", () => {
     expect(
       viewDefinitionSchema.parse({ filters: "x", sort: "x", breakdown: "x" }),
@@ -202,6 +210,13 @@ describe("savedViewRequestSchema", () => {
     expect(request({ places: many(1) }).error?.issues[0]?.message).toBe(
       "Too many places",
     );
+  });
+
+  it("accepts showing retired records, and refuses anything else for it", () => {
+    expect([
+      request({ retired: true }).success,
+      request({ retired: false }).success,
+    ]).toEqual([true, false]);
   });
 
   it("refuses a number of frozen columns that is not whole or is negative", () => {

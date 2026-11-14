@@ -380,6 +380,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
     recordedAs?: ExportedTable;
     held?: (rows: readonly Rec[], show: Show) => readonly HeldDetail[];
   };
+  // For a table whose row stands for several records' drafts: whether the row has any that can be
+  // decided now, in place of its own draft's state.
+  decidable?: (record: Rec) => boolean;
   // For a table that sums its rows: a total row ending each group, headed with the label, and one
   // for all the rows shown, kept in view at the foot, headed with the overall label; each column's
   // total is drawn from the rows it sums.
@@ -1236,7 +1239,30 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   opensAtColumn?: string | undefined;
   // False for a table whose records never have drafts, which offers no Draft menu.
   withDrafts?: boolean;
+  // Choices of which records the table shows, beyond its filters, such as Show retired, first in
+  // the Views menu.
+  viewItems?: ReactNode;
+  // What the page shows under the bar above the table, such as a timeline, as tall as it needs.
+  above?: ReactNode;
 }
+
+const nothing = () => undefined;
+
+// For a table that changes none of its records itself, whose actions are never called, apart from
+// deciding on drafts, which it may still offer.
+export const noRecordActions = <Rec extends GridRecord, Change, Request>(
+  decide: RecordActions<Rec, Change, Request>["decide"] = nothing,
+): RecordActions<Rec, Change, Request> => ({
+  add: nothing,
+  update: nothing,
+  decide,
+  remove: nothing,
+  discard: nothing,
+  resubmit: nothing,
+  editColumn: nothing,
+  discardColumn: nothing,
+  resubmitColumn: nothing,
+});
 
 const withoutDraftFilter = (view: View): View =>
   withoutFilters(view, (key) => key !== draftFilterKey);
@@ -1288,6 +1314,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   opensAtColumn,
   withDrafts = true,
   panels = [],
+  viewItems,
+  above,
 }: RecordGridProps<Rec, Change, Request>) {
   // An address may ask for drafts of a table that has none.
   const asked = withDrafts
@@ -1375,6 +1403,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // Whether the user's role approves a record's draft, and those it decides with it.
   const approvesRecord = (record: Rec) =>
     mayDecide(approves, table.drafts([record.id]));
+  const decidableRow = (record: Rec) =>
+    table.decidable?.(record) ?? decidable(record);
   // Beside a column whose draft changes what its cells show, the column as it is live, to compare,
   // as a record's live row is shown under their draft. A draft that changes only the column's
   // heading, such as its name, shows the live name under the drafted one instead, since the cells
@@ -2737,7 +2767,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             // Set apart from the items after it, when any are offered.
             divider={
               (mayChange(record) && record.heldBy === undefined) ||
-              (decidable(record) && approvesRecord(record)) ||
+              (decidableRow(record) && approvesRecord(record)) ||
               Boolean(ownItems)
             }
           />
@@ -2756,7 +2786,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         })}
         {ownItems}
         {/* A rejected draft is back with its makers, until they send it again. */}
-        {decidable(record) && approvesRecord(record) && (
+        {decidableRow(record) && approvesRecord(record) && (
           <>
             {Boolean(ownItems) && <Menu.Divider />}
             <Menu.Item
@@ -2779,7 +2809,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         )}
         {rowActions && mayChange(record) && record.heldBy === undefined && (
           <>
-            {((decidable(record) && approvesRecord(record)) ||
+            {((decidableRow(record) && approvesRecord(record)) ||
               Boolean(ownItems)) && <Menu.Divider />}
             {draft?.state === "rejected" && (
               <Menu.Item
@@ -2822,7 +2852,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const waitingShown: DraftSelection = {
     ...table.drafts(
       shownRecords
-        .filter((record) => decidable(record) && approvesRecord(record))
+        .filter((record) => decidableRow(record) && approvesRecord(record))
         .map(({ id }) => id),
     ),
     columns: approves.includes("field")
@@ -2940,48 +2970,58 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     liveColumn,
     saved,
   });
+  const viewBar = (
+    <ViewBar
+      one={table.one}
+      noun={table.noun}
+      columns={columns}
+      draftFilter={draftColumn}
+      view={view}
+      onView={onView}
+      shown={countedOnce(shownRecords).length}
+      total={countedOnce(records).length}
+      counted={table.counted?.counted(countedOnce(records))}
+      groupings={table.groupings}
+      withDrafts={withDrafts}
+      onLeave={() => {
+        moveTo(active.row, active.column);
+      }}
+      saved={saved}
+      viewItems={viewItems}
+      draftItems={
+        <>
+          {waitingTotal > 0 && (
+            <DecideAllItems
+              total={waitingTotal}
+              everywhere={
+                everyone.filter(({ draft }) => draft?.state === "waiting")
+                  .length +
+                draftedFields.filter(({ draft }) => draft?.state === "waiting")
+                  .length
+              }
+              disabled={saving}
+              onDecide={(asking) => {
+                actions.decide(asking, waitingShown);
+              }}
+            />
+          )}
+        </>
+      }
+    />
+  );
   // Menus and choices stay shown beside their cell however the table scrolls, so they are not hidden
   // when the cell is partly out of view.
   return (
     <DraftView show={known.show}>
       <WithSidePanel panels={sidePanels} storageKey="fathom-table-panel-width">
-        <ViewBar
-          one={table.one}
-          noun={table.noun}
-          columns={columns}
-          draftFilter={draftColumn}
-          view={view}
-          onView={onView}
-          shown={countedOnce(shownRecords).length}
-          total={countedOnce(records).length}
-          counted={table.counted?.counted(countedOnce(records))}
-          groupings={table.groupings}
-          withDrafts={withDrafts}
-          onLeave={() => {
-            moveTo(active.row, active.column);
-          }}
-          saved={saved}
-          draftItems={
-            <>
-              {waitingTotal > 0 && (
-                <DecideAllItems
-                  total={waitingTotal}
-                  everywhere={
-                    everyone.filter(({ draft }) => draft?.state === "waiting")
-                      .length +
-                    draftedFields.filter(
-                      ({ draft }) => draft?.state === "waiting",
-                    ).length
-                  }
-                  disabled={saving}
-                  onDecide={(asking) => {
-                    actions.decide(asking, waitingShown);
-                  }}
-                />
-              )}
-            </>
-          }
-        />
+        {above === undefined ? (
+          viewBar
+        ) : (
+          <div>
+            {viewBar}
+            {above}
+          </div>
+        )}
         <Paper
           ref={panelRef}
           withBorder

@@ -629,6 +629,21 @@ describe("a view's order of columns", () => {
   });
 });
 
+describe("showing retired records", () => {
+  it("is read from and written to the address only while asked for", () => {
+    expect([
+      viewFrom({ retired: true }).retired,
+      viewFrom({}),
+      searchFor({ ...emptyView, retired: true }).retired,
+      searchFor(emptyView),
+    ]).toEqual([true, emptyView, true, {}]);
+  });
+
+  it("counts as set apart", () => {
+    expect(setsApart({ ...emptyView, retired: true })).toBe(true);
+  });
+});
+
 describe("rows keeping their place", () => {
   const byName = view({ sort: [{ key: "name", descending: false }] });
   const useSteady = (all: Row[], shown: View, added = new Set<string>()) =>

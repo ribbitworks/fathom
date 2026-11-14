@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/product/decisions.md"]
-last_updated: "2026-11-11"
+last_updated: "2026-11-13"
 ---
 
 # Manual Test: Release Streams, Cycles and Releases
@@ -36,8 +36,9 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Start From a
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, marks and the Publish button. This test adds:
 
 - **Seeded dates in this test:** **This quarter** is the quarter today is in, and **the first half** is Platform's first half-year cycle, three quarters after this quarter. Patches' cycles are named such as **P24.3**. The examples after "such as" are as the seed data is when added on 7 November 2026.
-- **Streams table:** the table on the Releases page, with a row for each release stream and the columns **Stream**, **Cycle schedule** and **Releases**. Selecting a row opens the stream in the side panel.
-- **Side panel on Releases:** the panel beside the streams table for the selected stream, which the table narrows to make room for, with the sections **Cycle schedule**, **Releases** and **Cycles**. Dragging its left edge resizes it.
+- **Streams table:** the table on the Releases page, under the timeline, with a row for each release stream and the columns **Stream**, **Cycle schedule**, **Releases**, **Next release** and **Planned to**. Its rows are under a **Current** heading, and, while retired streams are shown, a **Retired** heading. The search field, the Draft menu, **Metrics**, **Group by** and **Views** are in the bar above the timeline; while any stream is retired, **Show retired** and how many are retired is first in the **Views** menu.
+- **Selecting a stream in the table:** selecting the arrow button at the right of the stream's **Stream** cell, which opens the stream in the side panel.
+- **Side panel on Releases:** the panel beside the timeline and the streams table for the selected stream, which they narrow to make room for, with the sections **Cycle schedule**, **Releases** and **Cycles**. Dragging its left edge resizes it.
 - **Timeline:** the section headed **Timeline** above the streams table, with **−** and **+** buttons and the zoom buttons **All**, **Year**, **6 months**, **Quarter**, **Month**, **Week** and **Days** at its top right, and the strip under them. It has a row for each stream that is not retired, named on the left, with a lane of the stream's cycles above a lane of its releases, under an axis of two rows of dates. Hovering over a cycle or a release shows its name and dates.
 - **Strip:** the row between the timeline's zoom buttons and its rows: **‹**, a box for each quarter of the timeline, **›**, and **Today** while today is on the timeline.
 - **⋯ menu on Releases:** a **⋯** button beside the side panel's close button acts on the stream itself, when it has a draft; one at the end of a row in the side panel acts on that change of cycles or release; one at the end of a row of the **Cycles** table acts on that cycle.
@@ -125,7 +126,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `1E14` Select **Set up cycles**.
   - **Expected:**
     - The dialog closes.
-    - Under **Cycle schedule**, a row reads **From 2027-01-04**, then **Every 2 weeks, named Sprint {#}**.
+    - Under **Cycle schedule**, a row reads **From Jan 4, 2027**, then **Every 2 weeks, named Sprint {#}**.
     - The row has a hollow yellow dot in its slot.
     - Below it are **Planned to** and a day two years after today.
     - A **Change…** button is under them.
@@ -169,7 +170,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `DDC5` Select **Make release**.
   - **Expected:**
-    - Under **Releases** in the side panel, a row reads **Testing Release**, then **Sprint 1 to Sprint 2 · ships 2027-01-31**.
+    - Under **Releases** in the side panel, a row reads **Testing Release**, then **Sprint 1 to Sprint 2 · ships Jan 31, 2027**.
     - The row has a hollow yellow dot in its slot.
     - In the table, the **Releases** column of **Testing Stream** reads **(1) Testing Release**.
   - **Notes:**
@@ -209,7 +210,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `9A9D` Run Restore the Seed Data.
   - **Expected:**
     - Restore the Seed Data finishes with no error.
-    - After the page reloads, the table shows **Testing Stream**, **Platform** and **Patches**, in that order.
+    - After the page reloads, the table shows a **Current** heading, then **Testing Stream**, **Platform** and **Patches**, in that order.
     - **Testing Stream** has no dot.
     - **Platform** has a grey lock in its slot.
     - **Patches** has a yellow dot in its slot.
@@ -221,11 +222,11 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Expected:**
     - The side panel opens, headed by the grey lock and **Platform**.
     - Under **Releases**, the rows read, from the top (see [Seeded dates](#terms)):
-      - **Harbor 1**, with a blue square before it, from the cycle three quarters ago to the one two quarters ago, shipping on the last day of the second, such as **26.1 to 26.2 · ships 2026-06-30**, with no dot and no **⋯** button
-      - **Harbor 2 LTS**, its name underlined, with a yellow dot before its teal square, from last quarter's cycle to this quarter's, shipping on the last day of this quarter, such as **26.3 to 26.4 · ships 2026-12-31**
+      - **Harbor 1**, with a blue square before it, from the cycle three quarters ago to the one two quarters ago, shipping on the last day of the second, such as **26.1 to 26.2 · ships Jun 30, 2026**, with no dot and no **⋯** button
+      - **Harbor 2 LTS**, its name underlined, with a yellow dot before its teal square, from last quarter's cycle to this quarter's, shipping on the last day of this quarter, such as **26.3 to 26.4 · ships Dec 31, 2026**
       - under it, a Live row: a green dot before a purple square and **Harbor 2**
       - **Harbor 3**, with a yellow dot in its slot, a blue square and the yellow **Moved** box, then a yellow dot before cycles one later than in its Live row
-      - under it, a Live row: a green dot in its slot, and **Harbor 3** from next quarter's cycle to the first half, shipping on its last day, such as **27.1 to 27.3 · ships 2027-12-31**
+      - under it, a Live row: a green dot in its slot, and **Harbor 3** from next quarter's cycle to the first half, shipping on its last day, such as **27.1 to 27.3 · ships Dec 31, 2027**
       - **Harbor 4**, with a yellow dot in its slot
     - There is no **New release…** button.
   - **Notes:**
@@ -280,7 +281,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `81B0` Select **Change cycles**.
   - **Expected:**
-    - A second row, **From 2027-02-01**, then **Every 4 weeks, named Sprint {#}**, appears.
+    - A second row, **From Feb 1, 2027**, then **Every 4 weeks, named Sprint {#}**, appears.
     - It has a hollow yellow dot in its slot.
   - **Notes:**
 
@@ -330,7 +331,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Expected:**
     - The side panel's heading shows a hollow yellow dot, **Testing Stream**, then the yellow **Retired** box.
     - The side panel's button now reads **Restore**.
-    - In the table, **Testing Stream** is still the first row.
+    - In the table, **Testing Stream** is still the first stream under the **Current** heading.
     - It has a hollow yellow dot in its slot.
     - The yellow **Retired** box follows its name.
   - **Notes:**
@@ -356,9 +357,25 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `5D18` Select **Approve**.
   - **Expected:**
     - A notification says **Approved 1 draft.**
-    - In the table, **Patches** is now under a **Retired** heading.
-    - **Patches** has no dot.
-    - The side panel's heading shows **Patches**, then **Retired** in grey.
+    - In the table, **Patches** is no longer listed.
+    - A **Views** button is at the right of the bar above the timeline.
+    - The side panel's heading shows **Patches**, then a grey **Retired** box.
+  - **Notes:**
+
+- [ ] `EB91` Select **Views**, then **Show retired (1)**.
+  - **Expected:**
+    - Under the **Current** heading are **Testing Stream** and **Platform**.
+    - Under a **Retired** heading is **Patches**, with no dot.
+  - **Notes:**
+
+- [ ] `A5A4` Select **Views**.
+  - **Expected:**
+    - **Show retired (1)** is ticked.
+    - **Clear view** is offered.
+  - **Notes:**
+
+- [ ] `9C3B` Reload the page.
+  - **Expected:** **Patches** is still under the **Retired** heading.
   - **Notes:**
 
 - [ ] `EEA9` Look under **Releases** in the side panel.
@@ -493,7 +510,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - There is no grey lock.
   - **Notes:**
 
-- [ ] `3D69` Under **Cycle schedule**, select the **Change…** button below the line **Planned to** and 31 December three years after this year, such as **Planned to 2029-12-31**, then **Planned to…** in its menu.
+- [ ] `3D69` Under **Cycle schedule**, select the **Change…** button below the line **Planned to** and 31 December three years after this year, such as **Planned to Dec 31, 2029**, then **Planned to…** in its menu.
   - **Expected:**
     - A dialog titled **Change how far Platform is planned** opens.
     - **Planned to** holds that day.
@@ -508,14 +525,14 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `B32E` Select **Save**.
   - **Expected:**
     - The panel's heading shows a hollow yellow dot before **Platform**.
-    - **Planned to** reads the new day, such as **Planned to 2030-12-31**.
+    - **Planned to** reads the new day, such as **Planned to Dec 31, 2030**.
     - The **Cycles** heading counts two more cycles, such as **Cycles (13)**.
-    - Its last row is a half-year cycle starting in the new day's year, such as **30.2** from **2030-07-01**.
+    - Its last row is a half-year cycle starting in the new day's year, such as **30.2** from **Jul 1, 2030**.
   - **Notes:**
 
 - [ ] `AAA0` Select the **⋯** button in the panel's heading, then **Discard draft**.
   - **Expected:**
-    - **Planned to** reads 31 December three years after this year, such as **Planned to 2029-12-31**.
+    - **Planned to** reads 31 December three years after this year, such as **Planned to Dec 31, 2029**.
     - The **Cycles** heading counts the cycles up to that day, such as **Cycles (11)**.
   - **Notes:**
 
@@ -538,15 +555,15 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `C5B2` Select **Save**.
   - **Expected:**
-    - The **Testing Release** row has a hollow yellow dot before **Sprint 1 to Sprint 2 · ships 2027-03-03**.
+    - The **Testing Release** row has a hollow yellow dot before **Sprint 1 to Sprint 2 · ships Mar 3, 2027**.
     - After it, in bold, the row reads **31 days after Sprint 2 ends**.
-    - In the **Cycles** section, **Sprint 3** still starts on **2027-02-01**.
+    - In the **Cycles** section, **Sprint 3** still starts on **Feb 1, 2027**.
   - **Notes:**
 
 - [ ] `5D17` Select the **⋯** button at the end of the **Testing Release** row, then **Discard draft**.
   - **Expected:**
     - A notification says **Discarded the draft.**
-    - The row reads **Sprint 1 to Sprint 2 · ships 2027-01-31**.
+    - The row reads **Sprint 1 to Sprint 2 · ships Jan 31, 2027**.
     - Nothing follows the date.
   - **Notes:**
 
@@ -561,7 +578,8 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `6CDB` Run Restore the Seed Data.
   - **Expected:**
     - Restore the Seed Data finishes with no error.
-    - After the page reloads, the streams table shows **Testing Stream**, **Platform** and **Patches**, none under **Retired**.
+    - After the page reloads, the streams table shows **Testing Stream**, **Platform** and **Patches** under the **Current** heading.
+    - There is no **Retired** heading, and no **Views** button in the bar.
     - The **Timeline** heading shows above the streams table, with the zoom buttons at its top right.
   - **Notes:**
 
@@ -754,7 +772,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 **Preconditions:** Signed in with this account. Run after REL-20. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] `752C` In the side panel's **Cycles** table, find the row of last quarter's cycle, the one after **Harbor 1**'s last, such as **26.3**.
-  - **Expected:** Its **Ends** shows a day, such as **2026-09-30**. Write that day down.
+  - **Expected:** Its **Ends** shows a day, such as **Sep 30, 2026**. Write that day down.
   - **Notes:**
 
 - [ ] `EBEE` Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
@@ -1086,4 +1104,62 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Expected:**
     - The note's panel closes.
     - The **Harbor 2** row has a hollow yellow dot in its slot.
+  - **Notes:**
+
+### Part 7: The Streams Table
+
+#### REL-28: Streams Are Found, Opened and Grouped in the Table
+
+**Account:** Team Member, `team.member@fathom.test`, changed from REL-27.
+
+**Preconditions:** Signed in with this account. Run after REL-27, or on its own. **Releases** page open from the left-hand menu.
+
+- [ ] `DCE3` Run Restore the Seed Data.
+  - **Expected:** After the page reloads, **Platform** and **Patches** are among the streams under the **Current** heading.
+  - **Notes:**
+
+- [ ] `FAC3` Read **Platform**'s row in the streams table.
+  - **Expected:**
+    - **Cycle schedule** reads **Every 3 months, named {YY}.{N}**.
+    - **Releases** reads **(4)**, then the names of its four releases.
+    - **Next release** reads **Harbor 2 LTS**, then **ships** and the last day of this quarter, such as **Harbor 2 LTS, ships Dec 31, 2026**.
+    - **Planned to** shows a day with a short month and its year.
+  - **Notes:**
+
+- [ ] `7314` Press Cmd+F on a Mac, or Ctrl+F elsewhere.
+  - **Expected:** The cursor is in the search field at the left of the bar above the timeline.
+  - **Notes:**
+
+- [ ] `17A8` Type `patch`.
+  - **Expected:**
+    - The streams table shows **Patches** alone.
+    - The timeline still shows **Platform** and **Patches**.
+  - **Notes:**
+
+- [ ] `93B7` Press Esc.
+  - **Expected:**
+    - The search field is empty.
+    - The streams table shows **Platform** and **Patches** again.
+  - **Notes:**
+
+- [ ] `39AF` Select **Platform** in the table.
+  - **Expected:**
+    - The side panel opens on **Platform**, beside the timeline and the streams table.
+    - **Platform** in the side panel's heading has the focus.
+  - **Notes:**
+
+- [ ] `B372` Press Esc.
+  - **Expected:**
+    - The side panel closes.
+    - **Platform**'s **Stream** cell is selected in the streams table.
+  - **Notes:**
+
+- [ ] `38AD` Choose **Cycle schedule** in the **Group by** menu.
+  - **Expected:**
+    - The **Group by** button reads **Group by: Cycle schedule**.
+    - Each cycle schedule heads the streams that have it, such as **Every 3 months, named {YY}.{N}** over **Platform**, with how many each holds.
+  - **Notes:**
+
+- [ ] `8D0D` Reload the page.
+  - **Expected:** The streams table is still grouped by cycle schedule.
   - **Notes:**

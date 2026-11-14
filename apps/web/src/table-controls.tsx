@@ -470,6 +470,7 @@ export function ViewsMenu({
   view,
   onView,
   onClear,
+  items,
 }: {
   saved?: SavedViews | undefined;
   columns: readonly AnyColumn[];
@@ -478,6 +479,8 @@ export function ViewsMenu({
   onView: ChangeView;
   // Clears the view, leaving the saved view it started from.
   onClear: () => void;
+  // Choices of which records the table shows, beyond its filters, such as Show retired, first.
+  items?: ReactNode;
 }) {
   const views = saved?.views ?? [];
   const groupId = useId();
@@ -578,7 +581,8 @@ export function ViewsMenu({
     },
   ].filter(({ items }) => items !== false);
   const actions = !empty || current?.canChange === true;
-  if (views.length === 0 && empty) return null;
+  const hasItems = items !== undefined && items !== null && items !== false;
+  if (views.length === 0 && empty && !hasItems) return null;
   return (
     <AppMenu position="bottom-start" hideDetached={false}>
       <AppMenu.Target>
@@ -595,6 +599,10 @@ export function ViewsMenu({
         </Button>
       </AppMenu.Target>
       <AppMenu.Dropdown>
+        {items}
+        {hasItems && (views.length > 0 || sections.length > 0 || actions) && (
+          <Menu.Divider />
+        )}
         {saved &&
           Object.entries(viewScopes).map(([scope, { heading }]) => {
             const grouped = views.filter((each) => each.scope === scope);
@@ -945,6 +953,7 @@ export function ViewBar({
   onLeave,
   saved,
   draftItems,
+  viewItems,
   groupings,
   withDrafts = true,
 }: {
@@ -969,6 +978,8 @@ export function ViewBar({
   saved?: SavedViews | undefined;
   // Added to the Draft menu, after what to show and the filter.
   draftItems?: ReactNode;
+  // Choices of which records the table shows, beyond its filters, first in the Views menu.
+  viewItems?: ReactNode;
   // False for a table whose records never have drafts.
   withDrafts?: boolean;
 }) {
@@ -1029,6 +1040,7 @@ export function ViewBar({
         onClear={() => {
           onView(emptyView);
         }}
+        items={viewItems}
       />
       {filters.map(({ column, filter }) => (
         <Pill
