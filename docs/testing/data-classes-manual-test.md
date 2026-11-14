@@ -46,7 +46,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `DB3B` Select **Data classes** under **Administration** in the left-hand menu.
   - **Expected:**
     - Three sections follow the heading: **Built-in details**, **Columns** and **Lists**
-    - Each section is a table with **Name**, **Class**, and a column saying what each row is about
+    - Each section is a table with **Name**, **Class** and **About**
     - Most rows end with a **Change class…** button
     - **Name**, **Class** and the third column start at the same place in all three tables
     - The **Change class…** buttons line up down the page
@@ -59,7 +59,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **Start date**'s **About** starts "These need it: People on other dates"
     - **Hiring plan**'s class is a lock with a keyhole, then **Confidential**
     - The three class names in **Class** start at the same place
-    - **Hiring plan**'s **About** reads "These need it: Planned hires on People and the Org chart."
+    - **Hiring plan**'s **About** reads "These need it: Planned hires' target dates, drafts and history."
   - **Notes:**
 
 - [ ] `A726` Look at the **Columns** section.
@@ -67,7 +67,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - It lists People's added columns, such as **Site**
     - Each column's class is an open eye, then **General**, except **Work pattern**'s
     - **Work pattern**'s class is an eye with a line through it, then **Personal**
-    - **Site**'s third column reads "People shows it. It has the class of its list, Sites."
+    - **Site**'s third column reads "People shows it. It takes its list's class, Sites."
     - **Site** has no **Change class…** button
   - **Notes:**
 

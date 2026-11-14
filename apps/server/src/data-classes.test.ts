@@ -461,7 +461,7 @@ describe("a list's class", () => {
     );
     expect(response.statusCode).toBe(409);
     expect(refusal(response)).toBe(
-      "A move to another class can't be undone; move it back instead",
+      "A change of class can't be undone; change it back instead",
     );
   });
 
@@ -504,7 +504,7 @@ describe("a list's class", () => {
     );
     expect(response.statusCode).toBe(400);
     expect(refusal(response)).toMatch(
-      /is already approved, so it changes class only by a move, not in a draft$/,
+      /is already approved, so its class changes at once, not in a draft$/,
     );
   });
 
@@ -659,7 +659,7 @@ describe("a column's class", () => {
     const response = await move(`/api/columns/${id}/class`, "personal");
     expect(response.statusCode).toBe(400);
     expect(refusal(response)).toBe(
-      "This column takes the class of its list, so move the list instead",
+      "This column takes its list's class, so change the list's class instead",
     );
   });
 
@@ -735,7 +735,7 @@ describe("a column's class", () => {
     const refused = await change("general");
     expect(refused.statusCode).toBe(400);
     expect(refusal(refused)).toBe(
-      `${name} is already approved, so it changes class only by a move, not in a draft`,
+      `${name} is already approved, so its class changes at once, not in a draft`,
     );
   });
 

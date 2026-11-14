@@ -3834,7 +3834,7 @@ describe("built-in lists and lists with meanings", () => {
     ).toBe(true);
     expect(
       within(dialog).getByText(
-        "A column on Features draws on this list, so it stays General",
+        "A column on Features uses this list, so it stays General",
       ),
     ).toBeTruthy();
   });

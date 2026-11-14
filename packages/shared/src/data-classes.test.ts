@@ -108,9 +108,9 @@ describe("what shows a built-in detail", () => {
     expect(shownIn("managerHistory")).toContain("People's Manager assigned");
   });
 
-  it("names the planned hires the hiring plan's class shows or hides", () => {
+  it("names what of planned hires the hiring plan's class keeps from view", () => {
     expect(shownIn("hiringPlan")).toEqual([
-      "Planned hires on People and the Org chart",
+      "Planned hires' target dates, drafts and history",
     ]);
   });
 });

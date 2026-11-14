@@ -246,12 +246,12 @@ const workPatternColumn = column("work-pattern", "Work pattern", workPatterns);
 
 // Most work full time; a few part time or compressed hours. Picked by a person's place rather than
 // at random, so adding the column changes nothing else the seed makes.
-const partTimeEvery = 9;
-const compressedEvery = 13;
+const partTime = { every: 9, from: 4 };
+const compressedHours = { every: 13, from: 7 };
 const workPatternOf = (index: number): string =>
-  index % partTimeEvery === 4
+  index % partTime.every === partTime.from
     ? "Part time"
-    : index % compressedEvery === 7
+    : index % compressedHours.every === compressedHours.from
       ? "Compressed hours"
       : "Full time";
 const onboardingColumn: FictionalColumn = {

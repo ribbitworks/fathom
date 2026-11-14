@@ -114,7 +114,7 @@ export async function classifyDraft(
   if (from === to) return;
   if (live) {
     throw new BadRequestError(
-      `${name} is already approved, so it changes class only by a move, not in a draft`,
+      `${name} is already approved, so its class changes at once, not in a draft`,
     );
   }
   requireMove(actor, from, to);

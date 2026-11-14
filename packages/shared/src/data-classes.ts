@@ -385,11 +385,19 @@ const viewPlaces: Record<
   ],
 };
 
-// The planned hires, which the hiring plan's class shows or hides whole, with their drafts and
-// history.
-const hiringPlanRows = "Planned hires on People and the Org chart";
+// What else holds each built-in detail besides views and columns: the hiring plan's class keeps
+// planned hires' target dates, drafts and history from view, though everyone reaching People sees
+// the hires themselves.
+const heldElsewhere: Record<ClassifiedField, readonly string[]> = {
+  startDate: [],
+  endDate: [],
+  managerHistory: [],
+  featureTeamDates: [],
+  futureReorganizations: [],
+  hiringPlan: ["Planned hires' target dates, drafts and history"],
+};
 
-// The views needing a built-in detail, and People's columns and rows holding it, by name.
+// The views needing a built-in detail, People's columns holding it, and what else holds it, by name.
 export function shownIn(field: ClassifiedField): string[] {
   const views = classifiedViewSchema.options.flatMap((view) =>
     // The view is always one of the fixed views listed above.
@@ -403,8 +411,9 @@ export function shownIn(field: ClassifiedField): string[] {
   const columns = [...builtInColumnNames].flatMap(([key, label]) =>
     classifiedColumns.get(key) === field ? [`People's ${label}`] : [],
   );
-  const rows = field === "hiringPlan" ? [hiringPlanRows] : [];
-  return [...views, ...columns, ...rows];
+  // The field is always one of the fixed fields.
+  // eslint-disable-next-line security/detect-object-injection
+  return [...views, ...columns, ...heldElsewhere[field]];
 }
 
 // The classes a view needs that a role does not see, least sensitive first.

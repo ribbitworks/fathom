@@ -910,7 +910,7 @@ async function undoIn(
   const records = recordsOf(rows);
   if (records.some(isClassMove)) {
     throw new ConflictError(
-      "A move to another class can't be undone; move it back instead",
+      "A change of class can't be undone; change it back instead",
     );
   }
   if (records.some(({ recordType }) => planRecordTypes.has(recordType))) {

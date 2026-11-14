@@ -229,7 +229,7 @@ export type List = z.infer<typeof listSchema>;
 
 // Why a list a column on Features draws on keeps General, as columns there do.
 export const featuresListGeneral =
-  "A column on Features draws on this list, so it stays General";
+  "A column on Features uses this list, so it stays General";
 
 // Every list, by name.
 export const listsSchema = z.object({ lists: z.array(listSchema) });

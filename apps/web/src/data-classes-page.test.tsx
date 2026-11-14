@@ -130,7 +130,7 @@ describe("the Data classes page", () => {
     expect(cellsOf(rowOf(details, "Hiring plan"))).toEqual([
       "Hiring plan",
       "Confidential",
-      "These need it: Planned hires on People and the Org chart.",
+      "These need it: Planned hires' target dates, drafts and history.",
       "Change class…This role can't see Confidential data",
     ]);
     // The symbol is seen only, so the class is read once, by its name.
@@ -153,7 +153,7 @@ describe("the Data classes page", () => {
       expect(cellsOf(rowOf(columns, "Site"))).toEqual([
         "Site",
         "General",
-        "People shows it. It has the class of its list, Sites.",
+        "People shows it. It takes its list's class, Sites.",
         "",
       ]);
     });
@@ -181,7 +181,7 @@ describe("the Data classes page", () => {
           "tr",
         ) as HTMLElement,
       )[2],
-    ).toBe("People shows it. It has the class of its list, Sites.");
+    ).toBe("People shows it. It takes its list's class, Sites.");
     expect(screen.queryByRole("region", { name: "Lists" })).toBeNull();
   });
 
@@ -435,7 +435,7 @@ describe("the Data classes page", () => {
     ).toBe(true);
     expect(
       within(dialog).getAllByText(
-        "A column on Features draws on this list, so it stays General",
+        "A column on Features uses this list, so it stays General",
       ),
     ).toHaveLength(1);
   });

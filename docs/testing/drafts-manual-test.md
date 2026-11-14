@@ -270,7 +270,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `9A70` Open the Draft menu, and select **Drafts applied**.
   - **Expected:**
-    - The count beside the search box reads "12 lists".
+    - The count beside the search box reads "13 lists".
     - 'Certifications' and 'Languages' are not in the table.
     - No Live rows.
     - No green dots.

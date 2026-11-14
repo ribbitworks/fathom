@@ -162,7 +162,7 @@ const classedColumn = (
     about:
       list === undefined
         ? "People shows it."
-        : `People shows it. It has the class of its list, ${list.name}.`,
+        : `People shows it. It takes its list's class, ${list.name}.`,
   };
 };
 

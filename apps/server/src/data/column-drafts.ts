@@ -501,7 +501,7 @@ export async function moveColumnClass(
     }
     if (row.visibility === null) {
       throw new BadRequestError(
-        "This column takes the class of its list, so move the list instead",
+        "This column takes its list's class, so change the list's class instead",
       );
     }
     const from = storedTier(row.visibility);
