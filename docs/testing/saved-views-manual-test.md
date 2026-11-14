@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Saved Views
@@ -49,9 +49,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Restore the Seed Data has been run. Signed in with this account in the main window. Select the **People** page in the left-hand menu.
 
-- [ ] `751F` Type `an` in the search box above the table.
+- [ ] `751F` Type `Patel-Singh` in the search box above the table.
   - **Expected:**
-    - The table shows only the rows matching `an`.
+    - Only the row of 'Tanushree Patel-Singh' shows.
     - A **Views** button shows above the table.
   - **Notes:**
 
@@ -66,7 +66,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No choice about sharing.
   - **Notes:**
 
-- [ ] `4DD1` Type `Fictional planner view` in **Name**.
+- [ ] `4DD1` In the open dialog, type `Fictional planner view` in **Name**.
   - **Expected:**
     - The name shows in **Name**.
     - No message is under it.
@@ -96,7 +96,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No view is applied.
   - **Notes:**
 
-- [ ] `86F9` In the second window, type `an` in the search box above the table.
+- [ ] `86F9` In the second window, type `Patel-Singh` in the search box above the table.
   - **Expected:** A **Views** button shows above the table.
   - **Notes:**
 

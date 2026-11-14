@@ -529,9 +529,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `312D` Type `Engineering Manager TBD` in the search box.
   - **Expected:**
-    - One row is shown.
-    - Its **Name** reads "Engineering Manager, TBD-" and a number, in grey italics.
-    - Its **Manager?** cell shows a checked box.
+    - Three rows are shown:
+      - the planned Engineering Manager, whose **Name** reads "Engineering Manager, TBD-" and a number, in grey italics
+      - 'Platform engineer'
+      - "SDET, TBD-" and another number
+    - The planned Engineering Manager's **Manager?** cell shows a checked box.
   - **Notes:**
 
 - [ ] `71B8` Clear the search box, and type `Platform engineer TBD`.
@@ -557,15 +559,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `4C77` Clear the search box, and type `Engineering Manager TBD`.
   - **Expected:**
-    - One row is shown.
-    - Its **Name** reads "Engineering Manager, TBD-" and the same number.
+    - Three rows are shown.
+    - The planned Engineering Manager's **Name** reads "Engineering Manager, TBD-" and the same number.
   - **Notes:**
 
-- [ ] `E9B5` Click once in the row's **Manager?** cell.
+- [ ] `E9B5` Click once in the planned Engineering Manager's **Manager?** cell.
   - **Expected:**
     - A message reads "Reassign direct reports first".
     - The box stays checked.
-    - The row has no dot.
+    - The planned Engineering Manager's row has no dot.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -576,7 +578,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open, with no filters.
 
-- [ ] `8EC5` Type `Backend engineer 2` in the search box, and look at the row's **Name** cell.
+- [ ] `8EC5` Type `Backend engineer 2` in the search box, and look at the **Name** cell of the row for 'Backend engineer 2'.
   - **Expected:**
     - A **Fill** button sits at the right of the cell.
     - 'Backend engineer 2' is still readable beside it.
@@ -744,14 +746,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open, with no filters.
 
-- [ ] `2ED2` Type `Engineering Manager TBD` in the search box, and look at the row's **State** and **Name** cells.
+- [ ] `2ED2` Type `Engineering Manager TBD` in the search box, and look at the **State** and **Name** cells of the row whose **Name** reads "Engineering Manager, TBD-" and a number.
   - **Expected:**
     - **State** reads "Request to hire".
     - There is no **Fill** button in the **Name** cell.
   - **Notes:**
 
-- [ ] `07FA` Select the row's **State** cell, press Enter, choose **Approved to hire**, and press Enter.
-  - **Expected:** A **Fill** button shows in the row's **Name** cell.
+- [ ] `07FA` Select that row's **State** cell, press Enter, choose **Approved to hire**, and press Enter.
+  - **Expected:** A **Fill** button shows in that row's **Name** cell.
   - **Notes:**
 
 - [ ] `8DB0` Select **Fill**.

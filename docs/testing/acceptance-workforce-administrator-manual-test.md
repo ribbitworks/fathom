@@ -125,11 +125,11 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu, with no filters.
 
 - [ ] `77C9` Search for `Engineering Manager TBD`.
-  - **Expected:** A row is listed whose **Name** reads "Engineering Manager, TBD-" and a number.
+  - **Expected:** Among the rows listed, one's **Name** reads "Engineering Manager, TBD-" and a number.
   - **Notes:**
 
-- [ ] `28CF` Select the row's **State** cell, press Enter, choose **Approved to hire**, and press Enter.
-  - **Expected:** A **Fill** button shows in the row's **Name** cell.
+- [ ] `28CF` Select that row's **State** cell, press Enter, choose **Approved to hire**, and press Enter.
+  - **Expected:** A **Fill** button shows in that row's **Name** cell.
   - **Notes:**
 
 - [ ] `EF3E` Search for `Tanushree Patel-Singh`.
