@@ -431,7 +431,7 @@ export async function approveDrafts(
         transaction,
         await withFills(transaction, actor, requested),
       );
-      const made = await approveRecordDrafts(transaction, asked.records);
+      const made = await approveRecordDrafts(transaction, actor, asked.records);
       if (asksForLists(asked)) {
         made.push(...(await approveListDrafts(transaction, asked)));
       }

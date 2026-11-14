@@ -6,6 +6,7 @@
 // patterns, and releases have drafts, shown in place of the live values, with the draft beside.
 
 import { z } from "zod";
+import type { Permission } from "./access.ts";
 import { type Cycle, cycleUnitSchema, laterCyclesSchema } from "./cycles.ts";
 import { daySchema } from "./days.ts";
 import { heldBySchema, recordDraftSchema } from "./drafts.ts";
@@ -175,6 +176,11 @@ export interface ReleaseMove<Moved extends ReleaseCycles> {
   lastCycle: string;
 }
 
+// Whether a refusal of a change of cycles may name the releases and features it is about, which are
+// seen with View Features alone; to anyone else it says what's wrong without naming them.
+export const namesPlannedWork = (permissions: readonly Permission[]) =>
+  permissions.includes("features:view");
+
 // The releases that move with their cycles when a stream's cycles change, given where each cycle
 // now starts, each with the cycles it moves to; or why the change cannot be made: a release would
 // include a cycle no longer made, or start after its Ships on day, as the Decisions Log sets out.
@@ -183,7 +189,9 @@ export function movedReleases<Moved extends ReleaseCycles>(
   moved: ReadonlyMap<string, string | undefined>,
   until: string,
   stream: string,
+  permissions: readonly Permission[],
 ): { moves: ReleaseMove<Moved>[] } | { problem: string } {
+  const named = namesPlannedWork(permissions);
   const moves: ReleaseMove<Moved>[] = [];
   for (const release of releases) {
     const firstCycle = moved.get(release.firstCycle);
@@ -193,12 +201,14 @@ export function movedReleases<Moved extends ReleaseCycles>(
     }
     if (firstCycle === undefined || lastCycle === undefined) {
       return {
-        problem: `${release.name} would move past ${until}, the end of ${stream}'s plan.`,
+        problem: `${named ? release.name : "Work planned on these cycles"} would move past ${until}, the end of ${stream}'s plan.`,
       };
     }
     if (release.shipsOn !== null && firstCycle > release.shipsOn) {
       return {
-        problem: `${release.name} would start after it ships on ${release.shipsOn}.`,
+        problem: named
+          ? `${release.name} would start after it ships on ${release.shipsOn}.`
+          : "Work planned on these cycles would start after the day it ships.",
       };
     }
     moves.push({ release, firstCycle, lastCycle });

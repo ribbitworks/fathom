@@ -15,7 +15,9 @@ import {
   type CyclePatternLike,
   cycleUnitSchema,
   cyclesOf,
+  namesPlannedWork,
   patternStartFits,
+  type Permission,
   planSubjects,
   projectSubjects,
   type RecordRef,
@@ -65,6 +67,15 @@ const onCycles = [
     notOfStream: "Choose a cycle of the feature's stream",
   },
 ] as const;
+
+// The refusals of a change of cycles, to a role that can't see releases and features, naming none
+// of them.
+const unnamedRefusals = {
+  afterPlan: "Work is planned on cycles after that day",
+  offCycles:
+    "Work planned on these cycles would no longer fit the stream's cycles",
+  sharedCycles: "Work planned on these cycles would overlap",
+} as const;
 
 // Release streams and cycles are seen with features and releases, and with planning configuration.
 const featuresOrConfiguration = [
@@ -386,12 +397,16 @@ const streamOf = ({ type, id, record }: Touched): string =>
     : String(record.streamId ?? record.targetStreamId);
 
 // The first way the records break the rules for streams' cycles and releases, in the streams the
-// touched records belong to, or undefined when they keep them. A release breaks them only if it is
-// touched, or a pattern in its stream is, so a change is not refused for a problem it did not make.
+// touched records belong to, or undefined when they keep them, in words the role acting can see. A
+// release breaks them only if it is touched, or a pattern in its stream is, so a change is not
+// refused for a problem it did not make.
 export function releaseProblem(
   state: RecordsState,
   touched: readonly Touched[],
+  permissions: readonly Permission[],
 ): string | undefined {
+  const worded = (named: string, unnamed: string) =>
+    namesPlannedWork(permissions) ? named : unnamed;
   const streams = new Set(touched.map(streamOf));
   for (const streamId of streams) {
     const patterns = streamPatterns(state, streamId);
@@ -427,11 +442,11 @@ export function releaseProblem(
         const name = String(record.name);
         const own = asCycles(record);
         if (streamTouched && String(own.lastCycle) > until) {
-          return refusals.afterPlan(name);
+          return worded(refusals.afterPlan(name), unnamedRefusals.afterPlan);
         }
         if (!releaseFits(cycles, own)) {
           return patternTouched
-            ? refusals.offCycles(name)
+            ? worded(refusals.offCycles(name), unnamedRefusals.offCycles)
             : refusals.notOfStream;
         }
         if (type !== "release") continue;
@@ -439,7 +454,10 @@ export function releaseProblem(
           (other) => other.id !== id && overlaps(record, other.release),
         );
         if (clash !== undefined) {
-          return `The release ${String(clash.release.name)} already includes some of those cycles`;
+          return worded(
+            `The release ${String(clash.release.name)} already includes some of those cycles`,
+            unnamedRefusals.sharedCycles,
+          );
         }
       }
     }

@@ -110,6 +110,7 @@ describe("planSubjects", () => {
 });
 
 describe("releases moved with their cycles", () => {
+  const seesFeatures = ["features:view"] as const;
   const release = {
     name: "Fictional Later",
     firstCycle: "2027-07-01",
@@ -124,7 +125,13 @@ describe("releases moved with their cycles", () => {
 
   it("move to where their cycles now start", () => {
     expect(
-      movedReleases([release], moved, "2027-12-31", "Fictional Majors"),
+      movedReleases(
+        [release],
+        moved,
+        "2027-12-31",
+        "Fictional Majors",
+        seesFeatures,
+      ),
     ).toEqual({
       moves: [{ release, firstCycle: "2027-06-01", lastCycle: "2027-09-01" }],
     });
@@ -137,14 +144,26 @@ describe("releases moved with their cycles", () => {
       lastCycle: "2027-01-01",
     };
     expect(
-      movedReleases([early], moved, "2027-12-31", "Fictional Majors"),
+      movedReleases(
+        [early],
+        moved,
+        "2027-12-31",
+        "Fictional Majors",
+        seesFeatures,
+      ),
     ).toEqual({ moves: [] });
   });
 
   it("may not include a cycle no longer made", () => {
     const gone = new Map([...moved, ["2027-10-01", undefined]]);
     expect(
-      movedReleases([release], gone, "2027-12-31", "Fictional Majors"),
+      movedReleases(
+        [release],
+        gone,
+        "2027-12-31",
+        "Fictional Majors",
+        seesFeatures,
+      ),
     ).toEqual({
       problem:
         "Fictional Later would move past 2027-12-31, the end of Fictional Majors's plan.",
@@ -159,9 +178,49 @@ describe("releases moved with their cycles", () => {
         later,
         "2027-12-31",
         "Fictional Majors",
+        seesFeatures,
       ),
     ).toEqual({
       problem: "Fictional Later would start after it ships on 2027-07-15.",
+    });
+  });
+
+  describe("refused to a role that can't see features", () => {
+    const seesConfiguration = [
+      "configuration:view",
+      "configuration:edit",
+    ] as const;
+
+    it("without naming what would move past the plan", () => {
+      const gone = new Map([...moved, ["2027-10-01", undefined]]);
+      expect(
+        movedReleases(
+          [release],
+          gone,
+          "2027-12-31",
+          "Fictional Majors",
+          seesConfiguration,
+        ),
+      ).toEqual({
+        problem:
+          "Work planned on these cycles would move past 2027-12-31, the end of Fictional Majors's plan.",
+      });
+    });
+
+    it("without naming what would start after it ships", () => {
+      const later = new Map([...moved, ["2027-07-01", "2027-08-01"]]);
+      expect(
+        movedReleases(
+          [{ ...release, shipsOn: "2027-07-15" }],
+          later,
+          "2027-12-31",
+          "Fictional Majors",
+          seesConfiguration,
+        ),
+      ).toEqual({
+        problem:
+          "Work planned on these cycles would start after the day it ships.",
+      });
     });
   });
 });

@@ -12,7 +12,12 @@
 
 import { fields } from "@fathom/db";
 import type { Database } from "@fathom/db";
-import type { RecordDraft, RecordRef, RecordType } from "@fathom/shared";
+import type {
+  Permission,
+  RecordDraft,
+  RecordRef,
+  RecordType,
+} from "@fathom/shared";
 import { noteProblem, recordTypeSchema } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
@@ -124,15 +129,21 @@ function linkedProblem(
 }
 
 // The rules across records of several kinds, checked for each change drafted, published, and
-// approved: each gives the first way the records break it, if any, the more telling first.
+// approved: each gives the first way the records break it, if any, the more telling first, in words
+// the role acting can see.
 const recordRules: readonly ((
   state: RecordsState,
   touched: readonly Touched[],
+  permissions: readonly Permission[],
 ) => string | undefined)[] = [allocationProblem, linkedProblem, releaseProblem];
 
-const ruleProblem = (state: RecordsState, touched: readonly Touched[]) =>
+const ruleProblem = (
+  state: RecordsState,
+  touched: readonly Touched[],
+  permissions: readonly Permission[],
+) =>
   recordRules
-    .map((rule) => rule(state, touched))
+    .map((rule) => rule(state, touched, permissions))
     .find((found) => found !== undefined);
 
 export const kindOf = (type: RecordType): RecordKind =>
@@ -420,6 +431,7 @@ function misfitOf(
   id: string,
   wanted: Recorded | undefined,
   before: Recorded,
+  permissions: readonly Permission[],
 ): RequestError | undefined {
   if (wanted !== undefined) {
     const taken = takenValue(kind, state, wanted, id);
@@ -439,9 +451,9 @@ function misfitOf(
   }
   const touched = [{ type: kind.type, id, record: wanted ?? before }];
   const after = withVersion(state, kind.type, id, wanted);
-  const problem = ruleProblem(after, touched);
+  const problem = ruleProblem(after, touched, permissions);
   if (problem !== undefined) return new ConflictError(problem);
-  const holder = holderBreaking(kind, after, id, wanted, touched);
+  const holder = holderBreaking(kind, after, id, wanted, touched, permissions);
   return holder === undefined
     ? undefined
     : new ConflictError(heldConflictMessage(holder));
@@ -496,6 +508,7 @@ function holderBreaking(
   id: string,
   wanted: Recorded | undefined,
   touched: readonly Touched[],
+  permissions: readonly Permission[],
 ): string | undefined {
   for (const holding of holdings(state)) {
     const theirs = withHolding(state, holding);
@@ -506,7 +519,7 @@ function holderBreaking(
           (target) => versionOf(theirs, type, target) === undefined,
         ),
       );
-    if (linkGone || ruleProblem(theirs, touched) !== undefined) {
+    if (linkGone || ruleProblem(theirs, touched, permissions) !== undefined) {
       return holding.holder;
     }
   }
@@ -560,6 +573,7 @@ export async function saveRecordDrafts(
       id,
       record,
       (before ?? record) as Recorded,
+      maker.permissions,
     );
     if (misfit !== undefined) throw misfit;
     const changes = asDraft(kindChanges(kind, id, before, record));
@@ -709,6 +723,7 @@ export async function discardRecordDraft(
           ...ref,
           record: stateOf(state, ref.type).live.get(ref.id) as Recorded,
         })),
+      maker.permissions,
     );
     if (problem !== undefined) throw new ConflictError(problem);
     const made: Change[] = [];
@@ -829,6 +844,7 @@ async function refuseHeldRecords(
 // at the same time. The live records must still keep every rule once they are applied.
 export async function approveRecordDrafts(
   transaction: Transaction,
+  approver: Actor,
   asked: readonly RecordRef[],
 ): Promise<Change[]> {
   if (asked.length === 0) return [];
@@ -905,6 +921,7 @@ export async function approveRecordDrafts(
       liveOnly(await readRecordsState(transaction)),
     ),
     touched,
+    approver.permissions,
   );
   if (problem !== undefined) throw new ConflictError(problem);
   for (const { kind, id } of removed.reverse()) {
@@ -1008,7 +1025,8 @@ export function recordFits(
 ): boolean {
   const version = versionOf(mine, type, id);
   const before = (version ?? stateOf(mine, type).live.get(id)) as Recorded;
-  return misfitOf(kindOf(type), mine, id, version, before) === undefined;
+  // Only whether it fits is asked, so whoever would read a refusal's words doesn't matter.
+  return misfitOf(kindOf(type), mine, id, version, before, []) === undefined;
 }
 
 // The changes that take a record back from the user's draft to the published one, or the live

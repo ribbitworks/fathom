@@ -301,6 +301,7 @@ export {
   cyclesUntilRequestSchema,
   longestCycle,
   movedReleases,
+  namesPlannedWork,
   type Release,
   type ReleaseCycles,
   releaseLengths,

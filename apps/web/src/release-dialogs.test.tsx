@@ -5,7 +5,7 @@
 // changing a release, each with what it refuses before saving, what it sends, and what it does
 // while and once it saves.
 
-import { shipsBeforeStart } from "@fathom/shared";
+import { sessionResponseSchema, shipsBeforeStart } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -20,12 +20,15 @@ import {
   ReleaseDialog,
   StreamDialog,
 } from "./release-dialogs.tsx";
+import { sessionQuery } from "./session.ts";
 import {
   fictionalPattern,
+  fictionalUser,
   fictionalRelease,
   fictionalStream,
   recordDraft,
   serverAnswers,
+  signedOut,
   streamId,
   testTheme,
   noFeatureColumns,
@@ -43,9 +46,18 @@ afterEach(() => {
 
 const saving = () => ({ onSaved: vi.fn(), onCancel: vi.fn(), onBusy: vi.fn() });
 
-function show(dialog: (handlers: ReturnType<typeof saving>) => ReactElement) {
+function show(
+  dialog: (handlers: ReturnType<typeof saving>) => ReactElement,
+  { signedIn = true } = {},
+) {
   const handlers = saving();
   const client = new QueryClient();
+  if (signedIn) {
+    client.setQueryData(
+      sessionQuery.queryKey,
+      sessionResponseSchema.parse(fictionalUser),
+    );
+  }
   render(
     <MantineProvider theme={testTheme}>
       <QueryClientProvider client={client}>
@@ -1089,6 +1101,32 @@ describe("the dialog changing one cycle's length", () => {
     await typeLength("4");
     expect(screen.getByRole("alert").textContent).toBe(
       "Fictional Later would start after it ships on 2027-07-15.",
+    );
+  });
+
+  it("names no release in a refusal until it knows the role sees them", async () => {
+    serverAnswers({ "GET /api/session": signedOut });
+    const shipping = fictionalStream({
+      releases: [
+        fictionalRelease({
+          name: "Fictional Later",
+          firstCycle: "2027-07-01",
+          lastCycle: "2027-10-01",
+          shipsOn: "2027-07-15",
+        }),
+      ],
+    });
+    show(
+      (handlers) => (
+        <CycleLengthDialog stream={shipping} cycle={second} {...handlers} />
+      ),
+      { signedIn: false },
+    );
+
+    await typeLength("4");
+
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Work planned on these cycles would start after the day it ships.",
     );
   });
 });

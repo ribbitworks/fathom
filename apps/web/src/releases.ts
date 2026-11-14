@@ -21,6 +21,7 @@ import {
   type Release,
   knownColour,
   type PaletteColour,
+  type Permission,
   type ReleaseRequest,
   type ReleaseStream,
   releaseStreamSchema,
@@ -159,6 +160,7 @@ export function lengthChangeOf(
   stream: ReleaseStream,
   startsOn: string,
   request: CycleLengthRequest,
+  permissions: readonly Permission[],
   features: readonly Feature[] = [],
 ): {
   cycles: Cycle[];
@@ -201,6 +203,7 @@ export function lengthChangeOf(
     moved,
     stream.cyclesUntil,
     stream.name,
+    permissions,
   );
   if ("problem" in moving) {
     return {

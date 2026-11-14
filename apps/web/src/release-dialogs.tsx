@@ -64,6 +64,7 @@ import {
   saveRelease,
 } from "./releases.ts";
 import { projectPlanQuery } from "./projects.ts";
+import { sessionQuery } from "./session.ts";
 
 interface Saving {
   onSaved: (saved: SavedStream) => void;
@@ -509,6 +510,7 @@ export function CycleLengthDialog({
   const [tried, setTried] = useState(false);
   // Those who see only configuration do not see the plan's features, and name none.
   const plan = useQuery(projectPlanQuery);
+  const session = useQuery(sessionQuery);
   const save = useSave(
     () =>
       changeCycleLength(stream.id, cycle.startsOn, {
@@ -529,6 +531,7 @@ export function CycleLengthDialog({
       length: lengthOk ? Number(length) : maker.length,
       later,
     },
+    session.data?.permissions ?? [],
     plan.data?.features,
   );
   return (

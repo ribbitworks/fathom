@@ -19,6 +19,7 @@ import {
   type CyclePattern,
   type CyclePatternLike,
   type CyclePatternRequest,
+  type Permission,
   type Release,
   type ReleaseRequest,
   type ReleaseStream,
@@ -423,6 +424,7 @@ function movingDrafts(
   state: RecordsState,
   streamId: string,
   moved: ReadonlyMap<string, string | undefined>,
+  permissions: readonly Permission[],
 ): Wanted[] {
   const found = [
     ...streamReleases(state, streamId).map(({ id, release }) => ({
@@ -449,6 +451,7 @@ function movingDrafts(
     moved,
     cyclesUntilOf(state, streamId),
     nameOf(state, streamId),
+    permissions,
   );
   if ("problem" in moving) throw new ConflictError(moving.problem);
   return moving.moves.map(({ release: { type, id, record }, ...to }) => {
@@ -498,7 +501,7 @@ export async function changeCycleLength(
     const moved = movedCycles(before, cyclesOf(made.patterns, until));
     return saveRecordDrafts(transaction, maker, state, [
       ...patternDrafts(state, streamId, kept, made.patterns),
-      ...movingDrafts(state, streamId, moved),
+      ...movingDrafts(state, streamId, moved, maker.permissions),
     ]);
   });
 }

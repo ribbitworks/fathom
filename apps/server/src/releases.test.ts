@@ -417,6 +417,34 @@ describe("changing release streams", () => {
     );
   });
 
+  it("names no release when refusing an earlier end of cycles to one who doesn't see features", async () => {
+    const stream = await liveStream();
+    await draftRelease(stream.id, {
+      name: "Fictional Late",
+      firstCycle: "2027-10-01",
+      lastCycle: "2027-10-01",
+    });
+    await approveAll(
+      (await readStream(stream.id, planner.cookie)) as ReleaseStream,
+    );
+    const editor = await test.signedIn([
+      "configuration:view",
+      "configuration:edit",
+    ]);
+
+    const response = await test.request(
+      editor.cookie,
+      "PUT",
+      `/api/release-streams/${stream.id}/cycles-until`,
+      { cyclesUntil: "2027-09-30" },
+    );
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe(
+      "Work is planned on cycles after that day",
+    );
+  });
+
   it("refuses a name another stream has, ignoring letter case", async () => {
     const name = unique("Fictional Taken");
     await draftStream(name);
@@ -1140,6 +1168,26 @@ describe("changing one cycle's length", () => {
     expect(response.statusCode).toBe(409);
     expect(response.json<{ error: string }>().error).toBe(
       "Fictional Later would start after it ships on 2027-07-15.",
+    );
+  });
+
+  it("names no release when refusing a move after its Ships on day to one who doesn't see features", async () => {
+    const stream = await withRelease("2027-07-15");
+    const editor = await test.signedIn([
+      "configuration:view",
+      "configuration:edit",
+    ]);
+
+    const response = await changeLength(
+      stream.id,
+      "2027-04-01",
+      { length: 4, later: "move" },
+      editor.cookie,
+    );
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe(
+      "Work planned on these cycles would start after the day it ships.",
     );
   });
 
