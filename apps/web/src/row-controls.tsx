@@ -53,25 +53,26 @@ export function RowControls({
   );
 }
 
-// The ⋯ that opens a row's menu, at the row's end or over its Name cell.
+// The ⋯ that opens a menu, such as a record's, its drafts' or the unpublished changes'.
 export function MoreButton({
   label,
   inCell = false,
-  ...target
+  ...button
 }: {
   label: string;
   inCell?: boolean;
+  size?: "sm";
+  id?: string;
+  tabIndex?: number;
+  disabled?: boolean;
 }) {
   return (
     <ActionIcon
       variant="subtle"
       color="gray"
-      size="sm"
-      // Tab moves between cells; the menu also opens with Shift+F10 on any of the row's cells.
-      tabIndex={-1}
       aria-label={label}
       // What the menu gives its target, such as opening it on a click.
-      {...target}
+      {...button}
       {...(inCell ? keptFromCell : {})}
     >
       <Icon name="more" />

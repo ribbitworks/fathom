@@ -86,6 +86,7 @@ import {
   setStreamRetired,
 } from "./releases.ts";
 import { Swatch } from "./colour-swatch.tsx";
+import { MoreButton } from "./row-controls.tsx";
 import { useNarrow } from "./side-panel.tsx";
 import { noRecordActions, RecordGrid, undoDrafts } from "./record-grid.tsx";
 import {
@@ -639,14 +640,7 @@ function Cycles({
                   <Table.Td className={classes.cycleCell}>
                     <Menu position="bottom-end">
                       <Menu.Target>
-                        <ActionIcon
-                          variant="subtle"
-                          color="gray"
-                          size="sm"
-                          aria-label={`Menu of ${cycle.name}`}
-                        >
-                          <Icon name="more" />
-                        </ActionIcon>
+                        <MoreButton size="sm" label={`Menu of ${cycle.name}`} />
                       </Menu.Target>
                       <Menu.Dropdown>
                         <Menu.Item

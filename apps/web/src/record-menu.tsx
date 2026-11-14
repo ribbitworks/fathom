@@ -5,7 +5,7 @@
 // with it.
 
 import type { Asking, DraftKind, RecordRef } from "@fathom/shared";
-import { ActionIcon, Menu } from "@mantine/core";
+import { Menu } from "@mantine/core";
 import { type ReactNode, useState } from "react";
 import { closesOnBlankClick } from "./app-menu.tsx";
 import {
@@ -15,10 +15,10 @@ import {
   UnpublishedNote,
 } from "./draft-details.tsx";
 import { decidable, noDrafts, waitsForRejected } from "./drafts.ts";
-import { Icon } from "./icons.tsx";
 import { DraftItems, madeVerb, makers } from "./list-drafts.tsx";
 import type { Phrase } from "./phrase.tsx";
 import type { RecordNode } from "./record-drafts.ts";
+import { MoreButton } from "./row-controls.tsx";
 
 export interface RecordMenuActions {
   // The kinds of draft the user's role approves and rejects.
@@ -72,15 +72,11 @@ export function RecordMenu({
       width={260}
     >
       <Menu.Target>
-        <ActionIcon
+        <MoreButton
           // Menus give their buttons ids of their own, so the button is found by this instead.
           data-record-menu={id}
-          variant="subtle"
-          color="gray"
-          aria-label={`Menu of ${title}`}
-        >
-          <Icon name="more" />
-        </ActionIcon>
+          label={`Menu of ${title}`}
+        />
       </Menu.Target>
       <Menu.Dropdown
         onClick={closesOnBlankClick(() => {

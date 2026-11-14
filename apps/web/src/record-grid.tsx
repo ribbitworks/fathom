@@ -2887,13 +2887,20 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     </Menu>
   );
 
-  // What a row's ⋯ is called, at its end and over its Name cell alike, as both open its menu.
-  const menuLabel = (row: Row<Rec>) => {
-    const name = row.record
-      ? table.nameOf(row.record)
-      : table.newRowLabel(rowKind(row)).toLowerCase();
-    return `Actions for ${name}`;
-  };
+  // A row's ⋯, at its end or over its Name cell, both opening its menu.
+  const rowMoreButton = (row: Row<Rec>, inCell: boolean) => (
+    <MoreButton
+      label={`Actions for ${
+        row.record
+          ? table.nameOf(row.record)
+          : table.newRowLabel(rowKind(row)).toLowerCase()
+      }`}
+      size="sm"
+      // Tab moves between cells; the menu also opens with Shift+F10 on any of the row's cells.
+      tabIndex={-1}
+      inCell={inCell}
+    />
+  );
 
   // The controls over a row's Name cell: its details' button and its menu's ⋯, where it has them.
   const nameCellControls = (row: Row<Rec>) => {
@@ -2910,12 +2917,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         : undefined;
     const menu =
       hasRowMenu(row) &&
-      rowMenu(
-        rowKey(row),
-        "name",
-        <MoreButton label={menuLabel(row)} inCell />,
-        rowMenuItems(row),
-      );
+      rowMenu(rowKey(row), "name", rowMoreButton(row, true), rowMenuItems(row));
     return (
       (details !== undefined || menu !== false) && (
         <RowControls details={details} menu={menu} />
@@ -3577,7 +3579,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                             rowMenu(
                               rowKey(row),
                               "end",
-                              <MoreButton label={menuLabel(row)} />,
+                              rowMoreButton(row, false),
                               rowMenuItems(row),
                             )}
                         </Table.Td>

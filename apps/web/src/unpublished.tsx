@@ -10,15 +10,7 @@ import {
   unpublishedDoneSchema,
   unpublishedSchema,
 } from "@fathom/shared";
-import {
-  ActionIcon,
-  Button,
-  Group,
-  Menu,
-  Modal,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { Button, Group, Menu, Modal, Stack, Text } from "@mantine/core";
 import {
   queryOptions,
   useMutation,
@@ -29,10 +21,10 @@ import { useState } from "react";
 import { describeProblem, getJson, sendJsonFor } from "./api.ts";
 import { AppMenu } from "./app-menu.tsx";
 import { MenuTitle, UnpublishedNote } from "./draft-details.tsx";
-import { Icon } from "./icons.tsx";
 import { notifyFailure, notifySuccess } from "./notices.tsx";
 import { count } from "./numbers.ts";
 import { type Phrase, PhraseText } from "./phrase.tsx";
+import { MoreButton } from "./row-controls.tsx";
 
 export const unpublishedQuery = queryOptions({
   queryKey: ["unpublished"],
@@ -129,14 +121,7 @@ export function UnpublishedControl() {
       </Button>
       <AppMenu position="bottom-end" width={280} hideDetached={false}>
         <AppMenu.Target>
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            disabled={busy}
-            aria-label="Unpublished changes"
-          >
-            <Icon name="more" />
-          </ActionIcon>
+          <MoreButton disabled={busy} label="Unpublished changes" />
         </AppMenu.Target>
         <AppMenu.Dropdown>
           <MenuTitle>Unpublished changes</MenuTitle>

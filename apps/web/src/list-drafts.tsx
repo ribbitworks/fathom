@@ -7,7 +7,7 @@
 
 import { allOf } from "@fathom/shared";
 import type { Choice, List } from "@fathom/shared";
-import { ActionIcon, Menu } from "@mantine/core";
+import { Menu } from "@mantine/core";
 import { useState } from "react";
 import {
   HeldNote,
@@ -18,11 +18,11 @@ import {
   WaitingNote,
 } from "./draft-details.tsx";
 import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
-import { Icon } from "./icons.tsx";
 import { makerNames } from "./names.ts";
 import { withRetiring } from "./lists.ts";
 import { closesOnBlankClick } from "./app-menu.tsx";
 import classes from "./pages.module.css";
+import { MoreButton } from "./row-controls.tsx";
 import { type DraftLike, partsMark } from "./status-mark.tsx";
 
 // What can be done with drafts on the Lists page; each names the draft it acts on.
@@ -230,13 +230,7 @@ export function ListDraftMenu({
       width={260}
     >
       <Menu.Target>
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          aria-label={`Drafts of ${list.name}`}
-        >
-          <Icon name="more" />
-        </ActionIcon>
+        <MoreButton label={`Drafts of ${list.name}`} />
       </Menu.Target>
       <Menu.Dropdown
         onClick={closesOnBlankClick(() => {
