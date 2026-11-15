@@ -4,7 +4,8 @@
 // each recorded in the change history as made by Fathom itself: members of the first two feature
 // teams on their teams' features, with someone over-allocated, someone under-allocated, someone with
 // three assignments in a month, one of them Possible, past work on a done feature, a cancelled
-// feature allocated in months still to come, a project's general feature, and a planned hire.
+// feature allocated in months still to come, a project's general feature, and a planned hire; then
+// the organization's wider workload on top of them.
 // Removing them removes every allocation, and every draft of one, that names a seeded person,
 // planned hire, or feature, so those can go. A development-only package, never included in the
 // runtime image.
@@ -23,6 +24,7 @@ import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { seededFeatures } from "./features.ts";
 import { featureId, projectId, seededProjects } from "./projects.ts";
 import { filledIn, recorded, type SeededChange } from "./recorded.ts";
+import { workloadRows } from "./workload.ts";
 
 // Who is allocated: a member of a seeded feature team, by the team's place and the member's place
 // on it, or the organization's first open planned hire with a target date.
@@ -208,20 +210,44 @@ export async function seedAllocations(
       .select({ id: allocations.id })
       .from(allocations)
       .where(inArray(allocations.id, seededIds()));
-    const [general] = await transaction
-      .select({ id: features.id })
+    const generals = await transaction
+      .select({ id: features.id, projectId: features.generalForProjectId })
       .from(features)
       .where(
-        eq(
+        inArray(
           features.generalForProjectId,
-          projectId(String(seededProjects[0]?.key)),
+          seededProjects.map(({ key }) => projectId(key)),
         ),
       );
-    const rows = seededAllocationRows(organization, String(general?.id));
-    const [first] = rows;
-    if (present !== undefined || general === undefined || first === undefined) {
+    const generalFeatureIds = new Map(
+      seededProjects.flatMap(({ key }) => {
+        const general = generals.find(
+          (feature) => feature.projectId === projectId(key),
+        );
+        return general === undefined ? [] : [[key, general.id] as const];
+      }),
+    );
+    const general = generalFeatureIds.get(String(seededProjects[0]?.key));
+    const seeded = seededAllocationRows(organization, String(general));
+    if (
+      present !== undefined ||
+      general === undefined ||
+      generalFeatureIds.size < seededProjects.length ||
+      seeded.length === 0
+    ) {
       return false;
     }
+    const rows = [
+      ...seeded,
+      ...workloadRows(organization, {
+        generalFeatureIds,
+        seededPeople: new Set(seeded.map(({ personId }) => personId)),
+      }).map(({ key, ...row }) => ({
+        id: allocationId(`workload:${key}`),
+        ...row,
+        plannedHireId: null,
+      })),
+    ];
     const made: SeededChange[] = [];
     for (const { id, ...row } of rows) {
       await transaction.insert(allocations).values({ id, ...row });

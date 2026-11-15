@@ -972,6 +972,10 @@ const featureTeamMembers = (featureTeams: readonly FictionalFeatureTeam[]) =>
     ),
   );
 
+// Everyone filling a planned hire, whom the seed data's later additions leave as they are.
+export const fillingHires = (hires: readonly FictionalHire[]) =>
+  new Set(hires.map(({ filledBy }) => filledBy));
+
 // The latest person current on the reference date on no feature team, whom a seed draft adds to one.
 export const lastOnNoTeam = (
   people: readonly FictionalPerson[],
@@ -996,7 +1000,7 @@ function setLeaving(
   referenceDate: string,
 ): void {
   const onTeams = featureTeamMembers(featureTeams);
-  const filling = new Set(hires.map(({ filledBy }) => filledBy));
+  const filling = fillingHires(hires);
   const notes = people.flatMap(({ notes }) => Object.values(notes)).join("\n");
   const joining = lastOnNoTeam(people, featureTeams, referenceDate);
   const leaving = people
