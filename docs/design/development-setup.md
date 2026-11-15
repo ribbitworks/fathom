@@ -1,7 +1,7 @@
 # Fathom: Development Setup
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-13
+**Last updated:** 2026-11-14
 
 How Fathom's repository is organized, how developers run it locally, and how fictional data is generated. It applies the libraries in [ADR 0002](../adr/0002-libraries.md) and the platforms in [Supported Platforms](../operations/supported-platforms.md).
 
@@ -70,7 +70,28 @@ Developers may use any machine and container runtime listed for development in S
 
   Copying `.dev/` from another copy keeps the same development accounts' password in every copy, but also copies its clone number, so run `pnpm dev:setup <number>` straight after with the new copy's own number. Until then, the new copy uses the other's database, and `pnpm dev:reset` there would delete it.
 
+  [Setting Up Another Copy](#setting-up-another-copy) gives these steps as commands to copy.
+
   A copy that had the plain names and now carries a number, because it was given one or because its `.dev/clone` already held 1, has new names and so a new database volume. Run `pnpm dev:reset` to create and seed its new database; nothing carries over from the old one. The old database and scanner cache stay on the machine, and the old containers keep clone 1's ports while they run. To remove the old containers and database, run `docker compose --project-name fathom-dev --file deploy/compose.dev.yaml down --volumes`, and to remove the old cache, `docker volume rm fathom-trivy-cache`.
+
+#### Setting Up Another Copy
+
+To run another copy of the repository beside the ones already set up, check that the new copy has no uncommitted work, then open a terminal in its folder. Set `other` to the folder of a copy whose `.dev/` to copy, and `number` to the new copy's clone number, then paste:
+
+```bash
+other=../fathom-1
+number=2
+git fetch origin
+git switch main
+git pull --ff-only
+pnpm install
+mkdir -p .dev
+cp -R "${other}/.dev/." .dev/
+pnpm dev:setup "${number}"
+pnpm dev:reset
+```
+
+`pnpm dev:setup` prints the copy's address, its clone number's development mode port in the table above, such as `https://localhost:8453` for clone 2. `pnpm dev:reset` deletes that copy's own database, seeds a new one, and opens Fathom there.
 
 ### HTTPS
 

@@ -1,7 +1,7 @@
 # Fathom: Roadmap
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-12
+**Last updated:** 2026-11-14
 
 A proposed order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. The principles, stage contents, and order are not yet agreed. The privacy approval gate is agreed. Each stage is a [GitHub milestone](https://github.com/jlarue26/fathom/milestones) holding its features, as [Issues](../issues.md) sets out, so this document keeps each stage's goals and why.
 
@@ -25,6 +25,16 @@ Development uses fictional data only.
 
 Before Fathom goes live: IT approves the [IT Overview](../operations/it-overview.md), the [Security Plan](../security/security-plan.md) and the [Deployment](../operations/deployment.md) document, before Fathom is deployed to company infrastructure, deployment testing included; HR approves the data protection document for the data the first stage holds; a first set of roles is agreed; hosting and backups are set up; and scanning is in place, with the threat model reviewed for the stage going live. Each is an issue in the [Before Going Live](https://github.com/jlarue26/fathom/milestone/6) milestone.
 
+## Coming Next
+
+The owner approved these designs on 2026-11-14. They are built in this order, with the first two alongside the other three. How each is built is in the [Implementation Plan](../design/implementation-plan.md#slices).
+
+1. **Views on every page:** personal and shared saved views on every page with a table, and on the Org chart, Feature assignments, Capacity's People mode and Drafts. Views also hide columns ([#517](https://github.com/jlarue26/fathom/issues/517)), group People ([#553](https://github.com/jlarue26/fathom/issues/553)), and bring the Lists page onto the shared table ([#317](https://github.com/jlarue26/fathom/issues/317)) and the Org chart's choices into its views ([#351](https://github.com/jlarue26/fathom/issues/351)).
+1. **Group by several values:** a record shown under each of its values, such as a feature under each project that needs it, on Features, the Features Board and People's feature teams ([#594](https://github.com/jlarue26/fathom/issues/594)). Built partway through views on every page.
+1. **Allocating from the grid:** allocating people and planned hires to features from Capacity's monthly grid, as drafts, with a Warnings filter ([#493](https://github.com/jlarue26/fathom/issues/493)).
+1. **Demand and Capacity's Work mode:** Capacity's Demand mode, comparing features' estimates with capacity in a table and a bar chart ([#496](https://github.com/jlarue26/fathom/issues/496)), and its Work mode, the Plan of staffed work on the shared timeline ([#491](https://github.com/jlarue26/fathom/issues/491)).
+1. **Added columns and Metrics:** Text and Date columns ([#504](https://github.com/jlarue26/fathom/issues/504)), brought forward from [Your Own Fields and Tables](#stage-your-own-fields-and-tables), and Record columns that pick a record of another table, on People and Features; who adds Features' columns ([#240](https://github.com/jlarue26/fathom/issues/240)); values in a column only drafted to be added ([#296](https://github.com/jlarue26/fathom/issues/296)); and totals in Metrics for numbers and effort ([#367](https://github.com/jlarue26/fathom/issues/367), [#295](https://github.com/jlarue26/fathom/issues/295)) and for dates ([#291](https://github.com/jlarue26/fathom/issues/291)).
+
 ## Stage: Who Is Working on What
 
 Covers the owner's immediate needs. Each goal starts in its simplest useful form, and the first stage shows the plan in tables, simple charts, the Features Board, and timelines, rather than an interactive Gantt view whose bars are dragged to new dates. What remains is in the [Who Is Working on What](https://github.com/jlarue26/fathom/milestone/1) milestone, and what is built is in the [Implementation Plan](../design/implementation-plan.md).
@@ -35,7 +45,7 @@ The hiring workflow, moving planned hires between states as each role allows; sn
 
 ## Stage: Your Own Fields and Tables
 
-Custom fields and tables, and every type of column users add, on People and other tables. Its features are in the [Your Own Fields and Tables](https://github.com/jlarue26/fathom/milestone/3) milestone.
+Custom fields and tables, and every type of column users add, on People and other tables, apart from Text and Date columns, which come sooner, as [Coming Next](#coming-next) sets out. Its features are in the [Your Own Fields and Tables](https://github.com/jlarue26/fathom/milestone/3) milestone.
 
 ## Stage: The Organization
 

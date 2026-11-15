@@ -27,7 +27,7 @@ Beyond the workflow, each slice:
 
 ## Slices
 
-The slices are built in this order, which may change as work progresses. The table shows the slices that are done or next; the rest are still to come.
+The slices are built in this order, which may change as work progresses; the slices approved on 2026-11-14 are built in the order the [Roadmap](../product/roadmap.md#coming-next) gives, and their sections below are grouped by topic. The table shows the slices that are done or next; the rest are still to come.
 
 | Slice | Progress |
 | --- | --- |
@@ -47,12 +47,16 @@ The slices are built in this order, which may change as work progresses. The tab
 | Org Chart Additions | In progress: team colours, drafts on the chart, and person details; next chart fields, filters, and sort |
 | Projects and Feature Teams | In progress: feature teams on the org chart, with the feature team chart, a team's panel, its members and lead as drafts, a person's feature teams in their details, and the Feature assignments page, showing feature team drafts, with its cells edited one at a time, and the Org chart's date setting when feature team changes take effect; projects next |
 | General Features | Done |
-| Allocations and Capacity | In progress: allocations on the server, each person's or planned hire's allocation to a feature one draft, approved with Approve allocations, with the employment and removal rules, the change history, and the seed's fictional allocations; a planned hire with allocations can't be filled, and a filled one can't be allocated, until filling moves its allocations; the allocations grid, read only, with planned hires as rows, each month's features and total, the over- and under-allocation marks, and allocation drafts, marked live only too; capacity total rows for each group and the whole organization, in person-months, with rows under each manager over time; and the grid moved from Feature assignments to the Capacity page's People mode, beside Settings; next allocating from a cell as drafts |
+| Allocations and Capacity | In progress: allocations on the server, each person's or planned hire's allocation to a feature one draft, approved with Approve allocations, with the employment and removal rules, the change history, and the seed's fictional allocations; a planned hire with allocations can't be filled, and a filled one can't be allocated, until filling moves its allocations; the allocations grid, read only, with planned hires as rows, each month's features and total, the over- and under-allocation marks, and allocation drafts, marked live only too; capacity total rows for each group and the whole organization, in person-months, with rows under each manager over time; and the grid moved from Feature assignments to the Capacity page's People mode, beside Settings; next [allocating from a cell](#allocations-and-capacity) as drafts |
 | Features and the Roadmap | In progress: schema, and features on the server as drafts approved with Approve Plan, following their cycles when those move, with the seed's fictional features; Edit Features is built; the Features page, grouped by cycle, with feature drafts on the Drafts page and in the change-length dialog; a feature's status as a list with meanings, the month it is needed by, customers, a note, and grouping by that month; columns added to Features, with their values in a feature's draft; the conversions between units of effort on the server; the Effort column, shown in the unit and decimal places the view names; the features projects and proposals name, on the server and in Features columns on Projects and Proposals, each feature a link from their details; the Projects and Proposals columns on Features, changed as drafts of each project and proposal, filtered, and each a link to its details beside Features, with Show features in a project's and a proposal's menu; grouping Features by release, with a Release column; a feature's details in sections of their own; each project's and proposal's scope history, with the reason for removing a feature from a proposal; and the planning settings, the conversions among them, on the Capacity page's Settings tab, changed as drafts approved with Approve Configuration; and the shared timeline and its strip of quarters, with the Releases timeline the first view on it |
 | Cycles and Releases | In progress: schema, server, seed, the Releases page and its timeline, a colour for each release, and changing one cycle's length |
 | Hiring Plan | In progress: schema and server, with Position and the hiring states built in and hires known by requisition or temporary ID; lists with meanings edited on the Lists page, which marks built-in lists; planned hires as rows of People, with optional names, the Hired state for people, the seed's planned hires, and a manual test; planned hires' values in People's added columns, each offered on them unless switched off; the Left state, with each person's own state of the meaning their end date gives, and those who have left listed for everyone who sees people; planned managers, with planned hires reporting to them on People and drawn as placeholders on the org chart; filling a planned hire as one draft, from its details panel |
 | Editable Roles | In progress: schema, the server reading roles from the database, the Roles page, several roles for each account, chosen from every role on the Accounts page, with a default, acting as one at a time and switching from the account menu, each change recording the role it was made as, the Hiring plan permission area, with viewing and editing, approving split by area, the starting roles rewritten for the personas, and viewing accounts, roles, and settings apart from changing them |
 | Exports | In progress: the CSV and TSV file of what a view shows, drafts and Live rows included, from an Export icon in the page's heading on People, Features and each Projects tab, the question asked before exporting Personal or Confidential data, and recording such an export in the access history; next the remaining tables, then the grids and the Org chart |
+| Views on Every Page | In progress: what opens each page in shared code, saved views for every table on the server, and the Views menu from one shared hook, with People and Releases on it; next hiding columns |
+| Group by Several Values | Approved, not started |
+| Demand Forecasting | Approved, not started: Capacity's Demand and Work modes |
+| Added Columns and Metrics | Approved, not started |
 
 ### Hello Fathom
 
@@ -80,7 +84,7 @@ The visual design in the roadmap's [After Hello Fathom](../product/roadmap.md#af
 
 People with the employee details the roadmap's [first stage](../product/roadmap.md#stage-who-is-working-on-what) allows.
 
-It is built in two steps: user-defined lists of choices, as set out in the [Decisions Log](../product/decisions.md#configuration), and people, with fictional seed data and commands to load and remove it, whose details such as site or position are columns drawing on lists. Teams with their managers and direct reports come in the Teams and Reporting Lines slice. The lists step adds the change history the Decisions Log requires, which every later slice records its changes in. The people step adds columns on People that draw on lists, held in the values table [ADR 0005](../adr/0005-flexible-data-model.md) proposes, and undo in one step for lists and people. The other field types, apart from Web link, and custom tables wait for the custom fields stage.
+It is built in two steps: user-defined lists of choices, as set out in the [Decisions Log](../product/decisions.md#configuration), and people, with fictional seed data and commands to load and remove it, whose details such as site or position are columns drawing on lists. Teams with their managers and direct reports come in the Teams and Reporting Lines slice. The lists step adds the change history the Decisions Log requires, which every later slice records its changes in. The people step adds columns on People that draw on lists, held in the values table [ADR 0005](../adr/0005-flexible-data-model.md) proposes, and undo in one step for lists and people. Text, Date and Record columns come with [Added Columns and Metrics](#added-columns-and-metrics); the other field types, apart from Web link, Note and Number, and custom tables wait for the custom fields stage.
 
 ### Seed Accounts
 
@@ -172,19 +176,19 @@ Built with Projects: proposals, with their statuses from the built-in Proposal s
 
 The Product Manager's roadmap: features with the built-in columns in the Decisions Log, each targeting a cycle, shown as a table that can be grouped by cycle, with Later for features that target none. Products become a built-in table, and lists drawn from a table let a Product column on Features pick from it. Fathom offers to add suggested columns, such as kind and product, which the owner will judge once seen. Features have a built-in description, and their increments are not linked, as the [Decisions Log](../product/decisions.md#planning) sets out, which also says where a feature's effort falls in time, for the Demand Forecasting slice. The seed data gains fictional features across the cycles of a release stream, with some in Later. The slice also links features to what was built before them: the features a project needs, edited from either Projects or Features; milestones of features and the release warnings; the features a feature team owns; and the features a proposal proposes, as the [Decisions Log](../product/decisions.md#planning) sets out. After the Features page, one step makes a feature's status a [list with meanings](../product/decisions.md#configuration) and adds what a Product Manager enters first, Needed by, customers, and a note, with the description limited, as the [Decisions Log](../product/decisions.md#planning) sets out, and the table able to group by Needed by; another adds columns users add to Features, starting with Complexity, decided by the owner on 2026-11-08. Feature milestones and the release warnings follow the links to projects and proposals, as their own step, decided by the owner on 2026-11-08: a milestone's record then holds its feature and no longer assumes a project. General features come with [General Features](#general-features). Changing one cycle's length moves the features on cycles that move, and a change that would leave a feature's target no longer a cycle is refused, as the Decisions Log's Cycles and Cycle length changes set out, built with the server's features.
 
-Features will take saved views, personal and shared, as People's table does, in a pull request of their own soon after, decided by the owner on 2026-11-08. The server keeps saved views for every table that has them, done on 2026-11-14, and one shared hook draws every page's saved views, with People and Releases on it, done on 2026-11-14; each other page's Views menu follows in a pull request of its own.
+Features take saved views, personal and shared, as People's table does, with [Views on Every Page](#views-on-every-page).
 
 [The Roadmap and the Plan](../product/decisions.md#planning), as [Visual Design](visual-design.md#components) and [UI Conventions](conventions.md#timelines) set out, start once three pull requests of [Demand Forecasting](#demand-forecasting) have merged, each step its own pull request, decided by the owner on 2026-11-11:
 
 1. **Size, Priority, and Risk:** built-in columns on Features, with the seed's Complexity becoming Kind. Done.
 2. **The shared timeline:** the timeline and its strip taken out of the Releases timeline, changing what Releases shows only by the strip and the page's layout, which puts the timeline above the table, each scrolling on its own. A wide change. Done, brought forward on 2026-11-11.
 3. **The Features Board:** in four pull requests: the board, read only, with cycles as its columns, done on 2026-11-13; months needed by as its columns, the default; moving cards; and Needed by as a year alone, decided by the owner on 2026-11-13.
-4. **Capacity's Work mode:** the Plan, with the allocations grid moved in as the People mode, coordinated with the work on the allocations grid.
+4. **Capacity's Work mode:** the Plan, with the allocations grid moved in as the People mode, built with [Demand Forecasting](#demand-forecasting).
 5. **The project timeline.**
 6. **The Releases timeline's changes:** its Ships on diamonds under the bars, drafts by the draft marks following the page's Draft view, and bars that name the release alone, brought forward to follow the shared timeline. Done on 2026-11-11.
-7. **A realistic release seed:** the seed's release drafts become a realistic plan: Harbor 3's draft ends a cycle later rather than moving, Harbor 4 follows straight after it, and the retirement is drafted on a stream that has finished. Decided by the owner on 2026-11-11, as its own pull request after step 6, which agent 1 recommended to keep each pull request under its size and the owner accepted in advance on 2026-11-11, to be confirmed.
+7. **A realistic release seed:** the seed's release drafts become a realistic plan: Harbor 3's draft ends a cycle later rather than moving, Harbor 4 follows straight after it, and the retirement is drafted on a stream that has finished. Decided by the owner on 2026-11-11, as its own pull request after step 6 to keep each pull request under its size, which the owner accepted in advance on 2026-11-11, to be confirmed.
 8. **The Releases page on the shared table:** the streams table moves onto the shared table, as every other page's is, with its search, details button, column menus, Group by, Metrics and saved views, and the page is brought in line with the conventions, taking the Releases items in issues [#219](https://github.com/jlarue26/fathom/issues/219), [#438](https://github.com/jlarue26/fathom/issues/438), [#440](https://github.com/jlarue26/fathom/issues/440), [#441](https://github.com/jlarue26/fathom/issues/441) and [#443](https://github.com/jlarue26/fathom/issues/443) and the retired streams in [issue #277](https://github.com/jlarue26/fathom/issues/277). Decided by the owner on 2026-11-11, as its own pull request in the same way. Done on 2026-11-13, and its saved views on 2026-11-14, with the timeline following the table's view.
-9. **The Lists page on the shared table:** the lists table moved onto the shared table in the same way, taking sorting, filtering and saved views of lists in [issue #317](https://github.com/jlarue26/fathom/issues/317). Decided by the owner on 2026-11-11.
+9. **The Lists page on the shared table:** the lists table moved onto the shared table in the same way, taking sorting, filtering and saved views of lists in [issue #317](https://github.com/jlarue26/fathom/issues/317). Decided by the owner on 2026-11-11, and built with [Views on Every Page](#views-on-every-page).
 
 ### General Features
 
@@ -194,6 +198,14 @@ Each project's general feature, which a future allocation names for work on the 
 
 Allocations kept from a month, as reporting lines are, for people and planned hires; capacity by person, by manager, by feature team, and for the whole organization; and the warnings and rules in the [Decisions Log](../product/decisions.md#planning), including over- and under-allocation and allocations a date change leaves outside someone's employment. They are shown in the monthly resource grid, grouped by manager or feature team, with the cycle and release lines of one release stream at a time from the Cycles and Releases slice, as [Visual Design](visual-design.md#components) sets out. Filling a planned hire moves its allocations to the person who fills it, as the [Decisions Log](../product/decisions.md#workforce) sets out. The seed data gains fictional allocations for people and planned hires across several months, including an over-allocated person, an under-allocated one, a project's general feature, and a filled planned hire whose person starts after its target date. A manual test in [Manual Tests](../testing/) walks through the grid. Building allocations adds Approve allocations.
 
+Allocating from the grid ([issue #493](https://github.com/jlarue26/fathom/issues/493)), approved by the owner on 2026-11-14, follows People Over Time's second and third steps, each step its own pull request:
+
+1. **The server:** several allocation changes in one request, the features that can be allocated, the access history for changes, and each month's warnings.
+2. **Changing a month from its cell** on Capacity's People mode, as drafts, with Undo and the server's refusals.
+3. **The row's menu:** allocating over many months from the side panel, and allocation drafts on the Drafts page.
+4. **Copying and pasting months** across a row.
+5. **The warnings in cells, and the Warnings filter** in the Views menu, after the Views menu on any page in [Views on Every Page](#views-on-every-page).
+
 ### Team Composition
 
 Reports per manager, including planned hires, compared with a range, in a Teams table with a row for each manager, counted as at a month the reader picks, as the [Decisions Log](../product/decisions.md#workforce) sets out. It builds on the People table's [metrics](../product/decisions.md#configuration), which count people by a column's values: reports per manager groups the same counts by manager, with a target beside each, and later ratios, such as test to development, compare two of a column's counts.
@@ -201,6 +213,14 @@ Reports per manager, including planned hires, compared with a range, in a Teams 
 ### Demand Forecasting
 
 One estimate per feature, entered in a unit of effort, with configurable conversions between units, and compared with the capacity from [Allocations and Capacity](#allocations-and-capacity) over the forecasting horizons in the [Product Brief](../product/brief.md), worked out from features' allocations and target cycles, as the [Decisions Log](../product/decisions.md#planning) sets out. A Demand page shows the forecast as a table and a simple bar chart, for the whole organization and for each feature team, and Features gain Allocated and Remaining columns beside the estimate. Demand and its settings become modes of the Capacity page, as [The Capacity page](../product/decisions.md#planning) sets out.
+
+Capacity's Demand mode ([issue #496](https://github.com/jlarue26/fathom/issues/496)) and Work mode, the Plan in [issue #491](https://github.com/jlarue26/fathom/issues/491), approved by the owner on 2026-11-14, follow allocating from the grid, each step its own pull request, with no migration:
+
+1. **One shared forecast:** demand and its horizons worked out once, for both modes, and the forecast's settings read by the roles that see the forecast.
+2. **Demand mode's table,** with Group by, units and drafts, and the mode in the Capacity page's switch.
+3. **Demand mode's bar chart,** with the chart library [ADR 0004](../adr/0004-ui-components.md) chose.
+4. **Work mode's timeline:** the capacity row, feature rows with staffed bars and Needed by, and the release layer, on the shared timeline.
+5. **Work mode's marks and filters,** Late and Not staffed among them, and links between the People and Work modes, after On track or Late on the Features Board's cards, for the Late mark, and after the Views menu on any page in [Views on Every Page](#views-on-every-page).
 
 Where a feature's effort counts in the forecast, as [Feature effort over time](../product/decisions.md#planning) and the Demand forecast set out:
 
@@ -217,6 +237,51 @@ flowchart TD
     bands --> split[Split into committed and possible, by the feature's status]
     later --> split
 ```
+
+### Views on Every Page
+
+Saved views, personal and shared, on every page with a table, and on the pages that aren't plain tables where they fit, served by one shared Views menu and one server for every table, approved by the owner on 2026-11-14. Each step is its own pull request, with no migration:
+
+1. **What opens each page,** moved to shared code with no change in behaviour. Done on 2026-11-14.
+2. **Saved views for any table on the server,** with grouping and hidden columns kept, the change history and undo for each table, and access control tests for every starting role. Done on 2026-11-14.
+3. **The Views menu on any page,** with a page's own choices kept in its views, People moved onto it, and saved views on Releases. Done on 2026-11-14.
+4. **Hiding columns** ([issue #517](https://github.com/jlarue26/fathom/issues/517)).
+5. **Saved views on Features,** the Features Board included, and on each Projects tab.
+6. **Group by on People** ([issue #553](https://github.com/jlarue26/fathom/issues/553)).
+7. **Saved views on Feature assignments and Capacity's People mode.**
+8. **The Lists page on the shared table** ([issue #317](https://github.com/jlarue26/fathom/issues/317)).
+9. **Saved views on Lists,** with its All, Built in or Custom choice in the Views menu.
+10. **Saved views on the Org chart** ([issue #351](https://github.com/jlarue26/fathom/issues/351)).
+11. **Accounts on the shared table,** with saved views and its All, Active or Deactivated choice in the Views menu, closing [issue #318](https://github.com/jlarue26/fathom/issues/318).
+12. **Filters and saved views on the Drafts page.**
+
+Steps 1, 2 and 3 come in order, and 4 follows 3; steps 5 to 12 follow in any order. Pinned views ([issue #516](https://github.com/jlarue26/fathom/issues/516)) come later.
+
+### Group by Several Values
+
+Grouping by a column holding several values, with a record shown under each of its values, approved by the owner on 2026-11-14, after step 6 of [Views on Every Page](#views-on-every-page) and before its step 7. Each step is its own pull request, with no migration:
+
+1. **The shared table** groups a record under several values, counting it once.
+2. **Features' Group by** offers Customers, Projects, Proposals and other columns holding several values, on the table and the Features Board ([issue #594](https://github.com/jlarue26/fathom/issues/594)).
+3. **People's Feature teams column,** and grouping People by it.
+
+Step 1 comes first, and lands before step 4 of Demand Forecasting's Work mode where it can, so the Plan's grouping by project is built on it; steps 2 and 3 follow in either order.
+
+### Added Columns and Metrics
+
+New types of added column, and totals in Metrics, approved by the owner on 2026-11-14, after [Demand Forecasting](#demand-forecasting). Each step is its own pull request:
+
+1. **The schema,** alone, in the only migration of this slice.
+2. **Text columns** on People and Features ([issue #504](https://github.com/jlarue26/fathom/issues/504)).
+3. **Date columns** on People and Features ([issue #504](https://github.com/jlarue26/fathom/issues/504)).
+4. **Who adds Features' columns** ([issue #240](https://github.com/jlarue26/fathom/issues/240)).
+5. **Values in a Features column only drafted to be added** ([issue #296](https://github.com/jlarue26/fathom/issues/296)).
+6. **Record columns on the server:** a column whose values are records of another table, such as a person or a feature.
+7. **Record columns on screen.**
+8. **Totals in Metrics** for numbers and effort ([issue #367](https://github.com/jlarue26/fathom/issues/367), [issue #295](https://github.com/jlarue26/fathom/issues/295)), after step 3 of [Views on Every Page](#views-on-every-page).
+9. **Dates in Metrics** ([issue #291](https://github.com/jlarue26/fathom/issues/291)).
+
+Step 1 comes first. Steps 2 and 3 follow it, step 4 comes before step 5, step 7 follows steps 2, 3 and 6, and step 9 follows step 8. Lookup columns, which follow a link, and Duration columns come in v1.1.
 
 ### Overview
 
