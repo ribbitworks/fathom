@@ -66,7 +66,7 @@ The values of every built-in field are set out in the [Decisions Log](../product
 
 ## Release Entities
 
-- **Schedule:** `ReleaseStream` in the code. Has a name, its place in the order of schedules, whether it is retired, and, for a schedule that ends, its last day, which cuts its last cycle short. Groups its cycles and releases, its cycles laid out two years ahead of today.
+- **Schedule:** `ReleaseStream` in the code. Has a name, its place in the order of schedules, whether it is retired, and, for a schedule that ends, its last day, which cuts its last cycle short. Groups its cycles and releases. Its cycles are worked out whenever they are read, never stored, two years ahead of today, or to its last day, or as far as a release or feature on them reaches.
 - **Cycle pattern:** A schedule's cycle length, in weeks or months, and its naming pattern, from a given date until the schedule's next pattern starts. A schedule has one or more, so a change of length leaves the cycles made before it as they are.
 - **Cycle:** A planning period in one schedule, with a name, a start date, and an end date, made ahead from the pattern in force. It is in at most one release. Cycles are worked out from the patterns rather than stored, so a cycle is known by its schedule and start date, as [ADR 0010](../adr/0010-cycles-from-patterns.md) sets out.
 - **Release:** A named delivery in one schedule, which includes one or more of its cycles, consecutive in the schedule. Its date is its Ships on date, the end of its last cycle unless set earlier or later, and its contents are the features that target those cycles. It can have a colour from the palette; one with none has the default colour. It can have a note, as a Note column holds.
