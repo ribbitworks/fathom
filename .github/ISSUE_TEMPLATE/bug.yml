@@ -9,13 +9,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        A bug's priority comes from its probability and its severity. P1 is fixed next, P2 in the next change that touches its area, and P3 and P4 in a cleanup pass.
-
-        | Probability | Severe | Moderate | Minor |
-        | --- | --- | --- | --- |
-        | Likely | P1 | P2 | P3 |
-        | Possible | P2 | P3 | P4 |
-        | Rare | P3 | P4 | P4 |
+        Fathom is in early development. The maintainer reads each issue and sets its priority and when it is worked on, as [Issues](https://github.com/jlarue26/fathom/blob/main/docs/issues.md) describes. Never report a vulnerability here: follow the [Security Policy](https://github.com/jlarue26/fathom/blob/main/SECURITY.md).
   - type: textarea
     id: what
     attributes:
@@ -63,7 +57,7 @@ body:
     id: probability
     attributes:
       label: Probability
-      description: With the severity, gives the priority in the table above.
+      description: How likely it is to happen.
       options:
         - Likely
         - Possible
@@ -74,7 +68,7 @@ body:
     id: severity
     attributes:
       label: Severity
-      description: With the probability, gives the priority in the table above.
+      description: How much harm it does when it happens.
       options:
         - Severe
         - Moderate
@@ -85,4 +79,4 @@ body:
     id: found
     attributes:
       label: Found
-      description: Who found it and when, such as conventions audit, 2026-11-11.
+      description: Who found it and when, such as a GitHub username and a date.

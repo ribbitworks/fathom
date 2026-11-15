@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["code-review.md", "testing.md", "documentation.md"]
-last_updated: "2026-11-01"
+last_updated: "2026-11-14"
 ---
 
 # Agent Workflow
@@ -15,7 +15,8 @@ and the rules for both modes hold either way.
 
 The project's own standards name its build, test and run commands, and the
 kinds of real data it must never hold. Where this document says "the project's
-test command", use the one they name.
+test command" or "the project's targeted tests", use the ones they name. A
+project with no targeted tests runs its full test command in their place.
 
 ## Choosing a Mode
 
@@ -118,14 +119,14 @@ test command", use the one they name.
 Complete these steps, in order, for every change:
 
 1. **UI verification:** for any change to a screen, have the owner verify the
-   screens (layout, controls, wording, behavior) before running the full test
-   suite or the code review, and iterate until the owner approves the UX. A
-   build to run the app for this is allowed. A change with no screen changes
-   skips this step.
-1. **Tests:** run the full suite except UI tests with the project's test
-   command, and fix all failures. A change to documentation only may skip this
-   and the next step, unless the project's standards say its documents are
-   built into the product.
+   screens (layout, controls, wording, behavior) before running the tests or
+   the code review, and iterate until the owner approves the UX. A build to run
+   the app for this is allowed. A change with no screen changes skips this
+   step.
+1. **Tests:** run the project's targeted tests, for the code the change
+   touches, and its linters, and fix all failures. A change to documentation
+   only may skip this and the next step, unless the project's standards say its
+   documents are built into the product.
 1. **Warnings:** resolve every build warning and runtime warning the run
    reports, including ones that predate the change.
 1. **Code review:** have a separate agent, acting as a senior staff engineer,
@@ -134,15 +135,20 @@ Complete these steps, in order, for every change:
    the owner and ask how to proceed.
 1. **Review findings:** address every finding. For any finding you do not fix,
    tell the owner which one and why, and get their approval before committing.
+1. **Full suite:** once the findings are fixed, run the full suite except UI
+   tests with the project's test command, on the code to be committed, and fix
+   all failures and warnings. A change to documentation only may skip this
+   step too.
 1. **Owner review:** summarize the changes and wait for the owner's explicit
    approval before committing.
 1. **Commit:** commit, following the branch and commit rules.
 1. **Stop:** stop and wait for instructions after committing or pushing.
 
-When changes come out of findings, UI feedback or owner feedback:
+When changes come out of findings, the full suite, UI feedback or owner
+feedback:
 
 - If they change a screen, have the owner verify it again.
-- Repeat the test and warning steps.
+- Repeat the test and warning steps, then the full suite step.
 - Repeat the code review too if the changes go beyond the reported findings or
   UI feedback, or if owner feedback adds new content.
 - Then return to the owner review step and get explicit approval again before

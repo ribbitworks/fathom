@@ -14,11 +14,13 @@ Fathom gives a software organization one place to plan its roadmap and its peopl
 
 ## Status
 
-Early development. The tech stack is recorded in [ADR 0001](docs/adr/0001-tech-stack.md), and Fathom is being built slice by slice, as described in the [Implementation Plan](docs/design/implementation-plan.md).
+Early development. Fathom isn't ready for production use, and it isn't accepting outside contributions yet: see [Contributing](CONTRIBUTING.md). Report a vulnerability privately, as the [Security Policy](SECURITY.md) sets out.
+
+The tech stack is recorded in [ADR 0001](docs/adr/0001-tech-stack.md), and Fathom is being built slice by slice, as described in the [Implementation Plan](docs/design/implementation-plan.md).
 
 ## Getting Started
 
-You need a running container runtime and mkcert. Then run the bootstrap script, which installs everything else:
+You need a running container runtime, such as [Docker Engine](https://docs.docker.com/engine/install/), [Colima](https://github.com/abiosoft/colima#installation) or [Podman](https://podman.io/docs/installation), and [mkcert](https://github.com/FiloSottile/mkcert#installation). [Supported Platforms](docs/operations/supported-platforms.md#development-platforms) lists the runtimes used for development. Then run the bootstrap script, which installs everything else:
 
 ```bash
 bash scripts/dev-bootstrap.sh
@@ -73,4 +75,4 @@ Fathom runs as Linux containers. See [Supported Platforms](docs/operations/suppo
 
 ## Licence
 
-Copyright 2026 Jared La Rue. Licensed under the [Apache License, Version 2.0](LICENSE).
+Copyright 2026 Jared La Rue. Licensed under the [Apache License, Version 2.0](LICENSE). The [Code of Conduct](CODE_OF_CONDUCT.md) is the Contributor Covenant, under [CC BY 4.0](LICENSES/CC-BY-4.0.txt).

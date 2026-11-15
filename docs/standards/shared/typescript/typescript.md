@@ -3,8 +3,8 @@ title: "TypeScript Standards"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*.ts", "**/*.tsx"]
-dependencies: ["../core-principles.md", "../code-review.md", "../testing.md"]
-last_updated: "2026-11-08"
+dependencies: ["../core-principles.md", "../code-review.md", "../testing.md", "../agent-workflow.md"]
+last_updated: "2026-11-14"
 ---
 
 # TypeScript Standards
@@ -42,8 +42,9 @@ manager commands and its decision records.
 ## Tooling
 
 - One project command runs linting, type checking and the test suites, such as
-  `pnpm check`. Run it, not the individual tools, unless the project's
-  standards say otherwise.
+  `pnpm check`. It is the full suite, which the
+  [Agent Workflow](../agent-workflow.md#workflow) runs after the code review.
+  Before the review, run the project's targeted tests and linters.
 - Markdown is linted by the project's Markdown linter, such as `pnpm lint:md`.
 
 ## Code Review Criteria

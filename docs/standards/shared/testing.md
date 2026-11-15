@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["agent-workflow.md", "code-review.md"]
-last_updated: "2026-11-01"
+last_updated: "2026-11-14"
 ---
 
 # Testing Standards
@@ -104,7 +104,7 @@ or feature document, and interactive elements carry accessibility identifiers.
 
 ## Running Tests
 
-Run tests only through the project's test command. If any category cannot run,
+Run tests only through the project's test commands. If any category cannot run,
 for example because a simulator or container runtime is missing, stop and tell
 the owner; never report the tests as passing.
 

@@ -8,7 +8,7 @@ Known problems and deferred work not yet scheduled in the [Implementation Plan](
 ## Filing an Issue
 
 - **Owner's approval:** An agent files an issue only with the owner's explicit approval. It proposes the title, labels and body to the owner first, and files only those the owner approves; one not approved is named in the pull request or the agent's report instead. A gap in a document is fixed on the branch in hand rather than proposed. Decided by the owner on 2026-11-13.
-- **Forms:** [New issue](https://github.com/jlarue26/fathom/issues/new/choose) offers one form for each kind: Bug, Quality of life, Feature and Debt. Blank issues are turned off.
+- **Forms:** [New issue](https://github.com/jlarue26/fathom/issues/new/choose) offers one form for each kind: Bug, Quality of life, Feature and Debt. Blank issues are turned off, and the page links to private reporting for vulnerabilities, as the [Security Policy](../SECURITY.md) sets out.
 - **What each asks:** What happens or what is wanted, why it matters, where, the background someone new to Fathom needs, with links, and how to tell it is done. A bug adds its steps, what was expected, its probability and its severity; the others add when.
 - **Links:** Every link in an issue is a full GitHub link to a file or heading on `main`.
 - **One place:** Once something is an issue, it lives only on GitHub. Documents link to the issue rather than repeat it.

@@ -6,6 +6,10 @@ name: Quality of life
 description: Something that works but could be easier, clearer or more consistent.
 labels: ["quality-of-life"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Fathom is in early development. The maintainer reads each issue and sets its priority and when it is worked on, as [Issues](https://github.com/jlarue26/fathom/blob/main/docs/issues.md) describes. Never report a vulnerability here: follow the [Security Policy](https://github.com/jlarue26/fathom/blob/main/SECURITY.md).
   - type: textarea
     id: what
     attributes:
@@ -40,7 +44,7 @@ body:
     id: when
     attributes:
       label: When
-      description: Now for the current work, Next for soon after, Later for when its area is next changed or it is wanted, Maybe for only if a need arises.
+      description: "How soon it is wanted. Now: the current work. Next: soon after. Later: when its area is next changed. Maybe: only if a need arises. The maintainer sets the final timing."
       options:
         - Now
         - Next
@@ -52,4 +56,4 @@ body:
     id: found
     attributes:
       label: Found
-      description: Who found it and when, such as conventions audit, 2026-11-11.
+      description: Who found it and when, such as a GitHub username and a date.

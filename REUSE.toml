@@ -35,3 +35,9 @@ path = [
 ]
 SPDX-FileCopyrightText = "2026 Jared La Rue"
 SPDX-License-Identifier = "Apache-2.0"
+
+# The Contributor Covenant, adapted only to name where reports go.
+[[annotations]]
+path = "CODE_OF_CONDUCT.md"
+SPDX-FileCopyrightText = "Contributor Covenant contributors"
+SPDX-License-Identifier = "CC-BY-4.0"

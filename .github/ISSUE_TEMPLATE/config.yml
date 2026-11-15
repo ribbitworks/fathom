@@ -1,5 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
-# Turns off blank issues, so every issue is filed through one of the forms beside this file.
+# Turns off blank issues, so every issue is filed through one of the forms beside this file, and
+# sends vulnerability reports to private reporting instead.
 
 blank_issues_enabled: false
+contact_links:
+  - name: Report a vulnerability
+    url: https://github.com/jlarue26/fathom/security/advisories/new
+    about: Report it privately, never in an issue.
