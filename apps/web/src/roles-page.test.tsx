@@ -602,9 +602,9 @@ describe("the summary of what a role allows", () => {
       // Releases, Drafts and the change history stay, since configuration opens them too, and
       // Capacity and Lists open with it.
       "New: Releases",
-      "Drafts",
       "New: Capacity",
       "New: Lists",
+      "Drafts",
       "Change history",
     ]);
     expect(summaryLine(dialog, "Releases", "Sees").className).toMatch(/added/);

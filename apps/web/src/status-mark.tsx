@@ -658,13 +658,15 @@ export type OtherTone = "live" | "warning" | "planned";
 // as a draft's dot is, offering "Live" as its tip and read aloud. A warning, such as Left, or a
 // planned place is a fact about the item, not a draft's state, so it is a small box after the item,
 // as a draft's Moved or Retired is, outlined red or grey, never a dot: a dot always means a draft's
-// state. With no item, it is the box alone, such as a line saying a place is planned; with no tone,
-// the item alone.
+// state. A warning with no value before it, such as No team in an empty cell, is its words in red in
+// the value's place, with no box. With no item, a planned place is the box alone, such as a line
+// saying a place is planned; with no tone, the item alone.
 export function MarkedItem({
   tone,
   words,
   spoken,
   slot = false,
+  empty = false,
   children,
 }: {
   tone: OtherTone | undefined;
@@ -674,6 +676,8 @@ export function MarkedItem({
   spoken?: string | undefined;
   // Whether Live's dot goes in a row's slot for its record's marks, as DraftedItem's does.
   slot?: boolean | undefined;
+  // Whether the item is an empty value, so a warning stands in its place.
+  empty?: boolean | undefined;
   children?: ReactNode;
 }) {
   if (tone === undefined) {
@@ -696,15 +700,19 @@ export function MarkedItem({
       </>
     );
   }
+  const alone = children === undefined;
   return (
     <>
       {slot && <MarkSlot />}
       {children}
-      {words !== undefined && (
-        <FactBox tone={tone} alone={children === undefined}>
-          {words}
-        </FactBox>
-      )}
+      {words !== undefined &&
+        (tone === "warning" && (alone || empty) ? (
+          <span className={marks.warningWords}>{words}</span>
+        ) : (
+          <FactBox tone={tone} alone={alone}>
+            {words}
+          </FactBox>
+        ))}
       {spoken !== undefined && <VisuallyHidden>, {spoken}</VisuallyHidden>}
     </>
   );

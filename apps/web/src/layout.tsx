@@ -159,12 +159,6 @@ const sections: { label: string; items: Item[] }[] = [
         page: "feature-assignments",
       },
       {
-        label: "Drafts",
-        icon: "drafts",
-        to: "/drafts",
-        page: "drafts",
-      },
-      {
         label: "Capacity",
         icon: "capacity",
         to: "/capacity",
@@ -211,6 +205,12 @@ const sections: { label: string; items: Item[] }[] = [
   {
     label: "History",
     items: [
+      {
+        label: "Drafts",
+        icon: "drafts",
+        to: "/drafts",
+        page: "drafts",
+      },
       {
         label: "Change history",
         icon: "changes",

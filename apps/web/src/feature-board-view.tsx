@@ -684,13 +684,13 @@ function FeatureCard({
         </Text>
       )}
       {notStaffed && (
-        <span className={classes.line}>
+        <Text component="span" size="xs" className={classes.line}>
           <MarkedItem
             tone="warning"
             words="Not staffed"
             spoken="it's planned or in progress, with nobody allocated to it"
           />
-        </span>
+        </Text>
       )}
     </UnstyledButton>
   );

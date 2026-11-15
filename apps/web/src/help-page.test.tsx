@@ -121,7 +121,7 @@ describe("Help's Roles page", () => {
 });
 
 describe("Help's Drafts page", () => {
-  it("is reached from the sidebar's Help section, apart from the People section's Drafts page", async () => {
+  it("is reached from the sidebar's Help section, apart from the History section's Drafts page", async () => {
     serverAnswers({
       "GET /api/session": () =>
         Response.json({
@@ -132,7 +132,7 @@ describe("Help's Drafts page", () => {
     renderApp("/help/roles");
     const help = await screen.findByRole("group", { name: "Help" });
     expect(
-      within(screen.getByRole("group", { name: "People" })).getByRole("link", {
+      within(screen.getByRole("group", { name: "History" })).getByRole("link", {
         name: "Drafts",
       }),
     ).toHaveProperty("pathname", "/drafts");

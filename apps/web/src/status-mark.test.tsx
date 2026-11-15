@@ -23,6 +23,7 @@ import {
   liveWaitingWords,
   LiveRowMarks,
   LiveValue,
+  MarkedItem,
   marksIn,
   partsMark,
   recordMark,
@@ -458,4 +459,45 @@ describe("a class's mark", () => {
     expect(classMarkChars("personal")).toBeGreaterThan(0);
     expect(classMarkChars("general")).toBe(0);
   });
+});
+
+describe("a warning", () => {
+  // Read from a wrapper of its own, since the rendered page also holds Mantine's styles.
+  const warning = (props: { empty?: boolean; children?: ReactNode }) => {
+    renderIn(
+      "both",
+      <span data-testid="marked">
+        <MarkedItem
+          tone="warning"
+          words="Fictional warning"
+          spoken="fictional reason"
+          {...props}
+        />
+      </span>,
+    );
+    return screen.getByTestId("marked").textContent;
+  };
+  const box = () =>
+    screen.getByText("Fictional warning").closest('[class*="warningKind"]');
+
+  it("follows a value in a red box, read aloud with why", () => {
+    expect(warning({ children: "Fictional value" })).toBe(
+      "Fictional valueFictional warning, fictional reason",
+    );
+    expect(box()).not.toBeNull();
+  });
+
+  it.each([
+    ["an empty value", { empty: true, children: "" }],
+    ["no value at all", {}],
+  ])(
+    "stands in %s's place as red words, with no box, read aloud the same",
+    (_case, props) => {
+      expect(warning(props)).toBe("Fictional warning, fictional reason");
+      expect(box()).toBeNull();
+      expect(screen.getByText("Fictional warning").className).toContain(
+        "warningWords",
+      );
+    },
+  );
 });

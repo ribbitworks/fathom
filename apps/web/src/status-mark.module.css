@@ -141,14 +141,20 @@
   color: var(--mantine-color-yellow-4);
 }
 
-/* A warning about an item, such as Left or No team: the same box outlined in red, since it is a
-   fact about the item, not a draft's state, which a dot shows. */
+/* A warning about an item, such as Left: the same box outlined in red, since it is a fact about the
+   item, not a draft's state, which a dot shows. In an empty value's place, such as No team, it is
+   the words alone, since there is no value for a box to follow. Both take a red dark enough to read
+   on a draft's tinted row. */
 .warningKind {
   border-color: var(--mantine-color-red-6);
-  color: var(--mantine-color-red-8);
 }
 
-:where([data-mantine-color-scheme="dark"]) .warningKind {
+.warningKind,
+.warningWords {
+  color: var(--mantine-color-red-9);
+}
+
+:where([data-mantine-color-scheme="dark"]) :is(.warningKind, .warningWords) {
   color: var(--mantine-color-red-4);
 }
 

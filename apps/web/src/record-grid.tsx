@@ -3573,6 +3573,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                           record === undefined || editingHere
                             ? undefined
                             : column.status?.(record);
+                        const standIn = standInAt(row, column);
                         const changes = draftChanges(draft, column);
                         const frozenAt = frozenCell(columnIndex);
                         const live =
@@ -3722,6 +3723,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                     }
                                     words={warning?.words}
                                     spoken={warning?.spoken}
+                                    empty={
+                                      standIn === undefined &&
+                                      isEmpty(shownAt(row, column))
+                                    }
                                   >
                                     {editingHere
                                       ? editor(
@@ -3734,8 +3739,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                           valueAt(row, column),
                                         )
                                       : has &&
-                                        (standInAt(row, column) ===
-                                        undefined ? (
+                                        (standIn === undefined ? (
                                           row.record && column.content ? (
                                             column.content(row.record)
                                           ) : (
@@ -3751,7 +3755,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                             c="dimmed"
                                             fs="italic"
                                           >
-                                            {standInAt(row, column)}
+                                            {standIn}
                                           </Text>
                                         ))}
                                   </MarkedItem>
@@ -3854,6 +3858,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                       }
                                       words={liveWarning(column)?.words}
                                       spoken={liveWarning(column)?.spoken}
+                                      empty={
+                                        standIn === undefined &&
+                                        isEmpty(column.value(liveRecord as Rec))
+                                      }
                                     >
                                       {standIn === undefined ? (
                                         // Drawn only under a record whose draft changes it, which the

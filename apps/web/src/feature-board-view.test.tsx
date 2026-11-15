@@ -322,6 +322,8 @@ describe("a card", () => {
   it("is marked Not staffed when committed with no allocations", async () => {
     await openBoard();
     expect(card("Fictional Alpha").textContent).toContain("Not staffed");
+    const words = within(card("Fictional Alpha")).getByText("Not staffed");
+    expect(words.closest('[class*="warningKind"]')).toBeNull();
     expect(card("Fictional Beta").textContent).not.toContain("Not staffed");
     expect(card("Fictional Gamma").textContent).not.toContain("Not staffed");
   });

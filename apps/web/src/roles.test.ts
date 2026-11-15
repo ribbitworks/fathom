@@ -43,13 +43,13 @@ describe("what a role allows", () => {
       "People",
       "Org chart",
       "Feature assignments",
-      "Drafts",
       "Capacity",
       "Accounts",
       "Roles",
       "Settings",
       "Lists",
       "Data classes",
+      "Drafts",
       "Change history",
       "Access history",
     ]);
@@ -63,10 +63,10 @@ describe("what a role allows", () => {
     expect(sees).toEqual([
       "People",
       "Org chart",
-      "Drafts",
       "Accounts",
       "Roles",
       "Settings",
+      "Drafts",
       "Change history",
       "Access history",
     ]);
@@ -98,9 +98,9 @@ describe("what a role allows", () => {
       "Org chart",
       "Org chart on other dates",
       "Feature assignments",
-      "Drafts",
       "Capacity",
       "Allocations",
+      "Drafts",
       "Change history",
     ]);
     expect(engineeringManager.doesNotSee).toEqual([

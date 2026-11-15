@@ -14,6 +14,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   bodyOf,
   chooseIn,
+  featureDraft,
   fictionalRelease,
   fictionalUser,
   findRowActions,
@@ -2764,9 +2765,33 @@ describe("the Features page", () => {
     });
   });
 
-  it("marks a feature whose status means Planned and that has no feature team", async () => {
+  const warningBox = (words: HTMLElement) =>
+    words.closest('[class*="warningKind"]');
+
+  it("marks a feature whose status means Planned and that has no feature team, in red words in place of the team, with no box", async () => {
     await open(featurePlan({ features: [{ ...first, statusId: plannedId }] }));
-    expect(await screen.findByText("No team")).not.toBeNull();
+    const words = await screen.findByText("No team");
+    expect(words.className).toContain("warningWords");
+    expect(warningBox(words)).toBeNull();
+  });
+
+  it("keeps the warning's box after the words a draft emptying the team shows", async () => {
+    await open(
+      featurePlan({
+        features: [
+          {
+            ...first,
+            statusId: plannedId,
+            draft: featureDraft({
+              changed: ["featureTeamId"],
+              live: { featureTeamId: teamId },
+            }),
+          },
+        ],
+      }),
+    );
+    const [words] = await screen.findAllByText("No team");
+    expect(warningBox(words as HTMLElement)).not.toBeNull();
   });
 
   it("follows a customer from a feature's details to the Customers tab", async () => {
