@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for each view table's choices: the parameters its page keeps in a view, which a request
-// must fit as a whole.
+// must fit as a whole; and for who shares each table's views.
 
 import { describe, expect, it } from "vitest";
-import { viewChoiceSchemas, viewTableSchema } from "./view-tables.ts";
+import {
+  sharesViews,
+  viewChoiceSchemas,
+  viewTableSchema,
+} from "./view-tables.ts";
 
 const stream = "6f1d6a52-0c1e-4a51-9b0f-1d2c3e4f5a6b";
 
@@ -41,4 +45,19 @@ describe("the choices of tables whose pages keep none", () => {
       expect(choices.safeParse({ mode: "board" }).success).toBe(false);
     },
   );
+});
+
+describe("Sharing views", () => {
+  it.each(viewTableSchema.options.filter((table) => table !== "accounts"))(
+    "shares %s's views with Edit Configuration alone",
+    (table) => {
+      expect(sharesViews(table, ["configuration:edit"])).toBe(true);
+      expect(sharesViews(table, ["administration:edit"])).toBe(false);
+    },
+  );
+
+  it("shares Accounts' views with Edit Administration alone", () => {
+    expect(sharesViews("accounts", ["administration:edit"])).toBe(true);
+    expect(sharesViews("accounts", ["configuration:edit"])).toBe(false);
+  });
 });

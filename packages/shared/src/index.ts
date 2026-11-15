@@ -471,6 +471,7 @@ export {
   cardPartSchema,
   type PlanMode,
   planModeSchema,
+  sharesViews,
   viewChoiceSchemas,
   type ViewTable,
   viewTableSchema,

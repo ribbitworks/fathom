@@ -23,6 +23,7 @@ import {
   type Permission,
   personLengths,
   seesView,
+  sharesViews,
   showSchema,
   daySchema,
   cardPartSchema,
@@ -392,18 +393,14 @@ const releasesRoute = createRoute({
   component: function Releases() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = releasesRoute.useNavigate();
-    const { view, onView } = viewProps(
-      releasesRoute.useSearch(),
-      (next, replace) => {
-        void navigate({ search: next, replace });
-      },
-    );
     return (
       <ReleasesPage
         streamId={releasesRoute.useParams().streamId}
         approves={approvableKinds(permissions)}
-        view={view}
-        onView={onView}
+        canShareViews={sharesViews("release-streams", permissions)}
+        {...viewProps(releasesRoute.useSearch(), (next, replace) => {
+          void navigate({ search: next, replace });
+        })}
       />
     );
   },

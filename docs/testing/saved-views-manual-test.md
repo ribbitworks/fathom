@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and taking it back, and moving columns as part of a view, as seen from more than one account.
+Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and taking it back, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; and that a view on Releases shows only its streams in the timeline.
 
 ## Test Environment
 
@@ -490,3 +490,139 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `B00D` In the second window, open the Views menu and select **Delete view**.
   - **Expected:** `Fictional moved columns` is gone from the Views menu.
   - **Notes:**
+
+### VIEW-10: A View on Releases Shows Its Streams in the Timeline Too
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as VIEW-09.
+
+**Preconditions:** In the main window, this account is signed in. Select the **Releases** page in the left-hand menu.
+
+- [ ] `289E` Type `Patches` in the search box above the table.
+  - **Expected:**
+    - The table lists only 'Patches'.
+    - The timeline above the table shows only the 'Patches' row.
+    - A **Views** button shows above the table.
+  - **Notes:**
+
+- [ ] `30E8` Open the Views menu, and select **Save view…**.
+  - **Expected:**
+    - A dialog titled "Save view" shows **Name**.
+    - Under **Includes**, **Search** reads “Patches”.
+  - **Notes:**
+
+- [ ] `9EB8` Type `Fictional patches` in **Name**.
+  - **Expected:** The name shows in **Name**.
+  - **Notes:**
+
+- [ ] `E207` Select **Save view** in the dialog.
+  - **Expected:** The Views menu's button says `Fictional patches`.
+  - **Notes:**
+
+- [ ] `F2CE` Open the Views menu, and select **Clear view**.
+  - **Expected:**
+    - The table lists 'Platform' and 'Patches'.
+    - The timeline shows a row for 'Platform' and a row for 'Patches'.
+  - **Notes:**
+
+- [ ] `AA19` Open the Views menu, and select `Fictional patches` under **My views**.
+  - **Expected:**
+    - The table lists only 'Patches'.
+    - The timeline shows only the 'Patches' row.
+  - **Notes:**
+
+- [ ] `724E` Open the Views menu, and select **Delete view**.
+  - **Expected:** `Fictional patches` is gone from the Views menu.
+  - **Notes:**
+
+### VIEW-11: A View on a Column the Role Can No Longer See Is Dimmed
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, in the second window, changed from VIEW-10.
+
+**Preconditions:** In the second window, this account is signed in on **People**, with no view applied. In the main window, Workforce Administrator, `engineering.operations.manager@fathom.test` is signed in.
+
+- [ ] `736D` In the second window, filter the **Site** column to 'Northmere Labs' from its column menu.
+  - **Expected:** Only people at 'Northmere Labs' show.
+  - **Notes:**
+
+- [ ] `67F2` Open the Views menu, and select **Save view…**.
+  - **Expected:** A dialog titled "Save view" shows **Name**.
+  - **Notes:**
+
+- [ ] `9E64` Type `Fictional by site` in **Name**.
+  - **Expected:** The name shows in **Name**.
+  - **Notes:**
+
+- [ ] `C2D4` Select **Save view** in the dialog.
+  - **Expected:** The Views menu's button says `Fictional by site`.
+  - **Notes:**
+
+- [ ] `D781` In the main window, select the **Data classes** page in the left-hand menu.
+  - **Expected:** The **Lists** section, last on the page, below **Columns**, lists 'Sites'.
+  - **Notes:**
+
+- [ ] `C247` In the **Lists** section, select **Change class…** on the row of 'Sites'.
+  - **Expected:**
+    - A dialog titled "Change the class of Sites" opens.
+    - **General** is chosen.
+  - **Notes:**
+
+- [ ] `5607` Select **Personal**.
+  - **Expected:** **Personal** is chosen.
+  - **Notes:**
+
+- [ ] `4ABF` Select **Change**.
+  - **Expected:** The class of 'Sites' is an eye with a line through it, then **Personal**.
+  - **Notes:**
+
+- [ ] `589F` In the second window, select the **People** page in the left-hand menu.
+  - **Expected:**
+    - The table has no **Site** column.
+    - A **Views** button shows above the table.
+  - **Notes:**
+
+- [ ] `64E5` In the second window, open the Views menu.
+  - **Expected:**
+    - **My views** lists `Fictional by site`, dimmed.
+    - Under its name, a line reads "Uses Site, which this role can't see."
+  - **Notes:**
+
+- [ ] `7A0C` Select `Fictional by site`.
+  - **Expected:**
+    - The view isn't applied: the Views menu's button still says **Views**.
+    - A menu beside it offers **Rename…** and **Delete…**, and nothing else.
+  - **Notes:**
+
+- [ ] `03A4` Select **Rename…**.
+  - **Expected:**
+    - A dialog titled "Rename view" opens.
+    - **Name** holds `Fictional by site`.
+  - **Notes:**
+
+- [ ] `526D` Clear **Name** and type `Fictional by place`.
+  - **Expected:** **Name** holds `Fictional by place`.
+  - **Notes:**
+
+- [ ] `F7B6` Select **Rename**.
+  - **Expected:**
+    - The dialog closes.
+    - No notification shows.
+  - **Notes:**
+
+- [ ] `8DDC` Open the Views menu.
+  - **Expected:** **My views** lists `Fictional by place`, dimmed, with the line "Uses Site, which this role can't see." under it.
+  - **Notes:**
+
+- [ ] `CD3D` Select `Fictional by place`, then **Delete…**.
+  - **Expected:**
+    - A dialog titled "Delete the Fictional by place view?" opens.
+    - It reads "This can't be undone."
+  - **Notes:**
+
+- [ ] `732D` Select **Delete**.
+  - **Expected:**
+    - The dialog closes.
+    - A notification reads "Deleted the Fictional by place view." with no **Undo**.
+    - No **Views** button shows above the table.
+  - **Notes:**
+
+**Afterwards:** In the main window, on the **Data classes** page, in the **Lists** section, select **Change class…** on the row of 'Sites', select **General**, and select **Change**. The class of 'Sites' is an open eye, then **General**.

@@ -24,6 +24,7 @@ import {
   type SavedViewRequest,
   seesClass,
   seesView,
+  sharesViews,
   type Tier,
   type UnusableView,
   viewChoiceSchemas,
@@ -168,9 +169,7 @@ const sees = (actor: Actor, table: Table, definition: ViewDefinition) =>
   usable(missingFor(actor, table, definition));
 
 const makesSharedViews = (actor: Actor, name: ViewTable) =>
-  // The table is always one of the fixed tables.
-  // eslint-disable-next-line security/detect-object-injection
-  actor.permissions.includes(viewTables[name].sharesWith);
+  sharesViews(name, actor.permissions);
 
 // Whether the actor may rename, update, or delete a view.
 const mayChange = (

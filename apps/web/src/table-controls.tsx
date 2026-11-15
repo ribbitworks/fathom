@@ -25,12 +25,14 @@ import {
   VisuallyHidden,
 } from "@mantine/core";
 import {
+  allOf,
   byName,
   numberProblem,
   type SavedView,
   type Show,
   showSchema,
   typedNumber,
+  type UnusableView,
   type ViewScope,
 } from "@fathom/shared";
 import {
@@ -49,6 +51,7 @@ import { focusSoon } from "./focus.ts";
 import {
   activeGrouping,
   notGrouped,
+  notGroupedLabel,
   type ColumnChoice,
   type Filter,
   folded,
@@ -67,7 +70,7 @@ import {
   withPlaces,
   withUnit,
 } from "./table-view.ts";
-import { AppMenu, MenuChoices } from "./app-menu.tsx";
+import { AppMenu, MenuChoices, MenuToggle, Tick } from "./app-menu.tsx";
 import type { ColumnUnits } from "./record-grid.tsx";
 import classes from "./pages.module.css";
 import { ClearableInput } from "./clearable-input.tsx";
@@ -162,6 +165,15 @@ export function viewParts(
   view: View,
   columns: readonly AnyColumn[],
   filterOnly: readonly AnyColumn[] = [],
+  {
+    groupings = [],
+    ungrouped = false,
+    choices = [],
+  }: {
+    groupings?: readonly { key: string; label: string }[];
+    ungrouped?: boolean;
+    choices?: readonly ViewChoice[];
+  } = {},
 ): ViewPart[] {
   const labelOf = (key: string) =>
     columns.filter((column) => column.key === key).map(({ label }) => label);
@@ -175,7 +187,13 @@ export function viewParts(
   const breakdown = (view.breakdown ?? []).flatMap(labelOf);
   const widths = widened(view, columns);
   const shownIn = unitsShown(view, columns);
+  // A grouping is named only where the view chooses one other than the table's own.
+  const grouping =
+    view.grouping === undefined
+      ? undefined
+      : (activeGrouping(view, groupings, ungrouped)?.label ?? notGroupedLabel);
   return [
+    ...choiceParts(view, choices),
     ...(view.search.trim() === ""
       ? []
       : [{ name: "Search", value: `“${view.search.trim()}”` }]),
@@ -187,6 +205,7 @@ export function viewParts(
     ...(breakdown.length === 0
       ? []
       : [{ name: "Metrics", value: breakdown.join(" by ") }]),
+    ...(grouping === undefined ? [] : [{ name: "Group by", value: grouping }]),
     ...(view.frozen === undefined
       ? []
       : [
@@ -425,13 +444,109 @@ export function TableSearch({
 // A table's saved views, the one its view started from, if any, and what can be done with them.
 export interface SavedViews {
   views: readonly SavedView[];
+  // The user's own personal views their role can no longer use, which they may rename or delete.
+  unusable: readonly UnusableView[];
   applied: string | undefined;
   onApply: (view: View, id: string) => void;
-  // Opens the dialog naming a saved view: a new one for the table's view, or one to rename.
-  onName: (saved: SavedView | undefined, view: View) => void;
+  // Opens the dialog naming a new saved view for the table's view, listing what saving it keeps.
+  onSave: (view: View, parts: readonly ViewPart[]) => void;
+  onRename: (saved: SavedView | UnusableView) => void;
   onUpdate: (saved: SavedView, view: View) => void;
   onDelete: (saved: SavedView) => void;
+  // Asks first, since deleting a view that can't be used can't be undone.
+  onDeleteUnusable: (saved: UnusableView) => void;
   onScope: (saved: SavedView, scope: ViewScope) => void;
+}
+
+// A choice of which records a table shows, beyond its filters, first in its Views menu and kept in
+// its view, such as Show retired: an item ticked while on, naming how many records it adds.
+export interface ViewChoice {
+  label: string;
+  count: number;
+  on: (view: View) => boolean;
+  turned: (view: View, on: boolean) => View;
+  // How the Save view dialog names it while on.
+  part: ViewPart;
+}
+
+// The parts of a view its page's choices set, as the Save view dialog names them.
+const choiceParts = (view: View, choices: readonly ViewChoice[]): ViewPart[] =>
+  choices.filter((choice) => choice.on(view)).map(({ part }) => part);
+
+// What a view its maker can no longer use is missing, as its line in the Views menu says it.
+export function missingWords({ missing }: UnusableView): string[] {
+  return [
+    ...(missing.columns.length === 0
+      ? []
+      : [`Uses ${allOf(missing.columns)}, which this role can't see.`]),
+    ...(missing.grouping === undefined
+      ? []
+      : [`Grouped by ${missing.grouping}, which this role can't see.`]),
+  ];
+}
+
+// A view its maker can no longer use, dimmed under My views with what it's missing, its own menu
+// offering Rename… and Delete… alone.
+function UnusableItem({
+  unusable,
+  onRename,
+  onDelete,
+}: {
+  unusable: UnusableView;
+  onRename: () => void;
+  onDelete: () => void;
+}) {
+  const lines = missingWords(unusable);
+  return (
+    <Menu.Sub>
+      <Menu.Sub.Target>
+        <Menu.Sub.Item leftSection={<Tick chosen={false} />}>
+          <Text component="span" display="block" c="dimmed" fz="sm">
+            {unusable.name}
+          </Text>
+          {lines.map((line) => (
+            <Text
+              key={line}
+              component="span"
+              display="block"
+              c="dimmed"
+              fz="xs"
+            >
+              {line}
+            </Text>
+          ))}
+        </Menu.Sub.Item>
+      </Menu.Sub.Target>
+      <Menu.Sub.Dropdown>
+        <Menu.Item onClick={onRename}>Rename…</Menu.Item>
+        <Menu.Item color="red" onClick={onDelete}>
+          Delete…
+        </Menu.Item>
+      </Menu.Sub.Dropdown>
+    </Menu.Sub>
+  );
+}
+
+// A page's choices, first in its Views menu.
+function ChoiceItems({
+  choices,
+  view,
+  onView,
+}: {
+  choices: readonly ViewChoice[];
+  view: View;
+  onView: ChangeView;
+}) {
+  return choices.map((choice) => (
+    <MenuToggle
+      key={choice.label}
+      label={`${choice.label} (${count(choice.count)})`}
+      on={choice.on(view)}
+      onToggle={(on) => {
+        onView(choice.turned(view, on));
+      }}
+    />
+  ));
 }
 
 export const viewScopes: Record<
@@ -470,7 +585,9 @@ export function ViewsMenu({
   view,
   onView,
   onClear,
-  items,
+  choices = [],
+  groupings = [],
+  ungrouped = false,
 }: {
   saved?: SavedViews | undefined;
   columns: readonly AnyColumn[];
@@ -479,10 +596,12 @@ export function ViewsMenu({
   onView: ChangeView;
   // Clears the view, leaving the saved view it started from.
   onClear: () => void;
-  // Choices of which records the table shows, beyond its filters, such as Show retired, first.
-  items?: ReactNode;
+  choices?: readonly ViewChoice[];
+  groupings?: readonly { key: string; label: string }[];
+  ungrouped?: boolean;
 }) {
   const views = saved?.views ?? [];
+  const unusable = saved?.unusable ?? [];
   // Each level of the sort, in order, with its column; a column the table does not have is left
   // out.
   const sorts = view.sort.flatMap(({ key, descending }) =>
@@ -580,8 +699,9 @@ export function ViewsMenu({
     },
   ].filter(({ items }) => items !== false);
   const actions = !empty || current?.canChange === true;
-  const hasItems = items !== undefined && items !== null && items !== false;
-  if (views.length === 0 && empty && !hasItems) return null;
+  const hasChoices = choices.length > 0;
+  const listed = views.length + unusable.length > 0;
+  if (!listed && empty && !hasChoices) return null;
   return (
     <AppMenu position="bottom-start" hideDetached={false}>
       <AppMenu.Target>
@@ -598,19 +718,32 @@ export function ViewsMenu({
         </Button>
       </AppMenu.Target>
       <AppMenu.Dropdown>
-        {items}
-        {hasItems && (views.length > 0 || sections.length > 0 || actions) && (
+        <ChoiceItems choices={choices} view={view} onView={onView} />
+        {hasChoices && (listed || sections.length > 0 || actions) && (
           <Menu.Divider />
         )}
         {saved &&
           Object.entries(viewScopes).map(([scope, { heading }]) => {
             const grouped = views.filter((each) => each.scope === scope);
+            const dimmed = scope === "personal" ? unusable : [];
             return (
-              grouped.length > 0 && (
+              grouped.length + dimmed.length > 0 && (
                 <MenuChoices
                   key={scope}
                   label={heading}
                   divided={false}
+                  after={[...dimmed].sort(byName).map((each) => (
+                    <UnusableItem
+                      key={each.id}
+                      unusable={each}
+                      onRename={() => {
+                        saved.onRename(each);
+                      }}
+                      onDelete={() => {
+                        saved.onDeleteUnusable(each);
+                      }}
+                    />
+                  ))}
                   choices={grouped
                     .sort(byName)
                     .map((each) => ({ value: each.id, label: each.name }))}
@@ -628,21 +761,26 @@ export function ViewsMenu({
               )
             );
           })}
-        {sections.length > 0 && views.length > 0 && <Menu.Divider />}
+        {sections.length > 0 && listed && <Menu.Divider />}
         {sections.map((section, at) => (
           <Fragment key={section.key}>
             {at > 0 && <Menu.Divider />}
             {section.items}
           </Fragment>
         ))}
-        {actions && (views.length > 0 || sections.length > 0) && (
-          <Menu.Divider />
-        )}
+        {actions && (listed || sections.length > 0) && <Menu.Divider />}
         {!empty && <Menu.Item onClick={onClear}>Clear view</Menu.Item>}
         {saved && !empty && (
           <Menu.Item
             onClick={() => {
-              saved.onName(undefined, view);
+              saved.onSave(
+                view,
+                viewParts(view, columns, filterOnly, {
+                  groupings,
+                  ungrouped,
+                  choices,
+                }),
+              );
             }}
           >
             Save view…
@@ -661,7 +799,7 @@ export function ViewsMenu({
             )}
             <Menu.Item
               onClick={() => {
-                saved.onName(current, view);
+                saved.onRename(current);
               }}
             >
               Rename…
@@ -907,7 +1045,7 @@ function GroupingMenu({
   onView: ChangeView;
 }) {
   const inUse = activeGrouping(view, groupings, ungrouped);
-  const none = { key: notGrouped, label: "None" };
+  const none = { key: notGrouped, label: notGroupedLabel };
   const shown = inUse ?? none;
   // The view names a grouping only when it isn't the table's own, which the menu lists first.
   const ownKey = ungrouped ? none.key : groupings[0]?.key;
@@ -952,7 +1090,7 @@ export function ViewBar({
   onLeave,
   saved,
   draftItems,
-  viewItems,
+  choices,
   groupings,
   ungrouped = false,
   withDrafts = true,
@@ -980,8 +1118,7 @@ export function ViewBar({
   saved?: SavedViews | undefined;
   // Added to the Draft menu, after what to show and the filter.
   draftItems?: ReactNode;
-  // Choices of which records the table shows, beyond its filters, first in the Views menu.
-  viewItems?: ReactNode;
+  choices?: readonly ViewChoice[] | undefined;
   // False for a table whose records never have drafts.
   withDrafts?: boolean;
 }) {
@@ -1047,7 +1184,9 @@ export function ViewBar({
         onClear={() => {
           onView(emptyView);
         }}
-        items={viewItems}
+        {...(choices === undefined ? {} : { choices })}
+        {...(groupings === undefined ? {} : { groupings })}
+        ungrouped={ungrouped}
       />
       {filters.map(({ column, filter }) => (
         <Pill

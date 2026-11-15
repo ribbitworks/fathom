@@ -5,6 +5,7 @@
 // old links still open as they did.
 
 import { z } from "zod";
+import type { Permission } from "./access.ts";
 import type { ViewChoices } from "./views.ts";
 
 export const viewTableSchema = z.enum([
@@ -66,3 +67,28 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
   "org-chart": noChoices,
   accounts: noChoices,
 };
+
+// The permission that shares a table's views, and changes or deletes others' shared ones. Nobody who
+// opens Accounts may change planning configuration.
+const viewSharers: Record<ViewTable, Permission> = {
+  people: "configuration:edit",
+  features: "configuration:edit",
+  projects: "configuration:edit",
+  proposals: "configuration:edit",
+  customers: "configuration:edit",
+  milestones: "configuration:edit",
+  "release-streams": "configuration:edit",
+  lists: "configuration:edit",
+  "feature-assignments": "configuration:edit",
+  capacity: "configuration:edit",
+  "org-chart": "configuration:edit",
+  accounts: "administration:edit",
+};
+
+export const sharesViews = (
+  table: ViewTable,
+  permissions: readonly string[],
+): boolean =>
+  // The table is always one of the fixed tables.
+  // eslint-disable-next-line security/detect-object-injection
+  permissions.includes(viewSharers[table]);

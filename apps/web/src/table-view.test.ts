@@ -27,6 +27,7 @@ import {
   type View,
   viewFrom,
   viewProps,
+  type ViewSearch,
   viewSearchSchema,
   widthWithin,
   withPlaces,
@@ -626,6 +627,44 @@ describe("a view's order of columns", () => {
       "a",
       "n",
     ]);
+  });
+});
+
+describe("a page's own choices", () => {
+  it("are kept in the address under their own names, and in the view's choices", () => {
+    const go = vi.fn();
+    const search: ViewSearch & {
+      mode?: string;
+      hide?: string[];
+      other?: string;
+      missing?: string;
+    } = { mode: "board", hide: ["status"], other: "kept out" };
+    const props = viewProps(search, go, ["mode", "hide", "missing"]);
+    expect(props.view.choices).toEqual({ mode: "board", hide: ["status"] });
+    props.onView({ ...emptyView, choices: { mode: "table" } });
+    expect(go).toHaveBeenLastCalledWith({ mode: "table" }, false);
+    props.onApply({ ...emptyView, choices: { mode: "board" } }, "saved");
+    expect(go).toHaveBeenLastCalledWith(
+      { mode: "board", view: "saved" },
+      false,
+    );
+  });
+
+  it("are read from and written to a saved view's choices, and count as set apart", () => {
+    const chosen = { ...emptyView, choices: { mode: "board" } };
+    expect(searchFor(chosen)).toEqual({ choices: { mode: "board" } });
+    expect(viewFrom({ choices: { mode: "board" } })).toEqual(chosen);
+    expect(viewFrom({ choices: {} })).toEqual(emptyView);
+    expect(setsApart(chosen)).toBe(true);
+  });
+
+  it("are kept, with whether retired records show, when the view is fitted to the table's columns", () => {
+    expect(
+      knownView(
+        { ...emptyView, retired: true, choices: { mode: "board" } },
+        [],
+      ),
+    ).toEqual({ ...emptyView, retired: true, choices: { mode: "board" } });
   });
 });
 

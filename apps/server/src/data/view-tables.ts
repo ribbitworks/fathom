@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // What differs between the tables that keep saved views: who opens the table's page, and so sees
-// and saves its views; who shares them; the classes of its columns; and the groupings that need data
+// and saves its views; the classes of its columns; and the groupings that need data
 // of a class beyond their column. Every table must be described, which the compiler checks.
 
 import type { Database } from "@fathom/db";
@@ -10,7 +10,6 @@ import {
   type ClassifiedView,
   type PageNeeds,
   pageNeeds,
-  type Permission,
   type ViewTable,
 } from "@fathom/shared";
 import { type ClassedColumn, columnClasses, readColumns } from "./values.ts";
@@ -28,7 +27,6 @@ export interface ViewColumns {
 
 export interface ViewTableRules {
   opens: PageNeeds;
-  sharesWith: Permission;
   columns(reader: Reader): Promise<ViewColumns>;
   // Groupings whose headings show data of a class beyond their column, with how they are named.
   groupingNeeds?: ReadonlyMap<string, { view: ClassifiedView; name: string }>;
@@ -41,39 +39,35 @@ const byManager = new Map([
   ["manager", { view: "groupingByManager" as const, name: "Manager" }],
 ]);
 
-const plan = (opens: PageNeeds): ViewTableRules => ({
+const generalTable = (opens: PageNeeds): ViewTableRules => ({
   opens,
-  sharesWith: "configuration:edit",
   columns: allGeneral,
 });
 
 export const viewTables: Record<ViewTable, ViewTableRules> = {
   people: {
     opens: pageNeeds.people,
-    sharesWith: "configuration:edit",
     columns: async (reader) => ({
       classed: columnClasses(await readColumns(reader)),
       open: false,
     }),
   },
-  features: plan(pageNeeds.features),
-  projects: plan(pageNeeds.projects),
-  proposals: plan(pageNeeds.projects),
-  customers: plan(pageNeeds.projects),
-  milestones: plan(pageNeeds.projects),
-  "release-streams": plan(pageNeeds.releases),
-  lists: plan(pageNeeds.lists),
+  features: generalTable(pageNeeds.features),
+  projects: generalTable(pageNeeds.projects),
+  proposals: generalTable(pageNeeds.projects),
+  customers: generalTable(pageNeeds.projects),
+  milestones: generalTable(pageNeeds.projects),
+  "release-streams": generalTable(pageNeeds.releases),
+  lists: generalTable(pageNeeds.lists),
   "feature-assignments": {
-    ...plan(pageNeeds["feature-assignments"]),
+    ...generalTable(pageNeeds["feature-assignments"]),
     groupingNeeds: byManager,
   },
   // Capacity's People, since its Settings keep no view.
-  capacity: { ...plan([capacityModeNeeds.people]), groupingNeeds: byManager },
-  "org-chart": plan(pageNeeds["org-chart"]),
-  // Nobody who opens Accounts may change planning configuration.
-  accounts: {
-    opens: pageNeeds.accounts,
-    sharesWith: "administration:edit",
-    columns: allGeneral,
+  capacity: {
+    ...generalTable([capacityModeNeeds.people]),
+    groupingNeeds: byManager,
   },
+  "org-chart": generalTable(pageNeeds["org-chart"]),
+  accounts: generalTable(pageNeeds.accounts),
 };

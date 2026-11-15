@@ -17,6 +17,7 @@ import {
   searchWords,
   type Show,
   type Tier,
+  type ViewChoices,
   type ViewDefinition,
   inPlacesOf,
   viewDefinitionSchema,
@@ -130,6 +131,9 @@ export interface View {
   places?: Record<string, number> | undefined;
   // Set when the table's retired records show too, for a table that has them.
   retired?: true | undefined;
+  // The page's own choices kept in the view, by the names its address gives them, such as
+  // Features' `mode`.
+  choices?: ViewChoices | undefined;
 }
 
 export const emptyView: View = {
@@ -170,6 +174,7 @@ export function viewFrom(search: ViewDefinition): View {
     ...(hasEntries(search.units) ? { units: search.units } : {}),
     ...(hasEntries(search.places) ? { places: search.places } : {}),
     ...(search.retired === true ? { retired: true } : {}),
+    ...(hasEntries(search.choices) ? { choices: search.choices } : {}),
   };
 }
 
@@ -244,24 +249,44 @@ export function withUnit(
   return { ...view, units: withEntry(view.units, key, unit) };
 }
 
+const isChoiceValue = (value: unknown): value is string | string[] =>
+  typeof value === "string" ||
+  (Array.isArray(value) && value.every((each) => typeof each === "string"));
+
 // A table's view as its page's address holds it, the saved view it started from, and how to change
 // it, for any page whose route reads its address with viewSearchSchema. `go` sets the address,
 // replacing the current entry in its history when asked. A changed view still names the saved view
 // it started from, until it is cleared.
-export function viewProps(
-  search: ViewSearch,
-  go: (search: ViewSearch, replace: boolean) => void,
+export function viewProps<Search extends ViewSearch>(
+  search: Search,
+  go: (search: ViewSearch & Record<string, unknown>, replace: boolean) => void,
+  // The page's own choices, each kept in the address under its own name, as before it was kept in
+  // a view, so old links still open as they did.
+  choiceKeys: readonly (keyof Search & string)[] = [],
 ): {
   view: View;
   applied: string | undefined;
   onView: (view: View, replace?: boolean) => void;
   onApply: (view: View, id: string, replace?: boolean) => void;
 } {
+  const choices = Object.fromEntries(
+    choiceKeys.flatMap((key) => {
+      // The key is always one of the page's own choices.
+      // eslint-disable-next-line security/detect-object-injection
+      const value = search[key];
+      return isChoiceValue(value) ? [[key, value]] : [];
+    }),
+  );
+  // The view as the address holds it, each choice under its own name.
+  const addressFor = (view: View) => {
+    const { choices: kept, ...written } = searchFor(view);
+    return { ...written, ...kept };
+  };
   return {
-    view: viewFrom(search),
+    view: viewFrom({ ...search, choices }),
     applied: search.view,
     onView: (view, replace = false) => {
-      const written = searchFor(view);
+      const written = addressFor(view);
       go(
         search.view === undefined || Object.keys(written).length === 0
           ? written
@@ -270,7 +295,7 @@ export function viewProps(
       );
     },
     onApply: (view, id, replace = false) => {
-      go({ ...searchFor(view), view: id }, replace);
+      go({ ...addressFor(view), view: id }, replace);
     },
   };
 }
@@ -299,6 +324,7 @@ export function searchFor(view: View): ViewDefinition {
     ...(hasEntries(view.units) ? { units: view.units } : {}),
     ...(hasEntries(view.places) ? { places: view.places } : {}),
     ...(view.retired === true ? { retired: true } : {}),
+    ...(hasEntries(view.choices) ? { choices: view.choices } : {}),
   };
 }
 
@@ -348,6 +374,7 @@ export function isActive(filter: Filter | undefined): boolean {
 
 // What a view's grouping is when the rows show as one list.
 export const notGrouped = "none";
+export const notGroupedLabel = "None";
 
 // The grouping a view puts the rows under: the one it names, or else the table's first, or none for
 // a table whose rows are in one list until a grouping is chosen.
@@ -364,11 +391,12 @@ export function activeGrouping<Grouping extends { key: string }>(
 }
 
 // Whether the view sorts the rows, or sets which columns are frozen, their order, how wide they are,
-// the units and decimal places they are shown in, or whether retired records show, which the Views
-// menu names and Clear all clears with the filters.
+// the units and decimal places they are shown in, whether retired records show, or the page's own
+// choices, which the Views menu names and Clear all clears with the filters.
 export function setsApart(view: View): boolean {
   return (
     view.sort.length > 0 ||
+    view.choices !== undefined ||
     view.grouping !== undefined ||
     view.frozen !== undefined ||
     view.order !== undefined ||
@@ -389,8 +417,8 @@ export function narrows(view: View): boolean {
 
 // The view with only the filters, sorts, and breakdown on columns the table has, and the filters it
 // offers that are not columns, leaving out those on columns the user may not see, such as in a link
-// from someone who may, and with its frozen columns and the widths, units, and decimal places of
-// the columns the table has.
+// from someone who may, and with its grouping, frozen columns, retired records and the page's
+// choices, and the widths, units, and decimal places of the columns the table has.
 // The breakdown keeps only the columns the metrics offer, when given.
 export function knownView(
   view: View,
@@ -420,6 +448,8 @@ export function knownView(
         }),
     ...(view.grouping === undefined ? {} : { grouping: view.grouping }),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
+    ...(view.retired === true ? { retired: true as const } : {}),
+    ...(view.choices === undefined ? {} : { choices: view.choices }),
     ...orderOf(view.order, known),
     ...knownEntries("widths", view.widths, known),
     ...knownEntries("units", view.units, known),

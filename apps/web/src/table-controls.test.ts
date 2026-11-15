@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the parts of a view the Save view dialog names, for those the table's other tests do
-// not reach: the units and decimal places columns are shown in.
+// not reach: the units and decimal places columns are shown in, the grouping and the page's own
+// choices; and what a view its maker can no longer use is missing, as the Views menu says it.
 
 import { describe, expect, it } from "vitest";
-import { viewParts } from "./table-controls.tsx";
+import { missingWords, type ViewChoice, viewParts } from "./table-controls.tsx";
 import { type ColumnUnit, emptyView } from "./table-view.ts";
 
 const weeks: ColumnUnit = {
@@ -89,5 +90,64 @@ describe("viewParts", () => {
         [column({ places: 0 })],
       ),
     ).toEqual([{ name: "Units", value: "Effort to 0 decimal places" }]);
+  });
+});
+
+describe("viewParts of a grouping and a page's choices", () => {
+  const toggle: ViewChoice = {
+    label: "Show retired",
+    count: 1,
+    on: (view) => view.retired === true,
+    turned: (view) => view,
+    part: { name: "Show", value: "Retired streams" },
+  };
+  const groupings = [
+    { key: "status", label: "Status" },
+    { key: "site", label: "Site" },
+  ];
+
+  it("names the choices first, each only when set, and a grouping other than the table's own", () => {
+    expect(
+      viewParts(
+        {
+          ...emptyView,
+          retired: true,
+          grouping: "site",
+        },
+        [],
+        [],
+        { groupings, choices: [toggle] },
+      ),
+    ).toEqual([
+      { name: "Show", value: "Retired streams" },
+      { name: "Group by", value: "Site" },
+    ]);
+    expect(
+      viewParts(emptyView, [], [], { groupings, choices: [toggle] }),
+    ).toEqual([]);
+  });
+
+  it("names a grouping of none as None", () => {
+    expect(
+      viewParts({ ...emptyView, grouping: "none" }, [], [], { groupings }),
+    ).toEqual([{ name: "Group by", value: "None" }]);
+  });
+});
+
+describe("missingWords", () => {
+  it("names the columns a view uses that the role can't see, then its grouping", () => {
+    expect(
+      missingWords({
+        id: "v1",
+        name: "Fictional",
+        missing: { columns: ["Site", "Grade"], grouping: "Manager" },
+      }),
+    ).toEqual([
+      "Uses Site and Grade, which this role can't see.",
+      "Grouped by Manager, which this role can't see.",
+    ]);
+    expect(
+      missingWords({ id: "v1", name: "Fictional", missing: { columns: [] } }),
+    ).toEqual([]);
   });
 });

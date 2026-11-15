@@ -1,6 +1,6 @@
 # Releases
 
-**Releases** holds your release streams. Here you set up each stream's cycles, make its releases, and see every stream on one timeline.
+**Releases** holds your release streams. Here you set up each stream's cycles, make its releases, and see your streams on one timeline.
 
 ## What to Know First
 
@@ -13,7 +13,7 @@
 - **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. It goes live once someone whose role approves features and releases approves it. A dot before a name marks its draft.
 - **Who changes what:** if your role changes planning settings, you add streams and change their cycles. If your role changes features, you make and change releases. Others see the page without these buttons.
 
-The page shows a timeline of every stream, with a table of the streams under it. The table lists each stream's cycle schedule, its releases, the next release to ship, and its **Planned to** day. Above the timeline are the search field and the **Draft**, **Metrics**, **Group by** and **Views** menus.
+The page shows a timeline of the streams the table shows, apart from retired ones, with the table of streams under it. A search, a filter or a saved view narrows both. The table lists each stream's cycle schedule, its releases, the next release to ship, and its **Planned to** day. Above the timeline are the search field and the **Draft**, **Metrics**, **Group by** and **Views** menus.
 
 See [Drafts](drafts.md) for more.
 
@@ -111,7 +111,7 @@ You're done when the changed cycles show in the panel, with dots for your drafts
 
 ### Rename, Retire or Restore a Stream
 
-A retired stream takes no new releases. Once its retirement is approved, it leaves the table. While any stream is retired, the **Views** menu offers **Show retired**. That lists retired streams under **Retired**, while the streams are grouped by **Status**.
+A retired stream takes no new releases. Once its retirement is approved, it leaves the table and the timeline. While any stream is retired, the **Views** menu offers **Show retired**, which a saved view keeps. That lists retired streams under **Retired**, while the streams are grouped by **Status**.
 
 1. To restore a retired stream, first open the **Views** menu, and choose **Show retired**.
 1. Open the stream.

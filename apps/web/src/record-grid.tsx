@@ -107,6 +107,7 @@ import {
   HeaderMarks,
   headerState,
   type SavedViews,
+  type ViewChoice,
   ViewBar,
 } from "./table-controls.tsx";
 import {
@@ -1259,9 +1260,10 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   withDrafts?: boolean;
   // Choices of which records the table shows, beyond its filters, such as Show retired, first in
   // the Views menu.
-  viewItems?: ReactNode;
-  // What the page shows under the bar above the table, such as a timeline, as tall as it needs.
-  above?: ReactNode;
+  viewChoices?: readonly ViewChoice[] | undefined;
+  // What the page shows under the bar above the table, such as a timeline, as tall as it needs,
+  // given the records the table shows.
+  above?: ((shown: readonly Rec[]) => ReactNode) | undefined;
   // Draws the rows the view shows in place of the table, such as a board, under the same bar.
   body?: ((shown: ShownRows<Rec>) => ReactNode) | undefined;
 }
@@ -1345,7 +1347,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   opensAtColumn,
   withDrafts = true,
   panels = [],
-  viewItems,
+  viewChoices,
   above,
   body,
 }: RecordGridProps<Rec, Change, Request>) {
@@ -3100,7 +3102,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         moveTo(active.row, active.column);
       }}
       saved={saved}
-      viewItems={viewItems}
+      choices={viewChoices}
       draftItems={
         <>
           {waitingTotal > 0 && (
@@ -3128,7 +3130,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     ) : (
       <div>
         {viewBar}
-        {above}
+        {above(shownRecords)}
       </div>
     );
   if (body !== undefined) {

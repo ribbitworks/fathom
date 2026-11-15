@@ -19,15 +19,13 @@ import type {
   List,
   Person,
   PersonDraft,
-  SavedView,
 } from "@fathom/shared";
-import { defaultClasses } from "@fathom/shared";
+import { defaultClasses, sharesViews } from "@fathom/shared";
 import {
   Anchor,
   Button,
   Group,
   Loader,
-  Modal,
   Paper,
   Stack,
   Text,
@@ -83,12 +81,7 @@ import {
   type PeopleActions,
   PeopleGrid,
 } from "./people-grid.tsx";
-import {
-  draftColumn,
-  isPending,
-  pendingId,
-  withLiveValues,
-} from "./record-grid.tsx";
+import { isPending, pendingId, withLiveValues } from "./record-grid.tsx";
 import {
   createHires,
   deleteHire,
@@ -106,37 +99,19 @@ import {
 } from "./people-rows.ts";
 import {
   createPeople,
-  createView,
   deletePerson,
-  deleteView,
   discardDraft,
   resubmitDraft,
   type PeopleData,
   peopleQuery,
   peopleQueryOn,
-  peopleViewsQuery,
-  updateView,
 } from "./people.ts";
 import { useSaving } from "./saving.ts";
-import type { ChangeView, SavedViews } from "./table-controls.tsx";
-import { viewParts, viewScopes } from "./table-controls.tsx";
-import { type View, savedFor } from "./table-view.ts";
-import { type SavedViewResult, ViewDialog } from "./view-dialog.tsx";
+import type { ChangeView } from "./table-controls.tsx";
+import { useSavedViews } from "./saved-views.tsx";
+import type { View } from "./table-view.ts";
 
 const newColumnId = "column-new";
-
-// Naming a saved view: a new one for the view shown, or one to rename.
-interface Naming {
-  saved?: SavedView;
-  view: View;
-}
-
-// The saved views with one added or replaced.
-function withView(views: readonly SavedView[], saved: SavedView): SavedView[] {
-  return views.some((other) => other.id === saved.id)
-    ? views.map((other) => (other.id === saved.id ? saved : other))
-    : [...views, saved];
-}
 
 // Someone or a planned hire being added, as the table shows them before they are saved: a draft
 // adding them.
@@ -262,13 +237,17 @@ export function PeoplePage({
       positionHidden && lists.isSuccess ? cannotAddId : undefined,
   };
   const columnDialog = useColumnDialog();
-  const [busy, setBusy] = useState(false);
-  // Like the column dialog, the naming dialog stays set while it closes.
-  const [naming, setNaming] = useState<Naming>();
-  const [namingOpened, setNamingOpened] = useState(false);
   // Approving or rejecting drafts, which asks first.
   const [decision, setDecision] = useState<Decision>();
   const [deciding, setDeciding] = useState(false);
+  const views = useSavedViews({
+    table: "people",
+    within: peopleQuery.queryKey,
+    applied,
+    onApply,
+    canShare: sharesViews("people", access.permissions),
+    blocked: columnDialog.opened || deciding,
+  });
   // A record's details, or one being added, and a note of its being written, beside the table.
   const notes = usePersonNotes();
   const [beingAdded, setBeingAdded] = useState<NewRecord>();
@@ -343,18 +322,9 @@ export function PeoplePage({
     queryKey: peopleQueryOn(day).queryKey,
     refreshes: day === undefined ? [] : [peopleQuery.queryKey],
     removed: "Someone else has removed this. The people have been refreshed.",
-    blocked: columnDialog.opened || namingOpened || deciding,
+    blocked: columnDialog.opened || views.opened || deciding,
   });
   const { save, undoable, done } = changes;
-  const views = useQuery(peopleViewsQuery);
-  // Until the views load, the page offers none, and a view's name is checked against none.
-  const savedList = views.data ?? [];
-  const viewChanges = useSaving<SavedView[]>({
-    queryKey: peopleViewsQuery.queryKey,
-    removed:
-      "Someone else has removed this view. The views have been refreshed.",
-    blocked: columnDialog.opened || namingOpened || deciding,
-  });
 
   // A row by name, as menus and notices name it, once the lists, which a row's actions wait for,
   // are loaded.
@@ -538,74 +508,6 @@ export function PeoplePage({
         undoable(changeSetId, before);
       },
     });
-  };
-
-  const savedViews = (views: SavedView[]): SavedViews => ({
-    views,
-    applied,
-    onApply: (shown, id) => {
-      onApply(shown, id);
-    },
-    onName: (saved, shown) => {
-      setNaming(saved ? { saved, view: shown } : { view: shown });
-      setNamingOpened(true);
-    },
-    onUpdate: (saved, shown) => {
-      const definition = savedFor(shown);
-      viewChanges.save({
-        next: (data) => withView(data, { ...saved, definition }),
-        save: async () =>
-          (await updateView(saved.id, { definition })).changeSetId,
-        failure: `Fathom could not update ${saved.name}.`,
-        onSaved: (changeSetId, before) => {
-          viewChanges.undoable(changeSetId, before);
-        },
-      });
-    },
-    onDelete: (saved) => {
-      viewChanges.save({
-        next: (data) => data.filter((other) => other.id !== saved.id),
-        save: () => deleteView(saved.id),
-        failure: `Fathom could not delete ${saved.name}.`,
-        onSaved: (changeSetId, before) => {
-          viewChanges.done(
-            `Deleted the ${saved.name} view.`,
-            changeSetId,
-            before,
-          );
-        },
-      });
-    },
-    onScope: (saved, scope) => {
-      viewChanges.save({
-        next: (data) => withView(data, { ...saved, scope }),
-        save: async () => (await updateView(saved.id, { scope })).changeSetId,
-        failure: `Fathom could not change ${saved.name}.`,
-        onSaved: (changeSetId, before) => {
-          viewChanges.done(
-            `${viewScopes[saved.scope].changedVerb} the ${saved.name} view.`,
-            changeSetId,
-            before,
-          );
-        },
-      });
-    },
-  });
-
-  // The dialog saved the view itself, so the page shows it at once. A new view is then the one
-  // applied.
-  const named = ({ view: saved, changeSetId }: SavedViewResult) => {
-    setNamingOpened(false);
-    viewChanges.shown(
-      (data) => withView(data, saved),
-      changeSetId,
-      (_saved, before) => {
-        viewChanges.undoable(changeSetId, before);
-      },
-    );
-    if (naming?.saved === undefined && naming) {
-      onApply(naming.view, saved.id, true);
-    }
   };
 
   const dateRow = dates !== undefined && (
@@ -851,18 +753,21 @@ export function PeoplePage({
           view={view}
           onView={onView}
           above={
-            dateRow !== false || (changesRows && positionHidden) ? (
-              <>
-                {dateRow}
-                {changesRows && positionHidden && (
-                  <Text size="sm" c="dimmed" mb="sm" id={cannotAddId}>
-                    This role can't add people, since it can't see positions.
-                  </Text>
-                )}
-              </>
-            ) : undefined
+            dateRow !== false || (changesRows && positionHidden)
+              ? () => (
+                  <>
+                    {dateRow}
+                    {changesRows && positionHidden && (
+                      <Text size="sm" c="dimmed" mb="sm" id={cannotAddId}>
+                        This role can't add people, since it can't see
+                        positions.
+                      </Text>
+                    )}
+                  </>
+                )
+              : undefined
           }
-          saved={savedViews(savedList)}
+          saved={views.saved}
         />
         {question.dialog}
         <DecisionModal
@@ -875,54 +780,7 @@ export function PeoplePage({
             setDeciding(false);
           }}
         />
-        <Modal
-          opened={namingOpened}
-          onClose={() => {
-            setNamingOpened(false);
-          }}
-          closeOnEscape={!busy}
-          closeOnClickOutside={!busy}
-          withCloseButton={!busy}
-          title={naming?.saved ? "Rename view" : "Save view"}
-        >
-          {naming && (
-            <ViewDialog
-              {...(naming.saved
-                ? { view: naming.saved }
-                : {
-                    canSaveShared: canEditColumns,
-                    saves: viewParts(
-                      naming.view,
-                      columnsFor(
-                        query.data.fields,
-                        lists.data,
-                        query.data.order,
-                        showDates,
-                        query.data.people,
-                        query.data.positionHidden !== true,
-                        showHireDates,
-                      ),
-                      [draftColumn],
-                    ),
-                  })}
-              views={savedList}
-              save={(name, scope) =>
-                naming.saved
-                  ? updateView(naming.saved.id, { name })
-                  : createView({
-                      name,
-                      scope,
-                      definition: savedFor(naming.view),
-                    })
-              }
-              onSaved={named}
-              onCancel={() => {
-                setNamingOpened(false);
-              }}
-              onBusy={setBusy}
-            />
-          )}
-        </Modal>
+        {views.dialogs}
         <ColumnModal<PeopleData>
           state={columnDialog}
           table="people"

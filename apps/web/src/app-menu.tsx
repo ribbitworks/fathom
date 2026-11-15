@@ -57,8 +57,8 @@ function AppMenuDropdown(props: MenuDropdownProps) {
 AppMenu.Target = Menu.Target;
 AppMenu.Dropdown = AppMenuDropdown;
 
-// The tick before a menu item, shown while it is chosen.
-function Tick({ chosen }: { chosen: boolean }) {
+// The tick before a menu item, shown while it is chosen, keeping its room while not.
+export function Tick({ chosen }: { chosen: boolean }) {
   return (
     <span className={classes.choiceTick} data-chosen={chosen || undefined}>
       <Icon name="check" />
@@ -73,6 +73,7 @@ export function MenuChoices<Value extends string>({
   chosen,
   onChoose,
   divided = true,
+  after,
 }: {
   label: string;
   // Each choice's words, with any marks they carry, such as a draft's dot.
@@ -81,6 +82,8 @@ export function MenuChoices<Value extends string>({
   onChoose: (value: Value) => void;
   // False where the menu sets the group apart itself.
   divided?: boolean;
+  // Items of the group that can't be chosen, after the choices.
+  after?: ReactNode;
 }) {
   const labelId = useId();
   return (
@@ -102,6 +105,7 @@ export function MenuChoices<Value extends string>({
             )}
           </Menu.Item>
         ))}
+        {after}
       </div>
     </>
   );

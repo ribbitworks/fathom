@@ -101,11 +101,10 @@ import { RowWithLive } from "./summary-row.tsx";
 import { unpublishedQuery } from "./unpublished.tsx";
 import { TimelineView } from "./timeline-view.tsx";
 import { today } from "./today.ts";
-import type { ChangeView } from "./table-controls.tsx";
+import type { ChangeView, ViewChoice } from "./table-controls.tsx";
+import { useSavedViews } from "./saved-views.tsx";
 import { formatDay, type View } from "./table-view.ts";
 import { TableTips } from "./table-tips.tsx";
-import { MenuToggle } from "./app-menu.tsx";
-import { count } from "./numbers.ts";
 import {
   patternWords,
   shownUnlessRetired,
@@ -793,6 +792,9 @@ export function ReleasesPage({
   approves,
   view,
   onView,
+  applied,
+  onApply,
+  canShareViews,
 }: {
   // The stream open in the side panel, if any.
   streamId?: string | undefined;
@@ -800,6 +802,10 @@ export function ReleasesPage({
   approves: readonly DraftKind[];
   view: View;
   onView: ChangeView;
+  // The saved view the view started from, as the address names it.
+  applied: string | undefined;
+  onApply: (view: View, id: string, replace?: boolean) => void;
+  canShareViews: boolean;
 }) {
   const { show } = view;
   const queryClient = useQueryClient();
@@ -812,6 +818,14 @@ export function ReleasesPage({
   const [busy, setBusy] = useState(false);
   const [decision, setDecision] = useState<Decision>();
   const [deciding, setDeciding] = useState(false);
+  const views = useSavedViews({
+    table: "release-streams",
+    within: releaseStreamsQuery.queryKey,
+    applied,
+    onApply,
+    canShare: canShareViews,
+    blocked: dialog !== undefined || deciding,
+  });
   // The release whose note is open above the stream's panel, whether it is being changed, and why
   // the note last saved was refused.
   // Whether the note may be changed is decided as it opens, so a refresh never takes away what is
@@ -876,6 +890,21 @@ export function ReleasesPage({
   const retiredCount = all.length - all.filter(shownUnlessRetired).length;
   const rows = streamRows(kept, show, day);
   const table = streamTable({ streams: kept, day, onOpen: openStream });
+  const choices: ViewChoice[] =
+    retiredCount > 0 || view.retired === true
+      ? [
+          {
+            label: "Show retired",
+            count: retiredCount,
+            on: (shown) => shown.retired === true,
+            turned: (shown, on) => ({
+              ...shown,
+              retired: on ? true : undefined,
+            }),
+            part: { name: "Show", value: "Retired streams" },
+          },
+        ]
+      : [];
   const drafts = draftsById(all);
   const nodes = [
     ...recordNodes(all),
@@ -1096,31 +1125,26 @@ export function ReleasesPage({
             view={view}
             onView={onView}
             panels={panels}
-            above={
-              // While a note is being changed, the timeline waits, as the streams do.
-              <div className={classes.releasesTimeline} inert={writing}>
-                <TimelineView
-                  title="Timeline"
-                  zoomKey={timelineZoomKey}
-                  releaseStreams={all}
-                  today={day}
-                />
-              </div>
-            }
-            viewItems={
-              retiredCount > 0 || view.retired === true ? (
-                <MenuToggle
-                  label={`Show retired (${count(retiredCount)})`}
-                  on={view.retired === true}
-                  onToggle={(on) => {
-                    onView({ ...view, retired: on ? true : undefined });
-                  }}
-                />
-              ) : undefined
-            }
+            above={(shown) => {
+              const listed = new Set(shown.map(({ id }) => id));
+              return (
+                // While a note is being changed, the timeline waits, as the streams do.
+                <div className={classes.releasesTimeline} inert={writing}>
+                  <TimelineView
+                    title="Timeline"
+                    zoomKey={timelineZoomKey}
+                    releaseStreams={kept.filter(({ id }) => listed.has(id))}
+                    today={day}
+                  />
+                </div>
+              );
+            }}
+            viewChoices={choices}
+            saved={views.saved}
           />
         </TableTips>
       )}
+      {views.dialogs}
       <Modal
         opened={dialog !== undefined}
         onClose={() => {

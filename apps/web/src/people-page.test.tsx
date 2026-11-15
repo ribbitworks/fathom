@@ -2890,18 +2890,140 @@ describe("searching, sorting, and filtering", () => {
       expect(await viewsMenuLayout()).toEqual(["Shared views", "Theirs"]);
     });
 
-    it("leaves out a view of the user's own that their role can no longer use", async () => {
-      await openAt("/people", {
-        "GET /api/views/people": withViews([
-          theirs,
-          {
-            id: "00000000-0000-4000-8000-0000000000a3",
-            name: "Leaving soon",
-            missing: { columns: ["End"] },
-          },
-        ]),
+    describe("a view of the user's own that their role can no longer use", () => {
+      const v3 = "00000000-0000-4000-8000-0000000000a3";
+      const leaving = {
+        id: v3,
+        name: "Leaving soon",
+        missing: { columns: ["End"] },
+      };
+
+      it("is listed dimmed under My views, saying what it uses that the role can't see", async () => {
+        await openAt("/people", {
+          "GET /api/views/people": withViews([theirs, leaving]),
+        });
+        expect(await viewsMenuLayout()).toEqual([
+          "My views",
+          "Leaving soonUses End, which this role can't see.",
+          "Shared views",
+          "Theirs",
+        ]);
       });
-      expect(await viewsMenuLayout()).toEqual(["Shared views", "Theirs"]);
+
+      it("offers Rename… and Delete… alone, and renames it with no Undo", async () => {
+        let views: object[] = [leaving];
+        const renamed = { ...leaving, name: "Leaving later" };
+        const { fetch } = await openAt("/people", {
+          "GET /api/views/people": () => withViews(views)(),
+          [`PUT /api/views/people/${v3}`]: () => {
+            views = [renamed];
+            return Response.json({ view: renamed, changeSetId: s1 });
+          },
+        });
+        await userEvent.click(
+          within(await viewsMenu()).getByRole("menuitem", {
+            name: /^Leaving soon/,
+          }),
+        );
+        const offered = await screen.findAllByRole("menuitem", {
+          name: /^(Rename…|Delete…)$/,
+        });
+        expect(offered.map((item) => item.textContent)).toEqual([
+          "Rename…",
+          "Delete…",
+        ]);
+        await userEvent.click(offered[0] as HTMLElement);
+        const dialog = await screen.findByRole("dialog", {
+          name: "Rename view",
+        });
+        await userEvent.clear(within(dialog).getByRole("textbox"));
+        await userEvent.type(
+          within(dialog).getByRole("textbox"),
+          "Leaving later{Enter}",
+        );
+        await waitFor(() => {
+          expect(screen.queryByRole("dialog")).toBeNull();
+        });
+        expect(bodyOf(fetch, "PUT", `/api/views/people/${v3}`)).toEqual([
+          { name: "Leaving later" },
+        ]);
+        await userEvent.keyboard("{Meta>}z{/Meta}");
+        expect(
+          fetch.mock.calls.some(([url]) => url.startsWith("/api/undo")),
+        ).toBe(false);
+        expect(await viewsMenuItems()).toContain(
+          "Leaving laterUses End, which this role can't see.",
+        );
+      });
+
+      it("deletes it only once asked, saying so with no Undo", async () => {
+        const { fetch } = await openAt("/people", {
+          "GET /api/views/people": withViews([leaving]),
+          [`DELETE /api/views/people/${v3}`]: savedAs(),
+        });
+        await userEvent.click(
+          within(await viewsMenu()).getByRole("menuitem", {
+            name: /^Leaving soon/,
+          }),
+        );
+        await userEvent.click(
+          await screen.findByRole("menuitem", { name: "Delete…" }),
+        );
+        const question = await screen.findByRole("dialog", {
+          name: "Delete the Leaving soon view?",
+        });
+        expect(
+          within(question).getByText("This can't be undone."),
+        ).toBeDefined();
+        expect(within(question).getByRole("button", { name: "Cancel" })).toBe(
+          document.activeElement,
+        );
+        await userEvent.keyboard("{Escape}");
+        await waitFor(() => {
+          expect(screen.queryByRole("dialog")).toBeNull();
+        });
+        await userEvent.click(
+          within(await viewsMenu()).getByRole("menuitem", {
+            name: /^Leaving soon/,
+          }),
+        );
+        await userEvent.click(
+          await screen.findByRole("menuitem", { name: "Delete…" }),
+        );
+        await userEvent.click(
+          within(
+            await screen.findByRole("dialog", {
+              name: "Delete the Leaving soon view?",
+            }),
+          ).getByRole("button", { name: "Cancel" }),
+        );
+        const deletes = () =>
+          fetch.mock.calls.filter(
+            ([url, init]) =>
+              url === `/api/views/people/${v3}` && init?.method === "DELETE",
+          ).length;
+        expect(deletes()).toBe(0);
+        await userEvent.click(
+          within(await viewsMenu()).getByRole("menuitem", {
+            name: /^Leaving soon/,
+          }),
+        );
+        await userEvent.click(
+          await screen.findByRole("menuitem", { name: "Delete…" }),
+        );
+        await userEvent.click(
+          within(
+            await screen.findByRole("dialog", {
+              name: "Delete the Leaving soon view?",
+            }),
+          ).getByRole("button", { name: "Delete" }),
+        );
+        expect(
+          await screen.findByText("Deleted the Leaving soon view."),
+        ).toBeDefined();
+        expect(screen.queryByRole("button", { name: "Undo" })).toBeNull();
+        expect(deletes()).toBe(1);
+      });
     });
 
     it("shares the applied view, offering Undo", async () => {

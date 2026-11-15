@@ -1,13 +1,13 @@
 # Saved views
 
-A view is how you've set up a table: its search, filters, sort and metrics, the **Draft** menu's choice, and its columns' order, widths, frozen columns, and units and decimal places. You can save a view under a name, and apply it again later. For now you can save views only on the **People** page. Other tables are to follow.
+A view is how you've set up a table: its search, filters, sort, metrics and **Group by**, the **Draft** menu's choice, and its columns' order, widths, frozen columns, and units and decimal places. On **Releases**, it also keeps whether **Show retired** is on. You can save a view under a name, and apply it again later. For now you can save views on the **People** and **Releases** pages. Other pages are to follow.
 
 You save and apply views from the **Views** menu: the last button after the search box. It shows once there's a view to save or apply.
 
 ## What to Know First
 
 - **Personal views:** a view you save is yours alone, unless you share it. Your own views are under **My views**.
-- **Shared views:** a shared view is seen by everyone who sees the table. They're under **Shared views**. Someone who can't see a column the view uses doesn't see the view.
+- **Shared views:** a shared view is seen by everyone who can open the page. They're under **Shared views**. Someone who can't see a column the view uses doesn't see the view.
 - **Who can share:** you can share a view you saved yourself, if your role changes configuration. Only a view's maker, or such a role, can change, rename or delete a shared view.
 
 ## Main Tasks
@@ -57,6 +57,27 @@ You're done when the view moves to **Shared views**, or back to **My views**.
 
 **Clear all**, above the table, does the same, but leaves the **Metrics** panel open.
 
+### Tidy a View You Can No Longer Use
+
+Your role might lose sight of a column one of your views uses. The view then stays under **My views**, dimmed, with a line saying what it uses, such as **Uses Site, which this role can't see.** You can't apply it, but you can rename or delete it.
+
+To rename it:
+
+1. Select **Views**.
+1. Select the dimmed view.
+1. Select **Rename…**.
+1. Type the view's new **Name**.
+1. Select **Rename**.
+
+To delete it:
+
+1. Select **Views**.
+1. Select the dimmed view.
+1. Select **Delete…**.
+1. Select **Delete**. This can't be undone.
+
+You're done when the view has its new name, or is gone from the menu. If your role sees the column again, the view works again as it was.
+
 ### Undo One Part of a View
 
 In the **Views** menu, under **Sort**, each level of the sort is named, and then any frozen columns, moved columns, set widths and units. Select one to undo just that part.
@@ -68,4 +89,4 @@ In the **Views** menu, under **Sort**, each level of the sort is named, and then
 
 ## Where Changes Go
 
-A saved view isn't a draft. It's saved straight away, without approval. Sharing, taking back and deleting a view each offer **Undo** for a few seconds.
+A saved view isn't a draft. It's saved straight away, without approval. Sharing, taking back and deleting a view each offer **Undo** for a few seconds. Renaming or deleting a view you can no longer use can't be undone.

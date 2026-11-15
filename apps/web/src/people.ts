@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// People and the People table's saved views, through the server's API, with the drafts of people
-// and their approval. Each change returns the change set it was saved in, which
-// undoing it names, or null when nothing changed.
+// People, through the server's API, with the drafts of people and their approval. Each change
+// returns the change set it was saved in, which undoing it names, or null when nothing changed.
 
 import {
   changeSetIdSchema,
@@ -11,11 +10,6 @@ import {
   peopleColumnsSchema,
   peopleSchema,
   savedSchema,
-  type SavedView,
-  type SavedViewChange,
-  type SavedViewRequest,
-  savedViewSchema,
-  listedViewSchema,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
@@ -74,39 +68,4 @@ export async function discardDraft(id: string): Promise<string | null> {
 export async function resubmitDraft(id: string): Promise<string | null> {
   return (await sendDeleteFor(`${personPath(id)}/draft/rejection`, savedSchema))
     .changeSetId;
-}
-
-const viewsPath = "/api/views/people";
-const viewPath = (id: string) => `${viewsPath}/${encodeURIComponent(id)}`;
-const viewResponse = z.object({
-  view: savedViewSchema,
-  changeSetId: changeSetIdSchema,
-});
-
-// The People table's saved views the user may apply, under the people's key, so whatever reloads
-// the people reloads them.
-export const peopleViewsQuery = queryOptions({
-  queryKey: [...peopleQuery.queryKey, "views"],
-  queryFn: async (): Promise<SavedView[]> =>
-    (await getJson(viewsPath, z.array(listedViewSchema))).filter(
-      (view): view is SavedView => "definition" in view,
-    ),
-});
-
-export async function createView(
-  request: SavedViewRequest,
-): Promise<z.infer<typeof viewResponse>> {
-  return sendJsonFor("POST", viewsPath, request, viewResponse);
-}
-
-// Renames a saved view, saves a new view over it, or both.
-export async function updateView(
-  id: string,
-  change: SavedViewChange,
-): Promise<z.infer<typeof viewResponse>> {
-  return sendJsonFor("PUT", viewPath(id), change, viewResponse);
-}
-
-export async function deleteView(id: string): Promise<string | null> {
-  return (await sendDeleteFor(viewPath(id), savedSchema)).changeSetId;
 }

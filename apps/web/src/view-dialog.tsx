@@ -4,7 +4,7 @@
 // is checked against the table's other saved views of the same scope as it is typed. The dialog saves the view itself,
 // so a name someone else has just taken is refused here, and cannot be closed while it saves.
 
-import { type SavedView, viewLengths, type ViewScope } from "@fathom/shared";
+import { type ListedView, viewLengths, type ViewScope } from "@fathom/shared";
 import { Button, Checkbox, Group, Stack, Text, TextInput } from "@mantine/core";
 import type { ViewPart } from "./table-controls.tsx";
 import classes from "./pages.module.css";
@@ -18,8 +18,15 @@ const conflict = 409;
 const includesId = "view-dialog-includes";
 
 export interface SavedViewResult {
-  view: SavedView;
+  view: ListedView;
   changeSetId: string | null;
+}
+
+// A saved view as a name is checked against it.
+export interface NamedView {
+  id: string;
+  name: string;
+  scope: ViewScope;
 }
 
 export function ViewDialog({
@@ -33,11 +40,11 @@ export function ViewDialog({
   canSaveShared = false,
 }: {
   // The saved view being renamed; absent when saving a new one.
-  view?: SavedView;
+  view?: NamedView | undefined;
   // What saving keeps, listed under the name; absent when renaming.
   saves?: readonly ViewPart[];
   canSaveShared?: boolean;
-  views: readonly SavedView[];
+  views: readonly NamedView[];
   save: (name: string, scope: ViewScope) => Promise<SavedViewResult>;
   onSaved: (saved: SavedViewResult) => void;
   onCancel: () => void;

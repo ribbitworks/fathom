@@ -282,6 +282,70 @@ describe("the table of release streams", () => {
     expect(history.location.search).toContain("retired=true");
   });
 
+  it("saves a view showing retired streams, naming it under Includes, and applies it again", async () => {
+    const saved = {
+      id: "00000000-0000-4000-8000-0000000000a1",
+      name: "Everything",
+      scope: "personal",
+      definition: { retired: true },
+      canChange: true,
+      canShare: false,
+    };
+    let views: object[] = [];
+    const fetch = serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer([
+        fictionalStream({ id: "s1", name: "Fictional Old", retired: true }),
+        fictionalStream({ id: "s2", name: "Fictional New", patterns: [] }),
+      ]),
+      "GET /api/views/release-streams": () => Response.json(views),
+      "POST /api/views/release-streams": () => {
+        views = [saved];
+        return Response.json(
+          { view: saved, changeSetId: null },
+          { status: 201 },
+        );
+      },
+    });
+    const history = renderApp("/releases?retired=true");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Views, changed" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Save view…" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Save view" });
+    expect(within(dialog).getByText("Retired streams")).toBeDefined();
+    await userEvent.type(
+      within(dialog).getByRole("textbox"),
+      "Everything{Enter}",
+    );
+    await waitFor(() => {
+      expect(history.location.search).toContain(`view=${saved.id}`);
+    });
+    expect(bodyOf(fetch, "POST", "/api/views/release-streams")).toEqual([
+      { name: "Everything", scope: "personal", definition: { retired: true } },
+    ]);
+
+    // Cleared, then applied again from the menu
+    await userEvent.click(
+      screen.getByRole("button", { name: "Views: Everything" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Clear view" }),
+    );
+    await waitFor(() => {
+      expect(history.location.search).not.toContain("retired");
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Views" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: /^Everything/ }),
+    );
+    await waitFor(() => {
+      expect(history.location.search).toContain("retired=true");
+    });
+  });
+
   it("offers no Views menu while it would hold nothing", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
@@ -298,7 +362,10 @@ describe("the table of release streams", () => {
       "GET /api/release-streams": answer([fictionalStream()]),
     });
     const history = renderApp("/releases?retired=true");
-    await userEvent.click(await screen.findByRole("button", { name: "Views" }));
+    // Showing retired streams is something to save, so the button is marked.
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Views, changed" }),
+    );
     await userEvent.click(
       await screen.findByRole("menuitem", {
         name: "Show retired (0), chosen",
@@ -1721,10 +1788,27 @@ describe("the timeline", () => {
 
   const zoomKey = "fathom-releases-timeline-zoom";
 
+  it("draws only the streams the table shows, as the view narrows them", async () => {
+    const timeline = await showTimeline(
+      [
+        fictionalStream({ id: "s1", name: "Fictional Old" }),
+        fictionalStream({ id: "s2", name: "Fictional New" }),
+      ],
+      "2027-02-15",
+      "?search=New",
+    );
+    expect(
+      within(timeline).getByRole("list", { name: "Cycles of Fictional New" }),
+    ).toBeDefined();
+    expect(
+      within(timeline).queryByRole("list", { name: "Cycles of Fictional Old" }),
+    ).toBeNull();
+  });
+
   async function showTimeline(
     shown: ReleaseStream[],
     today: string,
-    view: "" | "?show=drafts" | "?show=live" = "",
+    view = "",
   ) {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(`${today}T12:00:00Z`));
