@@ -65,6 +65,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **Release**
       - **Target cycle**
       - **Feature team**
+      - **Staffed**
     - Under the heading **Columns**, the rows read, from the top:
       - **Kind**
     - **Customers** lists these links, each on a line of its own, from the top:

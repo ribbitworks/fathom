@@ -2,7 +2,7 @@
 
 // Tests for the Features Board's rules: which cycles are its columns and their releases, which
 // column a feature is in, whether a draft moves it, the order of its cards, a risk's step, which
-// parts its cards show, and how Save view names the board's choices.
+// parts its cards show, how Save view names the board's choices, and a stream's current cycle.
 
 import type { Feature } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
@@ -16,7 +16,9 @@ import {
   movesCycle,
   riskStep,
   shownParts,
+  streamNow,
 } from "./feature-board.ts";
+import { liveStreams } from "./releases.ts";
 import {
   featureDraft,
   fictionalRelease,
@@ -289,6 +291,74 @@ describe("boardParts", () => {
     expect(boardParts({}, streams, offered)).toEqual([]);
     expect(
       boardParts({ choices: { stream: "gone" } }, streams, offered),
+    ).toEqual([]);
+  });
+});
+
+describe("a stream's current cycle", () => {
+  const release = fictionalRelease({
+    firstCycle: "2027-04-01",
+    lastCycle: "2027-07-01",
+  });
+  const stream = fictionalStream({ releases: [release] });
+
+  it.each(["2027-04-01", "2027-06-30"])(
+    "is the cycle holding %s, its first or last day, with its release",
+    (today) => {
+      expect(streamNow(stream, today)).toEqual({
+        cycle: stream.cycles[1],
+        release,
+      });
+    },
+  );
+
+  it("has no release when the cycle is in none", () => {
+    expect(streamNow(stream, "2027-02-14")?.release).toBeUndefined();
+  });
+
+  it("leaves out a release a draft removes", () => {
+    const removed = fictionalStream({
+      releases: [{ ...release, draft: recordDraft({ action: "deleted" }) }],
+    });
+
+    expect(streamNow(removed, "2027-05-01")?.release).toBeUndefined();
+  });
+
+  it.each([
+    ["not started", "2026-12-31", stream],
+    ["past its last cycle", "2028-01-01", stream],
+    ["retired", "2027-05-01", fictionalStream({ retired: true })],
+  ])("is none for a stream %s", (_case, today, shown) => {
+    expect(streamNow(shown, today)).toBeUndefined();
+  });
+
+  it("is the live cycle of a stream drafted to be retired", () => {
+    const [live] = liveStreams([
+      fictionalStream({
+        retired: true,
+        draft: recordDraft({ changed: ["retired"], live: { retired: false } }),
+      }),
+    ]);
+
+    expect(live && streamNow(live, "2027-05-01")?.cycle.name).toBe("27.2");
+  });
+
+  it("is the live cycle where a draft changes the stream's cycles", () => {
+    const [live] = liveStreams([
+      fictionalStream({
+        cycles: quarters(4).slice(2),
+        liveCycles: quarters(4),
+      }),
+    ]);
+
+    expect(live && streamNow(live, "2027-02-14")?.cycle.name).toBe("27.1");
+  });
+
+  it("is none for a stream only drafted to be added, once live", () => {
+    expect(
+      liveStreams([
+        fictionalStream({ draft: recordDraft({ action: "created" }) }),
+      ]),
     ).toEqual([]);
   });
 });

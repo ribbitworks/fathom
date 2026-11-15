@@ -16,6 +16,7 @@ import {
   planDraftFields,
   projectColumns,
   proposalColumns,
+  staffedChoices,
 } from "./project-grids.tsx";
 import type { TableChoices } from "./projects.ts";
 import { cycleChoices, planNodes, releaseOfCycle } from "./projects.ts";
@@ -231,6 +232,7 @@ describe("the Features table", () => {
       "release",
       "targetCycle",
       "featureTeamId",
+      "staffed",
     ]);
   });
 
@@ -935,5 +937,69 @@ describe("features by release", () => {
       "Fictional Majors: Fictional One",
       "Fictional Majors: Not released yet",
     ]);
+  });
+});
+
+describe("the Staffed column", () => {
+  const offered = choices({
+    featureStatuses: [
+      { ...cycleChoice("idea", "Idea"), meaning: "possible" },
+      { ...cycleChoice("planned", "Planned"), meaning: "planned" },
+      { ...cycleChoice("building", "Building"), meaning: "in-progress" },
+      { ...cycleChoice("shipped", "Shipped"), meaning: "done" },
+    ],
+  });
+  const staffed = featureColumns(offered).find(({ key }) => key === "staffed");
+
+  it.each(["planned", "building"])(
+    "says No for a %s feature with no one allocated",
+    (statusId) => {
+      expect(staffed?.value(feature({ statusId }))).toEqual([
+        staffedChoices.no,
+      ]);
+    },
+  );
+
+  it("says Yes for a committed feature someone is allocated to", () => {
+    expect(staffed?.value(feature({ staffed: true }))).toEqual([
+      staffedChoices.yes,
+    ]);
+  });
+
+  it.each(["idea", "shipped"])(
+    "is empty for a %s feature, which isn't committed",
+    (statusId) => {
+      expect(staffed?.value(feature({ statusId, staffed: true }))).toEqual([]);
+    },
+  );
+
+  it("calls a feature that isn't committed Not committed when grouped", () => {
+    const group = featureTable(offered)
+      .groupings?.find(({ key }) => key === "staffed")
+      ?.of(feature({ statusId: "idea" }));
+
+    expect(group?.label).toBe("Not committed");
+  });
+
+  it("is read only, offering Yes and No", () => {
+    expect(staffed?.readOnly).toBe(true);
+    expect(staffed?.live(featureDraft() as never)).toEqual([]);
+    expect(staffed?.change(["yes"])).toEqual({});
+    expect(staffed?.choices.map(({ label }) => label)).toEqual(["Yes", "No"]);
+  });
+
+  it("shows a feature staffed as its allocations are live, without drafts", () => {
+    const [live] = livePlanRecords([
+      feature({ staffed: true, staffedLive: false }),
+    ]);
+
+    expect(staffed?.value(live as Feature)).toEqual([staffedChoices.no]);
+  });
+
+  it("follows the details' Planning group, after Feature team", () => {
+    const planning = featureColumnGroups.find(
+      ({ title }) => title === "Planning",
+    );
+    expect(planning?.keys.slice(-2)).toEqual(["featureTeamId", "staffed"]);
   });
 });

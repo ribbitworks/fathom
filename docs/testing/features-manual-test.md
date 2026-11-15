@@ -67,6 +67,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **Release**
       - **Target cycle**
       - **Feature team**
+      - **Staffed**
       - **Kind**
     - Beside the search box, the count reads "12 features".
   - **Notes:**
@@ -1316,4 +1317,23 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
     - **Release**
     - **Target cycle**
     - **Feature team**
+    - **Staffed**
+  - **Notes:**
+
+### FEAT-27: Features Group by Whether Anyone Is on Them
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account FEAT-26 ended with.
+
+**Preconditions:** Run Restore the Seed Data, then select the **Features** page in the left-hand menu.
+
+- [ ] `7E31` Select **Group by: Cycle** above the table, then **Staffed**.
+  - **Expected:**
+    - The button reads **Group by: Staffed**.
+    - The headings read, from the top, **Yes**, **No** and **Not committed**.
+    - 'Offline Sync' is under **Yes**.
+    - 'Scheduler API' is under **No**.
+  - **Notes:**
+
+- [ ] `B05C` Select **Group by: Staffed**, then **Cycle**.
+  - **Expected:** The last heading is **Later**.
   - **Notes:**

@@ -389,10 +389,13 @@ export {
   featureLengths,
   featureRequestSchema,
   featureSchema,
+  featuresByMeaning,
   isCommitted,
   largestEstimateHours,
   needsFeatureTeam,
   needsStaffing,
+  type ProgressMeaning,
+  progressMeanings,
 } from "./features.ts";
 export {
   type OrgChart,

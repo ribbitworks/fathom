@@ -20,6 +20,7 @@ import {
   type Feature,
   featureColumnKeys,
   featureLengths,
+  isCommitted,
   type Meaning,
   type Milestone,
   needsFeatureTeam,
@@ -97,14 +98,17 @@ const featureDetailKeys: readonly string[] = [
   "targetStreamId",
 ];
 
-// Records as they are live, without drafts: those only drafted to be added are left out, and each
-// field a draft changes has its live value back.
+// Records as they are live, without drafts: those only drafted to be added are left out, each
+// field a draft changes has its live value back, and a feature is staffed as allocations are live.
 export function livePlanRecords<Rec extends PlanRecord>(
   records: readonly Rec[],
 ): Rec[] {
   return records.flatMap((record) =>
     isFeature(record)
-      ? (liveRecordsOf([record], featureDetailKeys) as Rec[])
+      ? (liveRecordsOf([record], featureDetailKeys).map((feature) => ({
+          ...feature,
+          staffed: feature.staffedLive,
+        })) as Rec[])
       : liveRecordsBy([withLiveDates(record)], withLiveFields),
   );
 }
@@ -703,6 +707,38 @@ function releaseColumn(
   };
 }
 
+export const staffedColumnKey = "staffed";
+
+export const staffedChoices = { yes: "yes", no: "no" } as const;
+
+// Yes or No for a committed feature, whether any allocation gives it a month, and empty for others,
+// worked out rather than entered, so Not staffed is a plain filter.
+function staffedColumn(
+  meaningOf: ReadonlyMap<string, Meaning | null | undefined>,
+): Column<Feature, PlanChange> {
+  const staffedOf = ({
+    statusId,
+    staffed,
+  }: Pick<Feature, "statusId" | "staffed">) => {
+    if (!isCommitted(meaningOf.get(statusId))) return [];
+    return [staffed ? staffedChoices.yes : staffedChoices.no];
+  };
+  return {
+    ...field<Feature>(staffedColumnKey, "Staffed", "choice", {
+      readOnly: true,
+      emptyLabel: "Not committed",
+      choices: [
+        choice(staffedChoices.yes, "Yes", false),
+        choice(staffedChoices.no, "No", false),
+      ],
+    }),
+    value: staffedOf,
+    // Allocations' drafts change it, never the feature's own, so its draft never names it.
+    live: () => [],
+    change: () => ({}),
+  };
+}
+
 // A feature's built-in columns in the headed groups its details show them in, in order: the order
 // the table starts its columns in too, so the two read alike.
 export const featureColumnGroups: readonly {
@@ -725,6 +761,7 @@ export const featureColumnGroups: readonly {
       releaseColumnKey,
       "targetCycle",
       "featureTeamId",
+      staffedColumnKey,
     ],
   },
 ];
@@ -795,6 +832,7 @@ export function featureColumns(
     },
     releaseColumn(choices.releaseOfCycle),
     effortColumn(choices.effortConversions),
+    staffedColumn(meaningOf),
     {
       ...field<Feature>(
         "featureTeamId",

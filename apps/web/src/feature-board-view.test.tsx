@@ -431,6 +431,7 @@ describe("rows from Group by", () => {
       "Size",
       "Risk",
       "Feature team",
+      "Staffed",
     ]);
   });
 

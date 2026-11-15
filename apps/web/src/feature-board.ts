@@ -131,6 +131,19 @@ export function boardColumns(
   ];
 }
 
+// A live stream's current cycle, holding today, with the release it is in, if any; none for a stream
+// retired, not started yet, or past its last cycle. It takes the stream as liveStreams gives it.
+export function streamNow(
+  stream: ReleaseStream,
+  today: string,
+):
+  | { cycle: Cycle; release?: ReleaseStream["releases"][number] | undefined }
+  | undefined {
+  if (stream.retired) return undefined;
+  const cycle = stream.cycles.find((one) => isCurrent(one, today));
+  return cycle && { cycle, release: releaseIn(stream, cycle.startsOn) };
+}
+
 // The column a feature is in: its target cycle's, or Later when it targets none.
 export const columnOf = (
   feature: Pick<Feature, "targetStreamId" | "targetCycle">,

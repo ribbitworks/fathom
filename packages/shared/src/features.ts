@@ -66,6 +66,55 @@ export const needsStaffing = (
   staffed: boolean,
 ): boolean => !staffed && isCommitted(meaning);
 
+// The meanings of a status that say how far a feature has come, furthest first. Other meanings,
+// such as cancelled, say it won't be delivered.
+export const progressMeanings = [
+  "done",
+  "in-progress",
+  "planned",
+  "possible",
+] as const satisfies readonly Meaning[];
+
+export type ProgressMeaning = (typeof progressMeanings)[number];
+
+const isProgress = (
+  meaning: Meaning | null | undefined,
+): meaning is ProgressMeaning =>
+  progressMeanings.some((progress) => progress === meaning);
+
+// The features targeting a stream's cycle, by what their status means, each in the order given;
+// those whose status means something else are left out.
+export function featuresByMeaning<
+  Targeting extends Pick<
+    Feature,
+    "statusId" | "targetStreamId" | "targetCycle"
+  >,
+>(
+  features: readonly Targeting[],
+  cycle: { streamId: string; startsOn: string },
+  meaningOf: (statusId: string) => Meaning | null | undefined,
+): Record<ProgressMeaning, Targeting[]> {
+  const byMeaning: Record<ProgressMeaning, Targeting[]> = {
+    done: [],
+    "in-progress": [],
+    planned: [],
+    possible: [],
+  };
+  for (const feature of features) {
+    const meaning = meaningOf(feature.statusId);
+    if (
+      feature.targetStreamId === cycle.streamId &&
+      feature.targetCycle === cycle.startsOn &&
+      isProgress(meaning)
+    ) {
+      // The meaning is one of the record's own keys.
+      // eslint-disable-next-line security/detect-object-injection
+      byMeaning[meaning].push(feature);
+    }
+  }
+  return byMeaning;
+}
+
 // A feature's draft, naming added columns as a person's draft does: by column, with their live
 // values held by type beside the live values of the feature's own fields.
 export const featureDraftSchema = recordDraftSchema.extend({

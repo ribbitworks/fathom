@@ -266,6 +266,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **Size**
       - **Risk**
       - **Feature team**
+      - **Staffed**
       - **Kind**
     - **Cycle** isn't listed.
   - **Notes:**

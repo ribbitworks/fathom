@@ -70,7 +70,7 @@ You're done when **Effort** shows your estimate, with a hollow dot.
 ### Group the Table
 
 1. Select **Group by**.
-1. Choose **Cycle**, **Release**, **Needed by**, a list such as **Status** or **Priority**, **Feature team**, or **None**.
+1. Choose **Cycle**, **Release**, **Needed by**, a list such as **Status** or **Priority**, **Feature team**, **Staffed**, or **None**.
 
 ### See Features as a Board
 
@@ -122,3 +122,4 @@ You're done when the row is struck through. It's removed once the removal is app
 - **Risk** says how much could go wrong in building it, from **Low** to **High**.
 - **Priority**, **Size** and **Risk** are optional. Your organization keeps their choices on the **Lists** page.
 - **Release** follows from **Target cycle**, so you can't change it.
+- **Staffed** says **Yes** when someone is allocated to a planned or in-progress feature, and **No** when nobody is. It's empty for other features. Fathom works it out from the allocations, so you can't change it. To find features nobody is on, filter **Staffed** to **No**.

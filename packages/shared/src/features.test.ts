@@ -3,9 +3,11 @@
 // Tests for what a request to add or change a feature may hold, and how drafts name a feature.
 
 import { describe, expect, it } from "vitest";
+import type { Meaning } from "./lists.ts";
 import {
   featureLengths,
   featureRequestSchema,
+  featuresByMeaning,
   largestEstimateHours,
   needsFeatureTeam,
   needsStaffing,
@@ -120,6 +122,88 @@ describe("which features need staffing", () => {
   it("does not need it for a planned feature that is staffed", () => {
     expect(needsStaffing("planned", true)).toBe(false);
   });
+});
+
+describe("a cycle's features by what their status means", () => {
+  const meanings = new Map<string, Meaning>([
+    ["done-status", "done"],
+    ["building-status", "in-progress"],
+    ["planned-status", "planned"],
+    ["idea-status", "possible"],
+    ["dropped-status", "cancelled"],
+  ]);
+  const meaningOf = (statusId: string) => meanings.get(statusId);
+  const cycle = { streamId: "platform", startsOn: "2026-12-01" };
+  const feature = (
+    name: string,
+    statusId: string,
+    target: { targetStreamId: string | null; targetCycle: string | null } = {
+      targetStreamId: cycle.streamId,
+      targetCycle: cycle.startsOn,
+    },
+  ) => ({ name, statusId, ...target });
+
+  it("groups the cycle's features by meaning, in the order given", () => {
+    const features = [
+      feature("Fictional Sync", "planned-status"),
+      feature("Fictional Export", "done-status"),
+      feature("Fictional Maps", "planned-status"),
+      feature("Fictional Search", "building-status"),
+      feature("Fictional Voice", "idea-status"),
+    ];
+
+    const byMeaning = featuresByMeaning(features, cycle, meaningOf);
+
+    expect(
+      Object.fromEntries(
+        Object.entries(byMeaning).map(([meaning, shown]) => [
+          meaning,
+          shown.map(({ name }) => name),
+        ]),
+      ),
+    ).toEqual({
+      done: ["Fictional Export"],
+      "in-progress": ["Fictional Search"],
+      planned: ["Fictional Sync", "Fictional Maps"],
+      possible: ["Fictional Voice"],
+    });
+  });
+
+  it("leaves out features of other cycles, other streams and Later", () => {
+    const byMeaning = featuresByMeaning(
+      [
+        feature("Next Cycle", "planned-status", {
+          targetStreamId: cycle.streamId,
+          targetCycle: "2027-01-01",
+        }),
+        feature("Other Stream", "planned-status", {
+          targetStreamId: "patches",
+          targetCycle: cycle.startsOn,
+        }),
+        feature("In Later", "planned-status", {
+          targetStreamId: null,
+          targetCycle: null,
+        }),
+      ],
+      cycle,
+      meaningOf,
+    );
+
+    expect(byMeaning.planned).toEqual([]);
+  });
+
+  it.each(["dropped-status", "unknown-status"])(
+    "leaves out a feature whose status is %s",
+    (statusId) => {
+      const byMeaning = featuresByMeaning(
+        [feature("Fictional Dropped", statusId)],
+        cycle,
+        meaningOf,
+      );
+
+      expect(Object.values(byMeaning).flat()).toEqual([]);
+    },
+  );
 });
 
 describe("which features need a feature team", () => {

@@ -44,6 +44,7 @@ import { AccountsPage } from "./accounts-page.tsx";
 import { FirstPasswordChange } from "./change-password.tsx";
 import { DraftsHelpPage, RolesHelpPage } from "./help-page.tsx";
 import { ChangeHistoryPage } from "./change-history-page.tsx";
+import { draftsSeen } from "./draft-entries.ts";
 import { DraftsPage } from "./drafts-page.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
@@ -291,22 +292,7 @@ const draftsRoute = createRoute({
     const navigate = draftsRoute.useNavigate();
     return (
       <DraftsPage
-        approves={approvableKinds(permissions)}
-        seesPeople={permissions.includes("people:view")}
-        seesLists={
-          permissions.includes("people:view") ||
-          permissions.includes("configuration:view")
-        }
-        seesPlan={
-          permissions.includes("features:view") ||
-          permissions.includes("configuration:view")
-        }
-        seesTeams={
-          permissions.includes("feature-teams:view") &&
-          permissions.includes("people:view")
-        }
-        seesProjects={permissions.includes("plan:view")}
-        seesSettings={permissions.includes("configuration:view")}
+        {...draftsSeen(permissions)}
         search={draftsRoute.useSearch().search ?? ""}
         onSearch={(search, replace) => {
           void navigate({ search: { search: search || undefined }, replace });
