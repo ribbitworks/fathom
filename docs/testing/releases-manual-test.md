@@ -1223,7 +1223,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - On the timeline, **Platform**'s lane has no upright line at its end.
   - **Notes:**
 
-#### REL-30: Streams Group by Status, Then by Cycle Schedule
+#### REL-30: Schedules Group by Status, Then by Cycle Schedule
 
 **Account:** Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, the account REL-29 ended with.
 
@@ -1238,7 +1238,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `0BE0` Select **Group by: Status, then Cycle schedule**, then **Clear grouping**.
   - **Expected:**
     - The button reads **Group by: Status**.
-    - The streams table has one heading, **Current**, with no headings set in under it.
+    - The schedules table has one heading, **Current**, with no headings set in under it.
 
 ### Part 8: The Schedules Tab
 
