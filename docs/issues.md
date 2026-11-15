@@ -1,7 +1,7 @@
 # Fathom: Issues
 
 **Status:** Moved to GitHub Issues
-**Last updated:** 2026-11-13
+**Last updated:** 2026-11-14
 
 Known problems and deferred work not yet scheduled in the [Implementation Plan](design/implementation-plan.md) are kept in [GitHub Issues](https://github.com/jlarue26/fathom/issues), moved there from this document on 2026-11-12, as the owner decided.
 
@@ -47,8 +47,8 @@ A task that is a set of issues in one area is a batch, worked in Autonomous mode
 - **Each issue:** Fixed, checked with `pnpm test:changed`, the linters and type checking, as [Testing Standards](standards/testing.md#running-tests) runs them while working, and committed on its own.
 - **Once, for the whole branch:**
   1. The owner's screen check, if any screen changed
-  1. One full `pnpm check`
   1. One separate-agent review of the whole branch
+  1. One full `pnpm check`, once the review's findings are fixed, as [Testing Standards](standards/testing.md#running-tests) sets out
   1. The owner's approval of the batch
   1. The pull request, as [Fixing an Issue](#fixing-an-issue) sets out
 - **Failures found at the end:** Fixed in a new commit, never by changing earlier ones.
