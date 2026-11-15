@@ -49,7 +49,13 @@ import {
   type RowGroup,
   type View,
 } from "./table-view.ts";
-import { recordCell, rowActions, testTheme } from "./test-support.tsx";
+import {
+  choiceUnder,
+  choicesUnder,
+  recordCell,
+  rowActions,
+  testTheme,
+} from "./test-support.tsx";
 
 interface Gadget extends CellRecord {
   name: string;
@@ -1784,6 +1790,255 @@ describe("a record under several groups", () => {
     await waitFor(() => {
       expect(document.activeElement).toBe(second);
     });
+  });
+});
+
+describe("rows grouped again under each heading", () => {
+  const letterGroup = (prefix: string) => (letter: string) => ({
+    key: letter,
+    label: `${prefix} ${letter}`,
+    rank: letter.charCodeAt(0),
+  });
+  const nested = (
+    more: Partial<RecordTable<Gadget, GadgetChange, GadgetChange>> = {},
+  ): RecordTable<Gadget, GadgetChange, GadgetChange> => ({
+    ...gadgetTable(),
+    groupings: [
+      {
+        key: "first",
+        label: "First letter",
+        of: ({ code }) => [letterGroup("Starts")(code.charAt(0))],
+      },
+      {
+        key: "letters",
+        label: "Letters",
+        of: ({ code }) => {
+          const [first, ...rest] = Array.from(code, letterGroup("Group"));
+          // Every gadget here has a code.
+          return [first as RowGroup, ...rest];
+        },
+      },
+    ],
+    ...more,
+  });
+  const gadgets = [
+    gadget("a", { code: "XY" }),
+    gadget("b", { code: "X" }),
+    gadget("c", { code: "YZ" }),
+  ];
+  const view = { ...emptyView, thenBy: "letters" };
+  const headings = () =>
+    screen.getAllByRole("rowheader").map(({ textContent }) => textContent);
+
+  it("heads each group's rows with their second groups, leaving out those empty, each counting its own records", () => {
+    renderGadgets({ gadgets, table: nested(), view });
+
+    expect(headings()).toEqual([
+      "Starts X2 gadgets",
+      "Group X2 gadgets",
+      "Group Y1 gadget",
+      "Starts Y1 gadget",
+      "Group Y1 gadget",
+      "Group Z1 gadget",
+    ]);
+    expect(screen.getByRole("status").textContent).toBe("3 gadgets");
+  });
+
+  it("marks a record under several second groups, naming the others", () => {
+    renderGadgets({ gadgets, table: nested(), view });
+
+    expect(
+      screen.getAllByText("+1").map((mark) => mark.parentElement?.dataset.tip),
+    ).toEqual([
+      "Also under Group Y.",
+      "Also under Group X.",
+      "Also under Group Z.",
+      "Also under Group Y.",
+    ]);
+  });
+
+  it("names another place differing in both groups by both, the first, a colon, then the second", () => {
+    renderGadgets({
+      gadgets: [gadget("a", { code: "XY" })],
+      table: nested({
+        groupings: [
+          ...(nested().groupings ?? []),
+          {
+            key: "again",
+            label: "Again",
+            of: ({ code }) => {
+              const [first, ...rest] = Array.from(code, letterGroup("Again"));
+              // Every gadget here has a code.
+              return [first as RowGroup, ...rest];
+            },
+          },
+        ],
+      }),
+      view: { ...emptyView, grouping: "letters", thenBy: "again" },
+    });
+
+    expect(screen.getAllByText("+3")[0]?.parentElement?.dataset.tip).toBe(
+      "Also under Again Y, Group Y, Group Y: Again Y.",
+    );
+  });
+
+  it("names both groupings on one button, offering the other groupings under the first, starting with none", async () => {
+    const onView = vi.fn();
+    renderGadgets({ gadgets, table: nested(), onView });
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Group by: First letter" }),
+    );
+
+    expect(
+      (await choicesUnder("Group by"))
+        .getAllByRole("menuitem")
+        .map(({ textContent }) => textContent),
+    ).toEqual(["First letter, chosen", "Letters", "None"]);
+    const thenBy = await choicesUnder("Then by");
+    expect(
+      thenBy.getAllByRole("menuitem").map(({ textContent }) => textContent),
+    ).toEqual(["None, chosen", "Letters"]);
+    await userEvent.click(thenBy.getByRole("menuitem", { name: "Letters" }));
+    expect(onView).toHaveBeenLastCalledWith({
+      ...emptyView,
+      thenBy: "letters",
+    });
+  });
+
+  it("takes the second grouping away when none is chosen for it", async () => {
+    const onView = vi.fn();
+    renderGadgets({ gadgets, table: nested(), view, onView });
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Group by: First letter, then Letters",
+      }),
+    );
+    await userEvent.click(await choiceUnder("Then by", "None"));
+
+    expect(onView).toHaveBeenLastCalledWith({
+      ...emptyView,
+      thenBy: undefined,
+    });
+  });
+
+  it("takes the second grouping away with the first, or when it becomes the first", async () => {
+    const onView = vi.fn();
+    renderGadgets({ gadgets, table: nested(), view, onView });
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Group by: First letter, then Letters",
+      }),
+    );
+    await userEvent.click(await choiceUnder("Group by", "Letters"));
+
+    expect(onView).toHaveBeenLastCalledWith({
+      ...emptyView,
+      grouping: "letters",
+      thenBy: undefined,
+    });
+  });
+
+  it("keeps the second grouping when another first is chosen", async () => {
+    const onView = vi.fn();
+    renderGadgets({
+      gadgets,
+      table: nested({
+        groupings: [
+          ...(nested().groupings ?? []),
+          {
+            key: "code",
+            label: "Code",
+            of: ({ code }) => [letterGroup("Code")(code)],
+          },
+        ],
+      }),
+      view,
+      onView,
+    });
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Group by: First letter, then Letters",
+      }),
+    );
+    await userEvent.click(await choiceUnder("Group by", "Code"));
+
+    expect(onView).toHaveBeenLastCalledWith({
+      ...emptyView,
+      grouping: "code",
+      thenBy: "letters",
+    });
+  });
+
+  it("clears both groupings back to the table's own, offered only once either is chosen", async () => {
+    const onView = vi.fn();
+    const { unmount } = renderGadgets({
+      gadgets,
+      table: nested(),
+      view: { ...emptyView, grouping: "letters", thenBy: "first" },
+      onView,
+    });
+
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Group by: Letters, then First letter",
+      }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Clear grouping" }),
+    );
+    expect(onView).toHaveBeenLastCalledWith({
+      ...emptyView,
+      grouping: undefined,
+      thenBy: undefined,
+    });
+    unmount();
+
+    // Named in the address, the table's own grouping is no change to clear.
+    renderGadgets({
+      gadgets,
+      table: nested(),
+      view: { ...emptyView, grouping: "first" },
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Group by: First letter" }),
+    );
+    await screen.findAllByRole("menuitem");
+    expect(
+      screen.queryByRole("menuitem", { name: "Clear grouping" }),
+    ).toBeNull();
+  });
+
+  it("offers no second grouping while the rows show as one list", async () => {
+    renderGadgets({
+      gadgets,
+      table: nested(),
+      view: { ...view, grouping: notGrouped },
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: "Group by" }));
+
+    expect(
+      (await screen.findAllByRole("menuitem")).map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual(["First letter", "Letters", "None, chosen", "Clear grouping"]);
+    expect(screen.queryByRole("group", { name: "Then by" })).toBeNull();
+  });
+
+  it("offers no second grouping, and groups one level deep, on a table whose records are made for its grouping", async () => {
+    renderGadgets({ gadgets, table: nested({ oneLevel: true }), view });
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Group by: First letter" }),
+    );
+
+    expect(await screen.findAllByRole("menuitem")).toHaveLength(3);
+    expect(screen.queryByRole("group", { name: "Then by" })).toBeNull();
+    expect(headings()).toEqual(["Starts X2 gadgets", "Starts Y1 gadget"]);
   });
 });
 

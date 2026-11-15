@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Saved Views
 
 ## Scope
 
-Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its streams in the timeline; and that a view on Features is shared by its table and Board, and kept to Features.
+Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its streams in the timeline; that a view on Features is shared by its table and Board, and kept to Features; and that a view keeps People grouped by two levels.
 
 ## Test Environment
 
@@ -815,4 +815,73 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `036B` Reload the page.
   - **Expected:** No Views menu shows above the table.
+  - **Notes:**
+
+### VIEW-14: A View Keeps People Grouped by Manager, Then Site
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, in the main window, changed from VIEW-13.
+
+**Preconditions:** This account is signed in on **People**, with no view applied.
+
+- [ ] `5E1A` Select **Group by**, then **Manager**.
+  - **Expected:**
+    - The button reads **Group by: Manager**.
+  - **Notes:**
+
+- [ ] `A7C3` Select **Group by: Manager**.
+  - **Expected:**
+    - The menu lists **Manager**, ticked, and the other groupings under a **Group by** label.
+    - After them, under a **Then by** label, it lists **None**, ticked, then the same groupings less **Manager**.
+  - **Notes:**
+
+- [ ] `B5E8` Select **Site** under **Then by**.
+  - **Expected:**
+    - The button reads **Group by: Manager, then Site**.
+    - Under the first manager's heading, a smaller, lighter heading set in from it names a site, with how many people it holds.
+    - Each site heading under that manager is followed by people at that site only.
+    - The counts on the site headings under that manager add up to the count on the manager's heading.
+  - **Notes:**
+
+- [ ] `7A1F` Select **Group by: Manager, then Site**.
+  - **Expected:** The menu ends with **Clear grouping**, set apart from the choices.
+  - **Notes:**
+
+- [ ] `2C6D` Press Esc.
+  - **Expected:** The menu closes, and the button still reads **Group by: Manager, then Site**.
+  - **Notes:**
+
+- [ ] `3D90` Open the Views menu, and select **Save view…**.
+  - **Expected:**
+    - A dialog titled "Save view" opens.
+    - Under **Includes**, **Group by** reads "Manager, then Site".
+  - **Notes:**
+
+- [ ] `C24B` Type `Fictional managers by site` in **Name**.
+  - **Expected:** The name shows in **Name**.
+  - **Notes:**
+
+- [ ] `0D7E` Select **Save view** in the dialog.
+  - **Expected:** The Views menu's button says `Fictional managers by site`.
+  - **Notes:**
+
+- [ ] `91E6` Select the **People** page in the left-hand menu.
+  - **Expected:**
+    - The rows show as one list.
+    - The button reads **Group by**, naming no grouping.
+  - **Notes:**
+
+- [ ] `F05D` Open the Views menu, and select `Fictional managers by site`.
+  - **Expected:**
+    - The button reads **Group by: Manager, then Site**.
+    - Under each manager's heading, smaller, lighter headings set in from it name sites, each with how many people it holds.
+  - **Notes:**
+
+- [ ] `6B28` Open the Views menu, and select **Delete view**.
+  - **Expected:** A notification reads "Deleted the Fictional managers by site view.", with **Undo**.
+  - **Notes:**
+
+- [ ] `D83B` Select **Group by: Manager, then Site**, then **Clear grouping**.
+  - **Expected:**
+    - The button reads **Group by**.
+    - The rows show as one list.
   - **Notes:**

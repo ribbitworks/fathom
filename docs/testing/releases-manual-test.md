@@ -1173,7 +1173,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - **Platform**'s **Stream** cell is selected in the streams table.
   - **Notes:**
 
-- [ ] `38AD` Choose **Cycle schedule** in the **Group by** menu.
+- [ ] `38AD` Select **Group by: Status**, then **Cycle schedule** under **Group by**.
   - **Expected:**
     - The **Group by** button reads **Group by: Cycle schedule**.
     - Each cycle schedule heads the streams that have it, such as **Every 3 months, named {YY}.{N}** over **Platform**, with how many each holds.

@@ -71,6 +71,11 @@ You're done when **Effort** shows your estimate, with a hollow dot.
 
 1. Select **Group by**.
 1. Choose **Cycle**, **Release**, **Needed by**, a list such as **Status** or **Priority**, **Feature team**, **Staffed**, or **None**.
+1. To group each heading's features again, such as each cycle's by status, select **Group by** again, and choose how under **Then by**.
+
+To go back to grouping by cycle alone, choose **Clear grouping**, at the end of the menu.
+
+The board shows only the first grouping. **Then by** comes back when you switch to the table.
 
 ### See Features as a Board
 

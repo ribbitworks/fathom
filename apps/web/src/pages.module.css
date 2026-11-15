@@ -657,6 +657,16 @@ th[data-centred] .recordHeadButton {
   font-weight: 600;
 }
 
+/* A heading under a group's own, for the second grouping: lighter, smaller, and set in. */
+.recordSubgroup {
+  font-size: var(--mantine-font-size-sm);
+  font-weight: 500;
+}
+
+.recordSubgroup > .recordGroupLabel {
+  padding-left: var(--mantine-spacing-lg);
+}
+
 /* A row summing the rows above it, such as a group's, set apart from them. */
 .recordTotalRow > :is(td, th) {
   border-top: var(--record-row-line-width) solid var(--table-border-color);

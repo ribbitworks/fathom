@@ -26,7 +26,7 @@ See [Drafts](drafts.md) for more.
 1. Point at the stream's row.
 1. Select the details button: the small box at the right of its name.
 
-Cmd+F on a Mac, or Ctrl+F elsewhere, takes you to the search field. Instead of the details button, you can also right-click the row and select **Show details**. To clear the search, press Esc in the search field. To group the streams another way, choose **Group by**, then **Status** or **Cycle schedule**.
+Cmd+F on a Mac, or Ctrl+F elsewhere, takes you to the search field. Instead of the details button, you can also right-click the row and select **Show details**. To clear the search, press Esc in the search field. To group the streams another way, choose **Group by**, then **Status** or **Cycle schedule**. To group each heading's streams again by the other, choose it under **Then by** in the same menu.
 
 You're done when the stream's panel is open, headed with its name.
 

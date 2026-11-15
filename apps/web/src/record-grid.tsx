@@ -113,7 +113,10 @@ import {
 } from "./table-controls.tsx";
 import {
   activeGrouping,
+  activeThenBy,
   applyView,
+  groupedRowId,
+  type OtherPlace,
   type PlacedRow,
   placedRows,
   recordsOf,
@@ -389,6 +392,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // table that groups them, unless its rows are in one list until one is chosen.
   groupings?: readonly RowGrouping<Rec>[];
   ungrouped?: boolean;
+  // For a table whose records are made for its grouping, such as one row under each manager in
+  // the months shown: its rows group one level deep, with no second grouping under the first.
+  oneLevel?: true;
   // For a table that can be exported: the table the server records an export holding Personal or
   // Confidential data as, and the classified details its rows hold apart from their columns, such
   // as the hiring plan, which planned hires' rows are. A table without it offers no export.
@@ -1385,11 +1391,57 @@ function useSteadyGroups<Rec>(
       };
 }
 
+// A run of rows of one group, headed by its label, with the records it holds, each once.
+interface GroupRun<Rec> {
+  key: string;
+  first: string;
+  last: string;
+  label: string;
+  nested: boolean;
+  records: Rec[];
+}
+
+// The runs of rows of one group, by the group each row's place gives it, at the first level or
+// nested under it. Rows added since the view last changed stay at the end, so may start a run of
+// their own.
+function runsOf<Rec>(
+  rows: readonly PlacedRow<Rec>[],
+  nested: boolean,
+  placeOf: (row: PlacedRow<Rec>) => RowGroup | undefined,
+): GroupRun<Rec>[] {
+  const runs: GroupRun<Rec>[] = [];
+  for (const row of rows) {
+    const group = placeOf(row);
+    if (group === undefined) continue;
+    const run = runs.at(-1);
+    if (run?.key === group.key) {
+      if (!run.records.includes(row.record)) run.records.push(row.record);
+      run.last = row.key;
+    } else {
+      runs.push({
+        key: group.key,
+        first: row.key,
+        last: row.key,
+        label: group.label,
+        nested,
+        records: [row.record],
+      });
+    }
+  }
+  return runs;
+}
+
 // After the name of a record shown under several headings: how many others, and in its tip, which,
 // so whoever edits one row knows another shows the same record.
-function AlsoUnder({ others }: { others: readonly RowGroup[] }) {
+function AlsoUnder({ others }: { others: readonly OtherPlace[] }) {
   if (others.length === 0) return null;
-  const names = others.map(({ label }) => label).join(", ");
+  const names = others
+    .map(({ group, subgroup }) =>
+      [group, subgroup]
+        .flatMap((one) => (one === undefined ? [] : [one.label]))
+        .join(": "),
+    )
+    .join(", ");
   const tip = `Also under ${names}.`;
   return (
     <Text
@@ -1676,11 +1728,19 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     activeGrouping(view, table.groupings, table.ungrouped),
     stableId,
   );
+  // A page drawing the rows its own way, such as a board, shows the first grouping alone.
+  const nests = table.oneLevel !== true && body === undefined;
+  const subgroupOf = useSteadyGroups(
+    records,
+    rowView,
+    nests ? activeThenBy(view, table.groupings, table.ungrouped) : undefined,
+    stableId,
+  );
   const countedAs = table.countedAs ?? ((record: Rec) => record.id);
   const countedOnce = (rows: readonly Rec[]): readonly Rec[] => [
     ...new Map(rows.map((row) => [countedAs(row), row])).values(),
   ];
-  const everyRow = placedRows(records, groupOf, stableId);
+  const everyRow = placedRows(records, groupOf, stableId, subgroupOf);
   // The rows of the records this user has added, in the order they added them.
   const addedRows = new Set(
     [...added].flatMap((id) =>
@@ -1699,32 +1759,17 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     addedRows,
   );
   const shownRecords = recordsOf(shownRows);
-  // The heading above each run of rows of one group, by its first row's key, with how many it
-  // holds. Rows added since the view last changed stay at the end, so may start a run of their own.
-  const groupRuns: {
-    key: string;
-    first: string;
-    last: string;
-    label: string;
-    records: Rec[];
-  }[] = [];
-  for (const { record, key, group } of shownRows) {
-    if (group === undefined) continue;
-    const run = groupRuns.at(-1);
-    if (run?.key === group.key) {
-      run.records.push(record);
-      run.last = key;
-    } else {
-      groupRuns.push({
-        key: group.key,
-        first: key,
-        last: key,
-        label: group.label,
-        records: [record],
-      });
-    }
+  const groupRuns = runsOf(shownRows, false, ({ group }) => group);
+  const subgroupRuns = runsOf(shownRows, true, ({ group, subgroup }) =>
+    group === undefined || subgroup === undefined
+      ? undefined
+      : { ...subgroup, key: groupedRowId(group.key, subgroup.key) },
+  );
+  // The headings above a row: its group's, where it starts one, then its second group's.
+  const headings = new Map<string, GroupRun<Rec>[]>();
+  for (const run of [...groupRuns, ...subgroupRuns]) {
+    headings.set(run.first, [...(headings.get(run.first) ?? []), run]);
   }
-  const headings = new Map(groupRuns.map((run) => [run.first, run]));
   const runEnds = new Map(groupRuns.map((run) => [run.last, run.records]));
   const [newRows, setNewRows] = useState<NewRow[]>([{ key: 0, values: {} }]);
   const [nextKey, setNextKey] = useState(1);
@@ -3238,6 +3283,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       counted={table.counted?.counted(countedOnce(records))}
       groupings={table.groupings}
       ungrouped={table.ungrouped}
+      nests={nests}
       withDrafts={withDrafts}
       onLeave={() => {
         moveTo(active.row, active.column);
@@ -3454,11 +3500,12 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                         : "",
                     ].join(" ");
                   }
-                  const heading = headings.get(key);
                   const runEnded = runEnds.get(key);
                   return [
-                    heading !== undefined && (
-                      <Table.Tr key={`group-${key}`}>
+                    ...(headings.get(key) ?? []).map((heading) => (
+                      <Table.Tr
+                        key={`group-${heading.nested ? "nested-" : ""}${key}`}
+                      >
                         <Table.Th
                           scope="row"
                           colSpan={
@@ -3466,7 +3513,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                             besides.length +
                             Number(withActions)
                           }
-                          className={classes.recordGroup}
+                          className={
+                            heading.nested
+                              ? classes.recordSubgroup
+                              : classes.recordGroup
+                          }
                         >
                           <span className={classes.recordGroupLabel}>
                             {heading.label}
@@ -3479,7 +3530,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                           </span>
                         </Table.Th>
                       </Table.Tr>
-                    ),
+                    )),
                     <Table.Tr
                       key={key}
                       className={rowClass}

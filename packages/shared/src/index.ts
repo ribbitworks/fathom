@@ -462,6 +462,7 @@ export {
   type ViewDefinition,
   draftFilterKey,
   viewColumnKeys,
+  viewGroupings,
   inPlacesOf,
   viewDefinitionSchema,
   viewScopeSchema,

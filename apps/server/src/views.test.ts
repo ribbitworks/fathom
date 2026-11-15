@@ -508,7 +508,8 @@ describe("saved views", () => {
         filters: { [field.id]: { any: [String(choice?.id)] } },
         sort: [field.id],
         breakdown: [field.id],
-        grouping: field.id,
+        grouping: "employeeId",
+        thenBy: field.id,
       })
     ).json<Saved>();
     expect(
@@ -522,12 +523,12 @@ describe("saved views", () => {
     ).toBe(200);
     await test.approveLists();
     // Readers are sent the view without the deleted column, which is not shown to them, though its
-    // metrics still show.
+    // metrics still show, and the rows are still grouped by the column that's left.
     const viewer = await test.signedIn(generalReader);
     expect(
       (await viewsOf(viewer.cookie)).find(({ id }) => id === view.id)
         ?.definition,
-    ).toEqual({ breakdown: [] });
+    ).toEqual({ breakdown: [], grouping: "employeeId" });
     // Its deleted column cannot be saved into it again.
     expect(
       (
@@ -569,7 +570,11 @@ describe("saved views", () => {
     ).toBe(200);
     expect(
       (await viewsOf(viewer.cookie)).find(({ id }) => id === view.id),
-    ).toEqual({ id: view.id, name: "By team", missing: { columns: ["Team"] } });
+    ).toEqual({
+      id: view.id,
+      name: "By team",
+      missing: { columns: ["Team"], groupings: [] },
+    });
     expect((await undo(viewer.cookie, changeSetId)).statusCode).toBe(403);
   });
 
@@ -1060,6 +1065,79 @@ describe("views of every table", () => {
     ).toBe(400);
   });
 
+  it("keep a second grouping and send it, and are kept from readers who can't see the column it groups by", async () => {
+    const maker = await test.signedIn("workforce-administrator");
+    const viewer = await test.signedIn(generalReader);
+    const definition = { grouping: "employeeId", thenBy: "endDate" };
+    const { view } = (
+      await share(maker.cookie, unique("Then by end"), definition)
+    ).json<Saved>();
+    expect(view.definition).toEqual(definition);
+    expect(
+      (await test.historyOf(view.id)).every(({ tier }) => tier === "personal"),
+    ).toBe(true);
+    expect(
+      (await viewsOf(viewer.cookie)).some(({ id }) => id === view.id),
+    ).toBe(false);
+    expect(
+      (await save(viewer.cookie, "Then by end", definition)).json(),
+    ).toEqual({ error: "Choose only columns this role can see" });
+    expect(
+      (
+        await save(maker.cookie, "Unknown", {
+          grouping: "employeeId",
+          thenBy: "nothing",
+        })
+      ).statusCode,
+    ).toBe(400);
+  });
+
+  it("group Feature assignments by manager under another grouping only for readers who see the data it needs", async () => {
+    const maker = await test.signedIn([
+      ...assignmentsReader,
+      "confidential:view",
+      "configuration:edit",
+    ]);
+    const viewer = await test.signedIn(assignmentsReader);
+    const definition = { grouping: "feature-team", thenBy: "manager" };
+    const shared = (
+      await assignments.save(
+        maker.cookie,
+        unique("Shared teams then managers"),
+        definition,
+        "shared",
+      )
+    ).json<Saved>().view;
+    expect(
+      (await assignments.list(viewer.cookie)).some(
+        ({ id }) => id === shared.id,
+      ),
+    ).toBe(false);
+    const { view } = (
+      await assignments.save(
+        maker.cookie,
+        unique("Teams then managers"),
+        definition,
+      )
+    ).json<Saved>();
+    expect(
+      (await test.historyOf(view.id)).every(
+        ({ tier }) => tier === "confidential",
+      ),
+    ).toBe(true);
+    expect(
+      (
+        await assignments.save(viewer.cookie, "Then by manager", definition)
+      ).json(),
+    ).toEqual({ error: "Choose only columns this role can see" });
+    await test.holdOnly(maker.id, assignmentsReader);
+    expect(await assignments.list(maker.cookie)).toContainEqual({
+      id: view.id,
+      name: view.name,
+      missing: { columns: [], groupings: ["Manager"] },
+    });
+  });
+
   it("group Feature assignments by manager only for readers who see the data it needs", async () => {
     const maker = await test.signedIn([
       ...assignmentsReader,
@@ -1143,12 +1221,15 @@ describe("views of every table", () => {
     expect(listed).toContainEqual({
       id: filtered.id,
       name: filtered.name,
-      missing: { columns: [nameOf("startDate"), nameOf("endDate")] },
+      missing: {
+        columns: [nameOf("startDate"), nameOf("endDate")],
+        groupings: [],
+      },
     });
     expect(listed).toContainEqual({
       id: grouped.id,
       name: grouped.name,
-      missing: { columns: [], grouping: nameOf("endDate") },
+      missing: { columns: [], groupings: [nameOf("endDate")] },
     });
     expect(listed.some(({ id }) => id === theirs.id)).toBe(false);
 
@@ -1165,7 +1246,10 @@ describe("views of every table", () => {
     expect(renamed.json<{ view: ListedView }>().view).toEqual({
       id: filtered.id,
       name: "Renamed",
-      missing: { columns: [nameOf("startDate"), nameOf("endDate")] },
+      missing: {
+        columns: [nameOf("startDate"), nameOf("endDate")],
+        groupings: [],
+      },
     });
     // Its history holds the columns the role can't see, so renaming it can't be undone
     expect(
@@ -1194,7 +1278,7 @@ describe("views of every table", () => {
     expect(await assignments.list(maker.cookie)).toContainEqual({
       id: view.id,
       name: view.name,
-      missing: { columns: [], grouping: "Manager" },
+      missing: { columns: [], groupings: ["Manager"] },
     });
   });
 

@@ -211,7 +211,7 @@ async function openBoard(
       Response.json(startingEffortConversions),
   });
   const history = renderApp(path);
-  await screen.findByRole("button", { name: /^Group by: / });
+  await screen.findByRole("button", { name: /^Group by/ });
   return history;
 }
 
@@ -415,12 +415,10 @@ describe("the strip and the Stream menu", () => {
 describe("rows from Group by", () => {
   it("starts with none, listed first, and leaves out Cycle", async () => {
     await openBoard();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Group by: None" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Group by" }));
     expect(
       (await screen.findAllByRole("menuitem")).map(({ textContent }) =>
-        textContent.replace("✓", "").replace(", on", ""),
+        textContent.replace(", chosen", ""),
       ),
     ).toEqual([
       "None",
@@ -460,9 +458,25 @@ describe("rows from Group by", () => {
     expect(screen.queryByText("Fictional Elsewhere")).toBeNull();
   });
 
+  it("offers no Then by, keeping the table's while another grouping is chosen", async () => {
+    const history = await openBoard(
+      "/features?mode=board&grouping=priorityId&thenBy=statusId",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Group by: Priority" }),
+    );
+    expect(screen.queryByRole("group", { name: "Then by" })).toBeNull();
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Size" }),
+    );
+
+    expect(screen.getByRole("button", { name: "Group by: Size" })).toBeTruthy();
+    expect(history.location.search).toContain("thenBy=statusId");
+  });
+
   it("shows none for a grouping the board doesn't offer", async () => {
     await openBoard("/features?mode=board&grouping=targetCycle");
-    expect(screen.getByRole("button", { name: "Group by: None" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Group by" })).toBeTruthy();
   });
 });
 

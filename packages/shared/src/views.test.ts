@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for table views: reading a view from an address or a saved view, which drops what does not
-// fit, checking a view a request sends, which must fit as a whole, and the columns a view uses.
+// fit, checking a view a request sends, which must fit as a whole, and the columns and groupings a
+// view uses.
 
 import { describe, expect, it } from "vitest";
 import {
@@ -12,6 +13,7 @@ import {
   textLimit,
   viewColumnKeys,
   viewDefinitionSchema,
+  viewGroupings,
 } from "./views.ts";
 
 describe("viewDefinitionSchema", () => {
@@ -113,6 +115,15 @@ describe("viewDefinitionSchema", () => {
       viewDefinitionSchema.parse({ retired: false }).retired,
       viewDefinitionSchema.parse({ retired: "yes" }).retired,
     ]).toEqual([true, undefined, undefined]);
+  });
+
+  it("reads a second grouping, dropping one that is not a column's key", () => {
+    expect(
+      viewDefinitionSchema.parse({ grouping: "site", thenBy: "level" }),
+    ).toEqual({ grouping: "site", thenBy: "level" });
+    expect(
+      viewDefinitionSchema.parse({ grouping: "site", thenBy: ["level"] }),
+    ).toEqual({ grouping: "site" });
   });
 
   it("drops filters, sorts, and breakdowns that are not lists or records", () => {
@@ -265,6 +276,12 @@ describe("savedViewRequestSchema", () => {
     ).toBe(false);
   });
 
+  it("accepts a second grouping by a column's key, and refuses anything else for it", () => {
+    expect(request({ grouping: "site", thenBy: "level" }).success).toBe(true);
+    expect(request({ thenBy: ["level"] }).success).toBe(false);
+    expect(request({ thenBy: "" }).success).toBe(false);
+  });
+
   it("refuses a number of frozen columns that is not whole or is negative", () => {
     expect(request({ frozen: 1.5 }).success).toBe(false);
     expect(request({ frozen: -1 }).success).toBe(false);
@@ -283,6 +300,17 @@ describe("savedViewRequestSchema", () => {
   });
 });
 
+describe("viewGroupings", () => {
+  it("names the first grouping, then the one under it, leaving out those not set", () => {
+    expect(viewGroupings({ grouping: "site", thenBy: "level" })).toEqual([
+      "site",
+      "level",
+    ]);
+    expect(viewGroupings({ thenBy: "level" })).toEqual(["level"]);
+    expect(viewGroupings({})).toEqual([]);
+  });
+});
+
 describe("viewColumnKeys", () => {
   it("names each column a view filters, sorts, breaks down, or groups by once", () => {
     expect(
@@ -291,8 +319,9 @@ describe("viewColumnKeys", () => {
         sort: ["-level", "site"],
         breakdown: ["team", "level"],
         grouping: "manager",
+        thenBy: "office",
       }),
-    ).toEqual(["site", "draft", "level", "team", "manager"]);
+    ).toEqual(["site", "draft", "level", "team", "manager", "office"]);
     expect(viewColumnKeys({})).toEqual([]);
   });
 });

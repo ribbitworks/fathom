@@ -129,7 +129,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The rows still show as one list.
   - **Notes:**
 
-- [ ] `4A6D` Select **Group by: None**, then **Cycle**.
+- [ ] `4A6D` Select **Group by**, then **Cycle**.
   - **Expected:**
     - Each heading names the stream and the cycle, such as **Platform: 27.1**.
     - Each heading has how many features it holds.
@@ -416,14 +416,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The headings are still by month.
   - **Notes:**
 
-- [ ] `424C` Select **Group by: Needed by**, then **None**.
+- [ ] `424C` Select **Group by: Needed by**, then **None** under **Group by**.
   - **Expected:**
     - The headings are gone.
     - The rows show as one list.
-    - The button reads **Group by: None**.
+    - The button reads **Group by**, naming no grouping.
   - **Notes:**
 
-- [ ] `E74A` Select **Group by: None**, then **Cycle**.
+- [ ] `E74A` Select **Group by**, then **Cycle**.
   - **Expected:**
     - The headings name cycles again.
     - The last heading is **Later**.
@@ -1153,14 +1153,14 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
     - The Live row of 'Report Builder' under it shows the old cycle.
   - **Notes:**
 
-- [ ] `13D0` Select **Group by: Release**, then **None**.
+- [ ] `13D0` Select **Group by: Release**, then **None** under **Group by**.
   - **Expected:**
     - The headings are gone.
     - The rows show as one list.
-    - The button reads **Group by: None**.
+    - The button reads **Group by**, naming no grouping.
   - **Notes:**
 
-- [ ] `85CC` Select **Group by: None**, then **Cycle**.
+- [ ] `85CC` Select **Group by**, then **Cycle**.
   - **Expected:**
     - The headings name cycles again.
     - The last heading is **Later**.
@@ -1334,6 +1334,6 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
     - 'Scheduler API' is under **No**.
   - **Notes:**
 
-- [ ] `B05C` Select **Group by: Staffed**, then **Cycle**.
+- [ ] `B05C` Select **Group by: Staffed**, then **Cycle** under **Group by**.
   - **Expected:** The last heading is **Later**.
   - **Notes:**

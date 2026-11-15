@@ -204,7 +204,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - Each of the three 'Harbor' headings is followed by a comma, "ships" and a date.
   - **Notes:**
 
-- [ ] `9BF5` Select **Group by: Release**, then **Cycle**.
+- [ ] `9BF5` Select **Group by: Release**, then **Cycle** under **Group by**.
   - **Expected:**
     - The headings name the cycles, such as **Platform: 27.1**.
     - The last heading is **Later**.

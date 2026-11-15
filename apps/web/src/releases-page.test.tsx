@@ -34,6 +34,7 @@ import {
   signedIn,
   streamId,
   testTheme,
+  choiceUnder,
 } from "./test-support.tsx";
 
 afterEach(() => {
@@ -581,9 +582,7 @@ describe("the table of release streams", () => {
     await userEvent.click(
       screen.getByRole("button", { name: "Group by: Status" }),
     );
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Cycle schedule" }),
-    );
+    await userEvent.click(await choiceUnder("Group by", "Cycle schedule"));
     await waitFor(() => {
       expect(history.location.search).toContain("grouping=schedule");
     });

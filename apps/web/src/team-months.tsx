@@ -232,6 +232,7 @@ export function monthGridTable<
     request: () => ({}),
     drafts: () => noDrafts(),
     groupings,
+    oneLevel: true,
   };
 }
 

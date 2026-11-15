@@ -2932,7 +2932,7 @@ describe("searching, sorting, and filtering", () => {
       const leaving = {
         id: v3,
         name: "Leaving soon",
-        missing: { columns: ["End"] },
+        missing: { columns: ["End"], groupings: [] },
       };
 
       it("is listed dimmed under My views, saying what it uses that the role can't see", async () => {

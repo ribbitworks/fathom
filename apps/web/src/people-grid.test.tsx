@@ -827,6 +827,32 @@ describe("managers and teams", () => {
     ]);
   });
 
+  it("groups each manager's people by site under their heading, leaving out sites none of them is at", () => {
+    render(
+      grid({
+        people: people.map((each) =>
+          each.id === "p2" ? { ...each, values: { f1: ["c1"] } } : each,
+        ),
+        fields: [site],
+        lists: [positions, sites],
+        view: { ...emptyView, grouping: "managerId", thenBy: "f1" },
+      }),
+    );
+    expect(
+      screen.getAllByRole("rowheader").map(({ textContent }) => textContent),
+    ).toEqual([
+      "Fictional p1, Harbour Crew2 people",
+      "Harbour1 person",
+      "No site1 person",
+      "Fictional p31 person",
+      "No site1 person",
+      "Fictional p91 person",
+      "No site1 person",
+      "No manager1 person",
+      "No site1 person",
+    ]);
+  });
+
   it("offers Group by Manager, Position, State and added columns of one choice, but not Team", async () => {
     const levels: Field = { ...site, id: "f2", name: "Levels", multiple: true };
     const states: List = {
@@ -836,14 +862,12 @@ describe("managers and teams", () => {
       builtIn: "hiring-states",
     };
     render(grid({ fields: [site, levels], lists: [positions, sites, states] }));
-    await userEvent.click(
-      screen.getByRole("button", { name: "Group by: None" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Group by" }));
     expect(
       (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["✓None, on", "Manager", "Position", "State", "Site"]);
+    ).toEqual(["None, chosen", "Manager", "Position", "State", "Site"]);
   });
 
   it("groups people by an added column's choice, in its list's order, then those with none", () => {
@@ -884,14 +908,12 @@ describe("managers and teams", () => {
         view: { ...emptyView, show: "live" },
       }),
     );
-    await userEvent.click(
-      screen.getByRole("button", { name: "Group by: None" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Group by" }));
     expect(
       (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["✓None, on", "Manager", "Position", "Site"]);
+    ).toEqual(["None, chosen", "Manager", "Position", "Site"]);
   });
 
   it("marks a drafted manager, and the team that follows, with the live ones", () => {

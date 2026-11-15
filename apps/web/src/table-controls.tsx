@@ -50,6 +50,7 @@ import { metricsButtonId, metricsPanelId, metricsTitleId } from "./metrics.ts";
 import { focusSoon } from "./focus.ts";
 import {
   activeGrouping,
+  activeThenBy,
   notGrouped,
   notGroupedLabel,
   type ColumnChoice,
@@ -193,11 +194,16 @@ export function viewParts(
   const widths = widened(view, columns);
   const shownIn = unitsShown(view, columns);
   const hidden = hiddenColumnsOf(view, columns).map(({ label }) => label);
-  // A grouping is named only where the view chooses one other than the table's own.
+  // A grouping is named only where the view chooses one other than the table's own, or one under it.
+  const thenBy = activeThenBy(view, groupings, ungrouped);
+  const first =
+    activeGrouping(view, groupings, ungrouped)?.label ?? notGroupedLabel;
   const grouping =
-    view.grouping === undefined
-      ? undefined
-      : (activeGrouping(view, groupings, ungrouped)?.label ?? notGroupedLabel);
+    thenBy !== undefined
+      ? `${first}, then ${thenBy.label}`
+      : view.grouping === undefined
+        ? undefined
+        : first;
   return [
     ...choiceParts(view, choices),
     ...pageParts(view),
@@ -517,9 +523,9 @@ export function missingWords({ missing }: UnusableView): string[] {
     ...(missing.columns.length === 0
       ? []
       : [`Uses ${allOf(missing.columns)}, which this role can't see.`]),
-    ...(missing.grouping === undefined
+    ...(missing.groupings.length === 0
       ? []
-      : [`Grouped by ${missing.grouping}, which this role can't see.`]),
+      : [`Grouped by ${allOf(missing.groupings)}, which this role can't see.`]),
   ];
 }
 
@@ -1116,42 +1122,92 @@ function DraftFilterItems({
   );
 }
 
-// Chooses what the rows are grouped by, or that they show as one list.
+const noGrouping = { key: notGrouped, label: notGroupedLabel };
+
+// Chooses what the rows are grouped by, or that they show as one list, and, for a table whose rows
+// nest, what they're grouped by under each heading, from the other groupings, in one menu whose
+// button names both. Choosing none, or the second grouping, as the first takes the second away.
 function GroupingMenu({
   groupings,
   ungrouped,
+  nests,
   view,
   onView,
 }: {
   groupings: readonly { key: string; label: string }[];
   ungrouped: boolean;
+  nests: boolean;
   view: View;
   onView: ChangeView;
 }) {
   const inUse = activeGrouping(view, groupings, ungrouped);
-  const none = { key: notGrouped, label: notGroupedLabel };
-  const shown = inUse ?? none;
+  const own = activeGrouping(
+    { ...view, grouping: undefined },
+    groupings,
+    ungrouped,
+  );
   // The view names a grouping only when it isn't the table's own, which the menu lists first.
-  const ownKey = ungrouped ? none.key : groupings[0]?.key;
+  const ownKey = ungrouped ? noGrouping.key : groupings[0]?.key;
+  const offersThenBy = nests && inUse !== undefined;
+  const thenBy = offersThenBy
+    ? activeThenBy(view, groupings, ungrouped)
+    : undefined;
+  const choicesOf = (list: readonly { key: string; label: string }[]) =>
+    list.map(({ key, label }) => ({ value: key, label }));
   return (
     <AppMenu position="bottom-start" hideDetached={false}>
       <AppMenu.Target>
-        <Button variant="default">Group by: {shown.label}</Button>
+        <Button variant="default">
+          Group by
+          {inUse !== undefined && `: ${inUse.label}`}
+          {thenBy !== undefined && `, then ${thenBy.label}`}
+        </Button>
       </AppMenu.Target>
       <AppMenu.Dropdown>
-        {(ungrouped ? [none, ...groupings] : [...groupings, none]).map(
-          ({ key, label }) => (
+        <MenuChoices
+          label={offersThenBy ? "Group by" : undefined}
+          divided={false}
+          choices={choicesOf(
+            ungrouped ? [noGrouping, ...groupings] : [...groupings, noGrouping],
+          )}
+          chosen={(inUse ?? noGrouping).key}
+          onChoose={(key) => {
+            // Kept by a choice on a board too, whose rows take the first grouping alone.
+            const keepsThenBy = key !== noGrouping.key && key !== view.thenBy;
+            onView({
+              ...view,
+              grouping: key === ownKey ? undefined : key,
+              thenBy: keepsThenBy ? view.thenBy : undefined,
+            });
+          }}
+        />
+        {offersThenBy && (
+          <MenuChoices
+            label="Then by"
+            choices={choicesOf([
+              noGrouping,
+              ...groupings.filter(({ key }) => key !== inUse.key),
+            ])}
+            chosen={(thenBy ?? noGrouping).key}
+            onChoose={(key) => {
+              onView({
+                ...view,
+                thenBy: key === noGrouping.key ? undefined : key,
+              });
+            }}
+          />
+        )}
+        {(inUse?.key !== own?.key || thenBy !== undefined) && (
+          <>
+            <Menu.Divider />
             <Menu.Item
-              key={key}
-              leftSection={check(key === shown.key)}
               onClick={() => {
-                onView({ ...view, grouping: key === ownKey ? undefined : key });
+                onView({ ...view, grouping: undefined, thenBy: undefined });
               }}
             >
-              {label}
-              {key === shown.key && <VisuallyHidden>, on</VisuallyHidden>}
+              Clear grouping
             </Menu.Item>
-          ),
+          </>
         )}
       </AppMenu.Dropdown>
     </AppMenu>
@@ -1178,6 +1234,7 @@ export function ViewBar({
   pageParts,
   groupings,
   ungrouped = false,
+  nests = false,
   withDrafts = true,
 }: {
   // What the rows are, one and several, such as "person" and "people".
@@ -1198,6 +1255,8 @@ export function ViewBar({
   // rows are in one list until one is chosen.
   groupings?: readonly { key: string; label: string }[] | undefined;
   ungrouped?: boolean | undefined;
+  // False for rows drawn their own way, such as a board's, or made for their grouping.
+  nests?: boolean;
   // Goes back to the table from the search field.
   onLeave: () => void;
   saved?: SavedViews | undefined;
@@ -1256,6 +1315,7 @@ export function ViewBar({
         <GroupingMenu
           groupings={groupings}
           ungrouped={ungrouped}
+          nests={nests}
           view={view}
           onView={onView}
         />

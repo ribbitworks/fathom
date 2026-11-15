@@ -138,6 +138,25 @@ describe("viewParts of a grouping and a page's choices", () => {
       viewParts({ ...emptyView, grouping: "none" }, [], [], { groupings }),
     ).toEqual([{ name: "Group by", value: "None" }]);
   });
+
+  it("names both groupings, the table's own too, once rows are grouped again under each heading", () => {
+    expect(
+      viewParts({ ...emptyView, grouping: "site", thenBy: "status" }, [], [], {
+        groupings,
+      }),
+    ).toEqual([{ name: "Group by", value: "Site, then Status" }]);
+    expect(
+      viewParts({ ...emptyView, thenBy: "site" }, [], [], { groupings }),
+    ).toEqual([{ name: "Group by", value: "Status, then Site" }]);
+  });
+
+  it("leaves out a second grouping the rows can't be under", () => {
+    expect(
+      viewParts({ ...emptyView, grouping: "none", thenBy: "site" }, [], [], {
+        groupings,
+      }),
+    ).toEqual([{ name: "Group by", value: "None" }]);
+  });
 });
 
 describe("viewParts of hidden columns", () => {
@@ -180,19 +199,30 @@ describe("describeFilter of every value that isn't empty", () => {
 });
 
 describe("missingWords", () => {
-  it("names the columns a view uses that the role can't see, then its grouping", () => {
+  it("names the columns a view uses that the role can't see, then its groupings", () => {
     expect(
       missingWords({
         id: "v1",
         name: "Fictional",
-        missing: { columns: ["Site", "Grade"], grouping: "Manager" },
+        missing: { columns: ["Site", "Grade"], groupings: ["Manager"] },
       }),
     ).toEqual([
       "Uses Site and Grade, which this role can't see.",
       "Grouped by Manager, which this role can't see.",
     ]);
     expect(
-      missingWords({ id: "v1", name: "Fictional", missing: { columns: [] } }),
+      missingWords({
+        id: "v1",
+        name: "Fictional",
+        missing: { columns: [], groupings: ["Manager", "Site"] },
+      }),
+    ).toEqual(["Grouped by Manager and Site, which this role can't see."]);
+    expect(
+      missingWords({
+        id: "v1",
+        name: "Fictional",
+        missing: { columns: [], groupings: [] },
+      }),
     ).toEqual([]);
   });
 });

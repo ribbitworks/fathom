@@ -336,11 +336,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `9652` Read the button after **Metrics** above the table.
   - **Expected:**
-    - It reads **Group by: None**.
+    - It reads **Group by**, naming no grouping.
     - The rows show as one list, with no headings.
   - **Notes:**
 
-- [ ] `6B5A` Select **Group by: None**, then **Manager**.
+- [ ] `6B5A` Select **Group by**, then **Manager**.
   - **Expected:**
     - The button reads **Group by: Manager**.
     - Each heading names a manager, followed by a comma and their team's name where the team has one, such as **Max Munk, Mobile team**.
@@ -360,6 +360,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** Every person shows again, under their manager's heading.
   - **Notes:**
 
-- [ ] `D69D` Select **Group by: Manager**, then **None**.
+- [ ] `D69D` Select **Group by: Manager**, then **None** under **Group by**.
   - **Expected:** The headings are gone, and the rows show as one list.
   - **Notes:**

@@ -421,9 +421,7 @@ describe("the Feature assignments page", () => {
     await waitFor(() => {
       expect(screen.queryByText("No manager")).toBeNull();
     });
-    expect(
-      screen.getByRole("button", { name: "Group by: None" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Group by" })).toBeDefined();
   });
 
   it("marks the months outside someone's employment", async () => {

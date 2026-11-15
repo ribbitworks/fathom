@@ -66,7 +66,7 @@ export function Tick({ chosen }: { chosen: boolean }) {
   );
 }
 
-// A group of choices in a menu, under a label, the chosen one ticked.
+// A group of choices in a menu, under a label where it shares the menu, the chosen one ticked.
 export function MenuChoices<Value extends string>({
   label,
   choices,
@@ -75,7 +75,8 @@ export function MenuChoices<Value extends string>({
   divided = true,
   after,
 }: {
-  label: string;
+  // Left out where the choices are the whole menu, which its button names.
+  label?: string | undefined;
   // Each choice's words, with any marks they carry, such as a draft's dot.
   choices: readonly { value: Value; label: ReactNode }[];
   chosen: Value | undefined;
@@ -89,8 +90,11 @@ export function MenuChoices<Value extends string>({
   return (
     <>
       {divided && <Menu.Divider />}
-      <Menu.Label id={labelId}>{label}</Menu.Label>
-      <div role="group" aria-labelledby={labelId}>
+      {label !== undefined && <Menu.Label id={labelId}>{label}</Menu.Label>}
+      <div
+        role={label === undefined ? undefined : "group"}
+        aria-labelledby={label === undefined ? undefined : labelId}
+      >
         {choices.map((choice) => (
           <Menu.Item
             key={choice.value}

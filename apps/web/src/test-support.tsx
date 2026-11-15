@@ -91,6 +91,13 @@ export function renderApp(path: string) {
   return history;
 }
 
+// The choices in an open menu under a group's label, such as Group by's.
+export const choicesUnder = async (group: string) =>
+  within(await screen.findByRole("group", { name: group }));
+
+export const choiceUnder = async (group: string, choice: string) =>
+  (await choicesUnder(group)).getByRole("menuitem", { name: choice });
+
 // A record's cell in a column of the shared table, in the record's first row.
 export const recordCell = (id: string, columnKey: string) =>
   document.querySelector<HTMLElement>(recordCellSelector(id, columnKey)) ??

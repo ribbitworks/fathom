@@ -119,6 +119,8 @@ export interface View {
   breakdown?: string[] | undefined;
   // Which of a table's groupings the rows are under, when not its first, or notGrouped for one list.
   grouping?: string | undefined;
+  // Which of the table's groupings the rows under each of the first grouping's headings are under.
+  thenBy?: string | undefined;
   // How many columns, from the first, stay in view while the table scrolls sideways, when not the
   // table's own default.
   frozen?: number | undefined;
@@ -171,6 +173,7 @@ export function viewFrom(search: ViewDefinition): View {
     ),
     ...(search.breakdown === undefined ? {} : { breakdown: search.breakdown }),
     ...(search.grouping === undefined ? {} : { grouping: search.grouping }),
+    ...(search.thenBy === undefined ? {} : { thenBy: search.thenBy }),
     ...(search.frozen === undefined ? {} : { frozen: search.frozen }),
     ...(hasKeys(search.order) ? { order: search.order } : {}),
     ...(hasKeys(search.hidden) ? { hidden: search.hidden } : {}),
@@ -322,6 +325,7 @@ export function searchFor(view: View): ViewDefinition {
         }),
     ...(view.breakdown === undefined ? {} : { breakdown: view.breakdown }),
     ...(view.grouping === undefined ? {} : { grouping: view.grouping }),
+    ...(view.thenBy === undefined ? {} : { thenBy: view.thenBy }),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
     ...(hasKeys(view.order) ? { order: view.order } : {}),
     ...(hasKeys(view.hidden) ? { hidden: view.hidden } : {}),
@@ -396,6 +400,19 @@ export function activeGrouping<Grouping extends { key: string }>(
   );
 }
 
+// The grouping a view puts the rows under within each of the first grouping's headings: the one it
+// names, while the rows are grouped by another.
+export function activeThenBy<Grouping extends { key: string }>(
+  view: Pick<View, "grouping" | "thenBy">,
+  groupings: readonly Grouping[] | undefined,
+  ungrouped = false,
+): Grouping | undefined {
+  const first = activeGrouping(view, groupings, ungrouped);
+  return first === undefined || view.thenBy === first.key
+    ? undefined
+    : groupings?.find(({ key }) => key === view.thenBy);
+}
+
 // Whether the view sorts the rows, or sets which columns are frozen, their order, which are hidden,
 // how wide they are, the units and decimal places they are shown in, whether retired records show,
 // or the page's own choices, which the Views menu names and Clear all clears with the filters.
@@ -404,6 +421,7 @@ export function setsApart(view: View): boolean {
     view.sort.length > 0 ||
     view.choices !== undefined ||
     view.grouping !== undefined ||
+    view.thenBy !== undefined ||
     view.frozen !== undefined ||
     view.order !== undefined ||
     view.hidden !== undefined ||
@@ -424,7 +442,7 @@ export function narrows(view: View): boolean {
 
 // The view with only the filters, sorts, and breakdown on columns the table has, and the filters it
 // offers that are not columns, leaving out those on columns the user may not see, such as in a link
-// from someone who may, and with its grouping, frozen columns, retired records and the page's
+// from someone who may, and with its groupings, frozen columns, retired records and the page's
 // choices, and the hidden columns, widths, units, and decimal places of the columns the table has.
 // The breakdown keeps only the columns the metrics offer, when given.
 export function knownView(
@@ -454,6 +472,7 @@ export function knownView(
           ),
         }),
     ...(view.grouping === undefined ? {} : { grouping: view.grouping }),
+    ...(view.thenBy === undefined ? {} : { thenBy: view.thenBy }),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
     ...(view.retired === true ? { retired: true as const } : {}),
     ...(view.choices === undefined ? {} : { choices: view.choices }),
@@ -923,40 +942,71 @@ export type RowGroups = readonly [RowGroup, ...RowGroup[]];
 export const groupedRowId = (groupKey: string, id: string) =>
   `${groupKey} ${id}`;
 
-// A record's row under each group it's in, with the other groups it's in, or its one row while the
-// rows aren't grouped.
+// A record's row under each group it's in, and under each of the groups of the second grouping it's
+// in within it, with the other places it's in, each as the groups it differs in, or its one row
+// while the rows aren't grouped.
 export interface PlacedRow<Rec> {
   record: Rec;
   key: string;
   group?: RowGroup;
-  others?: readonly RowGroup[];
+  subgroup?: RowGroup;
+  others?: readonly OtherPlace[];
+}
+
+// Another place a row's record is in: the groups it differs in from the row's, one or both.
+export interface OtherPlace {
+  group?: RowGroup;
+  subgroup?: RowGroup;
 }
 
 export function placedRows<Rec>(
   records: readonly Rec[],
   groupsOf: ((record: Rec) => RowGroups) | undefined,
   idOf: (record: Rec) => string,
+  subgroupsOf?: (record: Rec) => RowGroups,
 ): PlacedRow<Rec>[] {
   return records.flatMap((record) => {
     const id = idOf(record);
     if (groupsOf === undefined) return [{ record, key: id }];
-    const groups = groupsOf(record);
-    return groups.map((group) => ({
+    const places = groupsOf(record).flatMap((group) =>
+      subgroupsOf === undefined
+        ? [{ group, key: group.key }]
+        : subgroupsOf(record).map((subgroup) => ({
+            group,
+            subgroup,
+            key: groupedRowId(group.key, subgroup.key),
+          })),
+    );
+    return places.map((place) => ({
       record,
-      key: groupedRowId(group.key, id),
-      group,
-      others: groups.filter((other) => other !== group),
+      ...place,
+      key: groupedRowId(place.key, id),
+      others: places
+        .filter((other) => other !== place)
+        .map((other) => apart(place, other)),
     }));
   });
 }
+
+interface RowPlace {
+  group: RowGroup;
+  subgroup?: RowGroup;
+}
+
+const apart = (place: RowPlace, { group, subgroup }: RowPlace): OtherPlace => ({
+  ...(group.key === place.group.key ? {} : { group }),
+  ...(subgroup === undefined || subgroup.key === place.subgroup?.key
+    ? {}
+    : { subgroup }),
+});
 
 // Each record the rows are of, once, in the rows' order.
 export const recordsOf = <Rec>(rows: readonly PlacedRow<Rec>[]): Rec[] => [
   ...new Set(rows.map(({ record }) => record)),
 ];
 
-// The rows of the records shown, by their groups' rank, and within a group in the order the
-// records are shown.
+// The rows of the records shown, by their groups' rank, then their second groups', and within a
+// group in the order the records are shown.
 export function rowsInOrder<Rec>(
   rows: readonly PlacedRow<Rec>[],
   shown: readonly Rec[],
@@ -967,6 +1017,8 @@ export function rowsInOrder<Rec>(
     .filter(({ record }) => place.has(record))
     .sort(
       (a, b) =>
-        (a.group?.rank ?? 0) - (b.group?.rank ?? 0) || placeOf(a) - placeOf(b),
+        (a.group?.rank ?? 0) - (b.group?.rank ?? 0) ||
+        (a.subgroup?.rank ?? 0) - (b.subgroup?.rank ?? 0) ||
+        placeOf(a) - placeOf(b),
     );
 }

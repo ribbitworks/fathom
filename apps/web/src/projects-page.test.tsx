@@ -24,6 +24,7 @@ import {
   renderApp,
   savedFiles,
   serverAnswers,
+  choiceUnder,
 } from "./test-support.tsx";
 import { formatDay } from "./table-view.ts";
 import { operationsOf } from "./projects.ts";
@@ -1707,10 +1708,12 @@ describe("the Features page", () => {
       .map((cell) => cell.textContent)
       .filter((text) => groupHeading.test(text));
   const groupButton = (shown: string) =>
-    screen.getByRole("button", { name: `Group by: ${shown}` });
+    screen.getByRole("button", {
+      name: shown === "None" ? "Group by" : `Group by: ${shown}`,
+    });
   const groupBy = async (shown: string, next: string) => {
     await userEvent.click(groupButton(shown));
-    await userEvent.click(await screen.findByRole("menuitem", { name: next }));
+    await userEvent.click(await choiceUnder("Group by", next));
   };
   const rowNames = () =>
     screen
@@ -2927,7 +2930,11 @@ describe("the Features page", () => {
     await waitFor(() => {
       expect(headings()).toEqual([]);
     });
-    await groupBy("None", "Cycle");
+    // With no grouping, the menu holds Group by's choices alone, under no label.
+    await userEvent.click(groupButton("None"));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Cycle" }),
+    );
     await waitFor(() => {
       expect(headings()).toHaveLength(3);
     });

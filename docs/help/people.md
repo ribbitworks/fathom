@@ -148,12 +148,14 @@ You're done when the counts show under the column you chose.
 
 People starts as one list. You can put the rows under headings instead, such as one for each manager.
 
-1. Select **Group by: None**, after **Metrics**.
+1. Select **Group by**, after **Metrics**.
 1. Choose **Manager**, **Position**, **State**, or a column such as **Site**.
 
 Grouped by manager, each heading names the manager, then their team's name if the team has one. People with no manager come last, under **No manager**. Each heading says how many people it holds.
 
-To show one list again, choose **None** in the same menu. Save a view to keep a grouping you use often. See [Saved views](saved-views.md).
+To group each heading's rows again, such as each manager's people by site, select **Group by** again, and choose a column under **Then by**. The button then names both, such as **Group by: Manager, then Site**. Each manager's heading then has a smaller heading for each site, with that site's people under it. A site with nobody under a manager has no heading there.
+
+To show one list again, choose **Clear grouping**, at the end of the menu, or **None** under **Group by**. Either clears **Then by** too. Save a view to keep a grouping you use often. See [Saved views](saved-views.md).
 
 You're done when the rows show under the headings you chose.
 

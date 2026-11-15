@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A table's view, its search, filters, sort, breakdown, grouping, frozen columns, the order of its
+// A table's view, its search, filters, sort, breakdown, groupings, frozen columns, the order of its
 // columns, those hidden, the widths set for them, the unit and decimal places each column that
 // offers units is shown in, whether its retired records show, and its page's own choices, as the
 // page address holds it and as a saved view keeps it, and the saved views themselves. A saved view
@@ -166,6 +166,7 @@ export const viewDefinitionSchema = z.object({
     ),
   breakdown: looseColumnKeys(breakdownLimit),
   grouping: columnKey.optional().catch(undefined),
+  thenBy: columnKey.optional().catch(undefined),
   frozen: frozen.optional().catch(undefined),
   order: looseColumnKeys(columnsLimit),
   hidden: looseColumnKeys(columnsLimit),
@@ -184,6 +185,8 @@ export interface ViewDefinition {
   sort?: string[] | undefined;
   breakdown?: string[] | undefined;
   grouping?: string | undefined;
+  // The grouping of the rows under each of the first grouping's headings.
+  thenBy?: string | undefined;
   frozen?: number | undefined;
   order?: string[] | undefined;
   hidden?: string[] | undefined;
@@ -208,6 +211,7 @@ const strictDefinitionSchema = z.object({
   sort: z.array(sortLevel).max(levelsLimit).optional(),
   breakdown: columnKeys(breakdownLimit).optional(),
   grouping: columnKey.optional(),
+  thenBy: columnKey.optional(),
   frozen: frozen.optional(),
   order: columnKeys(columnsLimit).optional(),
   hidden: columnKeys(columnsLimit).optional(),
@@ -263,6 +267,12 @@ export function inPlacesOf(
   ];
 }
 
+// The keys of the groupings a view names, the first, then the one under it.
+export const viewGroupings = (definition: ViewDefinition): string[] =>
+  [definition.grouping, definition.thenBy].filter(
+    (key): key is string => key !== undefined,
+  );
+
 // The keys of the columns a view filters, sorts, breaks down, or groups by, and of any filter that
 // is not a column.
 export function viewColumnKeys(definition: ViewDefinition): string[] {
@@ -271,7 +281,7 @@ export function viewColumnKeys(definition: ViewDefinition): string[] {
       ...Object.keys(definition.filters ?? {}),
       ...(definition.sort ?? []).map((level) => level.replace(/^-/, "")),
       ...(definition.breakdown ?? []),
-      ...(definition.grouping === undefined ? [] : [definition.grouping]),
+      ...viewGroupings(definition),
     ]),
   ];
 }
@@ -293,14 +303,14 @@ export const savedViewSchema = z.object({
 
 export type SavedView = z.infer<typeof savedViewSchema>;
 
-// A personal view its maker can no longer apply, since it uses columns, or a grouping, their role
+// A personal view its maker can no longer apply, since it uses columns, or groupings, their role
 // can't see now: sent by name, with what is missing, to be renamed or deleted, never its definition.
 export const unusableViewSchema = z.object({
   id: z.string(),
   name: z.string(),
   missing: z.object({
     columns: z.array(z.string()),
-    grouping: z.string().optional(),
+    groupings: z.array(z.string()),
   }),
 });
 

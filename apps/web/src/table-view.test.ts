@@ -14,6 +14,7 @@ import {
   type RowGroup,
   rowsInOrder,
   activeGrouping,
+  activeThenBy,
   alwaysShowing,
   hiddenColumnsOf,
   shownColumnsOf,
@@ -405,6 +406,10 @@ describe("the view in the page address", () => {
     expect(viewFrom({ grouping: "none" })).toEqual(view({ grouping: "none" }));
     expect(searchFor(view({ grouping: "none" }))).toEqual({ grouping: "none" });
     expect(setsApart(view({ grouping: "none" }))).toBe(true);
+    expect(viewFrom({ thenBy: "site" })).toEqual(view({ thenBy: "site" }));
+    expect(searchFor(view({ thenBy: "site" }))).toEqual({ thenBy: "site" });
+    expect(setsApart(view({ thenBy: "site" }))).toBe(true);
+    expect(knownView(view({ thenBy: "site" }), []).thenBy).toBe("site");
     expect(searchFor(view({ breakdown: ["level", "start"] }))).toEqual({
       breakdown: ["level", "start"],
     });
@@ -1186,8 +1191,8 @@ describe("placing rows under their groups", () => {
 
   it("gives a record a row under each of its groups, each naming the others", () => {
     expect(placedRows(["both"], groupsOf, (record) => record)).toEqual([
-      { record: "both", key: "x both", group: x, others: [y] },
-      { record: "both", key: "y both", group: y, others: [x] },
+      { record: "both", key: "x both", group: x, others: [{ group: y }] },
+      { record: "both", key: "y both", group: y, others: [{ group: x }] },
     ]);
   });
 
@@ -1207,5 +1212,80 @@ describe("placing rows under their groups", () => {
       "x both",
       "y both",
     ]);
+  });
+
+  describe("and under each group's second groups", () => {
+    const [p, q] = [group("p", 0), group("q", 1)];
+    const subgroupsOf = (record: string) =>
+      record === "one" ? ([q] as const) : ([p, q] as const);
+    const place = (records: readonly string[]) =>
+      placedRows(records, groupsOf, (record) => record, subgroupsOf);
+
+    it("gives a record a row under each pair of groups, each with the others' groups it differs in", () => {
+      expect(place(["both"])).toEqual([
+        {
+          record: "both",
+          key: "x p both",
+          group: x,
+          subgroup: p,
+          others: [{ subgroup: q }, { group: y }, { group: y, subgroup: q }],
+        },
+        {
+          record: "both",
+          key: "x q both",
+          group: x,
+          subgroup: q,
+          others: [{ subgroup: p }, { group: y, subgroup: p }, { group: y }],
+        },
+        {
+          record: "both",
+          key: "y p both",
+          group: y,
+          subgroup: p,
+          others: [{ group: x }, { group: x, subgroup: q }, { subgroup: q }],
+        },
+        {
+          record: "both",
+          key: "y q both",
+          group: y,
+          subgroup: q,
+          others: [{ group: x, subgroup: p }, { group: x }, { subgroup: p }],
+        },
+      ]);
+    });
+
+    it("orders the rows by group, then second group, then as the records are shown", () => {
+      expect(
+        rowsInOrder(place(["both", "one"]), ["one", "both"])
+          .filter(({ group }) => group === x)
+          .map(({ key }) => key),
+      ).toEqual(["x p both", "x q one", "x q both"]);
+    });
+  });
+});
+
+describe("which grouping a view uses under each heading", () => {
+  const groupings = [{ key: "cycle" }, { key: "status" }, { key: "size" }];
+
+  it("uses the one the view names under the first", () => {
+    expect(activeThenBy({ thenBy: "status" }, groupings)).toEqual({
+      key: "status",
+    });
+    expect(
+      activeThenBy({ grouping: "size", thenBy: "cycle" }, groupings),
+    ).toEqual({ key: "cycle" });
+  });
+
+  it("uses none when the view names none, or one the table does not have", () => {
+    expect(activeThenBy({}, groupings)).toBeUndefined();
+    expect(activeThenBy({ thenBy: "gone" }, groupings)).toBeUndefined();
+  });
+
+  it("uses none when it is the first grouping, or the rows show as one list", () => {
+    expect(activeThenBy({ thenBy: "cycle" }, groupings)).toBeUndefined();
+    expect(
+      activeThenBy({ grouping: notGrouped, thenBy: "status" }, groupings),
+    ).toBeUndefined();
+    expect(activeThenBy({ thenBy: "status" }, groupings, true)).toBeUndefined();
   });
 });

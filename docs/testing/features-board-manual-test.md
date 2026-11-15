@@ -56,7 +56,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `D5B7` Select **Board** in the Table and Board switch.
   - **Expected:**
-    - The bar above the board holds the search box, **Draft**, **Metrics** and **Group by: None**.
+    - The bar above the board holds the search box, **Draft**, **Metrics** and **Group by**.
     - Under it, one row starts with the buttons **Stream: Platform** and **Card**, then the strip.
     - The board's columns run from left to right, the last headed "Later".
   - **Notes:**
@@ -255,7 +255,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Features** page open, showing Platform's board from the current cycle.
 
-- [ ] `2F2F` Select **Group by: None**.
+- [ ] `2F2F` Select **Group by**.
   - **Expected:**
     - The menu lists, from the top:
       - **None**, ticked

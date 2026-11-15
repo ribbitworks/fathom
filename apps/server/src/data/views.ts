@@ -5,13 +5,13 @@
 // view belongs to one table, and is seen and saved only by those who open the table's page, as its
 // rules in view-tables.ts decide. A personal view is seen and changed only by its maker. Everyone
 // who opens the page sees the table's shared views, except a view that filters, sorts, breaks down,
-// or groups by a column they may not see, or whose grouping needs data they may not see, since its
-// filters, metrics, and headings could reveal values they may not see; its maker is still sent their
-// own personal view, by name and what is missing, to rename or delete. Those who may share views on
-// the table may save shared ones, and share their own personal views or take them back. Only a
-// shared view's maker, or someone who may share views on its table, may change or delete it. Each
-// change is recorded in the change history with the most sensitive class of the view's columns and
-// grouping.
+// or groups by a column they may not see, at either level, or whose grouping needs data they may
+// not see, since its filters, metrics, and headings could reveal values they may not see; its
+// maker is still sent their own personal view, by name and what is missing, to rename or delete.
+// Those who may share views on the table may save shared ones, and share their own personal views
+// or take them back. Only a shared view's maker, or someone who may share views on its table, may
+// change or delete it. Each change is recorded in the change history with the most sensitive class
+// of the view's columns and groupings.
 
 import { changes, type Database, inChunks, savedViews } from "@fathom/db";
 import {
@@ -29,6 +29,7 @@ import {
   type UnusableView,
   viewChoiceSchemas,
   viewColumnKeys,
+  viewGroupings,
   type ViewDefinition,
   viewDefinitionSchema,
   viewScopeSchema,
@@ -104,66 +105,65 @@ function definitionOf(row: Pick<ViewRow, "definition">): ViewDefinition {
 const knows = (table: Table, key: string) =>
   table.columns.open || table.columns.classed.has(key);
 
-const groupingNeed = (table: Table, grouping: string | undefined) =>
-  grouping === undefined
-    ? undefined
-    : rulesOf(table).groupingNeeds?.get(grouping);
+const groupingNeed = (table: Table, grouping: string) =>
+  rulesOf(table).groupingNeeds?.get(grouping);
+
+// Whether the table groups by a key: one of its columns, or a grouping with a need of its own.
+const groups = (table: Table, grouping: string) =>
+  knows(table, grouping) || groupingNeed(table, grouping) !== undefined;
 
 const seesColumn = (actor: Actor, table: Table, key: string) => {
   const column = table.columns.classed.get(key);
   return column === undefined || seesClass(actor.permissions, column.tier);
 };
 
-// The classes a view's columns and grouping are kept in; a deleted column is ignored, as it is in
+// The classes a view's columns and groupings are kept in; a deleted column is ignored, as it is in
 // the page address.
 function usedTiers(
   actor: Actor,
   table: Table,
   definition: ViewDefinition,
 ): Tier[] {
-  const need = groupingNeed(table, definition.grouping);
   return [
     ...viewColumnKeys(definition).flatMap((key) => {
       const column = table.columns.classed.get(key);
       return column === undefined ? [] : [column.tier];
     }),
-    ...(need === undefined ? [] : classesOfView(need.view, actor)),
+    ...viewGroupings(definition).flatMap((grouping) => {
+      const need = groupingNeed(table, grouping);
+      return need === undefined ? [] : classesOfView(need.view, actor);
+    }),
   ];
 }
 
 // What a view uses that the actor may not see: the columns it filters, sorts, or breaks down by,
-// and its grouping, by name.
+// and its groupings, by name.
 function missingFor(
   actor: Actor,
   table: Table,
   definition: ViewDefinition,
 ): UnusableView["missing"] {
-  const { grouping } = definition;
+  const groupings = viewGroupings(definition);
   const unseen = (key: string) => !seesColumn(actor, table, key);
-  const need = groupingNeed(table, grouping);
-  const groupingMissing =
-    grouping !== undefined &&
-    (unseen(grouping) || (need !== undefined && !seesView(need.view, actor)));
   const nameOf = (key: string) =>
     // Only a column with a class, which is named, goes unseen.
     (table.columns.classed.get(key) as { name: string }).name;
   return {
     columns: viewColumnKeys(definition)
-      .filter((key) => key !== grouping && unseen(key))
+      .filter((key) => !groupings.includes(key) && unseen(key))
       .map(nameOf),
-    ...(groupingMissing
-      ? {
-          grouping:
-            need?.name ??
-            // A grouping missing for want of a need's class has a need; any other is a column.
-            nameOf(grouping),
-        }
-      : {}),
+    groupings: groupings.flatMap((grouping) => {
+      const need = groupingNeed(table, grouping);
+      const missing =
+        unseen(grouping) || (need !== undefined && !seesView(need.view, actor));
+      // A grouping missing for want of a need's class has a need; any other is a column.
+      return missing ? [need?.name ?? nameOf(grouping)] : [];
+    }),
   };
 }
 
 const usable = (missing: UnusableView["missing"]) =>
-  missing.columns.length === 0 && missing.grouping === undefined;
+  missing.columns.length === 0 && missing.groupings.length === 0;
 
 const sees = (actor: Actor, table: Table, definition: ViewDefinition) =>
   usable(missingFor(actor, table, definition));
@@ -207,7 +207,7 @@ function widthsSeen(
   );
 }
 
-// The view as a reader is sent it: without filters, sorts, breakdowns, and a grouping on columns
+// The view as a reader is sent it: without filters, sorts, breakdowns, and groupings on columns
 // deleted since it was saved, nor the order, hidden columns, or widths of columns the reader may not
 // see. None of those reveals a value, so a view keeps them for columns others may not see, and for
 // any the table no longer has. Every reader is sent the unit and decimal places each column is shown
@@ -224,7 +224,8 @@ function sentTo(
   const sort = (definition.sort ?? []).filter((level) =>
     known(level.replace(/^-/, "")),
   );
-  const { grouping } = definition;
+  const grouped = (grouping: string | undefined) =>
+    grouping !== undefined && groups(table, grouping) ? grouping : undefined;
   const seen = (key: string) => seesColumn(actor, table, key);
   return stored({
     search: definition.search,
@@ -232,11 +233,8 @@ function sentTo(
     filters: filters.length === 0 ? undefined : Object.fromEntries(filters),
     sort: sort.length === 0 ? undefined : sort,
     breakdown: definition.breakdown?.filter(known),
-    grouping:
-      grouping !== undefined &&
-      (known(grouping) || groupingNeed(table, grouping) !== undefined)
-        ? grouping
-        : undefined,
+    grouping: grouped(definition.grouping),
+    thenBy: grouped(definition.thenBy),
     frozen: definition.frozen,
     order: definition.order?.filter(seen),
     hidden: definition.hidden?.filter(seen),
@@ -293,9 +291,9 @@ export async function readViews(
     .map((row) => toListedView(row, actor, table));
 }
 
-// Refuses a view that filters, sorts, breaks down, or groups by a column the actor may not see, or
-// that the table does not have, whose grouping needs data they may not see, or with choices its
-// page doesn't offer, and returns the most sensitive class it uses. A view may filter on drafts too,
+// Refuses a view that filters, sorts, breaks down, or groups at either level by a column the actor
+// may not see, or that the table does not have, or whose groupings need data they may not see, or
+// with choices its page doesn't offer, and returns the most sensitive class it uses. A view may filter on drafts too,
 // which is General, since each user is sent only the drafts they may see, but not sort or break down
 // by them.
 function requireSeen(
@@ -306,14 +304,11 @@ function requireSeen(
   const unknown = (key: string) => !knows(table, key);
   const filters = Object.keys(definition.filters ?? {});
   const sort = (definition.sort ?? []).map((level) => level.replace(/^-/, ""));
-  const { grouping } = definition;
   if (
     filters.some((key) => unknown(key) && key !== draftFilterKey) ||
     sort.some(unknown) ||
     (definition.breakdown ?? []).some(unknown) ||
-    (grouping !== undefined &&
-      unknown(grouping) &&
-      groupingNeed(table, grouping) === undefined) ||
+    viewGroupings(definition).some((grouping) => !groups(table, grouping)) ||
     !sees(actor, table, definition)
   ) {
     throw new BadRequestError(hiddenColumns);
