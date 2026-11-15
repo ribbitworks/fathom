@@ -3,7 +3,7 @@
 - **ADR:** 0001
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms; 2026-10-27, to time the component evaluation after Hello Fathom; 2026-10-30, to add the proxy container chosen in [ADR 0003](0003-edge-proxy.md); 2026-11-07, to point to releases in [ADR 0011](0011-releases-and-images.md)
+- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms; 2026-10-27, to time the component evaluation after Hello Fathom; 2026-10-30, to add the proxy container chosen in [ADR 0003](0003-edge-proxy.md); 2026-11-07, to point to releases in [ADR 0011](0011-releases-and-images.md); 2026-11-14, to leave backups to whoever runs Fathom and drop one deployment's assumptions
 
 ## Context
 
@@ -13,13 +13,8 @@ Fathom's [Product Brief](../product/brief.md) sets the constraints that drive th
 - **Scale:** Tens of users and a modest amount of data. Simplicity matters more than horizontal scaling.
 - **Front end:** Rich, interactive timeline, Gantt, org chart, and capacity views, with drag-and-drop. The strongest choice of components for these is in the React ecosystem, so every option below uses a React front end.
 - **Security:** Local accounts, role-based access to tiers of data, enforced the same way in screens, exports, snapshots, and search. Personal data is kept out of logs.
-- **Operations:** Snapshots, plus automated, encrypted backups, expected to be run by the team that runs Fathom rather than IT.
-
-The maintainer's preferences:
-
-- **Maintainers:** At first, the maintainer, with technical managers who may help.
-- **Language:** Modern languages. The maintainer dislikes Windows, so development and operations should avoid Windows-specific tooling where the host platform allows.
-- **Database:** PostgreSQL is the maintainer's favourite, with openness to lighter-weight options.
+- **Operations:** Simple to run, with no Windows-specific tooling where the host platform allows.
+- **Maintainers:** A small group, working in modern languages.
 
 ## Options Considered
 
@@ -46,7 +41,7 @@ Go API server, React front end, and PostgreSQL.
 
 ### Other Back Ends
 
-ASP.NET Core and Java are modern, run on Linux, and are common in Windows Server environments. They were not preferred because they also mean two languages alongside a React front end, and they do not match the maintainer's preferences as well.
+ASP.NET Core and Java are modern, run on Linux, and are common in Windows Server environments. They were not preferred because they also mean two languages alongside a React front end.
 
 ### Database Options
 
@@ -55,16 +50,16 @@ ASP.NET Core and Java are modern, run on Linux, and are common in Windows Server
 
 ## Decision
 
-**TypeScript end to end with PostgreSQL**. PostgreSQL is chosen for the maintainer's preference, its mature backup and admin tooling, and room to grow, although SQLite would be viable at this scale.
+**TypeScript end to end with PostgreSQL**. PostgreSQL is chosen for its mature backup and admin tooling, and room to grow, although SQLite would be viable at this scale.
 
 - **Front end:** React and TypeScript, built with Vite. All assets, including fonts, are bundled into the build so nothing loads from the internet.
 - **Back end:** A Node.js API server in TypeScript on a Long Term Support (LTS) release, sharing types and validation schemas with the front end.
 - **Database:** PostgreSQL, accessed through a type-safe ORM or query builder with versioned migrations.
 - **Access control:** Implemented once in the server's data access layer, so every screen, export, snapshot, and search goes through the same tier-based checks.
-- **Transport security:** HTTPS using an internal certificate, since passwords and personal data cross the intranet.
+- **Transport security:** HTTPS, since passwords and personal data cross the network.
 - **Packaging:** Docker Compose with the application and PostgreSQL, and a proxy in front of the application, as chosen in [ADR 0003](0003-edge-proxy.md). The application server also serves the built front end.
-- **Container runtime:** Docker Engine with Compose on servers; on Windows Server it runs inside WSL 2, since Docker Desktop is not supported there and requires a paid subscription for larger companies. Development machines may use any runtime that runs the same containers.
-- **Backups:** A scheduled job runs `pg_dump`, encrypts the output with a public key whose private key is held by someone other than the person running the job, and writes it to an approved location. Restores are tested regularly.
+- **Container runtime:** Docker Engine with Compose on servers. Docker Desktop isn't supported on Windows Server, and requires a paid subscription for larger companies. Development machines may use any runtime that runs the same containers.
+- **Backups:** Left to whoever runs Fathom, as [Securing Your Environment](../operations/securing-your-environment.md#backups) sets out.
 
 Specific libraries (API framework, ORM, Gantt and org chart components, test tools) are chosen in follow-up decisions.
 
@@ -74,7 +69,6 @@ Specific libraries (API framework, ORM, Gantt and org chart components, test too
 - **Dependencies** need active care: Node.js stays on an LTS release, and dependency upgrades are planned rather than ad hoc.
 - **Gantt and timeline components** are the biggest technical risk. Free and commercial options vary widely in features and licensing. Some are GPL-licensed, which would require Fathom, if distributed, to be released under the GPL instead of Apache 2.0. A short evaluation should come before UI work beyond Hello Fathom starts.
 - **Access control** depends on discipline: all data access must go through the shared layer, which the code review standards should check.
-- **Each supported platform** has its own setup needs, which the team operating Fathom will own, as recorded in [Supported Platforms](../operations/supported-platforms.md).
-- **Internet exposure:** The host may have internet access, so Fathom's port must not be exposed to the internet, and its containers must not reach the internet at runtime. Releases are built and published by project scripts, as [ADR 0011](0011-releases-and-images.md) sets out.
+- **Internet exposure:** Fathom's containers must not reach the internet at runtime. Releases are built and published by project scripts, as [ADR 0011](0011-releases-and-images.md) sets out.
 - **Several containers** instead of one, a small operational cost in exchange for PostgreSQL and network isolation.
 - **Python** remains a reasonable alternative if the maintainers are much more comfortable with it than with TypeScript.
