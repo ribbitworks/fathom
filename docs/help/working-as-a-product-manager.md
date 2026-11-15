@@ -1,6 +1,6 @@
 # Working as a Product Manager
 
-As a Product Manager, you shape the plan. That's the projects customers need, the proposals that may become projects, the features they need, and the releases that ship them. You also approve other people's drafts of the plan and releases.
+As a Product Manager, you shape the plan. That's the projects customers need, the proposals that may become projects, the features they need, and the releases that ship them. You also set up schedules' cycles, and approve other people's drafts of the plan, releases and schedules.
 
 ## What to Know First
 
@@ -30,15 +30,17 @@ As a Product Manager, you shape the plan. That's the projects customers need, th
 1. Add each project's milestones. Tick **Customer delivery** on those the customer receives. See [Projects](projects.md#add-a-milestone-to-a-project).
 1. Select **Publish** in the top bar.
 
-## Make a Release
+## Plan Your Schedules' Cycles
 
-1. On **Releases**, open the schedule, and make the release from its cycles. See [Releases](releases.md#make-a-release).
-1. Write what the release ships in its note. See [Releases](releases.md#write-a-releases-note).
-1. To see what it holds, group **Features** by **Release**. See [Features](features.md#group-the-table).
+1. On **Releases**, open the schedule. See [Releases](releases.md#find-and-open-a-schedule).
+1. Change its cycles, such as how long they last. See [Releases](releases.md#change-a-schedules-cycles).
+1. To see what each release holds, group **Features** by **Release**. See [Features](features.md#group-the-table).
 1. Select **Publish** in the top bar.
+
+You can't make or change releases on **Releases** for now. That comes with its **Releases** tab, still to come.
 
 ## Approve Others' Drafts
 
-On the **Drafts** page, under **History**, approve or reject drafts of projects, proposals, features and releases. See [Drafts page](drafts-page.md#approve-drafts).
+On the **Drafts** page, under **History**, approve or reject drafts of projects, proposals, features, releases and schedules. See [Drafts page](drafts-page.md#approve-drafts).
 
 You're done when your features, projects and releases show what's planned, each change approved.

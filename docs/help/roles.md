@@ -54,6 +54,7 @@ You're done when the new role shows in the list.
 
 - **Rows** are the areas: **Plan**, **Features and releases**, **Allocations**, **People**, **Feature teams**, **Hiring plan**, **Configuration** and **Administration**.
 - **Edit** brings **View** with it, so ticking **Edit** ticks **View** too.
+- **Schedules** and their cycles are changed with **Edit** on either **Plan** or **Configuration**, and their drafts approved with **Approve** on either one. Either way, the role must also see schedules, with **View** on **Features and releases** or **Configuration**.
 - **Approve** doesn't let the role see anything. A role can approve a draft only if it sees all the draft's data.
 - **Administration** has no **Approve**, since changes to accounts, roles and settings aren't drafts.
 - Under **Data classification**, **General** comes with every area. You tick **Personal** and **Confidential** on their own.

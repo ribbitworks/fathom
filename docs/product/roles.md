@@ -8,12 +8,12 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 ## Starting Roles
 
 - **Team Member:** Sees the plan and people's General details.
-- **Product Manager:** Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan, approves or rejects drafts of the plan and releases, and sees people's General details and configuration.
+- **Product Manager:** Edits projects, proposals, features, milestones, releases, schedules and their cycles, products, customers, and estimates across the whole plan, approves or rejects drafts of the plan, releases, and schedules, and sees people's General details and configuration.
 - **Feature Lead:** Sees the plan and people's General details, edits features and estimates, and proposes feature teams.
-- **Project Manager:** Edits the plan, sees people with their Personal and Confidential data and the hiring plan, and approves or rejects drafts of the data the role sees, including allocations and feature teams.
-- **Engineering Manager:** Edits the plan and allocations, sees people, with everyone's Personal and Confidential data, the hiring plan, and configuration, and proposes feature teams.
-- **Engineering Director:** Edits and approves the plan, features, allocations, people, feature teams, the hiring plan, and configuration, sees all Personal and Confidential data and moves data between classes, and sees accounts, roles, settings, and the access history without changing them.
-- **Workforce Administrator:** Sees the plan, maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Personal and Confidential data and moves data between classes. Held by Engineering Operations Managers.
+- **Project Manager:** Edits the plan, schedules included, sees people with their Personal and Confidential data and the hiring plan, and approves or rejects drafts of the data the role sees, including allocations and feature teams.
+- **Engineering Manager:** Edits the plan, schedules included, and allocations, sees people, with everyone's Personal and Confidential data, the hiring plan, and configuration, and proposes feature teams.
+- **Engineering Director:** Edits and approves the plan, schedules included, features, allocations, people, feature teams, the hiring plan, and configuration, sees all Personal and Confidential data and moves data between classes, and sees accounts, roles, settings, and the access history without changing them.
+- **Workforce Administrator:** Sees the plan, maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, schedules included, and sees all Personal and Confidential data and moves data between classes. Held by Engineering Operations Managers.
 - **Executive:** Sees the plan, people, with their Personal and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.
 - **Administrator:** Manages user accounts, roles, and system settings, and sees the access history, without access to the plan or people's data.
 

@@ -65,6 +65,7 @@ The threat model groups threats by STRIDE: spoofing, tampering, repudiation, inf
 - **Granting oneself access:** Anyone who manages accounts could give themselves any role, or reset a user's password and sign in as them. Every change to accounts and roles is recorded in the access history, and accounts created, changes to roles, and changes to which roles an account holds are marked for review.
 - **Acting with several roles:** A session acts as one role at a time, with only that role's permissions.
 - **Approving one's own change:** Nobody approves their own change unless their role is given that permission.
+- **Approving under either of two areas:** Drafts of schedules and their cycles are changed with Edit on the plan or on configuration, and approved with Approve on either one, so a role granted either reaches them. One shared rule on the server checks either permission, together with seeing schedules, for every change and decision on them, and tests cover each role allowed and denied.
 - **Escaping a container:** Every container runs as a user other than root, with a read-only filesystem, all Linux capabilities dropped and no privilege escalation. The application's runtime image is distroless.
 - **The database:** Passwords are stored with SCRAM-SHA-256, and the database refuses superuser logins over the network.
 
