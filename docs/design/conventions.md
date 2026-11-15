@@ -84,9 +84,9 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **A risk:** A feature's [Risk](../product/decisions.md#planning) is the word Risk and a segment for each step of its list, green to red by the list's order, filling the space given, lined up under the Size mark. Its value shows on hover, is read aloud, and shows in the panel. Decided by the maintainer on 2026-11-11.
   - **Drawn by:** `RiskMark` in `apps/web/src/planning-marks.tsx`; on the Features Board's cards so far.
   - **Example:** Offline Sync's card on the Features Board.
-- **A coloured name:** A team or release named with its colour is always its name in a box tinted with that colour, never after a coloured dot or square, which reads as a draft's dot. One shared piece draws every coloured name. The Org chart's square before a team's name, and the Releases side panel's square before a release's name, are to move to it. Decided by the maintainer on 2026-11-11.
-  - **Drawn by:** `TeamLabels` in `apps/web/src/team-labels.tsx`, for feature teams and, through `ReleaseBox` in `apps/web/src/feature-board-view.tsx`, the releases in the Features Board's headings; to be renamed for any coloured name.
-  - **Example:** Mobile apps in a month's cell on Feature assignments.
+- **A coloured name:** A team or release named with its colour is the draft's dot, if it has one, then its colour's square, then its name, wherever the name is shown: in tables, details panels, the Features Board's headings, the month grids, menus, pills and timeline labels. No name is shown in a box tinted with its colour, anywhere. Colour as drawing stays: a timeline's spans and diamonds, and a card's top edge. The grey and red boxes of a fact, such as Not staffed, aren't coloured names, and stay. Decided by the maintainer on 2026-11-15.
+  - **Drawn by:** `ColouredName` in `apps/web/src/colour-swatch.tsx`; in a table, a column's `colour` in `apps/web/src/record-grid.tsx`, and in a panel, `Row`'s `colour` in `apps/web/src/record-details.tsx`. The Features Board's headings and the month grids still show `TeamLabels` from `apps/web/src/team-labels.tsx`, in a tinted box, and are to move to it.
+  - **Example:** Mobile apps in the Org chart's list of feature teams.
 
 ## Dates
 
@@ -192,12 +192,18 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 
 ## Details Panels
 
+- **One frame:** Every details panel is drawn in the one side panel frame, its sections spaced the same way by one shared piece, so no panel spaces its own. Decided by the maintainer on 2026-11-15.
+  - **Drawn by:** `SidePanelFrame` in `apps/web/src/side-panel.tsx`, with `DetailSections` in `apps/web/src/record-details.tsx`.
+  - **Example:** any seeded person's details beside People.
 - **Follow the Person panel:** Every record's details follow Person details: the record's name and draft mark at the top; headed sections of rows, each label beside its value while the panel is wide and over it once narrow, the labels in a column as wide as the section's longest, up to half the panel, so none wraps (decided by the maintainer on 2026-11-14); the columns an organization added under Columns. Each value that can be changed has a pencil at its right, named Change and the label, shown while its row is pointed at or has focus, or always on a screen that can't be pointed at; a click anywhere on the row, its label included, does the same, and the row is marked in the hover grey while pointed at. A panel never mixes in another layout, such as labels over form fields. Decided by the maintainer on 2026-11-11; the pencil shown on hover or focus decided on 2026-11-13.
   - **Drawn by:** `RecordSection`, `Row`, `changeButton` and `RecordLink` in `apps/web/src/record-details.tsx`, with `useRecordEditing` in `apps/web/src/record-editing.tsx` for the pencils, and `ValueField` there for a value typed in place, which a scope history's reason for a removal uses too.
   - **Example:** any seeded person's details beside People.
 - **A long note:** A note in a record's details folds to about its first dozen lines, ending in a short fade, with Show more under it opening the note in its own panel, as it reads, read only for those who may not change it. A note that fits shows in full. The note's row has the button for opening beside, a box with its right side marked, shown as a pencil is, in place of a pencil. A panel with no note panel to open, such as a person's details shown for another day, unfolds the note in place with Show more, and folds it again with Show less. Decided by the maintainer on 2026-11-14.
   - **Drawn by:** `FoldedNote` in `apps/web/src/folded-note.tsx`, on Mantine's `Spoiler`, with its fade's height from the theme's `--fathom-note-fade` in `apps/web/src/theme.ts`; the button by `OpenBesideButton` in `apps/web/src/row-controls.tsx`, which tables' details buttons share.
   - **Example:** Jarrod Mante's Onboarding note on People.
+- **A long list:** A list in a record's details, such as a schedule's cycles, folds as a long note does: from where it starts, such as the current cycle, it shows its first few, with Show all (n) under them, which then reads Show less; items before the start fold above it, behind Earlier cycles (n), which then reads Hide earlier cycles. Each control keeps its place and focus, so nothing moves under it. Every fold's control, a long note's Show more included, is a plain link in one small style. Decided by the maintainer on 2026-11-15.
+  - **Drawn by:** `FoldedList` in `apps/web/src/folded-list.tsx`, with the controls' style `foldControl` from `apps/web/src/folded-note.tsx`.
+  - **Example:** a schedule's Cycles in its details on Releases.
 - **Columns follow the panel's order:** A table's default column order follows its details panel's sections and rows, and the other way round, defined once and used by both.
   - **Drawn by:** `featureColumnGroups` in `apps/web/src/project-grids.tsx`.
   - **Example:** Features, whose columns start Name, Status, Description, Notes, as its details' Details section does.
@@ -306,6 +312,15 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 
 ## Tables
 
+- **A blank heading:** A column may show no name in its heading, such as a column of marks whose meaning its values show. It keeps its name for screen readers, its menu, its filters and exports. Decided by the maintainer on 2026-11-15.
+  - **Drawn by:** a column's `headingHidden` in `apps/web/src/record-grid.tsx`.
+  - **Example:** none in the seed yet.
+- **Scroll bars:** Every table, timeline and board scrolls with one style of scroll bar: slim, in the page's greys, and shown whenever there is more to scroll, so a wide view is seen to have more. Decided by the maintainer on 2026-11-15.
+  - **Drawn by:** `scrollBars` in `apps/web/src/pages.module.css`, with its size and colour from the theme's `--fathom-scrollbar-size` and `--fathom-scrollbar-thumb` in `apps/web/src/theme.ts`.
+  - **Example:** on Features, narrow the window until the table scrolls sideways.
+- **Drafts in a table changed elsewhere:** A table whose records are changed outside it, such as in their details panel, as Schedules are, still offers Discard draft and Resubmit in a row's menu for a draft the user may change. A row that stands for its parts' drafts as well as its own discards or resubmits the record's own draft. Decided by the maintainer on 2026-11-15.
+  - **Drawn by:** `RecordGrid`'s `canEditDrafts`, with a table's `ownDraft`, in `apps/web/src/record-grid.tsx`.
+  - **Example:** on Releases' Schedules tab, a schedule drafted to be retired.
 - **A row's controls:** While a table's row is pointed at, or its Name cell has focus, two buttons show at the right of the Name cell: the details button, a box with its right side marked, as the details open beside the table, on a table whose records have details; and a ⋯ that opens the row's menu, so it's in reach without scrolling to the row's end. One row shows them at a time: the row whose menu is open, from its ⋯ or a right-click, else the row pointed at, else the row whose Name cell has focus, decided by the owner on 2026-11-15. The ⋯ at the row's end stays, always shown. A right-click anywhere on the row opens the same menu beside the pointer, except in a cell being typed in, which keeps the browser's own; Shift+F10 and the menu key open it from the keyboard. A record's menu offers Show details, where it has details. There is no row header at the left: the slot before the first value keeps the draft's dot. Decided by the maintainer on 2026-11-13, settling [issue #485](https://github.com/jlarue26/fathom/issues/485).
   - **Drawn by:** `RowControls` and `MoreButton` in `apps/web/src/row-controls.tsx`, placed by `RecordGrid` in `apps/web/src/record-grid.tsx` in the column its table names as `nameColumn`, with the record's details from the table's `showDetails`.
   - **Example:** on People, point at any row, or right-click its Start cell.
