@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/shared/documentation.md", "docs/standards/shared/markdown-style-guidelines.md", "docs/standards/help-pages.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Documentation Standards
@@ -43,4 +43,5 @@ Fathom's additions to the shared [Documentation](shared/documentation.md) standa
 - Help pages (`docs/help/`): how to use each page of Fathom, and the workflows each role does most, for the people who use it, listed in `docs/help/index.md`; a guide that repeats facts the documents above own, kept consistent with them, and updated by every change to the page it covers
 - Securing your environment (`docs/operations/securing-your-environment.md`): what whoever runs Fathom must secure, since Fathom can't
 - Supported platforms (`docs/operations/supported-platforms.md`): the platforms Fathom is tested and supported on, and their setup needs
+- How Fathom is built (`docs/how-fathom-is-built.md`): for outside readers, how Fathom is made and how its quality is checked; a summary that repeats facts the standards, the Security Plan, the data protection summary and the manual tests own, kept consistent with them; and the one home of the AI tool and models used, updated when either changes
 - Data protection summary (`docs/privacy/data-protection.md`): a short list of what safeguards Fathom's data, linking to the documents above that own the facts; update it whenever those facts change

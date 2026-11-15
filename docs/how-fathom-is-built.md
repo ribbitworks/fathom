@@ -1,0 +1,157 @@
+# How Fathom Is Built
+
+AI agents write most of Fathom's code and documents, under a human's direction and review. This page says how that works, and how the quality of what they make is checked. It is for anyone evaluating Fathom: IT and security reviewers, developers, and people deciding whether to run it.
+
+## Quality at a Glance
+
+- **100% test coverage, enforced:** Every tested package fails its tests below 100% of branches, functions, lines and statements. What is left out, and why, is set out under [Coverage](#coverage).
+- **Manual tests that act as requirements:** Each feature has a written manual test of numbered cases with exact expected results, from a person's side. Each role has an acceptance test that follows its daily work. The maintainer has run them all, and runs them again as features change.
+- **Every screen seen by a person:** The maintainer looks at every screen change before it is tested or reviewed.
+- **Every change reviewed twice:** A separate agent reviews each change against written standards, then the maintainer approves each commit, or each batch of fixes, and every merge.
+- **Security checked before every pull request:** Dependency, source code and secret scans run with the tests before each pull request and each later push, and the container images are scanned again whenever what they're built from changes. The scans fail on a fix that is overdue or any other critical or high finding.
+
+## The Maintainer
+
+One maintainer directs Fathom: a software developer, architect and software development manager with decades of experience. The maintainer decides:
+
+- every product decision, and every decision in each design
+- what each screen looks like and how it reads
+- what reaches `main`
+
+No agent decides any of these.
+
+## The Team of Agents
+
+Each agent has one role:
+
+| Agent | Role |
+| --- | --- |
+| Architect | Writes detailed designs, and changes no code unless asked |
+| Two builders | Write the code and its automated tests |
+| Technical writer | Writes the documents, Help pages, manual and acceptance tests, and issues |
+| Test helper | Supports the maintainer's manual and acceptance testing |
+| Coordinator | Plans and assigns work, checks designs against the code, and keeps the record of the maintainer's decisions |
+
+Each agent that works on the repository has its own copy of it, with its own branch, database and ports, as [Development Setup](design/development-setup.md#ways-to-run-fathom) describes. No agent works in another's copy. This keeps one agent's unfinished work from mixing with another's, and lets each run the full tests without disturbing the rest.
+
+## How a Change Is Made
+
+```mermaid
+flowchart TD
+    Design["Design, for anything sizeable"] --> Approve["The maintainer approves the design"]
+    Approve --> Build["Build on a new branch"]
+    Build --> Screens{"Does it change a screen?"}
+    Screens -- Yes --> Check["The maintainer checks the screens"]
+    Screens -- No --> Tests
+    Check --> Tests["Targeted tests and linters"]
+    Tests --> Review["Review by a separate agent"]
+    Review --> Full["Full check: linters, types, tests with coverage, security scans"]
+    Full --> Commit["The maintainer approves the commit"]
+    Commit --> Merge["The maintainer approves the merge"]
+```
+
+1. **Design:** Anything sizeable starts with a written design, checked against the real code. It lists every decision it needs, least certain first. The maintainer approves, changes or rejects each one, often from a mockup of the screen.
+1. **Small pull requests:** Each pull request covers one task, usually in one reviewed commit. A batch of issue fixes in one area commits each fix on its own, has one review and one approval for the whole branch, and stays under about 1,500 added lines, as [Issues](issues.md#issue-batches) sets out.
+1. **The screen check:** The maintainer looks at every screen change, in a browser, before the tests and the review. Nothing goes further until the maintainer is satisfied with the screen.
+1. **Tests while working:** The tests of each package the change touches, and the linters, run while the change is made.
+1. **A separate review:** Another agent, which did not write the change, reviews it against the [Code Review Standards](standards/shared/code-review.md). It rates each focus area from 1 to 5, and the change is ready only when every area rates 5. A faster model may review changes to documents, scripts, on-screen wording and ordinary tests. Anything that touches security, and any change where the choice is in doubt, is reviewed with the full model, as [Code Review Standards § Review Process](standards/code-review.md#review-process) sets out. Every finding is fixed, or the maintainer agrees in writing to leave it.
+1. **The full check:** `pnpm check` runs before the pull request and before each later push to it, on the final code: the linters, type checks, the unit, integration, access control, security and script tests with coverage, and the security scans. A change that affects the containers also runs the container tests.
+1. **Approval and merge:** The maintainer approves each commit before it is made. Nothing is merged without the maintainer's word.
+
+Duplicated code isn't allowed: a new component, helper or rule first looks for one that already does the job, and the review searches for one too. Only the maintainer can approve an exception.
+
+Automated tests and scans don't yet run on GitHub for each pull request; they run in each copy of the repository with `pnpm check` before the pull request opens. GitHub runs the daily scan of the container images, and publishes a release's images when the maintainer starts it.
+
+## The Standards
+
+Every change follows written standards, kept in [docs/standards](standards/):
+
+- **Shared standards:** core principles, TypeScript, shell scripts, testing, documentation, Markdown style, code review, and how agents work. Several projects share these.
+- **Fathom's own:** additions for testing, code review, documentation and Help pages.
+
+A few things they demand:
+
+- **SOLID:** a review rates each of the five SOLID principles on its own.
+- **Strict TypeScript:** no `any`, no non-null assertions outside tests, and every union handled in full, so a new case fails to compile until each place that needs it does.
+- **Validated input:** data from outside the program, such as a request, is checked against a schema before use.
+- **Comments only for why:** names say what code does; a comment says only what the code can't.
+- **A header on every file,** with its licence, checked by `pnpm check`.
+- **Documents kept current:** a change updates every document it makes untrue, in the same change.
+
+## Testing
+
+### Automated Tests
+
+More than 4,500 automated tests run at every level:
+
+- **Unit tests** for rules, calculations and validation.
+- **Integration tests** of the API and the data layer, against a real PostgreSQL database.
+- **Access control tests:** every API route is tested signed out, with every permission but those it needs, and with only those it needs. A new route fails the tests until it is listed. The [Testing Standards](standards/testing.md#access-control-tests) set out the rest.
+- **Security tests** for injection, sessions, request forgery, rate limiting, the access history, and personal values kept out of logs.
+- **Container tests** that check, from inside the application and database containers, that they can't reach the internet. These run with `pnpm test:containers`.
+- **Script tests** for the automation scripts.
+
+### Coverage
+
+The test command fails below 100% of branches, functions, lines and statements in each of these:
+
+- the server, `apps/server/vitest.config.ts`
+- the web app, `apps/web/vite.config.ts`
+- the shared package, `packages/shared/vitest.config.ts`
+- the database package, `packages/db/vitest.config.ts`
+- the seed data generator, `packages/seed/vitest.config.ts`
+- the fictional records package, `packages/fixtures/vitest.config.ts`
+
+What is left out, as [Testing Standards § Coverage Enforcement](standards/testing.md#coverage-enforcement) allows:
+
+- **Files that only start a program or serve the tests,** such as the server's `main.ts` and the web app's `main.tsx`, named in each package's settings. The parts they put together are tested.
+- **Lines marked `/* v8 ignore */`,** each with its reason written beside it. There are four today, each the few lines that start a command when it runs as its own process, where the tests call the command's function instead.
+- **Code outside the packages:** the automation scripts have their own tests, and the test helper package serves only tests.
+
+Logic, validation, access checks and data handling are never left out, and the review judges each exclusion.
+
+### Manual and Acceptance Tests
+
+Automated tests can't judge how a screen looks and reads, a journey across pages and accounts, or the keyboard. Manual tests cover those, and only those:
+
+- **Feature tests:** each feature has one in [docs/testing](testing/), written as numbered cases, each with one action per step and its exact expected result. Each doubles as the feature's requirements: what it must do, step by step, from a person's side.
+- **Acceptance tests:** each role has one in [docs/testing/acceptance](testing/acceptance/), following the workflows of its [Help page](help/index.md) as that person would do them.
+- **Run by the maintainer:** the maintainer has run every one, and runs them again as features change. The marked copies of each run are kept privately.
+
+Together they hold about 340 test cases. They leave out what automated tests already prove, such as each validation message, so each runs in about 30 minutes.
+
+## Data and Security
+
+- **Data classes:** every list and column is General, Personal or Confidential, and the server never sends a value a role can't see, as [How Data Is Safeguarded](privacy/data-protection.md) sets out.
+- **Two histories:** the access history records sign-ins, changes to accounts, roles and data classes, exports of Personal or Confidential data, and views of Personal and Confidential data, at most once a day for each person. The change history records every change to the plan, people and configuration, with who made it and when. The database refuses Fathom any change to the access history, and the change history can only be added to, apart from marking a change published.
+- **Fictional data only:** the seed data and test data are made up by a generator with a fixed seed. No real data is ever put in the repository, its issues or its pull requests.
+- **Security plan:** the [Security Plan](security/security-plan.md) holds the threat model, the scans and their fix times, and how the source code is assured. A change that adds data, a way in, a role or a dependency updates it in the same change.
+- **Your environment:** [Securing Your Environment](operations/securing-your-environment.md) says what whoever runs Fathom must secure.
+
+## Decisions Are Written Down
+
+Each kind of decision has one home, so nothing is decided twice or lost:
+
+- [Decisions Log](product/decisions.md): product decisions and their details
+- [Architecture Decision Records](adr/): technical decisions, each with the options considered
+- [UI Conventions](design/conventions.md): what every screen shares
+- [Visual Design](design/visual-design.md): how screens look and behave
+
+[Documentation Standards](standards/documentation.md#which-document-owns-what) lists which document owns which facts.
+
+## What AI Does and Doesn't Do
+
+- **It does:** draft designs, write code, tests and documents, and review each other's work.
+- **It doesn't:** decide what Fathom is, approve its own work, or merge anything without the maintainer's word.
+
+Commits, pull requests, code and other documents carry no AI attribution. How AI is used is stated here instead, once, for the whole project, as the [Decisions Log](product/decisions.md#platform-and-operations) records under How AI is credited.
+
+## Open Source and the Tools
+
+Fathom is licensed under Apache 2.0, and the libraries it uses are open source, as [ADR 0001](adr/0001-tech-stack.md) and [ADR 0002](adr/0002-libraries.md) record. ### The Agents' Tools
+
+The agents run in Claude Code, Anthropic's coding tool. Today, they use these models:
+
+- **Claude Opus 5.5 for the agents' own work:** designs, code, tests, documents and coordination.
+- **Claude Opus 5.5 for full reviews:** anything that touches security, and any change where the choice is in doubt.
+- **Claude Sonnet 5.5 for faster reviews:** changes to documents, scripts, on-screen wording and ordinary tests.

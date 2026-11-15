@@ -149,3 +149,4 @@ Automate every repeatable setup, development, and operations task with a script 
 - Code review process: [Code Review Standards](docs/standards/shared/code-review.md), with Fathom's additions in [docs/standards/code-review.md](docs/standards/code-review.md)
 - Testing rules: [Testing Standards](docs/standards/shared/testing.md), with Fathom's additions in [docs/standards/testing.md](docs/standards/testing.md)
 - Help pages: [Help Page Standards](docs/standards/help-pages.md)
+- One exception to [No AI Attribution](#no-ai-attribution): [How Fathom Is Built](docs/how-fathom-is-built.md) names the AI tool and the models used, as the [Decisions Log](docs/product/decisions.md#platform-and-operations) records under How AI is credited. No other document, commit or pull request names them

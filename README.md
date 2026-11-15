@@ -20,6 +20,8 @@ Early development. Fathom isn't ready for production use, and it isn't accepting
 
 The tech stack is recorded in [ADR 0001](docs/adr/0001-tech-stack.md), and Fathom is being built slice by slice, as described in the [Implementation Plan](docs/design/implementation-plan.md).
 
+AI agents write most of Fathom's code and documents, under the maintainer's direction and review: see [How Fathom Is Built](docs/how-fathom-is-built.md).
+
 ## Getting Started
 
 You need a running container runtime, such as [Docker Engine](https://docs.docker.com/engine/install/), [Colima](https://github.com/abiosoft/colima#installation) or [Podman](https://podman.io/docs/installation), and [mkcert](https://github.com/FiloSottile/mkcert#installation). [Supported Platforms](docs/operations/supported-platforms.md#development-platforms) lists the runtimes used for development. Then run the bootstrap script, which installs everything else:

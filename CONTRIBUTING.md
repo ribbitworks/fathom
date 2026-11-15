@@ -4,7 +4,7 @@ Thank you for your interest in Fathom. It is in early development, and it isn't 
 
 ## Pull Requests
 
-Pull requests from outside the project are closed without review. This isn't a judgement of the work: while Fathom's design is still settling, the maintainer keeps every change on one path, from design to review, as the [Agent Workflow](docs/standards/shared/agent-workflow.md) describes.
+Pull requests from outside the project are closed without review. This isn't a judgement of the work: while Fathom's design is still settling, the maintainer keeps every change on one path, from design to review, as the [Agent Workflow](docs/standards/shared/agent-workflow.md) describes. [How Fathom Is Built](docs/how-fathom-is-built.md) explains that path.
 
 ## Issues and Questions
 
