@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Notes: rich text kept as Markdown, as the Decisions Log sets out, in the server and the browser
-// alike. A note holds paragraphs, headings three levels deep, and bullet or checkbox lists of text
-// that may be bold, italic, struck through, inline code, a web link, or coloured from a fixed
-// palette, the one thing Markdown cannot say, written as <span data-colour="teal">…</span>.
+// alike. A note holds paragraphs, headings three levels deep, and bullet, checkbox or numbered
+// lists, counting from 1. Their text may be bold, italic, struck through, inline code, a web link,
+// or coloured from a fixed palette, the one thing Markdown cannot say, written as
+// <span data-colour="teal">…</span>.
 // Anything else is refused when a note is saved, and removed when one is typed or pasted. Notes are
 // parsed and written by remark, with GitHub's Markdown, so no Markdown or HTML is parsed by hand.
 
@@ -129,11 +130,16 @@ function inlineProblem(children: readonly Nodes[]): string | undefined {
 const hasCheckbox = (item: ListItem) =>
   item.checked !== null && item.checked !== undefined;
 
-// Why a list is not allowed in a note, if it is not: bullets, every item with a checkbox or none,
-// and items holding paragraphs and lists.
+// Why a list is not allowed in a note, if it is not: bullets or numbers from 1, every bullet item
+// with a checkbox or none, and items holding paragraphs and lists.
 function listProblem(list: List): string | undefined {
-  if (list.ordered === true) return "A note's lists have bullets, not numbers.";
   const checkboxes = list.children.filter(hasCheckbox).length;
+  if (list.ordered === true && checkboxes !== 0) {
+    return "A numbered list's items can't have checkboxes.";
+  }
+  if (list.ordered === true && list.start !== 1) {
+    return "A note's numbered lists start at 1.";
+  }
   if (checkboxes !== 0 && checkboxes !== list.children.length) {
     return "A list's items must all have checkboxes, or none.";
   }
@@ -266,8 +272,10 @@ function cleanBlocks(
           : [{ type: "heading", depth, children }];
       }
       case "list": {
-        // A list with any checkbox gives every item one, unticked where it had none.
+        // A list with any checkbox gives every item one, unticked where it had none, and has
+        // bullets, since checkboxes are never numbered. A numbered list starts at 1.
         const checkboxes = node.children.some(hasCheckbox);
+        const ordered = node.ordered === true && !checkboxes;
         const items = node.children.flatMap((item): ListItem[] => {
           // Cleaning keeps only paragraphs and lists inside lists, which a list item may hold.
           const children = cleanBlocks(
@@ -288,7 +296,15 @@ function cleanBlocks(
         });
         return items.length === 0
           ? []
-          : [{ type: "list", ordered: false, spread: false, children: items }];
+          : [
+              {
+                type: "list",
+                ordered,
+                ...(ordered ? { start: 1 } : {}),
+                spread: false,
+                children: items,
+              },
+            ];
       }
       case "code":
         return paragraph([text(node.value)]);

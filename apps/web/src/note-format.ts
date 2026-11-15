@@ -11,7 +11,7 @@ import {
   webAddress,
 } from "@fathom/shared";
 import { getTaskListExtension } from "@mantine/tiptap";
-import { Mark, mergeAttributes } from "@tiptap/core";
+import { Mark, mergeAttributes, wrappingInputRule } from "@tiptap/core";
 import Bold from "@tiptap/extension-bold";
 import Code from "@tiptap/extension-code";
 import Document from "@tiptap/extension-document";
@@ -23,6 +23,8 @@ import {
   BulletList,
   ListItem,
   ListKeymap,
+  OrderedList,
+  orderedListInputRegex,
   TaskItem,
   TaskList,
 } from "@tiptap/extension-list";
@@ -65,8 +67,22 @@ const NoteColourMark = Mark.create({
   },
 });
 
+// A numbered list always counts from 1 in plain numbers, as notes keep it, whatever number or
+// style it is typed or pasted with.
+const NoteOrderedList = OrderedList.extend({
+  addAttributes: () => ({
+    start: { default: 1, parseHTML: () => 1, renderHTML: () => ({}) },
+  }),
+  addInputRules() {
+    return [
+      wrappingInputRule({ find: orderedListInputRegex, type: this.type }),
+    ];
+  },
+});
+
 // A list item holds paragraphs and lists, never headings.
-const itemContent = "paragraph (paragraph | bulletList | taskList)*";
+const itemContent =
+  "paragraph (paragraph | bulletList | orderedList | taskList)*";
 
 // Only the formats notes allow, and links only to web addresses.
 export const noteExtensions = [
@@ -87,6 +103,7 @@ export const noteExtensions = [
   Strike,
   Code,
   BulletList,
+  NoteOrderedList,
   ListItem.extend({ content: itemContent }),
   getTaskListExtension(TaskList),
   TaskItem.configure({ nested: true }).extend({ content: itemContent }),
@@ -116,6 +133,7 @@ export const shownOnly: Options = {
     "code",
     "a",
     "ul",
+    "ol",
     "li",
     "input",
     "span",

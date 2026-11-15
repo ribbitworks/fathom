@@ -235,7 +235,7 @@ describe("people's notes", () => {
 
   it.each([
     ["a heading four levels deep", "#### A heading"],
-    ["a numbered list", "1. First"],
+    ["a numbered list not starting at 1", "3. Third"],
     ["HTML", "<b>Bold</b>"],
     ["a colour not in the palette", '<span data-colour="plaid">Odd</span>'],
     ["a link that is not a web address", "[Run](javascript:alert(1))"],
@@ -249,11 +249,11 @@ describe("people's notes", () => {
     expect(response.json()).toEqual({ error: noteProblem(note) });
   });
 
-  it("keeps headings and checkboxes", async () => {
+  it("keeps headings, checkboxes and numbered lists", async () => {
     const { cookie } = await editor();
     const field = await noteColumn(cookie);
     const id = await addedId(cookie);
-    const note = "# Plans\n\n- [ ] Open\n- [x] Done";
+    const note = "# Plans\n\n- [ ] Open\n- [x] Done\n\n1. First\n   - Inner";
     const response = await send(cookie, "PATCH", `/api/people/${id}`, {
       notes: { [field.id]: note },
     });

@@ -795,7 +795,7 @@ describe("release notes", () => {
     ["HTML", "<script>alert(1)</script>"],
     ["an image", "![Fictional](https://example.com/a.png)"],
     ["a link to something but a web address", "[Run](javascript:alert(1))"],
-    ["a numbered list", "1. First"],
+    ["a numbered list not starting at 1", "3. Third"],
     ["a colour off the palette", '<span data-colour="beige">Beige</span>'],
     ["more than notes may hold", "a".repeat(10_001)],
   ])("refuse a note holding %s, drafting nothing", async (_what, note) => {

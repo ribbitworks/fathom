@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings and checkboxes look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, or any value in a choice column, and a long note folded in a person's details and read in full on Releases.
+Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings, checkboxes and numbered lists look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, or any value in a choice column, and a long note folded in a person's details and read in full on Releases.
 
 ## Test Environment
 
@@ -37,7 +37,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 - **Background cell:** the cell in a person's row under the **Background** column, which NOTE-01 adds at the right end of the People table; scroll right to reach it.
 - **Panel:** the side panel that opens beside the table from a **Background** cell, headed **Background**.
-- **Toolbar:** the row of buttons above the text in the panel's editor, for headings 1 to 3, bold, italic, strikethrough, code, colour, bullet list, checkbox list, link, and removing a link.
+- **Toolbar:** the row of buttons above the text in the panel's editor, for headings 1 to 3, bold, italic, strikethrough, code, colour, bullet list, numbered list, checkbox list, link, and removing a link.
 
 ## Test Cases
 
@@ -341,7 +341,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The heading and bold stay.
     - Highlighting and the image are gone.
-    - The numbered list becomes a bullet list.
+    - The numbered list stays numbered, counting from 1.
     - What is left reads sensibly.
   - **Notes:**
 
@@ -629,4 +629,76 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `FAB9` Scroll the **Harbor 3** panel to the middle of the note.
   - **Expected:** The toolbar stays in sight at the top, on a plain background, with no text showing through it.
+  - **Notes:**
+
+### NOTE-08: A Numbered List Holds Another List
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from NOTE-07.
+
+**Preconditions:** Signed in with this account. **People** page open, with `Lilian Lang` searched for.
+
+- [ ] `4E5F` Select the **Background** cell of 'Lilian Lang'.
+  - **Expected:**
+    - The panel opens.
+    - **Editor** is chosen.
+    - The note is empty.
+  - **Notes:**
+
+- [ ] `0D90` Select the numbered list button in the toolbar.
+  - **Expected:** `1.` shows at once at the start of the line.
+  - **Notes:**
+
+- [ ] `2DAC` Type `Sign the contract`, and press Enter.
+  - **Expected:** A line starting with `2.` starts under `Sign the contract`.
+  - **Notes:**
+
+- [ ] `2391` Press Tab.
+  - **Expected:**
+    - The line moves in, under `Sign the contract`.
+    - It starts with `1.`.
+  - **Notes:**
+
+- [ ] `9EC1` Select the bullet list button in the toolbar.
+  - **Expected:**
+    - The line's `1.` becomes a bullet.
+    - The line stays moved in.
+  - **Notes:**
+
+- [ ] `CD63` Type `Collect the laptop`, and press Enter twice.
+  - **Expected:**
+    - The cursor is on a line starting with `2.`.
+    - The line is not moved in.
+  - **Notes:**
+
+- [ ] `DA29` Type `Meet the team`.
+  - **Expected:** The line reads `2. Meet the team`.
+  - **Notes:**
+
+- [ ] `C6DD` Select **Note** at the top of the panel.
+  - **Expected:**
+    - The note reads, from the top:
+      - `1. Sign the contract`
+      - a bullet `Collect the laptop`, moved in under it
+      - `2. Meet the team`
+    - The numbers line up with their text, as the bullets do.
+  - **Notes:**
+
+- [ ] `ECF1` Select **Markdown**.
+  - **Expected:**
+    - The note shows as Markdown text, reading, from the top:
+      - `1. Sign the contract`
+      - `- Collect the laptop`, moved in
+      - `2. Meet the team`
+  - **Notes:**
+
+- [ ] `BB5B` Select **Cancel**.
+  - **Expected:**
+    - A dialog asks "Discard changes to the note?".
+    - It offers **Keep writing** and **Discard**.
+  - **Notes:**
+
+- [ ] `D2A8` Select **Discard**.
+  - **Expected:**
+    - The panel closes.
+    - The cell of 'Lilian Lang' is still empty.
   - **Notes:**

@@ -34,13 +34,24 @@ const view = (note: string) =>
 describe("a note as it reads", () => {
   it("shows each format notes allow", () => {
     const shown = view(
-      `**Bold** _italic_ ~~struck~~ \`code\` [Site](https://example.com/) ${teal}teal</span>\n\n- One`,
+      `**Bold** _italic_ ~~struck~~ \`code\` [Site](https://example.com/) ${teal}teal</span>\n\n- One\n\n1. First`,
     );
     expect(
-      [...shown.querySelectorAll("strong, em, del, code, a, span, li")].map(
-        (element) => element.tagName.toLowerCase(),
-      ),
-    ).toEqual(["strong", "em", "del", "code", "a", "span", "li"]);
+      [
+        ...shown.querySelectorAll("strong, em, del, code, a, span, ul, ol, li"),
+      ].map((element) => element.tagName.toLowerCase()),
+    ).toEqual([
+      "strong",
+      "em",
+      "del",
+      "code",
+      "a",
+      "span",
+      "ul",
+      "li",
+      "ol",
+      "li",
+    ]);
     const link = screen.getByRole("link", { name: "Site" });
     expect([link.getAttribute("target"), link.getAttribute("rel")]).toEqual([
       "_blank",
@@ -49,6 +60,11 @@ describe("a note as it reads", () => {
     expect(shown.querySelector("span")?.getAttribute("style")).toBe(
       "color: var(--mantine-color-teal-text);",
     );
+  });
+
+  it("shows a numbered list counting from 1, in plain numbers", () => {
+    const list = view("1. One\n2. Two").querySelector("ol");
+    expect(list?.getAttributeNames()).toEqual([]);
   });
 
   it.each([
@@ -248,6 +264,38 @@ describe("the note panel", () => {
     expect(boxes().map((box) => box.checked)).toEqual([true, true]);
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(onSave).toHaveBeenCalledWith("- [x] Open\n- [x] Done");
+  });
+
+  it("names a checkbox by its own item's words, not those of a list inside it", async () => {
+    sheet("- [ ] Open\n  1. Inner\n  - Bullet");
+    await screen.findByRole("button", { name: "Close note" });
+    expect(screen.getByRole("checkbox", { name: "Open" })).toBeDefined();
+  });
+
+  it("makes a numbered list counting from 1, whatever number is typed", async () => {
+    const { onSave } = sheet("");
+    const content = await screen.findByRole("textbox", { name: "Note" });
+    act(() => {
+      content.focus();
+    });
+    await userEvent.keyboard("3. Third");
+    expect(content.querySelector("ol")?.getAttributeNames()).toEqual([]);
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith("1. Third");
+  });
+
+  it.each([
+    ["Numbered list", "1. Step"],
+    ["Checkbox list", "- [ ] Step"],
+  ])("makes a list from the toolbar's %s button", async (button, written) => {
+    await editing("Step");
+    const content = await screen.findByRole("textbox", { name: "Note" });
+    act(() => {
+      content.focus();
+    });
+    await userEvent.click(screen.getByRole("button", { name: button }));
+    await userEvent.click(screen.getByText("Markdown"));
+    expect((markdownBox() as HTMLTextAreaElement).value).toBe(written);
   });
 
   it("reads a note kept in another form of Markdown as unchanged", async () => {
@@ -459,10 +507,11 @@ describe("pasting into the editor", () => {
     const editor = new Editor({
       extensions: noteExtensions,
       content:
-        '<h1>Heading</h1><h5>Deep</h5><p><b>Bold</b> <mark>marked</mark> <span data-colour="sea">sea</span> <span data-colour="teal">teal</span> <span style="color: red">red</span> <a href="javascript:alert(1)">run</a> <a href="https://example.com/">site</a><img src="x" onerror="alert(1)"></p><script>alert(1)</script><ol><li>One</li></ol>',
+        '<h1>Heading</h1><h5>Deep</h5><p><b>Bold</b> <mark>marked</mark> <span data-colour="sea">sea</span> <span data-colour="teal">teal</span> <span style="color: red">red</span> <a href="javascript:alert(1)">run</a> <a href="https://example.com/">site</a><img src="x" onerror="alert(1)"></p><script>alert(1)</script><ol start="3" type="a" style="list-style-type: lower-roman"><li>One<ul><li>Inner</li></ul></li></ol>',
     });
+    expect(editor.getHTML()).toContain("<ol><li>");
     expect(docToNote(editor.getJSON())).toBe(
-      `# Heading\n\n### Deep\n\n**Bold** marked sea ${teal}teal</span> red run [site](https://example.com/)\n\n- One`,
+      `# Heading\n\n### Deep\n\n**Bold** marked sea ${teal}teal</span> red run [site](https://example.com/)\n\n1. One\n   - Inner`,
     );
     editor.destroy();
   });

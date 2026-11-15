@@ -24,7 +24,7 @@ describe("a note", () => {
   it("may hold every format notes allow", () => {
     expect(
       noteProblem(
-        `Plain **bold** _italic_ ~~struck~~ \`code\` [site](https://example.com/) ${teal}teal **bold**</span>\\\nnext line\n\n# One\n\n## Two\n\n### Three\n\n- one\n  - nested\n- two\n\nTasks\n\n- [ ] open\n- [x] done\n  - [ ] nested`,
+        `Plain **bold** _italic_ ~~struck~~ \`code\` [site](https://example.com/) ${teal}teal **bold**</span>\\\nnext line\n\n# One\n\n## Two\n\n### Three\n\n- one\n  - nested\n- two\n\nTasks\n\n- [ ] open\n- [x] done\n  - [ ] nested\n\nSteps\n\n1. first\n   - bullet\n2. second\n   1. nested\n3. third\n   - [ ] task`,
       ),
     ).toBeUndefined();
   });
@@ -47,7 +47,9 @@ describe("a note", () => {
       "[Site][site]\n\n[site]: https://example.com/",
       "A note can't hold reference links.",
     ],
-    ["1. One", "A note's lists have bullets, not numbers."],
+    ["3. One\n4. Two", "A note's numbered lists start at 1."],
+    ["- One\n\n  0. Inner", "A note's numbered lists start at 1."],
+    ["1. [ ] Task", "A numbered list's items can't have checkboxes."],
     [
       "- [ ] Task\n- Plain",
       "A list's items must all have checkboxes, or none.",
@@ -102,7 +104,11 @@ describe("cleaning a note", () => {
     ["- [ ] Open\n-", "- [ ] Open"],
     ["- Item\n-", "- Item"],
     ["-", ""],
-    ["1. One\n2. Two", "- One\n- Two"],
+    ["1. One\n2. Two", "1. One\n2. Two"],
+    ["3) One\n4) Two", "1. One\n2. Two"],
+    ["- One\n\n  5. Inner", "- One\n  1. Inner"],
+    ["1. [x] Done\n2. Plain", "- [x] Done\n- [ ] Plain"],
+    ["1. One\n   -", "1. One"],
     ["- [x] Done", "- [x] Done"],
     ["```\ncode\n```", "code"],
     ["![Picture](https://example.com/a.png) text", "Picture text"],

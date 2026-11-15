@@ -20,6 +20,7 @@ const notes = [
   "",
   "\\<script> and \\*not bold\\*",
   "# One\n\n## Two\n\n### Three\n\n- [ ] Open\n- [x] Done\n  - [ ] Nested",
+  "1. One\n   - Bullet\n2. Two\n   1. Nested\n\n- [ ] Open\n  1. Inside",
 ];
 
 const text = (value: string, marks?: { type: string }[]) => ({
@@ -85,6 +86,25 @@ describe("a note in the editor", () => {
         }),
       ),
     ]).toEqual(["- [x] Met", ""]);
+  });
+
+  it("holds a numbered list as the editor names it, and writes one from 1, whatever it starts at", () => {
+    const item = (words: string) => ({
+      type: "listItem",
+      content: [{ type: "paragraph", content: [text(words)] }],
+    });
+    expect(noteToDoc("1. One").content).toEqual([
+      { type: "orderedList", content: [item("One")] },
+    ]);
+    expect(
+      docToNote(
+        doc({
+          type: "orderedList",
+          attrs: { start: 3 },
+          content: [item("Three"), item("Four")],
+        }),
+      ),
+    ).toBe("1. Three\n2. Four");
   });
 
   it("gives an empty list item an empty paragraph", () => {

@@ -106,14 +106,18 @@ function blocks(nodes: readonly (RootContent | BlockContent)[]): JSONContent[] {
       ];
     }
     // A kept note holds only paragraphs, headings, and lists, whose items all have checkboxes or
-    // none.
+    // none, and numbered lists, which have none.
     const list = node as List;
     const tasks = list.children.some(
       (item) => typeof item.checked === "boolean",
     );
     return [
       {
-        type: tasks ? "taskList" : "bulletList",
+        type: tasks
+          ? "taskList"
+          : list.ordered === true
+            ? "orderedList"
+            : "bulletList",
         content: list.children.map((item) => ({
           type: tasks ? "taskItem" : "listItem",
           ...(tasks ? { attrs: { checked: item.checked === true } } : {}),
@@ -257,6 +261,7 @@ function toBlocks(
       ];
     }
     const tasks = node.type === "taskList";
+    const ordered = node.type === "orderedList";
     // An empty item goes, since Markdown could not keep its checkbox.
     const items = (node.content as JSONContent[]).flatMap(
       (item): ListItem[] => {
@@ -277,7 +282,15 @@ function toBlocks(
     );
     return items.length === 0
       ? []
-      : [{ type: "list", ordered: false, spread: false, children: items }];
+      : [
+          {
+            type: "list",
+            ordered,
+            ...(ordered ? { start: 1 } : {}),
+            spread: false,
+            children: items,
+          },
+        ];
   });
 }
 

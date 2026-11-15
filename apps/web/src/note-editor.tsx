@@ -225,7 +225,12 @@ const itemWords = (element: ShownElement): string =>
   element.children
     .map((child) => {
       if (child.type === "text") return child.value;
-      if (child.type !== "element" || child.tagName === "ul") return "";
+      if (
+        child.type !== "element" ||
+        child.tagName === "ul" ||
+        child.tagName === "ol"
+      )
+        return "";
       return itemWords(child);
     })
     .join("");
@@ -504,7 +509,14 @@ function NoteEditorPanel({
               </RichTextEditor.ControlsGroup>
               <RichTextEditor.ControlsGroup>
                 <RichTextEditor.BulletList />
-                <RichTextEditor.TaskList />
+                <RichTextEditor.OrderedList
+                  aria-label="Numbered list"
+                  title="Numbered list"
+                />
+                <RichTextEditor.TaskList
+                  aria-label="Checkbox list"
+                  title="Checkbox list"
+                />
               </RichTextEditor.ControlsGroup>
               <RichTextEditor.ControlsGroup>
                 <LinkControl id={id} editor={editor} />
