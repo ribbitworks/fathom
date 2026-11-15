@@ -10,7 +10,7 @@
 - **Approval:** Changes to the plan and to people's details are drafts until a role allowed to approve them does.
 - **Exports:** Exporting Personal or Confidential data asks for confirmation, and the browser has it recorded.
 - **Encryption:** Browsers connect to Fathom over HTTPS. The database isn't encrypted at rest, as the [Security Plan](../security/security-plan.md) sets out.
-- **Outside services:** Today, Fathom sends no data to outside services, and needs no internet access to run.
+- **Outside services:** Fathom sends no data to outside services, as the [threat model](../security/security-plan.md#information-disclosure) sets out.
 - **Development:** Fathom is developed and tested with fictional data only.
 
 The [Security Plan](../security/security-plan.md) and [Roles](../product/roles.md) give the details.

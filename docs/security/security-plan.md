@@ -46,7 +46,7 @@ The threat model groups threats by STRIDE: spoofing, tampering, repudiation, inf
 - **Drafts and history:** Drafts, unpublished changes and the change history go through the same checks. Unpublished changes are seen only by their maker.
 - **Exports:** An exported file holds only what the role was sent. The browser asks the server to record an export of Personal or Confidential data before saving it. Accepted: a changed browser or a script can save the data without the record, as it could copy it from the screen.
 - **Logs and errors:** Logs leave out database error messages and known sensitive fields, though a path can name a record's ID. Server errors shown to users are generic.
-- **Leaving the machine:** The application and database containers have no route out.
+- **Outside services:** Fathom calls no outside service and loads nothing from the internet, such as fonts or scripts, so it needs no internet access to run. The application and database containers have no route out.
 - **At rest:** The database isn't encrypted at rest; [ADR 0012](../adr/0012-encryption-at-rest.md) leaves that to the disk. Accepted: traffic between the application and the database isn't encrypted, since it stays on an internal network, and session tokens are stored as they are, along with each session's address and browser.
 - **Secrets:** Secrets are kept out of the repository and container images.
 - **Development:** Development uses fictional data only. Its accounts are on the reserved `fathom.test` domain, and the release images don't hold them.
