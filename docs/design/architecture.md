@@ -1,7 +1,6 @@
 # Fathom: Architecture
 
-**Status:** Proposal for the maintainer's review
-**Last updated:** 2026-10-30
+**Last updated:** 2026-11-14
 
 A high-level view of Fathom's parts and how they connect. It stays at the level of containers and networks; how each part is built is in the documents linked below.
 
@@ -9,7 +8,7 @@ A high-level view of Fathom's parts and how they connect. It stays at the level 
 
 ```mermaid
 flowchart LR
-  browser["Browser<br/>(internal network)"]
+  browser["Browser"]
 
   subgraph host["Host"]
     subgraph edge["Edge network"]
