@@ -22,8 +22,8 @@ import {
   resubmitRecordDraft,
   savePattern,
   saveRelease,
-  setCyclesUntil,
   setStreamRetired,
+  setStreamSpan,
   shipsOffCycle,
 } from "./releases.ts";
 import {
@@ -94,10 +94,13 @@ describe("changes to release streams sent to the server", () => {
     expect(
       (
         await sent(`PUT ${streamPath}/cycles-until`, () =>
-          setCyclesUntil(streamId, "2028-06-30"),
+          setStreamSpan(streamId, {
+            cyclesUntil: "2028-06-30",
+            endsOn: "2027-12-31",
+          }),
         )
       ).body,
-    ).toEqual({ cyclesUntil: "2028-06-30" });
+    ).toEqual({ cyclesUntil: "2028-06-30", endsOn: "2027-12-31" });
   });
 
   const pattern = {

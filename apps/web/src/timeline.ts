@@ -83,6 +83,8 @@ export type ReleaseSpan = Span & {
 export interface ReleaseLayerRow {
   stream: ReleaseStream;
   cycles: (Span & ReleaseStream["cycles"][number])[];
+  // Days from the timeline's first day to the end of the stream's last day, for a stream that ends.
+  endsAt: number | undefined;
   releases: ReleaseSpan[];
   // Beside live, each release a draft moves as it is live, in its old place.
   live: ReleaseSpan[];
@@ -154,6 +156,10 @@ export function releaseLayer(
         at: daysBetween(from, cycle.startsOn),
         days: daysBetween(cycle.startsOn, addDays(cycle.endsOn, 1)),
       })),
+      endsAt:
+        stream.endsOn === null
+          ? undefined
+          : daysBetween(from, addDays(stream.endsOn, 1)),
       releases: spansOf(stream, stream.releases, from),
       live:
         liveStream === undefined

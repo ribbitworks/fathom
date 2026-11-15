@@ -128,7 +128,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - The dialog closes.
     - Under **Cycle schedule**, a row reads **From Jan 4, 2027**, then **Every 2 weeks, named Sprint {#}**.
     - The row has a hollow yellow dot in its slot.
-    - Below it are **Planned to** and a day two years after today.
+    - Below it are **Cycles until** and a day two years after today.
     - A **Change…** button is under them.
     - Below **Releases** is a **Cycles** section, its count in brackets.
     - It lists the cycles from **Sprint 1** on.
@@ -261,7 +261,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 **Preconditions:** Signed in with this account. Run after REL-07. **Releases** page open from the left-hand menu, with **Testing Stream** selected in the table.
 
 - [ ] `F37F` In the side panel, select **Change…** under **Cycle schedule**.
-  - **Expected:** The menu offers **Planned to…** and **Length or names from a date…**.
+  - **Expected:** The menu offers **Cycles until…**, **Ends…** and **Length or names from a date…**.
   - **Notes:**
 
 - [ ] `80EC` Select **Length or names from a date…**.
@@ -510,29 +510,29 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - There is no grey lock.
   - **Notes:**
 
-- [ ] `3D69` Under **Cycle schedule**, select the **Change…** button below the line **Planned to** and 31 December three years after this year, such as **Planned to Dec 31, 2029**, then **Planned to…** in its menu.
+- [ ] `3D69` Under **Cycle schedule**, select the **Change…** button below the line **Cycles until** and 31 December three years after this year, such as **Cycles until Dec 31, 2029**, then **Cycles until…** in its menu.
   - **Expected:**
-    - A dialog titled **Change how far Platform is planned** opens.
-    - **Planned to** holds that day.
+    - A dialog titled **Change how far ahead Platform's cycles are made** opens.
+    - **Cycles until** holds that day.
     - Below it, a line counts as many cycles in all as the **Cycles** heading counts, followed by **as now**, such as **11 cycles in all, as now**.
     - Under **Last cycles** are the last three half-year cycles, the last starting on or before that day, such as **28.2** with **2028-07-01 to 2028-12-31**, **29.1** with **2029-01-01 to 2029-06-30**, and **29.2** with **2029-07-01 to 2029-12-31**.
   - **Notes:**
 
 - [ ] `1B32` Replace the day with the same day a year later, such as `20301231`.
-  - **Expected:** **Planned to** in the dialog holds the new day, such as **2030-12-31**.
+  - **Expected:** **Cycles until** holds the new day, such as **2030-12-31**.
   - **Notes:**
 
 - [ ] `B32E` Select **Save**.
   - **Expected:**
     - The panel's heading shows a hollow yellow dot before **Platform**.
-    - **Planned to** reads the new day, such as **Planned to Dec 31, 2030**.
+    - **Cycles until** reads the new day, such as **Cycles until Dec 31, 2030**.
     - The **Cycles** heading counts two more cycles, such as **Cycles (13)**.
     - Its last row is a half-year cycle starting in the new day's year, such as **30.2** from **Jul 1, 2030**.
   - **Notes:**
 
 - [ ] `AAA0` Select the **⋯** button in the panel's heading, then **Discard draft**.
   - **Expected:**
-    - **Planned to** reads 31 December three years after this year, such as **Planned to Dec 31, 2029**.
+    - **Cycles until** reads 31 December three years after this year, such as **Cycles until Dec 31, 2029**.
     - The **Cycles** heading counts the cycles up to that day, such as **Cycles (11)**.
   - **Notes:**
 
@@ -1181,4 +1181,54 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `8D0D` Reload the page.
   - **Expected:** The streams table is still grouped by cycle schedule.
+  - **Notes:**
+
+#### REL-29: A Stream Ends on Its Last Day
+
+**Account:** Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, changed from REL-28.
+
+**Preconditions:** Signed in with this account. Run after REL-28. **Releases** page open from the left-hand menu.
+
+- [ ] `3F07` Run Discard the Unpublished Changes.
+  - **Expected:** The Publish button is gone.
+  - **Notes:**
+
+- [ ] `C6A8` Select **Platform** in the table.
+  - **Expected:**
+    - The side panel opens, headed **Platform**, with no grey lock.
+    - Under **Cycle schedule**, below the cycle changes, a line reads **Cycles until** and 31 December three years after this year, such as **Cycles until Dec 31, 2029**.
+    - A **Change…** button is under that line.
+  - **Notes:**
+
+- [ ] `5E2A` Select the **Change…** button under the **Cycles until** line, then **Ends…** in its menu.
+  - **Expected:**
+    - A dialog titled **Change when Platform ends** opens.
+    - Its one field, **Ends**, is empty.
+    - Under **Ends**, a line reads **The cycle holding this day ends on it**.
+  - **Notes:**
+
+- [ ] `0C94` Type 30 September three years after this year in **Ends**, such as `20290930`.
+  - **Expected:**
+    - Under **Last cycles**, the last row is a half-year cycle cut short to end on that day, such as **29.2** with **2029-07-01 to 2029-09-30**.
+    - The line above it counts as many cycles in all as now, such as **11 cycles in all, as now**.
+  - **Notes:**
+
+- [ ] `E61F` Select **Save**.
+  - **Expected:**
+    - The dialog closes.
+    - The panel's heading shows a hollow yellow dot before **Platform**.
+    - Under **Cycle schedule**, the line below the cycle changes reads **Ends** and that day, such as **Ends Sep 30, 2029**.
+    - The last row of **Cycles** is the cut cycle, such as **29.2** from **Jul 1, 2029** to **Sep 30, 2029**.
+  - **Notes:**
+
+- [ ] `9A3B` On the timeline, select **All**, then read the end of **Platform**'s cycle lane.
+  - **Expected:**
+    - The lane stops at that day, with a short upright grey line at its end.
+    - **Patches**' lane has no such line.
+  - **Notes:**
+
+- [ ] `D48E` Select the **⋯** button in the panel's heading, then **Discard draft**.
+  - **Expected:**
+    - **Cycles until** reads 31 December three years after this year, such as **Cycles until Dec 31, 2029**.
+    - On the timeline, **Platform**'s lane has no upright line at its end.
   - **Notes:**

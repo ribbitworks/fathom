@@ -1,11 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the shared timeline: its strip of quarters following the view and scrolling it, and
-// the rows a view gives it beside the release layer.
+// the rows a view gives it beside the release layer, with Ended on a stream past its last day.
 
 import type { ReleaseStream } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fictionalStream, testTheme } from "./test-support.tsx";
@@ -315,6 +322,19 @@ describe("a view's own rows", () => {
         lanes: (px: (days: number) => string) => <span>{px(10)} wide</span>,
       },
     ],
+  });
+
+  it("names a stream Ended once its last day has passed", () => {
+    const labels = (today: string) => {
+      const timeline = showTimeline({
+        streams: [fictionalStream({ endsOn: "2027-05-15" })],
+        today,
+      });
+      const shown = within(timeline).queryByText("Ended") !== null;
+      cleanup();
+      return shown;
+    };
+    expect([labels("2027-05-15"), labels("2027-05-16")]).toEqual([false, true]);
   });
 
   it("draws the view's rows at the timeline's scale, under the release layer", () => {

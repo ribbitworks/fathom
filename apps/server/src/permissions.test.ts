@@ -784,7 +784,7 @@ const routes: Route[] = [
     method: "PUT",
     pattern: "/api/release-streams/:streamId/cycles-until",
     needs: allOf("configuration:edit"),
-    body: () => ({ cyclesUntil: "2027-06-30" }),
+    body: () => ({ cyclesUntil: "2027-06-30", endsOn: null }),
   },
   {
     method: "PUT",

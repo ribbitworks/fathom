@@ -131,12 +131,32 @@ export function monthShares(startsOn: string, endsOn: string): MonthShare[] {
   return shares;
 }
 
+// How far a stream's cycles go: the day its last cycle starts by while it keeps going, and its last
+// day, or null while it keeps going. The first is kept while the stream ends, unused, so it can
+// keep going again from that day.
+export interface StreamSpan {
+  cyclesUntil: string;
+  endsOn: string | null;
+}
+
+// The last day a stream's cycles may start on, whether it ends or keeps going.
+export const lastStartOf = ({ cyclesUntil, endsOn }: StreamSpan): string =>
+  endsOn ?? cyclesUntil;
+
+// Whether a stream has ended: its last day is before the day given.
+export const hasEnded = ({ endsOn }: StreamSpan, today: string): boolean =>
+  endsOn !== null && endsOn < today;
+
 // A stream's cycles, in order, from its first pattern's start to the first cycle that starts after
-// the day given. A cycle that the next pattern's start would cut short ends the day before it.
+// the day given. A cycle that the next pattern's start would cut short ends the day before it. A
+// stream that ends has its cycles made up to its last day instead, the one holding that day cut
+// to end on it, though still named as its full length would name it, so ending renames nothing.
 export function cyclesOf(
   patterns: readonly CyclePatternLike[],
   until: string,
+  endsOn: string | null = null,
 ): Cycle[] {
+  const lastStart = lastStartOf({ cyclesUntil: until, endsOn });
   const sorted = [...patterns].sort((a, b) =>
     a.startsOn.localeCompare(b.startsOn),
   );
@@ -145,7 +165,9 @@ export function cyclesOf(
     const next = sorted[at + 1]?.startsOn;
     for (let index = 0; spans.length < mostCycles; index += 1) {
       const startsOn = cycleStart(pattern, index);
-      if ((next !== undefined && startsOn >= next) || startsOn > until) break;
+      if ((next !== undefined && startsOn >= next) || startsOn > lastStart) {
+        break;
+      }
       const following = cycleStart(pattern, index + 1);
       const end = next !== undefined && next < following ? next : following;
       spans.push({
@@ -156,18 +178,31 @@ export function cyclesOf(
     }
   }
   const numbers = new Map<string, number>();
-  return spans.map(({ startsOn, endsOn, naming }, at) => {
-    const year = endsOn.slice(0, 4);
+  return spans.map(({ startsOn, endsOn: fullEnd, naming }, at) => {
+    const year = fullEnd.slice(0, 4);
     const number = (numbers.get(year) ?? 0) + 1;
     numbers.set(year, number);
+    const end = endsOn !== null && endsOn < fullEnd ? endsOn : fullEnd;
     return {
       startsOn,
-      endsOn,
-      name: cycleName(naming, endsOn, number, at + 1),
-      months: monthShares(startsOn, endsOn),
+      endsOn: end,
+      name: cycleName(naming, fullEnd, number, at + 1),
+      months: monthShares(startsOn, end),
     };
   });
 }
+
+export const endsBeforeFirstCycle =
+  "The stream can't end before its first cycle starts";
+
+// Whether a stream with cycle patterns would end before its first cycle starts, so make none.
+export const endsTooEarly = (
+  patterns: readonly CyclePatternLike[],
+  span: StreamSpan,
+): boolean =>
+  span.endsOn !== null &&
+  patterns.length > 0 &&
+  cyclesOf(patterns, span.cyclesUntil, span.endsOn).length === 0;
 
 // Whether a pattern may start on a day, among a stream's other patterns: any day when there are
 // none, and otherwise only on the start of one of the cycles they make, so the cycles before it

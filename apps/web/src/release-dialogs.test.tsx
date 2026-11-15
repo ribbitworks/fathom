@@ -16,6 +16,7 @@ import { dayNeeded, dayProblem } from "./day-input.tsx";
 import {
   CycleLengthDialog,
   CyclesUntilDialog,
+  EndsDialog,
   PatternDialog,
   ReleaseDialog,
   StreamDialog,
@@ -198,8 +199,8 @@ describe("the dialog of the day a stream's cycles are made until", () => {
     "counts the cycles a later or earlier day makes: %s",
     async (_case, typed, count) => {
       show((handlers) => <CyclesUntilDialog stream={stream} {...handlers} />);
-      await userEvent.clear(box("Planned to"));
-      await userEvent.type(box("Planned to"), typed);
+      await userEvent.clear(box("Cycles until"));
+      await userEvent.type(box("Cycles until"), typed);
       expect(screen.getByText(count)).toBeDefined();
     },
   );
@@ -224,19 +225,21 @@ describe("the dialog of the day a stream's cycles are made until", () => {
     const { onSaved } = show((handlers) => (
       <CyclesUntilDialog stream={stream} {...handlers} />
     ));
-    await userEvent.clear(box("Planned to"));
-    await userEvent.type(box("Planned to"), "20280630");
+    await userEvent.clear(box("Cycles until"));
+    await userEvent.type(box("Cycles until"), "20280630");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => {
       expect(onSaved).toHaveBeenCalled();
     });
-    expect(bodiesOf(fetch)).toEqual([{ cyclesUntil: "2028-06-30" }]);
+    expect(bodiesOf(fetch)).toEqual([
+      { cyclesUntil: "2028-06-30", endsOn: null },
+    ]);
   });
 
   it("asks for a whole day before saving", async () => {
     const fetch = serverAnswers({});
     show((handlers) => <CyclesUntilDialog stream={stream} {...handlers} />);
-    await userEvent.clear(box("Planned to"));
+    await userEvent.clear(box("Cycles until"));
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect([screen.getByText(dayNeeded), fetch.mock.calls]).toEqual([
       expect.anything(),
@@ -250,8 +253,8 @@ describe("the dialog of the day a stream's cycles are made until", () => {
       releases: [fictionalRelease({ lastCycle: "2027-07-01" })],
     });
     show((handlers) => <CyclesUntilDialog stream={releasing} {...handlers} />);
-    await userEvent.clear(box("Planned to"));
-    await userEvent.type(box("Planned to"), "20270501");
+    await userEvent.clear(box("Cycles until"));
+    await userEvent.type(box("Cycles until"), "20270501");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect([
       screen.getByText(
@@ -274,12 +277,81 @@ describe("the dialog of the day a stream's cycles are made until", () => {
     const { onSaved } = show((handlers) => (
       <CyclesUntilDialog stream={releasing} {...handlers} />
     ));
-    await userEvent.clear(box("Planned to"));
-    await userEvent.type(box("Planned to"), "20270501");
+    await userEvent.clear(box("Cycles until"));
+    await userEvent.type(box("Cycles until"), "20270501");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => {
       expect(onSaved).toHaveBeenCalled();
     });
+  });
+});
+
+describe("the dialog ending a stream", () => {
+  it("ends the stream on the day typed, keeping the day its cycles are made until", async () => {
+    const fetch = serverAnswers({
+      [`PUT ${streamPath}/cycles-until`]: savedStream,
+    });
+    const { onSaved } = show((handlers) => (
+      <EndsDialog stream={stream} {...handlers} />
+    ));
+    await userEvent.type(box("Ends"), "20270515");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalled();
+    });
+    expect(bodiesOf(fetch)).toEqual([
+      { cyclesUntil: "2027-12-31", endsOn: "2027-05-15" },
+    ]);
+  });
+
+  it("shows the last cycle cut to end on the stream's last day", async () => {
+    show((handlers) => <EndsDialog stream={stream} {...handlers} />);
+    await userEvent.type(box("Ends"), "20270515");
+    expect(cyclesIn("Last cycles")).toEqual([
+      "27.12027-01-01 to 2027-03-31",
+      "27.22027-04-01 to 2027-05-15",
+    ]);
+  });
+
+  it("keeps a stream going once its day is emptied", async () => {
+    const fetch = serverAnswers({
+      [`PUT ${streamPath}/cycles-until`]: savedStream,
+    });
+    const ending = fictionalStream({ endsOn: "2027-05-15" });
+    const { onSaved } = show((handlers) => (
+      <EndsDialog stream={ending} {...handlers} />
+    ));
+    expect(box("Ends")).toHaveProperty("value", "2027-05-15");
+    await userEvent.clear(box("Ends"));
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalled();
+    });
+    expect(bodiesOf(fetch)).toEqual([
+      { cyclesUntil: "2027-12-31", endsOn: null },
+    ]);
+  });
+
+  it("refuses a day half typed", async () => {
+    const fetch = serverAnswers({});
+    show((handlers) => <EndsDialog stream={stream} {...handlers} />);
+    await userEvent.type(box("Ends"), "202612");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect([screen.getByText(dayProblem), fetch.mock.calls]).toEqual([
+      expect.anything(),
+      [],
+    ]);
+  });
+
+  it("refuses a day before the stream's first cycle starts", async () => {
+    const fetch = serverAnswers({});
+    show((handlers) => <EndsDialog stream={stream} {...handlers} />);
+    await userEvent.type(box("Ends"), "20261231");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect([
+      screen.getByText("The stream can't end before its first cycle starts"),
+      fetch.mock.calls,
+    ]).toEqual([expect.anything(), []]);
   });
 });
 

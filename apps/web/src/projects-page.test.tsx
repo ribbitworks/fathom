@@ -1610,6 +1610,7 @@ describe("the Features page", () => {
           position: 1,
           retired: false,
           cyclesUntil: "2027-12-31",
+          endsOn: null,
           patterns: [],
           cycles: [
             cycle(cycleOne, "2027-03-31", "27.1"),

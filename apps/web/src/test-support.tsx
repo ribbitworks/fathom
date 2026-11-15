@@ -209,6 +209,7 @@ export const fictionalStream = (
   name: "Fictional Majors",
   retired: false,
   cyclesUntil: "2027-12-31",
+  endsOn: null,
   patterns: [fictionalPattern()],
   cycles: quarters(4),
   releases: [],

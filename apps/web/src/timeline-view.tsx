@@ -160,8 +160,10 @@ export function TimelineView({
   // Where the timeline last scrolled the view itself, so only the reader's scrolling moves the
   // anchor.
   const scrolledTo = useRef<number>(undefined);
-  const { range: layerRange, rows: layerRows } =
-    useReleaseLayer(releaseStreams);
+  const { range: layerRange, rows: layerRows } = useReleaseLayer(
+    releaseStreams,
+    today,
+  );
   // The frame is built from days alone, so a view handing over equal streams or rows anew on each
   // render doesn't rebuild the axis, the quarters and the strip.
   const frame = useMemo(

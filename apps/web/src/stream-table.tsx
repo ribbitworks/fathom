@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Releases page's table of release streams on the shared table: each stream's name, how its
-// cycles are made now, its releases, the next to ship, and how far its cycles are made. A stream's
-// row carries the drafts of its cycle changes and releases as well as its own, so its row is marked
-// wherever any of them is, and each part is marked in its cell. Retired streams show only when
-// asked for, and a stream drafted to be retired or restored stays where it is live until approved.
+// The Releases page's table of release streams on the shared table: each stream's name, with Ended
+// after it once its last day has passed, how its cycles are made now, its releases, the next to
+// ship, and how far its cycles are made. A stream's row carries the drafts of its cycle changes and
+// releases as well as its own, so its row is marked wherever any of them is, and each part is
+// marked in its cell. Retired streams show only when asked for, and a stream drafted to be retired
+// or restored stays where it is live until approved.
 
-import type {
-  CyclePattern,
-  RecordDraft,
-  RecordRef,
-  ReleaseStream,
-  Show,
+import {
+  type CyclePattern,
+  hasEnded,
+  lastStartOf,
+  type RecordDraft,
+  type RecordRef,
+  type ReleaseStream,
+  type Show,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
 import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
@@ -36,6 +39,7 @@ import {
 import {
   DraftedItem,
   EmptiedValue,
+  EndedBox,
   MarkedItem,
   partsMark,
   type DraftLike,
@@ -108,7 +112,7 @@ function valuesOf(stream: ReleaseStream, day: string): StreamValues {
       .map(({ name }) => name)
       .join(", "),
     nextRelease: nextReleaseWords(stream, day),
-    cyclesUntil: stream.cyclesUntil,
+    cyclesUntil: lastStartOf(stream),
   };
 }
 
@@ -315,15 +319,22 @@ function releasesCell(row: StreamRow) {
 
 const statusGroups = {
   current: { key: "current", label: "Current", rank: 0 },
-  retired: { key: "retired", label: "Retired", rank: 1 },
+  ended: { key: "ended", label: "Ended", rank: 1 },
+  retired: { key: "retired", label: "Retired", rank: 2 },
 };
 
-const groupings: RowGrouping<StreamRow>[] = [
+// A stream's status: retired once its retirement is approved, or else ended once its last day has
+// passed, or else current.
+const statusOf = (stream: ReleaseStream, day: string) => {
+  if (retiredLive(stream)) return statusGroups.retired;
+  return hasEnded(stream, day) ? statusGroups.ended : statusGroups.current;
+};
+
+const groupings = (day: string): RowGrouping<StreamRow>[] => [
   {
     key: "status",
     label: "Status",
-    of: (row) =>
-      retiredLive(row.stream) ? statusGroups.retired : statusGroups.current,
+    of: (row) => statusOf(row.stream, day),
   },
   {
     key: "schedule",
@@ -336,7 +347,7 @@ const groupings: RowGrouping<StreamRow>[] = [
   },
 ];
 
-function columns(): Column<StreamRow, never>[] {
+function columns(day: string): Column<StreamRow, never>[] {
   const text = (key: keyof StreamValues, label: string) =>
     fieldColumn<StreamRow, never>(key, "text", {
       label,
@@ -345,7 +356,10 @@ function columns(): Column<StreamRow, never>[] {
       choices: [],
     });
   return [
-    text("name", "Stream"),
+    {
+      ...text("name", "Stream"),
+      mark: (row) => <EndedBox stream={row.stream} day={day} />,
+    },
     {
       ...text("schedule", "Cycle schedule"),
       emptyLabel: noSchedule,
@@ -399,7 +413,7 @@ export function streamTable({
   day: string;
   onOpen: (stream: ReleaseStream) => void;
 }): RecordTable<StreamRow, never, undefined> {
-  const shownColumns = columns();
+  const shownColumns = columns(day);
   const drafts = (ids: string[]): DraftSelection => ({
     ...noDrafts(),
     records: streams
@@ -414,7 +428,7 @@ export function streamTable({
     label: "Release streams",
     one: "release stream",
     noun: "release streams",
-    groupings,
+    groupings: groupings(day),
     newRowLabel: () => "New release stream",
     removeLabel: () => "Remove release stream",
     nameOf: (row) => row.name,

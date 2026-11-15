@@ -7,6 +7,7 @@ import type { ReleaseStream, ReleaseStreams } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import {
   act,
+  cleanup,
   fireEvent,
   render,
   screen,
@@ -47,6 +48,7 @@ const streams: ReleaseStreams = {
       name: "Fictional Majors",
       retired: false,
       cyclesUntil: "2028-12-31",
+      endsOn: null,
       patterns: [
         {
           id: "p1",
@@ -1174,15 +1176,81 @@ describe("changing a stream's cycles", () => {
       }),
     );
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Planned to…" }),
+      await screen.findByRole("menuitem", { name: "Cycles until…" }),
     );
     const dialog = await screen.findByRole("dialog", {
-      name: "Change how far Fictional Majors is planned",
+      name: "Change how far ahead Fictional Majors's cycles are made",
     });
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
       await screen.findByText("Drafted the change to the cycles."),
     ).toBeDefined();
+  });
+
+  it("ends the stream on a day from Ends…", async () => {
+    await openStream([fictionalStream()], {
+      can: editsAll,
+      answers: { [`PUT ${streamPath}/cycles-until`]: saved },
+    });
+    await userEvent.click(
+      within(section("Cycle schedule")).getByRole("button", {
+        name: "Change…",
+      }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Ends…" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Change when Fictional Majors ends",
+    });
+    await userEvent.type(
+      within(dialog).getByRole("textbox", { name: "Ends" }),
+      "20270515",
+    );
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      await screen.findByText("Drafted the change to the cycles."),
+    ).toBeDefined();
+  });
+
+  it("reads Cycles until and its day for a stream that keeps going, or Ends and its last day", async () => {
+    const line = async (stream: ReleaseStream) => {
+      await openStream([stream], { can: editsAll });
+      const words = within(section("Cycle schedule")).getByText(
+        (_text, element) =>
+          element?.tagName === "P" &&
+          /^(Cycles until|Ends) /.test(element.textContent),
+      ).textContent;
+      cleanup();
+      return words;
+    };
+    expect([
+      await line(fictionalStream()),
+      await line(fictionalStream({ endsOn: "2027-05-15" })),
+    ]).toEqual(["Cycles until Dec 31, 2027", "Ends May 15, 2027"]);
+  });
+
+  it("offers Ends…, and Cycles until… only while the stream keeps going", async () => {
+    const offered = async (stream: ReleaseStream) => {
+      await openStream([stream], { can: editsAll });
+      await userEvent.click(
+        within(section("Cycle schedule")).getByRole("button", {
+          name: "Change…",
+        }),
+      );
+      const items = (await screen.findAllByRole("menuitem")).map(
+        ({ textContent }) => textContent,
+      );
+      cleanup();
+      return items;
+    };
+    expect([
+      await offered(fictionalStream()),
+      await offered(fictionalStream({ endsOn: "2027-05-15" })),
+    ]).toEqual([
+      ["Cycles until…", "Ends…", "Length or names from a date…"],
+      ["Ends…", "Length or names from a date…"],
+    ]);
   });
 });
 

@@ -194,6 +194,28 @@ describe("the plan's fields in the change history", () => {
   });
 });
 
+describe("how far a stream's cycles go in the change history", () => {
+  it("names its last day Ends, and the day its cycles start up to Cycles until", () => {
+    expect([
+      describeField(
+        { field: "endsOn", oldValue: null, newValue: "2027-03-31" },
+        "release-stream",
+      ),
+      describeField(
+        {
+          field: "cyclesUntil",
+          oldValue: "2028-11-14",
+          newValue: "2028-12-31",
+        },
+        "release-stream",
+      ).at(0),
+    ]).toEqual([
+      [{ strong: "Ends" }, " set to ", { value: "Mar 31, 2027" }],
+      { strong: "Cycles until" },
+    ]);
+  });
+});
+
 describe("a release's colour in the change history", () => {
   const colour = (oldValue: string | null, newValue: string | null) =>
     describeField({ field: "colour", oldValue, newValue }, "release");

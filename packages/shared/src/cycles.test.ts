@@ -8,7 +8,10 @@ import { describe, expect, it } from "vitest";
 import {
   cycleName,
   cyclesOf,
+  endsTooEarly,
+  hasEnded,
   horizonFrom,
+  lastStartOf,
   lastDayOfMonth,
   type CyclePatternLike,
   type LengthChange,
@@ -117,6 +120,93 @@ describe("patterns", () => {
 
   it("may not start within one of the cycles the others make", () => {
     expect(patternStartFits([quarters], "2027-11-01")).toBe(false);
+  });
+});
+
+describe("a stream that ends", () => {
+  it("makes cycles up to its last day, the last cut to end on it", () => {
+    expect(days(cyclesOf([quarters], "2028-12-31", "2027-05-15"))).toEqual([
+      "2027-01-01 to 2027-03-31",
+      "2027-04-01 to 2027-05-15",
+    ]);
+  });
+
+  it("ignores how far its cycles were made, even when that is earlier", () => {
+    expect(days(cyclesOf([quarters], "2027-01-01", "2027-05-15"))).toEqual([
+      "2027-01-01 to 2027-03-31",
+      "2027-04-01 to 2027-05-15",
+    ]);
+  });
+
+  it("has a one-day last cycle when it ends on a cycle's first day", () => {
+    expect(days(cyclesOf([quarters], "2028-12-31", "2027-04-01"))).toEqual([
+      "2027-01-01 to 2027-03-31",
+      "2027-04-01 to 2027-04-01",
+    ]);
+  });
+
+  it("cuts a later pattern's cycle", () => {
+    const sprints = {
+      ...quarters,
+      startsOn: "2027-04-01",
+      length: 2,
+      unit: "weeks",
+    } as const;
+    expect(
+      days(cyclesOf([quarters, sprints], "2028-12-31", "2027-04-20")),
+    ).toEqual([
+      "2027-01-01 to 2027-03-31",
+      "2027-04-01 to 2027-04-14",
+      "2027-04-15 to 2027-04-20",
+    ]);
+  });
+
+  it("keeps a whole last cycle when it ends on that cycle's last day", () => {
+    expect(days(cyclesOf([quarters], "2028-12-31", "2027-06-30"))).toEqual([
+      "2027-01-01 to 2027-03-31",
+      "2027-04-01 to 2027-06-30",
+    ]);
+  });
+
+  it("names a cut cycle as its full length would, and counts its months by its days", () => {
+    const yearEnd = { ...quarters, startsOn: "2026-11-01" };
+    const [cycle] = cyclesOf([yearEnd], "2028-12-31", "2026-12-31");
+    expect(cycle?.name).toBe("27.1");
+    expect(cycle?.months).toEqual([
+      { month: "2026-11", share: 1 },
+      { month: "2026-12", share: 1 },
+    ]);
+  });
+});
+
+describe("how far a stream's cycles go", () => {
+  const span = (endsOn: string | null) => ({
+    cyclesUntil: "2028-12-31",
+    endsOn,
+  });
+
+  it("starts its last cycle by its last day when it ends, or else by the day its cycles are made until", () => {
+    expect([lastStartOf(span("2027-05-15")), lastStartOf(span(null))]).toEqual([
+      "2027-05-15",
+      "2028-12-31",
+    ]);
+  });
+
+  it("has ended only once its last day has passed", () => {
+    expect([
+      hasEnded(span("2027-05-15"), "2027-05-16"),
+      hasEnded(span("2027-05-15"), "2027-05-15"),
+      hasEnded(span(null), "2099-01-01"),
+    ]).toEqual([true, false, false]);
+  });
+
+  it("ends too early only before its first cycle starts, and never without cycle patterns", () => {
+    expect([
+      endsTooEarly([quarters], span("2026-12-31")),
+      endsTooEarly([quarters], span("2027-01-01")),
+      endsTooEarly([quarters], span(null)),
+      endsTooEarly([], span("2026-12-31")),
+    ]).toEqual([true, false, false, false]);
   });
 });
 

@@ -584,6 +584,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The yellow **Retired** box in its heading is easy to read.
   - **Notes:**
 
+- [ ] `4B7C` Under **Cycle schedule**, select **Change…**, then **Ends…** in its menu.
+  - **Expected:** A dialog titled **Change when Patches ends** opens, and is easy to read.
+  - **Notes:**
+
+- [ ] `E2D5` Type the last day of next month in **Ends**, such as `20261231`.
+  - **Expected:** The cycles under **Last cycles** are easy to read.
+  - **Notes:**
+
+- [ ] `6A1F` Select **Cancel**.
+  - **Expected:** The dialog closes.
+  - **Notes:**
+
 - [ ] `9AAE` Select the **⋯** button beside the close button at the top of the side panel, then **Approve…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens, and is easy to read.
   - **Notes:**

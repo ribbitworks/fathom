@@ -2,10 +2,10 @@
 
 // The dialogs of the Releases page: naming a release stream; changing a stream's cycles from a day,
 // with their length and how they are named, showing the first names they make; one cycle's length,
-// showing the cycles it makes and the releases that move; the day a stream's cycles are made
-// until; and making or changing a release from consecutive cycles of its stream
-// that no other release includes, shipping at the end of its last cycle or on a day of its own.
-// Each saves its change as a draft, and cannot be closed while it saves.
+// showing the cycles it makes and the releases that move; the day a stream's cycles are made until,
+// and the day it ends, if any; and making or changing a release from consecutive cycles of its
+// stream that no other release includes, shipping at the end of its last cycle or on a day of its
+// own. Each saves its change as a draft, and cannot be closed while it saves.
 
 import { MarkRow } from "./status-mark.tsx";
 import {
@@ -14,7 +14,10 @@ import {
   type Cycle,
   cyclesOf,
   defaultNaming,
+  endsBeforeFirstCycle,
+  endsTooEarly,
   isDay,
+  lastStartOf,
   longestCycle,
   namingTokens,
   releaseLengths,
@@ -26,6 +29,7 @@ import {
   paletteColours,
   type ReleaseStream,
   shipsBeforeStart,
+  type StreamSpan,
   allOf,
 } from "@fathom/shared";
 import {
@@ -57,7 +61,7 @@ import {
   lengthChangeOf,
   renameStream,
   type SavedStream,
-  setCyclesUntil,
+  setStreamSpan,
   shipsOffCycle,
   shownColour,
   savePattern,
@@ -202,8 +206,8 @@ function cycleCount(count: number, now: number): string {
   return `${all}, ${String(by)} ${count > now ? "more" : "fewer"} than now`;
 }
 
-// The earliest day a stream's cycles may be made until: the start of the last cycle any release
-// includes, so every release keeps its cycles.
+// The earliest day a stream's cycles may be made until, or it may end on: the start of the last cycle
+// any release includes, so every release keeps its cycles.
 const leastCyclesUntil = (stream: ReleaseStream): string | undefined =>
   stream.releases
     .filter(({ draft }) => draft?.action !== "deleted")
@@ -211,47 +215,79 @@ const leastCyclesUntil = (stream: ReleaseStream): string | undefined =>
     .sort()
     .at(-1);
 
-export function CyclesUntilDialog({
+// What is wrong with how far a stream's cycles would go, if anything.
+function spanProblem(
+  stream: ReleaseStream,
+  patterns: readonly CyclePattern[],
+  span: StreamSpan,
+): string | undefined {
+  const least = leastCyclesUntil(stream);
+  if (least !== undefined && lastStartOf(span) < least) {
+    return `A release includes the cycle from ${least}; choose that day or later`;
+  }
+  return endsTooEarly(patterns, span) ? endsBeforeFirstCycle : undefined;
+}
+
+// A day for how far a stream's cycles go, with how many cycles it makes and its last three, as it
+// would make them, saving the stream's span the day gives; or, where the day may be left empty,
+// the span it means when it is.
+function StreamSpanForm({
   stream,
-  ...saving
-}: { stream: ReleaseStream } & Saving) {
-  const [day, setDay] = useState<string | undefined>(stream.cyclesUntil);
+  label,
+  description,
+  value,
+  spanOf,
+  empty,
+  saving,
+}: {
+  stream: ReleaseStream;
+  label: string;
+  description: string;
+  value: string | undefined;
+  spanOf: (day: string) => StreamSpan;
+  // Undefined where a day is needed.
+  empty?: StreamSpan;
+  saving: Saving;
+}) {
+  const required = empty === undefined;
+  const [day, setDay] = useState(value);
+  const [typed, setTyped] = useState(value !== undefined);
   const [tried, setTried] = useState(false);
   const save = useSave(
-    (wanted: string) => setCyclesUntil(stream.id, wanted),
+    (span: StreamSpan) => setStreamSpan(stream.id, span),
     saving,
   );
-  const least = leastCyclesUntil(stream);
-  const problem =
-    day !== undefined && least !== undefined && day < least
-      ? `A release includes the cycle from ${least}; choose that day or later`
-      : undefined;
+  const span = day !== undefined ? spanOf(day) : typed ? undefined : empty;
+  const patterns = stream.patterns.filter(
+    ({ draft }) => draft?.action !== "deleted",
+  );
   const made =
-    day === undefined
+    span === undefined
       ? undefined
-      : cyclesOf(
-          stream.patterns.filter(({ draft }) => draft?.action !== "deleted"),
-          day,
-        );
+      : cyclesOf(patterns, span.cyclesUntil, span.endsOn);
+  const problem =
+    span === undefined ? undefined : spanProblem(stream, patterns, span);
   return (
     <form
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
         setTried(true);
-        if (day !== undefined && problem === undefined) save.mutate(day);
+        if (span !== undefined && problem === undefined) save.mutate(span);
       }}
     >
       <Stack gap="md">
         <DayInput
-          label="Planned to"
-          description="The last cycle starts by this day"
+          label={label}
+          description={description}
           autoFocus
-          value={stream.cyclesUntil}
+          required={required}
+          value={value}
           problem={problem}
           shown={tried}
-          onChange={(next) => {
+          onChange={(next, isTyped) => {
             setDay(next);
+            setTyped(isTyped);
           }}
         />
         {made !== undefined && made.length > 0 && (
@@ -277,6 +313,41 @@ export function CyclesUntilDialog({
   );
 }
 
+// The day a stream's cycles are made until while it keeps going, keeping its end.
+export function CyclesUntilDialog({
+  stream,
+  ...saving
+}: { stream: ReleaseStream } & Saving) {
+  return (
+    <StreamSpanForm
+      stream={stream}
+      label="Cycles until"
+      description="The last cycle starts by this day"
+      value={stream.cyclesUntil}
+      spanOf={(day) => ({ cyclesUntil: day, endsOn: stream.endsOn })}
+      saving={saving}
+    />
+  );
+}
+
+// A stream's last day, or none, when it keeps going, keeping the day its cycles are made until.
+export function EndsDialog({
+  stream,
+  ...saving
+}: { stream: ReleaseStream } & Saving) {
+  return (
+    <StreamSpanForm
+      stream={stream}
+      label="Ends"
+      description="The cycle holding this day ends on it"
+      value={stream.endsOn ?? undefined}
+      spanOf={(day) => ({ cyclesUntil: stream.cyclesUntil, endsOn: day })}
+      empty={{ cyclesUntil: stream.cyclesUntil, endsOn: null }}
+      saving={saving}
+    />
+  );
+}
+
 const unitLabels: Record<CycleUnit, string> = {
   weeks: "Weeks",
   months: "Months",
@@ -299,7 +370,7 @@ function startChoices(
   ) {
     return undefined;
   }
-  return cyclesOf(others, stream.cyclesUntil).map((cycle) => ({
+  return cyclesOf(others, stream.cyclesUntil, stream.endsOn).map((cycle) => ({
     value: cycle.startsOn,
     label: `${cycle.startsOn} (${cycle.name})`,
   }));

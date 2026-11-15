@@ -125,7 +125,7 @@ export function releaseRoutes(
         },
       },
       async (request) => {
-        const { result, changeSetId } = await releases.updateStream(
+        const { result, changeSetId } = await releases.changeStreamSpan(
           request.actor,
           request.params.streamId,
           request.body,

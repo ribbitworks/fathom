@@ -300,7 +300,8 @@ export const listItems = fathomSchema.table(
 // stream's name is unique, ignoring letter case. Streams are retired, never deleted, since releases
 // and features refer to their cycles. A stream's cycles are those starting on or before its
 // cycles-until date, which the server sets when the stream is drafted, since a stream is added only
-// once approved.
+// once approved. A stream that ends has a last day instead, which cuts its last cycle short; its
+// cycles-until date is kept, unused, so it can keep going again from that day.
 export const releaseStreams = fathomSchema.table(
   "release_streams",
   {
@@ -310,6 +311,7 @@ export const releaseStreams = fathomSchema.table(
     position: integer("position").notNull().default(0),
     retired: boolean("retired").notNull().default(false),
     cyclesUntil: date("cycles_until").notNull(),
+    endsOn: date("ends_on"),
   },
   (table) => [
     uniqueIndex("release_streams_name_index").on(sql`lower(${table.name})`),

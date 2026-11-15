@@ -4,10 +4,11 @@
 // as kinds of the plan's records, with the rules the Decisions Log sets for them: a stream's later
 // patterns start on the start of one of its cycles, so the cycles before keep their names and
 // dates; a release includes consecutive cycles of its stream, from its first to its last, which no
-// other release in the stream includes, and none starting after the stream's cycles-until date; and
-// a feature targets one of its stream's cycles. Part of the data access layer; records.ts checks
-// the rules when a change is drafted or published, against the records as the editor sees them, and
-// when drafts are approved, against the live records.
+// other release in the stream includes, and none starting after the last day the stream's cycles
+// start on; a feature targets one of its stream's cycles, and no new one a retired stream's; and a
+// stream that ends does so on or after its first cycle starts. Part of the data access layer;
+// records.ts checks the rules when a change is drafted or published, against the records as the
+// editor sees them, and when drafts are approved, against the live records.
 
 import { cyclePatterns, features, releases, releaseStreams } from "@fathom/db";
 import {
@@ -15,12 +16,16 @@ import {
   type CyclePatternLike,
   cycleUnitSchema,
   cyclesOf,
+  endsBeforeFirstCycle,
+  endsTooEarly,
+  lastStartOf,
   namesPlannedWork,
   patternStartFits,
   type Permission,
   planSubjects,
   projectSubjects,
   type RecordRef,
+  type StreamSpan,
 } from "@fathom/shared";
 import type { Recorded } from "./drafts.ts";
 import {
@@ -85,7 +90,7 @@ const featuresOrConfiguration = [
 export const streamKind: RecordKind = {
   type: "release-stream",
   table: releaseStreams,
-  fields: ["name", "retired", "cyclesUntil"],
+  fields: ["name", "retired", "cyclesUntil", "endsOn"],
   links: {},
   unique: [
     {
@@ -351,10 +356,19 @@ export function streamReleases(
     );
 }
 
-// The day a stream's cycles are made until, as its draft, if any, makes it.
-export const cyclesUntilOf = (state: RecordsState, streamId: string): string =>
+// How far a stream's cycles go, from its record.
+export const spanOf = (stream: Recorded): StreamSpan => ({
+  cyclesUntil: String(stream.cyclesUntil),
+  endsOn: typeof stream.endsOn === "string" ? stream.endsOn : null,
+});
+
+// How far a stream's cycles go, as its draft, if any, makes it.
+export const streamSpanOf = (
+  state: RecordsState,
+  streamId: string,
+): StreamSpan =>
   // A stream is never removed, so what belongs to it always has one.
-  String(versionOf(state, "release-stream", streamId)?.cyclesUntil);
+  spanOf(versionOf(state, "release-stream", streamId) ?? {});
 
 // Whether a release's first and last cycles are cycles of its stream, in order.
 function releaseFits(cycles: readonly Cycle[], release: Recorded): boolean {
@@ -431,11 +445,22 @@ export function releaseProblem(
       }
     }
     const found = streamReleases(state, streamId);
-    const until = cyclesUntilOf(state, streamId);
+    const span = streamSpanOf(state, streamId);
+    const lastStart = lastStartOf(span);
     const cycles = cyclesOf(
       patterns.map(({ pattern }) => pattern),
-      until,
+      span.cyclesUntil,
+      span.endsOn,
     );
+    if (
+      (streamTouched || patternTouched) &&
+      endsTooEarly(
+        patterns.map(({ pattern }) => pattern),
+        span,
+      )
+    ) {
+      return endsBeforeFirstCycle;
+    }
     for (const { type, cycles: asCycles, ...refusals } of onCycles) {
       for (const { id, record } of onStream(state, type, streamId, asCycles)) {
         const recordTouched = touched.some(
@@ -444,7 +469,7 @@ export function releaseProblem(
         if (!patternTouched && !streamTouched && !recordTouched) continue;
         const name = String(record.name);
         const own = asCycles(record);
-        if (streamTouched && String(own.lastCycle) > until) {
+        if (streamTouched && String(own.lastCycle) > lastStart) {
           return worded(refusals.afterPlan(name), unnamedRefusals.afterPlan);
         }
         if (!releaseFits(cycles, own)) {
@@ -462,6 +487,30 @@ export function releaseProblem(
           return `The release ${String(clash.release.name)} already includes some of those cycles`;
         }
       }
+    }
+  }
+  return undefined;
+}
+
+// The first feature drafted onto a cycle of a retired stream that its live record doesn't already
+// target a cycle of, refused, since a retired stream's cycles take no new features. A feature
+// already there keeps its place, and may move between the stream's cycles, as a change of the
+// stream's cycles moves it with its cycle; each draft is checked on its own, so the rule can't tell
+// that move from another.
+export function retiredTargetProblem(
+  state: RecordsState,
+  touched: readonly Touched[],
+): string | undefined {
+  for (const { type, id, record } of touched) {
+    if (type !== "feature" || typeof record.targetStreamId !== "string") {
+      continue;
+    }
+    const streamId = record.targetStreamId;
+    const stream = versionOf(state, "release-stream", streamId);
+    if (stream?.retired !== true) continue;
+    const live = stateOf(state, "feature").live.get(id);
+    if (live?.targetStreamId !== streamId) {
+      return `${String(stream.name)} is retired, so its cycles take no new features`;
     }
   }
   return undefined;

@@ -2,9 +2,11 @@
 
 // Tests for the table of release streams: what each stream's row shows, the draft its row is marked
 // with, from the stream's own and its parts', the streams as they are live, the drafts a row names,
-// and how rows are grouped.
+// how rows are grouped, and Ended after a stream's name.
 
 import type { ReleaseStream, Show } from "@fathom/shared";
+import { MantineProvider } from "@mantine/core";
+import { cleanup, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
   patternOn,
@@ -426,7 +428,7 @@ describe("the table of streams", () => {
     ]);
   });
 
-  it("groups streams by whether they are retired, as they are live", () => {
+  it("groups streams by whether they are retired, as they are live, or else ended", () => {
     const [status] = table().groupings ?? [];
     const groupOf = (stream: ReleaseStream) => status?.of(rowOf(stream)).label;
     expect([
@@ -438,7 +440,32 @@ describe("the table of streams", () => {
           draft: recordDraft({ changed: ["retired"] }),
         }),
       ),
-    ]).toEqual(["Current", "Retired", "Current"]);
+      groupOf(fictionalStream({ endsOn: "2027-02-14" })),
+      groupOf(fictionalStream({ endsOn: day })),
+      groupOf(fictionalStream({ endsOn: "2027-02-14", retired: true })),
+    ]).toEqual([
+      "Current",
+      "Retired",
+      "Current",
+      "Ended",
+      "Current",
+      "Retired",
+    ]);
+  });
+
+  it("shows Ended after the name of a stream whose last day has passed", () => {
+    const [name] = table().columnsFor([], [], [], []);
+    const markOf = (stream: ReleaseStream) => {
+      render(<MantineProvider>{name?.mark?.(rowOf(stream))}</MantineProvider>);
+      const shown = screen.queryByText("Ended") !== null;
+      cleanup();
+      return shown;
+    };
+    expect([
+      markOf(fictionalStream({ endsOn: "2027-02-14" })),
+      markOf(fictionalStream({ endsOn: day })),
+      markOf(fictionalStream()),
+    ]).toEqual([true, false, false]);
   });
 
   it("groups streams by their cycle schedule, those with none last", () => {

@@ -7,7 +7,12 @@
 
 import { z } from "zod";
 import type { Permission } from "./access.ts";
-import { type Cycle, cycleUnitSchema, laterCyclesSchema } from "./cycles.ts";
+import {
+  type Cycle,
+  cycleUnitSchema,
+  laterCyclesSchema,
+  type StreamSpan,
+} from "./cycles.ts";
 import { daySchema } from "./days.ts";
 import { heldBySchema, recordDraftSchema } from "./drafts.ts";
 import { paletteColourSchema } from "./palette.ts";
@@ -79,8 +84,10 @@ export const releaseStreamSchema = z.object({
   id: z.string(),
   name: z.string(),
   retired: z.boolean(),
-  // The stream's cycles are those starting on or before it.
+  // While the stream keeps going, its cycles are those starting on or before it.
   cyclesUntil: z.string(),
+  // The stream's last day, which cuts its last cycle short, or null while it keeps going.
+  endsOn: z.string().nullable(),
   patterns: z.array(cyclePatternSchema),
   cycles: z.array(cycleSchema),
   // Its cycles as they are live, where drafts of its patterns or plan change them.
@@ -108,9 +115,12 @@ export const releaseStreamRequestSchema = z.object({
 
 export type ReleaseStreamRequest = z.infer<typeof releaseStreamRequestSchema>;
 
-export const cyclesUntilRequestSchema = z.object({ cyclesUntil: day });
-
-export type CyclesUntilRequest = z.infer<typeof cyclesUntilRequestSchema>;
+// How far a stream's cycles go: the day they are made until while it keeps going, and its last day,
+// or null to keep going.
+export const cyclesUntilRequestSchema = z.object({
+  cyclesUntil: day,
+  endsOn: day.nullable(),
+}) satisfies z.ZodType<StreamSpan>;
 
 export const cyclePatternRequestSchema = z
   .object({

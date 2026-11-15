@@ -112,6 +112,15 @@ describe("the timeline of release streams", () => {
     ]);
   });
 
+  it("marks where a stream that ends has its last day, and nothing for one that keeps going", () => {
+    const ending = fictionalStream({ endsOn: "2027-05-15" });
+    const layout = releasesOnlyTimeline([ending, minors], "2027-02-15");
+    expect(layout?.rows.map(({ endsAt }) => endsAt)).toEqual([
+      31 + 31 + 28 + 31 + 30 + 15,
+      undefined,
+    ]);
+  });
+
   it("spans each release across its cycles, to the end of the day it ships", () => {
     const layout = releasesOnlyTimeline(
       [

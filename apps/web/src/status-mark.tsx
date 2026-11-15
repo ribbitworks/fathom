@@ -12,7 +12,9 @@
 import {
   classNames,
   type DraftState,
+  hasEnded,
   type Show,
+  type StreamSpan,
   type Tier,
 } from "@fathom/shared";
 import { Text, VisuallyHidden } from "@mantine/core";
@@ -555,6 +557,11 @@ export function FactBox({
       {children}
     </KindBox>
   );
+}
+
+// A release stream's Ended, once its last day has passed.
+export function EndedBox({ stream, day }: { stream: StreamSpan; day: string }) {
+  return hasEnded(stream, day) && <FactBox>Ended</FactBox>;
 }
 
 // The words for a class's mark, as a header's spoken name adds them: none for General.

@@ -12,6 +12,8 @@ import {
   type CycleLengthRequest,
   type CyclePatternRequest,
   cyclesOf,
+  type StreamSpan,
+  lastStartOf,
   movedCycles,
   movedReleases,
   patternsForLength,
@@ -65,16 +67,11 @@ export const setStreamRetired = (
 ): Promise<SavedStream> =>
   sendJsonFor("PUT", `${streamPath(id)}/retired`, { retired }, streamResponse);
 
-export const setCyclesUntil = (
+export const setStreamSpan = (
   id: string,
-  cyclesUntil: string,
+  span: StreamSpan,
 ): Promise<SavedStream> =>
-  sendJsonFor(
-    "PUT",
-    `${streamPath(id)}/cycles-until`,
-    { cyclesUntil },
-    streamResponse,
-  );
+  sendJsonFor("PUT", `${streamPath(id)}/cycles-until`, span, streamResponse);
 
 type Member = "patterns" | "releases";
 
@@ -182,7 +179,7 @@ export function lengthChangeOf(
       problem: made.problem,
     };
   }
-  const cycles = cyclesOf(made.patterns, stream.cyclesUntil);
+  const cycles = cyclesOf(made.patterns, stream.cyclesUntil, stream.endsOn);
   const kept = keptReleases(stream);
   const moved = movedCycles(stream.cycles, cycles);
   const moving = movedReleases(
@@ -201,7 +198,7 @@ export function lengthChangeOf(
         })),
     ],
     moved,
-    stream.cyclesUntil,
+    lastStartOf(stream),
     stream.name,
     permissions,
   );

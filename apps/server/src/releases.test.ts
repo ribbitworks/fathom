@@ -131,12 +131,16 @@ const firstHalf = { firstCycle: "2027-01-01", lastCycle: "2027-04-01" };
 // Today in Fathom's time zone, which the tests leave as it starts.
 const today = () => dayIn(defaultTimeZone);
 
-const changeCyclesUntil = (streamId: string, cyclesUntil: string) =>
+const changeSpan = (
+  streamId: string,
+  cyclesUntil: string,
+  endsOn: string | null = null,
+) =>
   test.request(
     configurer.cookie,
     "PUT",
     `/api/release-streams/${streamId}/cycles-until`,
-    { cyclesUntil },
+    { cyclesUntil, endsOn },
   );
 
 describe("reading release streams", () => {
@@ -277,7 +281,7 @@ describe("who may change what", () => {
       "changing when its cycles end",
       "PUT",
       "/cycles-until",
-      { cyclesUntil: "2031-12-31" },
+      { cyclesUntil: "2031-12-31", endsOn: null },
     ],
     ["adding a change of cycles", "POST", "/patterns", quarters],
   ] as const)(
@@ -393,7 +397,7 @@ describe("changing release streams", () => {
 
   it("drafts making a stream's cycles until a later day, which makes more cycles", async () => {
     const stream = await liveStream();
-    const response = await changeCyclesUntil(stream.id, "2059-12-31");
+    const response = await changeSpan(stream.id, "2059-12-31");
     expect(response.statusCode).toBe(200);
     const changed = response.json<{ stream: ReleaseStream }>().stream;
     expect(changed.cyclesUntil).toBe("2059-12-31");
@@ -410,7 +414,7 @@ describe("changing release streams", () => {
     await approveAll(
       (await readStream(stream.id, planner.cookie)) as ReleaseStream,
     );
-    const response = await changeCyclesUntil(stream.id, "2027-09-30");
+    const response = await changeSpan(stream.id, "2027-09-30");
     expect(response.statusCode).toBe(409);
     expect(response.json<{ error: string }>().error).toBe(
       "The release Fictional Late includes cycles after that day; change it first",
@@ -436,12 +440,126 @@ describe("changing release streams", () => {
       editor.cookie,
       "PUT",
       `/api/release-streams/${stream.id}/cycles-until`,
-      { cyclesUntil: "2027-09-30" },
+      { cyclesUntil: "2027-09-30", endsOn: null },
     );
 
     expect(response.statusCode).toBe(409);
     expect(response.json<{ error: string }>().error).toBe(
       "Work is planned on cycles after that day",
+    );
+  });
+
+  it("drafts ending a stream, cutting its last cycle on its last day and keeping the day its cycles are made until", async () => {
+    const stream = await liveStream();
+    const response = await changeSpan(
+      stream.id,
+      stream.cyclesUntil,
+      "2027-05-15",
+    );
+    expect(response.statusCode).toBe(200);
+    const changed = response.json<{ stream: ReleaseStream }>().stream;
+    expect({
+      cyclesUntil: changed.cyclesUntil,
+      endsOn: changed.endsOn,
+      last: changed.cycles.at(-1),
+      draft: changed.draft?.changed,
+    }).toMatchObject({
+      cyclesUntil: stream.cyclesUntil,
+      endsOn: "2027-05-15",
+      last: { startsOn: "2027-04-01", endsOn: "2027-05-15" },
+      draft: ["endsOn"],
+    });
+  });
+
+  it("drafts a stream that ends keeping going again, up to the day its cycles are made until", async () => {
+    const stream = await liveStream();
+    await changeSpan(stream.id, "2028-12-31", "2027-05-15");
+    const response = await changeSpan(stream.id, "2028-12-31");
+    const changed = response.json<{ stream: ReleaseStream }>().stream;
+    expect([
+      changed.endsOn,
+      changed.cyclesUntil,
+      changed.cycles.at(-1)?.endsOn,
+    ]).toEqual([null, "2028-12-31", "2028-12-31"]);
+  });
+
+  it("refuses ending a stream before its first cycle starts", async () => {
+    const stream = await liveStream();
+    const response = await changeSpan(
+      stream.id,
+      stream.cyclesUntil,
+      "2026-12-31",
+    );
+    expect(response.statusCode).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe(
+      "The stream can't end before its first cycle starts",
+    );
+  });
+
+  it("refuses ending a stream before a release's last cycle starts, but not on that day", async () => {
+    const stream = await liveStream();
+    await draftRelease(stream.id, {
+      name: "Fictional Ending",
+      firstCycle: "2027-10-01",
+      lastCycle: "2027-10-01",
+    });
+    await approveAll(
+      (await readStream(stream.id, planner.cookie)) as ReleaseStream,
+    );
+    const early = await changeSpan(stream.id, stream.cyclesUntil, "2027-09-30");
+    const onTheDay = await changeSpan(
+      stream.id,
+      stream.cyclesUntil,
+      "2027-10-01",
+    );
+    expect([
+      early.json<{ error: string }>().error,
+      onTheDay.json<{ stream: ReleaseStream }>().stream.cycles.at(-1),
+    ]).toEqual([
+      "The release Fictional Ending includes cycles after that day; change it first",
+      expect.objectContaining({ startsOn: "2027-10-01", endsOn: "2027-10-01" }),
+    ]);
+  });
+
+  it("records ending a stream in the change history", async () => {
+    const stream = await liveStream();
+    await changeSpan(stream.id, stream.cyclesUntil, "2027-05-15");
+    const response = await test.request(
+      configurer.cookie,
+      "GET",
+      "/api/changes",
+    );
+    const fields = response
+      .json<ChangeHistory>()
+      .entries.flatMap(({ records }) => records)
+      .filter((record) => record.name === stream.name)
+      .flatMap((record) => record.fields);
+    expect(fields).toContainEqual({
+      field: "endsOn",
+      oldValue: null,
+      newValue: "2027-05-15",
+    });
+  });
+
+  it("drafts ending a stream with no cycles yet, on any day", async () => {
+    const stream = await draftStream();
+    const response = await changeSpan(
+      stream.id,
+      stream.cyclesUntil,
+      "2020-01-01",
+    );
+    expect(response.json<{ stream: ReleaseStream }>().stream.endsOn).toBe(
+      "2020-01-01",
+    );
+  });
+
+  it("refuses a stream's first cycles starting after the day it ends", async () => {
+    const stream = await draftStream();
+    await changeSpan(stream.id, stream.cyclesUntil, "2026-12-31");
+    const response = await draftPattern(stream.id);
+    expect(response.statusCode).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe(
+      "The stream can't end before its first cycle starts",
     );
   });
 
@@ -871,6 +989,20 @@ describe("changing one cycle's length", () => {
     await approveAll((await readStream(stream.id)) as ReleaseStream);
     return (await readStream(stream.id)) as ReleaseStream;
   }
+
+  it("keeps a stream's end when a cycle's length changes, cutting the cycle that then holds it", async () => {
+    const stream = await liveStream();
+    await changeSpan(stream.id, stream.cyclesUntil, "2027-08-15");
+    const response = await changeLength(stream.id, "2027-04-01", {
+      length: 2,
+      later: "move",
+    });
+    expect(spans(response.json<{ stream: ReleaseStream }>().stream)).toEqual([
+      "2027-01-01 to 2027-03-31",
+      "2027-04-01 to 2027-05-31",
+      "2027-06-01 to 2027-08-15",
+    ]);
+  });
 
   it("moves the cycles after it, and the releases on them, in one change set", async () => {
     const stream = await withRelease();

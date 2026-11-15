@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The release layer a timeline may show: a row for each release stream, labelled with its name and
-// its draft's marks, with a lane of its cycles drawn at their real lengths above a lane of its
-// releases, each a span across its cycles with its Ships on diamond under it, and, beside live, a
-// Live lane holding each release a draft moves in its old place. The streams are shown as the
-// Draft view around the timeline shows them, and each mark is given its record's own draft.
+// its draft's marks and Ended once its last day has passed, with a lane of its cycles drawn at
+// their real lengths above a lane of its releases, each a span across its cycles with its Ships on
+// diamond under it, and, beside live, a Live lane holding each release a draft moves in its old
+// place. The streams are shown as the Draft view around the timeline shows them, and each mark is
+// given its record's own draft.
 
 import type { RecordDraft, ReleaseStream } from "@fathom/shared";
 import { useCallback, useMemo } from "react";
@@ -22,6 +23,7 @@ import {
   draftedItemChars,
   draftMarkChars,
   draftTip,
+  EndedBox,
   liveWaitingWords,
   MarkedItem,
   useDraftView,
@@ -138,7 +140,7 @@ function ReleaseBar({
 }
 
 function ReleaseLanes({
-  row: { stream, cycles, releases, live },
+  row: { stream, cycles, endsAt, releases, live },
   markOf,
   px,
 }: {
@@ -169,6 +171,13 @@ function ReleaseLanes({
             </span>
           </li>
         ))}
+        {endsAt !== undefined && (
+          <li
+            className={classes.timelineStreamEnd}
+            style={{ left: px(endsAt) }}
+            aria-hidden
+          />
+        )}
       </ul>
       <ul
         className={[classes.timelineLane, classes.timelineReleaseLane].join(
@@ -208,7 +217,10 @@ function ReleaseLanes({
 
 // The release layer of every stream with its drafts, as the Draft view around it shows them: the
 // days it covers, and its rows on a timeline starting on a day.
-export function useReleaseLayer(releaseStreams: readonly ReleaseStream[]): {
+export function useReleaseLayer(
+  releaseStreams: readonly ReleaseStream[],
+  today: string,
+): {
   range: DayRange | undefined;
   rows: (from: string) => TimelineRow[];
 } {
@@ -244,22 +256,28 @@ export function useReleaseLayer(releaseStreams: readonly ReleaseStream[]): {
       return releaseLayer(shown, from, live).map((row) => ({
         id: row.stream.id,
         label: (
-          <DraftedItem
-            draft={markedDraft(
-              drafts.get(row.stream.id),
-              retired.get(row.stream.id),
-            )}
-            heldBy={heldBy.get(row.stream.id)}
-          >
-            <Tipped tip={row.stream.name} className={classes.timelineLabelName}>
-              {row.stream.name}
-            </Tipped>
-          </DraftedItem>
+          <>
+            <DraftedItem
+              draft={markedDraft(
+                drafts.get(row.stream.id),
+                retired.get(row.stream.id),
+              )}
+              heldBy={heldBy.get(row.stream.id)}
+            >
+              <Tipped
+                tip={row.stream.name}
+                className={classes.timelineLabelName}
+              >
+                {row.stream.name}
+              </Tipped>
+            </DraftedItem>
+            <EndedBox stream={row.stream} day={today} />
+          </>
         ),
         lanes: (px) => <ReleaseLanes row={row} markOf={markOf} px={px} />,
       }));
     },
-    [releaseStreams, shown, live],
+    [releaseStreams, shown, live, today],
   );
   return { range, rows };
 }

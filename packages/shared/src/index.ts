@@ -162,7 +162,11 @@ export {
   type CycleUnit,
   cycleUnitSchema,
   defaultNaming,
+  endsBeforeFirstCycle,
+  endsTooEarly,
+  hasEnded,
   horizonFrom,
+  lastStartOf,
   type LaterCycles,
   laterCyclesSchema,
   type LengthChange,
@@ -172,6 +176,7 @@ export {
   namingTokens,
   patternsForLength,
   patternStartFits,
+  type StreamSpan,
   yearsAhead,
 } from "./cycles.ts";
 export {
@@ -310,7 +315,6 @@ export {
   cyclePatternRequestSchema,
   cyclePatternSchema,
   cycleSchema,
-  type CyclesUntilRequest,
   cyclesUntilRequestSchema,
   longestCycle,
   movedReleases,

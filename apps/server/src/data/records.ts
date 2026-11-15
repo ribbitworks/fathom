@@ -64,7 +64,11 @@ import {
 import { allocationKind, allocationProblem } from "./allocation-kinds.ts";
 import { planningSettingsKind } from "./planning-settings-kind.ts";
 import { projectKinds } from "./project-kinds.ts";
-import { releaseKinds, releaseProblem } from "./release-kinds.ts";
+import {
+  releaseKinds,
+  releaseProblem,
+  retiredTargetProblem,
+} from "./release-kinds.ts";
 import {
   addedOnly,
   everyVersion,
@@ -137,7 +141,12 @@ const recordRules: readonly ((
   state: RecordsState,
   touched: readonly Touched[],
   permissions: readonly Permission[],
-) => string | undefined)[] = [allocationProblem, linkedProblem, releaseProblem];
+) => string | undefined)[] = [
+  allocationProblem,
+  linkedProblem,
+  releaseProblem,
+  retiredTargetProblem,
+];
 
 const ruleProblem = (
   state: RecordsState,

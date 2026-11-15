@@ -12,14 +12,15 @@
 // Drafts page, from each record's menu.
 
 import { RecordMenu, type RecordMenuActions } from "./record-menu.tsx";
-import type {
-  Cycle,
-  CyclePattern,
-  DraftKind,
-  RecordDraft,
-  RecordRef,
-  Release,
-  ReleaseStream,
+import {
+  type Cycle,
+  type CyclePattern,
+  type DraftKind,
+  lastStartOf,
+  type RecordDraft,
+  type RecordRef,
+  type Release,
+  type ReleaseStream,
 } from "@fathom/shared";
 import {
   ActionIcon,
@@ -58,6 +59,7 @@ import type { RecordNode } from "./record-drafts.ts";
 import {
   CycleLengthDialog,
   CyclesUntilDialog,
+  EndsDialog,
   PatternDialog,
   ReleaseDialog,
   StreamDialog,
@@ -92,6 +94,7 @@ import { noRecordActions, RecordGrid, undoDrafts } from "./record-grid.tsx";
 import {
   DraftedItem,
   DraftedValue,
+  EndedBox,
   FactBox,
   LiveRowMarks,
   LiveValue,
@@ -119,6 +122,7 @@ type Dialog =
   | { kind: "stream"; stream?: ReleaseStream }
   | { kind: "pattern"; stream: ReleaseStream; pattern?: CyclePattern }
   | { kind: "cycles-until"; stream: ReleaseStream }
+  | { kind: "ends"; stream: ReleaseStream }
   | { kind: "cycle-length"; stream: ReleaseStream; cycle: Cycle }
   | { kind: "release"; stream: ReleaseStream; release?: Release };
 
@@ -150,7 +154,10 @@ const dialogTitle = (dialog: Dialog): string => {
       : `Rename ${dialog.stream.name}`;
   }
   if (dialog.kind === "cycles-until") {
-    return `Change how far ${dialog.stream.name} is planned`;
+    return `Change how far ahead ${dialog.stream.name}'s cycles are made`;
+  }
+  if (dialog.kind === "ends") {
+    return `Change when ${dialog.stream.name} ends`;
   }
   if (dialog.kind === "cycle-length") {
     return `Change the length of ${dialog.cycle.name}`;
@@ -385,9 +392,9 @@ function Patterns({
       </div>
       <Group gap="xs" mih={36}>
         <Text fz="sm">
-          Planned to{" "}
+          {stream.endsOn === null ? "Cycles until" : "Ends"}{" "}
           <span className={classes.figures}>
-            {formatDay(stream.cyclesUntil)}
+            {formatDay(lastStartOf(stream))}
           </span>
         </Text>
       </Group>
@@ -399,12 +406,21 @@ function Patterns({
             </Button>
           </Menu.Target>
           <Menu.Dropdown>
+            {stream.endsOn === null && (
+              <Menu.Item
+                onClick={() => {
+                  actions.open({ kind: "cycles-until", stream });
+                }}
+              >
+                Cycles until…
+              </Menu.Item>
+            )}
             <Menu.Item
               onClick={() => {
-                actions.open({ kind: "cycles-until", stream });
+                actions.open({ kind: "ends", stream });
               }}
             >
-              Planned to…
+              Ends…
             </Menu.Item>
             <Menu.Item
               onClick={() => {
@@ -670,12 +686,15 @@ function Cycles({
 // The selected stream, beside the table, as the Lists page shows a list.
 function StreamPanel({
   stream,
+  day,
   actions,
   narrow,
   waiting,
   onClose,
 }: {
   stream: ReleaseStream;
+  // Today, for whether the stream has ended.
+  day: string;
   actions: Actions;
   narrow: boolean;
   // While a release's note is being changed, nothing in the stream changes, so nothing written is
@@ -734,6 +753,7 @@ function StreamPanel({
               {stream.retired &&
                 markedDraft(stream.draft, stream.retired)?.retiring ===
                   undefined && <FactBox>Retired</FactBox>}
+              <EndedBox stream={stream} day={day} />
             </div>
             {editable && (
               <>
@@ -1065,6 +1085,7 @@ export function ReleasesPage({
             <StreamPanel
               key={open.id}
               stream={open}
+              day={day}
               actions={actions}
               narrow={narrow}
               waiting={writing}
@@ -1182,6 +1203,13 @@ export function ReleasesPage({
         )}
         {dialog?.kind === "cycles-until" && (
           <CyclesUntilDialog
+            stream={dialog.stream}
+            onSaved={saved("Drafted the change to the cycles.")}
+            {...savingProps}
+          />
+        )}
+        {dialog?.kind === "ends" && (
+          <EndsDialog
             stream={dialog.stream}
             onSaved={saved("Drafted the change to the cycles.")}
             {...savingProps}

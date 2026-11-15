@@ -9,7 +9,9 @@
 import type { Database } from "@fathom/db";
 import {
   cyclesOf,
+  type StreamSpan,
   horizonFrom,
+  lastStartOf,
   knownColour,
   longestCycle,
   movedCycles,
@@ -55,8 +57,9 @@ import {
   type Wanted,
 } from "./records.ts";
 import {
-  cyclesUntilOf,
+  spanOf,
   streamPatterns,
+  streamSpanOf,
   livePatterns,
   releaseKind,
   streamFeatures,
@@ -124,20 +127,25 @@ function streamOut(
       ...extras(state, makers, "release", releaseId),
     }),
   );
+  const span = spanOf(stream);
   const cycles = cyclesOf(
     streamPatterns(state, id).map(({ pattern }) => pattern),
-    cyclesUntilOf(state, id),
+    span.cyclesUntil,
+    span.endsOn,
   );
-  const liveStream = stateOf(state, "release-stream").live.get(id);
+  const liveSpan = spanOf(
+    stateOf(state, "release-stream").live.get(id) ?? stream,
+  );
   const liveCycles = cyclesOf(
     livePatterns(state, id),
-    String(liveStream?.cyclesUntil ?? stream.cyclesUntil),
+    liveSpan.cyclesUntil,
+    liveSpan.endsOn,
   );
   return {
     id,
     name: String(stream.name),
     retired: stream.retired === true,
-    cyclesUntil: String(stream.cyclesUntil),
+    ...span,
     patterns,
     cycles,
     ...(JSON.stringify(liveCycles) === JSON.stringify(cycles)
@@ -230,6 +238,7 @@ export async function createStream(
       name: request.name,
       retired: false,
       cyclesUntil: horizonFrom(today),
+      endsOn: null,
     }),
   );
 }
@@ -238,7 +247,7 @@ export async function updateStream(
   database: Database,
   maker: Actor,
   id: string,
-  change: Partial<{ name: string; retired: boolean; cyclesUntil: string }>,
+  change: Partial<{ name: string; retired: boolean } & StreamSpan>,
 ): Promise<Saved<ReleaseStream>> {
   return changingStream(database, maker, id, (transaction, state) => {
     const stream = changeableRecord(state, "release-stream", id);
@@ -248,6 +257,14 @@ export async function updateStream(
     });
   });
 }
+
+// Drafts how far a stream's cycles go: the day they are made until, and its last day, if any.
+export const changeStreamSpan = (
+  database: Database,
+  maker: Actor,
+  id: string,
+  span: StreamSpan,
+): Promise<Saved<ReleaseStream>> => updateStream(database, maker, id, span);
 
 // A record of a stream to change, refusing one that is not in the stream.
 function inStreamRecord(
@@ -448,7 +465,7 @@ function movingDrafts(
   const moving = movedReleases(
     found,
     moved,
-    cyclesUntilOf(state, streamId),
+    lastStartOf(streamSpanOf(state, streamId)),
     nameOf(state, streamId),
     permissions,
   );
@@ -482,8 +499,8 @@ export async function changeCycleLength(
     changeableRecord(state, "release-stream", streamId);
     const kept = streamPatterns(state, streamId);
     const patterns = kept.map(({ pattern }) => pattern);
-    const until = cyclesUntilOf(state, streamId);
-    const before = cyclesOf(patterns, until);
+    const { cyclesUntil, endsOn } = streamSpanOf(state, streamId);
+    const before = cyclesOf(patterns, cyclesUntil, endsOn);
     if (!before.some((cycle) => cycle.startsOn === startsOn)) {
       throw new NotFoundError("There is no such cycle in this stream");
     }
@@ -497,7 +514,10 @@ export async function changeCycleLength(
     }
     const made = patternsForLength(patterns, { startsOn, ...request });
     if ("problem" in made) throw new ConflictError(made.problem);
-    const moved = movedCycles(before, cyclesOf(made.patterns, until));
+    const moved = movedCycles(
+      before,
+      cyclesOf(made.patterns, cyclesUntil, endsOn),
+    );
     return saveRecordDrafts(transaction, maker, state, [
       ...patternDrafts(state, streamId, kept, made.patterns),
       ...movingDrafts(state, streamId, moved, maker.permissions),

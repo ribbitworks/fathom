@@ -842,14 +842,29 @@ describe("when a stream's cycles change", () => {
     expect(errorOf(response)).toContain(`${feature.name} would move past`);
   });
 
-  it("refuses moving Planned to earlier than a cycle a feature targets", async () => {
+  it("refuses ending a stream before a cycle a feature targets", async () => {
     const streamId = await liveStream();
     const feature = await liveFeature(target(streamId, cycle.fourth));
     const response = await test.request(
       configurer.cookie,
       "PUT",
       `/api/release-streams/${streamId}/cycles-until`,
-      { cyclesUntil: "2027-08-01" },
+      { cyclesUntil: "2029-01-01", endsOn: "2027-09-30" },
+    );
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe(
+      `The feature ${feature.name} targets a cycle after that day; change it first`,
+    );
+  });
+
+  it("refuses moving Cycles until earlier than a cycle a feature targets", async () => {
+    const streamId = await liveStream();
+    const feature = await liveFeature(target(streamId, cycle.fourth));
+    const response = await test.request(
+      configurer.cookie,
+      "PUT",
+      `/api/release-streams/${streamId}/cycles-until`,
+      { cyclesUntil: "2027-08-01", endsOn: null },
     );
     expect(response.statusCode).toBe(409);
     expect(errorOf(response)).toBe(
@@ -1025,5 +1040,54 @@ describe("when a stream's cycles change", () => {
   it("uses none when added on a cycle that is live", async () => {
     const feature = await draftFeature(target(await liveStream()));
     expect(feature.draft?.uses).toEqual([]);
+  });
+});
+
+describe("a retired stream's cycles", () => {
+  const retireStream = (streamId: string) =>
+    test.connection
+      .update(releaseStreams)
+      .set({ retired: true })
+      .where(eq(releaseStreams.id, streamId));
+
+  it("refuses a feature onto a retired stream's cycle", async () => {
+    const streamId = await liveStream();
+    await retireStream(streamId);
+    const [stream] = await test.connection
+      .select()
+      .from(releaseStreams)
+      .where(eq(releaseStreams.id, streamId));
+    const response = await post({
+      name: unique("Fictional Feature"),
+      ...target(streamId),
+    });
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe(
+      `${String(stream?.name)} is retired, so its cycles take no new features`,
+    );
+  });
+
+  it("keeps a feature on a retired stream's cycle it already targets", async () => {
+    const streamId = await liveStream();
+    const feature = await liveFeature(target(streamId));
+    await retireStream(streamId);
+    const response = await put(feature.id, {
+      name: unique("Fictional Renamed"),
+      ...target(streamId),
+    });
+    expect(response.statusCode).toBe(200);
+  });
+
+  it("moves a feature on a retired stream with its cycle when the cycles change", async () => {
+    const streamId = await liveStream();
+    await liveFeature(target(streamId));
+    await retireStream(streamId);
+    const response = await test.request(
+      configurer.cookie,
+      "PUT",
+      `/api/release-streams/${streamId}/cycles/${cycle.second}/length`,
+      { length: 2, later: "move" },
+    );
+    expect(response.statusCode).toBe(200);
   });
 });

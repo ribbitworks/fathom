@@ -8,7 +8,8 @@
 - **Cycle:** a planning period, such as a quarter. A stream makes its cycles from a schedule, such as every 3 months.
 - **Release:** what ships the features that target its cycles. It covers one cycle, or several in a row.
 - **Ships on:** the day a release ships. It's the end of its last cycle, unless you set another day.
-- **Planned to:** the day by which a stream's last cycle starts, so the last cycle can end after it. A feature can only target a cycle that's been made, so this decides how far ahead you can plan.
+- **Cycles until:** the day by which a stream's last cycle starts, so the last cycle can end after it. A feature can only target a cycle that's been made, so this decides how far ahead you can plan.
+- **Ends:** a stream's last day, if it has one. No cycle starts after it, and the cycle holding it ends on it. Once that day has passed, the stream shows **Ended** after its name. It stays on the page until you retire it.
 - **Panel:** a stream's details open in a panel beside the timeline and the table. To close it, select the **×** at its top right, or press Esc.
 - **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. It goes live once someone whose role approves features and releases approves it. A dot before a name marks its draft.
 - **Who changes what:** if your role changes planning settings, you add streams and change their cycles. If your role changes features, you make and change releases. Others see the page without these buttons.
@@ -93,10 +94,18 @@ Cycles before that date keep their names and dates.
 To make cycles further ahead, or stop them sooner:
 
 1. Under **Cycle schedule**, select **Change…**.
-1. Select **Planned to…**.
-1. Type the new day in **Planned to**.
+1. Select **Cycles until…**.
+1. Type the new day in **Cycles until**.
 1. Select **Save**.
 
+To end a stream on a day:
+
+1. Under **Cycle schedule**, select **Change…**.
+1. Select **Ends…**.
+1. Type the stream's last day in **Ends**.
+1. Select **Save**.
+
+The panel then reads **Ends** and the day, and the timeline's cycles stop there. To let the stream keep going again, empty **Ends** and save. While a stream ends, **Cycles until…** isn't offered, since that day isn't used.
 To change just one cycle's length:
 
 1. Under **Cycles**, select the **⋯** at the end of the cycle's row.
@@ -111,7 +120,7 @@ You're done when the changed cycles show in the panel, with dots for your drafts
 
 ### Rename, Retire or Restore a Stream
 
-A retired stream takes no new releases. Once its retirement is approved, it leaves the table and the timeline. While any stream is retired, the **Views** menu offers **Show retired**, which a saved view keeps. That lists retired streams under **Retired**, while the streams are grouped by **Status**.
+A retired stream takes no new releases, and its cycles take no new features. Features already on them keep their place. Once its retirement is approved, it leaves the table and the timeline. While any stream is retired, the **Views** menu offers **Show retired**, which a saved view keeps. That lists retired streams under **Retired**, while the streams are grouped by **Status**.
 
 1. To restore a retired stream, first open the **Views** menu, and choose **Show retired**.
 1. Open the stream.
