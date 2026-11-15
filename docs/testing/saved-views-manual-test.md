@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its streams in the timeline; that a view on Features is shared by its table and Board, and kept to Features; and that a view keeps People grouped by two levels.
+Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its streams in the timeline; that a view on Features is shared by its table and Board, and kept to Features; that a view keeps People grouped by two levels; and that a view on Feature assignments keeps its grouping, and is kept to its page.
 
 ## Test Environment
 
@@ -884,4 +884,71 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The button reads **Group by**.
     - The rows show as one list.
+  - **Notes:**
+
+### VIEW-15: A View on Feature Assignments Is Shared and Kept to Its Page
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, in the main window, the account VIEW-14 ended with.
+
+**Preconditions:** In the main window, this account is signed in on **Feature assignments**, with no view applied. In the second window, Engineering Director, `engineering.director@fathom.test` is signed in on **Feature assignments**, with no view applied.
+
+- [ ] `D9F9` In the main window, select **Group by: Manager**, then **Feature team**.
+  - **Expected:**
+    - The button reads **Group by: Feature team**.
+    - The rows show under headings that each name a feature team.
+  - **Notes:**
+
+- [ ] `B691` Open the Views menu, and select **Save view…**.
+  - **Expected:**
+    - A dialog titled "Save view" opens.
+    - Under **Includes**, **Group by** reads "Feature team".
+  - **Notes:**
+
+- [ ] `1E88` Type `Fictional by feature team` in **Name**.
+  - **Expected:** The name shows in **Name**.
+  - **Notes:**
+
+- [ ] `BD12` Tick **Share with everyone who sees this table**.
+  - **Expected:** The checkbox is ticked.
+  - **Notes:**
+
+- [ ] `A1D4` Select **Save view** in the dialog.
+  - **Expected:** The Views menu's button says `Fictional by feature team`.
+  - **Notes:**
+
+- [ ] `ED9B` In the second window, reload the page.
+  - **Expected:**
+    - The button reads **Group by: Manager**.
+    - The Views menu's button reads **Views**, with no dot.
+  - **Notes:**
+
+- [ ] `FCA9` Open the Views menu, and select `Fictional by feature team` under **Shared views**.
+  - **Expected:**
+    - The button reads **Group by: Feature team**.
+    - The rows show under headings that each name a feature team.
+    - The Views menu's button says `Fictional by feature team`, with no dot.
+  - **Notes:**
+
+- [ ] `B448` Select the **Capacity** page in the left-hand menu.
+  - **Expected:**
+    - **People** is chosen in the switch after the **Capacity** heading.
+    - No Views menu shows above the table.
+  - **Notes:**
+
+- [ ] `AA7A` Type `a` in the search box.
+  - **Expected:** The Views menu's button reads **Views**, with a dot.
+  - **Notes:**
+
+- [ ] `76BD` Open the Views menu.
+  - **Expected:**
+    - The menu offers **Save view…**.
+    - The menu lists no `Fictional by feature team`.
+  - **Notes:**
+
+- [ ] `5462` In the main window, open the Views menu and select **Delete view**.
+  - **Expected:** A notification reads "Deleted the Fictional by feature team view.", with **Undo**.
+  - **Notes:**
+
+- [ ] `CB80` Select **Group by: Feature team**, then **Manager**.
+  - **Expected:** The button reads **Group by: Manager**.
   - **Notes:**

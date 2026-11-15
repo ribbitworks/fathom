@@ -11,7 +11,7 @@ import { CapacityPeople } from "./capacity-people.tsx";
 import { ModeSwitch, PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { PlanningSettingsTab } from "./planning-settings-tab.tsx";
-import type { View } from "./table-view.ts";
+import type { MonthGridProps } from "./month-grid.tsx";
 import { today } from "./today.ts";
 
 const modeLabels: Record<CapacityMode, string> = {
@@ -23,20 +23,14 @@ export function CapacityPage({
   modes,
   mode,
   onMode,
-  byManager,
-  view,
-  onView,
   canEditSettings,
   approves,
-}: {
+  ...grid
+}: Omit<MonthGridProps, "now"> & {
   // The modes the role sees, in order.
   modes: readonly CapacityMode[];
   mode: CapacityMode;
   onMode: (mode: CapacityMode) => void;
-  // Whether the reader may group People's rows by manager, which shows later months' managers.
-  byManager: boolean;
-  view: View;
-  onView: (view: View, replace?: boolean) => void;
   canEditSettings: boolean;
   // The kinds of draft the user may approve and reject.
   approves: readonly DraftKind[];
@@ -68,18 +62,13 @@ export function CapacityPage({
         <PlanningSettingsTab
           canEdit={canEditSettings}
           approves={approves}
-          show={view.show}
+          show={grid.view.show}
           onShow={(show) => {
-            onView({ ...view, show }, true);
+            grid.onView({ ...grid.view, show }, true);
           }}
         />
       ) : (
-        <CapacityPeople
-          byManager={byManager}
-          now={now}
-          view={view}
-          onView={onView}
-        />
+        <CapacityPeople now={now} {...grid} />
       )}
     </Stack>
   );

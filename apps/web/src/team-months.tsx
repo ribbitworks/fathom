@@ -348,6 +348,8 @@ export const readOnlyMonthActions = noRecordActions<
 export function useTeamMonthActions(
   range: MonthRange,
   today: string,
+  // While another of the page's dialogs is open, which Cmd+Z leaves alone.
+  blocked: boolean,
 ): RecordActions<PersonMonths, CellChange, CellChange> {
   const { queryKey } = teamMonthsQuery(range);
   const { save, undoable } = useSaving<TeamMonths>({
@@ -355,7 +357,7 @@ export function useTeamMonthActions(
     refreshes: [featureTeamsQuery.queryKey],
     removed:
       "Someone else has removed this. The feature assignments have been refreshed.",
-    blocked: false,
+    blocked,
   });
   return {
     ...noRecordActions<PersonMonths, CellChange, CellChange>(),

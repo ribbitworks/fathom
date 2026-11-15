@@ -345,7 +345,11 @@ describe("changing a month's teams", () => {
     const client = new QueryClient();
     const { result } = renderHook(
       () =>
-        useTeamMonthActions({ from: "2027-03", to: "2027-04" }, "2027-03-10"),
+        useTeamMonthActions(
+          { from: "2027-03", to: "2027-04" },
+          "2027-03-10",
+          false,
+        ),
       {
         wrapper: ({ children }: { children: ReactNode }) => (
           <QueryClientProvider client={client}>{children}</QueryClientProvider>

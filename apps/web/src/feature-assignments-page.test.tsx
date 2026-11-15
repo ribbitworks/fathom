@@ -2,8 +2,9 @@
 
 // Tests for the Feature assignments page: people as rows and months as columns, their teams shown as
 // labels, the three ways of grouping them, each person counted once, months outside someone's
-// employment, a label's tooltip, drafts and the Draft menu, changing a month's teams, what it shows
-// when it cannot load, and the old address of its Allocations mode, which opens Capacity instead.
+// employment, a label's tooltip, drafts and the Draft menu, changing a month's teams, saved views,
+// what it shows when it cannot load, and the old address of its Allocations mode, which opens
+// Capacity instead.
 
 import { type TeamMonths } from "@fathom/shared";
 import {
@@ -134,6 +135,36 @@ describe("changing a month's teams", () => {
     await userEvent.keyboard("{Delete}");
 
     // Undo is offered once the change is saved; pressing it before then does nothing.
+    await waitFor(async () => {
+      await userEvent.keyboard("{Meta>}z{/Meta}");
+      expect(bodyOf(fetch, "POST", `/api/undo/${saved}`)).toEqual([{}]);
+    });
+  });
+
+  it("leaves a change alone with Cmd+Z while a view is being named", async () => {
+    // Given a change saved, and the Save view dialog open
+    const fetch = await openEditing();
+    act(() => {
+      cell("2027-03").focus();
+    });
+    await userEvent.keyboard("{Delete}");
+    await waitFor(() => {
+      expect(bodyOf(fetch, "PATCH", caseyUrl)).toHaveLength(1);
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Views, changed" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Save view…" }),
+    );
+    await screen.findByRole("dialog", { name: "Save view" });
+
+    // When Cmd+Z is pressed
+    await userEvent.keyboard("{Meta>}z{/Meta}");
+
+    // Then nothing is undone until the dialog closes
+    expect(bodyOf(fetch, "POST", `/api/undo/${saved}`)).toEqual([]);
+    await userEvent.keyboard("{Escape}");
     await waitFor(async () => {
       await userEvent.keyboard("{Meta>}z{/Meta}");
       expect(bodyOf(fetch, "POST", `/api/undo/${saved}`)).toEqual([{}]);
@@ -488,5 +519,77 @@ describe("the Feature assignments page", () => {
     expect(
       await screen.findByText("There is no page at this address."),
     ).toBeDefined();
+  });
+});
+
+describe("the Feature assignments page's saved views", () => {
+  it("saves a view with its grouping, and applies it again", async () => {
+    // Given the grid grouped by manager, and no saved views
+    const saved = {
+      id: "00000000-0000-4000-8000-0000000000a2",
+      name: "By manager",
+      scope: "personal",
+      definition: { grouping: "manager" },
+      canChange: true,
+      canShare: false,
+    };
+    let views: object[] = [];
+    const fetch = serverAnswers({
+      "GET /api/session": reader,
+      [monthsUrl]: () => Response.json(months),
+      "GET /api/views/feature-assignments": () => Response.json(views),
+      "POST /api/views/feature-assignments": () => {
+        views = [saved];
+        return Response.json(
+          { view: saved, changeSetId: null },
+          { status: 201 },
+        );
+      },
+    });
+    const history = renderApp("/feature-assignments?grouping=manager");
+
+    // When it is saved as a view
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Views, changed" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Save view…" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Save view" });
+    expect(within(dialog).getByText("Manager")).toBeDefined();
+    await userEvent.type(
+      within(dialog).getByRole("textbox"),
+      "By manager{Enter}",
+    );
+
+    // Then the grouping is saved, and the view is the one applied
+    await waitFor(() => {
+      expect(history.location.search).toContain(`view=${saved.id}`);
+    });
+    expect(bodyOf(fetch, "POST", "/api/views/feature-assignments")).toEqual(
+      [saved.definition].map((definition) => ({
+        name: "By manager",
+        scope: "personal",
+        definition,
+      })),
+    );
+
+    // And, cleared, it is applied again from the menu
+    await userEvent.click(
+      screen.getByRole("button", { name: "Views: By manager" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Clear view" }),
+    );
+    await waitFor(() => {
+      expect(history.location.search).not.toContain("manager");
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Views" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: /^By manager/u }),
+    );
+    await waitFor(() => {
+      expect(history.location.search).toContain("grouping=manager");
+    });
   });
 });

@@ -14,6 +14,7 @@ import {
   allocationsQuery,
 } from "./allocation-months.tsx";
 import { MonthGrid, type MonthGridProps } from "./month-grid.tsx";
+import { useSavedViews } from "./saved-views.tsx";
 import { orgChartQuery } from "./org-chart.ts";
 import { activeGrouping } from "./table-view.ts";
 import {
@@ -27,10 +28,20 @@ export function CapacityPeople({
   now,
   view,
   onView,
+  applied,
+  onApply,
+  canShareViews,
 }: MonthGridProps) {
   const [range] = useState(() => gridMonthsAround(now));
   const monthsRead = useQuery(teamMonthsQuery(range));
   const allocationsRead = useQuery(allocationsQuery);
+  const views = useSavedViews({
+    table: "capacity",
+    within: allocationsQuery.queryKey,
+    applied,
+    onApply,
+    canShare: canShareViews,
+  });
   const chartRead = useQuery(orgChartQuery);
   const teamMonths = monthsRead.data;
   const allocations = allocationsRead.data;
@@ -79,6 +90,7 @@ export function CapacityPeople({
       now={now}
       view={view}
       onView={onView}
+      views={views}
     />
   );
 }

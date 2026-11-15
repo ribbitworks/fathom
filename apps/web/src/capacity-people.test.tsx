@@ -2,8 +2,8 @@
 
 // Tests for the Capacity page's People mode and its switch: each person's and planned hire's
 // features with their percentages, grouping, the modes a role sees and the mode in the address, the
-// old address of Feature assignments' Allocations mode, what it shows when it cannot load, and its
-// cells read only.
+// old address of Feature assignments' Allocations mode, what it shows when it cannot load, its cells
+// read only, and its saved views.
 
 import {
   type Allocations,
@@ -336,5 +336,49 @@ describe("the old address of Feature assignments' Allocations mode", () => {
     });
     expect(address(history)).toBe("?grouping=feature-team&mode=people");
     expect(await grid()).toBeDefined();
+  });
+});
+
+describe("Capacity's saved views", () => {
+  it("applies a saved view, keeping the mode in the address", async () => {
+    // Given a saved view of Casey alone
+    const saved = {
+      id: "00000000-0000-4000-8000-0000000000a3",
+      name: "Casey",
+      scope: "shared",
+      definition: { search: "Casey" },
+      canChange: true,
+      canShare: true,
+    };
+    serverAnswers({
+      "GET /api/session": session([...seesPeople, "configuration:view"]),
+      [monthsUrl]: () => Response.json(fictionalTeamMonths),
+      "GET /api/allocations": () => Response.json(allocations),
+      "GET /api/org-chart": () => Response.json(chart),
+      "GET /api/views/capacity": () => Response.json([saved]),
+    });
+    const history = renderApp("/capacity?mode=people");
+    await grid();
+
+    // When it is chosen in the Views menu
+    await userEvent.click(screen.getByRole("button", { name: "Views" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: /^Casey/u }),
+    );
+
+    // Then the view and the mode are both in the address, and Casey is shown alone
+    await waitFor(() => {
+      expect(address(history)).toBe(
+        `?search=Casey&view=${saved.id}&mode=people`,
+      );
+    });
+    expect(screen.queryByText("Payments tester")).toBeNull();
+  });
+
+  it("offers no Views menu on Settings, though People's view has changed", async () => {
+    openPeople("?mode=settings&search=Casey");
+
+    await screen.findByText("Hours a day", { selector: "dt" });
+    expect(screen.queryByRole("button", { name: /^Views/u })).toBeNull();
   });
 });

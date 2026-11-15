@@ -409,9 +409,6 @@ const capacityRoute = createRoute({
     const mode = shownCapacityMode(asked, access);
     // The address keeps the mode shown, not one asked for that the role doesn't see.
     const kept = asked === undefined ? {} : { mode };
-    const { view, onView } = viewProps(search, (next, replace) => {
-      void navigate({ search: { ...next, ...kept }, replace });
-    });
     return (
       <CapacityPage
         modes={capacityModes(access)}
@@ -420,8 +417,10 @@ const capacityRoute = createRoute({
           void navigate({ search: { mode: next } });
         }}
         byManager={seesView("groupingByManager", access)}
-        view={view}
-        onView={onView}
+        canShareViews={sharesViews("capacity", permissions)}
+        {...viewProps(search, (next, replace) => {
+          void navigate({ search: { ...next, ...kept }, replace });
+        })}
         canEditSettings={permissions.includes("configuration:edit")}
         approves={approvableKinds(permissions)}
       />
@@ -694,19 +693,15 @@ const featureAssignmentsRoute = createRoute({
   component: function FeatureAssignments() {
     const { permissions, access } = signedIn.useRouteContext();
     const navigate = featureAssignmentsRoute.useNavigate();
-    const { view, onView } = viewProps(
-      featureAssignmentsRoute.useSearch(),
-      (next, replace) => {
-        void navigate({ search: next, replace });
-      },
-    );
     return (
       <FeatureAssignmentsPage
         byManager={seesView("groupingByManager", access)}
         editsTeams={editsFeatureTeams(permissions)}
         changesDates={editsField(access, "featureTeamDates")}
-        view={view}
-        onView={onView}
+        canShareViews={sharesViews("feature-assignments", permissions)}
+        {...viewProps(featureAssignmentsRoute.useSearch(), (next, replace) => {
+          void navigate({ search: next, replace });
+        })}
       />
     );
   },

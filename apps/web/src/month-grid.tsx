@@ -6,6 +6,7 @@
 import { monthOf } from "@fathom/shared";
 import { Center, Loader } from "@mantine/core";
 import type { UseQueryResult } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 import type { CellChange } from "./cell-kinds.tsx";
 import { LoadProblem } from "./load-problem.tsx";
 import {
@@ -13,16 +14,22 @@ import {
   RecordGrid,
   type RecordTable,
 } from "./record-grid.tsx";
+import type { SavedViews } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
 import { TableTips } from "./table-tips.tsx";
 import type { MonthRow } from "./team-months.tsx";
 
 // What a page gives the grid it shows.
 export interface MonthGridProps {
+  // Whether the reader may group rows by manager, which shows later months' managers.
   byManager: boolean;
   now: string;
   view: View;
   onView: (view: View, replace?: boolean) => void;
+  // The saved view the view started from, as the address names it.
+  applied: string | undefined;
+  onApply: (view: View, id: string, replace?: boolean) => void;
+  canShareViews: boolean;
 }
 
 export function MonthGrid<Rec extends MonthRow>({
@@ -35,6 +42,7 @@ export function MonthGrid<Rec extends MonthRow>({
   now,
   view,
   onView,
+  views,
 }: {
   // What could not be loaded, such as "the allocations".
   what: string;
@@ -46,6 +54,8 @@ export function MonthGrid<Rec extends MonthRow>({
   now: string;
   view: View;
   onView: (view: View, replace?: boolean) => void;
+  // The grid's saved views, and the dialogs that name and delete them.
+  views: { saved: SavedViews; dialogs: ReactNode };
 }) {
   if (reads.some(({ isError }) => isError)) {
     return (
@@ -81,9 +91,11 @@ export function MonthGrid<Rec extends MonthRow>({
         actions={actions}
         view={view}
         onView={onView}
+        saved={views.saved}
         opensAtColumn={monthOf(now)}
         withDrafts
       />
+      {views.dialogs}
     </TableTips>
   );
 }
