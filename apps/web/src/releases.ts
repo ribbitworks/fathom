@@ -104,19 +104,6 @@ export function saveRelease(
   );
 }
 
-// Drafts a release's note; an empty one removes it.
-export const saveReleaseNote = (
-  streamId: string,
-  id: string,
-  note: string,
-): Promise<SavedStream> =>
-  sendJsonFor(
-    "PUT",
-    `${memberPath(streamId, "releases", id)}/note`,
-    { note: note === "" ? null : note },
-    streamResponse,
-  );
-
 // Drafts removing a pattern or release; removing one only drafted to be added discards it.
 export async function removeFromStream(
   streamId: string,
@@ -253,12 +240,6 @@ export async function resubmitRecordDraft(
 
 // What each row shows of its record, each marked by its own dot where a draft changes it.
 export const streamRowFields = new Set(["name"]);
-export const patternRowFields = new Set([
-  "startsOn",
-  "length",
-  "unit",
-  "naming",
-]);
 export const releaseRowFields = new Set([
   "name",
   "colour",

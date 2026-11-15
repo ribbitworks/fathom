@@ -168,75 +168,6 @@
   min-height: 0;
 }
 
-.panelNarrow {
-  position: fixed;
-  top: var(--app-shell-header-offset, 56px);
-  right: 0;
-  bottom: 0;
-  left: 0;
-  /* Above the table's header row. */
-  z-index: 150;
-  border: 0;
-  border-radius: 0;
-}
-
-.panelHead {
-  padding: 16px 16px 12px 24px;
-}
-
-.panelTitle {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-/* A panel's name with its marks on one line, on the name's baseline and in its size, so its dot is
-   centred on its capitals and its boxes follow it, as every item's marks do. */
-.panelNameBlock {
-  flex: 1;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  min-width: 0;
-  font-size: var(--fathom-panel-name-size);
-  line-height: var(--fathom-panel-name-line);
-}
-
-/* A subtitle wraps onto a line of its own under the name. */
-.panelSubtitle {
-  flex-basis: 100%;
-}
-
-.panelNameBlock .panelName {
-  flex: 0 1 auto;
-  min-width: 0;
-}
-
-.panelName {
-  flex: 1;
-  margin: 0;
-  font-size: var(--fathom-panel-name-size);
-  line-height: var(--fathom-panel-name-line);
-  font-weight: 600;
-}
-
-/* A side panel's scrolling body, with room above its first control for a whole focus ring, taken back
-   so nothing moves, as the shared scroll area has. */
-.panelBody {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  margin-top: calc(-1 * var(--fathom-focus-room));
-  padding: var(--fathom-focus-room) 12px 12px;
-}
-
-.panelFoot {
-  display: flex;
-  justify-content: flex-end;
-  padding: 8px 16px;
-  border-top: 1px solid var(--mantine-color-default-border);
-}
-
 /* Choices: a row each, with the grip and actions showing on hover or when selected. */
 .choice {
   position: relative;
@@ -361,13 +292,6 @@ select.cellInput {
 .cellInput::placeholder {
   color: var(--mantine-color-placeholder);
   font-weight: 400;
-}
-
-/* A release's name opening its note is underlined, in the text's colour as a stream's name is. */
-.noteLink {
-  color: inherit;
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
 /* A web link in a cell reads as a link, and is cut short like any other cell's text. */
@@ -1178,51 +1102,6 @@ th.liveColumn {
 .viewParts dd {
   margin: 0;
   overflow-wrap: anywhere;
-}
-
-/* The Releases page's side panel: a section for each part of a stream, each a heading over compact
-   rows with the row's menu in a narrow last column, and the section's action under its rows. */
-.panelSection {
-  padding: 12px 12px 4px;
-}
-
-.panelSection + .panelSection {
-  border-top: 1px solid var(--mantine-color-default-border);
-}
-
-/* A panel section's rows: one grid whose rows share its columns, so a mark or box in one row's first
-   value moves every row's second value alike. */
-.recordRows {
-  display: grid;
-  grid-template-columns: minmax(7rem, max-content) 1fr 28px;
-  column-gap: 16px;
-}
-
-.recordRow {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: subgrid;
-  align-items: center;
-  min-height: 36px;
-  padding: 2px 0;
-  font-size: 14px;
-}
-
-/* The Releases panel's table of cycles: names, days, and releases stay on one line, and only the
-   months wrap. */
-.cycleCell {
-  white-space: nowrap;
-}
-
-/* A cycle's months wrap, but never to a word on each line. */
-.monthsCell {
-  min-width: 12rem;
-}
-
-/* A row in a record's panel that its draft removes, struck through as a table's row is. */
-.removedRow.recordRow > span:not(:last-child) {
-  color: var(--mantine-color-dimmed);
-  text-decoration: line-through;
 }
 
 /* The shared timeline: a sticky column of row labels, as wide as the timeline's style sets, beside

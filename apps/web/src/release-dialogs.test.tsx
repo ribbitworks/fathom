@@ -325,6 +325,39 @@ describe("the dialog changing a stream's cycles", () => {
     ]);
   });
 
+  it("starts a new pattern from the cycle given, as the one in force there makes cycles", async () => {
+    // Given a schedule of fortnights named Sprint, from a cycle of it
+    const fetch = serverAnswers({
+      [`POST ${streamPath}/patterns`]: savedStream,
+    });
+    const sprints = fictionalStream({
+      patterns: [
+        fictionalPattern({ unit: "weeks", length: 2, naming: "Sprint {N}" }),
+      ],
+    });
+    const { onSaved } = show((handlers) => (
+      <PatternDialog stream={sprints} from="2027-01-15" {...handlers} />
+    ));
+
+    // When the change is saved as it opens
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change cycles" }),
+    );
+
+    // Then it starts on that cycle, as long and named as the pattern in force
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalled();
+    });
+    expect(bodiesOf(fetch)).toEqual([
+      {
+        startsOn: "2027-01-15",
+        length: 2,
+        unit: "weeks",
+        naming: "Sprint {N}",
+      },
+    ]);
+  });
+
   it("shows the first cycles the pattern makes", async () => {
     show((handlers) => <PatternDialog stream={empty} {...handlers} />);
     await userEvent.type(box("First cycle starts"), "20270101");

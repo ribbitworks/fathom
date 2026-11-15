@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the table of release streams: what each stream's row shows, the draft its row is marked
-// with, from the stream's own and its parts', the streams as they are live, the drafts a row names,
-// how rows are grouped, and Ended after a stream's name.
+// Tests for the Schedules tab's table: what each schedule's row shows, the draft its row is marked
+// with, from the schedule's own and its parts', the schedules as they are live, the drafts a row
+// names, how rows are grouped, the next release's colour, and Ended after a schedule's name.
 
 import type { ReleaseStream, Show } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import { cleanup, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
-  patternOn,
   shownUnlessRetired,
   streamColumnOrder,
   streamRows,
@@ -31,9 +30,13 @@ const rowOf = (stream: ReleaseStream, show: Show = "both") => {
 };
 const table = (streams: ReleaseStream[] = []) =>
   streamTable({ streams, day, onOpen: vi.fn() });
+const columnOf = (key: string) =>
+  table()
+    .columnsFor([], [], [], [])
+    .find((column) => column.key === key);
 
-describe("a stream's row", () => {
-  it("shows its name, cycles in force, releases kept, and the day it ends", () => {
+describe("a schedule's row", () => {
+  it("shows its name, current cycle and its days, next release and its day, length now and end", () => {
     const row = rowOf(
       fictionalStream({
         releases: [
@@ -46,10 +49,23 @@ describe("a stream's row", () => {
         ],
       }),
     );
-    expect([row.name, row.schedule, row.releases, row.endsOn]).toEqual([
+    expect([
+      row.name,
+      row.currentCycle,
+      row.cycleStarts,
+      row.cycleEnds,
+      row.nextRelease,
+      row.releaseDate,
+      row.lengthNow,
+      row.endsOn,
+    ]).toEqual([
       "Fictional Majors",
-      "Every 3 months, named {YY}.{N}",
+      "27.1",
+      "2027-01-01",
+      "2027-03-31",
       "Fictional One",
+      "2027-03-31",
+      "3 months",
       "",
     ]);
   });
@@ -79,23 +95,51 @@ describe("a stream's row", () => {
         ],
       }),
     );
-    expect(row.nextRelease).toBe("Fictional Sooner, ships Mar 31, 2027");
+    expect([row.nextRelease, row.releaseDate]).toEqual([
+      "Fictional Sooner",
+      "2027-03-31",
+    ]);
   });
 
-  it("names no release when none is to come, and no cycles when it has none", () => {
-    const row = rowOf(fictionalStream({ patterns: [] }));
-    expect([row.nextRelease, row.schedule]).toEqual(["", ""]);
+  it("is blank for a schedule with no cycles yet", () => {
+    const row = rowOf(fictionalStream({ patterns: [], cycles: [] }));
+    expect([
+      row.currentCycle,
+      row.cycleStarts,
+      row.nextRelease,
+      row.releaseDate,
+      row.lengthNow,
+    ]).toEqual(["", "", "", "", ""]);
   });
 
-  it("has no draft when nothing in its stream has one", () => {
+  it("has no draft when nothing in its schedule has one", () => {
     expect(rowOf(fictionalStream()).draft).toBeUndefined();
   });
 
-  it("has no draft when its parts' drafts change nothing it shows, such as a release's colour", () => {
+  it("marks Next release when a draft changes the next release's colour", () => {
     const row = rowOf(
       fictionalStream({
         releases: [
           fictionalRelease({
+            colour: "grape",
+            draft: recordDraft({ changed: ["colour"], live: { colour: null } }),
+          }),
+        ],
+      }),
+    );
+    expect(row.draft?.changed).toEqual(["nextRelease"]);
+  });
+
+  it("has no draft when its parts' drafts change nothing it shows, such as a later release's colour", () => {
+    const row = rowOf(
+      fictionalStream({
+        releases: [
+          fictionalRelease(),
+          fictionalRelease({
+            id: releaseId(2),
+            name: "Fictional Later",
+            firstCycle: "2027-04-01",
+            lastCycle: "2027-04-01",
             colour: "grape",
             draft: recordDraft({ changed: ["colour"], live: { colour: null } }),
           }),
@@ -138,21 +182,24 @@ describe("a stream's row", () => {
     expect(row.draft).toEqual({
       action: "changed",
       state: "waiting",
-      changed: ["schedule", "releases", "nextRelease"],
+      changed: ["lengthNow", "nextRelease"],
       madeBy: "Fictional Later",
       madeAs: undefined,
       changedBy: {
-        schedule: "Fictional Editor",
-        releases: "Fictional Later",
+        lengthNow: "Fictional Editor",
         nextRelease: "Fictional Later",
       },
       unpublished: false,
       needsOtherApprover: true,
       live: {
         name: "Fictional Majors",
-        schedule: "",
-        releases: "Fictional One, Fictional Was",
-        nextRelease: "Fictional One, ships Mar 31, 2027",
+        currentCycle: "27.1",
+        cycleStarts: "2027-01-01",
+        cycleEnds: "2027-03-31",
+        nextRelease: "Fictional One",
+        nextReleaseColour: "",
+        releaseDate: "2027-03-31",
+        lengthNow: "",
         endsOn: "",
       },
     });
@@ -176,7 +223,7 @@ describe("a stream's row", () => {
     ]).toEqual(["waiting", "rejected"]);
   });
 
-  it("adds the columns its parts' drafts change to the stream's own draft, saying it retires the stream", () => {
+  it("adds the columns its parts' drafts change to the schedule's own draft, saying it retires the schedule", () => {
     const row = rowOf(
       fictionalStream({
         retired: true,
@@ -187,14 +234,14 @@ describe("a stream's row", () => {
       }),
     );
     expect([row.draft?.changed, row.draft?.retiring]).toEqual([
-      ["retired", "releases", "nextRelease"],
+      ["retired", "nextRelease", "releaseDate"],
       true,
     ]);
   });
 });
 
-describe("a stream's row with its drafts applied", () => {
-  it("still marks a release a waiting draft removes, struck through, and leaves out rejected drafts", () => {
+describe("a schedule's row with its drafts applied", () => {
+  it("leaves out what a waiting draft removes and takes back rejected drafts", () => {
     const row = rowOf(
       fictionalStream({
         releases: [
@@ -213,24 +260,15 @@ describe("a stream's row with its drafts applied", () => {
       }),
       "drafts",
     );
-    expect([
-      row.releases,
-      row.releasesMark?.state,
-      row.scheduleMark,
-      row.parts.map(({ name, removed }) => `${name} ${String(removed)}`),
-      row.draft?.changed,
-    ]).toEqual([
+    expect([row.nextRelease, row.draft?.changed]).toEqual([
       "Fictional Kept",
-      "waiting",
-      undefined,
-      ["Fictional One true", "Fictional Kept false"],
-      ["releases", "nextRelease"],
+      ["nextRelease"],
     ]);
   });
 });
 
 describe("the row's draft standing for every draft it shows", () => {
-  it("keeps the state of the stream's own draft, while the row can still be decided for its parts", () => {
+  it("keeps the state of the schedule's own draft, while the row can still be decided for its parts", () => {
     const stream = fictionalStream({
       name: "Fictional New Name",
       draft: recordDraft({
@@ -249,7 +287,7 @@ describe("the row's draft standing for every draft it shows", () => {
     ]);
   });
 
-  it("leaves out the stream's own rejected draft with drafts applied", () => {
+  it("leaves out the schedule's own rejected draft with drafts applied", () => {
     const row = rowOf(
       fictionalStream({
         draft: recordDraft({ changed: ["name"], state: "rejected" }),
@@ -261,7 +299,7 @@ describe("the row's draft standing for every draft it shows", () => {
     );
     expect([row.draft?.state, row.draft?.changed]).toEqual([
       "waiting",
-      ["releases", "nextRelease"],
+      ["nextRelease", "releaseDate"],
     ]);
   });
 
@@ -307,7 +345,7 @@ describe("the row's draft standing for every draft it shows", () => {
     ]).toEqual([false, true]);
   });
 
-  it("marks the next release as changed when a draft of the day it ends changes it", () => {
+  it("marks the current cycle and next release as changed when a draft of the day it ends changes them", () => {
     const row = rowOf(
       fictionalStream({
         endsOn: "2026-12-31",
@@ -320,10 +358,18 @@ describe("the row's draft standing for every draft it shows", () => {
         liveCycles: fictionalStream().cycles,
       }),
     );
-    expect(row.draft?.changed).toEqual(["endsOn", "nextRelease"]);
+    expect(row.draft?.changed).toEqual([
+      "endsOn",
+      "currentCycle",
+      "cycleStarts",
+      "cycleEnds",
+      "lengthNow",
+      "nextRelease",
+      "releaseDate",
+    ]);
   });
 
-  it("marks the next release as changed when a cycle change moves it", () => {
+  it("marks the current cycle and next release as changed when a cycle change moves them", () => {
     const row = rowOf(
       fictionalStream({
         patterns: [
@@ -334,12 +380,18 @@ describe("the row's draft standing for every draft it shows", () => {
         releases: [fictionalRelease()],
       }),
     );
-    expect(row.draft?.changed).toEqual(["nextRelease"]);
+    expect(row.draft?.changed).toEqual([
+      "currentCycle",
+      "cycleStarts",
+      "cycleEnds",
+      "nextRelease",
+      "releaseDate",
+    ]);
   });
 });
 
-describe("the streams as they are live", () => {
-  it("are each stream without its drafts, its parts' marks still worked out from its drafts", () => {
+describe("the schedules as they are live", () => {
+  it("are each schedule without its drafts", () => {
     const drafted = fictionalStream({
       name: "Fictional New Name",
       draft: recordDraft({
@@ -357,7 +409,7 @@ describe("the streams as they are live", () => {
     ]);
   });
 
-  it("leave out a stream only drafted to be added", () => {
+  it("leave out a schedule only drafted to be added", () => {
     const added = fictionalStream({
       draft: recordDraft({ action: "created" }),
     });
@@ -367,8 +419,8 @@ describe("the streams as they are live", () => {
   });
 });
 
-describe("the table of streams", () => {
-  it("names the drafts of each stream named that can be decided, its own and its parts'", () => {
+describe("the table of schedules", () => {
+  it("names the drafts of each schedule named that can be decided, its own and its parts'", () => {
     const drafted = recordDraft();
     const streams = [
       fictionalStream({
@@ -399,7 +451,7 @@ describe("the table of streams", () => {
     );
   });
 
-  it("words what a stream's draft changes, as the table shows it", () => {
+  it("words what a schedule's draft changes, as the table shows it", () => {
     const row = rowOf(
       fictionalStream({
         name: "Fictional New Name",
@@ -428,7 +480,7 @@ describe("the table of streams", () => {
     ]);
   });
 
-  it("groups streams by whether they are retired, as they are live, or else ended", () => {
+  it("groups schedules by whether they are retired, as they are live, or else ended", () => {
     const [status] = table().groupings ?? [];
     const groupOf = (stream: ReleaseStream) =>
       status?.of(rowOf(stream))[0]?.label;
@@ -454,7 +506,7 @@ describe("the table of streams", () => {
     ]);
   });
 
-  it("shows Ended after the name of a stream whose last day has passed", () => {
+  it("shows Ended after the name of a schedule whose last day has passed", () => {
     const [name] = table().columnsFor([], [], [], []);
     const markOf = (stream: ReleaseStream) => {
       render(<MantineProvider>{name?.mark?.(rowOf(stream))}</MantineProvider>);
@@ -469,20 +521,32 @@ describe("the table of streams", () => {
     ]).toEqual([true, false, false]);
   });
 
-  it("groups streams by their cycle schedule, those with none last", () => {
-    const [, schedule] = table().groupings ?? [];
-    const groupOf = (stream: ReleaseStream) => schedule?.of(rowOf(stream))[0];
+  it("colours the next release by its own colour, sea when it has none, and nothing when none is to come", () => {
+    const colourOf = (stream: ReleaseStream) =>
+      columnOf("nextRelease")?.colour?.(rowOf(stream));
     expect([
-      groupOf(fictionalStream()),
-      groupOf(fictionalStream({ patterns: [] })),
-    ]).toEqual([
-      {
-        key: "Every 3 months, named {YY}.{N}",
-        label: "Every 3 months, named {YY}.{N}",
-        rank: 0,
-      },
-      { key: "", label: "None", rank: 1 },
-    ]);
+      colourOf(
+        fictionalStream({ releases: [fictionalRelease({ colour: "grape" })] }),
+      ),
+      colourOf(fictionalStream({ releases: [fictionalRelease()] })),
+      colourOf(fictionalStream()),
+    ]).toEqual(["grape", "sea", null]);
+  });
+
+  it("starts with no grouping, and offers what a schedule's menu adds", () => {
+    const retire = vi.fn(() => "Retire");
+    const withMenu = streamTable({
+      streams: [],
+      day,
+      onOpen: vi.fn(),
+      menuItems: retire,
+    });
+    const row = rowOf(fictionalStream());
+    expect([
+      table().ungrouped,
+      withMenu.menuItems?.(row),
+      table().menuItems,
+    ]).toEqual([true, "Retire", undefined]);
   });
 
   it("has its columns in its own order, and names each stream", () => {
@@ -494,18 +558,7 @@ describe("the table of streams", () => {
   });
 });
 
-describe("the cycles in force", () => {
-  it("are the pattern started last by the day, or the first when none has started", () => {
-    const later = fictionalPattern({ id: "p2", startsOn: "2027-07-01" });
-    const stream = fictionalStream({ patterns: [fictionalPattern(), later] });
-    expect([
-      patternOn(stream, "2027-08-01")?.id,
-      patternOn(stream, "2026-01-01")?.id,
-    ]).toEqual(["p2", fictionalPattern().id]);
-  });
-});
-
-describe("streams shown while retired streams are hidden", () => {
+describe("schedules shown while retired ones are hidden", () => {
   it("are those not retired, or retired only by a draft", () => {
     expect([
       shownUnlessRetired(fictionalStream()),

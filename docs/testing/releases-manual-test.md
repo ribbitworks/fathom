@@ -1259,4 +1259,194 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Expected:**
     - The button reads **Group by: Status**.
     - The streams table has one heading, **Current**, with no headings set in under it.
+
+### Part 8: The Schedules Tab
+
+#### REL-30: The Schedules Tab Shows Each Schedule Now
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-29.
+
+**Preconditions:** Restore the Seed Data run, then signed in with this account.
+
+- [ ] `5B30` Select the **Releases** page in the left-hand menu.
+  - **Expected:**
+    - A **Schedules** tab is beside the **Releases** heading, and is chosen.
+    - The table's columns are, in order: a first column with no heading, **Current cycle**, **Cycle starts**, **Cycle ends**, **Next release**, **Release date**, **Cycle length** and **Schedule ends**.
+    - The rows are not under any heading, and the button beside **Metrics** reads "Group by", with nothing after it.
+  - **Notes:**
+
+- [ ] `A976` Read the row for 'Platform'.
+  - **Expected:**
+    - **Current cycle** names the cycle today is in, such as '26.4', and **Cycle starts** and **Cycle ends** are its first and last days.
+    - **Next release** shows a yellow dot, a small coloured square, then the release's name, such as 'Harbor 2 LTS'.
+    - **Cycle length** reads "3 months".
+    - **Schedule ends** is blank.
+  - **Notes:**
+
+- [ ] `A52C` Read the light green **Live** row under the row for 'Platform'.
+  - **Expected:** Its **Next release** shows a green dot, a square of another colour from the one in the row above, then 'Harbor 2'.
+  - **Notes:**
+
+#### REL-31: A Schedule's Details Follow Its Row
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-30 ended with.
+
+**Preconditions:** **Releases** page open on the **Schedules** tab.
+
+- [ ] `40DF` Select 'Platform' in the table.
+  - **Expected:**
+    - The side panel opens, headed 'Platform'.
+    - Under **Details**, the rows are, in order: **Schedule**, **Current cycle**, **Cycle starts**, **Cycle ends**, **Next release**, **Release date**, **Cycle length**, **Schedule ends** and **Name pattern**.
+    - **Schedule ends** reads "No end date".
+    - **Name pattern** reads `{YY}.{N}`, then "(now" and the current cycle's name, such as "(now 26.4)".
+    - **Next release** shows the same square and name as the table's row.
+  - **Notes:**
+
+- [ ] `97F9` Read the **Cycles** section, under **Details**.
+  - **Expected:**
+    - "Earlier cycles" and how many there are, such as "Earlier cycles (3)", is above a table with the columns **Cycle**, **Starts**, **Ends** and **Duration**.
+    - The table's first row is the current cycle, with a **Current** box after its name, followed by five more.
+    - Nothing is under the table.
+  - **Notes:**
+
+- [ ] `E45A` Select 'Patches' in the table.
+  - **Expected:**
+    - The side panel shows 'Patches'.
+    - Its **Cycles** section has "Earlier cycles" and how many there are above the table, and "Show all" and how many there are from the current cycle under it.
+  - **Notes:**
+
+- [ ] `FC53` Select **Show all**.
+  - **Expected:**
+    - Every cycle from the current one is listed.
+    - "Show less" is where "Show all" was, and has the focus.
+  - **Notes:**
+
+- [ ] `4866` Select **Earlier cycles**.
+  - **Expected:**
+    - The cycles before the current one are listed above it, in grey.
+    - The control reads "Hide earlier cycles", and has the focus.
+  - **Notes:**
+
+- [ ] `6EBD` Select **Show less**.
+  - **Expected:** The section is as it first was: "Earlier cycles" folded, then the current cycle and the next five, then "Show all".
+  - **Notes:**
+
+#### REL-32: A Schedule Is Changed Only While Nobody Holds It and It Isn't Retiring
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-31 ended with.
+
+**Preconditions:** **Releases** page open on the **Schedules** tab.
+
+- [ ] `DBFB` Select 'Platform' in the table.
+  - **Expected:** A grey lock comes before 'Platform' in the side panel's heading.
+  - **Notes:**
+
+- [ ] `5E8B` Point at the lock.
+  - **Expected:** Its tip reads "Being changed by Second Engineering Operations Manager".
+  - **Notes:**
+
+- [ ] `CE3B` Point at the **Schedule ends** row.
+  - **Expected:** No pencil shows.
+  - **Notes:**
+
+- [ ] `96B0` Select **⋯** at the right of the first cell of the row for 'Platform'.
+  - **Expected:** The menu offers neither **Retire** nor **Restore**.
+  - **Notes:**
+
+- [ ] `F35D` Select 'Patches' in the table.
+  - **Expected:** The side panel shows 'Patches', with a **Retired** box after its name and no lock.
+  - **Notes:**
+
+- [ ] `F044` Point at the **Schedule ends** row.
+  - **Expected:** No pencil shows.
+  - **Notes:**
+
+- [ ] `2C38` Select **⋯** at the right of the first cell of the row for 'Patches'.
+  - **Expected:** The menu offers **Restore**.
+  - **Notes:**
+
+- [ ] `BFC7` Select **Restore**.
+  - **Expected:** The **Retired** box after 'Patches' is gone, in the table and in the side panel.
+  - **Notes:**
+
+#### REL-33: A Schedule Is Changed From Its Details
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-32 ended with.
+
+**Preconditions:** 'Patches' open in the side panel, as REL-32 left it.
+
+- [ ] `FB54` Point at the **Schedule ends** row.
+  - **Expected:** A pencil shows at the row's right.
+  - **Notes:**
+
+- [ ] `731E` Select the pencil.
+  - **Expected:**
+    - A dialog titled "Change when Patches ends" opens.
+    - Its **Schedule ends** field reads "No end date" in grey, with the line "Its last cycle ends on this day." under it.
+  - **Notes:**
+
+- [ ] `C617` Type a day in the middle of the cycle after the current one, as the **Cycles** table shows it, as its digits, such as `20261215`.
+  - **Expected:**
+    - Under the field, how many cycles there are in all, such as "3 cycles in all", then a table of the last cycles.
+    - The last of them keeps its name, starts on its own first day, and ends on the day typed.
+  - **Notes:**
+
+- [ ] `AF4E` Select **Cancel**.
+  - **Expected:** The dialog closes, and **Schedule ends** still reads "No end date".
+  - **Notes:**
+
+- [ ] `889D` Select the pencil in the **Duration** cell of the cycle after the current one, in the **Cycles** section.
+  - **Expected:** A menu offers **This cycle only…** and **This and later cycles…**.
+  - **Notes:**
+
+- [ ] `20EC` Select **This and later cycles…**.
+  - **Expected:**
+    - A dialog titled "Change the length or names of Patches's cycles" opens.
+    - Its start is the cycle chosen, its length `4` and unit **Weeks**, and its naming as **Name pattern** shows it.
+  - **Notes:**
+
+- [ ] `4E9F` Select **Cancel**.
+  - **Expected:** The dialog closes, and nothing in the panel has changed.
+  - **Notes:**
+
+**Afterwards:** Run Publish.
+
+#### REL-34: A Role That Can't Change Schedules Sees No Pencils
+
+**Account:** Project Manager, `project.manager@fathom.test`, changed from REL-33.
+
+**Preconditions:** Signed in with this account. **Releases** page open on the **Schedules** tab.
+
+- [ ] `0012` Select 'Patches' in the table.
+  - **Expected:** The side panel opens on 'Patches', with no lock and no **Retired** box.
+  - **Notes:**
+
+- [ ] `482D` Point at the **Schedule ends** row.
+  - **Expected:** No pencil shows.
+  - **Notes:**
+
+- [ ] `CAF8` Point at the **Duration** cell of the cycle after the current one, in the **Cycles** section.
+  - **Expected:** No pencil shows.
+  - **Notes:**
+
+- [ ] `E4E4` Select **⋯** at the right of the first cell of the row for 'Patches'.
+  - **Expected:** The menu offers neither **Retire** nor **Restore**.
+  - **Notes:**
+
+**Afterwards:** Run Restore the Seed Data.
+
+#### REL-35: The Timeline Names Releases With Their Colours
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-34.
+
+**Preconditions:** Signed in with this account. **Releases** page open on the **Schedules** tab, with no side panel open, and **Year** chosen on the timeline.
+
+- [ ] `0651` Read the releases of 'Platform' on the timeline.
+  - **Expected:**
+    - Each release is a strip of its colour along its cycles, with its diamond under its end.
+    - Above each strip wide enough for it: a dot, if it has a draft, then a small square of its colour, then its name.
+  - **Notes:**
+
+- [ ] `EB18` Read the releases of 'Patches' on the timeline.
+  - **Expected:** The strips too short for their names show no dot, square or name above them.
   - **Notes:**

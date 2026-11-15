@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Releases page: each release stream with how its cycles are made, its releases, and
-// its cycles, the timeline of them all, and what those who see the plan may do there.
+// Tests for the Releases page's Schedules tab: the table of schedules, each schedule's details and
+// cycles, the changes made from them and from each row's menu, its drafts, the timeline above the
+// table, and what each role may do there.
 
-import type { ReleaseStream, ReleaseStreams } from "@fathom/shared";
+import type { Cycle, ReleaseStream, ReleaseStreams } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import {
   act,
-  cleanup,
   fireEvent,
   render,
   screen,
@@ -15,11 +15,12 @@ import {
   within,
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { focusManager } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TimelineView } from "./timeline-view.tsx";
 import {
   bodyOf,
+  detailRow,
+  detailValue,
   featureDraft,
   fictionalPattern,
   fictionalRelease,
@@ -34,7 +35,6 @@ import {
   signedIn,
   streamId,
   testTheme,
-  choiceUnder,
 } from "./test-support.tsx";
 
 afterEach(() => {
@@ -103,7 +103,7 @@ describe("the Releases page", () => {
         name: "Show details of Fictional Majors",
       }),
     ).toBeDefined();
-    expect(screen.getByText("Every 3 months, named {YY}.{N}")).toBeDefined();
+    expect(screen.getByText("3 months")).toBeDefined();
   });
 
   it("opens a stream in its panel at its own address", async () => {
@@ -115,7 +115,9 @@ describe("the Releases page", () => {
     expect(
       await screen.findByRole("heading", { name: "Fictional Majors" }),
     ).toBeDefined();
-    expect(screen.getByText("27.1 to 27.2")).toBeDefined();
+    expect(
+      within(panel()).getByRole("region", { name: "Details" }),
+    ).toBeDefined();
   });
 
   it("keeps the panel open when its edge is dragged to resize it", async () => {
@@ -190,12 +192,19 @@ async function openStream(
 }
 
 const panel = () => screen.getByRole("region", { name: "Fictional Majors" });
-const section = (name: string) => within(panel()).getByRole("region", { name });
 
-async function chooseInMenu(of: string, item: string) {
-  await userEvent.click(
-    screen.getByRole("button", { name: `Actions for ${of}` }),
-  );
+// Opens the menu of the schedule's row in the table, from the ⋯ beside its Schedule cell.
+async function openRowMenu() {
+  const [more] = within(
+    screen.getByRole("grid", { name: "Schedules" }),
+  ).getAllByRole("button", { name: "Actions for Fictional Majors" });
+  await userEvent.click(more as HTMLElement);
+  return screen.findByRole("menu");
+}
+
+// Chooses an action from the menu of the schedule's row.
+async function chooseRowAction(item: string) {
+  await openRowMenu();
   await userEvent.click(await screen.findByRole("menuitem", { name: item }));
 }
 
@@ -224,12 +233,12 @@ function calls(fetch: ReturnType<typeof serverAnswers>, method: string) {
     .map(([url]) => url);
 }
 
-describe("the table of release streams", () => {
+describe("the Schedules table", () => {
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  it("shows each schedule's cycles in force, releases, next release and the day it ends", async () => {
+  it("shows each schedule's current cycle and its days, next release and its day, and how long cycles last", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
     serverAnswers({
@@ -241,23 +250,37 @@ describe("the table of release streams", () => {
     renderApp("/releases");
     await streamsGrid();
     expect(rowTexts()).toEqual([
-      "Current1 schedule",
-      "Fictional MajorsEvery 3 months, named {YY}.{N}(1) Fictional OneFictional One, ships Mar 31, 2027",
+      "Fictional Majors27.1Jan 1, 2027Mar 31, 2027Fictional OneMar 31, 20273 months",
     ]);
   });
 
-  it("leaves the Releases cell blank for a stream with no releases", async () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
+  it("leaves the cells of a schedule with no cycles blank", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer([
+        fictionalStream({ patterns: [], cycles: [] }),
+      ]),
+    });
+    renderApp("/releases");
+    await streamsGrid();
+    expect(rowTexts()).toEqual(["Fictional Majors"]);
+  });
+
+  it("sits under the Schedules tab, chosen, beside the heading", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer([fictionalStream()]),
     });
     renderApp("/releases");
-    await streamsGrid();
-    expect(rowTexts().at(1)).toBe(
-      "Fictional MajorsEvery 3 months, named {YY}.{N}",
-    );
+    const tab = await screen.findByRole("tab", { name: "Schedules" });
+    await userEvent.click(tab);
+    expect([
+      tab.getAttribute("aria-selected"),
+      within(screen.getByRole("tabpanel", { name: "Schedules" })).getByRole(
+        "grid",
+        { name: "Schedules" },
+      ),
+    ]).toEqual(["true", expect.anything()]);
   });
 
   it("hides retired streams until Show retired is chosen in the Views menu, keeping the choice in the address", async () => {
@@ -279,10 +302,8 @@ describe("the table of release streams", () => {
     );
     await detailsOf("Fictional Old");
     expect(rowTexts().map((text) => text.slice(0, 13))).toEqual([
-      "Current1 sche",
-      "Fictional New",
-      "Retired1 sche",
       "Fictional Old",
+      "Fictional New",
     ]);
     expect(history.location.search).toContain("retired=true");
   });
@@ -386,7 +407,7 @@ describe("the table of release streams", () => {
     });
   });
 
-  it("shows the cycles in force today, leaving out those drafted to be removed", async () => {
+  it("shows how long cycles last today, leaving out changes of cycles drafted to be removed", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2027-08-15T12:00:00Z"));
     serverAnswers({
@@ -411,36 +432,7 @@ describe("the table of release streams", () => {
       ]),
     });
     renderApp("/releases");
-    expect(
-      await screen.findByText("Every 1 week, named {YY}.{N}"),
-    ).toBeDefined();
-  });
-
-  it("lists a stream's releases, striking through and leaving uncounted those drafted to be removed", async () => {
-    serverAnswers({
-      "GET /api/session": signedIn,
-      "GET /api/release-streams": answer([
-        fictionalStream({
-          releases: [
-            release,
-            fictionalRelease({
-              id: "30000000-0000-4000-8000-000000000002",
-              name: "Fictional Gone",
-              draft: recordDraft({ action: "deleted" }),
-            }),
-          ],
-        }),
-      ]),
-    });
-    renderApp("/releases");
-    await detailsOf("Fictional Majors");
-    const releases = cellOf("Fictional Majors", 2);
-    expect(releases.textContent).toMatch(
-      /^\(1\) Fictional One, Fictional Gone, Draft/,
-    );
-    expect(within(releases).getByText("Fictional Gone").className).toMatch(
-      /struck/,
-    );
+    expect(await screen.findByText("1 week")).toBeDefined();
   });
 
   it("marks each stream's draft, saying when it retires the stream, which stays where it is live", async () => {
@@ -462,11 +454,9 @@ describe("the table of release streams", () => {
     });
     renderApp("/releases?retired=true");
     await detailsOf("Fictional E");
-    expect(rowTexts().map((text) => text.replace(/Every.*$/, ""))).toEqual([
-      "Current2 schedules",
-      "Fictional A, Draft: added, draft",
+    expect(rowTexts().map((text) => text.replace(/3 months.*$/, ""))).toEqual([
+      "Fictional A, Draft: added, draft, draft, draft, draft, draft, draft",
       "Fictional DRetired, Draft: retired",
-      "Retired1 schedule",
       "Fictional E, Rejected, restored",
     ]);
   });
@@ -521,19 +511,19 @@ describe("the table of release streams", () => {
       rowOf("Fictional Coloured").nextElementSibling?.getAttribute(
         "aria-hidden",
       ),
-      cellOf("Fictional Coloured", 2).textContent,
+      cellOf("Fictional Coloured", 4).textContent,
       rowOf("Fictional Removing").className,
       rowOf("Fictional Removing").nextElementSibling?.textContent,
     ]).toEqual([
       expect.not.stringMatching(/draftRow/),
       null,
-      "(1) Fictional One, Draft",
+      "Fictional One",
       expect.stringMatching(/draftRow/),
-      expect.stringContaining("(1) Fictional One"),
+      expect.stringContaining("Fictional One"),
     ]);
   });
 
-  it("says a stream had no cycles in its Live row while a draft adds its first", async () => {
+  it("says a schedule had no cycle length in its Live row while a draft adds its first cycles", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer([
@@ -548,7 +538,7 @@ describe("the table of release streams", () => {
     await detailsOf("Fictional Majors");
     const liveRow = cellOf("Fictional Majors", 0).closest("tr")
       ?.nextElementSibling as HTMLElement;
-    expect(liveRow.textContent).toContain("No cycles");
+    expect(liveRow.textContent).toContain("No cycle length");
   });
 
   it("finds streams by any word in them", async () => {
@@ -575,28 +565,32 @@ describe("the table of release streams", () => {
     expect(screen.getByRole("status").textContent).toBe("1 of 2");
   });
 
-  it("groups streams by their cycle schedule, keeping the grouping in the address", async () => {
+  it("starts with no grouping, and groups schedules by status when asked, keeping it in the address", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer([
         fictionalStream({ id: "s1", name: "Fictional Majors" }),
-        fictionalStream({ id: "s2", name: "Fictional New", patterns: [] }),
+        fictionalStream({
+          id: "s2",
+          name: "Fictional Ended",
+          endsOn: "2020-01-01",
+        }),
       ]),
     });
     const history = renderApp("/releases");
-    await detailsOf("Fictional New");
+    await detailsOf("Fictional Ended");
+    await userEvent.click(screen.getByRole("button", { name: "Group by" }));
     await userEvent.click(
-      screen.getByRole("button", { name: "Group by: Status" }),
+      await screen.findByRole("menuitem", { name: "Status" }),
     );
-    await userEvent.click(await choiceUnder("Group by", "Cycle schedule"));
     await waitFor(() => {
-      expect(history.location.search).toContain("grouping=schedule");
+      expect(history.location.search).toContain("grouping=status");
     });
     expect(rowTexts().map((text) => text.slice(0, 13))).toEqual([
-      "Every 3 month",
+      "Current1 sche",
       "Fictional Maj",
-      "None1 schedul",
-      "Fictional New",
+      "Ended1 schedu",
+      "Fictional End",
     ]);
   });
 
@@ -658,7 +652,7 @@ describe("the table of release streams", () => {
     expect(await detailsOf("Fictional Majors")).toBeDefined();
   });
 
-  it("opens a stream from the arrow in its Stream cell", async () => {
+  it("opens a schedule from the details button in its Schedule cell", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer([fictionalStream()]),
@@ -672,134 +666,6 @@ describe("the table of release streams", () => {
 });
 
 describe("a stream's panel", () => {
-  it("shows each release's cycles and the day it ships", async () => {
-    await openStream([
-      fictionalStream({
-        releases: [
-          release,
-          fictionalRelease({
-            id: "30000000-0000-4000-8000-000000000002",
-            name: "Fictional Two",
-            firstCycle: "2027-04-01",
-            lastCycle: "2027-07-01",
-            shipsOn: "2027-08-15",
-          }),
-          fictionalRelease({
-            id: "30000000-0000-4000-8000-000000000003",
-            name: "Fictional Far",
-            firstCycle: "2031-01-01",
-            lastCycle: "2031-01-01",
-          }),
-        ],
-      }),
-    ]);
-    expect(
-      within(section("Releases"))
-        .getAllByText(/ships/)
-        .map((line) => line.parentElement?.textContent),
-    ).toEqual([
-      "27.1 · ships Mar 31, 2027",
-      "27.2 to 27.3 · ships Aug 15, 2027, 46 days before 27.3 ends",
-      "2031-01-01 · ships None",
-    ]);
-  });
-
-  it("shows each release's colour before its name, hidden from screen readers", async () => {
-    await openStream([
-      fictionalStream({
-        releases: [
-          release,
-          fictionalRelease({
-            id: "30000000-0000-4000-8000-000000000002",
-            name: "Fictional Two",
-            firstCycle: "2027-04-01",
-            lastCycle: "2027-04-01",
-            colour: "grape",
-          }),
-        ],
-      }),
-    ]);
-    expect(
-      [
-        ...section("Releases").querySelectorAll<HTMLElement>(
-          ".mantine-ColorSwatch-root",
-        ),
-      ].map((swatch) => [
-        swatch.parentElement?.getAttribute("aria-hidden"),
-        swatch.parentElement?.nextSibling?.textContent,
-        swatch.querySelector<HTMLElement>(".mantine-ColorSwatch-colorOverlay")
-          ?.style.backgroundColor,
-      ]),
-    ).toEqual([
-      ["true", "Fictional One", "var(--mantine-color-sea-filled)"],
-      ["true", "Fictional Two", "var(--mantine-color-grape-filled)"],
-    ]);
-  });
-
-  it("lists each cycle with its release and the share of each month it covers", async () => {
-    await openStream([
-      fictionalStream({
-        cycles: [
-          {
-            startsOn: "2027-12-16",
-            endsOn: "2028-02-29",
-            name: "28.1",
-            months: [
-              { month: "2027-12", share: 16 / 31 },
-              { month: "2028-01", share: 1 },
-              { month: "2028-02", share: 1 },
-            ],
-          },
-          {
-            startsOn: "2028-03-01",
-            endsOn: "2028-03-31",
-            name: "28.2",
-            months: [{ month: "2028-03", share: 1 }],
-          },
-        ],
-        releases: [
-          fictionalRelease({
-            firstCycle: "2027-12-16",
-            lastCycle: "2027-12-16",
-          }),
-          fictionalRelease({
-            id: "30000000-0000-4000-8000-000000000002",
-            name: "Fictional Gone",
-            firstCycle: "2028-03-01",
-            lastCycle: "2028-03-01",
-            draft: recordDraft({ action: "deleted" }),
-          }),
-        ],
-      }),
-    ]);
-    expect(
-      within(section("Cycles (2)"))
-        .getAllByRole("row")
-        .map(({ textContent }) => textContent),
-    ).toEqual([
-      "NameStartsEndsReleaseMonths",
-      "28.1Dec 16, 2027Feb 29, 2028Fictional OneDec 2027 52%, Jan 2028, Feb",
-      "28.2Mar 1, 2028Mar 31, 2028Mar 2028",
-    ]);
-  });
-
-  it("shows the cycle schedule's days with a short month and the year", async () => {
-    await openStream([fictionalStream({ endsOn: "2027-12-31" })]);
-    expect([
-      within(section("Cycle schedule")).getByText("From Jan 1, 2027"),
-      within(section("Cycle schedule")).getByText("Dec 31, 2027"),
-    ]).toEqual([expect.anything(), expect.anything()]);
-  });
-
-  it("says None when a stream has no cycles or releases yet", async () => {
-    await openStream([fictionalStream({ patterns: [], cycles: [] })]);
-    expect([
-      within(section("Cycle schedule")).getByText("None"),
-      within(section("Releases")).getByText("None"),
-      within(panel()).queryByRole("region", { name: /^Cycles \(/ }),
-    ]).toEqual([expect.anything(), expect.anything(), null]);
-  });
-
   it("says a stream is retired", async () => {
     await openStream([fictionalStream({ retired: true })]);
     expect(within(panel()).getByText("Retired")).toBeDefined();
@@ -818,13 +684,15 @@ describe("a stream's panel", () => {
     [
       "the close button",
       async () => {
-        await userEvent.click(screen.getByRole("button", { name: "Close" }));
+        await userEvent.click(
+          screen.getByRole("button", { name: "Close details" }),
+        );
       },
     ],
     [
       "Escape",
       async () => {
-        screen.getByRole("button", { name: "Close" }).focus();
+        screen.getByRole("button", { name: "Close details" }).focus();
         await userEvent.keyboard("{Escape}");
       },
     ],
@@ -837,7 +705,7 @@ describe("a stream's panel", () => {
       },
     ],
   ])(
-    "closes with %s, putting focus on the stream's Stream cell",
+    "closes with %s, putting focus on the schedule's Schedule cell",
     async (_case, close) => {
       const { history } = await openStream([fictionalStream()]);
       await close();
@@ -850,7 +718,7 @@ describe("a stream's panel", () => {
 
   it("stays open when a key other than Escape is pressed in it", async () => {
     const { history } = await openStream([fictionalStream()]);
-    screen.getByRole("button", { name: "Close" }).focus();
+    screen.getByRole("button", { name: "Close details" }).focus();
     await userEvent.keyboard("{Shift}");
     expect(history.location.pathname).toBe(`/releases/${streamId}`);
   });
@@ -869,7 +737,7 @@ describe("a stream's panel", () => {
 
   it("stays open when clicked inside", async () => {
     const { history } = await openStream([fictionalStream()]);
-    await userEvent.click(within(panel()).getByText("Cycle schedule"));
+    await userEvent.click(within(panel()).getByText("Details"));
     expect(history.location.pathname).toBe(`/releases/${streamId}`);
   });
 
@@ -890,11 +758,11 @@ describe("a stream's panel", () => {
       removeEventListener: () => undefined,
     }));
     await openStream([fictionalStream()]);
-    const dialog = screen.getByRole("dialog", { name: "Fictional Majors" });
-    expect([dialog.getAttribute("aria-modal"), dialog.className]).toEqual([
-      "true",
-      expect.stringMatching(/panelNarrow/),
-    ]);
+    expect(
+      screen
+        .getByRole("dialog", { name: "Fictional Majors" })
+        .getAttribute("aria-modal"),
+    ).toBe("true");
   });
 });
 
@@ -940,7 +808,7 @@ describe("changing streams", () => {
       },
     });
     await userEvent.click(
-      within(panel()).getByRole("button", { name: "Rename" }),
+      within(panel()).getByRole("button", { name: "Change Schedule" }),
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Rename Fictional Majors",
@@ -955,7 +823,7 @@ describe("changing streams", () => {
   it("closes a dialog when cancelled", async () => {
     await openStream([fictionalStream()], { can: editsAll });
     await userEvent.click(
-      within(panel()).getByRole("button", { name: "Rename" }),
+      within(panel()).getByRole("button", { name: "Change Schedule" }),
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Rename Fictional Majors",
@@ -971,7 +839,7 @@ describe("changing streams", () => {
   it("closes a dialog with Escape", async () => {
     await openStream([fictionalStream()], { can: editsAll });
     await userEvent.click(
-      within(panel()).getByRole("button", { name: "Rename" }),
+      within(panel()).getByRole("button", { name: "Change Schedule" }),
     );
     await screen.findByRole("dialog", { name: "Rename Fictional Majors" });
     await userEvent.keyboard("{Escape}");
@@ -980,7 +848,7 @@ describe("changing streams", () => {
     });
   });
 
-  it("drafts retiring a stream", async () => {
+  it("drafts retiring a schedule from its row's menu", async () => {
     const { fetch } = await openStream([fictionalStream()], {
       can: editsAll,
       answers: {
@@ -988,9 +856,7 @@ describe("changing streams", () => {
           Response.json({ stream: fictionalStream(), changeSetId }),
       },
     });
-    await userEvent.click(
-      within(panel()).getByRole("button", { name: "Retire" }),
-    );
+    await chooseRowAction("Retire");
     expect(
       await screen.findByText("Drafted retiring Fictional Majors."),
     ).toBeDefined();
@@ -1000,17 +866,24 @@ describe("changing streams", () => {
     ).toBe(JSON.stringify({ retired: true }));
   });
 
-  it("drafts restoring a retired stream", async () => {
-    await openStream([fictionalStream({ retired: true })], {
-      can: editsAll,
-      answers: {
-        [`PUT ${streamPath}/retired`]: () =>
-          Response.json({ stream: fictionalStream(), changeSetId }),
-      },
+  it("drafts restoring a retired schedule from its row's menu", async () => {
+    // Given a retired schedule, shown with the retired ones
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer(
+        [fictionalStream({ retired: true })],
+        editsAll,
+      ),
+      [`PUT ${streamPath}/retired`]: () =>
+        Response.json({ stream: fictionalStream(), changeSetId }),
     });
-    await userEvent.click(
-      within(panel()).getByRole("button", { name: "Restore" }),
-    );
+    renderApp("/releases?retired=true");
+    await detailsOf("Fictional Majors");
+
+    // When Restore is chosen from its row's menu
+    await chooseRowAction("Restore");
+
+    // Then restoring it is drafted
     expect(
       await screen.findByText("Drafted restoring Fictional Majors."),
     ).toBeDefined();
@@ -1024,9 +897,7 @@ describe("changing streams", () => {
           Response.json({ error: "Fictional refusal" }, { status: 409 }),
       },
     });
-    await userEvent.click(
-      within(panel()).getByRole("button", { name: "Retire" }),
-    );
+    await chooseRowAction("Retire");
     expect(await screen.findByText("Fictional refusal")).toBeDefined();
   });
 
@@ -1035,36 +906,313 @@ describe("changing streams", () => {
       can: editsAll,
     });
     expect([
-      within(panel()).queryByRole("button", { name: "Rename" }),
-      within(section("Cycle schedule")).queryByRole("button", {
-        name: "Change…",
-      }),
+      within(panel()).queryByRole("button", { name: /^Change / }),
       within(panel()).getByText(/being changed by Fictional Colleague/),
-    ]).toEqual([null, null, expect.anything()]);
+    ]).toEqual([null, expect.anything()]);
   });
 
-  it("offers no renaming of a stream drafted to be removed", async () => {
+  it("offers no renaming of a schedule drafted to be removed", async () => {
     await openStream(
       [fictionalStream({ draft: recordDraft({ action: "deleted" }) })],
       { can: editsAll },
     );
     expect(
-      within(panel()).queryByRole("button", { name: "Rename" }),
+      within(panel()).queryByRole("button", { name: "Change Schedule" }),
     ).toBeNull();
   });
 });
 
-describe("changing a stream's cycles", () => {
+describe("a schedule's details", () => {
   const saved = () => Response.json({ stream: fictionalStream(), changeSetId });
+  const details = () =>
+    within(panel()).getByRole("region", { name: "Details" });
+  const cycles = () => within(panel()).getByRole("region", { name: "Cycles" });
+  const cycleRows = () =>
+    within(cycles())
+      .getAllByRole("row")
+      .slice(1)
+      .map(({ textContent }) => textContent);
+  const pencil = (label: string) =>
+    within(panel()).getByRole("button", { name: `Change ${label}` });
 
-  it("sets up the cycles of a stream without any", async () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("shows the table's values first, then its Name pattern as typed", async () => {
+    await openStream([fictionalStream({ releases: [release] })]);
+    expect(
+      [
+        "Schedule",
+        "Current cycle",
+        "Cycle starts",
+        "Cycle ends",
+        "Next release",
+        "Release date",
+        "Cycle length",
+        "Schedule ends",
+        "Name pattern",
+      ].map((label) => detailValue(label, details())),
+    ).toEqual([
+      "Fictional Majors",
+      "27.1",
+      "Jan 1, 2027",
+      "Mar 31, 2027",
+      "Fictional One",
+      "Mar 31, 2027",
+      "3 months",
+      "No end date",
+      "{YY}.{N} (now 27.1)",
+    ]);
+  });
+
+  it("says None for what a schedule with no cycles yet doesn't have", async () => {
+    await openStream([fictionalStream({ patterns: [], cycles: [] })]);
+    expect(
+      ["Current cycle", "Next release", "Name pattern"].map((label) =>
+        detailValue(label, details()),
+      ),
+    ).toEqual(["None", "None", "None"]);
+  });
+
+  it("offers no pencils to those who don't change schedules", async () => {
+    await openStream([fictionalStream()], { can: { canEditReleases: true } });
+    expect(
+      within(panel()).queryAllByRole("button", { name: /^Change / }),
+    ).toEqual([]);
+  });
+
+  it("marks a drafted name and end, with what they are live", async () => {
+    await openStream([
+      fictionalStream({
+        endsOn: "2027-05-15",
+        draft: recordDraft({
+          changed: ["name", "endsOn"],
+          live: { name: "Fictional Was", endsOn: null },
+        }),
+      }),
+    ]);
+    expect([
+      detailValue("Schedule", details()),
+      detailValue("Schedule ends", details()),
+    ]).toEqual([
+      expect.stringContaining("Fictional Was"),
+      expect.stringMatching(/May 15, 2027.*No end date/),
+    ]);
+  });
+
+  it("marks a drafted change of how long cycles last, with how long they last live, as its row does", async () => {
+    // Given a draft making cycles a month long, where they are three months live
+    await openStream([
+      fictionalStream({
+        patterns: [
+          fictionalPattern({
+            length: 1,
+            draft: recordDraft({ changed: ["length"], live: { length: 3 } }),
+          }),
+        ],
+      }),
+    ]);
+
+    // Then Cycle length has the draft's dot, with the live length on its Live line
+    const length = detailRow("Cycle length", details());
+    expect([
+      length.querySelector("[class*='dot']") !== null,
+      detailValue("Cycle length", details()),
+    ]).toEqual([true, expect.stringMatching(/^1 month.*3 months/)]);
+  });
+
+  // A drafted change of cycles cutting 27.2 to two months, with a month's freeze after it.
+  const recut = () => {
+    const [first, second, ...later] = quarters(4) as [Cycle, Cycle, ...Cycle[]];
+    return fictionalStream({
+      patterns: [
+        pattern,
+        fictionalPattern({
+          id: "20000000-0000-4000-8000-000000000002",
+          startsOn: "2027-06-01",
+          draft: recordDraft({ action: "created" }),
+        }),
+      ],
+      cycles: [
+        first,
+        { ...second, endsOn: "2027-05-31" },
+        {
+          startsOn: "2027-06-01",
+          endsOn: "2027-06-30",
+          name: "Freeze",
+          months: [],
+        },
+        ...later,
+      ],
+      liveCycles: quarters(4),
+    });
+  };
+  const markedCycles = () =>
+    within(cycles())
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => [
+        row.querySelector("[class*='dot']") !== null,
+        row.textContent,
+      ]);
+
+  it("marks each cycle a draft changes or adds, with how long a changed one lasts live", async () => {
+    await openStream([recut()]);
+
+    expect(markedCycles()).toEqual([
+      [false, "27.1 CurrentJan 1, 2027Mar 31, 20273 months"],
+      [true, expect.stringMatching(/^27\.2.*May 31, 2027.*2 months.*3 months/)],
+      [true, expect.stringMatching(/^Freeze.*Jun 30, 2027.*1 month$/)],
+      [false, "27.3Jul 1, 2027Sep 30, 20273 months"],
+      [false, "27.4Oct 1, 2027Dec 31, 20273 months"],
+    ]);
+  });
+
+  it("shows the cycles as they are live under Live only, marking each a draft would change", async () => {
+    // Given the same drafted change, under Live only
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer([recut()]),
+    });
+    renderApp(`/releases/${streamId}?show=live`);
+    await screen.findByRole("heading", { name: "Fictional Majors", level: 2 });
+
+    // Then 27.2 shows as it is live, marked, with no Live line, and no freeze is shown
+    expect(markedCycles()).toEqual([
+      [false, "27.1 CurrentJan 1, 2027Mar 31, 20273 months"],
+      [true, expect.stringMatching(/^27\.2.*Jun 30, 2027.*3 months$/)],
+      [false, "27.3Jul 1, 2027Sep 30, 20273 months"],
+      [false, "27.4Oct 1, 2027Dec 31, 20273 months"],
+    ]);
+  });
+
+  it("marks no value or cycle of a schedule only drafted to be added", async () => {
+    await openStream([
+      fictionalStream({ draft: recordDraft({ action: "created" }) }),
+    ]);
+
+    expect([
+      detailValue("Cycle length", details()),
+      detailValue("Name pattern", details()),
+      markedCycles().map(([marked]) => marked),
+    ]).toEqual([
+      "3 months",
+      "{YY}.{N} (now 27.1)",
+      [false, false, false, false],
+    ]);
+  });
+
+  it("marks a drafted Name pattern, with the pattern live", async () => {
+    await openStream([
+      fictionalStream({
+        patterns: [
+          fictionalPattern({
+            naming: "{YYYY}.{N}",
+            draft: recordDraft({
+              changed: ["naming"],
+              live: { naming: "{YY}.{N}" },
+            }),
+          }),
+        ],
+      }),
+    ]);
+
+    const naming = detailRow("Name pattern", details());
+    expect([
+      naming.querySelector("[class*='dot']") !== null,
+      detailValue("Name pattern", details()),
+    ]).toEqual([
+      true,
+      expect.stringMatching(/^\{YYYY\}\.\{N\} \(now 27\.1\).*\{YY\}\.\{N\}/),
+    ]);
+  });
+
+  it("shows an ended schedule's last cycle, with no current cycle or length", async () => {
+    // Given a schedule whose last cycle ended before today
+    vi.setSystemTime(new Date("2028-02-15T12:00:00Z"));
+    await openStream([
+      fictionalStream({ endsOn: "2027-12-31", cycles: quarters(4) }),
+    ]);
+
+    // Then it has no current cycle or length, and its last cycle shows, the earlier ones folded
+    expect([
+      detailValue("Current cycle", details()),
+      detailValue("Cycle length", details()),
+      cycleRows(),
+      within(cycles())
+        .getByRole("button", { name: "Earlier cycles (3)" })
+        .getAttribute("aria-expanded"),
+    ]).toEqual([
+      "None",
+      "None",
+      ["27.4Oct 1, 2027Dec 31, 20273 months"],
+      "false",
+    ]);
+  });
+
+  it.each([
+    ["retired", fictionalStream({ retired: true })],
+    [
+      "drafted to be retired",
+      fictionalStream({
+        retired: true,
+        draft: recordDraft({ changed: ["retired"] }),
+      }),
+    ],
+  ])(
+    "offers a schedule %s no pencils, and only Restore in its row's menu",
+    async (_case, stream) => {
+      // Given a schedule retired, or drafted to be, shown with retired ones, to one who changes
+      // schedules
+      serverAnswers({
+        "GET /api/session": signedIn,
+        "GET /api/release-streams": answer([stream], editsAll),
+      });
+      renderApp(`/releases/${streamId}?retired=true`);
+      await screen.findByRole("heading", {
+        name: "Fictional Majors",
+        level: 2,
+      });
+
+      // When its row's menu opens
+      const menu = await openRowMenu();
+
+      // Then its details offer no change, and its menu offers Restore, not Retire
+      expect([
+        within(panel()).queryAllByRole("button", { name: /^Change / }),
+        within(menu).queryByRole("menuitem", { name: "Retire" }),
+        within(menu).getByRole("menuitem", { name: "Restore" }),
+      ]).toEqual([[], null, expect.anything()]);
+    },
+  );
+
+  it("marks an end moved from one day to another, with the day it is live", async () => {
+    await openStream([
+      fictionalStream({
+        endsOn: "2027-05-15",
+        draft: recordDraft({
+          changed: ["endsOn"],
+          live: { endsOn: "2027-04-30" },
+        }),
+      }),
+    ]);
+    expect(detailValue("Schedule ends", details())).toMatch(
+      /May 15, 2027.*Apr 30, 2027/,
+    );
+  });
+
+  it("sets up the cycles of a schedule without any from its Name pattern", async () => {
     await openStream([fictionalStream({ patterns: [], cycles: [] })], {
       can: editsAll,
       answers: { [`POST ${streamPath}/patterns`]: saved },
     });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Set up cycles…" }),
-    );
+    await userEvent.click(pencil("Name pattern"));
     const dialog = await screen.findByRole("dialog", {
       name: "Set up cycles for Fictional Majors",
     });
@@ -1078,32 +1226,12 @@ describe("changing a stream's cycles", () => {
     expect(await screen.findByText("Drafted the cycles.")).toBeDefined();
   });
 
-  it("offers only setting up the cycles of a stream without any", async () => {
-    await openStream([fictionalStream({ patterns: [], cycles: [] })], {
-      can: editsAll,
-    });
-    expect(
-      within(section("Cycle schedule"))
-        .getAllByRole("button")
-        .map(({ textContent }) => textContent),
-    ).toEqual(["Set up cycles…"]);
-  });
-
-  it("changes the length or names of the cycles from a date", async () => {
-    await openStream([fictionalStream()], {
+  it("changes the names from the current cycle on, from Name pattern", async () => {
+    const { fetch } = await openStream([fictionalStream()], {
       can: editsAll,
       answers: { [`POST ${streamPath}/patterns`]: saved },
     });
-    await userEvent.click(
-      within(section("Cycle schedule")).getByRole("button", {
-        name: "Change…",
-      }),
-    );
-    await userEvent.click(
-      await screen.findByRole("menuitem", {
-        name: "Length or names from a date…",
-      }),
-    );
+    await userEvent.click(pencil("Name pattern"));
     const dialog = await screen.findByRole("dialog", {
       name: "Change the length or names of Fictional Majors's cycles",
     });
@@ -1113,74 +1241,25 @@ describe("changing a stream's cycles", () => {
     expect(
       await screen.findByText("Drafted the change to the cycles."),
     ).toBeDefined();
-  });
-
-  it("changes a change of cycles from its menu", async () => {
-    await openStream([fictionalStream()], {
-      can: editsAll,
-      answers: { [`PUT ${streamPath}/patterns/${pattern.id}`]: saved },
-    });
-    await chooseInMenu("Cycles from Jan 1, 2027", "Change…");
-    const dialog = await screen.findByRole("dialog", {
-      name: "Cycles from Jan 1, 2027",
-    });
-    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(
-      await screen.findByText("Drafted the change to the cycles."),
-    ).toBeDefined();
-  });
-
-  it("drafts removing a change of cycles from its menu", async () => {
-    const { fetch } = await openStream([fictionalStream()], {
-      can: editsAll,
-      answers: { [`DELETE ${streamPath}/patterns/${pattern.id}`]: savedAs },
-    });
-    await chooseInMenu("Cycles from Jan 1, 2027", "Remove");
-    expect(
-      await screen.findByText("Drafted removing the cycles from Jan 1, 2027."),
-    ).toBeDefined();
-    expect(calls(fetch, "DELETE")).toEqual([
-      `${streamPath}/patterns/${pattern.id}`,
+    expect(bodyOf(fetch, "POST", `${streamPath}/patterns`)).toEqual([
+      expect.objectContaining({ startsOn: "2027-01-01" }),
     ]);
   });
 
-  it("offers no change to a change of cycles drafted to be removed, only its draft", async () => {
-    await openStream(
-      [
-        fictionalStream({
-          patterns: [
-            fictionalPattern({ draft: recordDraft({ action: "deleted" }) }),
-          ],
-        }),
-      ],
-      { can: editsAll },
-    );
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: "Actions for Cycles from Jan 1, 2027",
-      }),
-    );
-    const menu = await screen.findByRole("menu");
+  it("renames a schedule from Schedule", async () => {
+    await openStream([fictionalStream()], { can: editsAll });
+    await userEvent.click(pencil("Schedule"));
     expect(
-      within(menu)
-        .getAllByRole("menuitem")
-        .map(({ textContent }) => textContent),
-    ).toEqual(["Discard draft"]);
+      await screen.findByRole("dialog", { name: "Rename Fictional Majors" }),
+    ).toBeDefined();
   });
 
-  it("ends the schedule on a day from Schedule ends…", async () => {
+  it("ends the schedule on a day from Schedule ends", async () => {
     await openStream([fictionalStream()], {
       can: editsAll,
       answers: { [`PUT ${streamPath}/ends-on`]: saved },
     });
-    await userEvent.click(
-      within(section("Cycle schedule")).getByRole("button", {
-        name: "Change…",
-      }),
-    );
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Schedule ends…" }),
-    );
+    await userEvent.click(pencil("Schedule ends"));
     const dialog = await screen.findByRole("dialog", {
       name: "Change when Fictional Majors ends",
     });
@@ -1194,47 +1273,117 @@ describe("changing a stream's cycles", () => {
     ).toBeDefined();
   });
 
-  it("reads Schedule ends with No end date for a schedule that keeps going, or its last day", async () => {
-    const line = async (stream: ReleaseStream) => {
-      await openStream([stream], { can: editsAll });
-      const words = within(section("Cycle schedule")).getByText(
-        (_text, element) =>
-          element?.tagName === "P" &&
-          element.textContent.startsWith("Schedule ends "),
-      ).textContent;
-      cleanup();
-      return words;
-    };
-    expect([
-      await line(fictionalStream()),
-      await line(fictionalStream({ endsOn: "2027-05-15" })),
-    ]).toEqual(["Schedule ends No end date", "Schedule ends May 15, 2027"]);
+  it("offers no Schedule ends pencil before a schedule has cycles", async () => {
+    await openStream([fictionalStream({ patterns: [], cycles: [] })], {
+      can: editsAll,
+    });
+    expect(
+      within(panel()).queryByRole("button", { name: "Change Schedule ends" }),
+    ).toBeNull();
   });
 
-  it("offers Schedule ends… and a change of length or names from a date", async () => {
-    await openStream([fictionalStream()], { can: editsAll });
+  it("lists cycles from the current one, marked, and the next five, with each one's duration", async () => {
+    await openStream([fictionalStream({ cycles: quarters(10) })]);
+    expect(cycleRows()).toEqual([
+      "27.1 CurrentJan 1, 2027Mar 31, 20273 months",
+      "27.2Apr 1, 2027Jun 30, 20273 months",
+      "27.3Jul 1, 2027Sep 30, 20273 months",
+      "27.4Oct 1, 2027Dec 31, 20273 months",
+      "28.1Jan 1, 2028Mar 31, 20283 months",
+      "28.2Apr 1, 2028Jun 30, 20283 months",
+    ]);
+  });
+
+  it("shows all cycles on asking, and fewer again, keeping focus on the one control", async () => {
+    // Given a schedule with more cycles than the panel first lists
+    await openStream([fictionalStream({ cycles: quarters(10) })]);
+    const fold = within(cycles()).getByRole("button", {
+      name: "Show all (10)",
+    });
+
+    // When all are asked for
+    await userEvent.click(fold);
+
+    // Then every cycle shows, and the same control, still focused, offers fewer
+    expect([
+      cycleRows().length,
+      fold.textContent,
+      fold.getAttribute("aria-expanded"),
+      document.activeElement,
+    ]).toEqual([10, "Show less", "true", fold]);
+
+    // When fewer are asked for again
+    await userEvent.click(fold);
+
+    // Then the first six show again
+    expect([cycleRows().length, fold.textContent]).toEqual([
+      6,
+      "Show all (10)",
+    ]);
+  });
+
+  it("unfolds the cycles before the current one", async () => {
+    vi.setSystemTime(new Date("2027-08-15T12:00:00Z"));
+    await openStream([fictionalStream({ cycles: quarters(4) })]);
     await userEvent.click(
-      within(section("Cycle schedule")).getByRole("button", {
-        name: "Change…",
-      }),
+      within(cycles()).getByRole("button", { name: "Earlier cycles (2)" }),
     );
+    expect(cycleRows().map((row) => row.slice(0, 4))).toEqual([
+      "27.1",
+      "27.2",
+      "27.3",
+      "27.4",
+    ]);
+  });
+
+  it("says None for a schedule with no cycles", async () => {
+    await openStream([fictionalStream({ patterns: [], cycles: [] })]);
+    expect(within(cycles()).getByText("None")).toBeDefined();
+  });
+
+  it("asks whether a Duration's change is for that cycle only or for it and later ones", async () => {
+    const { fetch } = await openStream([fictionalStream()], {
+      can: editsAll,
+      answers: { [`POST ${streamPath}/patterns`]: saved },
+    });
+    await userEvent.click(pencil("Duration of 27.2"));
     expect(
       (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["Schedule ends…", "Length or names from a date…"]);
+    ).toEqual(["This cycle only…", "This and later cycles…"]);
+    await userEvent.click(
+      screen.getByRole("menuitem", { name: "This and later cycles…" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Change the length or names of Fictional Majors's cycles",
+    });
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Change cycles" }),
+    );
+    await screen.findByText("Drafted the change to the cycles.");
+    expect(bodyOf(fetch, "POST", `${streamPath}/patterns`)).toEqual([
+      expect.objectContaining({ startsOn: "2027-04-01" }),
+    ]);
   });
 });
 
 describe("changing one cycle's length", () => {
   const saved = () => Response.json({ stream: fictionalStream(), changeSetId });
 
-  it("is offered on each cycle to those who change cycles, and drafts the new length", async () => {
+  it("is offered on each cycle's Duration to those who change cycles, and drafts the new length", async () => {
     const { fetch } = await openStream([fictionalStream()], {
       can: editsAll,
       answers: { [`PUT ${streamPath}/cycles/2027-04-01/length`]: saved },
     });
-    await chooseInMenu("27.2", "Change length…");
+    await userEvent.click(
+      within(panel()).getByRole("button", {
+        name: "Change Duration of 27.2",
+      }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "This cycle only…" }),
+    );
     const dialog = await screen.findByRole("dialog", {
       name: "Change the length of 27.2",
     });
@@ -1253,86 +1402,7 @@ describe("changing one cycle's length", () => {
       can: { canEditReleases: true },
     });
     expect(
-      screen.queryByRole("button", { name: "Actions for 27.2" }),
-    ).toBeNull();
-  });
-});
-
-describe("changing releases", () => {
-  const saved = () => Response.json({ stream: fictionalStream(), changeSetId });
-
-  it("makes a release", async () => {
-    await openStream([fictionalStream()], {
-      can: editsAll,
-      answers: { [`POST ${streamPath}/releases`]: saved },
-    });
-    await userEvent.click(screen.getByRole("button", { name: "New release…" }));
-    const dialog = await screen.findByRole("dialog", {
-      name: "New release in Fictional Majors",
-    });
-    await userEvent.type(
-      within(dialog).getByRole("textbox", { name: "Name" }),
-      "Fictional Two",
-    );
-    await userEvent.click(
-      within(dialog).getByRole("combobox", { name: "First cycle" }),
-    );
-    await userEvent.click(
-      await screen.findByRole("option", {
-        name: "27.2 (2027-04-01 to 2027-06-30)",
-      }),
-    );
-    await userEvent.click(
-      within(dialog).getByRole("button", { name: "Make release" }),
-    );
-    expect(await screen.findByText("Drafted the new release.")).toBeDefined();
-  });
-
-  it.each([
-    ["a retired stream", fictionalStream({ retired: true })],
-    ["a stream without cycles", fictionalStream({ patterns: [], cycles: [] })],
-  ])("offers no new release in %s", async (_case, shown) => {
-    await openStream([shown], { can: editsAll });
-    expect(screen.queryByRole("button", { name: "New release…" })).toBeNull();
-  });
-
-  it("changes a release from its menu", async () => {
-    await openStream([fictionalStream({ releases: [release] })], {
-      can: editsAll,
-      answers: { [`PUT ${streamPath}/releases/${release.id}`]: saved },
-    });
-    await chooseInMenu("Fictional One", "Change…");
-    const dialog = await screen.findByRole("dialog", {
-      name: "Change Fictional One",
-    });
-    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(
-      await screen.findByText("Drafted the change to the release."),
-    ).toBeDefined();
-  });
-
-  it("drafts removing a release from its menu", async () => {
-    await openStream([fictionalStream({ releases: [release] })], {
-      can: editsAll,
-      answers: { [`DELETE ${streamPath}/releases/${release.id}`]: savedAs },
-    });
-    await chooseInMenu("Fictional One", "Remove");
-    expect(
-      await screen.findByText("Drafted removing Fictional One."),
-    ).toBeDefined();
-  });
-
-  it("offers no change to a release someone else is changing", async () => {
-    await openStream(
-      [
-        fictionalStream({
-          releases: [fictionalRelease({ heldBy: "Fictional Colleague" })],
-        }),
-      ],
-      { can: editsAll },
-    );
-    expect(
-      screen.queryByRole("button", { name: "Actions for Fictional One" }),
+      screen.queryByRole("button", { name: "Change Duration of 27.2" }),
     ).toBeNull();
   });
 });
@@ -1416,62 +1486,13 @@ describe("the Draft menu", () => {
   });
 });
 
-describe("drafts in a stream's panel", () => {
-  const draftPath = `/api/records/release/${release.id}/draft`;
-
-  it("says what a renamed release was called", async () => {
-    await openStream([
-      fictionalStream({
-        releases: [
-          fictionalRelease({
-            draft: recordDraft({
-              changed: ["name"],
-              live: { name: "Fictional Earlier" },
-            }),
-          }),
-        ],
-      }),
-    ]);
-    expect(
-      within(section("Releases")).getByText(
-        ", Draft: changed from “Fictional Earlier”",
-      ),
-    ).toBeDefined();
-  });
-
-  it("marks a release a draft moves to other cycles as moved", async () => {
-    await openStream([
-      fictionalStream({
-        releases: [
-          fictionalRelease({
-            firstCycle: "2027-04-01",
-            lastCycle: "2027-04-01",
-            draft: recordDraft({
-              changed: ["firstCycle", "lastCycle"],
-              live: { firstCycle: "2027-01-01", lastCycle: "2027-01-01" },
-            }),
-          }),
-        ],
-      }),
-    ]);
-    const releases = section("Releases");
-    expect(within(releases).getByText("Moved")).toBeDefined();
-    expect(within(releases).getByText(/Draft: moved/)).toBeDefined();
-  });
+describe("a schedule's draft in its row's menu", () => {
+  const draftPath = `/api/records/release-stream/${streamId}/draft`;
 
   it("shows who made a draft, and closes the menu on a click beside its items", async () => {
-    await openStream([
-      fictionalStream({
-        releases: [fictionalRelease({ draft: recordDraft() })],
-      }),
-    ]);
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for Fictional One" }),
-    );
-    const menu = await screen.findByRole("menu");
-    await userEvent.click(
-      within(menu).getByText("Changed by Fictional Editor"),
-    );
+    await openStream([fictionalStream({ draft: recordDraft() })]);
+    const menu = await openRowMenu();
+    await userEvent.click(within(menu).getByText(/by Fictional Editor$/));
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
     });
@@ -1479,14 +1500,10 @@ describe("drafts in a stream's panel", () => {
 
   it("discards a draft", async () => {
     const { fetch } = await openStream(
-      [
-        fictionalStream({
-          releases: [fictionalRelease({ draft: recordDraft() })],
-        }),
-      ],
+      [fictionalStream({ draft: recordDraft() })],
       { can: editsAll, answers: { [`DELETE ${draftPath}`]: savedAs } },
     );
-    await chooseInMenu("Fictional One", "Discard draft");
+    await chooseRowAction("Discard draft");
     expect(await screen.findByText("Discarded the draft.")).toBeDefined();
     expect(calls(fetch, "DELETE")).toEqual([draftPath]);
   });
@@ -1495,14 +1512,7 @@ describe("drafts in a stream's panel", () => {
     const { fetch } = await openStream(
       [
         fictionalStream({
-          releases: [
-            fictionalRelease({
-              draft: recordDraft({
-                state: "rejected",
-                reason: "Fictional reason",
-              }),
-            }),
-          ],
+          draft: recordDraft({ state: "rejected", reason: "Fictional reason" }),
         }),
       ],
       {
@@ -1510,31 +1520,50 @@ describe("drafts in a stream's panel", () => {
         answers: { [`DELETE ${draftPath}/rejection`]: savedAs },
       },
     );
-    await chooseInMenu("Fictional One", "Resubmit");
+    await chooseRowAction("Resubmit");
     expect(await screen.findByText("Resubmitted the draft.")).toBeDefined();
     expect(calls(fetch, "DELETE")).toEqual([`${draftPath}/rejection`]);
   });
 
-  it("offers no discarding of a draft someone else is changing, and says who", async () => {
+  it("offers no discarding on a schedule whose only draft is a release's", async () => {
+    // Given a schedule with no draft of its own, whose next release is drafted to be renamed
     await openStream(
       [
         fictionalStream({
           releases: [
             fictionalRelease({
-              draft: recordDraft(),
-              heldBy: "Fictional Colleague",
+              draft: recordDraft({
+                changed: ["name"],
+                live: { name: "Fictional Before" },
+              }),
             }),
           ],
         }),
       ],
       { can: editsAll },
     );
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for Fictional One" }),
-    );
-    const menu = await screen.findByRole("menu");
+
+    // Then its row's menu offers neither Discard draft nor Resubmit
+    const menu = await openRowMenu();
     expect([
-      within(menu).queryByRole("menuitem"),
+      within(menu).queryByRole("menuitem", { name: "Discard draft" }),
+      within(menu).queryByRole("menuitem", { name: "Resubmit" }),
+    ]).toEqual([null, null]);
+  });
+
+  it("offers no discarding of a draft someone else is changing, and says who", async () => {
+    await openStream(
+      [
+        fictionalStream({
+          draft: recordDraft(),
+          heldBy: "Fictional Colleague",
+        }),
+      ],
+      { can: editsAll },
+    );
+    const menu = await openRowMenu();
+    expect([
+      within(menu).queryByRole("menuitem", { name: "Discard draft" }),
       within(menu).getByText(/^Being changed by Fictional Colleague\./),
     ]).toEqual([null, expect.anything()]);
   });
@@ -1545,11 +1574,7 @@ describe("drafts in a stream's panel", () => {
         draft: recordDraft({ unpublished: true }),
       }),
     ]);
-    await userEvent.click(
-      within(panel()).getByRole("button", {
-        name: "Actions for Fictional Majors",
-      }),
-    );
+    await openRowMenu();
     expect(
       await screen.findByText(
         "Nobody else sees these changes until they're published.",
@@ -1560,14 +1585,10 @@ describe("drafts in a stream's panel", () => {
   it("names a feature's draft that approving includes", async () => {
     const featureId = "00000000-0000-4000-8000-0000000000f1";
     const stream = fictionalStream({
-      releases: [
-        fictionalRelease({
-          draft: recordDraft({
-            action: "changed",
-            uses: [{ type: "feature", id: featureId }],
-          }),
-        }),
-      ],
+      draft: recordDraft({
+        action: "changed",
+        uses: [{ type: "feature", id: featureId }],
+      }),
     });
     const { fetch } = await openStream([stream], {
       answers: {
@@ -1610,7 +1631,7 @@ describe("drafts in a stream's panel", () => {
     await waitFor(() => {
       expect(fetch.mock.calls.map(([url]) => url)).toContain("/api/projects");
     });
-    await chooseInMenu("Fictional One", "Approve…");
+    await chooseRowAction("Approve draft");
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 2 drafts?",
     });
@@ -1620,16 +1641,13 @@ describe("drafts in a stream's panel", () => {
   });
 
   it("approves a draft with the drafts it uses", async () => {
-    // A release in a stream only drafted to be added.
+    // Given a schedule's change that uses a change of its cycles only drafted to be added
     const stream = fictionalStream({
-      draft: recordDraft({ action: "created" }),
-      releases: [
-        fictionalRelease({
-          draft: recordDraft({
-            action: "created",
-            uses: [{ type: "release-stream", id: streamId }],
-          }),
-        }),
+      draft: recordDraft({
+        uses: [{ type: "cycle-pattern", id: pattern.id }],
+      }),
+      patterns: [
+        fictionalPattern({ draft: recordDraft({ action: "created" }) }),
       ],
     });
     const { fetch } = await openStream([stream], {
@@ -1638,13 +1656,10 @@ describe("drafts in a stream's panel", () => {
         "POST /api/drafts/approval": savedAs,
       },
     });
-    await chooseInMenu("Fictional One", "Approve…");
+    await chooseRowAction("Approve draft");
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 2 drafts?",
     });
-    expect(
-      within(dialog).getByText("the schedule Fictional Majors"),
-    ).toBeDefined();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Approve" }),
     );
@@ -1659,23 +1674,18 @@ describe("drafts in a stream's panel", () => {
     ).toEqual(
       expect.objectContaining({
         records: [
-          { type: "release", id: release.id },
           { type: "release-stream", id: streamId },
+          { type: "cycle-pattern", id: pattern.id },
         ],
       }),
     );
   });
 
   it("asks before rejecting a draft, and closes when cancelled", async () => {
-    await openStream(
-      [
-        fictionalStream({
-          releases: [fictionalRelease({ draft: recordDraft() })],
-        }),
-      ],
-      { answers: { "GET /api/session": approver } },
-    );
-    await chooseInMenu("Fictional One", "Reject…");
+    await openStream([fictionalStream({ draft: recordDraft() })], {
+      answers: { "GET /api/session": approver },
+    });
+    await chooseRowAction("Reject draft…");
     const dialog = await screen.findByRole("dialog", {
       name: "Reject 1 draft?",
     });
@@ -1687,48 +1697,43 @@ describe("drafts in a stream's panel", () => {
     });
   });
 
-  it("cannot approve a draft that uses a rejected one", async () => {
+  it("approves no draft that uses a rejected one, saying it waits for that one", async () => {
+    // Given a schedule's change that uses a rejected change of its cycles
     const stream = fictionalStream({
-      draft: recordDraft({ action: "created", state: "rejected" }),
-      releases: [
-        fictionalRelease({
-          draft: recordDraft({
-            action: "created",
-            uses: [{ type: "release-stream", id: streamId }],
-          }),
+      draft: recordDraft({
+        uses: [{ type: "cycle-pattern", id: pattern.id }],
+      }),
+      patterns: [
+        fictionalPattern({
+          draft: recordDraft({ action: "created", state: "rejected" }),
         }),
       ],
     });
-    await openStream([stream], { answers: { "GET /api/session": approver } });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for Fictional One" }),
-    );
-    const menu = await screen.findByRole("menu");
-    expect([
-      within(menu)
-        .getByRole("menuitem", { name: "Approve…" })
-        .hasAttribute("disabled") ||
-        within(menu)
-          .getByRole("menuitem", { name: "Approve…" })
-          .getAttribute("data-disabled"),
-      within(menu).getByText("Waiting for a rejected draft to be resubmitted"),
-    ]).toEqual([expect.anything(), expect.anything()]);
+    const { fetch } = await openStream([stream], {
+      answers: { "GET /api/session": approver },
+    });
+
+    // When approving it is chosen from its row's menu
+    await chooseRowAction("Approve draft");
+
+    // Then Fathom says it waits for the rejected one, and approves nothing
+    expect(
+      await screen.findByText(
+        "Waiting for a rejected draft to be resubmitted.",
+      ),
+    ).toBeDefined();
+    expect(calls(fetch, "POST")).toEqual([]);
   });
 
-  it("offers no approval of a release's draft this account changed, but still rejecting it", async () => {
+  it("offers no approval of a draft this account changed, but still rejecting it", async () => {
     const stream = fictionalStream({
-      releases: [
-        fictionalRelease({
-          draft: recordDraft({ action: "created", needsOtherApprover: true }),
-        }),
-      ],
+      draft: recordDraft({ needsOtherApprover: true }),
     });
     await openStream([stream], { answers: { "GET /api/session": approver } });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for Fictional One" }),
-    );
-    const menu = await screen.findByRole("menu");
-    const approve = within(menu).getByRole("menuitem", { name: "Approve…" });
+    const menu = await openRowMenu();
+    const approve = within(menu).getByRole("menuitem", {
+      name: "Approve draft",
+    });
     expect(
       approve.hasAttribute("disabled") ||
         approve.getAttribute("data-disabled") === "true",
@@ -1740,21 +1745,16 @@ describe("drafts in a stream's panel", () => {
     ).toBeDefined();
     expect(
       within(menu)
-        .getByRole("menuitem", { name: "Reject…" })
+        .getByRole("menuitem", { name: "Reject draft…" })
         .hasAttribute("data-disabled"),
     ).toBe(false);
   });
 
-  it("closes only a menu in the panel with Escape, keeping the panel open", async () => {
+  it("closes only the row's menu with Escape, keeping the panel open", async () => {
     const { history } = await openStream([
-      fictionalStream({
-        releases: [fictionalRelease({ draft: recordDraft() })],
-      }),
+      fictionalStream({ draft: recordDraft() }),
     ]);
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for Fictional One" }),
-    );
-    await screen.findByRole("menu");
+    await openRowMenu();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
@@ -1762,46 +1762,17 @@ describe("drafts in a stream's panel", () => {
     expect(history.location.pathname).toBe(`/releases/${streamId}`);
   });
 
-  it("moves through a menu's items with the arrow keys, keeping the panel open", async () => {
+  it("moves through the row menu's items with the arrow keys, keeping the panel open", async () => {
     const { history } = await openStream(
-      [
-        fictionalStream({
-          releases: [fictionalRelease({ draft: recordDraft() })],
-        }),
-      ],
+      [fictionalStream({ draft: recordDraft() })],
       { can: editsAll },
     );
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for Fictional One" }),
-    );
-    await screen.findByRole("menu");
+    await openRowMenu();
     await userEvent.keyboard("{ArrowDown}{ArrowDown}");
     expect([
       document.activeElement?.getAttribute("role"),
       history.location.pathname,
     ]).toEqual(["menuitem", `/releases/${streamId}`]);
-  });
-
-  it("sets a change of cycles' draft apart from what may be done to it", async () => {
-    await openStream(
-      [
-        fictionalStream({
-          patterns: [fictionalPattern({ draft: recordDraft() })],
-        }),
-      ],
-      { can: editsAll },
-    );
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: "Actions for Cycles from Jan 1, 2027",
-      }),
-    );
-    const menu = await screen.findByRole("menu");
-    expect(
-      within(menu)
-        .getAllByRole("menuitem")
-        .map(({ textContent }) => textContent),
-    ).toEqual(["Change…", "Remove", "Discard draft"]);
   });
 });
 
@@ -2484,236 +2455,5 @@ describe("the timeline", () => {
     renderApp("/releases");
     await streamsGrid();
     expect(screen.queryByRole("region", { name: "Timeline" })).toBeNull();
-  });
-});
-
-describe("a release's note", () => {
-  const noted = fictionalRelease({ note: "Scope **frozen** for now" });
-  const notePath = `${streamPath}/releases/${release.id}/note`;
-  const saved = () => Response.json({ stream: fictionalStream(), changeSetId });
-  const notePanel = () =>
-    screen.findByRole("region", { name: "Fictional One" });
-  const noteButton = () =>
-    screen.getByRole("button", { name: "Fictional One note" });
-
-  it("makes the name of a release that has a note a link to it", async () => {
-    await openStream([fictionalStream({ releases: [noted] })]);
-    expect(noteButton()).toBeDefined();
-  });
-
-  it("links no release without a note", async () => {
-    await openStream([fictionalStream({ releases: [release] })]);
-    expect(
-      screen.queryByRole("button", { name: "Fictional One note" }),
-    ).toBeNull();
-  });
-
-  it("opens the note under the schedule's panel, read only, to those who may not change releases, and closes it, putting focus back on its link", async () => {
-    await openStream([fictionalStream({ releases: [noted] })]);
-    await userEvent.click(noteButton());
-    const opened = await notePanel();
-    // Under the schedule's panel, as a person's note opens under their details.
-    expect(
-      panel().compareDocumentPosition(opened) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(within(opened).getByText("frozen").tagName).toBe("STRONG");
-    expect(within(opened).queryByRole("button", { name: "Save" })).toBeNull();
-    await userEvent.click(
-      within(opened).getByRole("button", { name: "Close note" }),
-    );
-    await waitFor(() => {
-      expect(document.activeElement).toBe(noteButton());
-    });
-    expect(screen.queryByRole("region", { name: "Fictional One" })).toBeNull();
-  });
-
-  it("is added from the release's menu, and drafted once saved", async () => {
-    const { fetch } = await openStream(
-      [fictionalStream({ releases: [release] })],
-      {
-        can: editsAll,
-        answers: { [`PUT ${notePath}`]: saved },
-      },
-    );
-    await chooseInMenu("Fictional One", "Add note…");
-    const opened = await notePanel();
-    await userEvent.click(within(opened).getByText("Markdown"));
-    await userEvent.type(
-      within(opened).getByRole("textbox", { name: "Markdown" }),
-      "Ships *late*",
-    );
-    await userEvent.click(within(opened).getByRole("button", { name: "Save" }));
-    expect(
-      await screen.findByText("Drafted the note on Fictional One."),
-    ).toBeDefined();
-    expect(bodyOf(fetch, "PUT", notePath)).toEqual([{ note: "Ships _late_" }]);
-  });
-
-  it("is offered only by its link once the release has one", async () => {
-    await openStream([fictionalStream({ releases: [noted] })], {
-      can: editsAll,
-    });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for Fictional One" }),
-    );
-    expect(
-      await screen.findByRole("menuitem", { name: "Change…" }),
-    ).toBeDefined();
-    expect(screen.queryByRole("menuitem", { name: "Add note…" })).toBeNull();
-  });
-
-  it("is removed when cleared and saved", async () => {
-    const { fetch } = await openStream(
-      [fictionalStream({ releases: [noted] })],
-      {
-        can: editsAll,
-        answers: { [`PUT ${notePath}`]: saved },
-      },
-    );
-    await userEvent.click(noteButton());
-    const opened = await notePanel();
-    await userEvent.click(within(opened).getByText("Editor"));
-    await userEvent.click(
-      within(opened).getByRole("button", { name: "Clear" }),
-    );
-    await userEvent.click(within(opened).getByRole("button", { name: "Save" }));
-    expect(
-      await screen.findByText("Drafted removing the note on Fictional One."),
-    ).toBeDefined();
-    expect(bodyOf(fetch, "PUT", notePath)).toEqual([{ note: null }]);
-  });
-
-  it("keeps the panel open, with what was written and why, when the note is refused", async () => {
-    await openStream([fictionalStream({ releases: [release] })], {
-      can: editsAll,
-      answers: {
-        [`PUT ${notePath}`]: () =>
-          Response.json({ message: "Fictional refusal" }, { status: 400 }),
-      },
-    });
-    await chooseInMenu("Fictional One", "Add note…");
-    const opened = await notePanel();
-    await userEvent.click(within(opened).getByText("Markdown"));
-    const markdown = within(opened).getByRole("textbox", { name: "Markdown" });
-    await userEvent.type(markdown, "Kept");
-    await userEvent.click(within(opened).getByRole("button", { name: "Save" }));
-    expect(await within(opened).findByRole("alert")).toBeDefined();
-    expect((markdown as HTMLTextAreaElement).value).toBe("Kept");
-  });
-
-  it("leaves the timeline and the schedule's panel waiting, and opens no other stream, while the note is being changed", async () => {
-    const other = fictionalStream({
-      id: "10000000-0000-4000-8000-000000000002",
-      name: "Fictional Other",
-    });
-    const { history } = await openStream(
-      [fictionalStream({ releases: [noted] }), other],
-      { can: editsAll },
-    );
-    await userEvent.click(noteButton());
-    const opened = await notePanel();
-    expect(panel().closest("[inert]")).toBeNull();
-    await userEvent.click(within(opened).getByText("Editor"));
-    expect(panel().hasAttribute("inert")).toBe(true);
-    expect(
-      screen
-        .getByRole("region", { name: "Timeline", hidden: true })
-        .closest("[inert]"),
-    ).not.toBeNull();
-    await userEvent.click(await detailsOf("Fictional Other"));
-    expect(history.location.pathname).toBe(`/releases/${streamId}`);
-    await userEvent.click(
-      within(opened).getByRole("button", { name: "Cancel" }),
-    );
-    await waitFor(() => {
-      expect(panel().hasAttribute("inert")).toBe(false);
-    });
-    await waitFor(() => {
-      expect(document.activeElement).toBe(noteButton());
-    });
-  });
-
-  it("puts focus on the release's menu when a new note is cancelled", async () => {
-    await openStream([fictionalStream({ releases: [release] })], {
-      can: editsAll,
-    });
-    await chooseInMenu("Fictional One", "Add note…");
-    const opened = await notePanel();
-    await userEvent.click(
-      within(opened).getByRole("button", { name: "Cancel" }),
-    );
-    await waitFor(() => {
-      expect(document.activeElement).toBe(
-        screen.getByRole("button", { name: "Actions for Fictional One" }),
-      );
-    });
-  });
-
-  it("stays as it is being written when a refresh shows the release held by someone else", async () => {
-    let held = false;
-    const fetch = serverAnswers({
-      "GET /api/session": signedIn,
-      "GET /api/release-streams": () =>
-        answer(
-          [
-            fictionalStream({
-              releases: [
-                held ? { ...noted, heldBy: "Fictional Colleague" } : noted,
-              ],
-            }),
-          ],
-          editsAll,
-        )(),
-    });
-    const reads = () =>
-      fetch.mock.calls.filter(([url]) => url === "/api/release-streams").length;
-    renderApp(`/releases/${streamId}`);
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Fictional One note" }),
-    );
-    const opened = await notePanel();
-    await userEvent.click(within(opened).getByText("Markdown"));
-    await userEvent.type(
-      within(opened).getByRole("textbox", { name: "Markdown" }),
-      " more",
-    );
-    held = true;
-    const before = reads();
-    // Coming back to the window refreshes the streams.
-    act(() => {
-      focusManager.setFocused(false);
-      focusManager.setFocused(true);
-    });
-    await waitFor(() => {
-      expect(reads()).toBeGreaterThan(before);
-    });
-    const markdown = await within(opened).findByRole("textbox", {
-      name: "Markdown",
-    });
-    expect((markdown as HTMLTextAreaElement).value).toBe(
-      "Scope **frozen** for now more",
-    );
-  });
-
-  it("opens no other note while one is being changed", async () => {
-    const other = fictionalRelease({
-      id: "30000000-0000-4000-8000-000000000002",
-      name: "Fictional Two",
-      firstCycle: "2027-04-01",
-      lastCycle: "2027-04-01",
-      note: "Fictional",
-    });
-    await openStream([fictionalStream({ releases: [noted, other] })], {
-      can: editsAll,
-    });
-    await userEvent.click(noteButton());
-    const opened = await notePanel();
-    await userEvent.click(within(opened).getByText("Editor"));
-    await userEvent.click(
-      screen.getByRole("button", { name: "Fictional Two note" }),
-    );
-    expect(screen.getByRole("region", { name: "Fictional One" })).toBe(opened);
-    expect(screen.queryByRole("region", { name: "Fictional Two" })).toBeNull();
   });
 });

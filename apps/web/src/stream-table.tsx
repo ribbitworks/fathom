@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Releases page's table of release streams on the shared table: each stream's name, with Ended
-// after it once its last day has passed, how its cycles are made now, its releases, the next to
-// ship, and how far its cycles are made. A stream's row carries the drafts of its cycle changes and
-// releases as well as its own, so its row is marked wherever any of them is, and each part is
-// marked in its cell. Retired streams show only when asked for, and a stream drafted to be retired
-// or restored stays where it is live until approved.
+// The Schedules tab's table on the shared table: each schedule's name, with Ended after it once its
+// last day has passed, its current cycle with its first and last days, the release that ships next
+// and its day, how long its cycles last now, and its last day. A schedule's row carries the drafts
+// of its cycle changes and releases as well as its own, so its row is marked wherever any of them
+// changes what it shows. Retired schedules show only when asked for, and a schedule drafted to be
+// retired or restored stays where it is live until approved.
 
 import {
   capitalized,
-  type CyclePattern,
   hasEnded,
   type RecordDraft,
   type RecordKeyOf,
@@ -29,92 +28,49 @@ import {
   readOnlyTableParts,
   type RecordTable,
   type RowGrouping,
-  undoDrafts,
 } from "./record-grid.tsx";
 import {
   draftedStreams,
-  keptReleases,
   liveStreams,
   markedDraft,
-  releaseDate,
+  shownColour,
   streamNames,
 } from "./releases.ts";
-import {
-  DraftedItem,
-  EmptiedValue,
-  EndedBox,
-  MarkedItem,
-  partsMark,
-  type DraftLike,
-  useBesideLive,
-} from "./status-mark.tsx";
-import { LiveParts, Parts, type SummaryPart } from "./summary-row.tsx";
-import { formatDay } from "./table-view.ts";
+import { currentCycle, lengthNow, nextRelease } from "./schedules.ts";
+import { EndedBox, type DraftLike } from "./status-mark.tsx";
 
-export const patternWords = (pattern: CyclePattern) =>
-  `Every ${String(pattern.length)} ${pattern.unit === "weeks" ? "week" : "month"}${pattern.length === 1 ? "" : "s"}, named ${pattern.naming}`;
-
-// The pattern in force on a day, or the first, when none has started yet.
-export function patternOn(
-  stream: ReleaseStream,
-  day: string,
-): CyclePattern | undefined {
-  const kept = stream.patterns.filter(
-    ({ draft }) => draft?.action !== "deleted",
-  );
-  return kept.filter(({ startsOn }) => startsOn <= day).at(-1) ?? kept[0];
-}
-
-// What a row shows of its stream, by column key, as a draft's live values hold it too.
+// What a row shows of its schedule, by column key, as a draft's live values hold it too.
 interface StreamValues {
   name: string;
-  schedule: string;
-  releases: string;
+  currentCycle: string;
+  cycleStarts: string;
+  cycleEnds: string;
   nextRelease: string;
+  // Not a column: the next release's colour, so a draft changing it marks Next release.
+  nextReleaseColour: string;
+  releaseDate: string;
+  lengthNow: string;
   endsOn: string;
 }
 
 export interface StreamRow extends GridRecord, StreamValues {
   draft?: (GridDraft & { live: StreamValues }) | undefined;
   stream: ReleaseStream;
-  // The marks of the stream's cycle changes and releases, and its releases as the row lists them,
-  // worked out from every draft, so the Draft view decides how they show.
-  scheduleMark: DraftLike | undefined;
-  releasesMark: DraftLike | undefined;
-  parts: readonly SummaryPart[];
   live: boolean;
 }
 
-// A stream with no cycles yet, in its group's heading; its cell is blank, as every empty cell is.
-const noSchedule = "None";
-
-// The release that ships next, on or after a day, of those not removed.
-function nextRelease(stream: ReleaseStream, day: string) {
-  return keptReleases(stream)
-    .flatMap((release) => {
-      const ships = releaseDate(stream, release);
-      return ships !== undefined && ships >= day ? [{ release, ships }] : [];
-    })
-    .sort((one, other) => one.ships.localeCompare(other.ships))
-    .at(0);
-}
-
-const nextReleaseWords = (stream: ReleaseStream, day: string) => {
-  const next = nextRelease(stream, day);
-  return next === undefined
-    ? ""
-    : `${next.release.name}, ships ${formatDay(next.ships)}`;
-};
-
 function valuesOf(stream: ReleaseStream, day: string): StreamValues {
-  const now = patternOn(stream, day);
+  const now = currentCycle(stream, day);
+  const next = nextRelease(stream, day);
   return {
     name: stream.name,
-    schedule: now === undefined ? "" : patternWords(now),
-    releases: keptReleases(stream)
-      .map(({ name }) => name)
-      .join(", "),
-    nextRelease: nextReleaseWords(stream, day),
+    currentCycle: now?.name ?? "",
+    cycleStarts: now?.startsOn ?? "",
+    cycleEnds: now?.endsOn ?? "",
+    nextRelease: next?.release.name ?? "",
+    nextReleaseColour: next?.release.colour ?? "",
+    releaseDate: next?.ships ?? "",
+    lengthNow: lengthNow(stream, day),
     endsOn: stream.endsOn ?? "",
   };
 }
@@ -141,10 +97,10 @@ const latest = (drafts: readonly RecordDraft[]) =>
 const waitingIn = (drafts: readonly DraftLike[]) =>
   drafts.some(({ state }) => state === "waiting");
 
-// The row's draft, for its marks alone: the stream's own, with the columns whose values its parts'
+// The row's draft, for its marks alone: the schedule's own, with the columns whose values its parts'
 // drafts change, or, when only its parts have drafts, one standing for those that change a value the
-// row shows, credited to whoever changed them last. A part's draft that changes nothing the row
-// shows, such as a release's colour, leaves the row unmarked but for the dot before its parts.
+// row shows, the next release's colour included, credited to whoever changed them last. A part's
+// draft that changes nothing the row shows, such as a later release's colour, leaves it unmarked.
 function rowDraft(
   stream: ReleaseStream,
   values: StreamValues,
@@ -157,27 +113,29 @@ function rowDraft(
     leaveOutRejected && stream.draft !== undefined && isRejected(stream.draft)
       ? undefined
       : markedDraft(stream.draft, stream.retired);
+  const shownNow = new Map(Object.entries(values));
+  const liveNow = new Map(Object.entries(live));
+  const differs = (keys: readonly (keyof StreamValues)[]) =>
+    keys.filter((key) => shownNow.get(key) !== liveNow.get(key));
+  // A change of cycles can change the current cycle, how long cycles last, and, moving releases,
+  // which ships next; a release's draft can change which ships next and when.
   const byColumn = [
-    {
-      key: "schedule",
-      drafts: patterns,
-      differs: values.schedule !== live.schedule,
-    },
-    {
-      key: "releases",
-      drafts: releases,
-      differs: values.releases !== live.releases,
-    },
-    {
-      // Moving a release, or a change to its cycles, can change which release ships next.
-      key: "nextRelease",
+    ...differs(["currentCycle", "cycleStarts", "cycleEnds", "lengthNow"]).map(
+      (key) => ({ key, drafts: patterns }),
+    ),
+    ...[
+      ...differs(["nextRelease", "releaseDate"]),
+      ...(values.nextRelease === live.nextRelease &&
+      values.nextReleaseColour !== live.nextReleaseColour
+        ? (["nextRelease"] as const)
+        : []),
+    ].map((key) => ({
+      key,
       drafts: [...patterns, ...releases],
-      differs: values.nextRelease !== live.nextRelease,
-    },
+    })),
   ];
   const changedParts = byColumn.filter(
-    ({ drafts, differs }) =>
-      differs && (drafts.length > 0 || own !== undefined),
+    ({ drafts }) => drafts.length > 0 || own !== undefined,
   );
   const parts = [...new Set(changedParts.flatMap(({ drafts }) => drafts))];
   if (own !== undefined) {
@@ -225,29 +183,18 @@ export function streamRows(
       live === undefined ? values : valuesOf(live, day),
       leaveOutRejected,
     );
-    const releases = leaveOutRejected
-      ? undoDrafts(stream.releases, isRejected)
-      : stream.releases;
     return {
       id: stream.id,
       ...values,
       heldBy: stream.heldBy,
       ...(draft === undefined ? {} : { draft }),
       stream: shown,
-      scheduleMark: partsMark(draftsOf(stream.patterns, leaveOutRejected)),
-      releasesMark: partsMark(draftsOf(stream.releases, leaveOutRejected)),
-      parts: releases.map((release) => ({
-        id: release.id,
-        name: release.name,
-        removed: release.draft?.action === "deleted",
-      })),
       live: false,
     };
   });
 }
 
-// Each row as its stream is live, without drafts, from the stream with every draft, keeping the
-// marks of its parts' drafts.
+// Each row as its schedule is live, without drafts, from the schedule with every draft.
 const liveRows = (
   rows: readonly StreamRow[],
   streams: readonly ReleaseStream[],
@@ -259,65 +206,43 @@ const liveRows = (
       ...valuesOf(stream, day),
       draft: undefined,
       stream,
-      parts: stream.releases.map(({ id, name }) => ({
-        id,
-        name,
-        removed: false,
-      })),
       live: true,
     })),
   );
 
-// A cell of a stream's parts, such as its releases, marked by their drafts, or, in its Live row
-// beside live, as they are live, after Live's dot where drafts change them.
-function ShownOrLive({
-  row,
-  shown,
-  live,
-}: {
-  row: StreamRow;
-  shown: ReactNode;
-  live: ReactNode;
-}) {
-  const besideLive = useBesideLive();
-  return row.live && besideLive ? live : shown;
+// A schedule's row for its details: as the Draft view shows it, with its drafts, whatever the view,
+// which its marks are worked out from, and as it is live, or, while it is only drafted to be added,
+// as drafted, so nothing in it is marked beside its own mark; and the latest draft of its cycles,
+// which marks those it changes.
+export interface ScheduleRows {
+  shown: StreamRow;
+  drafted: StreamRow;
+  live: StreamRow;
+  cyclesDraft: RecordDraft | undefined;
 }
 
-// An empty schedule is blank, unless a draft fills or empties it, when the empty side says so.
-function scheduleCell(row: StreamRow) {
-  const mark = row.scheduleMark;
-  const words =
-    mark !== undefined && row.schedule === "" ? (
-      <EmptiedValue name="cycles" />
-    ) : (
-      row.schedule
-    );
-  return (
-    <ShownOrLive
-      row={row}
-      shown={<DraftedItem draft={mark}>{words}</DraftedItem>}
-      live={
-        <MarkedItem tone={mark === undefined ? undefined : "live"}>
-          {words}
-        </MarkedItem>
-      }
-    />
+export function scheduleRows(
+  stream: ReleaseStream,
+  show: Show,
+  day: string,
+): ScheduleRows {
+  const [drafted] = streamRows([stream], show, day) as [StreamRow];
+  const live = liveRows([drafted], [stream], day).at(0) ?? drafted;
+  const ownEnd =
+    stream.draft?.action === "changed" &&
+    stream.draft.changed.includes("endsOn")
+      ? [stream.draft]
+      : [];
+  const drafts = draftsOf(
+    [...ownEnd.map((draft) => ({ draft })), ...stream.patterns],
+    show === "drafts",
   );
-}
-
-function releasesCell(row: StreamRow) {
-  return (
-    <ShownOrLive
-      row={row}
-      shown={<Parts mark={row.releasesMark} parts={row.parts} />}
-      live={
-        <LiveParts
-          marked={row.releasesMark !== undefined}
-          names={row.parts.map(({ name }) => name)}
-        />
-      }
-    />
-  );
+  return {
+    shown: show === "live" ? live : drafted,
+    drafted,
+    live,
+    cyclesDraft: drafts.length === 0 ? undefined : latest(drafts),
+  };
 }
 
 const statusGroups = {
@@ -339,62 +264,60 @@ const groupings = (day: string): RowGrouping<StreamRow>[] => [
     label: "Status",
     of: (row) => [statusOf(row.stream, day)],
   },
-  {
-    key: "schedule",
-    label: "Cycle schedule",
-    of: ({ schedule }) => [
-      {
-        key: schedule,
-        label: schedule === "" ? noSchedule : schedule,
-        rank: schedule === "" ? 1 : 0,
-      },
-    ],
-  },
 ];
 
-function columns(day: string): Column<StreamRow, never>[] {
-  const text = (key: keyof StreamValues, label: string) =>
-    fieldColumn<StreamRow, never>(key, "text", {
+type StreamColumnKey = Exclude<keyof StreamValues, "nextReleaseColour">;
+
+// The table's columns, in its order, which a schedule's details show too.
+export function streamColumns(day: string): Column<StreamRow, never>[] {
+  const column = (
+    key: StreamColumnKey,
+    label: string,
+    kind: "text" | "date",
+    emptyLabel?: string,
+  ) =>
+    fieldColumn<StreamRow, never>(key, kind, {
       label,
       required: false,
       multiple: false,
       choices: [],
+      ...(emptyLabel === undefined ? {} : { emptyLabel }),
     });
+  // A column with a value of its own for nearly every schedule, not worth breaking down by.
+  const valueColumn = (...args: Parameters<typeof column>) => ({
+    ...column(...args),
+    breaksDown: false,
+  });
   return [
     {
-      ...text("name", "Schedule"),
+      ...column("name", "Schedule", "text"),
+      headingHidden: true,
       mark: (row) => <EndedBox stream={row.stream} day={day} />,
     },
+    valueColumn("currentCycle", "Current cycle", "text"),
+    valueColumn("cycleStarts", "Cycle starts", "date"),
+    valueColumn("cycleEnds", "Cycle ends", "date"),
     {
-      ...text("schedule", "Cycle schedule"),
-      emptyLabel: noSchedule,
-      marksParts: true,
-      content: scheduleCell,
+      ...valueColumn("nextRelease", "Next release", "text"),
+      colour: (row) => {
+        const next = nextRelease(row.stream, day);
+        return next === undefined ? null : shownColour(next.release.colour);
+      },
     },
-    {
-      ...text("releases", "Releases"),
-      breaksDown: false,
-      marksParts: true,
-      content: releasesCell,
-    },
-    { ...text("nextRelease", "Next release"), breaksDown: false },
-    {
-      ...fieldColumn<StreamRow, never>("endsOn", "date", {
-        label: "Schedule ends",
-        required: false,
-        multiple: false,
-        choices: [],
-      }),
-      breaksDown: false,
-    },
+    valueColumn("releaseDate", "Release date", "date"),
+    valueColumn("lengthNow", "Cycle length", "text"),
+    valueColumn("endsOn", "Schedule ends", "date", "No end date"),
   ];
 }
 
 export const streamColumnOrder = [
   "name",
-  "schedule",
-  "releases",
+  "currentCycle",
+  "cycleStarts",
+  "cycleEnds",
   "nextRelease",
+  "releaseDate",
+  "lengthNow",
   "endsOn",
 ];
 
@@ -418,13 +341,16 @@ export function streamTable({
   streams,
   day,
   onOpen,
+  menuItems,
 }: {
   // Every stream, with its drafts, whatever the view.
   streams: readonly ReleaseStream[];
   day: string;
   onOpen: (stream: ReleaseStream) => void;
+  // What else a schedule's menu offers, such as retiring it.
+  menuItems?: ((row: StreamRow) => ReactNode) | undefined;
 }): RecordTable<StreamRow, never, undefined> {
-  const shownColumns = columns(day);
+  const shownColumns = streamColumns(day);
   const drafts = (ids: string[]): DraftSelection => ({
     ...noDrafts(),
     records: streams
@@ -441,6 +367,9 @@ export function streamTable({
     one: streamNames.one,
     noun: streamNames.noun,
     groupings: groupings(day),
+    ungrouped: true,
+    ownDraft: (row) => (row.stream.draft === undefined ? undefined : row.draft),
+    ...(menuItems === undefined ? {} : { menuItems }),
     nameOf: (row) => row.name,
     nameColumn: "name",
     showDetails: (row) => {

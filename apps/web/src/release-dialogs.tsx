@@ -66,6 +66,7 @@ import {
   saveRelease,
 } from "./releases.ts";
 import { projectPlanQuery } from "./projects.ts";
+import { cycleUnitWords, patternOn } from "./schedules.ts";
 import { sessionQuery } from "./session.ts";
 
 interface Saving {
@@ -256,7 +257,8 @@ export function EndsDialog({
       <Stack gap="md">
         <DayInput
           label="Schedule ends"
-          description="The cycle holding this day ends on it. With no day, the schedule keeps going."
+          description="Its last cycle ends on this day."
+          placeholder="No end date"
           autoFocus
           required={false}
           value={stream.endsOn ?? undefined}
@@ -321,19 +323,24 @@ function startChoices(
 export function PatternDialog({
   stream,
   pattern,
+  from,
   ...saving
 }: {
   stream: ReleaseStream;
   // The pattern being changed; absent when adding one.
   pattern?: CyclePattern | undefined;
+  // The start of the cycle a new pattern starts from, which then starts like the one in force there.
+  from?: string | undefined;
 } & Saving) {
   const choices = startChoices(stream, pattern);
+  const like =
+    pattern ?? (from === undefined ? undefined : patternOn(stream, from));
   const [startsOn, setStartsOn] = useState(
-    pattern?.startsOn ?? choices?.at(-1)?.value ?? "",
+    pattern?.startsOn ?? from ?? choices?.at(-1)?.value ?? "",
   );
-  const [length, setLength] = useState<number | string>(pattern?.length ?? 3);
-  const [unit, setUnit] = useState<CycleUnit>(pattern?.unit ?? "months");
-  const [naming, setNaming] = useState(pattern?.naming ?? defaultNaming);
+  const [length, setLength] = useState<number | string>(like?.length ?? 3);
+  const [unit, setUnit] = useState<CycleUnit>(like?.unit ?? "months");
+  const [naming, setNaming] = useState(like?.naming ?? defaultNaming);
   const [tried, setTried] = useState(false);
   const save = useSave(
     () =>
@@ -480,9 +487,6 @@ export function PatternDialog({
   );
 }
 
-const unitWords = (length: number, unit: CycleUnit) =>
-  `${unit === "weeks" ? "week" : "month"}${length === 1 ? "" : "s"}`;
-
 function MovedList({
   title,
   names,
@@ -567,7 +571,7 @@ export function CycleLengthDialog({
           value={length}
           rightSection={
             <Text fz="sm" c="dimmed" pr="xs">
-              {unitWords(Number(length), unit)}
+              {cycleUnitWords(Number(length), unit)}
             </Text>
           }
           rightSectionWidth={72}
