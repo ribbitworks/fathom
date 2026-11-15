@@ -136,6 +136,12 @@ Every view with time across it, the Releases timeline, the Plan and the project 
   - **Drawn by:** `MonthGrid` in `apps/web/src/month-grid.tsx`, with each month's cell in `apps/web/src/team-months.tsx` and `apps/web/src/allocation-months.tsx`, whose month columns set `marksParts` in `apps/web/src/record-grid.tsx`; the timeline's month names, today's mark, and the lines are not shared with it yet.
   - **Example:** Feature assignments.
 
+## The Top Bar
+
+- **Where the user is:** The top bar names the sidebar's section and page. On an address below a sidebar item, such as a Help page, the item's name is a link back to its page, followed by what the address shows, such as the Help page's title.
+  - **Drawn by:** the sidebar's items in `apps/web/src/layout.tsx`, where an item's `detailOf` names what an address below it shows.
+  - **Example:** select Help pages, then Lists: the top bar reads Help / Help pages / Lists.
+
 ## The Page Heading
 
 - **The row under the heading stays put:** Every page's heading is one line: its title, then, where the page shows its records more than one way, the switch between them, centred on the title's line, and the page's actions at the right. Nothing adds a row between the heading and the search row, so the search row starts at the same place on every page, and moving between pages doesn't shift it. The heading is one height on every page, as tall as a button, and the gap under it is the same on every page, the theme's medium spacing. Decided by the maintainer on 2026-11-13. A page's tabs, such as Projects', sit there too, after the title, decided by the maintainer on 2026-11-13.
@@ -372,3 +378,9 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **Finding rows:** A search field above a table finds rows with every word typed anywhere in them, ignoring letter case and accents. Cmd+F on a Mac, or Ctrl+F elsewhere, goes to it from anywhere but a dialog, and Esc clears it, then leaves it, going back to the table where it can. When nothing matches, the table says so. The Org chart's finder follows the same keys: Cmd+F or Ctrl+F goes to it, and Esc clears it. Decided by the maintainer on 2026-11-11. Typing in any drop-down list, such as the Org chart's finder, finds options the same way, decided by the maintainer on 2026-11-14.
   - **Drawn by:** `TableSearch` in `apps/web/src/table-controls.tsx`; in a drop-down list, the `byWords` filter every `Select` takes from `apps/web/src/theme.ts`, which any other searchable Mantine list, such as `MultiSelect` or `Autocomplete`, needs too.
   - **Example:** type offline in the search field on Features.
+
+## Help
+
+- **A Help page:** A Help page is drawn as [Visual Design](visual-design.md#layout) sets out, through the one rendering every note uses, never a renderer of its own. A link to a Help page, in a Help page or in any note, stays in Fathom, and a link whose text only repeats its address reads the page's title. Help is reached from the sidebar's Help section alone, with no button on each page, as [Help pages](../product/decisions.md#configuration) sets out.
+  - **Drawn by:** `HelpPageView` in `apps/web/src/help-page.tsx`, through `NoteView` in `apps/web/src/note-editor.tsx` with `anchors`, its links by `NoteLink` there, and the pages from `apps/web/src/help-pages.ts`.
+  - **Example:** select Help pages, then Pages, then the link to Lists.
