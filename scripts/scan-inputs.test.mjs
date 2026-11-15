@@ -187,6 +187,26 @@ describe("the command", () => {
       process.chdir(previous);
     }
   });
+
+  it("lists only the work not yet committed when asked, staged or not", () => {
+    write("apps/server/src/people.ts", "changed\n");
+    git("commit", "--quiet", "-am", "code");
+    write("deploy/compose.yaml", "changed\n");
+    git("add", "deploy/compose.yaml");
+    write("apps/web/src/theme.css");
+    write("docs/notes.md");
+    const previous = process.cwd();
+    process.chdir(repository);
+    try {
+      assert.deepEqual(changedPaths({ uncommitted: true }).sort(), [
+        "apps/web/src/theme.css",
+        "deploy/compose.yaml",
+        "docs/notes.md",
+      ]);
+    } finally {
+      process.chdir(previous);
+    }
+  });
 });
 
 describe("the dependency hash", () => {
