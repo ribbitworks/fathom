@@ -20,6 +20,7 @@ import {
   fictionalUser,
   renderApp,
   serverAnswers,
+  undoWithKeys,
 } from "./test-support.tsx";
 
 const s1 = "00000000-0000-4000-8000-000000000001";
@@ -577,7 +578,8 @@ describe("a web link column", () => {
     ).toBe(true);
   });
 
-  it("gives a column only drafted to be added its class in its dialog, not from its menu", async () => {
+  it("changes the class of a column only drafted to be added in its draft, from its dialog or its menu", async () => {
+    // Given
     const added = {
       ...profile,
       draft: {
@@ -589,7 +591,7 @@ describe("a web link column", () => {
         madeAt: "2026-11-01T10:00:00.000Z",
       },
     };
-    await openPeople(
+    const fetch = await openPeople(
       {
         "GET /api/people": () =>
           Response.json({
@@ -597,25 +599,48 @@ describe("a web link column", () => {
             fields: [added],
             order: ["preferredName", "employeeId", "f1"],
           }),
+        "PUT /api/columns/f1/class": saved,
+        [`POST /api/undo/${s1}`]: () => Response.json({ changeSetId: null }),
       },
       classifier,
     );
     await userEvent.click(
       await screen.findByRole("button", { name: /^Profile column/ }),
     );
-    await screen.findByRole("menuitem", { name: "Edit column" });
-    expect(screen.queryByRole("menuitem", { name: "Change class…" })).toBe(
-      null,
-    );
     await userEvent.click(
-      screen.getByRole("menuitem", { name: "Edit column" }),
+      await screen.findByRole("menuitem", { name: "Edit column" }),
     );
-    const dialog = await screen.findByRole("dialog", { name: "Edit column" });
+    const edit = await screen.findByRole("dialog", { name: "Edit column" });
     expect(
-      within(dialog).getByRole<HTMLInputElement>("radio", {
+      within(edit).getByRole<HTMLInputElement>("radio", {
         name: /^General/,
       }).checked,
     ).toBe(true);
+    await userEvent.click(within(edit).getByRole("button", { name: "Cancel" }));
+    // When
+    await userEvent.click(
+      await screen.findByRole("button", { name: /^Profile column/ }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Change class…" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Change the class of Profile",
+    });
+    await userEvent.click(
+      within(dialog).getByRole("radio", { name: /^Confidential/ }),
+    );
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Change" }),
+    );
+    // Then
+    expect(bodyOf(fetch, "PUT", "/api/columns/f1/class")).toEqual([
+      { dataClass: "confidential" },
+    ]);
+    await undoWithKeys(fetch);
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", `/api/undo/${s1}`)).toHaveLength(1);
+    });
   });
 
   it("keeps its type once added", async () => {

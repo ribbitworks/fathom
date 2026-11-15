@@ -49,7 +49,11 @@ import { focusSoon } from "./focus.ts";
 import { ListDialog } from "./list-dialog.tsx";
 import { useDialogState } from "./dialog-actions.tsx";
 import { moveListClass } from "./data-classes.ts";
-import { MoveClassModal, useClassMove } from "./move-class-dialog.tsx";
+import {
+  MoveClassModal,
+  showMoved,
+  useClassMove,
+} from "./move-class-dialog.tsx";
 import {
   drafting,
   draftName,
@@ -709,12 +713,19 @@ export function ListsPage({
     }
   };
 
-  // A move is changed back rather than undone, so it offers no Undo.
-  const movedClass = (list: List, visibility: Tier) => {
-    shown((current) =>
-      current.map((other) =>
-        other.id === list.id ? { ...other, visibility } : other,
-      ),
+  const movedClass = (
+    list: List,
+    visibility: Tier,
+    changeSetId: string | null,
+  ) => {
+    showMoved(
+      { shown, undoable },
+      list,
+      (current) =>
+        current.map((other) =>
+          other.id === list.id ? { ...other, visibility } : other,
+        ),
+      changeSetId,
     );
   };
 
@@ -901,8 +912,8 @@ export function ListsPage({
                                     from: open.visibility,
                                     move: (to) => moveListClass(open.id, to),
                                     refusal: listRefusal(open),
-                                    moved: (to) => {
-                                      movedClass(open, to);
+                                    moved: (to, changeSetId) => {
+                                      movedClass(open, to, changeSetId);
                                     },
                                   });
                                 }

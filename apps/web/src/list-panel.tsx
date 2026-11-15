@@ -1331,7 +1331,7 @@ export function ListPanel({
               </Button>
             )}
             {onMoveClass &&
-              list.draft?.action !== "created" &&
+              (mayEdit || list.draft?.action !== "created") &&
               list.draft?.action !== "deleted" && (
                 <Stack gap={2} align="flex-end">
                   <Button

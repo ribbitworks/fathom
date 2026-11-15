@@ -241,6 +241,16 @@ export function describeValue(
       ];
 }
 
+// The class of a list or column being added, such as "Class Personal", or nothing for General,
+// which has no mark.
+export function addedClass(visibility: ChangeValue | undefined): Phrase[] {
+  if (visibility === undefined || visibility === "general") return [];
+  const line = describeValue("visibility", visibility);
+  return line === undefined ? [] : [line];
+}
+
+const classedKinds = new Set(["list", "field"]);
+
 // The record, as a sentence names it, such as "the choice North in Sites".
 function thing({ kind, name, list }: ChangedRecord): string {
   const called = name ?? "without a name";
@@ -413,7 +423,13 @@ function recordWords(
   if (record.action === "created" || record.action === "deleted") {
     return {
       sentence: `${addedOrRemoved(record, kind)} ${named}`,
-      details: [],
+      details:
+        record.action === "created" && classedKinds.has(record.kind)
+          ? addedClass(
+              record.fields.find(({ field }) => field === "visibility")
+                ?.newValue,
+            )
+          : [],
     };
   }
   if (kind === "rejection") {

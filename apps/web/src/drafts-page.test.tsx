@@ -223,10 +223,18 @@ describe("the Drafts page", () => {
       ],
       draft: listDraft("created"),
     };
+    const lockers = {
+      ...teams,
+      id: "l4",
+      name: "Lockers",
+      visibility: "confidential",
+      choices: [],
+    };
     const fetch = await openDrafts({
       "GET /api/people": peopleWith([]),
       "GET /api/release-streams": noStreams,
-      "GET /api/lists": () => Response.json({ lists: [drafted, teams] }),
+      "GET /api/lists": () =>
+        Response.json({ lists: [drafted, teams, lockers] }),
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
     const shown = await entries();
@@ -241,6 +249,9 @@ describe("the Drafts page", () => {
     );
     expect(shown).toContain(
       "Fictional Editor drafted adding the list Teams, Draft: added",
+    );
+    expect(shown).toContain(
+      "Fictional Editor drafted adding the list Lockers: Class Confidential, Draft: added",
     );
     await userEvent.click(
       screen.getByRole("checkbox", {

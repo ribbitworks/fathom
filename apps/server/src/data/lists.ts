@@ -52,6 +52,7 @@ import { randomUUID } from "node:crypto";
 import {
   type Actor,
   mostSensitive,
+  requirePermission,
   seesSensitivity,
   storedTier,
 } from "../access.ts";
@@ -1143,10 +1144,9 @@ export async function createList(
     if (listNameTaken(state, request.name)) {
       throw new ConflictError(duplicateList);
     }
-    await classifyDraft(transaction, actor, {
+    classifyDraft(actor, {
       live: false,
       name: request.name,
-      moved: listMoved(request.name),
       from: "general",
       to: request.visibility,
     });
@@ -1165,32 +1165,50 @@ export async function createList(
   });
 }
 
+type ListChange = (
+  transaction: Transaction,
+  state: ListsState,
+  list: Recorded,
+) => Promise<Recorded>;
+
 // Drafts a change to a list's settings, or to whether it is retired.
 async function changeList(
   database: Database,
   maker: Actor,
   id: string,
-  change: (
-    transaction: Transaction,
-    state: ListsState,
-    list: Recorded,
-  ) => Promise<Recorded>,
+  change: ListChange,
 ): Promise<Saved<List>> {
   return drafting(database, maker.user.id, async (transaction, state) => {
-    const list = changeableList(state, id);
-    const after = await change(transaction, state, list);
-    const changeSetId = await saveDraft(
+    const changeSetId = await draftListChange(
       transaction,
       maker,
-      "list",
+      state,
       id,
-      state.lists.get(id),
-      list,
-      after,
-      state.listDrafts.get(id),
+      change,
     );
     return { result: await listNow(transaction, maker, id), changeSetId };
   });
+}
+
+async function draftListChange(
+  transaction: Transaction,
+  maker: Actor,
+  state: ListsState,
+  id: string,
+  change: ListChange,
+): Promise<string | null> {
+  const list = changeableList(state, id);
+  const after = await change(transaction, state, list);
+  return saveDraft(
+    transaction,
+    maker,
+    "list",
+    id,
+    state.lists.get(id),
+    list,
+    after,
+    state.listDrafts.get(id),
+  );
 }
 
 // The lists a column on Features draws on, built in or added, live or in a draft, published or not.
@@ -1253,7 +1271,13 @@ export async function updateList(
   id: string,
   request: ListRequest,
 ): Promise<Saved<List>> {
-  return changeList(database, actor, id, async (transaction, state, list) => {
+  return changeList(database, actor, id, listSettings(actor, id, request));
+}
+
+// The change to a list's settings a request asks for, refused where the actor can't make it.
+const listSettings =
+  (actor: Actor, id: string, request: ListRequest): ListChange =>
+  async (transaction, state, list) => {
     await refuseSensitiveFeatureList(transaction, id, request.visibility);
     refuseUnseenVisibility(
       actor,
@@ -1264,20 +1288,19 @@ export async function updateList(
     if (listNameTaken(state, request.name, id)) {
       throw new ConflictError(duplicateList);
     }
-    await classifyDraft(transaction, actor, {
+    classifyDraft(actor, {
       live: state.lists.has(id),
       name: String(list.name),
-      moved: listMoved(request.name),
       from: storedTier(list.visibility),
       to: request.visibility,
     });
     return { ...list, ...request };
-  });
-}
+  };
 
-const listMoved = (name: unknown) => `the ${String(name)} list`;
+export const listMoved = (name: unknown) => `the ${String(name)} list`;
 
-// Moves a list, and so the values chosen from it, to another class.
+// Moves a list, and so the values chosen from it, to another class: at once for an approved list,
+// and in its draft for one only drafted to be added.
 export async function moveListClass(
   database: Database,
   actor: Actor,
@@ -1292,8 +1315,23 @@ export async function moveListClass(
       .from(lists)
       .where(eq(lists.id, id))
       .for("update");
-    if (row === undefined) throw new NotFoundError(noList);
-    changeableList(await readState(transaction, actor.user.id), id);
+    const state = await readState(transaction, actor.user.id);
+    if (row === undefined) {
+      const list = changeableList(state, id);
+      requirePermission(actor, "configuration:edit");
+      return draftListChange(
+        transaction,
+        actor,
+        state,
+        id,
+        listSettings(actor, id, {
+          name: String(list.name),
+          description: String(list.description),
+          visibility: to,
+        }),
+      );
+    }
+    changeableList(state, id);
     const from = storedTier(row.visibility);
     requireMove(actor, from, to);
     if (from === to) return null;

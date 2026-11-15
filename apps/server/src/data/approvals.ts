@@ -433,7 +433,7 @@ export async function approveDrafts(
       );
       const made = await approveRecordDrafts(transaction, actor, asked.records);
       if (asksForLists(asked)) {
-        made.push(...(await approveListDrafts(transaction, asked)));
+        made.push(...(await approveListDrafts(transaction, actor, asked)));
       }
       if (asksForColumns(asked)) {
         made.push(...(await approveColumnDrafts(transaction, actor, asked)));

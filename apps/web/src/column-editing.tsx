@@ -18,7 +18,7 @@ import { useState } from "react";
 import { ColumnDialog } from "./column-dialog.tsx";
 import { moveColumnClass } from "./data-classes.ts";
 import { useDialogState } from "./dialog-actions.tsx";
-import { MoveClassModal } from "./move-class-dialog.tsx";
+import { MoveClassModal, showMoved } from "./move-class-dialog.tsx";
 import {
   deleteField,
   discardColumnDraft,
@@ -116,14 +116,21 @@ export function ColumnModal<Data>({
       },
     );
   };
-  // A move is changed back rather than undone, so it offers no Undo.
-  const moved = (field: Field, visibility: Field["visibility"]) => {
-    shown((data) =>
-      withColumns(data, ({ fields: listed }) => ({
-        fields: listed.map((other) =>
-          other.id === field.id ? { ...other, visibility } : other,
-        ),
-      })),
+  const moved = (
+    field: Field,
+    visibility: Field["visibility"],
+    changeSetId: string | null,
+  ) => {
+    showMoved(
+      { shown, undoable },
+      field,
+      (data) =>
+        withColumns(data, ({ fields: listed }) => ({
+          fields: listed.map((other) =>
+            other.id === field.id ? { ...other, visibility } : other,
+          ),
+        })),
+      changeSetId,
     );
   };
   const remove = (field: Field) => {
@@ -149,8 +156,8 @@ export function ColumnModal<Data>({
             name: moving.field.name,
             from: moving.from,
             move: (to) => moveColumnClass(moving.field.id, to),
-            moved: (to) => {
-              moved(moving.field, to);
+            moved: (to, changeSetId) => {
+              moved(moving.field, to, changeSetId);
             },
           }
         }

@@ -84,13 +84,13 @@ You're done when the list shows your change: a hollow dot, a **Retired** box, or
 
 ### Change a List's Class
 
-You can do this if your role may classify data, once the list is approved. For a new list that isn't approved yet, choose its **Class** in **Edit list** instead.
+You can do this if your role may classify data.
 
 1. In the list's panel, select **Change class…**.
 1. Choose the class.
 1. Select **Change**.
 
-The change takes effect straight away, with no draft, and it's recorded in the access history. You can't choose a class your role can't see. A list that a column on **Features** uses stays **General**. You can also change an approved list's class on the **Data classes** page.
+On an approved list, the change takes effect straight away, with no draft, and it's recorded in the access history. On a new list that isn't approved yet, it changes the list's draft instead, just as choosing its **Class** in **Edit list** does, and you can undo it. You can't choose a class your role can't see. A list that a column on **Features** uses stays **General**. You can also change an approved list's class on the **Data classes** page.
 
 You're done when the list's name shows its new class.
 

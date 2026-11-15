@@ -21,9 +21,9 @@ import {
 import { mergeThemeOverrides } from "@mantine/core";
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory } from "@tanstack/react-router";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { vi } from "vitest";
+import { expect, vi } from "vitest";
 import { App } from "./app.tsx";
 import { theme } from "./theme.ts";
 
@@ -330,4 +330,19 @@ export async function chooseIn(
 ) {
   await userEvent.click(within(holder).getByLabelText(label));
   await userEvent.click(await screen.findByRole("option", { name: option }));
+}
+
+const undoRequests = (fetch: ReturnType<typeof serverAnswers>) =>
+  fetch.mock.calls.filter(
+    ([url, init]) => url.startsWith("/api/undo/") && init?.method === "POST",
+  ).length;
+
+// Undoes the latest change with Cmd+Z. A change becomes undoable only once it has finished saving,
+// which nothing on screen shows, so the keys are pressed until the page asks the server to undo.
+export async function undoWithKeys(fetch: ReturnType<typeof serverAnswers>) {
+  const before = undoRequests(fetch);
+  await waitFor(async () => {
+    await userEvent.keyboard("{Meta>}z{/Meta}");
+    expect(undoRequests(fetch)).toBeGreaterThan(before);
+  });
 }

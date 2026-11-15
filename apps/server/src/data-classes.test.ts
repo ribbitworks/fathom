@@ -7,7 +7,7 @@
 // history and their drafts, and are moved back rather than undone; and the views that need a
 // detail, and who sees and changes the hiring plan, follow its class.
 
-import { accessHistory, dataClasses, fields, lists } from "@fathom/db";
+import { accessHistory, dataClasses, fields, lists, users } from "@fathom/db";
 import {
   type DataClasses,
   defaultClasses,
@@ -74,6 +74,36 @@ async function latestMove(actorId: string) {
     .orderBy(desc(accessHistory.id))
     .limit(1);
   return entry;
+}
+
+// The moves recorded of one list or column, by whoever made them, as the access history names it.
+async function movesOf(moved: string) {
+  const entries = await test.connection
+    .select({ actorId: accessHistory.actorId, details: accessHistory.details })
+    .from(accessHistory)
+    .where(eq(accessHistory.action, "data-class-moved"));
+  return entries.filter(
+    ({ details }) => (details as { moved?: unknown }).moved === moved,
+  );
+}
+
+// The account test.approveLists approves as.
+async function listApproverId() {
+  const [approver] = await test.connection
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, "list.approver@example.test"));
+  return approver?.id;
+}
+
+// A list only drafted to be added, by the classifier, in the class given.
+async function addedList(visibility = "general") {
+  const name = unique("Fictional lockers");
+  const created = await test.request(classifier.cookie, "POST", "/api/lists", {
+    name,
+    visibility,
+  });
+  return { id: created.json<{ list: { id: string } }>().list.id, name };
 }
 
 describe("a built-in detail's class", () => {
@@ -508,7 +538,8 @@ describe("a list's class", () => {
     );
   });
 
-  it("starts other than General only with Classify data, recorded as a move", async () => {
+  it("starts other than General only with Classify data, recorded as a move once approved", async () => {
+    // Given
     const editor = await test.signedIn([...seesBoth, "configuration:edit"]);
     const name = unique("Fictional badges");
     const refused = await test.request(editor.cookie, "POST", "/api/lists", {
@@ -516,21 +547,149 @@ describe("a list's class", () => {
       visibility: "personal",
     });
     expect(refused.statusCode).toBe(403);
+    // When
     const created = await test.request(
       classifier.cookie,
       "POST",
       "/api/lists",
-      {
-        name,
-        visibility: "personal",
-      },
+      { name, visibility: "personal" },
     );
+    // Then
     expect(created.statusCode).toBe(201);
-    expect((await latestMove(classifier.id))?.details).toEqual({
-      moved: `the ${name} list`,
-      dataClass: "personal",
-      previousDataClass: "general",
+    expect(await movesOf(`the ${name} list`)).toEqual([]);
+    await test.approveLists();
+    expect(await movesOf(`the ${name} list`)).toEqual([
+      {
+        actorId: await listApproverId(),
+        details: {
+          moved: `the ${name} list`,
+          dataClass: "personal",
+          previousDataClass: "general",
+        },
+      },
+    ]);
+  });
+
+  it("is changed in the draft of a list only drafted to be added", async () => {
+    // Given
+    const name = unique("Fictional lockers");
+    const created = await test.request(
+      classifier.cookie,
+      "POST",
+      "/api/lists",
+      { name, visibility: "general" },
+    );
+    const id = created.json<{ list: { id: string } }>().list.id;
+    // When
+    const response = await move(`/api/lists/${id}/class`, "confidential");
+    // Then
+    expect(response.statusCode).toBe(200);
+    expect(
+      response.json<{ changeSetId: string | null }>().changeSetId,
+    ).not.toBe(null);
+    const live = await test.connection
+      .select()
+      .from(lists)
+      .where(eq(lists.id, id));
+    expect(live).toEqual([]);
+    const read = await test.request(classifier.cookie, "GET", "/api/lists");
+    expect(
+      read
+        .json<{ lists: { id: string; visibility: string }[] }>()
+        .lists.find((list) => list.id === id)?.visibility,
+    ).toBe("confidential");
+    expect(await movesOf(`the ${name} list`)).toEqual([]);
+    await test.approveLists();
+    const [approved] = await test.connection
+      .select()
+      .from(lists)
+      .where(eq(lists.id, id));
+    expect(approved?.visibility).toBe("confidential");
+    expect(await movesOf(`the ${name} list`)).toHaveLength(1);
+  });
+
+  it("records no move for a draft discarded before approval", async () => {
+    const { id, name } = await addedList("personal");
+    await test.request(classifier.cookie, "DELETE", `/api/lists/${id}/draft`);
+    expect(await movesOf(`the ${name} list`)).toEqual([]);
+  });
+
+  it("is not changed in a draft by a classifier who doesn't change configuration", async () => {
+    const { id } = await addedList();
+    const classifierOnly = await test.signedIn([
+      ...seesBoth,
+      "configuration:view",
+      "data:classify",
+    ]);
+    const response = await move(
+      `/api/lists/${id}/class`,
+      "personal",
+      classifierOnly.cookie,
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("is not changed in a draft to a class the classifier can't see", async () => {
+    const { id } = await addedList();
+    const personalOnly = await test.signedIn([
+      "people:view",
+      "personal:view",
+      "configuration:view",
+      "configuration:edit",
+      "data:classify",
+    ]);
+    const response = await move(
+      `/api/lists/${id}/class`,
+      "confidential",
+      personalOnly.cookie,
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("is not changed in a draft someone else is changing", async () => {
+    const { id } = await addedList();
+    const other = await test.signedIn("workforce-administrator");
+    await test.request(
+      other.cookie,
+      "PUT",
+      `/api/lists/${id}`,
+      { name: unique("Fictional held"), visibility: "general" },
+      { publish: false },
+    );
+    const response = await move(`/api/lists/${id}/class`, "personal");
+    await test.request(other.cookie, "POST", "/api/unpublished/discard");
+    expect(response.statusCode).toBe(409);
+  });
+
+  it("is not put back above General by undoing once a column on Features draws on it", async () => {
+    // Given
+    const { id } = await addedList();
+    await move(`/api/lists/${id}/class`, "personal");
+    const { changeSetId } = (
+      await move(`/api/lists/${id}/class`, "general")
+    ).json<{ changeSetId: string }>();
+    await test.request(classifier.cookie, "POST", "/api/features/columns", {
+      name: unique("Fictional feature column"),
+      listId: id,
     });
+    // When
+    const response = await test.request(
+      classifier.cookie,
+      "POST",
+      `/api/undo/${changeSetId}`,
+    );
+    // Then
+    expect(response.statusCode).toBe(409);
+  });
+
+  it("records no move for a list approved as General", async () => {
+    const name = unique("Fictional benches");
+    await test.request(classifier.cookie, "POST", "/api/lists", {
+      name,
+      visibility: "general",
+    });
+    await test.approveLists();
+    expect(await movesOf(`the ${name} list`)).toEqual([]);
   });
 
   it("records nothing when moved to the class it is in", async () => {
@@ -736,6 +895,138 @@ describe("a column's class", () => {
     expect(refused.statusCode).toBe(400);
     expect(refusal(refused)).toBe(
       `${name} is already approved, so its class changes at once, not in a draft`,
+    );
+  });
+
+  it("is changed in the draft of a column only drafted to be added, and recorded once approved", async () => {
+    // Given
+    const name = unique("Fictional portfolio");
+    const created = await test.request(
+      classifier.cookie,
+      "POST",
+      "/api/people/columns",
+      { name, type: "link", visibility: "general" },
+    );
+    const id = created.json<{ field: { id: string } }>().field.id;
+    // When
+    const response = await move(`/api/columns/${id}/class`, "confidential");
+    // Then
+    expect(response.statusCode).toBe(200);
+    const live = await test.connection
+      .select()
+      .from(fields)
+      .where(eq(fields.id, id));
+    expect(live).toEqual([]);
+    expect(await movesOf(`the ${name} column`)).toEqual([]);
+    expect(await test.historyOf(id)).toContainEqual(
+      expect.objectContaining({
+        field: "visibility",
+        oldValue: "general",
+        newValue: "confidential",
+      }),
+    );
+    await test.approveLists();
+    const [approved] = await test.connection
+      .select()
+      .from(fields)
+      .where(eq(fields.id, id));
+    expect(approved?.visibility).toBe("confidential");
+    expect(await movesOf(`the ${name} column`)).toEqual([
+      {
+        actorId: await listApproverId(),
+        details: {
+          moved: `the ${name} column`,
+          dataClass: "confidential",
+          previousDataClass: "general",
+        },
+      },
+    ]);
+  });
+
+  it("is undone in the draft of a column only drafted to be added", async () => {
+    const created = await test.request(
+      classifier.cookie,
+      "POST",
+      "/api/people/columns",
+      {
+        name: unique("Fictional portfolio"),
+        type: "link",
+        visibility: "general",
+      },
+    );
+    const id = created.json<{ field: { id: string } }>().field.id;
+    const { changeSetId } = (
+      await move(`/api/columns/${id}/class`, "personal")
+    ).json<{ changeSetId: string }>();
+    const response = await test.request(
+      classifier.cookie,
+      "POST",
+      `/api/undo/${changeSetId}`,
+    );
+    expect(response.statusCode).toBe(200);
+    expect(await test.historyOf(id)).toContainEqual(
+      expect.objectContaining({
+        field: "visibility",
+        oldValue: "personal",
+        newValue: "general",
+      }),
+    );
+  });
+
+  it("is not changed in a draft by a classifier who doesn't change configuration", async () => {
+    const created = await test.request(
+      classifier.cookie,
+      "POST",
+      "/api/people/columns",
+      {
+        name: unique("Fictional portfolio"),
+        type: "link",
+        visibility: "general",
+      },
+    );
+    const id = created.json<{ field: { id: string } }>().field.id;
+    const classifierOnly = await test.signedIn([
+      ...seesBoth,
+      "configuration:view",
+      "data:classify",
+    ]);
+    const response = await move(
+      `/api/columns/${id}/class`,
+      "personal",
+      classifierOnly.cookie,
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("stays General in the draft of a column on Features", async () => {
+    const created = await test.request(
+      classifier.cookie,
+      "POST",
+      "/api/features/columns",
+      {
+        name: unique("Fictional feature link"),
+        type: "link",
+        visibility: "general",
+      },
+    );
+    const id = created.json<{ field: { id: string } }>().field.id;
+    const response = await move(`/api/columns/${id}/class`, "personal");
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("is its list's for a column only drafted to be added that draws on one", async () => {
+    const listId = await liveList();
+    const created = await test.request(
+      classifier.cookie,
+      "POST",
+      "/api/people/columns",
+      { name: unique("Fictional choice column"), listId },
+    );
+    const id = created.json<{ field: { id: string } }>().field.id;
+    const response = await move(`/api/columns/${id}/class`, "personal");
+    expect(response.statusCode).toBe(400);
+    expect(refusal(response)).toBe(
+      "This column takes its list's class, so change the list's class instead",
     );
   });
 

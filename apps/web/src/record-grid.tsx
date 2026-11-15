@@ -2598,7 +2598,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
               </Menu.Item>
               {field &&
                 actions.moveColumnClass &&
-                field.draft?.action !== "created" &&
+                (changesColumn || field.draft?.action !== "created") &&
                 field.draft?.action !== "deleted" && (
                   <>
                     <Menu.Divider />

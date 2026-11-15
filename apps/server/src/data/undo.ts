@@ -69,6 +69,7 @@ import {
   nameTaken,
   readColumnsState,
 } from "./column-drafts.ts";
+import { classifyDraft } from "./data-classes.ts";
 import { checkLiveList, checkValuesFit, lockFields } from "./fields.ts";
 import {
   choiceLabelTaken,
@@ -85,6 +86,7 @@ import {
   refuseLastKept,
   removeEmptyOrders,
   writeOrderDraft,
+  refuseSensitiveFeatureList,
 } from "./lists.ts";
 import {
   peopleFitColumns,
@@ -631,6 +633,23 @@ function withoutRejection(
   return kept;
 }
 
+// The class of a list or column only drafted to be added, put back by undoing, is checked as
+// drafting it was, since the role may have changed since; it starts General unless someone with
+// Classify data gives it another.
+function reclassifyDraft(
+  actor: Actor,
+  wanted: Recorded,
+  now: unknown,
+  to: Tier,
+): void {
+  classifyDraft(actor, {
+    live: false,
+    name: String(wanted.name),
+    from: now === undefined || now === null ? "general" : storedTier(now),
+    to,
+  });
+}
+
 // Puts back the drafts of the lists, choices, and choice orders a change set changed in their
 // drafts, one at a time, in the order lists come before their choices: the record it drafted adding
 // taken out, the one it drafted removing put back as it was, the fields it changed put back, with a
@@ -638,9 +657,10 @@ function withoutRejection(
 // since, and belong to a list that is there to change.
 async function undoListDrafts(
   transaction: Transaction,
-  editor: string,
+  actor: Actor,
   records: readonly Undone[],
 ): Promise<void> {
+  const editor = actor.user.id;
   for (const record of [...records].sort((a, b) => byKind(a) - byKind(b))) {
     const state = await readState(transaction, editor);
     const old = withoutRejection(record.old);
@@ -687,6 +707,11 @@ async function undoListDrafts(
         listNameTaken(state, String(wanted.name), record.id)
       ) {
         throw new ConflictError(changedSince);
+      }
+      if (wanted !== undefined && live === undefined) {
+        const to = storedTier(wanted.visibility);
+        reclassifyDraft(actor, wanted, now?.visibility, to);
+        await refuseSensitiveFeatureList(transaction, record.id, to);
       }
     } else if (wanted !== undefined) {
       // A choice always records its list.
@@ -757,7 +782,16 @@ async function undoColumnDrafts(
         throw new ConflictError(changedSince);
       }
       refuseSensitiveOnFeatures(state, wanted);
-      const { listId } = typeOf(wanted).settings(wanted);
+      const { listId, visibility } = typeOf(wanted).settings(wanted);
+      const before = drafted(live, draft);
+      if (visibility !== null && live === undefined) {
+        reclassifyDraft(
+          actor,
+          wanted,
+          before && typeOf(before).settings(before).visibility,
+          storedTier(visibility),
+        );
+      }
       if (listId !== null && listId !== live?.listId) {
         await checkList(
           transaction,
@@ -1114,7 +1148,7 @@ async function undoIn(
     listKinds.includes(recordType),
   );
   if (listDrafts.length > 0) {
-    await undoListDrafts(transaction, actor.user.id, listDrafts);
+    await undoListDrafts(transaction, actor, listDrafts);
     await removeEmptyOrders(transaction, actor.user.id);
   }
   if (columnDrafts.length > 0) {

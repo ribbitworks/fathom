@@ -48,7 +48,7 @@ import { useQuery } from "@tanstack/react-query";
 import { featureTeamsQuery, teamPersonNamer } from "./feature-teams.ts";
 import { orgChartQuery } from "./org-chart.ts";
 import { type ReactNode, useState } from "react";
-import { describeField, describeValue } from "./changes.ts";
+import { addedClass, describeField, describeValue } from "./changes.ts";
 import { DecisionModal, drafts } from "./decision-dialog.tsx";
 import {
   type Decision,
@@ -259,15 +259,17 @@ function listEntries(lists: readonly List[]): Entry[] {
             `list ${list.id}`,
             list.draft,
             `the list ${list.name}`,
-            configFields(
-              {
-                ...list.draft,
-                changed: list.draft.changed.filter((field) =>
-                  listFieldNames.includes(field),
+            list.draft.action === "created"
+              ? addedClass(list.visibility)
+              : configFields(
+                  {
+                    ...list.draft,
+                    changed: list.draft.changed.filter((field) =>
+                      listFieldNames.includes(field),
+                    ),
+                  },
+                  list,
                 ),
-              },
-              list,
-            ),
             { lists: [list.id] },
             list.heldBy,
           ),
@@ -317,7 +319,7 @@ function columnEntries(
 ): Entry[] {
   // A web link column has no list, and a list not sent to the reader goes unnamed.
   const listName = (id: unknown) =>
-    id === null ? null : (lists.find((list) => list.id === id)?.name ?? null);
+    lists.find((list) => list.id === id)?.name ?? null;
   return [
     ...data.fields.flatMap((field) =>
       field.draft
@@ -326,19 +328,21 @@ function columnEntries(
               `column ${field.id}`,
               field.draft,
               columnSubject(field.name),
-              // Lists are named, not identified, on both sides of a change.
-              configFields(
-                {
-                  ...field.draft,
-                  live: {
-                    ...field.draft.live,
-                    ...(field.draft.live.listId === undefined
-                      ? {}
-                      : { listId: listName(field.draft.live.listId) }),
-                  },
-                },
-                { ...field, listId: listName(field.listId) },
-              ),
+              field.draft.action === "created"
+                ? addedClass(field.visibility)
+                : // Lists are named, not identified, on both sides of a change.
+                  configFields(
+                    {
+                      ...field.draft,
+                      live: {
+                        ...field.draft.live,
+                        ...(field.draft.live.listId === undefined
+                          ? {}
+                          : { listId: listName(field.draft.live.listId) }),
+                      },
+                    },
+                    { ...field, listId: listName(field.listId) },
+                  ),
               { columns: [field.id] },
               field.heldBy,
             ),

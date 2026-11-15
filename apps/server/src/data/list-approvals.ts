@@ -11,8 +11,10 @@
 import { lists as listTable, listItems } from "@fathom/db";
 import type { DraftsRequest } from "@fathom/shared";
 import { eq } from "drizzle-orm";
+import { type Actor, storedTier } from "../access.ts";
 import { ConflictError, NotFoundError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
+import { recordAddedClass } from "./data-classes.ts";
 import {
   deleteDrafts,
   drafted,
@@ -28,6 +30,7 @@ import {
   choicesOrderUses,
   heldOrder,
   listChanges,
+  listMoved,
   listOfChoice,
   type ListsState,
   liveOrder,
@@ -151,6 +154,7 @@ const asChoice = (id: string, choice: Record<string, unknown>) => ({
 // then orders, then removals, so each finds what it needs in place.
 export async function approveListDrafts(
   transaction: Transaction,
+  actor: Actor,
   asked: ListSelection,
 ): Promise<Change[]> {
   const state = await readState(transaction);
@@ -170,7 +174,14 @@ export async function approveListDrafts(
     if (list === undefined) {
       removedLists.push(id);
     } else if (live === undefined) {
-      await transaction.insert(listTable).values(asList(id, list));
+      const added = asList(id, list);
+      await transaction.insert(listTable).values(added);
+      await recordAddedClass(
+        transaction,
+        actor,
+        listMoved(added.name),
+        storedTier(added.visibility),
+      );
       made.push(...listChanges(id, "created", undefined, list));
     } else {
       if (list.retired === true && live.retired !== true) {

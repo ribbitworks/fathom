@@ -119,7 +119,7 @@ To remove the column instead, select **Remove column** in that dialog.
 
 You're done when the column shows your change, with a hollow dot until you publish it.
 
-If your role can set classes, the same menu also has **Change class…**, for an approved column that doesn't use a list. A column that uses a list always takes its list's class. A change of class takes effect straight away, with no draft. See [Data classes](data-classes.md).
+If your role can set classes, the same menu also has **Change class…**, for a column that doesn't use a list. A column that uses a list always takes its list's class. On an approved column, a change of class takes effect straight away, with no draft. On a new column that isn't approved yet, it changes the column's draft, and you can undo it. See [Data classes](data-classes.md).
 
 ### Write a Note
 

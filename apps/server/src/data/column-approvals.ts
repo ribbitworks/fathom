@@ -8,17 +8,24 @@
 import { fields, lists } from "@fathom/db";
 import type { DraftsRequest } from "@fathom/shared";
 import { eq } from "drizzle-orm";
-import { type Actor, mostSensitive, seesSensitivity } from "../access.ts";
+import {
+  type Actor,
+  mostSensitive,
+  seesSensitivity,
+  storedTier,
+} from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
 import {
   refuseSensitiveOnFeatures,
+  columnMoved,
   columnRow,
   columnTier,
   draftedField,
   readColumnsState,
 } from "./column-drafts.ts";
 import { appendColumn } from "./column-order.ts";
+import { recordAddedClass } from "./data-classes.ts";
 import {
   deleteDrafts,
   type Draft,
@@ -117,6 +124,14 @@ export async function approveColumnDrafts(
       await transaction.insert(fields).values(after);
       // Only People's columns have an order kept yet.
       if (after.tableName === "people") await appendColumn(transaction, id);
+      if (after.visibility !== null) {
+        await recordAddedClass(
+          transaction,
+          actor,
+          columnMoved(after.name),
+          storedTier(after.visibility),
+        );
+      }
       made.push(...fieldChanges(id, "created", undefined, after));
     } else {
       const { name, listId, visibility, multiple, required, onPlannedHires } =

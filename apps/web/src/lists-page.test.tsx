@@ -22,6 +22,7 @@ import {
   renderApp,
   serverAnswers,
   signedIn,
+  undoWithKeys,
 } from "./test-support.tsx";
 
 const viewer = () =>
@@ -184,14 +185,6 @@ function undone(fetch: ReturnType<typeof serverAnswers>): string[] {
 // shortcut.
 function startsWith(text: string) {
   return (name: string) => name.startsWith(text);
-}
-
-// Undoes the latest change with Cmd+Z, once it has finished saving and become undoable.
-async function undoWithKeys() {
-  await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 20));
-  });
-  await userEvent.keyboard("{Meta>}z{/Meta}");
 }
 
 async function undoLast() {
@@ -913,7 +906,7 @@ describe("adding choices", () => {
     await waitFor(() => {
       expect(document.activeElement).toBe(entryName());
     });
-    await undoWithKeys();
+    await undoWithKeys(fetch);
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
@@ -1102,7 +1095,7 @@ describe("editing choices", () => {
     await waitFor(() => {
       expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2")).toHaveLength(1);
     });
-    await undoWithKeys();
+    await undoWithKeys(fetch);
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
@@ -1210,7 +1203,7 @@ describe("ordering choices", () => {
         bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/position"),
       ).toHaveLength(1);
     });
-    await undoWithKeys();
+    await undoWithKeys(fetch);
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
@@ -1460,7 +1453,7 @@ describe("removing choices", () => {
     await waitFor(() => {
       expect(document.activeElement).toBe(row("c2"));
     });
-    await undoWithKeys();
+    await undoWithKeys(fetch);
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
@@ -1478,7 +1471,7 @@ describe("removing choices", () => {
     await userEvent.click(
       await screen.findByRole("menuitem", { name: /^Remove/ }),
     );
-    await undoWithKeys();
+    await undoWithKeys(fetch);
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
@@ -1507,13 +1500,13 @@ describe("removing choices", () => {
   });
 
   it("says when the undo cannot be done", async () => {
-    await openPanel({
+    const { fetch } = await openPanel({
       "DELETE /api/lists/l1/choices/c3": savedAs(),
       [`POST /api/undo/${s1}`]: refused(500),
     });
     focusRow("c3");
     await userEvent.keyboard("{Delete}");
-    await undoWithKeys();
+    await undoWithKeys(fetch);
     expect(
       await screen.findByText(
         "Fathom could not undo the change. Try again in a moment.",
@@ -1592,7 +1585,7 @@ describe("creating and editing lists", () => {
         "Product areas",
       ),
     ).toBeDefined();
-    await undoWithKeys();
+    await undoWithKeys(fetch);
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
@@ -1683,7 +1676,7 @@ describe("creating and editing lists", () => {
     await waitFor(() => {
       expect(bodyOf(fetch, "PUT", "/api/lists/l2")).toHaveLength(1);
     });
-    await undoWithKeys();
+    await undoWithKeys(fetch);
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
@@ -1774,7 +1767,7 @@ describe("creating and editing lists", () => {
         screen.getByRole("heading", { name: "Regions", level: 2 }),
       );
     });
-    await undoWithKeys();
+    await undoWithKeys(fetch);
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
@@ -1842,7 +1835,7 @@ describe("creating and editing lists", () => {
     await waitFor(() => {
       expect(bodyOf(fetch, "PUT", "/api/lists/l2/retired")).toHaveLength(1);
     });
-    await undoWithKeys();
+    await userEvent.keyboard("{Meta>}z{/Meta}");
     expect(screen.queryByText("Retired Skills.")).toBeNull();
     expect(undone(fetch)).toEqual([]);
   });
@@ -3710,7 +3703,8 @@ describe("built-in lists and lists with meanings", () => {
     });
   });
 
-  it("gives a list only drafted to be added its class in its dialog, not from its panel", async () => {
+  it("changes the class of a list only drafted to be added in its draft, from its dialog or its panel", async () => {
+    // Given
     const added = {
       ...empty,
       draft: {
@@ -3722,29 +3716,94 @@ describe("built-in lists and lists with meanings", () => {
         madeAt: "2026-11-01T10:00:00.000Z",
       },
     };
+    let visibility = "general";
     const fetch = serverAnswers({
       "GET /api/session": classifier,
-      "GET /api/lists": () => Response.json({ lists: [added] }),
-      "PUT /api/lists/l3": () =>
-        Response.json({
-          list: { ...added, visibility: "personal" },
+      "GET /api/lists": () =>
+        Response.json({ lists: [{ ...added, visibility }] }),
+      "PUT /api/lists/l3": () => {
+        visibility = "personal";
+        return Response.json({
+          list: { ...added, visibility },
           changeSetId: s1,
-        }),
+        });
+      },
+      "PUT /api/lists/l3/class": () => {
+        visibility = "general";
+        return Response.json({ changeSetId: s1 });
+      },
+      [`POST /api/undo/${s1}`]: savedAs(u1),
     });
     renderApp("/lists/l3");
     await screen.findByRole("heading", { name: "Empty List", level: 2 });
-    expect(screen.queryByRole("button", { name: "Change class…" })).toBe(null);
     await userEvent.click(screen.getByRole("button", { name: "Edit list" }));
-    const dialog = await screen.findByRole("dialog", { name: "Edit list" });
+    const edit = await screen.findByRole("dialog", { name: "Edit list" });
     await userEvent.click(
-      within(dialog).getByRole("radio", { name: /^Personal/ }),
+      within(edit).getByRole("radio", { name: /^Personal/ }),
     );
-    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await userEvent.click(within(edit).getByRole("button", { name: "Save" }));
     await waitFor(() => {
       expect(bodyOf(fetch, "PUT", "/api/lists/l3")).toEqual([
         { name: "Empty List", description: "", visibility: "personal" },
       ]);
     });
+    // When
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Change class…" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Change the class of Empty List",
+    });
+    await userEvent.click(
+      within(dialog).getByRole("radio", { name: /^General/ }),
+    );
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Change" }),
+    );
+    // Then
+    await waitFor(() => {
+      expect(bodyOf(fetch, "PUT", "/api/lists/l3/class")).toEqual([
+        { dataClass: "general" },
+      ]);
+    });
+    await undoWithKeys(fetch);
+    await waitFor(() => {
+      expect(undone(fetch)).toEqual([s1]);
+    });
+  });
+
+  it("offers no change of class on a list only drafted to be added to a role that doesn't change lists", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: [
+            "configuration:view",
+            "people:view",
+            "personal:view",
+            "data:classify",
+          ],
+        }),
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...empty,
+              draft: {
+                action: "created",
+                changed: [],
+                live: {},
+                state: "waiting",
+                madeBy: "Fictional Editor",
+                madeAt: "2026-11-01T10:00:00.000Z",
+              },
+            },
+          ],
+        }),
+    });
+    renderApp("/lists/l3");
+    await screen.findByRole("heading", { name: "Empty List", level: 2 });
+    expect(screen.queryByRole("button", { name: "Change class…" })).toBe(null);
   });
 
   it("makes a General list for a role without Classify data, offering no class", async () => {

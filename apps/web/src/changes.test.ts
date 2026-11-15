@@ -2,7 +2,8 @@
 
 // Tests for how the change history words a new order of a list's choices, one choice moved, drafted
 // or approved, how it names the plan's records, such as release streams and proposals, and their
-// fields, how it words a release's colour, and the words for a feature team's changes.
+// fields, how it words a release's colour, the words for a feature team's changes, and the class of
+// a list or column added.
 
 import type { ChangedRecord } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
@@ -341,5 +342,41 @@ describe("a feature team's changes in the change history", () => {
       undefined,
       undefined,
     ]);
+  });
+});
+
+describe("a list or column added", () => {
+  const added = (
+    kind: ChangedRecord["kind"],
+    visibility: string | null,
+  ): ChangedRecord => ({
+    kind,
+    action: "created",
+    name: "Lockers",
+    list: null,
+    draft: true,
+    fields: [
+      { field: "name", oldValue: null, newValue: "Lockers" },
+      { field: "visibility", oldValue: null, newValue: visibility },
+    ],
+  });
+
+  it("names its class beyond General", () => {
+    expect(describeRecord(added("list", "confidential")).details).toEqual([
+      [{ strong: "Class" }, " ", { value: "Confidential" }],
+    ]);
+    expect(
+      describeRecord(added("field", "personal"), "approval").details,
+    ).toEqual([[{ strong: "Class" }, " ", { value: "Personal" }]]);
+  });
+
+  it("names no class for General, for a column taking its list's, or for another record", () => {
+    expect(describeRecord(added("list", "general")).details).toEqual([]);
+    expect(describeRecord(added("field", null)).details).toEqual([]);
+    expect(describeRecord(added("release", "personal")).details).toEqual([]);
+    expect(
+      describeRecord({ ...added("list", "personal"), action: "deleted" })
+        .details,
+    ).toEqual([]);
   });
 });

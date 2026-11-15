@@ -209,7 +209,10 @@ export function DataClassesPage({ access }: { access: ClassAccess }) {
     dataClass: access.dataClasses[field],
     about: `These need it: ${shownIn(field).join(", ")}.`,
     change: {
-      move: (to) => moveFieldClass(field, to),
+      move: async (to) => {
+        await moveFieldClass(field, to);
+        return null;
+      },
       moved: () => {
         void queryClient
           .invalidateQueries({ queryKey: sessionQuery.queryKey })

@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies what only a person can judge of changing the class of data: the Data classes page and its three sections, the dialog that changes a class, the symbol marking a classified column or list, and how a change of class changes what another role sees. Changing a list's class from its panel is in [Lists](lists-manual-test.md) LIST-07.
+Verifies what only a person can judge of changing the class of data: the Data classes page and its three sections, the dialog that changes a class, the symbol marking a classified column or list, how a change of class changes what another role sees, and how changing the class of a column drafted to be added changes its draft. Changing a list's class from its panel is in [Lists](lists-manual-test.md) LIST-07.
 
 ## Test Environment
 
@@ -266,6 +266,57 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `D938` Select the **Data classes** page in the left-hand menu.
   - **Expected:** In the **Columns** section, **Portfolio**'s class is an eye with a line through it, then **Personal**.
+  - **Notes:**
+
+**Afterwards:** Run Reset the Database.
+
+### CLASS-04: Changing the Class of a Column Drafted to Be Added Changes Its Draft
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as the account CLASS-03 ended with.
+
+**Preconditions:** CLASS-03 done, so the database is as Reset the Database leaves it. Signed in with this account. **People** page open from the left-hand menu.
+
+- [ ] `78BA` Select **New column**.
+  - **Expected:** The **New column** dialog opens.
+  - **Notes:**
+
+- [ ] `680B` Type `Portfolio` in **Name**.
+  - **Expected:** **Name** reads `Portfolio`.
+  - **Notes:**
+
+- [ ] `B762` Choose **Web link** in **Type**.
+  - **Expected:**
+    - **Class** is shown
+    - **General** is chosen
+  - **Notes:**
+
+- [ ] `118A` Select **Add column**.
+  - **Expected:**
+    - The dialog closes
+    - A **Portfolio** column is at the right end of the table
+    - A hollow dot is before its name, with no class symbol
+  - **Notes:**
+
+- [ ] `924D` Open the **Portfolio** column menu, and select **Change class…**.
+  - **Expected:**
+    - A dialog titled "Change the class of Portfolio" opens
+    - **General** is chosen
+  - **Notes:**
+
+- [ ] `78AF` Select **Confidential**.
+  - **Expected:** **Confidential** is chosen.
+  - **Notes:**
+
+- [ ] `A21F` Select **Change**.
+  - **Expected:**
+    - The dialog closes
+    - The hollow dot, then a lock with a keyhole, are before **Portfolio** in its heading
+  - **Notes:**
+
+- [ ] `2D81` Select the **Drafts** page in the left-hand menu.
+  - **Expected:**
+    - An entry reads "Engineering Director drafted adding the column Portfolio"
+    - Under it, **Class** reads `Confidential`
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

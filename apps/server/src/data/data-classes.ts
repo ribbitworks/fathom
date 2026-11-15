@@ -102,15 +102,14 @@ export async function moveFieldClass(
   });
 }
 
-// A list or column drafted with a class: a new one starts General, and takes another class only
-// with Classify data, recorded as a move; one already approved keeps its class in drafts, since it
-// is moved on its own.
-export async function classifyDraft(
-  transaction: Transaction,
+// A list or column drafted with a class: a new one starts General, and takes another class in its
+// draft only with Classify data; one already approved keeps its class in drafts, since it is moved
+// on its own.
+export function classifyDraft(
   actor: Actor,
-  draft: { live: boolean; name: string; moved: string; from: Tier; to: Tier },
-): Promise<void> {
-  const { live, name, moved, from, to } = draft;
+  draft: { live: boolean; name: string; from: Tier; to: Tier },
+): void {
+  const { live, name, from, to } = draft;
   if (from === to) return;
   if (live) {
     throw new BadRequestError(
@@ -118,5 +117,17 @@ export async function classifyDraft(
     );
   }
   requireMove(actor, from, to);
-  await recordMove(transaction, actor, moved, from, to);
+}
+
+// A list or column drafted to be added with a class beyond General is recorded as a move once
+// approved, when its class first holds anything, named as it is then.
+export async function recordAddedClass(
+  transaction: Transaction,
+  approver: Actor,
+  moved: string,
+  to: Tier,
+): Promise<void> {
+  if (to !== "general") {
+    await recordMove(transaction, approver, moved, "general", to);
+  }
 }

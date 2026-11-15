@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Changing the class of data, for a role with Classify data: a built-in detail, a list, or a column
-// with a class of its own. Each class the data can't go to is turned off, with why. The change takes
-// effect at once, so the dialog saves it itself, and cannot be closed while it saves. A new list or
-// column is given its class with the same choice.
+// with a class of its own. Each class the data can't go to is turned off, with why. The dialog saves
+// the change itself, and cannot be closed while it saves: at once, or in the draft of a list or
+// column only drafted to be added. A new list or column is given its class with the same choice.
 
 import {
   classNames,
@@ -16,14 +16,15 @@ import { Modal, Radio, Stack } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { DialogActions, useDialogState } from "./dialog-actions.tsx";
+import type { useSaving } from "./saving.ts";
 
 // What is being moved: its name, as the dialog's title gives it, its class now, the request that
-// moves it, and what the page shows once it has moved.
+// moves it, returning the change set saved, if any, and what the page shows once it has moved.
 export interface MoveSubject {
   name: string;
   from: Tier;
-  move: (to: Tier) => Promise<unknown>;
-  moved: (to: Tier) => void;
+  move: (to: Tier) => Promise<string | null>;
+  moved: (to: Tier, changeSetId: string | null) => void;
   // Why the data can't go to a class, for a reason of its own beyond the role's, if any.
   refusal?: ((to: Tier) => string | undefined) | undefined;
 }
@@ -96,9 +97,9 @@ function MoveClassDialog({
     onSettled: () => {
       onBusy(false);
     },
-    onSuccess: (_saved, chosen) => {
+    onSuccess: (changeSetId, chosen) => {
       onDone();
-      moved(chosen);
+      moved(chosen, changeSetId);
     },
   });
   return (
@@ -165,3 +166,24 @@ export function MoveClassModal({
 }
 
 export const useClassMove = () => useDialogState<MoveSubject>();
+
+// Shows a page's data with a list or column in its new class. One only drafted to be added has its
+// class changed in its draft, which can be undone; an approved one's is changed back rather than
+// undone.
+export function showMoved<Data>(
+  {
+    shown,
+    undoable,
+  }: Pick<ReturnType<typeof useSaving<Data>>, "shown" | "undoable">,
+  moved: { draft?: { action: string } | undefined },
+  next: (data: Data) => Data,
+  changeSetId: string | null,
+): void {
+  if (moved.draft?.action === "created") {
+    shown(next, changeSetId, (_saved, before) => {
+      undoable(changeSetId, before);
+    });
+  } else {
+    shown(next);
+  }
+}
