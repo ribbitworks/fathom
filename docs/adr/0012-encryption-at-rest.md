@@ -6,7 +6,7 @@
 
 ## Context
 
-Fathom's database holds Personal and Confidential data. PostgreSQL, as Fathom ships it, doesn't encrypt its data files; that feature exists only in some commercial distributions. Fathom's Compose configuration keeps the database in a Docker volume, which is encrypted only if the disk under it is.
+Fathom's database holds Personal and Confidential data. PostgreSQL, as Fathom ships it, doesn't encrypt its data files. Fathom's Compose configuration keeps the database in a Docker volume, which is encrypted only if the disk under it is.
 
 ## Options
 

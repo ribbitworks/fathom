@@ -21,7 +21,7 @@ What Fathom can't secure for itself. The [Security Plan](../security/security-pl
 - **Use a trusted certificate:** Set `FATHOM_TLS_CERT` and `FATHOM_TLS_KEY` to a certificate whose name matches `FATHOM_PUBLIC_URL`, and renew it before it expires.
 - **Generate the secrets:** Fill `FATHOM_SECRETS_DIR` with random passwords for the database's three accounts and a session secret of at least 32 random characters, one file each. Never reuse the development secrets.
 - **Protect the folder:** The files must be readable by all (mode 644), so keep them in a folder only the account that runs Fathom can open, with the certificate's private key.
-- **Keep master copies elsewhere:** Store each secret in a password manager or secret store, and change it when someone with access to it leaves.
+- **Keep master copies elsewhere:** Store each secret in a password manager or secret store. The database's passwords are set when its data is first created, so changing one later means changing it in PostgreSQL too. Changing the session secret signs everyone out.
 
 ## Backups
 
@@ -31,7 +31,7 @@ What Fathom can't secure for itself. The [Security Plan](../security/security-pl
 
 ## Accounts
 
-- **The first administrator:** Once Fathom is running, create the Fathom Administrator account with `pnpm stack:create-administrator --email <address>`. It prints a password once, which must be changed at first sign-in. Then give the Administrator role to a named person, and stop using that shared account.
+- **The first administrator:** Once Fathom is running, create the Fathom Administrator account with `docker compose --file deploy/compose.yaml run --rm --no-deps app apps/server/src/create-administrator.ts --email <address>`. It prints a password once, which must be changed at first sign-in. Then give the Administrator role to a named person, and stop using that shared account.
 - **Roles:** Give each account only the roles its user needs. Anyone who manages accounts can give themselves any role.
 - **The access history:** Review it for changes marked worth checking, such as accounts created and roles changed.
 - **People who leave:** Deactivate their accounts.
@@ -39,9 +39,10 @@ What Fathom can't secure for itself. The [Security Plan](../security/security-pl
 ## Updates
 
 - **Run the latest release:** Each release's images are scanned before they're published. Update to new releases as they come out, especially for security fixes.
+- **Images built on the machine:** Set `FATHOM_SECURITY_FIXES_DATE` to a newer date to fetch the latest operating system fixes when rebuilding.
 
 ## What Leaves Fathom
 
-- **Exports:** A file exported from Fathom leaves its protection. Fathom records who exported Personal or Confidential data, and which columns.
+- **Exports:** A file exported from Fathom leaves its protection. The browser has an export of Personal or Confidential data recorded, with who exported it and which columns, but a changed browser or a script can skip that.
 - **Logs:** Fathom's logs hold each request's network address. Keep them only as long as needed.
 - **Links:** A page's address holds what was searched for, so it stays in browser history and in any link that is shared.
