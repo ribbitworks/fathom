@@ -1399,7 +1399,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Notes:**
 
 - [ ] `FCD5` Point at the **+1** after 'Offline Sync' under **Clinic Booking**.
-  - **Expected:** A tip reads "Also under P-2001 Crane Control."
+  - **Expected:** A tip reads "Also under P-2001 Crane Control"
   - **Notes:**
 
 - [ ] `8CBA` Select **Group by: Projects**, then **Status** under **Then by**.
@@ -1408,6 +1408,6 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `B5B3` Point at the **+1** after 'Offline Sync' under **Clinic Booking**.
   - **Expected:**
-    - A tip reads "Also under P-2001 Crane Control."
+    - A tip reads "Also under P-2001 Crane Control"
     - The tip names no status.
   - **Notes:**

@@ -1,6 +1,6 @@
 # Fathom: UI Conventions
 
-**Last updated:** 2026-11-14
+**Last updated:** 2026-11-15
 
 A short lookup of the conventions every screen follows, for those who build screens. Each entry gives the rule, the shared piece that draws it, so a new screen reuses it rather than drawing its own, and an example from the [fictional seed data](development-setup.md#fictional-seed-data), or the steps that make one. The principles behind them, and how each page is laid out, are in [Visual Design](visual-design.md).
 
@@ -243,6 +243,9 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **The principles:** Every word on screen follows Visual Design's [Principles](visual-design.md#principles): words people say, never the second person, and no instructional text. The rule against instructions is for text always on screen: a refusal may say what to do next, such as Choose a manager, or leave Manager assigned empty, and a menu or dialog may state, in one short line, a fact needed at that moment, such as Nobody else sees these changes until they're published, but never how to use the control. On top of those, use the plain verb: added, removed, changed, retired, restored, never "comes off" or "taking off". Records and their drafts are removed, never deleted; delete is for what isn't a record, such as a saved view. A naming pattern reads in words, such as named by year and number, like 27.1, never as the pattern typed, such as {YY}.{N}. Decided by the maintainer on 2026-11-11.
   - **Drawn by:** the words themselves, with `draftWords` and `DraftedWords` in `apps/web/src/status-mark.tsx` for drafts.
   - **Example:** Draft: removed.
+- **Tips:** A tip of one phrase has no period, such as Also under Search; a tip of several sentences ends each with one. Decided by the maintainer on 2026-11-15.
+  - **Drawn by:** the words themselves, shown by `TableTips` or `Tipped` in `apps/web/src/table-tips.tsx` on tables.
+  - **Example:** on People, choose Feature teams in Group by, and point at the +1 after Lorenza Thiel's name.
 
 ## Entering Data
 
@@ -317,7 +320,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
   - **Example:** on Features, choose Feature team in Group by, then switch to Board: the rows are feature teams.
 - **A record under several headings:** Grouped by a column holding several values, a record has a row under each of its values, each its own row for focus and the keyboard, and a dimmed +1, or +2 and on, after its name, its tip naming the other headings, such as Also under P-2014 Fleet Telemetry; grouped by two levels, it names each other place by the groups it differs in, both as the first, a colon and the second, such as Also under Priya Raman: Northmere. Closing a record's details puts focus on its cell in the row last used, or else its first. Decided by the owner on 2026-11-14.
   - **Drawn by:** `RecordGrid`, with `AlsoUnder` and `focusRecordCell`, in `apps/web/src/record-grid.tsx`; a grouping's `of` gives a record's groups, and `byChoice` in `apps/web/src/choice-grouping.ts` a group for each choice; the Features Board's cards use the same `AlsoUnder`, and `focusCard` in `apps/web/src/feature-board-view.tsx`.
-  - **Example:** on Features, choose Projects in Group by: a feature two projects need shows under both, each row marked +1.
+  - **Example:** on Features, choose Projects in Group by: a feature two projects need shows under both, each row marked +1. On People, choose Feature teams: Lorenza Thiel shows under Payments core and Search.
 - **Grouping under each heading:** Once rows are grouped, Then by, under its own label after Group by's choices in the same menu, groups them again under each heading, and the menu's button names both, such as Group by: Manager, then Site, so the second level takes no room of its own in the bar. Its headings sit under their first-level heading, set in, smaller and lighter, each counting its own rows, and a second-level group a heading has no rows in isn't shown. A page that draws its rows another way, such as a board, or whose rows are made for their grouping, such as the month grids, offers no Then by. Decided by the owner on 2026-11-14.
   - **Drawn by:** `GroupingMenu` in `apps/web/src/table-controls.tsx`, the view's `thenBy` read by `activeThenBy` in `apps/web/src/table-view.ts`, and the headings by `RecordGrid` in `apps/web/src/record-grid.tsx`, with a table's `oneLevel` for rows made for their grouping.
   - **Example:** on People, choose Manager in Group by, then open the menu again and choose Site under Then by.

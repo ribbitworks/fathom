@@ -10,6 +10,7 @@ The **People** page lists everyone, one row each, with your planned hires beside
 - **Classes:** each list and column has a class, which decides who sees it. **General** is seen by everyone who can open the page. **Personal** is for people's private and HR details, and **Confidential** is for business data not yet announced; only roles allowed to see them do. A symbol before a column's name shows its class: an eye with a line through it for **Personal**, and a lock with a keyhole for **Confidential**. Point at it to see the class's name.
 - **Drafts:** almost every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. It goes live once an approver, such as a Project Manager or the Engineering Director, approves it on the **Drafts** page. A hollow dot marks a change you haven't published yet, and a yellow dot one that's waiting for approval.
 - **Managers:** **Manager?** is ticked for each person others can report to. A manager types their team's name in **Team name**, on their own row. Everyone who reports to them then shows that team in **Team**.
+- **Feature teams:** if your role sees feature teams, **Feature teams** follows **Team** and names the teams each person is on, on the date the page shows. You can't change it here. You change a team's members on the **Org chart**. See [Org chart](org-chart.md).
 
 See [Drafts](drafts.md) for more.
 
@@ -149,9 +150,11 @@ You're done when the counts show under the column you chose.
 People starts as one list. You can put the rows under headings instead, such as one for each manager.
 
 1. Select **Group by**, after **Metrics**.
-1. Choose **Manager**, **Position**, **State**, or a column such as **Site**.
+1. Choose **Manager**, **Feature teams**, **Position**, **State**, or a column such as **Site**.
 
 Grouped by manager, each heading names the manager, then their team's name if the team has one. People with no manager come last, under **No manager**. Each heading says how many people it holds.
+
+Grouped by feature teams, someone on two teams shows under each, with a dimmed **+1** after their name. Point at it to see the other team. People on no team, and planned hires, come last, under **No feature team**.
 
 To group each heading's rows again, such as each manager's people by site, select **Group by** again, and choose a column under **Then by**. The button then names both, such as **Group by: Manager, then Site**. Each manager's heading then has a smaller heading for each site, with that site's people under it. A site with nobody under a manager has no heading there.
 

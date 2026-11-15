@@ -1,7 +1,7 @@
 # Fathom: Implementation Plan
 
 **Status:** Proposal for the maintainer's review
-**Last updated:** 2026-11-14
+**Last updated:** 2026-11-15
 
 A proposed way to build the first stage of the [Roadmap](../product/roadmap.md): groundwork first, then a sequence of thin vertical slices. Each slice goes through every layer (browser, server, database, deployment), follows the roadmap's [Guiding Principles](../product/roadmap.md#guiding-principles), the [Agent Workflow](../standards/shared/agent-workflow.md), and the [Data](../../AGENTS.md#data) rules.
 
@@ -54,7 +54,7 @@ The slices are built in this order, which may change as work progresses; the sli
 | Editable Roles | In progress: schema, the server reading roles from the database, the Roles page, several roles for each account, chosen from every role on the Accounts page, with a default, acting as one at a time and switching from the account menu, each change recording the role it was made as, the Hiring plan permission area, with viewing and editing, approving split by area, the starting roles rewritten for the personas, and viewing accounts, roles, and settings apart from changing them |
 | Exports | In progress: the CSV and TSV file of what a view shows, drafts and Live rows included, from an Export icon in the page's heading on People, Features and each Projects tab, the question asked before exporting Personal or Confidential data, and recording such an export in the access history; next the remaining tables, then the grids and the Org chart |
 | Views on Every Page | In progress: what opens each page in shared code, saved views for every table on the server, the Views menu from one shared hook, hiding columns, and saved views on People, Releases, Features and the Projects tabs; next Group by on People |
-| Group by Several Values | Approved, not started |
+| Group by Several Values | Done |
 | Demand Forecasting | Approved, not started: Capacity's Demand and Work modes |
 | Added Columns and Metrics | Approved, not started |
 
@@ -263,7 +263,7 @@ Grouping by a column holding several values, with a record shown under each of i
 
 1. **The shared table** groups a record under several values, counting it once. Done on 2026-11-14.
 2. **Features' Group by** offers Customers, Projects, Proposals and other columns holding several values, on the table and the Features Board ([issue #594](https://github.com/jlarue26/fathom/issues/594)). Done on 2026-11-15.
-3. **People's Feature teams column,** and grouping People by it.
+3. **People's Feature teams column,** and grouping People by it. Done on 2026-11-15.
 
 Step 1 comes first, and lands before step 4 of Demand Forecasting's Work mode where it can, so the Plan's grouping by project is built on it; steps 2 and 3 follow in either order.
 

@@ -309,7 +309,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `B19C` Point at the "+1" on the card 'Offline Sync' in the row "Clinic Booking".
-  - **Expected:** A tooltip reads "Also under P-2001 Crane Control."
+  - **Expected:** A tooltip reads "Also under P-2001 Crane Control"
   - **Notes:**
 
 - [ ] `D2A6` Select that card, then press Esc.

@@ -1,6 +1,6 @@
 # Fathom: Roadmap
 
-**Last updated:** 2026-11-14
+**Last updated:** 2026-11-15
 
 The order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. Each stage is a [GitHub milestone](https://github.com/jlarue26/fathom/milestones) holding its features, as [Issues](../issues.md) sets out, so this document keeps each stage's goals and why.
 
@@ -29,7 +29,7 @@ Before Fathom's first release: a first set of roles is agreed, and the [Security
 The maintainer approved these designs on 2026-11-14. They are built in this order, with the first two alongside the other three. How each is built is in the [Implementation Plan](../design/implementation-plan.md#slices).
 
 1. **Views on every page:** personal and shared saved views on every page with a table, and on the Org chart, Feature assignments, Capacity's People mode and Drafts. Views also hide columns ([#517](https://github.com/jlarue26/fathom/issues/517)), group People ([#553](https://github.com/jlarue26/fathom/issues/553)), and bring the Lists page onto the shared table ([#317](https://github.com/jlarue26/fathom/issues/317)) and the Org chart's choices into its views ([#351](https://github.com/jlarue26/fathom/issues/351)).
-1. **Group by several values:** a record shown under each of its values, such as a feature under each project that needs it, on Features, the Features Board and People's feature teams ([#594](https://github.com/jlarue26/fathom/issues/594)). Built partway through views on every page: done on Features and the Features Board on 2026-11-15, with People's feature teams to follow.
+1. **Group by several values:** a record shown under each of its values, such as a feature under each project that needs it, on Features, the Features Board and People's feature teams ([#594](https://github.com/jlarue26/fathom/issues/594)). Built partway through views on every page: done on Features and the Features Board, then on People, on 2026-11-15.
 1. **Allocating from the grid:** allocating people and planned hires to features from Capacity's monthly grid, as drafts, with a Warnings filter ([#493](https://github.com/jlarue26/fathom/issues/493)).
 1. **Demand and Capacity's Work mode:** Capacity's Demand mode, comparing features' estimates with capacity in a table and a bar chart ([#496](https://github.com/jlarue26/fathom/issues/496)), and its Work mode, the Plan of staffed work on the shared timeline ([#491](https://github.com/jlarue26/fathom/issues/491)).
 1. **Added columns and Metrics:** Text and Date columns ([#504](https://github.com/jlarue26/fathom/issues/504)), brought forward from [Your Own Fields and Tables](#stage-your-own-fields-and-tables), and Record columns that pick a record of another table, on People and Features; who adds Features' columns ([#240](https://github.com/jlarue26/fathom/issues/240)); values in a column only drafted to be added ([#296](https://github.com/jlarue26/fathom/issues/296)); and totals in Metrics for numbers and effort ([#367](https://github.com/jlarue26/fathom/issues/367), [#295](https://github.com/jlarue26/fathom/issues/295)) and for dates ([#291](https://github.com/jlarue26/fathom/issues/291)).

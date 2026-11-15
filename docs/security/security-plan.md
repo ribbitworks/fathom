@@ -1,6 +1,6 @@
 # Fathom: Security Plan
 
-**Last updated:** 2026-11-14
+**Last updated:** 2026-11-15
 
 How Fathom guards against threats as it ships: its code, its container images and its Compose configuration. The machine, network, certificates, secrets and backups around it come from whoever runs it, as [Securing Your Environment](../operations/securing-your-environment.md) sets out. [How Data Is Safeguarded](../privacy/data-protection.md) covers who sees which data, and the [Security Policy](../../SECURITY.md) how to report a vulnerability.
 
@@ -42,7 +42,7 @@ The threat model groups threats by STRIDE: spoofing, tampering, repudiation, inf
 ### Information Disclosure
 
 - **Before sign-in:** Only the front end's files, sign-in, sign-out, changing a password and the session checks are served without a signed-in account. The front end's script names Fathom's release. Accepted: anyone who reaches it can look up the release's known weaknesses, which are fixed by updating, not hidden.
-- **Data beyond a role:** One shared data access layer checks permissions and classifications for every page, export and search. A page, view or column is shown only to roles that see every classification it needs.
+- **Data beyond a role:** One shared data access layer checks permissions and classifications for every page, export and search. A page, view or column is shown only to roles that see every classification it needs, and a column that needs a permission as well, such as People's Feature teams, which needs View on Feature teams, only to roles that hold it.
 - **Drafts and history:** Drafts, unpublished changes and the change history go through the same checks. Unpublished changes are seen only by their maker.
 - **Exports:** An exported file holds only what the role was sent. The browser asks the server to record an export of Personal or Confidential data before saving it. Accepted: a changed browser or a script can save the data without the record, as it could copy it from the screen.
 - **Logs and errors:** Logs leave out database error messages and known sensitive fields, though a path can name a record's ID. Server errors shown to users are generic.
