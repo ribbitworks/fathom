@@ -182,6 +182,10 @@ function PanelStack({
     moves,
   );
   const items = useRef(new Map<string, HTMLDivElement>());
+  // Shares are kept as weights, scaled so the smallest open is 1: a flex item whose weights add up
+  // to less than 1 takes only that part of the room, so a panel left alone after its neighbour
+  // closed would stop short of the bottom.
+  const smallest = Math.min(...shown.map(height));
   // Where each panel is drawn, by the time an edge beside it is moved.
   const box = (panel: SidePanel) =>
     (items.current.get(panel.key) as HTMLDivElement).getBoundingClientRect();
@@ -243,7 +247,9 @@ function PanelStack({
                 isArriving(panel) && classes.stackItemArriving,
                 gone && classes.stackItemLeaving,
               )}
-              style={{ "--stack-share": height(panel) } as CSSProperties}
+              style={
+                { "--stack-share": height(panel) / smallest } as CSSProperties
+              }
               inert={gone}
               onTransitionEnd={(event) => {
                 if (event.target === event.currentTarget) settled(panel.key);

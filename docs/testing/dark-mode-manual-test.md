@@ -510,7 +510,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The **New feature** panel opens beside the table.
   - **Notes:**
 
-- [ ] `56C3` Select the change button in the **Notes** row.
+- [ ] `56C3` Select the open button in the **Notes** row.
   - **Expected:**
     - A second panel opens, titled "Notes for New feature".
     - Both panels are easy to read.
@@ -573,7 +573,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `EC95` Select the underlined name 'Harbor 2' in the panel.
   - **Expected:**
-    - A panel titled 'Harbor 2' opens above the stream's panel.
+    - A panel titled 'Harbor 2' opens under the stream's panel.
     - The note's headings, bullets, checklist, red text and link are easy to read.
     - Both panels read well.
   - **Notes:**

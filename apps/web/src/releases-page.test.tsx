@@ -2467,10 +2467,15 @@ describe("a release's note", () => {
     ).toBeNull();
   });
 
-  it("opens the note, read only, to those who may not change releases, and closes it, putting focus back on its link", async () => {
+  it("opens the note under the stream's panel, read only, to those who may not change releases, and closes it, putting focus back on its link", async () => {
     await openStream([fictionalStream({ releases: [noted] })]);
     await userEvent.click(noteButton());
     const opened = await notePanel();
+    // Under the stream's panel, as a person's note opens under their details.
+    expect(
+      panel().compareDocumentPosition(opened) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(within(opened).getByText("frozen").tagName).toBe("STRONG");
     expect(within(opened).queryByRole("button", { name: "Save" })).toBeNull();
     await userEvent.click(

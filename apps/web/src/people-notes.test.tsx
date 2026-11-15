@@ -136,7 +136,7 @@ describe("a Note column", () => {
       await screen.findByRole("option", { name: "Fictional Engineer" }),
     );
     await userEvent.click(
-      screen.getByRole("button", { name: "Change Background" }),
+      screen.getByRole("button", { name: "Open Background" }),
     );
     const opened = await screen.findByRole("region", {
       name: "Background for New person",
@@ -165,7 +165,7 @@ describe("a Note column", () => {
     await openPeople();
     await userEvent.click(screen.getByRole("button", { name: "New person" }));
     await userEvent.click(
-      await screen.findByRole("button", { name: "Change Background" }),
+      await screen.findByRole("button", { name: "Open Background" }),
     );
     const opened = await screen.findByRole("region", {
       name: "Background for New person",

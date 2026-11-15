@@ -35,7 +35,7 @@ You're done when the card is in the middle of the chart, with a blue ring.
 ### See Someone's Details
 
 1. Select the person's name on their card. Their details open beside the chart.
-1. To change a value, point at it. A pencil shows if you can change it.
+1. To change a value, point at it. A pencil shows if you can change it. A note shows a button that opens it in its own panel instead, where you can read it, and change it if you can.
 1. Select the value, and make the change.
 
 You're done when the value shows your change, with a hollow dot.

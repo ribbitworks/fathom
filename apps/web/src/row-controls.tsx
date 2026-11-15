@@ -21,6 +21,33 @@ const overCell = (onSelect: () => void) => ({
   },
 });
 
+// The button that opens something in a panel beside, drawn as the panel it opens: a record's details,
+// or a note.
+export function OpenBesideButton({
+  label,
+  onOpen,
+  ...button
+}: {
+  label: string;
+  onOpen: () => void;
+  id?: string;
+  className?: string | undefined;
+  tabIndex?: number;
+}) {
+  return (
+    <ActionIcon
+      variant="subtle"
+      color="gray"
+      size="sm"
+      aria-label={label}
+      {...button}
+      {...overCell(onOpen)}
+    >
+      <Icon name="sidePanel" />
+    </ActionIcon>
+  );
+}
+
 export function RowControls({
   details,
   menu,
@@ -33,16 +60,11 @@ export function RowControls({
   return (
     <span className={classes.rowControls}>
       {details !== undefined && (
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          size="sm"
+        <OpenBesideButton
           tabIndex={-1}
-          aria-label={`Show details of ${details.name}`}
-          {...overCell(details.onShow)}
-        >
-          <Icon name="sidePanel" />
-        </ActionIcon>
+          label={`Show details of ${details.name}`}
+          onOpen={details.onShow}
+        />
       )}
       {menu}
     </span>

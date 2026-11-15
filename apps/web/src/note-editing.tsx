@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A record's note being written, in a panel of its own under the details or the form beside the
-// table. One note is open at a time, for the record shown; once that record is no longer shown the
+// A record's note, in a panel of its own under the details or the form beside the table, read there,
+// and written by those who may. One note is open at a time, for the record shown; once that record is no longer shown the
 // note closes. The page holds this, since it draws both panels.
 
 import { type ReactNode, useState } from "react";
@@ -32,6 +32,7 @@ interface Writing {
   column: EditorProps["column"];
   Editor: (props: EditorProps) => ReactNode;
   value: CellValue;
+  readOnly: boolean;
   finish: (edited: CellValue) => string | undefined;
 }
 
@@ -45,8 +46,11 @@ export function useNoteEditing(detailsTitleId: string) {
 
   // Opens a record's note, unless another being changed is open, which keeps focus instead.
   const start = <Rec extends GridRecord, Change>(
-    context: NoteContext<Rec, Change> & { save: SaveChange<Rec, Change> },
+    context: NoteContext<Rec, Change> & {
+      save: SaveChange<Rec, Change> | undefined;
+    },
     column: Column<Rec, Change>,
+    readOnly = false,
   ) => {
     if (writing !== undefined && changing) {
       focusSoon(`${editorId(writing.column)}-title`);
@@ -59,17 +63,19 @@ export function useNoteEditing(detailsTitleId: string) {
       // A kind written in the side panel has an editor.
       Editor: cellKinds[column.kind].Editor as Writing["Editor"],
       value: context.values[column.key] as CellValue,
+      readOnly: readOnly || context.save === undefined,
       finish: (edited) => {
         const made = checked(context, column, edited);
         if (made !== undefined && "problem" in made) return made.problem;
-        if (made !== undefined) context.save(made.change, column, edited);
+        if (made !== undefined) context.save?.(made.change, column, edited);
         return undefined;
       },
     });
     setRefused(undefined);
-    // A note with something in it opens as it reads, with its editor hidden.
+    // A note with something in it opens as it reads, with its editor hidden, its title then taking
+    // focus; a read-only note's panel is titled by the editor's own ID, as an empty note's editor is.
     focusSoon(
-      context.values[column.key] === ""
+      readOnly || context.values[column.key] === ""
         ? editorId(column)
         : `${editorId(column)}-title`,
     );
@@ -80,7 +86,7 @@ export function useNoteEditing(detailsTitleId: string) {
   // about first, so it stays only when the address moved on its own, as by Back.
   const note = (shown: string | undefined): SidePanel | undefined => {
     if (writing === undefined) return undefined;
-    const { recordId, name, column, Editor, value, finish } = writing;
+    const { recordId, name, column, Editor, value, readOnly, finish } = writing;
     const stillShown = shown === recordId;
     if (!changing && !stillShown) {
       setWriting(undefined);
@@ -107,7 +113,7 @@ export function useNoteEditing(detailsTitleId: string) {
           typed=""
           invalid={refused !== undefined}
           problem={refused}
-          readOnly={false}
+          readOnly={readOnly}
           onChanged={setChanging}
           onDone={(edited) => {
             const problem = finish(edited);

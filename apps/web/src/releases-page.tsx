@@ -1057,7 +1057,6 @@ export function ReleasesPage({
 
   const panels = open
     ? [
-        ...notePanel,
         {
           key: "stream",
           id: panelId,
@@ -1075,6 +1074,7 @@ export function ReleasesPage({
             />
           ),
         },
+        ...notePanel,
       ]
     : [];
   const gridActions = noRecordActions<StreamRow, never, undefined>(

@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings and checkboxes look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, and filtering the rows that have a note, or any value in a choice column.
+Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings and checkboxes look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, or any value in a choice column, and a long note folded in a person's details and read in full on Releases.
 
 ## Test Environment
 
@@ -37,7 +37,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 - **Background cell:** the cell in a person's row under the **Background** column, which NOTE-01 adds at the right end of the People table; scroll right to reach it.
 - **Panel:** the side panel that opens beside the table from a **Background** cell, headed **Background**.
-- **Toolbar:** the row of buttons under the text in the panel's editor, for headings 1 to 3, bold, italic, strikethrough, code, colour, bullet list, checkbox list, link, and removing a link.
+- **Toolbar:** the row of buttons above the text in the panel's editor, for headings 1 to 3, bold, italic, strikethrough, code, colour, bullet list, checkbox list, link, and removing a link.
 
 ## Test Cases
 
@@ -99,8 +99,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - It is headed **Background**.
     - **Note**, **Editor** and **Markdown** are at the top.
     - **Editor** is chosen.
-    - The note's text is under them.
-    - The toolbar is under the text.
+    - The toolbar is under them, then the note's text.
     - **Clear**, **Cancel** and **Save** are at the bottom.
   - **Notes:**
 
@@ -228,7 +227,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `F125` Select **Note** at the top of the panel.
   - **Expected:**
-    - The text starts in the same place in the panel, so nothing jumps.
     - The note reads, from the top:
       - `Joined from the platform team`, with `Joined` in bold and `platform` in teal
       - a bullet `Mentor: Lilian Lang`, with `Lilian Lang` a link
@@ -252,7 +250,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `C74E` Select **Editor**.
   - **Expected:**
-    - The text starts in the same place in the panel, so nothing jumps.
     - The note reads, from the top:
       - `Joined from the platform team`, with `Joined` in bold and `platform` in teal
       - a bullet `Mentor: Lilian Lang`, with `Lilian Lang` a link
@@ -293,7 +290,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `F9CA` Select **Editor**.
   - **Expected:**
     - **Editor** is chosen.
-    - The toolbar is under the text.
+    - The toolbar is above the text.
   - **Notes:**
 
 - [ ] `33E2` Click at the end of `Set goals`.
@@ -578,4 +575,58 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The pill is gone.
     - Every person is listed again.
+  - **Notes:**
+
+### NOTE-07: A Long Note Folds in a Person's Details
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as the account NOTE-06 ended with.
+
+**Preconditions:** Signed in with this account. **People** page open, with `Jarrod Mante` searched for.
+
+- [ ] `5EB4` Select **Show details** in the ⋯ menu of 'Jarrod Mante'.
+  - **Expected:**
+    - The side panel opens.
+    - Under **Columns**, **Onboarding** shows the first lines of the note, starting with the heading **First weeks**.
+    - The last lines shown fade out.
+    - A **Show more** link is under the note.
+  - **Notes:**
+
+- [ ] `51FF` Select **Show more**.
+  - **Expected:**
+    - A panel headed **Onboarding** opens under the details.
+    - **Note** is chosen at its top, and the whole note reads below, ending with the heading **Looking back** and its paragraph.
+  - **Notes:**
+
+- [ ] `AC5C` Select the close button of the **Onboarding** panel.
+  - **Expected:** The **Onboarding** panel closes, and the details fill the height again.
+  - **Notes:**
+
+- [ ] `0362` Point at the **Onboarding** row in the details.
+  - **Expected:** A button showing a box with its right side marked appears at the row's right.
+  - **Notes:**
+
+- [ ] `5AB7` Select that button.
+  - **Expected:** The **Onboarding** panel opens under the details again, on **Note**.
+  - **Notes:**
+
+- [ ] `3BA2` Select the **Releases** page in the left-hand menu.
+  - **Expected:** The **Releases** page opens, with **Platform** in its table.
+  - **Notes:**
+
+- [ ] `7324` Select **Platform** in the table.
+  - **Expected:** The stream's panel lists **Harbor 3** under **Releases**, its name underlined.
+  - **Notes:**
+
+- [ ] `C9C4` Select **Harbor 3**'s underlined name.
+  - **Expected:**
+    - A panel titled **Harbor 3** opens under the stream's panel.
+    - It shows the whole note, starting with the heading **What Harbor 3 is for**.
+  - **Notes:**
+
+- [ ] `0C5E` Select **Editor** at the top of the **Harbor 3** panel.
+  - **Expected:** The toolbar is above the note's text.
+  - **Notes:**
+
+- [ ] `FAB9` Scroll the **Harbor 3** panel to the middle of the note.
+  - **Expected:** The toolbar stays in sight at the top, on a plain background, with no text showing through it.
   - **Notes:**

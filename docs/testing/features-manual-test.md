@@ -726,12 +726,12 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `BCF1` Select the change button in the **Notes** row.
+- [ ] `BCF1` Select the open button in the **Notes** row.
   - **Expected:**
     - A second panel opens under **New feature**, titled "Notes for New feature".
     - **Note**, **Editor** and **Markdown** are at its top.
     - **Editor** is chosen.
-    - A toolbar is under the text.
+    - A toolbar is above the text.
     - `Fictional Atlas` is still in **Name**.
   - **Notes:**
 
@@ -760,7 +760,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
     - **Name** still reads `Fictional Atlas Two`.
   - **Notes:**
 
-- [ ] `3CFC` Select the change button in the **Notes** row.
+- [ ] `3CFC` Select the open button in the **Notes** row.
   - **Expected:**
     - The note's panel opens.
     - It shows the note as it reads.

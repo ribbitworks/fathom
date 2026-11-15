@@ -485,12 +485,11 @@ function NoteEditorPanel({
             )}
           </div>
         )}
-        {/* The toolbar is below the text, so the text starts in the same place in every view. */}
         <div hidden={view !== "editor"}>
           {/* @mantine/tiptap's types load Tiptap's CommonJS declarations of the same editor. */}
           <RichTextEditor editor={editor as never} className={classes.editor}>
-            <RichTextEditor.Content />
-            <RichTextEditor.Toolbar>
+            {/* Stays in sight as a long note scrolls under it. */}
+            <RichTextEditor.Toolbar sticky stickyOffset={0}>
               <RichTextEditor.ControlsGroup>
                 <RichTextEditor.H1 />
                 <RichTextEditor.H2 />
@@ -512,6 +511,7 @@ function NoteEditorPanel({
                 <RichTextEditor.Unlink />
               </RichTextEditor.ControlsGroup>
             </RichTextEditor.Toolbar>
+            <RichTextEditor.Content />
           </RichTextEditor>
         </div>
         {view === "markdown" && (

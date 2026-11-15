@@ -2255,7 +2255,7 @@ describe("the Features page", () => {
       await openNamed(`/features?open=${first.id}`);
       await userEvent.click(
         await within(sidePanel()).findByRole("button", {
-          name: "Change Notes",
+          name: "Open Notes",
         }),
       );
       expect(
@@ -3165,7 +3165,7 @@ describe("the Features page", () => {
     const startWriting = async () => {
       await userEvent.click(await newButton("feature"));
       await userEvent.click(
-        await screen.findByRole("button", { name: "Change Fictional Why" }),
+        await screen.findByRole("button", { name: "Open Fictional Why" }),
       );
       const opened = await screen.findByRole("region", {
         name: "Fictional Why for New feature",
@@ -3225,7 +3225,7 @@ describe("the Features page", () => {
         await within(sidePanel()).findByText("Fictional Why needed"),
       ).toBeTruthy();
       const change = screen.getByRole("button", {
-        name: "Change Fictional Why",
+        name: "Open Fictional Why",
       });
       await waitFor(() => {
         expect(document.activeElement).toBe(change);
@@ -3249,7 +3249,7 @@ describe("the Features page", () => {
         within(opened).getByRole("button", { name: "Save" }),
       );
       await userEvent.click(
-        await screen.findByRole("button", { name: "Change Fictional Why" }),
+        await screen.findByRole("button", { name: "Open Fictional Why" }),
       );
       const again = await screen.findByRole("region", {
         name: "Fictional Why for New feature",
@@ -3287,7 +3287,7 @@ describe("the Features page", () => {
         within(opened).getByRole("button", { name: "Save" }),
       );
       await userEvent.click(
-        await screen.findByRole("button", { name: "Change Fictional Why" }),
+        await screen.findByRole("button", { name: "Open Fictional Why" }),
       );
       const again = await screen.findByRole("region", {
         name: "Fictional Why for New feature",

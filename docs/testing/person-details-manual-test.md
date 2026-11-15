@@ -523,7 +523,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Within a moment, her card shows `Quayside team` as well.
   - **Notes:**
 
-- [ ] `2BA5` Select the change button beside **Onboarding**, under **Columns**.
+- [ ] `2BA5` Select the open button beside **Onboarding**, under **Columns**.
   - **Expected:**
     - A second panel opens under her details, headed "Onboarding for Lorenza Thiel".
     - The second panel has **Clear**, **Cancel** and **Save** buttons.
@@ -575,7 +575,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The details show 'Tanushree Patel-Singh'.
   - **Notes:**
 
-- [ ] `D126` Select the change button beside **Onboarding**.
+- [ ] `D126` Select the open button beside **Onboarding**.
   - **Expected:**
     - Tanushree's note opens under her details, headed "Onboarding for Tanushree Patel-Singh".
     - The note shows her checklist.

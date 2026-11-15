@@ -86,7 +86,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The side panel opens, headed 'Offline Sync'.
   - **Notes:**
 
-- [ ] `12F6` Select the change button beside **Notes**.
+- [ ] `12F6` Select the open button beside **Notes**.
   - **Expected:**
     - A panel titled **Notes for Offline Sync** opens beside the side panel.
     - It shows the note, starting "Field crews asked for this first."

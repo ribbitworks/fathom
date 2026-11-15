@@ -216,7 +216,7 @@ describe("filling a planned hire with a new person", () => {
     renderApp("/people");
     await openForm();
     await userEvent.click(
-      screen.getByRole("button", { name: "Change Background" }),
+      screen.getByRole("button", { name: "Open Background" }),
     );
     const opened = await screen.findByRole("region", {
       name: /^Background for/u,
@@ -265,7 +265,7 @@ describe("filling a planned hire with a new person", () => {
     await type("Name", "Fictional Starter");
     await type("ID", "E9");
     await userEvent.click(
-      screen.getByRole("button", { name: "Change Background" }),
+      screen.getByRole("button", { name: "Open Background" }),
     );
     const opened = await screen.findByRole("region", {
       name: /^Background for/u,
@@ -277,7 +277,7 @@ describe("filling a planned hire with a new person", () => {
     );
     await userEvent.click(within(opened).getByRole("button", { name: "Save" }));
     await userEvent.click(
-      await screen.findByRole("button", { name: "Change Background" }),
+      await screen.findByRole("button", { name: "Open Background" }),
     );
     const again = await screen.findByRole("region", {
       name: /^Background for/u,

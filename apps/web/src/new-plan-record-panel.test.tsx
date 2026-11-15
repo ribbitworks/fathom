@@ -98,6 +98,10 @@ const add = () => userEvent.click(screen.getByRole("button", { name: "Add" }));
 const change = (key: string) =>
   userEvent.click(screen.getByRole("button", { name: `Change ${key}` }));
 
+// A note opens in its own panel, to read and to write.
+const open = (key: string) =>
+  userEvent.click(screen.getByRole("button", { name: `Open ${key}` }));
+
 describe("the rows for each kind of column", () => {
   it("sends a picked choice, offering only those not retired", async () => {
     const onAdd = vi.fn();
@@ -179,7 +183,7 @@ describe("the rows for each kind of column", () => {
     const onAdd = vi.fn();
     renderPanel({ given: table([column("words", "note")]), onAdd });
     expect(screen.queryByRole("textbox")).toBeNull();
-    await change("words");
+    await open("words");
     expect(await screen.findByRole("textbox", { name: "Note" })).toBeTruthy();
     await userEvent.click(
       within(

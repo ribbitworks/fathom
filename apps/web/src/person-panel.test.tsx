@@ -1009,6 +1009,10 @@ describe("changing a person's details", () => {
   const change = (label: string) =>
     screen.getByRole("button", { name: `Change ${label}` });
 
+  // A note opens in its own panel, to read and to change.
+  const open = (label: string) =>
+    screen.getByRole("button", { name: `Open ${label}` });
+
   // Waits for a change to finish saving, once the count of unsaved changes is asked for again.
   const settled = (fetch: ReturnType<typeof serverAnswers>) =>
     waitFor(() => {
@@ -1412,13 +1416,35 @@ describe("changing a person's details", () => {
     const sashasNote = "Background for Sasha Fictional";
     const plans = { ...background, id: "f9", name: "Plans" };
 
+    it("opens it to be read by a role that can't change it, with focus on its title and back on its button", async () => {
+      // Given Sasha's details, seen by a role that may not change people
+      editAnswers({ "GET /api/session": viewer });
+      renderApp("/people?open=E2");
+      await panel("Sasha Fictional");
+      // When her note is opened
+      await userEvent.click(open("Background"));
+      // Then it reads, with nothing to save, and focus on its title
+      expect(await panel(sashasNote)).toBeDefined();
+      expect(screen.queryByRole("button", { name: "Save" })).toBeNull();
+      await waitFor(() => {
+        expect(document.activeElement).toBe(
+          screen.getByRole("heading", { name: sashasNote }),
+        );
+      });
+      // And closing it puts focus back on its button
+      await userEvent.click(screen.getByRole("button", { name: "Close note" }));
+      await waitFor(() => {
+        expect(document.activeElement).toBe(open("Background"));
+      });
+    });
+
     it("opens it in a panel under the details, which stay", async () => {
       // Given Sasha's details
       editAnswers();
       renderApp("/people?open=E2");
       await panel("Sasha Fictional");
       // When her note is opened
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       // Then it opens under her details, named for her, with focus on its title, as it opens to be read
       expect(await panel(sashasNote)).toBeDefined();
       expect(
@@ -1436,7 +1462,7 @@ describe("changing a person's details", () => {
       const fetch = editAnswers({ "PATCH /api/people/2": savedAs });
       renderApp("/people?open=E2");
       await panel("Sasha Fictional");
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       await panel(sashasNote);
       // When it is cleared and saved
       await userEvent.click(screen.getByRole("radio", { name: "Editor" }));
@@ -1450,7 +1476,7 @@ describe("changing a person's details", () => {
         expect(screen.queryByRole("region", { name: sashasNote })).toBeNull();
       });
       await waitFor(() => {
-        expect(document.activeElement).toBe(change("Background"));
+        expect(document.activeElement).toBe(open("Background"));
       });
     });
 
@@ -1458,7 +1484,7 @@ describe("changing a person's details", () => {
       editAnswers();
       renderApp("/people?open=E1");
       await panel("Robin Fictional");
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       await waitFor(() => {
         expect(document.activeElement).toBe(
           screen.getByRole("textbox", { name: "Note" }),
@@ -1471,7 +1497,7 @@ describe("changing a person's details", () => {
       editAnswers();
       renderApp("/people?open=E2");
       await panel("Sasha Fictional");
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       await panel(sashasNote);
       // When Robin's details are asked for from the table
       await userEvent.click(
@@ -1487,7 +1513,7 @@ describe("changing a person's details", () => {
       const fetch = editAnswers({ "PATCH /api/people/2": savedAs });
       renderApp("/people?open=E2");
       await panel("Sasha Fictional");
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       await panel(sashasNote);
       await userEvent.click(screen.getByRole("radio", { name: "Markdown" }));
       await userEvent.type(
@@ -1539,7 +1565,7 @@ describe("changing a person's details", () => {
       editAnswers();
       const history = renderApp("/people?open=E1");
       await panel("Robin Fictional");
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       await panel("Background for Robin Fictional");
       // When the address names an ID nobody has
       act(() => {
@@ -1559,7 +1585,7 @@ describe("changing a person's details", () => {
       const fetch = editAnswers();
       renderApp("/people?open=E1");
       await panel("Robin Fictional");
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       await panel("Background for Robin Fictional");
       // When it is saved as it is
       await userEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -1579,7 +1605,7 @@ describe("changing a person's details", () => {
       renaming();
       const history = renderApp("/people?open=E1");
       await panel("Robin Fictional");
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       await panel("Background for Robin Fictional");
       // When Robin's ID is changed in the details
       await typeInto("ID", "E7{Enter}");
@@ -1604,7 +1630,7 @@ describe("changing a person's details", () => {
       });
       renderApp("/people?open=E2");
       await panel("Sasha Fictional");
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       await userEvent.click(
         await screen.findByRole("radio", { name: "Editor" }),
       );
@@ -1634,10 +1660,10 @@ describe("changing a person's details", () => {
       twoNotes();
       renderApp("/people?open=E2");
       await panel("Sasha Fictional");
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       await panel(sashasNote);
       // When another of her notes is opened
-      await userEvent.click(change("Plans"));
+      await userEvent.click(open("Plans"));
       // Then it takes the first's place
       expect(await panel("Plans for Sasha Fictional")).toBeDefined();
       expect(screen.queryByRole("region", { name: sashasNote })).toBeNull();
@@ -1648,12 +1674,12 @@ describe("changing a person's details", () => {
       twoNotes();
       renderApp("/people?open=E2");
       await panel("Sasha Fictional");
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       await panel(sashasNote);
       await userEvent.click(screen.getByRole("radio", { name: "Editor" }));
       await userEvent.click(screen.getByRole("button", { name: "Clear" }));
       // When another of her notes is asked for
-      await userEvent.click(change("Plans"));
+      await userEvent.click(open("Plans"));
       // Then focus goes back to the note being changed, which stays, and the other does not open
       await waitFor(() => {
         expect(document.activeElement).toBe(
@@ -1678,7 +1704,7 @@ describe("changing a person's details", () => {
       renderApp("/people?open=E2");
       await panel("Sasha Fictional");
       // When it is cleared and saved
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       await userEvent.click(
         await screen.findByRole("radio", { name: "Editor" }),
       );
@@ -1697,7 +1723,7 @@ describe("changing a person's details", () => {
       await panel("Sasha Fictional");
       await typeInto("Reporting team name", "Harbour team{Enter}");
       await settled(fetch);
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       await panel(sashasNote);
       await userEvent.click(screen.getByRole("radio", { name: "Editor" }));
       const editor = screen.getByRole("textbox", { name: "Note" });
@@ -1719,7 +1745,7 @@ describe("changing a person's details", () => {
       editAnswers();
       const history = renderApp("/people?open=E2");
       await panel("Sasha Fictional");
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       await panel(sashasNote);
       await userEvent.click(screen.getByRole("radio", { name: "Markdown" }));
       await userEvent.type(
@@ -1748,7 +1774,7 @@ describe("changing a person's details", () => {
       editAnswers();
       renderApp("/org-chart?open=E2");
       await panel("Sasha Fictional");
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       await panel(sashasNote);
       await userEvent.click(screen.getByRole("radio", { name: "Markdown" }));
       await userEvent.type(
@@ -1777,7 +1803,7 @@ describe("changing a person's details", () => {
       editAnswers();
       renderApp("/org-chart?open=E2");
       await panel("Sasha Fictional");
-      await userEvent.click(change("Background"));
+      await userEvent.click(open("Background"));
       expect(await panel(sashasNote)).toBeDefined();
       expect(
         screen.getByRole("region", { name: "Sasha Fictional" }),

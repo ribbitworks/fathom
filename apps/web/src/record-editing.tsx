@@ -248,11 +248,13 @@ export interface RecordEditingContext<Rec extends GridRecord, Change> {
   onUnit?: (column: Column<Rec, Change>, unit: string) => void;
 }
 
-// Opens a note, for tables that have them, which is written in a panel of its own.
+// Opens a note, for tables that have them, in a panel of its own, where it is read, and written by
+// those who may.
 export interface NoteStarter<Rec extends GridRecord, Change, Context> {
   start: (
-    context: Context & { save: SaveChange<Rec, Change> },
+    context: Context & { save: SaveChange<Rec, Change> | undefined },
     column: Column<Rec, Change>,
+    readOnly: boolean,
   ) => void;
 }
 
@@ -369,10 +371,26 @@ export function useRecordEditing<
     (context: Context) =>
     (column: Column<Rec, Change>): Editing | undefined => {
       const { id, save } = context;
-      if (save === undefined || readOnlyFor(column, context.kind)) {
-        return undefined;
-      }
       const kind = cellKinds[column.kind];
+      const readOnly = save === undefined || readOnlyFor(column, context.kind);
+      // A note opens in its own panel to be read, by everyone who sees it, and there changed by those
+      // who may.
+      if (kind.inPanel === true) {
+        if (notes === undefined) return undefined;
+        return {
+          open: false,
+          editor: undefined,
+          onStart: () => {
+            setProblem(id, column.key);
+            notes.start({ ...context, save }, column, readOnly);
+          },
+          problem: readOnly
+            ? undefined
+            : problems.find((one) => one.id === id && one.key === column.key)
+                ?.message,
+        };
+      }
+      if (readOnly) return undefined;
       const value = context.values[column.key] as CellValue;
       const wrong = problems.find(
         (one) => one.id === id && one.key === column.key,
@@ -395,18 +413,6 @@ export function useRecordEditing<
               <Text id={wordsId(column)}>{kind.inWords(column, value)}</Text>
             </Group>
           ),
-          problem: wrong,
-        };
-      }
-      if (kind.inPanel === true) {
-        if (notes === undefined) return undefined;
-        return {
-          open: false,
-          editor: undefined,
-          onStart: () => {
-            setProblem(id, column.key);
-            notes.start({ ...context, save }, column);
-          },
           problem: wrong,
         };
       }

@@ -12,6 +12,7 @@ import {
   fictionalOrganization,
   onboarding,
   onboardingSteps,
+  starterHandbook,
 } from "./index.ts";
 
 const version5 =
@@ -157,11 +158,26 @@ describe("a fictional organization", () => {
           noteOf(person)?.split("\n")[0],
         ]).toEqual([0, "## Before day one"]);
       }
-      const progress = started.map((person) => ticked(noteOf(person)));
+      // The handbook the starter furthest along keeps has checkboxes of its own.
+      const progress = started.map((person) =>
+        ticked(noteOf(person)?.split(starterHandbook)[0]),
+      );
       expect(progress).toEqual([...progress].sort((a, b) => a - b));
       expect(progress[0]).toBeGreaterThan(0);
       expect(progress.at(-1)).toBe(onboardingSteps("").length);
       expect(new Set(progress).size).toBeGreaterThan(2);
+    });
+
+    it("give the starter furthest along a handbook a few pages long, as notes allow", () => {
+      const withHandbook = noted.filter((person) =>
+        noteOf(person)?.includes(starterHandbook),
+      );
+      expect(withHandbook).toEqual([started.at(-1)]);
+      const length = withHandbook.map(
+        (person) => String(noteOf(person)).length,
+      );
+      expect(length[0]).toBeGreaterThan(5000);
+      expect(length[0]).toBeLessThan(10_000);
     });
 
     it("name a buddy already working, who started before every starter with a note", () => {

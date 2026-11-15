@@ -10,7 +10,8 @@ import type { MouseEvent, ReactNode } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { Icon } from "./icons.tsx";
 import { LinkCell } from "./link-field.tsx";
-import { NoteView } from "./note-editor.tsx";
+import { FoldedNote } from "./folded-note.tsx";
+import { OpenBesideButton } from "./row-controls.tsx";
 import {
   changeId,
   type Editing,
@@ -59,10 +60,13 @@ function Value({
   column,
   value,
   drafted = false,
+  onOpenNote,
 }: {
   column: DetailColumn;
   value: unknown;
   drafted?: boolean;
+  // Opens a note in its own panel, for Show more under a folded note.
+  onOpenNote?: (() => void) | undefined;
 }) {
   const kind = cellKinds[column.kind];
   const none = drafted ? (
@@ -73,7 +77,15 @@ function Value({
     <Text c="dimmed">{column.emptyLabel ?? "None"}</Text>
   );
   if (column.kind === "note") {
-    return value === "" ? none : <NoteView note={value as string} />;
+    return value === "" ? (
+      none
+    ) : (
+      <FoldedNote
+        name={column.label}
+        note={value as string}
+        onOpen={onOpenNote}
+      />
+    );
   }
   if (column.kind === "link") {
     return value === null ? (
@@ -280,19 +292,29 @@ export function Row({
                         column={column}
                         value={value}
                         drafted={draft !== undefined}
+                        onOpenNote={start}
                       />
                     ))}
               </DraftedItem>
             </MarkRow>
             {(start !== undefined || Boolean(action)) && (
               <Group gap={4} wrap="nowrap">
-                {start !== undefined && (
-                  <ActionIcon
-                    id={changeId(column)}
-                    {...changeButton(column.label)}
-                    onClick={start}
-                  />
-                )}
+                {start !== undefined &&
+                  (cellKinds[column.kind].inPanel === true ? (
+                    // A value opened in its own panel, such as a note, is read there first.
+                    <OpenBesideButton
+                      id={changeId(column)}
+                      className={classes.change}
+                      label={`Open ${column.label}`}
+                      onOpen={start}
+                    />
+                  ) : (
+                    <ActionIcon
+                      id={changeId(column)}
+                      {...changeButton(column.label)}
+                      onClick={start}
+                    />
+                  ))}
                 {action}
               </Group>
             )}

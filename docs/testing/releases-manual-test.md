@@ -1094,7 +1094,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `81AA` Select **Harbor 2**'s underlined name.
   - **Expected:**
-    - A panel titled **Harbor 2** opens above the stream's panel.
+    - A panel titled **Harbor 2** opens under the stream's panel.
     - It shows the note as it reads:
       - two headings
       - a bullet list with **every** in bold

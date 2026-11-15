@@ -1,0 +1,17 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* A folded note's last lines fade out, by a mask on the text, so the row behind it shows through
+   whatever its colour. Its hidden part is clipped rather than scrolled, so focus moving to a link
+   beyond the fold never scrolls the note out of place. */
+
+.content {
+  overflow: clip;
+}
+
+.root[data-has-spoiler]:not([data-open]) .content {
+  mask-image: linear-gradient(
+    to bottom,
+    black calc(100% - var(--fathom-note-fade)),
+    transparent
+  );
+}

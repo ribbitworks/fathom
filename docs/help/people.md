@@ -132,6 +132,8 @@ A **Note** column holds a short note for each person, with formatting such as bo
 
 You're done when the cell shows the start of your note.
 
+In a person's details, a long note shows only its first lines. Select **Show more** under it to read it all in its own panel. You can also open a note from the button at the right of its row, which shows when you point at the row.
+
 ### Count People
 
 1. Select **Metrics**.

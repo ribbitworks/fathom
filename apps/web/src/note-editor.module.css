@@ -1,13 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-/* Styles for a note: as it reads, and in the panel's three views, which start their text in the same
-   place and are at least the same height, so switching between them moves little. */
-
-/* The toolbar sits under the text, where its square lower corners would cover the box's rounded
-   ones. Mantine clips only a sticky toolbar. */
-.editor {
-  overflow: clip;
-}
+/* Styles for a note: as it reads, and in the panel's three views, which are at least the same height,
+   so switching between them moves little. */
 
 .editor :global(.ProseMirror) {
   min-height: 15rem;

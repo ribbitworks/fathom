@@ -184,7 +184,26 @@ describe("stacked panels", () => {
     expect(edge().getAttribute("aria-valuenow")).toBe(
       String(50 + stackShares.step),
     );
-    expect(Number(grows("Above")) + Number(grows("Below"))).toBeCloseTo(2);
+    expect(Number(grows("Above")) / Number(grows("Below"))).toBeCloseTo(
+      (50 + stackShares.step) / (50 - stackShares.step),
+    );
+  });
+
+  it("leave a panel alone, after the edge was moved and its neighbour closed, the whole height", async () => {
+    // Given the edge moved, so the panel below keeps less than half
+    localStorage.clear();
+    const { rerender } = stacked();
+    act(() => {
+      edge().focus();
+    });
+    await userEvent.keyboard("{ArrowDown}{ArrowDown}");
+    // When the panel above closes and is gone
+    rerender(layout([one("Below", "below")]));
+    fireEvent.transitionEnd(
+      screen.getByText("Above").parentElement as HTMLElement,
+    );
+    // Then the one left fills the column
+    expect(Number(grows("Below"))).toBe(1);
   });
 
   it("share the height by dragging the edge, leaving each its least", () => {

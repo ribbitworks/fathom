@@ -142,6 +142,8 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-today": "var(--mantine-color-red-6)",
     // A page's heading, as tall as a button beside it, so every page's heading is one height.
     "--fathom-heading-height": "calc(2.25rem * var(--mantine-scale))",
+    // The last lines of a long note folded in a panel fade out over this height.
+    "--fathom-note-fade": "3rem",
     // A side panel's name, at its top, and the line it and its marks stand on.
     "--fathom-panel-name-size": "18px",
     "--fathom-panel-name-line": "28px",
