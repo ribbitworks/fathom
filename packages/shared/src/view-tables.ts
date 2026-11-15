@@ -41,6 +41,17 @@ export const cardPartSchema = z.enum([
 
 export type CardPart = z.infer<typeof cardPartSchema>;
 
+// The Org chart's levels shown, as a view keeps them: a count from the top, or all of them.
+const mostChartLevels = 999;
+export const allChartLevels = "all";
+export const chartLevelsSchema = z.union([
+  z.literal(allChartLevels),
+  z
+    .string()
+    .regex(/^[1-9][0-9]*$/u)
+    .refine((count) => Number(count) <= mostChartLevels, "Too many levels"),
+]);
+
 const noChoices = z.strictObject({});
 
 // Each table's choices, which a request must fit as a whole. A table whose page keeps no choices in
@@ -63,7 +74,12 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
   lists: noChoices,
   "feature-assignments": noChoices,
   capacity: noChoices,
-  "org-chart": noChoices,
+  "org-chart": z.strictObject({
+    teams: z.literal("feature").optional(),
+    levels: chartLevelsSchema.optional(),
+    // By Fathom's own ID, so a shared view names no Employee ID its reader isn't sent.
+    team: z.uuid().optional(),
+  }),
   accounts: noChoices,
 };
 

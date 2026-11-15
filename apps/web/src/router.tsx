@@ -21,6 +21,8 @@ import {
   seesEmployment,
   seesHiringPlan,
   type Permission,
+  allChartLevels,
+  chartLevelsSchema,
   personLengths,
   seesView,
   sharesViews,
@@ -53,6 +55,7 @@ import { ListsPage } from "./lists-page.tsx";
 import { listKindSchema } from "./lists.ts";
 import { FeatureAssignmentsPage } from "./feature-assignments-page.tsx";
 import { OrgChartPage } from "./org-chart-page.tsx";
+import type { ChartSearch } from "./org-chart.ts";
 import { CapacityPage } from "./capacity-page.tsx";
 import {
   capacityModeSchema,
@@ -80,23 +83,48 @@ const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
 const signedIn = getRouteApi("/signed-in");
 const people = getRouteApi("/signed-in/people");
 
-// The org chart's address: the person found on it, and the manager whose team alone is shown, each
-// by Employee ID, or by Fathom's own ID for readers who do not see people, what the Draft menu
-// shows, and the person whose details are shown beside it.
+// The org chart's address: the person found on it, by Employee ID, or by Fathom's own ID for a
+// planned hire; the manager whose team alone is shown, by Fathom's own ID, or by Employee ID in an
+// address made before; what the Draft menu shows; the person whose details are shown beside it;
+// and the saved view the chart's view started from. An address from before feature teams were
+// named `teams` still opens on them.
 const fathomIdLength = 36;
 const chartAddressLength = Math.max(personLengths.employeeId, fathomIdLength);
-const chartSearch = z.object({
-  person: z.string().max(chartAddressLength).optional().catch(undefined),
-  team: z.string().max(chartAddressLength).optional().catch(undefined),
-  show: showSchema.optional().catch(undefined),
-  open: z.string().max(personLengths.employeeId).optional().catch(undefined),
-  // Which teams the chart draws: managers' teams, or, when chosen, feature teams.
-  view: z.literal("feature-teams").optional().catch(undefined),
-  // The feature team whose details are shown beside the chart.
-  featureTeam: z.uuid().optional().catch(undefined),
-  // The day the chart is drawn as of, when not today.
-  day: daySchema.optional().catch(undefined),
-});
+const oldFeatureTeams = "feature-teams";
+const chartSearch = z
+  .object({
+    person: z.string().max(chartAddressLength).optional().catch(undefined),
+    team: z.string().max(chartAddressLength).optional().catch(undefined),
+    show: showSchema.optional().catch(undefined),
+    open: z.string().max(personLengths.employeeId).optional().catch(undefined),
+    // Which teams the chart draws: managers' teams, or, when chosen, feature teams.
+    teams: z.literal("feature").optional().catch(undefined),
+    // The levels shown, when not the two the chart opens on.
+    levels: z
+      .union([
+        z.literal(allChartLevels),
+        z
+          .number()
+          .refine(
+            (count) => chartLevelsSchema.safeParse(String(count)).success,
+          ),
+      ])
+      .optional()
+      .catch(undefined),
+    view: z
+      .union([z.uuid(), z.literal(oldFeatureTeams)])
+      .optional()
+      .catch(undefined),
+    // The feature team whose details are shown beside the chart.
+    featureTeam: z.uuid().optional().catch(undefined),
+    // The day the chart is drawn as of, when not today.
+    day: daySchema.optional().catch(undefined),
+  })
+  .transform(({ view, teams, ...search }): ChartSearch => ({
+    ...search,
+    teams: view === oldFeatureTeams ? "feature" : teams,
+    view: view === oldFeatureTeams ? undefined : view,
+  }));
 
 // Pages only for users whose access opens them; anyone else is told there is no such page.
 function opening(page: GuardedPage) {
@@ -660,6 +688,7 @@ const orgChartRoute = createRoute({
         canEdit={permissions.includes("people:edit")}
         changesDates={changesField(access, "managerHistory")}
         featureTeamEdits={featureTeamEdits}
+        canShareViews={sharesViews("org-chart", permissions)}
         search={orgChartRoute.useSearch()}
         onSearch={(search, replace) => {
           void navigate({ search, replace });

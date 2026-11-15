@@ -20,12 +20,14 @@ import { useSaving } from "./saving.ts";
 export function useFeatureTeamActions(
   // Shows the team just added.
   openTeam: (id: string) => void,
+  // While another of the page's dialogs is open, which Cmd+Z leaves alone.
+  blocked: boolean,
 ): FeatureTeamActions {
   const { save: saving, undoable } = useSaving<FeatureTeams>({
     queryKey: featureTeamsQuery.queryKey,
     removed:
       "Someone else has removed this feature team. The teams have been refreshed.",
-    blocked: false,
+    blocked,
   });
   const saveTeam = (save: () => Promise<string | null>, failure: string) => {
     saving({

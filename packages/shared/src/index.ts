@@ -477,8 +477,10 @@ export {
   type ViewChoices,
 } from "./views.ts";
 export {
+  allChartLevels,
   type CardPart,
   cardPartSchema,
+  chartLevelsSchema,
   type PlanMode,
   planModeSchema,
   sharesViews,

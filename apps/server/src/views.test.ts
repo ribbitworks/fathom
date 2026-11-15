@@ -945,6 +945,7 @@ const onTable = (table: ViewTable) => ({
 const features = onTable("features");
 const assignments = onTable("feature-assignments");
 const accounts = onTable("accounts");
+const chart = onTable("org-chart");
 
 const nameOf = (key: string) => String(builtInColumnNames.get(key));
 
@@ -1031,6 +1032,28 @@ describe("views of every table", () => {
         error: "Choose only what this page offers",
       });
     }
+  });
+
+  it("keep the Org chart's teams, levels and team shown alone, refusing a team by Employee ID", async () => {
+    const { cookie } = await test.signedIn("engineering-manager");
+    const choices = {
+      teams: "feature",
+      levels: "all",
+      team: "6a0b1c2d-3e4f-4a5b-8c6d-7e8f9a0b1c2d",
+    };
+    const response = await chart.save(cookie, unique("Chart"), { choices });
+    expect(response.statusCode).toBe(201);
+    const { view } = response.json<Saved>();
+    expect(view.definition).toEqual({ choices });
+    expect(await chart.list(cookie)).toContainEqual(view);
+
+    expect(
+      (
+        await chart.save(cookie, unique("By ID"), {
+          choices: { team: "E-1042" },
+        })
+      ).json(),
+    ).toEqual({ error: "Choose only what this page offers" });
   });
 
   it("keep names unique within each table, allowing one name on two tables", async () => {

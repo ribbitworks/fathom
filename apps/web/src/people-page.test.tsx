@@ -2867,7 +2867,7 @@ describe("searching, sorting, and filtering", () => {
         "Views: Harbour, changed",
       );
       expect(address(history)).toContain(`view=${v1}`);
-      await chooseView("Update Harbour");
+      await chooseView("Update view");
       expect(bodyOf(fetch, "PUT", `/api/views/people/${v1}`)).toEqual([
         {
           definition: {
@@ -3147,7 +3147,7 @@ describe("searching, sorting, and filtering", () => {
       const dialog = await screen.findByRole("dialog", { name: "Save view" });
       await userEvent.click(
         within(dialog).getByRole("checkbox", {
-          name: "Share with everyone who sees this table",
+          name: "Share with everyone who sees this page",
         }),
       );
       await userEvent.type(

@@ -3,8 +3,8 @@
 // Tests for the Org chart page, with the server's responses simulated: who sees it, each person's
 // card and its link to People and back, hiding and showing a manager's reports and levels, finding a
 // person, one team shown alone, the chart's controls, and when the chart cannot load or has nobody on
-// it, what those who see the chart but not People see, and feature teams: drawing them, opening one
-// or a person from its cards, and saving each change to a team from its panel.
+// it, what those who see the chart but not People see, feature teams: drawing them, opening one
+// or a person from its cards, and saving each change to a team from its panel, and saved views.
 
 import type { OrgChartPerson } from "@fathom/shared";
 import {
@@ -18,6 +18,7 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { featureTeamPanelId } from "./feature-team-panel.tsx";
 import {
+  bodyOf,
   detailValue,
   fictionalUser,
   greeting,
@@ -1370,7 +1371,7 @@ describe("the org chart", () => {
         name: "Show only the team of Sasha Fictional",
       }),
     ).toBeNull();
-    expect(history.location.search).toBe("?team=FX-p2");
+    expect(history.location.search).toBe("?team=p2&levels=all");
     await userEvent.type(
       screen.getByRole("combobox", { name: "Find a person or team" }),
       "Robin",
@@ -1560,7 +1561,7 @@ describe("feature teams on the org chart", () => {
   type Answers = Parameters<typeof serverAnswers>[0];
 
   async function openFeatureTeams({
-    path = "/org-chart?view=feature-teams",
+    path = "/org-chart?teams=feature",
     signedInAs = viewer,
     answers = {},
     shown = teams,
@@ -1632,17 +1633,17 @@ describe("feature teams on the org chart", () => {
     await userEvent.click(screen.getByRole("radio", { name: "Feature teams" }));
     const params = () => new URLSearchParams(history.location.search);
     expect([
-      params().get("view"),
+      params().get("teams"),
       params().get("person"),
       params().get("open"),
-    ]).toEqual(["feature-teams", "FX-p4", "FX-p4"]);
+    ]).toEqual(["feature", "FX-p4", "FX-p4"]);
     expect(
       (await screen.findAllByRole("link", { name: "Uma Fictional" })).length,
     ).toBe(2);
     await userEvent.click(
       screen.getByRole("radio", { name: "Reporting teams" }),
     );
-    expect([params().get("view"), params().get("person")]).toEqual([
+    expect([params().get("teams"), params().get("person")]).toEqual([
       null,
       "FX-p4",
     ]);
@@ -1744,7 +1745,7 @@ describe("feature teams on the org chart", () => {
 
   it("opens another team chosen from the Feature teams button while one is open", async () => {
     const { history } = await openFeatureTeams({
-      path: `/org-chart?view=feature-teams&featureTeam=${lighthouse}`,
+      path: `/org-chart?teams=feature&featureTeam=${lighthouse}`,
     });
     await teamPanel();
     const panel = await openTeamPanel("Fictional Quay");
@@ -1788,7 +1789,7 @@ describe("feature teams on the org chart", () => {
 
   it("lists the teams a person leads apart from those they are a member of", async () => {
     await openFeatureTeams({
-      path: "/org-chart?view=feature-teams&open=FX-p4",
+      path: "/org-chart?teams=feature&open=FX-p4",
       shown: [
         featureTeam({
           id: lighthouse,
@@ -1866,7 +1867,7 @@ describe("feature teams on the org chart", () => {
   it("offers no adding of teams with Live only", async () => {
     await openFeatureTeams({
       signedInAs: editor,
-      path: "/org-chart?view=feature-teams&show=live",
+      path: "/org-chart?teams=feature&show=live",
     });
     await userEvent.click(
       await screen.findByRole("button", { name: "Feature teams" }),
@@ -1879,7 +1880,7 @@ describe("feature teams on the org chart", () => {
 
   it("lists with Live only no team a draft only adds", async () => {
     await openFeatureTeams({
-      path: "/org-chart?view=feature-teams&show=live",
+      path: "/org-chart?teams=feature&show=live",
       shown: [
         ...teams,
         featureTeam({
@@ -1907,7 +1908,7 @@ describe("feature teams on the org chart", () => {
 
   it("marks with Live only a member a waiting draft takes off the team", async () => {
     await openFeatureTeams({
-      path: "/org-chart?view=feature-teams&show=live",
+      path: "/org-chart?teams=feature&show=live",
       shown: [
         {
           ...teams[0],
@@ -1977,6 +1978,53 @@ describe("feature teams on the org chart", () => {
       expect(sent(fetch, "POST")).toHaveLength(2);
     });
     expect(sent(fetch, "POST")[1]).toEqual([`/api/undo/${changeSet}`, {}]);
+  });
+
+  it("leaves a team just added alone with Cmd+Z while a view is being named", async () => {
+    // Given a team added, and the Save view dialog open
+    const { fetch } = await openFeatureTeams({
+      signedInAs: editor,
+      answers: {
+        "POST /api/feature-teams": () =>
+          Response.json({ id: beacon, changeSetId: changeSet }),
+        [`POST /api/undo/${changeSet}`]: saved(undone),
+      },
+    });
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Feature teams" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "New feature team" }),
+    );
+    const form = await screen.findByRole("region", {
+      name: "New feature team",
+    });
+    await userEvent.type(
+      within(form).getByRole("textbox", { name: "Name" }),
+      "Fictional Beacon",
+    );
+    await userEvent.click(within(form).getByRole("button", { name: "Add" }));
+    await waitFor(() => {
+      expect(sent(fetch, "POST")).toHaveLength(1);
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Views, changed" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Save view…" }),
+    );
+    await screen.findByRole("dialog", { name: "Save view" });
+
+    // When Cmd+Z is pressed
+    await userEvent.keyboard("{Meta>}z{/Meta}");
+
+    // Then nothing is undone until the dialog closes
+    expect(sent(fetch, "POST")).toHaveLength(1);
+    await userEvent.keyboard("{Escape}");
+    await waitFor(async () => {
+      await userEvent.keyboard("{Meta>}z{/Meta}");
+      expect(sent(fetch, "POST")[1]).toEqual([`/api/undo/${changeSet}`, {}]);
+    });
   });
 
   it("says so when a team cannot be added", async () => {
@@ -2073,7 +2121,7 @@ describe("feature teams on the org chart", () => {
 
     it("draws the chart as of an earlier day, read only, for those who may not change earlier days", async () => {
       const { fetch } = await openFeatureTeams({
-        path: `/org-chart?view=feature-teams&day=${onDay}`,
+        path: `/org-chart?teams=feature&day=${onDay}`,
         signedInAs: seesDetails,
         answers: { ...teamsOnDay, ...chartOnDay },
       });
@@ -2094,7 +2142,7 @@ describe("feature teams on the org chart", () => {
     it("changes feature teams from a later day shown, with drafts", async () => {
       const later = "2099-03-01";
       const { fetch } = await openFeatureTeams({
-        path: `/org-chart?view=feature-teams&day=${later}`,
+        path: `/org-chart?teams=feature&day=${later}`,
         signedInAs: seesDetails,
         answers: {
           [`GET /api/feature-teams?on=${later}`]: () =>
@@ -2140,7 +2188,7 @@ describe("feature teams on the org chart", () => {
 
     it("changes feature teams from an earlier day for those who may change Personal details", async () => {
       await openFeatureTeams({
-        path: `/org-chart?view=feature-teams&day=${onDay}`,
+        path: `/org-chart?teams=feature&day=${onDay}`,
         signedInAs: editor,
         answers: { ...teamsOnDay, ...chartOnDay },
       });
@@ -2155,7 +2203,7 @@ describe("feature teams on the org chart", () => {
 
     it("leaves out the date row, and draws today, for those who do not see Personal details", async () => {
       const { fetch } = await openFeatureTeams({
-        path: `/org-chart?view=feature-teams&day=${onDay}`,
+        path: `/org-chart?teams=feature&day=${onDay}`,
         signedInAs: seesChart,
       });
       await screen.findByRole("link", { name: "Sasha Fictional" });
@@ -2177,7 +2225,7 @@ describe("feature teams on the org chart", () => {
 
     it("ignores a date that does not exist", async () => {
       const { fetch } = await openFeatureTeams({
-        path: "/org-chart?view=feature-teams&day=2025-02-30",
+        path: "/org-chart?teams=feature&day=2025-02-30",
         signedInAs: seesDetails,
       });
       await screen.findByRole("button", { name: "Today" });
@@ -2279,7 +2327,7 @@ describe("feature teams on the org chart", () => {
 
     it("keeps the day when the teams switch changes", async () => {
       const { history } = await openFeatureTeams({
-        path: `/org-chart?view=feature-teams&day=${onDay}`,
+        path: `/org-chart?teams=feature&day=${onDay}`,
         signedInAs: seesDetails,
         answers: { ...teamsOnDay, ...chartOnDay },
       });
@@ -2293,7 +2341,7 @@ describe("feature teams on the org chart", () => {
 
     it("goes back to today", async () => {
       const { history } = await openFeatureTeams({
-        path: `/org-chart?view=feature-teams&day=${onDay}`,
+        path: `/org-chart?teams=feature&day=${onDay}`,
         signedInAs: seesDetails,
         answers: { ...teamsOnDay, ...chartOnDay },
       });
@@ -2405,5 +2453,214 @@ describe("feature teams on the org chart", () => {
     expect(sent(fetch, "PUT")).toEqual([
       [`/api/feature-teams/${lighthouse}/colour`, { colour: "grape" }],
     ]);
+  });
+});
+
+describe("the org chart's saved views", () => {
+  const savedId = "00000000-0000-4000-8000-0000000000c1";
+
+  function openViews(
+    path: string,
+    views: () => Response = () => Response.json([]),
+    created?: () => Response,
+  ) {
+    const fetch = serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/org-chart": chartAnswer,
+      "GET /api/feature-teams": () => Response.json({ teams: [] }),
+      "GET /api/views/org-chart": views,
+      ...(created === undefined
+        ? {}
+        : { "POST /api/views/org-chart": created }),
+      ...peopleAnswers,
+    });
+    const history = renderApp(path);
+    return { fetch, history };
+  }
+
+  it("opens on feature teams from an address made before they were named teams", async () => {
+    openViews("/org-chart?view=feature-teams");
+
+    expect(
+      (
+        await screen.findByRole<HTMLInputElement>("radio", {
+          name: "Feature teams",
+        })
+      ).checked,
+    ).toBe(true);
+  });
+
+  it("keeps the levels shown in the address, so Back shows the levels before", async () => {
+    const { history } = openViews("/org-chart");
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+
+    await showLevels("1 level");
+    expect(history.location.search).toBe("?levels=1");
+    expect(screen.queryByRole("link", { name: "Sasha Fictional" })).toBeNull();
+
+    act(() => {
+      history.back();
+    });
+    expect(
+      await screen.findByRole("link", { name: "Sasha Fictional" }),
+    ).toBeDefined();
+    expect(screen.queryByRole("link", { name: "Tatum Fictional" })).toBeNull();
+  });
+
+  it("shows the levels chosen again though they are the levels shown, hiding reports shown since", async () => {
+    // Given the two levels the chart opens on, with Sasha's report shown since
+    openViews("/org-chart");
+    await userEvent.click(
+      await screen.findByRole("button", { name: /^Show 1 report/u }),
+    );
+    expect(
+      await screen.findByRole("link", { name: "Tatum Fictional" }),
+    ).toBeDefined();
+
+    // When two levels are chosen again
+    await showLevels("2 levels");
+
+    // Then Sasha's report is hidden again
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("link", { name: "Tatum Fictional" }),
+      ).toBeNull();
+    });
+  });
+
+  it("leaves the two levels the chart opens on out of the address", async () => {
+    const { history } = openViews("/org-chart?levels=1");
+    await screen.findByRole("link", { name: "Robin Fictional" });
+
+    await showLevels("2 levels");
+
+    await waitFor(() => {
+      expect(history.location.search).toBe("");
+    });
+  });
+
+  it.each([
+    [
+      "feature teams at every level",
+      "/org-chart?teams=feature&levels=all",
+      [
+        ["Teams", "Feature teams"],
+        ["Levels", "All"],
+      ],
+    ],
+    [
+      "only the Draft menu's choice",
+      "/org-chart?show=live",
+      [["Draft", "Live only"]],
+    ],
+  ])("names %s in what the view saves", async (_, path, parts) => {
+    openViews(path);
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Views, changed" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Save view…" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Save view" });
+
+    for (const [name, value] of parts as [string, string][]) {
+      expect(within(dialog).getByText(name)).toBeDefined();
+      expect(within(dialog).getByText(value)).toBeDefined();
+    }
+    expect(within(dialog).queryByText("Shown alone")).toBeNull();
+  });
+
+  it("saves the teams drawn, the levels and the team shown alone, naming each", async () => {
+    // Given Sasha's team shown alone at three levels, and no saved views
+    // The address is one made before, naming the lead by Employee ID; the view keeps Fathom's own.
+    const definition = {
+      choices: { team: "p2", levels: "3" },
+    };
+    const view = {
+      id: savedId,
+      name: "Sasha's team",
+      scope: "personal",
+      definition,
+      canChange: true,
+      canShare: false,
+    };
+    const { fetch, history } = openViews(
+      "/org-chart?team=FX-p2&levels=3",
+      () => Response.json([]),
+      () => Response.json({ view, changeSetId: null }, { status: 201 }),
+    );
+
+    // When it is saved as a view
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Views, changed" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Save view…" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Save view" });
+
+    // Then the dialog names the team and the levels, and the view keeps them
+    expect(
+      within(dialog).getByText("The team of Sasha Fictional"),
+    ).toBeDefined();
+    expect(within(dialog).getByText("Levels")).toBeDefined();
+    await userEvent.type(
+      within(dialog).getByRole("textbox"),
+      "Sasha's team{Enter}",
+    );
+    await waitFor(() => {
+      expect(history.location.search).toContain(`view=${savedId}`);
+    });
+    expect(bodyOf(fetch, "POST", "/api/views/org-chart")).toEqual([
+      { name: "Sasha's team", scope: "personal", definition },
+    ]);
+  });
+
+  it("applies a saved view of feature teams at every level, leaving the day", async () => {
+    const view = {
+      id: savedId,
+      name: "Feature teams",
+      scope: "shared",
+      definition: { choices: { teams: "feature", levels: "all" } },
+      canChange: false,
+      canShare: false,
+    };
+    const { history } = openViews("/org-chart?day=2026-12-01", () =>
+      Response.json([view]),
+    );
+
+    await userEvent.click(await screen.findByRole("button", { name: "Views" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: /^Feature teams/u }),
+    );
+
+    await waitFor(() => {
+      expect(
+        Object.fromEntries(new URLSearchParams(history.location.search)),
+      ).toEqual({
+        day: "2026-12-01",
+        teams: "feature",
+        levels: "all",
+        view: savedId,
+      });
+    });
+  });
+
+  it("clears the view back to reporting teams at two levels, keeping the day and the person found", async () => {
+    const { history } = openViews(
+      "/org-chart?teams=feature&levels=3&show=live&person=FX-p4&day=2026-12-01",
+    );
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Views, changed" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Clear view" }),
+    );
+
+    await waitFor(() => {
+      expect(history.location.search).toBe("?person=FX-p4&day=2026-12-01");
+    });
   });
 });

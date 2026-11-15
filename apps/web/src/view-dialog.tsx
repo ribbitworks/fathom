@@ -110,7 +110,7 @@ export function ViewDialog({
         />
         {canSaveShared && (
           <Checkbox
-            label="Share with everyone who sees this table"
+            label="Share with everyone who sees this page"
             checked={scope === "shared"}
             onChange={(event) => {
               setScope(event.currentTarget.checked ? "shared" : "personal");

@@ -2,17 +2,22 @@
 
 // Tests for the org chart's tree: who sits under whom, the managers above someone, whose reports
 // are hidden when it opens, where the people shown are placed when managers are collapsed, and the
-// people the Draft menu's choice draws, and the days the chart is drawn as of.
+// people the Draft menu's choice draws, the days the chart is drawn as of, and the chart's view as
+// its address and a saved view keep it.
 
 import type { OrgChartPerson } from "@fathom/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   cardHeight,
   cardWidth,
+  chartAddressOf,
   chartDays,
+  chartViewSearch,
   chartPeople,
   heightOf,
   collapsedBelow,
+  collapsedTo,
+  leadOf,
   levelsOf,
   managersAbove,
   placed,
@@ -104,6 +109,12 @@ describe("what the org chart hides", () => {
     expect([...collapsedBelow(tree, 2)]).toEqual(["m1"]);
     expect([...collapsedBelow(tree, 1)].sort()).toEqual(["head", "m1"]);
     expect(collapsedBelow(tree, 3).size).toBe(0);
+  });
+
+  it("hides as many levels' reports as chosen, and none for all of them", () => {
+    const tree = treeOf(people);
+    expect([...collapsedTo(tree, 2)]).toEqual(["m1"]);
+    expect(collapsedTo(tree, "all").size).toBe(0);
   });
 
   it("counts the levels, with the people at the top as the first", () => {
@@ -412,5 +423,72 @@ describe("chartDays", () => {
     ],
   ])("%s", (_, sees, expected) => {
     expect(chartDays(later, sees)).toEqual(expected);
+  });
+});
+
+describe("the chart's view", () => {
+  it("keeps the levels as a word in the view, and a count in the address", () => {
+    const search = { teams: "feature" as const, levels: 3, team: "FX-p2" };
+
+    const inView = chartViewSearch(search);
+
+    expect(inView).toEqual({
+      ...search,
+      levels: "3",
+      show: undefined,
+      view: undefined,
+    });
+    expect(chartAddressOf(inView)).toEqual({
+      ...search,
+      show: undefined,
+      view: undefined,
+    });
+  });
+
+  it("keeps every level as all, and leaves out levels it can't count", () => {
+    expect(chartAddressOf({ levels: "all" }).levels).toBe("all");
+    expect(chartAddressOf({ levels: "0" }).levels).toBeUndefined();
+    expect(chartViewSearch({}).levels).toBeUndefined();
+  });
+
+  it("leaves out choices of other kinds than the chart's", () => {
+    expect(chartAddressOf({ teams: "reporting", team: ["FX-p2"] })).toEqual({
+      show: undefined,
+      view: undefined,
+      teams: undefined,
+      team: undefined,
+      levels: undefined,
+    });
+  });
+});
+
+describe("the team shown alone", () => {
+  const tree = treeOf(people);
+
+  it("is led by the manager named by Fathom's own ID, or by Employee ID from an old address", () => {
+    expect(leadOf(tree, "m1")?.id).toBe("m1");
+    expect(leadOf(tree, "E-m1")?.id).toBe("m1");
+  });
+
+  it("is no one's for someone with no reports, someone not on the chart, or none asked", () => {
+    expect(leadOf(tree, "r1")).toBeUndefined();
+    expect(leadOf(tree, "nobody")).toBeUndefined();
+    expect(leadOf(tree, undefined)).toBeUndefined();
+  });
+
+  it("is never a Live copy's", () => {
+    const moved = treeOf([
+      ...people,
+      { ...person("copy", "head"), liveCopyOf: "m1" },
+      person("r3", "copy"),
+    ] as OrgChartPerson[]);
+    expect(leadOf(moved, "copy")).toBeUndefined();
+  });
+});
+
+describe("the levels the chart opens on", () => {
+  it("are left out of the view and the address, as the chart starts with them", () => {
+    expect(chartViewSearch({ levels: 2 }).levels).toBeUndefined();
+    expect(chartAddressOf({ levels: "2" }).levels).toBeUndefined();
   });
 });

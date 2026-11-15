@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The controls above the org chart: on the left the finder, the Draft menu and, for those who can
-// change teams, the Teams panel; on the right the levels to show, zooming, and fitting the
-// chart to the screen. The chart decides what each choice does to it.
+// The controls above the org chart: on the left the finder, the Draft menu, for those who can
+// change teams the Teams panel, and last, as on a table, the Views menu, so it moves nothing when
+// it appears; on the right the levels to show, zooming, and fitting the chart to the screen. The
+// chart decides what each choice does to it.
 
 import {
   ActionIcon,
@@ -44,6 +45,7 @@ export function ChartControls({
   onFind,
   onFindAgain,
   onLevels,
+  views,
   onMove,
 }: {
   tree: OrgTree;
@@ -58,6 +60,7 @@ export function ChartControls({
   // Someone was chosen in the finder, even the person already found.
   onFindAgain: () => void;
   onLevels: (levels: number | "all") => void;
+  views: ReactNode;
   // The chart is zoomed or fitted to the screen.
   onMove: () => void;
 }) {
@@ -166,6 +169,7 @@ export function ChartControls({
         />
         {draft}
         {teams}
+        {views}
       </Group>
       <Group gap="xs">
         {levels > 1 && (

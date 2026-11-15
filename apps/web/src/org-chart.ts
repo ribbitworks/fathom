@@ -11,6 +11,8 @@
 // chart, the chart is drawn as drafts make it, or drafts are left out.
 
 import {
+  allChartLevels,
+  chartLevelsSchema,
   type OrgChart,
   type OrgChartDraft,
   type OrgChartPerson,
@@ -22,7 +24,7 @@ import {
   searchWords,
 } from "@fathom/shared";
 import { dayQuery, sendJson } from "./api.ts";
-import { formatDay } from "./table-view.ts";
+import { formatDay, type ViewSearch } from "./table-view.ts";
 import { shownDay, today } from "./today.ts";
 
 // The chart as it is today, with drafts, or as approved on a chosen day, for readers who see
@@ -248,6 +250,25 @@ export function managersAbove(tree: OrgTree, id: string): string[] {
 
 // The managers whose reports are hidden when the chart opens, so it starts with the levels given,
 // counting the people at the top as the first.
+// The managers whose reports are hidden to show a number of levels; none to show them all.
+export const collapsedTo = (tree: OrgTree, levels: ChartLevels): Set<string> =>
+  levels === allChartLevels ? new Set() : collapsedBelow(tree, levels);
+
+// The manager whose team alone is shown, by Fathom's own ID, or by the Employee ID an address made
+// before named them by; none for someone with no reports on the chart.
+export function leadOf(
+  tree: OrgTree,
+  team: string | undefined,
+): ChartPerson | undefined {
+  if (team === undefined) return undefined;
+  return [...tree.people.values()].find(
+    (person) =>
+      person.liveCopyOf === undefined &&
+      (person.id === team || person.employeeId === team) &&
+      tree.reports.has(person.id),
+  );
+}
+
 export function collapsedBelow(tree: OrgTree, levels: number): Set<string> {
   const collapsed = new Set<string>();
   const visit = (id: string, level: number) => {
@@ -435,8 +456,8 @@ export function levelsOf(tree: OrgTree): number {
   return Math.max(0, ...tree.roots.map(below));
 }
 
-// The chart's address: the person found, and the manager whose team alone is shown, each by
-// Employee ID, and what the Draft menu shows, drafts beside live unless chosen otherwise.
+// The chart's address: the person found, by Employee ID, the manager whose team alone is shown, by
+// Fathom's own ID, and what the Draft menu shows, drafts beside live unless chosen otherwise.
 export interface ChartSearch {
   person?: string | undefined;
   team?: string | undefined;
@@ -444,11 +465,58 @@ export interface ChartSearch {
   // The person whose details are shown beside the chart, by Employee ID.
   open?: string | undefined;
   // Which teams the chart draws: managers', or feature teams.
-  view?: "feature-teams" | undefined;
+  teams?: "feature" | undefined;
+  levels?: ChartLevels | undefined;
+  // The saved view the chart's view started from.
+  view?: string | undefined;
   // The feature team whose details are shown beside the chart.
   featureTeam?: string | undefined;
   // The day the chart is drawn as of, when not today.
   day?: string | undefined;
+}
+
+// How many levels of the chart are shown, counting the people at the top as the first, or all.
+export type ChartLevels = number | typeof allChartLevels;
+
+// The levels the chart opens on, so a large organization starts readable.
+export const openLevels = 2;
+
+// The chart's view, kept in a saved view as the Views menu keeps any page's: what the Draft menu
+// shows, and the page's choices of which teams are drawn, the levels shown and the team shown alone,
+// each by its name in the address. The levels are a count in the address and a word in a view.
+export function chartViewSearch(search: ChartSearch) {
+  return {
+    show: search.show,
+    view: search.view,
+    teams: search.teams,
+    team: search.team,
+    levels:
+      search.levels === undefined || search.levels === openLevels
+        ? undefined
+        : String(search.levels),
+  };
+}
+
+export const chartChoiceKeys = ["teams", "team", "levels"] as const;
+
+// A chart view as the address keeps it.
+export function chartAddressOf(
+  written: ViewSearch & Record<string, unknown>,
+): ChartSearch {
+  const { show, view, teams, team, levels } = written;
+  const counted = chartLevelsSchema.safeParse(levels);
+  const shown: ChartLevels | undefined = !counted.success
+    ? undefined
+    : counted.data === allChartLevels
+      ? allChartLevels
+      : Number(counted.data);
+  return {
+    show,
+    view,
+    teams: teams === "feature" ? teams : undefined,
+    team: typeof team === "string" ? team : undefined,
+    levels: shown === openLevels ? undefined : shown,
+  };
 }
 
 // The day the chart is drawn as of, and the day its people are drawn as of. Later dates of

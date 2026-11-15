@@ -884,7 +884,7 @@ export function ViewsMenu({
                   saved.onUpdate(current, view);
                 }}
               >
-                Update {current.name}
+                Update view
               </Menu.Item>
             )}
             <Menu.Item

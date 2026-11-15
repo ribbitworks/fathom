@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its streams in the timeline; that a view on Features is shared by its table and Board, and kept to Features; that a view keeps People grouped by two levels; and that a view on Feature assignments keeps its grouping, and is kept to its page.
+Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its streams in the timeline; that a view on Features is shared by its table and Board, and kept to Features; that a view keeps People grouped by two levels; and that a view on Feature assignments keeps its grouping, and is kept to its page; and that a view on the Org chart keeps the team shown alone and the levels shown.
 
 ## Test Environment
 
@@ -951,4 +951,87 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `CB80` Select **Group by: Feature team**, then **Manager**.
   - **Expected:** The button reads **Group by: Manager**.
+  - **Notes:**
+
+### VIEW-16: A View on the Org Chart Keeps Its Team and Levels
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, in the main window, the account VIEW-15 ended with.
+
+**Preconditions:** This account is signed in, in the main window.
+
+- [ ] `162B` Select the **Org chart** page in the left-hand menu.
+  - **Expected:**
+    - **Show levels**, **+**, **−** and **Fit to screen** are on the right above the chart.
+    - No Views menu shows.
+  - **Notes:**
+
+- [ ] `7B93` Select the small org chart button at the top right of the card for 'Lorenza Thiel'.
+  - **Expected:**
+    - To the right of the heading, the page reads "Only the team of Lorenza Thiel is shown."
+    - Last of the buttons on the left above the chart, the Views menu's button reads **Views**, with a dot.
+  - **Notes:**
+
+- [ ] `798E` Select **Show levels**, then **All levels**.
+  - **Expected:** Every card under 'Lorenza Thiel' that has reports shows them.
+  - **Notes:**
+
+- [ ] `ABBF` Open the Views menu, and select **Save view…**.
+  - **Expected:**
+    - A dialog titled "Save view" opens.
+    - Under **Includes**, **Levels** reads "All".
+    - Under **Includes**, **Shown alone** reads "The team of Lorenza Thiel".
+  - **Notes:**
+
+- [ ] `46FD` Type `Fictional Lorenza's team` in **Name**.
+  - **Expected:** The name shows in **Name**.
+  - **Notes:**
+
+- [ ] `0DAE` Select **Save view** in the dialog.
+  - **Expected:** The Views menu's button says `Fictional Lorenza's team`.
+  - **Notes:**
+
+- [ ] `0733` Reload the page.
+  - **Expected:**
+    - The page reads "Only the team of Lorenza Thiel is shown."
+    - Every card under 'Lorenza Thiel' that has reports shows them.
+    - The Views menu's button says `Fictional Lorenza's team`, with no dot.
+  - **Notes:**
+
+- [ ] `12C9` Select the **People** page in the left-hand menu.
+  - **Expected:** The **People** table shows.
+  - **Notes:**
+
+- [ ] `39D9` Select the **Org chart** page in the left-hand menu.
+  - **Expected:**
+    - 'Silje Holm-Schrøder' is at the top of the chart.
+    - No line reading "Only the team of" shows.
+    - The Views menu's button reads **Views**, with no dot.
+  - **Notes:**
+
+- [ ] `14D1` Open the Views menu, and select `Fictional Lorenza's team` under **My views**.
+  - **Expected:**
+    - The page reads "Only the team of Lorenza Thiel is shown."
+    - Every card under 'Lorenza Thiel' that has reports shows them.
+    - The Views menu's button says `Fictional Lorenza's team`, with no dot.
+  - **Notes:**
+
+- [ ] `41E9` Select **Feature teams** in the switch after the **Org chart** heading.
+  - **Expected:**
+    - The chart draws feature teams.
+    - The Views menu's button says `Fictional Lorenza's team`, with a dot.
+  - **Notes:**
+
+- [ ] `055E` Open the Views menu, and select **Clear view**.
+  - **Expected:**
+    - **Reporting teams** is chosen in the switch after the **Org chart** heading.
+    - 'Silje Holm-Schrøder' is at the top of the chart.
+    - The Views menu's button reads **Views**, with no dot.
+  - **Notes:**
+
+- [ ] `BC2E` Open the Views menu, and select `Fictional Lorenza's team`.
+  - **Expected:** The page reads "Only the team of Lorenza Thiel is shown."
+  - **Notes:**
+
+- [ ] `AD9A` Open the Views menu, and select **Delete view**.
+  - **Expected:** A notification reads "Deleted the Fictional Lorenza's team view.", with **Undo**.
   - **Notes:**

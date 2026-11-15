@@ -14,6 +14,7 @@
 // day, for those who may date changes then, and everything else is read only.
 
 import {
+  allChartLevels,
   type FeatureTeams,
   mayDateLineChange,
   mayDateChange,
@@ -86,10 +87,16 @@ import {
   liveCopyId,
   heightOf,
   stackIndent,
+  chartAddressOf,
+  chartChoiceKeys,
+  type ChartLevels,
   type ChartSearch,
+  chartViewSearch,
   chartDays,
-  collapsedBelow,
+  collapsedTo,
+  leadOf,
   levelsOf,
+  openLevels,
   findFieldId,
   managersAbove,
   type OrgTree,
@@ -121,8 +128,9 @@ import {
   MarkedItem,
   MarkRow,
 } from "./status-mark.tsx";
-import { plannedWords } from "./table-view.ts";
-import { DraftMenu } from "./table-controls.tsx";
+import { useSavedViews } from "./saved-views.tsx";
+import { emptyView, plannedWords, viewProps } from "./table-view.ts";
+import { DraftMenu, type PageParts, ViewsMenu } from "./table-controls.tsx";
 import { today } from "./today.ts";
 
 interface CardData extends Record<string, unknown> {
@@ -466,9 +474,6 @@ const nodeTypes = { person: PersonCard };
 
 const cardLinkId = (id: string) => `card-${id}`;
 
-// The levels shown when the chart opens, so a large organization starts readable.
-const openLevels = 2;
-
 // How the address names a person, for the team shown alone and the person found: by Employee ID,
 // or, for a planned hire, by Fathom's own ID. Null for a Live copy, which the person themselves
 // stands for.
@@ -489,8 +494,11 @@ function Chart({
   teamsList,
   fixedDay,
   dateRow,
+  views,
 }: {
   dateRow: ReactNode;
+  // The Views menu, last of the controls on the left, as on a table.
+  views: ReactNode;
   // Whether the chart shows another day on which nothing can be changed, drawn as approved, with no
   // drafts to choose among.
   fixedDay: boolean;
@@ -533,21 +541,31 @@ function Chart({
     search.person === undefined
       ? (teamCard ?? foundByName)
       : (byAddress.get(search.person)?.id ?? null);
+  const levelsChosen = search.levels ?? openLevels;
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() =>
-    collapsedBelow(tree, openLevels),
+    collapsedTo(tree, levelsChosen),
   );
+  // Choosing a number of levels, from the menu, a saved view or the browser's Back, shows that
+  // many again, hiding or showing every manager's reports, even the number already shown, and
+  // fits the chart to them.
+  const [levelsShown, setLevelsShown] = useState({
+    levels: levelsChosen,
+    times: 0,
+  });
+  if (levelsShown.levels !== levelsChosen) {
+    setLevelsShown({ levels: levelsChosen, times: levelsShown.times + 1 });
+    setCollapsed(collapsedTo(tree, levelsChosen));
+  }
   // Someone who manages nobody in one choice of what to show may manage someone in another, such as
   // the manager a person is drafted from, so the first time they appear their reports are shown or
   // hidden as the levels last chosen have them.
-  const [levelsChosen, setLevelsChosen] = useState<number | "all">(openLevels);
   const [managersSeen, setManagersSeen] = useState<ReadonlySet<string>>(
     () => new Set(tree.reports.keys()),
   );
   const added = [...tree.reports.keys()].filter((id) => !managersSeen.has(id));
   if (added.length > 0) {
     setManagersSeen(new Set([...managersSeen, ...added]));
-    const below =
-      levelsChosen === "all" ? new Set() : collapsedBelow(tree, levelsChosen);
+    const below = collapsedTo(tree, levelsChosen);
     setCollapsed(
       new Set([...collapsed, ...added.filter((id) => below.has(id))]),
     );
@@ -645,7 +663,13 @@ function Chart({
                 ? undefined
                 : () => {
                     onSearch(
-                      { team: address, show: search.show, day: search.day },
+                      {
+                        team: person.id,
+                        show: search.show,
+                        day: search.day,
+                        levels: search.levels,
+                        view: search.view,
+                      },
                       false,
                     );
                   },
@@ -811,18 +835,24 @@ function Chart({
 
   // Showing a number of levels changes the chart's whole shape, so it is fitted to the screen again
   // once laid out; showing or hiding one manager's reports leaves it where it is.
-  const fitNext = useRef(false);
-  const showLevels = (levels: number | "all") => {
-    centreOnSpace(false);
-    fitNext.current = true;
-    setLevelsChosen(levels);
-    setCollapsed(levels === "all" ? new Set() : collapsedBelow(tree, levels));
-  };
+  const fittedFor = useRef(levelsShown.times);
   useEffect(() => {
-    if (!fitNext.current) return;
-    fitNext.current = false;
+    if (fittedFor.current === levelsShown.times) return;
+    fittedFor.current = levelsShown.times;
     void flow.fitView({ ...fitOptions, duration: 300 });
-  }, [layout, flow]);
+  }, [levelsShown, flow]);
+  const showLevels = (levels: ChartLevels) => {
+    centreOnSpace(false);
+    if (levels === levelsChosen) {
+      setLevelsShown({ levels, times: levelsShown.times + 1 });
+      setCollapsed(collapsedTo(tree, levels));
+      return;
+    }
+    onSearch(
+      { ...search, levels: levels === openLevels ? undefined : levels },
+      false,
+    );
+  };
 
   return (
     <Stack gap="sm">
@@ -863,6 +893,7 @@ function Chart({
           setReveals((count) => count + 1);
         }}
         onLevels={showLevels}
+        views={views}
         onMove={() => {
           centreOnSpace(false);
         }}
@@ -917,6 +948,33 @@ function Chart({
   );
 }
 
+// What a view keeps of the chart's own choices, as the Save view dialog names them, the team shown
+// alone by its manager, found on the whole chart.
+const chartParts =
+  (everyone: OrgTree): PageParts =>
+  ({ choices = {} }) => {
+    const { teams, levels, team } = choices;
+    const lead = leadOf(everyone, typeof team === "string" ? team : undefined);
+    return [
+      ...(teams === "feature"
+        ? [{ name: "Teams", value: "Feature teams" }]
+        : []),
+      ...(typeof levels === "string"
+        ? [
+            {
+              name: "Levels",
+              value: levels === allChartLevels ? "All" : levels,
+            },
+          ]
+        : []),
+      ...(lead === undefined
+        ? []
+        : [
+            { name: "Shown alone", value: `The team of ${lead.preferredName}` },
+          ]),
+    ];
+  };
+
 // On another day, only what takes effect from it is changed: renaming, colouring and removing a team
 // do not.
 const undatedChangesLeftOut = (edits: FeatureTeamEdits): FeatureTeamEdits => ({
@@ -938,8 +996,10 @@ export function OrgChartPage({
   canEdit = false,
   changesDates = false,
   featureTeamEdits = noFeatureTeamEdits,
+  canShareViews = false,
 }: {
   featureTeamEdits?: FeatureTeamEdits;
+  canShareViews?: boolean;
   search: ChartSearch;
   // Whether the reader may change people, in a person's details, and their teams' names and colours.
   canEdit?: boolean;
@@ -953,7 +1013,7 @@ export function OrgChartPage({
   futureDates?: boolean;
   onSearch: (search: ChartSearch, replace: boolean) => void;
 }) {
-  const featureView = search.view === "feature-teams";
+  const featureView = search.teams === "feature";
   const { day, peopleDay } = chartDays(search.day, {
     otherDates,
     futureLines: futureDates,
@@ -991,12 +1051,6 @@ export function OrgChartPage({
       },
     );
   };
-  const { save, undoable } = useSaving<PeopleData>({
-    queryKey: peopleQuery.queryKey,
-    removed: "Someone else has removed this. The people have been refreshed.",
-    blocked: false,
-    refreshes: [orgChartQuery.queryKey],
-  });
   const teamsQuery = useQuery({
     ...featureTeamsQueryOn(day),
     enabled: featureView,
@@ -1017,25 +1071,51 @@ export function OrgChartPage({
           featureTeamPeople(teamsQuery.data.teams, query.data.people, show),
         );
   }, [query.data, show, featureView, teamsQuery.data, day]);
+  const lead =
+    everyone === undefined ? undefined : leadOf(everyone, search.team);
+  // The chart's view, from the address, as any page's is; what isn't part of it stays as it is.
+  const { view, applied, onView, onApply } = viewProps(
+    // A team shown alone is kept in a view by its lead's own ID, though an old address names them
+    // by Employee ID, and one not on the chart is no part of it.
+    chartViewSearch({ ...search, team: lead?.id }),
+    (next, replace) => {
+      go(
+        {
+          person: search.person,
+          open: search.open,
+          featureTeam: search.featureTeam,
+          day: search.day,
+          ...chartAddressOf(next),
+        },
+        replace,
+      );
+    },
+    chartChoiceKeys,
+  );
+  const views = useSavedViews({
+    table: "org-chart",
+    within: orgChartQuery.queryKey,
+    applied,
+    onApply,
+    canShare: canShareViews,
+  });
+  const { save, undoable } = useSaving<PeopleData>({
+    queryKey: peopleQuery.queryKey,
+    removed: "Someone else has removed this. The people have been refreshed.",
+    blocked: views.opened,
+    refreshes: [orgChartQuery.queryKey],
+  });
   const openTeam = (id: string | undefined) => {
     setCreating(false);
     go({ ...search, person: undefined, featureTeam: id }, false);
   };
-  const teamActions = useFeatureTeamActions(openTeam);
+  const teamActions = useFeatureTeamActions(openTeam, views.opened);
   const openedTeam = teamsQuery.data?.teams.find(
     ({ id }) => id === search.featureTeam,
   );
   // Live only is read only, as on tables, managers' teams are not changed on the feature team chart,
   // and team names and colours, which take no date, change only today.
   const editsTeams = show === "live" || featureView || dated ? false : canEdit;
-  const lead =
-    everyone === undefined
-      ? undefined
-      : [...everyone.people.values()].find(
-          (person) =>
-            addressOf(person) === search.team &&
-            everyone.reports.has(person.id),
-        );
   const tree = useMemo(
     () =>
       everyone === undefined || lead === undefined
@@ -1077,8 +1157,10 @@ export function OrgChartPage({
                     open: search.open,
                     person: search.person ?? search.open,
                     day: search.day,
+                    levels: search.levels,
+                    view: search.view,
                     ...(mode === "feature-teams"
-                      ? { view: "feature-teams" as const }
+                      ? { teams: "feature" as const }
                       : {}),
                   },
                   false,
@@ -1101,6 +1183,8 @@ export function OrgChartPage({
                         show: search.show,
                         open: search.open,
                         day: search.day,
+                        levels: search.levels,
+                        view: search.view,
                       },
                       false,
                     );
@@ -1266,6 +1350,18 @@ export function OrgChartPage({
               search={search}
               onSearch={go}
               dateRow={dateRow}
+              views={
+                <ViewsMenu
+                  saved={views.saved}
+                  columns={[]}
+                  view={view}
+                  onView={onView}
+                  onClear={() => {
+                    onView(emptyView);
+                  }}
+                  pageParts={chartParts(everyone)}
+                />
+              }
               {...(featureView
                 ? {
                     teamsList: (
@@ -1287,6 +1383,7 @@ export function OrgChartPage({
         </WithSidePanel>
       )}
       {question.dialog}
+      {views.dialogs}
     </DraftView>
   );
 }
