@@ -23,21 +23,10 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 - **Administrator:** `fathom.administrator@fathom.test`, shown in Fathom as "Fathom Administrator"
 - **Team Member:** `team.member@fathom.test`, with the permissions each test case grants it through Grant Team Member Only Some Permissions
-- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager". Add a Confidential Column uses it to add a column.
-- **Engineering Director:** `engineering.director@fathom.test`. Add a Confidential Column uses it to approve that column.
 
 ## Common Procedures
 
 This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database), [Open a Role](manual-test-basics.md#open-a-role) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes). It adds:
-
-### Add a Confidential Column
-
-1. Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`, and select the **People** page in the left-hand menu.
-2. Select **New column**. Type `Offer letter` in **Name**, choose **Web link** in **Type**, choose **Confidential** under **Class**, and select **Add column**.
-3. Select the Publish button, which reads **Publish 4 changes**, and confirm that a notification reads "Published 4 changes."
-4. Sign in as the Engineering Director, `engineering.director@fathom.test`, select the **Drafts** page in the left-hand menu, and type `Offer letter` in the search box.
-5. Select the entry's checkbox, then **Approve 1 draft…**, then **Approve** in the dialog titled "Approve 1 draft?".
-6. Confirm that a notification reads "Approved 1 draft."
 
 ### Grant Team Member Only Some Permissions
 
@@ -192,6 +181,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `BE13` Read the column headers, and the top right of the page.
   - **Expected:**
     - **Start**, **End** and **Manager assigned** are not shown
+    - **Compensation band** and **Performance rating** are not shown
     - There is no **New person** and no **New column** button
   - **Notes:**
 
@@ -256,7 +246,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `EEC1` Select **Feature teams** in the teams switch.
   - **Expected:**
-    - The chart shows the feature teams 'Payments core', 'Search', 'Platform reliability' and 'Mobile apps', with their members
+    - The chart shows the feature teams, such as 'Payments core', each with its members
     - There is no **New feature team**, and no way to change a team
   - **Notes:**
 
@@ -326,7 +316,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-08 ended with.
 
-**Preconditions:** Reset the Database, then Add a Confidential Column, then Team Member granted only **View** on **People** and **View** on **Confidential** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Team Member granted only **View** on **People** and **View** on **Confidential** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] `F202` Select the **People** page in the left-hand menu.
   - **Expected:** The **People** table shows.
@@ -334,7 +324,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `7D27` Look at the column headers and the top right of the page.
   - **Expected:**
-    - An **Offer letter** column is shown
+    - **Compensation band** and **Performance rating** columns are shown
     - **Start**, **End** and **Manager assigned** are not shown
     - There is no **New person** button
   - **Notes:**
@@ -364,7 +354,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-09 ended with.
 
-**Preconditions:** Add a Confidential Column done since the last reset, as for PERM-09, then Team Member granted only **Edit** on **People** and **Edit** on **Confidential** through Grant Team Member Only Some Permissions, signed in with this account.
+**Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Confidential** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] `1062` Select the **People** page in the left-hand menu.
   - **Expected:** The **People** table shows.
@@ -372,23 +362,25 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `512C` Look at the column headers and the top right of the page.
   - **Expected:**
-    - An **Offer letter** column is shown
+    - **Compensation band** and **Performance rating** columns are shown
     - **New person** is at the top right
     - **Start**, **End** and **Manager assigned** are not shown
   - **Notes:**
 
 - [ ] `1B51` Search for 'Max Munk'.
-  - **Expected:** One row has 'Max Munk' in its **Name** cell.
+  - **Expected:**
+    - One row has 'Max Munk' in its **Name** cell
+    - Its **Compensation band** cell reads 'Band 5'
   - **Notes:**
 
-- [ ] `FC92` In the row whose **Name** cell reads 'Max Munk', select the **Offer letter** cell, press Enter, type `https://example.test/offer` in **Address**, and press Enter.
+- [ ] `4B7E` In the row whose **Name** cell reads 'Max Munk', select the **Compensation band** cell, press Enter, choose 'Band 6', and press Enter.
   - **Expected:**
-    - The cell shows the address, with a hollow yellow dot before it
+    - The cell reads 'Band 6', with a hollow yellow dot before it
     - The Publish button reads **Publish 1 change**
   - **Notes:**
 
-- [ ] `23C3` Run Discard the Unpublished Changes.
-  - **Expected:** The **Offer letter** cell of 'Max Munk' is empty.
+- [ ] `C05A` Run Discard the Unpublished Changes.
+  - **Expected:** The **Compensation band** cell of 'Max Munk' reads 'Band 5', with no dot before it.
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.

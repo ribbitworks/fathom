@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/person-panel*", "apps/web/src/person-change.ts", "apps/web/src/people-grid.tsx", "apps/web/src/org-chart-page.tsx", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Person Details
@@ -81,6 +81,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **Site** 'Ashgrove'
       - **Role on team** 'Design Authority'
       - **Work pattern** 'Full time'
+      - **Compensation band** 'Band 4'
+      - **Performance rating** 'Meets'
   - **Notes:**
 
 - [ ] `D843` Select 'Tanushree Patel-Singh' under **Direct reports**.

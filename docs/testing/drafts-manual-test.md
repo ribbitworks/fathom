@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Drafts of People, Lists and Columns
@@ -105,6 +105,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Grade**
     - **Onboarding**
     - **Work pattern**
+    - **Compensation band**
+    - **Performance rating**
     - **State**
     - **Start**
     - **Expected**
@@ -137,6 +139,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Role on team**
     - **Onboarding**
     - **Work pattern**
+    - **Compensation band**
+    - **Performance rating**
     - **State**
     - **Start**
     - **Expected**
@@ -270,7 +274,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `9A70` Open the Draft menu, and select **Drafts applied**.
   - **Expected:**
-    - The count beside the search box reads "13 lists".
+    - The count beside the search box reads "15 lists".
     - 'Certifications' and 'Languages' are not in the table.
     - No Live rows.
     - No green dots.

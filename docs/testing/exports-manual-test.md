@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/visual-design.md", "docs/product/decisions.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Exports
@@ -53,7 +53,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `BA09` Choose **CSV file**.
   - **Expected:**
     - A dialog titled "Export Confidential and Personal data?" opens.
-    - It reads "This file holds Confidential data (Hiring plan) and Personal data (", the columns holding Personal data, including **Start** and **End**, then ")."
+    - It reads "This file holds Confidential data (Hiring plan, Compensation band, Performance rating) and Personal data (", the columns holding Personal data, including **Start** and **End**, then ")."
     - **Confidential** is in red and **Personal** in orange, both in semibold, and the column names are in semibold.
     - It offers **Cancel** and **Export**.
   - **Notes:**
@@ -91,7 +91,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `55F5` Select the **Access history** page in the left-hand menu.
   - **Expected:**
     - The newest entry reads "Fathom Administrator (`fathom.administrator@fathom.test`) signed in: as Administrator".
-    - The entry under it reads "Engineering Director (`engineering.director@fathom.test`) exported People with Confidential data (Hiring plan) and Personal data (", the columns holding Personal data, including **Start** and **End**, then ")".
+    - The entry under it reads "Engineering Director (`engineering.director@fathom.test`) exported People with Confidential data (Hiring plan, Compensation band, Performance rating) and Personal data (", the columns holding Personal data, including **Start** and **End**, then ")".
   - **Notes:**
 
 ### EXP-02: Exporting General Data Saves at Once

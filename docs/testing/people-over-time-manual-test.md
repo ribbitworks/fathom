@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/people-page.tsx", "apps/web/src/people-grid.tsx", "apps/web/src/person-panel.tsx", "apps/web/src/date-control.tsx", "apps/server/src/data/people.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/org-chart-manual-test.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: People Over Time
@@ -95,7 +95,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The line under the date row is gone.
   - **Notes:**
 
-- [ ] `4931` Type `TBD` in the search box.
+- [ ] `3B6E` Type `선예빈` in the search box.
+  - **Expected:** One row shows, '선예빈', whose **End** holds a date still to come.
+  - **Notes:**
+
+- [ ] `4931` Clear the search box, and type `TBD`.
   - **Expected:** The planned hires with temporary IDs show, each starting **TBD-**.
   - **Notes:**
 
@@ -109,7 +113,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** One row shows, 'Chatura Abbott', who has started by then.
   - **Notes:**
 
-- [ ] `0C76` Clear the search box, and type `Holmberg`.
+- [ ] `9D41` Clear the search box, and type `선예빈`.
   - **Expected:** No row shows.
   - **Notes:**
 

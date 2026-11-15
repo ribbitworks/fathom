@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/views.ts", "packages/shared/src/views.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Metrics, Frozen Columns, and Column Widths on the People Table
@@ -40,7 +40,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Draft menu and the column menu. This test adds:
 
 - **Metrics panel:** the panel titled **Metrics** that opens on the right of the People table.
-- **Count line:** the line under the panel's title saying how many people and planned hires it counts, such as "150 people and 8 planned hires".
+- **Count line:** the line under the panel's title saying how many people and planned hires it counts, such as "150 people and 10 planned hires".
 - **Panel edge:** the strip between the table and the Metrics panel. A blue line shows on it when the pointer is over it.
 - **Column edge:** the right edge of a column's name in the People table's header. A short blue line shows on it when the pointer is over it.
 
@@ -90,15 +90,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `014F` Set **Break down by** to **Position**.
   - **Expected:**
-    - The count line says "150 people and 8 planned hires".
+    - The count line says "150 people and 10 planned hires".
     - The figures are headed **Count**.
     - The rows read, from top to bottom:
       - "Employee 0 (0%)"
       - "Manager 0 (0%)"
-      - "Software Engineer 73 (46.2%)"
-      - "Test Engineer 36 (22.8%)"
-      - "SDET 32 (20.3%)"
-      - "Engineering Manager 17 (10.8%)"
+      - "Software Engineer 75 (46.9%)"
+      - "Test Engineer 36 (22.5%)"
+      - "SDET 32 (20%)"
+      - "Engineering Manager 17 (10.6%)"
       - "Architect 0 (0%)"
     - No row shows a green dot and a second figure.
   - **Notes:**
@@ -118,14 +118,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A table headed **Position by Site** shows.
     - It has a column for each site and an **All** column.
     - It has a row for each position and an **All** row.
-    - An **Empty** column counts the planned hires, which have no site.
+    - An **Empty** column counts the planned hires that have no site.
     - The **All** row shows:
-      - "Kestrel Bay 31"
-      - "Northmere 33"
-      - "Ashgrove 47"
+      - "Kestrel Bay 32"
+      - "Northmere 34"
+      - "Ashgrove 48"
       - "Corran Quay 39"
-      - "Empty 8"
-      - "All 158"
+      - "Empty 7"
+      - "All 160"
     - **Count** is selected above the table.
   - **Notes:**
 
@@ -148,15 +148,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `2FED` Press Esc.
   - **Expected:**
     - The filter closes.
-    - The bar above the table says "47 of 158".
-    - The count line says "47 people".
+    - The bar above the table says "48 of 160".
+    - The count line says "47 people and 1 planned hire".
     - The rows read, from top to bottom:
       - "Employee 0 (0%)"
       - "Manager 0 (0%)"
-      - "Software Engineer 20 (42.6%)"
-      - "Test Engineer 12 (25.5%)"
-      - "SDET 6 (12.8%)"
-      - "Engineering Manager 9 (19.1%)"
+      - "Software Engineer 21 (43.8%)"
+      - "Test Engineer 12 (25%)"
+      - "SDET 6 (12.5%)"
+      - "Engineering Manager 9 (18.8%)"
       - "Architect 0 (0%)"
   - **Notes:**
 
@@ -189,7 +189,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `04C1` Set **and by** to **Nothing more**.
   - **Expected:**
     - The 'P1' row shows a count.
-    - Under the count, a green dot before a dimmed "17".
+    - Under the count, a green dot before a dimmed "18".
     - Rows whose count drafts do not change show no green dot.
   - **Notes:**
 
@@ -293,7 +293,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The Metrics panel opens.
     - It shows a table headed **Position by Site**.
-    - The figures are live only: the **All** row ends with "All 158".
+    - The figures are live only: the **All** row ends with "All 160".
   - **Notes:**
 
 - [ ] `1CC4` Open the Views menu, and select **Delete view**.

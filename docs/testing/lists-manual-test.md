@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Built-in Lists and Lists with Meanings
@@ -229,7 +229,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `DB05` In the switch beside **Search lists**, select **Built in**.
   - **Expected:**
     - The table shows only **Feature priorities**, **Feature risks**, **Feature sizes**, **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses**.
-    - The count reads "7 of 15".
+    - The count reads "7 of 18".
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

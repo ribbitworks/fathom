@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/shared/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Data Classes
@@ -65,8 +65,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `A726` Look at the **Columns** section.
   - **Expected:**
     - It lists People's added columns, such as **Site**
-    - Each column's class is an open eye, then **General**, except **Work pattern**'s
+    - Each column's class is an open eye, then **General**, except those of **Work pattern**, **Compensation band** and **Performance rating**
     - **Work pattern**'s class is an eye with a line through it, then **Personal**
+    - **Compensation band**'s class is a lock with a keyhole, then **Confidential**
+    - **Performance rating**'s class is a lock with a keyhole, then **Confidential**
     - **Site**'s third column reads "People shows it. It takes its list's class, Sites."
     - **Site** has no **Change class…** button
   - **Notes:**
@@ -76,6 +78,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - It lists the lists, such as 'Sites'
     - The third column of 'Sites' reads "These People columns use it: Site."
     - The class of 'Work patterns' is an eye with a line through it, then **Personal**
+    - The class of 'Compensation bands' is a lock with a keyhole, then **Confidential**
+    - The class of 'Performance ratings' is a lock with a keyhole, then **Confidential**
+    - The third column of 'Compensation bands' reads "These People columns use it: Compensation band."
     - Each list's row ends with a **Change class…** button
   - **Notes:**
 
