@@ -31,7 +31,7 @@ What Fathom can't secure for itself. The [Security Plan](../security/security-pl
 
 ## Accounts
 
-- **The first administrator:** Fathom creates the Fathom Administrator account at install, with a password shown once that must be changed at first sign-in. Give the Administrator role to a named person, and stop using the shared account.
+- **The first administrator:** Once Fathom is running, create the Fathom Administrator account with `pnpm stack:create-administrator --email <address>`. It prints a password once, which must be changed at first sign-in. Then give the Administrator role to a named person, and stop using that shared account.
 - **Roles:** Give each account only the roles its user needs. Anyone who manages accounts can give themselves any role.
 - **The access history:** Review it for changes marked worth checking, such as accounts created and roles changed.
 - **People who leave:** Deactivate their accounts.

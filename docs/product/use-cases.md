@@ -139,12 +139,6 @@ flowchart TD
 - **Goal:** Create local accounts and give each user one or more roles, one of them the default.
 - **Outcome:** Each user sees and changes only what their role allows.
 
-### Back Up and Restore
-
-- **Actor:** The department that runs Fathom
-- **Goal:** Make sure Fathom's data can be recovered from automated, encrypted backups.
-- **Outcome:** Fathom's data can be recovered after a failure.
-
 ## Not Yet Covered
 
 - **What-if scenarios:** Comparing alternative plans with the approved plan and with each other depends on an open question in the brief.
