@@ -3,11 +3,11 @@
 - **ADR:** 0011
 - **Status:** Accepted
 - **Date:** 2026-11-07
-- **Revised:** 2026-11-07, to add the daily scan of the default branch's and the newest full release's images to what moving the repository needs
+- **Revised:** 2026-11-07, to add the daily scan of the default branch's and the newest full release's images to what moving the repository needs; 2026-11-14, to drop speculation about moving hosts
 
 ## Context
 
-Fathom runs as containers built from the repository, as [ADR 0001](0001-tech-stack.md) and [ADR 0003](0003-edge-proxy.md) set out. A release must reach the server as images that can be matched to their source, scanned as the [Security Plan](../security/security-plan.md) requires, with no overdue fix. Fathom is open source, and the repository may be hosted somewhere other than where it is today, so releasing must not depend on one hosting service.
+Fathom runs as containers built from the repository, as [ADR 0001](0001-tech-stack.md) and [ADR 0003](0003-edge-proxy.md) set out. A release must reach a server as images that can be matched to their source, scanned as the [Security Plan](../security/security-plan.md) requires, with no overdue fix. Fathom is open source, so releasing must not depend on one hosting service.
 
 ## Options
 
@@ -26,7 +26,7 @@ Fathom releases with project scripts and a registry:
 
 ## Consequences
 
-- **Releasing works wherever the code is hosted,** and moving the repository changes only the registry setting and, at most, the thin workflows that run the scripts: the one that publishes a release's images, and the daily scan of the default branch's and the newest release's images, which needs that host's scheduler.
+- **Releasing works wherever the code is hosted:** another host needs only the registry setting and, at most, its own thin workflows that run the same scripts.
 - **The server needs no source or build tools;** it pulls published images.
 - **Each image names its source and commit,** so what runs can be matched to the code it was built from. The commit date fixes each image's labels and dates, not its digest: each build takes the security fixes released by that day, and installed files keep their build times, so repeatable images are later work, recorded in [issue #434](https://github.com/jlarue26/fathom/issues/434).
 - **Releases are started by a person,** never on every merge, so a release is always a deliberate step.
