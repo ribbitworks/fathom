@@ -1,8 +1,8 @@
 # Saved views
 
-A view is how you've set up a table: its search, filters, sort, metrics, **Group by**, with its **Then by**, the **Draft** menu's choice, and its columns' order, hidden columns, widths, frozen columns, and units and decimal places. On **Releases**, it also keeps whether **Show retired** is on. On **Features**, it also keeps the board's stream and what its cards show. The table and the board share one view. Switching between them doesn't change it. You can save a view under a name, and apply it again later. For now you can save views on the **People**, **Features**, **Projects**, **Releases** and **Feature assignments** pages, and in **Capacity**'s **People** mode. Each tab of **Projects** has views of its own. **Feature assignments** and **Capacity** each have their own views too. Other pages are to follow.
+A view is how you've set up a table: its search, filters, sort, metrics, **Group by**, with its **Then by**, the **Draft** menu's choice, and its columns' order, hidden columns, widths, frozen columns, and units and decimal places. On **Releases**, it also keeps whether **Show retired** is on. On **Features**, it also keeps the board's stream and what its cards show. The table and the board share one view. Switching between them doesn't change it. You can save a view under a name, and apply it again later. For now you can save views on the **People**, **Features**, **Projects**, **Releases**, **Org chart** and **Feature assignments** pages, and in **Capacity**'s **People** mode. Each tab of **Projects** has views of its own. **Feature assignments** and **Capacity** each have their own views too. On the **Org chart**, a view keeps how the chart is drawn instead, as [Org chart](org-chart.md#save-a-view-of-the-chart) says. Other pages are to follow.
 
-You save and apply views from the **Views** menu: the last button after the search box. It shows once there's a view to save or apply.
+You save and apply views from the **Views** menu: the last button after the search box, or, on the **Org chart**, the last of the buttons on the left above the chart. It shows once there's a view to save or apply.
 
 ## What to Know First
 
@@ -19,7 +19,7 @@ You save and apply views from the **Views** menu: the last button after the sear
 1. Select **Save view…**. While a view is applied, it reads **Save as new view…**, and the view applied stays as it was.
 1. Type the view's **Name**.
 1. Check what the view keeps, under **Includes**.
-1. To share it, tick **Share with everyone who sees this table**.
+1. To share it, tick **Share with everyone who sees this page**.
 1. Select **Save view**.
 
 You're done when the **Views** button shows the view's name.
@@ -36,7 +36,7 @@ You're done when the **Views** button shows the view's name, with a tick beside 
 1. Apply the view.
 1. Change the table.
 1. Select **Views**.
-1. Select **Update** followed by the view's name. It shows once the table has changed.
+1. Select **Update view**. It shows once the table has changed.
 
 To rename the view, select **Rename…** in the same menu. To delete it, select **Delete view**.
 

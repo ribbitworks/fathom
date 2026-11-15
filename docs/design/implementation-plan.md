@@ -53,7 +53,7 @@ The slices are built in this order, which may change as work progresses; the sli
 | Hiring Plan | In progress: schema and server, with Position and the hiring states built in and hires known by requisition or temporary ID; lists with meanings edited on the Lists page, which marks built-in lists; planned hires as rows of People, with optional names, the Hired state for people, the seed's planned hires, and a manual test; planned hires' values in People's added columns, each offered on them unless switched off; the Left state, with each person's own state of the meaning their end date gives, and those who have left listed for everyone who sees people; planned managers, with planned hires reporting to them on People and drawn as placeholders on the org chart; filling a planned hire as one draft, from its details panel |
 | Editable Roles | In progress: schema, the server reading roles from the database, the Roles page, several roles for each account, chosen from every role on the Accounts page, with a default, acting as one at a time and switching from the account menu, each change recording the role it was made as, the Hiring plan permission area, with viewing and editing, approving split by area, the starting roles rewritten for the personas, and viewing accounts, roles, and settings apart from changing them |
 | Exports | In progress: the CSV and TSV file of what a view shows, drafts and Live rows included, from an Export icon in the page's heading on People, Features and each Projects tab, the question asked before exporting Personal or Confidential data, and recording such an export in the access history; next the remaining tables, then the grids and the Org chart |
-| Views on Every Page | In progress: what opens each page in shared code, saved views for every table on the server, the Views menu from one shared hook, hiding columns, Group by on People, and saved views on People, Releases, Features, the Projects tabs, Feature assignments and Capacity's People mode; next the Lists page on the shared table |
+| Views on Every Page | In progress: what opens each page in shared code, saved views for every table on the server, the Views menu from one shared hook, hiding columns, Group by on People, and saved views on People, Releases, Features, the Projects tabs, Feature assignments, Capacity's People mode and the Org chart; next the Lists page on the shared table |
 | Group by Several Values | Done |
 | Demand Forecasting | Approved, not started: Capacity's Demand and Work modes |
 | Added Columns and Metrics | Approved, not started |
@@ -251,7 +251,7 @@ Saved views, personal and shared, on every page with a table, and on the pages t
 7. **Saved views on Feature assignments and Capacity's People mode.** Done on 2026-11-15.
 8. **The Lists page on the shared table** ([issue #317](https://github.com/jlarue26/fathom/issues/317)).
 9. **Saved views on Lists,** with its All, Built in or Custom choice in the Views menu.
-10. **Saved views on the Org chart** ([issue #351](https://github.com/jlarue26/fathom/issues/351)).
+10. **Saved views on the Org chart** ([issue #351](https://github.com/jlarue26/fathom/issues/351)). Done on 2026-11-15.
 11. **Accounts on the shared table,** with saved views and its All, Active or Deactivated choice in the Views menu, closing [issue #318](https://github.com/jlarue26/fathom/issues/318).
 12. **Filters and saved views on the Drafts page.**
 

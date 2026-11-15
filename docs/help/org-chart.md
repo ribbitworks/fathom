@@ -1,6 +1,6 @@
 # Org chart
 
-The **Org chart** draws everyone as cards, one for each person. It has two views, and the switch at the top right chooses between them.
+The **Org chart** draws everyone as cards, one for each person. It draws reporting teams or feature teams, and the switch at the top right chooses between them.
 
 ## What to Know First
 
@@ -31,6 +31,18 @@ You're done when the card is in the middle of the chart, with a blue ring.
 
 1. On a manager's card, select **Show only this team**: the small org chart button at the card's top right.
 1. To see everyone again, select **Show everyone**.
+
+### Save a View of the Chart
+
+A view keeps how you've set up the chart, so you can come back to it. It keeps whether the chart shows reporting teams or feature teams, the **Draft** menu's choice, the levels shown, and a team shown alone. It doesn't keep the date or the person you found.
+
+1. Set up the chart the way you want it.
+1. Select **Views**, the last of the buttons on the left above the chart.
+1. Select **Save view…**.
+1. Type the view's **Name**.
+1. Select **Save view**.
+
+You're done when the **Views** button shows the view's name. See [Saved views](saved-views.md) to apply, change or share a view.
 
 ### See Someone's Details
 

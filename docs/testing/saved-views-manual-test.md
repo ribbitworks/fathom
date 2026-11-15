@@ -122,7 +122,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `B284` Select **Save view…**.
   - **Expected:**
-    - The dialog shows a checkbox, **Share with everyone who sees this table**, below **Name**.
+    - The dialog shows a checkbox, **Share with everyone who sees this page**, below **Name**.
     - The checkbox is not ticked.
   - **Notes:**
 
@@ -132,7 +132,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No message is under it.
   - **Notes:**
 
-- [ ] `5E73` Tick **Share with everyone who sees this table**.
+- [ ] `5E73` Tick **Share with everyone who sees this page**.
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 
@@ -186,13 +186,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `E7E3` Open the Views menu.
   - **Expected:**
     - **Save as new view…** is offered.
-    - **Update Fictional team view** is offered.
+    - **Update view** is offered.
   - **Notes:**
 
 - [ ] `3AB9` Select **Save as new view…**.
   - **Expected:**
     - A dialog titled "Save view" shows.
-    - **Share with everyone who sees this table** is not ticked.
+    - **Share with everyone who sees this page** is not ticked.
   - **Notes:**
 
 - [ ] `FBAE` Type `Fictional passed round` in **Name**.
@@ -269,7 +269,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `DC7D` Select **Save as new view…**.
   - **Expected:**
     - A dialog titled "Save view" shows.
-    - **Share with everyone who sees this table** is not ticked.
+    - **Share with everyone who sees this page** is not ticked.
   - **Notes:**
 
 - [ ] `368C` Type `Fictional team view` in **Name**.
@@ -350,7 +350,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `F9C3` Press Tab.
-  - **Expected:** Focus moves to **Share with everyone who sees this table**.
+  - **Expected:** Focus moves to **Share with everyone who sees this page**.
   - **Notes:**
 
 - [ ] `AB89` Press Space.
@@ -763,7 +763,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The name shows in **Name**.
   - **Notes:**
 
-- [ ] `CFB2` Tick **Share with everyone who sees this table**.
+- [ ] `CFB2` Tick **Share with everyone who sees this page**.
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 
@@ -908,7 +908,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The name shows in **Name**.
   - **Notes:**
 
-- [ ] `BD12` Tick **Share with everyone who sees this table**.
+- [ ] `BD12` Tick **Share with everyone who sees this page**.
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 

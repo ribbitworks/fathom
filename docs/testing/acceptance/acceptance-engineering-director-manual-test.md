@@ -229,14 +229,14 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `C002` Open the Views menu, and select **Save view…**.
-  - **Expected:** The dialog shows a checkbox, **Share with everyone who sees this table**, not ticked, below **Name**.
+  - **Expected:** The dialog shows a checkbox, **Share with everyone who sees this page**, not ticked, below **Name**.
   - **Notes:**
 
 - [ ] `85D9` Type `Fictional hiring` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `CFEB` Tick **Share with everyone who sees this table**.
+- [ ] `CFEB` Tick **Share with everyone who sees this page**.
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 
@@ -316,14 +316,14 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `E050` Open the Views menu, and select **Save view…**.
   - **Expected:**
     - A dialog titled "Save view" shows **Name**.
-    - Below it is a checkbox, **Share with everyone who sees this table**, not ticked.
+    - Below it is a checkbox, **Share with everyone who sees this page**, not ticked.
   - **Notes:**
 
 - [ ] `F359` Type `Fictional platform` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `57B0` Tick **Share with everyone who sees this table**.
+- [ ] `57B0` Tick **Share with everyone who sees this page**.
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 
@@ -359,7 +359,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `1D44` Tick **Share with everyone who sees this table**.
+- [ ] `1D44` Tick **Share with everyone who sees this page**.
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 
@@ -391,7 +391,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `C609` Tick **Share with everyone who sees this table**.
+- [ ] `C609` Tick **Share with everyone who sees this page**.
   - **Expected:** The checkbox is ticked.
   - **Notes:**
 

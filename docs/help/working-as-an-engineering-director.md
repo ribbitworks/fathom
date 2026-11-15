@@ -41,9 +41,9 @@ The change takes effect straight away, with no draft.
 
 ## Share a View
 
-A view is how you've set up a table, such as its search, filters and columns. A shared view is seen by everyone who sees the table.
+A view is how you've set up a table, such as its search, filters and columns. A shared view is seen by everyone who sees the page.
 
 1. Set up the table on **People**, **Features**, **Releases**, **Feature assignments**, **Capacity**'s **People** or a **Projects** tab the way others need it.
-1. Save the view, and tick **Share with everyone who sees this table**. See [Saved views](saved-views.md#save-a-view).
+1. Save the view, and tick **Share with everyone who sees this page**. See [Saved views](saved-views.md#save-a-view).
 
 You're done when the plan and people show what you approved, and no drafts are waiting.
