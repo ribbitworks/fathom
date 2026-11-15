@@ -105,7 +105,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `68C9` Select **Fit to screen**.
   - **Expected:**
-    - The whole organization fits in the panel.
+    - The whole chart fits in the panel.
     - Its cards are too small to read.
     - It reaches down further than across.
   - **Notes:**

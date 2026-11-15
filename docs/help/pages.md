@@ -6,8 +6,8 @@ The left-hand menu shows only the pages your role lets you open. A page your rol
 
 - **Sections:** the left-hand menu groups the pages into sections: **Plan**, **People**, **Administration**, **History** and **Help**.
 - **Permissions:** a role is a set of permissions. Each one is a box in the grid on the [Roles](roles.md) page. **View Plan**, for example, is the **View** box in the **Plan** row. **Edit** brings **View** with it, so a role that edits an area sees it too.
-- **Personal details:** **View Personal details** is the **Personal** box under **Data classification**. Some pages need it, since they show the months people join and leave teams. Those dates are Personal unless your organization moves them. If it does, these pages need the class the dates are in instead. See [Data classes](data-classes.md).
-- **Starting roles:** Fathom starts with nine roles, one for each kind of work. The tables below say which of them see each page. Your organization can change these roles and make others, so check a role's own boxes on the Roles page.
+- **Personal details:** **View Personal details** is the **Personal** box under **Data classification**. Some pages need it, since they show the months people join and leave teams. Those dates are Personal unless they're moved to another class. If it does, these pages need the class the dates are in instead. See [Data classes](data-classes.md).
+- **Starting roles:** Fathom starts with nine roles, one for each kind of work. The tables below say which of them see each page. These roles can be changed, and others made, so check a role's own boxes on the Roles page.
 
 ## Plan
 
@@ -22,7 +22,7 @@ The left-hand menu shows only the pages your role lets you open. A page your rol
 
 | Page | What it's for | Shown with | Starting roles that see it |
 | --- | --- | --- | --- |
-| [People](people.md) | It lists everyone in the organization and the planned hires, as a table. | **View People** | Every role but Administrator |
+| [People](people.md) | It lists everyone and the planned hires, as a table. | **View People** | Every role but Administrator |
 | [Org chart](org-chart.md) | It draws reporting teams and feature teams as cards, today or, with **View Personal details**, on other dates. | **View People** | Every role but Administrator |
 | [Feature assignments](feature-assignments.md) | It shows who is on which feature team, month by month. | **View Feature teams** with **View Personal details** | Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive |
 | [Drafts](drafts-page.md) | It lists the drafts waiting. Approvers approve or reject them there. | Any of **View Plan**, **View Features and releases**, **View People** or **View Configuration** | Every role but Administrator |

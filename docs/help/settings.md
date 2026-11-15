@@ -1,6 +1,6 @@
 # Settings
 
-**Settings** holds Fathom's settings for your whole organization: its time zone, and the rules for passwords. Each has its own panel.
+**Settings** holds Fathom's settings, which apply to everyone: its time zone, and the rules for passwords. Each has its own panel.
 
 ## What to Know First
 
@@ -20,7 +20,7 @@ See [Access history](access-history.md) for more.
 1. Check the day and time shown under it.
 1. Select **Save**.
 
-You're done when **Save** is greyed out again, and the day and time under **Time zone** are right for your organization.
+You're done when **Save** is greyed out again, and the day and time under **Time zone** are right.
 
 ### Set the Rules for Passwords
 

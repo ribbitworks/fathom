@@ -8,7 +8,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 
 ## Working in Fathom
 
-- [Setting up Fathom](setting-up-fathom.md): a new Fathom, from an empty database to an organization ready to plan.
+- [Setting up Fathom](setting-up-fathom.md): a new Fathom, from an empty database to one ready to plan with.
 - [How work moves between roles](how-work-moves-between-roles.md): a change drafted, approved, and staffed.
 - [Working as a Team Member](working-as-a-team-member.md): the plan, projects and people, to read.
 - [Working as a Product Manager](working-as-a-product-manager.md): features, projects, proposals and releases.
@@ -17,7 +17,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 - [Working as an Engineering Manager](working-as-an-engineering-manager.md): feature teams, allocations and estimates.
 - [Working as an Engineering Director](working-as-an-engineering-director.md): approving, reporting lines, hiring and data classes.
 - [Working as a Workforce Administrator](working-as-a-workforce-administrator.md): people, the hiring plan, lists, feature teams, planning settings and data classes.
-- [Working as an Executive](working-as-an-executive.md): the plan, the organization and what changed, to read.
+- [Working as an Executive](working-as-an-executive.md): the plan, the people and what changed, to read.
 - [Working as an Administrator](working-as-an-administrator.md): accounts, roles, settings and the access history.
 
 ## Plan
@@ -29,7 +29,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 
 ## People
 
-- [People](people.md): everyone in the organization and the planned hires, as a table.
+- [People](people.md): everyone and the planned hires, as a table.
 - [Org chart](org-chart.md): reporting teams and feature teams as cards, today or on another date.
 - [Feature assignments](feature-assignments.md): who is on which feature team, month by month.
 - [Capacity](capacity.md): what each person works on, month by month, and the planning settings capacity and forecasts are worked out with.

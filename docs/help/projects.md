@@ -1,12 +1,12 @@
 # Projects
 
-**Projects** holds the work your organization delivers to customers, and what goes with it. Each kind of record has its own tab.
+**Projects** holds the work delivered to customers, and what goes with it. Each kind of record has its own tab.
 
 ## What to Know First
 
 - **Projects:** a project is work delivered to one or more customers. A project with no customers is an internal project.
 - **Proposals:** a proposal is work offered or requested that may become a project, such as a bid or a customer's request.
-- **Customers:** a customer is who a project's work is for, outside your organization or inside it.
+- **Customers:** a customer is whoever a project's work is for.
 - **Milestones:** the dated points in a project, such as a delivery to the customer.
 - **Features:** a project or proposal names the features it needs. Features are planned on the [Features](features.md) page.
 - **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. It goes live once someone whose role approves the plan approves it on the **Drafts** page. A hollow dot marks a change you haven't published yet.

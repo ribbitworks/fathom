@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies that work passes from one role to the next as [How Work Moves Between Roles](../../help/how-work-moves-between-roles.md) describes: a Product Manager drafts a project and a feature with its cycle and team, the Engineering Director approves them, and an Engineering Manager staffs the feature teams, from next month and months ahead, for approval, on the organization [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) has just set up. It also verifies that the org chart and Feature assignments show each team month by month.
+Verifies that work passes from one role to the next as [How Work Moves Between Roles](../../help/how-work-moves-between-roles.md) describes: a Product Manager drafts a project and a feature with its cycle and team, the Engineering Director approves them, and an Engineering Manager staffs the feature teams, from next month and months ahead, for approval, on the people and teams [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) has just set up. It also verifies that the org chart and Feature assignments show each team month by month.
 
 ## Test Environment
 

@@ -1,6 +1,6 @@
 # Working as an Engineering Director
 
-As an Engineering Director, you run your organization's plan and people. You change and approve almost anything, you see all Personal and Confidential data, and you decide which class each detail belongs to. You also see accounts, roles, settings and the access history, but you don't change them.
+As an Engineering Director, you run the plan and people. You change and approve almost anything, you see all Personal and Confidential data, and you decide which class each detail belongs to. You also see accounts, roles, settings and the access history, but you don't change them.
 
 ## What to Know First
 

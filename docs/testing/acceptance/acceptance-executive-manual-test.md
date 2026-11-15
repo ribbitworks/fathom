@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies the workflows of [Working as an Executive](../../help/working-as-an-executive.md) on the seed data: reading the plan on Features and on the Releases timeline, live only or with drafts, looking at the organization on the org chart and in Metrics, seeing people and administration without changing them, and following what changed in both histories, and keeping a view of People.
+Verifies the workflows of [Working as an Executive](../../help/working-as-an-executive.md) on the seed data: reading the plan on Features and on the Releases timeline, live only or with drafts, looking at people on the org chart and in Metrics, seeing people and administration without changing them, and following what changed in both histories, and keeping a view of People.
 
 ## Test Environment
 
@@ -97,7 +97,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
     - There is no **New feature** button.
   - **Notes:**
 
-### EXECUTIVE-02: An Executive Looks at the Organization
+### EXECUTIVE-02: An Executive Looks at People
 
 **Account:** Executive, `executive@fathom.test`, the same as EXECUTIVE-01.
 

@@ -1,6 +1,6 @@
 # People
 
-The **People** page lists everyone in your organization, one row each, with your planned hires beside them. A planned hire is a job you plan to fill. Each row holds the person's position, manager, team and dates, and any columns your organization adds.
+The **People** page lists everyone, one row each, with your planned hires beside them. A planned hire is a job you plan to fill. Each row holds the person's position, manager, team and dates, and any columns added to it.
 
 ## What to Know First
 
@@ -69,7 +69,7 @@ You're done once it's approved. The person's **Team** then shows their new manag
 
 ### See Another Date
 
-People can show your organization on another day, in the past or the future. Your role needs to see Personal data for past days, and Confidential data for future ones.
+People can show another day, in the past or the future. Your role needs to see Personal data for past days, and Confidential data for future ones.
 
 1. In the date row above the table, type a day in **Date**. You can also select an arrow to move a month, or drag the timeline.
 1. To come back to today, select **Today**.
@@ -175,7 +175,7 @@ You're done when the file is saved.
 
 ### Remove a Person or Planned Hire
 
-When someone leaves the organization, don't remove them. Give them an **End** date instead, so their row stays. Their **State** follows that date: once it has passed, they show as having left. A state that means Left is only for someone whose **End** date has passed.
+When someone leaves, don't remove them. Give them an **End** date instead, so their row stays. Their **State** follows that date: once it has passed, they show as having left. A state that means Left is only for someone whose **End** date has passed.
 
 To remove a row:
 
@@ -188,7 +188,7 @@ You're done when the row is struck through. It's removed once the removal is app
 
 - **A planned hire with no name** shows its position and ID in grey, such as **SDET, TBD-5**. **TBD-** and a number is a temporary ID, used until the hire has its own.
 - **Expected** is the month the hire is expected to start, worked out from its **Start** date. You can't type it. It's empty for a hire with no **Start**, which is marked **Planned, no date**.
-- **The hiring plan** holds your organization's planned hires. Some roles may see it, and some may not.
+- **The hiring plan** holds the planned hires. Some roles may see it, and some may not.
 - **A planned hire's Start** is the day it's planned to start. You see it, and the hire's drafts, only if your role may see the hiring plan. Otherwise you see the hire's name, ID, position, state, manager and **Expected** month.
 - **A red Left box** after a manager's name means they've left, and people still report to them.
 - **A value in red** can't be saved as it is. The reason shows under the row, in its first cell.

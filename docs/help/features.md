@@ -1,6 +1,6 @@
 # Features
 
-**Features** lists every feature your organization plans, one row each, grouped by the cycle it targets. A feature is a body of work that one feature team delivers, such as **Offline Sync**.
+**Features** lists every planned feature, one row each, grouped by the cycle it targets. A feature is a body of work that one feature team delivers, such as **Offline Sync**.
 
 ## What to Know First
 
@@ -114,12 +114,12 @@ You're done when the row is struck through. It's removed once the removal is app
 - **Not released yet**, after a stream's name, such as **Platform: Not released yet**, means the feature's cycle isn't in any release.
 - **No team** marks a planned or in-progress feature that has no feature team yet.
 - **Needed by** is the month the feature is wanted. Type it as digits, such as `2027-03`, and it shows as Mar 2027. It's a rough wish; **Target cycle** is the commitment.
-- **Status** says how far along the feature is. Your organization names its own statuses, and each one means Possible, Planned, In progress, Done or Cancelled. A new feature starts on the first status that means Possible.
+- **Status** says how far along the feature is. Statuses are named on the **Lists** page, and each one means Possible, Planned, In progress, Done or Cancelled. A new feature starts on the first status that means Possible.
 - **Projects** and **Proposals** name the projects that need the feature, and the proposals that propose it. Changing them changes that project or proposal. If you take a feature off a proposal, you give the reason on the proposal; see [Projects](projects.md#give-a-reason-for-removing-a-feature-from-a-proposal).
 - **Effort** is the work the feature needs, such as 2.5 PD for person-days. Point at it to see the hours.
-- **Priority** says how much the feature matters to your organization, apart from its status, from **Critical** to **Low**.
+- **Priority** says how much the feature matters, apart from its status, from **Critical** to **Low**.
 - **Size** is the feature's rough size before it's estimated, from **XS** to **XL**.
 - **Risk** says how much could go wrong in building it, from **Low** to **High**.
-- **Priority**, **Size** and **Risk** are optional. Your organization keeps their choices on the **Lists** page.
+- **Priority**, **Size** and **Risk** are optional. Their choices are kept on the **Lists** page.
 - **Release** follows from **Target cycle**, so you can't change it.
 - **Staffed** says **Yes** when someone is allocated to a planned or in-progress feature, and **No** when nobody is. It's empty for other features. Fathom works it out from the allocations, so you can't change it. To find features nobody is on, filter **Staffed** to **No**.

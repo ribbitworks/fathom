@@ -1,6 +1,6 @@
 # Org chart
 
-The **Org chart** draws your organization as cards, one for each person. It has two views, and the switch at the top right chooses between them.
+The **Org chart** draws everyone as cards, one for each person. It has two views, and the switch at the top right chooses between them.
 
 ## What to Know First
 
@@ -78,7 +78,7 @@ You're done when the change shows in the team's panel. A change of colour applie
 
 ### See Another Date
 
-The chart can show your organization on another day, in the past or the future.
+The chart can show another day, in the past or the future.
 
 1. In the date row under **Find a person or team**, type a day in **Date**. You can also select an arrow to move a month, or drag the timeline.
 1. To come back to today, select **Today**.

@@ -4,7 +4,7 @@ As a Project Manager, you see projects through to delivery: their milestones, th
 
 ## What to Know First
 
-- **What you see:** you see people with their Personal and Confidential data, and the hiring plan, which holds your organization's planned hires.
+- **What you see:** you see people with their Personal and Confidential data, and the hiring plan, which holds the planned hires.
 - **What you approve:** you approve other people's drafts of the plan, features and releases, allocations, people and planned hires, feature teams, lists, and the planning settings. Your own drafts need another approver, such as the Engineering Director.
 - **Milestones:** a project's dated points, such as a delivery to the customer. **Next delivery** is the next milestone marked **Customer delivery**.
 - **Drafts:** your changes are drafts. Nobody else sees them until you select **Publish** in the top bar.

@@ -3,7 +3,7 @@
 **Capacity** is about how much feature work people can deliver. It has two modes, and the switch beside the heading chooses between them:
 
 - **People** shows what each person and planned hire works on, month by month, and how much of their month it takes.
-- **Settings** holds the planning settings for your whole organization.
+- **Settings** holds the planning settings, which apply to everyone.
 
 ## What to Know First
 

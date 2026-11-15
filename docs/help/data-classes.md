@@ -21,8 +21,8 @@ A new list or column that isn't approved yet is different. Its class is part of 
 The page has up to three sections:
 
 - **Built-in details** are the details Fathom has from the start, such as **Start date** and **Hiring plan**. **About** lists the pages, views and columns that need each one, and for **Hiring plan**, the parts of planned hires its class keeps from view.
-- **Columns** are the columns your organization added to **People**. **About** says where each one shows, and the list it takes its class from, if it has one. You see this section if your role sees people.
-- **Lists** are your organization's lists of choices. **About** names the columns on **People** that use each one. You see this section if your role sees configuration.
+- **Columns** are the columns added to **People**. **About** says where each one shows, and the list it takes its class from, if it has one. You see this section if your role sees people.
+- **Lists** are the lists of choices. **About** names the columns on **People** that use each one. You see this section if your role sees configuration.
 
 A column that picks from a list takes that list's class. So it has no **Change class…** of its own; you change its list's class instead.
 

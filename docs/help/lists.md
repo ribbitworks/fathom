@@ -5,8 +5,8 @@
 ## What to Know First
 
 - **Choices:** the values in a list, such as each site's name. Each choice can have a description.
-- **Built-in lists:** lists Fathom needs, such as **Positions** and **Hiring states**. They're marked **Built in**, and you can't retire or remove them, but their choices are your organization's own.
-- **Meanings:** in some lists, each choice has a meaning that Fathom acts on, such as **Proposed** or **Open**. Fathom shows the choice's own name, so you can call it what your organization calls it.
+- **Built-in lists:** lists Fathom needs, such as **Positions** and **Hiring states**. They're marked **Built in**, and you can't retire or remove them, but their choices can be changed.
+- **Meanings:** in some lists, each choice has a meaning that Fathom acts on, such as **Proposed** or **Open**. Fathom shows the choice's own name, so you can call it whatever you like.
 - **Classes:** each list has a class, which decides who sees the values picked from it. A list is **General**, seen by everyone, unless its values are private.
 - **Drafts:** every change to a list or its choices is a draft, apart from a change of class. Nobody else sees it until you select **Publish** in the top bar. It goes live once someone whose role approves configuration approves it.
 

@@ -1,6 +1,6 @@
 # Working as a Workforce Administrator
 
-As a Workforce Administrator, you keep your organization's records: its people and planned hires, reporting lines, feature teams, lists and planning settings. Engineering Operations Managers hold this role. If Fathom is brand new, start with [Setting Up Fathom](setting-up-fathom.md).
+As a Workforce Administrator, you keep Fathom's records: its people and planned hires, reporting lines, feature teams, lists and planning settings. Engineering Operations Managers hold this role. If Fathom is brand new, start with [Setting Up Fathom](setting-up-fathom.md).
 
 ## What to Know First
 

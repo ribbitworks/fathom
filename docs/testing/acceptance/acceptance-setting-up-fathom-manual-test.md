@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies that a Workforce Administrator can set up a brand-new Fathom as [Setting Up Fathom](../../help/setting-up-fathom.md) describes, from an empty database. The Administrator makes the account and sets the time zone. The Workforce Administrator then adds the lists and a column, the people, their managers and team names, a release stream, the working time, and feature teams recorded from six months ago, each round approved before the next. A Team Member reads the organization that results. It is the first acceptance test; [Work Between Roles](acceptance-work-between-roles-manual-test.md) runs straight after it, on the organization it sets up.
+Verifies that a Workforce Administrator can set up a brand-new Fathom as [Setting Up Fathom](../../help/setting-up-fathom.md) describes, from an empty database. The Administrator makes the account and sets the time zone. The Workforce Administrator then adds the lists and a column, the people, their managers and team names, a release stream, the working time, and feature teams recorded from six months ago, each round approved before the next. A Team Member reads the people and teams that result. It is the first acceptance test; [Work Between Roles](acceptance-work-between-roles-manual-test.md) runs straight after it, on the people and teams it sets up.
 
 ## Test Environment
 
@@ -720,7 +720,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The page says "No drafts waiting for approval."
   - **Notes:**
 
-### SETUP-09: A Team Member Reads the New Organization
+### SETUP-09: A Team Member Reads the New People and Teams
 
 **Account:** Team Member, `team.member@fathom.test`, changed from SETUP-08.
 
@@ -755,4 +755,4 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - It offers no **New feature team**.
   - **Notes:**
 
-**Afterwards:** Run [Work Between Roles](acceptance-work-between-roles-manual-test.md) next, on this organization. To stop here instead, run Reset the Database.
+**Afterwards:** Run [Work Between Roles](acceptance-work-between-roles-manual-test.md) next, on these people and teams. To stop here instead, run Reset the Database.

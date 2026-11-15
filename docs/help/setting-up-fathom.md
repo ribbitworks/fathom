@@ -1,6 +1,6 @@
 # Setting Up Fathom
 
-This page takes you, as the Workforce Administrator, from a brand-new Fathom to an organization others can plan with.
+This page takes you, as the Workforce Administrator, from a brand-new Fathom to one others can plan with.
 
 Before you start, an Administrator signs in as Fathom Administrator, the account Fathom makes when it's installed. They make your account and one for whoever approves your changes, such as the Engineering Director, and they set Fathom's time zone. See [Working as an Administrator](working-as-an-administrator.md).
 
@@ -19,9 +19,9 @@ Because columns pick from lists, you set things up in this order: the lists, the
 
 A new Fathom comes with only the lists it can't work without, such as **Positions** and **Hiring states**.
 
-1. Select the **Lists** page, open **Positions**, and add your organization's positions.
+1. Select the **Lists** page, open **Positions**, and add the positions.
 1. Open **Hiring states**. It starts with **Request to hire**, **Approved to hire**, **Hired** and **Left**.
-1. Rename those to the words your organization uses, if they differ. You can add more too, choosing a meaning for each, but keep at least one for each meaning shown beside them.
+1. Rename those to the words you use, if they differ. You can add more too, choosing a meaning for each, but keep at least one for each meaning shown beside them.
 1. Make a list for anything else you'll describe people by, such as their site or their level. Select **New list**, and give it a name. If its values are private, choose **Personal** or **Confidential** as its class there too. Then add its choices.
 
 See [Lists](lists.md) for more.

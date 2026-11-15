@@ -1,6 +1,6 @@
 # Working as an Engineering Manager
 
-As an Engineering Manager, you staff the work: who is on which feature team, month by month, and what the features they build will take. You see everyone's Personal and Confidential data, and the hiring plan, which holds your organization's planned hires.
+As an Engineering Manager, you staff the work: who is on which feature team, month by month, and what the features they build will take. You see everyone's Personal and Confidential data, and the hiring plan, which holds the planned hires.
 
 ## What to Know First
 

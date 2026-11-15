@@ -49,7 +49,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 ### Part 1: From an Empty Database
 
-#### REL-01: An Organization Starts With No Release Streams
+#### REL-01: A New Fathom Starts With No Release Streams
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
 

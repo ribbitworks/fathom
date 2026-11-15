@@ -1,6 +1,6 @@
 # Working as an Executive
 
-As an Executive, you see the whole plan and organization, with every person's Personal and Confidential details. You read; you don't change any records. You also see accounts, roles, settings, and both histories.
+As an Executive, you see the whole plan and everyone in it, with every person's Personal and Confidential details. You read; you don't change any records. You also see accounts, roles, settings, and both histories.
 
 ## What to Know First
 
@@ -12,10 +12,10 @@ As an Executive, you see the whole plan and organization, with every person's Pe
 1. On **Releases**, use the timeline to see when each release ships. See [Releases](releases.md#use-the-timeline).
 1. To see only what's approved, choose **Live only** in the **Draft** menu above the table. See [Drafts](drafts.md#what-the-draft-menu-shows).
 
-## Look at the Organization
+## Look at People
 
 1. On the **Org chart**, find a person or team. See [Org chart](org-chart.md#find-a-person-or-team).
-1. To see the organization on another day, choose the date. See [Org chart](org-chart.md#see-another-date).
+1. To see the chart on another day, choose the date. See [Org chart](org-chart.md#see-another-date).
 1. On **People**, select **Metrics** to count people by a column, such as level or site. See [People](people.md#count-people).
 
 ## Follow What Changed
