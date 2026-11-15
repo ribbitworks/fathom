@@ -142,5 +142,5 @@ flowchart TD
 ## Not Yet Covered
 
 - **What-if scenarios:** Comparing alternative plans with the approved plan and with each other, which is still to be designed.
-- **Configuring cycles and releases:** Setting up release streams, with their cycle lengths and cycle names, and choosing which cycles each release includes, have no use case yet.
+- **Configuring cycles and releases:** Setting up schedules, with their cycle lengths and cycle names, and choosing which cycles each release includes, have no use case yet.
 - **Custom fields and tables:** Defining custom fields and tables comes in a later stage of the [Roadmap](roadmap.md), and has no use case yet.

@@ -30,13 +30,13 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | Confidential data, seen by Project Managers and Engineering Managers since the maintainer's decision of 2026-11-13 | None | None | None | View | View | Edit | Edit | View | None |
 | Classify data: moving built-in details, lists, and columns between the classes the role sees, as the [Decisions Log](decisions.md#people-and-privacy) sets out under Data classes, decided by the maintainer on 2026-11-11 | None | None | None | None | None | Edit | Edit | None | None |
 | The hiring plan: every planned hire, with its target date, drafts, and history (decided by the maintainer on 2026-11-07), seen and changed only with its class too, Confidential unless the organization moves it, decided by the maintainer on 2026-11-13 | None | None | None | View | View | Edit | Edit | View | None |
-| Planning configuration: release streams, their cycles and cycle names, seen by everyone who sees features and releases and changed as drafts approved with Approve Features, decided by the maintainer on 2026-11-09, and composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | View | Edit | Edit | View | None |
+| Planning configuration: schedules, their cycles and cycle names, seen by everyone who sees features and releases and changed as drafts approved with Approve Features, decided by the maintainer on 2026-11-09, and composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | View | Edit | Edit | View | None |
 | The planning settings, on Capacity: hours a day and working days, which everyone who sees the plan or features reads as the conversions between units of effort, and focus, buffer and ramp-up, changed as drafts approved with Approve Configuration, and seen by Product Managers and Engineering Managers too, decided by the maintainer on 2026-11-11 | None | View | None | View | View | Edit | Edit | View | None |
 | Lists of choices, and the columns added to People and Features (everyone with View Features and releases also sees the columns on Features and their values) | None | View lists | None | View lists, decided by the maintainer on 2026-11-01 | View lists | Edit | Edit | View lists | None |
 | Draft rows of the data the role sees, made by editing it | View | Edit | Edit | Edit | Edit | Edit | Edit | View (**proposal**: none) | None |
 | Approving drafts of the plan: projects, proposals, and the roadmap | None | Approve | None | Approve | None | Approve | None | None | None |
 | Approving drafts of allocations (decided by the maintainer on 2026-11-09) | None | None | None | Approve | None | Approve | None | None | None |
-| Approving drafts of features, releases, release streams, and cycle patterns, given to everyone who approved the plan or releases | None | Approve | None | Approve | None | Approve | None | None | None |
+| Approving drafts of features, releases, schedules, and cycle patterns, given to everyone who approved the plan or releases | None | Approve | None | Approve | None | Approve | None | None | None |
 | Approving drafts of people, teams, and reporting lines | None | None | None | Approve | None | Approve | None | None | None |
 | Approving drafts of planned hires | None | None | None | Approve | None | Approve | None | None | None |
 | Approving drafts of lists of choices, of the columns added to People and Features, and of the planning settings | None | None | None | Approve | None | Approve | None | None | None |
@@ -65,7 +65,7 @@ Columns on Features are added and changed by the Product Manager and the Enginee
 
 ## Releases
 
-**Proposal:** Roles that edit the plan, such as Project Manager, make releases and choose which cycles each includes. The Workforce Administrator sets up release streams, their cycle lengths, and their naming patterns. Changing one cycle's length also moves the releases and features on cycles that move, which the Workforce Administrator may do without editing releases or features otherwise, as the [Decisions Log](decisions.md#planning) sets out.
+**Proposal:** Roles that edit the plan, such as Project Manager, make releases and choose which cycles each includes. The Workforce Administrator sets up schedules, their cycle lengths, and their naming patterns. Changing one cycle's length also moves the releases and features on cycles that move, which the Workforce Administrator may do without editing releases or features otherwise, as the [Decisions Log](decisions.md#planning) sets out.
 
 ## Access to Your Own Record and Your Reports
 

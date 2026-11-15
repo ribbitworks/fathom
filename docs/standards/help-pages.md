@@ -15,7 +15,7 @@ How Fathom's Help pages in `docs/help/` are written, so they read the way a coll
 
 - **Must** use short sentences, each with a subject and a verb, that a person would say out loud, and say "you" to the reader.
 - **Must** say what to do in each step, and add why only where the reader would otherwise wonder.
-- **Must** explain a term, such as a table, a list, a class, a draft or a stream, in one plain sentence before a step relies on it. A page that leans on several gathers them under a short "What to Know First".
+- **Must** explain a term, such as a table, a list, a class, a draft or a schedule, in one plain sentence before a step relies on it. A page that leans on several gathers them under a short "What to Know First".
 - **Must** give one link where the reader would want more, as a closing "See [Lists](../help/lists.md)" for its section, not "as [Lists](../help/lists.md) sets out" on every step.
 - **Must** give each step one action: a step that needs several sentences is two steps.
 - **Must** say the real sequence: where Fathom needs one change approved before the next is possible, the steps say so, in rounds.

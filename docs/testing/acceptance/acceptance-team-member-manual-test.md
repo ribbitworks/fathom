@@ -119,7 +119,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] `9A61` Select the details button at the right of the **Stream** cell of 'Platform'.
+- [ ] `9A61` Select the details button at the right of the **Schedule** cell of 'Platform'.
   - **Expected:**
     - 'Harbor 1' has no **⋯** button.
     - There is no **New release…** button.
@@ -130,7 +130,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `DB21` Select **All** on the timeline.
-  - **Expected:** Each stream's lane shows from its first cycle to its last without scrolling.
+  - **Expected:** Each schedule's lane shows from its first cycle to its last without scrolling.
   - **Notes:**
 
 - [ ] `E851` Hover over the span of 'Harbor 1' on the timeline.

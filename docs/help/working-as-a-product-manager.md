@@ -5,7 +5,7 @@ As a Product Manager, you shape the plan. That's the projects customers need, th
 ## What to Know First
 
 - **Features:** a feature is a body of work that one feature team delivers. It targets a cycle, a planning period such as a quarter.
-- **Releases:** a release ships the features that target its cycles. Each release belongs to a release stream, such as one product line's.
+- **Releases:** a release ships the features that target its cycles. Each release belongs to a schedule, such as one product line's.
 - **Projects and proposals:** a project is work delivered to customers. A proposal is work offered or requested that may become a project. A project's milestones are its dated points, such as a delivery to the customer.
 - **Drafts:** your changes are drafts. Nobody else sees them until you select **Publish** in the top bar, and they go live once someone approves them. Your own drafts need another approver, such as a Project Manager or the Engineering Director.
 
@@ -32,7 +32,7 @@ As a Product Manager, you shape the plan. That's the projects customers need, th
 
 ## Make a Release
 
-1. On **Releases**, open the stream, and make the release from its cycles. See [Releases](releases.md#make-a-release).
+1. On **Releases**, open the schedule, and make the release from its cycles. See [Releases](releases.md#make-a-release).
 1. Write what the release ships in its note. See [Releases](releases.md#write-a-releases-note).
 1. To see what it holds, group **Features** by **Release**. See [Features](features.md#group-the-table).
 1. Select **Publish** in the top bar.

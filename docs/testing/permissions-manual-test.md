@@ -89,14 +89,14 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `AA88` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The table of release streams shows.
+  - **Expected:** The table of schedules shows.
   - **Notes:**
 
-- [ ] `50E9` Select the details button at the right of the **Stream** cell of 'Platform'.
+- [ ] `50E9` Select the details button at the right of the **Schedule** cell of 'Platform'.
   - **Expected:**
     - Under **Releases**, the side panel lists 'Harbor 1', 'Harbor 2 LTS', 'Harbor 3' and 'Harbor 4'
     - A light green Live row is under 'Harbor 2 LTS' and under 'Harbor 3'
-    - There is no **New release…** button and no **New release stream** button
+    - There is no **New release…** button and no **New schedule** button
   - **Notes:**
 
 - [ ] `3EDC` Select the **Drafts** page in the left-hand menu.
@@ -121,13 +121,13 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `B4C1` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The table of release streams shows.
+  - **Expected:** The table of schedules shows.
   - **Notes:**
 
-- [ ] `F936` Select the details button at the right of the **Stream** cell of 'Platform'.
+- [ ] `F936` Select the details button at the right of the **Schedule** cell of 'Platform'.
   - **Expected:**
     - The side panel opens, with **New release…** under **Releases**
-    - There is no **New release stream** button at the top right of the page
+    - There is no **New schedule** button at the top right of the page
   - **Notes:**
 
 - [ ] `5F2C` Select **New release…**.
@@ -563,10 +563,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Team Member granted only **Edit** on **Features and releases**, **Approve** on **Features and releases** and **Approve own drafts** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] `3A4B` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The table of release streams shows.
+  - **Expected:** The table of schedules shows.
   - **Notes:**
 
-- [ ] `2EE1` Select the details button at the right of the **Stream** cell of 'Platform'.
+- [ ] `2EE1` Select the details button at the right of the **Schedule** cell of 'Platform'.
   - **Expected:** The side panel opens, headed 'Platform', with **Releases** listed.
   - **Notes:**
 
@@ -606,7 +606,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 ### Configuration
 
-#### PERM-16: View Configuration Shows Lists and Release Streams Without Changing Them
+#### PERM-16: View Configuration Shows Lists and Schedules Without Changing Them
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-15 ended with.
 
@@ -621,7 +621,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `D311` Select the **Releases** page in the left-hand menu.
   - **Expected:**
     - 'Platform' and 'Patches' are in the table
-    - There is no **New release stream** button
+    - There is no **New schedule** button
   - **Notes:**
 
 - [ ] `C148` Select the **Drafts** page in the left-hand menu.
@@ -632,28 +632,28 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Afterwards:** Run Restore Team Member.
 
-#### PERM-17: Edit Configuration Changes Release Streams
+#### PERM-17: Edit Configuration Changes Schedules
 
 **Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-16 ended with.
 
 **Preconditions:** Team Member granted only **Edit** on **Configuration** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] `B0BC` Select the **Releases** page in the left-hand menu.
-  - **Expected:** **New release stream** is at the top right of the page.
+  - **Expected:** **New schedule** is at the top right of the page.
   - **Notes:**
 
-- [ ] `D3C6` Select **New release stream**.
-  - **Expected:** A dialog titled "New release stream" opens.
+- [ ] `D3C6` Select **New schedule**.
+  - **Expected:** A dialog titled "New schedule" opens.
   - **Notes:**
 
-- [ ] `43EC` Type `Testing Stream` in **Name**.
-  - **Expected:** **Name** reads `Testing Stream`.
+- [ ] `43EC` Type `Testing Schedule` in **Name**.
+  - **Expected:** **Name** reads `Testing Schedule`.
   - **Notes:**
 
-- [ ] `9DA0` Select **Add stream**.
+- [ ] `9DA0` Select **Add schedule**.
   - **Expected:**
-    - A notification says "Drafted the new release stream."
-    - The table has a `Testing Stream` row, with a hollow yellow dot in its slot
+    - A notification says "Drafted the new schedule."
+    - The table has a `Testing Schedule` row, with a hollow yellow dot in its slot
     - The Publish button reads **Publish 1 change**
   - **Notes:**
 
@@ -662,7 +662,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `CE3A` Select the **Releases** page in the left-hand menu.
-  - **Expected:** `Testing Stream` is gone from the table.
+  - **Expected:** `Testing Schedule` is gone from the table.
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.

@@ -39,7 +39,7 @@ This test uses [Start Fathom](../manual-test-basics.md#start-fathom), [Reset the
 
 [Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses, such as marks, a row's slot, Draft rows and Live rows, the Publish button, the Draft menu, the details button, the side panel and seeded dates. This test adds:
 
-- **Next quarter's cycle:** the 'Platform' stream's cycle for the quarter after the one today is in. The examples after "such as" are for a run in November 2026.
+- **Next quarter's cycle:** the 'Platform' schedule's cycle for the quarter after the one today is in. The examples after "such as" are for a run in November 2026.
 - **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20300315`.
 
 ## Test Cases
@@ -404,7 +404,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Releases** page shows again.
   - **Notes:**
 
-- [ ] `B18B` Select the details button at the right of the **Stream** cell of 'Platform'.
+- [ ] `B18B` Select the details button at the right of the **Schedule** cell of 'Platform'.
   - **Expected:**
     - The side panel's heading reads 'Platform'.
     - No lock is before it.
@@ -472,7 +472,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] `3F69` Select the details button at the right of the **Stream** cell of 'Platform'.
+- [ ] `3F69` Select the details button at the right of the **Schedule** cell of 'Platform'.
   - **Expected:** The side panel's heading reads 'Platform'.
   - **Notes:**
 

@@ -3,7 +3,7 @@
 - **ADR:** 0009
 - **Status:** Superseded by [The Roadmap and the Plan](../product/decisions.md#planning), agreed by the maintainer on 2026-11-11. Its choice of libraries, below, still stands, as its revision of 2026-11-11 records
 - **Date:** 2026-11-03
-- **Revised:** 2026-11-03, to point to the Decisions Log's answer on how a cycle's demand is counted, and to the board's test page in the Implementation Plan; 2026-11-10, since large work is no longer split into a feature for each increment; 2026-11-11, since the board and timeline it proposed were revised with the maintainer into the Features Board and the shared timeline, keeping the choice of libraries; 2026-11-12, marked superseded
+- **Revised:** 2026-11-03, to point to the Decisions Log's answer on how a cycle's demand is counted, and to the board's test page in the Implementation Plan; 2026-11-10, since large work is no longer split into a feature for each increment; 2026-11-11, since the board and timeline it proposed were revised with the maintainer into the Features Board and the shared timeline, keeping the choice of libraries; 2026-11-12, marked superseded; 2026-11-15, to note that release streams, the streams below, are now called schedules
 
 ## Context
 

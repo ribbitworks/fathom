@@ -62,7 +62,7 @@ Fathom only lets you choose a manager once their **Manager?** tick is approved. 
 
 Plans in Fathom are built on releases and on who's available to do the work.
 
-1. On **Releases**, a release stream is a series of releases, such as one product line's, and its work is planned in cycles, such as quarters. Add a stream for each product line, and set up its cycles as you add it.
+1. On **Releases**, a schedule is a repeating set of cycles, such as one product line's quarters, and its releases ship the work planned in them. Add a schedule for each product line, and set up its cycles as you add it.
 1. On **Capacity**, choose **Settings**.
 1. Set the **Working time**, so Fathom can work out how much work people can deliver.
 1. On the **Org chart**, choose **Feature teams** in the switch beside the heading. A feature team is a group that works on features together, whoever its members report to.

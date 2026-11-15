@@ -20,7 +20,7 @@ The left-hand menu shows only the pages your role lets you open. A page your rol
 - [Features](features.md): It shows every feature planned, grouped by cycle.
   - **Shown with:** **View Features and releases**
   - **Starting roles that see it:** Every role but Administrator
-- [Releases](releases.md): It holds release streams, their cycles and releases, and the timeline.
+- [Releases](releases.md): It holds schedules, their cycles and releases, and the timeline.
   - **Shown with:** **View Features and releases** or **View Configuration**
   - **Starting roles that see it:** Every role but Administrator
 

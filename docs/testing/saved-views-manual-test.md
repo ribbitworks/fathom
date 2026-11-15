@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its streams in the timeline; that a view on Features is shared by its table and Board, and kept to Features; that a view keeps People grouped by two levels; and that a view on Feature assignments keeps its grouping, and is kept to its page; that a view on the Org chart keeps the team shown alone and the levels shown; and that Accounts are on the shared table with saved views.
+Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its schedules in the timeline; that a view on Features is shared by its table and Board, and kept to Features; that a view keeps People grouped by two levels; and that a view on Feature assignments keeps its grouping, and is kept to its page; that a view on the Org chart keeps the team shown alone and the levels shown; and that Accounts are on the shared table with saved views.
 
 ## Test Environment
 
@@ -496,7 +496,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** `Fictional moved columns` is gone from the Views menu.
   - **Notes:**
 
-### VIEW-10: A View on Releases Shows Its Streams in the Timeline Too
+### VIEW-10: A View on Releases Shows Its Schedules in the Timeline Too
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as VIEW-09.
 
@@ -741,7 +741,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `4C59` Select **Board** in the switch after the **Features** heading.
   - **Expected:**
-    - The board shows, with the button **Stream: Platform**.
+    - The board shows, with the button **Schedule: Platform**.
     - The board holds the card 'Offline Sync' alone.
   - **Notes:**
 

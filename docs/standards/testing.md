@@ -107,7 +107,7 @@ Rules:
   - **Bold** for what to select or read on screen: buttons, menus, pages, fields and columns.
   - `Backticks` for what to type, exact values, and step IDs.
   - "Double quotes" for exact text on screen to check, such as a notification or a refusal.
-  - 'Single quotes' for seed data, such as people, teams, release streams and releases.
+  - 'Single quotes' for seed data, such as people, teams, schedules and releases.
   - **Bold** labels for **Account:**, **Preconditions:**, **Expected:**, **Notes:** and **Afterwards:**.
 - **Must** give every action and expected result precisely enough for a junior test engineer to run and judge without knowing Fathom: what to select, where, and the exact text shown, marked as the rule above sets out. Every fact a step relies on, such as a URL or a supported browser, comes from the document that owns it, never from assumption.
 - **Must** keep each test case to one behaviour, and make its preconditions enough to start it.

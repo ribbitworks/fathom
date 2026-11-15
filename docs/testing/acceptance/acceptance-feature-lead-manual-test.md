@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies the workflows of [Working as a Feature Lead](../../help/working-as-a-feature-lead.md) on the seed data: shaping a feature team, approved by a Project Manager; keeping a feature's status and estimate current, approved by a Product Manager; seeing what each release and cycle holds, and keeping views of one stream and of the Features board; and finding someone on the org chart. It also verifies that the account, which holds a second role, switches between them at once, and that the change history names the role a change was made as.
+Verifies the workflows of [Working as a Feature Lead](../../help/working-as-a-feature-lead.md) on the seed data: shaping a feature team, approved by a Project Manager; keeping a feature's status and estimate current, approved by a Product Manager; seeing what each release and cycle holds, and keeping views of one schedule and of the Features board; and finding someone on the org chart. It also verifies that the account, which holds a second role, switches between them at once, and that the change history names the role a change was made as.
 
 ## Test Environment
 
@@ -230,7 +230,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as LEAD-05.
 
-**Preconditions:** Acting as **Feature Lead**. Select the **Releases** page in the left-hand menu, and the details button at the right of the **Stream** cell of 'Platform'.
+**Preconditions:** Acting as **Feature Lead**. Select the **Releases** page in the left-hand menu, and the details button at the right of the **Schedule** cell of 'Platform'.
 
 - [ ] `95E5` Open the account menu.
   - **Expected:**
@@ -287,7 +287,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] `D9AF` Select the details button at the right of the **Stream** cell of 'Platform'.
+- [ ] `D9AF` Select the details button at the right of the **Schedule** cell of 'Platform'.
   - **Expected:** The side panel's heading reads 'Platform'.
   - **Notes:**
 
@@ -301,7 +301,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **People** section of the left-hand menu shows no **Feature assignments** and no **Capacity**.
   - **Notes:**
 
-### LEAD-08: A Feature Lead Keeps Views of One Stream and the Board
+### LEAD-08: A Feature Lead Keeps Views of One Schedule and the Board
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as LEAD-07.
 
@@ -320,14 +320,14 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - It offers no choice about sharing.
   - **Notes:**
 
-- [ ] `728E` Type `Fictional my stream` in **Name**.
+- [ ] `728E` Type `Fictional my schedule` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
 - [ ] `F3C2` Select **Save view**.
   - **Expected:**
     - The dialog closes.
-    - The Views button reads `Fictional my stream`.
+    - The Views button reads `Fictional my schedule`.
   - **Notes:**
 
 - [ ] `121F` Open the Views menu, and select **Clear view**.
@@ -336,7 +336,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The table lists 'Platform', 'Patches' and 'Field Apps'.
   - **Notes:**
 
-- [ ] `FDC2` Open the Views menu, and select `Fictional my stream` under **My views**.
+- [ ] `FDC2` Open the Views menu, and select `Fictional my schedule` under **My views**.
   - **Expected:**
     - The search box shows `Platform`.
     - The table and the timeline show only 'Platform'.
@@ -348,7 +348,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `494C` Select **Board** in the switch after the **Features** heading.
   - **Expected:**
-    - The board shows, with the button **Stream: Platform**.
+    - The board shows, with the button **Schedule: Platform**.
     - Its columns are 'Platform' cycles, then **Later**.
   - **Notes:**
 

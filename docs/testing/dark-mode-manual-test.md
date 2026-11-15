@@ -593,28 +593,28 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** That quarter's box is filled blue, and its white name is easy to read.
   - **Notes:**
 
-- [ ] `36A8` Select the details button at the right of the **Stream** cell of 'Platform'.
+- [ ] `36A8` Select the details button at the right of the **Schedule** cell of 'Platform'.
   - **Expected:** The panel of 'Platform' opens.
   - **Notes:**
 
 - [ ] `EC95` Select the underlined name 'Harbor 2' in the panel.
   - **Expected:**
-    - A panel titled 'Harbor 2' opens under the stream's panel.
+    - A panel titled 'Harbor 2' opens under the schedule's panel.
     - The note's headings, bullets, checklist, red text and link are easy to read.
     - Both panels read well.
   - **Notes:**
 
-- [ ] `CD9F` Select the details button at the right of the **Stream** cell of 'Patches'.
+- [ ] `CD9F` Select the details button at the right of the **Schedule** cell of 'Patches'.
   - **Expected:**
     - The panel of 'Patches' opens, and the panel of 'Harbor 2' closes.
     - The yellow **Retired** box in its heading is easy to read.
   - **Notes:**
 
-- [ ] `4B7C` Under **Cycle schedule**, select **Change…**, then **Ends…** in its menu.
+- [ ] `4B7C` Under **Cycle schedule**, select **Change…**, then **Schedule ends…** in its menu.
   - **Expected:** A dialog titled **Change when Patches ends** opens, and is easy to read.
   - **Notes:**
 
-- [ ] `E2D5` Type the last day of next month in **Ends**, such as `20261231`.
+- [ ] `E2D5` Type the last day of next month in **Schedule ends**, such as `20261231`.
   - **Expected:** The cycles under **Last cycles** are easy to read.
   - **Notes:**
 

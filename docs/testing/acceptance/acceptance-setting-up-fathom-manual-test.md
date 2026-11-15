@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies that a Workforce Administrator can set up a brand-new Fathom as [Setting Up Fathom](../../help/setting-up-fathom.md) describes, from an empty database. The Administrator makes the account and sets the time zone. The Workforce Administrator then adds the lists and a column, the people, their managers and team names, a release stream, the working time, and feature teams recorded from six months ago, each round approved before the next. A Team Member reads the people and teams that result. It is the first acceptance test; [Work Between Roles](acceptance-work-between-roles-manual-test.md) runs straight after it, on the people and teams it sets up.
+Verifies that a Workforce Administrator can set up a brand-new Fathom as [Setting Up Fathom](../../help/setting-up-fathom.md) describes, from an empty database. The Administrator makes the account and sets the time zone. The Workforce Administrator then adds the lists and a column, the people, their managers and team names, a schedule, the working time, and feature teams recorded from six months ago, each round approved before the next. A Team Member reads the people and teams that result. It is the first acceptance test; [Work Between Roles](acceptance-work-between-roles-manual-test.md) runs straight after it, on the people and teams it sets up.
 
 ## Test Environment
 
@@ -456,7 +456,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - **Team** reads `Keepers` for `Ada Quill`, `Dara Finch` and `Emil Stone`.
   - **Notes:**
 
-### SETUP-06: A Release Stream Is Set Up With Its Cycles
+### SETUP-06: A Schedule Is Set Up With Its Cycles
 
 **Account:** Workforce Administrator, `fictional.planning.lead@fathom.test`, shown in Fathom as `Fictional Planning Lead`, changed from SETUP-05.
 
@@ -464,21 +464,21 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `C990` Select the **Releases** page in the left-hand menu.
   - **Expected:**
-    - The page reads "No release streams yet."
-    - A **New release stream** button is at the top right.
+    - The page reads "No schedules yet."
+    - A **New schedule** button is at the top right.
   - **Notes:**
 
-- [ ] `2A4A` Select **New release stream**.
-  - **Expected:** A dialog titled "New release stream" opens.
+- [ ] `2A4A` Select **New schedule**.
+  - **Expected:** A dialog titled "New schedule" opens.
   - **Notes:**
 
 - [ ] `55CC` Type `Fictional Mainline` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `FD5B` Select **Add stream**.
+- [ ] `FD5B` Select **Add schedule**.
   - **Expected:**
-    - A notification says "Drafted the new release stream."
+    - A notification says "Drafted the new schedule."
     - The side panel is headed with a hollow yellow dot before `Fictional Mainline`.
     - "None" is under **Cycle schedule**.
     - "None" is under **Releases**.
@@ -700,7 +700,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `BD9B` Select the **Drafts** page in the left-hand menu.
   - **Expected:** Six entries are shown, each with a checkbox, one each for:
-    - the release stream `Fictional Mainline`
+    - the schedule `Fictional Mainline`
     - its cycles from the first day of next year, such as "2027-01-01"
     - the planning settings
     - the feature teams `Tide team`, `Harbour team` and `Beacon team`

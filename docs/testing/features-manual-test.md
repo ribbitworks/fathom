@@ -92,7 +92,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `3E03` Read the group headings from top to bottom.
   - **Expected:**
-    - Each heading names the stream and the cycle, such as **Platform: 27.1**.
+    - Each heading names the schedule and the cycle, such as **Platform: 27.1**.
     - Each heading has how many features it holds.
     - The headings for **Platform** come first, from the earliest cycle to the latest, then those for **Field Apps**, such as **Field Apps: FA26.2**, from the earliest to the latest.
     - The last heading is **Later**.
@@ -113,7 +113,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `C44A` Empty the search box.
   - **Expected:**
-    - Each heading names the stream and the cycle, such as **Platform: 27.1**.
+    - Each heading names the schedule and the cycle, such as **Platform: 27.1**.
     - Each heading has how many features it holds.
     - The headings for **Platform** come first, from the earliest cycle to the latest, then those for **Field Apps**, such as **Field Apps: FA26.2**, from the earliest to the latest.
     - The last heading is **Later**.
@@ -132,7 +132,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `4A6D` Select **Group by**, then **Cycle**.
   - **Expected:**
-    - Each heading names the stream and the cycle, such as **Platform: 27.1**.
+    - Each heading names the schedule and the cycle, such as **Platform: 27.1**.
     - Each heading has how many features it holds.
     - The headings for **Platform** come first, from the earliest cycle to the latest, then those for **Field Apps**, such as **Field Apps: FA26.2**, from the earliest to the latest.
     - The last heading is **Later**.
@@ -184,7 +184,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `24AE` In the row 'Report Builder', select the **Target cycle** cell.
   - **Expected:**
     - A list of cycles opens.
-    - Each choice names its stream and cycle.
+    - Each choice names its schedule and cycle.
   - **Notes:**
 
 - [ ] `F7F1` Choose another cycle from the list.
@@ -263,11 +263,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `347C` Select the **Releases** page in the left-hand menu.
   - **Expected:**
-    - The streams table shows 'Platform'.
+    - The schedules table shows 'Platform'.
     - 'Platform' has no grey lock in its slot.
   - **Notes:**
 
-- [ ] `AE97` Select the details button at the right of the **Stream** cell of 'Platform'.
+- [ ] `AE97` Select the details button at the right of the **Schedule** cell of 'Platform'.
   - **Expected:** The side panel opens, headed 'Platform'.
   - **Notes:**
 
@@ -1153,10 +1153,10 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Notes:**
 
 - [ ] `80BD` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The streams table shows 'Platform'.
+  - **Expected:** The schedules table shows 'Platform'.
   - **Notes:**
 
-- [ ] `451F` Select the details button at the right of the **Stream** cell of 'Platform'.
+- [ ] `451F` Select the details button at the right of the **Schedule** cell of 'Platform'.
   - **Expected:**
     - A side panel for 'Platform' opens.
     - Under **Releases**, each 'Harbor' row ends with "ships" and a day, such as "26.3 to 26.4 · ships 2026-12-31".

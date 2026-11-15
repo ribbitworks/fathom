@@ -16,7 +16,7 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **Milestone:** A dated point in a project or a feature.
 - **Cycle:** A repeating planning period of a set length, such as six months, a quarter, or a program increment. Features target cycles.
 - **Release:** A named delivery that includes one or more cycles, and ships the features that target them.
-- **Release stream:** A sequence of releases with its own cycle length, such as major releases or patches.
+- **Schedule:** A repeating set of cycles with its own cycle length, such as major releases or patches, with releases only where it ships them, since not everything is released.
 - **Roadmap:** The features wanted and roughly when, before anything is costed. Not built yet, as [The Roadmap and the Plan](decisions.md#planning) sets out.
 - **Plan:** The features that are staffed, with their estimates, allocations, months, and capacity. Written with a capital P, apart from the plan Approve Plan approves. Not built yet.
 - **Estimate:** A rough size of the effort a feature needs, not its cost, such as a rough order of magnitude (ROM) or a SWAG, given in a unit of effort such as hours or person-months.

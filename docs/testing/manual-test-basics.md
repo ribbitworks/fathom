@@ -39,7 +39,7 @@ In short, the text in a step is marked as [Testing Standards](../standards/testi
 - **Bold:** something to select or read on screen, such as a button, menu, page, field or column.
 - `Backticks`: something to type, an exact value, or a step's ID.
 - "Double quotes": the exact text to check on screen, such as a notification.
-- 'Single quotes': seed data, such as a person, team, release stream or release.
+- 'Single quotes': seed data, such as a person, team, schedule or release.
 
 ## Recording Results
 
@@ -148,7 +148,7 @@ Run only where a test says so. This deletes every account and record in the deve
 - **Group heading:** the full-width row above each group of rows in a grouped table, naming the group, with how many rows it holds at its right.
 - **Column menu:** the menu that opens from a column's name in a table's header.
 - **⋯ menu:** the menu that opens from a **⋯** button, such as the one at the end of a table row, beside a list's name at the top of its panel, or beside the Publish button. A table row's ⋯ menu also opens from the **⋯** after its details button, or from a right-click anywhere on the row.
-- **Details button:** the small button drawn as a box with a line down its right side, at the right of a row's **Name** or **Stream** cell, with a **⋯** button after it, both shown while the row is pointed at.
+- **Details button:** the small button drawn as a box with a line down its right side, at the right of a row's **Name** or **Schedule** cell, with a **⋯** button after it, both shown while the row is pointed at.
 - **Side panel:** the panel on the right that opens from **Show details** in a row's ⋯ menu, or from the details button. Steps also call it the details panel. It is headed with the record's name, and its close button, an **×**, is at its top right.
 - **Open button:** a small box with its right side marked, at the right of a note in a side panel, in place of a change button, shown while the note's row is pointed at or has focus. It opens the note in a panel of its own, to read it, and to change it for accounts that may. Selecting the row anywhere does the same.
 - **Change button:** a small pencil at the right of a value in a side panel, shown to accounts that may change it while the value's row is pointed at or has focus. Selecting the row anywhere does the same. To check whether a value or row has a change button, or whether a panel shows any, point at each row the step names, or at each of the panel's rows.

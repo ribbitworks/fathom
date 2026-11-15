@@ -4,7 +4,7 @@
 
 ## What to Know First
 
-- **Release streams and cycles:** a release stream is a line of releases, such as **Platform**. Its work is planned in cycles of a set length, such as quarters. You set them up on [Releases](releases.md).
+- **Schedules and cycles:** a schedule is a repeating set of cycles of a set length, such as **Platform**'s quarters. Its releases ship the features planned in its cycles. You set them up on [Releases](releases.md).
 - **Target cycle:** the cycle a feature is planned to ship in. **Later** holds the features that don't target a cycle yet.
 - **Feature team:** a group that works on features together, whoever its members report to.
 - **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. It goes live once someone whose role approves features and releases approves it on the **Drafts** page. A hollow dot marks a change you haven't published yet.
@@ -81,18 +81,18 @@ The board shows only the first grouping. **Then by** comes back when you switch 
 
 ### See Features as a Board
 
-The board shows one release stream's cycles side by side, with a card for each feature in the cycle it targets. **Later** is its last column.
+The board shows one schedule's cycles side by side, with a card for each feature in the cycle it targets. **Later** is its last column.
 
 1. Choose **Board** beside the **Features** heading.
-1. To see another stream, select **Stream**, and choose one.
+1. To see another schedule, select **Schedule**, and choose one.
 1. To see other cycles, select **‹** or **›**, or a cycle in the row of cycles.
 1. To go back to the current cycle, select **Today**.
 1. To choose what the cards show, select **Card**, and tick or untick each part.
 1. To put the cards in rows, select **Group by**, and choose how, such as **Feature team**. Grouped by **Projects**, a feature two projects need has a card in each project's row.
 
-While **Staffed months** is ticked under **Card**, a card that says **Not staffed** in red is planned or in progress, but nobody is allocated to it yet. Select a card to see the feature's details. The search, the **Draft** menu and **Metrics** work on the board as they do on the table. So does **Views**: the table and the board share one view, and a saved view keeps the board's stream and what its cards show. See [Saved views](saved-views.md).
+While **Staffed months** is ticked under **Card**, a card that says **Not staffed** in red is planned or in progress, but nobody is allocated to it yet. Select a card to see the feature's details. The search, the **Draft** menu and **Metrics** work on the board as they do on the table. So does **Views**: the table and the board share one view, and a saved view keeps the board's schedule and what its cards show. See [Saved views](saved-views.md).
 
-You're done when the board shows the stream and cycles you want.
+You're done when the board shows the schedule and cycles you want.
 
 ### Export Features
 
@@ -118,7 +118,7 @@ You're done when the row is struck through. It's removed once the removal is app
 ## Marks and Terms
 
 - **Later** heads the features that target no cycle yet.
-- **Not released yet**, after a stream's name, such as **Platform: Not released yet**, means the feature's cycle isn't in any release.
+- **Not released yet**, after a schedule's name, such as **Platform: Not released yet**, means the feature's cycle isn't in any release.
 - **No team**, in red in the **Feature team** cell, marks a planned or in-progress feature that has no feature team yet.
 - **Needed by** is the month the feature is wanted. Type it as digits, such as `2027-03`, and it shows as Mar 2027. It's a rough wish; **Target cycle** is the commitment.
 - **Status** says how far along the feature is. Statuses are named on the **Lists** page, and each one means Possible, Planned, In progress, Done or Cancelled. A new feature starts on the first status that means Possible.

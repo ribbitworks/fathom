@@ -4,7 +4,7 @@ Fathom plans software work over time: what a team will build, who will build it,
 
 ## Features
 
-- **Roadmap:** features grouped into releases on release streams, shown on a timeline and a board.
+- **Roadmap:** features grouped into releases on schedules, shown on a timeline and a board.
 - **Resource planning:** who is assigned to which feature or project, for which months, and how much of their time, as people join and leave and teams change.
 - **Capacity:** whether the people planned can do the work planned, month by month, including planned hires.
 - **Drafts:** changes are drafts until they're approved, and can be compared with what's live.

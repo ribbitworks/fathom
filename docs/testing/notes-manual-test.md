@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/shared/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/product/decisions.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Note Columns on People
@@ -614,12 +614,12 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `7324` Select **Platform** in the table.
-  - **Expected:** The stream's panel lists **Harbor 3** under **Releases**, its name underlined.
+  - **Expected:** The schedule's panel lists **Harbor 3** under **Releases**, its name underlined.
   - **Notes:**
 
 - [ ] `C9C4` Select **Harbor 3**'s underlined name.
   - **Expected:**
-    - A panel titled **Harbor 3** opens under the stream's panel.
+    - A panel titled **Harbor 3** opens under the schedule's panel.
     - It shows the whole note, starting with the heading **What Harbor 3 is for**.
   - **Notes:**
 

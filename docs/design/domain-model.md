@@ -7,7 +7,7 @@ A first sketch of Fathom's core entities and how they relate. It describes struc
 
 ## Overview
 
-The diagram shows the core relationships only. Dashed lines are proposals or relationships whose cardinality is not yet confirmed. Access records and snapshots are described below but not drawn. Each release stream has its own cycles.
+The diagram shows the core relationships only. Dashed lines are proposals or relationships whose cardinality is not yet confirmed. Access records and snapshots are described below but not drawn. Each schedule has its own cycles.
 
 ```mermaid
 erDiagram
@@ -43,10 +43,10 @@ erDiagram
     USER |o..o| PERSON : "may be"
     CHANGE_SET ||--|{ CHANGE : groups
     USER |o--o{ CHANGE_SET : makes
-    RELEASE_STREAM ||--|{ CYCLE_PATTERN : "changes over time"
+    SCHEDULE ||--|{ CYCLE_PATTERN : "changes over time"
     CYCLE_PATTERN ||--o{ CYCLE : makes
-    RELEASE_STREAM ||--o{ CYCLE : defines
-    RELEASE_STREAM ||--o{ RELEASE : contains
+    SCHEDULE ||--o{ CYCLE : defines
+    SCHEDULE ||--o{ RELEASE : contains
     RELEASE |o--|{ CYCLE : includes
 ```
 
@@ -54,7 +54,7 @@ erDiagram
 
 - **Project:** Has a name, and optionally a Project ID, an owner, who is a person, and customers. Has milestones, which give it its dates, and links to the features it needs, which its draft holds whichever side they are edited from. Has one general feature, which takes allocations made to the project directly and is added and removed as the project is approved. Links to one or more proposals; linking one is to offer to add the proposal's features to those the project needs, as one step the person confirms, not built yet, as the [Decisions Log](../product/decisions.md#planning) sets out.
 - **Proposal:** Work offered or requested that may become a project, such as a bid or a customer request. Has a name, a status, and optionally a Proposal ID, a web link, an owner, who is a person, and customers. Links to the features it proposes, and keeps the reason given for each feature removed from it while that feature is not in it. Projects link to proposals; a proposal is not made into a project.
-- **Feature:** Has a name, a status, a choice of the built-in list of feature statuses, and optionally the month it is needed by, customers, a description, a note, a target cycle, or, with none yet, the release stream whose Later it is in, an estimate, a size, a priority, a risk, and the feature team that owns and delivers it. Size, priority, and risk are choices of built-in lists, as [Size, Priority, and Risk](../product/decisions.md#planning) sets out, each choice of Size with a weight. The stream of a feature in Later is not built yet. Has no owner of its own; ownership comes from its feature team. A project's general feature has no name of its own and shows its project's, has the first status meaning In progress, has no draft, and is on no roadmap. Can be needed by several projects, or by none. Ships in the release that includes its target cycle, and its start and end months follow from its allocations. Holds values in the columns added to Features, which are part of its draft.
+- **Feature:** Has a name, a status, a choice of the built-in list of feature statuses, and optionally the month it is needed by, customers, a description, a note, a target cycle, or, with none yet, the schedule whose Later it is in, an estimate, a size, a priority, a risk, and the feature team that owns and delivers it. Size, priority, and risk are choices of built-in lists, as [Size, Priority, and Risk](../product/decisions.md#planning) sets out, each choice of Size with a weight. The schedule of a feature in Later is not built yet. Has no owner of its own; ownership comes from its feature team. A project's general feature has no name of its own and shows its project's, has the first status meaning In progress, has no draft, and is on no roadmap. Can be needed by several projects, or by none. Ships in the release that includes its target cycle, and its start and end months follow from its allocations. Holds values in the columns added to Features, which are part of its draft.
 - **Milestone:** A dated point in one project or one feature, with a name, which says whether it is a customer delivery date. Milestones are kept in a table of their own. Proposal milestones are decided but not built, as the [Decisions Log](../product/decisions.md#planning) records.
 - **Allocation:** Puts one person or planned hire on one feature, holding a record for each month it changes: the percentage that takes effect from that month, or none when it stops the allocation, each in force until the next, as reporting lines are kept from a date. A person or planned hire has at most one allocation to a feature, which is one draft whatever months change. It points to a person or a planned hire, never both. Removing the person or planned hire removes it; a feature with allocations is not removed. Filling a planned hire moves its allocations to the person, as set out below.
 - **Estimate:** A feature's one estimate, its total effort, kept as one value in hours and shown in the unit the reader picks.
@@ -66,10 +66,10 @@ The values of every built-in field are set out in the [Decisions Log](../product
 
 ## Release Entities
 
-- **Release stream:** Has a name, its place in the order of streams, whether it is retired, the date its cycles are made until, and, for a stream that ends, its last day, which cuts its last cycle short. Groups its cycles and releases.
-- **Cycle pattern:** A release stream's cycle length, in weeks or months, and its naming pattern, from a given date until the stream's next pattern starts. A stream has one or more, so a change of length leaves the cycles made before it as they are.
-- **Cycle:** A planning period in one release stream, with a name, a start date, and an end date, made ahead from the pattern in force. It is in at most one release. Cycles are worked out from the patterns rather than stored, so a cycle is known by its stream and start date, as [ADR 0010](../adr/0010-cycles-from-patterns.md) sets out.
-- **Release:** A named delivery in one release stream, which includes one or more of its cycles, consecutive in the stream. Its date is its Ships on date, the end of its last cycle unless set earlier or later, and its contents are the features that target those cycles. It can have a colour from the palette; one with none has the default colour. It can have a note, as a Note column holds.
+- **Schedule:** `ReleaseStream` in the code. Has a name, its place in the order of schedules, whether it is retired, and, for a schedule that ends, its last day, which cuts its last cycle short. Groups its cycles and releases, its cycles laid out two years ahead of today.
+- **Cycle pattern:** A schedule's cycle length, in weeks or months, and its naming pattern, from a given date until the schedule's next pattern starts. A schedule has one or more, so a change of length leaves the cycles made before it as they are.
+- **Cycle:** A planning period in one schedule, with a name, a start date, and an end date, made ahead from the pattern in force. It is in at most one release. Cycles are worked out from the patterns rather than stored, so a cycle is known by its schedule and start date, as [ADR 0010](../adr/0010-cycles-from-patterns.md) sets out.
+- **Release:** A named delivery in one schedule, which includes one or more of its cycles, consecutive in the schedule. Its date is its Ships on date, the end of its last cycle unless set earlier or later, and its contents are the features that target those cycles. It can have a colour from the palette; one with none has the default colour. It can have a note, as a Note column holds.
 
 ## Workforce Entities
 
@@ -120,7 +120,7 @@ Built-in tables and custom fields and tables are set out in the [Decisions Log](
 
 - **Field definition:** A custom field on a built-in or custom table, with a name, field type, sensitivity tier, and whether it must be filled in or be unique. A Person or Link field also names the table it links to. A "Choice from a list" field, the first built, names its list, takes its tier from the list's visibility, and says whether it takes one choice or several. A "Web link" field holds one link for each record, an address and the text shown for it, and has a visibility of its own as its tier. A "Note" field holds one rich-text note for each record, and a "Number" field one number, and each has a visibility of its own as its tier too. A field on People also says whether planned hires have it too.
 - **Column order:** A table's own order of its columns, built-in and custom alike, which every view starts from. A view may hold an order of its own.
-- **Saved view:** A table's search, filters, sort, what its Draft menu shows, the columns its metrics break down by, its grouping, the columns it hides, and its page's own choices, such as the stream the Features Board shows, saved under a name, with the table it belongs to, one of a fixed set, the user who saved it, and whether it is personal to them or shared. A name is unique, ignoring letter case, among the table's shared views and among each user's personal views on it. Its sensitivity is that of the most sensitive column it filters, sorts, breaks down, or groups by, and of the data its grouping needs; a People view may also filter on drafts, which is General, since each user is sent only the drafts they may see.
+- **Saved view:** A table's search, filters, sort, what its Draft menu shows, the columns its metrics break down by, its grouping, the columns it hides, and its page's own choices, such as the schedule the Features Board shows, saved under a name, with the table it belongs to, one of a fixed set, the user who saved it, and whether it is personal to them or shared. A name is unique, ignoring letter case, among the table's shared views and among each user's personal views on it. Its sensitivity is that of the most sensitive column it filters, sorts, breaks down, or groups by, and of the data its grouping needs; a People view may also filter on drafts, which is General, since each user is sent only the drafts they may see.
 - **Custom table:** A table users define, with a name, a sensitivity tier, and its field definitions.
 - **Custom record:** One row of a custom table, holding values for its fields.
 - **Custom value:** The value of one custom field for one record, built-in or custom.
