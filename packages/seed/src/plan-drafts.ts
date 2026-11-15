@@ -17,7 +17,11 @@
 // development-only package, never included in the runtime image.
 
 import { changes, type Database, drafts } from "@fathom/db";
-import type { FictionalOrganization, FictionalPerson } from "@fathom/fixtures";
+import {
+  type FictionalOrganization,
+  type FictionalPerson,
+  lastOnNoTeam,
+} from "@fathom/fixtures";
 import type { Actor } from "@fathom/server/access";
 import { createDataAccess } from "@fathom/server/data";
 import {
@@ -365,17 +369,11 @@ async function draftFeatures(
 // Someone current on the reference date on no feature team, the latest such in the fictional
 // people, so no other seed draft changes them.
 function teamless(organization: FictionalOrganization): FictionalPerson {
-  const onTeams = new Set(
-    organization.featureTeams.flatMap(({ memberships }) =>
-      memberships.map(({ personId }) => personId),
-    ),
-  );
   return present(
-    organization.people.findLast(
-      ({ id, startDate, endDate }) =>
-        !onTeams.has(id) &&
-        endDate === null &&
-        String(startDate) <= organization.referenceDate,
+    lastOnNoTeam(
+      organization.people,
+      organization.featureTeams,
+      organization.referenceDate,
     ),
     "current person on no feature team",
   );

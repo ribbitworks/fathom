@@ -836,7 +836,7 @@ describe("the seed command", () => {
     const addresses = personaAccounts.map(({ email }) => email);
     expect(log.mock.calls.map(([line]) => line as string)).toEqual([
       "Added 150 fictional people, with their lists and columns",
-      "Added 10 fictional planned hires",
+      "Added 12 fictional planned hires",
       "Added fictional release streams, with their cycles and releases",
       "Added fictional features",
       "Added fictional customers, proposals, and projects with their milestones",

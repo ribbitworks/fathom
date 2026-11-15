@@ -578,6 +578,9 @@ const openings: readonly {
   meaning: FictionalHire["meaning"];
   months: number | null;
   managed: boolean;
+  // A place among the current managers instead of the next turn, so a later hire keeps off a manager
+  // the manual tests count reports or Capacity rows for.
+  managerPlace?: number;
   key?: string;
   managedBy?: string;
   isManager?: boolean;
@@ -658,6 +661,25 @@ const openings: readonly {
     managed: false,
     managedBy: "planned-manager",
   },
+  {
+    name: "Data engineer",
+    requisition: "REQ-2053",
+    position: "Software Engineer",
+    meaning: "open",
+    months: -1,
+    managed: true,
+    managerPlace: 5,
+    level: "P2",
+  },
+  {
+    name: "Mobile developer",
+    requisition: "REQ-2055",
+    position: "Software Engineer",
+    meaning: "proposed",
+    months: 4,
+    managed: true,
+    managerPlace: 6,
+  },
 ];
 
 function hiresFor(
@@ -681,11 +703,17 @@ function hiresFor(
   let next = 0;
   const openingId = (index: number) =>
     fictionalId(`planned-hire:${String(index)}`);
-  const managerOfOpening = (managed: boolean, managedBy?: string) => {
+  const managerOfOpening = (
+    managed: boolean,
+    managedBy?: string,
+    managerPlace?: number,
+  ) => {
     if (managedBy !== undefined) {
       return openingId(openings.findIndex(({ key }) => key === managedBy));
     }
-    return managed ? String(managers.at(next++ % managers.length)?.id) : null;
+    if (!managed || managers.length === 0) return null;
+    const place = managerPlace ?? next++;
+    return String(managers.at(place % managers.length)?.id);
   };
   const open = openings.map(
     (
@@ -697,6 +725,7 @@ function hiresFor(
         months,
         managed,
         managedBy,
+        managerPlace,
         isManager,
         site,
         level,
@@ -709,7 +738,7 @@ function hiresFor(
       meaning,
       positionId: choice(positions, position),
       targetDate: months === null ? null : due(months),
-      managerId: managerOfOpening(managed, managedBy),
+      managerId: managerOfOpening(managed, managedBy, managerPlace),
       isManager: isManager ?? false,
       filledBy: null,
       values: {
@@ -906,6 +935,9 @@ export function fictionalOrganization({
     seed,
     referenceDate,
   );
+  const hires = hiresFor(people, lines.reportingLines, referenceDate);
+  const featureTeams = featureTeamsFor(people, referenceDate);
+  setLeaving(people, hires, featureTeams, referenceDate);
   return {
     referenceDate,
     lists: [sites, levels, teamRoles, certifications, languages, workPatterns],
@@ -920,9 +952,72 @@ export function fictionalOrganization({
     people,
     ...lines,
     newcomers: everyone.slice(size),
-    hires: hiresFor(people, lines.reportingLines, referenceDate),
-    featureTeams: featureTeamsFor(people, referenceDate),
+    hires,
+    featureTeams,
   };
+}
+
+// The seed data's drafts and tests name the first people, so what is added later changes only those
+// after them.
+export const firstUnnamed = 12;
+
+// How many days after the reference date each of those leaving soon leaves: one within the month,
+// one later.
+export const leavingInDays = [12, 45] as const;
+
+const featureTeamMembers = (featureTeams: readonly FictionalFeatureTeam[]) =>
+  new Set(
+    featureTeams.flatMap(({ memberships }) =>
+      memberships.map(({ personId }) => personId),
+    ),
+  );
+
+// The latest person current on the reference date on no feature team, whom a seed draft adds to one.
+export const lastOnNoTeam = (
+  people: readonly FictionalPerson[],
+  featureTeams: readonly FictionalFeatureTeam[],
+  referenceDate: string,
+): FictionalPerson | undefined => {
+  const onTeams = featureTeamMembers(featureTeams);
+  return people.findLast(
+    ({ id, startDate, endDate }) =>
+      !onTeams.has(id) &&
+      endDate === null &&
+      String(startDate) <= referenceDate,
+  );
+};
+
+// Set last, on people nothing else picks, since everything worked out above, and the seed data's
+// own picks, read an end date as having left.
+function setLeaving(
+  people: readonly FictionalPerson[],
+  hires: readonly FictionalHire[],
+  featureTeams: readonly FictionalFeatureTeam[],
+  referenceDate: string,
+): void {
+  const onTeams = featureTeamMembers(featureTeams);
+  const filling = new Set(hires.map(({ filledBy }) => filledBy));
+  const notes = people.flatMap(({ notes }) => Object.values(notes)).join("\n");
+  const joining = lastOnNoTeam(people, featureTeams, referenceDate);
+  const leaving = people
+    .slice(firstUnnamed)
+    .filter(
+      (person) =>
+        person !== joining &&
+        person.endDate === null &&
+        person.startDate !== null &&
+        person.startDate <= referenceDate &&
+        !person.isManager &&
+        Object.keys(person.notes).length === 0 &&
+        !notes.includes(`**${person.preferredName}**`) &&
+        !onTeams.has(person.id) &&
+        !filling.has(person.id),
+    )
+    .slice(-leavingInDays.length);
+  leavingInDays.forEach((days, at) => {
+    const person = leaving.at(at);
+    if (person !== undefined) person.endDate = addDays(referenceDate, days);
+  });
 }
 
 // The feature teams, as the organization's feature teams list says, from people current on the

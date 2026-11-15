@@ -10,6 +10,9 @@ import { describe, expect, it } from "vitest";
 import {
   fictionalId,
   fictionalOrganization,
+  firstUnnamed,
+  lastOnNoTeam,
+  leavingInDays,
   onboarding,
   onboardingSteps,
   starterHandbook,
@@ -295,6 +298,83 @@ describe("a fictional organization", () => {
     }
   });
 
+  it("has two current non-managers leaving soon whom nothing else uses", () => {
+    const { referenceDate } = organization;
+    const leaving = organization.people.filter(
+      ({ endDate }) => endDate !== null && endDate > referenceDate,
+    );
+    expect(leaving.map(({ endDate }) => endDate)).toEqual(
+      leavingInDays.map((days) => addDays(referenceDate, days)),
+    );
+    const onTeams = organization.featureTeams.flatMap(({ memberships }) =>
+      memberships.map(({ personId }) => personId),
+    );
+    const notes = organization.people
+      .flatMap(({ notes }) => Object.values(notes))
+      .join("\n");
+    for (const person of leaving) {
+      expect(organization.people.indexOf(person)).toBeGreaterThanOrEqual(
+        firstUnnamed,
+      );
+      expect(String(person.startDate) <= referenceDate).toBe(true);
+      expect(person.isManager).toBe(false);
+      expect(person.notes).toEqual({});
+      expect(notes).not.toContain(`**${person.preferredName}**`);
+      expect(onTeams).not.toContain(person.id);
+      expect(organization.hires.map(({ filledBy }) => filledBy)).not.toContain(
+        person.id,
+      );
+    }
+  });
+
+  it.each([[2026], [7]])(
+    "with seed %d, leaves the person a seed draft adds to a feature team as they were",
+    (seed) => {
+      const seeded = fictionalOrganization({ size: 150, seed });
+      const unchanged = fictionalOrganization({ size: 150, seed });
+      for (const person of unchanged.people) {
+        if (
+          person.endDate !== null &&
+          person.endDate > unchanged.referenceDate
+        ) {
+          person.endDate = null;
+        }
+      }
+      expect(
+        lastOnNoTeam(seeded.people, seeded.featureTeams, seeded.referenceDate)
+          ?.id,
+      ).toBe(
+        lastOnNoTeam(
+          unchanged.people,
+          unchanged.featureTeams,
+          unchanged.referenceDate,
+        )?.id,
+      );
+    },
+  );
+
+  it("has a late open hire and a proposed hire, each under a current manager", () => {
+    const { referenceDate } = organization;
+    const byName = (name: string) =>
+      organization.hires.find((hire) => hire.name === name);
+    const late = byName("Data engineer");
+    const proposed = byName("Mobile developer");
+    expect(late).toMatchObject({ meaning: "open", requisition: "REQ-2053" });
+    expect(late?.targetDate).toBeDefined();
+    expect(String(late?.targetDate) < referenceDate).toBe(true);
+    expect(proposed).toMatchObject({
+      meaning: "proposed",
+      requisition: "REQ-2055",
+    });
+    for (const hire of [late, proposed]) {
+      const manager = organization.people.find(
+        ({ id }) => id === hire?.managerId,
+      );
+      expect(manager?.isManager).toBe(true);
+      expect(manager?.endDate).toBeNull();
+    }
+  });
+
   it("leaves people with no manager when none is employed for them, as in a tiny organization", () => {
     // With this seed, nobody has left and no manager is among the three.
     const tiny = fictionalOrganization({ size: 3, seed: 1 });
@@ -335,11 +415,16 @@ describe("the organization on another day", () => {
       ).toEqual(
         before.hires.map(({ id, targetDate }) => [id, targetDate === null]),
       );
-      for (const hire of after.hires) {
-        if (hire.targetDate !== null && hire.filledBy === null) {
-          expect(hire.targetDate > referenceDate).toBe(true);
-        }
-      }
+      expect(
+        after.hires
+          .filter(
+            ({ targetDate, filledBy }) =>
+              targetDate !== null &&
+              filledBy === null &&
+              targetDate <= referenceDate,
+          )
+          .map(({ name }) => name),
+      ).toEqual(["Data engineer"]);
       expect(
         after.featureTeams.map(({ name, leadId, memberships }) => [
           name,
