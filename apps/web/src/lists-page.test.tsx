@@ -2972,11 +2972,7 @@ describe("drafts on the Lists page", () => {
         .getByRole("menuitem", { name: "Approve…" })
         .hasAttribute("data-disabled"),
     ).toBe(true);
-    expect(
-      within(menu).getByText(
-        "Changed by this account, so another approver must approve it",
-      ),
-    ).toBeDefined();
+    expect(within(menu).getByText("Needs another approver")).toBeDefined();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();

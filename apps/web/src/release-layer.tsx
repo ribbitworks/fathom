@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The release layer a timeline may show: a row for each release stream, labelled with its name and
-// its draft's marks and Ended once its last day has passed, with a lane of its cycles drawn at
-// their real lengths above a lane of its releases, each a span across its cycles with its Ships on
-// diamond under it, and, beside live, a Live lane holding each release a draft moves in its old
-// place. The streams are shown as the Draft view around the timeline shows them, and each mark is
-// given its record's own draft.
+// its draft's marks and Ended once its last day has passed, holding what its form shows of its
+// cycles, drawn at their real lengths, and its releases, each a span across its cycles with its
+// Ships on diamond under it, and, beside live, a Live lane holding each release a draft moves in its
+// old place. The streams are shown as the Draft view around the timeline shows them, and each mark
+// is given its record's own draft.
 
 import type { RecordDraft, ReleaseStream } from "@fathom/shared";
-import { useCallback, useMemo } from "react";
+import { type ReactNode, useCallback, useMemo } from "react";
 import { ColouredName, colouredNameChars } from "./colour-swatch.tsx";
 import classes from "./pages.module.css";
 import {
@@ -32,6 +32,7 @@ import {
   viewedDraft,
 } from "./status-mark.tsx";
 import { TableTips, Tipped, tipAttribute } from "./table-tips.tsx";
+import { formatDay } from "./table-view.ts";
 import {
   charactersWidth,
   type DayRange,
@@ -150,87 +151,138 @@ function ReleaseBar({
   );
 }
 
+// What the release layer shows on each stream's row: its releases over its cycles drawn faint, or
+// its cycles alone, with its end named.
+export type ReleaseLayerForm = "releases" | "schedules";
+
+// Every other cycle is shaded apart from the one before, so each shows its own length unnamed.
+const blockShades = [
+  classes.timelineCycleBlock,
+  classes.timelineCycleAlternate,
+];
+// A cycle's block: shaded apart from the one before, and faded once it has ended.
+const blockClass = (index: number, cycle: { endsOn: string }, today: string) =>
+  [
+    blockShades[index % blockShades.length],
+    cycle.endsOn < today ? classes.timelineCyclePast : undefined,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
 function ReleaseLanes({
-  row: { stream, cycles, endsAt, releases, live },
+  row: { stream, cycles, end, releases, live },
+  form,
   markOf,
   px,
+  today,
 }: {
   row: ReleaseLayerRow;
+  form: ReleaseLayerForm;
   markOf: (id: string) => BarMark;
   px: Px;
-}) {
-  // One tooltip for the stream's releases, showing the tip of what is pointed at, so a draft's dot
-  // shows its own tip alone, rather than with its release's.
-  return (
-    <TableTips>
-      <ul
-        className={classes.timelineLane}
-        aria-label={`Cycles of ${stream.name}`}
+  today: string;
+}): ReactNode {
+  // The stream's end line, named with its last day where asked.
+  const endLine = (named: boolean) =>
+    end !== undefined && (
+      <li
+        className={classes.timelineStreamEnd}
+        style={{ left: px(end.at) }}
+        aria-hidden={!named}
       >
-        {cycles.map((cycle) => (
-          <li
-            key={cycle.startsOn}
-            className={classes.timelineCycle}
-            style={{ left: px(cycle.at), width: px(cycle.days) }}
-            title={`${cycle.name}: ${cycle.startsOn} to ${cycle.endsOn}`}
-          >
-            <span aria-hidden>
-              {fits(cycle.name, px.of(cycle.days)) && cycle.name}
-            </span>
-            <span className={classes.visuallyHidden}>
-              {cycle.name}, {cycle.startsOn} to {cycle.endsOn}
-            </span>
-          </li>
-        ))}
-        {endsAt !== undefined && (
-          <li
-            className={classes.timelineStreamEnd}
-            style={{ left: px(endsAt) }}
-            aria-hidden
-          />
+        {named && (
+          <span className={classes.timelineStreamEndLabel}>
+            Ends {formatDay(end.day)}
+          </span>
         )}
-      </ul>
-      <ul
-        className={[classes.timelineLane, classes.timelineReleaseLane].join(
-          " ",
-        )}
-        aria-label={`Releases of ${stream.name}`}
-      >
-        {releases.map((span) => (
-          <ReleaseBar
-            key={span.release.id}
-            span={span}
-            px={px}
-            mark={markOf(span.release.id)}
-          />
-        ))}
-      </ul>
-      {live.length > 0 && (
-        <ul
-          className={[classes.timelineLane, classes.timelineReleaseLane].join(
-            " ",
-          )}
-          aria-label={`Releases of ${stream.name} as they are live`}
-        >
-          {live.map((span) => (
-            <ReleaseBar
-              key={span.release.id}
-              span={span}
-              px={px}
-              mark={{ live: true }}
-            />
-          ))}
-        </ul>
-      )}
-    </TableTips>
+      </li>
+    );
+  const bars = releases.map((span) => (
+    <ReleaseBar
+      key={span.release.id}
+      span={span}
+      px={px}
+      mark={markOf(span.release.id)}
+    />
+  ));
+  const releaseLaneClass = [
+    classes.timelineLane,
+    classes.timelineReleaseLane,
+  ].join(" ");
+  const liveLane = live.length > 0 && (
+    <ul
+      className={releaseLaneClass}
+      aria-label={`Releases of ${stream.name} as they are live`}
+    >
+      {live.map((span) => (
+        <ReleaseBar
+          key={span.release.id}
+          span={span}
+          px={px}
+          mark={{ live: true }}
+        />
+      ))}
+    </ul>
   );
+  switch (form) {
+    case "releases":
+      return (
+        <TableTips>
+          <ul
+            className={releaseLaneClass}
+            aria-label={`Releases of ${stream.name}`}
+          >
+            {cycles.map((cycle, index) => (
+              <li
+                key={cycle.startsOn}
+                className={[
+                  classes.timelineCycleFaint,
+                  blockClass(index, cycle, today),
+                ].join(" ")}
+                style={{ left: px(cycle.at), width: px(cycle.days) }}
+                aria-hidden
+              />
+            ))}
+            {endLine(false)}
+            {bars}
+          </ul>
+          {liveLane}
+        </TableTips>
+      );
+    case "schedules":
+      return (
+        <ul
+          className={classes.timelineLane}
+          aria-label={`Cycles of ${stream.name}`}
+        >
+          {cycles.map((cycle, index) => (
+            <li
+              key={cycle.startsOn}
+              className={[
+                classes.timelineCycle,
+                blockClass(index, cycle, today),
+              ].join(" ")}
+              style={{ left: px(cycle.at), width: px(cycle.days) }}
+              title={`${cycle.name}: ${formatDay(cycle.startsOn)} to ${formatDay(cycle.endsOn)}`}
+            >
+              <span className={classes.visuallyHidden}>
+                {cycle.name}, {formatDay(cycle.startsOn)} to{" "}
+                {formatDay(cycle.endsOn)}
+              </span>
+            </li>
+          ))}
+          {endLine(true)}
+        </ul>
+      );
+  }
 }
 
-// The release layer of every stream with its drafts, as the Draft view around it shows them: the
-// days it covers, and its rows on a timeline starting on a day.
+// The release layer of every stream with its drafts, as the Draft view around it shows them, in the
+// form given: the days it covers, and its rows on a timeline starting on a day.
 export function useReleaseLayer(
   releaseStreams: readonly ReleaseStream[],
   today: string,
+  form: ReleaseLayerForm,
 ): {
   range: DayRange | undefined;
   rows: (from: string) => TimelineRow[];
@@ -285,10 +337,18 @@ export function useReleaseLayer(
             <EndedBox stream={row.stream} day={today} />
           </>
         ),
-        lanes: (px) => <ReleaseLanes row={row} markOf={markOf} px={px} />,
+        lanes: (px) => (
+          <ReleaseLanes
+            row={row}
+            form={form}
+            markOf={markOf}
+            px={px}
+            today={today}
+          />
+        ),
       }));
     },
-    [releaseStreams, shown, live, today],
+    [releaseStreams, shown, live, today, form],
   );
   return { range, rows };
 }

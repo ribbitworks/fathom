@@ -9,6 +9,7 @@ import {
   cycleNamed,
   discardRecordDraft,
   draftedStreams,
+  hasShipped,
   lastCycleEnd,
   liveStreams,
   markedDraft,
@@ -16,15 +17,20 @@ import {
   slotDraft,
   streamRowFields,
   recordNodes,
+  releaseCycles,
+  releaseListNames,
   releaseDate,
   removeFromStream,
   renameStream,
   resubmitRecordDraft,
   savePattern,
   saveRelease,
+  saveReleaseNote,
   setStreamRetired,
   setStreamEnd,
   shipsOffCycle,
+  withSchedule,
+  cycleRunWords,
 } from "./releases.ts";
 import {
   fictionalPattern,
@@ -156,6 +162,28 @@ describe("changes to release streams sent to the server", () => {
   });
 });
 
+describe("a release's note sent to the server", () => {
+  it("drafts the note typed", async () => {
+    expect(
+      (
+        await sent(`PUT ${streamPath}/releases/${releaseId}/note`, () =>
+          saveReleaseNote(streamId, releaseId, "Fictional words"),
+        )
+      ).body,
+    ).toEqual({ note: "Fictional words" });
+  });
+
+  it("drafts removing the note once it is emptied", async () => {
+    expect(
+      (
+        await sent(`PUT ${streamPath}/releases/${releaseId}/note`, () =>
+          saveReleaseNote(streamId, releaseId, ""),
+        )
+      ).body,
+    ).toEqual({ note: null });
+  });
+});
+
 describe("removing from release streams and handling drafts", () => {
   it("removes a release from a stream, giving the change set", async () => {
     const fetch = serverAnswers({
@@ -238,6 +266,76 @@ describe("cycles and releases by name and day", () => {
 
   it("knows no end for a last cycle the stream does not have", () => {
     expect(lastCycleEnd(stream, "2031-01-01")).toBeUndefined();
+  });
+
+  it("has shipped a release only once the day it ships has passed", () => {
+    const shipping = { lastCycle: "2027-01-01", shipsOn: null };
+    expect(
+      ["2027-03-31", "2027-04-01"].map((day) =>
+        hasShipped(stream, shipping, day),
+      ),
+    ).toEqual([false, true]);
+  });
+
+  it("has not shipped a release whose last cycle the stream does not have", () => {
+    expect(
+      hasShipped(
+        stream,
+        { lastCycle: "2031-01-01", shipsOn: null },
+        "2032-01-01",
+      ),
+    ).toBe(false);
+  });
+
+  it("names a release's cycles from first to last, or its one cycle", () => {
+    expect([
+      releaseCycles(stream, {
+        firstCycle: "2027-01-01",
+        lastCycle: "2027-04-01",
+      }),
+      releaseCycles(stream, {
+        firstCycle: "2027-01-01",
+        lastCycle: "2027-01-01",
+      }),
+    ]).toEqual(["27.1 to 27.2", "27.1"]);
+  });
+
+  it("words a run of cycles from first to last, or the one", () => {
+    expect([
+      cycleRunWords("27.1", "27.3"),
+      cycleRunWords("27.1", "27.1"),
+    ]).toEqual(["27.1 to 27.3", "27.1"]);
+  });
+
+  it("names a release in a list with its schedule only where another of every release shares its name", () => {
+    const minors = fictionalStream({
+      id: "s2",
+      name: "Fictional Minors",
+      releases: [
+        fictionalRelease({ id: "r2" }),
+        fictionalRelease({ id: "r3", name: "Fictional Lone" }),
+      ],
+    });
+    const named = releaseListNames(
+      [stream, minors].map((each) =>
+        each.id === "s2" ? each : { ...each, releases: [fictionalRelease()] },
+      ),
+    );
+    expect([
+      named(minors, { name: "Fictional One" }),
+      named(minors, { name: "Fictional Lone" }),
+      named(minors, { name: "Fictional Unlisted" }),
+    ]).toEqual([
+      "Fictional Minors: Fictional One",
+      "Fictional Lone",
+      "Fictional Unlisted",
+    ]);
+  });
+
+  it("names a cycle or release with its schedule", () => {
+    expect(withSchedule(stream, "Fictional One")).toBe(
+      "Fictional Majors: Fictional One",
+    );
   });
 });
 

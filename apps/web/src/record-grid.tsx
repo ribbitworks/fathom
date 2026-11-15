@@ -118,7 +118,7 @@ import {
   SelectionBar,
   tickedOf,
 } from "./row-ticks.tsx";
-import { draftedLists, liveLists } from "./lists.ts";
+import { choice, draftedLists, liveLists } from "./lists.ts";
 import { CopyLinkItem, isSaved } from "./record-key.tsx";
 import {
   type ChangeView,
@@ -276,9 +276,6 @@ export interface Column<
   // How many characters the column's cells fit, in place of what its kind works out.
   cellChars?: number;
   headingCentred?: boolean;
-  // Set for a column whose heading shows no name, which keeps it for screen readers, its menu, its
-  // filters and exports.
-  headingHidden?: boolean;
   live: (draft: DraftOf<Rec>) => CellValue;
   change: (value: CellValue) => Change;
   // Shown after a record's value, such as a button that opens it.
@@ -554,6 +551,83 @@ export function fieldColumn<
         : { [key]: ownField.save(value, rest.multiple) }) as Change,
   };
 }
+
+// A read-only column of words its records hold as fields of their own, by the column's key or the
+// field named: one each, several, or none, such as a cycle's name. Its choices are every word the
+// records given hold, each named as given or by itself, in the order given or else alphabetically by
+// name, so its filter lists those in use, as a list's does.
+export function wordsColumn<
+  Rec extends GridRecord & { draft?: { live: object } | undefined },
+  Change,
+>(
+  key: string,
+  label: string,
+  records: readonly Rec[],
+  {
+    required = false,
+    multiple = false,
+    emptyLabel,
+    from = key,
+    named = (word) => word,
+    order,
+  }: {
+    required?: boolean;
+    multiple?: boolean;
+    emptyLabel?: string;
+    // The field holding the words, such as each record's identifier, when not the column's key.
+    from?: string;
+    // A word's name in the column, from a record holding it, such as a record's name for its
+    // identifier.
+    named?: (word: string, record: Rec) => string;
+    order?: (one: string, other: string) => number;
+  } = {},
+): Column<Rec, Change> {
+  const read = (holder: object): string[] => {
+    const held: unknown = new Map(Object.entries(holder)).get(from);
+    if (Array.isArray(held)) {
+      return held.filter((word): word is string => typeof word === "string");
+    }
+    return typeof held === "string" && held !== "" ? [held] : [];
+  };
+  // Each word, named from the first record holding it.
+  const names = new Map<string, string>();
+  for (const record of records) {
+    for (const word of read(record)) {
+      if (!names.has(word)) names.set(word, named(word, record));
+    }
+  }
+  return {
+    ...fieldColumn<Rec, Change>(key, "choice", {
+      label,
+      required,
+      multiple,
+      choices: [...names]
+        .sort(([one, oneName], [other, otherName]) =>
+          order === undefined
+            ? oneName.localeCompare(otherName, undefined, { numeric: true })
+            : order(one, other),
+        )
+        .map(([word, name]) => choice(word, name, false)),
+      readOnly: true,
+      ...(emptyLabel === undefined ? {} : { emptyLabel }),
+    }),
+    value: read,
+    live: (draft) => read(draft.live),
+  };
+}
+
+// Each record, and, beside one with a draft, a copy of it as it is live, so a column built from them
+// names every value either holds.
+export const withLiveCopies = <
+  Rec extends GridRecord & { draft?: { live: object } | undefined },
+>(
+  records: readonly Rec[],
+): Rec[] =>
+  records.flatMap((record) =>
+    record.draft === undefined
+      ? [record]
+      : [record, { ...record, ...record.draft.live }],
+  );
 
 // Columns in the order given by their keys; a column the order does not name yet comes at the end,
 // in the order given.
@@ -973,7 +1047,7 @@ export function columnWidth(
     ),
     header: Math.min(
       Math.max(
-        (column.headingHidden === true ? 0 : column.label.length) +
+        column.label.length +
           (column.field?.draft ? draftMarkChars : 0) +
           classMarkChars(column.dataClass),
         (liveName(column, "both")?.length ?? 0) + draftMarkChars,
@@ -1725,6 +1799,52 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     mayDecide(approves, table.drafts([record.id]));
   const decidableRow = (record: Rec) =>
     table.decidable?.(record) ?? decidable(record);
+  // The draft a record's menu discards, resubmits, approves or rejects, the drafts approving or
+  // rejecting it decides, none on a row standing only for its parts' drafts, and whether it can be
+  // decided now. On a table whose rows stand for their parts' drafts too, that is the record's own
+  // draft alone, since its parts' drafts are decided where the parts are shown.
+  const menuDraftOf = (
+    record: Rec,
+  ): {
+    draft: DraftOf<Rec> | undefined;
+    selection: DraftSelection | undefined;
+    decidable: boolean;
+  } => {
+    if (table.ownDraft === undefined) {
+      return {
+        draft: record.draft,
+        selection: table.drafts([record.id]),
+        decidable: decidableRow(record),
+      };
+    }
+    const draft = table.ownDraft(record);
+    return {
+      draft,
+      selection:
+        draft === undefined
+          ? undefined
+          : {
+              ...noDrafts(),
+              records: table
+                .drafts([record.id])
+                .records.filter(({ id }) => id === record.id),
+            },
+      decidable: decidable({ draft, heldBy: record.heldBy }),
+    };
+  };
+  const ownDraftOf = (record: Rec) => menuDraftOf(record).draft;
+  // Whether the user's role approves the drafts a record's menu decides.
+  const approvesInMenu = (record: Rec) => {
+    const { selection } = menuDraftOf(record);
+    return selection !== undefined && mayDecide(approves, selection);
+  };
+  // What a record's menu offers the user's role to approve or reject, if anything.
+  const decidedInMenu = (record: Rec): DraftSelection | undefined => {
+    const { selection, decidable: now } = menuDraftOf(record);
+    return now && selection !== undefined && mayDecide(approves, selection)
+      ? selection
+      : undefined;
+  };
   // Beside a column whose draft changes what its cells show, the column as it is live, to compare,
   // as a record's live row is shown under their draft. A draft that changes only the column's
   // heading, such as its name, shows the live name under the drafted one instead, since the cells
@@ -1983,13 +2103,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const hasMenu = (record: Rec) =>
     !isPending(record) &&
     ((rowActions && mayChange(record)) ||
-      (record.draft !== undefined && approvesRecord(record)) ||
+      (record.draft !== undefined && approvesInMenu(record)) ||
       decidesOwnDraft(record) ||
       ownItemsOf(record).length > 0);
-  const ownDraftOf = (record: Rec) =>
-    table.ownDraft === undefined
-      ? (record.draft as DraftOf<Rec> | undefined)
-      : table.ownDraft(record);
   // On a table whose records are changed elsewhere, whether the user may discard or resubmit a
   // record's own draft from its menu.
   const decidesOwnDraft = (record: Rec) =>
@@ -2727,7 +2843,14 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     };
     const headerMenu = (
       <FilterPopover
-        column={column}
+        // A column is never empty only where every kind of record needs a value in it.
+        column={{
+          ...column,
+          required:
+            column.required &&
+            column.requiredOn === undefined &&
+            column.offeredOn === undefined,
+        }}
         view={view}
         onView={onView}
         opened={filtering === column.key}
@@ -2777,13 +2900,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                     heldBy={field?.heldBy}
                     dataClass={column.dataClass}
                   >
-                    {column.headingHidden === true ? (
-                      <VisuallyHidden>{column.label}</VisuallyHidden>
-                    ) : (
-                      <span className={classes.headerLabel}>
-                        {column.label}
-                      </span>
-                    )}
+                    <span className={classes.headerLabel}>{column.label}</span>
                   </DraftedItem>
                 </span>
                 {renamedFrom(column) !== undefined && (
@@ -3143,6 +3260,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     const changes =
       rowActions && mayChange(record) && record.heldBy === undefined;
     const draftItems = changes || decidesOwnDraft(record);
+    const deciding = decidedInMenu(record);
     const removes =
       changes && draft?.action !== "created" && draft?.action !== "deleted";
     return (
@@ -3151,7 +3269,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         <MenuTitle>{table.nameOf(record)}</MenuTitle>
         {/* Who holds the record matters only to those who may change or decide it. */}
         {record.heldBy !== undefined &&
-          (mayChange(record) || approvesRecord(record)) && (
+          (mayChange(record) || approvesInMenu(record)) && (
             <HeldNote by={record.heldBy} />
           )}
         {draft?.unpublished === true && <UnpublishedNote />}
@@ -3166,7 +3284,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             divider={
               (mayChange(record) && record.heldBy === undefined) ||
               decidesOwnDraft(record) ||
-              (decidableRow(record) && approvesRecord(record)) ||
+              deciding !== undefined ||
               ownItems.length > 0
             }
           />
@@ -3185,21 +3303,21 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         })}
         {ownItems}
         {/* A rejected draft is back with its makers, until they send it again. */}
-        {decidableRow(record) && approvesRecord(record) && (
+        {deciding !== undefined && (
           <>
             {ownItems.length > 0 && <Menu.Divider />}
             <Menu.Item
-              disabled={record.draft?.needsOtherApprover === true}
+              disabled={ownDraft?.needsOtherApprover === true}
               onClick={() => {
-                actions.decide("approve", table.drafts([record.id]));
+                actions.decide("approve", deciding);
               }}
             >
               Approve draft
             </Menu.Item>
-            {record.draft?.needsOtherApprover === true && <OtherApproverNote />}
+            {ownDraft?.needsOtherApprover === true && <OtherApproverNote />}
             <Menu.Item
               onClick={() => {
-                actions.decide("reject", table.drafts([record.id]));
+                actions.decide("reject", deciding);
               }}
             >
               Reject draft…
@@ -3208,8 +3326,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         )}
         {draftItems && (ownDraft !== undefined || removes) && (
           <>
-            {((decidableRow(record) && approvesRecord(record)) ||
-              ownItems.length > 0) && <Menu.Divider />}
+            {(deciding !== undefined || ownItems.length > 0) && (
+              <Menu.Divider />
+            )}
             {ownDraft?.state === "rejected" && (
               <Menu.Item
                 onClick={() => {
@@ -3969,8 +4088,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                     words={warning?.words}
                                     spoken={warning?.spoken}
                                     empty={
-                                      standIn === undefined &&
-                                      isEmpty(shownAt(row, column))
+                                      standIn === undefined && isEmpty(value)
                                     }
                                   >
                                     {editingHere
@@ -3991,17 +4109,14 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                             <ColouredName
                                               colour={
                                                 row.record === undefined ||
-                                                isEmpty(shownAt(row, column))
+                                                isEmpty(value)
                                                   ? null
                                                   : (column.colour?.(
                                                       row.record,
                                                     ) ?? null)
                                               }
                                             >
-                                              {cellContent(
-                                                column,
-                                                shownAt(row, column),
-                                              )}
+                                              {cellContent(column, value)}
                                             </ColouredName>
                                           )
                                         ) : (

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the shared timeline: its strip of quarters following the view and scrolling it, and
-// the rows a view gives it beside the release layer, with Ended on a stream past its last day.
+// Tests for the shared timeline: its strip of quarters following the view and scrolling it, the
+// release layer in each of its forms, and the rows a view gives it beside the release layer, with
+// Ended on a stream past its last day.
 
 import type { ReleaseStream } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
@@ -21,6 +22,7 @@ import {
   recordDraft,
   testTheme,
 } from "./test-support.tsx";
+import type { ReleaseLayerForm } from "./release-layer.tsx";
 import type { DayRange, TimelineRow } from "./timeline.ts";
 import { TimelineView } from "./timeline-view.tsx";
 
@@ -47,10 +49,12 @@ function showTimeline({
   streams = [fictionalStream()],
   rows,
   today = "2027-06-15",
+  layerForm = "releases",
 }: {
   streams?: ReleaseStream[];
   rows?: { name: string; range: DayRange; rows: TimelineRow[] };
   today?: string;
+  layerForm?: ReleaseLayerForm;
 } = {}) {
   render(
     <MantineProvider theme={testTheme}>
@@ -58,6 +62,7 @@ function showTimeline({
         title="Fictional Timeline"
         zoomKey={zoomKey}
         releaseStreams={streams}
+        layerForm={layerForm}
         rows={rows}
         today={today}
       />
@@ -433,5 +438,125 @@ describe("a view's own rows", () => {
     expect(
       within(timeline).getByRole("list", { name: "Fictional rows" }),
     ).toBeDefined();
+  });
+});
+
+describe("the release layer's forms", () => {
+  // Fictional Majors ends with 2027, and ships Fictional One with its second quarter.
+  const ending = () =>
+    fictionalStream({
+      endsOn: "2027-12-31",
+      releases: [fictionalRelease({ lastCycle: "2027-04-01" })],
+    });
+
+  // Each list in the first stream's row, by its name, with each item's classes, unhashed.
+  const rowLists = (timeline: HTMLElement) =>
+    [
+      ...(
+        within(timeline).getByRole("list", { name: "Schedules" })
+          .firstElementChild as HTMLElement
+      ).querySelectorAll("ul"),
+    ].map((list) => ({
+      name: list.getAttribute("aria-label"),
+      items: [...list.children].map((item) =>
+        item.className
+          .replace(/_([A-Za-z]+)_\w+/g, "$1")
+          .replace(/\s+/g, " ")
+          .trim(),
+      ),
+    }));
+
+  it("draws each stream's releases over its cycles, drawn faint in the same row, for releases", () => {
+    const timeline = showTimeline({
+      streams: [ending()],
+      layerForm: "releases",
+    });
+    expect(rowLists(timeline)).toEqual([
+      {
+        name: "Releases of Fictional Majors",
+        items: [
+          "timelineCycleFaint timelineCycleBlock timelineCyclePast",
+          "timelineCycleFaint timelineCycleAlternate",
+          "timelineCycleFaint timelineCycleBlock",
+          "timelineCycleFaint timelineCycleAlternate",
+          "timelineStreamEnd",
+          "timelineReleaseSlot",
+        ],
+      },
+    ]);
+    // The faint cycles are only drawn, so the row's items are its releases.
+    expect(
+      within(
+        within(timeline).getByRole("list", {
+          name: "Releases of Fictional Majors",
+        }),
+      )
+        .getAllByRole("listitem")
+        .map((item) => item.getAttribute("data-tip")),
+    ).toEqual(["Fictional One: 27.1 to 27.2, ships 2027-06-30."]);
+  });
+
+  it.each([
+    ["releases", "Releases of Fictional Majors"],
+    ["schedules", "Cycles of Fictional Majors"],
+  ] as const)(
+    "fades the cycles that ended before today, and not the current or later ones, for %s",
+    (layerForm, lane) => {
+      // Given today in the third cycle, on the second's last day plus one
+      const timeline = showTimeline({
+        streams: [ending()],
+        layerForm,
+        today: "2027-07-01",
+      });
+
+      // Then only the first two cycles are drawn as past
+      const cycles = [
+        ...within(timeline).getByRole("list", { name: lane }).children,
+      ].filter((item) => /timelineCycle(Block|Alternate)/.test(item.className));
+      expect(
+        cycles.map((cycle) => cycle.matches("[class*='timelineCyclePast']")),
+      ).toEqual([true, true, false, false]);
+    },
+  );
+
+  it("draws each schedule's cycles unnamed, with its end named, and no releases, for schedules", () => {
+    const timeline = showTimeline({
+      streams: [
+        ending(),
+        fictionalStream({ id: "s2", name: "Fictional Minors" }),
+      ],
+      layerForm: "schedules",
+    });
+    const lanes = rowLists(timeline);
+    expect(lanes).toEqual([
+      {
+        name: "Cycles of Fictional Majors",
+        items: [
+          "timelineCycle timelineCycleBlock timelineCyclePast",
+          "timelineCycle timelineCycleAlternate",
+          "timelineCycle timelineCycleBlock",
+          "timelineCycle timelineCycleAlternate",
+          "timelineStreamEnd",
+        ],
+      },
+    ]);
+    const majors = within(timeline).getByRole("list", {
+      name: "Cycles of Fictional Majors",
+    });
+    expect(majors.querySelector("[aria-hidden='true']")).toBeNull();
+    expect(majors.lastElementChild?.textContent).toBe("Ends Dec 31, 2027");
+    const [first] = within(majors).getAllByRole("listitem");
+    expect([first?.title, first?.textContent]).toEqual([
+      "27.1: Jan 1, 2027 to Mar 31, 2027",
+      "27.1, Jan 1, 2027 to Mar 31, 2027",
+    ]);
+    expect(
+      within(timeline)
+        .getByRole("list", { name: "Cycles of Fictional Minors" })
+        .querySelector("[class*='timelineStreamEnd']"),
+    ).toBeNull();
+    expect(
+      within(timeline).queryByRole("list", { name: /^Releases of/ }),
+    ).toBeNull();
   });
 });

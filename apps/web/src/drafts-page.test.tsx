@@ -1068,8 +1068,33 @@ describe("the Drafts page", () => {
       ]);
     });
     expect(await showOn(app, "Fictional Majors", "Releases")).toBe(
-      `/releases/${streamId}`,
+      `/releases?tab=schedules&open=${streamId}`,
     );
+  });
+
+  it("shows a release's draft on Releases, with the release's details open", async () => {
+    const release = fictionalRelease({
+      draft: recordDraft({ action: "created" }),
+    });
+    const { app } = await openDrafts({
+      "GET /api/session": session([
+        "features:approve",
+        "features:view",
+        "plan:view",
+      ]),
+      "GET /api/projects": noPlan,
+      "GET /api/projects/choices": noPlanChoices,
+      "GET /api/release-streams": () =>
+        Response.json({
+          streams: [fictionalStream({ releases: [release] })],
+          canEditStreams: false,
+          canEditReleases: false,
+        }),
+    });
+
+    expect(
+      await showOn(app, "Fictional One in Fictional Majors", "Releases"),
+    ).toBe(`/releases?open=${release.id}`);
   });
 
   it("names everyone who changed a draft", async () => {
@@ -1168,9 +1193,7 @@ describe("the Drafts page", () => {
       false,
     );
     expect(
-      screen.getByText(
-        "1 chosen draft was changed by this account, so another approver must approve it.",
-      ),
+      screen.getByText("1 chosen draft needs another approver."),
     ).toBeDefined();
     await userEvent.click(
       screen.getByRole("checkbox", {
@@ -1178,9 +1201,7 @@ describe("the Drafts page", () => {
       }),
     );
     expect(
-      screen.getByText(
-        "2 chosen drafts were changed by this account, so another approver must approve them.",
-      ),
+      screen.getByText("2 chosen drafts need another approver."),
     ).toBeDefined();
   });
 

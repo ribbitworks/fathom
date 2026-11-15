@@ -1073,6 +1073,26 @@ describe("views of every table", () => {
     }
   });
 
+  it("keep whether Releases shows shipped releases, and nothing else in its place", async () => {
+    // Given someone who sees the plan
+    const { cookie } = await test.signedIn(generalReader);
+    const releases = onTable("releases");
+
+    // When views are saved with shipped releases shown, and set some other way
+    const shown = await releases.save(cookie, unique("Shipped"), {
+      choices: { shipped: "shown" },
+    });
+    const other = await releases.save(cookie, unique("Other"), {
+      choices: { shipped: "hidden" },
+    });
+
+    // Then the first is kept as asked, and the second refused
+    expect([shown.json<Saved>().view.definition, other.json()]).toEqual([
+      { choices: { shipped: "shown" } },
+      { error: "Choose only what this page offers" },
+    ]);
+  });
+
   it("keep names unique within each table, allowing one name on two tables", async () => {
     const { cookie } = await test.signedIn(generalReader);
     const name = unique("Mine");
@@ -1449,6 +1469,7 @@ describe("every starting role on every view table", () => {
     proposals: { opens: everyoneButAdministrator, shares: configurers },
     customers: { opens: everyoneButAdministrator, shares: configurers },
     milestones: { opens: everyoneButAdministrator, shares: configurers },
+    releases: { opens: everyoneButAdministrator, shares: configurers },
     "release-streams": { opens: everyoneButAdministrator, shares: configurers },
     lists: { opens: seesConfiguration, shares: configurers },
     "feature-assignments": { opens: seesAssignments, shares: configurers },

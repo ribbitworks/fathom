@@ -169,6 +169,12 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-size-3": "#566f86",
     "--fathom-size-4": "#2f4659",
     "--fathom-scrollbar-thumb": "var(--mantine-color-gray-4)",
+    // A timeline's cycles, every other one in the second shade, in blue-greys beside the size marks',
+    // each with a hairline edge, the lightest size mark here and a shade of its own in dark, so a
+    // lane reads clearly against the panel.
+    "--fathom-cycle": "#cfdae3",
+    "--fathom-cycle-alternate": "#e2e9ef",
+    "--fathom-cycle-edge": "var(--fathom-size-1)",
   },
   dark: {
     "--mantine-color-body": "#17212a",
@@ -187,5 +193,8 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-size-3": "#86a0ba",
     "--fathom-size-4": "#b9cde0",
     "--fathom-scrollbar-thumb": "var(--mantine-color-dark-3)",
+    "--fathom-cycle": "#34485a",
+    "--fathom-cycle-alternate": "#2a3a48",
+    "--fathom-cycle-edge": "#4a6178",
   },
 });

@@ -473,8 +473,8 @@ describe("the table of schedules", () => {
         key: "name",
         field: {
           field: "Schedule",
-          oldValue: "Fictional Majors",
-          newValue: "Fictional New Name",
+          oldValue: ["Fictional Majors"],
+          newValue: ["Fictional New Name"],
         },
       },
     ]);

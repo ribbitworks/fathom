@@ -97,7 +97,7 @@ describe("the Releases page", () => {
       "GET /api/session": signedIn,
       "GET /api/release-streams": () => Response.json(streams),
     });
-    renderApp("/releases");
+    renderApp("/releases?tab=schedules");
     expect(
       await screen.findByRole("button", {
         name: "Show details of Fictional Majors",
@@ -193,6 +193,10 @@ async function openStream(
 
 const panel = () => screen.getByRole("region", { name: "Fictional Majors" });
 
+// The record whose details the address opens, if any.
+const openIn = (history: { location: { search: string } }) =>
+  new URLSearchParams(history.location.search).get("open") ?? undefined;
+
 // Opens the menu of the schedule's row in the table, from the ⋯ beside its Schedule cell.
 async function openRowMenu() {
   const [more] = within(
@@ -227,6 +231,19 @@ const cellOf = (name: string, column: number) =>
 const detailsOf = (name: string) =>
   screen.findByRole("button", { name: `Show details of ${name}` });
 
+// Chooses an item from a column's menu, from its heading.
+async function chooseInColumn(label: string, item: string) {
+  await userEvent.click(
+    screen.getByRole("button", {
+      name: (name) => name.startsWith(`${label} column`),
+    }),
+  );
+  await userEvent.click(await screen.findByRole("menuitem", { name: item }));
+  await waitFor(() => {
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+}
+
 function calls(fetch: ReturnType<typeof serverAnswers>, method: string) {
   return fetch.mock.calls
     .filter(([, init]) => init?.method === method)
@@ -247,10 +264,71 @@ describe("the Schedules table", () => {
         fictionalStream({ releases: [release] }),
       ]),
     });
-    renderApp("/releases");
+    renderApp("/releases?tab=schedules");
     await streamsGrid();
     expect(rowTexts()).toEqual([
       "Fictional Majors27.1Jan 1, 2027Mar 31, 2027Fictional OneMar 31, 20273 months",
+    ]);
+  });
+
+  it("heads each column, Schedule first, each offering a filter of its kind from its menu", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer([
+        fictionalStream({ releases: [release] }),
+        fictionalStream({
+          id: "s2",
+          name: "Fictional Empty",
+          patterns: [],
+          cycles: [],
+        }),
+      ]),
+    });
+    renderApp("/releases?tab=schedules");
+    const grid = await streamsGrid();
+    const labels = within(grid)
+      .getAllByRole("columnheader")
+      .map(({ textContent }) => textContent)
+      .filter((text) => text !== "Actions");
+    expect(labels).toEqual([
+      "Schedule",
+      "Current cycle",
+      "Cycle starts",
+      "Cycle ends",
+      "Next release",
+      "Release date",
+      "Cycle length",
+      "Schedule ends",
+    ]);
+    const offered = [];
+    for (const label of labels) {
+      await chooseInColumn(label, "Filter…");
+      const dialog = await screen.findByRole("dialog", {
+        name: `Filter ${label}`,
+      });
+      offered.push(
+        [
+          ...within(dialog).queryAllByRole("textbox"),
+          ...within(dialog).queryAllByRole("checkbox"),
+        ].map((box) => (box as HTMLInputElement).labels?.[0]?.textContent),
+      );
+      await userEvent.keyboard("{Escape}");
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog")).toBeNull();
+      });
+    }
+    const days = ["From", "To", "No date", "Any date"];
+    expect(offered).toEqual([
+      ["Fictional Empty", "Fictional Majors"],
+      ["27.1", "Empty", "Not empty"],
+      days,
+      days,
+      ["Fictional One", "Empty", "Not empty"],
+      days,
+      ["3 months", "Empty", "Not empty"],
+      days,
     ]);
   });
 
@@ -261,7 +339,7 @@ describe("the Schedules table", () => {
         fictionalStream({ patterns: [], cycles: [] }),
       ]),
     });
-    renderApp("/releases");
+    renderApp("/releases?tab=schedules");
     await streamsGrid();
     expect(rowTexts()).toEqual(["Fictional Majors"]);
   });
@@ -271,7 +349,7 @@ describe("the Schedules table", () => {
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer([fictionalStream()]),
     });
-    renderApp("/releases");
+    renderApp("/releases?tab=schedules");
     const tab = await screen.findByRole("tab", { name: "Schedules" });
     await userEvent.click(tab);
     expect([
@@ -291,7 +369,7 @@ describe("the Schedules table", () => {
         fictionalStream({ id: "s2", name: "Fictional New", patterns: [] }),
       ]),
     });
-    const history = renderApp("/releases");
+    const history = renderApp("/releases?tab=schedules");
     await detailsOf("Fictional New");
     expect(
       screen.queryByRole("button", { name: "Show details of Fictional Old" }),
@@ -333,7 +411,7 @@ describe("the Schedules table", () => {
         );
       },
     });
-    const history = renderApp("/releases?retired=true");
+    const history = renderApp("/releases?tab=schedules&retired=true");
     await userEvent.click(
       await screen.findByRole("button", { name: "Views, changed" }),
     );
@@ -377,7 +455,7 @@ describe("the Schedules table", () => {
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer([fictionalStream()]),
     });
-    renderApp("/releases");
+    renderApp("/releases?tab=schedules");
     await streamsGrid();
     await userEvent.click(screen.getByRole("button", { name: "Views" }));
     expect(
@@ -392,7 +470,7 @@ describe("the Schedules table", () => {
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer([fictionalStream()]),
     });
-    const history = renderApp("/releases?retired=true");
+    const history = renderApp("/releases?tab=schedules&retired=true");
     // Showing retired streams is something to save, so the button is marked.
     await userEvent.click(
       await screen.findByRole("button", { name: "Views, changed" }),
@@ -431,7 +509,7 @@ describe("the Schedules table", () => {
         }),
       ]),
     });
-    renderApp("/releases");
+    renderApp("/releases?tab=schedules");
     expect(await screen.findByText("1 week")).toBeDefined();
   });
 
@@ -452,7 +530,7 @@ describe("the Schedules table", () => {
         }),
       ]),
     });
-    renderApp("/releases?retired=true");
+    renderApp("/releases?tab=schedules&retired=true");
     await detailsOf("Fictional E");
     expect(rowTexts().map((text) => text.replace(/3 months.*$/, ""))).toEqual([
       "Fictional A, Draft: added, draft, draft, draft, draft, draft, draft",
@@ -473,7 +551,7 @@ describe("the Schedules table", () => {
         },
       ]),
     });
-    renderApp("/releases?show=live");
+    renderApp("/releases?tab=schedules&show=live");
     await detailsOf("Fictional Majors");
     expect(cellOf("Fictional Majors", 0).textContent).toContain(
       "Live. Its retirement is waiting for approval.",
@@ -500,7 +578,7 @@ describe("the Schedules table", () => {
         }),
       ]),
     });
-    renderApp("/releases");
+    renderApp("/releases?tab=schedules");
     await detailsOf("Fictional Removing");
     const rowOf = (name: string) =>
       screen
@@ -534,7 +612,7 @@ describe("the Schedules table", () => {
         }),
       ]),
     });
-    renderApp("/releases");
+    renderApp("/releases?tab=schedules");
     await detailsOf("Fictional Majors");
     const liveRow = cellOf("Fictional Majors", 0).closest("tr")
       ?.nextElementSibling as HTMLElement;
@@ -549,7 +627,7 @@ describe("the Schedules table", () => {
         fictionalStream({ id: "s2", name: "Fictional Patches" }),
       ]),
     });
-    renderApp("/releases");
+    renderApp("/releases?tab=schedules");
     await detailsOf("Fictional Patches");
     await userEvent.type(
       screen.getByRole("textbox", { name: "Search schedules" }),
@@ -577,7 +655,7 @@ describe("the Schedules table", () => {
         }),
       ]),
     });
-    const history = renderApp("/releases");
+    const history = renderApp("/releases?tab=schedules");
     await detailsOf("Fictional Ended");
     await userEvent.click(screen.getByRole("button", { name: "Group by" }));
     await userEvent.click(
@@ -613,7 +691,7 @@ describe("the Schedules table", () => {
       ]),
       "POST /api/drafts/approve": () => Response.json({ approved: 3 }),
     });
-    renderApp("/releases");
+    renderApp("/releases?tab=schedules");
     await detailsOf("Fictional Renamed");
     await userEvent.click(screen.getByRole("button", { name: /^Draft/ }));
     await userEvent.click(
@@ -630,7 +708,7 @@ describe("the Schedules table", () => {
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer([]),
     });
-    renderApp("/releases");
+    renderApp("/releases?tab=schedules");
     expect(await screen.findByText("No schedules yet.")).toBeDefined();
   });
 
@@ -645,7 +723,7 @@ describe("the Schedules table", () => {
           : answer([fictionalStream()])();
       },
     });
-    renderApp("/releases");
+    renderApp("/releases?tab=schedules");
     await userEvent.click(
       await screen.findByRole("button", { name: "Try again" }),
     );
@@ -657,10 +735,10 @@ describe("the Schedules table", () => {
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer([fictionalStream()]),
     });
-    const history = renderApp("/releases");
+    const history = renderApp("/releases?tab=schedules");
     await userEvent.click(await detailsOf("Fictional Majors"));
     await waitFor(() => {
-      expect(history.location.pathname).toBe(`/releases/${streamId}`);
+      expect(openIn(history)).toBe(streamId);
     });
   });
 });
@@ -710,7 +788,7 @@ describe("a stream's panel", () => {
       const { history } = await openStream([fictionalStream()]);
       await close();
       await waitFor(() => {
-        expect(history.location.pathname).toBe("/releases");
+        expect(openIn(history)).toBeUndefined();
         expect(document.activeElement).toBe(recordCell(streamId, "name"));
       });
     },
@@ -720,7 +798,7 @@ describe("a stream's panel", () => {
     const { history } = await openStream([fictionalStream()]);
     screen.getByRole("button", { name: "Close details" }).focus();
     await userEvent.keyboard("{Shift}");
-    expect(history.location.pathname).toBe(`/releases/${streamId}`);
+    expect(openIn(history)).toBe(streamId);
   });
 
   it("stays open when the search field is clicked, so what is typed goes there", async () => {
@@ -729,8 +807,8 @@ describe("a stream's panel", () => {
       name: "Search schedules",
     });
     await userEvent.click(search);
-    expect([history.location.pathname, document.activeElement]).toEqual([
-      `/releases/${streamId}`,
+    expect([openIn(history), document.activeElement]).toEqual([
+      streamId,
       search,
     ]);
   });
@@ -738,7 +816,7 @@ describe("a stream's panel", () => {
   it("stays open when clicked inside", async () => {
     const { history } = await openStream([fictionalStream()]);
     await userEvent.click(within(panel()).getByText("Details"));
-    expect(history.location.pathname).toBe(`/releases/${streamId}`);
+    expect(openIn(history)).toBe(streamId);
   });
 
   it("puts focus on the stream's name when it opens", async () => {
@@ -778,7 +856,7 @@ describe("changing streams", () => {
       "POST /api/release-streams": () =>
         Response.json({ stream: added, changeSetId }),
     });
-    const history = renderApp("/releases");
+    const history = renderApp("/releases?tab=schedules");
     await userEvent.click(
       await screen.findByRole("button", { name: "New schedule" }),
     );
@@ -794,7 +872,7 @@ describe("changing streams", () => {
     );
     expect(await screen.findByText("Drafted the new schedule.")).toBeDefined();
     await waitFor(() => {
-      expect(history.location.pathname).toBe(`/releases/${added.id}`);
+      expect(openIn(history)).toBe(added.id);
     });
     expect(calls(fetch, "POST")).toEqual(["/api/release-streams"]);
   });
@@ -877,7 +955,7 @@ describe("changing streams", () => {
       [`PUT ${streamPath}/retired`]: () =>
         Response.json({ stream: fictionalStream(), changeSetId }),
     });
-    renderApp("/releases?retired=true");
+    renderApp("/releases?tab=schedules&retired=true");
     await detailsOf("Fictional Majors");
 
     // When Restore is chosen from its row's menu
@@ -1451,7 +1529,7 @@ describe("the Draft menu", () => {
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer(drafted),
     });
-    const history = renderApp("/releases?show=live&retired=true");
+    const history = renderApp("/releases?tab=schedules&show=live&retired=true");
     await detailsOf("Fictional Earlier");
     expect(names()).toEqual(["Fictional Earlier", "Fictional Back"]);
     expect(cellOf("Fictional Back", 0).textContent).not.toContain("Retired,");
@@ -1477,10 +1555,10 @@ describe("the Draft menu", () => {
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer(drafted),
     });
-    const history = renderApp("/releases?show=drafts");
+    const history = renderApp("/releases?tab=schedules&show=drafts");
     await userEvent.click(await detailsOf("Fictional Majors"));
     await waitFor(() => {
-      expect(history.location.pathname).toBe(`/releases/${streamId}`);
+      expect(openIn(history)).toBe(streamId);
     });
     expect(history.location.search).toContain("show=drafts");
   });
@@ -1681,6 +1759,57 @@ describe("a schedule's draft in its row's menu", () => {
     );
   });
 
+  it("approves only the schedule's own draft from its row, leaving its parts' drafts", async () => {
+    // Given a renamed schedule whose cycles and release also have drafts
+    const stream = fictionalStream({
+      draft: recordDraft(),
+      patterns: [fictionalPattern({ draft: recordDraft() })],
+      releases: [fictionalRelease({ draft: recordDraft() })],
+    });
+    const { fetch } = await openStream([stream], {
+      answers: {
+        "GET /api/session": approver,
+        "POST /api/drafts/approval": savedAs,
+      },
+    });
+
+    // When Approve draft is chosen from its row's menu
+    await chooseRowAction("Approve draft");
+    const dialog = await screen.findByRole("dialog", {
+      name: "Approve 1 draft?",
+    });
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Approve" }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+
+    // Then only the schedule's own draft is approved
+    expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
+      expect.objectContaining({
+        records: [{ type: "release-stream", id: streamId }],
+      }),
+    ]);
+  });
+
+  it("offers no approval on a schedule's row whose only drafts are its parts'", async () => {
+    await openStream(
+      [
+        fictionalStream({
+          patterns: [fictionalPattern({ draft: recordDraft() })],
+          releases: [fictionalRelease({ draft: recordDraft() })],
+        }),
+      ],
+      { answers: { "GET /api/session": approver } },
+    );
+    const menu = await openRowMenu();
+    expect([
+      within(menu).queryByRole("menuitem", { name: "Approve draft" }),
+      within(menu).queryByRole("menuitem", { name: "Reject draft…" }),
+    ]).toEqual([null, null]);
+  });
+
   it("asks before rejecting a draft, and closes when cancelled", async () => {
     await openStream([fictionalStream({ draft: recordDraft() })], {
       answers: { "GET /api/session": approver },
@@ -1738,11 +1867,7 @@ describe("a schedule's draft in its row's menu", () => {
       approve.hasAttribute("disabled") ||
         approve.getAttribute("data-disabled") === "true",
     ).toBe(true);
-    expect(
-      within(menu).getByText(
-        "Changed by this account, so another approver must approve it",
-      ),
-    ).toBeDefined();
+    expect(within(menu).getByText("Needs another approver")).toBeDefined();
     expect(
       within(menu)
         .getByRole("menuitem", { name: "Reject draft…" })
@@ -1759,7 +1884,7 @@ describe("a schedule's draft in its row's menu", () => {
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
     });
-    expect(history.location.pathname).toBe(`/releases/${streamId}`);
+    expect(openIn(history)).toBe(streamId);
   });
 
   it("moves through the row menu's items with the arrow keys, keeping the panel open", async () => {
@@ -1771,8 +1896,8 @@ describe("a schedule's draft in its row's menu", () => {
     await userEvent.keyboard("{ArrowDown}{ArrowDown}");
     expect([
       document.activeElement?.getAttribute("role"),
-      history.location.pathname,
-    ]).toEqual(["menuitem", `/releases/${streamId}`]);
+      openIn(history),
+    ]).toEqual(["menuitem", streamId]);
   });
 });
 
@@ -1817,10 +1942,81 @@ describe("the timeline", () => {
     ).toBeNull();
   });
 
+  // The schedules the timeline draws, in its order.
+  const lanes = (timeline: HTMLElement) =>
+    within(timeline)
+      .getAllByRole("list", { name: /^Cycles of / })
+      .map((list) => list.getAttribute("aria-label"));
+  const oldAndNew = [
+    fictionalStream({
+      id: "s1",
+      name: "Fictional Old",
+      cycles: quarters(2),
+      endsOn: "2027-06-30",
+    }),
+    fictionalStream({ id: "s2", name: "Fictional New" }),
+  ];
+
+  it("draws only the schedules a filter on the Schedule column leaves, as the table does", async () => {
+    const timeline = await showTimeline(oldAndNew, "2027-02-15");
+    await chooseInColumn("Schedule", "Filter…");
+    const dialog = await screen.findByRole("dialog", {
+      name: "Filter Schedule",
+    });
+    await userEvent.click(
+      within(dialog).getByRole("checkbox", { name: "Fictional Old" }),
+    );
+    await waitFor(() => {
+      expect(rowTexts().map((text) => text.slice(0, 13))).toEqual([
+        "Fictional Old",
+      ]);
+    });
+    expect(lanes(timeline)).toEqual(["Cycles of Fictional Old"]);
+  });
+
+  it("draws only the schedules a filter on Schedule ends leaves, as the table does", async () => {
+    const timeline = await showTimeline(oldAndNew, "2027-02-15");
+    await chooseInColumn("Schedule ends", "Filter…");
+    const dialog = await screen.findByRole("dialog", {
+      name: "Filter Schedule ends",
+    });
+    await userEvent.click(
+      within(dialog).getByRole("checkbox", { name: "No date" }),
+    );
+    await waitFor(() => {
+      expect(rowTexts().map((text) => text.slice(0, 13))).toEqual([
+        "Fictional New",
+      ]);
+    });
+    expect(lanes(timeline)).toEqual(["Cycles of Fictional New"]);
+  });
+
+  it("draws retired schedules while the table shows them, in the table's order", async () => {
+    const timeline = await showTimeline(
+      [
+        fictionalStream({ id: "s2", name: "Fictional New" }),
+        fictionalStream({ id: "s1", name: "Fictional Old", retired: true }),
+      ],
+      "2027-02-15",
+      '?retired=true&sort=["-name"]',
+    );
+    await waitFor(() => {
+      expect(rowTexts().map((text) => text.slice(0, 13))).toEqual([
+        "Fictional Old",
+        "Fictional New",
+      ]);
+    });
+    expect(lanes(timeline)).toEqual([
+      "Cycles of Fictional Old",
+      "Cycles of Fictional New",
+    ]);
+  });
+
   async function showTimeline(
     shown: ReleaseStream[],
     today: string,
     view = "",
+    tab: "schedules" | "releases" = "schedules",
   ) {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(`${today}T12:00:00Z`));
@@ -1828,7 +2024,7 @@ describe("the timeline", () => {
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer(shown),
     });
-    renderApp(`/releases${view}`);
+    renderApp(`/releases?tab=${tab}${view.replace("?", "&")}`);
     return screen.findByRole("region", { name: "Timeline" });
   }
 
@@ -1849,14 +2045,14 @@ describe("the timeline", () => {
     const timeline = await showTimeline([fictionalStream()], "2027-02-15");
     const cycles = items(timeline, "Cycles of Fictional Majors");
     expect(cycles.map((cycle) => cycle.getAttribute("title"))).toEqual([
-      "27.1: 2027-01-01 to 2027-03-31",
-      "27.2: 2027-04-01 to 2027-06-30",
-      "27.3: 2027-07-01 to 2027-09-30",
-      "27.4: 2027-10-01 to 2027-12-31",
+      "27.1: Jan 1, 2027 to Mar 31, 2027",
+      "27.2: Apr 1, 2027 to Jun 30, 2027",
+      "27.3: Jul 1, 2027 to Sep 30, 2027",
+      "27.4: Oct 1, 2027 to Dec 31, 2027",
     ]);
     expect(
       within(cycles[0] as HTMLElement).getByText(
-        "27.1, 2027-01-01 to 2027-03-31",
+        "27.1, Jan 1, 2027 to Mar 31, 2027",
       ),
     ).toBeDefined();
     // Three pixels a day: 90 days in the first quarter, 91 in the second.
@@ -1868,28 +2064,28 @@ describe("the timeline", () => {
     ]);
   });
 
-  it("names a cycle only when its name fits", async () => {
+  it("draws the Schedules tab's cycles unnamed, with each schedule's end", async () => {
     const timeline = await showTimeline(
-      [
-        fictionalStream({
-          cycles: [
-            ...quarters(1),
-            {
-              startsOn: "2027-04-01",
-              endsOn: "2027-04-03",
-              name: "Fictional Short",
-              months: [],
-            },
-          ],
-        }),
-      ],
+      [fictionalStream({ endsOn: "2027-12-31" })],
       "2027-02-15",
     );
+    const lane = items(timeline, "Cycles of Fictional Majors");
+    // Each cycle's name is only for assistive technology, and its title.
     expect(
-      items(timeline, "Cycles of Fictional Majors").map(
-        (cycle) => cycle.querySelector("[aria-hidden]")?.textContent,
-      ),
-    ).toEqual(["27.1", ""]);
+      lane.map((item) => item.querySelector("[aria-hidden]")?.textContent),
+    ).toEqual([undefined, undefined, undefined, undefined, undefined]);
+    expect(lane.map(({ textContent }) => textContent)).toEqual([
+      "27.1, Jan 1, 2027 to Mar 31, 2027",
+      "27.2, Apr 1, 2027 to Jun 30, 2027",
+      "27.3, Jul 1, 2027 to Sep 30, 2027",
+      "27.4, Oct 1, 2027 to Dec 31, 2027",
+      "Ends Dec 31, 2027",
+    ]);
+    expect(
+      within(timeline).queryByRole("list", {
+        name: "Releases of Fictional Majors",
+      }),
+    ).toBeNull();
   });
 
   it("spans each release across its cycles, marked on the day it ships", async () => {
@@ -1910,6 +2106,8 @@ describe("the timeline", () => {
         }),
       ],
       "2027-02-15",
+      "",
+      "releases",
     );
     const releases = items(timeline, "Releases of Fictional Majors");
     // Each release's words are its tip in the timeline's one tooltip, which a draft's dot inside it
@@ -1962,6 +2160,8 @@ describe("the timeline", () => {
         }),
       ],
       "2027-02-15",
+      "",
+      "releases",
     );
     expect(
       items(timeline, "Releases of Fictional Majors").map(({ style }) =>
@@ -2007,7 +2207,7 @@ describe("the timeline", () => {
         }),
       "GET /api/release-streams": answer([fictionalStream()]),
     });
-    renderApp("/releases");
+    renderApp("/releases?tab=schedules");
     const timeline = await screen.findByRole("region", { name: "Timeline" });
     expect(
       within(timeline).getByText(
@@ -2065,6 +2265,7 @@ describe("the timeline", () => {
           title="Timeline"
           zoomKey={zoomKey}
           releaseStreams={streams}
+          layerForm="schedules"
           today="2027-06-15"
         />
       </MantineProvider>
@@ -2317,7 +2518,12 @@ describe("the timeline", () => {
     const liveList = "Releases of Fictional Majors as they are live";
 
     it("shows beside live each release a draft moves in its old place, and what a draft removes", async () => {
-      const timeline = await showTimeline([drafted()], "2027-02-15");
+      const timeline = await showTimeline(
+        [drafted()],
+        "2027-02-15",
+        "",
+        "releases",
+      );
       expect(names(timeline, "Releases of Fictional Majors")).toEqual([
         "Fictional One: 27.2, ships 2027-06-30. Draft: moved.",
         "Fictional Two: 27.3, ships 2027-09-30. Draft: removed.",
@@ -2338,6 +2544,7 @@ describe("the timeline", () => {
         [drafted()],
         "2027-02-15",
         "?show=drafts",
+        "releases",
       );
       expect(names(timeline, "Releases of Fictional Majors")).toEqual([
         "Fictional One: 27.2, ships 2027-06-30. Draft: moved.",
@@ -2353,6 +2560,7 @@ describe("the timeline", () => {
         [drafted()],
         "2027-02-15",
         "?show=live",
+        "releases",
       );
       expect(names(timeline, "Releases of Fictional Majors")).toEqual([
         "Fictional One: 27.1, ships 2027-03-31. Live. A move is waiting for approval.",
@@ -2396,7 +2604,12 @@ describe("the timeline", () => {
       });
 
     it("says beside live which drafts were rejected, striking out none, and which are unpublished", async () => {
-      const timeline = await showTimeline([judged()], "2027-02-15");
+      const timeline = await showTimeline(
+        [judged()],
+        "2027-02-15",
+        "",
+        "releases",
+      );
       const [moved, removed, unpublished] = names(
         timeline,
         "Releases of Fictional Majors",
@@ -2421,6 +2634,8 @@ describe("the timeline", () => {
           }),
         ],
         "2027-02-15",
+        "",
+        "releases",
       );
       expect(names(timeline, "Releases of Fictional Majors")).toEqual([
         "Fictional One: 27.1, ships 2027-03-31. Being changed by Fictional Editor.",
@@ -2435,6 +2650,7 @@ describe("the timeline", () => {
         [judged()],
         "2027-02-15",
         "?show=drafts",
+        "releases",
       );
       expect(
         names(timeline, "Releases of Fictional Majors").slice(0, 2),
@@ -2452,7 +2668,7 @@ describe("the timeline", () => {
         fictionalStream({ cycles: [], patterns: [] }),
       ]),
     });
-    renderApp("/releases");
+    renderApp("/releases?tab=schedules");
     await streamsGrid();
     expect(screen.queryByRole("region", { name: "Timeline" })).toBeNull();
   });

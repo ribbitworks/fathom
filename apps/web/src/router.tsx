@@ -34,6 +34,7 @@ import {
   planModeSchema,
   parseRecordKey,
   parseRecordLink,
+  shownChoiceSchema,
 } from "@fathom/shared";
 import { Anchor } from "@mantine/core";
 import {
@@ -76,7 +77,11 @@ import {
 import { SettingsPage } from "./settings-page.tsx";
 import { DataClassesPage } from "./data-classes-page.tsx";
 import { setTimeZone, shownDay, today } from "./today.ts";
-import { ReleasesPage } from "./releases-page.tsx";
+import {
+  ReleasesPage,
+  releasesTabSchema,
+  releasesTabTables,
+} from "./releases-page.tsx";
 import { PeoplePage } from "./people-page.tsx";
 import { ProjectsPage, projectTabSchema } from "./projects-page.tsx";
 import { featureNamers, planAddress } from "./projects.ts";
@@ -420,7 +425,11 @@ function placeAddress(place: DraftPlace): LinkOptions {
     case "releases":
       return {
         to: "/releases/{-$streamId}" as const,
-        params: { streamId: place.streamId },
+        params: { streamId: undefined },
+        search: {
+          ...(place.tab === "releases" ? {} : { tab: place.tab }),
+          open: place.open,
+        },
       };
     case "features":
       return planAddress("features", place.open);
@@ -505,25 +514,63 @@ const listsRoute = createRoute({
   },
 });
 
-// Release streams, with their cycles and releases, seen with the plan or planning configuration,
-// with the table's view in the address, and the stream in the address, if any, open in its side
-// panel.
+// The Releases page's address: its tab, the record of the tab whose details are shown beside it,
+// the tab's view, and, on Releases, whether shipped releases show. Changing the tab starts its view
+// afresh.
+const releasesSearch = viewSearchSchema.extend({
+  tab: releasesTabSchema.optional().catch(undefined),
+  open: z.string().max(fathomIdLength).optional().catch(undefined),
+  shipped: shownChoiceSchema.optional().catch(undefined),
+});
+
+// Releases, their schedules and cycles, seen with the plan or planning configuration. An address
+// naming a schedule after the page, as links made before the page had tabs do, opens it on
+// Schedules.
 const releasesRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/releases/{-$streamId}",
-  validateSearch: viewSearchSchema,
-  beforeLoad: reaching("releases"),
+  validateSearch: releasesSearch,
+  beforeLoad: (match) => {
+    reaching("releases")(match);
+    const { streamId } = match.params;
+    if (streamId !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
+      throw redirect({
+        to: "/releases/{-$streamId}",
+        params: { streamId: undefined },
+        search: { ...match.search, tab: "schedules", open: streamId },
+        replace: true,
+      });
+    }
+  },
   component: function Releases() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = releasesRoute.useNavigate();
+    const { tab = "releases", open, ...search } = releasesRoute.useSearch();
+    const kept = { tab: tab === "releases" ? undefined : tab, open };
     return (
       <ReleasesPage
-        streamId={releasesRoute.useParams().streamId}
+        tab={tab}
+        onTab={(next) => {
+          void navigate({
+            search: next === "releases" ? {} : { tab: next },
+          });
+        }}
+        open={open}
+        onOpen={(next) => {
+          void navigate({ search: { ...search, ...kept, open: next } });
+        }}
         approves={approvableKinds(permissions)}
-        canShareViews={sharesViews("release-streams", permissions)}
-        {...viewProps(releasesRoute.useSearch(), (next, replace) => {
-          void navigate({ search: next, replace });
-        })}
+        // The tab is always one of the fixed tabs.
+        // eslint-disable-next-line security/detect-object-injection
+        canShareViews={sharesViews(releasesTabTables[tab], permissions)}
+        {...viewProps(
+          search,
+          (next, replace) => {
+            void navigate({ search: { ...next, ...kept }, replace });
+          },
+          tab === "releases" ? ["shipped"] : [],
+        )}
       />
     );
   },
@@ -639,7 +686,11 @@ const featuresRoute = createRoute({
           void navigate(planAddress(next, record));
         }}
         onReleaseStream={(streamId) => {
-          void navigate({ to: "/releases/{-$streamId}", params: { streamId } });
+          void navigate({
+            to: "/releases/{-$streamId}",
+            params: { streamId: undefined },
+            search: { tab: "schedules", open: streamId },
+          });
         }}
         approves={approvableKinds(permissions)}
         {...viewProps(

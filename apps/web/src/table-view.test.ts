@@ -39,6 +39,7 @@ import {
   viewSearchSchema,
   widthWithin,
   withPlaces,
+  withChoice,
   withUnit,
   withoutFilters,
   withHidden,
@@ -877,6 +878,26 @@ describe("a page's own choices", () => {
     expect(viewFrom({ choices: { mode: "board" } })).toEqual(chosen);
     expect(viewFrom({ choices: {} })).toEqual(emptyView);
     expect(setsApart(chosen)).toBe(true);
+  });
+
+  it("are set one at a time, keeping the others", () => {
+    const chosen = { ...emptyView, choices: { mode: "board" } };
+    expect(withChoice(chosen, "shipped", "shown").choices).toEqual({
+      mode: "board",
+      shipped: "shown",
+    });
+  });
+
+  it("are taken out one at a time, leaving none once the last goes", () => {
+    const chosen = {
+      ...emptyView,
+      choices: { mode: "board", shipped: "shown" },
+    };
+    const fewer = withChoice(chosen, "shipped", undefined);
+    expect([
+      fewer.choices,
+      sameView(withChoice(fewer, "mode", undefined), emptyView),
+    ]).toEqual([{ mode: "board" }, true]);
   });
 
   it("are kept, with whether retired records show, when the view is fitted to the table's columns", () => {

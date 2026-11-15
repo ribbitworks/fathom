@@ -437,7 +437,9 @@ describe("a person's details", () => {
     it("marks someone drafted to be added beside live", async () => {
       answers(everyone);
       renderApp("/people?open=E8");
-      expect(await panel("Xan Fictional, Draft: added")).toBeDefined();
+      // The panel is named for the person alone, with the draft's mark beside its heading.
+      const shown = await panel("Xan Fictional");
+      expect(within(shown).getByText(/Draft: added/)).toBeDefined();
     });
 
     it("says who is not live yet with Live only", async () => {

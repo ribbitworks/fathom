@@ -134,6 +134,7 @@ import {
   RecordSection,
   Row,
   DetailSections,
+  RecordPanel,
 } from "./record-details.tsx";
 import {
   type Column,
@@ -175,12 +176,7 @@ import {
 import { useSavedViews } from "./saved-views.tsx";
 import { RecordKey } from "./record-key.tsx";
 import { useSaving } from "./saving.ts";
-import {
-  type SidePanel,
-  SidePanelFrame,
-  sidePanelScroll,
-  useNarrow,
-} from "./side-panel.tsx";
+import { type SidePanel, useNarrow } from "./side-panel.tsx";
 import { besideLive, DraftedItem, MarkRow } from "./status-mark.tsx";
 import type { ChangeView } from "./table-controls.tsx";
 import { type CellValue, formatDay, type View } from "./table-view.ts";
@@ -422,9 +418,6 @@ export function ProjectsPage({
     openedAdded.current = justAdded;
     onOpen?.(justAdded);
   }, [justAdded, query.data, onOpen]);
-  useEffect(() => {
-    if (open !== undefined) focusSoon(panelTitleId);
-  }, [open]);
   const [decision, setDecision] = useState<Decision>();
   const [deciding, setDeciding] = useState(false);
   // A milestone being added to a project, or changed, in the project's panel.
@@ -1262,44 +1255,38 @@ function recordPanel({
     id: panelId,
     name: "details",
     node: (
-      <SidePanelFrame
+      <RecordPanel
         id={panelId}
         titleId={panelTitleId}
-        narrow={narrow}
+        recordId={shown.id}
         title={shown.name}
-        marked={(heading) => (
-          <DraftedItem draft={ownDraft} heldBy={shown.heldBy}>
-            {heading}
-          </DraftedItem>
-        )}
+        narrow={narrow}
+        draft={ownDraft}
+        heldBy={shown.heldBy}
+        onClose={onClose}
         subtitle={
           <RecordKey record={{ kind: type, keyNumber: shown.keyNumber }} />
         }
-        close={{ label: "Close details", onClose }}
       >
-        <div className={sidePanelScroll}>
-          <DetailSections>
-            <PlanRecordDetails
-              // Each record's details start in the units the table shows.
-              key={shown.id}
-              columns={columns}
-              units={units}
-              record={shown}
-              ownDraft={ownDraft}
-              canEdit={canEdit}
-              identified={identified}
-              follow={follow}
-              onChange={(change) => {
-                onChange(type, shown, change);
-              }}
-              sections={type === "feature" ? featureColumnGroups : undefined}
-              notes={notes}
-            />
-            {extra}
-            {scope}
-          </DetailSections>
-        </div>
-      </SidePanelFrame>
+        <PlanRecordDetails
+          // Each record's details start in the units the table shows.
+          key={shown.id}
+          columns={columns}
+          units={units}
+          record={shown}
+          ownDraft={ownDraft}
+          canEdit={canEdit}
+          identified={identified}
+          follow={follow}
+          onChange={(change) => {
+            onChange(type, shown, change);
+          }}
+          sections={type === "feature" ? featureColumnGroups : undefined}
+          notes={notes}
+        />
+        {extra}
+        {scope}
+      </RecordPanel>
     ),
   };
 }

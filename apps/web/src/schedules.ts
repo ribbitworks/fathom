@@ -15,7 +15,12 @@ import {
   type ReleaseStream,
 } from "@fathom/shared";
 import { isCurrent } from "./feature-board.ts";
-import { daysBetween, keptReleases, releaseDate } from "./releases.ts";
+import {
+  daysBetween,
+  hasShipped,
+  keptReleases,
+  releaseDate,
+} from "./releases.ts";
 
 // The pattern in force on a day, or the first, when none has started yet.
 export function patternOn(
@@ -39,7 +44,9 @@ export function nextRelease(stream: ReleaseStream, day: string) {
   return keptReleases(stream)
     .flatMap((release) => {
       const ships = releaseDate(stream, release);
-      return ships !== undefined && ships >= day ? [{ release, ships }] : [];
+      return ships === undefined || hasShipped(stream, release, day)
+        ? []
+        : [{ release, ships }];
     })
     .sort((one, other) => one.ships.localeCompare(other.ships))
     .at(0);

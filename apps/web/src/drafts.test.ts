@@ -15,6 +15,7 @@ import { recordDraft } from "./test-support.tsx";
 import {
   type Columns,
   decisionFor,
+  differingKeys,
   draftSentAgain,
   draftNames,
   draftTotal,
@@ -72,6 +73,18 @@ const sites: List = {
 };
 
 const lists = [teams, sites];
+
+describe("the values a draft changes", () => {
+  it("are those that differ from live, a list only where its items or their order do", () => {
+    expect(
+      differingKeys(
+        { name: "B", cycles: ["1", "2"], moved: ["1", "2"], cut: ["1"] },
+        { name: "A", cycles: ["1", "2"], moved: ["2", "1"], cut: ["1", "2"] },
+        ["name", "cycles", "moved", "cut"],
+      ),
+    ).toEqual(["name", "moved", "cut"]);
+  });
+});
 
 describe("drafts an approval includes", () => {
   it("approves the choices an order places, and the lists they are added to", () => {

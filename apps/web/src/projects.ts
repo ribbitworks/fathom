@@ -38,7 +38,12 @@ import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
 import type { CellChange } from "./cell-kinds.tsx";
 import { choice } from "./lists.ts";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
-import { includesCycle, keptReleases, releaseDate } from "./releases.ts";
+import {
+  includesCycle,
+  keptReleases,
+  releaseDate,
+  withSchedule,
+} from "./releases.ts";
 import { formatDay } from "./table-view.ts";
 
 export const projectPlanQuery = queryOptions({
@@ -651,9 +656,22 @@ export const cycleChoices = (streams: readonly ReleaseStream[]): Choice[] =>
     namedCycles(stream).map(({ cycle, retired }) =>
       choice(
         cycleChoiceId(stream.id, cycle.startsOn),
-        `${stream.name}: ${cycle.name}`,
+        withSchedule(stream, cycle.name),
         retired,
       ),
+    ),
+  );
+
+// Every stream's cycles' own names, by their choices.
+export const cycleNames = (
+  streams: readonly ReleaseStream[],
+): ReadonlyMap<string, string> =>
+  new Map(
+    streams.flatMap((stream) =>
+      namedCycles(stream).map(({ cycle }) => [
+        cycleChoiceId(stream.id, cycle.startsOn),
+        cycle.name,
+      ]),
     ),
   );
 
@@ -697,7 +715,7 @@ export function releaseOfCycle(
   };
   releases.forEach(({ stream, release }, rank) => {
     const shipsOn = releaseDate(stream, release);
-    const name = `${stream.name}: ${release.name}`;
+    const name = withSchedule(stream, release.name);
     place(
       stream,
       {
@@ -711,7 +729,7 @@ export function releaseOfCycle(
     );
   });
   streams.forEach((stream, order) => {
-    const name = `${stream.name}: Not released yet`;
+    const name = withSchedule(stream, "Not released yet");
     place(
       stream,
       {

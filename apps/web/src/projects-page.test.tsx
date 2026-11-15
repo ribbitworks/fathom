@@ -2871,8 +2871,10 @@ describe("the Features page", () => {
       }),
     );
     await waitFor(() => {
-      expect(history.location.pathname).toBe(`/releases/${streamId}`);
+      expect(history.location.pathname).toBe("/releases");
     });
+    expect(history.location.search).toContain("tab=schedules");
+    expect(history.location.search).toContain(`open=${streamId}`);
   });
 
   it("groups features by release, then each stream's cycles in none, then Later", async () => {

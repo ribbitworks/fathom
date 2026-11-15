@@ -81,12 +81,11 @@ describe("the timeline of release streams", () => {
     ],
   });
 
-  it("lays every current stream's cycles on one axis of whole months", () => {
+  it("lays every stream's cycles on one axis of whole months", () => {
     const layout = releasesOnlyTimeline(
       [
         stream,
         minors,
-        fictionalStream({ id: "s3", name: "Fictional Old", retired: true }),
         fictionalStream({ id: "s4", name: "Fictional Empty", cycles: [] }),
       ],
       "2027-02-15",
@@ -115,8 +114,8 @@ describe("the timeline of release streams", () => {
   it("marks where a stream that ends has its last day, and nothing for one that keeps going", () => {
     const ending = fictionalStream({ endsOn: "2027-05-15" });
     const layout = releasesOnlyTimeline([ending, minors], "2027-02-15");
-    expect(layout?.rows.map(({ endsAt }) => endsAt)).toEqual([
-      31 + 31 + 28 + 31 + 30 + 15,
+    expect(layout?.rows.map(({ end }) => end)).toEqual([
+      { day: "2027-05-15", at: 31 + 31 + 28 + 31 + 30 + 15 },
       undefined,
     ]);
   });
@@ -244,29 +243,19 @@ describe("the timeline of release streams", () => {
     expect(today("2028-01-01")).toBeUndefined();
   });
 
-  it("keeps a stream where it is live while a draft retires or restores it", () => {
-    const retiring = (retired: boolean) =>
-      fictionalStream({
-        id: retired ? "s2" : "s3",
-        name: retired ? "Fictional Retiring" : "Fictional Restoring",
-        retired,
-        draft: recordDraft({ changed: ["retired"] }),
-      });
+  it("lays out the streams given in their order, retired ones included", () => {
     expect(
       releasesOnlyTimeline(
-        [retiring(true), retiring(false)],
+        [{ ...minors, name: "Fictional Retired", retired: true }, stream],
         "2027-02-15",
       )?.rows.map((row) => row.stream.name),
-    ).toEqual(["Fictional Retiring"]);
+    ).toEqual(["Fictional Retired", "Fictional Majors"]);
   });
 
-  it("has nothing to show while no current stream has cycles", () => {
+  it("has nothing to show while no stream has cycles", () => {
     expect(releasesOnlyTimeline([], "2027-02-15")).toBeUndefined();
     expect(
-      releasesOnlyTimeline(
-        [fictionalStream({ cycles: [] }), fictionalStream({ retired: true })],
-        "2027-02-15",
-      ),
+      releasesOnlyTimeline([fictionalStream({ cycles: [] })], "2027-02-15"),
     ).toBeUndefined();
   });
 

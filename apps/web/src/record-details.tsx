@@ -6,12 +6,13 @@
 
 import type { Link as WebLink } from "@fathom/shared";
 import { ActionIcon, Anchor, Group, Stack, Text } from "@mantine/core";
-import type { MouseEvent, ReactNode } from "react";
+import { type MouseEvent, type ReactNode, useEffect } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { ColouredName } from "./colour-swatch.tsx";
 import { Icon } from "./icons.tsx";
 import { LinkCell } from "./link-field.tsx";
 import { FoldedNote } from "./folded-note.tsx";
+import { focusSoon } from "./focus.ts";
 import { OpenBesideButton } from "./row-controls.tsx";
 import {
   changeId,
@@ -21,10 +22,17 @@ import {
 } from "./record-editing.tsx";
 import classes from "./record-details.module.css";
 import { roundedUpTo } from "@fathom/shared";
-import { type Column, isEmpty, shownInView } from "./record-grid.tsx";
+import {
+  type Column,
+  type GridRecord,
+  isEmpty,
+  shownInView,
+} from "./record-grid.tsx";
+import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {
   DraftedItem,
   type DraftLike,
+  DraftedValue,
   emptiedWords,
   MarkedItem,
   MarkRow,
@@ -138,6 +146,64 @@ export function inUnitsWords(
   return shown.unit.key === units.offered[0].key || Number(shownValue) <= 0
     ? kept
     : `${spelledOut(shown.column, shown.unit, shownValue)} (${kept})`;
+}
+
+// A record's details beside its table: its name as the panel's heading, marked with the draft of the
+// record as a whole, who holds it and its facts, and with its name's draft; focus goes to the name
+// as each record opens. Its sections scroll under the heading.
+export function RecordPanel({
+  id,
+  titleId,
+  recordId,
+  title,
+  narrow,
+  draft,
+  nameDraft,
+  heldBy,
+  facts,
+  subtitle,
+  onClose,
+  children,
+}: {
+  id: string;
+  titleId: string;
+  recordId: string;
+  title: string;
+  // The line under the title, such as the record's key.
+  subtitle?: ReactNode;
+  narrow: boolean;
+  draft?: DraftLike | undefined;
+  // The record's draft, whatever the view, which marks its name where it changes it.
+  nameDraft?: Parameters<typeof DraftedValue>[0]["draft"];
+  heldBy?: string | undefined;
+  facts?: ReactNode;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  useEffect(() => {
+    focusSoon(titleId);
+  }, [recordId, titleId]);
+  return (
+    <SidePanelFrame
+      id={id}
+      titleId={titleId}
+      narrow={narrow}
+      title={title}
+      marked={(heading) => (
+        <DraftedItem draft={draft} heldBy={heldBy} facts={facts}>
+          <DraftedValue draft={nameDraft} fields={["name"]} named="Name">
+            {heading}
+          </DraftedValue>
+        </DraftedItem>
+      )}
+      subtitle={subtitle}
+      close={{ label: "Close details", onClose }}
+    >
+      <div className={sidePanelScroll}>
+        <DetailSections>{children}</DetailSections>
+      </div>
+    </SidePanelFrame>
+  );
 }
 
 // A details panel's sections, one under another with room between, as every panel spaces them.
@@ -371,5 +437,57 @@ export function Row({
         )}
       </dd>
     </div>
+  );
+}
+
+// A record's details from its table's columns, in the table's order, each a row with the column's
+// label, the record's value, its colour and its draft's marks, and a pencil where it can be changed:
+// the record as the Draft view shows it, its draft whatever the view, which marks each value it
+// changes, and the record as it is live, for a changed value's colour under it.
+export function ColumnRows<Rec extends GridRecord, Change>({
+  columns,
+  shown,
+  draft,
+  live,
+  changeOf,
+}: {
+  columns: readonly Column<Rec, Change>[];
+  shown: Rec;
+  draft: NonNullable<Rec["draft"]> | undefined;
+  live: Rec;
+  // What opens a change to a column's value, such as a dialog, where it may be changed.
+  changeOf: (column: Column<Rec, Change>) => (() => void) | undefined;
+}) {
+  return (
+    <>
+      {columns.map((column) => {
+        const value = column.value(shown);
+        const change = changeOf(column);
+        return (
+          <Row
+            key={column.key}
+            column={column}
+            value={value}
+            colour={column.colour?.(shown) ?? null}
+            changed={
+              draft?.changed.includes(column.key) === true
+                ? {
+                    live: column.live(draft),
+                    liveColour: column.colour?.(live) ?? null,
+                    draft,
+                  }
+                : undefined
+            }
+            action={
+              change === undefined ? undefined : (
+                <ActionIcon {...changeButton(column.label)} onClick={change} />
+              )
+            }
+          >
+            {isEmpty(value) ? undefined : column.content?.(shown)}
+          </Row>
+        );
+      })}
+    </>
   );
 }

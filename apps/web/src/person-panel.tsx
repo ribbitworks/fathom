@@ -17,7 +17,6 @@ import { Alert, Button, Group, Loader, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useEffectEvent } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
-import { focusSoon } from "./focus.ts";
 import { listsQuery } from "./lists.ts";
 import { PersonFeatureTeams } from "./person-feature-teams.tsx";
 import { useTeamColours } from "./org-chart.ts";
@@ -33,6 +32,7 @@ import {
   withTeamColours,
 } from "./people-grid.tsx";
 import { isHire, personKeyOf, rowName, type RowChange } from "./people-rows.ts";
+import { RecordKey } from "./record-key.tsx";
 import { changedFrom, managerChangesFrom } from "./person-change.ts";
 import type { NoteEditing } from "./note-editing.tsx";
 import { peopleQuery, peopleQueryOn } from "./people.ts";
@@ -47,14 +47,12 @@ import {
   RecordLink,
   RecordSection,
   Row,
-  DetailSections,
+  RecordPanel,
 } from "./record-details.tsx";
 import { heldBack, onRow, shownSchema } from "./record-grid.tsx";
-import { RecordKey } from "./record-key.tsx";
-import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {
   besideLive,
-  DraftedItem,
+  type DraftLike,
   DraftedPartItem,
   leftWarning,
   MarkedItem,
@@ -175,87 +173,75 @@ export function PersonPanel({
     if (renamed !== undefined) follow(renamed);
   }, [renamed]);
   const shown = drafted?.id ?? employeeId;
-  useEffect(() => {
-    focusSoon(titleId);
-  }, [shown]);
-  const frame = ({
-    title,
-    subtitle,
-    content,
-  }: {
-    title: ReactNode;
-    subtitle?: ReactNode;
-    content: ReactNode;
-  }) => (
-    <SidePanelFrame
+  const frame = (
+    title: string,
+    content: ReactNode,
+    draft?: DraftLike,
+    // The line under the title, such as the record's key.
+    subtitle?: ReactNode,
+  ) => (
+    <RecordPanel
       id={personPanelId}
       titleId={titleId}
+      recordId={shown}
       title={title}
       subtitle={subtitle}
       narrow={narrow}
-      close={{ label: "Close details", onClose }}
+      draft={draft}
+      onClose={onClose}
     >
-      <div className={sidePanelScroll}>{content}</div>
-    </SidePanelFrame>
+      {content}
+    </RecordPanel>
   );
   if (query.isPending || lists.isPending) {
-    return frame({
-      title: "Details",
-      content: <Loader role="status" aria-label="Loading" />,
-    });
+    return frame("Details", <Loader role="status" aria-label="Loading" />);
   }
   if (query.isError || lists.isError) {
-    return frame({
-      title: "Details",
-      content: (
-        <Alert color="red" role="alert">
-          <Group justify="space-between">
-            Fathom could not load this person.
-            <Button
-              variant="light"
-              color="red"
-              size="xs"
-              onClick={() => {
-                void query.refetch();
-                void lists.refetch();
-              }}
-            >
-              Try again
-            </Button>
-          </Group>
-        </Alert>
-      ),
-    });
+    return frame(
+      "Details",
+      <Alert color="red" role="alert">
+        <Group justify="space-between">
+          Fathom could not load this person.
+          <Button
+            variant="light"
+            color="red"
+            size="xs"
+            onClick={() => {
+              void query.refetch();
+              void lists.refetch();
+            }}
+          >
+            Try again
+          </Button>
+        </Group>
+      </Alert>,
+    );
   }
   const asShown = peopleAsShown(query.data.people, show);
   const person = asShown.find(({ id }) => id === drafted?.id);
   if (person === undefined) {
     if (drafted === undefined) {
       const today = todays.data?.people.find((one) => sameId(one, employeeId));
-      return frame({
-        title: "Details",
-        content: (
-          <Text>
-            {shownOn === undefined
-              ? `Nobody in People has the ID ${employeeId}.`
-              : `${today === undefined ? employeeId : rowName(today, lists.data)} isn't employed on ${formatDay(shownOn)}.`}
-          </Text>
-        ),
-      });
+      return frame(
+        "Details",
+        <Text>
+          {shownOn === undefined
+            ? `Nobody in People has the ID ${employeeId}.`
+            : `${today === undefined ? employeeId : rowName(today, lists.data)} isn't employed on ${formatDay(shownOn)}.`}
+        </Text>,
+      );
     }
     const name = rowName(drafted, lists.data);
-    return frame({
-      title: name,
-      content: (
-        <Text>
-          {drafted.draft?.action === "deleted"
-            ? `${name} is drafted to be removed.`
-            : drafted.draft?.state === "rejected"
-              ? `Adding ${name} was rejected.`
-              : `${name} is only drafted to be added, so is not live yet.`}
-        </Text>
-      ),
-    });
+    return frame(
+      name,
+      <Text>
+        {drafted.draft?.action === "deleted"
+          ? `${name} is drafted to be removed.`
+          : drafted.draft?.state === "rejected"
+            ? `Adding ${name} was rejected.`
+            : `${name} is only drafted to be added, so is not live yet.`}
+      </Text>,
+    );
   }
   const kind = person.kind ?? personKind;
   const schema = shownSchema(show, query.data.fields, lists.data);
@@ -416,119 +402,110 @@ export function PersonPanel({
   const fill = isHire(person)
     ? hireFill?.(person, asShown, allColumns)
     : undefined;
-  return frame({
-    title: (
-      <DraftedItem
-        draft={ownDraft?.action === "changed" ? undefined : ownDraft}
-      >
-        {nameOf(person)}
-      </DraftedItem>
-    ),
-    subtitle: (
-      <RecordKey
-        record={personKeyOf({
-          keyNumber: person.keyNumber,
-          hire: isHire(person),
-        })}
-      />
-    ),
-    content: (
-      <DetailSections>
-        <div>
-          <Group gap={0} align="baseline">
-            <MarkedItem
-              tone={
-                left
-                  ? "warning"
-                  : person.expected === undefined
-                    ? undefined
-                    : "planned"
-              }
-              words={
-                left
-                  ? leftWarning.words
-                  : person.expected === undefined
-                    ? undefined
-                    : plannedWords({
-                        expected: person.expected,
-                        undated: person.undated,
-                      })
-              }
-              spoken={left ? leftWarning.spoken : undefined}
-            >
-              {position !== undefined && (
-                <Text c="dimmed">
-                  {cellKinds.choice.inWords(position, position.value(person))}
-                </Text>
-              )}
-            </MarkedItem>
-          </Group>
-          {elsewhere(person)}
-          {fill?.action}
-        </div>
-        {fill?.form ?? (
-          <>
-            {teams === "feature-teams" && (
-              <RecordSection id="person-reporting" title="Reporting">
-                {section(["managerId"]).map(rowOf)}
-              </RecordSection>
+  return frame(
+    nameOf(person),
+    <>
+      <div>
+        <Group gap={0} align="baseline">
+          <MarkedItem
+            tone={
+              left
+                ? "warning"
+                : person.expected === undefined
+                  ? undefined
+                  : "planned"
+            }
+            words={
+              left
+                ? leftWarning.words
+                : person.expected === undefined
+                  ? undefined
+                  : plannedWords({
+                      expected: person.expected,
+                      undated: person.undated,
+                    })
+            }
+            spoken={left ? leftWarning.spoken : undefined}
+          >
+            {position !== undefined && (
+              <Text c="dimmed">
+                {cellKinds.choice.inWords(position, position.value(person))}
+              </Text>
             )}
-            {teams === "reporting" && (
-              <RecordSection id="person-reporting" title="Reporting">
-                {section(reportingKeys).map(reportingLabel).map(rowOf)}
-                <div className={classes.row}>
-                  <dt className={classes.label}>Direct reports</dt>
-                  <dd className={classes.value}>
-                    {reports.length === 0 ? (
-                      <Text c="dimmed">None</Text>
-                    ) : (
-                      <ul className={classes.reports}>
-                        {reports.map((report) => (
-                          <li key={report.id}>
-                            <DraftedPartItem
-                              draft={draftOf.get(report.id)}
-                              part={partOf(report.id)}
-                            >
-                              <RecordLink
-                                name={nameOf(report)}
-                                onShow={() => {
-                                  onPerson(report.employeeId);
-                                }}
-                              />
-                            </DraftedPartItem>
-                            {typeof report.startDate === "string" &&
-                              report.startDate > day && (
-                                <Text span c="dimmed" size="sm" ml={8}>
-                                  Starts {formatDay(report.startDate)}
-                                </Text>
-                              )}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </dd>
-                </div>
-              </RecordSection>
-            )}
-            {!isHire(person) && (
-              <PersonFeatureTeams
-                shownOn={shownOn}
-                personId={person.id}
-                employeeId={person.employeeId}
-                seesFeatureTeams={seesFeatureTeams}
-              />
-            )}
-            <RecordSection id="person-details" title="Details">
-              {section(detailKeys).map(rowOf)}
+          </MarkedItem>
+        </Group>
+        {elsewhere(person)}
+        {fill?.action}
+      </div>
+      {fill?.form ?? (
+        <>
+          {teams === "feature-teams" && (
+            <RecordSection id="person-reporting" title="Reporting">
+              {section(["managerId"]).map(rowOf)}
             </RecordSection>
-            {added.length > 0 && (
-              <RecordSection id="person-columns" title="Columns">
-                {added.map(rowOf)}
-              </RecordSection>
-            )}
-          </>
-        )}
-      </DetailSections>
-    ),
-  });
+          )}
+          {teams === "reporting" && (
+            <RecordSection id="person-reporting" title="Reporting">
+              {section(reportingKeys).map(reportingLabel).map(rowOf)}
+              <div className={classes.row}>
+                <dt className={classes.label}>Direct reports</dt>
+                <dd className={classes.value}>
+                  {reports.length === 0 ? (
+                    <Text c="dimmed">None</Text>
+                  ) : (
+                    <ul className={classes.reports}>
+                      {reports.map((report) => (
+                        <li key={report.id}>
+                          <DraftedPartItem
+                            draft={draftOf.get(report.id)}
+                            part={partOf(report.id)}
+                          >
+                            <RecordLink
+                              name={nameOf(report)}
+                              onShow={() => {
+                                onPerson(report.employeeId);
+                              }}
+                            />
+                          </DraftedPartItem>
+                          {typeof report.startDate === "string" &&
+                            report.startDate > day && (
+                              <Text span c="dimmed" size="sm" ml={8}>
+                                Starts {formatDay(report.startDate)}
+                              </Text>
+                            )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </dd>
+              </div>
+            </RecordSection>
+          )}
+          {!isHire(person) && (
+            <PersonFeatureTeams
+              shownOn={shownOn}
+              personId={person.id}
+              employeeId={person.employeeId}
+              seesFeatureTeams={seesFeatureTeams}
+            />
+          )}
+          <RecordSection id="person-details" title="Details">
+            {section(detailKeys).map(rowOf)}
+          </RecordSection>
+          {added.length > 0 && (
+            <RecordSection id="person-columns" title="Columns">
+              {added.map(rowOf)}
+            </RecordSection>
+          )}
+        </>
+      )}
+    </>,
+    ownDraft?.action === "changed" ? undefined : ownDraft,
+    <RecordKey
+      record={personKeyOf({
+        keyNumber: person.keyNumber,
+        hire: isHire(person),
+      })}
+    />,
+  );
 }

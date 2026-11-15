@@ -12,8 +12,13 @@ import { ActionIcon, Group, Menu, Table, Text } from "@mantine/core";
 import { FoldedList } from "./folded-list.tsx";
 import classes from "./pages.module.css";
 import details from "./record-details.module.css";
-import { changeButton, RecordSection, Row } from "./record-details.tsx";
-import { type Column, fieldColumn } from "./record-grid.tsx";
+import {
+  changeButton,
+  ColumnRows,
+  RecordSection,
+  Row,
+} from "./record-details.tsx";
+import { fieldColumn } from "./record-grid.tsx";
 import {
   currentCycle,
   durationWords,
@@ -77,34 +82,25 @@ export function ScheduleDetails({
       ? [["endsOn", { kind: "ends" }] as const]
       : []),
   ]);
-  const changedIn = (column: Column<StreamRow, never>) =>
-    draft?.changed.includes(column.key) === true
-      ? {
-          live: column.live(draft),
-          liveColour: column.colour?.(live) ?? null,
-          draft,
-        }
-      : undefined;
   const pattern = patternOn(shown.stream, day);
   const draftedNaming = patternOn(drafted.stream, day)?.naming ?? "";
   const liveNaming = patternOn(live.stream, day)?.naming ?? "";
   return (
     <RecordSection id="schedule-details" title="Details">
-      {streamColumns(day).map((column) => {
-        const change = changes.get(column.key);
-        return (
-          <Row
-            key={column.key}
-            column={column}
-            value={column.value(shown)}
-            colour={column.colour?.(shown) ?? null}
-            changed={changedIn(column)}
-            action={
-              change === undefined ? undefined : pencil(column.label, change)
-            }
-          />
-        );
-      })}
+      <ColumnRows
+        columns={streamColumns(day, [shown, drafted, live])}
+        shown={shown}
+        draft={draft}
+        live={live}
+        changeOf={(column) => {
+          const change = changes.get(column.key);
+          return canEdit && change !== undefined
+            ? () => {
+                onChange(change);
+              }
+            : undefined;
+        }}
+      />
       <Row
         column={namePattern}
         value={pattern?.naming ?? ""}

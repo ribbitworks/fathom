@@ -519,6 +519,7 @@ export {
   type PlanMode,
   planModeSchema,
   sharesViews,
+  shownChoiceSchema,
   viewChoiceSchemas,
   type ViewTable,
   viewTableSchema,

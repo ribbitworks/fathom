@@ -26,7 +26,7 @@ import {
 } from "react";
 import classes from "./pages.module.css";
 import { Icon } from "./icons.tsx";
-import { useReleaseLayer } from "./release-layer.tsx";
+import { type ReleaseLayerForm, useReleaseLayer } from "./release-layer.tsx";
 import { daysBetween } from "./releases.ts";
 import {
   type AxisScale,
@@ -133,6 +133,7 @@ export function TimelineView({
   zoomKey,
   today,
   releaseStreams = noStreams,
+  layerForm,
   rows,
 }: {
   title: string;
@@ -142,6 +143,7 @@ export function TimelineView({
   // The release streams whose cycles and releases are shown first, as a layer, each with its
   // drafts, shown as the Draft view around the timeline shows them.
   releaseStreams?: readonly ReleaseStream[];
+  layerForm: ReleaseLayerForm;
   // The view's own rows, under the release layer, with the days they cover.
   rows?: (RowGroup & { range: DayRange }) | undefined;
 }) {
@@ -163,6 +165,7 @@ export function TimelineView({
   const { range: layerRange, rows: layerRows } = useReleaseLayer(
     releaseStreams,
     today,
+    layerForm,
   );
   // The frame is built from days alone, so a view handing over equal streams or rows anew on each
   // render doesn't rebuild the axis, the quarters and the strip.

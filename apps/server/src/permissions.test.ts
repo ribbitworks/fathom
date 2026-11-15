@@ -107,6 +107,7 @@ const viewTableNeeds: Record<ViewTable, Needs> = {
   proposals: allOf("plan:view"),
   customers: allOf("plan:view"),
   milestones: allOf("plan:view"),
+  releases: anyOf("features:view", "configuration:view"),
   "release-streams": anyOf("features:view", "configuration:view"),
   lists: allOf("configuration:view"),
   // Feature assignments' start and end dates, past managers, and team dates are Personal.

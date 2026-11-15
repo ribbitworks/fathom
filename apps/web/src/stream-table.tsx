@@ -17,7 +17,12 @@ import {
   type Show,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
-import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
+import {
+  decidable,
+  differingKeys,
+  type DraftSelection,
+  noDrafts,
+} from "./drafts.ts";
 import { retiredLive } from "./lists.ts";
 import { draftFieldsOf } from "./project-grids.tsx";
 import {
@@ -28,6 +33,8 @@ import {
   readOnlyTableParts,
   type RecordTable,
   type RowGrouping,
+  withLiveCopies,
+  wordsColumn,
 } from "./record-grid.tsx";
 import {
   draftedStreams,
@@ -113,10 +120,8 @@ function rowDraft(
     leaveOutRejected && stream.draft !== undefined && isRejected(stream.draft)
       ? undefined
       : markedDraft(stream.draft, stream.retired);
-  const shownNow = new Map(Object.entries(values));
-  const liveNow = new Map(Object.entries(live));
   const differs = (keys: readonly (keyof StreamValues)[]) =>
-    keys.filter((key) => shownNow.get(key) !== liveNow.get(key));
+    differingKeys(values, live, keys);
   // A change of cycles can change the current cycle, how long cycles last, and, moving releases,
   // which ships next; a release's draft can change which ships next and when.
   const byColumn = [
@@ -268,8 +273,12 @@ const groupings = (day: string): RowGrouping<StreamRow>[] => [
 
 type StreamColumnKey = Exclude<keyof StreamValues, "nextReleaseColour">;
 
-// The table's columns, in its order, which a schedule's details show too.
-export function streamColumns(day: string): Column<StreamRow, never>[] {
+// The table's columns, in its order, which a schedule's details show too, given the schedules the
+// table can show, whose names, current cycles, next releases and cycle lengths their filters offer.
+export function streamColumns(
+  day: string,
+  records: readonly StreamRow[],
+): Column<StreamRow, never>[] {
   const column = (
     key: StreamColumnKey,
     label: string,
@@ -288,24 +297,30 @@ export function streamColumns(day: string): Column<StreamRow, never>[] {
     ...column(...args),
     breaksDown: false,
   });
+  // A column listing the words its rows hold, one each or none.
+  const listColumn = (key: StreamColumnKey, label: string) => ({
+    ...wordsColumn<StreamRow, never>(key, label, records),
+    breaksDown: false,
+  });
   return [
     {
-      ...column("name", "Schedule", "text"),
-      headingHidden: true,
+      ...wordsColumn<StreamRow, never>("name", "Schedule", records, {
+        required: true,
+      }),
       mark: (row) => <EndedBox stream={row.stream} day={day} />,
     },
-    valueColumn("currentCycle", "Current cycle", "text"),
+    listColumn("currentCycle", "Current cycle"),
     valueColumn("cycleStarts", "Cycle starts", "date"),
     valueColumn("cycleEnds", "Cycle ends", "date"),
     {
-      ...valueColumn("nextRelease", "Next release", "text"),
+      ...listColumn("nextRelease", "Next release"),
       colour: (row) => {
         const next = nextRelease(row.stream, day);
         return next === undefined ? null : shownColour(next.release.colour);
       },
     },
     valueColumn("releaseDate", "Release date", "date"),
-    valueColumn("lengthNow", "Cycle length", "text"),
+    listColumn("lengthNow", "Cycle length"),
     valueColumn("endsOn", "Schedule ends", "date", "No end date"),
   ];
 }
@@ -321,7 +336,8 @@ export const streamColumnOrder = [
   "endsOn",
 ];
 
-const decidableRefs = (
+// The records whose drafts can be decided now, as decisions name them.
+export const decidableRefs = (
   type: RecordRef["type"],
   records: readonly {
     id: string;
@@ -350,7 +366,9 @@ export function streamTable({
   // What else a schedule's menu offers, such as retiring it.
   menuItems?: ((row: StreamRow) => ReactNode) | undefined;
 }): RecordTable<StreamRow, never, undefined> {
-  const shownColumns = streamColumns(day);
+  // A draft's menu words a schedule's values as drafted and as they are live.
+  const describedColumns = (row: StreamRow) =>
+    streamColumns(day, withLiveCopies([row]));
   const drafts = (ids: string[]): DraftSelection => ({
     ...noDrafts(),
     records: streams
@@ -376,9 +394,11 @@ export function streamTable({
       onOpen(row.stream);
     },
     keyOf: streamKeyOf,
-    columnsFor: () => shownColumns,
+    columnsFor: (_fields, _lists, _order, records) =>
+      streamColumns(day, records),
     liveRecords: (rows) => liveRows(rows, streams, day),
-    draftFields: (row, draft) => draftFieldsOf(shownColumns, row, draft),
+    draftFields: (row, draft) =>
+      draftFieldsOf(describedColumns(row), row, draft),
     drafts,
     decidable: (row) => drafts([row.id]).records.length > 0,
   };

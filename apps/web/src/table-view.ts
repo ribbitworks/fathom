@@ -76,6 +76,14 @@ export interface TableColumn<Row> {
   emptyLabel?: string;
   // For choice columns: what a filter calls the choices no longer offered, when not "Retired".
   retiredLabel?: string;
+  // For choice columns: a cell's choices in words, where their names joined would not read as the
+  // cell should, such as a run of cycles as "27.1 to 27.2", in its cell, its details and its drafts.
+  choicesInWords?: (chosen: readonly string[]) => string;
+  // Whether every row has a value, so its filter offers neither Empty nor Not empty.
+  required?: boolean;
+  // Whether the column offers a filter, as every column does unless another control already chooses
+  // the rows by it, such as Show shipped for a release's Status.
+  filterable?: false;
   value: (row: Row) => CellValue;
   // For number columns: the unit the numbers are in, which each cell names by its code, and the most
   // decimal places shown, each number rounded up to them, as estimates are.
@@ -265,6 +273,18 @@ export function withUnit(
   unit: string | undefined,
 ): View {
   return { ...view, units: withEntry(view.units, key, unit) };
+}
+
+// The view with one of its page's choices set, or, given none, taken out.
+export function withChoice(
+  view: View,
+  key: string,
+  value: string | undefined,
+): View {
+  return {
+    ...view,
+    choices: withEntry<ViewChoices[string]>(view.choices, key, value),
+  };
 }
 
 const isChoiceValue = (value: unknown): value is string | string[] =>

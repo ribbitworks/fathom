@@ -15,6 +15,7 @@ export const viewTableSchema = z.enum([
   "proposals",
   "customers",
   "milestones",
+  "releases",
   "release-streams",
   "lists",
   "feature-assignments",
@@ -56,6 +57,9 @@ export const chartLevelsSchema = z.union([
 
 const noChoices = z.strictObject({});
 
+// A choice that shows records a table otherwise leaves out, such as shipped releases, while set.
+export const shownChoiceSchema = z.literal("shown");
+
 // Each table's choices, which a request must fit as a whole. A table whose page keeps no choices in
 // its view takes none.
 export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
@@ -72,6 +76,9 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
   proposals: noChoices,
   customers: noChoices,
   milestones: noChoices,
+  releases: z.strictObject({
+    shipped: shownChoiceSchema.optional(),
+  }),
   "release-streams": noChoices,
   lists: noChoices,
   "feature-assignments": noChoices,
@@ -100,6 +107,7 @@ const viewSharers: Record<ViewTable, Permission> = {
   proposals: "configuration:edit",
   customers: "configuration:edit",
   milestones: "configuration:edit",
+  releases: "configuration:edit",
   "release-streams": "configuration:edit",
   lists: "configuration:edit",
   "feature-assignments": "configuration:edit",

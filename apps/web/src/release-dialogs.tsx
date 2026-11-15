@@ -641,16 +641,33 @@ const colourChoices = [
   })),
 ];
 
+// What a release's dialog asks for, when it changes one of the release's values rather than all.
+export type ReleasePart = "name" | "cycles" | "shipsOn" | "colour";
+
+const noStreams: readonly ReleaseStream[] = [];
+
+const scheduleChoices = (streams: readonly ReleaseStream[]) =>
+  streams.map(({ id, name }) => ({ value: id, label: name }));
+
 export function ReleaseDialog({
-  stream,
+  stream: given,
+  streams = noStreams,
   release,
+  part,
   ...saving
-}: {
-  stream: ReleaseStream;
+}: (
+  | { stream: ReleaseStream; streams?: undefined }
+  // For a new release, the schedules it may be made in, one of which is chosen first.
+  | { stream?: undefined; streams: readonly ReleaseStream[] }
+) & {
   // The release being changed; absent when making one.
   release?: Release | undefined;
+  // The one value asked for, when only it is changed.
+  part?: ReleasePart | undefined;
 } & Saving) {
-  const choices = freeCycles(stream, release);
+  const [streamId, setStreamId] = useState(given?.id ?? "");
+  const stream = given ?? streams.find(({ id }) => id === streamId);
+  const choices = stream === undefined ? [] : freeCycles(stream, release);
   const [name, setName] = useState(release?.name ?? "");
   const [firstCycle, setFirst] = useState(release?.firstCycle ?? "");
   const [lastCycle, setLast] = useState(release?.lastCycle ?? "");
@@ -662,22 +679,23 @@ export function ReleaseDialog({
   const [shipsUnfinished, setShipsUnfinished] = useState(false);
   const [tried, setTried] = useState(false);
   const save = useSave(
-    () =>
+    (inStream: string) =>
       saveRelease(
-        stream.id,
+        inStream,
         { name: name.trim(), firstCycle, lastCycle, shipsOn, colour },
         release?.id,
       ),
     saving,
   );
+  const asks = (wanted: ReleasePart) => part === undefined || part === wanted;
   const problem = nameProblem(
     name,
-    stream.releases.some(
+    stream?.releases.some(
       (other) => other.id !== release?.id && same(other.name, name),
-    ),
+    ) === true,
   );
   // The cycles must follow one another with none between them that another release includes.
-  const between = stream.cycles.filter(
+  const between = (stream?.cycles ?? []).filter(
     ({ startsOn }) => startsOn >= firstCycle && startsOn <= lastCycle,
   );
   const consecutive =
@@ -686,108 +704,154 @@ export function ReleaseDialog({
     between.every(({ startsOn }) =>
       choices.some(({ value }) => value === startsOn),
     );
-  const end = consecutive ? lastCycleEnd(stream, lastCycle) : undefined;
+  const end =
+    consecutive && stream !== undefined
+      ? lastCycleEnd(stream, lastCycle)
+      : undefined;
   const shipsProblem =
     shipsOn !== null && firstCycle !== "" && shipsOn < firstCycle
       ? shipsBeforeStart
       : undefined;
+  const wrong =
+    stream === undefined ||
+    (asks("name") && problem !== undefined) ||
+    (asks("cycles") && !consecutive) ||
+    (asks("shipsOn") && shipsUnfinished) ||
+    ((asks("shipsOn") || asks("cycles")) && shipsProblem !== undefined);
+  // Without Ships on, a change of cycles that would ship the release before it starts says so here.
+  const firstCycleProblem =
+    firstCycle === ""
+      ? "Choose a cycle"
+      : asks("shipsOn")
+        ? undefined
+        : shipsProblem;
   return (
     <form
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
         setTried(true);
-        if (
-          problem === undefined &&
-          consecutive &&
-          !shipsUnfinished &&
-          shipsProblem === undefined
-        ) {
-          save.mutate(undefined);
-        }
+        if (stream !== undefined && !wrong) save.mutate(stream.id);
       }}
     >
       <Stack gap="md">
-        <TextInput
-          label="Name"
-          data-autofocus
-          value={name}
-          error={tried || name !== "" ? problem : undefined}
-          rightSection={
-            <Count length={name.trim().length} maximum={releaseLengths.name} />
-          }
-          rightSectionWidth={56}
-          onChange={(event) => {
-            setName(event.currentTarget.value);
-          }}
-        />
-        <Select
-          label="First cycle"
-          data={choices}
-          value={firstCycle || null}
-          searchable
-          error={tried && firstCycle === "" ? "Choose a cycle" : undefined}
-          onChange={(value) => {
-            setFirst(value ?? "");
-            if (lastCycle === "" || (value ?? "") > lastCycle) {
-              setLast(value ?? "");
+        {given === undefined && (
+          <Select
+            label="Schedule"
+            data-autofocus
+            data={scheduleChoices(streams)}
+            value={streamId || null}
+            searchable
+            allowDeselect={false}
+            error={
+              tried && stream === undefined ? "Choose a schedule" : undefined
             }
-          }}
-        />
-        <Select
-          label="Last cycle"
-          data={choices.filter(({ value }) => value >= firstCycle)}
-          value={lastCycle || null}
-          searchable
-          error={
-            tried && firstCycle !== "" && !consecutive
-              ? lastCycle === ""
-                ? "Choose a cycle"
-                : "Choose cycles no other release includes"
-              : undefined
-          }
-          onChange={(value) => {
-            setLast(value ?? "");
-          }}
-        />
-        <DayInput
-          label="Ships on"
-          description={
-            (shipsOn !== null && consecutive
-              ? offCycleWords(shipsOffCycle(stream, { lastCycle, shipsOn }))
-              : undefined) ??
-            (end === undefined
-              ? "Leave empty to ship at the end of its last cycle"
-              : `Leave empty to ship at the end of its last cycle, on ${end}`)
-          }
-          required={false}
-          value={release?.shipsOn ?? undefined}
-          problem={shipsProblem}
-          shown={tried}
-          onChange={(day, typed) => {
-            setShipsOn(day ?? null);
-            setShipsUnfinished(typed && day === undefined);
-          }}
-        />
-        <Select
-          label="Colour"
-          description="How the release is drawn on the timeline"
-          data={colourChoices}
-          value={shownColour(colour)}
-          allowDeselect={false}
-          leftSection={<Swatch colour={shownColour(colour)} alone />}
-          renderOption={({ option }) => (
-            <MarkRow>
-              <Swatch colour={option.value} />
-              {option.label}
-            </MarkRow>
-          )}
-          onChange={(value) => {
-            setColour(
-              paletteColours.find((choice) => choice === value) ?? null,
-            );
-          }}
-        />
+            onOptionSubmit={(value) => {
+              // The cycles chosen are another schedule's once another is chosen.
+              if (value !== streamId) {
+                setFirst("");
+                setLast("");
+              }
+              setStreamId(value);
+            }}
+          />
+        )}
+        {asks("name") && (
+          <TextInput
+            label="Name"
+            data-autofocus={given !== undefined || undefined}
+            value={name}
+            error={tried || name !== "" ? problem : undefined}
+            rightSection={
+              <Count
+                length={name.trim().length}
+                maximum={releaseLengths.name}
+              />
+            }
+            rightSectionWidth={56}
+            onChange={(event) => {
+              setName(event.currentTarget.value);
+            }}
+          />
+        )}
+        {asks("cycles") && (
+          <>
+            <Select
+              label="First cycle"
+              data-autofocus={part === "cycles" || undefined}
+              data={choices}
+              value={firstCycle || null}
+              searchable
+              error={tried ? firstCycleProblem : undefined}
+              onChange={(value) => {
+                setFirst(value ?? "");
+                if (lastCycle === "" || (value ?? "") > lastCycle) {
+                  setLast(value ?? "");
+                }
+              }}
+            />
+            <Select
+              label="Last cycle"
+              data={choices.filter(({ value }) => value >= firstCycle)}
+              value={lastCycle || null}
+              searchable
+              error={
+                tried && firstCycle !== "" && !consecutive
+                  ? lastCycle === ""
+                    ? "Choose a cycle"
+                    : "Choose cycles no other release includes"
+                  : undefined
+              }
+              onChange={(value) => {
+                setLast(value ?? "");
+              }}
+            />
+          </>
+        )}
+        {asks("shipsOn") && (
+          <DayInput
+            label="Ships on"
+            autoFocus={part === "shipsOn"}
+            description={
+              (shipsOn !== null && consecutive && stream !== undefined
+                ? offCycleWords(shipsOffCycle(stream, { lastCycle, shipsOn }))
+                : undefined) ??
+              (end === undefined
+                ? "Leave empty to ship at the end of its last cycle"
+                : `Leave empty to ship at the end of its last cycle, on ${end}`)
+            }
+            required={false}
+            value={release?.shipsOn ?? undefined}
+            problem={shipsProblem}
+            shown={tried}
+            onChange={(day, typed) => {
+              setShipsOn(day ?? null);
+              setShipsUnfinished(typed && day === undefined);
+            }}
+          />
+        )}
+        {asks("colour") && (
+          <Select
+            label="Colour"
+            data-autofocus={part === "colour" || undefined}
+            description="How the release is drawn on the timeline"
+            data={colourChoices}
+            value={shownColour(colour)}
+            allowDeselect={false}
+            leftSection={<Swatch colour={shownColour(colour)} alone />}
+            renderOption={({ option }) => (
+              <MarkRow>
+                <Swatch colour={option.value} />
+                {option.label}
+              </MarkRow>
+            )}
+            onChange={(value) => {
+              setColour(
+                paletteColours.find((choice) => choice === value) ?? null,
+              );
+            }}
+          />
+        )}
         <DialogActions
           error={save.error}
           pending={save.isPending}

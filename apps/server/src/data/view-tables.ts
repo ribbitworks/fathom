@@ -57,6 +57,7 @@ export const viewTables: Record<ViewTable, ViewTableRules> = {
   proposals: generalTable(pageNeeds.projects),
   customers: generalTable(pageNeeds.projects),
   milestones: generalTable(pageNeeds.projects),
+  releases: generalTable(pageNeeds.releases),
   "release-streams": generalTable(pageNeeds.releases),
   lists: generalTable(pageNeeds.lists),
   "feature-assignments": {

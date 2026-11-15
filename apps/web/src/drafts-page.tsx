@@ -242,8 +242,8 @@ export function DraftsPage({
                         {othersApprove > 0 && (
                           <Text fz="sm" c="dimmed" role="status">
                             {othersApprove === 1
-                              ? "1 chosen draft was changed by this account, so another approver must approve it."
-                              : `${String(othersApprove)} chosen drafts were changed by this account, so another approver must approve them.`}
+                              ? "1 chosen draft needs another approver."
+                              : `${String(othersApprove)} chosen drafts need another approver.`}
                           </Text>
                         )}
                         <Button

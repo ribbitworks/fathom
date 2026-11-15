@@ -123,11 +123,7 @@ describe("a draft's details", () => {
       "disabled",
       true,
     );
-    expect(
-      screen.getByText(
-        "Changed by this account, so another approver must approve it",
-      ),
-    ).toBeDefined();
+    expect(screen.getByText("Needs another approver")).toBeDefined();
   });
 
   it.each([

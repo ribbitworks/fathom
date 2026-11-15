@@ -11,7 +11,6 @@ import {
   type ReleaseStream,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
-import { retiredLive } from "./lists.ts";
 import {
   daysBetween,
   lastCycleEnd,
@@ -83,17 +82,16 @@ export type ReleaseSpan = Span & {
 export interface ReleaseLayerRow {
   stream: ReleaseStream;
   cycles: (Span & ReleaseStream["cycles"][number])[];
-  // Days from the timeline's first day to the end of the stream's last day, for a stream that ends.
-  endsAt: number | undefined;
+  // For a stream that ends, its last day, and the days from the timeline's first day to its end.
+  end: { day: string; at: number } | undefined;
   releases: ReleaseSpan[];
   // Beside live, each release a draft moves as it is live, in its old place.
   live: ReleaseSpan[];
 }
 
-// The streams a timeline's release layer shows: those with cycles that are not retired as they are
-// live, since a stream drafted to be retired or restored stays where it is until approved.
+// The streams a timeline's release layer shows: those with cycles, of the streams its table shows.
 const layerStreams = (streams: readonly ReleaseStream[]) =>
-  streams.filter((stream) => !retiredLive(stream) && stream.cycles.length > 0);
+  streams.filter((stream) => stream.cycles.length > 0);
 
 // From the first day of the release layer's first cycle to the last of its last, or undefined
 // when it shows no stream.
@@ -136,7 +134,7 @@ const spansOf = (
 
 // Where each stream's cycles and releases fall on a timeline starting on the day given, as the
 // Draft view shows them, with, beside live, the streams as they are live, whose releases a draft
-// moves are drawn in their old places too. Streams retired as they are live are left out.
+// moves are drawn in their old places too.
 export function releaseLayer(
   streams: readonly ReleaseStream[],
   from: string,
@@ -156,10 +154,13 @@ export function releaseLayer(
         at: daysBetween(from, cycle.startsOn),
         days: daysBetween(cycle.startsOn, addDays(cycle.endsOn, 1)),
       })),
-      endsAt:
+      end:
         stream.endsOn === null
           ? undefined
-          : daysBetween(from, addDays(stream.endsOn, 1)),
+          : {
+              day: stream.endsOn,
+              at: daysBetween(from, addDays(stream.endsOn, 1)),
+            },
       releases: spansOf(stream, stream.releases, from),
       live:
         liveStream === undefined

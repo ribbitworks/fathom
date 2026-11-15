@@ -1,0 +1,404 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// The Releases page's Releases tab: a timeline of the releases the table shows, with their cycles,
+// above the table, and the selected release's details in a side panel, with its note in a panel of
+// its own beside them. Shipped releases show only when asked for. Those who change releases change
+// each value from its pencil in the details, and remove a release or add its note from its row's
+// menu. A release in a retired schedule, held by someone else, or drafted to be removed is read
+// only. Every change is a draft, which its makers discard or resubmit, and Approvers approve or
+// reject, from each row's menu.
+
+import type { Asking, DraftKind, Release, ReleaseStream } from "@fathom/shared";
+import { Menu } from "@mantine/core";
+import { useEffect, useEffectEvent, useRef } from "react";
+import { noteOf } from "./cell-kinds.tsx";
+import type { DraftSelection } from "./drafts.ts";
+import { noOthers } from "./new-plan-record-panel.tsx";
+import type { NoteContext, NoteEditing } from "./note-editing.tsx";
+import {
+  ColumnRows,
+  RecordPanel,
+  RecordSection,
+  Row,
+} from "./record-details.tsx";
+import { useRecordEditing } from "./record-editing.tsx";
+import { noRecordActions } from "./record-grid.tsx";
+import type { ReleasePart } from "./release-dialogs.tsx";
+import {
+  releaseColumnOrder,
+  releaseDetailColumns,
+  type ReleaseDetailRows,
+  releaseDetailRows,
+  releaseNoteColumn,
+  type ReleaseRow,
+  releaseRows,
+  releaseTable,
+} from "./release-table.tsx";
+import {
+  inShownOrder,
+  releaseRowFields,
+  removeFromStream,
+  saveReleaseNote,
+  slotDraft,
+} from "./releases.ts";
+import { ownDraftActions, ReleasesTabTable } from "./releases-tab-table.tsx";
+import type { SidePanel } from "./side-panel.tsx";
+import type { ChangeView, SavedViews, ViewChoice } from "./table-controls.tsx";
+import { withChoice, type View } from "./table-view.ts";
+
+const panelId = "release-panel";
+export const releasePanelTitleId = "release-panel-title";
+
+type ReleaseNote = NoteContext<ReleaseRow, never>;
+
+// The view's choice that shows shipped releases too, by its name in the address.
+const shippedChoice = "shipped";
+const shownValue = "shown";
+
+const showsShipped = (view: View) => {
+  const { shipped } = view.choices ?? {};
+  return shipped === shownValue;
+};
+
+// The values a release's details change, by their columns' keys, each with its own pencil.
+const parts: ReadonlySet<string> = new Set<ReleasePart>([
+  "name",
+  "shipsOn",
+  "cycles",
+  "colour",
+]);
+
+const isPart = (key: string): key is ReleasePart => parts.has(key);
+
+function ReleaseDetails({
+  streams,
+  rows: { shown, drafted, live },
+  canEdit,
+  onChange,
+  note,
+  notes,
+}: {
+  // Every schedule, which a release's Schedule is chosen from.
+  streams: readonly ReleaseStream[];
+  rows: ReleaseDetailRows;
+  canEdit: boolean;
+  onChange: (part: ReleasePart) => void;
+  // What writing the release's note needs, which opens in a panel of its own that the page holds.
+  note: ReleaseNote;
+  notes: Pick<NoteEditing, "start">;
+}) {
+  const { draft } = drafted;
+  const { closeStale, editingOf } = useRecordEditing<
+    ReleaseRow,
+    never,
+    ReleaseNote
+  >(notes);
+  closeStale(note);
+  return (
+    <RecordSection id="release-details" title="Details">
+      <ColumnRows
+        columns={releaseDetailColumns(streams, [shown, drafted, live])}
+        shown={shown}
+        draft={draft}
+        live={live}
+        changeOf={(column) => {
+          const { key } = column;
+          return canEdit && isPart(key)
+            ? () => {
+                onChange(key);
+              }
+            : undefined;
+        }}
+      />
+      <Row
+        column={releaseNoteColumn}
+        value={shown.note}
+        changed={
+          draft?.changed.includes(releaseNoteColumn.key) === true
+            ? { draft }
+            : undefined
+        }
+        editing={editingOf(note)(releaseNoteColumn)}
+      />
+    </RecordSection>
+  );
+}
+
+// The selected release, beside the table.
+function ReleasePanel({
+  streams,
+  release,
+  rows,
+  canEdit,
+  narrow,
+  onChange,
+  note,
+  notes,
+  onClose,
+}: {
+  streams: readonly ReleaseStream[];
+  release: Release;
+  rows: ReleaseDetailRows;
+  canEdit: boolean;
+  narrow: boolean;
+  onChange: (part: ReleasePart) => void;
+  note: ReleaseNote;
+  notes: Pick<NoteEditing, "start">;
+  onClose: () => void;
+}) {
+  return (
+    <RecordPanel
+      id={panelId}
+      titleId={releasePanelTitleId}
+      recordId={release.id}
+      title={rows.shown.name}
+      narrow={narrow}
+      draft={slotDraft(release.draft, releaseRowFields)}
+      nameDraft={release.draft}
+      heldBy={release.heldBy}
+      onClose={onClose}
+    >
+      <ReleaseDetails
+        key={release.id}
+        streams={streams}
+        rows={rows}
+        canEdit={canEdit}
+        onChange={onChange}
+        note={note}
+        notes={notes}
+      />
+    </RecordPanel>
+  );
+}
+
+export function ReleasesTable({
+  streams,
+  day,
+  view,
+  onView,
+  approves,
+  saved,
+  canEdit,
+  narrow,
+  open,
+  onOpen,
+  onClose,
+  notes,
+  notePanel,
+  onChange,
+  run,
+  decide,
+}: {
+  // Every schedule, with its drafts, whatever the view.
+  streams: readonly ReleaseStream[];
+  day: string;
+  view: View;
+  onView: ChangeView;
+  approves: readonly DraftKind[];
+  saved: SavedViews;
+  // Whether the user may change releases in the Draft view shown.
+  canEdit: boolean;
+  narrow: boolean;
+  // The release whose details are open, if any.
+  open: string | undefined;
+  // Opens a release's details, then does what was asked with them, unless they cannot open now.
+  onOpen: (id: string, opened?: () => void) => void;
+  // Closes the release's details, given its ID.
+  onClose: (id: string) => void;
+  // Opens a release's note, which the page holds, and its panel while one is open.
+  notes: Pick<NoteEditing, "start">;
+  notePanel: SidePanel | undefined;
+  onChange: (
+    stream: ReleaseStream,
+    release: Release,
+    part: ReleasePart,
+  ) => void;
+  run: (work: () => Promise<unknown>, done: string) => void;
+  decide: (asking: Asking, selection: DraftSelection) => void;
+}) {
+  const { show } = view;
+  const everyRow = releaseRows(streams, show, day);
+  const shippedCount = everyRow.filter(({ status }) => status !== "").length;
+  const rows = showsShipped(view)
+    ? everyRow
+    : everyRow.filter(({ status }) => status === "");
+  const choices: ViewChoice[] =
+    shippedCount > 0 || showsShipped(view)
+      ? [
+          {
+            label: "Show shipped",
+            count: shippedCount,
+            on: showsShipped,
+            turned: (shown, on) =>
+              withChoice(shown, shippedChoice, on ? shownValue : undefined),
+            part: { name: "Show", value: "Shipped releases" },
+          },
+        ]
+      : [];
+  const changeable = (stream: ReleaseStream, release: Release) =>
+    canEdit &&
+    release.heldBy === undefined &&
+    release.draft?.action !== "deleted" &&
+    !stream.retired;
+  // What writing a release's note needs: its note as shown, and, for those who may change the
+  // release, saving it as a draft.
+  const noteContextOf = (
+    stream: ReleaseStream,
+    release: Release,
+    shown: string,
+  ): ReleaseNote => ({
+    id: release.id,
+    name: release.name,
+    kind: "",
+    values: { [releaseNoteColumn.key]: shown },
+    save: changeable(stream, release)
+      ? (_change, _column, value) => {
+          const note = noteOf(value);
+          run(
+            () => saveReleaseNote(stream.id, release.id, note),
+            note === ""
+              ? `Drafted removing the note on ${release.name}.`
+              : `Drafted the note on ${release.name}.`,
+          );
+        }
+      : undefined,
+    others: noOthers,
+    recordProblem: () => undefined,
+  });
+  // A note asked for from a row's menu, opened once its release's details are.
+  const noteAsked = useRef<string>(undefined);
+  const table = releaseTable({
+    streams,
+    day,
+    changeable: (row) => !row.live && changeable(row.stream, row.release),
+    onOpen: (release) => {
+      onOpen(release.id);
+    },
+    menuItems: (row) =>
+      !row.live &&
+      changeable(row.stream, row.release) &&
+      row.release.note === null && (
+        <Menu.Item
+          onClick={() => {
+            if (open === row.id) {
+              notes.start(
+                noteContextOf(row.stream, row.release, ""),
+                releaseNoteColumn,
+              );
+            } else {
+              onOpen(row.id, () => {
+                noteAsked.current = row.id;
+              });
+            }
+          }}
+        >
+          Add note…
+        </Menu.Item>
+      ),
+  });
+  const gridActions = {
+    ...noRecordActions<ReleaseRow, never, undefined>(decide),
+    remove: (row: ReleaseRow) => {
+      run(
+        () => removeFromStream(row.stream.id, "releases", row.id),
+        `Drafted removing ${row.name}.`,
+      );
+    },
+    ...ownDraftActions("release", run),
+  };
+
+  // A release named in the address opens even while shipped releases are hidden.
+  const holding =
+    open === undefined
+      ? undefined
+      : streams.find(({ releases }) => releases.some(({ id }) => id === open));
+  const detail =
+    holding === undefined
+      ? undefined
+      : releaseDetailRows(holding, open, show, day);
+  const opened =
+    holding === undefined || detail === undefined
+      ? undefined
+      : { stream: holding, release: detail.drafted.release, detail };
+  const startAskedNote = useEffectEvent(() => {
+    if (opened === undefined || noteAsked.current !== opened.release.id) {
+      return;
+    }
+    noteAsked.current = undefined;
+    notes.start(
+      noteContextOf(opened.stream, opened.release, opened.detail.shown.note),
+      releaseNoteColumn,
+    );
+  });
+  useEffect(() => {
+    startAskedNote();
+  }, [opened?.release.id]);
+  const panels =
+    opened === undefined
+      ? []
+      : [
+          {
+            key: "release",
+            id: panelId,
+            name: "the release's panel",
+            node: (
+              <ReleasePanel
+                key={opened.release.id}
+                streams={streams}
+                release={opened.release}
+                rows={opened.detail}
+                canEdit={changeable(opened.stream, opened.release)}
+                narrow={narrow}
+                onChange={(part) => {
+                  onChange(opened.stream, opened.release, part);
+                }}
+                note={noteContextOf(
+                  opened.stream,
+                  opened.release,
+                  opened.detail.shown.note,
+                )}
+                notes={notes}
+                onClose={() => {
+                  onClose(opened.release.id);
+                }}
+              />
+            ),
+          },
+          ...(notePanel === undefined ? [] : [notePanel]),
+        ];
+
+  return (
+    <ReleasesTabTable
+      none={everyRow.length === 0 ? "No releases yet." : undefined}
+      day={day}
+      layerForm="releases"
+      timelineOf={(shown) => {
+        const listed = new Set(shown.map(({ id }) => id));
+        // Each schedule holding a release the table shows, with only those releases.
+        return inShownOrder(
+          streams,
+          shown.map(({ stream }) => stream.id),
+        ).map((stream) => ({
+          ...stream,
+          releases: stream.releases.filter(({ id }) => listed.has(id)),
+        }));
+      }}
+      records={rows}
+      table={table}
+      fields={[]}
+      order={releaseColumnOrder}
+      lists={[]}
+      canEdit={canEdit}
+      canAdd={false}
+      canEditDrafts={canEdit}
+      approves={approves}
+      canEditColumns={false}
+      actions={gridActions}
+      view={view}
+      onView={onView}
+      panels={panels}
+      viewChoices={choices}
+      saved={saved}
+    />
+  );
+}

@@ -1262,16 +1262,20 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 ### Part 8: The Schedules Tab
 
-#### REL-30: The Schedules Tab Shows Each Schedule Now
+#### REL-31: The Schedules Tab Shows Each Schedule Now
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-29.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-30.
 
 **Preconditions:** Restore the Seed Data run, then signed in with this account.
 
 - [ ] `5B30` Select the **Releases** page in the left-hand menu.
+  - **Expected:** The tabs **Releases** and **Schedules** are beside the **Releases** heading, and **Releases** is chosen.
+  - **Notes:**
+
+- [ ] `C61E` Select the **Schedules** tab.
   - **Expected:**
-    - A **Schedules** tab is beside the **Releases** heading, and is chosen.
-    - The table's columns are, in order: a first column with no heading, **Current cycle**, **Cycle starts**, **Cycle ends**, **Next release**, **Release date**, **Cycle length** and **Schedule ends**.
+    - **Schedules** is chosen, and the button at the top right reads **New schedule**.
+    - The table's columns are, in order: **Schedule**, **Current cycle**, **Cycle starts**, **Cycle ends**, **Next release**, **Release date**, **Cycle length** and **Schedule ends**.
     - The rows are not under any heading, and the button beside **Metrics** reads "Group by", with nothing after it.
   - **Notes:**
 
@@ -1287,9 +1291,9 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Expected:** Its **Next release** shows a green dot, a square of another colour from the one in the row above, then 'Harbor 2'.
   - **Notes:**
 
-#### REL-31: A Schedule's Details Follow Its Row
+#### REL-32: A Schedule's Details Follow Its Row
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-30 ended with.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-31 ended with.
 
 **Preconditions:** **Releases** page open on the **Schedules** tab.
 
@@ -1312,13 +1316,13 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `E45A` Select 'Patches' in the table.
   - **Expected:**
     - The side panel shows 'Patches'.
-    - Its **Cycles** section has "Earlier cycles" and how many there are above the table, and "Show all" and how many there are from the current cycle under it.
+    - Its **Cycles** section has "Earlier cycles" and how many there are above the table, and "Later cycles" and how many more there are under it.
   - **Notes:**
 
-- [ ] `FC53` Select **Show all**.
+- [ ] `FC53` Select **Later cycles**.
   - **Expected:**
     - Every cycle from the current one is listed.
-    - "Show less" is where "Show all" was, and has the focus.
+    - "Hide later cycles" is where "Later cycles" was, and has the focus.
   - **Notes:**
 
 - [ ] `4866` Select **Earlier cycles**.
@@ -1327,13 +1331,13 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - The control reads "Hide earlier cycles", and has the focus.
   - **Notes:**
 
-- [ ] `6EBD` Select **Show less**.
-  - **Expected:** The section is as it first was: "Earlier cycles" folded, then the current cycle and the next five, then "Show all".
+- [ ] `6EBD` Select **Hide later cycles**.
+  - **Expected:** The section is as it first was: "Earlier cycles" folded, then the current cycle and the next five, then "Later cycles".
   - **Notes:**
 
-#### REL-32: A Schedule Is Changed Only While Nobody Holds It and It Isn't Retiring
+#### REL-33: A Schedule Is Changed Only While Nobody Holds It and It Isn't Retiring
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-31 ended with.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-32 ended with.
 
 **Preconditions:** **Releases** page open on the **Schedules** tab.
 
@@ -1365,15 +1369,15 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Expected:** The menu offers **Restore**.
   - **Notes:**
 
-- [ ] `BFC7` Select **Restore**.
-  - **Expected:** The **Retired** box after 'Patches' is gone, in the table and in the side panel.
+#### REL-34: A Schedule Is Changed From Its Details
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-33 ended with.
+
+**Preconditions:** **Releases** page open on the **Schedules** tab.
+
+- [ ] `CFF8` Select 'Field Apps' in the table.
+  - **Expected:** The side panel shows 'Field Apps', with no lock and no **Retired** box.
   - **Notes:**
-
-#### REL-33: A Schedule Is Changed From Its Details
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-32 ended with.
-
-**Preconditions:** 'Patches' open in the side panel, as REL-32 left it.
 
 - [ ] `FB54` Point at the **Schedule ends** row.
   - **Expected:** A pencil shows at the row's right.
@@ -1381,7 +1385,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `731E` Select the pencil.
   - **Expected:**
-    - A dialog titled "Change when Patches ends" opens.
+    - A dialog titled "Change when Field Apps ends" opens.
     - Its **Schedule ends** field reads "No end date" in grey, with the line "Its last cycle ends on this day." under it.
   - **Notes:**
 
@@ -1401,24 +1405,22 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `20EC` Select **This and later cycles…**.
   - **Expected:**
-    - A dialog titled "Change the length or names of Patches's cycles" opens.
-    - Its start is the cycle chosen, its length `4` and unit **Weeks**, and its naming as **Name pattern** shows it.
+    - A dialog titled "Change the length or names of Field Apps's cycles" opens.
+    - Its start is the cycle chosen, its length `6` and unit **Months**, and its naming as **Name pattern** shows it.
   - **Notes:**
 
 - [ ] `4E9F` Select **Cancel**.
   - **Expected:** The dialog closes, and nothing in the panel has changed.
   - **Notes:**
 
-**Afterwards:** Run Publish.
+#### REL-35: A Role That Can't Change Schedules Sees No Pencils
 
-#### REL-34: A Role That Can't Change Schedules Sees No Pencils
-
-**Account:** Team Member, `team.member@fathom.test`, changed from REL-33.
+**Account:** Team Member, `team.member@fathom.test`, changed from REL-34.
 
 **Preconditions:** Signed in with this account. **Releases** page open on the **Schedules** tab.
 
-- [ ] `0012` Select 'Patches' in the table.
-  - **Expected:** The side panel opens on 'Patches', with no lock and no **Retired** box.
+- [ ] `0012` Select 'Field Apps' in the table.
+  - **Expected:** The side panel opens on 'Field Apps', with no lock and no **Retired** box.
   - **Notes:**
 
 - [ ] `482D` Point at the **Schedule ends** row.
@@ -1429,24 +1431,196 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Expected:** No pencil shows.
   - **Notes:**
 
-- [ ] `E4E4` Select **⋯** at the right of the first cell of the row for 'Patches'.
+- [ ] `E4E4` Select **⋯** at the right of the first cell of the row for 'Field Apps'.
   - **Expected:** The menu offers neither **Retire** nor **Restore**.
   - **Notes:**
 
-**Afterwards:** Run Restore the Seed Data.
+#### REL-36: Each Tab's Timeline Draws What Its Table Lists
 
-#### REL-35: The Timeline Names Releases With Their Colours
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-35.
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-34.
-
-**Preconditions:** Signed in with this account. **Releases** page open on the **Schedules** tab, with no side panel open, and **Year** chosen on the timeline.
+**Preconditions:** Signed in with this account. **Releases** page open on the **Releases** tab, with no side panel open, and **Year** chosen on the timeline.
 
 - [ ] `0651` Read the releases of 'Platform' on the timeline.
   - **Expected:**
     - Each release is a strip of its colour along its cycles, with its diamond under its end.
+    - Under the strips, 'Platform''s cycles are drawn faint, each a different shade from the one before.
     - Above each strip wide enough for it: a dot, if it has a draft, then a small square of its colour, then its name.
   - **Notes:**
 
 - [ ] `EB18` Read the releases of 'Patches' on the timeline.
   - **Expected:** The strips too short for their names show no dot, square or name above them.
+  - **Notes:**
+
+- [ ] `7B4D` Select the **Schedules** tab.
+  - **Expected:**
+    - On the timeline, each schedule's row shows its cycles as blocks, each a different shade from the one before.
+    - The cycles that have ended are fainter than the current one and those after it.
+    - No releases are drawn.
+  - **Notes:**
+
+- [ ] `2E93` Select the details button at the right of the first cell of the row for 'Platform'.
+  - **Expected:** The side panel opens, headed 'Platform'.
+  - **Notes:**
+
+- [ ] `9F18` Select the pencil at the right of the **Schedule ends** row.
+  - **Expected:** A dialog titled "Change when Platform ends" opens.
+  - **Notes:**
+
+- [ ] `A5C2` Type 30 September three years after this year in **Schedule ends**, as its digits, such as `20290930`.
+  - **Expected:** The last cycle in the table under the field ends on the day typed.
+  - **Notes:**
+
+- [ ] `4D7E` Select **Save**.
+  - **Expected:** The dialog closes, and **Schedule ends** in the side panel reads that day, such as "Sep 30, 2029".
+  - **Notes:**
+
+- [ ] `5E7C` Select **All** at the top right of the timeline.
+  - **Expected:**
+    - At the right end of 'Platform''s row, its cycles stop at that day, with a short upright grey line there.
+    - After the line, it reads "Ends" and the day, such as "Ends Sep 30, 2029".
+  - **Notes:**
+
+**Afterwards:** Run Discard the Unpublished Changes.
+
+### Part 9: The Releases Tab
+
+#### REL-37: The Releases Tab Shows Each Release
+
+**Account:** Product Manager, `product.manager@fathom.test`, changed from REL-36.
+
+**Preconditions:** Restore the Seed Data run, then signed in with this account.
+
+- [ ] `F2C3` Select the **Releases** page in the left-hand menu.
+  - **Expected:**
+    - **Releases** is the tab chosen, and the button at the top right reads **New release**.
+    - The table's columns are, in order: **Release**, **Schedule**, **Ships on**, **Cycles** and **Status**.
+    - The rows are under the headings 'Platform' and 'Patches'.
+  - **Notes:**
+
+- [ ] `C42A` Read the rows under 'Field Apps'.
+  - **Expected:**
+    - 'Lantern 1', 'Lantern 2' and 'Lantern 3' are listed, in that order, unless 'Lantern 1' has shipped.
+    - The **Ships on** day of 'Lantern 2' is later than the last day of its last cycle.
+  - **Notes:**
+
+- [ ] `9E90` Read the row for 'Harbor 3', under 'Platform'.
+  - **Expected:**
+    - **Ships on** is a day, and **Cycles** names its first and last cycles, such as "27.2 to 28.1".
+    - **Ships on** and **Cycles** each have a yellow dot before them.
+    - **Status** is blank.
+  - **Notes:**
+
+- [ ] `6E0B` Read the light green **Live** row under the row for 'Harbor 3'.
+  - **Expected:** Its **Ships on** and **Cycles** show an earlier day and earlier cycles than the row above.
+  - **Notes:**
+
+- [ ] `5509` Open the **Views** menu.
+  - **Expected:** It offers "Show shipped (2)".
+  - **Notes:**
+
+- [ ] `B630` Select **Show shipped**.
+  - **Expected:**
+    - 'Harbor 1' is listed under 'Platform', and **Status** reads "Shipped".
+    - Under 'Patches', the release that has shipped is listed too, and **Status** reads "Shipped".
+    - 'Harbor 1' is drawn on the timeline above the table.
+  - **Notes:**
+
+- [ ] `DC03` Choose **None** in the **Group by** menu.
+  - **Expected:** The rows are under no heading, and **Cycles** names only the cycles, such as "27.2 to 28.1", with no schedule's name before them.
+  - **Notes:**
+
+- [ ] `8A1D` Select **Filter…** in the **Schedule** column's menu.
+  - **Expected:** A dialog opens listing 'Platform' and 'Patches', each with a checkbox.
+  - **Notes:**
+
+- [ ] `3D7A` Tick 'Platform'.
+  - **Expected:**
+    - Every release listed reads 'Platform' in **Schedule**, and none reads 'Patches'.
+    - A pill above the table reads "Schedule: Platform".
+    - The timeline above the table draws only 'Platform'.
+  - **Notes:**
+
+#### REL-38: A Release's Details Offer Its Note and a Pencil for Each Value
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account REL-37 ended with.
+
+**Preconditions:** **Releases** page selected again in the left-hand menu, so the **Releases** tab shows with no filter, grouped by schedule, and shipped releases hidden.
+
+- [ ] `EC21` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS'.
+  - **Expected:**
+    - The side panel opens, headed 'Harbor 2 LTS'.
+    - Under **Details**, the rows are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Status**, **Colour** and **Note**.
+    - **Status** reads "Not shipped", and **Schedule** reads 'Platform'.
+    - **Note** shows the release's whole note.
+  - **Notes:**
+
+- [ ] `7E5C` Select the button at the right of the **Note** row.
+  - **Expected:** The note opens in a panel of its own beside the release's details.
+  - **Notes:**
+
+- [ ] `A106` Select the **×** at the top right of the note's panel.
+  - **Expected:** The release's details are still open.
+  - **Notes:**
+
+- [ ] `DEB6` Point at the **Ships on** row.
+  - **Expected:** A pencil shows at the row's right.
+  - **Notes:**
+
+- [ ] `F33C` Select the pencil.
+  - **Expected:** A dialog titled "Change when Harbor 2 LTS ships" opens, with only a **Ships on** field.
+  - **Notes:**
+
+- [ ] `1443` Select **Cancel**.
+  - **Expected:** The dialog closes, and nothing in the panel has changed.
+  - **Notes:**
+
+#### REL-39: A Release Is Added to a Schedule Chosen
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account REL-38 ended with.
+
+**Preconditions:** **Releases** page open on the **Releases** tab.
+
+- [ ] `6B37` Select **New release**.
+  - **Expected:** A dialog opens whose first field is **Schedule**.
+  - **Notes:**
+
+- [ ] `4C8F` Open the **Schedule** list.
+  - **Expected:** It offers 'Platform', and not 'Patches'.
+  - **Notes:**
+
+- [ ] `35C5` Choose 'Platform'.
+  - **Expected:** **First cycle** and **Last cycle** offer Platform's cycles.
+  - **Notes:**
+
+- [ ] `864E` Type `Fictional Harbor` in **Name**.
+  - **Expected:** The name is in the field.
+  - **Notes:**
+
+- [ ] `3D01` Choose the cycle of the quarter after this quarter in **First cycle**, such as '27.1'.
+  - **Expected:**
+    - **First cycle** and **Last cycle** both read that cycle.
+    - The dialog shows no problem.
+  - **Notes:**
+
+- [ ] `EA8F` Select **Save**.
+  - **Expected:**
+    - The dialog closes, and 'Fictional Harbor' is listed under 'Platform', with a hollow dot in its slot.
+    - Its details are open beside the table.
+  - **Notes:**
+
+**Afterwards:** Run Discard the Unpublished Changes.
+
+#### REL-40: A Role That Can't Change Releases Sees No Pencils
+
+**Account:** Team Member, `team.member@fathom.test`, changed from REL-39.
+
+**Preconditions:** Signed in with this account. **Releases** page open on the **Releases** tab.
+
+- [ ] `89A3` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS'.
+  - **Expected:** Its details open beside the table.
+  - **Notes:**
+
+- [ ] `4205` Point at the **Ships on** row.
+  - **Expected:** No pencil shows.
   - **Notes:**

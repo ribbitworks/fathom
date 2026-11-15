@@ -104,6 +104,19 @@ export function saveRelease(
   );
 }
 
+// Drafts a release's note; an empty one removes it.
+export const saveReleaseNote = (
+  streamId: string,
+  id: string,
+  note: string,
+): Promise<SavedStream> =>
+  sendJsonFor(
+    "PUT",
+    `${memberPath(streamId, "releases", id)}/note`,
+    { note: note === "" ? null : note },
+    streamResponse,
+  );
+
 // Drafts removing a pattern or release; removing one only drafted to be added discards it.
 export async function removeFromStream(
   streamId: string,
@@ -335,6 +348,15 @@ export const streamsShown = (
       ? draftedStreams(streams)
       : streams;
 
+// The streams named, in the order first named, such as by the rows a table shows.
+export const inShownOrder = (
+  streams: readonly ReleaseStream[],
+  ids: readonly string[],
+): ReleaseStream[] =>
+  [...new Set(ids)].flatMap((id) =>
+    streams.filter((stream) => stream.id === id),
+  );
+
 // The cycle that starts on a day, by name, or the day itself when the stream has no such cycle.
 export function cycleNamed(stream: ReleaseStream, startsOn: string): string {
   return (
@@ -365,6 +387,13 @@ export const releaseDate = (
   release: { lastCycle: string; shipsOn: string | null },
 ): string | undefined =>
   release.shipsOn ?? lastCycleEnd(stream, release.lastCycle);
+
+// Whether a release has shipped by a day, having shipped on an earlier one; until then it is to come.
+export const hasShipped = (
+  stream: ReleaseStream,
+  release: { lastCycle: string; shipsOn: string | null },
+  day: string,
+): boolean => (releaseDate(stream, release) ?? day) < day;
 
 const dayMs = 24 * 60 * 60 * 1000;
 
@@ -405,14 +434,37 @@ export const releaseColourStyle = (
     "--release-light": colourVariable(shownColour(colour), "light"),
   }) as CSSProperties;
 
+// A cycle or release named with its schedule, such as "Platform: 27.1", where nothing around it says
+// which schedule it is in.
+export const withSchedule = (stream: { name: string }, name: string): string =>
+  `${stream.name}: ${name}`;
+
+// A run of cycles in words, from the first's name to the last's, such as "26.1 to 26.2", or the one
+// cycle's name.
+export const cycleRunWords = (first: string, last: string): string =>
+  first === last ? first : `${first} to ${last}`;
+
 // A release's cycles, in words, such as "26.1 to 26.2", or the one cycle's name.
-export function releaseCycles(
+export const releaseCycles = (
   stream: ReleaseStream,
   release: { firstCycle: string; lastCycle: string },
-): string {
-  const first = cycleNamed(stream, release.firstCycle);
-  const last = cycleNamed(stream, release.lastCycle);
-  return first === last ? first : `${first} to ${last}`;
+): string =>
+  cycleRunWords(
+    cycleNamed(stream, release.firstCycle),
+    cycleNamed(stream, release.lastCycle),
+  );
+
+// How a list of every release names each: by its name, with its schedule's before it where another
+// release of the schedules given has the same name.
+export function releaseListNames(
+  streams: readonly ReleaseStream[],
+): (stream: { name: string }, release: { name: string }) => string {
+  const uses = new Map<string, number>();
+  for (const { name } of streams.flatMap(({ releases }) => releases)) {
+    uses.set(name, (uses.get(name) ?? 0) + 1);
+  }
+  return (stream, { name }) =>
+    (uses.get(name) ?? 0) > 1 ? withSchedule(stream, name) : name;
 }
 
 // What a schedule is called, one and several, wherever a table names its kind.

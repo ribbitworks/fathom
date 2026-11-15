@@ -24,6 +24,7 @@ import {
   findRowActions,
   greeting,
   optionsIn,
+  recordCell,
   renderApp,
   rowActions,
   savedFiles,
@@ -3645,7 +3646,7 @@ describe("drafts of columns", () => {
   });
 
   it("offers no approval of a person's or a column's draft this account changed", async () => {
-    const note = "Changed by this account, so another approver must approve it";
+    const note = "Needs another approver";
     const disabled = (menu: HTMLElement, name: string) =>
       within(menu)
         .getByRole("menuitem", { name })
@@ -4084,6 +4085,35 @@ describe("planned hires", () => {
     await screen.findByRole("grid", { name: "People" });
     return fetch;
   }
+
+  it("finds planned hires with no Site by its Empty, though a person's Site is required", async () => {
+    await openHires({
+      "GET /api/people": () =>
+        Response.json({
+          people: [{ ...avery, stateId: "s-hired" }, opening, drafted],
+          fields: [site],
+          order: ["preferredName", "employeeId", "f1"],
+        }),
+    });
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: (name) => name.startsWith("Site column"),
+      }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Filter…" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Filter Site" });
+    await userEvent.click(
+      within(dialog).getByRole("checkbox", { name: "Empty" }),
+    );
+    await waitFor(() => {
+      expect(recordCell(avery.id, "preferredName")).toBeUndefined();
+    });
+    expect(
+      ["h1", "h2"].map((id) => recordCell(id, "preferredName") !== undefined),
+    ).toEqual([true, true]);
+  });
 
   async function fromMenu(row: string, item: string) {
     focusCell(row, "employeeId");

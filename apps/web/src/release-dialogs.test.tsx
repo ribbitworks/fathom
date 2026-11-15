@@ -33,6 +33,7 @@ import {
   testTheme,
   noFeatureColumns,
   featureDraft,
+  quarters,
 } from "./test-support.tsx";
 
 const changeSetId = "00000000-0000-4000-8000-000000000001";
@@ -906,6 +907,133 @@ describe("the dialog making or changing a release", () => {
     await userEvent.type(box("Ships on"), "202704");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect([screen.getByText(dayProblem), fetch.mock.calls]).toEqual([
+      expect.anything(),
+      [],
+    ]);
+  });
+});
+
+describe("the dialog making a release in a schedule chosen", () => {
+  const minorsId = "10000000-0000-4000-8000-000000000002";
+  const minors = fictionalStream({
+    id: minorsId,
+    name: "Fictional Minors",
+    cycles: quarters(2).map((cycle) => ({
+      ...cycle,
+      name: `Minor ${cycle.name}`,
+    })),
+  });
+  const schedules = [stream, minors];
+
+  it("asks for a schedule before making a release", async () => {
+    const fetch = serverAnswers({});
+    show((handlers) => <ReleaseDialog streams={schedules} {...handlers} />);
+    await userEvent.type(box("Name"), "Fictional Two");
+    await userEvent.click(screen.getByRole("button", { name: "Make release" }));
+    expect([screen.getByText("Choose a schedule"), fetch.mock.calls]).toEqual([
+      expect.anything(),
+      [],
+    ]);
+  });
+
+  it("offers the cycles of the schedule chosen", async () => {
+    show((handlers) => <ReleaseDialog streams={schedules} {...handlers} />);
+    await choose("Schedule", "Fictional Minors");
+    await userEvent.click(picker("First cycle"));
+    expect(
+      (await screen.findAllByRole("option")).map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual([
+      "Minor 27.1 (2027-01-01 to 2027-03-31)",
+      "Minor 27.2 (2027-04-01 to 2027-06-30)",
+    ]);
+  });
+
+  it("empties the cycles chosen once another schedule is chosen", async () => {
+    show((handlers) => <ReleaseDialog streams={schedules} {...handlers} />);
+    await choose("Schedule", "Fictional Majors");
+    await choose("First cycle", "27.2 (2027-04-01 to 2027-06-30)");
+    await choose("Schedule", "Fictional Minors");
+    expect([picker("First cycle").value, picker("Last cycle").value]).toEqual([
+      "",
+      "",
+    ]);
+  });
+
+  it("keeps the cycles chosen when the same schedule is chosen again", async () => {
+    show((handlers) => <ReleaseDialog streams={schedules} {...handlers} />);
+    await choose("Schedule", "Fictional Majors");
+    await choose("First cycle", "27.2 (2027-04-01 to 2027-06-30)");
+    await choose("Schedule", "Fictional Majors");
+    expect(picker("First cycle").value).toBe("27.2 (2027-04-01 to 2027-06-30)");
+  });
+
+  it("makes the release in the schedule chosen", async () => {
+    const fetch = serverAnswers({
+      [`POST /api/release-streams/${minorsId}/releases`]: savedStream,
+    });
+    const { onSaved } = show((handlers) => (
+      <ReleaseDialog streams={schedules} {...handlers} />
+    ));
+    await choose("Schedule", "Fictional Minors");
+    await userEvent.type(box("Name"), "Fictional Two");
+    await choose("First cycle", "Minor 27.2 (2027-04-01 to 2027-06-30)");
+    await userEvent.click(screen.getByRole("button", { name: "Make release" }));
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalled();
+    });
+    expect(fetch.mock.calls.map(([url]) => url)).toEqual([
+      `/api/release-streams/${minorsId}/releases`,
+    ]);
+  });
+});
+
+describe("the dialog changing one of a release's values", () => {
+  const release = fictionalRelease({ shipsOn: "2027-03-15" });
+  const releasing = fictionalStream({ releases: [release] });
+
+  it("saves the value changed with the release's others as they are", async () => {
+    const fetch = serverAnswers({
+      [`PUT ${streamPath}/releases/${release.id}`]: savedStream,
+    });
+    const { onSaved } = show((handlers) => (
+      <ReleaseDialog
+        stream={releasing}
+        release={release}
+        part="colour"
+        {...handlers}
+      />
+    ));
+    await choose("Colour", "Grape");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalled();
+    });
+    expect(bodiesOf(fetch)).toEqual([
+      {
+        name: "Fictional One",
+        firstCycle: "2027-01-01",
+        lastCycle: "2027-01-01",
+        shipsOn: "2027-03-15",
+        colour: "grape",
+      },
+    ]);
+  });
+
+  it("says under First cycle when the cycles chosen would ship the release before it starts", async () => {
+    const fetch = serverAnswers({});
+    show((handlers) => (
+      <ReleaseDialog
+        stream={releasing}
+        release={release}
+        part="cycles"
+        {...handlers}
+      />
+    ));
+    await choose("First cycle", "27.2 (2027-04-01 to 2027-06-30)");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect([screen.getByText(shipsBeforeStart), fetch.mock.calls]).toEqual([
       expect.anything(),
       [],
     ]);

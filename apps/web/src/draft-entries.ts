@@ -87,7 +87,7 @@ function draftedPeople(data: PeopleData): Drafted[] {
 export type DraftPlace =
   | { page: "people"; open: string | undefined }
   | { page: "lists"; listId: string }
-  | { page: "releases"; streamId: string }
+  | { page: "releases"; tab: "releases" | "schedules"; open: string }
   | { page: "features"; open: string | undefined }
   | { page: "projects"; tab: ProjectTab; open: string }
   | { page: "org-chart"; featureTeam: string }
@@ -379,7 +379,9 @@ function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
     },
     now: Record<string, unknown>,
     name: string,
-    streamId: string,
+    // Where the record's details open: a release on Releases, anything else as its schedule's on
+    // Schedules.
+    place: DraftPlace,
   ): Entry[] =>
     record.draft === undefined
       ? []
@@ -391,29 +393,32 @@ function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
             name,
             configFields(record.draft, now, type),
             { records: [{ type, id: record.id }] },
-            { page: "releases", streamId },
+            place,
             record.heldBy,
           ),
         ];
+  const onSchedules = (stream: { id: string }): DraftPlace => ({
+    page: "releases",
+    tab: "schedules",
+    open: stream.id,
+  });
   return streams.flatMap((stream) => [
-    ...of("release-stream", stream, stream, stream.name, stream.id),
+    ...of("release-stream", stream, stream, stream.name, onSchedules(stream)),
     ...stream.patterns.flatMap((pattern) =>
       of(
         "cycle-pattern",
         pattern,
         { ...pattern, length: String(pattern.length) },
         `${stream.name} from ${formatDay(pattern.startsOn)}`,
-        stream.id,
+        onSchedules(stream),
       ),
     ),
     ...stream.releases.flatMap((release) =>
-      of(
-        "release",
-        release,
-        release,
-        `${release.name} in ${stream.name}`,
-        stream.id,
-      ),
+      of("release", release, release, `${release.name} in ${stream.name}`, {
+        page: "releases",
+        tab: "releases",
+        open: release.id,
+      }),
     ),
   ]);
 }

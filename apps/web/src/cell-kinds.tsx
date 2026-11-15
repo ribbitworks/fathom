@@ -50,7 +50,13 @@ import {
 
 type AnyColumn = Pick<
   TableColumn<never>,
-  "key" | "label" | "multiple" | "unit" | "places" | "emptyLabel"
+  | "key"
+  | "label"
+  | "multiple"
+  | "unit"
+  | "places"
+  | "emptyLabel"
+  | "choicesInWords"
 > & {
   choices: readonly Choice[];
   // Whether a choice may be put in a cell, apart from being offered in its list: any may, unless
@@ -65,7 +71,10 @@ type AnyColumn = Pick<
 };
 
 // The choices a column's values may name, and the unit its numbers are in.
-type Choices = Pick<AnyColumn, "choices" | "unit" | "places">;
+type Choices = Pick<
+  AnyColumn,
+  "choices" | "unit" | "places" | "choicesInWords"
+>;
 
 // A record's details and its values in added columns, as it is or as its draft shows it live.
 export interface CellSource {
@@ -325,8 +334,10 @@ const choice: CellKind = {
   // The key is a column's own.
   // eslint-disable-next-line security/detect-object-injection
   read: (source, key) => source.values[key] ?? [],
-  inWords: (column, value) => labels(column, value).join(", "),
-  inDetail: labels,
+  inWords: (column, value) =>
+    column.choicesInWords?.(chosen(value)) ?? labels(column, value).join(", "),
+  inDetail: (column, value) =>
+    column.choicesInWords?.(chosen(value)) ?? labels(column, value),
   ownField: {
     read: (held) => {
       if (Array.isArray(held)) return held as string[];
@@ -444,7 +455,7 @@ const link: CellKind = {
 };
 
 // A note column's cells always hold a note's Markdown, empty for none.
-const noteOf = (value: CellValue): string => value as string;
+export const noteOf = (value: CellValue): string => value as string;
 
 const note: CellKind = {
   empty: "",

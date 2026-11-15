@@ -571,6 +571,24 @@ export function decisionFor(
   };
 }
 
+// Whether two values are the same, a list holding the same items in the same order.
+const sameValue = (one: unknown, other: unknown): boolean =>
+  Array.isArray(one) && Array.isArray(other)
+    ? one.length === other.length &&
+      one.every((item, index) => item === other.at(index))
+    : one === other;
+
+// The keys, of those given, whose values differ between a record as shown and as it is live.
+export function differingKeys<Key extends string>(
+  values: object,
+  live: object,
+  keys: readonly Key[],
+): Key[] {
+  const shownNow = new Map(Object.entries(values));
+  const liveNow = new Map(Object.entries(live));
+  return keys.filter((key) => !sameValue(shownNow.get(key), liveNow.get(key)));
+}
+
 // Whether an Approver may decide a record's draft now: it waits, is published, and nobody has
 // unpublished changes to it, so nobody approves a version that is about to change.
 export const decidable = (record: {

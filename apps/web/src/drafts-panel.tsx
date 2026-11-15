@@ -7,12 +7,7 @@
 
 import { Button, Group, Stack, Text } from "@mantine/core";
 import { useEffect } from "react";
-import {
-  heldWords,
-  otherApproverWords,
-  unpublishedWords,
-  waitingWords,
-} from "./draft-details.tsx";
+import { heldWords, unpublishedWords, waitingWords } from "./draft-details.tsx";
 import type { DraftPlace } from "./draft-entries.ts";
 import type { ReactNode } from "react";
 import { areaWords, type DraftRow } from "./drafts-table.tsx";
@@ -54,9 +49,9 @@ export interface DraftActions {
   reject: () => void;
 }
 
-// Why a draft can't be decided by this account now, if it can't: with no decision offered, why
-// nothing can be done yet; with one, that another approver must approve a draft this account
-// changed.
+// Why a draft can't be decided by this account now, if it can't, with no decision offered: why
+// nothing can be done yet. With one, a draft this account changed already reads Needs another
+// approver in its details, so nothing more is said.
 function whyNot(
   row: DraftRow,
   {
@@ -66,9 +61,7 @@ function whyNot(
   }: Record<"decides" | "approves" | "waits", boolean>,
 ): string | undefined {
   const { entry } = row;
-  if (decides) {
-    return entry.needsOtherApprover ? otherApproverWords : undefined;
-  }
+  if (decides) return undefined;
   if (entry.unpublished) return unpublishedWords;
   if (entry.heldBy !== undefined) return heldWords(entry.heldBy);
   if (entry.state === "rejected") {

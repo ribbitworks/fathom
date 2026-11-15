@@ -94,6 +94,8 @@ type AnyColumn = Pick<
   | "multiple"
   | "emptyLabel"
   | "retiredLabel"
+  | "required"
+  | "filterable"
   | "unit"
   | "places"
   | "dataClass"
@@ -1466,9 +1468,11 @@ export function ColumnViewItems({
         </Menu.Item>
       )}
       <Menu.Divider />
-      <Menu.Item leftSection={<Icon name="filter" />} onClick={onFilter}>
-        Filter…
-      </Menu.Item>
+      {column.filterable !== false && (
+        <Menu.Item leftSection={<Icon name="filter" />} onClick={onFilter}>
+          Filter…
+        </Menu.Item>
+      )}
       {filtered && (
         <Menu.Item
           onClick={() => {
@@ -1619,12 +1623,14 @@ function FilterForm({
       }}
     />
   );
-  const empty = (label: string) => (
-    <>
-      {emptyBox(label, "empty")}
-      {emptyBox(notEmptyLabels[column.kind], "notEmpty")}
-    </>
-  );
+  // A required column's value is never empty, so it offers neither Empty nor Not empty.
+  const empty = (label: string) =>
+    column.required !== true && (
+      <>
+        {emptyBox(label, "empty")}
+        {emptyBox(notEmptyLabels[column.kind], "notEmpty")}
+      </>
+    );
   const emptyLabel = column.emptyLabel ?? "Empty";
   switch (column.kind) {
     case "choice":

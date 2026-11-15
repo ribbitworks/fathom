@@ -243,8 +243,7 @@ export function MenuNote({ children }: { children: ReactNode }) {
 }
 
 // Why a draft can't be decided by this account, or yet, as its menu and its details say it.
-export const otherApproverWords =
-  "Changed by this account, so another approver must approve it";
+export const otherApproverWords = "Needs another approver";
 export const waitingWords = "Waiting for a rejected draft to be resubmitted";
 export const heldWords = (by: string) =>
   `Being changed by ${by}. It can be changed once they publish or discard their changes.`;

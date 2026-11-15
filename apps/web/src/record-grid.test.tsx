@@ -31,6 +31,8 @@ import {
   cellColumn,
   type CellRecord,
   type Column,
+  type GridDraft,
+  wordsColumn,
   countedRecords,
   droppedAfter,
   inOrder,
@@ -2162,6 +2164,51 @@ describe("total rows", () => {
   });
 });
 
+describe("a column of the words its records hold", () => {
+  interface Held {
+    id: string;
+    site: unknown;
+    draft?: GridDraft & { live: object };
+  }
+  const held: Held[] = [
+    { id: "a", site: "B" },
+    { id: "b", site: "" },
+    { id: "c", site: ["C10", "C9", 1] },
+  ];
+
+  it("reads one word, none, or several, as they are live too", () => {
+    const sites = wordsColumn<Held, never>("site", "Site", held);
+    expect([
+      ...held.map((record) => sites.value(record)),
+      sites.live({
+        action: "changed",
+        changed: ["site"],
+        state: "waiting",
+        madeBy: "Fictional Editor",
+        live: { site: "X" },
+      }),
+      sites.readOnly,
+    ]).toEqual([["B"], [], ["C10", "C9"], ["X"], true]);
+  });
+
+  it("offers every word its records hold, alphabetically with numbers in order, or in the order given", () => {
+    const labels = (order?: (one: string, other: string) => number) =>
+      wordsColumn<Held, never>("site", "Site", held, {
+        required: true,
+        multiple: true,
+        emptyLabel: "None",
+        ...(order === undefined ? {} : { order }),
+      }).choices.map(({ label }) => label);
+    expect([
+      labels(),
+      labels((one, other) => other.localeCompare(one)),
+    ]).toEqual([
+      ["B", "C9", "C10"],
+      ["C9", "C10", "B"],
+    ]);
+  });
+});
+
 describe("what a table can ask of its columns and rows", () => {
   const noted = (
     more: Partial<Column<Gadget, GadgetChange>>,
@@ -2281,13 +2328,29 @@ describe("what a table can ask of its columns and rows", () => {
     ]);
   });
 
-  it("shows no name in a hidden heading, which keeps it for screen readers", () => {
-    renderTable(noted({ headingHidden: true }), [gadget("a")]);
+  it("offers no filter on a column whose rows are chosen elsewhere", async () => {
+    renderTable(noted({ filterable: false }), [gadget("a")]);
+    await userEvent.click(screen.getByRole("button", { name: /^Code column/ }));
+    const menu = await screen.findByRole("menu");
+    expect([
+      within(menu).queryByRole("menuitem", { name: "Filter…" }),
+      within(menu).getAllByRole("menuitem").length > 0,
+    ]).toEqual([null, true]);
+  });
 
-    const heading = screen.getByRole("button", { name: /^Code column/ });
+  it("offers neither Empty nor Not empty in a required column's filter", async () => {
+    renderTable(noted({ required: true }), [gadget("a")]);
+    await userEvent.click(screen.getByRole("button", { name: /^Code column/ }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Filter…" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Filter Code" });
     expect(
-      within(heading).getByText("Code").closest(".mantine-VisuallyHidden-root"),
-    ).not.toBeNull();
+      within(dialog)
+        .getAllByRole("textbox")
+        .map((box) => (box as HTMLInputElement).labels?.[0]?.textContent),
+    ).toEqual(["Contains"]);
+    expect(within(dialog).queryAllByRole("checkbox")).toEqual([]);
   });
 
   it("draws the record as it is live with a column's own content in the Live row", () => {

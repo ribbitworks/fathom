@@ -1278,6 +1278,46 @@ th.liveColumn {
   transform: translateX(-50%);
 }
 
+/* A cycle drawn as a block, shaded apart from the one before, with a small gap between them, so each
+   shows its own length unnamed. */
+.timelineCycleBlock,
+.timelineCycleAlternate {
+  border-left: 3px solid var(--mantine-color-body);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--fathom-cycle);
+  background-clip: padding-box;
+  box-shadow: inset 0 0 0 1px var(--fathom-cycle-edge);
+}
+
+.timelineCycleAlternate {
+  background: var(--fathom-cycle-alternate);
+}
+
+/* A cycle that has ended, faded, so the cycles still to come stand out. */
+.timelineCyclePast {
+  opacity: 0.45;
+}
+
+/* A cycle drawn faint behind its schedule's releases, along the foot of their bars. */
+.timelineCycleFaint {
+  position: absolute;
+  top: calc(var(--release-bar) - var(--release-span));
+  height: var(--release-span);
+}
+
+/* What a stream's end says beside its line, such as its last day. */
+.timelineStreamEndLabel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 7px;
+  display: flex;
+  align-items: center;
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-xs);
+  white-space: nowrap;
+}
+
 .timelineReleaseSlot {
   position: absolute;
   top: 0;

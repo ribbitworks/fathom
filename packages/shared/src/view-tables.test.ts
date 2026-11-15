@@ -73,19 +73,35 @@ describe("the Drafts page's choices", () => {
   });
 });
 
-describe("the choices of tables whose pages keep none", () => {
-  it.each(
-    viewTableSchema.options.filter(
-      (table) =>
-        table !== "features" && table !== "org-chart" && table !== "drafts",
-    ),
-  )("refuses any choice on %s, and accepts none", (table) => {
-    // The table is always one of the fixed tables.
-    // eslint-disable-next-line security/detect-object-injection
-    const choices = viewChoiceSchemas[table];
-    expect(choices.safeParse({}).success).toBe(true);
-    expect(choices.safeParse({ hide: ["status"] }).success).toBe(false);
+describe("Releases' choices", () => {
+  const fits = (choices: object) =>
+    viewChoiceSchemas.releases.safeParse(choices).success;
+
+  it("accepts shipped releases shown, or nothing chosen", () => {
+    expect([fits({ shipped: "shown" }), fits({})]).toEqual([true, true]);
   });
+
+  it.each([
+    ["shipped releases set any other way", { shipped: "hidden" }],
+    ["a choice it doesn't keep", { hide: ["status"] }],
+  ])("refuses %s", (_, choices) => {
+    expect(fits(choices)).toBe(false);
+  });
+});
+
+const keepsChoices = new Set(["features", "releases", "org-chart", "drafts"]);
+
+describe("the choices of tables whose pages keep none", () => {
+  it.each(viewTableSchema.options.filter((table) => !keepsChoices.has(table)))(
+    "refuses any choice on %s, and accepts none",
+    (table) => {
+      // The table is always one of the fixed tables.
+      // eslint-disable-next-line security/detect-object-injection
+      const choices = viewChoiceSchemas[table];
+      expect(choices.safeParse({}).success).toBe(true);
+      expect(choices.safeParse({ hide: ["status"] }).success).toBe(false);
+    },
+  );
 });
 
 describe("Sharing views", () => {
