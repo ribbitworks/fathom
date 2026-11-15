@@ -41,7 +41,7 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 ## Table Terms
 
 - **Retired:** A retired choice or list stays on records that already have it, but is no longer offered for new ones, and can be restored.
-- **View:** What a table shows: its search, filters, sort, which version of each record it shows, its metrics, which of its first columns are frozen, staying in view while the rest scroll sideways, the order of its columns, and the widths set for them.
+- **View:** What a table shows: its search, filters, sort, grouping, which version of each record it shows, its metrics, which of its first columns are frozen, staying in view while the rest scroll sideways, the order of its columns, which are hidden, the widths set for them, the units and decimal places they are shown in, and any of the page's own choices of which records show, such as Show retired.
 - **Metrics:** Counts of a table's rows shown, broken down by the values of one column, or of two crossed, each with its share of those rows.
 - **Draft row:** A row to be added, changed, or removed, waiting for an Approver to approve it, which makes it live, or reject it, which marks it Rejected, with a reason, until it is changed or discarded.
 - **Live:** Approved, and so part of the plan everyone works from.

@@ -61,6 +61,9 @@ import {
   emptyView,
   knownView,
   narrows,
+  hiddenColumnsOf,
+  shownColumnsOf,
+  withHidden,
   sameView,
   setsApart,
   type TableColumn,
@@ -187,6 +190,7 @@ export function viewParts(
   const breakdown = (view.breakdown ?? []).flatMap(labelOf);
   const widths = widened(view, columns);
   const shownIn = unitsShown(view, columns);
+  const hidden = hiddenColumnsOf(view, columns).map(({ label }) => label);
   // A grouping is named only where the view chooses one other than the table's own.
   const grouping =
     view.grouping === undefined
@@ -211,12 +215,20 @@ export function viewParts(
       : [
           {
             name: "Frozen",
-            value: frozenUpTo(view.frozen, columns, "Up to", "None"),
+            value: frozenUpTo(
+              view.frozen,
+              shownColumnsOf(view, columns),
+              "Up to",
+              "None",
+            ),
           },
         ]),
     ...(view.order === undefined
       ? []
       : [{ name: "Column order", value: "Moved" }]),
+    ...(hidden.length === 0
+      ? []
+      : [{ name: "Hidden", value: hidden.join(", ") }]),
     ...(widths.length === 0
       ? []
       : [{ name: "Widths", value: widths.join(", ") }]),
@@ -574,8 +586,9 @@ export const viewScopes: Record<
 
 // The menu of a table's saved views, named after the one the view started from, marked when the
 // view has changed since, or, with none applied, from the table's default view. Choosing a view
-// applies it. The menu names each level of the sort, the frozen columns, and the columns whose
-// widths are set, which the table itself already shows, each item removing what it names. It clears
+// applies it. The menu names each level of the sort, the frozen columns, the columns moved, and the
+// columns whose widths are set, which the table itself already shows, each item removing what it
+// names, and the hidden columns, each item showing its column again. It clears
 // the view, saves it as a new one, and updates, renames, or deletes the one applied when the user
 // may change it, and shares it or takes it back when they may.
 export function ViewsMenu({
@@ -617,6 +630,8 @@ export function ViewsMenu({
   const changed = current ? !sameView(shownAs(current), view) : !empty;
   const widths = widened(view, columns);
   const shownIn = unitsShown(view, columns);
+  const hidden = hiddenColumnsOf(view, columns);
+  const ordered = columns.map(({ key }) => key);
   // What the view sets beyond the rows it shows, each part set apart, removing what it names.
   const sections = [
     {
@@ -650,7 +665,12 @@ export function ViewsMenu({
             onView({ ...view, frozen: undefined });
           }}
         >
-          {frozenUpTo(view.frozen, columns, "Frozen to", "Unfrozen")}
+          {frozenUpTo(
+            view.frozen,
+            shownColumnsOf(view, columns),
+            "Frozen to",
+            "Unfrozen",
+          )}
           <VisuallyHidden>, reset</VisuallyHidden>
         </Menu.Item>
       ),
@@ -667,6 +687,41 @@ export function ViewsMenu({
           Columns moved
           <VisuallyHidden>, reset</VisuallyHidden>
         </Menu.Item>
+      ),
+    },
+    {
+      key: "hidden",
+      items: hidden.length > 0 && (
+        <>
+          <Menu.Label>Hidden</Menu.Label>
+          {hidden.length > 1 && (
+            <Menu.Item
+              onClick={() => {
+                onView(
+                  withHidden(
+                    view,
+                    ordered,
+                    hidden.map(({ key }) => key),
+                    false,
+                  ),
+                );
+              }}
+            >
+              Show all columns
+            </Menu.Item>
+          )}
+          {hidden.map((column) => (
+            <Menu.Item
+              key={column.key}
+              onClick={() => {
+                onView(withHidden(view, ordered, [column.key], false));
+              }}
+            >
+              {column.label}
+              <VisuallyHidden>, show</VisuallyHidden>
+            </Menu.Item>
+          ))}
+        </>
       ),
     },
     {
@@ -1080,7 +1135,7 @@ function GroupingMenu({
 export function ViewBar({
   one,
   noun,
-  columns: shownColumns,
+  columns: everyColumn,
   draftFilter,
   view,
   onView,
@@ -1123,7 +1178,7 @@ export function ViewBar({
   withDrafts?: boolean;
 }) {
   const filterOnly = [draftFilter];
-  const columns = [...shownColumns, ...filterOnly];
+  const columns = [...everyColumn, ...filterOnly];
   const filters = columns.flatMap((column) => {
     const filter = view.filters[column.key];
     return filter && isActive(filter) ? [{ column, filter }] : [];
@@ -1177,7 +1232,7 @@ export function ViewBar({
       {/* Last of the buttons, so it moves none of them when it appears. */}
       <ViewsMenu
         saved={saved}
-        columns={shownColumns}
+        columns={everyColumn}
         filterOnly={filterOnly}
         view={view}
         onView={onView}

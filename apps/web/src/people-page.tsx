@@ -36,6 +36,7 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { kept } from "./added-columns.ts";
 import {
   columnDraftActions,
+  columnRemover,
   ColumnModal,
   useColumnDialog,
 } from "./column-editing.tsx";
@@ -112,6 +113,11 @@ import { useSavedViews } from "./saved-views.tsx";
 import type { View } from "./table-view.ts";
 
 const newColumnId = "column-new";
+
+const withPeopleColumns = (
+  data: PeopleData,
+  change: (columns: PeopleData) => Partial<PeopleData>,
+): PeopleData => ({ ...data, ...change(data) });
 
 // Someone or a planned hire being added, as the table shows them before they are saved: a draft
 // adding them.
@@ -468,6 +474,7 @@ export function PeoplePage({
     editColumn: (field) => {
       columnDialog.open({ kind: "edit", field });
     },
+    removeColumn: columnRemover("people", changes, withPeopleColumns),
     ...(access.permissions.includes("data:classify")
       ? {
           moveColumnClass: (field, from) => {
@@ -788,7 +795,7 @@ export function PeoplePage({
           lists={lists.data}
           saving={changes}
           permissions={access.permissions}
-          withColumns={(data, change) => ({ ...data, ...change(data) })}
+          withColumns={withPeopleColumns}
           newColumnButton={newColumnId}
         />
       </>

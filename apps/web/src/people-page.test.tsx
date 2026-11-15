@@ -4720,6 +4720,36 @@ describe("exporting People", () => {
     expect(dialog.textContent).not.toContain("Hiring plan");
   });
 
+  it("leaves hidden columns out of the file, asking nothing when only they hold Personal data", async () => {
+    // Given People with its Personal columns hidden
+    const files = savedFiles();
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/people": peopleAnswer,
+      "GET /api/lists": listsAnswer,
+    });
+    renderApp('/people?hidden=["startDate","endDate","managerFrom","f2"]');
+    await screen.findByRole("grid", { name: "People" });
+
+    // When People is exported
+    await userEvent.click(screen.getByRole("button", { name: "Export" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "CSV file" }),
+    );
+
+    // Then the file is saved without asking, holding no hidden column
+    await waitFor(() => {
+      expect(files).toHaveLength(1);
+    });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    const [heading = ""] = (await files[0]?.text())?.split(/\r?\n/u) ?? [];
+    const headings = heading.split(",");
+    expect(headings).toEqual(expect.arrayContaining(["Name", "Site"]));
+    for (const hidden of ["Start", "End", "Manager assigned", "Role on team"]) {
+      expect(headings).not.toContain(hidden);
+    }
+  });
+
   it("names past managers for a drafted change of manager", async () => {
     // Given a person drafted to another manager
     const moved = {

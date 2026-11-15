@@ -10,6 +10,9 @@ import { describe, expect, it, vi } from "vitest";
 import { isDay } from "@fathom/shared";
 import {
   activeGrouping,
+  alwaysShowing,
+  hiddenColumnsOf,
+  shownColumnsOf,
   notGrouped,
   applyView,
   emptyView,
@@ -33,6 +36,7 @@ import {
   withPlaces,
   withUnit,
   withoutFilters,
+  withHidden,
   withWidth,
   orderAfterMove,
 } from "./table-view.ts";
@@ -627,6 +631,108 @@ describe("a view's order of columns", () => {
       "a",
       "n",
     ]);
+  });
+});
+
+describe("a view's hidden columns", () => {
+  const ordered = ["name", "code", "colour", "size"];
+
+  it("is read from and written to the address, leaving out an empty one", () => {
+    expect(viewFrom({ hidden: ["code"] }).hidden).toEqual(["code"]);
+    expect(viewFrom({ hidden: [] })).not.toHaveProperty("hidden");
+    expect(searchFor({ ...emptyView, hidden: ["code"] }).hidden).toEqual([
+      "code",
+    ]);
+    expect(searchFor(emptyView)).not.toHaveProperty("hidden");
+  });
+
+  it("counts as set apart", () => {
+    expect(setsApart({ ...emptyView, hidden: ["code"] })).toBe(true);
+  });
+
+  it("keeps the hidden columns not shown for now, and goes once it names none the table has", () => {
+    const known = [{ key: "name" }, { key: "code" }];
+    expect(
+      knownView({ ...emptyView, hidden: ["drafted", "code"] }, known).hidden,
+    ).toEqual(["drafted", "code"]);
+    expect(
+      knownView({ ...emptyView, hidden: ["gone"] }, known),
+    ).not.toHaveProperty("hidden");
+  });
+
+  it("keeps a hidden column not shown for now when another is hidden or shown again", () => {
+    const withDrafted = { ...emptyView, hidden: ["drafted"] };
+    expect(withHidden(withDrafted, ordered, ["code"], true).hidden).toEqual([
+      "code",
+      "drafted",
+    ]);
+    expect(
+      withHidden(
+        { ...withDrafted, hidden: ["code", "drafted"] },
+        ordered,
+        ["code"],
+        false,
+      ).hidden,
+    ).toEqual(["drafted"]);
+  });
+
+  it("tells the columns shown from those hidden, in the table's order", () => {
+    const columns = ordered.map((key) => ({ key }));
+    const view = { ...emptyView, hidden: ["size", "code"] };
+    expect(shownColumnsOf(view, columns).map(({ key }) => key)).toEqual([
+      "name",
+      "colour",
+    ]);
+    expect(hiddenColumnsOf(view, columns).map(({ key }) => key)).toEqual([
+      "code",
+      "size",
+    ]);
+    expect(shownColumnsOf(emptyView, columns)).toEqual(columns);
+  });
+
+  it("never hides a column that is always shown", () => {
+    expect(
+      alwaysShowing({ ...emptyView, hidden: ["name", "code"] }, "name").hidden,
+    ).toEqual(["code"]);
+    expect(
+      alwaysShowing({ ...emptyView, hidden: ["name"] }, "name").hidden,
+    ).toBeUndefined();
+    expect(alwaysShowing(emptyView, "name").hidden).toBeUndefined();
+  });
+
+  it("hides columns in the table's order, and shows them again, leaving none once none is hidden", () => {
+    const hidden = withHidden(emptyView, ordered, ["size", "code"], true);
+    expect(hidden.hidden).toEqual(["code", "size"]);
+    expect(withHidden(hidden, ordered, ["code"], false).hidden).toEqual([
+      "size",
+    ]);
+    expect(
+      withHidden(hidden, ordered, ["code", "size"], false).hidden,
+    ).toBeUndefined();
+  });
+
+  it("leaves one fewer column frozen when a frozen one is hidden, and none fewer for another", () => {
+    const threeFrozen = { ...emptyView, frozen: 3 };
+    expect(withHidden(threeFrozen, ordered, ["code"], true).frozen).toBe(2);
+    expect(withHidden(threeFrozen, ordered, ["size"], true).frozen).toBe(3);
+  });
+
+  it("freezes a column shown again among the frozen ones, as it was", () => {
+    const hidden = { ...emptyView, frozen: 2, hidden: ["code"] };
+    expect(withHidden(hidden, ordered, ["code"], false).frozen).toBe(3);
+    expect(
+      withHidden({ ...hidden, frozen: undefined }, ordered, ["code"], false)
+        .frozen,
+    ).toBeUndefined();
+  });
+
+  it("keeps no column frozen while none is, and the first while frozen columns are the default", () => {
+    expect(
+      withHidden({ ...emptyView, frozen: 0 }, ordered, ["code"], true).frozen,
+    ).toBe(0);
+    expect(
+      withHidden(emptyView, ordered, ["code"], true).frozen,
+    ).toBeUndefined();
   });
 });
 

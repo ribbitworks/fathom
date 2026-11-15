@@ -1,6 +1,6 @@
 # Saved views
 
-A view is how you've set up a table: its search, filters, sort, metrics and **Group by**, the **Draft** menu's choice, and its columns' order, widths, frozen columns, and units and decimal places. On **Releases**, it also keeps whether **Show retired** is on. You can save a view under a name, and apply it again later. For now you can save views on the **People** and **Releases** pages. Other pages are to follow.
+A view is how you've set up a table: its search, filters, sort, metrics and **Group by**, the **Draft** menu's choice, and its columns' order, hidden columns, widths, frozen columns, and units and decimal places. On **Releases**, it also keeps whether **Show retired** is on. You can save a view under a name, and apply it again later. For now you can save views on the **People** and **Releases** pages. Other pages are to follow.
 
 You save and apply views from the **Views** menu: the last button after the search box. It shows once there's a view to save or apply.
 
@@ -78,9 +78,25 @@ To delete it:
 
 You're done when the view has its new name, or is gone from the menu. If your role sees the column again, the view works again as it was.
 
+### Hide a Column and Show It Again
+
+A hidden column leaves the table, but still counts. Its filter and sort still apply, and **Metrics** can still break down by it. An export leaves it out. You can hide any column except the one naming each row, such as **Name** on **People**.
+
+1. Open the menu on the column's heading.
+1. Select **Hide column**.
+
+To show it again:
+
+1. Select **Views**.
+1. Under **Hidden**, select the column's name.
+
+With two or more columns hidden, **Show all columns** under **Hidden** shows them all.
+
+You're done when the column is back in its place.
+
 ### Undo One Part of a View
 
-In the **Views** menu, under **Sort**, each level of the sort is named, and then any frozen columns, moved columns, set widths and units. Select one to undo just that part.
+In the **Views** menu, under **Sort**, each level of the sort is named, and then any frozen columns, moved columns, hidden columns, set widths and units. Select one to undo just that part.
 
 ## Marks and Terms
 

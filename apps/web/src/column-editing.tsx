@@ -69,6 +69,32 @@ export function columnDraftActions<Data>(
   };
 }
 
+type WithColumns<Data> = (
+  data: Data,
+  change: (columns: TableColumns) => Partial<TableColumns>,
+) => Data;
+
+// Removing a column is a draft that may be undone.
+export function columnRemover<Data>(
+  table: ColumnTable,
+  { save, done }: Pick<ColumnSaving<Data>, "save" | "done">,
+  withColumns: WithColumns<Data>,
+) {
+  return (field: Field) => {
+    save({
+      next: (data) =>
+        withColumns(data, ({ fields: shown }) => ({
+          fields: shown.filter((other) => other.id !== field.id),
+        })),
+      save: () => deleteField(field.id, table),
+      failure: `Fathom could not remove ${field.name}.`,
+      onSaved: (changeSetId, before) => {
+        done(`Removed the ${field.name} column.`, changeSetId, before);
+      },
+    });
+  };
+}
+
 export function ColumnModal<Data>({
   state,
   table,
@@ -88,11 +114,7 @@ export function ColumnModal<Data>({
   // The role's permissions, which decide the classes a column may be moved to.
   permissions?: readonly Permission[];
   saving: ColumnSaving<Data>;
-  // The page's data with its table's columns changed.
-  withColumns: (
-    data: Data,
-    change: (columns: TableColumns) => Partial<TableColumns>,
-  ) => Data;
+  withColumns: WithColumns<Data>;
   // The button focus returns to once a new column is saved.
   newColumnButton: string;
 }) {
@@ -133,19 +155,10 @@ export function ColumnModal<Data>({
       changeSetId,
     );
   };
+  const removeColumn = columnRemover(table, { save, done }, withColumns);
   const remove = (field: Field) => {
     close();
-    save({
-      next: (data) =>
-        withColumns(data, ({ fields: shown }) => ({
-          fields: shown.filter((other) => other.id !== field.id),
-        })),
-      save: () => deleteField(field.id, table),
-      failure: `Fathom could not remove ${field.name}.`,
-      onSaved: (changeSetId, before) => {
-        done(`Removed the ${field.name} column.`, changeSetId, before);
-      },
-    });
+    removeColumn(field);
   };
   const moving = dialog?.kind === "move" ? dialog : undefined;
   return (

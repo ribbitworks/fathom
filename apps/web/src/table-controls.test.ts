@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the parts of a view the Save view dialog names, for those the table's other tests do
-// not reach: the units and decimal places columns are shown in, the grouping and the page's own
-// choices; and what a view its maker can no longer use is missing, as the Views menu says it.
+// not reach: the units and decimal places columns are shown in, the grouping, the page's own
+// choices and the hidden columns; and what a view its maker can no longer use is missing, as the
+// Views menu says it.
 
 import { describe, expect, it } from "vitest";
 import { missingWords, type ViewChoice, viewParts } from "./table-controls.tsx";
@@ -131,6 +132,26 @@ describe("viewParts of a grouping and a page's choices", () => {
     expect(
       viewParts({ ...emptyView, grouping: "none" }, [], [], { groupings }),
     ).toEqual([{ name: "Group by", value: "None" }]);
+  });
+});
+
+describe("viewParts of hidden columns", () => {
+  const name = column({ key: "name", label: "Name", kind: "text" });
+  const site = column({ key: "site", label: "Site", kind: "text" });
+  const grade = column({ key: "grade", label: "Grade", kind: "text" });
+
+  it("names the hidden columns in the table's order, and the frozen ones among those shown", () => {
+    expect(
+      viewParts({ ...emptyView, hidden: ["site", "grade"], frozen: 2 }, [
+        name,
+        grade,
+        site,
+        column({}),
+      ]),
+    ).toEqual([
+      { name: "Frozen", value: "Up to Effort" },
+      { name: "Hidden", value: "Grade, Site" },
+    ]);
   });
 });
 

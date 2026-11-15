@@ -115,7 +115,7 @@ You're done when the new column shows in the table, with a hollow dot until you 
 1. Make your change.
 1. Select **Save**.
 
-To remove the column instead, select **Remove column** in that dialog.
+To remove the column instead, select **Remove column** in the same menu, or in that dialog. It's removed as a draft, and you can undo it.
 
 You're done when the column shows your change, with a hollow dot until you publish it.
 

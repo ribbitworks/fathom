@@ -59,6 +59,7 @@ import { withCellChange } from "./added-columns.ts";
 import { type CellChange, cellKinds } from "./cell-kinds.tsx";
 import {
   columnDraftActions,
+  columnRemover,
   ColumnModal,
   useColumnDialog,
 } from "./column-editing.tsx";
@@ -189,6 +190,16 @@ const newColumnId = "features-new-column";
 const tabsId = "projects-tabs";
 const panelId = "project-record-panel";
 const panelTitleId = "project-record-panel-title";
+
+const withFeatureColumns = (
+  plan: ProjectPlan,
+  change: (
+    columns: ProjectPlan["featureColumns"],
+  ) => Partial<ProjectPlan["featureColumns"]>,
+): ProjectPlan => ({
+  ...plan,
+  featureColumns: { ...plan.featureColumns, ...change(plan.featureColumns) },
+});
 
 // A record being added, as the table shows it before it is saved: a draft adding it.
 function adding(
@@ -751,6 +762,15 @@ export function ProjectsPage({
           editColumn: (field) => {
             columnDialog.open({ kind: "edit", field });
           },
+          ...(plan.canEditFeatures
+            ? {
+                removeColumn: columnRemover(
+                  "features",
+                  changes,
+                  withFeatureColumns,
+                ),
+              }
+            : {}),
         };
         const { fields, order, lists } = plan.featureColumns;
         return (
@@ -794,13 +814,7 @@ export function ProjectsPage({
               lists={listsToOffer.data ?? lists}
               canDelete={plan.canEditFeatures}
               saving={changes}
-              withColumns={(shown, change) => ({
-                ...shown,
-                featureColumns: {
-                  ...shown.featureColumns,
-                  ...change(shown.featureColumns),
-                },
-              })}
+              withColumns={withFeatureColumns}
               newColumnButton={newColumnId}
             />
           </>

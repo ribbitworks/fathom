@@ -24,6 +24,7 @@ import {
 } from "@fathom/shared";
 import { useState } from "react";
 import { z } from "zod";
+import { frozenByDefault } from "./frozen-columns.ts";
 import { decimal } from "./numbers.ts";
 
 // What a cell holds: text, a date as YYYY-MM-DD or empty, a number as typed or empty, the
@@ -123,6 +124,8 @@ export interface View {
   frozen?: number | undefined;
   // The keys of the columns in the order the view puts them, when moved from the table's own.
   order?: string[] | undefined;
+  // The keys of the columns the table leaves out, which keep their filters, sorts and places.
+  hidden?: string[] | undefined;
   // The width set for each column, in pixels, by key, for those not left to fit what they hold.
   widths?: Record<string, number> | undefined;
   // The unit each column that offers units is shown in, by key, for those not in their first, and
@@ -169,7 +172,8 @@ export function viewFrom(search: ViewDefinition): View {
     ...(search.breakdown === undefined ? {} : { breakdown: search.breakdown }),
     ...(search.grouping === undefined ? {} : { grouping: search.grouping }),
     ...(search.frozen === undefined ? {} : { frozen: search.frozen }),
-    ...(hasOrder(search.order) ? { order: search.order } : {}),
+    ...(hasKeys(search.order) ? { order: search.order } : {}),
+    ...(hasKeys(search.hidden) ? { hidden: search.hidden } : {}),
     ...(hasEntries(search.widths) ? { widths: search.widths } : {}),
     ...(hasEntries(search.units) ? { units: search.units } : {}),
     ...(hasEntries(search.places) ? { places: search.places } : {}),
@@ -178,8 +182,8 @@ export function viewFrom(search: ViewDefinition): View {
   };
 }
 
-const hasOrder = (order: readonly string[] | undefined): order is string[] =>
-  order !== undefined && order.length > 0;
+const hasKeys = (keys: readonly string[] | undefined): keys is string[] =>
+  keys !== undefined && keys.length > 0;
 
 const hasEntries = <Value>(
   byColumn: Record<string, Value> | undefined,
@@ -319,7 +323,8 @@ export function searchFor(view: View): ViewDefinition {
     ...(view.breakdown === undefined ? {} : { breakdown: view.breakdown }),
     ...(view.grouping === undefined ? {} : { grouping: view.grouping }),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
-    ...(hasOrder(view.order) ? { order: view.order } : {}),
+    ...(hasKeys(view.order) ? { order: view.order } : {}),
+    ...(hasKeys(view.hidden) ? { hidden: view.hidden } : {}),
     ...(hasEntries(view.widths) ? { widths: view.widths } : {}),
     ...(hasEntries(view.units) ? { units: view.units } : {}),
     ...(hasEntries(view.places) ? { places: view.places } : {}),
@@ -390,9 +395,9 @@ export function activeGrouping<Grouping extends { key: string }>(
   );
 }
 
-// Whether the view sorts the rows, or sets which columns are frozen, their order, how wide they are,
-// the units and decimal places they are shown in, whether retired records show, or the page's own
-// choices, which the Views menu names and Clear all clears with the filters.
+// Whether the view sorts the rows, or sets which columns are frozen, their order, which are hidden,
+// how wide they are, the units and decimal places they are shown in, whether retired records show,
+// or the page's own choices, which the Views menu names and Clear all clears with the filters.
 export function setsApart(view: View): boolean {
   return (
     view.sort.length > 0 ||
@@ -400,6 +405,7 @@ export function setsApart(view: View): boolean {
     view.grouping !== undefined ||
     view.frozen !== undefined ||
     view.order !== undefined ||
+    view.hidden !== undefined ||
     view.widths !== undefined ||
     view.units !== undefined ||
     view.places !== undefined ||
@@ -418,7 +424,7 @@ export function narrows(view: View): boolean {
 // The view with only the filters, sorts, and breakdown on columns the table has, and the filters it
 // offers that are not columns, leaving out those on columns the user may not see, such as in a link
 // from someone who may, and with its grouping, frozen columns, retired records and the page's
-// choices, and the widths, units, and decimal places of the columns the table has.
+// choices, and the hidden columns, widths, units, and decimal places of the columns the table has.
 // The breakdown keeps only the columns the metrics offer, when given.
 export function knownView(
   view: View,
@@ -451,6 +457,7 @@ export function knownView(
     ...(view.retired === true ? { retired: true as const } : {}),
     ...(view.choices === undefined ? {} : { choices: view.choices }),
     ...orderOf(view.order, known),
+    ...knownHidden(view.hidden, known),
     ...knownEntries("widths", view.widths, known),
     ...knownEntries("units", view.units, known),
     ...knownEntries("places", view.places, known),
@@ -464,6 +471,68 @@ function orderOf(
   known: ReadonlySet<string>,
 ): { order?: string[] } {
   return order?.some((key) => known.has(key)) === true ? { order } : {};
+}
+
+// The hidden columns while they name any column the table has, keeping those the Draft menu's
+// choice leaves out for now, as the order does.
+function knownHidden(
+  hidden: string[] | undefined,
+  known: ReadonlySet<string>,
+): { hidden?: string[] } {
+  return hidden?.some((key) => known.has(key)) === true ? { hidden } : {};
+}
+
+export const shownColumnsOf = <Column extends { key: string }>(
+  view: Pick<View, "hidden">,
+  columns: readonly Column[],
+): Column[] => columns.filter(({ key }) => view.hidden?.includes(key) !== true);
+export const hiddenColumnsOf = <Column extends { key: string }>(
+  view: Pick<View, "hidden">,
+  columns: readonly Column[],
+): Column[] => columns.filter(({ key }) => view.hidden?.includes(key) === true);
+
+// The view with a column that is never hidden shown, such as the one naming each record.
+export function alwaysShowing(view: View, key: string): View {
+  const hidden = (view.hidden ?? []).filter((other) => other !== key);
+  return { ...view, hidden: hidden.length === 0 ? undefined : hidden };
+}
+
+// The view with columns hidden, or shown again, given the keys of the table's columns in the view's
+// order. Frozen columns count the columns shown, so a frozen column hidden leaves one fewer frozen,
+// and one shown again before the last frozen column joins them.
+export function withHidden(
+  view: View,
+  ordered: readonly string[],
+  keys: readonly string[],
+  hide: boolean,
+): View {
+  const before = new Set(view.hidden ?? []);
+  const after = new Set(
+    hide
+      ? [...before, ...keys]
+      : [...before].filter((key) => !keys.includes(key)),
+  );
+  const shownBefore = ordered.filter((key) => !before.has(key));
+  const frozenBefore = Math.min(
+    view.frozen ?? frozenByDefault,
+    shownBefore.length,
+  );
+  const lastFrozen = shownBefore.slice(0, frozenBefore).at(-1);
+  const frozenEnd =
+    lastFrozen === undefined ? 0 : ordered.indexOf(lastFrozen) + 1;
+  const frozen = ordered
+    .slice(0, frozenEnd)
+    .filter((key) => !after.has(key)).length;
+  // Columns the Draft menu's choice leaves out for now stay hidden, after the rest.
+  const hidden = [
+    ...ordered.filter((key) => after.has(key)),
+    ...[...after].filter((key) => !ordered.includes(key)),
+  ];
+  return {
+    ...view,
+    hidden: hidden.length === 0 ? undefined : hidden,
+    frozen: frozen === frozenByDefault ? undefined : frozen,
+  };
 }
 
 // A copy with the item at one place taken out and put back at another.

@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and taking it back, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; and that a view on Releases shows only its streams in the timeline.
+Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and taking it back, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; and that a view on Releases shows only its streams in the timeline.
 
 ## Test Environment
 
@@ -626,3 +626,100 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 **Afterwards:** In the main window, on the **Data classes** page, in the **Lists** section, select **Change class…** on the row of 'Sites', select **General**, and select **Change**. The class of 'Sites' is an open eye, then **General**.
+
+### VIEW-12: A Column Is Hidden and Shown Again
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, in the main window, changed from VIEW-11.
+
+**Preconditions:** In the main window, this account is signed in on **People**, with no view applied.
+
+- [ ] `D6A1` Select **Name** in the People table's header.
+  - **Expected:**
+    - The column menu opens.
+    - It offers no **Hide column**.
+  - **Notes:**
+
+- [ ] `7B72` Press Esc.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
+- [ ] `98E2` Select **Site** in the People table's header.
+  - **Expected:**
+    - The column menu opens.
+    - **Hide column** is listed after **Narrower**.
+  - **Notes:**
+
+- [ ] `FA93` Press the Down arrow key until **Hide column** is highlighted.
+  - **Expected:** **Hide column** is highlighted.
+  - **Notes:**
+
+- [ ] `8FB0` Press Enter.
+  - **Expected:**
+    - The menu closes.
+    - The table has no **Site** column.
+    - The heading of the column that was right of **Site** has a focus ring.
+    - No notification shows.
+  - **Notes:**
+
+- [ ] `0442` Select **Position** in the People table's header.
+  - **Expected:** The column menu opens.
+  - **Notes:**
+
+- [ ] `A7CE` Select **Hide column**.
+  - **Expected:** The table has no **Position** column.
+  - **Notes:**
+
+- [ ] `AFC7` Open the Views menu.
+  - **Expected:**
+    - Under the heading **Hidden**, the menu lists **Show all columns**, **Position** and **Site**, in that order.
+    - The **Hidden** heading and its items are set apart from the items around them.
+  - **Notes:**
+
+- [ ] `548D` Select **Save view…**.
+  - **Expected:** Under **Includes**, **Hidden** reads "Position, Site".
+  - **Notes:**
+
+- [ ] `1CE7` Select **Cancel**.
+  - **Expected:** The dialog closes.
+  - **Notes:**
+
+- [ ] `BFE1` Select the search box.
+  - **Expected:** The search box has focus.
+  - **Notes:**
+
+- [ ] `BCD3` Press Tab until the Views menu's button has focus.
+  - **Expected:** The button has a focus ring.
+  - **Notes:**
+
+- [ ] `4A8B` Press Enter.
+  - **Expected:** The Views menu opens.
+  - **Notes:**
+
+- [ ] `0859` Press the Down arrow key until **Site** is highlighted.
+  - **Expected:** **Site** is highlighted.
+  - **Notes:**
+
+- [ ] `F9D2` Press Enter.
+  - **Expected:**
+    - The menu closes.
+    - **Site** is back in the place it had before.
+    - The table still has no **Position** column.
+  - **Notes:**
+
+- [ ] `8787` Press Enter.
+  - **Expected:**
+    - The Views menu opens.
+    - Under **Hidden**, it lists **Position** alone, with no **Show all columns**.
+  - **Notes:**
+
+- [ ] `B04F` Press the Down arrow key until **Position** is highlighted.
+  - **Expected:** **Position** is highlighted.
+  - **Notes:**
+
+- [ ] `180A` Press Enter.
+  - **Expected:** **Position** is back in the place it had before.
+  - **Notes:**
+
+- [ ] `49AA` Open the Views menu.
+  - **Expected:** The menu has no **Hidden** heading.
+  - **Notes:**

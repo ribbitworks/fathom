@@ -124,6 +124,9 @@ import {
   valueOrStandIn,
   type View,
   orderAfterMove,
+  alwaysShowing,
+  shownColumnsOf,
+  withHidden,
   withoutFilters,
 } from "./table-view.ts";
 import { AppMenu, closesOnBlankClick } from "./app-menu.tsx";
@@ -185,6 +188,8 @@ export interface RecordActions<Rec extends GridRecord, Change, Request> {
   // Sends a rejected draft for approval again, unchanged.
   resubmit: (record: Rec) => void;
   editColumn: (field: Field) => void;
+  // Removes an added column as a draft, for a role that may.
+  removeColumn?: ((field: Field) => void) | undefined;
   // Moves an approved column to another class, for a role with Classify data on a table whose
   // columns may be in any class.
   moveColumnClass?: ((field: Field, from: Tier) => void) | undefined;
@@ -646,7 +651,7 @@ interface Cell {
   column: number;
 }
 
-const headerId = (column: { key: string }) => `column-${column.key}`;
+const headerId = (column: { key: string }) => `${column.key}-heading`;
 
 const shortcuts = shortcutsFor(navigator.userAgent);
 
@@ -918,19 +923,22 @@ function widthStyle(
 function longestTexts<Rec extends GridRecord>(
   columns: readonly Column<Rec>[],
   records: readonly Rec[],
+  // The column drawn first, as a list of one, which holds the slot for a draft's mark.
+  first: readonly string[],
 ): Map<string, number> {
   return new Map(
     columns
       .filter((column) => kindOf(column).measured)
       .map((column) => [
         column.key,
-        (column === columns[0] ? slotChars : 0) +
+        (first.includes(column.key) ? slotChars : 0) +
           records.reduce(
             (longest, record) =>
               Math.max(
                 longest,
                 shown(column, valueOrStandIn(column, record)).length +
-                  (column !== columns[0] && cellDraft(record.draft, column)
+                  (!first.includes(column.key) &&
+                  cellDraft(record.draft, column)
                     ? draftMarkChars
                     : 0),
               ),
@@ -1374,18 +1382,22 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // Both are made from the same fields, so every column has its live one.
   const liveColumn = (column: Column<Rec, Change>) =>
     liveColumns.find(({ key }) => key === column.key) as Column<Rec, Change>;
-  const columns =
+  const allColumns =
     asked.show === "live"
       ? liveColumns
       : inViewOrder(table.columnsFor(fields, listsShown, order, everyone)).map(
           (column) => inViewUnits(column, asked),
         );
-  const known = knownView(
+  const knownAsked = knownView(
     asked,
-    columns,
+    allColumns,
     [draftColumn],
-    columns.filter(breaksDown),
+    allColumns.filter(breaksDown),
   );
+  // The name column, holding each row's controls, is never hidden.
+  const known = alwaysShowing(knownAsked, table.nameColumn);
+  // A hidden column still filters, sorts and breaks down the rows.
+  const columns = shownColumnsOf(known, allColumns);
   // The live records alone are read only, since every change makes a draft they do not show, and
   // have no drafts to filter by.
   const liveOnly = known.show === "live";
@@ -1563,8 +1575,15 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       draft.action === "deleted" ? classes.removedColumn : "",
     ].join(" ");
   };
-  // No width follows what is typed, so editing never moves the table.
-  const [longestText] = useState(() => longestTexts(columns, records));
+  // No width follows what is typed, so editing never moves the table. Hidden columns are measured
+  // too, so one shown again fits what it holds.
+  const [longestText] = useState(() =>
+    longestTexts(
+      allColumns,
+      records,
+      columns.slice(0, 1).map(({ key }) => key),
+    ),
+  );
   // The records this user has added since the page opened, which stay shown whatever the view.
   const [added, setAdded] = useState<ReadonlySet<string>>(new Set());
   // The identifier each record added since the page opened was shown under before it was saved, by
@@ -1573,11 +1592,12 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     new Map(),
   );
   const stableId = (record: Rec) => shownAs.get(record.id) ?? record.id;
-  // Freezing, moving, and setting the widths of columns move no rows.
+  // Freezing, moving, hiding, and setting the widths of columns move no rows.
   const rowView = {
     ...view,
     frozen: undefined,
     order: undefined,
+    hidden: undefined,
     widths: undefined,
   };
   const groupOf = useSteadyGroups(
@@ -1595,7 +1615,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     records,
     rowView,
     (rows) => {
-      const shown = applyView(rows, columns, view, [draftColumn]);
+      const shown = applyView(rows, allColumns, view, [draftColumn]);
       return groupOf === undefined
         ? shown
         : shown.sort((a, b) => groupOf(a).rank - groupOf(b).rank);
@@ -1916,7 +1936,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // Each record's values, by column.
   const valuesOf = (record: Rec): Record<string, CellValue> =>
     Object.fromEntries(
-      columns.map((column) => [column.key, column.value(record)]),
+      allColumns.map((column) => [column.key, column.value(record)]),
     );
 
   // Every record's and new row's values, by its row's key, read once for a save or for adding
@@ -1953,7 +1973,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   ): RowProblem | undefined => {
     if (Object.values(values).every(isEmpty)) return undefined;
     const found = firstProblem(
-      columnsOn(columns, kind),
+      columnsOn(allColumns, kind),
       (column) => values[column.key] ?? emptyValue(column),
       () => table.recordProblem(values, otherValues(everyRowsValues(), key)),
     );
@@ -2035,7 +2055,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     const made: NewRow = {
       ...newRow,
       kind,
-      values: keptForKind(columns, newRow.values, kind).values,
+      values: keptForKind(allColumns, newRow.values, kind).values,
     };
     if (kind === defaultKind) delete made.kind;
     return made;
@@ -2072,7 +2092,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     const checked = filled.map((newRow): NewRow => {
       if (newRow.problem !== undefined) return newRow;
       const found = firstProblem(
-        columnsOn(columns, newRow.kind ?? defaultKind),
+        columnsOn(allColumns, newRow.kind ?? defaultKind),
         // The columns given are the table's own.
         (column) => newValue(newRow, column as Column<Rec, Change>),
         () =>
@@ -2103,7 +2123,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       return {
         id: pendingId(),
         request: table.request(
-          columnsOn(columns, kind).map((column) =>
+          columnsOn(allColumns, kind).map((column) =>
             column.change(newValue(newRow, column)),
           ),
           kind,
@@ -2334,6 +2354,16 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     });
   };
 
+  // A column's heading goes, so the one taking its place, or else the one before, takes the focus.
+  const focusBeside = (index: number) => {
+    focusSoon(
+      ...[
+        ...columns.slice(index + 1, index + 2),
+        ...columns.slice(index - 1, index),
+      ].map(headerId),
+    );
+  };
+
   const moveColumnBy = (column: Column<Rec, Change>, step: -1 | 1) => {
     const index = keys.indexOf(column.key);
     const to = index + step;
@@ -2406,10 +2436,15 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             focusSoon(headerId(column));
           }}
         >
-          <AppMenu position="bottom-start" withinPortal hideDetached={false}>
+          <AppMenu
+            // The menu sets its button's id from its own, overriding one given to the button.
+            id={headerId(column)}
+            position="bottom-start"
+            withinPortal
+            hideDetached={false}
+          >
             <AppMenu.Target>
               <button
-                id={headerId(column)}
                 type="button"
                 className={classes.recordHeadButton}
                 aria-label={`${column.label} column${headerState(column, view)}`}
@@ -2572,6 +2607,23 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   Reset width
                 </Menu.Item>
               )}
+              {column.key !== table.nameColumn && (
+                <Menu.Item
+                  onClick={() => {
+                    onView(
+                      withHidden(
+                        view,
+                        allColumns.map(({ key }) => key),
+                        [column.key],
+                        true,
+                      ),
+                    );
+                    focusBeside(index);
+                  }}
+                >
+                  Hide column
+                </Menu.Item>
+              )}
               <Menu.Divider />
               {changesColumn && field && field.draft?.action !== "deleted" && (
                 <Menu.Item
@@ -2582,6 +2634,20 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   Edit column
                 </Menu.Item>
               )}
+              {changesColumn &&
+                field &&
+                field.draft?.action !== "deleted" &&
+                actions.removeColumn && (
+                  <Menu.Item
+                    color="red"
+                    onClick={() => {
+                      actions.removeColumn?.(field);
+                      focusBeside(index);
+                    }}
+                  >
+                    Remove column
+                  </Menu.Item>
+                )}
               <Menu.Item
                 rightSection={<kbd>{shortcuts.left}</kbd>}
                 onClick={() => {
@@ -2997,11 +3063,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       {...countedRecords(
         withDrafts ? view.show : "live",
         countedOnce(shownRecords),
-        columns,
+        allColumns,
         liveForMetrics,
         table.liveRecords,
       )}
-      offered={columns.filter(breaksDown)}
+      offered={allColumns.filter(breaksDown)}
       breakdown={view.breakdown}
       onBreakdown={(breakdown) => {
         onView({ ...view, breakdown });
@@ -3088,7 +3154,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     <ViewBar
       one={table.one}
       noun={table.noun}
-      columns={columns}
+      columns={allColumns}
       draftFilter={draftColumn}
       view={view}
       onView={onView}
@@ -3457,7 +3523,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                               unpublished={
                                 newRowMarked &&
                                 newRowWords(
-                                  columnsOn(columns, rowKind(row))
+                                  columnsOn(allColumns, rowKind(row))
                                     .filter(
                                       (other) =>
                                         other.required &&

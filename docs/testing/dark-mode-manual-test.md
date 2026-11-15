@@ -187,6 +187,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** **Site** goes back to its width.
   - **Notes:**
 
+- [ ] `9B03` Open the **Site** column menu, and select **Hide column**.
+  - **Expected:** The table has no **Site** column.
+  - **Notes:**
+
+- [ ] `4D1D` Open the Views menu.
+  - **Expected:**
+    - The heading **Hidden** and **Site** under it are easy to read.
+    - They are set apart from the items around them.
+  - **Notes:**
+
+- [ ] `F734` Select **Site**.
+  - **Expected:** **Site** is back in the table.
+  - **Notes:**
+
 ### DARK-03: People's Panels, Dialogs and Menus
 
 **Account:** Superuser, `superuser@fathom.test`, the same as DARK-02.

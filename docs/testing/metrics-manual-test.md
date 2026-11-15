@@ -465,8 +465,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** Lines split the menu into groups, from top to bottom:
     - the two sorts
     - **Filter…** and **Break down by**
-    - **Freeze up to this column**, **Wider**, and **Narrower**
-    - **Edit column**, **Move left**, and **Move right**
+    - **Freeze up to this column**, **Wider**, **Narrower**, and **Hide column**
+    - **Edit column**, **Remove column**, **Move left**, and **Move right**
   - **Notes:**
 
 - [ ] `CFCC` Press Esc.
