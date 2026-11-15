@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-product-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Acceptance, Product Manager
@@ -457,7 +457,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Features** page opens.
   - **Notes:**
 
-- [ ] `A09D` Select **Group by: Cycle** above the table, then **Release**.
+- [ ] `A09D` Select **Group by: Cycle** above the table, then **Release** under **Group by**.
   - **Expected:**
     - The release headings, such as **Platform: Harbor 1**, are each followed by a comma, "ships" and a date.
     - `Fictional Atlas` is under the heading **Platform: Not released yet**.

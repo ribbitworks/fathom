@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-team-member.md", "docs/product/roles.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Acceptance, Team Member
@@ -111,7 +111,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Expected:** The cell does not open for editing.
   - **Notes:**
 
-- [ ] `B3B1` Select **Group by: Cycle** above the table, then **Release**.
+- [ ] `B3B1` Select **Group by: Cycle** above the table, then **Release** under **Group by**.
   - **Expected:**
     - The release headings, such as **Platform: Harbor 1**, are each followed by a comma, "ships" and a date.
     - The last heading is **Later**.

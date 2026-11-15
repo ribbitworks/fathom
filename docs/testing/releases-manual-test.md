@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/product/decisions.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Release Streams, Cycles and Releases
@@ -1231,4 +1231,22 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Expected:**
     - **Cycles until** reads 31 December three years after this year, such as **Cycles until Dec 31, 2029**.
     - On the timeline, **Platform**'s lane has no upright line at its end.
+  - **Notes:**
+
+#### REL-30: Streams Group by Status, Then by Cycle Schedule
+
+**Account:** Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, the account REL-29 ended with.
+
+**Preconditions:** Signed in with this account. Run after REL-29. **Releases** page open from the left-hand menu, with no grouping chosen, so the button reads **Group by: Status**.
+
+- [ ] `0B65` Select **Group by: Status**, then **Cycle schedule** under **Then by**.
+  - **Expected:**
+    - The button reads **Group by: Status, then Cycle schedule**.
+    - Under **Current**, smaller, lighter headings set in from it name each cycle schedule, such as **Every 3 months, named {YY}.{N}** over **Platform**.
+  - **Notes:**
+
+- [ ] `0BE0` Select **Group by: Status, then Cycle schedule**, then **Clear grouping**.
+  - **Expected:**
+    - The button reads **Group by: Status**.
+    - The streams table has one heading, **Current**, with no headings set in under it.
   - **Notes:**

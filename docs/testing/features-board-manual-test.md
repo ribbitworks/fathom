@@ -423,3 +423,37 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 **Afterwards:** Press Esc.
+
+### BOARD-08: The Board Leaves Out Then By
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, the account BOARD-07 ended with.
+
+**Preconditions:** Run after BOARD-07. **Features** page open, showing the board.
+
+- [ ] `6699` Select **Table** in the Table and Board switch.
+  - **Expected:** The table shows.
+  - **Notes:**
+
+- [ ] `03B2` Select **Group by: Cycle**, then **Status** under **Then by**.
+  - **Expected:** The button reads **Group by: Cycle, then Status**.
+  - **Notes:**
+
+- [ ] `4608` Select **Board** in the Table and Board switch.
+  - **Expected:** The button above the board reads **Group by**.
+  - **Notes:**
+
+- [ ] `2DCF` Select **Group by**.
+  - **Expected:**
+    - The menu has no **Group by** or **Then by** label.
+    - It has no **Clear grouping**.
+  - **Notes:**
+
+- [ ] `0A40` Press Esc.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
+- [ ] `2969` Select **Table** in the Table and Board switch.
+  - **Expected:** The button reads **Group by: Cycle, then Status**.
+  - **Notes:**
+
+**Afterwards:** Select **Group by: Cycle, then Status**, then **Clear grouping**.

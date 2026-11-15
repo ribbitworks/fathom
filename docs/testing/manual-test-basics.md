@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["docs/testing/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test Basics
@@ -144,7 +144,7 @@ Run only where a test says so. This deletes every account and record in the deve
 - **Search for:** type the text in the search box above a table, so only the matching rows show.
 - **Views menu:** the menu that opens from the last of the buttons after the search box above a table. The button reads **Views**, or the name of the view applied.
 - **Draft menu:** the menu that opens from the **Draft** button above a table, beside the search box, or, on the **Org chart** page, just right of the finder. The button, with a funnel icon, names the choice shown, such as **Drafts & Live**, and has a dot after it while a draft filter is in use.
-- **Group by menu:** the menu that opens from the button above a table whose label starts **Group by:**, such as **Group by: Cycle**, naming the grouping in use.
+- **Group by menu:** the menu that opens from the button above a table whose label starts **Group by**, such as **Group by**, **Group by: Cycle** or **Group by: Manager, then Site**. Its choices may be under a **Group by** label and a **Then by** label, and it may end with **Clear grouping**.
 - **Group heading:** the full-width row above each group of rows in a grouped table, naming the group, with how many rows it holds at its right.
 - **Column menu:** the menu that opens from a column's name in a table's header.
 - **⋯ menu:** the menu that opens from a **⋯** button, such as the one at the end of a table row, beside a list's name at the top of its panel, or beside the Publish button. A table row's ⋯ menu also opens from the **⋯** after its details button, or from a right-click anywhere on the row.

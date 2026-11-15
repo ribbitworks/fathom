@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/feature-assignments-page*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Feature Assignments
@@ -112,6 +112,18 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
   - **Expected:**
     - **Group by: Feature team** still shows.
     - The table opens at the current month again.
+  - **Notes:**
+
+- [ ] `A46D` Select **Group by: Feature team**.
+  - **Expected:**
+    - The menu has no **Then by** label.
+    - It ends with **Clear grouping**, set apart from the choices.
+  - **Notes:**
+
+- [ ] `D26B` Select **Clear grouping**.
+  - **Expected:**
+    - **Group by: Manager** shows.
+    - The rows are grouped under managers.
   - **Notes:**
 
 - [ ] `441A` Select **None** in the Group by menu.

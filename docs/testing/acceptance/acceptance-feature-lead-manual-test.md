@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-feature-lead.md", "docs/product/roles.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Acceptance, Feature Lead
@@ -198,7 +198,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** Signed in with this account, acting as **Feature Lead**. **Features** page open from the left-hand menu.
 
-- [ ] `2EDD` Select **Group by: Cycle** above the table, then **Release**.
+- [ ] `2EDD` Select **Group by: Cycle** above the table, then **Release** under **Group by**.
   - **Expected:**
     - The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2 LTS**, **Platform: Harbor 3**, **Platform: Not released yet** and **Later**.
     - Each of the three 'Harbor' headings is followed by a comma, "ships" and a date.

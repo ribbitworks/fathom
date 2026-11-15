@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Features
@@ -119,7 +119,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - All 12 rows show.
   - **Notes:**
 
-- [ ] `B4B0` Select **Group by: Cycle** above the table, then **None**.
+- [ ] `B4B0` Select **Group by: Cycle** above the table, then **None** under **Group by**.
   - **Expected:**
     - The headings are gone.
     - The 12 rows show as one list.
@@ -403,7 +403,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Run Restore the Seed Data first. Signed in with this account. **Features** page open.
 
-- [ ] `BD96` Select **Group by: Cycle** above the table, then **Needed by**.
+- [ ] `BD96` Select **Group by: Cycle** above the table, then **Needed by** under **Group by**.
   - **Expected:**
     - The button reads **Group by: Needed by**.
     - Each heading names a month and year, such as **Mar 2027**.
@@ -1103,11 +1103,33 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `DC19` Select **Group by: Cycle** above the table.
   - **Expected:**
-    - The menu offers **Cycle**, **Release**, **Needed by** and **None**.
-    - A tick is beside **Cycle**.
+    - Under a **Group by** label, the menu lists, from the top:
+      - **Cycle**, ticked
+      - **Release**
+      - **Needed by**
+      - **Status**
+      - **Priority**
+      - **Size**
+      - **Risk**
+      - **Feature team**
+      - **Staffed**
+      - **Kind**
+      - **None**
+    - Under a **Then by** label after them, it lists, from the top:
+      - **None**, ticked
+      - **Release**
+      - **Needed by**
+      - **Status**
+      - **Priority**
+      - **Size**
+      - **Risk**
+      - **Feature team**
+      - **Staffed**
+      - **Kind**
+    - There is no **Clear grouping**.
   - **Notes:**
 
-- [ ] `CD88` Select **Release**.
+- [ ] `CD88` Select **Release** under **Group by**.
   - **Expected:**
     - The button reads **Group by: Release**.
     - The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2 LTS**, **Platform: Harbor 3**, **Platform: Not released yet** and **Later**.
@@ -1131,7 +1153,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:** The button above the table reads **Group by: Cycle**.
   - **Notes:**
 
-- [ ] `F508` Select **Group by: Cycle** above the table, then **Release**.
+- [ ] `F508` Select **Group by: Cycle** above the table, then **Release** under **Group by**.
   - **Expected:**
     - The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2 LTS**, **Platform: Harbor 3**, **Platform: Not released yet** and **Later**.
     - Each of the three 'Harbor' headings is followed by a comma, "ships" and a date with its day, month and year, such as "ships 31 Mar 2027".
@@ -1326,7 +1348,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 **Preconditions:** Run Restore the Seed Data, then select the **Features** page in the left-hand menu.
 
-- [ ] `7E31` Select **Group by: Cycle** above the table, then **Staffed**.
+- [ ] `7E31` Select **Group by: Cycle** above the table, then **Staffed** under **Group by**.
   - **Expected:**
     - The button reads **Group by: Staffed**.
     - The headings read, from the top, **Yes**, **No** and **Not committed**.
@@ -1336,4 +1358,22 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `B05C` Select **Group by: Staffed**, then **Cycle** under **Group by**.
   - **Expected:** The last heading is **Later**.
+  - **Notes:**
+
+### FEAT-28: Features Group by Cycle, Then by Status
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account FEAT-27 ended with.
+
+**Preconditions:** Run Restore the Seed Data, then select the **Features** page in the left-hand menu.
+
+- [ ] `2622` Select **Group by: Cycle** above the table, then **Status** under **Then by**.
+  - **Expected:**
+    - The button reads **Group by: Cycle, then Status**.
+    - Under each cycle's heading, smaller, lighter headings set in from it name feature statuses, such as **In progress**, each with how many features it holds.
+  - **Notes:**
+
+- [ ] `60B6` Select **Group by: Cycle, then Status**, then **Clear grouping**.
+  - **Expected:**
+    - The button reads **Group by: Cycle**.
+    - The headings name cycles, with no headings set in under them.
   - **Notes:**
