@@ -47,7 +47,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `0FC9` Choose **Feature teams** in the teams switch.
   - **Expected:**
-    - The chart is drawn again with four teams side by side.
+    - The chart is drawn again with the feature teams side by side.
     - 'Mobile apps' is on the card of 'Sharda Varrier'.
     - 'Payments core' is on the card of 'Gilda Effertz'.
     - 'Search and discovery' is on the card of 'Lorenza Thiel'.
@@ -96,14 +96,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **Colour**, reading "None".
     - A **Members** section has two rows:
       - **Feature lead**, reading "None".
-      - **Members**, listing 'Bilwa Iyer', 'Polly Smith' and 'Thad Heidenreich'.
+      - **Members**, listing 'Bilwa Iyer', 'Fulcran Deschamps', 'Gloria Armas Guardado', 'Polly Smith', 'Thad Heidenreich' and 'Valéry Caron'.
     - No row has a change button.
     - There are no buttons at the panel's foot.
   - **Notes:**
 
 - [ ] `FF44` Select the Feature teams button.
   - **Expected:**
-    - The list holds 'Mobile apps', 'Payments core', 'Platform reliability' and 'Search and discovery'.
+    - The list holds the feature teams [Development Setup](../design/development-setup.md#fictional-seed-data) lists, with 'Search and discovery' in place of 'Search'.
     - The list has no **New feature team**.
   - **Notes:**
 
@@ -233,7 +233,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `21BE` Press Enter.
   - **Expected:**
-    - **Members** lists 'Bilwa Iyer', 'Polly Smith', 'Rosendo Champlin' and 'Thad Heidenreich', in that order.
+    - **Members** lists 'Bilwa Iyer', 'Fulcran Deschamps', 'Gloria Armas Guardado', 'Polly Smith', 'Rosendo Champlin', 'Thad Heidenreich' and 'Valéry Caron', in that order.
     - 'Rosendo Champlin' has a hollow yellow dot before his name.
     - 'Thad Heidenreich' has a hollow yellow dot before his name.
     - 'Thad Heidenreich' is struck through.
@@ -349,7 +349,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - One entry is listed, "the feature team Platform reliability".
     - Its **Feature lead** line sets it to "Polly Smith".
-    - Its **Members** line changes them from "Bilwa Iyer, Polly Smith, Thad Heidenreich" to "Bilwa Iyer, Polly Smith, Rosendo Champlin".
+    - Its **Members** line changes them:
+      - from "Bilwa Iyer, Fulcran Deschamps, Gloria Armas Guardado, Polly Smith, Thad Heidenreich, Valéry Caron"
+      - to "Bilwa Iyer, Fulcran Deschamps, Gloria Armas Guardado, Polly Smith, Rosendo Champlin, Valéry Caron"
     - Each line ends "by Engineering Manager".
   - **Notes:**
 
@@ -471,6 +473,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Below the row, text reads "Showing" with that date, then "Changes take effect from this date."
     - The chart redraws without the page going blank.
     - The **Draft** button is still above the chart.
+  - **Notes:**
+
+- [ ] `E122` Clear the **Date** box, and type the first day of the month seven months before the current one, as digits alone, such as `20260401` on a seed restored on 15 November 2026.
+  - **Expected:**
+    - The **Date** box shows the date typed.
+    - 'Data pipeline' is on the card of 'Carmine Labadie'.
+    - The card of 'Maribel Dare' is under 'Identity'.
+    - No card of 'Maribel Dare' is under 'Integrations'.
   - **Notes:**
 
 - [ ] `9D38` Select the Feature teams button, then 'Payments core'.
@@ -735,7 +745,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `C5B9` Choose **Feature teams** in **Group by**.
   - **Expected:**
     - The button reads "Group by: Feature teams".
-    - The headings are, in order: "Mobile apps", "Payments core", "Platform reliability", "Search", "No feature team".
+    - The headings name the feature teams in order of name, from "Data pipeline" to "Search", then "No feature team".
     - Each heading shows how many rows are under it.
   - **Notes:**
 

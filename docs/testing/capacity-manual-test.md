@@ -265,7 +265,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** **Capacity** open, with **People** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
 
-- [ ] `CBFE` In the current month's column, find a cell whose last line reads "Over", and one whose last line reads "Under".
+- [ ] `CBFE` In the current month's column, find a cell whose last line reads "Over", such as that of 'Blaise Gislason', and one whose last line reads "Under", such as that of 'Anahi Bins'.
   - **Expected:**
     - "Over" is red and bold.
     - "Under" is grey.
@@ -304,7 +304,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `1F82` Look along the row from 12 months ago to the right.
   - **Expected:**
     - The cells before the month noted in step `4CD5` are empty.
-    - From that month on, cells list a feature with "100%".
+    - For six months from that month, cells list a feature with "100%".
+    - The cells after those six months list no feature.
   - **Notes:**
 
 - [ ] `CB11` Empty the search box.
@@ -338,8 +339,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `565B` Scroll down to the end of the 'Payments core' group.
   - **Expected:**
     - The group ends with a total row.
-    - Each of its month cells reads two numbers, such as "7.5 of 9".
-    - Under them is a percentage, such as "83.3%", in bold.
+    - Each of its month cells reads two numbers, such as "4.25 of 5".
+    - Under them is a percentage, such as "85%", in bold.
   - **Notes:**
 
 - [ ] `7D6D` Scroll the table down.
@@ -366,7 +367,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 **Preconditions:** **Capacity** open, with **People** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `8DC9` Select **Metrics**.
-  - **Expected:** The Metrics panel gives a number of people and a number of planned hires, such as "150 people and 8 planned hires".
+  - **Expected:** The Metrics panel gives a number of people and a number of planned hires, such as "141 people and 10 planned hires".
   - **Notes:**
 
 - [ ] `C877` Close the Metrics panel.
@@ -377,7 +378,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - One row is listed, named 'Payments tester'.
     - In the **Organization, PM** row, the cells before the month its allocations start are empty.
-    - From that month on, each reads "1 of 1" and "100%".
+    - For six months from that month, each reads "1 of 1" and "100%".
+    - After those six months, each reads "0 of 1" and "0%".
   - **Notes:**
 
 - [ ] `9D78` Hold the pointer over the cell of the **Organization, PM** row in the month the allocations of 'Payments tester' start.
@@ -421,7 +423,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - Each of those rows is followed by a total row.
     - The total row under 'Mobile apps' has figures only in the months the person was on 'Mobile apps', up to the month noted.
     - The other total row has figures only in the months before and after those.
-    - Each figure reads "0 of 1" and "0%".
+    - In the months before the person's allocation starts, each figure reads "0 of 1" and "0%".
+    - From that month on, each figure reads "1 of 1" and "100%".
   - **Notes:**
 
 ### CAP-13: Someone Has a Row Under Each Manager They Reported To
@@ -430,8 +433,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** Restore the Seed Data has been run. Signed in with this account. **People** open from the left-hand menu.
 
-- [ ] `3B65` Type `Samuel Richter` in the search box.
-  - **Expected:** Only the row of 'Samuel Richter' is listed.
+- [ ] `3B65` Type `Bilwa Iyer` in the search box.
+  - **Expected:** Only the row of 'Bilwa Iyer' is listed.
   - **Notes:**
 
 - [ ] `F866` Select the **Manager** cell of the row.
@@ -472,7 +475,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:** The **Drafts** page opens.
   - **Notes:**
 
-- [ ] `1E6F` Type `Samuel Richter` in the search box.
+- [ ] `1E6F` Type `Bilwa Iyer` in the search box.
   - **Expected:** One entry is listed.
   - **Notes:**
 
@@ -500,10 +503,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **Group by: Manager** shows.
   - **Notes:**
 
-- [ ] `11E3` Type `Samuel Richter` in the search box.
+- [ ] `11E3` Type `Bilwa Iyer` in the search box.
   - **Expected:**
-    - 'Samuel Richter' has a row under 'Atmananda Ganaka' whose cells are empty from the current month on.
-    - He has a row under 'Max Munk' whose cells are empty before the current month.
+    - 'Bilwa Iyer' has a row under 'Atmananda Ganaka' whose cell for last month lists 'Parts Lookup' with "100%", and whose cells are empty from the current month on.
+    - 'Bilwa Iyer' has a row under 'Max Munk' whose cells are empty before the current month, and list 'Parts Lookup' with "100%" from the current month on.
     - Each group ends with a total row.
   - **Notes:**
 

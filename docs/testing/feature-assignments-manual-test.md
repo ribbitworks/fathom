@@ -81,11 +81,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **Feature assignments** open, with the current month in view.
 
 - [ ] `E780` Look at the labels in the current month's column.
-  - **Expected:** Each label names a feature team, in its colour:
-    - 'Mobile apps' orange
-    - 'Payments core' teal
-    - 'Search' indigo
-    - 'Platform reliability', which has no colour, neutral
+  - **Expected:**
+    - Each label names a feature team, in the team's colour, such as 'Mobile apps' orange and 'Payments core' teal.
+    - Labels of 'Platform reliability', which has no colour, are neutral.
   - **Notes:**
 
 - [ ] `18C9` Hold the pointer over a label.
@@ -230,7 +228,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 - [ ] `7B9F` Scroll sideways and down through the table.
   - **Expected:**
-    - Some people have shaded cells at the start or end of their row, for the months before they started or after they left.
+    - Some people have shaded cells at the start or end of their row, for the months before they started or after they left, such as 'Melinda Zemlak' and '선예빈'.
     - Shaded cells hold no labels.
   - **Notes:**
 
