@@ -327,20 +327,36 @@ async function addFeatureTeams(
 ): Promise<SeededChange[]> {
   const made: SeededChange[] = [];
   for (const team of organization.featureTeams) {
-    const { memberships, leadId, ...row } = team;
+    const { memberships, leadId, formerLead, ...row } = team;
     await transaction.insert(featureTeams).values(row);
     await transaction
       .insert(featureTeamMemberships)
       .values(memberships.map((one) => ({ teamId: team.id, ...one })));
-    // A team's lead has led it since they first joined it.
-    const ledFrom = memberships
-      .filter((one) => one.member && one.personId === leadId)
-      .map(({ fromDate }) => fromDate)
-      .sort()[0];
-    if (ledFrom !== undefined) {
+    // A team's lead has led it since they first joined it, or since its former lead, who had led it
+    // since they joined, handed over.
+    const joinedOn = (personId: string | null) =>
+      memberships
+        .filter((one) => one.member && one.personId === personId)
+        .map(({ fromDate }) => fromDate)
+        .sort()[0];
+    const leads = [
+      ...(formerLead === undefined
+        ? []
+        : [
+            {
+              leadId: formerLead.personId,
+              fromDate: joinedOn(formerLead.personId),
+            },
+          ]),
+      { leadId, fromDate: formerLead?.until ?? joinedOn(leadId) },
+    ].filter(
+      (lead): lead is { leadId: string | null; fromDate: string } =>
+        lead.fromDate !== undefined,
+    );
+    for (const lead of leads) {
       await transaction
         .insert(featureTeamLeads)
-        .values({ teamId: team.id, leadId, fromDate: ledFrom });
+        .values({ teamId: team.id, ...lead });
     }
     const latest = new Map(
       [...memberships]

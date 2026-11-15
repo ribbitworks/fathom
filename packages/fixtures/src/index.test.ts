@@ -2,8 +2,8 @@
 
 // Tests for the fictional organization: the same records every time, identifiers that are valid and
 // unique, names from several countries and scripts, people whose details are consistent and drawn
-// from the lists their columns name, Confidential bands and ratings, and the newest starters'
-// onboarding notes.
+// from the lists their columns name, Confidential bands and ratings, feature teams grown over two
+// years with moves, a lead change and a join to come, and the newest starters' onboarding notes.
 
 import { en_IN } from "@faker-js/faker";
 import { addDays } from "@fathom/shared";
@@ -111,6 +111,129 @@ describe("a fictional organization", () => {
         if (!column?.multiple) expect(chosen).toHaveLength(1);
       }
     }
+  });
+
+  describe("feature teams", () => {
+    const { referenceDate } = organization;
+    const membersOn = (
+      team: (typeof organization.featureTeams)[number],
+      day: string,
+    ) => {
+      const latest = new Map<string, boolean>();
+      for (const { personId, member, fromDate } of [...team.memberships].sort(
+        (a, b) => a.fromDate.localeCompare(b.fromDate),
+      )) {
+        if (fromDate <= day) latest.set(personId, member);
+      }
+      return [...latest].filter(([, member]) => member).map(([id]) => id);
+    };
+
+    it("hold over half the current people who manage no one", () => {
+      const onTeams = new Set(
+        organization.featureTeams.flatMap((team) =>
+          membersOn(team, referenceDate),
+        ),
+      );
+      const working = organization.people.filter(
+        ({ startDate, endDate, isManager }) =>
+          !isManager &&
+          String(startDate) <= referenceDate &&
+          (endDate === null || endDate > referenceDate),
+      );
+      expect(
+        working.filter(({ id }) => onTeams.has(id)).length / working.length,
+      ).toBeGreaterThan(0.5);
+    });
+
+    it("let people join only once they start", () => {
+      const startOf = new Map(
+        organization.people.map(({ id, startDate }) => [id, startDate]),
+      );
+      for (const { memberships } of organization.featureTeams) {
+        for (const { personId, fromDate } of memberships) {
+          expect(String(startOf.get(personId)) <= fromDate).toBe(true);
+        }
+      }
+    });
+
+    it("move people from one team to another, leaving it the day they join the next", () => {
+      const moves = organization.featureTeams.flatMap((from) =>
+        from.memberships
+          .filter(({ member }) => !member)
+          .flatMap(({ personId, fromDate }) => {
+            const to = organization.featureTeams.find(
+              (team) =>
+                team !== from &&
+                team.memberships.some(
+                  (joined) =>
+                    joined.member &&
+                    joined.personId === personId &&
+                    joined.fromDate === fromDate,
+                ),
+            );
+            return to === undefined ? [] : [{ from, personId, fromDate }];
+          }),
+      );
+      expect(moves.length).toBeGreaterThan(0);
+      for (const { from, personId, fromDate } of moves) {
+        expect(membersOn(from, addDays(fromDate, -1))).toContain(personId);
+        expect(membersOn(from, fromDate)).not.toContain(personId);
+      }
+    });
+
+    it.each([[2026], [3], [7], [20]])(
+      "with seed %d, have each lead on their team from the day they lead it, in order",
+      (seed) => {
+        const seeded = fictionalOrganization({ size: 150, seed });
+        for (const team of seeded.featureTeams) {
+          const joinedOn = (personId: string | null) =>
+            team.memberships
+              .filter((one) => one.member && one.personId === personId)
+              .map(({ fromDate }) => fromDate)
+              .sort()[0];
+          const leads = [
+            ...(team.formerLead === undefined
+              ? []
+              : [
+                  {
+                    id: team.formerLead.personId,
+                    from: joinedOn(team.formerLead.personId),
+                  },
+                ]),
+            {
+              id: team.leadId,
+              from: team.formerLead?.until ?? joinedOn(team.leadId),
+            },
+          ].filter(({ id }) => id !== null);
+          for (const { id, from } of leads) {
+            expect(membersOn(team, String(from))).toContain(id);
+          }
+          const days = leads.map(({ from }) => String(from));
+          expect(days).toEqual([...days].sort());
+        }
+      },
+    );
+
+    it("have a team whose lead took over from a former lead, both on it then", () => {
+      const changed = organization.featureTeams.filter(
+        ({ formerLead }) => formerLead !== undefined,
+      );
+      expect(changed.map(({ name }) => name)).toEqual(["Data pipeline"]);
+      for (const team of changed) {
+        const until = String(team.formerLead?.until);
+        expect(membersOn(team, until)).toContain(team.formerLead?.personId);
+        expect(membersOn(team, until)).toContain(team.leadId);
+      }
+    });
+
+    it("have someone joining a team a month from now", () => {
+      const ahead = organization.featureTeams.flatMap(({ name, memberships }) =>
+        memberships
+          .filter(({ fromDate }) => fromDate > referenceDate)
+          .map(({ fromDate }) => [name, fromDate]),
+      );
+      expect(ahead).toEqual([["Integrations", addDays(referenceDate, 30)]]);
+    });
   });
 
   describe("Confidential values", () => {
@@ -496,19 +619,23 @@ describe("the organization on another day", () => {
           .map(({ name }) => name),
       ).toEqual(["Data engineer"]);
       expect(
-        after.featureTeams.map(({ name, leadId, memberships }) => [
+        after.featureTeams.map(({ name, leadId, memberships, formerLead }) => [
           name,
           leadId,
           memberships,
+          formerLead,
         ]),
       ).toEqual(
-        before.featureTeams.map(({ name, leadId, memberships }) => [
+        before.featureTeams.map(({ name, leadId, memberships, formerLead }) => [
           name,
           leadId,
           memberships.map(({ fromDate, ...rest }) => ({
             ...rest,
             fromDate: addDays(fromDate, days),
           })),
+          formerLead === undefined
+            ? undefined
+            : { ...formerLead, until: addDays(formerLead.until, days) },
         ]),
       );
     },

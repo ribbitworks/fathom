@@ -126,14 +126,14 @@ const heldFeature = featureId(
   ),
 );
 
-// The seeded feature teams the drafts change: the second renamed, the third held, and the last
-// given and losing members.
+// The seeded feature teams the drafts change: the second renamed, the third held, and the fourth
+// given and losing members, by place, since the teams after it are added later.
 function draftedTeams(organization: FictionalOrganization) {
   const { featureTeams } = organization;
   return {
     renamed: present(featureTeams[1], "second feature team"),
     held: present(featureTeams[2], "third feature team"),
-    regrouped: present(featureTeams.at(-1), "last feature team"),
+    regrouped: present(featureTeams[3], "fourth feature team"),
   };
 }
 

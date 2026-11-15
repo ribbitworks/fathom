@@ -114,6 +114,8 @@ export interface FictionalFeatureTeam {
   leadId: string | null;
   colour: string | null;
   memberships: { personId: string; member: boolean; fromDate: string }[];
+  // Who led it before its lead, until the day its lead took over.
+  formerLead?: { personId: string; until: string };
 }
 
 // A planned hire: named, if it has a name, and known by its requisition, or by a temporary ID the
@@ -1013,6 +1015,7 @@ export function fictionalOrganization({
   const hires = hiresFor(people, lines.reportingLines, referenceDate);
   const featureTeams = featureTeamsFor(people, referenceDate);
   setLeaving(people, hires, featureTeams, referenceDate);
+  growFeatureTeams(people, hires, featureTeams, referenceDate);
   return {
     referenceDate,
     lists: [
@@ -1167,4 +1170,153 @@ function featureTeamsFor(
       memberships,
     };
   });
+}
+
+// Feature teams added after the first, with joins spread over two years so their history shows.
+const grownTeams: readonly {
+  name: string;
+  colour: string | null;
+  size: number;
+  leadChange?: boolean;
+  joining?: boolean;
+}[] = [
+  { name: "Field tools", colour: "grape", size: 12 },
+  { name: "Data pipeline", colour: "lime", size: 12, leadChange: true },
+  { name: "Identity", colour: "pink", size: 11 },
+  { name: "Integrations", colour: "green", size: 10, joining: true },
+];
+
+// How many join the third and fourth teams, after their first members.
+const grownMembers = 3;
+const grownTeamsJoinedDaysAgo = 700;
+const newestJoinDaysAgo = 30;
+const joinSpacingDays = 53;
+const leadChangedDaysAgo = 200;
+const movedDaysAgo = 120;
+const joiningInDays = 30;
+// One in this many joining a grown team after the first moved there from the team before it.
+const movedEvery = 9;
+
+// Grows the teams after people's end dates are set, from current people who manage no one, after
+// those the seed data's drafts name, apart from those filling hires and the person a draft adds to a
+// team, so nothing worked out before changes.
+function growFeatureTeams(
+  people: readonly FictionalPerson[],
+  hires: readonly FictionalHire[],
+  featureTeams: FictionalFeatureTeam[],
+  referenceDate: string,
+): void {
+  const onTeams = featureTeamMembers(featureTeams);
+  const filling = fillingHires(hires);
+  const joining = lastOnNoTeam(people, featureTeams, referenceDate);
+  const free = people
+    .slice(firstUnnamed)
+    .filter(
+      (person) =>
+        person !== joining &&
+        person.endDate === null &&
+        String(person.startDate) <= referenceDate &&
+        !person.isManager &&
+        !onTeams.has(person.id) &&
+        !filling.has(person.id),
+    );
+  let next = 0;
+  const take = (count: number) => {
+    const taken = free.slice(next, next + count);
+    next += count;
+    return taken;
+  };
+  const later = (person: FictionalPerson, day: string) =>
+    String(person.startDate) > day ? String(person.startDate) : day;
+  // Joined some time in the last two years, or when they started, if later.
+  const joinedDay = (person: FictionalPerson, turn: number) =>
+    later(
+      person,
+      addDays(
+        referenceDate,
+        -(
+          newestJoinDaysAgo +
+          ((turn * joinSpacingDays) % grownTeamsJoinedDaysAgo)
+        ),
+      ),
+    );
+  featureTeams.slice(2).forEach((team, index) => {
+    for (const [turn, person] of take(grownMembers).entries()) {
+      team.memberships.push({
+        personId: person.id,
+        member: true,
+        fromDate: joinedDay(person, turn + index * grownMembers),
+      });
+    }
+  });
+  const earliest = addDays(referenceDate, -grownTeamsJoinedDaysAgo);
+  const fromStart = (person: FictionalPerson) => later(person, earliest);
+  const until = addDays(referenceDate, -leadChangedDaysAgo);
+  const grown = grownTeams.map((plan, index): FictionalFeatureTeam => {
+    const members = take(plan.size);
+    // The earliest starters lead, from the team's start: one before the other where it changed.
+    const [first, second] = [...members].sort((a, b) =>
+      String(a.startDate).localeCompare(String(b.startDate)),
+    );
+    const changed =
+      plan.leadChange === true &&
+      first !== undefined &&
+      second !== undefined &&
+      fromStart(second) < until;
+    const leads = new Set([first, ...(changed ? [second] : [])]);
+    const memberships = members.map((person, turn) => ({
+      personId: person.id,
+      member: true,
+      fromDate: leads.has(person)
+        ? fromStart(person)
+        : joinedDay(person, turn + index),
+    }));
+    return {
+      id: fictionalId(`feature-team:${plan.name}`),
+      name: plan.name,
+      leadId: (changed ? second : first)?.id ?? null,
+      colour: plan.colour,
+      memberships,
+      ...(changed ? { formerLead: { personId: first.id, until } } : {}),
+    };
+  });
+  // Some moved from the team before, leaving it the day they joined; they had been on it from its
+  // start, or from when they started, if later.
+  const moved = addDays(referenceDate, -movedDaysAgo);
+  grown.forEach((team, index) => {
+    const before = index === 0 ? undefined : grown.at(index - 1);
+    if (before === undefined) return;
+    team.memberships.forEach((membership, turn) => {
+      if (turn % movedEvery !== movedEvery - 1) return;
+      const person = people.find(({ id }) => id === membership.personId);
+      const leads = [team.leadId, team.formerLead?.personId];
+      if (
+        person === undefined ||
+        leads.includes(person.id) ||
+        fromStart(person) >= moved
+      ) {
+        return;
+      }
+      before.memberships.push(
+        { personId: person.id, member: true, fromDate: fromStart(person) },
+        { personId: person.id, member: false, fromDate: moved },
+      );
+      membership.fromDate = moved;
+    });
+  });
+  const [planned] = take(1);
+  const joiningTeam = grown.at(
+    grownTeams.findIndex(({ joining: ahead }) => ahead === true),
+  );
+  if (planned !== undefined && joiningTeam !== undefined) {
+    joiningTeam.memberships.push({
+      personId: planned.id,
+      member: true,
+      fromDate: addDays(referenceDate, joiningInDays),
+    });
+  }
+  // An organization too small to fill a team adds none.
+  featureTeams.push(
+    ...grown.filter(({ memberships }) => memberships.length > 0),
+  );
 }
