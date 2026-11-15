@@ -13,11 +13,15 @@ import {
   type ReleaseStream,
 } from "@fathom/shared";
 import { cycleChoiceId } from "./projects.ts";
+import type { ViewPart } from "./table-controls.tsx";
+import type { View } from "./table-view.ts";
 import { includesCycle, keptReleases } from "./releases.ts";
+
+const boardLabel = "Board";
 
 export const planModes: readonly { value: PlanMode; label: string }[] = [
   { value: "table", label: "Table" },
-  { value: "board", label: "Board" },
+  { value: "board", label: boardLabel },
 ];
 
 export const cardPartLabels: Readonly<Record<CardPart, string>> = {
@@ -35,6 +39,36 @@ export const shownParts = (
   hidden: readonly CardPart[] | undefined,
 ): ReadonlySet<CardPart> =>
   new Set(offered.filter((part) => hidden?.includes(part) !== true));
+
+// The words of the Board's menus, on their buttons and where Save view names their choices.
+export const boardMenuWords = { stream: "Stream", card: "Card" } as const;
+
+// How Save view names the Board's choices a view keeps: its stream and the parts its cards show,
+// each once chosen.
+export function boardParts(
+  view: Pick<View, "choices">,
+  streams: readonly Pick<ReleaseStream, "id" | "name">[],
+  offered: readonly CardPart[],
+): ViewPart[] {
+  const { stream, hide } = view.choices ?? {};
+  const hidden = [hide ?? []].flat();
+  const shown = offered
+    .filter((part) => !hidden.includes(part))
+    // The part is always one of the fixed parts.
+    // eslint-disable-next-line security/detect-object-injection
+    .map((part) => cardPartLabels[part]);
+  const parts = [
+    ...streams
+      .filter(({ id }) => id === stream)
+      .map(({ name }) => `${boardMenuWords.stream} ${name}`),
+    ...(hide === undefined
+      ? []
+      : [`${boardMenuWords.card} ${shown.join(", ")}`]),
+  ];
+  return parts.length === 0
+    ? []
+    : [{ name: boardLabel, value: parts.join(", ") }];
+}
 
 // The column of features that target no cycle yet.
 export const laterKey = "later";

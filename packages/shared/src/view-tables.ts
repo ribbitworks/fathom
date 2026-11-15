@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The tables that keep saved views, and the choices each page keeps in a view beyond its columns,
-// such as whether Features shows its table or its board, by the names its address gives them, so
-// old links still open as they did.
+// such as the stream the Features Board shows, by the names its address gives them, so old links
+// still open as they did.
 
 import { z } from "zod";
 import type { Permission } from "./access.ts";
@@ -48,7 +48,6 @@ const noChoices = z.strictObject({});
 export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
   people: noChoices,
   features: z.strictObject({
-    mode: planModeSchema.optional(),
     stream: z.uuid().optional(),
     hide: z
       .array(cardPartSchema)

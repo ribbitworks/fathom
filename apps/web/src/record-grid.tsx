@@ -107,6 +107,7 @@ import {
   HeaderMarks,
   headerState,
   type SavedViews,
+  type PageParts,
   type ViewChoice,
   ViewBar,
 } from "./table-controls.tsx";
@@ -1269,6 +1270,8 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   // Choices of which records the table shows, beyond its filters, such as Show retired, first in
   // the Views menu.
   viewChoices?: readonly ViewChoice[] | undefined;
+  // How Save view names the page's own choices kept outside the Views menu, such as Features' Board.
+  pageParts?: PageParts | undefined;
   // What the page shows under the bar above the table, such as a timeline, as tall as it needs,
   // given the records the table shows.
   above?: ((shown: readonly Rec[]) => ReactNode) | undefined;
@@ -1356,6 +1359,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   withDrafts = true,
   panels = [],
   viewChoices,
+  pageParts,
   above,
   body,
 }: RecordGridProps<Rec, Change, Request>) {
@@ -3169,6 +3173,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       }}
       saved={saved}
       choices={viewChoices}
+      pageParts={pageParts}
       draftItems={
         <>
           {waitingTotal > 0 && (

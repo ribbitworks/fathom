@@ -3088,7 +3088,7 @@ describe("searching, sorting, and filtering", () => {
       });
     });
 
-    it("takes back the applied view, offering Undo", async () => {
+    it("stops sharing the applied view, offering Undo", async () => {
       const shared = { ...harbour, canShare: true, definition: {} };
       const url = `/api/views/people/${v1}`;
       const { fetch } = await openAt(`/people?view=${v1}`, {
@@ -3099,8 +3099,8 @@ describe("searching, sorting, and filtering", () => {
             changeSetId: s1,
           }),
       });
-      await chooseView("Take back current view");
-      await screen.findByText("Took back the Harbour view.");
+      await chooseView("Stop sharing current view");
+      await screen.findByText("Stopped sharing the Harbour view.");
       expect(bodyOf(fetch, "PUT", url)).toEqual([{ scope: "personal" }]);
       await userEvent.click(screen.getByRole("button", { name: "Undo" }));
       await waitFor(() => {
@@ -3134,7 +3134,7 @@ describe("searching, sorting, and filtering", () => {
       });
       const items = await viewsMenuItems();
       expect(items).toContain("Rename…");
-      expect(items).not.toContain("Take back current view");
+      expect(items).not.toContain("Stop sharing current view");
     });
 
     it("saves a view as shared when the box is ticked", async () => {
@@ -3302,7 +3302,7 @@ describe("searching, sorting, and filtering", () => {
         "Theirs, chosen",
         "Name ↓descending, remove sort",
         "Clear view",
-        "Save view…",
+        "Save as new view…",
       ]);
       // Every saved view keeps room for the tick, so names line up.
       expect(
@@ -3311,7 +3311,7 @@ describe("searching, sorting, and filtering", () => {
           .map((item) => item.querySelector("[data-position='left']") !== null),
       ).toEqual([true, true]);
       await userEvent.click(
-        screen.getByRole("menuitem", { name: "Save view…" }),
+        screen.getByRole("menuitem", { name: "Save as new view…" }),
       );
       await screen.findByRole("dialog", { name: "Save view" });
       await userEvent.keyboard("{Escape}");

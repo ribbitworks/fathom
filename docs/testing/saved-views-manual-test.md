@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and taking it back, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; and that a view on Releases shows only its streams in the timeline.
+Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and taking it back, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its streams in the timeline; and that a view on Features is shared by its table and Board, and kept to Features.
 
 ## Test Environment
 
@@ -26,6 +26,8 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
 - **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as "Second Engineering Operations Manager"
 - **Feature Lead:** `feature.lead@fathom.test`
+- **Engineering Director:** `engineering.director@fathom.test`
+- **Product Manager:** `product.manager@fathom.test`
 
 ## Common Procedures
 
@@ -722,4 +724,93 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `49AA` Open the Views menu.
   - **Expected:** The menu has no **Hidden** heading.
+  - **Notes:**
+
+### VIEW-13: A View on Features Is Shared by Its Table and Board
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, in the main window, changed from VIEW-12.
+
+**Preconditions:** In the main window, this account is signed in on **Features**, showing the table, with no view applied. In the second window, Product Manager, `product.manager@fathom.test` is signed in on **Features**, showing the table, with no view applied.
+
+- [ ] `CBA2` In the main window, type `offline` in the search box.
+  - **Expected:** The table lists 'Offline Sync' alone.
+  - **Notes:**
+
+- [ ] `4C59` Select **Board** in the switch after the **Features** heading.
+  - **Expected:**
+    - The board shows, with the button **Stream: Platform**.
+    - The board holds the card 'Offline Sync' alone.
+  - **Notes:**
+
+- [ ] `BCED` Select **Card**, then **Risk**.
+  - **Expected:** The cards no longer show **Risk**.
+  - **Notes:**
+
+- [ ] `CE29` Press Esc.
+  - **Expected:** The Card menu closes.
+  - **Notes:**
+
+- [ ] `7291` Open the Views menu, and select **Save view…**.
+  - **Expected:**
+    - A dialog titled "Save view" opens.
+    - Under **Includes**, **Search** reads “offline”.
+    - Under **Includes**, **Board** reads "Card Status, Priority, Size, Needed by, Staffed months".
+  - **Notes:**
+
+- [ ] `7293` Type `Fictional roadmap` in **Name**.
+  - **Expected:** The name shows in **Name**.
+  - **Notes:**
+
+- [ ] `CFB2` Tick **Share with everyone who sees this table**.
+  - **Expected:** The checkbox is ticked.
+  - **Notes:**
+
+- [ ] `FFDF` Select **Save view** in the dialog.
+  - **Expected:** The Views menu's button says `Fictional roadmap`.
+  - **Notes:**
+
+- [ ] `D1B9` Select **Table** in the switch after the **Features** heading.
+  - **Expected:**
+    - The table lists 'Offline Sync' alone.
+    - The Views menu's button says `Fictional roadmap`, with no dot.
+  - **Notes:**
+
+- [ ] `11C8` In the second window, reload the page.
+  - **Expected:**
+    - The table shows.
+    - The Views menu's button reads **Views**, with no dot.
+  - **Notes:**
+
+- [ ] `8296` Open the Views menu.
+  - **Expected:** **Shared views** lists `Fictional roadmap`.
+  - **Notes:**
+
+- [ ] `FD34` Select `Fictional roadmap`.
+  - **Expected:**
+    - The table still shows, listing 'Offline Sync' alone.
+    - The Views menu's button says `Fictional roadmap`, with no dot.
+  - **Notes:**
+
+- [ ] `7D74` Select **Board** in the switch after the **Features** heading.
+  - **Expected:**
+    - The board holds the card 'Offline Sync' alone, without **Risk**.
+    - The Views menu's button still says `Fictional roadmap`, with no dot.
+  - **Notes:**
+
+- [ ] `B1FA` Select the **Projects** page in the left-hand menu.
+  - **Expected:**
+    - The **Projects** tab is chosen.
+    - No Views menu shows above the table.
+  - **Notes:**
+
+- [ ] `AC9D` In the main window, open the Views menu and select **Delete view**.
+  - **Expected:** A notification reads "Deleted the Fictional roadmap view.", with **Undo**.
+  - **Notes:**
+
+- [ ] `4A6B` In the second window, select the **Features** page in the left-hand menu.
+  - **Expected:** The table shows, with no view applied.
+  - **Notes:**
+
+- [ ] `036B` Reload the page.
+  - **Expected:** No Views menu shows above the table.
   - **Notes:**

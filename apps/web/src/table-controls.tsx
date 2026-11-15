@@ -172,10 +172,12 @@ export function viewParts(
     groupings = [],
     ungrouped = false,
     choices = [],
+    pageParts = noPageParts,
   }: {
     groupings?: readonly { key: string; label: string }[];
     ungrouped?: boolean;
     choices?: readonly ViewChoice[];
+    pageParts?: PageParts;
   } = {},
 ): ViewPart[] {
   const labelOf = (key: string) =>
@@ -198,6 +200,7 @@ export function viewParts(
       : (activeGrouping(view, groupings, ungrouped)?.label ?? notGroupedLabel);
   return [
     ...choiceParts(view, choices),
+    ...pageParts(view),
     ...(view.search.trim() === ""
       ? []
       : [{ name: "Search", value: `“${view.search.trim()}”` }]),
@@ -499,6 +502,11 @@ export interface ViewChoice {
   part: ViewPart;
 }
 
+// The parts of a view its page's own choices set outside the Views menu, such as Features' Board, as
+// the Save view dialog names them.
+export type PageParts = (view: View) => ViewPart[];
+const noPageParts: PageParts = () => [];
+
 // The parts of a view its page's choices set, as the Save view dialog names them.
 const choiceParts = (view: View, choices: readonly ViewChoice[]): ViewPart[] =>
   choices.filter((choice) => choice.on(view)).map(({ part }) => part);
@@ -597,8 +605,8 @@ export const viewScopes: Record<
   shared: {
     heading: "Shared views",
     changesTo: "personal",
-    changeLabel: "Take back current view",
-    changedVerb: "Took back",
+    changeLabel: "Stop sharing current view",
+    changedVerb: "Stopped sharing",
   },
 };
 
@@ -617,6 +625,7 @@ export function ViewsMenu({
   onView,
   onClear,
   choices = [],
+  pageParts = noPageParts,
   groupings = [],
   ungrouped = false,
 }: {
@@ -628,6 +637,7 @@ export function ViewsMenu({
   // Clears the view, leaving the saved view it started from.
   onClear: () => void;
   choices?: readonly ViewChoice[];
+  pageParts?: PageParts;
   groupings?: readonly { key: string; label: string }[];
   ungrouped?: boolean;
 }) {
@@ -852,11 +862,12 @@ export function ViewsMenu({
                   groupings,
                   ungrouped,
                   choices,
+                  pageParts,
                 }),
               );
             }}
           >
-            Save view…
+            {current === undefined ? "Save view…" : "Save as new view…"}
           </Menu.Item>
         )}
         {saved && current?.canChange && (
@@ -1164,6 +1175,7 @@ export function ViewBar({
   saved,
   draftItems,
   choices,
+  pageParts,
   groupings,
   ungrouped = false,
   withDrafts = true,
@@ -1192,6 +1204,7 @@ export function ViewBar({
   // Added to the Draft menu, after what to show and the filter.
   draftItems?: ReactNode;
   choices?: readonly ViewChoice[] | undefined;
+  pageParts?: PageParts | undefined;
   // False for a table whose records never have drafts.
   withDrafts?: boolean;
 }) {
@@ -1258,6 +1271,7 @@ export function ViewBar({
           onView(emptyView);
         }}
         {...(choices === undefined ? {} : { choices })}
+        {...(pageParts === undefined ? {} : { pageParts })}
         {...(groupings === undefined ? {} : { groupings })}
         ungrouped={ungrouped}
       />

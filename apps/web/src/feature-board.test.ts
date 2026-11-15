@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the Features Board's rules: which cycles are its columns and their releases, which
-// column a feature is in, whether a draft moves it, the order of its cards, a risk's step, and
-// which parts its cards show.
+// column a feature is in, whether a draft moves it, the order of its cards, a risk's step, which
+// parts its cards show, and how Save view names the board's choices.
 
 import type { Feature } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
   boardColumns,
+  boardParts,
   cardOrder,
   columnOf,
   firstShown,
@@ -259,5 +260,35 @@ describe("the parts a card shows", () => {
       "risk",
     ]);
     expect([...shownParts(["status"], undefined)]).toEqual(["status"]);
+  });
+});
+
+describe("boardParts", () => {
+  const streams = [{ id: streamId, name: "Platform" }];
+  const offered = ["status", "priority", "risk"] as const;
+
+  it("names the stream and the parts the cards show, each once chosen", () => {
+    expect(
+      boardParts(
+        { choices: { stream: streamId, hide: ["risk"] } },
+        streams,
+        offered,
+      ),
+    ).toEqual([
+      { name: "Board", value: "Stream Platform, Card Status, Priority" },
+    ]);
+    expect(
+      boardParts({ choices: { hide: ["status"] } }, streams, offered),
+    ).toEqual([{ name: "Board", value: "Card Priority, Risk" }]);
+    expect(
+      boardParts({ choices: { stream: streamId } }, streams, offered),
+    ).toEqual([{ name: "Board", value: "Stream Platform" }]);
+  });
+
+  it("names nothing for a board left as it starts, or a stream it doesn't have", () => {
+    expect(boardParts({}, streams, offered)).toEqual([]);
+    expect(
+      boardParts({ choices: { stream: "gone" } }, streams, offered),
+    ).toEqual([]);
   });
 });

@@ -16,15 +16,16 @@ describe("Features' choices", () => {
   const fits = (choices: object) =>
     viewChoiceSchemas.features.safeParse(choices).success;
 
-  it("accepts the table or the board, a stream, and the card parts hidden", () => {
-    expect(fits({ mode: "board", stream, hide: ["status", "size"] })).toBe(
-      true,
-    );
+  it("accepts the Board's stream and the card parts hidden", () => {
+    expect(fits({ stream, hide: ["status", "size"] })).toBe(true);
     expect(fits({})).toBe(true);
   });
 
   it.each([
-    ["a mode it doesn't have", { mode: "timeline" }],
+    [
+      "the table or the board, which the two share a view across",
+      { mode: "board" },
+    ],
     ["a stream that isn't an identifier", { stream: "Platform" }],
     ["a card part it doesn't have", { hide: ["colour"] }],
     ["a card part twice", { hide: ["status", "status"] }],
@@ -42,7 +43,7 @@ describe("the choices of tables whose pages keep none", () => {
       // eslint-disable-next-line security/detect-object-injection
       const choices = viewChoiceSchemas[table];
       expect(choices.safeParse({}).success).toBe(true);
-      expect(choices.safeParse({ mode: "board" }).success).toBe(false);
+      expect(choices.safeParse({ hide: ["status"] }).success).toBe(false);
     },
   );
 });

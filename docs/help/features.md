@@ -83,7 +83,7 @@ The board shows one release stream's cycles side by side, with a card for each f
 1. To choose what the cards show, select **Card**, and tick or untick each part.
 1. To put the cards in rows, select **Group by**, and choose how, such as **Feature team**.
 
-While **Staffed months** is ticked under **Card**, a card marked **Not staffed** is planned or in progress, but nobody is allocated to it yet. Select a card to see the feature's details. The search, the **Draft** menu and **Metrics** work on the board as they do on the table.
+While **Staffed months** is ticked under **Card**, a card marked **Not staffed** is planned or in progress, but nobody is allocated to it yet. Select a card to see the feature's details. The search, the **Draft** menu and **Metrics** work on the board as they do on the table. So does **Views**: the table and the board share one view, and a saved view keeps the board's stream and what its cards show. See [Saved views](saved-views.md).
 
 You're done when the board shows the stream and cycles you want.
 

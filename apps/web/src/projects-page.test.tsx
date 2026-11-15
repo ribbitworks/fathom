@@ -179,6 +179,56 @@ describe("the page's tabs", () => {
     }
   });
 
+  it("offers each tab's own saved views", async () => {
+    // Given a view saved on Proposals and none on Projects
+    await openPage("/projects?tab=proposals", plan(), {
+      "GET /api/views/proposals": () =>
+        Response.json([
+          {
+            id: crypto.randomUUID(),
+            name: "Fictional proposals",
+            scope: "personal",
+            definition: { search: "fictional" },
+            canChange: true,
+            canShare: false,
+          },
+        ]),
+      "GET /api/views/projects": () =>
+        Response.json([
+          {
+            id: crypto.randomUUID(),
+            name: "Fictional projects",
+            scope: "personal",
+            definition: { search: "fictional" },
+            canChange: true,
+            canShare: false,
+          },
+        ]),
+    });
+    const offered = async () => {
+      await userEvent.click(
+        await screen.findByRole("button", { name: /^Views/ }),
+      );
+      await screen.findByRole("menu");
+      return screen
+        .getAllByRole("menuitem")
+        .map(({ textContent }) => textContent);
+    };
+
+    // When the Views menu opens on Proposals, then on Projects
+    const onProposals = await offered();
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(screen.getByRole("tab", { name: "Projects" }));
+    await screen.findByRole("grid", { name: "Projects" });
+    const onProjects = await offered();
+
+    // Then each offers its own view alone
+    expect(onProposals).toContain("Fictional proposals");
+    expect(onProposals).not.toContain("Fictional projects");
+    expect(onProjects).toContain("Fictional projects");
+    expect(onProjects).not.toContain("Fictional proposals");
+  });
+
   it("names its tabs, each pointing at the table it shows", async () => {
     await openPage("/projects", plan({ canEdit: false }), {}, [
       "plan:view",
@@ -1668,6 +1718,91 @@ describe("the Features page", () => {
           /Fictional (Later|Second|First)/.exec(textContent)?.[0],
       )
       .filter((name) => name !== undefined);
+
+  describe("saved views on Features", () => {
+    const roadmap = {
+      id: crypto.randomUUID(),
+      name: "Roadmap",
+      scope: "personal",
+      definition: {
+        search: "first",
+        choices: { stream: streamId, hide: ["risk"] },
+      },
+      canChange: true,
+      canShare: false,
+    };
+    const views = (listed: object[]) => () => Response.json(listed);
+    const viewsMenu = async () => {
+      await userEvent.click(screen.getByRole("button", { name: /^Views/ }));
+      return screen.findByRole("menu");
+    };
+
+    it("keeps the Board's stream and card parts in a view, naming them, but not Table or Board", async () => {
+      // Given Features showing the board's stream and card parts in its address
+      const { fetch } = await open(
+        featurePlan(),
+        {
+          "GET /api/views/features": views([]),
+          "POST /api/views/features": () =>
+            Response.json({ view: roadmap, changeSetId }, { status: 201 }),
+        },
+        `/features?mode=table&stream=${streamId}&hide=["risk"]&search=first`,
+      );
+
+      // When the view is saved
+      await userEvent.click(
+        within(await viewsMenu()).getByRole("menuitem", {
+          name: "Save view…",
+        }),
+      );
+      const dialog = await screen.findByRole("dialog", { name: "Save view" });
+
+      // Then Includes names the board, and the view keeps its choices alone
+      expect(dialog.textContent).toContain(
+        "Stream Fictional Stream, Card Status, Priority, Size, Needed by, Staffed months",
+      );
+      await userEvent.type(
+        within(dialog).getByRole("textbox", { name: "Name" }),
+        "Roadmap",
+      );
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Save view" }),
+      );
+      await waitFor(() => {
+        expect(sent(fetch, "POST /api/views/features")).toHaveLength(1);
+      });
+      expect(sent(fetch, "POST /api/views/features")[0]).toMatchObject({
+        definition: {
+          search: "first",
+          choices: { stream: streamId, hide: ["risk"] },
+        },
+      });
+    });
+
+    it("applies a view on the board, keeping the board shown", async () => {
+      // Given the board shown
+      const { history } = await open(featurePlan(), {
+        "GET /api/views/features": views([roadmap]),
+      });
+      await userEvent.click(screen.getByRole("radio", { name: "Board" }));
+      await waitFor(() => {
+        expect(history.location.search).toContain("mode=board");
+      });
+
+      // When a saved view is applied
+      await userEvent.click(
+        within(await viewsMenu()).getByRole("menuitem", { name: "Roadmap" }),
+      );
+
+      // Then it sets the search and the board's choices, and the board still shows
+      await waitFor(() => {
+        expect(history.location.search).toContain("search=first");
+      });
+      expect(history.location.search).toContain(`stream=${streamId}`);
+      expect(history.location.search).toContain("hide=");
+      expect(history.location.search).toContain("mode=board");
+    });
+  });
 
   it("lists a project's features in its panel, each a link to its details on Features", async () => {
     // Given a project needing two features, open beside Projects

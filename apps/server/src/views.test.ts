@@ -82,7 +82,7 @@ const demote = async (id: string) => {
 };
 
 const notSharer =
-  "Only someone who may share views on its table can share a view they saved, or take it back";
+  "Only someone who may share views on its table can share a view they saved, or stop sharing it";
 const notSharedViewMaker =
   "Only someone who may share views on this table can save a shared view";
 const sharers: readonly string[] = [
@@ -954,7 +954,7 @@ describe("views of every table", () => {
       search: "fictional",
       grouping: "status",
       hidden: ["size"],
-      choices: { mode: "board", hide: ["status"] },
+      choices: { hide: ["status"] },
     };
     const made = await features.save(cookie, unique("Board"), definition);
     expect(made.statusCode).toBe(201);
@@ -965,11 +965,11 @@ describe("views of every table", () => {
     const renamed = await features.change(cookie, view.id, { name: "Ours" });
     expect(renamed.statusCode).toBe(200);
     const updated = await features.change(cookie, view.id, {
-      definition: { choices: { mode: "table" } },
+      definition: { choices: { hide: ["size"] } },
     });
     expect(updated.json<Saved>().view).toMatchObject({
       name: "Ours",
-      definition: { choices: { mode: "table" } },
+      definition: { choices: { hide: ["size"] } },
     });
 
     expect((await features.remove(cookie, view.id)).statusCode).toBe(200);

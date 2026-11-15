@@ -22,6 +22,7 @@ import {
   type BoardColumn,
   boardColumns,
   cardOrder,
+  boardMenuWords,
   cardPartLabels,
   columnOf,
   firstShown,
@@ -215,7 +216,9 @@ export function FeatureBoard({
     <>
       <AppMenu position="bottom-start">
         <AppMenu.Target>
-          <Button variant="default">Stream: {stream?.name ?? "None"}</Button>
+          <Button variant="default">
+            {boardMenuWords.stream}: {stream?.name ?? "None"}
+          </Button>
         </AppMenu.Target>
         <AppMenu.Dropdown>
           <MenuChoices
@@ -246,7 +249,7 @@ export function FeatureBoard({
       </AppMenu>
       <AppMenu position="bottom-start" closeOnItemClick={false}>
         <AppMenu.Target>
-          <Button variant="default">Card</Button>
+          <Button variant="default">{boardMenuWords.card}</Button>
         </AppMenu.Target>
         <AppMenu.Dropdown>
           {offeredParts.map((part) => (

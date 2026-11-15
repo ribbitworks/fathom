@@ -54,7 +54,7 @@ const duplicateView = "There is already a view with that name";
 const notYours =
   "Only the person who saved a view, or someone who may share views on its table, can change it";
 const notSharer =
-  "Only someone who may share views on its table can share a view they saved, or take it back";
+  "Only someone who may share views on its table can share a view they saved, or stop sharing it";
 const notSharedViewMaker =
   "Only someone who may share views on this table can save a shared view";
 const hiddenColumns = "Choose only columns this role can see";

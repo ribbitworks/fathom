@@ -42,7 +42,7 @@ import {
   cardId,
   FeatureBoard,
 } from "./feature-board-view.tsx";
-import { planModes } from "./feature-board.ts";
+import { boardParts, planModes } from "./feature-board.ts";
 import { today } from "./today.ts";
 import { TableTips } from "./table-tips.tsx";
 import {
@@ -172,6 +172,7 @@ import {
   releaseStreamsQuery,
   resubmitRecordDraft,
 } from "./releases.ts";
+import { useSavedViews } from "./saved-views.tsx";
 import { useSaving } from "./saving.ts";
 import {
   type SidePanel,
@@ -302,6 +303,9 @@ export function ProjectsPage({
   canEditColumns = false,
   view,
   onView,
+  applied,
+  onApply,
+  canShareViews = false,
   open,
   onOpen,
   onMilestonesOf,
@@ -318,6 +322,10 @@ export function ProjectsPage({
   canEditColumns?: boolean;
   view: View;
   onView: ChangeView;
+  // The saved view the view started from, as the address names it.
+  applied: string | undefined;
+  onApply: (view: View, id: string, replace?: boolean) => void;
+  canShareViews?: boolean;
   // The record whose details are shown beside the table, by its identifier.
   open?: string | undefined;
   onOpen?: (id: string | undefined) => void;
@@ -419,10 +427,19 @@ export function ProjectsPage({
     { project: Project; milestone?: Milestone } | undefined
   >();
   const [dialogOpened, setDialogOpened] = useState(false);
+  // Each tab, and Features, keeps saved views of its own.
+  const views = useSavedViews({
+    table: tab,
+    within: projectPlanQuery.queryKey,
+    applied,
+    onApply,
+    canShare: canShareViews,
+    blocked: deciding || dialogOpened || columnDialog.opened,
+  });
   const changes = useSaving<ProjectPlan>({
     queryKey: projectPlanQuery.queryKey,
     removed: "Someone else has removed this. The plan has been refreshed.",
-    blocked: deciding || dialogOpened || columnDialog.opened,
+    blocked: deciding || dialogOpened || columnDialog.opened || views.opened,
   });
   const { save, shown, undoable, done } = changes;
   const canEdit = query.data !== undefined && page.mayEdit(query.data);
@@ -661,7 +678,14 @@ export function ProjectsPage({
       changeReason,
       notes,
     });
-    const shared = { canEdit, approves, saving, view, onView };
+    const shared = {
+      canEdit,
+      approves,
+      saving,
+      view,
+      onView,
+      saved: views.saved,
+    };
     // The form takes the panel's place while a record is being added.
     function panelsWith<Rec extends PlanRecord, Request>(
       type: PlanRecordKind,
@@ -788,6 +812,7 @@ export function ProjectsPage({
                 order={order}
                 lists={lists}
                 canEditColumns={canEditColumns}
+                pageParts={(shown) => boardParts(shown, streams, offeredParts)}
                 body={
                   onBoard && board !== undefined
                     ? (shown) => (
@@ -947,6 +972,7 @@ export function ProjectsPage({
         <Fragment key={tab}>{content}</Fragment>
       )}
       {question.dialog}
+      {views.dialogs}
       <DecisionModal
         decision={decision}
         opened={deciding}

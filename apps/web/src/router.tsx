@@ -485,13 +485,15 @@ const featuresRoute = createRoute({
   component: function Features() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = featuresRoute.useNavigate();
-    const { open, mode, stream, from, hide, ...search } =
-      featuresRoute.useSearch();
-    const board = { mode, stream, from, hide };
+    // Table or Board, and the cycle the Board starts from, are kept in the address but not the
+    // view, which the table and the Board share.
+    const { open, mode, from, ...search } = featuresRoute.useSearch();
+    const { stream, hide } = search;
     return (
       <ProjectsPage
         tab="features"
         canEditColumns={permissions.includes("configuration:edit")}
+        canShareViews={sharesViews("features", permissions)}
         onTab={(next, record) => {
           void navigate(planAddress(next, record));
         }}
@@ -499,12 +501,16 @@ const featuresRoute = createRoute({
           void navigate({ to: "/releases/{-$streamId}", params: { streamId } });
         }}
         approves={approvableKinds(permissions)}
-        {...viewProps(search, (next, replace) => {
-          void navigate({ search: { ...next, ...board, open }, replace });
-        })}
+        {...viewProps(
+          search,
+          (next, replace) => {
+            void navigate({ search: { ...next, mode, from, open }, replace });
+          },
+          ["stream", "hide"],
+        )}
         open={open}
         onOpen={(next) => {
-          void navigate({ search: { ...search, ...board, open: next } });
+          void navigate({ search: { ...search, mode, from, open: next } });
         }}
         board={{
           mode,
@@ -512,7 +518,7 @@ const featuresRoute = createRoute({
             void navigate({
               search: {
                 ...search,
-                ...board,
+                from,
                 open,
                 mode: next === "board" ? next : undefined,
               },
@@ -540,6 +546,7 @@ const projectsRoute = createRoute({
     return (
       <ProjectsPage
         tab={tab ?? "projects"}
+        canShareViews={sharesViews(tab ?? "projects", permissions)}
         onTab={(next, record) => {
           void navigate(planAddress(next, record));
         }}
