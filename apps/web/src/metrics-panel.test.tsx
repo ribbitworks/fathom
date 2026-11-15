@@ -341,7 +341,7 @@ describe("the Metrics panel", () => {
     render(<Table />);
     await user.click(screen.getByRole("button", { name: "Level column" }));
     await user.click(
-      await screen.findByRole("menuitem", { name: "Break down by" }),
+      await screen.findByRole("menuitem", { name: "Metrics" }),
     );
     expect(figures("P4")).toEqual(["2", share(2, 4)]);
   });
@@ -352,7 +352,7 @@ describe("the Metrics panel", () => {
     await user.click(screen.getByRole("button", { name: "Level column" }));
 
     await user.click(
-      await screen.findByRole("menuitem", { name: "Break down by" }),
+      await screen.findByRole("menuitem", { name: "Metrics" }),
     );
 
     await waitFor(() => {

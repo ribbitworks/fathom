@@ -67,7 +67,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **Metrics** button has the keyboard focus.
   - **Notes:**
 
-- [ ] `4AD4` Open the **Position** column menu, and select **Break down by**.
+- [ ] `4AD4` Open the **Position** column menu, and select **Metrics**.
   - **Expected:**
     - The panel opens.
     - **Break down by** is set to **Position**.
@@ -75,7 +75,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `EEB4` Open the **Name** column menu.
-  - **Expected:** The menu has no **Break down by**.
+  - **Expected:** The menu has no **Metrics**.
   - **Notes:**
 
 ### METRICS-02: One Column Is Counted With Shares
@@ -464,7 +464,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `9D79` Open the **Site** column menu.
   - **Expected:** Lines split the menu into groups, from top to bottom:
     - the two sorts
-    - **Filter…** and **Break down by**
+    - **Filter…** and **Metrics**
     - **Freeze up to this column**, **Wider**, **Narrower**, and **Hide column**
     - **Edit column**, **Remove column**, **Move left**, and **Move right**
   - **Notes:**

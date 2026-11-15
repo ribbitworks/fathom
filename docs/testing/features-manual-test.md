@@ -835,7 +835,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
     - A tick is beside **Hours** only.
     - Under **Decimal places**, it lists **0**, **1** and **2**.
     - A tick is beside **2** only.
-    - It has no **Break down by**.
+    - It has no **Metrics**.
   - **Notes:**
 
 - [ ] `55AF` Select **Person-days (8 hours)**.

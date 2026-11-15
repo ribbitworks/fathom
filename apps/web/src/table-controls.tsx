@@ -6,7 +6,7 @@
 // header; the bar naming each filter, which removes them one at a time or all at once; the menu of
 // the table's saved views, which applies, saves, renames, updates, and deletes them, and names each
 // level of the sort, the frozen columns, and the columns' widths, removing them one at a time; and
-// the Metrics button, and each column's Break down by, which open the Metrics panel. What they
+// the Metrics button, and each column's Metrics, which open the Metrics panel. What they
 // change is the table's view, as table-view.ts sets out.
 
 import {
@@ -1476,7 +1476,7 @@ export function ColumnViewItems({
             focusSoon(metricsTitleId);
           }}
         >
-          Break down by
+          Metrics
         </Menu.Item>
       )}
       {units !== undefined && (
