@@ -206,6 +206,29 @@ export const seededProjects: readonly {
     features: ["usage-alerts"],
     milestones: [],
   },
+  {
+    key: "depot-operations",
+    name: "Depot Operations",
+    externalId: "P-2017",
+    customers: ["mining"],
+    proposals: [],
+    owner: 2,
+    features: ["parts-lookup", "barcode-scanning", "work-order-sync"],
+    milestones: [
+      {
+        key: "depot-pilot",
+        name: "Depot pilot",
+        days: -30,
+        customerDelivery: true,
+      },
+      {
+        key: "all-depots",
+        name: "All depots live",
+        days: 150,
+        customerDelivery: true,
+      },
+    ],
+  },
 ];
 
 export const customerId = (key: string) => fictionalId(`customer:${key}`);

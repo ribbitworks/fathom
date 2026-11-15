@@ -10,6 +10,7 @@ import { addToMonth, monthOf, percentageIn } from "@fathom/shared";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
+  allocationId,
   seedAllocations,
   seededAllocationRows,
   unseedAllocations,
@@ -49,6 +50,21 @@ describe("seeding allocations", () => {
     expect(
       await seedAllocations(connection, { ...organization, featureTeams: [] }),
     ).toBe(false);
+  });
+
+  it("leaves out an allocation of a planned hire by name when the organization has no such hire", () => {
+    const without = {
+      ...organization,
+      hires: organization.hires.filter(
+        ({ name }) => name !== "Mobile developer",
+      ),
+    };
+    expect(
+      seededAllocationRows(without, "general").map(({ id }) => id),
+    ).not.toContain(allocationId("hire-alone"));
+    expect(
+      seededAllocationRows(organization, "general").map(({ id }) => id),
+    ).toContain(allocationId("hire-alone"));
   });
 
   it("removes nothing, and records nothing, when there are none", async () => {

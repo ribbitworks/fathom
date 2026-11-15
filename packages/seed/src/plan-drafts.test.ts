@@ -189,6 +189,7 @@ describe("the seed's drafts of the plan and feature teams", () => {
     expect(streams.map(({ name, heldBy }) => [name, heldBy])).toEqual([
       ["Platform", expect.any(String)],
       ["Patches", undefined],
+      ["Field Apps", undefined],
     ]);
     const held = await data.releases.read(
       await actorOf(connection, "engineering.operations.manager.2@fathom.test"),

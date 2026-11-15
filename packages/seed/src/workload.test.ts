@@ -19,8 +19,15 @@ import {
 } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import { seededAllocationRows } from "./allocations.ts";
+import { fieldAppsFeatures } from "./field-apps.ts";
+import { seededFeatures } from "./features.ts";
 import { featureId } from "./projects.ts";
-import { currentWork, workloadPeople, workloadRows } from "./workload.ts";
+import {
+  currentWork,
+  earlierWork,
+  workloadPeople,
+  workloadRows,
+} from "./workload.ts";
 
 const referenceDate = "2026-11-15";
 const organization = fictionalOrganization({ size: 150, referenceDate });
@@ -55,9 +62,14 @@ describe("the workload", () => {
           : generalFeatureIds.get(item.project),
       ),
     );
+    const done = new Set(
+      earlierWork.flatMap((item) =>
+        "feature" in item ? [featureId(item.feature)] : [],
+      ),
+    );
     for (const { featureId: id, months } of rows) {
       if (!current.has(id)) {
-        expect(id).toBe(featureId("sign-on"));
+        expect(done.has(id)).toBe(true);
         expect(percentageIn(months, month)).toBeNull();
       }
     }
@@ -65,6 +77,30 @@ describe("the workload", () => {
       ({ personId, featureId: id }) => `${String(personId)} ${id}`,
     );
     expect(new Set(pairs).size).toBe(pairs.length);
+  });
+
+  it("staffs every committed Field Apps feature, the one in the next cycle by a planned hire alone", () => {
+    const all: { personId: string | null; featureId: string }[] = [
+      ...seeded,
+      ...rows,
+    ];
+    const hireAlone = seeded.filter(
+      ({ featureId: id }) => id === featureId("work-order-sync"),
+    );
+    expect(hireAlone.map(({ plannedHireId }) => plannedHireId)).toEqual([
+      organization.hires.find(({ name }) => name === "Mobile developer")?.id,
+    ]);
+    const committed = fieldAppsFeatures.filter(
+      ({ status }) => status === "planned" || status === "in-progress",
+    );
+    expect(
+      committed.map(({ key }) =>
+        all.some(
+          ({ featureId: id, personId }) =>
+            id === featureId(key) && personId !== null,
+        ),
+      ),
+    ).toEqual(committed.map(({ key }) => key !== "work-order-sync"));
   });
 
   it("gives this month most people full time, and some over, under and not allocated", () => {
@@ -170,5 +206,51 @@ describe("the workload", () => {
         { generalFeatureIds, seededPeople },
       ).filter(({ key }) => key.endsWith(":early")),
     ).toEqual([]);
+  });
+});
+
+describe("what Overview counts on the seed day", () => {
+  const all = [...seeded, ...rows];
+  const allocated = new Set(all.map(({ featureId: id }) => id));
+  const committed = seededFeatures.filter(
+    ({ status }) => status === "planned" || status === "in-progress",
+  );
+
+  it("has features not staffed and with no estimate", () => {
+    expect(
+      committed
+        .filter(({ key }) => !allocated.has(featureId(key)))
+        .map(({ key }) => key),
+    ).toEqual(["scheduler-api", "retention-controls"]);
+    expect(
+      committed.filter(({ hours }) => hours === null).map(({ key }) => key),
+    ).toEqual(["scheduler-api"]);
+  });
+
+  it("has a late open hire, open hires with no allocation, and someone leaving within the month", () => {
+    const open = organization.hires.filter(
+      ({ meaning, filledBy }) => meaning === "open" && filledBy === null,
+    );
+    const hired = new Set(seeded.map(({ plannedHireId }) => plannedHireId));
+    expect(
+      open
+        .filter(
+          ({ targetDate }) => targetDate !== null && targetDate < referenceDate,
+        )
+        .map(({ name }) => name),
+    ).toEqual(["Data engineer"]);
+    expect(
+      open
+        .filter(({ id }) => !hired.has(id))
+        .map(({ requisition, name }) => String(requisition ?? name)),
+    ).toEqual(["REQ-2042", "Backend engineer 2", "REQ-2047", "REQ-2053"]);
+    expect(
+      organization.people.filter(
+        ({ endDate }) =>
+          endDate !== null &&
+          endDate > referenceDate &&
+          endDate <= addDays(referenceDate, 30),
+      ),
+    ).toHaveLength(1);
   });
 });

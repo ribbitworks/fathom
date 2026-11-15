@@ -4,11 +4,11 @@
 // each recorded in the change history as made by Fathom itself: members of the first two feature
 // teams on their teams' features, with someone over-allocated, someone under-allocated, someone with
 // three assignments in a month, one of them Possible, past work on a done feature, a cancelled
-// feature allocated in months still to come, a project's general feature, and a planned hire; then
-// the organization's wider workload on top of them.
-// Removing them removes every allocation, and every draft of one, that names a seeded person,
-// planned hire, or feature, so those can go. A development-only package, never included in the
-// runtime image.
+// feature allocated in months still to come, a project's general feature, a planned hire, and a
+// planned hire alone on a feature in Field Apps' next cycle; then the organization's wider workload
+// on top of them. Removing them removes every allocation, and every draft of one, that names a
+// seeded person, planned hire, or feature, so those can go. A development-only package, never
+// included in the runtime image.
 
 import {
   allocations,
@@ -27,8 +27,9 @@ import { filledIn, recorded, type SeededChange } from "./recorded.ts";
 import { workloadRows } from "./workload.ts";
 
 // Who is allocated: a member of a seeded feature team, by the team's place and the member's place
-// on it, or the organization's first open planned hire with a target date.
-type Assignee = { team: number; member: number } | "planned hire";
+// on it, the organization's first open planned hire with a target date, or a planned hire by name.
+type Assignee =
+  { team: number; member: number } | "planned hire" | { hire: string };
 
 // Each month is counted from the seed day's, or a planned hire's from the month it is expected,
 // before it when negative; null stops the allocation.
@@ -129,6 +130,14 @@ export const seededAllocations: readonly {
     feature: "mobile-approvals",
     months: { 0: 100, 6: null },
   },
+  // The only allocation to a feature in Field Apps' next cycle, so a planned hire alone staffs it,
+  // until that cycle ends.
+  {
+    key: "hire-alone",
+    assignee: { hire: "Mobile developer" },
+    feature: "work-order-sync",
+    months: { 0: 100, 4: null },
+  },
 ];
 
 export const allocationId = (key: string) => fictionalId(`allocation:${key}`);
@@ -176,26 +185,37 @@ export function seededAllocationRows(
   const hire = allocatedHire(organization);
   if (hire === undefined || membersOf(organization, 0).length === 0) return [];
   const current = monthOf(organization.referenceDate);
-  return seededAllocations.map((seeded) => {
-    const forHire = seeded.assignee === "planned hire";
-    return {
-      id: allocationId(seeded.key),
-      personId:
-        seeded.assignee === "planned hire"
-          ? null
-          : String(
-              membersOf(organization, seeded.assignee.team).at(
-                seeded.assignee.member,
-              ),
-            ),
-      plannedHireId: forHire ? hire.id : null,
-      featureId:
-        seeded.feature === null ? generalFeatureId : featureId(seeded.feature),
-      months: monthsFrom(
-        seeded.months,
-        forHire ? monthOf(String(hire.targetDate)) : current,
-      ),
-    };
+  // Who an allocation names, and the month its months are counted from: the seed day's for a person,
+  // the month a planned hire is expected for a hire; none for a hire missing or with no target.
+  const assigned = (assignee: Assignee) => {
+    if (assignee !== "planned hire" && !("hire" in assignee)) {
+      const member = membersOf(organization, assignee.team).at(assignee.member);
+      return { personId: String(member), plannedHireId: null, from: current };
+    }
+    const planned =
+      assignee === "planned hire"
+        ? hire
+        : organization.hires.find(({ name }) => name === assignee.hire);
+    return planned === undefined || planned.targetDate === null
+      ? undefined
+      : {
+          personId: null,
+          plannedHireId: planned.id,
+          from: monthOf(planned.targetDate),
+        };
+  };
+  return seededAllocations.flatMap(({ key, assignee, feature, months }) => {
+    const to = assigned(assignee);
+    if (to === undefined) return [];
+    const { from, ...who } = to;
+    return [
+      {
+        id: allocationId(key),
+        ...who,
+        featureId: feature === null ? generalFeatureId : featureId(feature),
+        months: monthsFrom(months, from),
+      },
+    ];
   });
 }
 

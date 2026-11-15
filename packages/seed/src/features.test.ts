@@ -28,7 +28,8 @@ import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { seededFeatures, seedFeatures, unseedFeatures } from "./features.ts";
 import { customerId, featureId } from "./projects.ts";
-import { seedReleases, unseedReleases } from "./releases.ts";
+import { fieldAppsKeys } from "./field-apps.ts";
+import { seedReleases, streamId, unseedReleases } from "./releases.ts";
 
 const today = "2026-11-08";
 
@@ -201,6 +202,35 @@ describe("seeding features", () => {
     expect(
       found.filter(({ targetCycle }) => targetCycle === null),
     ).toHaveLength(seededFeatures.filter(({ cycle }) => cycle === null).length);
+  });
+
+  it("adds none when a schedule they target is missing", async () => {
+    await connection.insert(releaseStreams).values({
+      id: streamId({ name: "Platform" }),
+      name: "Platform",
+      cyclesUntil: "2029-12-31",
+    });
+    expect(await seedFeatures(connection, today, [])).toBe(false);
+    expect(await everyFeature()).toEqual([]);
+  });
+
+  it("places Field Apps' features in its own cycles, one needed by last month", async () => {
+    await seedReleases(connection, today);
+    await seedFeatures(connection, today, []);
+    const [next, signature] = await Promise.all(
+      ["work-order-sync", "signature-capture"].map(async (key) => {
+        const [found] = await connection
+          .select()
+          .from(features)
+          .where(eq(features.id, featureId(key)));
+        return found;
+      }),
+    );
+    expect(next).toMatchObject({
+      targetStreamId: streamId({ name: fieldAppsKeys.name }),
+      targetCycle: "2027-01-01",
+    });
+    expect(signature?.neededBy).toBe(monthOf(addMonths(today, -1)));
   });
 
   it("targets the cycle the seed day falls in for work in progress", async () => {

@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The fictional organization's features, added live and placed relative to the cycle the seed day
-// falls in, across the cycles of the Platform release stream, some in Later, each recorded in the
-// change history as made by Fathom itself. Removing them discards every draft of them, takes the
-// seeded feature teams off features added by hand, so the teams can go, and takes the features off
-// every project and proposal. A development-only package, never included in the runtime image.
+// falls in, across the cycles of the Platform and Field Apps release schedules, some in Later, each
+// recorded in the change history as made by Fathom itself. Removing them discards every draft of
+// them, takes the seeded feature teams off features added by hand, so the teams can go, and takes
+// the features off every project and proposal. A development-only package, never included in the
+// runtime image.
 
 import {
   type ChangeRecord,
@@ -25,6 +26,7 @@ import {
 import { fictionalId } from "@fathom/fixtures";
 import {
   addMonths,
+  type Cycle,
   cyclesOf,
   featureBuiltInLists,
   type Meaning,
@@ -33,9 +35,12 @@ import {
 import { and, arrayOverlaps, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { customerId, featureId, linksAny } from "./projects.ts";
 import { filledIn, recorded, type SeededChange } from "./recorded.ts";
+import { fieldAppsFeatures, fieldAppsKeys } from "./field-apps.ts";
 import { type SeededStream, seededStreams, streamId } from "./releases.ts";
 
-const streamName = "Platform";
+const streamNames = ["Platform", fieldAppsKeys.name] as const;
+type StreamName = (typeof streamNames)[number];
+const defaultStream: StreamName = "Platform";
 
 const kinds = ["New", "Improvement", "Fix"] as const;
 const kindListId = fictionalId("list:kind");
@@ -43,10 +48,11 @@ const kindColumnId = fictionalId("field:kind");
 const kindId = (kind: string) => fictionalId(`list-item:kind:${kind}`);
 
 // Each feature's cycle is counted from the one the seed day falls in, before it when negative, or
-// null for Later. Its feature team is by its place among the organization's, if it has one. The
-// month it is needed by is counted from the seed day's. Its priority, size and risk are choices of
-// their built-in lists as Fathom starts them, by name.
-export const seededFeatures: readonly {
+// null for Later, in Platform's cycles unless it names another schedule. Its feature team is by its
+// place among the organization's, if it has one. The month it is needed by is counted from the seed
+// day's. Its priority, size and risk are choices of their built-in lists as Fathom starts them, by
+// name.
+export interface SeededFeature {
   key: string;
   name: string;
   status: Meaning;
@@ -57,11 +63,14 @@ export const seededFeatures: readonly {
   customers?: readonly string[];
   note?: string;
   kind?: (typeof kinds)[number];
+  stream?: StreamName;
   cycle: number | null;
   hours: number | null;
   team: number | null;
   description: string | null;
-}[] = [
+}
+
+export const seededFeatures: readonly SeededFeature[] = [
   {
     key: "audit-export",
     name: "Audit Export",
@@ -206,6 +215,7 @@ export const seededFeatures: readonly {
     team: null,
     description: null,
   },
+  ...fieldAppsFeatures,
 ];
 
 const seededIds = () => seededFeatures.map(({ key }) => featureId(key));
@@ -282,31 +292,50 @@ async function builtInChoiceIds(
     name === undefined ? null : (ids.get(`${list}:${name}`) ?? null);
 }
 
-// Adds the features, once, if the Platform stream is there to target. Returns whether it added
-// them.
+// A schedule's id and cycles, and the place among them of the cycle the seed day falls in.
+interface StreamPlacing {
+  id: string;
+  cycles: Cycle[];
+  current: number;
+}
+
+function placingIn(name: StreamName, today: string): StreamPlacing {
+  const stream = seededStreams(today).find(
+    (seeded) => seeded.name === name,
+  ) as SeededStream;
+  const cycles = cyclesOf(stream.patterns, stream.cyclesUntil);
+  const current = cycles.findIndex(
+    ({ startsOn, endsOn }) => startsOn <= today && today <= endsOn,
+  );
+  return { id: streamId({ name }), cycles, current };
+}
+
+// Adds the features, once, if the schedules they target are there. Returns whether it added them.
 export async function seedFeatures(
   database: Database,
   today: string,
   teamIds: readonly string[],
 ): Promise<boolean> {
-  const stream = seededStreams(today).find(
-    ({ name }) => name === streamName,
-  ) as SeededStream;
-  const targetStreamId = streamId({ name: streamName });
+  const placing = new Map(
+    streamNames.map((name) => [name, placingIn(name, today)]),
+  );
   return database.transaction(async (transaction) => {
     const [present] = await transaction
       .select({ id: features.id })
       .from(features)
       .where(inArray(features.id, seededIds()));
-    const [streamRow] = await transaction
+    const streamRows = await transaction
       .select({ id: releaseStreams.id })
       .from(releaseStreams)
-      .where(eq(releaseStreams.id, targetStreamId));
-    if (present !== undefined || streamRow === undefined) return false;
-    const cycles = cyclesOf(stream.patterns, stream.cyclesUntil);
-    const current = cycles.findIndex(
-      ({ startsOn, endsOn }) => startsOn <= today && today <= endsOn,
-    );
+      .where(
+        inArray(
+          releaseStreams.id,
+          streamNames.map((name) => streamId({ name })),
+        ),
+      );
+    if (present !== undefined || streamRows.length < streamNames.length) {
+      return false;
+    }
     const statuses = await transaction
       .select({ id: listItems.id, meaning: listItems.meaning })
       .from(listItems)
@@ -330,6 +359,11 @@ export async function seedFeatures(
       if (statusId === undefined) {
         throw new Error(`No feature status means ${feature.status}`);
       }
+      const {
+        id: targetStreamId,
+        cycles,
+        current,
+      } = placing.get(feature.stream ?? defaultStream) as StreamPlacing;
       const cycle =
         feature.cycle === null ? undefined : cycles.at(current + feature.cycle);
       const row = {

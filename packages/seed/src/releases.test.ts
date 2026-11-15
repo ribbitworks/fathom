@@ -22,6 +22,7 @@ import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { eq, inArray, isNull } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { fieldAppsKeys } from "./field-apps.ts";
 import {
   seededKeys,
   seededStreams,
@@ -63,7 +64,7 @@ describe("seeding release streams", () => {
   it("adds the streams, their patterns, and their releases once, recorded as made by Fathom itself", async () => {
     expect(await seedReleases(connection, today)).toBe(true);
     expect(await seedReleases(connection, today)).toBe(false);
-    expect(await streamNames()).toEqual(["Patches", "Platform"]);
+    expect(await streamNames()).toEqual(["Field Apps", "Patches", "Platform"]);
     const made = await connection
       .select({ recordType: changes.recordType })
       .from(changes)
@@ -191,7 +192,7 @@ describe("the streams as dated from a day", () => {
   );
 
   it.each(days)(
-    "on %s, give each stream a release that has shipped and one under way, and Platform one to come",
+    "on %s, give each stream a release that has shipped and one under way, and Platform and Field Apps one to come",
     (on) => {
       const releases = placed(on);
       const shipped = (key: string) => String(releases.get(key)?.ends) < on;
@@ -204,7 +205,32 @@ describe("the streams as dated from a day", () => {
         String(releases.get("harbor-3")?.starts) > on,
         shipped("patch-1"),
         underWay("patch-2"),
-      ]).toEqual([true, true, true, true, true]);
+        shipped("lantern-1"),
+        underWay("lantern-2"),
+        String(releases.get("lantern-3")?.starts) > on,
+      ]).toEqual([true, true, true, true, true, true, true, true]);
+    },
+  );
+
+  it.each(days)(
+    "on %s, ship Lantern 2 after its cycle ends and leave the next cycle in no release",
+    (on) => {
+      const fieldApps = seededStreams(on).find(
+        ({ name }) => name === fieldAppsKeys.name,
+      );
+      const [, current, coming] = fieldApps?.releases ?? [];
+      const cycles = cyclesOf(
+        fieldApps?.patterns ?? [],
+        String(fieldApps?.cyclesUntil),
+      );
+      const ofCurrent = cycles.find(
+        ({ startsOn }) => startsOn === current?.lastCycle,
+      );
+      const next = cycles.at(
+        cycles.findIndex(({ startsOn }) => startsOn === current?.lastCycle) + 1,
+      );
+      expect(String(current?.shipsOn) > String(ofCurrent?.endsOn)).toBe(true);
+      expect(String(next?.startsOn) < String(coming?.firstCycle)).toBe(true);
     },
   );
 
@@ -325,7 +351,7 @@ describe("removing release streams", () => {
     expect([
       await seedReleases(connection, today),
       await streamNames(),
-    ]).toEqual([true, ["Patches", "Platform"]]);
+    ]).toEqual([true, ["Field Apps", "Patches", "Platform"]]);
   });
 
   it("does not seed a stream whose name a stream added by hand has", async () => {
@@ -333,6 +359,6 @@ describe("removing release streams", () => {
       .insert(releaseStreams)
       .values({ name: "patches", cyclesUntil: "2028-12-31" });
     await seedReleases(connection, today);
-    expect(await streamNames()).toEqual(["Platform", "patches"]);
+    expect(await streamNames()).toEqual(["Field Apps", "Platform", "patches"]);
   });
 });

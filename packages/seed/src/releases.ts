@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The fictional organization's release streams, added live and dated from the day they are added:
-// Platform, in quarters and then halves, with three releases, and Patches, in four-week cycles, with
-// two, each recorded in the change history as made by Fathom itself. Removing them first
-// discards every draft, published or not, of their records or of records drafted to be added to
-// them, and keeps a stream that has a live pattern or release added by hand. A development-only
-// package, never included in the runtime image.
+// Platform, in quarters and then halves, with three releases, Patches, in four-week cycles, with
+// two, and Field Apps, in six-month cycles, with three, each recorded in the change history as made
+// by Fathom itself. Removing them first discards every draft, published or not, of their records or
+// of records drafted to be added to them, and keeps a stream that has a live pattern or release
+// added by hand. A development-only package, never included in the runtime image.
 
 import {
   cyclePatterns,
@@ -25,6 +25,7 @@ import {
   type PaletteColour,
 } from "@fathom/shared";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { fieldAppsKeys, fieldAppsStream } from "./field-apps.ts";
 import { recorded, type SeededChange } from "./recorded.ts";
 
 // Harbor 3's plan, a few pages long, so a long note shows on Releases.
@@ -140,6 +141,8 @@ export interface SeededStream {
     firstCycle: string;
     lastCycle: string;
     colour?: PaletteColour;
+    // A Ships on day of its own, rather than its last cycle's end.
+    shipsOn?: string;
     // As Markdown, within what notes allow.
     note?: string;
   }[];
@@ -157,6 +160,7 @@ export const seededKeys = [
     patterns: ["four-weeks"],
     releases: ["patch-1", "patch-2"],
   },
+  fieldAppsKeys,
 ] as const;
 
 // Platform starts some quarters before today's, is in halves from some quarters after it, and is
@@ -189,7 +193,7 @@ const monthName = (of: string): string =>
 // quarters before today's and in halves from three quarters after it, with a release that has
 // shipped, one ending this quarter, and one to come; and Patches, in four-week cycles from eight
 // weeks before this week's Monday, with a release on one cycle that has shipped and one on two
-// cycles to come, each named after the month it ships in.
+// cycles to come, each named after the month it ships in; and Field Apps, as its module sets out.
 export function seededStreams(today: string): readonly SeededStream[] {
   const quarter = (offset: number) =>
     addMonths(quarterStart(today), offset * 3);
@@ -292,6 +296,7 @@ export function seededStreams(today: string): readonly SeededStream[] {
         },
       ],
     },
+    fieldAppsStream(today),
   ];
 }
 

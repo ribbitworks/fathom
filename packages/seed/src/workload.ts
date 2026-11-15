@@ -4,9 +4,9 @@
 // work this month, as an organization's would, added on top of the seeded allocations without
 // changing them. Most work full time on one feature, some split their time, some are over- or
 // under-allocated, a few are not allocated at all, a few managers give a little time to a project,
-// some did earlier work on a feature now done, someone leaving soon is still allocated after leaving,
-// and someone not started yet is allocated from before they start. A development-only package,
-// never included in the runtime image.
+// some did earlier work on a feature now done, someone leaving soon is still allocated after
+// leaving, and someone not started yet is allocated from before they start. A development-only
+// package, never included in the runtime image.
 
 import {
   type FictionalOrganization,
@@ -33,10 +33,21 @@ export const currentWork: readonly WorkItem[] = [
   { project: "clinic-booking" },
   { project: "transit-displays" },
   { project: "internal-tools" },
+  { project: "depot-operations" },
+  { feature: "signature-capture" },
+  { feature: "parts-lookup" },
+  { feature: "barcode-scanning" },
+  { feature: "site-diary" },
+  { feature: "timesheet-sync" },
 ];
 
-// Earlier work, on a feature now done, which some did before their current work.
-const earlierWork: WorkItem = { feature: "sign-on" };
+// Earlier work, on features now done, which some did before their current work.
+export const earlierWork: readonly WorkItem[] = [
+  { feature: "sign-on" },
+  { feature: "crew-roster" },
+  { feature: "job-sheets" },
+  { feature: "offline-forms" },
+];
 
 // How each person's time is shared this month, in turn: most full time on one piece of work, some
 // split, one in twelve over-allocated and one under; every percentage the grid offers appears.
@@ -196,10 +207,15 @@ export function workloadRows(
     return [
       ...(earlier
         ? [
-            row(`${person.id}:earlier`, person, earlierWork, {
-              [monthOf(fromDay)]: 100,
-              [nowFrom]: null,
-            }),
+            row(
+              `${person.id}:earlier`,
+              person,
+              earlierWork[place % earlierWork.length] as WorkItem,
+              {
+                [monthOf(fromDay)]: 100,
+                [nowFrom]: null,
+              },
+            ),
           ]
         : []),
       ...split.map((percentage, at) =>
