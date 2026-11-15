@@ -133,7 +133,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - The filter shows **At least** and **At most** fields.
     - **At least** is ready to type in.
-    - A **No number** checkbox is under them.
+    - A **No number** checkbox is under them, then an **Any number** checkbox.
     - A field holding text shows an × at its right end.
   - **Notes:**
 

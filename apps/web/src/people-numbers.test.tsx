@@ -263,7 +263,7 @@ describe("a Number column", () => {
     await userEvent.click(
       within(filter).getByRole("checkbox", { name: "No number" }),
     );
-    expect(screen.getByText("Score: no number")).toBeDefined();
+    expect(screen.getByText("Score: No number")).toBeDefined();
     expect(shownNames()).toEqual(["Casey Fictional"]);
   });
 

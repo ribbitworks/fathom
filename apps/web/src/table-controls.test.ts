@@ -2,11 +2,16 @@
 
 // Tests for the parts of a view the Save view dialog names, for those the table's other tests do
 // not reach: the units and decimal places columns are shown in, the grouping, the page's own
-// choices and the hidden columns; and what a view its maker can no longer use is missing, as the
-// Views menu says it.
+// choices and the hidden columns; a filter of every value that isn't empty; and what a view its
+// maker can no longer use is missing, as the Views menu says it.
 
 import { describe, expect, it } from "vitest";
-import { missingWords, type ViewChoice, viewParts } from "./table-controls.tsx";
+import {
+  describeFilter,
+  missingWords,
+  type ViewChoice,
+  viewParts,
+} from "./table-controls.tsx";
 import { type ColumnUnit, emptyView } from "./table-view.ts";
 
 const weeks: ColumnUnit = {
@@ -50,7 +55,7 @@ describe("viewParts", () => {
       ),
     ).toEqual([
       { name: "Search", value: "“fictional”" },
-      { name: "Filter", value: "Name contains “Atlas”" },
+      { name: "Filter", value: "Name: contains “Atlas”" },
       { name: "Sort", value: "Name ↑, Effort ↓" },
       { name: "Draft", value: "Drafts applied" },
       { name: "Metrics", value: "Name" },
@@ -66,7 +71,7 @@ describe("viewParts", () => {
       viewParts({ ...emptyView, filters: { name: { empty: true } } }, [
         column({ key: "name", label: "Name", kind: "text" }),
       ]),
-    ).toEqual([{ name: "Filter", value: "Name empty" }]);
+    ).toEqual([{ name: "Filter", value: "Name: Empty" }]);
   });
 
   it("names the unit and decimal places a column is shown in", () => {
@@ -152,6 +157,25 @@ describe("viewParts of hidden columns", () => {
       { name: "Frozen", value: "Up to Effort" },
       { name: "Hidden", value: "Grade, Site" },
     ]);
+  });
+});
+
+describe("describeFilter of every value that isn't empty", () => {
+  it("names it in words matching the column's Empty box, alone", () => {
+    expect(
+      describeFilter(column({ label: "Onboarding", kind: "note" }), {
+        notEmpty: true,
+        contains: "plan",
+      }),
+    ).toBe("Onboarding: Not empty");
+    expect(
+      describeFilter(column({ label: "Start", kind: "date" }), {
+        notEmpty: true,
+      }),
+    ).toBe("Start: Any date");
+    expect(describeFilter(column({}), { notEmpty: true })).toBe(
+      "Effort: Any number",
+    );
   });
 });
 

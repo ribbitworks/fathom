@@ -275,7 +275,25 @@ function frozenUpTo(
 }
 
 // A filter in words, such as "Site: Harbour, Northmere".
+// What a filter's choice of every value that isn't empty is called, matching its Empty box. A
+// checkbox's filter offers none, since a checkbox is never empty, but an address or saved view may
+// still hold one, which its pill names.
+const notEmptyLabels: Record<Kind, string> = {
+  text: "Not empty",
+  month: "Not empty",
+  link: "Not empty",
+  note: "Not empty",
+  choice: "Not empty",
+  flag: "Not empty",
+  date: "Any date",
+  number: "Any number",
+};
+
 export function describeFilter(column: AnyColumn, filter: Filter): string {
+  // Any value matches, so nothing else the filter holds narrows it further.
+  if (filter.notEmpty === true) {
+    return `${column.label}: ${notEmptyLabels[column.kind]}`;
+  }
   const parts: string[] = [];
   switch (column.kind) {
     case "choice":
@@ -296,7 +314,7 @@ export function describeFilter(column: AnyColumn, filter: Filter): string {
       } else if (to !== undefined) {
         parts.push(`until ${formatDay(to)}`);
       }
-      if (filter.empty) parts.push("no date");
+      if (filter.empty) parts.push("No date");
       return `${column.label}: ${parts.join(" or ")}`;
     }
     case "number": {
@@ -308,7 +326,7 @@ export function describeFilter(column: AnyColumn, filter: Filter): string {
       } else if (atMost !== undefined) {
         parts.push(`at most ${decimal(atMost)}`);
       }
-      if (filter.empty) parts.push("no number");
+      if (filter.empty) parts.push("No number");
       return `${column.label}: ${parts.join(" or ")}`;
     }
     case "text":
@@ -317,8 +335,8 @@ export function describeFilter(column: AnyColumn, filter: Filter): string {
     case "note": {
       const contains = (filter.contains ?? "").trim();
       if (contains !== "") parts.push(`contains “${contains}”`);
-      if (filter.empty) parts.push("empty");
-      return `${column.label} ${parts.join(" or ")}`;
+      if (filter.empty) parts.push("Empty");
+      return `${column.label}: ${parts.join(" or ")}`;
     }
   }
 }
@@ -1497,26 +1515,50 @@ function FilterForm({
   filter: Filter;
   onChange: (filter: Filter) => void;
 }) {
-  const empty = (label: string) => (
+  // Empty and Not empty together would show every row, so ticking one unticks the other.
+  const emptyBox = (label: string, part: "empty" | "notEmpty") => (
     <Checkbox
       label={label}
-      checked={filter.empty === true}
+      checked={(part === "empty" ? filter.empty : filter.notEmpty) === true}
       onChange={(event) => {
         onChange(
-          withPart(filter, "empty", event.currentTarget.checked || undefined),
+          withPart(
+            withPart(
+              filter,
+              part === "empty" ? "notEmpty" : "empty",
+              undefined,
+            ),
+            part,
+            event.currentTarget.checked || undefined,
+          ),
         );
       }}
     />
   );
+  const empty = (label: string) => (
+    <>
+      {emptyBox(label, "empty")}
+      {emptyBox(notEmptyLabels[column.kind], "notEmpty")}
+    </>
+  );
+  const emptyLabel = column.emptyLabel ?? "Empty";
   switch (column.kind) {
     case "choice":
+      return (
+        <ChoiceFilter
+          column={column}
+          filter={filter}
+          onChange={onChange}
+          empty={empty(emptyLabel)}
+        />
+      );
     case "flag":
       return (
         <ChoiceFilter
           column={column}
           filter={filter}
           onChange={onChange}
-          empty={empty(column.emptyLabel ?? "Empty")}
+          empty={emptyBox(emptyLabel, "empty")}
         />
       );
     case "date":

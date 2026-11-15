@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/shared/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/product/decisions.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Note Columns on People
 
 ## Scope
 
-Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings and checkboxes look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, and the journey from writing a note to reading it, approving it, and finding it in the change history.
+Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings and checkboxes look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, and filtering the rows that have a note, or any value in a choice column.
 
 ## Test Environment
 
@@ -533,4 +533,49 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The history shows the note's words without formatting.
     - The words read clearly.
+  - **Notes:**
+
+### NOTE-06: Rows With a Note Are Filtered
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as NOTE-05.
+
+**Preconditions:** Run after NOTE-05. Select the **People** page in the left-hand menu.
+
+- [ ] `EB7E` Open the **Background** column menu, and select **Filter…**.
+  - **Expected:** The filter opens beside the column's name, showing, from the top:
+    - **Contains**
+    - an **Empty** checkbox
+    - a **Not empty** checkbox, in the same style
+  - **Notes:**
+
+- [ ] `10BD` Tick **Empty**.
+  - **Expected:** Only people with no note in **Background** are listed.
+  - **Notes:**
+
+- [ ] `F1E0` Tick **Not empty**.
+  - **Expected:**
+    - **Not empty** is ticked.
+    - **Empty** is no longer ticked.
+    - 'Max Munk' is listed.
+    - Every person listed has a note in **Background**.
+  - **Notes:**
+
+- [ ] `4D41` Press Esc.
+  - **Expected:**
+    - The filter closes.
+    - A pill above the table reads "Background: Not empty".
+  - **Notes:**
+
+- [ ] `083E` Open the **Site** column menu, and select **Filter…**.
+  - **Expected:** **Empty** and then **Not empty** follow the sites that are in use.
+  - **Notes:**
+
+- [ ] `06B8` Press Esc.
+  - **Expected:** The filter closes.
+  - **Notes:**
+
+- [ ] `1BC7` Select **Clear all** above the table.
+  - **Expected:**
+    - The pill is gone.
+    - Every person is listed again.
   - **Notes:**

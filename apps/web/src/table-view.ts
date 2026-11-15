@@ -373,7 +373,8 @@ export function isActive(filter: Filter | undefined): boolean {
     filter.atLeast !== undefined ||
     filter.atMost !== undefined ||
     (filter.any ?? []).length > 0 ||
-    filter.empty === true
+    filter.empty === true ||
+    filter.notEmpty === true
   );
 }
 
@@ -796,7 +797,7 @@ function matchesFilter(
 ): boolean {
   const kind = rulesFor(column);
   if (kind.isEmpty(value)) return filter.empty === true;
-  return kind.matches(value, filter);
+  return filter.notEmpty === true || kind.matches(value, filter);
 }
 
 // The rows the view shows, in its order: those matching every filter and every word searched for,

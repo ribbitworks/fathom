@@ -2219,7 +2219,7 @@ describe("hiding columns", () => {
         sort: [{ key: "code", descending: true }],
       }),
     );
-    expect(screen.getByText("Code contains “B”")).toBeDefined();
+    expect(screen.getByText("Code: contains “B”")).toBeDefined();
     expect(screen.getAllByRole("row").map((row) => row.textContent)).toEqual(
       expect.arrayContaining([expect.stringContaining("Gadget b")]),
     );

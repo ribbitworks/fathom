@@ -118,7 +118,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `407B` Select the **State** header, then **Filter…**, and look at the choices.
   - **Expected:**
-    - **Request to hire**, **Approved to hire**, **Hired**, **Left** and **Empty** are listed together.
+    - **Request to hire**, **Approved to hire**, **Hired**, **Left**, **Empty** and **Not empty** are listed together.
     - There is no **Retired** heading.
   - **Notes:**
 

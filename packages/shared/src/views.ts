@@ -49,7 +49,7 @@ export type ViewChoices = Record<string, string | string[] | undefined>;
 // A column's filter. A row matches when its value matches any part that is set: for text, when it
 // contains the text; for dates, when it falls between from and to, and for numbers, between
 // atLeast and atMost, either of which may be left open; for choices, when it holds any of them.
-// With `empty`, an empty value matches too.
+// With `empty`, an empty value matches too; with `notEmpty`, any value that isn't empty does.
 export const filterSchema = z.object({
   contains: z.string().max(textLimit).optional(),
   from: daySchema.optional(),
@@ -58,6 +58,7 @@ export const filterSchema = z.object({
   atMost: numberValueSchema.optional(),
   any: z.array(key).max(textLimit).optional(),
   empty: z.boolean().optional(),
+  notEmpty: z.boolean().optional(),
 });
 
 export type Filter = z.infer<typeof filterSchema>;

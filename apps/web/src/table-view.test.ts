@@ -152,6 +152,18 @@ describe("filtering", () => {
     ).toEqual(["c", "d"]);
   });
 
+  it("matches every value that isn't empty, whatever else the filter holds", () => {
+    expect(shownBy({ filters: { name: { notEmpty: true } } })).toEqual([
+      "a",
+      "b",
+      "d",
+    ]);
+    expect(
+      shownBy({ filters: { start: { notEmpty: true, from: "2030-01-01" } } }),
+    ).toEqual(["a", "c", "d"]);
+    expect(isActive({ notEmpty: true })).toBe(true);
+  });
+
   it("matches dates between from and to, either left open, or no date", () => {
     expect(shownBy({ filters: { start: { from: "2024-03-02" } } })).toEqual([
       "c",

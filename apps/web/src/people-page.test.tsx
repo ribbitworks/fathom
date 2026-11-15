@@ -2256,7 +2256,7 @@ describe("searching, sorting, and filtering", () => {
       within(dialog)
         .getAllByRole("checkbox")
         .map((box) => (box as HTMLInputElement).labels?.[0]?.textContent),
-    ).toEqual(["Harbour", "Northmere", "Empty", "Old Mill"]);
+    ).toEqual(["Harbour", "Northmere", "Empty", "Not empty", "Old Mill"]);
     await userEvent.click(
       within(dialog).getByRole("checkbox", { name: "Northmere" }),
     );
@@ -2555,11 +2555,11 @@ describe("searching, sorting, and filtering", () => {
       name: "Narrow Site choices",
     });
     await userEvent.type(narrow, "dun");
-    expect(within(dialog).getAllByRole("checkbox")).toHaveLength(2);
+    expect(within(dialog).getAllByRole("checkbox")).toHaveLength(3);
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Clear" }),
     );
-    expect(within(dialog).getAllByRole("checkbox")).toHaveLength(10);
+    expect(within(dialog).getAllByRole("checkbox")).toHaveLength(11);
   });
 
   it("filters text", async () => {
@@ -2573,7 +2573,7 @@ describe("searching, sorting, and filtering", () => {
     await userEvent.click(
       within(name).getByRole("checkbox", { name: "Empty" }),
     );
-    expect(screen.getByText("Name contains “blake” or empty")).toBeDefined();
+    expect(screen.getByText("Name: contains “blake” or Empty")).toBeDefined();
     await userEvent.click(
       within(name).getByRole("checkbox", { name: "Empty" }),
     );
@@ -2587,6 +2587,43 @@ describe("searching, sorting, and filtering", () => {
     );
     await userEvent.keyboard("{Escape}");
     expect(shownNames()).toEqual(["Blake Fictional"]);
+  });
+
+  it("filters to the values that aren't empty, unticking Empty, and names it", async () => {
+    // Given the Start filter showing only people with no start date
+    await openAt("/people");
+    await choose("Start", "Filter…");
+    const start = await screen.findByRole("dialog", { name: "Filter Start" });
+    await userEvent.click(
+      within(start).getByRole("checkbox", { name: "No date" }),
+    );
+
+    // When Any date is ticked
+    await userEvent.click(
+      within(start).getByRole("checkbox", { name: "Any date" }),
+    );
+
+    // Then No date is unticked, and the pill names Any date alone
+    expect(
+      within(start).getByRole<HTMLInputElement>("checkbox", {
+        name: "No date",
+      }).checked,
+    ).toBe(false);
+    expect(screen.getByText("Start: Any date")).toBeDefined();
+  });
+
+  it("offers no Not empty on a checkbox column, which is never empty", async () => {
+    await openAt("/people");
+
+    await choose("Manager?", "Filter…");
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "Filter Manager?",
+    });
+    expect(within(dialog).getByRole("checkbox", { name: "No" })).toBeDefined();
+    expect(
+      within(dialog).queryByRole("checkbox", { name: "Not empty" }),
+    ).toBeNull();
   });
 
   it("filters dates, and clears everything at once", async () => {
@@ -2612,7 +2649,7 @@ describe("searching, sorting, and filtering", () => {
     await userEvent.click(
       within(start).getByRole("checkbox", { name: "No date" }),
     );
-    expect(screen.getByText("Start: no date")).toBeDefined();
+    expect(screen.getByText("Start: No date")).toBeDefined();
     expect(shownNames()).toEqual(["Blake Fictional"]);
     await userEvent.keyboard("{Escape}");
 
