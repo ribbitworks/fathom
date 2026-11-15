@@ -12,6 +12,7 @@ import {
   type Column,
   fieldColumn,
   type GridRecord,
+  readOnlyTableParts,
   type RecordTable,
 } from "./record-grid.tsx";
 import { FactBox } from "./status-mark.tsx";
@@ -134,18 +135,14 @@ export function accountsTable({
 }): RecordTable<AccountRow, never, undefined> {
   const shownColumns = accountColumns(accounts, ownId);
   return {
+    ...readOnlyTableParts,
     label: "Accounts",
     one: "account",
     noun: "accounts",
-    newRowLabel: () => "New account",
-    removeLabel: () => "Remove account",
     nameOf: (row) => row.name,
     nameColumn: "name",
     columnsFor: () => shownColumns,
     liveRecords: (rows) => [...rows],
-    draftFields: () => [],
-    recordProblem: () => undefined,
-    request: () => undefined,
     drafts: () => noDrafts(),
     showDetails: (row) => {
       onOpen(row.account);

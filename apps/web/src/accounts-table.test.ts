@@ -47,21 +47,14 @@ describe("the Accounts table", () => {
     expect(row?.created).toBe("2026-10-11");
   });
 
-  it("is read only, with no drafts, problems or requests, and opens an account's details", () => {
+  it("shows accounts as they are, and opens an account's details", () => {
     const onOpen = vi.fn();
     const table = accountsTable({ accounts: [account], ownId: "", onOpen });
     const rows = accountRows([account]);
     const [row] = rows;
     if (row === undefined) throw new Error("No row");
 
-    expect([table.newRowLabel(""), table.removeLabel(row)]).toEqual([
-      "New account",
-      "Remove account",
-    ]);
     expect(table.liveRecords(rows)).toEqual(rows);
-    expect(table.draftFields(row, undefined as never, [], [])).toEqual([]);
-    expect(table.recordProblem({}, () => [])).toBeUndefined();
-    table.request([], "");
     table.showDetails?.(row);
     expect(onOpen).toHaveBeenCalledWith(account);
   });

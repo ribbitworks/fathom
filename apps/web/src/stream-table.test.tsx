@@ -485,24 +485,12 @@ describe("the table of streams", () => {
     ]);
   });
 
-  it("has its columns in its own order, and adds, removes and refuses nothing itself", () => {
+  it("has its columns in its own order, and names each stream", () => {
     const streams = table();
     expect([
       streams.columnsFor([], [], [], []).map(({ key }) => key),
       streams.nameOf(rowOf(fictionalStream())),
-      streams.newRowLabel(""),
-      streams.removeLabel(rowOf(fictionalStream())),
-      streams.recordProblem({}, () => []),
-    ]).toEqual([
-      streamColumnOrder,
-      "Fictional Majors",
-      "New release stream",
-      "Remove release stream",
-      undefined,
-    ]);
-    expect(() => {
-      streams.request([], "");
-    }).not.toThrow();
+    ]).toEqual([streamColumnOrder, "Fictional Majors"]);
   });
 });
 

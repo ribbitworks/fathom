@@ -3,8 +3,8 @@
 // Tests for the table of records on its own, with a made-up kind of record, gadgets, so nothing
 // particular to People is relied on: what the table calls its rows and menus, the checks a table
 // makes on a whole record, a text column's length, where a dragged column goes, the columns'
-// order, hiding columns, the records as they are live, the records the metrics count, and the live
-// columns.
+// order, hiding columns, the records as they are live, the records the metrics count, the live
+// columns, and what a read-only table is never asked.
 // People's own table is tested in people-grid.test.tsx.
 
 import {
@@ -38,6 +38,7 @@ import {
   liveRecordsOf,
   newRecordProblems,
   focusRecordCell,
+  readOnlyTableParts,
   type RecordActions,
   RecordGrid,
   type RecordTable,
@@ -509,6 +510,20 @@ describe("a table of another kind of record", () => {
       ],
       expect.any(Function),
       expect.any(Function),
+    );
+  });
+});
+
+describe("a read-only table", () => {
+  it("names no new row or removal, finds no draft fields, checks nothing, and refuses to add a record", () => {
+    expect([
+      readOnlyTableParts.newRowLabel(),
+      readOnlyTableParts.removeLabel(),
+    ]).toEqual(["", ""]);
+    expect(readOnlyTableParts.draftFields()).toEqual([]);
+    expect(readOnlyTableParts.recordProblem).not.toThrow();
+    expect(() => readOnlyTableParts.request()).toThrow(
+      "A read-only table adds no records",
     );
   });
 });

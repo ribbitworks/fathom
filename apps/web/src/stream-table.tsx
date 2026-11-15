@@ -25,6 +25,7 @@ import {
   fieldColumn,
   type GridDraft,
   type GridRecord,
+  readOnlyTableParts,
   type RecordTable,
   type RowGrouping,
   undoDrafts,
@@ -427,12 +428,11 @@ export function streamTable({
       ]),
   });
   return {
+    ...readOnlyTableParts,
     label: "Release streams",
     one: "release stream",
     noun: "release streams",
     groupings: groupings(day),
-    newRowLabel: () => "New release stream",
-    removeLabel: () => "Remove release stream",
     nameOf: (row) => row.name,
     nameColumn: "name",
     showDetails: (row) => {
@@ -441,8 +441,6 @@ export function streamTable({
     columnsFor: () => shownColumns,
     liveRecords: (rows) => liveRows(rows, streams, day),
     draftFields: (row, draft) => draftFieldsOf(shownColumns, row, draft),
-    recordProblem: () => undefined,
-    request: () => undefined,
     drafts,
     decidable: (row) => drafts([row.id]).records.length > 0,
   };

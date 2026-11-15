@@ -1351,6 +1351,19 @@ export const noRecordActions = <Rec extends GridRecord, Change, Request>(
   resubmitColumn: nothing,
 });
 
+// What a table that adds, removes and drafts none of its records itself is never asked: what a new
+// row and removing are called, what a draft changes, what is wrong with a new record's values, and
+// the request that adds one.
+export const readOnlyTableParts = {
+  newRowLabel: () => "",
+  removeLabel: () => "",
+  draftFields: () => [],
+  recordProblem: nothing,
+  request: (): never => {
+    throw new Error("A read-only table adds no records");
+  },
+};
+
 const withoutDraftFilter = (view: View): View =>
   withoutFilters(view, (key) => key !== draftFilterKey);
 

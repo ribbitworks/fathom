@@ -43,14 +43,9 @@ describe("the table", () => {
     [],
   );
 
-  it("is never asked to add or remove records, and has nothing to say if it were", () => {
-    expect(table.request([], "")).toEqual({});
-    expect(table.newRowLabel("")).toBe("");
+  it("is never asked to add or remove records, and has no drafts of its own", () => {
     expect(table.drafts([]).people).toEqual([]);
     expect(table.liveRecords([])).toEqual([]);
-    expect(table.draftFields({} as never, {} as never, [], [])).toEqual([]);
-    expect(table.recordProblem({}, () => [])).toBeUndefined();
-    expect(table.removeLabel({} as never)).toBe("");
     expect(() => {
       (readOnlyMonthActions.add as () => void)();
     }).not.toThrow();
