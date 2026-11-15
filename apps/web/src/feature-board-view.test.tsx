@@ -117,8 +117,13 @@ const gamma = feature("Fictional Gamma", {
 });
 const later = feature("Fictional Later", { staffed: true });
 
+const customers = [
+  { id: "c0000000-0000-4000-8000-000000000001", name: "Fictional Harbour" },
+  { id: "c0000000-0000-4000-8000-000000000002", name: "Fictional Quay" },
+];
+
 const plan = (features: Feature[]): ProjectPlan => ({
-  customers: [],
+  customers,
   projects: [],
   proposals: [],
   features,
@@ -425,6 +430,9 @@ describe("rows from Group by", () => {
       "Release",
       "Needed by",
       "Status",
+      "Customers",
+      "Projects",
+      "Proposals",
       "Priority",
       "Size",
       "Risk",
@@ -477,6 +485,88 @@ describe("rows from Group by", () => {
   it("shows none for a grouping the board doesn't offer", async () => {
     await openBoard("/features?mode=board&grouping=targetCycle");
     expect(screen.getByRole("button", { name: "Group by" })).toBeTruthy();
+  });
+});
+
+describe("a feature under several values", () => {
+  const shared = feature("Fictional Shared", {
+    ...target("2027-04-01"),
+    customerIds: customers.map(({ id }) => id),
+  });
+  const copies = () =>
+    screen.getAllByRole("button", {
+      name: (label) => label.startsWith("Fictional Shared"),
+    });
+  const open = () =>
+    openBoard("/features?mode=board&grouping=customerIds", {
+      features: [shared, beta],
+    });
+
+  it("has a card in the row of each, keyed apart, marked with the others", async () => {
+    await open();
+
+    for (const name of customers.map(({ name }) => name)) {
+      expect(
+        screen.getByRole("list", { name: `Cycle 27.2, ${name}` }).textContent,
+      ).toContain("Fictional Shared");
+    }
+    expect(
+      screen.getByRole("list", { name: "Cycle 27.2, No customers" })
+        .textContent,
+    ).toContain("Fictional Beta");
+    const [first, second] = copies();
+    expect(first?.id).not.toBe(second?.id);
+    expect(first?.textContent).toContain("+1");
+    expect(
+      within(first as HTMLElement).getByText("+1").parentElement?.dataset.tip,
+    ).toBe("Also under Fictional Quay.");
+    expect(
+      within(second as HTMLElement).getByText("+1").parentElement?.dataset.tip,
+    ).toBe("Also under Fictional Harbour.");
+  });
+
+  it("steps through each card with the keyboard, and puts focus back on the one opened", async () => {
+    await open();
+    const [first, second] = copies();
+    first?.focus();
+    await userEvent.keyboard("{ArrowDown}");
+    expect(document.activeElement).toBe(second);
+
+    await userEvent.keyboard("{Enter}");
+    await screen.findByRole("heading", { name: "Fictional Shared" });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(document.activeElement).toBe(copies()[1]);
+    });
+  });
+
+  it("puts focus on the first card of the feature closed, once another card had it", async () => {
+    await openBoard(
+      `/features?mode=board&grouping=customerIds&open=${shared.id}`,
+      { features: [shared, beta] },
+    );
+    await screen.findByRole("heading", { name: "Fictional Shared" });
+    card("Fictional Beta").focus();
+
+    await userEvent.click(screen.getByRole("button", { name: /^Close/ }));
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(copies()[0]);
+    });
+  });
+
+  it("gives each card an id with no spaces, where a row's key has one, such as a release's", async () => {
+    await openBoard("/features?mode=board&grouping=release");
+
+    expect(
+      screen
+        .getAllByRole("button", {
+          name: (label) => label.startsWith("Fictional"),
+        })
+        .map(({ id }) => id)
+        .filter((id) => id.startsWith("card-") && /\s/.test(id)),
+    ).toEqual([]);
+    expect(card("Fictional Alpha").id).toMatch(/^card-\S+$/);
   });
 });
 

@@ -63,7 +63,7 @@ import {
   type TableChoices,
   targetOf,
 } from "./projects.ts";
-import { byChoice, holdsOneChoice } from "./choice-grouping.ts";
+import { byChoice, holdsChoices } from "./choice-grouping.ts";
 import { tipAttribute } from "./table-tips.tsx";
 import {
   fieldColumn,
@@ -917,11 +917,10 @@ const byNeededBy: RowGrouping<Feature> = {
   ],
 };
 
-// The columns whose one choice the rows can be grouped by, apart from the target cycle and its
-// release, grouped by their own; a column holding several choices has a row's place in several
-// groups, which a grouping can't give it.
+// The columns whose choices the rows can be grouped by, a feature under each it holds, apart from
+// the target cycle and its release, grouped by their own.
 const groupedByChoice = (column: Column<Feature, PlanChange>) =>
-  holdsOneChoice(column) &&
+  holdsChoices(column) &&
   column.key !== "targetCycle" &&
   column.key !== releaseColumnKey;
 

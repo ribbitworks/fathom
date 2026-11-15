@@ -39,7 +39,7 @@ import { useIsMutating, useMutation, useQuery } from "@tanstack/react-query";
 import { effortConversionsQuery } from "./effort.ts";
 import {
   type BoardPlace,
-  cardId,
+  focusCard,
   FeatureBoard,
 } from "./feature-board-view.tsx";
 import { boardParts, planModes } from "./feature-board.ts";
@@ -640,7 +640,7 @@ export function ProjectsPage({
       nodes,
       onClose: () => {
         onOpen?.(undefined);
-        if (onBoard) focusSoon(cardId(String(open)));
+        if (onBoard) focusCard(String(open));
         else focusRecordCell(String(open), "name");
       },
       menu: {

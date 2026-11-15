@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for grouping rows by the one choice a column holds: each choice's group in its list's
-// order, its heading, and the group of rows with none.
+// Tests for grouping rows by the choices a column holds: each choice's group in its list's order,
+// its heading, a row's place under each of several, and the group of rows with none.
 
 import { describe, expect, it } from "vitest";
-import { byChoice, holdsOneChoice } from "./choice-grouping.ts";
+import { byChoice, holdsChoices, holdsOneChoice } from "./choice-grouping.ts";
 import type { Column, GridRecord } from "./record-grid.tsx";
 
 interface Row extends GridRecord {
@@ -27,7 +27,7 @@ const column: Column<Row> = {
 };
 const row = (chosen: string[]): Row => ({ id: "r1", chosen });
 
-describe("grouping by a column's one choice", () => {
+describe("grouping by a column's choices", () => {
   it("ranks each choice's group by its place in the list, retired ones included", () => {
     const grouping = byChoice(column);
     expect(grouping).toMatchObject({ key: "site", label: "Site" });
@@ -52,7 +52,17 @@ describe("grouping by a column's one choice", () => {
     expect(grouping.of(row(["gone"]))).toEqual([none]);
   });
 
-  it("offers only columns holding one choice", () => {
+  it("puts a row holding several choices under each, in the list's order", () => {
+    const grouping = byChoice({ ...column, multiple: true });
+    expect(grouping.of(row(["c2", "gone", "c1"]))).toEqual([
+      { key: "c1", label: "Harbour", rank: 0 },
+      { key: "c2", label: "Quay", rank: 1 },
+    ]);
+  });
+
+  it("tells columns holding choices, and those holding one, from the rest", () => {
+    expect(holdsChoices({ ...column, multiple: true })).toBe(true);
+    expect(holdsChoices({ ...column, kind: "text" })).toBe(false);
     expect(holdsOneChoice(column)).toBe(true);
     expect(holdsOneChoice({ ...column, multiple: true })).toBe(false);
     expect(holdsOneChoice({ ...column, kind: "text" })).toBe(false);

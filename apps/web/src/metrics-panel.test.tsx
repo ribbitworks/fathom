@@ -340,9 +340,7 @@ describe("the Metrics panel", () => {
     const user = userEvent.setup();
     render(<Table />);
     await user.click(screen.getByRole("button", { name: "Level column" }));
-    await user.click(
-      await screen.findByRole("menuitem", { name: "Metrics" }),
-    );
+    await user.click(await screen.findByRole("menuitem", { name: "Metrics" }));
     expect(figures("P4")).toEqual(["2", share(2, 4)]);
   });
 
@@ -351,9 +349,7 @@ describe("the Metrics panel", () => {
     render(<Table drawnLater />);
     await user.click(screen.getByRole("button", { name: "Level column" }));
 
-    await user.click(
-      await screen.findByRole("menuitem", { name: "Metrics" }),
-    );
+    await user.click(await screen.findByRole("menuitem", { name: "Metrics" }));
 
     await waitFor(() => {
       expect(panel().contains(document.activeElement)).toBe(true);

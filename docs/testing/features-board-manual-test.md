@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/conventions.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Features Board
 
 ## Scope
 
-Verifies the Board on the Features page: switching between the table and the board, the columns of one release stream's cycles and Later, the cards and the Card menu, the strip and the Stream menu, rows from the Group by menu, and how search, drafts, a feature's details and the keyboard work on the board. The table itself is verified in [Features](features-manual-test.md).
+Verifies the Board on the Features page: switching between the table and the board, the columns of one release stream's cycles and Later, the cards and the Card menu, the strip and the Stream menu, rows from the Group by menu, with a card in each row of a feature under several values, and how search, drafts, a feature's details and the keyboard work on the board. The table itself is verified in [Features](features-manual-test.md).
 
 ## Test Environment
 
@@ -262,6 +262,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **Release**
       - **Needed by**
       - **Status**
+      - **Customers**
+      - **Projects**
+      - **Proposals**
       - **Priority**
       - **Size**
       - **Risk**
@@ -298,7 +301,28 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'Offline Sync' is in the row "Critical".
   - **Notes:**
 
-**Afterwards:** Select **Group by: Priority**, then **None**.
+- [ ] `4E7B` Select **Group by: Priority**, then **Projects**.
+  - **Expected:**
+    - Rows "Clinic Booking" and "P-2001 Crane Control" each hold a card 'Offline Sync'.
+    - Each 'Offline Sync' card has a grey "+1" after its name.
+    - The last row is "No projects".
+  - **Notes:**
+
+- [ ] `B19C` Point at the "+1" on the card 'Offline Sync' in the row "Clinic Booking".
+  - **Expected:** A tooltip reads "Also under P-2001 Crane Control."
+  - **Notes:**
+
+- [ ] `D2A6` Select that card, then press Esc.
+  - **Expected:**
+    - The side panel opens, headed "Offline Sync", then closes.
+    - The card 'Offline Sync' in the row "Clinic Booking" has the keyboard focus.
+  - **Notes:**
+
+- [ ] `7C51` Press the Down arrow until the focus leaves the row "Clinic Booking".
+  - **Expected:** The focus reaches the next card down the column, through the rows below, including the card 'Offline Sync' in the row "P-2001 Crane Control".
+  - **Notes:**
+
+**Afterwards:** Select **Group by: Projects**, then **None**.
 
 ### BOARD-05: Search, Details and the Keyboard Work on the Board
 

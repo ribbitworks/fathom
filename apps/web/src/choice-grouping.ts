@@ -1,17 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Grouping a table's rows by the one choice a column holds: a group for each choice, in its list's
-// order, then the rows with none, under the column's words for none.
+// Grouping a table's rows by the choices a column holds: a group for each choice, in its list's
+// order, a row under each of its choices, then the rows with none, under the column's words for none.
 
 import type { Column, GridRecord, RowGrouping } from "./record-grid.tsx";
 import type { RowGroup } from "./table-view.ts";
 import { emptiedWords } from "./status-mark.tsx";
 import type { Choice } from "@fathom/shared";
 
-// A row of a column holding several choices would need a place in several groups.
+export const holdsChoices = <Rec extends GridRecord, Change>(
+  column: Column<Rec, Change>,
+) => column.kind === "choice";
+
+// Where a table gives each record one row, a column holding several choices can't group it.
 export const holdsOneChoice = <Rec extends GridRecord, Change>(
   column: Column<Rec, Change>,
-) => column.kind === "choice" && !column.multiple;
+) => holdsChoices(column) && !column.multiple;
 
 export function byChoice<Rec extends GridRecord, Change>(
   column: Column<Rec, Change>,
@@ -26,17 +30,13 @@ export function byChoice<Rec extends GridRecord, Change>(
     key: column.key,
     label: column.label,
     of: (record) => {
-      const [chosen] = column.value(record) as string[];
-      const choice = column.choices.find(({ id }) => id === chosen);
-      return [
-        choice === undefined
-          ? none
-          : {
-              key: choice.id,
-              label: headingOf(choice),
-              rank: column.choices.indexOf(choice),
-            },
-      ];
+      const chosen = new Set(column.value(record) as string[]);
+      const [first = none, ...rest] = column.choices.flatMap((choice, rank) =>
+        chosen.has(choice.id)
+          ? [{ key: choice.id, label: headingOf(choice), rank }]
+          : [],
+      );
+      return [first, ...rest];
     },
   };
 }

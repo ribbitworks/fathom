@@ -2924,6 +2924,48 @@ describe("the Features page", () => {
     expect(groupButton("Needed by")).not.toBeNull();
   });
 
+  it("groups features under each project that needs them, then those no project needs", async () => {
+    await open(
+      featurePlan({
+        projects: [
+          project({ featureIds: [first.id, second.id] }),
+          project({
+            id: "70000000-0000-4000-8000-000000000002",
+            name: "Fictional Other",
+            externalId: "FP-2",
+            featureIds: [first.id],
+          }),
+        ],
+      }),
+    );
+    await groupBy("Cycle", "Projects");
+    await waitFor(() => {
+      expect(
+        screen
+          .queryAllByRole("rowheader")
+          .map((cell) => cell.textContent)
+          .filter((text) => / features?$/.test(text)),
+      ).toEqual([
+        "FP-1 Fictional Project2 features",
+        "FP-2 Fictional Other1 feature",
+        "No projects1 feature",
+      ]);
+    });
+    expect(rowNames()).toEqual([
+      "Fictional Second",
+      "Fictional First",
+      "Fictional First",
+      "Fictional Later",
+    ]);
+    expect(screen.getByRole("status").textContent).toBe("3 features");
+    expect(
+      screen.getAllByText("+1").map((mark) => mark.parentElement?.dataset.tip),
+    ).toEqual([
+      "Also under FP-2 Fictional Other.",
+      "Also under FP-1 Fictional Project.",
+    ]);
+  });
+
   it("groups them again when turned back on", async () => {
     await open();
     await groupBy("Cycle", "None");

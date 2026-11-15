@@ -70,8 +70,10 @@ You're done when **Effort** shows your estimate, with a hollow dot.
 ### Group the Table
 
 1. Select **Group by**.
-1. Choose **Cycle**, **Release**, **Needed by**, a list such as **Status** or **Priority**, **Feature team**, **Staffed**, or **None**.
+1. Choose **Cycle**, **Release**, **Needed by**, **Customers**, **Projects**, **Proposals**, a list such as **Status** or **Priority**, **Feature team**, **Staffed**, or **None**.
 1. To group each heading's features again, such as each cycle's by status, select **Group by** again, and choose how under **Then by**.
+
+A feature with several customers, projects or proposals shows under each of them. Each of its rows has a grey **+1**, or **+2** and on, after its name; point at it to see the other headings. A change in one row shows in the others, since they're the same feature.
 
 To go back to grouping by cycle alone, choose **Clear grouping**, at the end of the menu.
 
@@ -86,7 +88,7 @@ The board shows one release stream's cycles side by side, with a card for each f
 1. To see other cycles, select **‹** or **›**, or a cycle in the row of cycles.
 1. To go back to the current cycle, select **Today**.
 1. To choose what the cards show, select **Card**, and tick or untick each part.
-1. To put the cards in rows, select **Group by**, and choose how, such as **Feature team**.
+1. To put the cards in rows, select **Group by**, and choose how, such as **Feature team**. Grouped by **Projects**, a feature two projects need has a card in each project's row.
 
 While **Staffed months** is ticked under **Card**, a card marked **Not staffed** is planned or in progress, but nobody is allocated to it yet. Select a card to see the feature's details. The search, the **Draft** menu and **Metrics** work on the board as they do on the table. So does **Views**: the table and the board share one view, and a saved view keeps the board's stream and what its cards show. See [Saved views](saved-views.md).
 

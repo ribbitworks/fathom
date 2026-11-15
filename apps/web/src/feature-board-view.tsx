@@ -18,6 +18,7 @@ import { Button, Group, Paper, Text, UnstyledButton } from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
 import { type KeyboardEvent, useState } from "react";
 import { AppMenu, MenuChoices, MenuToggle } from "./app-menu.tsx";
+import { focusFoundSoon } from "./focus.ts";
 import {
   type BoardColumn,
   boardColumns,
@@ -35,7 +36,7 @@ import {
 import classes from "./feature-board-view.module.css";
 import { draftRowClass } from "./list-drafts.tsx";
 import { RiskMark, SizeMark } from "./planning-marks.tsx";
-import type { ShownRows } from "./record-grid.tsx";
+import { AlsoUnder, type ShownRows } from "./record-grid.tsx";
 import {
   daysBetween,
   draftsById,
@@ -54,7 +55,12 @@ import {
   useDraftView,
   wasWords,
 } from "./status-mark.tsx";
-import { formatDay, formatMonth, type RowGroups } from "./table-view.ts";
+import {
+  formatDay,
+  formatMonth,
+  type OtherPlace,
+  type RowGroups,
+} from "./table-view.ts";
 import { TeamLabels } from "./team-labels.tsx";
 import { TimelineStrip } from "./timeline-strip.tsx";
 
@@ -188,7 +194,8 @@ export function FeatureBoard({
   const placed = rows.flatMap((row, rowIndex) =>
     row.cells.flatMap((cell, columnIndex) =>
       cell.cards.map((feature, index) => ({
-        id: feature.id,
+        id: copyOf(row.key, feature.id, grouped),
+        feature: feature.id,
         rowIndex,
         columnIndex,
         index,
@@ -197,7 +204,7 @@ export function FeatureBoard({
   );
   const tabStop =
     placed.find(({ id }) => id === focused) ??
-    placed.find(({ id }) => id === open) ??
+    placed.find(({ feature }) => feature === open) ??
     placed[0];
   const move = (event: KeyboardEvent, from: (typeof placed)[number]) => {
     const target = keyTarget(event.key, from, placed, columns.length);
@@ -358,29 +365,27 @@ export function FeatureBoard({
                 ].join(", ")}
               >
                 {cell.cards.map((feature, index) => {
+                  const copy = copyOf(row.key, feature.id, grouped);
                   const at = {
-                    id: feature.id,
+                    id: copy,
+                    feature: feature.id,
                     rowIndex,
                     columnIndex,
                     index,
                   };
                   return (
-                    <li key={feature.id}>
+                    <li key={copy}>
                       <FeatureCard
+                        id={copy}
                         feature={feature}
+                        others={otherRows(groupOf, feature, row.key)}
                         draft={draftOf(feature)}
                         choices={choices}
                         parts={parts}
                         selected={feature.id === open}
-                        tabIndex={
-                          tabStop?.rowIndex === rowIndex &&
-                          tabStop.columnIndex === columnIndex &&
-                          tabStop.index === index
-                            ? 0
-                            : -1
-                        }
+                        tabIndex={tabStop?.id === copy ? 0 : -1}
                         onFocus={() => {
-                          setFocused(feature.id);
+                          setFocused(copy);
                         }}
                         onKeyDown={(event) => {
                           move(event, at);
@@ -411,7 +416,37 @@ export function FeatureBoard({
   );
 }
 
-export const cardId = (id: string) => `card-${id}`;
+// A card's own identifier: its feature's, or, on a board in rows, where a feature has a card in the
+// row of each of its values, its row's and its feature's, with no spaces, which an id can't hold,
+// though some rows' keys, such as a release's, have one.
+const copyOf = (rowKey: string, id: string, grouped: boolean) =>
+  grouped ? `${rowKey.replaceAll(" ", "-")}-${id}` : id;
+
+// The other rows a feature has a card in, named by its card's +1 mark.
+const otherRows = (
+  groupOf: ((record: Feature) => RowGroups) | undefined,
+  feature: Feature,
+  rowKey: string,
+): OtherPlace[] =>
+  (groupOf?.(feature) ?? [])
+    .filter(({ key }) => key !== rowKey)
+    .map((group) => ({ group }));
+
+const cardId = (copy: string) => `card-${copy}`;
+const cardAttribute = "data-card-of";
+
+// Puts focus on a feature's card, such as once its details close: where it has a card in each of
+// several rows, the one Tab reaches, which is the one last focused, or else its first.
+export function focusCard(id: string): void {
+  focusFoundSoon(() => {
+    const cards = [
+      ...document.querySelectorAll<HTMLElement>(
+        `[${cardAttribute}="${CSS.escape(id)}"]`,
+      ),
+    ];
+    return cards.find(({ tabIndex }) => tabIndex === 0) ?? cards[0];
+  });
+}
 
 // The rows: the groups the records are in, in their order, or one row holding them all.
 function rowsOf(
@@ -437,6 +472,7 @@ function rowsOf(
 
 interface CardPlace {
   id: string;
+  feature: string;
   rowIndex: number;
   columnIndex: number;
   index: number;
@@ -523,7 +559,9 @@ function ColumnHeader({
 }
 
 function FeatureCard({
+  id,
   feature,
+  others,
   draft,
   choices,
   parts,
@@ -533,7 +571,10 @@ function FeatureCard({
   onKeyDown,
   onOpen,
 }: {
+  id: string;
   feature: Feature;
+  // The other rows its feature has a card in.
+  others: readonly OtherPlace[];
   // The feature's draft, whatever the view.
   draft: Feature["draft"];
   choices: PlanChoices;
@@ -572,7 +613,8 @@ function FeatureCard({
     );
   return (
     <UnstyledButton
-      id={cardId(feature.id)}
+      id={cardId(id)}
+      {...{ [cardAttribute]: feature.id }}
       component="div"
       role="button"
       className={[
@@ -597,6 +639,7 @@ function FeatureCard({
             {feature.name}
           </DraftedValue>
         </DraftedItem>
+        <AlsoUnder others={others} />
       </Text>
       {(parts.has("status") || (parts.has("priority") && priority)) && (
         <Text component="span" size="xs" className={classes.words}>

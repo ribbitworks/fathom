@@ -1433,7 +1433,7 @@ function runsOf<Rec>(
 
 // After the name of a record shown under several headings: how many others, and in its tip, which,
 // so whoever edits one row knows another shows the same record.
-function AlsoUnder({ others }: { others: readonly OtherPlace[] }) {
+export function AlsoUnder({ others }: { others: readonly OtherPlace[] }) {
   if (others.length === 0) return null;
   const names = others
     .map(({ group, subgroup }) =>
