@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the Accounts page and the Change name and Change password dialogs, with the server's
-// responses simulated: who sees the Accounts page, the list of accounts, creating accounts, editing
-// their names, email addresses, and their one role, chosen from every role, resetting passwords,
-// with the password Fathom generates shown once, deactivating and reactivating, the server's
-// refusals, changing one's own name and password, with the checklist of what a new password must
-// meet, and changing a generated password before anything else.
+// responses simulated: who sees the Accounts page, the list of accounts on the shared table, an
+// account's details beside it, finding and breaking down accounts, saved views, creating accounts,
+// editing their names, email addresses and roles, chosen from every role, resetting passwords, with
+// the password Fathom generates shown once, deactivating and reactivating, the server's refusals,
+// changing one's own name and password, with the checklist of what a new password must meet, and
+// changing a generated password before anything else.
 
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -14,6 +15,7 @@ import { notAllowedMessage } from "./api.ts";
 import {
   fictionalUser,
   greeting,
+  recordCell,
   renderApp,
   serverAnswers,
   signedIn,
@@ -106,7 +108,7 @@ const manager = () =>
   });
 
 const own = {
-  id: "user-1",
+  id: "10000000-0000-4000-8000-000000000001",
   name: "Fictional Person",
   email: "person@example.test",
   ...holdingRoles(administratorRole),
@@ -114,7 +116,7 @@ const own = {
   createdAt: "2026-10-12T09:00:00.000Z",
 };
 const planner = {
-  id: "user-2",
+  id: "10000000-0000-4000-8000-000000000002",
   name: "Fictional Planner",
   email: "planner@example.test",
   ...holdingRoles(productManagerRole),
@@ -122,7 +124,7 @@ const planner = {
   createdAt: "2026-10-14T09:00:00.000Z",
 };
 const former = {
-  id: "user-3",
+  id: "10000000-0000-4000-8000-000000000003",
   name: "Fictional Former",
   email: "former@example.test",
   ...holdingRoles(teamMemberRole),
@@ -135,17 +137,30 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+// Opens an account's details beside the table, from its details button.
+async function openPanelFor(name: string): Promise<HTMLElement> {
+  await userEvent.click(
+    await screen.findByRole("button", { name: `Show details of ${name}` }),
+  );
+  // One's own account is headed with This account after the name.
+  return screen.findByRole("region", {
+    name: (heading) => heading === name || heading === `${name} This account`,
+  });
+}
+
 async function openEditFor(name: string): Promise<HTMLElement> {
   await userEvent.click(
-    await screen.findByRole("button", { name: `Edit ${name}` }),
+    within(await openPanelFor(name)).getByRole("button", { name: "Edit…" }),
   );
   return screen.findByRole("dialog", { name: `Edit ${name}` });
 }
 
-// Opens one of the actions an account's Edit dialog offers besides saving.
+// Opens one of the actions an account's details offer besides editing it, such as Deactivate….
 async function openAction(name: string, action: string) {
   await userEvent.click(
-    within(await openEditFor(name)).getByRole("button", { name: action }),
+    within(await openPanelFor(name)).getByRole("button", {
+      name: `${action}…`,
+    }),
   );
 }
 
@@ -240,10 +255,10 @@ describe("who sees the Accounts page", () => {
     expect(history.location.pathname).toBe("/accounts");
     expect(screen.getByRole("link", { name: "Accounts" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "New account" })).toBeNull();
-    expect(
-      screen.queryByRole("button", { name: "Edit Fictional Planner" }),
-    ).toBeNull();
-    expect(screen.getAllByRole("columnheader")).toHaveLength(4);
+    const panel = await openPanelFor("Fictional Planner");
+    expect(within(panel).queryByRole("button")).toBe(
+      within(panel).getByRole("button", { name: "Close details" }),
+    );
     expect(fetch).not.toHaveBeenCalledWith("/api/roles", expect.anything());
   });
 
@@ -264,19 +279,48 @@ describe("the list of accounts", () => {
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
-    const row = (await screen.findByText("Fictional Planner")).closest("tr");
+    await screen.findByText("Fictional Planner");
+    const text = (id: string, key: string) => recordCell(id, key)?.textContent;
     expect(
-      within(row as HTMLElement).getByText("Product Manager"),
-    ).toBeDefined();
-    expect(within(row as HTMLElement).getByText("Active")).toBeDefined();
-    expect(screen.getByText("Deactivated")).toBeDefined();
-    const ownRow = within(screen.getByRole("table"))
-      .getByText("Fictional Person")
-      .closest("tr");
-    expect(
-      within(ownRow as HTMLElement).getByText("This account"),
-    ).toBeDefined();
-    expect(within(row as HTMLElement).queryByText("This account")).toBeNull();
+      ["name", "email", "roles", "status"].map((key) => text(planner.id, key)),
+    ).toEqual([
+      "Fictional Planner",
+      "planner@example.test",
+      "Product Manager",
+      "Active",
+    ]);
+    expect(text(former.id, "status")).toBe("Deactivated");
+    expect(text(own.id, "name")).toContain("This account");
+  });
+
+  it("opens an account's details at their own address, and closes them back to its row", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+    });
+    const history = renderApp("/accounts");
+    const panel = await openPanelFor("Fictional Planner");
+    expect(history.location.search).toBe(`?open=${planner.id}`);
+    await waitFor(() => {
+      expect(document.activeElement?.textContent).toBe("Fictional Planner");
+    });
+
+    await userEvent.click(
+      within(panel).getByRole("button", { name: "Close details" }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("region", { name: "Fictional Planner" }),
+      ).toBeNull();
+    });
+    expect(history.location.search).toBe("");
+    await waitFor(() => {
+      expect(
+        recordCell(planner.id, "name")?.contains(document.activeElement),
+      ).toBe(true);
+    });
   });
 
   it("shows every role an account holds, the default first and marked", async () => {
@@ -295,13 +339,10 @@ describe("the list of accounts", () => {
         }),
     });
     renderApp("/accounts");
-    const row = (await screen.findByText("Fictional Planner")).closest("tr");
-    const roles = within(row as HTMLElement).getAllByRole("cell")[1];
-    expect(
-      Array.from(roles?.firstElementChild?.children ?? []).map(
-        ({ textContent }) => textContent,
-      ),
-    ).toEqual(["Product Manager (default)", "Fictional Auditors"]);
+    await screen.findByText("Fictional Planner");
+    expect(recordCell(planner.id, "roles")?.textContent).toBe(
+      "Product Manager (default), Fictional Auditors",
+    );
   });
 
   it("offers every change to one's own account but resetting its password, which needs the current one", async () => {
@@ -311,13 +352,12 @@ describe("the list of accounts", () => {
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
-    const dialog = await openEditFor("Fictional Person");
+    const panel = await openPanelFor("Fictional Person");
     expect(
-      within(dialog).getByRole("button", { name: "Deactivate" }),
-    ).toBeDefined();
-    expect(
-      within(dialog).queryByRole("button", { name: "Reset password" }),
-    ).toBeNull();
+      within(panel)
+        .getAllByRole("button")
+        .map(({ textContent }) => textContent),
+    ).toEqual(["", "Edit…", "Deactivate…"]);
   });
 
   it("shows an account left without a role as holding none, and asks for one before saving it", async () => {
@@ -330,8 +370,8 @@ describe("the list of accounts", () => {
         }),
     });
     renderApp("/accounts");
-    const row = (await screen.findByText("Fictional Planner")).closest("tr");
-    expect(within(row as HTMLElement).getByText("No role")).toBeDefined();
+    await screen.findByText("Fictional Planner");
+    expect(recordCell(planner.id, "roles")?.textContent).toBe("No role");
     const dialog = await openEditFor("Fictional Planner");
     expect(
       within(dialog)
@@ -341,7 +381,7 @@ describe("the list of accounts", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(await within(dialog).findByText("Choose a role.")).toBeDefined();
     expect(fetch).not.toHaveBeenCalledWith(
-      "/api/accounts/user-2",
+      "/api/accounts/10000000-0000-4000-8000-000000000002",
       expect.anything(),
     );
   });
@@ -354,18 +394,11 @@ describe("the list of accounts", () => {
     });
     renderApp("/accounts");
     await screen.findByText("Fictional Planner");
-    const created = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
     expect(
-      screen.getAllByRole("row").flatMap((row) => {
-        const time = row.querySelector("time");
-        return time === null ? [] : [[time.dateTime, time.textContent]];
-      }),
-    ).toEqual(
-      [own, planner, former].map(({ createdAt }) => [
-        createdAt,
-        created.format(new Date(createdAt)),
-      ]),
-    );
+      [own, planner, former].map(
+        ({ id }) => recordCell(id, "created")?.textContent,
+      ),
+    ).toEqual(["Oct 12, 2026", "Oct 14, 2026", "Oct 16, 2026"]);
   });
 
   it("shows a loading indicator until the accounts arrive", async () => {
@@ -399,7 +432,7 @@ describe("changing one's own account", () => {
       "GET /api/session": () => session(),
       "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
-      "PATCH /api/accounts/user-1": () => {
+      "PATCH /api/accounts/10000000-0000-4000-8000-000000000001": () => {
         session = () =>
           Response.json({
             ...fictionalUser,
@@ -443,7 +476,7 @@ describe("changing one's own account", () => {
           accounts: [own, { ...planner, ...holdingRoles(administratorRole) }],
         });
       },
-      "PATCH /api/accounts/user-1": () => {
+      "PATCH /api/accounts/10000000-0000-4000-8000-000000000001": () => {
         session = signedIn;
         return Response.json({
           account: { ...own, ...holdingRoles(teamMemberRole) },
@@ -500,14 +533,29 @@ describe("the last active account with Edit Administration", () => {
       "GET /api/accounts": () => Response.json({ accounts }),
     });
     renderApp("/accounts");
-    const dialog = await openEditFor(name);
-    const deactivate = within(dialog).getByRole("button", {
-      name: "Deactivate",
+    const deactivate = within(await openPanelFor(name)).getByRole("button", {
+      name: "Deactivate…",
     });
+    const dialog = await openEditFor(name);
     const choice = (name: string) =>
       within(dialog).getByRole<HTMLInputElement>("checkbox", { name });
     return { deactivate, choice };
   }
+
+  it("leaves deactivating to the server's check until the roles have loaded", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": () => new Promise<Response>(() => undefined),
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    const panel = await openPanelFor("Fictional Person");
+    expect(
+      within(panel).getByRole<HTMLButtonElement>("button", {
+        name: "Deactivate…",
+      }).disabled,
+    ).toBe(false);
+  });
 
   it("can neither give up the role that alone grants it nor be deactivated, though it can take on others", async () => {
     const { deactivate, choice } = await controlsFor([own, planner, former]);
@@ -545,73 +593,7 @@ describe("the last active account with Edit Administration", () => {
 });
 
 describe("finding accounts", () => {
-  it("narrows the list by name or email address as you type", async () => {
-    serverAnswers({
-      "GET /api/session": manager,
-      "GET /api/roles": roleList,
-      "GET /api/accounts": accountList,
-    });
-    renderApp("/accounts");
-    const search = await screen.findByLabelText("Search by name or email");
-    await userEvent.type(search, "PLANNER@");
-    expect(screen.getByText("Fictional Planner")).toBeDefined();
-    expect(screen.queryByText("Fictional Former")).toBeNull();
-    await userEvent.clear(search);
-    await userEvent.type(search, "former");
-    expect(screen.getByText("Fictional Former")).toBeDefined();
-    expect(screen.queryByText("Fictional Planner")).toBeNull();
-    await userEvent.click(screen.getByRole("button", { name: "Clear search" }));
-    expect(screen.getByText("Fictional Planner")).toBeDefined();
-    expect(document.activeElement).toBe(search);
-    await userEvent.keyboard("{Escape}");
-    expect(document.activeElement).not.toBe(search);
-  });
-
-  it("finds an account whatever its name's accents, by every word typed", async () => {
-    serverAnswers({
-      "GET /api/session": manager,
-      "GET /api/roles": roleList,
-      "GET /api/accounts": () =>
-        Response.json({
-          accounts: [
-            own,
-            planner,
-            {
-              ...former,
-              id: "user-4",
-              name: "Fictional Schrøder",
-              email: "fs@example.test",
-            },
-          ],
-        }),
-    });
-    renderApp("/accounts");
-    await userEvent.type(
-      await screen.findByLabelText("Search by name or email"),
-      "schroder fictional",
-    );
-    expect(screen.getByText("Fictional Schrøder")).toBeDefined();
-    expect(screen.queryByText("Fictional Planner")).toBeNull();
-  });
-
-  it("shows only active or only deactivated accounts, with how many of each", async () => {
-    serverAnswers({
-      "GET /api/session": manager,
-      "GET /api/roles": roleList,
-      "GET /api/accounts": accountList,
-    });
-    renderApp("/accounts");
-    await userEvent.click(await screen.findByText("Deactivated 1"));
-    expect(screen.getByText("Fictional Former")).toBeDefined();
-    expect(screen.queryByText("Fictional Planner")).toBeNull();
-    await userEvent.click(screen.getByText("Active 2"));
-    expect(screen.getByText("Fictional Planner")).toBeDefined();
-    expect(screen.queryByText("Fictional Former")).toBeNull();
-    await userEvent.click(screen.getByText("All 3"));
-    expect(screen.getByText("Fictional Former")).toBeDefined();
-  });
-
-  it("says when no account matches", async () => {
+  it("finds an account by its email address, as by any of its columns", async () => {
     serverAnswers({
       "GET /api/session": manager,
       "GET /api/roles": roleList,
@@ -619,10 +601,74 @@ describe("finding accounts", () => {
     });
     renderApp("/accounts");
     await userEvent.type(
-      await screen.findByLabelText("Search by name or email"),
-      "nobody",
+      await screen.findByRole("textbox", { name: "Search accounts" }),
+      "former@",
     );
-    expect(screen.getByText("No accounts match.")).toBeDefined();
+    expect(screen.getByText("Fictional Former")).toBeDefined();
+    expect(screen.queryByText("Fictional Planner")).toBeNull();
+  });
+
+  it("shows only deactivated accounts when Status is filtered to them", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+    });
+    renderApp('/accounts?filters={"status":{"any":["deactivated"]}}');
+    expect(await screen.findByText("Fictional Former")).toBeDefined();
+    expect(screen.queryByText("Fictional Planner")).toBeNull();
+  });
+
+  it("breaks accounts down by their roles and status alone", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Metrics" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("combobox", { name: "Break down by" }),
+    );
+    expect(
+      (await screen.findAllByRole("option")).map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual(["Choose a column", "Roles", "Status"]);
+  });
+});
+
+describe("the Accounts page's saved views", () => {
+  it("applies a shared view, keeping the account open", async () => {
+    const view = {
+      id: "00000000-0000-4000-8000-0000000000d1",
+      name: "Gone",
+      scope: "shared",
+      definition: { filters: { status: { any: ["deactivated"] } } },
+      canChange: true,
+      canShare: true,
+    };
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+      "GET /api/views/accounts": () => Response.json([view]),
+    });
+    const history = renderApp(`/accounts?open=${former.id}`);
+    await screen.findByRole("region", { name: "Fictional Former" });
+
+    await userEvent.click(screen.getByRole("button", { name: "Views" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: /^Gone/u }),
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText("Fictional Planner")).toBeNull();
+    });
+    expect(history.location.search).toContain(`view=${view.id}`);
+    expect(history.location.search).toContain(`open=${former.id}`);
   });
 });
 
@@ -635,7 +681,11 @@ describe("creating an account", () => {
       "POST /api/accounts": () =>
         Response.json(
           {
-            account: { ...planner, id: "user-4", name: "Fictional Newcomer" },
+            account: {
+              ...planner,
+              id: "10000000-0000-4000-8000-000000000004",
+              name: "Fictional Newcomer",
+            },
             password: generated,
           },
           { status: 201 },
@@ -667,9 +717,9 @@ describe("creating an account", () => {
       within(dialog).getByRole("button", { name: "Create account" }),
     );
     await showsGeneratedPassword("Fictional Newcomer");
-    expect((await screen.findByRole("status")).textContent).toBe(
-      "Created the account for Fictional Newcomer.",
-    );
+    expect(
+      await screen.findByText("Created the account for Fictional Newcomer."),
+    ).toBeDefined();
     expect(fetch).toHaveBeenCalledWith(
       "/api/accounts",
       expect.objectContaining({
@@ -689,7 +739,7 @@ describe("creating an account", () => {
       "GET /api/session": manager,
       "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
-      "POST /api/accounts/user-2/password": () =>
+      "POST /api/accounts/10000000-0000-4000-8000-000000000002/password": () =>
         Response.json({ password: generated }),
     });
     renderApp("/accounts");
@@ -857,10 +907,7 @@ describe("creating an account", () => {
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Edit Fictional Planner" }),
-    );
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await openEditFor("Fictional Planner");
     expect((await within(dialog).findByRole("alert")).textContent).toBe(
       "Fathom could not load the roles. Try again in a moment.",
     );
@@ -937,7 +984,7 @@ describe("changing an account", () => {
       "GET /api/session": manager,
       "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
-      "PATCH /api/accounts/user-2": () =>
+      "PATCH /api/accounts/10000000-0000-4000-8000-000000000002": () =>
         Response.json({
           account: {
             ...planner,
@@ -947,12 +994,7 @@ describe("changing an account", () => {
         }),
     });
     renderApp("/accounts");
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Edit Fictional Planner" }),
-    );
-    const dialog = await screen.findByRole("dialog", {
-      name: "Edit Fictional Planner",
-    });
+    const dialog = await openEditFor("Fictional Planner");
     const name = within(dialog).getByLabelText("Name");
     await userEvent.clear(name);
     await userEvent.type(name, "Fictional Planning");
@@ -966,11 +1008,11 @@ describe("changing an account", () => {
       within(dialog).getByRole("checkbox", { name: "Product Manager" }),
     );
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect((await screen.findByRole("status")).textContent).toBe(
-      "Saved the account for Fictional Planning.",
-    );
+    expect(
+      await screen.findByText("Saved the account for Fictional Planning."),
+    ).toBeDefined();
     expect(fetch).toHaveBeenCalledWith(
-      "/api/accounts/user-2",
+      "/api/accounts/10000000-0000-4000-8000-000000000002",
       expect.objectContaining({
         method: "PATCH",
         body: JSON.stringify({
@@ -990,10 +1032,7 @@ describe("changing an account", () => {
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Edit Fictional Planner" }),
-    );
-    const dialog = await screen.findByRole("dialog");
+    const dialog = await openEditFor("Fictional Planner");
     await userEvent.clear(within(dialog).getByLabelText("Name"));
     const email = within(dialog).getByLabelText("Email address");
     await userEvent.clear(email);
@@ -1006,7 +1045,7 @@ describe("changing an account", () => {
       within(dialog).getByText("Enter a valid email address."),
     ).toBeDefined();
     expect(fetch).not.toHaveBeenCalledWith(
-      "/api/accounts/user-2",
+      "/api/accounts/10000000-0000-4000-8000-000000000002",
       expect.anything(),
     );
   });
@@ -1016,7 +1055,7 @@ describe("changing an account", () => {
       "GET /api/session": manager,
       "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
-      "POST /api/accounts/user-2/password": () =>
+      "POST /api/accounts/10000000-0000-4000-8000-000000000002/password": () =>
         Response.json({ password: generated }),
     });
     renderApp("/accounts");
@@ -1032,11 +1071,11 @@ describe("changing an account", () => {
       within(dialog).getByRole("button", { name: "Reset password" }),
     );
     await showsGeneratedPassword("Fictional Planner");
-    expect((await screen.findByRole("status")).textContent).toBe(
-      "Reset the password for Fictional Planner.",
-    );
+    expect(
+      await screen.findByText("Reset the password for Fictional Planner."),
+    ).toBeDefined();
     expect(fetch).toHaveBeenCalledWith(
-      "/api/accounts/user-2/password",
+      "/api/accounts/10000000-0000-4000-8000-000000000002/password",
       expect.objectContaining({ method: "POST", body: "{}" }),
     );
   });
@@ -1046,7 +1085,7 @@ describe("changing an account", () => {
       "GET /api/session": manager,
       "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
-      "POST /api/accounts/user-2/password": () =>
+      "POST /api/accounts/10000000-0000-4000-8000-000000000002/password": () =>
         Response.json({ error: "There is no such account" }, { status: 404 }),
     });
     renderApp("/accounts");
@@ -1064,14 +1103,14 @@ describe("changing an account", () => {
     [
       "deactivates an active account",
       "Fictional Planner",
-      "user-2",
+      "10000000-0000-4000-8000-000000000002",
       "Deactivate",
       false,
     ],
     [
       "reactivates a deactivated one",
       "Fictional Former",
-      "user-3",
+      "10000000-0000-4000-8000-000000000003",
       "Reactivate",
       true,
     ],
@@ -1703,7 +1742,7 @@ describe("after a change", () => {
       "GET /api/session": manager,
       "GET /api/roles": roleList,
       "GET /api/accounts": () => Response.json({ accounts }),
-      "PUT /api/accounts/user-2/active": () => {
+      "PUT /api/accounts/10000000-0000-4000-8000-000000000002/active": () => {
         accounts = [own, { ...planner, active: false }, former];
         return Response.json({ account: accounts[1] });
       },
@@ -1716,11 +1755,11 @@ describe("after a change", () => {
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Deactivate" }),
     );
-    expect((await screen.findByRole("status")).textContent).toBe(
-      "Deactivated the account for Fictional Planner.",
-    );
+    expect(
+      await screen.findByText("Deactivated the account for Fictional Planner."),
+    ).toBeDefined();
     await waitFor(() => {
-      expect(screen.getAllByText("Deactivated")).toHaveLength(2);
+      expect(recordCell(planner.id, "status")?.textContent).toBe("Deactivated");
     });
   });
 
@@ -1769,16 +1808,11 @@ describe("after a change", () => {
       "GET /api/session": manager,
       "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
-      "PATCH /api/accounts/user-2": () =>
+      "PATCH /api/accounts/10000000-0000-4000-8000-000000000002": () =>
         Response.json({ error: "Forbidden" }, { status: 403 }),
     });
     renderApp("/accounts");
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Edit Fictional Planner" }),
-    );
-    const dialog = await screen.findByRole("dialog", {
-      name: "Edit Fictional Planner",
-    });
+    const dialog = await openEditFor("Fictional Planner");
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect((await within(dialog).findByRole("alert")).textContent).toBe(
       notAllowedMessage,
@@ -1791,11 +1825,12 @@ describe("after a change", () => {
       "GET /api/session": () => session(),
       "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
-      "POST /api/accounts/user-2/password": () => {
-        session = () =>
-          Response.json({ error: "Unauthorized" }, { status: 401 });
-        return session();
-      },
+      "POST /api/accounts/10000000-0000-4000-8000-000000000002/password":
+        () => {
+          session = () =>
+            Response.json({ error: "Unauthorized" }, { status: 401 });
+          return session();
+        },
     });
     renderApp("/accounts");
     await openAction("Fictional Planner", "Reset password");

@@ -1,45 +1,37 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Accounts page, for users who may see accounts: every account with its roles, the default
-// first, and whether it can sign in, and, for those who may manage accounts, dialogs to create
-// accounts and to edit them, where their names, email addresses, roles, and default role are
-// changed, choosing from every role, and from which their passwords are reset and they are
-// deactivated or reactivated. Fathom generates the password of a new account and of a reset, which
-// the dialog then shows once, to copy. A user's own account offers all but the password reset, as
-// changing one's own password needs the current one. A dialog cannot be closed while its change is
-// being saved, shows plainly why a change was refused, and keeps no password once it closes. Some
-// active account must keep Edit Administration, so taking away a role or deactivating when that
-// would leave none holding it is turned off, as the server refuses it.
+// The Accounts page, for users who may see accounts: every account on the shared table, with its
+// roles, the default first, and whether it can sign in, its view saved as any table's is, and, for
+// those who may manage accounts, dialogs to create accounts and to edit them, where their names,
+// email addresses, roles, and default role are changed, choosing from every role, and, from an
+// account's details, to reset its password and to deactivate or reactivate it. Fathom generates the
+// password of a new account and of a reset, which the dialog then shows once, to copy. A user's own
+// account offers all but the password reset, as changing one's own password needs the current one.
+// A dialog cannot be closed while its change is being saved, shows plainly why a change was
+// refused, and keeps no password once it closes. Some active account must keep Edit Administration,
+// so taking away a role or deactivating when that would leave none holding it is turned off, as the
+// server refuses it.
 
 import {
   type Account,
-  matchesWords,
   newAccountSchema,
   type RoleSummary,
-  searchWords,
-  staysManageable,
 } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Alert,
   Anchor,
-  Avatar,
-  Badge,
   Button,
   Checkbox,
   CopyButton,
   Group,
   Loader,
   Modal,
-  Paper,
   PasswordInput,
   Radio,
-  SegmentedControl,
   Stack,
-  Table,
   Text,
   TextInput,
-  VisuallyHidden,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
@@ -48,6 +40,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import {
   accountsQuery,
+  refusedChanges,
   createAccount,
   defaultAmong,
   nameProblem,
@@ -56,15 +49,28 @@ import {
   updateAccount,
 } from "./accounts.ts";
 import { DialogActions, useDialogState } from "./dialog-actions.tsx";
-import { initials, rolesHeld } from "./names.ts";
 import { notifySuccess } from "./notices.tsx";
 import { rolesQuery } from "./roles.ts";
-import { TableSearch } from "./table-controls.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { type SignedInUser, sessionQuery } from "./session.ts";
-import { count } from "./numbers.ts";
-import { formatMomentDay } from "./table-view.ts";
+import {
+  accountColumnOrder,
+  accountColumns,
+  type AccountRow,
+  accountRows,
+  accountsTable,
+} from "./accounts-table.tsx";
+import { AccountPanel, accountPanelId } from "./accounts-panel.tsx";
+import {
+  focusRecordCell,
+  noRecordActions,
+  RecordGrid,
+} from "./record-grid.tsx";
+import { useNarrow } from "./side-panel.tsx";
+import { useSavedViews } from "./saved-views.tsx";
+import { TableTips } from "./table-tips.tsx";
+import type { View } from "./table-view.ts";
 
 type Dialog =
   | { kind: "create" }
@@ -100,43 +106,6 @@ function dialogTitle(dialog: Dialog): string {
     case "active":
       return `${dialog.account.active ? "Deactivate" : "Reactivate"} ${dialog.account.name}`;
   }
-}
-
-// The changes to an account that the server refuses: the roles picked for it that it cannot give
-// up, and whether it cannot be deactivated.
-interface RefusedChanges {
-  roleIds: ReadonlySet<string>;
-  deactivating: boolean;
-}
-
-function refusedChanges(
-  account: Account,
-  picked: readonly string[],
-  accounts: readonly Account[],
-  roles: readonly RoleSummary[],
-): RefusedChanges {
-  const changed = (change: Partial<Account>) =>
-    accounts.map((other) =>
-      other.id === account.id ? { ...other, ...change } : other,
-    );
-  const holding = (roleIds: readonly string[]) =>
-    roles.filter(({ id }) => roleIds.includes(id));
-  return {
-    // Adding a role never leaves Fathom unmanageable, so only those picked can be refused.
-    roleIds: new Set(
-      picked.filter(
-        (roleId) =>
-          !staysManageable(
-            changed({
-              roles: holding(picked.filter((other) => other !== roleId)),
-            }),
-            roles,
-          ),
-      ),
-    ),
-    deactivating:
-      account.active && !staysManageable(changed({ active: false }), roles),
-  };
 }
 
 const roleProblem = "Choose a role.";
@@ -340,7 +309,6 @@ function EditAccount({
   roles,
   onDone,
   onBusy,
-  onOpen,
 }: DialogProps & {
   account: Account;
   own: boolean;
@@ -396,31 +364,6 @@ function EditAccount({
           pending={saving.isPending}
           label="Save"
           onCancel={onDone}
-          others={
-            <>
-              {!own && (
-                <Button
-                  variant="default"
-                  disabled={saving.isPending}
-                  onClick={() => {
-                    onOpen({ kind: "password", account });
-                  }}
-                >
-                  Reset password
-                </Button>
-              )}
-              <Button
-                variant={account.active ? "outline" : "default"}
-                color="red"
-                disabled={saving.isPending || refused.deactivating}
-                onClick={() => {
-                  onOpen({ kind: "active", account, own });
-                }}
-              >
-                {account.active ? "Deactivate" : "Reactivate"}
-              </Button>
-            </>
-          }
         />
       </Stack>
     </form>
@@ -617,123 +560,34 @@ function DialogContent({ dialog, ...props }: DialogProps & { dialog: Dialog }) {
   }
 }
 
-type Filter = "all" | "active" | "deactivated";
-
-function matches(account: Account, search: string, filter: Filter): boolean {
-  const found = matchesWords(
-    `${account.name} ${account.email}`,
-    searchWords(search),
-  );
-  const shown = filter === "all" || (filter === "active") === account.active;
-  return found && shown;
-}
-
-function AccountRow({
-  account,
-  own,
-  onEdit,
-}: {
-  account: Account;
-  own: boolean;
-  // Editing the account, for those who may manage accounts.
-  onEdit: (() => void) | undefined;
-}) {
-  return (
-    <Table.Tr>
-      <Table.Td>
-        <Group gap="sm" wrap="nowrap">
-          <Avatar size={32} radius="xl" color="sea">
-            {initials(account.name)}
-          </Avatar>
-          <div>
-            <Group gap={6} wrap="nowrap">
-              <Text fz="sm" fw={500}>
-                {account.name}
-              </Text>
-              {own && (
-                <Badge
-                  variant="light"
-                  color="sea"
-                  radius="sm"
-                  tt="none"
-                  className={classes.ownBadge}
-                >
-                  This account
-                </Badge>
-              )}
-            </Group>
-            <Text fz="xs" c="dimmed">
-              {account.email}
-            </Text>
-          </div>
-        </Group>
-      </Table.Td>
-      <Table.Td>
-        {account.roles.length === 0 ? (
-          <Text fz="sm" c="dimmed">
-            No role
-          </Text>
-        ) : (
-          <Group gap={4}>
-            {rolesHeld(
-              account.role?.name,
-              account.roles.map(({ name }) => name),
-            ).map((role) => (
-              <Badge
-                key={role}
-                variant="default"
-                radius="sm"
-                tt="none"
-                fw={400}
-              >
-                {role}
-              </Badge>
-            ))}
-          </Group>
-        )}
-      </Table.Td>
-      <Table.Td>
-        <Badge
-          variant="light"
-          color={account.active ? "green" : "gray"}
-          radius="xl"
-          tt="none"
-          leftSection={<span className={classes.statusDot} />}
-        >
-          {account.active ? "Active" : "Deactivated"}
-        </Badge>
-      </Table.Td>
-      <Table.Td c="dimmed" className={classes.figures}>
-        <time dateTime={account.createdAt}>
-          {formatMomentDay(account.createdAt)}
-        </time>
-      </Table.Td>
-      {onEdit && (
-        <Table.Td ta="right">
-          <Button
-            variant="default"
-            size="xs"
-            aria-label={`Edit ${account.name}`}
-            onClick={onEdit}
-          >
-            Edit
-          </Button>
-        </Table.Td>
-      )}
-    </Table.Tr>
-  );
-}
-
 export function AccountsPage({
   user,
   canManage,
+  view,
+  onView,
+  applied,
+  onApply,
+  canShareViews,
+  open: openId,
+  onOpen,
 }: {
   user: SignedInUser;
   canManage: boolean;
+  view: View;
+  onView: (view: View, replace?: boolean) => void;
+  // The saved view the view started from, as the address names it.
+  applied: string | undefined;
+  onApply: (view: View, id: string, replace?: boolean) => void;
+  canShareViews: boolean;
+  // The account whose details are shown beside the table, by its identifier.
+  open: string | undefined;
+  onOpen: (id: string | undefined) => void;
 }) {
   const accounts = useQuery(accountsQuery);
-  // Read now, so the dialogs that choose a role have them on opening.
-  useQuery({ ...rolesQuery, enabled: canManage });
+  // Read now, so the dialogs that choose a role have them on opening, and the panel knows which
+  // accounts may not be deactivated.
+  const roles = useQuery({ ...rolesQuery, enabled: canManage });
+  const narrow = useNarrow();
   const {
     dialog,
     opened,
@@ -742,16 +596,79 @@ export function AccountsPage({
     forget,
   } = useDialogState<Dialog>();
   const [busy, setBusy] = useState(false);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
+  const views = useSavedViews({
+    table: "accounts",
+    within: accountsQuery.queryKey,
+    applied,
+    onApply,
+    canShare: canShareViews,
+    blocked: opened,
+  });
 
   const close = (done?: string) => {
     if (done !== undefined) notifySuccess(done);
     closeDialog();
   };
   const all = accounts.data ?? [];
-  const activeCount = all.filter((account) => account.active).length;
-  const shown = all.filter((account) => matches(account, search, filter));
+  const table = accountsTable({
+    accounts: all,
+    ownId: user.id,
+    onOpen: (account) => {
+      onOpen(account.id);
+    },
+  });
+  const rows = accountRows(all);
+  const shownRow = rows.find(({ id }) => id === openId);
+  const closePanel = (id: string) => {
+    focusRecordCell(id, "name");
+    onOpen(undefined);
+  };
+  const actionsFor = (account: Account) => {
+    const own = account.id === user.id;
+    return {
+      edit: () => {
+        open({ kind: "edit", account, own, accounts: all });
+      },
+      resetPassword: () => {
+        open({ kind: "password", account });
+      },
+      changeActive:
+        roles.data !== undefined &&
+        refusedChanges(
+          account,
+          account.roles.map(({ id }) => id),
+          all,
+          roles.data,
+        ).deactivating
+          ? undefined
+          : () => {
+              open({ kind: "active", account, own });
+            },
+    };
+  };
+  const panels =
+    shownRow === undefined
+      ? []
+      : [
+          {
+            key: "account",
+            id: accountPanelId,
+            name: "the account's details",
+            node: (
+              <AccountPanel
+                key={shownRow.id}
+                row={shownRow}
+                columns={accountColumns(all, user.id)}
+                own={shownRow.id === user.id}
+                actions={canManage ? actionsFor(shownRow.account) : undefined}
+                narrow={narrow}
+                onClose={() => {
+                  closePanel(shownRow.id);
+                }}
+              />
+            ),
+          },
+        ];
 
   return (
     <Stack gap="md" className={classes.tablePage}>
@@ -776,76 +693,27 @@ export function AccountsPage({
         </Alert>
       )}
       {accounts.isSuccess && (
-        <>
-          <Group gap="sm">
-            <TableSearch
-              label="Search by name or email"
-              value={search}
-              onChange={setSearch}
-            />
-            <SegmentedControl
-              aria-label="Show"
-              value={filter}
-              onChange={(value) => {
-                setFilter(value);
-              }}
-              data={[
-                { value: "all", label: `All ${count(all.length)}` },
-                { value: "active", label: `Active ${String(activeCount)}` },
-                {
-                  value: "deactivated",
-                  label: `Deactivated ${count(all.length - activeCount)}`,
-                },
-              ]}
-            />
-          </Group>
-          <Paper withBorder className={classes.tableScrollPanel}>
-            <div className={classes.tableScroll}>
-              <Table miw={720}>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Person</Table.Th>
-                    <Table.Th>Roles</Table.Th>
-                    <Table.Th>Status</Table.Th>
-                    <Table.Th>Created</Table.Th>
-                    {canManage && (
-                      <Table.Th>
-                        <VisuallyHidden>Actions</VisuallyHidden>
-                      </Table.Th>
-                    )}
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {shown.map((account) => (
-                    <AccountRow
-                      key={account.id}
-                      account={account}
-                      own={account.id === user.id}
-                      onEdit={
-                        canManage
-                          ? () => {
-                              open({
-                                kind: "edit",
-                                account,
-                                own: account.id === user.id,
-                                accounts: all,
-                              });
-                            }
-                          : undefined
-                      }
-                    />
-                  ))}
-                </Table.Tbody>
-              </Table>
-            </div>
-            {shown.length === 0 && (
-              <Text p="md" fz="sm" c="dimmed">
-                No accounts match.
-              </Text>
-            )}
-          </Paper>
-        </>
+        <TableTips>
+          <RecordGrid
+            records={rows}
+            table={table}
+            fields={[]}
+            order={accountColumnOrder}
+            lists={[]}
+            canEdit={false}
+            canAdd={false}
+            rowActions={false}
+            canEditColumns={false}
+            actions={noRecordActions<AccountRow, never, undefined>()}
+            view={view}
+            onView={onView}
+            saved={views.saved}
+            panels={panels}
+            withDrafts={false}
+          />
+        </TableTips>
       )}
+      {views.dialogs}
       <Modal
         opened={opened}
         // The dialogs that list every role, with what each is for, have room for them.

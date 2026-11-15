@@ -6,6 +6,7 @@
 // effect at once, and a deactivated account cannot sign in. Better Auth's warnings and errors go to
 // Fathom's log as its fixed messages only, without the details it attaches, which can name a user.
 
+import { randomUUID } from "node:crypto";
 import {
   accounts,
   type Database,
@@ -84,6 +85,9 @@ export function createAuth(
       customRules: { "/sign-in/email": { window: minute, max: 5 } },
     },
     advanced: {
+      // Every sign-in record, accounts among them, is identified by a UUID, as every other record is,
+      // not the library's own IDs.
+      database: { generateId: () => randomUUID() },
       useSecureCookies: true,
       cookiePrefix: cookiePrefix(config.publicUrl),
       ipAddress: { ipAddressHeaders: [clientAddressHeader] },

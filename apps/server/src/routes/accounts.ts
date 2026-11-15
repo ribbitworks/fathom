@@ -23,7 +23,7 @@ const created = 201;
 const noContent = 204;
 
 const accountResponse = z.object({ account: accountSchema });
-const params = z.object({ id: z.string().min(1) });
+const params = z.object({ id: z.uuid() });
 
 export function accountRoutes(
   accounts: AccountAdministration,

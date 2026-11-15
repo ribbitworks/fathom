@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its streams in the timeline; that a view on Features is shared by its table and Board, and kept to Features; that a view keeps People grouped by two levels; and that a view on Feature assignments keeps its grouping, and is kept to its page; and that a view on the Org chart keeps the team shown alone and the levels shown.
+Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its streams in the timeline; that a view on Features is shared by its table and Board, and kept to Features; that a view keeps People grouped by two levels; and that a view on Feature assignments keeps its grouping, and is kept to its page; that a view on the Org chart keeps the team shown alone and the levels shown; and that Accounts are on the shared table with saved views.
 
 ## Test Environment
 
@@ -28,6 +28,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 - **Feature Lead:** `feature.lead@fathom.test`
 - **Engineering Director:** `engineering.director@fathom.test`
 - **Product Manager:** `product.manager@fathom.test`
+- **Administrator:** `fathom.administrator@fathom.test`, shown in Fathom as "Fathom Administrator"
 
 ## Common Procedures
 
@@ -1034,4 +1035,86 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `AD9A` Open the Views menu, and select **Delete view**.
   - **Expected:** A notification reads "Deleted the Fictional Lorenza's team view.", with **Undo**.
+  - **Notes:**
+
+### VIEW-17: Accounts Are on the Shared Table, With a Saved View
+
+**Account:** Administrator, `fathom.administrator@fathom.test`, changed from VIEW-16.
+
+**Preconditions:** This account is signed in, in the main window.
+
+- [ ] `E540` Select the **Accounts** page in the left-hand menu.
+  - **Expected:**
+    - Above the table are the search box and **Metrics**; no **Draft** button shows.
+    - The table's columns are **Name**, **Email address**, **Roles**, **Status** and **Created**, in that order.
+    - 'Fathom Administrator' has a grey **This account** box after the name.
+    - Each row's **Status** reads "Active".
+    - No Views menu shows.
+  - **Notes:**
+
+- [ ] `ADA1` Select the details button in the 'Feature Lead' row's **Name** cell.
+  - **Expected:**
+    - A side panel headed "Feature Lead" opens.
+    - Under **Details** it lists **Name**, **Email address**, **Roles**, **Status** and **Created**.
+    - **Roles** reads "Feature Lead (default), Engineering Manager".
+    - Under the details are **Edit…**, **Reset password…** and a red **Deactivate…**.
+  - **Notes:**
+
+- [ ] `194E` Select **Edit…**.
+  - **Expected:** A dialog titled "Edit Feature Lead" opens.
+  - **Notes:**
+
+- [ ] `8D1C` Select **Cancel**.
+  - **Expected:** The dialog closes, and the side panel is still open.
+  - **Notes:**
+
+- [ ] `72AA` Select the details button in the 'Fathom Administrator' row's **Name** cell.
+  - **Expected:**
+    - The side panel is headed "Fathom Administrator", with a grey **This account** box after it.
+    - Under the details are **Edit…** and **Deactivate…**; no **Reset password…** is offered.
+  - **Notes:**
+
+- [ ] `55DF` Select the **×** at the top right of the side panel.
+  - **Expected:** The side panel closes.
+  - **Notes:**
+
+- [ ] `839A` Type `operations` in the search box.
+  - **Expected:**
+    - The table lists only 'Engineering Operations Manager' and 'Second Engineering Operations Manager'.
+    - Last of the buttons, the Views menu's button reads **Views**, with a dot.
+  - **Notes:**
+
+- [ ] `C234` Open the Views menu, and select **Save view…**.
+  - **Expected:**
+    - A dialog titled "Save view" opens.
+    - Under **Includes**, **Search** reads “operations”.
+  - **Notes:**
+
+- [ ] `C0E1` Type `Fictional operations` in **Name**.
+  - **Expected:** The name shows in **Name**.
+  - **Notes:**
+
+- [ ] `F13F` Select **Save view** in the dialog.
+  - **Expected:** The Views menu's button says `Fictional operations`.
+  - **Notes:**
+
+- [ ] `B3EA` Select the **Roles** page in the left-hand menu.
+  - **Expected:** The **Roles** page shows.
+  - **Notes:**
+
+- [ ] `762F` Select the **Accounts** page in the left-hand menu.
+  - **Expected:**
+    - The search box is empty, and every account is listed.
+    - The Views menu's button reads **Views**, with no dot.
+  - **Notes:**
+
+- [ ] `5DC2` Open the Views menu, and select `Fictional operations` under **My views**.
+  - **Expected:**
+    - The search box reads `operations`.
+    - The table lists only 'Engineering Operations Manager' and 'Second Engineering Operations Manager'.
+    - The Views menu's button says `Fictional operations`, with no dot.
+  - **Notes:**
+
+- [ ] `6667` Open the Views menu, and select **Delete view**.
+  - **Expected:** A notification reads "Deleted the Fictional operations view.", with **Undo**.
   - **Notes:**

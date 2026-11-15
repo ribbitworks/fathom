@@ -14,7 +14,10 @@ const entry = (
   occurredAt: "2026-11-06T12:00:00.000Z",
   actor: null,
   action,
-  subject: { id: "user-2", name: "Fictional Planner" },
+  subject: {
+    id: "10000000-0000-4000-8000-000000000002",
+    name: "Fictional Planner",
+  },
   details,
 });
 

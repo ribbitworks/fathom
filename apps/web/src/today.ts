@@ -18,6 +18,10 @@ export function setTimeZone(zone: string): void {
 // Today as YYYY-MM-DD.
 export const today = (): string => dayIn(timeZone);
 
+// The day of a moment, such as when something was made, as YYYY-MM-DD.
+export const dayOf = (moment: string): string =>
+  dayIn(timeZone, new Date(moment));
+
 // The day a page should be shown as of, or undefined for today: only a day the reader's role sees
 // the classes of data for.
 export function shownDay(

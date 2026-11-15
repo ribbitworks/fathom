@@ -43,7 +43,7 @@ export const accountRoleSchema = z.object({ id: z.uuid(), name: z.string() });
 export type AccountRole = z.infer<typeof accountRoleSchema>;
 
 export const accountSchema = z.object({
-  id: z.string(),
+  id: z.uuid(),
   name: z.string(),
   email: z.string(),
   // The account's default role, which it signs in as the first time; null only for an account

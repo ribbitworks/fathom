@@ -285,9 +285,9 @@ describe("who may manage accounts", () => {
         roleId: missingRecord,
       },
     ],
-    ["PATCH", "/api/accounts/any", { name: "Fictional Person" }],
-    ["POST", "/api/accounts/any/password", {}],
-    ["PUT", "/api/accounts/any/active", { active: false }],
+    ["PATCH", `/api/accounts/${missingRecord}`, { name: "Fictional Person" }],
+    ["POST", `/api/accounts/${missingRecord}/password`, {}],
+    ["PUT", `/api/accounts/${missingRecord}/active`, { active: false }],
   ] as const;
   const refusedRoles = roleSchema.options.filter(
     (role) => !rolesGranting("administration:edit").includes(role),
@@ -334,7 +334,7 @@ describe("administering accounts", () => {
     });
   });
 
-  it("creates an account with a generated password, which must be changed, recording when", async () => {
+  it("creates an account identified by a UUID, with a generated password, which must be changed, recording when", async () => {
     const { cookie } = await signedIn("administrator");
     const before = Date.now();
     const response = await request(cookie, "POST", "/api/accounts", {
@@ -345,6 +345,9 @@ describe("administering accounts", () => {
     expect(response.statusCode).toBe(201);
     expect(response.json()).toMatchObject({
       account: {
+        id: expect.stringMatching(
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u,
+        ) as unknown,
         name: "Fictional Newcomer",
         role: { id: await roleId("product-manager"), name: "Product Manager" },
         active: true,
@@ -642,9 +645,9 @@ describe("administering accounts", () => {
   });
 
   it.each([
-    ["PATCH", "/api/accounts/no-such-account", { name: "Fictional Person" }],
-    ["POST", "/api/accounts/no-such-account/password", {}],
-    ["PUT", "/api/accounts/no-such-account/active", { active: false }],
+    ["PATCH", `/api/accounts/${missingRecord}`, { name: "Fictional Person" }],
+    ["POST", `/api/accounts/${missingRecord}/password`, {}],
+    ["PUT", `/api/accounts/${missingRecord}/active`, { active: false }],
   ] as const)(
     "answers %s %s for a missing account with not found",
     async (method, url, payload) => {
@@ -1031,7 +1034,7 @@ describe("changing a generated password first", () => {
     ["GET", "/api/access-history", undefined],
     ["GET", "/api/roles", undefined],
     ["PUT", "/api/account/name", { name: "Fictional Impatient" }],
-    ["POST", "/api/accounts/any/password", {}],
+    ["POST", `/api/accounts/${missingRecord}/password`, {}],
   ] as const)(
     "refuses %s %s until the password is changed",
     async (method, url, payload) => {

@@ -20,8 +20,14 @@ const historyViewer = () =>
     permissions: ["administration:view", "administration:edit"],
   });
 
-const admin = { id: "user-1", name: "Fictional Person" };
-const subject = { id: "user-2", name: "Fictional Planner" };
+const admin = {
+  id: "10000000-0000-4000-8000-000000000001",
+  name: "Fictional Person",
+};
+const subject = {
+  id: "10000000-0000-4000-8000-000000000002",
+  name: "Fictional Planner",
+};
 const entries = [
   {
     id: 4,
@@ -36,13 +42,13 @@ const entries = [
     occurredAt: "2026-10-30T14:00:00.000Z",
     actor: admin,
     action: "password-reset",
-    subject: { id: "user-9", name: null },
+    subject: { id: "10000000-0000-4000-8000-000000000009", name: null },
     details: {},
   },
   {
     id: 1,
     occurredAt: "2026-10-30T12:00:00.000Z",
-    actor: { id: "user-8", name: null },
+    actor: { id: "10000000-0000-4000-8000-000000000008", name: null },
     action: "future-action",
     subject,
     details: {},

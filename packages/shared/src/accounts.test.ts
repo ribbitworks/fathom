@@ -23,6 +23,7 @@ import {
 } from "./session.ts";
 
 const password = "p".repeat(passwordLength.minimum);
+const accountId = "10000000-0000-4000-8000-000000000001";
 const roleId = "00000000-0000-4000-8000-0000000000a1";
 const otherRoleId = "00000000-0000-4000-8000-0000000000a2";
 
@@ -176,7 +177,7 @@ describe("responses", () => {
     expect(
       createdAccountSchema.safeParse({
         account: {
-          id: "1",
+          id: accountId,
           name: "Fictional User",
           email: "user@example.test",
           role: { id: roleId, name: "Fictional Role" },
@@ -189,12 +190,30 @@ describe("responses", () => {
     ).toBe(true);
   });
 
-  it("reads the accounts", () => {
+  it("refuses an account whose ID isn't a UUID", () => {
     expect(
       accountListSchema.safeParse({
         accounts: [
           {
             id: "1",
+            name: "Fictional User",
+            email: "user@example.test",
+            role: null,
+            roles: [],
+            active: true,
+            createdAt: "2026-11-03T12:00:00+00:00",
+          },
+        ],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("reads the accounts", () => {
+    expect(
+      accountListSchema.safeParse({
+        accounts: [
+          {
+            id: accountId,
             name: "Fictional User",
             email: "user@example.test",
             role: { id: roleId, name: "Fictional Role" },

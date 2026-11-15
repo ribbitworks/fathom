@@ -6,6 +6,8 @@
 import {
   type Account,
   type AccountChangeRequest,
+  type RoleSummary,
+  staysManageable,
   accountListSchema,
   accountSchema,
   type CreatedAccount,
@@ -85,4 +87,41 @@ export async function changePassword(
   request: PasswordChangeRequest,
 ): Promise<void> {
   await sendJson("POST", "/api/auth/change-password", request);
+}
+
+// The changes to an account that the server refuses: the roles picked for it that it cannot give
+// up, and whether it cannot be deactivated.
+export interface RefusedChanges {
+  roleIds: ReadonlySet<string>;
+  deactivating: boolean;
+}
+
+export function refusedChanges(
+  account: Account,
+  picked: readonly string[],
+  accounts: readonly Account[],
+  roles: readonly RoleSummary[],
+): RefusedChanges {
+  const changed = (change: Partial<Account>) =>
+    accounts.map((other) =>
+      other.id === account.id ? { ...other, ...change } : other,
+    );
+  const holding = (roleIds: readonly string[]) =>
+    roles.filter(({ id }) => roleIds.includes(id));
+  return {
+    // Adding a role never leaves Fathom unmanageable, so only those picked can be refused.
+    roleIds: new Set(
+      picked.filter(
+        (roleId) =>
+          !staysManageable(
+            changed({
+              roles: holding(picked.filter((other) => other !== roleId)),
+            }),
+            roles,
+          ),
+      ),
+    ),
+    deactivating:
+      account.active && !staysManageable(changed({ active: false }), roles),
+  };
 }

@@ -45,12 +45,12 @@ const auditors = {
 const roleList = () => Response.json({ roles: [teamMemberRole, auditors] });
 
 const planner = {
-  id: "user-2",
+  id: "10000000-0000-4000-8000-000000000002",
   name: "Fictional Planner",
   email: "planner@example.test",
 };
 const self = {
-  id: "user-1",
+  id: "10000000-0000-4000-8000-000000000001",
   name: "Fictional Person",
   email: "person@example.test",
 };
@@ -1093,7 +1093,7 @@ describe("the permissions that keep access managed", () => {
     permissions: ["administration:edit"],
   };
   const lastAdministrator = {
-    id: "user-5",
+    id: "10000000-0000-4000-8000-000000000005",
     name: "Fictional Administrator",
     email: "administrator@example.test",
     role: { id: administrators.id, name: administrators.name },

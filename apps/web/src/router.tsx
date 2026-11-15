@@ -225,16 +225,32 @@ const homeRoute = createRoute({
   component: Home,
 });
 
+// The Accounts page's address: the table's view, and the account whose details are shown beside it.
+const accountsSearch = viewSearchSchema.extend({
+  open: z.uuid().optional().catch(undefined),
+});
+
 const accountsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/accounts",
+  validateSearch: accountsSearch,
   beforeLoad: reaching("accounts"),
   component: function Accounts() {
     const { user, permissions } = signedIn.useRouteContext();
+    const navigate = accountsRoute.useNavigate();
+    const { open, ...search } = accountsRoute.useSearch();
     return (
       <AccountsPage
         user={user}
         canManage={permissions.includes("administration:edit")}
+        canShareViews={sharesViews("accounts", permissions)}
+        {...viewProps(search, (next, replace) => {
+          void navigate({ search: { ...next, open }, replace });
+        })}
+        open={open}
+        onOpen={(next) => {
+          void navigate({ search: { ...search, open: next } });
+        }}
       />
     );
   },
