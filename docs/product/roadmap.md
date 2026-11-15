@@ -23,7 +23,7 @@ Development uses fictional data only.
 
 ## Before Going Live
 
-Before Fathom goes live in an organization: its IT team approves the [IT Overview](../operations/it-overview.md), the [Security Plan](../security/security-plan.md) and the [Deployment](../operations/deployment.md) document, before Fathom is deployed to its infrastructure, deployment testing included; its HR team reviews [how data is safeguarded](../privacy/data-protection.md); a first set of roles is agreed; hosting and backups are set up; and scanning is in place, with the threat model reviewed for the stage going live. Each is an issue in the [Before Going Live](https://github.com/jlarue26/fathom/milestone/6) milestone.
+Before Fathom goes live in an organization: its IT team approves the [Security Plan](../security/security-plan.md), before Fathom is deployed to its infrastructure, deployment testing included; its HR team reviews [how data is safeguarded](../privacy/data-protection.md); a first set of roles is agreed; hosting and backups are set up; and scanning is in place, with the threat model reviewed for the stage going live. Each is an issue in the [Before Going Live](https://github.com/jlarue26/fathom/milestone/6) milestone.
 
 ## Coming Next
 

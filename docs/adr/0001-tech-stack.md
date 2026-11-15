@@ -9,7 +9,7 @@
 
 Fathom's [Product Brief](../product/brief.md) sets the constraints that drive the stack:
 
-- **Hosting:** Runs as containers on an on-premises host with a supported container runtime, as listed in [Supported Platforms](../operations/supported-platforms.md). The first deployment is described in [Deployment](../operations/deployment.md). The host may have internet access, but Fathom must be reachable only from the internal network. Nothing may depend on internet services at runtime, including CDNs and web fonts.
+- **Hosting:** Runs as containers on a host with a supported container runtime, as listed in [Supported Platforms](../operations/supported-platforms.md). Nothing may depend on internet services at runtime, including CDNs and web fonts.
 - **Scale:** Tens of users and a modest amount of data. Simplicity matters more than horizontal scaling.
 - **Front end:** Rich, interactive timeline, Gantt, org chart, and capacity views, with drag-and-drop. The strongest choice of components for these is in the React ecosystem, so every option below uses a React front end.
 - **Security:** Local accounts, role-based access to tiers of data, enforced the same way in screens, exports, snapshots, and search. Personal data is kept out of logs.

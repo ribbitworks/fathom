@@ -95,7 +95,7 @@ pnpm dev:reset
 
 ### HTTPS
 
-Both modes use a locally trusted certificate created with mkcert and stored in the git-ignored `.dev/` folder. mkcert's local certificate authority key stays in mkcert's own folder and is never shared or copied into the repository. Node.js-based tools that call Fathom over HTTPS are pointed at the local certificate authority with `NODE_EXTRA_CA_CERTS`. Production uses the internal certificate described in the [IT Overview](../operations/it-overview.md).
+Both modes use a locally trusted certificate created with mkcert and stored in the git-ignored `.dev/` folder. mkcert's local certificate authority key stays in mkcert's own folder and is never shared or copied into the repository. Node.js-based tools that call Fathom over HTTPS are pointed at the local certificate authority with `NODE_EXTRA_CA_CERTS`. Production uses a certificate whoever runs Fathom provides, as [Securing Your Environment](../operations/securing-your-environment.md#certificates-and-secrets) sets out.
 
 ### Secrets and Configuration
 

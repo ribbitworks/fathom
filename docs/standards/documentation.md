@@ -43,6 +43,4 @@ Fathom's additions to the shared [Documentation](shared/documentation.md) standa
 - Help pages (`docs/help/`): how to use each page of Fathom, and the workflows each role does most, for the people who use it, listed in `docs/help/index.md`; a guide that repeats facts the documents above own, kept consistent with them, and updated by every change to the page it covers
 - Securing your environment (`docs/operations/securing-your-environment.md`): what whoever runs Fathom must secure, since Fathom can't
 - Supported platforms (`docs/operations/supported-platforms.md`): the platforms Fathom is tested and supported on, and their setup needs
-- Deployment (`docs/operations/deployment.md`): the specifics of Fathom's first deployment and what it asks of IT
-- IT overview (`docs/operations/it-overview.md`): a standalone summary for IT of facts owned by the documents above; update it whenever those facts change
 - Data protection summary (`docs/privacy/data-protection.md`): a short list of what safeguards Fathom's data, linking to the documents above that own the facts; update it whenever those facts change

@@ -48,4 +48,4 @@ So no part except the proxy can reach the internet, and the proxy cannot reach t
 - [ADR 0001](../adr/0001-tech-stack.md) and [ADR 0002](../adr/0002-libraries.md): the technology and libraries.
 - [Development Setup](development-setup.md): the repository layout and how to run Fathom locally.
 - [Security Plan](../security/security-plan.md): threats and how each is mitigated.
-- [Deployment](../operations/deployment.md): the first server Fathom runs on.
+- [Securing Your Environment](../operations/securing-your-environment.md): what whoever runs Fathom must secure.

@@ -301,7 +301,7 @@ Testing on the server platforms in [Supported Platforms](../operations/supported
 
 ## Host Setup
 
-The scripts that set up the production host are written once the first stage works on macOS, close to deployment. For the first deployment's Windows Server with WSL 2, they cover the [setup it needs](../operations/supported-platforms.md#windows-server-with-wsl-2), the host firewall, where possible blocking the proxy's outbound traffic, and creating the first Administrator, the Fathom Administrator account, by running `apps/server/src/create-administrator.ts` in the application's container, as `pnpm stack:create-administrator` does. They wait until then because they depend on IT's answers to the requests in the [IT Overview](../operations/it-overview.md) and [Deployment](../operations/deployment.md), and need a Windows machine to test on.
+Scripts that set up a production host cover the host firewall, blocking the proxy's outbound traffic where possible, and creating the first Administrator, the Fathom Administrator account, by running `apps/server/src/create-administrator.ts` in the application's container, as `pnpm stack:create-administrator` does. Until they exist, [Securing Your Environment](../operations/securing-your-environment.md) lists what a host needs.
 
 ## Going Live
 

@@ -65,7 +65,7 @@ Personas are named as they are widely known in the software industry. Each organ
 
 ## Constraints
 
-- **Deployment:** Runs on the organization's own server, which may be shared with other applications. No managed cloud services can be assumed. Details are in [Deployment](../operations/deployment.md).
+- **Deployment:** Runs on the organization's own server, which may be shared with other applications. No managed cloud services can be assumed.
 - **Network:** Fathom must be reachable only from the internal network, never from the internet, even though its server has internet access. Fathom must not depend on internet services at runtime, including CDNs, fonts, or external APIs, so personal data stays inside the organization.
 - **Scale:** Small. Tens of users and a modest amount of data. Simple, easy-to-run choices matter more than horizontal scaling.
 - **Personal data:** Fathom holds personal information about employees, who may work in several countries. It is expected to be governed by the privacy law where the organization is based, and the law of other countries where employees work may also apply. Access is limited by role, and personal data not needed for planning is kept out of logs and other output.
