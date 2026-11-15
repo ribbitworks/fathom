@@ -82,6 +82,7 @@ import {
   filledIn,
   recorded as recordedFields,
   type SeededChange,
+  valueTiers,
 } from "./recorded.ts";
 import { seedReleases, unseedReleases } from "./releases.ts";
 import {
@@ -101,13 +102,17 @@ function recorded(
   action: SeededChange["action"],
   values: Record<string, unknown>,
   personalFieldNames: readonly string[] = [],
+  tiers: ReadonlyMap<string, string> = new Map(),
 ): SeededChange[] {
   return recordedFields(
     recordType,
     recordId,
     action,
     filledIn(values),
-    (field) => (personalFieldNames.includes(field) ? "personal" : "general"),
+    (field) =>
+      personalFieldNames.includes(field)
+        ? "personal"
+        : (tiers.get(field) ?? "general"),
   );
 }
 
@@ -269,6 +274,7 @@ export async function seed(
     const teamOf = new Map(
       organization.teams.map(({ managerId, name }) => [managerId, name]),
     );
+    const tiers = valueTiers(organization);
     for (const person of organization.people) {
       const { values, notes, ...row } = person;
       await transaction.insert(people).values(row);
@@ -296,6 +302,7 @@ export async function seed(
             reportingOf(lineOf.get(person.id), teamOf.get(person.id)),
           ),
           personalDetailFields,
+          tiers,
         ),
       );
     }

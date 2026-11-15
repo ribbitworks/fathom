@@ -29,6 +29,7 @@ import {
   filledIn,
   recorded as recordedFields,
   type SeededChange,
+  valueTiers,
 } from "./recorded.ts";
 
 const editorEmail = `engineering.operations.manager@${accountDomain}`;
@@ -42,9 +43,13 @@ type HireRow = typeof plannedHires.$inferSelect;
 
 // The first choice of the hiring states list with each meaning, and the tier each of a hire's fields
 // is recorded at, as the server records them: its name General, its position and state as the
-// Positions and hiring states lists, its values as the seeded lists, which are General, and the
-// rest Confidential.
-async function hiringSettings(reader: Reader) {
+// Positions and hiring states lists, its values as their columns' classes, and the rest
+// Confidential.
+async function hiringSettings(
+  reader: Reader,
+  organization: Pick<FictionalOrganization, "lists" | "columns">,
+) {
+  const values = valueTiers(organization);
   const states = await reader
     .select({ id: listItems.id, meaning: listItems.meaning })
     .from(listItems)
@@ -67,7 +72,8 @@ async function hiringSettings(reader: Reader) {
     tierOf: (field: string) => {
       if (field === "positionId") return String(tiers.get("positions"));
       if (field === "stateId") return String(tiers.get("hiring-states"));
-      if (field === "name" || fieldOfValue(field) !== null) return "general";
+      if (field === "name") return "general";
+      if (fieldOfValue(field) !== null) return values.get(field) ?? "general";
       return "confidential";
     },
   };
@@ -117,7 +123,7 @@ export async function seedHires(
         ),
       );
     if (present.length > 0 || organization.hires.length === 0) return false;
-    const { stateOf, tierOf } = await hiringSettings(transaction);
+    const { stateOf, tierOf } = await hiringSettings(transaction, organization);
     const made: SeededChange[] = [];
     const hireIds = new Set(organization.hires.map(({ id }) => id));
     // A planned manager comes before the hires under it.
@@ -217,7 +223,7 @@ export async function seedHireDrafts(
   const data = createDataAccess(database);
   const editor = await actorOf(database, editorEmail);
   const approver = await actorOf(database, approverEmail);
-  const { stateOf } = await hiringSettings(database);
+  const { stateOf } = await hiringSettings(database, organization);
   await data.hires.update(editor, proposed.id, { stateId: stateOf("open") });
   await data.hires.create(editor, [
     {
@@ -274,7 +280,7 @@ export async function removeSeededHires(
   transaction: Pick<Database, "select" | "delete">,
   organization: FictionalOrganization,
 ): Promise<SeededChange[]> {
-  const { tierOf } = await hiringSettings(transaction);
+  const { tierOf } = await hiringSettings(transaction, organization);
   const seeded = await transaction
     .select()
     .from(plannedHires)

@@ -100,8 +100,8 @@ describe("seeding", () => {
     expect(await seed(connection, organization)).toBe(true);
     expect(await totalOf(people)).toBe(20);
     // With the seven lists Fathom builds in, Positions holding the seeded positions.
-    expect(await totalOf(lists)).toBe(13);
-    expect(await totalOf(fields)).toBe(5);
+    expect(await totalOf(lists)).toBe(15);
+    expect(await totalOf(fields)).toBe(7);
     const [order] = await connection.select().from(columnOrders);
     expect(order?.keys.slice(0, 4)).toEqual([
       "preferredName",
@@ -146,12 +146,20 @@ describe("seeding", () => {
     expect(await totalOf(people)).toBe(20);
   });
 
-  it("gives each list the class it is seeded in", async () => {
+  it("gives each list the class it is seeded in, one Personal and two Confidential", async () => {
     const [workPatterns] = await connection
       .select({ visibility: lists.visibility })
       .from(lists)
       .where(eq(lists.name, "Work patterns"));
     expect(workPatterns?.visibility).toBe("personal");
+    const confidential = await connection
+      .select({ name: lists.name })
+      .from(lists)
+      .where(eq(lists.visibility, "confidential"));
+    expect(confidential.map(({ name }) => name).sort()).toEqual([
+      "Compensation bands",
+      "Performance ratings",
+    ]);
   });
 
   it("records each link a removed person had", async () => {

@@ -3,7 +3,8 @@
 // The change history's record of fields seeded or removed, each at its tier, as the server records
 // them, for the seed data generator.
 
-import type { ChangeRecord } from "@fathom/db";
+import { type ChangeRecord, valueField } from "@fathom/db";
+import type { FictionalOrganization } from "@fathom/fixtures";
 
 export type SeededChange = ChangeRecord & { action: "created" | "deleted" };
 
@@ -31,3 +32,20 @@ export const filledIn = (
   Object.fromEntries(
     Object.entries(values).filter(([, value]) => value !== null),
   );
+
+// The class each of the organization's columns records its values at, by the field it is recorded
+// under: its own class, or its list's, as the server takes it.
+export function valueTiers(
+  organization: Pick<FictionalOrganization, "lists" | "columns">,
+): ReadonlyMap<string, string> {
+  const listClass = new Map(
+    organization.lists.map(({ id, visibility }) => [id, visibility]),
+  );
+  return new Map(
+    organization.columns.map(({ id, visibility, listId }) => [
+      valueField(id),
+      // A column with no class of its own draws on a list, which has one.
+      visibility ?? String(listClass.get(listId)),
+    ]),
+  );
+}

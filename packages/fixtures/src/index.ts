@@ -223,6 +223,20 @@ const workPatterns = list(
   "personal",
 );
 
+// Confidential lists, so a list, its column and its values in the narrowest class are seeded.
+const compensationBands = list(
+  "compensation-bands",
+  "Compensation bands",
+  ["Band 1", "Band 2", "Band 3", "Band 4", "Band 5", "Band 6"],
+  "confidential",
+);
+const performanceRatings = list(
+  "performance-ratings",
+  "Performance ratings",
+  ["Exceeds", "Meets", "Developing", "Too early"],
+  "confidential",
+);
+
 function column(
   key: string,
   name: string,
@@ -243,6 +257,66 @@ const siteColumn = column("site", "Site", sites);
 const levelColumn = column("level", "Level", levels);
 const teamRoleColumn = column("team-role", "Role on team", teamRoles, true);
 const workPatternColumn = column("work-pattern", "Work pattern", workPatterns);
+const compensationColumn = column(
+  "compensation-band",
+  "Compensation band",
+  compensationBands,
+);
+const ratingColumn = column(
+  "performance-rating",
+  "Performance rating",
+  performanceRatings,
+);
+
+const bandOfLevel: Readonly<Record<string, string>> = {
+  "Co-op": "Band 1",
+  P1: "Band 1",
+  P2: "Band 2",
+  P3: "Band 3",
+  P4: "Band 4",
+  P5: "Band 5",
+  M1: "Band 4",
+  M2: "Band 4",
+  M3: "Band 5",
+  M4: "Band 5",
+  M5: "Band 6",
+};
+
+// Ratings come a year in, and are picked by a person's place rather than at random, so adding them
+// shifts nothing else the seed makes: two in ten exceed expectations and one in ten is developing.
+const ratedAfterDays = 365;
+const ratings = { every: 10, exceedsBelow: 2, developingAt: 9 } as const;
+
+const ratingOf = (index: number, started: string, referenceDate: string) => {
+  if (started > addDays(referenceDate, -ratedAfterDays)) return "Too early";
+  const turn = index % ratings.every;
+  if (turn < ratings.exceedsBelow) return "Exceeds";
+  return turn === ratings.developingAt ? "Developing" : "Meets";
+};
+
+// Set once every level is final, since the last to leave is made a manager, and before planned
+// hires copy the values of those who fill them.
+function setConfidential(
+  people: readonly FictionalPerson[],
+  referenceDate: string,
+): void {
+  const labelOf = new Map(levels.choices.map(({ id, label }) => [id, label]));
+  people.forEach((person, index) => {
+    const [level] = person.values[levelColumn.id] as string[];
+    person.values[compensationColumn.id] = [
+      choice(
+        compensationBands,
+        bandOfLevel[String(labelOf.get(String(level)))] as string,
+      ),
+    ];
+    person.values[ratingColumn.id] = [
+      choice(
+        performanceRatings,
+        ratingOf(index, String(person.startDate), referenceDate),
+      ),
+    ];
+  });
+}
 
 // Most work full time; a few part time or compressed hours. Picked by a person's place rather than
 // at random, so adding the column changes nothing else the seed makes.
@@ -894,6 +968,7 @@ export function fictionalOrganization({
     lastToLeave.values[levelColumn.id] = [choice(levels, "M1")];
     lastToLeave.isManager = true;
   }
+  setConfidential(everyone, referenceDate);
   // The newest starters who have not left, each with a buddy who started before all of them: those
   // still to start have done nothing yet, and those who have started are further along the earlier
   // they started, the earliest done. A buddy is never the starter, so an organization too small for
@@ -940,7 +1015,16 @@ export function fictionalOrganization({
   setLeaving(people, hires, featureTeams, referenceDate);
   return {
     referenceDate,
-    lists: [sites, levels, teamRoles, certifications, languages, workPatterns],
+    lists: [
+      sites,
+      levels,
+      teamRoles,
+      certifications,
+      languages,
+      workPatterns,
+      compensationBands,
+      performanceRatings,
+    ],
     positions: positions.choices,
     columns: [
       siteColumn,
@@ -948,6 +1032,8 @@ export function fictionalOrganization({
       teamRoleColumn,
       onboardingColumn,
       workPatternColumn,
+      compensationColumn,
+      ratingColumn,
     ],
     people,
     ...lines,

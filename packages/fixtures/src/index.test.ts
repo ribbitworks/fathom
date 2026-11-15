@@ -2,7 +2,8 @@
 
 // Tests for the fictional organization: the same records every time, identifiers that are valid and
 // unique, names from several countries and scripts, people whose details are consistent and drawn
-// from the lists their columns name, and the newest starters' onboarding notes.
+// from the lists their columns name, Confidential bands and ratings, and the newest starters'
+// onboarding notes.
 
 import { en_IN } from "@faker-js/faker";
 import { addDays } from "@fathom/shared";
@@ -110,6 +111,75 @@ describe("a fictional organization", () => {
         if (!column?.multiple) expect(chosen).toHaveLength(1);
       }
     }
+  });
+
+  describe("Confidential values", () => {
+    const labelOf = new Map(
+      organization.lists.flatMap(({ choices }) =>
+        choices.map(({ id, label }) => [id, label]),
+      ),
+    );
+    const columnId = (name: string) =>
+      String(organization.columns.find((column) => column.name === name)?.id);
+    const valueOf = (
+      person: (typeof organization.people)[number],
+      name: string,
+    ) => labelOf.get(String(person.values[columnId(name)]?.[0]));
+    const everyone = [...organization.people, ...organization.newcomers];
+
+    it("are in two Confidential lists", () => {
+      expect(
+        organization.lists
+          .filter(({ visibility }) => visibility === "confidential")
+          .map(({ name }) => name),
+      ).toEqual(["Compensation bands", "Performance ratings"]);
+    });
+
+    it("give everyone, newcomers too, the compensation band of their level, as it finally is", () => {
+      const bands = {
+        "Co-op": "Band 1",
+        P1: "Band 1",
+        P2: "Band 2",
+        P3: "Band 3",
+        P4: "Band 4",
+        P5: "Band 5",
+        M1: "Band 4",
+        M2: "Band 4",
+        M3: "Band 5",
+        M4: "Band 5",
+        M5: "Band 6",
+      } as Record<string, string>;
+      for (const person of everyone) {
+        expect(valueOf(person, "Compensation band")).toBe(
+          bands[String(valueOf(person, "Level"))],
+        );
+      }
+    });
+
+    it("give a rating a year in, Too early before, each rating given", () => {
+      const yearAgo = addDays(organization.referenceDate, -365);
+      for (const person of everyone) {
+        expect(valueOf(person, "Performance rating") === "Too early").toBe(
+          String(person.startDate) > yearAgo,
+        );
+      }
+      expect(
+        new Set(
+          everyone.map((person) => valueOf(person, "Performance rating")),
+        ),
+      ).toEqual(new Set(["Exceeds", "Meets", "Developing", "Too early"]));
+    });
+
+    it("go with a filled planned hire's other values to it", () => {
+      for (const hire of organization.hires.filter(
+        ({ filledBy }) => filledBy,
+      )) {
+        const person = organization.people.find(
+          ({ id }) => id === hire.filledBy,
+        );
+        expect(hire.values).toEqual(person?.values);
+      }
+    });
   });
 
   describe("onboarding notes", () => {
