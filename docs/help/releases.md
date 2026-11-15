@@ -11,7 +11,7 @@
 - **Schedule ends:** a schedule's last day, or **No end date** if it keeps going. No cycle starts after that day, and the cycle holding it ends on it. Once that day has passed, the schedule shows **Ended** after its name. It stays on the page until you retire it.
 - **Panel:** a schedule's details open in a panel beside the timeline and the table. To close it, select the **×** at its top right, or press Esc.
 - **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. It goes live once someone whose role approves features and releases approves it. A dot before a name marks its draft.
-- **Who changes what:** if your role can change **Configuration**, you add schedules and change their cycles. If your role can change **Features and releases**, you make and change releases. Others see the page without these buttons.
+- **Who changes what:** if your role can change **Plan** or **Configuration**, you add schedules and change their cycles. If your role can change **Features and releases**, you make and change releases. Others see the page without these buttons.
 
 The page shows a timeline of the schedules the table shows, with the table of schedules under it. A search, a filter or a saved view narrows both. The table lists each schedule's **Cycle schedule**, its releases, the next release to ship, and its **Schedule ends** day, which is blank while it has no end date. Above the timeline are the search field, the **Draft** menu, the **Metrics** button, and the **Group by** and **Views** menus.
 
@@ -101,7 +101,6 @@ To end a schedule on a day:
 1. Select **Save**.
 
 The panel then reads **Schedule ends** and the day, and the timeline's cycles stop there. To let the schedule keep going again, empty **Schedule ends** and save. The panel then reads **No end date**.
-
 
 To change just one cycle's length:
 
