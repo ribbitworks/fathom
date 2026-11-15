@@ -616,7 +616,7 @@ export const viewScopes: Record<
 // columns whose widths are set, which the table itself already shows, each item removing what it
 // names, and the hidden columns, each item showing its column again. It clears
 // the view, saves it as a new one, and updates, renames, or deletes the one applied when the user
-// may change it, and shares it or takes it back when they may.
+// may change it, and shares it or stops sharing it when they may.
 export function ViewsMenu({
   saved,
   columns,

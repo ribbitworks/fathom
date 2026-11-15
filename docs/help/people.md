@@ -144,6 +144,19 @@ The counts include every row the table shows, planned hires too. So a search or 
 
 You're done when the counts show under the column you chose.
 
+### Group People
+
+People starts as one list. You can put the rows under headings instead, such as one for each manager.
+
+1. Select **Group by: None**, after **Metrics**.
+1. Choose **Manager**, **Position**, **State**, or a column such as **Site**.
+
+Grouped by manager, each heading names the manager, then their team's name if the team has one. People with no manager come last, under **No manager**. Each heading says how many people it holds.
+
+To show one list again, choose **None** in the same menu. Save a view to keep a grouping you use often. See [Saved views](saved-views.md).
+
+You're done when the rows show under the headings you chose.
+
 ### Export People
 
 Exporting saves the table as a file you can open in a spreadsheet.

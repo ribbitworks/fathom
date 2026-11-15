@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Managers and Teams on People
 
 ## Scope
 
-Verifies the People table's **Manager**, **Manager?**, **Manager assigned**, **Team** and **Team name** columns: who can be picked as a manager, checking and clearing **Manager?** as drafts, the rule that refuses clearing it, team names, the red **Left** box on a manager who has left, filtering and sorting by **Manager?**, and what a Feature Lead sees.
+Verifies the People table's **Manager**, **Manager?**, **Manager assigned**, **Team** and **Team name** columns: who can be picked as a manager, checking and clearing **Manager?** as drafts, the rule that refuses clearing it, team names, the red **Left** box on a manager who has left, filtering and sorting by **Manager?**, what a Feature Lead sees, and how the rows read grouped by manager.
 
 ## Test Environment
 
@@ -326,4 +326,40 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - In the row of '西尾 亮', the **Manager** cell reads 'Viktoria Holmberg'.
     - The cell has no **Left** box.
+  - **Notes:**
+
+### MGR-11: People Are Grouped by Manager
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, the same as MGR-10.
+
+**Preconditions:** **People** page open from the left-hand menu.
+
+- [ ] `9652` Read the button after **Metrics** above the table.
+  - **Expected:**
+    - It reads **Group by: None**.
+    - The rows show as one list, with no headings.
+  - **Notes:**
+
+- [ ] `6B5A` Select **Group by: None**, then **Manager**.
+  - **Expected:**
+    - The button reads **Group by: Manager**.
+    - Each heading names a manager, followed by a comma and their team's name where the team has one, such as **Max Munk, Mobile team**.
+    - A manager whose team has no name is named alone.
+    - Each heading has how many people it holds.
+    - The headings run in order of the managers' names.
+    - The last heading is **No manager**.
+  - **Notes:**
+
+- [ ] `D80E` Type `Max Munk` in the search box above the table.
+  - **Expected:**
+    - One heading shows, naming the manager the 'Max Munk' row's **Manager** cell names.
+    - The 'Max Munk' row is under it.
+  - **Notes:**
+
+- [ ] `E9C9` Clear the search box.
+  - **Expected:** Every person shows again, under their manager's heading.
+  - **Notes:**
+
+- [ ] `D69D` Select **Group by: Manager**, then **None**.
+  - **Expected:** The headings are gone, and the rows show as one list.
   - **Notes:**

@@ -247,7 +247,7 @@ Saved views, personal and shared, on every page with a table, and on the pages t
 3. **The Views menu on any page,** with a page's own choices kept in its views, People moved onto it, and saved views on Releases. Done on 2026-11-14.
 4. **Hiding columns** ([issue #517](https://github.com/jlarue26/fathom/issues/517)). Done on 2026-11-14.
 5. **Saved views on Features,** the Features Board included, and on each Projects tab. Done on 2026-11-14.
-6. **Group by on People** ([issue #553](https://github.com/jlarue26/fathom/issues/553)).
+6. **Group by on People** ([issue #553](https://github.com/jlarue26/fathom/issues/553)). Done on 2026-11-14.
 7. **Saved views on Feature assignments and Capacity's People mode.**
 8. **The Lists page on the shared table** ([issue #317](https://github.com/jlarue26/fathom/issues/317)).
 9. **Saved views on Lists,** with its All, Built in or Custom choice in the Views menu.

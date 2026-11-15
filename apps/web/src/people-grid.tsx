@@ -46,9 +46,12 @@ import {
   RecordGrid,
   type RecordGridProps,
   type RecordTable,
+  type RowGrouping,
   type RowProblem,
   recordsAsShown,
+  shownSchema,
 } from "./record-grid.tsx";
+import { byChoice, holdsOneChoice } from "./choice-grouping.ts";
 import { flagChoice } from "./cell-kinds.tsx";
 import {
   isHire,
@@ -660,7 +663,36 @@ function requestFor(parts: readonly RowChange[]): RowRequest {
 // The only value changed from another day, since the rest take no date.
 export const datedKey = "managerId";
 
+const builtInGroupings = ["managerId", "positionId", "stateId"];
+
+// Team follows from Manager, so isn't offered apart.
+function peopleGroupings(columns: readonly Column[]): RowGrouping<Person>[] {
+  const teamOf = new Map(
+    columns
+      .find(({ key }) => key === "team")
+      ?.choices.map(({ id, label }) => [id, label]),
+  );
+  const managerHeading = ({ id, label }: Choice) => {
+    const team = teamOf.get(id);
+    return team === undefined || team === label ? label : `${label}, ${team}`;
+  };
+  return [
+    ...builtInGroupings.flatMap((key) =>
+      columns.filter((column) => column.key === key),
+    ),
+    ...columns.filter(
+      (column) => column.field !== undefined && holdsOneChoice(column),
+    ),
+  ].map((column) =>
+    column.key === "managerId"
+      ? byChoice(column, managerHeading)
+      : byChoice(column),
+  );
+}
+
 function peopleTable(
+  // The columns and lists as the Draft menu's choice shows them, which the rows can be grouped by.
+  schema: { fields: readonly Field[]; lists: readonly List[] },
   showDates: boolean,
   showHireDates: boolean,
   showPosition: boolean,
@@ -690,8 +722,28 @@ function peopleTable(
         : { ...column, dataClass: builtInClasses.get(column.key) };
   };
   const hireIds = new Set(people.filter(isHire).map(({ id }) => id));
+  const columnsShown = (
+    shownFields: readonly Field[],
+    shownLists: readonly List[],
+    order: readonly string[],
+    records: readonly Person[],
+  ) =>
+    columnsFor(
+      shownFields,
+      shownLists,
+      order,
+      showDates,
+      records,
+      showPosition,
+      showHireDates,
+      canEditHires,
+    );
   return {
     label: "People",
+    groupings: peopleGroupings(
+      columnsShown(schema.fields, schema.lists, [], people),
+    ),
+    ungrouped: true,
     exported: {
       recordedAs: "people",
       // Planned hires' rows are the hiring plan, whatever columns are exported.
@@ -735,18 +787,9 @@ function peopleTable(
       changesFrom === undefined
         ? isHire(row) && !canEditHires
         : isHire(row) || !managerChangesFrom(row.id, changesFrom),
-    columnsFor: (fields, lists, order, records) =>
-      columnsFor(
-        fields,
-        lists,
-        order,
-        showDates,
-        records,
-        showPosition,
-        showHireDates,
-        canEditHires,
-      )
-        .map(classed(lists))
+    columnsFor: (shownFields, shownLists, order, records) =>
+      columnsShown(shownFields, shownLists, order, records)
+        .map(classed(shownLists))
         .map((column) =>
           changesFrom === undefined || column.key === datedKey
             ? column
@@ -828,6 +871,11 @@ export function PeopleGrid({
     <RecordGrid
       records={people}
       table={peopleTable(
+        shownSchema(
+          props.withDrafts === false ? "live" : props.view.show,
+          props.fields,
+          props.lists,
+        ),
         showDates,
         showHireDates,
         showPosition,

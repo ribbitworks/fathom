@@ -62,7 +62,7 @@ import {
   type TableChoices,
   targetOf,
 } from "./projects.ts";
-import { emptiedWords } from "./status-mark.tsx";
+import { byChoice, holdsOneChoice } from "./choice-grouping.ts";
 import { tipAttribute } from "./table-tips.tsx";
 import {
   fieldColumn,
@@ -874,36 +874,11 @@ const byNeededBy: RowGrouping<Feature> = {
         },
 };
 
-// The rows' groups by the one choice a column holds, in its list's order, then those with none.
-function byChoice(column: Column<Feature, PlanChange>): RowGrouping<Feature> {
-  const none: RowGroup = {
-    key: "no-choice",
-    label: emptiedWords(column.label, column.emptyLabel),
-    rank: Number.MAX_SAFE_INTEGER,
-  };
-  return {
-    key: column.key,
-    label: column.label,
-    of: (feature) => {
-      const [chosen] = column.value(feature) as string[];
-      const choice = column.choices.find(({ id }) => id === chosen);
-      return choice === undefined
-        ? none
-        : {
-            key: choice.id,
-            label: choice.label,
-            rank: column.choices.indexOf(choice),
-          };
-    },
-  };
-}
-
 // The columns whose one choice the rows can be grouped by, apart from the target cycle and its
 // release, grouped by their own; a column holding several choices has a row's place in several
 // groups, which a grouping can't give it.
 const groupedByChoice = (column: Column<Feature, PlanChange>) =>
-  column.kind === "choice" &&
-  !column.multiple &&
+  holdsOneChoice(column) &&
   column.key !== "targetCycle" &&
   column.key !== releaseColumnKey;
 
@@ -925,7 +900,7 @@ export function featureTable(
 ): RecordTable<Feature, PlanChange, FeatureFields> {
   const byListed = featureColumns(choices)
     .filter(groupedByChoice)
-    .map(byChoice);
+    .map((column) => byChoice(column));
   return planTable<Feature, FeatureFields>({
     type: "feature",
     ...wordsOf("features"),

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the People table on its own: how its columns are put in order, how wide each column is,
-// adding people for a user who does not see start and end dates, and the people as they are live.
+// adding people for a user who does not see start and end dates, the ways its rows group, and the
+// people as they are live.
 // The grid it is built on is tested in record-grid.test.tsx, and the page around it in
 // people-page.test.tsx.
 
@@ -812,6 +813,85 @@ describe("managers and teams", () => {
     );
     expect(text("p4", "team")).toBe("Fictional p3");
     expect(text("p5", "managerId")).toBe("Fictional p9");
+  });
+
+  it("groups people under each manager, named with their team's name where it has one, then No manager", () => {
+    render(grid({ view: { ...emptyView, grouping: "managerId" } }));
+    expect(
+      screen.getAllByRole("rowheader").map(({ textContent }) => textContent),
+    ).toEqual([
+      "Fictional p1, Harbour Crew2 people",
+      "Fictional p31 person",
+      "Fictional p91 person",
+      "No manager1 person",
+    ]);
+  });
+
+  it("offers Group by Manager, Position, State and added columns of one choice, but not Team", async () => {
+    const levels: Field = { ...site, id: "f2", name: "Levels", multiple: true };
+    const states: List = {
+      ...sites,
+      id: "states",
+      name: "Hiring states",
+      builtIn: "hiring-states",
+    };
+    render(grid({ fields: [site, levels], lists: [positions, sites, states] }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Group by: None" }),
+    );
+    expect(
+      (await screen.findAllByRole("menuitem")).map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual(["✓None, on", "Manager", "Position", "State", "Site"]);
+  });
+
+  it("groups people by an added column's choice, in its list's order, then those with none", () => {
+    render(
+      grid({
+        people: [
+          person("p1", { values: { f1: ["c1"] } }),
+          person("p2", { values: {} }),
+        ],
+        fields: [site],
+        lists: [positions, sites],
+        view: { ...emptyView, grouping: "f1" },
+      }),
+    );
+    expect(
+      screen.getAllByRole("rowheader").map(({ textContent }) => textContent),
+    ).toEqual(["Harbour1 person", "No site1 person"]);
+  });
+
+  it("offers no grouping by a column only drafted to be added while live alone shows", async () => {
+    const office: Field = {
+      ...site,
+      id: "f2",
+      name: "Office",
+      draft: {
+        action: "created",
+        changed: [],
+        live: {},
+        state: "waiting",
+        madeBy: null,
+        madeAt: null,
+      },
+    };
+    render(
+      grid({
+        fields: [site, office],
+        lists: [positions, sites],
+        view: { ...emptyView, show: "live" },
+      }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Group by: None" }),
+    );
+    expect(
+      (await screen.findAllByRole("menuitem")).map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual(["✓None, on", "Manager", "Position", "Site"]);
   });
 
   it("marks a drafted manager, and the team that follows, with the live ones", () => {
