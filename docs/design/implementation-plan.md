@@ -293,7 +293,7 @@ Exporting what a view shows as a CSV or TSV file, as the [Decisions Log](../prod
 
 ### Project Manager Input
 
-The input Project Managers give on whether teams are in place. Its form is an [open question in the Product Brief](../product/brief.md#open-questions), so this slice is scheduled once it is answered.
+The input Project Managers give on whether teams are in place. Its form is still to be decided, so this slice is scheduled once it is.
 
 ## Deployment Testing
 
