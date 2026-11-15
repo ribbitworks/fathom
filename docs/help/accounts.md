@@ -11,7 +11,7 @@ The **Accounts** page lists everyone who can sign in to Fathom. You find it unde
 
 See [Access history](access-history.md) for more.
 
-The table shows each account's **Person**, **Roles**, **Status** and the day it was **Created**.
+The table shows each account's **Name**, **Email address**, **Roles**, **Status** and the day it was **Created**. It's read only. To see an account's details, point at its row and select the details button at the right of its **Name**. They open in a panel beside the table, with the buttons for changing the account under them.
 
 ## Make an Account
 
@@ -32,17 +32,18 @@ See [Settings](settings.md) for more.
 
 ## Change an Account
 
-1. Select **Edit** in the account's row.
+1. Open the account's details.
+1. Select **Edit…**.
 1. Change the **Name**, the **Email address**, the roles or the **Default role**.
 1. Select **Save**.
 
-You're done when the account's row shows your change.
+You're done when the account's details show your change.
 
 ## Reset a Password
 
-1. Select **Edit** in the account's row.
-1. Select **Reset password**.
-1. Select **Reset password** again in the dialog. Fathom shows a new password.
+1. Open the account's details.
+1. Select **Reset password…**.
+1. Select **Reset password** in the dialog. Fathom shows a new password.
 1. Select **Copy**, and give the password to its holder.
 1. Select **Done**.
 
@@ -56,30 +57,31 @@ You're done when you've given the new password to its holder.
 
 Deactivating an account stops it signing in. Fathom never deletes accounts, since the change history and the access history name them.
 
-1. Select **Edit** in the account's row.
-1. Select **Deactivate**.
-1. Select **Deactivate** again in the dialog.
+1. Open the account's details.
+1. Select **Deactivate…**.
+1. Select **Deactivate** in the dialog.
 
-You're done when the row says **Deactivated**. The account is signed out everywhere.
+You're done when its **Status** says **Deactivated**. The account is signed out everywhere.
 
 ## Reactivate an Account
 
-1. Select **Edit** in the account's row.
-1. Select **Reactivate**.
-1. Select **Reactivate** again in the dialog.
+1. Open the account's details.
+1. Select **Reactivate…**.
+1. Select **Reactivate** in the dialog.
 
 If you deactivate your own account, someone else who manages accounts has to reactivate it.
 
-You're done when the row says **Active**.
+You're done when its **Status** says **Active**.
 
 ## Find an Account
 
 - Type part of a name or an email address in the search box.
-- Choose **All**, **Active** or **Deactivated** beside it to show only those accounts.
+- To show only active or deactivated accounts, filter the **Status** column. Open its menu, and select **Filter…**. Then tick **Active** or **Deactivated**.
+- To keep a search, filter or sort and come back to it, save it as a view. See [Saved views](saved-views.md).
 
 ## Marks on the Page
 
 - **This account** marks your own row.
 - **(default)** after a role, in **Roles**, marks the account's default role.
 - **Active** or **Deactivated**, in **Status**, says whether the account can sign in.
-- **A greyed-out role or Deactivate** means the change would leave no active account that manages accounts. Fathom always keeps one, so nobody is locked out.
+- **A greyed-out role, or a greyed-out Deactivate…**, means the change would leave no active account that manages accounts. Fathom always keeps one, so nobody is locked out.

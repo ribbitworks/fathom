@@ -91,7 +91,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 ## Dates
 
 - **Days:** A day shows in the reader's language with a short month and its year, such as 31 Dec 2026 or Dec 31, 2026. Every date shown includes its year. The About box's full date and Settings' day and time in a time zone are the two exceptions, as [Visual Design](visual-design.md#layout) sets out.
-  - **Drawn by:** `formatDay` in `apps/web/src/table-view.ts`, which date cells use through `cellKinds` in `apps/web/src/cell-kinds.tsx`, and `formatMomentDay` there for the day of a moment, such as when an account was made.
+  - **Drawn by:** `formatDay` in `apps/web/src/table-view.ts`, which date cells use through `cellKinds` in `apps/web/src/cell-kinds.tsx`, with `dayOf` in `apps/web/src/today.ts` turning a moment into its day in Fathom's time zone first, such as when an account was made in Accounts' Created column, and `formatMomentDay` in `apps/web/src/table-view.ts` for a moment shown outside a date cell, such as a scope history's.
   - **Example:** each release's heading on Features grouped by Release, such as Platform: Harbor 2 and the day it ships.
 - **Months:** A month shows as a short month and its year, such as Mar 2027.
   - **Drawn by:** `formatMonth` in `apps/web/src/table-view.ts`.

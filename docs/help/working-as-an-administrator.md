@@ -24,7 +24,7 @@ The account is ready once its row shows **Active**. See [Accounts](accounts.md#m
 
 ## Look After Accounts
 
-On **Accounts**, select **Edit** in an account's row. From there you can change its name or roles, reset its password, or deactivate it. A deactivated account is reactivated the same way. See [Accounts](accounts.md).
+On **Accounts**, open an account's details from the button at the right of its **Name**. Under them, **Edit…** changes its name or roles, **Reset password…** gives it a new password, and **Deactivate…** stops it signing in. A deactivated account has **Reactivate…** there instead. To find accounts by status, filter the **Status** column. See [Accounts](accounts.md).
 
 ## Change What a Role Lets Its Holders Do
 
