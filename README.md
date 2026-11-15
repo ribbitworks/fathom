@@ -2,15 +2,17 @@
 
 Fathom plans software work over time: what a team will build, who will build it, and when.
 
-## What Fathom Is For
+## Features
 
-Fathom gives a software organization one place to plan its roadmap and its people together:
-
-- **A roadmap:** features grouped into releases on release streams, shown on a timeline and a board.
-- **Resource planning over time:** who is assigned to which feature or project, for which months, and how much of their time. Assignments start and end, people join and leave, and teams change, so every plan is a plan for a period, not a snapshot.
+- **Roadmap:** features grouped into releases on release streams, shown on a timeline and a board.
+- **Resource planning:** who is assigned to which feature or project, for which months, and how much of their time, as people join and leave and teams change.
 - **Capacity:** whether the people planned can do the work planned, month by month, including planned hires.
-- **Drafts before changes go live:** planners try changes as drafts, compare them with what's live, and publish when they agree.
-- **Access by role and data class:** each role sees and changes only what it needs, and personal or confidential data is shown only to those allowed to see it.
+- **Drafts:** changes are drafts until they're approved, and can be compared with what's live.
+- **Access control:** data is classified as General, Personal or Confidential, and each role sees and changes only the classifications its permissions allow.
+
+## Security
+
+The [Security Plan](docs/security/security-plan.md) sets out what Fathom guards against, [How Data Is Safeguarded](docs/privacy/data-protection.md) who sees which data, and [Securing Your Environment](docs/operations/securing-your-environment.md) what whoever runs Fathom must secure.
 
 ## Status
 
