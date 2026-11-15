@@ -6,7 +6,7 @@
 
 ## Context
 
-The owner decided that a user's changes are seen only by that user until they publish them, all at once, and that a record someone has unpublished changes to is held: others see it as it was, marked as being changed, and cannot change, approve, or reject it, as the [Decisions Log](../product/decisions.md#planning) sets out. Changing a published draft makes the change the editor's alone until they publish it, while others keep seeing the published draft. The change history shows unpublished edits only to their maker until they are published.
+The maintainer decided that a user's changes are seen only by that user until they publish them, all at once, and that a record someone has unpublished changes to is held: others see it as it was, marked as being changed, and cannot change, approve, or reject it, as the [Decisions Log](../product/decisions.md#planning) sets out. Changing a published draft makes the change the editor's alone until they publish it, while others keep seeing the published draft. The change history shows unpublished edits only to their maker until they are published.
 
 [ADR 0007](0007-draft-rows.md) keeps drafts in one table, one per record, shown to everyone. Some records exist only as drafts, such as a person or a list drafted to be added.
 

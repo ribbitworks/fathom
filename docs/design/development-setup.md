@@ -1,6 +1,6 @@
 # Fathom: Development Setup
 
-**Status:** Proposal for the owner's review
+**Status:** Proposal for the maintainer's review
 **Last updated:** 2026-11-14
 
 How Fathom's repository is organized, how developers run it locally, and how fictional data is generated. It applies the libraries in [ADR 0002](../adr/0002-libraries.md) and the platforms in [Supported Platforms](../operations/supported-platforms.md).
@@ -131,7 +131,7 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 | `pnpm updates` | List available dependency updates with Renovate, written to the git-ignored `output/updates/` folder; changes nothing, and needs network access to the package and container registries |
 | `pnpm update:analyzer <version>` | Pin a new PSScriptAnalyzer version together with its SHA-256 |
 | `pnpm reset-caches` | Remove cached scanner data, which the next check rebuilds, and ESLint's cache, which the next `pnpm lint` rebuilds |
-| `pnpm prune-reports [days]` | Delete local reports older than the given number of days, 365 by default. Security reports are always kept for at least one calendar year, and must also be kept in the location agreed with IT, as the [Security Plan](../security/security-plan.md) requires |
+| `pnpm prune-reports [days]` | Delete local reports older than the given number of days, 365 by default. Security reports are always kept for at least one calendar year |
 | `pnpm stack:up`, `pnpm stack:down`, `pnpm stack:reset`, and `pnpm stack:logs` | Start, stop, delete the data of, and follow the logs of production-like mode |
 | `pnpm stack:create-account --name <name> --email <email> [--role <role>]` and `pnpm stack:create-administrator --email <email>` | Create an account, or the Fathom Administrator account, in production-like mode while it runs, as `pnpm account:create` and `pnpm admin:create` do |
 | `pnpm test:containers` | Container tests, in a separate copy of production-like mode: users reach Fathom only through the proxy, and the application and database cannot reach the internet |

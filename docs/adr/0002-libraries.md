@@ -65,7 +65,7 @@ Which component provides each security mitigation:
 - **Security headers:** @fastify/helmet.
 - **Logs:** Pino redacts known sensitive fields, and database errors are logged by type and code, without their details. Personal data is never passed to the logger, and request logging leaves out query strings. The one exception is each request's client address, which is logged to investigate security problems.
 
-Better Auth settings that the security plan relies on:
+Better Auth settings Fathom's security relies on:
 
 - **No public sign-up:** Accounts are created only by administrators.
 - **No session caching in cookies:** Role changes and account deactivation take effect immediately.

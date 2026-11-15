@@ -1,7 +1,7 @@
 # Fathom: Product Brief
 
 **Status:** Draft
-**Last updated:** 2026-11-12
+**Last updated:** 2026-11-14
 
 ## Problem
 
@@ -13,7 +13,7 @@ Fathom is the single place where a software organization's managers plan project
 
 ## Users
 
-About 20 to 30 users at first, mostly managers and leads, in one private company, with employees in several countries. Team members may be given accounts later. Not all users can edit; [Roles](roles.md) sets out who can do what.
+Tens of users in one organization, mostly managers and leads, whose employees may work in several countries. Team members may be given accounts too. Not all users can edit; [Roles](roles.md) sets out who can do what.
 
 Personas are named as they are widely known in the software industry. Each organization matches them to its own titles, such as those shown.
 
@@ -53,7 +53,7 @@ Personas are named as they are widely known in the software industry. Each organ
 
 ## Out of scope for v1
 
-- Integrations with external systems (Jira, Primavera P6, HR systems)
+- Integrations with external systems, such as issue trackers, project scheduling tools and HR systems
 - Sign-in through a corporate directory
 - Live collaborative editing
 - Cost, rates, and budget tracking. Fathom tracks people and time only.
@@ -65,11 +65,11 @@ Personas are named as they are widely known in the software industry. Each organ
 
 ## Constraints
 
-- **Deployment:** Runs on-premises, on a server shared with other applications. No managed cloud services can be assumed. Details are in [Deployment](../operations/deployment.md).
-- **Network:** Fathom must be reachable only from the internal network, never from the internet, even though its server has internet access. Fathom must not depend on internet services at runtime, including CDNs, fonts, or external APIs, so personal data stays inside the company.
+- **Deployment:** Runs on the organization's own server, which may be shared with other applications. No managed cloud services can be assumed. Details are in [Deployment](../operations/deployment.md).
+- **Network:** Fathom must be reachable only from the internal network, never from the internet, even though its server has internet access. Fathom must not depend on internet services at runtime, including CDNs, fonts, or external APIs, so personal data stays inside the organization.
 - **Scale:** Small. Tens of users and a modest amount of data. Simple, easy-to-run choices matter more than horizontal scaling.
-- **Personal data:** Fathom holds personal information about employees, who may work in several countries. It is expected to be governed by the privacy law where the company is based, and the law of other countries where employees work may also apply. Access is limited by role, and personal data not needed for planning is kept out of logs and other output.
-- **Configurability:** Fathom needs to be as configurable as possible, to suit multiple domains and organizational structures, but must meet the owner's requirements and use cases first.
+- **Personal data:** Fathom holds personal information about employees, who may work in several countries. It is expected to be governed by the privacy law where the organization is based, and the law of other countries where employees work may also apply. Access is limited by role, and personal data not needed for planning is kept out of logs and other output.
+- **Configurability:** Fathom needs to be as configurable as possible, to suit multiple domains and organizational structures, but must meet the maintainer's requirements and use cases first.
 - **Front end:** The UI needs rich, interactive timeline, Gantt, org chart, and capacity views. This is the biggest driver of the front-end technology choice.
 
 ## Key decisions
@@ -80,7 +80,7 @@ Personas are named as they are widely known in the software industry. Each organ
 - **Access:** Role-based. Each user holds one or more roles and acts as one at a time, and roles grant access to tiers of data by sensitivity.
 - **Editing:** No live collaboration. Draft changes are approved before they reach the live plan.
 - **Configurability:** A fixed core of built-in tables, extended with custom fields and tables. See the [Decisions Log](decisions.md#configuration).
-- **Employee data:** A manually maintained copy of details held in the company's HR system.
+- **Employee data:** A manually maintained copy of details held in the organization's HR system.
 - **Authentication:** Local accounts managed in Fathom for v1.
 - **Tech stack:** TypeScript end to end with PostgreSQL, in Docker. See [ADR 0001](../adr/0001-tech-stack.md).
 
@@ -89,17 +89,17 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md). The order 
 ## Future possibilities
 
 - Sign-in through the corporate directory (Active Directory / Entra ID / LDAP)
-- Reading project data from a Primavera P6 database
-- Integrations with Jira and HR systems
+- Reading project data from a project scheduling tool
+- Integrations with issue trackers and HR systems
 - Other integrations as needs emerge
 - Physical resources, such as equipment, planned and allocated alongside people
 - Importing people: adding and updating people from a CSV or TSV file, planned for v1.1, as the [Roadmap](roadmap.md#not-yet-placed) records
 
 ## Open questions
 
-1. **What-if scenarios:** The owner wants to compare a draft with the approved plan, and drafts with each other. Each row has only one draft, as the [Decisions Log](decisions.md#planning) sets out, so comparing alternative plans would be a separate feature, such as named scenarios. It could mature incrementally across versions of Fathom.
+1. **What-if scenarios:** The maintainer wants to compare a draft with the approved plan, and drafts with each other. Each row has only one draft, as the [Decisions Log](decisions.md#planning) sets out, so comparing alternative plans would be a separate feature, such as named scenarios. It could mature incrementally across versions of Fathom.
 1. **Roles and approval:** Which roles exist, and what can each see, edit, and approve? See the proposal in [Roles](roles.md). Which changes need approval is decided in the [Decisions Log](decisions.md#planning).
-1. **Privacy review:** A document describing the personal data Fathom holds and how it is protected will be prepared for HR to review and approve. Which laws apply, in each country where employees work, is to be confirmed in that review.
+1. **Privacy review:** Each organization reviews [how data is safeguarded](../privacy/data-protection.md) before going live, and confirms which laws apply in each country where its employees work.
 1. **Backup location:** Where are backup files kept?
 1. **Project Manager input:** How do Project Managers give input on whether teams are in place, beyond what [Roles](roles.md) grants, such as comments or proposals?
 1. **Timeline changes:** The timeline goal asks for drag and drop to change dates and assignments. [The Roadmap and the Plan](decisions.md#planning) move features between cycles, and between the rows of the Features Board, first. Is dragging to shift a feature's allocations by months also needed?

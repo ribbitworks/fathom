@@ -233,7 +233,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The side panel is headed `Testing Project`.
     - A hollow yellow dot is before the heading.
-    - It shows the owner, `Testing Customer` and `Testing Proposal`.
+    - It shows the maintainer, `Testing Customer` and `Testing Proposal`.
     - **First milestone**, **Last milestone** and **Next delivery** read "None".
     - Under **Milestones** are "None" and an **Add milestone** button.
     - The table has a row for it.

@@ -1,6 +1,6 @@
 # Fathom: Architecture
 
-**Status:** Proposal for the owner's review
+**Status:** Proposal for the maintainer's review
 **Last updated:** 2026-10-30
 
 A high-level view of Fathom's parts and how they connect. It stays at the level of containers and networks; how each part is built is in the documents linked below.

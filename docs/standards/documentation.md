@@ -37,12 +37,11 @@ Fathom's additions to the shared [Documentation](shared/documentation.md) standa
 - Implementation plan (`docs/design/implementation-plan.md`): how the roadmap's stages are built, slice by slice
 - Architecture decision records (`docs/adr/`): technical decisions
 - Issues ([GitHub Issues](https://github.com/jlarue26/fathom/issues), as `docs/issues.md` sets out): known problems and deferred work not yet scheduled in the implementation plan
-- Security plan (`docs/security/security-plan.md`): threat model, vulnerability scanning, source code assurance, and enforcement
+- Security plan (`docs/security/security-plan.md`): threats and their mitigations, vulnerability scanning, and source code assurance
 - Manual tests (`docs/testing/`, with each role's acceptance test in `docs/testing/acceptance/`): lasting step-by-step tests of a feature by hand in a real browser, following [Testing Standards § Manual Tests](testing.md#manual-tests)
-- Manual test results (`docs/testing/results/`): the marked copy of each manual test run, saved when its marks are cleared, as [Manual Test Basics](../testing/manual-test-basics.md#recording-results) sets out
 - Manual test basics (`docs/testing/manual-test-basics.md`): what every manual test shares, its environment, where its accounts come from, the common procedures, named, and the common terms
 - Help pages (`docs/help/`): how to use each page of Fathom, and the workflows each role does most, for the people who use it, listed in `docs/help/index.md`; a guide that repeats facts the documents above own, kept consistent with them, and updated by every change to the page it covers
 - Supported platforms (`docs/operations/supported-platforms.md`): the platforms Fathom is tested and supported on, and their setup needs
 - Deployment (`docs/operations/deployment.md`): the specifics of Fathom's first deployment and what it asks of IT
 - IT overview (`docs/operations/it-overview.md`): a standalone summary for IT of facts owned by the documents above; update it whenever those facts change
-- Data protection summary (`docs/privacy/data-protection.md`): a standalone summary for HR of facts owned by the documents above; update it whenever those facts change
+- Data protection summary (`docs/privacy/data-protection.md`): a short list of what safeguards Fathom's data, linking to the documents above that own the facts; update it whenever those facts change

@@ -1,13 +1,13 @@
 # Roadmap and Timeline Views
 
 - **ADR:** 0009
-- **Status:** Superseded by [The Roadmap and the Plan](../product/decisions.md#planning), agreed by the owner on 2026-11-11. Its choice of libraries, below, still stands, as its revision of 2026-11-11 records
+- **Status:** Superseded by [The Roadmap and the Plan](../product/decisions.md#planning), agreed by the maintainer on 2026-11-11. Its choice of libraries, below, still stands, as its revision of 2026-11-11 records
 - **Date:** 2026-11-03
-- **Revised:** 2026-11-03, to point to the Decisions Log's answer on how a cycle's demand is counted, and to the board's test page in the Implementation Plan; 2026-11-10, since large work is no longer split into a feature for each increment; 2026-11-11, since the board and timeline it proposed were revised with the owner into the Features Board and the shared timeline, keeping the choice of libraries; 2026-11-12, marked superseded
+- **Revised:** 2026-11-03, to point to the Decisions Log's answer on how a cycle's demand is counted, and to the board's test page in the Implementation Plan; 2026-11-10, since large work is no longer split into a feature for each increment; 2026-11-11, since the board and timeline it proposed were revised with the maintainer into the Features Board and the shared timeline, keeping the choice of libraries; 2026-11-12, marked superseded
 
 ## Context
 
-The [Product Brief](../product/brief.md#goals-for-v1) asks for a roadmap view, where Product Managers shape the roadmap of features by cycle and release and leadership reads it, and a timeline or Gantt view, which changes dates and assignments by drag and drop. The [Roadmap](../product/roadmap.md#stage-who-is-working-on-what) places both in the first stage, after its table of features grouped by cycle, where the owner moved them from The Organization stage on 2026-11-11. [ADR 0004](0004-ui-components.md) chose vis-timeline for them, to be confirmed later; this ADR replaces that choice.
+The [Product Brief](../product/brief.md#goals-for-v1) asks for a roadmap view, where Product Managers shape the roadmap of features by cycle and release and leadership reads it, and a timeline or Gantt view, which changes dates and assignments by drag and drop. The [Roadmap](../product/roadmap.md#stage-who-is-working-on-what) places both in the first stage, after its table of features grouped by cycle, where the maintainer moved them from The Organization stage on 2026-11-11. [ADR 0004](0004-ui-components.md) chose vis-timeline for them, to be confirmed later; this ADR replaces that choice.
 
 What the views move is coarse, as the [Decisions Log](../product/decisions.md#planning) sets out:
 
@@ -16,7 +16,7 @@ What the views move is coarse, as the [Decisions Log](../product/decisions.md#pl
 - **No dependency lines:** Dependencies between features are not recorded, and Fathom plans features, never tasks.
 - **Every change is a draft:** Moves are drafts, private until published, as [ADR 0007](0007-draft-rows.md) and [ADR 0008](0008-unpublished-drafts.md) set out, shown with the marks every other table uses.
 
-On 2026-11-11 the owner revised the board and timeline below, keeping the choice of libraries: the board became the Features Board, the Roadmap, whose columns are one stream's cycles and whose rows follow Group by, and the timeline became one shared timeline, taken out of the Releases timeline, for the Plan, the project timeline and Releases, each day the same width, as [Visual Design](../design/visual-design.md#components) and [UI Conventions](../design/conventions.md#timelines) set out.
+On 2026-11-11 the maintainer revised the board and timeline below, keeping the choice of libraries: the board became the Features Board, the Roadmap, whose columns are one stream's cycles and whose rows follow Group by, and the timeline became one shared timeline, taken out of the Releases timeline, for the Plan, the project timeline and Releases, each day the same width, as [Visual Design](../design/visual-design.md#components) and [UI Conventions](../design/conventions.md#timelines) set out.
 
 Every choice must meet ADR 0004's rules: completely open source with no paid edition, bundled and working offline, no code built from strings, React 19, and actively maintained. The candidates below were compared from GitHub and npm on 2026-11-03, without test pages; sizes are minified and compressed, from bundlephobia.
 
@@ -41,6 +41,6 @@ Every choice must meet ADR 0004's rules: completely open source with no paid edi
 
 - **Fathom maintains the board and the timeline,** as it does the spreadsheet tables, in return for drafts shown as everywhere else and no new dependency, and none of moment, HTML labels, or a wrapper around a component that is not React.
 - **Bars live on the timeline, not the board:** A feature's staffed months are a bar on the shared timeline, in the Plan and the project timeline, each day the same width, so cycles of any length line up. The board's cards name their staffed months in words instead, so the board needs no lanes.
-- **The brief's dates and assignments are narrowed:** The first version moves target cycles and the board's row values only. Dragging a bar to shift a feature's allocations by months would make many allocation drafts at once, so it is left out until the owner decides it is needed, as the brief's open questions ask.
+- **The brief's dates and assignments are narrowed:** The first version moves target cycles and the board's row values only. Dragging a bar to shift a feature's allocations by months would make many allocation drafts at once, so it is left out until the maintainer decides it is needed, as the brief's open questions ask.
 - **More reliance on @hello-pangea/dnd,** whose last release was in February 2025. Moving it out would touch both ordering and the board, with `@dnd-kit/react` the replacement ADR 0004 names.
 - **Build order:** The Features Board, the Plan and the project timeline are built in the order the [Implementation Plan](../design/implementation-plan.md#features-and-the-roadmap) sets out. The board shows no demand; demand against capacity is the Capacity page's Demand mode, as the [Decisions Log](../product/decisions.md#planning) sets out.

@@ -41,7 +41,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 
 ### Start With No Accounts
 
-Use only where a test case asks for it. Like Reset the Database, it deletes every account and record in the development database, and asks the owner first on a database others use.
+Use only where a test case asks for it. Like Reset the Database, it deletes every account and record in the development database, and asks the maintainer first on a database others use.
 
 1. Stop Fathom: press Ctrl+C in the first terminal.
 2. In the second terminal, run:

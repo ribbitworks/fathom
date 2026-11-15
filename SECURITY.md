@@ -18,4 +18,4 @@ Fathom is in early development and has no supported versions before 1.0. Fixes a
 
 ## How Fathom Is Kept Secure
 
-The [Security Plan](docs/security/security-plan.md) sets out the threats Fathom guards against, and the scans run on each build and on a schedule.
+The [Security Plan](docs/security/security-plan.md) sets out the threats Fathom guards against, and how its code and images are scanned.

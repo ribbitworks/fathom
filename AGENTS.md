@@ -1,6 +1,6 @@
 # Fathom: Agent Instructions
 
-Guidance for AI coding agents working in this repository.
+Guidance for AI coding agents working in this repository. The shared rules below are copied from the ai-toolkit, the maintainer's separate repository of engineering standards and agent rules that several projects share. It isn't public yet; its standards are copied into `docs/standards/shared/`.
 
 <!-- ai-toolkit:shared-rules:start -->
 ## Shared Agent Rules
@@ -136,7 +136,7 @@ Fathom holds company and employee data, so the shared data rule covers these in 
 - Never commit real company or employee information, including names, org structure, company plans, internal documents, or exports
 - Sample, seed, and test data must be fictional, and must not be derived from real people or real company data, including anonymized or masked copies
 - Do not put real data into documentation examples either (the shared rule covers prompts, issues and the rest)
-- Real data the owner keeps locally belongs only in `private/`, which is git-ignored, and only on company-managed machines; agents do not read from it
+- Real data the maintainer keeps locally belongs only in `private/`, which is git-ignored; agents do not read from it
 
 ## Automation
 

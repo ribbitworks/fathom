@@ -13,13 +13,13 @@ Fathom's [Product Brief](../product/brief.md) sets the constraints that drive th
 - **Scale:** Tens of users and a modest amount of data. Simplicity matters more than horizontal scaling.
 - **Front end:** Rich, interactive timeline, Gantt, org chart, and capacity views, with drag-and-drop. The strongest choice of components for these is in the React ecosystem, so every option below uses a React front end.
 - **Security:** Local accounts, role-based access to tiers of data, enforced the same way in screens, exports, snapshots, and search. Personal data is kept out of logs.
-- **Operations:** Snapshots, plus automated, encrypted backups, expected to be run by the department rather than IT.
+- **Operations:** Snapshots, plus automated, encrypted backups, expected to be run by the team that runs Fathom rather than IT.
 
-The owner's preferences:
+The maintainer's preferences:
 
-- **Maintainers:** In the short term, a group effort within the department, including the owner. Software Engineering Managers are technical.
-- **Language:** Modern languages. The owner dislikes Windows, so development and operations should avoid Windows-specific tooling where the host platform allows.
-- **Database:** PostgreSQL is the owner's favourite, with openness to lighter-weight options.
+- **Maintainers:** At first, the maintainer, with technical managers who may help.
+- **Language:** Modern languages. The maintainer dislikes Windows, so development and operations should avoid Windows-specific tooling where the host platform allows.
+- **Database:** PostgreSQL is the maintainer's favourite, with openness to lighter-weight options.
 
 ## Options Considered
 
@@ -46,7 +46,7 @@ Go API server, React front end, and PostgreSQL.
 
 ### Other Back Ends
 
-ASP.NET Core and Java are modern, run on Linux, and are common in Windows Server environments. They were not preferred because they also mean two languages alongside a React front end, and they do not match the owner's preferences as well.
+ASP.NET Core and Java are modern, run on Linux, and are common in Windows Server environments. They were not preferred because they also mean two languages alongside a React front end, and they do not match the maintainer's preferences as well.
 
 ### Database Options
 
@@ -55,7 +55,7 @@ ASP.NET Core and Java are modern, run on Linux, and are common in Windows Server
 
 ## Decision
 
-**TypeScript end to end with PostgreSQL**. PostgreSQL is chosen for the owner's preference, its mature backup and admin tooling, and room to grow, although SQLite would be viable at this scale.
+**TypeScript end to end with PostgreSQL**. PostgreSQL is chosen for the maintainer's preference, its mature backup and admin tooling, and room to grow, although SQLite would be viable at this scale.
 
 - **Front end:** React and TypeScript, built with Vite. All assets, including fonts, are bundled into the build so nothing loads from the internet.
 - **Back end:** A Node.js API server in TypeScript on a Long Term Support (LTS) release, sharing types and validation schemas with the front end.
@@ -70,11 +70,11 @@ Specific libraries (API framework, ORM, Gantt and org chart components, test too
 
 ## Consequences
 
-- **Maintainers** work in one language, which suits a group effort within the department.
+- **Maintainers** work in one language, which suits a small group of maintainers.
 - **Dependencies** need active care: Node.js stays on an LTS release, and dependency upgrades are planned rather than ad hoc.
 - **Gantt and timeline components** are the biggest technical risk. Free and commercial options vary widely in features and licensing. Some are GPL-licensed, which would require Fathom, if distributed, to be released under the GPL instead of Apache 2.0. A short evaluation should come before UI work beyond Hello Fathom starts.
 - **Access control** depends on discipline: all data access must go through the shared layer, which the code review standards should check.
 - **Each supported platform** has its own setup needs, which the team operating Fathom will own, as recorded in [Supported Platforms](../operations/supported-platforms.md).
-- **Internet exposure:** The host may have internet access, so Fathom's port must not be exposed to the internet, and its containers must not reach the internet at runtime. Releases are built and published by project scripts, as [ADR 0011](0011-releases-and-images.md) sets out; which machine runs them and how images reach the server is an open question in the [Security Plan](../security/security-plan.md).
+- **Internet exposure:** The host may have internet access, so Fathom's port must not be exposed to the internet, and its containers must not reach the internet at runtime. Releases are built and published by project scripts, as [ADR 0011](0011-releases-and-images.md) sets out.
 - **Several containers** instead of one, a small operational cost in exchange for PostgreSQL and network isolation.
-- **Python** remains a reasonable alternative if the department's maintainers are much more comfortable with it than with TypeScript.
+- **Python** remains a reasonable alternative if the maintainers are much more comfortable with it than with TypeScript.

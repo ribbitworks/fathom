@@ -65,7 +65,7 @@ flowchart TD
 ### Maintain Employee Records
 
 - **Actor:** Engineering Operations Manager
-- **Goal:** Keep Fathom's copy of employee details from the company's HR system current, including teams, managers, and end dates.
+- **Goal:** Keep Fathom's copy of employee details from the organization's HR system current, including teams, managers, and end dates.
 - **Outcome:** People can be planned for. People who leave are kept, with their end date, rather than deleted.
 
 Details are typed or pasted into People, changed in a person's details beside People or the org chart, or [imported](decisions.md#people-and-privacy) from a file:
@@ -141,7 +141,7 @@ flowchart TD
 
 ### Back Up and Restore
 
-- **Actor:** The owner's department
+- **Actor:** The department that runs Fathom
 - **Goal:** Make sure Fathom's data can be recovered from automated, encrypted backups.
 - **Outcome:** Fathom's data can be recovered after a failure.
 

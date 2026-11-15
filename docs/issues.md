@@ -3,11 +3,12 @@
 **Status:** Moved to GitHub Issues
 **Last updated:** 2026-11-14
 
-Known problems and deferred work not yet scheduled in the [Implementation Plan](design/implementation-plan.md) are kept in [GitHub Issues](https://github.com/jlarue26/fathom/issues), moved there from this document on 2026-11-12, as the owner decided.
+Known problems and deferred work not yet scheduled in the [Implementation Plan](design/implementation-plan.md) are kept in [GitHub Issues](https://github.com/jlarue26/fathom/issues), moved there from this document on 2026-11-12, as the maintainer decided.
 
 ## Filing an Issue
 
-- **Owner's approval:** An agent files an issue only with the owner's explicit approval. It proposes the title, labels and body to the owner first, and files only those the owner approves; one not approved is named in the pull request or the agent's report instead. A gap in a document is fixed on the branch in hand rather than proposed. Decided by the owner on 2026-11-13.
+- **Maintainer's approval:** An agent files an issue only with the maintainer's explicit approval. It proposes the title, labels and body to the maintainer first, and files only those the maintainer approves; one not approved is named in the pull request or the agent's report instead. A gap in a document is fixed on the branch in hand rather than proposed. Decided by the maintainer on 2026-11-13.
+- **From outside:** Issues are welcome from people the maintainer invites into the `ribbitworks` organization, as [Contributing](../CONTRIBUTING.md) sets out. Others may be closed without a reply.
 - **Forms:** [New issue](https://github.com/jlarue26/fathom/issues/new/choose) offers one form for each kind: Bug, Quality of life, Feature and Debt. Blank issues are turned off, and the page links to private reporting for vulnerabilities, as the [Security Policy](../SECURITY.md) sets out.
 - **What each asks:** What happens or what is wanted, why it matters, where, the background someone new to Fathom needs, with links, and how to tell it is done. A bug adds its steps, what was expected, its probability and its severity; the others add when.
 - **Links:** Every link in an issue is a full GitHub link to a file or heading on `main`.
@@ -29,7 +30,7 @@ Known problems and deferred work not yet scheduled in the [Implementation Plan](
 
 ## Triage and Milestones
 
-- **Who decides:** The owner decides stages and priorities. Whoever proposes an issue suggests its labels.
+- **Who decides:** The maintainer decides stages and priorities. Whoever proposes an issue suggests its labels.
 - **Milestones:** Each stage of the [Roadmap](product/roadmap.md) is a [GitHub milestone](https://github.com/jlarue26/fathom/milestones), holding a Feature issue for each feature in it. An issue in no milestone is not yet placed.
 - **No project board** at first.
 
@@ -41,14 +42,14 @@ Known problems and deferred work not yet scheduled in the [Implementation Plan](
 
 ## Issue Batches
 
-A task that is a set of issues in one area is a batch, worked in Autonomous mode only. A batch is an exception to the [Autonomous workflow](standards/shared/agent-workflow.md#autonomous-mode), which reviews each change and has the owner approve it before it is committed, as the owner decided on 2026-11-13:
+A task that is a set of issues in one area is a batch, worked in Autonomous mode only. A batch is an exception to the [Autonomous workflow](standards/shared/agent-workflow.md#autonomous-mode), which reviews each change and has the maintainer approve it before it is committed, as the maintainer decided on 2026-11-13:
 
 - **One branch per area:** Such as `fix/releases-issues`, holding one area only and under about 1,500 added lines.
 - **Each issue:** Fixed, checked with `pnpm test:changed`, the linters and type checking, as [Testing Standards](standards/testing.md#running-tests) runs them while working, and committed on its own.
 - **Once, for the whole branch:**
-  1. The owner's screen check, if any screen changed
+  1. The maintainer's screen check, if any screen changed
   1. One separate-agent review of the whole branch
   1. One full `pnpm check`, once the review's findings are fixed, as [Testing Standards](standards/testing.md#running-tests) sets out
-  1. The owner's approval of the batch
+  1. The maintainer's approval of the batch
   1. The pull request, as [Fixing an Issue](#fixing-an-issue) sets out
 - **Failures found at the end:** Fixed in a new commit, never by changing earlier ones.

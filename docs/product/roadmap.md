@@ -1,16 +1,16 @@
 # Fathom: Roadmap
 
-**Status:** Proposal for the owner's review
+**Status:** Proposal for the maintainer's review
 **Last updated:** 2026-11-14
 
 A proposed order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. The principles, stage contents, and order are not yet agreed. The privacy approval gate is agreed. Each stage is a [GitHub milestone](https://github.com/jlarue26/fathom/milestones) holding its features, as [Issues](../issues.md) sets out, so this document keeps each stage's goals and why.
 
 ## Guiding Principles
 
-- **Immediate needs first:** The first stage covers the owner's immediate needs.
+- **Immediate needs first:** The first stage covers the maintainer's immediate needs.
 - **Complete stages:** Each stage is fully functional and fully tested. Stages are cut down in scope, never in quality.
 - **Only the sensitive data each stage needs:** Each stage holds only the employee details it uses, so the first privacy review stays small.
-- **Owner's requirements first:** Each feature meets the owner's requirements and use cases first, then becomes as configurable as practical. Configuration already decided in the [Decisions Log](decisions.md) ships with its feature.
+- **Maintainer's requirements first:** Each feature meets the maintainer's requirements and use cases first, then becomes as configurable as practical. Configuration already decided in the [Decisions Log](decisions.md) ships with its feature.
 
 ## Before Development
 
@@ -18,16 +18,16 @@ Development uses fictional data only.
 
 ## After Hello Fathom
 
-- **Component evaluation:** UI components, styling, and charts are chosen, and Gantt, timeline, and org chart components are evaluated, before any UI work beyond Hello Fathom. By the owner's choice, Hello Fathom's placeholder page counts as groundwork rather than UI work.
+- **Component evaluation:** UI components, styling, and charts are chosen, and Gantt, timeline, and org chart components are evaluated, before any UI work beyond Hello Fathom. By the maintainer's choice, Hello Fathom's placeholder page counts as groundwork rather than UI work.
 - **Visual design:** A visual and user experience design is agreed before the rest of the first stage's screens are built.
 
 ## Before Going Live
 
-Before Fathom goes live: IT approves the [IT Overview](../operations/it-overview.md), the [Security Plan](../security/security-plan.md) and the [Deployment](../operations/deployment.md) document, before Fathom is deployed to company infrastructure, deployment testing included; HR approves the data protection document for the data the first stage holds; a first set of roles is agreed; hosting and backups are set up; and scanning is in place, with the threat model reviewed for the stage going live. Each is an issue in the [Before Going Live](https://github.com/jlarue26/fathom/milestone/6) milestone.
+Before Fathom goes live in an organization: its IT team approves the [IT Overview](../operations/it-overview.md), the [Security Plan](../security/security-plan.md) and the [Deployment](../operations/deployment.md) document, before Fathom is deployed to its infrastructure, deployment testing included; its HR team reviews [how data is safeguarded](../privacy/data-protection.md); a first set of roles is agreed; hosting and backups are set up; and scanning is in place, with the threat model reviewed for the stage going live. Each is an issue in the [Before Going Live](https://github.com/jlarue26/fathom/milestone/6) milestone.
 
 ## Coming Next
 
-The owner approved these designs on 2026-11-14. They are built in this order, with the first two alongside the other three. How each is built is in the [Implementation Plan](../design/implementation-plan.md#slices).
+The maintainer approved these designs on 2026-11-14. They are built in this order, with the first two alongside the other three. How each is built is in the [Implementation Plan](../design/implementation-plan.md#slices).
 
 1. **Views on every page:** personal and shared saved views on every page with a table, and on the Org chart, Feature assignments, Capacity's People mode and Drafts. Views also hide columns ([#517](https://github.com/jlarue26/fathom/issues/517)), group People ([#553](https://github.com/jlarue26/fathom/issues/553)), and bring the Lists page onto the shared table ([#317](https://github.com/jlarue26/fathom/issues/317)) and the Org chart's choices into its views ([#351](https://github.com/jlarue26/fathom/issues/351)).
 1. **Group by several values:** a record shown under each of its values, such as a feature under each project that needs it, on Features, the Features Board and People's feature teams ([#594](https://github.com/jlarue26/fathom/issues/594)). Built partway through views on every page.
@@ -37,7 +37,7 @@ The owner approved these designs on 2026-11-14. They are built in this order, wi
 
 ## Stage: Who Is Working on What
 
-Covers the owner's immediate needs. Each goal starts in its simplest useful form, and the first stage shows the plan in tables, simple charts, the Features Board, and timelines, rather than an interactive Gantt view whose bars are dragged to new dates. What remains is in the [Who Is Working on What](https://github.com/jlarue26/fathom/milestone/1) milestone, and what is built is in the [Implementation Plan](../design/implementation-plan.md).
+Covers the maintainer's immediate needs. Each goal starts in its simplest useful form, and the first stage shows the plan in tables, simple charts, the Features Board, and timelines, rather than an interactive Gantt view whose bars are dragged to new dates. What remains is in the [Who Is Working on What](https://github.com/jlarue26/fathom/milestone/1) milestone, and what is built is in the [Implementation Plan](../design/implementation-plan.md).
 
 ## Stage: Snapshots, Exports, and Hiring
 
@@ -57,7 +57,7 @@ What-if scenarios, if confirmed. In the [Planning Ahead](https://github.com/jlar
 
 ## Not Yet Placed
 
-Goals the owner has added that are not yet placed in a stage are [Feature issues in no milestone](https://github.com/jlarue26/fathom/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement+no%3Amilestone).
+Goals the maintainer has added that are not yet placed in a stage are [Feature issues in no milestone](https://github.com/jlarue26/fathom/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement+no%3Amilestone).
 
 These five stages make up v1. Broader configuration for other domains, and the future possibilities listed in the brief, come after v1.
 

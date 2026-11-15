@@ -35,4 +35,4 @@ Container files must not depend on features of a particular container runtime. P
 
 ## Browsers
 
-Fathom supports Chrome, Edge, Safari and Firefox, and browsers built on them, such as Brave or Arc, decided by the owner on 2026-11-11. Which versions are supported is to be decided. Saving an export opens the browser's Save dialog where the browser offers one to web pages, as Chrome, Edge and others built on Chromium do; Safari and Firefox save it as their own download settings say, as [Exports](../product/decisions.md#platform-and-operations) sets out.
+Fathom supports Chrome, Edge, Safari and Firefox, and browsers built on them, such as Brave or Arc, decided by the maintainer on 2026-11-11. Which versions are supported is to be decided. Saving an export opens the browser's Save dialog where the browser offers one to web pages, as Chrome, Edge and others built on Chromium do; Safari and Firefox save it as their own download settings say, as [Exports](../product/decisions.md#platform-and-operations) sets out.
