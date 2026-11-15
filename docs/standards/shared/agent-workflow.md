@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["code-review.md", "testing.md", "documentation.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Agent Workflow
@@ -158,11 +158,18 @@ feedback:
 
 - A branch can collect several commits before it is pushed. Push only when the
   owner says the work is ready for a pull request.
-- Before opening the pull request, have a separate agent review the whole
-  branch against `main` when it has two or more commits, or when a commit on it
-  skipped review, since separate commit reviews cannot see how commits
-  interact. A branch with a single reviewed commit needs no second review.
-  Handle any findings as in the workflow.
+- Before opening the pull request, have a separate agent review the branch
+  against `main` when its commits' own reviews cannot see all of it. Handle any
+  findings as in the workflow:
+  - **A commit skipped review:** the review covers the whole branch, however
+    many commits it has.
+  - **Every commit reviewed:** a branch of two or more commits has an
+    interaction review, a short review of only where the commits meet, such as
+    shared code two of them change, a feature one builds on another, or a
+    document more than one edits. It names the earlier review files and does
+    not review each commit again. A branch with a single commit, or whose later
+    commits only fix review findings or the owner's UI feedback, needs no
+    review.
 - Push with `git push -u origin <type>/<task>`.
 - Open the pull request with `gh pr create`, following the commit message rules
   for its title and description.

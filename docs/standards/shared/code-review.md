@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["core-principles.md", "testing.md", "documentation.md", "markdown-style-guidelines.md", "agent-workflow.md"]
-last_updated: "2026-11-07"
+last_updated: "2026-11-15"
 ---
 
 # Code Review Standards
@@ -31,7 +31,8 @@ that language. Rate those the same way.
   (`gh pr diff`)?
 - In Autonomous mode the scope is set by [agent-workflow.md](agent-workflow.md):
   the uncommitted changes (the whole commit when amending), or, in the cases
-  that workflow names, the whole branch against `main` before a pull request.
+  that workflow names, an interaction review of a branch's commits or the
+  whole branch against `main` before a pull request.
 - A review subagent gets its scope in its prompt and never asks.
 - The review states its scope at the top. For very large diffs, do several
   passes.

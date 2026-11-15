@@ -17,7 +17,7 @@ Identify every changed file in the diff, including new and deleted files, before
 
 A separate agent running a faster model, such as Sonnet, may review a change that touches only documentation, scripts, wording on screens, or tests other than access control and security tests. Anything the [Security](#security) section or the shared Security and Data focus area covers, such as sign-in, sessions, access control, the data access layer, migrations, secrets, the containers, and checks on user input, including web addresses, is reviewed with the full model, and so is any change where the choice is in doubt.
 
-Before a pull request, a branch whose commits were each reviewed has an interaction review in place of the shared [Agent Workflow](shared/agent-workflow.md#pushing-and-pull-requests)'s whole-branch review: a short review, by a separate agent, of only where the commits meet, such as a shared component two of them change, a feature one builds on another, and documents more than one edits. It names the earlier review files, and doesn't review each commit again. A faster model may run it under the rule above. A branch with one reviewed commit, or whose later changes were only fixes to review findings or to the owner's screen check, needs none. Decided by the owner on 2026-11-15.
+The interaction review that the shared [Agent Workflow](shared/agent-workflow.md#pushing-and-pull-requests) sets out before a pull request may be run by a faster model under the rule above. Decided by the owner on 2026-11-15.
 
 ## Security
 
