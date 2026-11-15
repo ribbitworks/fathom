@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later, by release and by the month needed, the Release column, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, columns added to Features, writing a note in New feature, a feature's effort, shown and typed in the unit chosen, its priority, size and risk, from their built-in lists, and moving any column. The projects and proposals that name a feature are verified in [Feature Links](feature-links-manual-test.md).
+Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later, by release, by the month needed and by project, with a second level of grouping under the first and the +1 after a feature shown under two headings, the Release column, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, columns added to Features, writing a note in New feature, a feature's effort, shown and typed in the unit chosen, its priority, size and risk, from their built-in lists, and moving any column. The projects and proposals that name a feature are verified in [Feature Links](feature-links-manual-test.md).
 
 ## Test Environment
 
@@ -36,7 +36,8 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu, marks, the Group by menu and group headings. This test adds:
 
-- **Group heading on Features:** it names a cycle or **Later**; grouped by release, a release or **Not released yet**; grouped by the month needed, a month or **No date**.
+- **Group heading on Features:** it names a cycle or **Later**; grouped by release, a release or **Not released yet**; grouped by the month needed, a month or **No date**; grouped by project, a project or **No projects**.
+- **+1:** the small grey mark after a feature's name in a grouped table, when the feature also shows under another heading. Pointing at it shows a tip naming the other heading.
 
 ## Test Cases
 
@@ -1108,6 +1109,9 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
       - **Release**
       - **Needed by**
       - **Status**
+      - **Customers**
+      - **Projects**
+      - **Proposals**
       - **Priority**
       - **Size**
       - **Risk**
@@ -1120,6 +1124,9 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
       - **Release**
       - **Needed by**
       - **Status**
+      - **Customers**
+      - **Projects**
+      - **Proposals**
       - **Priority**
       - **Size**
       - **Risk**
@@ -1376,4 +1383,31 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:**
     - The button reads **Group by: Cycle**.
     - The headings name cycles, with no headings set in under them.
+  - **Notes:**
+
+### FEAT-29: A Feature Under Two Projects Shows Under Each
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account FEAT-28 ended with.
+
+**Preconditions:** Run Restore the Seed Data, then select the **Features** page in the left-hand menu.
+
+- [ ] `AC75` Select **Group by: Cycle** above the table, then **Projects** under **Group by**.
+  - **Expected:**
+    - The button reads **Group by: Projects**.
+    - The headings read, from the top, **Clinic Booking**, **P-2001 Crane Control**, **Internal Tools**, **P-1984 Transit Displays** and **No projects**.
+    - 'Offline Sync' is under both **Clinic Booking** and **P-2001 Crane Control**.
+  - **Notes:**
+
+- [ ] `FCD5` Point at the **+1** after 'Offline Sync' under **Clinic Booking**.
+  - **Expected:** A tip reads "Also under P-2001 Crane Control."
+  - **Notes:**
+
+- [ ] `8CBA` Select **Group by: Projects**, then **Status** under **Then by**.
+  - **Expected:** The button reads **Group by: Projects, then Status**.
+  - **Notes:**
+
+- [ ] `B5B3` Point at the **+1** after 'Offline Sync' under **Clinic Booking**.
+  - **Expected:**
+    - A tip reads "Also under P-2001 Crane Control."
+    - The tip names no status.
   - **Notes:**
