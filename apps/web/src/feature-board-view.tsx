@@ -35,7 +35,7 @@ import {
 import classes from "./feature-board-view.module.css";
 import { draftRowClass } from "./list-drafts.tsx";
 import { RiskMark, SizeMark } from "./planning-marks.tsx";
-import type { RowGroup, ShownRows } from "./record-grid.tsx";
+import type { ShownRows } from "./record-grid.tsx";
 import {
   daysBetween,
   draftsById,
@@ -54,7 +54,7 @@ import {
   useDraftView,
   wasWords,
 } from "./status-mark.tsx";
-import { formatDay, formatMonth } from "./table-view.ts";
+import { formatDay, formatMonth, type RowGroups } from "./table-view.ts";
 import { TeamLabels } from "./team-labels.tsx";
 import { TimelineStrip } from "./timeline-strip.tsx";
 
@@ -416,22 +416,23 @@ export const cardId = (id: string) => `card-${id}`;
 // The rows: the groups the records are in, in their order, or one row holding them all.
 function rowsOf(
   records: readonly Feature[],
-  groupOf: ((record: Feature) => RowGroup) | undefined,
+  groupOf: ((record: Feature) => RowGroups) | undefined,
 ): { key: string; label: string; records: Feature[] }[] {
   if (groupOf === undefined) {
     return [{ key: "all", label: "", records: [...records] }];
   }
   const rows = new Map<
     string,
-    { key: string; label: string; records: Feature[] }
+    { key: string; label: string; rank: number; records: Feature[] }
   >();
   for (const record of records) {
-    const { key, label } = groupOf(record);
-    const row = rows.get(key) ?? { key, label, records: [] };
-    row.records.push(record);
-    rows.set(key, row);
+    for (const { key, label, rank } of groupOf(record)) {
+      const row = rows.get(key) ?? { key, label, rank, records: [] };
+      row.records.push(record);
+      rows.set(key, row);
+    }
   }
-  return [...rows.values()];
+  return [...rows.values()].sort((a, b) => a.rank - b.rank);
 }
 
 interface CardPlace {

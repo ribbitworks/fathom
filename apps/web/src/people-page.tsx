@@ -82,7 +82,12 @@ import {
   type PeopleActions,
   PeopleGrid,
 } from "./people-grid.tsx";
-import { isPending, pendingId, withLiveValues } from "./record-grid.tsx";
+import {
+  focusRecordCell,
+  isPending,
+  pendingId,
+  withLiveValues,
+} from "./record-grid.tsx";
 import {
   createHires,
   deleteHire,
@@ -733,7 +738,7 @@ export function PeoplePage({
                           leave(() => {
                             onOpen(undefined);
                             if (shownRecord !== undefined) {
-                              focusSoon(`cell-${shownRecord.id}-preferredName`);
+                              focusRecordCell(shownRecord.id, "preferredName");
                             }
                           });
                         }}

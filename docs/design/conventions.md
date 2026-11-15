@@ -316,6 +316,9 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **Group by's own grouping:** A table's Group by menu starts with the table's own grouping, such as Cycle on Features, and choosing it again leaves nothing in the address. A table with no grouping of its own, such as People, and a view that shows the same records another way, such as a board, start with none instead, which the menu then lists first, and a board keeps a grouping chosen in its table where both offer it. Introduced with the Features Board on 2026-11-13, for the owner's screen check; People's decided by the owner on 2026-11-14.
   - **Drawn by:** the `groupings` and `ungrouped` of a table in `apps/web/src/record-grid.tsx`, read by `activeGrouping` in `apps/web/src/table-view.ts` and the Group by menu in `apps/web/src/table-controls.tsx`.
   - **Example:** on Features, choose Feature team in Group by, then switch to Board: the rows are feature teams.
+- **A record under several headings:** Grouped by a column holding several values, a record has a row under each of its values, each its own row for focus and the keyboard, and a dimmed +1, or +2 and on, after its name, its tip naming the other headings, such as Also under P-2014 Fleet Telemetry. Closing a record's details puts focus on its cell in the row last used, or else its first. Decided by the owner on 2026-11-14.
+  - **Drawn by:** `RecordGrid`, with `AlsoUnder` and `focusRecordCell`, in `apps/web/src/record-grid.tsx`; a grouping's `of` gives a record's groups.
+  - **Example:** none until a table offers a grouping by several values, such as Projects on Features.
 
 ## Staying Put
 

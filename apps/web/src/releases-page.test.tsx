@@ -27,6 +27,7 @@ import {
   fictionalUser,
   noFeatureColumns,
   quarters,
+  recordCell,
   recordDraft,
   renderApp,
   serverAnswers,
@@ -836,9 +837,8 @@ describe("a stream's panel", () => {
       const { history } = await openStream([fictionalStream()]);
       await close();
       await waitFor(() => {
-        expect([history.location.pathname, document.activeElement?.id]).toEqual(
-          ["/releases", `cell-${streamId}-name`],
-        );
+        expect(history.location.pathname).toBe("/releases");
+        expect(document.activeElement).toBe(recordCell(streamId, "name"));
       });
     },
   );

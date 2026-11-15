@@ -36,7 +36,7 @@ import {
 } from "./record-grid.tsx";
 import { changeMemberTeams, featureTeamsQuery } from "./feature-teams.ts";
 import { useSaving } from "./saving.ts";
-import { formatMonth } from "./table-view.ts";
+import { formatMonth, groupedRowId } from "./table-view.ts";
 import type { DraftLike } from "./status-mark.tsx";
 import { type DraftedLabel, TeamLabels } from "./team-labels.tsx";
 
@@ -105,7 +105,7 @@ function groupedByManager<Rec extends Pick<MonthRow, "manager">>(
   return {
     key: managerGrouping,
     label: "Manager",
-    of: ({ manager }) =>
+    of: ({ manager }) => [
       manager === null
         ? { key: "no-manager", label: "No manager", rank: lastRank }
         : {
@@ -114,6 +114,7 @@ function groupedByManager<Rec extends Pick<MonthRow, "manager">>(
             // Every manager of a row is given above.
             rank: ranks.get(manager.id) as number,
           },
+    ],
   };
 }
 
@@ -126,7 +127,7 @@ function groupedByFeatureTeam<Rec extends Pick<MonthRow, "group">>(
   return {
     key: featureTeamGrouping,
     label: "Feature team",
-    of: ({ group }) =>
+    of: ({ group }) => [
       group === undefined
         ? { key: "no-team", label: "No feature team", rank: lastRank }
         : {
@@ -135,6 +136,7 @@ function groupedByFeatureTeam<Rec extends Pick<MonthRow, "group">>(
             // Every team in the data is ranked above.
             rank: ranks.get(group.id) as number,
           },
+    ],
   };
 }
 
@@ -476,10 +478,6 @@ function withLiveMarks(
     ),
   };
 }
-
-// A row's identifier under a group, since someone may have a row under each of several.
-export const groupedRowId = (groupKey: string, personId: string) =>
-  `${groupKey} ${personId}`;
 
 // The teams in any of someone's months, by name, each with the months they are on it.
 export function teamsAcross(

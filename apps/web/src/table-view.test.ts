@@ -9,6 +9,10 @@ import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { isDay } from "@fathom/shared";
 import {
+  placedRows,
+  recordsOf,
+  type RowGroup,
+  rowsInOrder,
   activeGrouping,
   alwaysShowing,
   hiddenColumnsOf,
@@ -1160,6 +1164,48 @@ describe("a month column", () => {
       "m1",
       "m0",
       "m2",
+    ]);
+  });
+});
+
+describe("placing rows under their groups", () => {
+  const group = (key: string, rank: number): RowGroup => ({
+    key,
+    label: `Group ${key}`,
+    rank,
+  });
+  const [x, y] = [group("x", 0), group("y", 1)];
+  const groupsOf = (record: string) =>
+    record === "both" ? ([x, y] as const) : ([x] as const);
+
+  it("gives a record one row, keyed by itself, while the rows aren't grouped", () => {
+    expect(placedRows(["a"], undefined, (record) => record)).toEqual([
+      { record: "a", key: "a" },
+    ]);
+  });
+
+  it("gives a record a row under each of its groups, each naming the others", () => {
+    expect(placedRows(["both"], groupsOf, (record) => record)).toEqual([
+      { record: "both", key: "x both", group: x, others: [y] },
+      { record: "both", key: "y both", group: y, others: [x] },
+    ]);
+  });
+
+  it("names each record once, in the rows' order", () => {
+    const rows = placedRows(["both", "one"], groupsOf, (record) => record);
+    expect(recordsOf(rows)).toEqual(["both", "one"]);
+  });
+
+  it("orders the rows of the records shown by group, then as the records are shown", () => {
+    const rows = placedRows(
+      ["both", "one", "hidden"],
+      groupsOf,
+      (record) => record,
+    );
+    expect(rowsInOrder(rows, ["one", "both"]).map(({ key }) => key)).toEqual([
+      "x one",
+      "x both",
+      "y both",
     ]);
   });
 });

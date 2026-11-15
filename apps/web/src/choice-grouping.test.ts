@@ -31,16 +31,14 @@ describe("grouping by a column's one choice", () => {
   it("ranks each choice's group by its place in the list, retired ones included", () => {
     const grouping = byChoice(column);
     expect(grouping).toMatchObject({ key: "site", label: "Site" });
-    expect(grouping.of(row(["c2"]))).toEqual({
-      key: "c2",
-      label: "Quay",
-      rank: 1,
-    });
+    expect(grouping.of(row(["c2"]))).toEqual([
+      { key: "c2", label: "Quay", rank: 1 },
+    ]);
   });
 
   it("heads a group with the heading given for its choice", () => {
     const grouping = byChoice(column, ({ label }) => `${label} office`);
-    expect(grouping.of(row(["c1"])).label).toBe("Harbour office");
+    expect(grouping.of(row(["c1"]))[0].label).toBe("Harbour office");
   });
 
   it("puts rows with none, or a choice no longer in the list, last under the column's words for none", () => {
@@ -50,8 +48,8 @@ describe("grouping by a column's one choice", () => {
       label: "No site yet",
       rank: Number.MAX_SAFE_INTEGER,
     };
-    expect(grouping.of(row([]))).toEqual(none);
-    expect(grouping.of(row(["gone"]))).toEqual(none);
+    expect(grouping.of(row([]))).toEqual([none]);
+    expect(grouping.of(row(["gone"]))).toEqual([none]);
   });
 
   it("offers only columns holding one choice", () => {

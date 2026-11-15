@@ -261,7 +261,7 @@ Steps 1, 2 and 3 come in order, and 4 follows 3; steps 5 to 12 follow in any ord
 
 Grouping by a column holding several values, with a record shown under each of its values, approved by the owner on 2026-11-14, after step 6 of [Views on Every Page](#views-on-every-page) and before its step 7. Each step is its own pull request, with no migration:
 
-1. **The shared table** groups a record under several values, counting it once.
+1. **The shared table** groups a record under several values, counting it once. Done on 2026-11-14.
 2. **Features' Group by** offers Customers, Projects, Proposals and other columns holding several values, on the table and the Features Board ([issue #594](https://github.com/jlarue26/fathom/issues/594)).
 3. **People's Feature teams column,** and grouping People by it.
 

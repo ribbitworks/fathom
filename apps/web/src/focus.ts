@@ -8,7 +8,10 @@
 // opening a panel, may draw a little after the change itself.
 const framesToWait = 10;
 
-function soon(ids: readonly string[], act: (element: HTMLElement) => void) {
+function soon(
+  find: () => HTMLElement | undefined,
+  act: (element: HTMLElement) => void,
+) {
   let framesLeft = framesToWait;
   // A key pressed or a click since, such as on another control, is the person moving on: waiting
   // gives way. Focus a menu hands back by itself as it closes is not.
@@ -24,9 +27,7 @@ function soon(ids: readonly string[], act: (element: HTMLElement) => void) {
     document.removeEventListener("pointerdown", moveOn, listen);
   };
   const attempt = () => {
-    const element = ids
-      .map((id) => document.getElementById(id))
-      .find((found) => found !== null);
+    const element = find();
     if (element !== undefined) {
       done();
       act(element);
@@ -38,15 +39,27 @@ function soon(ids: readonly string[], act: (element: HTMLElement) => void) {
   setTimeout(attempt, 0);
 }
 
+const firstOf = (ids: readonly string[]) => () =>
+  ids
+    .map((id) => document.getElementById(id))
+    .find((found) => found !== null) ?? undefined;
+
+const focus = (element: HTMLElement) => {
+  element.focus();
+};
+
 export function focusSoon(...ids: string[]): void {
-  soon(ids, (element) => {
-    element.focus();
-  });
+  soon(firstOf(ids), focus);
+}
+
+// Focuses the first control found once drawn, for one known by more than its identifier.
+export function focusFoundSoon(find: () => HTMLElement | undefined): void {
+  soon(find, focus);
 }
 
 // Focuses a field opened to change its value, with its text selected, so typing replaces it.
 export function selectSoon(id: string): void {
-  soon([id], (element) => {
+  soon(firstOf([id]), (element) => {
     element.focus();
     if (element instanceof HTMLInputElement) element.select();
   });

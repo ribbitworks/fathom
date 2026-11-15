@@ -25,6 +25,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { expect, vi } from "vitest";
 import { App } from "./app.tsx";
+import { recordCellSelector } from "./record-grid.tsx";
 import { theme } from "./theme.ts";
 
 type Answer = Response | Promise<Response>;
@@ -90,6 +91,11 @@ export function renderApp(path: string) {
   return history;
 }
 
+// A record's cell in a column of the shared table, in the record's first row.
+export const recordCell = (id: string, columnKey: string) =>
+  document.querySelector<HTMLElement>(recordCellSelector(id, columnKey)) ??
+  undefined;
+
 // The simulated browser has no layout, so everything seems off screen, and a tooltip or menu would
 // hide itself once placed, sometimes before the test looked.
 export const testTheme = mergeThemeOverrides(theme, {
@@ -99,8 +105,6 @@ export const testTheme = mergeThemeOverrides(theme, {
   },
 });
 
-// Finds the element whose whole text matches, though parts of it, such as the values a change
-// names, are marked in elements of their own.
 // A row of a details panel, by its label, within the panel given or the whole page.
 export const detailRow = (
   label: string,

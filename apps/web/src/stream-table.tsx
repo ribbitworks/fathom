@@ -334,16 +334,18 @@ const groupings = (day: string): RowGrouping<StreamRow>[] => [
   {
     key: "status",
     label: "Status",
-    of: (row) => statusOf(row.stream, day),
+    of: (row) => [statusOf(row.stream, day)],
   },
   {
     key: "schedule",
     label: "Cycle schedule",
-    of: ({ schedule }) => ({
-      key: schedule,
-      label: schedule === "" ? noSchedule : schedule,
-      rank: schedule === "" ? 1 : 0,
-    }),
+    of: ({ schedule }) => [
+      {
+        key: schedule,
+        label: schedule === "" ? noSchedule : schedule,
+        rank: schedule === "" ? 1 : 0,
+      },
+    ],
   },
 ];
 

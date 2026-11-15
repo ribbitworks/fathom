@@ -430,7 +430,8 @@ describe("the table of streams", () => {
 
   it("groups streams by whether they are retired, as they are live, or else ended", () => {
     const [status] = table().groupings ?? [];
-    const groupOf = (stream: ReleaseStream) => status?.of(rowOf(stream)).label;
+    const groupOf = (stream: ReleaseStream) =>
+      status?.of(rowOf(stream))[0]?.label;
     expect([
       groupOf(fictionalStream()),
       groupOf(fictionalStream({ retired: true })),
@@ -470,7 +471,7 @@ describe("the table of streams", () => {
 
   it("groups streams by their cycle schedule, those with none last", () => {
     const [, schedule] = table().groupings ?? [];
-    const groupOf = (stream: ReleaseStream) => schedule?.of(rowOf(stream));
+    const groupOf = (stream: ReleaseStream) => schedule?.of(rowOf(stream))[0];
     expect([
       groupOf(fictionalStream()),
       groupOf(fictionalStream({ patterns: [] })),

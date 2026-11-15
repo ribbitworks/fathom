@@ -90,7 +90,12 @@ import {
 import { Swatch } from "./colour-swatch.tsx";
 import { actionsFor, MoreButton } from "./row-controls.tsx";
 import { useNarrow } from "./side-panel.tsx";
-import { noRecordActions, RecordGrid, undoDrafts } from "./record-grid.tsx";
+import {
+  focusRecordCell,
+  noRecordActions,
+  RecordGrid,
+  undoDrafts,
+} from "./record-grid.tsx";
 import {
   DraftedItem,
   DraftedValue,
@@ -128,7 +133,6 @@ type Dialog =
 
 const panelId = "release-stream-panel";
 const panelTitleId = "release-stream-panel-title";
-const nameCellId = (stream: { id: string }) => `cell-${stream.id}-name`;
 const noteId = "release-note";
 const timelineZoomKey = "fathom-releases-timeline-zoom";
 const noteButtonId = (release: { id: string }) =>
@@ -876,7 +880,7 @@ export function ReleasesPage({
     });
   };
   const closePanel = (stream: ReleaseStream) => {
-    focusSoon(nameCellId(stream));
+    focusRecordCell(stream.id, "name");
     void navigate({
       to: "/releases/{-$streamId}",
       params: { streamId: undefined },

@@ -19,6 +19,7 @@ import {
   findRowActions,
   noFeatureColumns,
   optionsIn,
+  recordCell,
   recordDraft,
   renderApp,
   savedFiles,
@@ -1839,7 +1840,7 @@ describe("the Features page", () => {
     const openNamed = (path = "/features", more: object = {}) =>
       openPage(path, named(), { ...answers, ...more }, planEditor);
     const cell = (feature: { id: string }, key: string) =>
-      document.getElementById(`cell-${feature.id}-${key}`);
+      recordCell(feature.id, key);
 
     it("names each by its ID, dimmed, then its name", async () => {
       await openNamed();
@@ -1973,7 +1974,7 @@ describe("the Features page", () => {
         );
         // When both are removed
         act(() => {
-          document.getElementById(`cell-${proposalId}-featureIds`)?.focus();
+          recordCell(proposalId, "featureIds")?.focus();
         });
         await userEvent.keyboard("{Enter}");
         for (const name of ["Fictional First", "Fictional Second"]) {
@@ -2497,7 +2498,7 @@ describe("the Features page", () => {
       featurePlan({ features: [{ ...first, estimateHours: hours }] });
     const featurePath = `PUT /api/features/${first.id}`;
     const effortCell = () =>
-      document.getElementById(`cell-${first.id}-estimateHours`) as HTMLElement;
+      recordCell(first.id, "estimateHours") as HTMLElement;
 
     it("leaves the address once Effort is back in hours to two decimal places", async () => {
       const { history } = await open(
@@ -2661,9 +2662,7 @@ describe("the Features page", () => {
 
     it("tells the hours of the cell with keyboard focus", async () => {
       await open(withEstimate(20), {}, inUnit("person-days"));
-      await userEvent.click(
-        document.getElementById(`cell-${first.id}-neededBy`) as HTMLElement,
-      );
+      await userEvent.click(recordCell(first.id, "neededBy") as HTMLElement);
       await userEvent.keyboard("{ArrowRight}");
       expect((await screen.findByRole("tooltip")).textContent).toBe("20 hours");
     });
@@ -2879,11 +2878,9 @@ describe("the Features page", () => {
 
   it("moves down past a heading to the next group's first row", async () => {
     await open();
-    await userEvent.click(
-      document.getElementById(`cell-${first.id}-name`) as HTMLElement,
-    );
+    await userEvent.click(recordCell(first.id, "name") as HTMLElement);
     await userEvent.keyboard("{ArrowDown}");
-    expect(document.activeElement?.id).toBe(`cell-${second.id}-name`);
+    expect(document.activeElement).toBe(recordCell(second.id, "name"));
   });
 
   it("shows one list once grouping is turned off, kept in the address", async () => {
@@ -3254,9 +3251,7 @@ describe("the Features page", () => {
         { [path]: saved(() => start) },
         featureEditor,
       );
-      await userEvent.dblClick(
-        document.getElementById(`cell-${later.id}-${score.id}`) as HTMLElement,
-      );
+      await userEvent.dblClick(recordCell(later.id, score.id) as HTMLElement);
       await userEvent.keyboard("7{Enter}");
       await waitFor(() => {
         expect(sent(fetch, path)).toMatchObject([

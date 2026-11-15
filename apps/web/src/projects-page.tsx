@@ -139,6 +139,7 @@ import {
 } from "./record-details.tsx";
 import {
   type Column,
+  focusRecordCell,
   heldBack,
   inViewUnits,
   newRecordProblems,
@@ -639,7 +640,8 @@ export function ProjectsPage({
       nodes,
       onClose: () => {
         onOpen?.(undefined);
-        focusSoon(onBoard ? cardId(String(open)) : `cell-${String(open)}-name`);
+        if (onBoard) focusSoon(cardId(String(open)));
+        else focusRecordCell(String(open), "name");
       },
       menu: {
         decide: (asking, ref) => {

@@ -18,6 +18,7 @@ import {
   fictionalTeamMonths,
   fictionalUser,
   gridNow,
+  recordCell,
   monthsUrl,
   renderApp,
   serverAnswers,
@@ -231,9 +232,7 @@ describe("Capacity's People mode", () => {
     await grid();
 
     expect(
-      document
-        .getElementById("cell-p-casey-2027-03")
-        ?.getAttribute("aria-readonly"),
+      recordCell("p-casey", "2027-03")?.getAttribute("aria-readonly"),
     ).toBe("true");
   });
 });

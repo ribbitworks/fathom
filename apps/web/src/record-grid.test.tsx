@@ -37,12 +37,19 @@ import {
   liveFields,
   liveRecordsOf,
   newRecordProblems,
+  focusRecordCell,
   type RecordActions,
   RecordGrid,
   type RecordTable,
 } from "./record-grid.tsx";
-import { emptyView, formatDay, notGrouped, type View } from "./table-view.ts";
-import { rowActions, testTheme } from "./test-support.tsx";
+import {
+  emptyView,
+  formatDay,
+  notGrouped,
+  type RowGroup,
+  type View,
+} from "./table-view.ts";
+import { recordCell, rowActions, testTheme } from "./test-support.tsx";
 
 interface Gadget extends CellRecord {
   name: string;
@@ -1604,6 +1611,182 @@ describe("the problems with a new record", () => {
   });
 });
 
+describe("a record under several groups", () => {
+  // Each letter of a gadget's code is a group it's in.
+  const byLetters: RecordTable<Gadget, GadgetChange, GadgetChange> = {
+    ...gadgetTable(),
+    groupings: [
+      {
+        key: "letters",
+        label: "Letters",
+        of: ({ code }) => {
+          const [first, ...rest] = Array.from(code, (letter) => ({
+            key: letter,
+            label: `Group ${letter}`,
+            rank: letter.charCodeAt(0),
+          }));
+          // Every gadget here has a code.
+          return [first as RowGroup, ...rest];
+        },
+      },
+    ],
+  };
+  const gadgets = [
+    gadget("a", { code: "XY" }),
+    gadget("b", { code: "X" }),
+    gadget("c", { code: "Y" }),
+  ];
+  const nameCells = () =>
+    screen
+      .getAllByRole("gridcell")
+      .filter((cell) =>
+        cell.getAttribute("data-record-cell")?.endsWith(" name"),
+      );
+
+  it("shows a record under each of its groups, each heading counting its own rows, and the table counting it once", () => {
+    renderGadgets({ gadgets, table: byLetters });
+
+    expect(
+      screen.getAllByRole("rowheader").map(({ textContent }) => textContent),
+    ).toEqual(["Group X2 gadgets", "Group Y2 gadgets"]);
+    expect(nameCells().map(({ textContent }) => textContent)).toEqual([
+      "Gadget a+1, also under Group Y.",
+      "Gadget b",
+      "Gadget a+1, also under Group X.",
+      "Gadget c",
+    ]);
+    expect(screen.getByRole("status").textContent).toBe("3 gadgets");
+  });
+
+  it("names the other groups in the mark's tip", () => {
+    renderGadgets({ gadgets, table: byLetters });
+
+    expect(
+      screen.getAllByText("+1").map((mark) => mark.parentElement?.dataset.tip),
+    ).toEqual(["Also under Group Y.", "Also under Group X."]);
+  });
+
+  it("gives each row of a record a cell of its own, which the arrows step through", async () => {
+    renderGadgets({ gadgets, table: byLetters });
+    const [first, , second] = nameCells();
+    expect(first?.id).not.toBe(second?.id);
+    act(() => {
+      first?.focus();
+    });
+
+    await userEvent.keyboard("{ArrowDown}{ArrowDown}");
+
+    expect(document.activeElement).toBe(second);
+  });
+
+  it("saves a change made in any of a record's rows to the record", async () => {
+    const update =
+      vi.fn<RecordActions<Gadget, GadgetChange, GadgetChange>["update"]>();
+    renderGadgets({ gadgets, table: byLetters, given: actions({ update }) });
+    act(() => {
+      nameCells()[2]?.focus();
+    });
+
+    await userEvent.keyboard("Renamed{Enter}");
+
+    expect(update).toHaveBeenCalledWith(gadgets[0], { name: "Renamed" });
+  });
+
+  it("shows a refused value's problem in the row it was typed in alone, and keeps that row's cell after Esc", async () => {
+    renderGadgets({
+      gadgets,
+      table: {
+        ...byLetters,
+        recordProblem: (values) =>
+          values.name === "Bad" ? { message: "Not this name" } : undefined,
+      },
+    });
+    const second = nameCells()[2];
+    act(() => {
+      second?.focus();
+    });
+
+    await userEvent.keyboard("Bad{Enter}");
+    expect(screen.getAllByText("Not this name")).toHaveLength(1);
+    expect(second?.closest("tr")?.textContent).toContain("Not this name");
+    await userEvent.keyboard("{Escape}");
+
+    expect(document.activeElement).toBe(nameCells()[2]);
+  });
+
+  it("keeps a record shown since the view was set under its headings while its grouped value changes", () => {
+    const grid = (shown: Gadget[]) => (
+      <MantineProvider theme={testTheme}>
+        <RecordGrid
+          records={shown}
+          table={byLetters}
+          fields={[]}
+          order={[]}
+          lists={[]}
+          canEdit
+          canEditColumns={false}
+          view={emptyView}
+          onView={noop}
+          actions={actions()}
+        />
+      </MantineProvider>
+    );
+    const { rerender } = render(grid(gadgets));
+    rerender(grid([...gadgets, gadget("d", { code: "X" })]));
+    rerender(grid([...gadgets, gadget("d", { code: "Y" })]));
+
+    expect(
+      recordCell("d", "name")?.closest("tr")?.previousSibling?.textContent,
+    ).toBe("Group X1 gadget");
+  });
+
+  it("marks a record's draft, with its Live row, under each of its groups", () => {
+    renderGadgets({
+      gadgets: [
+        gadget("a", {
+          code: "XY",
+          name: "Renamed",
+          draft: {
+            ...waiting,
+            action: "changed",
+            changed: ["name"],
+            live: { name: "Gadget a", values: {}, links: {} },
+          },
+        }),
+      ],
+      table: byLetters,
+    });
+
+    expect(screen.getAllByText("Gadget a")).toHaveLength(2);
+    expect(
+      nameCells().map(({ textContent }) =>
+        textContent.includes("Draft: changed from “Gadget a”"),
+      ),
+    ).toEqual([true, true]);
+  });
+
+  it("puts focus on a record's cell in the row of the active cell, or else its first", async () => {
+    renderGadgets({ gadgets, table: byLetters });
+    const [first, , second, last] = nameCells();
+
+    focusRecordCell("a", "name");
+    await waitFor(() => {
+      expect(document.activeElement).toBe(first);
+    });
+    act(() => {
+      last?.focus();
+    });
+    await userEvent.keyboard("{ArrowUp}");
+    act(() => {
+      (document.activeElement as HTMLElement).blur();
+    });
+    focusRecordCell("a", "name");
+    await waitFor(() => {
+      expect(document.activeElement).toBe(second);
+    });
+  });
+});
+
 describe("total rows", () => {
   const totalled: RecordTable<Gadget, GadgetChange, GadgetChange> = {
     ...gadgetTable(),
@@ -1611,7 +1794,7 @@ describe("total rows", () => {
       {
         key: "code",
         label: "Code",
-        of: ({ code }) => ({ key: code, label: `Group ${code}`, rank: 0 }),
+        of: ({ code }) => [{ key: code, label: `Group ${code}`, rank: 0 }],
       },
     ],
     totals: {

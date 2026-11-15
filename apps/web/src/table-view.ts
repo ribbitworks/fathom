@@ -909,3 +909,64 @@ export function useSteadyOrder<Row>(
     ...since.filter((row) => !added.has(idOf(row)) && matching.has(idOf(row))),
   ];
 }
+
+// The group a row is in: the groups follow in order of rank, and each is headed with its label.
+export interface RowGroup {
+  key: string;
+  label: string;
+  rank: number;
+}
+
+export type RowGroups = readonly [RowGroup, ...RowGroup[]];
+
+// A row's key under a group, since a record has a row under each group it's in.
+export const groupedRowId = (groupKey: string, id: string) =>
+  `${groupKey} ${id}`;
+
+// A record's row under each group it's in, with the other groups it's in, or its one row while the
+// rows aren't grouped.
+export interface PlacedRow<Rec> {
+  record: Rec;
+  key: string;
+  group?: RowGroup;
+  others?: readonly RowGroup[];
+}
+
+export function placedRows<Rec>(
+  records: readonly Rec[],
+  groupsOf: ((record: Rec) => RowGroups) | undefined,
+  idOf: (record: Rec) => string,
+): PlacedRow<Rec>[] {
+  return records.flatMap((record) => {
+    const id = idOf(record);
+    if (groupsOf === undefined) return [{ record, key: id }];
+    const groups = groupsOf(record);
+    return groups.map((group) => ({
+      record,
+      key: groupedRowId(group.key, id),
+      group,
+      others: groups.filter((other) => other !== group),
+    }));
+  });
+}
+
+// Each record the rows are of, once, in the rows' order.
+export const recordsOf = <Rec>(rows: readonly PlacedRow<Rec>[]): Rec[] => [
+  ...new Set(rows.map(({ record }) => record)),
+];
+
+// The rows of the records shown, by their groups' rank, and within a group in the order the
+// records are shown.
+export function rowsInOrder<Rec>(
+  rows: readonly PlacedRow<Rec>[],
+  shown: readonly Rec[],
+): PlacedRow<Rec>[] {
+  const place = new Map(shown.map((record, index) => [record, index]));
+  const placeOf = (row: PlacedRow<Rec>) => Number(place.get(row.record));
+  return rows
+    .filter(({ record }) => place.has(record))
+    .sort(
+      (a, b) =>
+        (a.group?.rank ?? 0) - (b.group?.rank ?? 0) || placeOf(a) - placeOf(b),
+    );
+}

@@ -3,12 +3,8 @@
 // Grouping a table's rows by the one choice a column holds: a group for each choice, in its list's
 // order, then the rows with none, under the column's words for none.
 
-import type {
-  Column,
-  GridRecord,
-  RowGroup,
-  RowGrouping,
-} from "./record-grid.tsx";
+import type { Column, GridRecord, RowGrouping } from "./record-grid.tsx";
+import type { RowGroup } from "./table-view.ts";
 import { emptiedWords } from "./status-mark.tsx";
 import type { Choice } from "@fathom/shared";
 
@@ -32,13 +28,15 @@ export function byChoice<Rec extends GridRecord, Change>(
     of: (record) => {
       const [chosen] = column.value(record) as string[];
       const choice = column.choices.find(({ id }) => id === chosen);
-      return choice === undefined
-        ? none
-        : {
-            key: choice.id,
-            label: headingOf(choice),
-            rank: column.choices.indexOf(choice),
-          };
+      return [
+        choice === undefined
+          ? none
+          : {
+              key: choice.id,
+              label: headingOf(choice),
+              rank: column.choices.indexOf(choice),
+            },
+      ];
     },
   };
 }

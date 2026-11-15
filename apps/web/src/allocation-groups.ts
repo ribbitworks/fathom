@@ -7,9 +7,9 @@
 // single group's row holds every month.
 
 import type { TeamMonths } from "@fathom/shared";
+import { groupedRowId } from "./table-view.ts";
 import {
   featureTeamGrouping,
-  groupedRowId,
   managerGrouping,
   type MonthRow,
   type PersonMonths,

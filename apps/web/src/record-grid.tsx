@@ -81,7 +81,7 @@ import {
   noDrafts,
 } from "./drafts.ts";
 import { useColumnWidths } from "./column-widths.ts";
-import { focusSoon } from "./focus.ts";
+import { focusFoundSoon, focusSoon } from "./focus.ts";
 import { ResizeEdge } from "./resize-edge.tsx";
 import {
   cellKey,
@@ -114,6 +114,12 @@ import {
 import {
   activeGrouping,
   applyView,
+  type PlacedRow,
+  placedRows,
+  recordsOf,
+  type RowGroup,
+  type RowGroups,
+  rowsInOrder,
   type CellValue,
   type ColumnUnit,
   fieldLabel,
@@ -133,6 +139,7 @@ import {
 import { AppMenu, closesOnBlankClick } from "./app-menu.tsx";
 import type { HeldDetail } from "./exports.ts";
 import { useTableExport } from "./table-export.tsx";
+import { tipAttribute } from "./table-tips.tsx";
 import { metricsButtonId, metricsPanelId } from "./metrics.ts";
 import { type CountedRows, MetricsPanel } from "./metrics-panel.tsx";
 import classes from "./pages.module.css";
@@ -375,8 +382,8 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   drafts: (ids: string[]) => DraftSelection;
   // What else a record's menu offers, after its columns' own items, such as showing its details.
   menuItems?: (record: Rec) => ReactNode;
-  // For a table where something can have a row under each of several groups: what each row is of,
-  // so the count above the table and the metrics count it once.
+  // For a table that makes a record of each of someone's rows under several groups: what each row
+  // is of, so the count above the table and the metrics count it once. Otherwise the record's id.
   countedAs?: (record: Rec) => string;
   // The ways the rows can be grouped under headings, the first of which is the table's own, for a
   // table that groups them, unless its rows are in one list until one is chosen.
@@ -404,18 +411,40 @@ export interface RowTotals<Rec> {
   cell: (records: readonly Rec[], columnKey: string) => ReactNode;
 }
 
-// The group a row is in: the groups follow in order of rank, and each is headed with its label.
-export interface RowGroup {
-  key: string;
-  label: string;
-  rank: number;
-}
-
 export interface RowGrouping<Rec> {
   key: string;
   // What the choice of this grouping is called.
   label: string;
-  of: (record: Rec) => RowGroup;
+  // The groups a record is in: one, or several for a column holding several values, never none,
+  // since a record with no value is in the grouping's group for none.
+  of: (record: Rec) => RowGroups;
+}
+
+const recordCellAttribute = "data-record-cell";
+const recordCellOf = (id: string, columnKey: string) => `${id} ${columnKey}`;
+
+// Every cell of a record in a column, one in each of its rows.
+export const recordCellSelector = (id: string, columnKey: string) =>
+  `[${recordCellAttribute}="${CSS.escape(recordCellOf(id, columnKey))}"]`;
+
+// Puts focus on a record's cell in a column, such as once its details close: in the row with the
+// table's active cell, where the record has a row under each of several groups, or else its first.
+export function focusRecordCell(id: string, columnKey: string): void {
+  focusFoundSoon(() => {
+    const cells = [
+      ...document.querySelectorAll<HTMLElement>(
+        recordCellSelector(id, columnKey),
+      ),
+    ];
+    return (
+      cells.find(
+        (cell) =>
+          cell
+            .closest("tr")
+            ?.querySelector('[role="gridcell"][tabindex="0"]') != null,
+      ) ?? cells[0]
+    );
+  });
 }
 
 // What is wrong with a row, and the column whose value is wrong, when one is.
@@ -622,8 +651,16 @@ interface NewRow {
   soFar?: RowProblem | undefined;
 }
 
+// A record's row under each group it's in, or a new row.
 type Row<Rec> =
-  { record: Rec; newRow?: never } | { newRow: NewRow; record?: never };
+  | (PlacedRow<Rec> & { newRow?: never })
+  | {
+      newRow: NewRow;
+      record?: never;
+      key?: never;
+      group?: never;
+      others?: never;
+    };
 
 // Where a row's menu is open from: the ⋯ at the row's end, which the keyboard opens it from too,
 // the ⋯ over its Name cell, or the pointer, where the row was right-clicked.
@@ -1285,7 +1322,7 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
 export interface ShownRows<Rec extends GridRecord> {
   records: readonly Rec[];
   panelOpen: boolean;
-  groupOf: ((record: Rec) => RowGroup) | undefined;
+  groupOf: ((record: Rec) => RowGroups) | undefined;
   draftOf: (record: Rec) => DraftOf<Rec> | undefined;
   liveOf: (record: Rec) => Rec | undefined;
 }
@@ -1311,14 +1348,15 @@ export const noRecordActions = <Rec extends GridRecord, Change, Request>(
 const withoutDraftFilter = (view: View): View =>
   withoutFilters(view, (key) => key !== draftFilterKey);
 
-// Each row's group as the view last placed it, so a row keeps its heading while it is edited, as
-// it keeps its place; a row added since is placed by what it holds now.
+// Each record's groups as the view last placed them, so its rows keep their headings while it is
+// edited, as they keep their places; a record shown since is placed by what it held when first
+// shown, so its rows keep their keys too.
 function useSteadyGroups<Rec>(
   records: readonly Rec[],
   view: View,
   grouping: RowGrouping<Rec> | undefined,
   idOf: (record: Rec) => string,
-): ((record: Rec) => RowGroup) | undefined {
+): ((record: Rec) => RowGroups) | undefined {
   const viewKey = JSON.stringify(view);
   const take = () => ({
     view: viewKey,
@@ -1334,9 +1372,37 @@ function useSteadyGroups<Rec>(
     current = take();
     setSnapshot(current);
   }
+  const { groups } = current;
   return grouping === undefined
     ? undefined
-    : (record) => current.groups.get(idOf(record)) ?? grouping.of(record);
+    : (record) => {
+        const id = idOf(record);
+        const placed = groups.get(id) ?? grouping.of(record);
+        // Kept on first sight only, from the same records, so a render React discards pins
+        // nothing another wouldn't.
+        groups.set(id, placed);
+        return placed;
+      };
+}
+
+// After the name of a record shown under several headings: how many others, and in its tip, which,
+// so whoever edits one row knows another shows the same record.
+function AlsoUnder({ others }: { others: readonly RowGroup[] }) {
+  if (others.length === 0) return null;
+  const names = others.map(({ label }) => label).join(", ");
+  const tip = `Also under ${names}.`;
+  return (
+    <Text
+      component="span"
+      fz="sm"
+      c="dimmed"
+      ml="xs"
+      {...{ [tipAttribute]: tip }}
+    >
+      <span aria-hidden="true">+{others.length}</span>
+      <VisuallyHidden>{`, also under ${names}.`}</VisuallyHidden>
+    </Text>
+  );
 }
 
 export function RecordGrid<Rec extends GridRecord, Change, Request>({
@@ -1610,23 +1676,29 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     activeGrouping(view, table.groupings, table.ungrouped),
     stableId,
   );
-  const { countedAs } = table;
-  const countedOnce = (rows: readonly Rec[]): readonly Rec[] =>
-    countedAs === undefined
-      ? rows
-      : [...new Map(rows.map((row) => [countedAs(row), row])).values()];
-  const shownRecords = useSteadyOrder(
-    records,
-    rowView,
-    (rows) => {
-      const shown = applyView(rows, allColumns, view, [draftColumn]);
-      return groupOf === undefined
-        ? shown
-        : shown.sort((a, b) => groupOf(a).rank - groupOf(b).rank);
-    },
-    stableId,
-    added,
+  const countedAs = table.countedAs ?? ((record: Rec) => record.id);
+  const countedOnce = (rows: readonly Rec[]): readonly Rec[] => [
+    ...new Map(rows.map((row) => [countedAs(row), row])).values(),
+  ];
+  const everyRow = placedRows(records, groupOf, stableId);
+  // The rows of the records this user has added, in the order they added them.
+  const addedRows = new Set(
+    [...added].flatMap((id) =>
+      everyRow.flatMap((row) => (stableId(row.record) === id ? [row.key] : [])),
+    ),
   );
+  const shownRows = useSteadyOrder(
+    everyRow,
+    rowView,
+    (rows) =>
+      rowsInOrder(
+        rows,
+        applyView(recordsOf(rows), allColumns, view, [draftColumn]),
+      ),
+    ({ key }) => key,
+    addedRows,
+  );
+  const shownRecords = recordsOf(shownRows);
   // The heading above each run of rows of one group, by its first row's key, with how many it
   // holds. Rows added since the view last changed stay at the end, so may start a run of their own.
   const groupRuns: {
@@ -1636,22 +1708,20 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     label: string;
     records: Rec[];
   }[] = [];
-  if (groupOf !== undefined) {
-    for (const record of shownRecords) {
-      const group = groupOf(record);
-      const run = groupRuns.at(-1);
-      if (run?.key === group.key) {
-        run.records.push(record);
-        run.last = stableId(record);
-      } else {
-        groupRuns.push({
-          key: group.key,
-          first: stableId(record),
-          last: stableId(record),
-          label: group.label,
-          records: [record],
-        });
-      }
+  for (const { record, key, group } of shownRows) {
+    if (group === undefined) continue;
+    const run = groupRuns.at(-1);
+    if (run?.key === group.key) {
+      run.records.push(record);
+      run.last = key;
+    } else {
+      groupRuns.push({
+        key: group.key,
+        first: key,
+        last: key,
+        label: group.label,
+        records: [record],
+      });
     }
   }
   const headings = new Map(groupRuns.map((run) => [run.first, run]));
@@ -1734,11 +1804,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       ? (row.newRow.kind ?? defaultKind)
       : (table.kindOf?.(row.record) ?? defaultKind);
   const rows: Row<Rec>[] = [
-    ...shownRecords.map((record) => ({ record })),
+    ...shownRows,
     ...(canEdit && canAdd ? newRows.map((newRow) => ({ newRow })) : []),
   ];
   const rowKey = (row: Row<Rec>) =>
-    row.newRow ? `new-${String(row.newRow.key)}` : stableId(row.record);
+    row.newRow ? `new-${String(row.newRow.key)}` : row.key;
   const rowKeys = rows.map(rowKey);
   const keys = columns.map((column) => column.key);
   // Each column's header cells: its own, and any live copy beside it.
@@ -1943,7 +2013,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       allColumns.map((column) => [column.key, column.value(record)]),
     );
 
-  // Every record's and new row's values, by its row's key, read once for a save or for adding
+  // Every record's and new row's values, by the record's stable identifier or the new row's key,
+  // read once for a save or for adding
   // rows, and only when a record's problem needs them.
   const everyRowsValues = () => {
     let read: [string, Record<string, CellValue>][] | undefined;
@@ -1962,7 +2033,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     };
   };
 
-  // The values of every record and new row but the one named by its row's key.
+  // The values of every record and new row but the one named by its key among them.
   const otherValues =
     (rowsValues: () => [string, Record<string, CellValue>][], except: string) =>
     () =>
@@ -2026,7 +2097,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       rowKind(row),
       valuesOf(row.record),
       value,
-      otherValues(everyRowsValues(), key),
+      otherValues(everyRowsValues(), stableId(row.record)),
     );
     if (made === undefined) return true;
     if ("problem" in made) {
@@ -3450,6 +3521,14 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                           <Table.Td
                             key={column.key}
                             id={cellId(rowIndex, columnIndex)}
+                            {...(record === undefined
+                              ? {}
+                              : {
+                                  [recordCellAttribute]: recordCellOf(
+                                    record.id,
+                                    column.key,
+                                  ),
+                                })}
                             role="gridcell"
                             tabIndex={isActive ? 0 : -1}
                             aria-invalid={
@@ -3603,6 +3682,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                 </MarkedItem>
                               </DraftedItem>
                             </DraftedItem>
+                            {column.key === table.nameColumn &&
+                              !editingHere && (
+                                <AlsoUnder others={row.others ?? []} />
+                              )}
                             {column.key === table.nameColumn &&
                               !editingHere &&
                               nameCellControls(row)}

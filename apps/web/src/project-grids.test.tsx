@@ -114,7 +114,7 @@ describe("the Features table", () => {
   const groupingOf = (key: string, more: Partial<Feature>) =>
     featureTable(choices({ cycles }))
       .groupings?.find((grouping) => grouping.key === key)
-      ?.of(feature(more));
+      ?.of(feature(more))[0];
   const groupOf = (more: Partial<Feature>) => groupingOf("targetCycle", more);
   const monthGroupOf = (more: Partial<Feature>) => groupingOf("neededBy", more);
 
@@ -872,7 +872,7 @@ describe("features by release", () => {
   const releaseGroupOf = (more: Partial<Feature>) =>
     featureTable(offered)
       .groupings?.find(({ key }) => key === "release")
-      ?.of(feature(more));
+      ?.of(feature(more))[0];
   const targeting = (targetCycle: string) => ({
     targetStreamId: fictionalStream().id,
     targetCycle,
@@ -976,7 +976,7 @@ describe("the Staffed column", () => {
   it("calls a feature that isn't committed Not committed when grouped", () => {
     const group = featureTable(offered)
       .groupings?.find(({ key }) => key === "staffed")
-      ?.of(feature({ statusId: "idea" }));
+      ?.of(feature({ statusId: "idea" }))[0];
 
     expect(group?.label).toBe("Not committed");
   });

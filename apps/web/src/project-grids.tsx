@@ -77,10 +77,14 @@ import {
   RecordGrid,
   type RecordGridProps,
   type RecordTable,
-  type RowGroup,
   type RowGrouping,
 } from "./record-grid.tsx";
-import { type CellValue, type ColumnUnit, formatMonth } from "./table-view.ts";
+import {
+  type CellValue,
+  type ColumnUnit,
+  formatMonth,
+  type RowGroup,
+} from "./table-view.ts";
 
 // A change to one or more of a record's fields, by name.
 export type PlanChange = Record<string, unknown>;
@@ -884,7 +888,7 @@ const byTarget = (
   label,
   of: (feature) => {
     const [cycle = ""] = cycleOf(feature);
-    return groupOfCycle.get(cycle) ?? later;
+    return [groupOfCycle.get(cycle) ?? later];
   },
 });
 
@@ -902,7 +906,7 @@ const byCycle = (cycles: readonly Choice[]) =>
 const byNeededBy: RowGrouping<Feature> = {
   key: "neededBy",
   label: "Needed by",
-  of: ({ neededBy }) =>
+  of: ({ neededBy }) => [
     neededBy === null
       ? { key: "no-date", label: "No date", rank: Number.MAX_SAFE_INTEGER }
       : {
@@ -910,6 +914,7 @@ const byNeededBy: RowGrouping<Feature> = {
           label: formatMonth(neededBy),
           rank: Number(neededBy.replace("-", "")),
         },
+  ],
 };
 
 // The columns whose one choice the rows can be grouped by, apart from the target cycle and its
