@@ -17,7 +17,7 @@ The threat model groups threats by STRIDE: spoofing, tampering, repudiation, inf
 
 ### Spoofing
 
-- **Signing in as someone else:** Passwords must meet the rules set in Settings and not be easy to guess, and are hashed with scrypt. Sign-in attempts are rate-limited, and a session ends after 30 minutes without use.
+- **Signing in as someone else:** Passwords must meet the rules set in Settings and not be easy to guess, and are hashed with scrypt, Better Auth's default. Sign-in attempts are rate-limited, and a session ends after 30 minutes without use.
 - **Stolen or forged sessions:** Session cookies are Secure, HttpOnly and SameSite, and requests are checked against cross-site forgery.
 - **Posing as the proxy:** The application accepts connections, and the user addresses they name, only from the proxy.
 - **Taking a colleague's name:** A user can't take a name another account has, ignoring letter case, and names that differ only in invisible characters are refused. The audit log shows each account's email address beside its name.
@@ -39,6 +39,7 @@ The threat model groups threats by STRIDE: spoofing, tampering, repudiation, inf
 
 ### Information Disclosure
 
+- **Before sign-in:** Only the front end's files, sign-in and the session check are served without a signed-in account.
 - **Data beyond a role:** One shared data access layer checks permissions and classifications for every page, export and search. A page, view or column is shown only to roles that see every classification it needs.
 - **Drafts and history:** Drafts, unpublished changes and the change history go through the same checks. Unpublished changes are seen only by their maker.
 - **Exports:** An exported file holds only what the role was sent, and saving one with Personal or Confidential data is recorded.

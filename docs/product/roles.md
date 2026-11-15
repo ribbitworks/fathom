@@ -101,7 +101,7 @@ Columns on Features are added and changed by the Product Manager and the Enginee
 
 Personas are defined in the [Product Brief](brief.md#users). A person with two personas, such as a Feature Lead who is also an Engineering Manager, is given the role that grants more, or a role made for them that grants what both do.
 
-How Project Managers give input on whether teams are in place is an open question in the [Product Brief](brief.md), and may add to their role.
+How Project Managers give input on whether teams are in place is still to be decided, and may add to their role.
 
 ## First Stage
 
