@@ -149,12 +149,15 @@ export interface FictionalOrganization {
   // Names for about half the managers' teams; the rest have none.
   teams: FictionalTeam[];
   // Feature teams drawn from current people across managers' teams: some coloured, one with no
-  // lead, someone on two teams, and someone who has left a team, so its history holds a past member.
+  // lead, someone on two teams, someone who has left a team, so its history holds a past member,
+  // and over half of those working on them, joined over two years, with moves between teams, a
+  // lead change and a join to come.
   featureTeams: FictionalFeatureTeam[];
   // People made like the rest but not added, for drafts that add them.
   newcomers: FictionalPerson[];
   // Planned hires in each state, with requisitions and temporary IDs, most under current managers,
-  // and one filled by someone who has not started yet, and one by an internal transfer.
+  // one past its target date, and one filled by someone who has not started yet, and one by an
+  // internal transfer.
   hires: FictionalHire[];
 }
 

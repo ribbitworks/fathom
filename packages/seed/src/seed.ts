@@ -2,11 +2,12 @@
 
 // Adds the fictional organization from @fathom/fixtures to a development database, and removes it
 // again: its lists, the choices it adds to the built-in Positions list, the columns on people
-// drawing on its lists and its note column, about 150 people, the newest with onboarding notes, its
-// planned hires, from ./hires.ts, its release streams, from ./releases.ts, and its customers,
-// proposals, and projects, from ./projects.ts, each recorded in the change history as made by
-// Fathom itself, and an account for each persona, from ./accounts.ts, recorded in the access
-// history. Seeding twice adds nothing more, and removing takes away only what seeding added,
+// drawing on its lists and its note column, about 150 people, the newest with onboarding notes,
+// its feature teams, its planned hires, from ./hires.ts, its release streams, from ./releases.ts,
+// its features, from ./features.ts, its customers, proposals, and projects, from ./projects.ts,
+// and its allocations and workload, from ./allocations.ts, each recorded in the change history as
+// made by Fathom itself, and an account for each persona, from ./accounts.ts, recorded in the
+// access history. Seeding twice adds nothing more, and removing takes away only what seeding added,
 // keeping a seeded column, list, release stream, project, proposal, customer, or person that
 // something added by hand still uses, and deactivating the accounts. Drafts made by the personas,
 // from ./drafts.ts, ./hires.ts, ./list-drafts.ts, and ./plan-drafts.ts, are added once the accounts
@@ -507,6 +508,7 @@ export async function unseed(
       }
     }
     const currentLine = new Map(lines.map((line) => [line.personId, line]));
+    const tiers = valueTiers(organization);
     const teamNames = new Map(
       (await transaction.select().from(teams)).map(({ managerId, name }) => [
         managerId,
@@ -554,6 +556,7 @@ export async function unseed(
             ...single,
           },
           personalDetailFields,
+          tiers,
         ),
       );
     }

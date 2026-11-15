@@ -351,6 +351,29 @@ describe("seeding", () => {
     await seed(connection, organization);
   });
 
+  it("records a person's Confidential values at their class, when added and when removed", async () => {
+    const [person] = organization.people;
+    const band = organization.columns.find(
+      ({ name }) => name === "Compensation band",
+    );
+    const field = `value:${String(band?.id)}`;
+    await unseed(connection, organization);
+    const recordedAs = await connection
+      .select({ action: changes.action, tier: changes.tier })
+      .from(changes)
+      .where(
+        and(eq(changes.recordId, String(person?.id)), eq(changes.field, field)),
+      );
+    expect(recordedAs).toEqual(
+      expect.arrayContaining([
+        { action: "created", tier: "confidential" },
+        { action: "deleted", tier: "confidential" },
+      ]),
+    );
+    expect(recordedAs.every(({ tier }) => tier === "confidential")).toBe(true);
+    expect(await seed(connection, organization)).toBe(true);
+  });
+
   it("records each note a removed person had", async () => {
     const [person] = organization.people;
     const personId = String(person?.id);

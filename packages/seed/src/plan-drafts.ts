@@ -8,7 +8,7 @@
 // milestones, gives the open proposal a Proposal ID, adds a customer, and renames a third project;
 // changes a planned feature's estimate and description and adds a feature; and publishes them. The
 // Engineering Operations Manager drafts retiring Patches, renaming the second feature team, and
-// adding someone to the last and taking someone else off it, and publishes them. The Engineering
+// adding someone to the fourth and taking someone else off it, and publishes them. The Engineering
 // Director rejects the Patches release's colour and the third project's new name with a reason.
 // Then come changes left unpublished, which hold their records: the second Engineering Operations
 // Manager's new names for Platform and the third feature team, and the Project Manager's new
