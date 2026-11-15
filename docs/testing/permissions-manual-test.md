@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["packages/shared/src/access.ts", "packages/shared/src/page-access.ts", "apps/web/src/layout.tsx", "apps/web/src/router.tsx", "apps/web/src/*-page.tsx", "apps/server/src/access.ts", "apps/server/src/data/**", "apps/server/src/routes/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/testing/roles-manual-test.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: What Each Permission Allows
@@ -72,8 +72,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `98FD` Look at the left-hand menu.
   - **Expected:**
     - **Plan** section: **Overview** and **Projects**
-    - **People** section: **Drafts**
-    - **History** section: **Change history**
+    - **History** section: **Drafts** and **Change history**
     - The **Help** section, and no other page
   - **Notes:**
 
@@ -96,8 +95,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `6C7D` Look at the left-hand menu.
   - **Expected:**
     - **Plan** section: **Features** and **Releases**
-    - **People** section: **Drafts**
-    - **History** section: **Change history**
+    - **History** section: **Drafts** and **Change history**
     - The **Help** section, and no other page
   - **Notes:**
 
@@ -129,8 +127,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `4D73` Look at the left-hand menu.
   - **Expected:**
     - **Plan** section: **Features** and **Releases**
-    - **People** section: **Drafts**
-    - **History** section: **Change history**
+    - **History** section: **Drafts** and **Change history**
     - The **Help** section, and no other page
   - **Notes:**
 
@@ -183,8 +180,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `11CE` Look at the left-hand menu.
   - **Expected:**
-    - **People** section: **People**, **Org chart** and **Drafts**
-    - **History** section: **Change history**
+    - **People** section: **People** and **Org chart**
+    - **History** section: **Drafts** and **Change history**
     - The **Help** section, and no other page
   - **Notes:**
 
@@ -248,8 +245,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `E063` Look at the left-hand menu.
   - **Expected:**
-    - **People** section: **People**, **Org chart**, **Feature assignments** and **Drafts**
-    - **History** section: **Change history**
+    - **People** section: **People**, **Org chart** and **Feature assignments**
+    - **History** section: **Drafts** and **Change history**
     - The **Help** section, and no other page
   - **Notes:**
 
@@ -494,9 +491,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `9A70` Look at the left-hand menu.
   - **Expected:**
     - **Plan** section: **Releases**
-    - **People** section: **Drafts** and **Capacity**
+    - **People** section: **Capacity**
     - **Administration** section: **Lists**
-    - **History** section: **Change history**
+    - **History** section: **Drafts** and **Change history**
     - The **Help** section, and no other page
   - **Notes:**
 
@@ -689,9 +686,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `850A` Look at the left-hand menu.
   - **Expected:**
     - **Plan** section: **Releases**
-    - **People** section: **Drafts** and **Capacity**
+    - **People** section: **Capacity**
     - **Administration** section: **Lists**
-    - **History** section: **Change history**
+    - **History** section: **Drafts** and **Change history**
     - The **Help** section, and no other page
   - **Notes:**
 

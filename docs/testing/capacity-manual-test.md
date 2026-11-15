@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Capacity
@@ -517,7 +517,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `3C47` Look at the **People** section of the left-hand menu.
   - **Expected:**
-    - It shows **People**, **Org chart** and **Drafts**.
+    - It shows **People** and **Org chart**.
     - There is no **Capacity**.
   - **Notes:**
 

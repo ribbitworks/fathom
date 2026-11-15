@@ -144,13 +144,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `C157` Read the card 'Scheduler API' in the second column.
   - **Expected:**
     - "Planned · Medium priority" is under its name.
-    - At its foot, "Not staffed" is in a red box.
+    - At its foot, "Not staffed" is in red words, with no box.
   - **Notes:**
 
 - [ ] `883E` Find the card 'Report Builder', selecting **›** in the strip if it isn't shown.
   - **Expected:**
     - Its status, "Possible", is in italics.
-    - Its card has no "Not staffed" box.
+    - Its card has no "Not staffed".
   - **Notes:**
 
 - [ ] `6582` Select **Card**.
@@ -415,7 +415,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `C5FB` Select **Board** in the Table and Board switch.
   - **Expected:**
     - The board shows Platform's cycles from the current one.
-    - 'Scheduler API' shows "Not staffed" in a red box.
+    - 'Scheduler API' shows "Not staffed" in red words.
   - **Notes:**
 
 - [ ] `F21A` Select **Card**.

@@ -242,7 +242,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 - [ ] `8352` Look at the **People** section of the left-hand menu.
   - **Expected:**
-    - It shows **People**, **Org chart** and **Drafts**.
+    - It shows **People** and **Org chart**.
     - There is no **Feature assignments**.
   - **Notes:**
 

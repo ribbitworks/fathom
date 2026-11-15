@@ -502,7 +502,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The cell reads "Planned", with a hollow yellow dot before it.
     - The row is faintly yellow.
-    - Its **Feature team** cell shows a red **No team** box.
+    - Its **Feature team** cell shows **No team** in red, with no box.
     - A Live row under it reads "Possible".
   - **Notes:**
 

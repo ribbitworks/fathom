@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-setting-up-fathom-manual-test.md", "docs/help/how-work-moves-between-roles.md", "docs/product/roles.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Acceptance, Work Between Roles
@@ -109,7 +109,7 @@ Run the test cases in order, in about 30 minutes, straight after [Setting Up Fat
 - [ ] `7B69` Select **Add**.
   - **Expected:**
     - The feature's details are headed with a hollow yellow dot before `Fictional Tide Tables`.
-    - In the table, its **Feature team** cell reads `Tide team`, with no **No team** box.
+    - In the table, its **Feature team** cell reads `Tide team`, and does not show **No team**.
     - Its **Target cycle** cell reads the cycle chosen, such as "Fictional Mainline: 27.1".
   - **Notes:**
 

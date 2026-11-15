@@ -25,7 +25,6 @@ The left-hand menu shows only the pages your role lets you open. A page your rol
 | [People](people.md) | It lists everyone and the planned hires, as a table. | **View People** | Every role but Administrator |
 | [Org chart](org-chart.md) | It draws reporting teams and feature teams as cards, today or, with **View Personal details**, on other dates. | **View People** | Every role but Administrator |
 | [Feature assignments](feature-assignments.md) | It shows who is on which feature team, month by month. | **View Feature teams** with **View Personal details** | Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive |
-| [Drafts](drafts-page.md) | It lists the drafts waiting. Approvers approve or reject them there. | Any of **View Plan**, **View Features and releases**, **View People** or **View Configuration** | Every role but Administrator |
 | [Capacity](capacity.md) | It shows what each person works on, month by month, and the planning settings. | Its **People** mode needs **View Allocations**, **View Feature teams**, **View People** and **View Personal details**. Its **Settings** mode needs **View Configuration**. Either mode shows the page. | Product Manager, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive |
 
 The Product Manager sees Capacity in its **Settings** mode only, since the role doesn't hold **View Personal details**.
@@ -44,6 +43,7 @@ The Product Manager sees Capacity in its **Settings** mode only, since the role 
 
 | Page | What it's for | Shown with | Starting roles that see it |
 | --- | --- | --- | --- |
+| [Drafts](drafts-page.md) | It lists the drafts waiting. Approvers approve or reject them there. | Any of **View Plan**, **View Features and releases**, **View People** or **View Configuration** | Every role but Administrator |
 | [Change history](change-history.md) | It lists every change saved, who made it, and the values before and after. | **View** on any area but **Administration** | Every role but Administrator |
 | [Access history](access-history.md) | It lists sign-ins, changes to accounts, roles and settings, and who viewed or exported private details. | **View Administration** | Engineering Director, Executive, Administrator |
 

@@ -240,7 +240,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `3F53` Press Esc, and look at the **People** section of the left-hand menu.
   - **Expected:**
-    - It shows **People**, **Org chart** and **Drafts**.
+    - It shows **People** and **Org chart**.
     - There is no **Feature assignments** and no **Capacity**.
   - **Notes:**
 

@@ -146,7 +146,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `F55A` Look at the **Feature team** cell of the row 'Scheduler API'.
   - **Expected:**
-    - The cell has a red **No team** box.
+    - The cell shows **No team** in red, with no box.
     - No dot is before the box.
     - The box starts in line with the text of the cells above and below.
   - **Notes:**

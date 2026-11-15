@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/design/conventions.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Dark Mode
@@ -530,7 +530,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The current cycle's red line along its heading, and the strip's red underline, are clear against the dark page.
     - The **Later** column's shade is clear, and its cards stand out from it.
     - The blocks after **Size**, from dark to light, and the bars after **Risk**, green to red, are clear.
-    - The red "Not staffed" box on 'Scheduler API' is easy to read.
+    - The red "Not staffed" on 'Scheduler API' is easy to read.
   - **Notes:**
 
 - [ ] `2514` Select **Table** beside the **Features** heading.

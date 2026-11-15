@@ -1,6 +1,6 @@
 # Drafts page
 
-The **Drafts** page, under **People** in the left-hand menu, lists the drafts, newest first. A draft is a change that waits for approval before it goes live. The page shows the drafts waiting for approval, the ones rejected, and your own changes you haven't published yet.
+The **Drafts** page, under **History** in the left-hand menu, lists the drafts, newest first. A draft is a change that waits for approval before it goes live. The page shows the drafts waiting for approval, the ones rejected, and your own changes you haven't published yet.
 
 Approvers approve or reject drafts here. Everyone who sees the plan, features, people or configuration sees the drafts of what they see.
 
