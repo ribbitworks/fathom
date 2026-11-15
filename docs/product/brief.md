@@ -83,4 +83,4 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md). The order 
 - Integrations with issue trackers and HR systems
 - Other integrations as needs emerge
 - Physical resources, such as equipment, planned and allocated alongside people
-- Importing people: adding and updating people from a CSV or TSV file, planned for v1.1, as the [Roadmap](roadmap.md#not-yet-placed) records
+- Importing people: adding and updating people from a CSV or TSV file, planned for v1.1

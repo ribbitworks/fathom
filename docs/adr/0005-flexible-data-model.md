@@ -1,7 +1,7 @@
 # Flexible Data Model
 
 - **ADR:** 0005
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-30
 - **Revised:** 2026-10-31, to link to [ADR 0006](0006-table-views-in-the-browser.md) for how tables are filtered and sorted; 2026-11-06, to add Note fields; 2026-11-08, to add Number fields
 

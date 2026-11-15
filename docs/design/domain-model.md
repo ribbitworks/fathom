@@ -139,7 +139,3 @@ Approving drafts, whether one or several at once, applies them all to the live r
 ## Not Yet Modeled
 
 Initiatives, themes, and priorities are not built in: an organization that uses them adds them as columns. Links between the features that are increments of the same work are not built in either; such a column groups them, as the [Decisions Log](../product/decisions.md#planning) sets out. How projects relate to products, if at all, is not yet decided. Physical resources are a future possibility in the [Product Brief](../product/brief.md#future-possibilities). Dotted-line reporting relationships and licenses are out of scope for v1, as listed in the [Product Brief](../product/brief.md).
-
-## Open Questions
-
-1. **Allocations with variable capacity:** Once a person can have less than a full month, does a 50% allocation mean half a month, or half of that person's capacity?
