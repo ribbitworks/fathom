@@ -12,16 +12,15 @@
 // only read. Beside the org chart on an earlier day, only a person's manager changes, from that day,
 // while their current line was already in force then.
 
-import { type PaletteColour, type Person, type Show } from "@fathom/shared";
-import { Alert, Button, Group, Loader, Stack, Text } from "@mantine/core";
+import { type Person, type Show } from "@fathom/shared";
+import { Alert, Button, Group, Loader, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useEffectEvent } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
-import { Swatch, teamSwatchSize } from "./colour-swatch.tsx";
 import { focusSoon } from "./focus.ts";
 import { listsQuery } from "./lists.ts";
 import { PersonFeatureTeams } from "./person-feature-teams.tsx";
-import { orgChartQuery } from "./org-chart.ts";
+import { useTeamColours } from "./org-chart.ts";
 import {
   columnsFor,
   type Column,
@@ -31,6 +30,7 @@ import {
   peopleAsShown,
   personKind,
   recordProblem,
+  withTeamColours,
 } from "./people-grid.tsx";
 import { isHire, personKeyOf, rowName, type RowChange } from "./people-rows.ts";
 import { changedFrom, managerChangesFrom } from "./person-change.ts";
@@ -43,7 +43,12 @@ import {
   useShownId,
 } from "./person-editing.tsx";
 import classes from "./record-details.module.css";
-import { RecordLink, RecordSection, Row } from "./record-details.tsx";
+import {
+  RecordLink,
+  RecordSection,
+  Row,
+  DetailSections,
+} from "./record-details.tsx";
 import { heldBack, onRow, shownSchema } from "./record-grid.tsx";
 import { RecordKey } from "./record-key.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
@@ -53,7 +58,6 @@ import {
   DraftedPartItem,
   leftWarning,
   MarkedItem,
-  MarkRow,
 } from "./status-mark.tsx";
 import { type CellValue, formatDay, plannedWords } from "./table-view.ts";
 import { today } from "./today.ts";
@@ -150,7 +154,7 @@ export function PersonPanel({
 }) {
   const query = useQuery(peopleQueryOn(shownOn));
   const lists = useQuery(listsQuery);
-  const chart = useQuery(orgChartQuery);
+  const teamColourOf = useTeamColours();
   const { closeStale, editingOf } = usePersonEditing(notes);
   const people = query.data?.people ?? [];
   const found = people.find((one) => sameId(one, employeeId));
@@ -255,14 +259,17 @@ export function PersonPanel({
   }
   const kind = person.kind ?? personKind;
   const schema = shownSchema(show, query.data.fields, lists.data);
-  const allColumns = columnsFor(
-    schema.fields,
-    schema.lists,
-    query.data.order,
-    showDates,
-    asShown,
-    query.data.positionHidden !== true,
-    showHireDates,
+  const allColumns = withTeamColours(
+    columnsFor(
+      schema.fields,
+      schema.lists,
+      query.data.order,
+      showDates,
+      asShown,
+      query.data.positionHidden !== true,
+      showHireDates,
+    ),
+    teamColourOf,
   );
   const columns = allColumns
     .filter((column) => column.offeredOn?.(kind) ?? true)
@@ -310,8 +317,6 @@ export function PersonPanel({
     ...reportsAmong(asShown),
     ...liveReports.filter(({ id }) => !shownIds.has(id)),
   ].sort((a, b) => byName.compare(nameOf(a), nameOf(b)));
-  const colour: PaletteColour | null =
-    chart.data?.people.find(({ id }) => id === person.id)?.teamColour ?? null;
   const left = typeof person.endDate === "string" && person.endDate < day;
   const position = byKey.get("positionId");
   const valuesOf = (one: Person): Record<string, CellValue> =>
@@ -372,13 +377,6 @@ export function PersonPanel({
             />
           </MarkedItem>
         </>
-      ) : column.key === "teamName" &&
-        colour !== null &&
-        typeof person.teamName === "string" ? (
-        <MarkRow>
-          <Swatch colour={colour} size={teamSwatchSize} />
-          <Text>{person.teamName}</Text>
-        </MarkRow>
       ) : undefined;
     const draft =
       ownDraft?.action === "changed" &&
@@ -390,11 +388,14 @@ export function PersonPanel({
         key={column.key}
         column={column}
         value={column.value(person)}
+        colour={column.colour?.(person) ?? null}
         changed={
           draft === undefined
             ? undefined
             : {
                 live: column.live(draft),
+                // Only a record drafted to be added has no live copy, and its draft changes no value.
+                liveColour: column.colour?.({ ...person, ...live }) ?? null,
                 draft,
                 warning:
                   column.key === "managerId" && live?.managerLeft === true
@@ -432,7 +433,7 @@ export function PersonPanel({
       />
     ),
     content: (
-      <Stack gap="lg">
+      <DetailSections>
         <div>
           <Group gap={0} align="baseline">
             <MarkedItem
@@ -527,7 +528,7 @@ export function PersonPanel({
             )}
           </>
         )}
-      </Stack>
+      </DetailSections>
     ),
   });
 }

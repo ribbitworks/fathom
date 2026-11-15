@@ -315,7 +315,7 @@ export function TimelineView({
       <Paper withBorder className={classes.timelinePanel}>
         <div
           ref={scroller}
-          className={classes.timelineScroll}
+          className={[classes.timelineScroll, classes.scrollBars].join(" ")}
           // Focusable, so the keyboard scrolls it in every browser.
           tabIndex={0}
           role="group"

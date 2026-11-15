@@ -18,6 +18,7 @@ import type {
   DataClasses,
   Field,
   List,
+  PaletteColour,
   Person,
   Show,
 } from "@fathom/shared";
@@ -723,6 +724,29 @@ function peopleGroupings(columns: readonly Column[]): RowGrouping<Person>[] {
 const personRowKeyOf = (row: Person) =>
   personKeyOf({ keyNumber: row.keyNumber, hire: isHire(row) });
 
+const noTeamColour = (): PaletteColour | null => null;
+
+// The team columns in their teams' colours: Team in its manager's team's, the team it names, and
+// Team name in the person's own.
+export const withTeamColours = (
+  columns: readonly Column[],
+  teamColourOf: (personId: string) => PaletteColour | null,
+): Column[] =>
+  columns.map((column) => {
+    if (column.key === "team") {
+      return {
+        ...column,
+        colour: ({ manager }: Person) =>
+          manager === undefined || manager === null
+            ? null
+            : teamColourOf(manager.id),
+      };
+    }
+    return column.key === "teamName"
+      ? { ...column, colour: ({ id }: Person) => teamColourOf(id) }
+      : column;
+  });
+
 function peopleTable(
   // The columns and lists as the Draft menu's choice shows them, which the rows can be grouped by.
   schema: { fields: readonly Field[]; lists: readonly List[] },
@@ -736,6 +760,7 @@ function peopleTable(
   onFill: ((hire: Person) => void) | undefined,
   dataClasses: DataClasses,
   changesFrom: ChangesFrom | undefined,
+  teamColourOf: (personId: string) => PaletteColour | null,
 ): RecordTable<Person, RowChange, RowRequest> {
   const kindOf = (row: Person) => row.kind ?? personKind;
   // Each built-in column's class, as the server decides who is sent it. A Start column showing
@@ -761,15 +786,18 @@ function peopleTable(
     order: readonly string[],
     records: readonly Person[],
   ) =>
-    columnsFor(
-      shownFields,
-      shownLists,
-      order,
-      showDates,
-      records,
-      showPosition,
-      showHireDates,
-      canEditHires,
+    withTeamColours(
+      columnsFor(
+        shownFields,
+        shownLists,
+        order,
+        showDates,
+        records,
+        showPosition,
+        showHireDates,
+        canEditHires,
+      ),
+      teamColourOf,
     );
   return {
     label: "People",
@@ -887,6 +915,8 @@ type PeopleGridProps = Omit<
   onFill?: ((hire: Person) => void) | undefined;
   // The day People shows, when a change of manager is made from it rather than today.
   changesFrom?: ChangesFrom | undefined;
+  // The colour of the team each person leads, which the team columns show.
+  teamColourOf?: (personId: string) => PaletteColour | null;
 };
 
 export function PeopleGrid({
@@ -899,6 +929,7 @@ export function PeopleGrid({
   onOpen,
   onFill,
   changesFrom,
+  teamColourOf = noTeamColour,
   ...props
 }: PeopleGridProps) {
   return (
@@ -920,6 +951,7 @@ export function PeopleGrid({
         onFill,
         dataClasses,
         changesFrom,
+        teamColourOf,
       )}
       canAdd={showPosition && changesFrom === undefined}
       rowActions={changesFrom === undefined}

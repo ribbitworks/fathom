@@ -77,7 +77,7 @@ function ClassSection({
         {title}
       </Title>
       <Paper withBorder className={classes.tableScrollPanel}>
-        <div className={classes.tableScroll}>
+        <div className={[classes.tableScroll, classes.scrollBars].join(" ")}>
           <Table aria-labelledby={id} className={pageClasses.classTable}>
             <Table.Thead>
               <Table.Tr>

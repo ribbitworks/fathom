@@ -78,6 +78,7 @@
 }
 
 .row:is(:hover, :focus-within) .change,
+.panelTable tr:is(:hover, :focus-within) .change,
 .change:is(:focus-visible, [aria-expanded="true"]) {
   opacity: 1;
 }
@@ -126,4 +127,19 @@
 .unitField {
   flex: 1;
   min-width: 0;
+}
+
+/* A small table in a panel, lined up with the labels above it, its headings in the labels' colour;
+   its rows' pencils show as a value's do, and a row of something already over is dimmed. */
+.panelTable :is(th, td):first-child {
+  padding-inline-start: 0;
+}
+
+.panelTable th {
+  font-weight: 400;
+  color: var(--mantine-color-dimmed);
+}
+
+.pastRow {
+  color: var(--mantine-color-dimmed);
 }

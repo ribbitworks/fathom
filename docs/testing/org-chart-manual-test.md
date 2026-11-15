@@ -647,3 +647,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **Date** box shows the first day of last month.
     - No card for the planned Engineering Manager or any other planned hire is drawn.
   - **Notes:**
+
+### ORG-19: A Team's Colour Shows Before Its Name on People and in Details
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the account ORG-18 ended with.
+
+**Preconditions:** Restore the Seed Data run, then signed in with this account. **People** page open from the left-hand menu.
+
+- [ ] `2EDA` In the search field, type `Atmananda`.
+  - **Expected:** 'Atmananda Ganaka' is the only row.
+  - **Notes:**
+
+- [ ] `782F` Read his **Team name** cell.
+  - **Expected:** A grape (purple) square, then "Payments team".
+  - **Notes:**
+
+- [ ] `E2B7` Point at his row, then select the details button at the right of his **Name** cell.
+  - **Expected:** His details open, and under **Reporting**, **Reporting team name** shows a grape square, then "Payments team".
+  - **Notes:**
+
+- [ ] `986E` Clear the search field, then type `Lorenza`.
+  - **Expected:** The **Team name** cell of the row for 'Lorenza Thiel' is blank, with no square.
+  - **Notes:**

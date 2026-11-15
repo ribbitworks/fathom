@@ -15,7 +15,12 @@ import {
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fictionalStream, testTheme } from "./test-support.tsx";
+import {
+  fictionalRelease,
+  fictionalStream,
+  recordDraft,
+  testTheme,
+} from "./test-support.tsx";
 import type { DayRange, TimelineRow } from "./timeline.ts";
 import { TimelineView } from "./timeline-view.tsx";
 
@@ -335,6 +340,66 @@ describe("a view's own rows", () => {
       return shown;
     };
     expect([labels("2027-05-15"), labels("2027-05-16")]).toEqual([false, true]);
+  });
+
+  it("names a release that fits after its draft's dot and its colour's square, and marks none that doesn't", () => {
+    // Given two drafted releases on one quarter each: a short name that fits, and a long one
+    const drafted = recordDraft({ action: "changed", changed: ["name"] });
+    const timeline = showTimeline({
+      streams: [
+        fictionalStream({
+          releases: [
+            fictionalRelease({ name: "Fit", colour: "grape", draft: drafted }),
+            fictionalRelease({
+              id: "30000000-0000-4000-8000-000000000002",
+              name: "A release name far too long for one quarter's strip",
+              firstCycle: "2027-04-01",
+              lastCycle: "2027-04-01",
+              colour: "teal",
+              draft: drafted,
+            }),
+          ],
+        }),
+      ],
+    });
+
+    // Then only the release that fits shows its square, and only its name is drawn on its strip
+    expect([
+      [...timeline.querySelectorAll<HTMLElement>("[data-colour]")].map(
+        (square) => square.dataset.colour,
+      ),
+      within(timeline).queryAllByText("Fit", {
+        ignore: "[class*='visuallyHidden']",
+      }).length,
+    ]).toEqual([["grape"], 1]);
+  });
+
+  it("leaves room for a release's square when deciding whether its name fits", () => {
+    // Given a release on a quarter of 90 days, 270 pixels, whose name and square fit, and one on a
+    // quarter of 91 days, 273 pixels, whose name fits only without its square
+    const timeline = showTimeline({
+      streams: [
+        fictionalStream({
+          releases: [
+            fictionalRelease({ name: "N".repeat(35), colour: "grape" }),
+            fictionalRelease({
+              id: "30000000-0000-4000-8000-000000000002",
+              name: "W".repeat(37),
+              firstCycle: "2027-04-01",
+              lastCycle: "2027-04-01",
+              colour: "teal",
+            }),
+          ],
+        }),
+      ],
+    });
+
+    // Then only the first is named on its strip
+    expect(
+      [...timeline.querySelectorAll<HTMLElement>("[data-colour]")].map(
+        (square) => square.dataset.colour,
+      ),
+    ).toEqual(["grape"]);
   });
 
   it("draws the view's rows at the timeline's scale, under the release layer", () => {

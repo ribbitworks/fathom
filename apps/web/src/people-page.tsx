@@ -45,6 +45,7 @@ import { listsQuery } from "./lists.ts";
 import { focusSoon } from "./focus.ts";
 import { DateControl } from "./date-control.tsx";
 import { PageHeader } from "./page-header.tsx";
+import { useTeamColours } from "./org-chart.ts";
 import {
   type NewRecord,
   newRecord,
@@ -228,6 +229,7 @@ export function PeoplePage({
 }) {
   const day = dates?.day;
   const query = useQuery(peopleQueryOn(day));
+  const teamColourOf = useTeamColours();
   // Changes to rows, columns, and anything undated are made on today.
   const changesRows = canEdit && day === undefined;
   const changesFrom =
@@ -570,6 +572,7 @@ export function PeoplePage({
       <>
         <PeopleGrid
           linkedColumn={linkedColumn}
+          teamColourOf={teamColourOf}
           dataClasses={access.dataClasses}
           // On a day where nothing can be changed, People is read as approved, as the Org chart is.
           withDrafts={day === undefined || changesFrom !== undefined}

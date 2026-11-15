@@ -16,7 +16,6 @@
 
 import { actionsFor, MoreButton, opensMenu } from "./row-controls.tsx";
 import { RecordKey } from "./record-key.tsx";
-import { PanelSubtitle } from "./side-panel.tsx";
 import { movedItem } from "./table-view.ts";
 import {
   DragDropContext,
@@ -41,9 +40,8 @@ import {
   meaningsOf,
 } from "@fathom/shared";
 import {
-  ActionIcon,
   Button,
-  FocusTrap,
+  Group,
   Menu,
   Stack,
   Text,
@@ -78,6 +76,7 @@ import {
   WaitingNote,
 } from "./draft-details.tsx";
 import { originalOf } from "./record-drafts.ts";
+import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
 import {
   changedValue,
@@ -131,6 +130,7 @@ const entryWeightId = "choice-entry-weight";
 const editWeightId = "choice-edit-weight";
 export const titleId = "list-panel-title";
 const classHeldId = "list-panel-class-held";
+const listFrameId = "list-panel-frame";
 export const rowId = (choice: { id: string }) => `choice-${choice.id}`;
 const actionsId = (choice: { id: string }) => `choice-actions-${choice.id}`;
 const duplicate = "Already in this list";
@@ -1269,114 +1269,104 @@ export function ListPanel({
 
   const gridRole = canEdit ? "grid" : "table";
 
+  // Prevented, so the frame's Esc leaves the panel open while it closes the menu.
+  const closeMenuOnEscape = (event: KeyboardEvent) => {
+    if (
+      event.key !== "Escape" ||
+      event.defaultPrevented ||
+      menuFor === undefined
+    ) {
+      return;
+    }
+    event.preventDefault();
+    setMenuFor(undefined);
+    focusSoon(rowId({ id: menuFor }));
+  };
+
   return (
-    <FocusTrap active={narrow}>
-      <section
-        className={narrow ? classes.panelNarrow : classes.panel}
-        aria-labelledby={titleId}
-        // Covering the page on a narrow screen, it holds focus until it is closed.
-        {...(narrow ? { role: "dialog", "aria-modal": true } : {})}
-        onKeyDown={(event) => {
-          // Esc closes an open menu, then the panel, from anywhere in it, unless something inside,
-          // such as a choice being edited, has used it already.
-          if (event.key !== "Escape" || event.defaultPrevented) return;
-          if (menuFor === undefined) {
-            onClose();
-            return;
+    <SidePanelFrame
+      id={listFrameId}
+      titleId={titleId}
+      narrow={narrow}
+      close={{ label: "Close", onClose }}
+      title={
+        <span className={listRemoved ? classes.struck : undefined}>
+          {list.name}
+        </span>
+      }
+      marked={(heading) => (
+        // The list's own mark, unless its draft only changes its name or description, each marked
+        // before it; a new order is marked on each choice it moves.
+        <DraftedItem
+          draft={
+            recordMark(original.draft, listFields) === undefined
+              ? undefined
+              : withRetiring({
+                  ...original,
+                  draft: original.draft as NonNullable<List["draft"]>,
+                })
           }
-          setMenuFor(undefined);
-          focusSoon(rowId({ id: menuFor }));
-        }}
-      >
-        <div className={classes.panelHead}>
-          <div className={classes.panelTitle}>
-            <div className={classes.panelNameBlock}>
-              {/* The list's own mark, unless its draft only changes its name or description, each
-                  marked before it; a new order is marked on each choice it moves. */}
-              <DraftedItem
-                draft={
-                  recordMark(original.draft, listFields) === undefined
-                    ? undefined
-                    : withRetiring({
-                        ...original,
-                        draft: original.draft as NonNullable<List["draft"]>,
-                      })
-                }
-                heldBy={list.heldBy ?? list.orderHeldBy}
-                facts={<ListFacts list={list} />}
-              >
-                <DraftedValue
-                  draft={original.draft}
-                  fields={["name"]}
-                  named="Name"
-                  dataClass={list.visibility}
+          heldBy={list.heldBy ?? list.orderHeldBy}
+          facts={<ListFacts list={list} />}
+        >
+          <DraftedValue
+            draft={original.draft}
+            fields={["name"]}
+            named="Name"
+            dataClass={list.visibility}
+          >
+            {heading}
+          </DraftedValue>
+        </DraftedItem>
+      )}
+      actions={
+        <>
+          {canEdit && (
+            <Button variant="default" size="compact-sm" onClick={onEditList}>
+              Edit list
+            </Button>
+          )}
+          {onMoveClass &&
+            (mayEdit || list.draft?.action !== "created") &&
+            list.draft?.action !== "deleted" && (
+              <Stack gap={2} align="flex-end">
+                <Button
+                  variant="default"
+                  size="compact-sm"
+                  disabled={list.heldBy !== undefined}
+                  aria-describedby={
+                    list.heldBy === undefined ? undefined : classHeldId
+                  }
+                  onClick={onMoveClass}
                 >
-                  <h2
-                    id={titleId}
-                    className={[
-                      classes.panelName,
-                      listRemoved ? classes.struck : "",
-                    ].join(" ")}
-                    tabIndex={-1}
-                  >
-                    {list.name}
-                  </h2>
-                </DraftedValue>
-              </DraftedItem>
-              <PanelSubtitle className={classes.panelSubtitle}>
-                <RecordKey
-                  record={{ kind: "list", keyNumber: list.keyNumber }}
-                />
-              </PanelSubtitle>
-            </div>
-            {canEdit && (
-              <Button variant="default" size="compact-sm" onClick={onEditList}>
-                Edit list
-              </Button>
+                  Change class…
+                </Button>
+                {list.heldBy !== undefined && (
+                  <Text id={classHeldId} fz="xs" c="dimmed" ta="right">
+                    {list.heldBy} is changing this list
+                  </Text>
+                )}
+              </Stack>
             )}
-            {onMoveClass &&
-              (mayEdit || list.draft?.action !== "created") &&
-              list.draft?.action !== "deleted" && (
-                <Stack gap={2} align="flex-end">
-                  <Button
-                    variant="default"
-                    size="compact-sm"
-                    disabled={list.heldBy !== undefined}
-                    aria-describedby={
-                      list.heldBy === undefined ? undefined : classHeldId
-                    }
-                    onClick={onMoveClass}
-                  >
-                    Change class…
-                  </Button>
-                  {list.heldBy !== undefined && (
-                    <Text id={classHeldId} fz="xs" c="dimmed" ta="right">
-                      {list.heldBy} is changing this list
-                    </Text>
-                  )}
-                </Stack>
-              )}
-            {(list.draft ?? list.orderDraft) && (
-              <ListDraftMenu
-                list={list}
-                orderWaits={waits({ ...noDrafts(), orders: [list.id] })}
-                canEdit={mayEdit}
-                canApprove={canApprove}
-                actions={draftActions}
-              />
-            )}
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              aria-label="Close"
-              onClick={onClose}
-            >
-              <Icon name="close" />
-            </ActionIcon>
+          {(list.draft ?? list.orderDraft) && (
+            <ListDraftMenu
+              list={list}
+              orderWaits={waits({ ...noDrafts(), orders: [list.id] })}
+              canEdit={mayEdit}
+              canApprove={canApprove}
+              actions={draftActions}
+            />
+          )}
+        </>
+      }
+      subtitle={
+        <>
+          <div>
+            <RecordKey record={{ kind: "list", keyNumber: list.keyNumber }} />
           </div>
-          {(list.description !== "" ||
-            changedValue(original.draft, "description") !== undefined) && (
-            <Text fz="sm" c="dimmed" mt={4} component="div">
+          {list.description !== "" ||
+          changedValue(original.draft, "description") !== undefined ? (
+            <>
               <MarkRow>
                 <DraftedValue
                   draft={original.draft}
@@ -1395,101 +1385,13 @@ export function ListPanel({
                       : liveDescription}
                   </LiveLine>
                 )}
-            </Text>
-          )}
-        </div>
-        <div className={classes.panelBody}>
-          {offered.length === 0 && !canEdit && (
-            <Text fz="sm" c="dimmed" p="md">
-              None
-            </Text>
-          )}
-          <div role={gridRole} aria-label="Choices">
-            <DragDropContext onDragEnd={drop}>
-              <Droppable droppableId="choices">
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    role="rowgroup"
-                  >
-                    {offered.map((choice, index) => (
-                      <Fragment key={choice.id}>
-                        {index === 0 && liveRowsAfter(null)}
-                        {row(choice, index)}
-                        {liveUnder(choice)}
-                        {liveRowsAfter(choice.id)}
-                      </Fragment>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
-            {canEdit && (
-              <div
-                role="row"
-                className={[...shape, classes.entry].join(" ")}
-                // Leaving the empty row, by clicking or tabbing elsewhere, adds what was typed, as
-                // leaving a choice being edited saves it.
-                onBlur={(event) => {
-                  if (event.currentTarget.contains(event.relatedTarget)) return;
-                  addEntry(false);
-                }}
-              >
-                <span className={classes.plus} aria-hidden>
-                  <Icon name="plus" size={14} />
-                </span>
-                <Fields
-                  idPrefix="choice-entry"
-                  draft={entry}
-                  problem={entryProblem}
-                  label="New choice "
-                  meanings={meanings}
-                  weighed={weighed}
-                  weightProblem={entryWeightProblem}
-                  onChange={(next) => {
-                    setEntry(next);
-                    setEntryProblem(undefined);
-                    setEntryWeightProblem(undefined);
-                  }}
-                  onKeyDown={onEntryKey}
-                  onFocus={() => {
-                    setSelected(undefined);
-                  }}
-                  onPaste={paste}
-                />
-              </div>
-            )}
-          </div>
-          {list.builtIn && (
-            <Text fz="xs" c="dimmed" className={classes.builtInNote}>
-              {builtInNote(list.builtIn, mayEdit)}
-            </Text>
-          )}
-          {shownRetired.length > 0 && (
-            <>
-              <Text
-                id="list-panel-retired"
-                className={classes.retiredLabel}
-                fz="xs"
-                fw={600}
-              >
-                Retired
-              </Text>
-              <div role={gridRole} aria-labelledby="list-panel-retired">
-                {shownRetired.map((choice, index) => (
-                  <Fragment key={choice.id}>
-                    {row(choice, index)}
-                    {liveUnder(choice)}
-                  </Fragment>
-                ))}
-              </div>
             </>
-          )}
-        </div>
-        {retired.length > 0 && (
-          <div className={classes.panelFoot}>
+          ) : undefined}
+        </>
+      }
+      foot={
+        retired.length > 0 ? (
+          <Group justify="flex-end">
             <Button
               variant={showRetired ? "light" : "default"}
               color="gray"
@@ -1503,9 +1405,100 @@ export function ListPanel({
                 ? "Hide retired"
                 : `Show retired (${count(retired.length)})`}
             </Button>
-          </div>
+          </Group>
+        ) : undefined
+      }
+    >
+      <div className={sidePanelScroll} onKeyDown={closeMenuOnEscape}>
+        {offered.length === 0 && !canEdit && (
+          <Text fz="sm" c="dimmed" p="md">
+            None
+          </Text>
         )}
-      </section>
-    </FocusTrap>
+        <div role={gridRole} aria-label="Choices">
+          <DragDropContext onDragEnd={drop}>
+            <Droppable droppableId="choices">
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  role="rowgroup"
+                >
+                  {offered.map((choice, index) => (
+                    <Fragment key={choice.id}>
+                      {index === 0 && liveRowsAfter(null)}
+                      {row(choice, index)}
+                      {liveUnder(choice)}
+                      {liveRowsAfter(choice.id)}
+                    </Fragment>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+          {canEdit && (
+            <div
+              role="row"
+              className={[...shape, classes.entry].join(" ")}
+              // Leaving the empty row, by clicking or tabbing elsewhere, adds what was typed, as
+              // leaving a choice being edited saves it.
+              onBlur={(event) => {
+                if (event.currentTarget.contains(event.relatedTarget)) return;
+                addEntry(false);
+              }}
+            >
+              <span className={classes.plus} aria-hidden>
+                <Icon name="plus" size={14} />
+              </span>
+              <Fields
+                idPrefix="choice-entry"
+                draft={entry}
+                problem={entryProblem}
+                label="New choice "
+                meanings={meanings}
+                weighed={weighed}
+                weightProblem={entryWeightProblem}
+                onChange={(next) => {
+                  setEntry(next);
+                  setEntryProblem(undefined);
+                  setEntryWeightProblem(undefined);
+                }}
+                onKeyDown={onEntryKey}
+                onFocus={() => {
+                  setSelected(undefined);
+                }}
+                onPaste={paste}
+              />
+            </div>
+          )}
+        </div>
+        {list.builtIn && (
+          <Text fz="xs" c="dimmed" className={classes.builtInNote}>
+            {builtInNote(list.builtIn, mayEdit)}
+          </Text>
+        )}
+        {shownRetired.length > 0 && (
+          <>
+            <Text
+              id="list-panel-retired"
+              className={classes.retiredLabel}
+              fz="xs"
+              fw={600}
+            >
+              Retired
+            </Text>
+            <div role={gridRole} aria-labelledby="list-panel-retired">
+              {shownRetired.map((choice, index) => (
+                <Fragment key={choice.id}>
+                  {row(choice, index)}
+                  {liveUnder(choice)}
+                </Fragment>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </SidePanelFrame>
   );
 }

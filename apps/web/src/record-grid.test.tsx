@@ -2228,6 +2228,68 @@ describe("what a table can ask of its columns and rows", () => {
     expect(screen.queryByText("A")).toBeNull();
   });
 
+  // What a value's cells draw, in order: each colour's square, by its colour, and each word.
+  const drawn = (words: string) =>
+    screen.getAllByText(words).map((value) => {
+      const cell = value.closest("td") as HTMLElement;
+      const walker = document.createTreeWalker(cell, NodeFilter.SHOW_ALL);
+      const parts: string[] = [];
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const text = node.textContent?.trim() ?? "";
+        if (node instanceof HTMLElement && node.dataset.colour !== undefined) {
+          parts.push(`square ${node.dataset.colour}`);
+        } else if (node.nodeType === Node.TEXT_NODE && text !== "") {
+          parts.push(text);
+        }
+      }
+      return parts;
+    });
+
+  it("draws a column's colour as its square before the value's words", () => {
+    renderTable(noted({ colour: () => "grape" }), [gadget("a")]);
+
+    expect(drawn("A")).toEqual([["square grape", "A"]]);
+  });
+
+  it("draws no square for a value with no colour", () => {
+    renderTable(noted({ colour: () => null }), [gadget("a")]);
+
+    expect(drawn("A")).toEqual([["A"]]);
+  });
+
+  it("draws the colour of the record as it is live in the Live row", () => {
+    // Given a rename drafted, the drafted record's colour following its name
+    renderTable(
+      noted({ colour: (one) => (one.name === "Renamed" ? "grape" : "teal") }),
+      [
+        gadget("a", {
+          name: "Renamed",
+          draft: {
+            ...waiting,
+            action: "changed",
+            changed: ["name"],
+            live: { name: "Gadget a", values: {}, links: {} },
+          },
+        }),
+      ],
+    );
+
+    // Then the drafted row's square is the drafted colour and the Live row's the live one
+    expect(drawn("A").map(([square]) => square)).toEqual([
+      "square grape",
+      "square teal",
+    ]);
+  });
+
+  it("shows no name in a hidden heading, which keeps it for screen readers", () => {
+    renderTable(noted({ headingHidden: true }), [gadget("a")]);
+
+    const heading = screen.getByRole("button", { name: /^Code column/ });
+    expect(
+      within(heading).getByText("Code").closest(".mantine-VisuallyHidden-root"),
+    ).not.toBeNull();
+  });
+
   it("draws the record as it is live with a column's own content in the Live row", () => {
     renderTable(noted({ content: (one) => <b>Made from {one.name}</b> }), [
       gadget("a", {
@@ -2895,6 +2957,123 @@ describe("hiding columns", () => {
 
     // Then its mark names Code as needed
     expect(screen.getByText(", New, not saved yet: Code needed")).toBeDefined();
+  });
+});
+
+describe("a read-only table's own drafts", () => {
+  const rejected = {
+    ...waiting,
+    state: "rejected" as const,
+    action: "changed" as const,
+    changed: ["code"],
+    live: { code: "OLD", values: {}, links: {} },
+  };
+  const detailed = (
+    more: Partial<RecordTable<Gadget, GadgetChange, GadgetChange>> = {},
+  ) => ({ ...gadgetTable(), showDetails: noop, ...more });
+
+  function renderReadOnly({
+    gadgets,
+    table = detailed(),
+    given = actions(),
+    view = emptyView,
+  }: {
+    gadgets: Gadget[];
+    table?: RecordTable<Gadget, GadgetChange, GadgetChange>;
+    given?: RecordActions<Gadget, GadgetChange, GadgetChange>;
+    view?: View;
+  }) {
+    return render(
+      <MantineProvider theme={testTheme}>
+        <RecordGrid
+          records={gadgets}
+          table={table}
+          fields={[]}
+          order={[]}
+          lists={[]}
+          canEdit={false}
+          canAdd={false}
+          rowActions={false}
+          canEditDrafts
+          canEditColumns={false}
+          view={view}
+          onView={noop}
+          actions={given}
+        />
+      </MantineProvider>,
+    );
+  }
+
+  const menuOf = async (name: string) => {
+    await userEvent.click(rowActions(name));
+    await screen.findByRole("menuitem", { name: "Show details" });
+    return screen.getByRole("menu");
+  };
+
+  it("offers Resubmit and Discard draft for a record's own draft", async () => {
+    // Given a rejected draft on a table whose records are changed elsewhere
+    const discard = vi.fn();
+    const resubmit = vi.fn();
+    renderReadOnly({
+      gadgets: [gadget("g1", { draft: rejected })],
+      given: actions({ discard, resubmit }),
+    });
+
+    // When its draft is resubmitted, then discarded
+    await menuOf("Gadget g1");
+    await userEvent.click(screen.getByRole("menuitem", { name: "Resubmit" }));
+    await menuOf("Gadget g1");
+    await userEvent.click(
+      screen.getByRole("menuitem", { name: "Discard draft" }),
+    );
+
+    // Then each reaches the table's actions
+    expect([resubmit.mock.calls.length, discard.mock.calls.length]).toEqual([
+      1, 1,
+    ]);
+  });
+
+  it("offers neither under Live only", async () => {
+    renderReadOnly({
+      gadgets: [gadget("g1", { draft: rejected })],
+      view: { ...emptyView, show: "live" },
+    });
+
+    const menu = await menuOf("Gadget g1");
+
+    expect(
+      within(menu)
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Show details"]);
+  });
+
+  it("offers nothing for drafts of the record's parts alone, with no divider left after Show details", async () => {
+    // Given a row whose draft stands for its parts' drafts, the record having none of its own
+    renderReadOnly({
+      gadgets: [gadget("g1", { draft: rejected })],
+      table: detailed({ ownDraft: () => undefined }),
+    });
+
+    const menu = await menuOf("Gadget g1");
+
+    expect([
+      within(menu)
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+      within(menu).queryAllByRole("separator"),
+    ]).toEqual([["Show details"], []]);
+  });
+
+  it("has no menu for a row whose only drafts are its parts' where the table offers nothing else", () => {
+    renderReadOnly({
+      gadgets: [gadget("g1", { draft: rejected })],
+      table: { ...gadgetTable(), ownDraft: () => undefined },
+    });
+
+    expect(
+      screen.queryAllByRole("button", { name: "Actions for Gadget g1" }),
+    ).toEqual([]);
   });
 });
 

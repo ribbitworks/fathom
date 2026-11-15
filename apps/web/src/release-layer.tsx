@@ -9,12 +9,14 @@
 
 import type { RecordDraft, ReleaseStream } from "@fathom/shared";
 import { useCallback, useMemo } from "react";
+import { ColouredName, colouredNameChars } from "./colour-swatch.tsx";
 import classes from "./pages.module.css";
 import {
   draftsById,
   liveStreams,
   markedDraft,
   releaseColourStyle,
+  shownColour,
   streamsShown,
 } from "./releases.ts";
 import {
@@ -34,7 +36,6 @@ import {
   charactersWidth,
   type DayRange,
   fits,
-  labelPadding,
   type Px,
   releaseLayer,
   releaseLayerRange,
@@ -75,10 +76,14 @@ function ReleaseBar({
   const name = fits(
     release.name,
     px.of(days),
-    labelPadding.block + charactersWidth(markRoom),
+    charactersWidth(markRoom + colouredNameChars),
   )
     ? release.name
     : undefined;
+  // The name, after its colour's square, as every coloured name is.
+  const label = (
+    <ColouredName colour={shownColour(release.colour)}>{name}</ColouredName>
+  );
   // The release, then each mark in a sentence of its own.
   const sentences = [
     `${release.name}: ${span.cycleWords}, ships ${span.shipsOn}`,
@@ -111,12 +116,18 @@ function ReleaseBar({
         style={{ left: from(at), width: px(days) }}
         aria-hidden
       >
-        {mark.live ? (
-          <MarkedItem tone="live">{name}</MarkedItem>
-        ) : (
-          <DraftedItem draft={draft} heldBy={mark.heldBy}>
-            {name}
-          </DraftedItem>
+        {/* Its marks show with its name or not at all, so none is left without what it marks; its
+            tip still says them. */}
+        {name !== undefined && (
+          <span className={classes.timelineReleaseLabel}>
+            {mark.live ? (
+              <MarkedItem tone="live">{label}</MarkedItem>
+            ) : (
+              <DraftedItem draft={draft} heldBy={mark.heldBy}>
+                {label}
+              </DraftedItem>
+            )}
+          </span>
         )}
       </span>
       {shipsAt !== end && (

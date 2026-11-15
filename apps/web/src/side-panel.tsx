@@ -439,13 +439,16 @@ export function PanelSubtitle({
   );
 }
 
-// A side panel's frame: its title, with a line under it and a close button unless it closes only by
-// its own buttons, what it holds, scrolling, and a foot that stays in view, such as Save. Esc closes
-// it too. Covering the content on a narrow screen, it holds focus until it is closed.
+// A side panel's frame: its title, with any controls for the whole record beside it and a line
+// under it, a close button unless it closes only by its own buttons, what it holds, scrolling, and
+// a foot that stays in view, such as Save. Esc closes it too, unless something inside has used it
+// already. Covering the content on a narrow screen, it holds focus until it is closed.
 export function SidePanelFrame({
   id,
   titleId,
   title,
+  marked,
+  actions,
   subtitle,
   narrow,
   close,
@@ -455,6 +458,10 @@ export function SidePanelFrame({
   id: string;
   titleId: string;
   title: ReactNode;
+  // The record's marks drawn around the title, such as a draft's dot and its facts, kept out of
+  // the heading so it names the record alone.
+  marked?: (heading: ReactNode) => ReactNode;
+  actions?: ReactNode;
   subtitle?: ReactNode;
   narrow: boolean;
   // The close button's name, such as "Close metrics", what it does, and whether Esc does it too, as
@@ -484,9 +491,22 @@ export function SidePanelFrame({
         }}
       >
         <div className={classes.head}>
-          <h2 id={titleId} className={classes.title} tabIndex={-1}>
-            {title}
-          </h2>
+          {marked === undefined ? (
+            <h2 id={titleId} className={classes.title} tabIndex={-1}>
+              {title}
+            </h2>
+          ) : (
+            <div className={classes.markedTitle}>
+              {marked(
+                <h2 id={titleId} className={classes.title} tabIndex={-1}>
+                  {title}
+                </h2>,
+              )}
+            </div>
+          )}
+          {actions !== undefined && (
+            <div className={classes.actions}>{actions}</div>
+          )}
           {close !== undefined && (
             <ActionIcon
               variant="subtle"

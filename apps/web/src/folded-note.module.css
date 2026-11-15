@@ -15,3 +15,9 @@
     transparent
   );
 }
+
+/* Every fold's control, a note's Show more and a list's Show all alike, in the small size, so it
+   reads as a control of what's above it rather than as more of it. */
+.control {
+  font-size: var(--mantine-font-size-sm);
+}

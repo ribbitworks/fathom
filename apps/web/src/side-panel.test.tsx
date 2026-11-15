@@ -4,7 +4,7 @@
 // column widens as they open and narrows as they close, and a closed panel stays, out of reach,
 // until its slide ends, or until a panel opens again (the other tests run with less motion, where a
 // panel goes as soon as it closes); and panels stacked, sharing one width and the height between
-// them.
+// them; and a panel's frame, with its heading and Esc.
 
 import { MantineProvider } from "@mantine/core";
 import { act, fireEvent, render, screen } from "@testing-library/react";
@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   motionLasts,
   type SidePanel,
+  SidePanelFrame,
   stackShares,
   WithSidePanel,
   roomWithoutScrollBar,
@@ -356,5 +357,117 @@ describe("the room beside the panels", () => {
     const withBar = roomWithoutScrollBar(985, 1000, 985);
 
     expect(withBar).toBe(withoutBar);
+  });
+});
+
+describe("a side panel's frame", () => {
+  const frame = (
+    props: Partial<Parameters<typeof SidePanelFrame>[0]> = {},
+    onClose = vi.fn(),
+  ) => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <SidePanelFrame
+          id="frame"
+          titleId="frame-title"
+          title="Sites"
+          narrow={false}
+          close={{ label: "Close sites", onClose }}
+          {...props}
+        >
+          <button type="button">Inside</button>
+        </SidePanelFrame>
+      </MantineProvider>,
+    );
+    return onClose;
+  };
+  const follows = (first: Element, second: Element) =>
+    (first.compareDocumentPosition(second) &
+      Node.DOCUMENT_POSITION_FOLLOWING) !==
+    0;
+
+  it("puts its actions between the title and the close button", () => {
+    frame({ actions: <button type="button">Edit sites</button> });
+
+    const title = screen.getByRole("heading", { name: "Sites" });
+    const action = screen.getByRole("button", { name: "Edit sites" });
+    const close = screen.getByRole("button", { name: "Close sites" });
+
+    expect(title.contains(action)).toBe(false);
+    expect(follows(title, action)).toBe(true);
+    expect(follows(action, close)).toBe(true);
+  });
+
+  it("puts its subtitle under the title, outside it and before what it holds", () => {
+    frame({ subtitle: "Where people work" });
+
+    const title = screen.getByRole("heading", { name: "Sites" });
+    const subtitle = screen.getByText("Where people work");
+
+    expect(title.contains(subtitle)).toBe(false);
+    expect(follows(title, subtitle)).toBe(true);
+    expect(
+      follows(subtitle, screen.getByRole("button", { name: "Inside" })),
+    ).toBe(true);
+  });
+
+  it("draws a title's marks around its heading, leaving the heading named by the title alone", () => {
+    frame({
+      marked: (heading) => (
+        <>
+          <span>Draft</span>
+          {heading}
+          <span>Built in</span>
+        </>
+      ),
+    });
+
+    const title = screen.getByRole("heading", { name: "Sites" });
+
+    expect(follows(screen.getByText("Draft"), title)).toBe(true);
+    expect(follows(title, screen.getByText("Built in"))).toBe(true);
+    expect(
+      follows(
+        screen.getByText("Built in"),
+        screen.getByRole("button", { name: "Close sites" }),
+      ),
+    ).toBe(true);
+  });
+
+  it("closes with Esc from inside it", async () => {
+    const onClose = frame();
+    screen.getByRole("button", { name: "Inside" }).focus();
+
+    await userEvent.keyboard("{Escape}");
+
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("stays open on an Esc that something inside it has used", async () => {
+    const onClose = vi.fn();
+    render(
+      <MantineProvider theme={testTheme}>
+        <SidePanelFrame
+          id="frame"
+          titleId="frame-title"
+          title="Sites"
+          narrow={false}
+          close={{ label: "Close sites", onClose }}
+        >
+          <div
+            onKeyDown={(event) => {
+              event.preventDefault();
+            }}
+          >
+            <button type="button">Inside</button>
+          </div>
+        </SidePanelFrame>
+      </MantineProvider>,
+    );
+    screen.getByRole("button", { name: "Inside" }).focus();
+
+    await userEvent.keyboard("{Escape}");
+
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

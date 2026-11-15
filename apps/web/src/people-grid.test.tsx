@@ -590,6 +590,30 @@ describe("managers and teams", () => {
   const text = (row: string, key: string) =>
     document.getElementById(`cell-${row}-${key}`)?.textContent;
 
+  const squareIn = (row: string, key: string) =>
+    document
+      .getElementById(`cell-${row}-${key}`)
+      ?.querySelector<HTMLElement>("[data-colour]")?.dataset.colour;
+
+  it("shows a reporting team's colour as its square before its name", () => {
+    render(grid({ teamColourOf: (id) => (id === "p1" ? "teal" : null) }));
+    expect([
+      squareIn("p1", "teamName"),
+      text("p1", "teamName"),
+      squareIn("p2", "teamName"),
+    ]).toEqual(["teal", "Harbour Crew", undefined]);
+  });
+
+  it("shows the team a person is in by its manager's team's colour", () => {
+    render(grid({ teamColourOf: (id) => (id === "p1" ? "teal" : null) }));
+    expect([
+      squareIn("p2", "team"),
+      text("p2", "team"),
+      squareIn("p5", "team"),
+      squareIn("p1", "team"),
+    ]).toEqual(["teal", "Harbour Crew", undefined, undefined]);
+  });
+
   it("offers everyone marked as a manager and still employed, and keeps those gone, or not shown, for the people who report to them", () => {
     const manager = columnsFor([], [], [], true, people).find(
       ({ key }) => key === "managerId",

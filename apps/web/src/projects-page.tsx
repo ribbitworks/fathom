@@ -25,16 +25,7 @@ import {
   type PlanMode,
   withRemovalReason,
 } from "@fathom/shared";
-import {
-  Button,
-  Group,
-  Loader,
-  Menu,
-  Modal,
-  Stack,
-  Tabs,
-  Text,
-} from "@mantine/core";
+import { Button, Group, Loader, Menu, Modal, Stack, Text } from "@mantine/core";
 import { useIsMutating, useMutation, useQuery } from "@tanstack/react-query";
 import { effortConversionsQuery } from "./effort.ts";
 import {
@@ -77,7 +68,12 @@ import {
 import { Icon } from "./icons.tsx";
 import { listsQuery } from "./lists.ts";
 import { LoadProblem } from "./load-problem.tsx";
-import { ModeSwitch, PageHeader } from "./page-header.tsx";
+import {
+  HeadingTabPanel,
+  HeadingTabs,
+  ModeSwitch,
+  PageHeader,
+} from "./page-header.tsx";
 import classes from "./pages.module.css";
 import details from "./record-details.module.css";
 import {
@@ -137,6 +133,7 @@ import {
   RecordLinkList,
   RecordSection,
   Row,
+  DetailSections,
 } from "./record-details.tsx";
 import {
   type Column,
@@ -898,34 +895,20 @@ export function ProjectsPage({
         title={page.title}
         beside={
           page.tabbed ? (
-            <Tabs
+            <HeadingTabs
               id={tabsId}
-              value={tab}
-              classNames={{
-                list: classes.headingTabs,
-                tab: classes.headingTab,
-              }}
-              onChange={(next) => {
+              label={`${page.title} tables`}
+              tabs={projectTabs.map((one) => ({
+                value: one,
+                label: wordsOf(one).label,
+              }))}
+              tab={tab}
+              onTab={(next) => {
                 leave(() => {
-                  onTab?.(projectTabSchema.parse(next));
+                  onTab?.(next);
                 });
               }}
-            >
-              <Tabs.List aria-label={`${page.title} tables`}>
-                {projectTabs.map((one) => (
-                  <Tabs.Tab
-                    key={one}
-                    value={one}
-                    // Only the chosen tab's table is drawn, so only it has a panel to point at.
-                    aria-controls={
-                      one === tab ? `${tabsId}-panel-${one}` : undefined
-                    }
-                  >
-                    {wordsOf(one).label}
-                  </Tabs.Tab>
-                ))}
-              </Tabs.List>
-            </Tabs>
+            />
           ) : (
             tab === "features" &&
             board !== undefined && (
@@ -968,16 +951,9 @@ export function ProjectsPage({
         }
       />
       {page.tabbed ? (
-        // Named by its tab, whose id Mantine makes from the tabs' id.
-        <div
-          key={tab}
-          role="tabpanel"
-          id={`${tabsId}-panel-${tab}`}
-          aria-labelledby={`${tabsId}-tab-${tab}`}
-          className={classes.tabPanel}
-        >
+        <HeadingTabPanel key={tab} id={tabsId} tab={tab}>
           {content}
-        </div>
+        </HeadingTabPanel>
       ) : (
         <Fragment key={tab}>{content}</Fragment>
       )}
@@ -1290,38 +1266,39 @@ function recordPanel({
         id={panelId}
         titleId={panelTitleId}
         narrow={narrow}
-        title={
-          <span>
-            <DraftedItem draft={ownDraft} heldBy={shown.heldBy}>
-              {shown.name}
-            </DraftedItem>
-          </span>
-        }
+        title={shown.name}
+        marked={(heading) => (
+          <DraftedItem draft={ownDraft} heldBy={shown.heldBy}>
+            {heading}
+          </DraftedItem>
+        )}
         subtitle={
           <RecordKey record={{ kind: type, keyNumber: shown.keyNumber }} />
         }
         close={{ label: "Close details", onClose }}
       >
-        <Stack gap="lg" className={sidePanelScroll}>
-          <PlanRecordDetails
-            // Each record's details start in the units the table shows.
-            key={shown.id}
-            columns={columns}
-            units={units}
-            record={shown}
-            ownDraft={ownDraft}
-            canEdit={canEdit}
-            identified={identified}
-            follow={follow}
-            onChange={(change) => {
-              onChange(type, shown, change);
-            }}
-            sections={type === "feature" ? featureColumnGroups : undefined}
-            notes={notes}
-          />
-          {extra}
-          {scope}
-        </Stack>
+        <div className={sidePanelScroll}>
+          <DetailSections>
+            <PlanRecordDetails
+              // Each record's details start in the units the table shows.
+              key={shown.id}
+              columns={columns}
+              units={units}
+              record={shown}
+              ownDraft={ownDraft}
+              canEdit={canEdit}
+              identified={identified}
+              follow={follow}
+              onChange={(change) => {
+                onChange(type, shown, change);
+              }}
+              sections={type === "feature" ? featureColumnGroups : undefined}
+              notes={notes}
+            />
+            {extra}
+            {scope}
+          </DetailSections>
+        </div>
       </SidePanelFrame>
     ),
   };
@@ -1469,7 +1446,7 @@ function PlanRecordDetails({
     keys: rows.map(({ column }) => column.key).filter((key) => !named.has(key)),
   };
   return (
-    <Stack gap="lg">
+    <DetailSections>
       {[...sections, others].map((section, index) => {
         const shown = section.keys.flatMap((key) =>
           rows.filter(({ column }) => column.key === key),
@@ -1485,7 +1462,7 @@ function PlanRecordDetails({
           </RecordSection>
         );
       })}
-    </Stack>
+    </DetailSections>
   );
 }
 

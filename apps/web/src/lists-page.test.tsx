@@ -881,6 +881,33 @@ describe("the side panel", () => {
       row("c1").querySelector("[data-rbd-drag-handle-draggable-id]"),
     ]).toEqual(["true", null]);
   });
+
+  it("holds focus in the panel, a modal dialog, on narrow screens", async () => {
+    // Given the panel on a narrow screen
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: true,
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    await openPanel();
+    const dialog = screen.getByRole("dialog", { name: /./ });
+
+    // When Tab is pressed past its last control, then Shift+Tab past its first
+    const stops: boolean[] = [];
+    for (const keys of ["{Tab}", "{Shift>}{Tab}{/Shift}"]) {
+      for (let press = 0; press < 30; press++) {
+        await userEvent.keyboard(keys);
+        stops.push(dialog.contains(document.activeElement));
+      }
+    }
+
+    // Then focus never leaves it
+    expect([dialog.getAttribute("aria-modal"), stops.every(Boolean)]).toEqual([
+      "true",
+      true,
+    ]);
+  });
 });
 
 describe("adding choices", () => {
@@ -1455,6 +1482,27 @@ describe("choice menus", () => {
     await userEvent.click(within(menu).getByText("Northmere"));
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
+    });
+  });
+
+  it("close with Esc before the panel does, putting focus back on their choice", async () => {
+    const { history } = await openPanel();
+    focusRow("c2");
+    await userEvent.keyboard("{ContextMenu}");
+    await screen.findByRole("menu");
+
+    await userEvent.keyboard("{Escape}");
+
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(row("c2"));
+    });
+    expect(history.location.pathname).toBe("/lists/l1");
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/lists");
     });
   });
 });

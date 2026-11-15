@@ -5,7 +5,7 @@
 // which is round.
 
 import { ColorSwatch } from "@mantine/core";
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { colourVariable } from "./colours.ts";
 import marks from "./status-mark.module.css";
 
@@ -15,6 +15,9 @@ const swatchRadius = (size: number) => Math.max(2, Math.round(size / 5));
 
 // The size of a team's colour, beside its name in panels and on cards.
 export const teamSwatchSize = 11;
+
+// About how many characters a coloured name's square takes, with the gap after it.
+export const colouredNameChars = 3;
 
 export const Swatch = ({
   colour,
@@ -37,6 +40,7 @@ export const Swatch = ({
       radius={swatchRadius(size)}
       withShadow={false}
       display="inline-block"
+      data-colour={colour}
       {...(alone ? { "aria-hidden": true } : {})}
     />
   );
@@ -52,3 +56,21 @@ export const Swatch = ({
     </span>
   );
 };
+
+// A name in its colour, as panels and tables show a team or release that has one: its colour's
+// square before it, centred on its text, in the line that holds it, such as a cell's after a
+// draft's dot. A grid of months shows the name in a tinted box instead.
+export function ColouredName({
+  colour,
+  children,
+}: {
+  colour: string | null;
+  children: ReactNode;
+}) {
+  return (
+    <>
+      {colour !== null && <Swatch colour={colour} size={teamSwatchSize} />}
+      {children}
+    </>
+  );
+}

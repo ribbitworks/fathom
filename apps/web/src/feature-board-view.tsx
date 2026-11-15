@@ -44,6 +44,7 @@ import {
 } from "./feature-board.ts";
 import classes from "./feature-board-view.module.css";
 import { draftRowClass } from "./list-drafts.tsx";
+import pages from "./pages.module.css";
 import { RiskMark, SizeMark } from "./planning-marks.tsx";
 import { CopyLinkItem, isSaved } from "./record-key.tsx";
 import { AlsoUnder, type ShownRows } from "./record-grid.tsx";
@@ -333,7 +334,7 @@ export function FeatureBoard({
           }}
         />
       )}
-      <Paper withBorder className={classes.panel}>
+      <Paper withBorder className={[classes.panel, pages.scrollBars].join(" ")}>
         <div
           className={classes.grid}
           style={{

@@ -162,23 +162,6 @@
   border-top: 1px solid var(--mantine-color-default-border);
 }
 
-/* The side panel for one record, such as a list: beside the table, which narrows to make room, or
-   the whole screen below the top bar when narrow. */
-.panel,
-.panelNarrow {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  background: var(--mantine-color-body);
-  border: 1px solid var(--mantine-color-default-border);
-  border-radius: var(--mantine-radius-default);
-}
-
-.panel {
-  flex: 1;
-  min-width: 0;
-}
-
 /* Holds a record's panel in its place beside the table. */
 .panelSlot {
   display: flex;
@@ -502,21 +485,22 @@ select.cellInput {
   border-radius: inherit;
 }
 
-/* A table's scroll bars always show while it has more to scroll, slim, in the page's greys, so a
-   wide table is seen to have more columns, even where the system hides scroll bars until used.
-   Chrome, Edge and Safari keep a scroll bar shown once it is styled this way; Firefox takes the
-   standard properties instead, which in Chrome would turn the styling below off. */
-.tableScroll::-webkit-scrollbar {
+/* Every table's, timeline's and board's scroll bars, in one style: shown always while there is more
+   to scroll, slim, in the page's greys, so a wide view is seen to have more, even where the system
+   hides scroll bars until used. Chrome, Edge and Safari keep a scroll bar shown once it is styled
+   this way; Firefox takes the standard properties instead, which in Chrome would turn the styling
+   below off. */
+.scrollBars::-webkit-scrollbar {
   width: var(--fathom-scrollbar-size);
   height: var(--fathom-scrollbar-size);
 }
 
-.tableScroll::-webkit-scrollbar-track,
-.tableScroll::-webkit-scrollbar-corner {
+.scrollBars::-webkit-scrollbar-track,
+.scrollBars::-webkit-scrollbar-corner {
   background: transparent;
 }
 
-.tableScroll::-webkit-scrollbar-thumb {
+.scrollBars::-webkit-scrollbar-thumb {
   /* A clear edge around the thumb, so it sits slimmer than its track. */
   border: calc(var(--fathom-scrollbar-size) / 5) solid transparent;
   border-radius: var(--fathom-scrollbar-size);
@@ -524,7 +508,7 @@ select.cellInput {
 }
 
 @supports (-moz-appearance: none) {
-  .tableScroll {
+  .scrollBars {
     scrollbar-width: thin;
     scrollbar-color: var(--fathom-scrollbar-thumb) transparent;
   }
@@ -1258,10 +1242,13 @@ th.liveColumn {
   overflow: hidden;
 }
 
+/* Its scroll bar's room is kept while nothing is wider than the view, so the timeline keeps its
+   height, and nothing under it moves, when a panel beside it opens or closes. */
 .timelineScroll {
   flex: 1;
   min-height: 0;
   overflow: auto;
+  overflow-x: scroll;
 }
 
 .timeline {
@@ -1376,6 +1363,7 @@ th.liveColumn {
    diamond never sits on the next release's bar. */
 .timelineReleaseLane {
   --release-bar: 24px;
+  --release-span: 6px;
   --release-ships-row: 14px;
 
   height: calc(var(--release-bar) + var(--release-ships-row));
@@ -1417,15 +1405,32 @@ th.liveColumn {
   bottom: 0;
 }
 
-/* Text stays in the body's text colour, since some colours' own text shades are hard to read. */
+/* A release's span across its cycles is drawn in its colour along the bar's foot, and its name sits
+   over it in the body's text colour, after its colour's square, with no box, as every coloured name
+   is. */
 .timelineRelease {
   bottom: auto;
   height: var(--release-bar);
-  border: 1px solid var(--release-filled);
-  border-radius: var(--mantine-radius-sm);
-  background: var(--release-light);
+  padding: 0;
   color: var(--mantine-color-text);
   font-weight: 500;
+}
+
+.timelineRelease::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--release-span);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--release-filled);
+  content: "";
+}
+
+.timelineReleaseLabel {
+  display: flex;
+  align-items: baseline;
+  line-height: calc(var(--release-bar) - var(--release-span));
 }
 
 /* A release as it is live, beside the draft that moves it, dimmed as a Live copy is. */

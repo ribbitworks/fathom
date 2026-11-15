@@ -266,7 +266,7 @@
   right: 0;
   bottom: 0;
   left: 0;
-  /* The same layer as the Lists page's side panel, above the table's header row. */
+  /* Above the table's header row. */
   z-index: 150;
   border: 0;
   border-radius: 0;
@@ -274,7 +274,7 @@
 
 .head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   padding: 12px 12px 4px 16px;
 }
@@ -295,6 +295,31 @@
 
 .subtitlePlace {
   padding: 0 12px 4px 16px;
+}
+
+/* A title with its marks on one line, on the title's baseline and in its size, so a draft's dot is
+   centred on its capitals and its boxes follow it, as every item's marks do. */
+.markedTitle {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  min-width: 0;
+  font-size: var(--fathom-panel-name-size);
+  line-height: var(--fathom-panel-name-line);
+}
+
+.markedTitle .title {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* Controls for the whole record, such as Edit, top-aligned so a note under one leaves the rest in
+   line with the title. */
+.actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .body {

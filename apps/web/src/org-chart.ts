@@ -25,6 +25,8 @@ import {
   parseRecordKey,
   type RecordKeyOf,
 } from "@fathom/shared";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { dayQuery, sendJson } from "./api.ts";
 import { personKeyOf } from "./people-rows.ts";
 import { formatDay, type ViewSearch } from "./table-view.ts";
@@ -39,6 +41,23 @@ export const orgChartQueryOn = dayQuery(
 );
 
 export const orgChartQuery = orgChartQueryOn(undefined);
+
+// Each person's reporting team colour, by their id, as the org chart sets it: none for someone with
+// no colour, or while the chart loads.
+export function useTeamColours(): (personId: string) => PaletteColour | null {
+  const chart = useQuery(orgChartQuery);
+  const colours = useMemo(
+    () =>
+      new Map(
+        (chart.data?.people ?? []).map(({ id, teamColour }) => [
+          id,
+          teamColour,
+        ]),
+      ),
+    [chart.data],
+  );
+  return (personId) => colours.get(personId) ?? null;
+}
 
 // Fitting a small chart to the screen never enlarges its cards past their own size.
 export const fitOptions = { maxZoom: 1 };

@@ -184,6 +184,10 @@ function answers(
 const panel = (name: string) => screen.findByRole("region", { name });
 
 const row = (label: string) => detailRow(label);
+const squaresIn = (element: HTMLElement) =>
+  [...element.querySelectorAll<HTMLElement>("[data-colour]")].map(
+    (square) => square.dataset.colour,
+  );
 
 describe("a person's details", () => {
   it("shows the person, their manager, reports, details and columns beside People", async () => {
@@ -659,6 +663,44 @@ describe("a person's details", () => {
     expect(within(liveLine).getByText(", live")).toBeDefined();
     expect(within(liveLine).getByText("Left")).toBeDefined();
     expect(within(manager).getAllByText("Left")).toHaveLength(1);
+  });
+
+  it("draws the Reporting team in its manager's team's colour", async () => {
+    answers();
+    renderApp("/people?open=E2");
+    await panel("Sasha Fictional");
+    await waitFor(() => {
+      expect(squaresIn(row("Reporting team"))).toEqual(["teal"]);
+    });
+  });
+
+  it("draws the live Reporting team's colour on its Live line under a drafted move", async () => {
+    // Given Uma, drafted to move from Robin, whose team is teal, to Sasha, whose team has no colour
+    answers([
+      robin,
+      sasha,
+      person("3", "Uma Fictional", {
+        manager: { id: "2", preferredName: "Sasha Fictional" },
+        team: "Fictional crew",
+        draft: {
+          action: "changed",
+          changed: ["managerId"],
+          live: { managerId: "1", values: {}, links: {} },
+          state: "waiting",
+          madeBy: null,
+          madeAt: null,
+        },
+      }),
+    ]);
+
+    // When her details open
+    renderApp("/people?open=E3");
+    await panel("Uma Fictional");
+
+    // Then only the Live line has a square, Robin's team's
+    await waitFor(() => {
+      expect(squaresIn(row("Reporting team"))).toEqual(["teal"]);
+    });
   });
 
   it("draws the team's colour before its name", async () => {

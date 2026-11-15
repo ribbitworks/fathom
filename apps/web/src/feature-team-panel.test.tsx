@@ -131,6 +131,12 @@ function openPanel({
   return { asked, onClose };
 }
 
+// The panel's heading with the marks beside it, such as a draft's, which are kept out of the heading
+// itself so it names the team alone.
+const headingRow = () =>
+  screen.getByRole("heading", { name: "Fictional Lighthouse", level: 2 })
+    .parentElement as HTMLElement;
+
 // What a row of the panel reads, by its label: its value, and any marks and live value under it.
 const rowText = (label: string) => detailValue(label);
 
@@ -520,11 +526,9 @@ describe("a feature team's draft in its panel", () => {
 
   it("offers no changes to a team the draft removes, marking it in the title", () => {
     openPanel({ shown: team({ draft: draft({ action: "deleted" }) }) });
-    expect(
-      screen.getByRole("heading", {
-        name: "Fictional Lighthouse, Draft: removed",
-      }),
-    ).toBeDefined();
+    expect(headingRow().textContent).toBe(
+      "Fictional Lighthouse, Draft: removed",
+    );
     expect([
       screen.queryByRole("button", { name: "Remove feature team" }),
       screen.queryByRole("button", { name: /^Change / }),
@@ -534,11 +538,7 @@ describe("a feature team's draft in its panel", () => {
 
   it("offers no colour for a team only drafted to be added, marking it in the title", () => {
     openPanel({ shown: team({ draft: draft({ action: "created" }) }) });
-    expect(
-      screen.getByRole("heading", {
-        name: "Fictional Lighthouse, Draft: added",
-      }),
-    ).toBeDefined();
+    expect(headingRow().textContent).toBe("Fictional Lighthouse, Draft: added");
     expect(screen.queryByRole("button", { name: "Change Colour" })).toBeNull();
   });
 

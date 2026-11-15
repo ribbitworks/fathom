@@ -19,9 +19,8 @@ import {
   type PaletteColour,
   type Show,
 } from "@fathom/shared";
-import { Button, Group, Stack, Text } from "@mantine/core";
+import { Button, Group, Text } from "@mantine/core";
 import { type ReactNode, useMemo, useState } from "react";
-import { Swatch } from "./colour-swatch.tsx";
 import { colourWords } from "./colours.ts";
 import {
   featureTeamsQuery,
@@ -34,7 +33,7 @@ import { noOthers } from "./new-plan-record-panel.tsx";
 import { NewRecordPanel, newRecordId } from "./new-record-panel.tsx";
 import { noRecordProblem } from "./project-grids.tsx";
 import classes from "./record-details.module.css";
-import { RecordSection, Row } from "./record-details.tsx";
+import { RecordSection, Row, DetailSections } from "./record-details.tsx";
 import {
   type RecordEditingContext,
   useRecordEditing,
@@ -46,7 +45,6 @@ import {
   DraftedItem,
   type DraftedPart,
   DraftedPartItem,
-  MarkRow,
 } from "./status-mark.tsx";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
 import { today } from "./today.ts";
@@ -402,16 +400,15 @@ function TeamDetails({
     <SidePanelFrame
       id={featureTeamPanelId}
       titleId={titleId}
-      title={
-        <span>
-          <DraftedItem
-            draft={ownDraft?.action === "changed" ? undefined : ownDraft}
-            heldBy={team.heldBy}
-          >
-            {shown.name}
-          </DraftedItem>
-        </span>
-      }
+      title={shown.name}
+      marked={(heading) => (
+        <DraftedItem
+          draft={ownDraft?.action === "changed" ? undefined : ownDraft}
+          heldBy={team.heldBy}
+        >
+          {heading}
+        </DraftedItem>
+      )}
       subtitle={
         <RecordKey record={{ kind: "team", keyNumber: team.keyNumber }} />
       }
@@ -419,7 +416,7 @@ function TeamDetails({
       close={{ label: "Close feature team", onClose }}
     >
       <div className={sidePanelScroll}>
-        <Stack gap="lg">
+        <DetailSections>
           {draft?.state === "rejected" && draft.reason !== undefined && (
             <Text size="sm">Reason: {draft.reason}</Text>
           )}
@@ -437,6 +434,7 @@ function TeamDetails({
             <Row
               column={colourColumn}
               value={team.colour ?? ""}
+              colour={team.colour}
               action={
                 edits.undated &&
                 live !== undefined &&
@@ -453,10 +451,7 @@ function TeamDetails({
               }
             >
               {team.colour === null ? undefined : (
-                <MarkRow>
-                  <Swatch colour={team.colour} size={14} />
-                  <Text>{colourWords(team.colour)}</Text>
-                </MarkRow>
+                <Text>{colourWords(team.colour)}</Text>
               )}
             </Row>
           </RecordSection>
@@ -535,7 +530,7 @@ function TeamDetails({
               )}
             </Group>
           )}
-        </Stack>
+        </DetailSections>
       </div>
     </SidePanelFrame>
   );

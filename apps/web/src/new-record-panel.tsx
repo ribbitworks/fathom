@@ -6,10 +6,11 @@
 // sections, and names the problems Add finds. The page holds what has been entered, so it can ask
 // before discarding it.
 
-import { Button, Group, Stack } from "@mantine/core";
+import { Button, Group } from "@mantine/core";
 import { type ReactNode, useEffect } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { focusSoon } from "./focus.ts";
+import { DetailSections } from "./record-details.tsx";
 import {
   type Column,
   columnsOn,
@@ -114,7 +115,7 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
     );
   };
   const body = (
-    <Stack gap="lg">
+    <DetailSections>
       {children}
       <Group justify="flex-end" gap="xs">
         <Button variant="default" onClick={onCancel} disabled={saving}>
@@ -124,7 +125,7 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
           Add
         </Button>
       </Group>
-    </Stack>
+    </DetailSections>
   );
   return (
     <SidePanelFrame

@@ -13,6 +13,8 @@ import { NoteView } from "./note-editor.tsx";
 // About a dozen lines of a note's text, in pixels at the default text size, as Spoiler takes it.
 const foldHeight = 256;
 
+export const foldControl = classes.control;
+
 export function FoldedNote({
   name,
   note,
@@ -36,7 +38,11 @@ export function FoldedNote({
         if (onOpen === undefined) setOpen(expanded);
         else onOpen();
       }}
-      classNames={{ root: classes.root, content: classes.content }}
+      classNames={{
+        root: classes.root,
+        content: classes.content,
+        control: classes.control,
+      }}
       data-open={open || undefined}
     >
       <NoteView note={note} />

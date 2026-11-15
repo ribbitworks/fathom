@@ -8,6 +8,7 @@ import type { Link as WebLink } from "@fathom/shared";
 import { ActionIcon, Anchor, Group, Stack, Text } from "@mantine/core";
 import type { MouseEvent, ReactNode } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
+import { ColouredName } from "./colour-swatch.tsx";
 import { Icon } from "./icons.tsx";
 import { LinkCell } from "./link-field.tsx";
 import { FoldedNote } from "./folded-note.tsx";
@@ -20,7 +21,7 @@ import {
 } from "./record-editing.tsx";
 import classes from "./record-details.module.css";
 import { roundedUpTo } from "@fathom/shared";
-import { type Column, shownInView } from "./record-grid.tsx";
+import { type Column, isEmpty, shownInView } from "./record-grid.tsx";
 import {
   DraftedItem,
   type DraftLike,
@@ -139,22 +140,31 @@ export function inUnitsWords(
     : `${spelledOut(shown.column, shown.unit, shownValue)} (${kept})`;
 }
 
-// A headed list of a record's rows.
+// A details panel's sections, one under another with room between, as every panel spaces them.
+export function DetailSections({ children }: { children: ReactNode }) {
+  return <Stack gap="lg">{children}</Stack>;
+}
+
+// A headed section of a record's details: a list of its rows, or another body, such as a small
+// table.
 export function RecordSection({
   id,
   title,
   children,
+  body,
 }: {
   id: string;
   title: string;
-  children: ReactNode;
-}) {
+} & (
+  | { children: ReactNode; body?: undefined }
+  | { body: ReactNode; children?: undefined }
+)) {
   return (
     <section aria-labelledby={id}>
       <h3 className={classes.heading} id={id}>
         {title}
       </h3>
-      <dl className={classes.list}>{children}</dl>
+      {body ?? <dl className={classes.list}>{children}</dl>}
     </section>
   );
 }
@@ -221,6 +231,7 @@ export const opensOnClick = (start: (() => void) | undefined) =>
 export function Row({
   column,
   value,
+  colour = null,
   changed,
   editing,
   children,
@@ -228,13 +239,17 @@ export function Row({
 }: {
   column: DetailColumn;
   value: CellValue;
+  // The value's colour, such as its team's, drawn as the colour's square before it.
+  colour?: string | null;
   // What a draft changes here, whatever the Draft view, which decides how it shows: the live value,
   // shown under the drafted one beside live where given, the draft to mark it with, if any, and the
   // day or month the change takes effect from, where that needs saying.
   changed?:
     | {
         live?: CellValue;
-        draft?: DraftLike;
+        // The live value's colour, where it has one, for its square under the drafted value.
+        liveColour?: string | null;
+        draft?: DraftLike | undefined;
         from?: string | undefined;
         // A warning about the live value, such as a manager who has left.
         warning?: { words: string; spoken?: string } | undefined;
@@ -285,16 +300,24 @@ export function Row({
                     : liveWords(column, changed.live)
                 }
               >
-                {checkbox
-                  ? editing.editor
-                  : (children ?? (
+                {checkbox ? (
+                  editing.editor
+                ) : (
+                  <ColouredName
+                    colour={
+                      children === undefined && isEmpty(value) ? null : colour
+                    }
+                  >
+                    {children ?? (
                       <Value
                         column={column}
                         value={value}
                         drafted={draft !== undefined}
                         onOpenNote={start}
                       />
-                    ))}
+                    )}
+                  </ColouredName>
+                )}
               </DraftedItem>
             </MarkRow>
             {(start !== undefined || Boolean(action)) && (
@@ -333,7 +356,15 @@ export function Row({
                 words={liveUnder.warning?.words}
                 spoken={liveUnder.warning?.spoken}
               >
-                <Value column={column} value={liveUnder.live} drafted />
+                <ColouredName
+                  colour={
+                    isEmpty(liveUnder.live)
+                      ? null
+                      : (liveUnder.liveColour ?? null)
+                  }
+                >
+                  <Value column={column} value={liveUnder.live} drafted />
+                </ColouredName>
               </MarkedItem>
             </MarkedItem>
           </MarkRow>

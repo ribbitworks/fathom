@@ -782,7 +782,7 @@ export function RolesPage({
       )}
       {roles.isSuccess && (
         <Paper withBorder className={classes.tableScrollPanel}>
-          <div className={classes.tableScroll}>
+          <div className={[classes.tableScroll, classes.scrollBars].join(" ")}>
             <Table miw={640}>
               <Table.Thead>
                 <Table.Tr>

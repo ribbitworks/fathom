@@ -6,9 +6,10 @@
 // own under it: each page puts the same gap after it, so the row under the heading starts at the
 // same place on every page.
 
-import { Group, SegmentedControl, Title } from "@mantine/core";
+import { Group, SegmentedControl, Tabs, Title } from "@mantine/core";
 import type { ReactNode } from "react";
 import { PageExportMenu } from "./page-export.tsx";
+import classes from "./pages.module.css";
 
 export function PageHeader({
   title,
@@ -60,5 +61,73 @@ export function ModeSwitch<Mode extends string>({
       onChange={onMode}
       data={[...modes]}
     />
+  );
+}
+
+// A page's tabs, beside its title, such as Projects' tables. Arrow keys move between them.
+export function HeadingTabs<Tab extends string>({
+  id,
+  label,
+  tabs,
+  tab,
+  onTab,
+}: {
+  id: string;
+  label: string;
+  tabs: readonly { value: Tab; label: string }[];
+  tab: Tab;
+  onTab: (tab: Tab) => void;
+}) {
+  return (
+    <Tabs
+      id={id}
+      value={tab}
+      classNames={{ list: classes.headingTabs, tab: classes.headingTab }}
+      onChange={(next) => {
+        // A tab can't be cleared, so one always matches; the filter types it with no check.
+        for (const one of tabs.filter(({ value }) => value === next)) {
+          onTab(one.value);
+        }
+      }}
+    >
+      <Tabs.List aria-label={label}>
+        {tabs.map((one) => (
+          <Tabs.Tab
+            key={one.value}
+            value={one.value}
+            // Only the chosen tab's content is drawn, so only it has a panel to point at.
+            aria-controls={
+              one.value === tab ? tabPanelId(id, one.value) : undefined
+            }
+          >
+            {one.label}
+          </Tabs.Tab>
+        ))}
+      </Tabs.List>
+    </Tabs>
+  );
+}
+
+const tabPanelId = (id: string, tab: string) => `${id}-panel-${tab}`;
+
+// The chosen tab's content, named by its tab, whose id Mantine makes from the tabs' id.
+export function HeadingTabPanel({
+  id,
+  tab,
+  children,
+}: {
+  id: string;
+  tab: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      role="tabpanel"
+      id={tabPanelId(id, tab)}
+      aria-labelledby={`${id}-tab-${tab}`}
+      className={classes.tabPanel}
+    >
+      {children}
+    </div>
   );
 }
