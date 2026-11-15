@@ -6,7 +6,9 @@
 
 import {
   headingLevels,
+  isMarkdownFile,
   isNoteColour,
+  noteAddress,
   noteColours,
   webAddress,
 } from "@fathom/shared";
@@ -84,7 +86,7 @@ const NoteOrderedList = OrderedList.extend({
 const itemContent =
   "paragraph (paragraph | bulletList | orderedList | taskList)*";
 
-// Only the formats notes allow, and links only to web addresses.
+// Only the formats notes allow, and links only to web addresses and Help pages.
 export const noteExtensions = [
   Document,
   Paragraph,
@@ -114,12 +116,16 @@ export const noteExtensions = [
     openOnClick: false,
     autolink: true,
     protocols: [],
-    isAllowedUri: (address) => webAddress(address) !== null,
+    isAllowedUri: (address) => noteAddress(address) !== null,
+    // A Help page's file name typed or pasted, such as lists.md, is never made a link to the .md
+    // domain; a link to a Help page is set with the link button.
+    shouldAutoLink: (text) =>
+      !isMarkdownFile(text) && webAddress(text) !== null,
   }),
 ];
 
 // What sanitising lets through to the screen: the elements and attributes notes make, and links
-// only to web addresses.
+// only to web addresses and, with no scheme, Help pages.
 export const shownOnly: Options = {
   tagNames: [
     "p",
@@ -150,7 +156,7 @@ export const shownOnly: Options = {
   strip: ["script", "style"],
 };
 
-// A link's address as shown: only a web address, as the server keeps them, never a relative one,
-// which sanitising alone would let through.
+// A link's address as shown: only a web address or a Help page, as the server keeps them, never any
+// other relative address, which sanitising alone would let through.
 export const shownAddress = (address: string): string =>
-  webAddress(address) === address ? address : "";
+  noteAddress(address) === address ? address : "";

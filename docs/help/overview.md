@@ -1,8 +1,6 @@
 # Overview
 
-Overview is the page Fathom opens on when you sign in, if your role sees the plan. For now, Overview only greets you.
-
-Later, it will list what needs your attention, and each item will take you to where you deal with it.
+Overview is the page Fathom opens on when you sign in, if your role sees the plan. It shows a greeting.
 
 ## Where Changes Go
 

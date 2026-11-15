@@ -463,7 +463,11 @@ describe("a class's mark", () => {
 
 describe("a warning", () => {
   // Read from a wrapper of its own, since the rendered page also holds Mantine's styles.
-  const warning = (props: { empty?: boolean; children?: ReactNode }) => {
+  const warning = (props: {
+    empty?: boolean;
+    slot?: boolean;
+    children?: ReactNode;
+  }) => {
     renderIn(
       "both",
       <span data-testid="marked">
@@ -485,6 +489,13 @@ describe("a warning", () => {
       "Fictional valueFictional warning, fictional reason",
     );
     expect(box()).not.toBeNull();
+  });
+
+  it("keeps a row's slot for its record's marks, empty, before the value", () => {
+    warning({ slot: true, children: "Fictional value" });
+    const marked = screen.getByTestId("marked");
+    expect(marked.firstElementChild?.className).toContain("slot");
+    expect(marked.firstElementChild?.textContent).toBe("");
   });
 
   it.each([

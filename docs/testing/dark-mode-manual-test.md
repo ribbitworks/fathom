@@ -736,12 +736,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The entries and their yellow dots are easy to read.
   - **Notes:**
 
-- [ ] `9C10` Select the **Roles** page under **Help** in the left-hand menu.
-  - **Expected:** Every word and mark is easy to read.
-  - **Notes:**
-
-- [ ] `1FAD` Select the **Drafts** page under **Help** in the left-hand menu.
-  - **Expected:** Every word and mark is easy to read.
+- [ ] `5985` Select the **Help pages** page under **Help** in the left-hand menu.
+  - **Expected:** Every word, heading and link is easy to read.
   - **Notes:**
 
 - [ ] `E5EF` Select **About Fathom** under **Help** in the left-hand menu.

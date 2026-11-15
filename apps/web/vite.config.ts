@@ -64,12 +64,14 @@ export default defineConfig({
     strictPort: true,
     open: environment.FATHOM_DEV_OPEN !== "false",
     // Vite would otherwise serve any file in the workspace, including the private .dev/ and private/
-    // folders, so it may serve only the front end, the shared package, and installed packages.
+    // folders, so it may serve only the front end, the shared package, the Help pages the front end
+    // builds in, and installed packages.
     fs: {
       strict: true,
       allow: [
         folder("."),
         folder("../../packages/shared"),
+        folder("../../docs/help"),
         folder("../../node_modules"),
       ],
     },

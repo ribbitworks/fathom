@@ -24,6 +24,7 @@ import {
 } from "@fathom/shared";
 import {
   Alert,
+  Anchor,
   AppShell,
   Avatar,
   Breadcrumbs,
@@ -51,6 +52,7 @@ import { useEffect, useState } from "react";
 import { Brand } from "./brand.tsx";
 import { PageExportProvider } from "./page-export.tsx";
 import { DevBadge, devLabel } from "./dev-label.tsx";
+import { shownHelpPage } from "./help-pages.ts";
 import { Icon, type IconName } from "./icons.tsx";
 import { useSignOutWhenIdle } from "./idle.ts";
 import classes from "./layout.module.css";
@@ -87,8 +89,7 @@ type Page =
   | "/capacity"
   | "/projects"
   | "/features"
-  | "/help/roles"
-  | "/help/drafts";
+  | "/help";
 
 // A page, or a box opened over the current page instead of going to another.
 type Item = {
@@ -99,6 +100,9 @@ type Item = {
   // Pages with addresses below their own, such as each list's, are marked as the current page for
   // all of them.
   nested?: boolean;
+  // The name of what an address below the page shows, such as a Help page's title, which the top
+  // bar adds after the page's, given the rest of the address.
+  detailOf?: (below: string) => string | undefined;
 } & ({ to: Page; box?: undefined } | { box: "about"; to?: undefined });
 
 // Whether the user's access opens an item's page.
@@ -228,8 +232,13 @@ const sections: { label: string; items: Item[] }[] = [
   {
     label: "Help",
     items: [
-      { label: "Roles", icon: "rolesHelp", to: "/help/roles" },
-      { label: "Drafts", icon: "draftsHelp", to: "/help/drafts" },
+      {
+        label: "Help pages",
+        icon: "helpPages",
+        to: "/help",
+        nested: true,
+        detailOf: (name) => shownHelpPage(name)?.title,
+      },
       { label: "About Fathom", icon: "aboutHelp", box: "about" },
     ],
   },
@@ -298,20 +307,28 @@ export function pagesReached(permissions: readonly Permission[]): string[] {
 }
 
 // The sidebar's section and page at an address, which the top bar names: a page's own address, or,
-// for a page with addresses below its own, such as each list's, any of them.
+// for a page with addresses below its own, such as each list's, any of them, with the name of what
+// that one shows, where the page names it.
 function placeAt(
   pathname: string,
-): { section: string; item: Item } | undefined {
+):
+  | { section: string; item: Item; base: string; detail?: string | undefined }
+  | undefined {
   for (const section of sections) {
-    const item = section.items.find(({ to, nested }) => {
-      if (to === undefined) return false;
-      const base = to.replace(/\/\{-\$\w+\}$/, "");
-      return (
-        pathname === base ||
-        (nested === true && pathname.startsWith(`${base}/`))
-      );
-    });
-    if (item !== undefined) return { section: section.label, item };
+    for (const item of section.items) {
+      if (item.to === undefined) continue;
+      const base = item.to.replace(/\/\{-\$\w+\}$/, "");
+      if (pathname === base) return { section: section.label, item, base };
+      if (item.nested === true && pathname.startsWith(`${base}/`)) {
+        const below = pathname.slice(base.length + 1);
+        return {
+          section: section.label,
+          item,
+          base,
+          detail: item.detailOf?.(below),
+        };
+      }
+    }
   }
   return undefined;
 }
@@ -559,9 +576,20 @@ export function Layout({
             {place && (
               <Breadcrumbs separator="/" fz="sm" c="dimmed">
                 <span>{place.section}</span>
-                <Text span fz="sm" fw={500} c="var(--mantine-color-text)">
-                  {place.item.label}
-                </Text>
+                {place.detail === undefined ? (
+                  <Text span fz="sm" fw={500} c="var(--mantine-color-text)">
+                    {place.item.label}
+                  </Text>
+                ) : (
+                  <Anchor component={Link} to={place.base} fz="sm" c="dimmed">
+                    {place.item.label}
+                  </Anchor>
+                )}
+                {place.detail !== undefined && (
+                  <Text span fz="sm" fw={500} c="var(--mantine-color-text)">
+                    {place.detail}
+                  </Text>
+                )}
               </Breadcrumbs>
             )}
             <DevBadge label={devLabel} />

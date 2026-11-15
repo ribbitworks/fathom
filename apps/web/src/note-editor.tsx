@@ -9,6 +9,7 @@
 
 import {
   cleanNote,
+  helpLink,
   isNoteColour,
   type Link,
   type NoteColour,
@@ -29,10 +30,12 @@ import {
   Textarea,
 } from "@mantine/core";
 import { RichTextEditor } from "@mantine/tiptap";
+import { Link as PageLink } from "@tanstack/react-router";
 import { type Editor, useEditor, useEditorState } from "@tiptap/react";
 import {
   type ChangeEvent,
   createContext,
+  type ReactNode,
   useContext,
   useEffect,
   useRef,
@@ -41,8 +44,10 @@ import {
 import ReactMarkdown, { type ExtraProps } from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
+import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import { Icon } from "./icons.tsx";
+import { helpDestination, helpPage } from "./help-pages.ts";
 import { useLinkForm } from "./link-field.tsx";
 import { Swatch } from "./colour-swatch.tsx";
 import { colourWords } from "./colours.ts";
@@ -115,6 +120,7 @@ function NoteLinkForm({
     name: "Link",
     initial,
     typed: undefined,
+    place: "note",
     onDone,
     onCancel,
   });
@@ -257,15 +263,40 @@ function NoteCheckbox({
   );
 }
 
+// A link in a note as it reads: to a Help page, it stays in Fathom, named by the page's title when
+// it has no text of its own; to a web address, it opens in a new tab, without telling the site
+// which page it came from.
+function NoteLink({ href, children }: { href: string; children: ReactNode }) {
+  const help = helpLink(href);
+  if (help !== undefined) {
+    // A link that only repeats its address shows the page's title instead.
+    const title = children === href ? helpPage(help.page)?.title : undefined;
+    return <PageLink {...helpDestination(help)}>{title ?? children}</PageLink>;
+  }
+  const shown =
+    typeof children === "string" ? shownLinkText(href, children) : children;
+  return (
+    <a
+      href={href === "" ? undefined : href}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {shown}
+    </a>
+  );
+}
+
 // A note as it reads, from its Markdown, with checkboxes ticked by clicking them where the note may
-// change.
+// change, and, on a Help page, its headings as anchors that links can lead to.
 export function NoteView({
   note,
   onToggle,
+  anchors = false,
 }: {
   note: string;
   // Ticks or unticks a checkbox, by its place among the note's checkboxes.
   onToggle?: (at: number) => void;
+  anchors?: boolean;
 }) {
   const view = useRef<HTMLDivElement>(null);
   return (
@@ -273,7 +304,12 @@ export function NoteView({
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         urlTransform={shownAddress}
-        rehypePlugins={[rehypeRaw, [rehypeSanitize, shownOnly]]}
+        // Anchors are added after sanitising, which would otherwise rename them.
+        rehypePlugins={[
+          rehypeRaw,
+          [rehypeSanitize, shownOnly],
+          ...(anchors ? [rehypeSlug] : []),
+        ]}
         components={{
           li: ({ node, className, children }) => (
             <li className={className}>
@@ -300,16 +336,8 @@ export function NoteView({
               }
             />
           ),
-          a: ({ href, children }) => (
-            <a
-              href={href === "" ? undefined : href}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {href !== undefined && typeof children === "string"
-                ? shownLinkText(href, children)
-                : children}
-            </a>
+          a: ({ href = "", children }) => (
+            <NoteLink href={href}>{children}</NoteLink>
           ),
           span: ({ children, ...props }) => {
             const colour = (props as { "data-colour"?: string })["data-colour"];

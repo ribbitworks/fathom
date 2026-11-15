@@ -5,8 +5,9 @@
 // of every package that depends on one, with the script tests, which also check package files. With
 // --uncommitted, only the work not yet committed counts as changed. A change outside the packages,
 // other than to documentation, can affect any test, such as the lockfile, scripts/ or deploy/, so it
-// runs every test. A change to the web app's stylesheets alone runs only the web app's tests and the
-// linters. Runs any tests once no other copy of the repository is running a check.
+// runs every test. Help pages are built into the web app, so a change to one runs the web app's
+// tests, as a change in it does. A change to the web app's stylesheets alone runs only the web app's
+// tests and the linters. Runs any tests once no other copy of the repository is running a check.
 // Usage: node scripts/test-changed.mjs [--uncommitted]
 
 import { parseArgs } from "node:util";
@@ -16,9 +17,19 @@ import { changedPaths } from "./changed-paths.mjs";
 import { runPackageTests, runPnpm } from "./package-tests.mjs";
 
 const webApp = "apps/web";
+const helpPages = "docs/help/";
 
 function isDocumentation(path) {
-  return path.endsWith(".md") || path.startsWith("docs/");
+  return (
+    !path.startsWith(helpPages) &&
+    (path.endsWith(".md") || path.startsWith("docs/"))
+  );
+}
+
+// The workspace package a path is part of, such as apps/server, or undefined outside the packages.
+function packageOf(path) {
+  if (path.startsWith(helpPages)) return webApp;
+  return /^((?:apps|packages)\/[^/]+)\//.exec(path)?.[1];
 }
 
 function isWebStylesheet(path) {
@@ -35,10 +46,10 @@ export function testsFor(paths) {
   const packages = new Set();
   let scripts = false;
   for (const path of code) {
-    const match = /^((?:apps|packages)\/[^/]+)\//.exec(path);
-    if (!match) return { kind: "everything" };
+    const owner = packageOf(path);
+    if (owner === undefined) return { kind: "everything" };
     scripts = true;
-    packages.add(match[1]);
+    packages.add(owner);
   }
   return scripts
     ? { kind: "packages", packages: [...packages].sort() }

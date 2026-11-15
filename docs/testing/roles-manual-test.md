@@ -370,12 +370,6 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The left-hand menu shows **Lists** in the **Administration** section.
   - **Notes:**
 
-- [ ] `B83E` Select the **Roles** page under **Help** in the left-hand menu.
-  - **Expected:**
-    - The first row is **Copy of Team Member**, with a sea-blue check before its name, and its description beside it.
-    - No other row has a check.
-  - **Notes:**
-
 ### ROLE-11: Names Must Differ
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, changed from ROLE-10.

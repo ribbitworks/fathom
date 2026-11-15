@@ -10,7 +10,9 @@ import {
   linkInWords,
   linkLabel,
   linkProblems,
+  keptAddress,
   linkValueSchema,
+  noteAddress,
   shortAddress,
   shownLinkText,
   webAddress,
@@ -94,6 +96,24 @@ describe("web addresses", () => {
   });
 });
 
+describe("a note's addresses", () => {
+  it.each([
+    [" lists.md ", "lists.md"],
+    ["saved-views.md#share-a-view", "saved-views.md#share-a-view"],
+    ["example.com", "https://example.com/"],
+    ["Lists.md", null],
+    ["/help/lists#add-choices", "lists.md#add-choices"],
+    ["/help", "index.md"],
+    ["/helpful", null],
+    ["https://lists.md/", "https://lists.md/"],
+    ["../help/lists.md", null],
+    ["lists.md#", null],
+    ["javascript:alert(1)", null],
+  ])("keeps %j as %j", (typed, kept) => {
+    expect(noteAddress(typed)).toBe(kept);
+  });
+});
+
 describe("a link's problems", () => {
   it("are none for a link Fathom accepts", () => {
     expect(linkProblems(proposal)).toEqual({});
@@ -108,6 +128,19 @@ describe("a link's problems", () => {
   it("explain a refused address", () => {
     expect(linkProblems({ address: "proposals/P-1", text: "" })).toEqual({
       address: addressProblem,
+    });
+  });
+
+  it("take a Help page only in a note, and a web address on .md in a column", () => {
+    expect([
+      keptAddress("lists.md", "column"),
+      keptAddress("lists.md", "note"),
+    ]).toEqual(["https://lists.md/", "lists.md"]);
+  });
+
+  it("explain an address a note refuses", () => {
+    expect(linkProblems({ address: "lists", text: "" }, "note")).toEqual({
+      address: `${addressProblem}, or a Help page, such as lists.md`,
     });
   });
 

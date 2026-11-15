@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/shared/testing.md", "docs/standards/shared/typescript/typescript.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Testing Standards
@@ -65,7 +65,7 @@ Logic, validation, access checks and data handling are never excluded. The code 
 
 ## Running Tests
 
-`pnpm check` runs ESLint, the Prettier formatting check, type checking, Markdown, shell, PowerShell and licence linting, the unit, integration, access control and security tests, and the build-time security scans, side by side, then lists each one's result and time. `pnpm test:changed` runs the script tests and every test of each package a change touches, committed or not, and of every package that depends on one; a change outside the packages, other than to documentation, runs every test, a change to the web app's stylesheets alone runs only the web app's tests and the linters, and a change to documentation alone runs none. `pnpm test:changed --uncommitted` counts only the work not yet committed, for small rounds of fixes after a commit on a long branch. Both run in one copy of the repository at a time on one computer, a copy that has to wait saying so, as [Development Setup](../design/development-setup.md#common-commands) describes. Container tests run with `pnpm test:containers`, and UI tests have their own command once they are added. If any category cannot run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.
+`pnpm check` runs ESLint, the Prettier formatting check, type checking, Markdown, shell, PowerShell and licence linting, the unit, integration, access control and security tests, and the build-time security scans, side by side, then lists each one's result and time. `pnpm test:changed` runs the script tests and every test of each package a change touches, committed or not, and of every package that depends on one; a change outside the packages, other than to documentation, runs every test, a change to the web app's stylesheets alone runs only the web app's tests and the linters, a change to a Help page in `docs/help/` runs the web app's tests, since Help pages are built into it, and a change to other documentation alone runs none. `pnpm test:changed --uncommitted` counts only the work not yet committed, for small rounds of fixes after a commit on a long branch. Both run in one copy of the repository at a time on one computer, a copy that has to wait saying so, as [Development Setup](../design/development-setup.md#common-commands) describes. Container tests run with `pnpm test:containers`, and UI tests have their own command once they are added. If any category cannot run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.
 
 While working, run `pnpm test:changed`, `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, and `pnpm lint:md` or `pnpm lint:shell` for the files changed. The workflow's test step, which [agent-workflow.md](shared/agent-workflow.md#autonomous-mode) repeats after each round of fixes, runs:
 
@@ -73,7 +73,7 @@ While working, run `pnpm test:changed`, `pnpm lint`, `pnpm format:check`, `pnpm 
 - **After each round of fixes,** whether from a review, UI feedback or owner feedback: `pnpm test:changed`, `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, and `pnpm lint:md` or `pnpm lint:shell` for the files changed. `pnpm security` runs too, but only if the round changed dependencies, the lockfile, a container file or the security scans' settings.
 - **Before opening the pull request, and before each later push to it:** the full `pnpm check`, once the review's findings are fixed and before the owner's approval, which is the word to push, on the final code rebased onto `main`, so every build pushed for review has had every scan the [Security Plan](../security/security-plan.md#vulnerability-scanning) runs on every build. A rebase needs the full check again only when the commits it brings in from `main` change more than documentation; when they change documentation alone, the full check already run still holds. Decided by the owner on 2026-11-14. This is the shared [Agent Workflow](shared/agent-workflow.md#workflow)'s full suite step, run before a pull request's commit, or for an [issue batch](../issues.md#issue-batches) once for the whole branch.
 
-A change that affects the containers runs `pnpm test:containers` with the test step before the code review, and again only if a later fix changes the containers. A change to documentation only may skip the test step, as [agent-workflow.md](shared/agent-workflow.md#autonomous-mode) allows.
+A change that affects the containers runs `pnpm test:containers` with the test step before the code review, and again only if a later fix changes the containers. A change to documentation only may skip the test step, as [agent-workflow.md](shared/agent-workflow.md#autonomous-mode) allows, except a change to a Help page, which is built into Fathom.
 
 ## Problems Found
 

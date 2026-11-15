@@ -2,9 +2,9 @@
 
 // Notes: rich text kept as Markdown, as the Decisions Log sets out, in the server and the browser
 // alike. A note holds paragraphs, headings three levels deep, and bullet, checkbox or numbered
-// lists, counting from 1. Their text may be bold, italic, struck through, inline code, a web link,
-// or coloured from a fixed palette, the one thing Markdown cannot say, written as
-// <span data-colour="teal">…</span>.
+// lists, counting from 1. Their text may be bold, italic, struck through, inline code, a link to a
+// web address or a Help page, or coloured from a fixed palette, the one thing Markdown cannot say,
+// written as <span data-colour="teal">…</span>.
 // Anything else is refused when a note is saved, and removed when one is typed or pasted. Notes are
 // parsed and written by remark, with GitHub's Markdown, so no Markdown or HTML is parsed by hand.
 
@@ -22,7 +22,7 @@ import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import remarkStringify from "remark-stringify";
 import { unified } from "unified";
-import { shownLinkText, webAddress } from "./links.ts";
+import { noteAddress, shownLinkText } from "./links.ts";
 import { paletteColours } from "./palette.ts";
 
 export const noteLength = 10_000;
@@ -114,10 +114,10 @@ function inlineProblem(children: readonly Nodes[]): string | undefined {
     if (!phrasingTypes.has(node.type)) return cannotHold(node);
     if (
       node.type === "link" &&
-      (webAddress(node.url) !== node.url ||
+      (noteAddress(node.url) !== node.url ||
         (node.title !== null && node.title !== undefined))
     ) {
-      return "A note's links must be web addresses, starting with http or https.";
+      return "A note's links must be web addresses, starting with http or https, or Help pages, such as lists.md.";
     }
     const problem = hasChildren(node)
       ? inlineProblem(node.children)
@@ -185,13 +185,18 @@ const nodeNames: Readonly<Record<string, string>> = {
   footnoteDefinition: "footnotes",
 };
 
+// Why Markdown holds something outside what notes allow, whatever its length, or undefined when
+// it holds nothing else.
+export const noteFormatProblem = (markdown: string): string | undefined =>
+  blockProblem(parseNote(markdown).children, true);
+
 // Why a note cannot be kept as it is, or undefined when it can: too long, or holding something
 // outside what notes allow.
 export function noteProblem(markdown: string): string | undefined {
   if (markdown.length > noteLength) {
     return `A note can be at most ${noteLength.toLocaleString("en")} characters.`;
   }
-  return blockProblem(parseNote(markdown).children, true);
+  return noteFormatProblem(markdown);
 }
 
 const text = (value: string): PhrasingContent => ({ type: "text", value });
@@ -216,8 +221,8 @@ function balancedColours(children: PhrasingContent[]): PhrasingContent[] {
   return kept.filter((_, at) => !unmatched.has(at));
 }
 
-// Inline content as a note allows it: links only to web addresses, without titles, and only the
-// palette's colour tags; anything else becomes its text, or goes.
+// Inline content as a note allows it: links only to web addresses and Help pages, without titles,
+// and only the palette's colour tags; anything else becomes its text, or goes.
 function cleanInline(nodes: readonly Nodes[]): PhrasingContent[] {
   const cleaned = nodes.flatMap((node): PhrasingContent[] => {
     switch (node.type) {
@@ -230,7 +235,7 @@ function cleanInline(nodes: readonly Nodes[]): PhrasingContent[] {
       case "delete":
         return [{ ...node, children: cleanInline(node.children) }];
       case "link": {
-        const url = webAddress(node.url);
+        const url = noteAddress(node.url);
         const children = cleanInline(node.children);
         return url === null
           ? children

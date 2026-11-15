@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   isNoteField,
   cleanNote,
+  noteFormatProblem,
   colourTag,
   isNoteColour,
   noteLength,
@@ -24,7 +25,7 @@ describe("a note", () => {
   it("may hold every format notes allow", () => {
     expect(
       noteProblem(
-        `Plain **bold** _italic_ ~~struck~~ \`code\` [site](https://example.com/) ${teal}teal **bold**</span>\\\nnext line\n\n# One\n\n## Two\n\n### Three\n\n- one\n  - nested\n- two\n\nTasks\n\n- [ ] open\n- [x] done\n  - [ ] nested\n\nSteps\n\n1. first\n   - bullet\n2. second\n   1. nested\n3. third\n   - [ ] task`,
+        `Plain **bold** _italic_ ~~struck~~ \`code\` [site](https://example.com/) [Lists](lists.md) [Add choices](lists.md#add-choices) ${teal}teal **bold**</span>\\\nnext line\n\n# One\n\n## Two\n\n### Three\n\n- one\n  - nested\n- two\n\nTasks\n\n- [ ] open\n- [x] done\n  - [ ] nested\n\nSteps\n\n1. first\n   - bullet\n2. second\n   1. nested\n3. third\n   - [ ] task`,
       ),
     ).toBeUndefined();
   });
@@ -71,11 +72,15 @@ describe("a note", () => {
     ["Text </span> closed", "A note's colours must open before they close."],
     [
       "[Run](javascript:alert(1))",
-      "A note's links must be web addresses, starting with http or https.",
+      "A note's links must be web addresses, starting with http or https, or Help pages, such as lists.md.",
     ],
     [
       '[Site](https://example.com/ "Title")',
-      "A note's links must be web addresses, starting with http or https.",
+      "A note's links must be web addresses, starting with http or https, or Help pages, such as lists.md.",
+    ],
+    [
+      "[Up](../help/lists.md)",
+      "A note's links must be web addresses, starting with http or https, or Help pages, such as lists.md.",
     ],
     [
       "Text **with ![image](https://example.com/a.png)**",
@@ -84,6 +89,13 @@ describe("a note", () => {
   ])("may not hold %j", (markdown, problem) => {
     testedNotes.push(markdown);
     expect(noteProblem(markdown)).toBe(problem);
+  });
+
+  it("is checked for its format alone, whatever its length", () => {
+    expect([
+      noteFormatProblem("a".repeat(noteLength + 1)),
+      noteFormatProblem("> Quoted"),
+    ]).toEqual([undefined, "A note can't hold quotes."]);
   });
 
   it("is at most its length", () => {
@@ -122,6 +134,9 @@ describe("cleaning a note", () => {
     ["Close </span>only", "Close only"],
     ["[Run](javascript:alert(1)) here", "Run here"],
     ["[Site](example.com)", "[Site](https://example.com/)"],
+    ["[Lists]( lists.md#add-choices )", "[Lists](lists.md#add-choices)"],
+    ["[Lists](/help/lists)", "[Lists](lists.md)"],
+    ["[Design](../design/conventions.md)", "Design"],
     ['[Site](https://example.com/ "Title")', "[Site](https://example.com/)"],
     ["[Site][site]\n\n[site]: https://example.com/", "Site"],
     ["Text[^1]\n\n[^1]: Footnote", "Text"],

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests of choosing the tests a change can affect, for 'pnpm test:changed': documentation alone
-// runs none, the web app's stylesheets alone run its tests and the linters, a change in packages
-// runs the script tests and those packages' tests, and any other change runs every test; any tests
-// run in the check's turn, and none waits for it.
+// runs none, a Help page runs the web app's, the web app's stylesheets alone run its tests and the
+// linters, a change in packages runs the script tests and those packages' tests, and any other
+// change runs every test; any tests run in the check's turn, and none waits for it.
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
@@ -15,6 +15,13 @@ describe("choosing the tests a change can affect", () => {
       testsFor(["docs/issues.md", "README.md", "apps/web/README.md"]),
       { kind: "none" },
     );
+  });
+
+  it("runs the web app's tests when a Help page changed, since it builds them in", () => {
+    assert.deepEqual(testsFor(["docs/help/lists.md", "docs/issues.md"]), {
+      kind: "packages",
+      packages: ["apps/web"],
+    });
   });
 
   it("runs none when nothing changed", () => {

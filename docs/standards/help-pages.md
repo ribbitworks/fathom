@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["docs/help/**"]
 dependencies: ["docs/standards/shared/documentation.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-15"
 ---
 
 # Help Page Standards
@@ -21,6 +21,7 @@ How Fathom's Help pages in `docs/help/` are written, so they read the way a coll
 - **Must** say the real sequence: where Fathom needs one change approved before the next is possible, the steps say so, in rounds.
 - **Must** end a guide by saying how the reader knows they're done.
 - **Must** check each fact against Fathom before writing it.
+- **Must** describe only what Fathom does now, never what is planned: no "for now", "later" or "to follow", since Help is shown in Fathom. Decided by the owner on 2026-11-15.
 - **Must** bring an existing Help page to these rules when it is next changed.
 
 ## Before and After

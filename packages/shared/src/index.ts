@@ -211,6 +211,7 @@ export {
   noteColours,
   noteLength,
   notePlainText,
+  noteFormatProblem,
   noteProblem,
   parseNote,
   toggleCheckbox,
@@ -297,6 +298,13 @@ export {
   weightSchema,
 } from "./lists.ts";
 export {
+  type HelpLink,
+  helpLink,
+  helpLinkOfPath,
+  isHelpLink,
+  isMarkdownFile,
+} from "./help-links.ts";
+export {
   addressProblem,
   isLink,
   type Link,
@@ -305,7 +313,10 @@ export {
   linkLengths,
   type LinkProblems,
   linkProblems,
+  type LinkPlace,
   linkValueSchema,
+  keptAddress,
+  noteAddress,
   shownLinkText,
   webAddress,
 } from "./links.ts";

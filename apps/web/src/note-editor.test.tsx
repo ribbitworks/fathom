@@ -10,6 +10,13 @@ import { MantineProvider } from "@mantine/core";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  RouterProvider,
+} from "@tanstack/react-router";
 import { Editor } from "@tiptap/core";
 import { NoteCell, NotePanel, notePreview, NoteView } from "./note-editor.tsx";
 import { noteExtensions } from "./note-format.ts";
@@ -24,6 +31,29 @@ beforeAll(() => {
   Range.prototype.getBoundingClientRect = () => new DOMRect();
 });
 
+// A note as it reads inside Fathom, whose links to Help pages lead to Help's addresses.
+async function viewInFathom(note: string) {
+  const root = createRootRoute({
+    component: () => (
+      <MantineProvider theme={testTheme}>
+        <NoteView note={note} />
+      </MantineProvider>
+    ),
+  });
+  const page = (path: string) =>
+    createRoute({ getParentRoute: () => root, path });
+  const router = createRouter({
+    routeTree: root.addChildren([
+      page("/"),
+      page("/help"),
+      page("/help/$page"),
+    ]),
+    history: createMemoryHistory({ initialEntries: ["/"] }),
+  });
+  render(<RouterProvider router={router} />);
+  await screen.findAllByRole("link");
+}
+
 const view = (note: string) =>
   render(
     <MantineProvider theme={testTheme}>
@@ -32,6 +62,14 @@ const view = (note: string) =>
   ).container;
 
 describe("a note as it reads", () => {
+  it("keeps the formatting of a link's text", () => {
+    const shown = view("[**Bold** site](https://example.com/)");
+    expect(
+      screen.getByRole("link", { name: "Bold site" }).querySelector("strong"),
+    ).not.toBeNull();
+    expect(shown.querySelectorAll("a")).toHaveLength(1);
+  });
+
   it("shows each format notes allow", () => {
     const shown = view(
       `**Bold** _italic_ ~~struck~~ \`code\` [Site](https://example.com/) ${teal}teal</span>\n\n- One\n\n1. First`,
@@ -107,7 +145,28 @@ describe("a note as it reads", () => {
     );
   });
 
-  it("never links anywhere but the web", () => {
+  it("links only to web addresses and Help pages", async () => {
+    await viewInFathom(
+      '[Lists](lists.md) [Choices](lists.md#add-choices) [Up](../help/lists.md) [Caps](Lists.md) <a href="lists.md">raw</a> [lists.md](lists.md) [site](https://example.com/)',
+    );
+    expect(
+      [...document.querySelectorAll("a")].map((link) => [
+        link.textContent,
+        link.getAttribute("href"),
+        link.getAttribute("target"),
+      ]),
+    ).toEqual([
+      ["Lists", "/help/lists", null],
+      ["Choices", "/help/lists#add-choices", null],
+      ["Up", null, "_blank"],
+      ["Caps", null, "_blank"],
+      ["raw", "/help/lists", null],
+      ["Lists", "/help/lists", null],
+      ["site", "https://example.com/", "_blank"],
+    ]);
+  });
+
+  it("never links anywhere else", () => {
     view(
       '[Run](javascript:alert(1)) and <a href="javascript:alert(1)">this</a> [here](/api/session) [there](//example.test/) [site](https://example.com/)',
     );
@@ -427,6 +486,12 @@ describe("a link in the editor", () => {
     expect(await markdownOnSave()).toBe("[Some words](https://example.com/)");
   });
 
+  it("links to a Help page, at a heading on it", async () => {
+    const { form } = await editorWith("Some words");
+    await userEvent.type(field(form, "Address"), "lists.md#add-choices{Enter}");
+    expect(await markdownOnSave()).toBe("[Some words](lists.md#add-choices)");
+  });
+
   it("keeps the formatting of what it links, left as chosen", async () => {
     const { form } = await editorWith("**Bold** words");
     await userEvent.type(field(form, "Address"), "example.com{Enter}");
@@ -482,6 +547,9 @@ describe("a link in the editor", () => {
     const { form } = await editorWith("Some words");
     await userEvent.type(field(form, "Address"), "javascript:alert(1){Enter}");
     expect(field(form, "Address").getAttribute("aria-invalid")).toBe("true");
+    expect(
+      within(form).getByText(/or a Help page, such as lists\.md$/u),
+    ).toBeDefined();
     expect(screen.getByRole("form", { name: "Link" })).toBe(form);
   });
 
@@ -499,6 +567,18 @@ describe("a link in the editor", () => {
       expect(screen.queryByRole("form", { name: "Link" })).toBeNull();
     });
     expect(await markdownOnSave()).toBe("Some words");
+  });
+});
+
+describe("typing an address in the editor", () => {
+  it("links a web address, but never a Help page's file name, to the web", () => {
+    const editor = new Editor({ extensions: noteExtensions, content: "" });
+    editor.commands.insertContent("See example.com ");
+    editor.commands.insertContent("and lists.md now");
+    expect(docToNote(editor.getJSON())).toBe(
+      "See [example.com](http://example.com) and lists.md now",
+    );
+    editor.destroy();
   });
 });
 

@@ -175,10 +175,7 @@ describe("the sidebar", () => {
           link.getAttribute("href"),
           link.getAttribute("aria-current"),
         ]),
-    ).toEqual([
-      ["/roles", "page"],
-      ["/help/roles", null],
-    ]);
+    ).toEqual([["/roles", "page"]]);
     for (const name of ["Accounts", "Settings"]) {
       expect(within(sidebar()).getByRole("link", { name })).toBeDefined();
     }
@@ -285,7 +282,8 @@ describe("the collapsed sidebar", () => {
 describe("the top bar", () => {
   it.each([
     ["/", "Plan/Overview"],
-    ["/help/roles", "Help/Roles"],
+    ["/help", "Help/Help pages"],
+    ["/help/roles", "Help/Help pages/Roles"],
   ])("names where the user is on %s", async (path, place) => {
     serverAnswers({
       "GET /api/session": signedIn,
@@ -488,7 +486,9 @@ describe("switching role", () => {
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Fictional Keepers" }),
     );
-    expect(await screen.findByRole("link", { name: "Accounts" })).toBeDefined();
+    expect(
+      await within(sidebar()).findByRole("link", { name: "Accounts" }),
+    ).toBeDefined();
     expect(history.location.pathname).toBe("/help/roles");
   });
 

@@ -17,6 +17,7 @@
 !apps/web/vite.config.ts
 !apps/web/tsconfig.json
 !apps/web/src/
+!docs/help/
 !packages/db/package.json
 !packages/db/src/
 !packages/db/migrations/

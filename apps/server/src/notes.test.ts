@@ -239,6 +239,7 @@ describe("people's notes", () => {
     ["HTML", "<b>Bold</b>"],
     ["a colour not in the palette", '<span data-colour="plaid">Odd</span>'],
     ["a link that is not a web address", "[Run](javascript:alert(1))"],
+    ["a link to a document outside Help", "[Design](../design/conventions.md)"],
     ["too many characters", "x".repeat(noteLength + 1)],
   ])("refuses a note with %s, saying why", async (_holding, note) => {
     expect(noteProblem(note)).toBeDefined();
@@ -249,11 +250,12 @@ describe("people's notes", () => {
     expect(response.json()).toEqual({ error: noteProblem(note) });
   });
 
-  it("keeps headings, checkboxes and numbered lists", async () => {
+  it("keeps headings, checkboxes, numbered lists and links to Help pages", async () => {
     const { cookie } = await editor();
     const field = await noteColumn(cookie);
     const id = await addedId(cookie);
-    const note = "# Plans\n\n- [ ] Open\n- [x] Done\n\n1. First\n   - Inner";
+    const note =
+      "# Plans\n\n- [ ] Open\n- [x] Done\n\n1. First\n   - Inner\n\nSee [Lists](lists.md#add-choices).";
     const response = await send(cookie, "PATCH", `/api/people/${id}`, {
       notes: { [field.id]: note },
     });

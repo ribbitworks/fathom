@@ -109,18 +109,14 @@ describe("who sees the Roles page", () => {
     expect(history.location.pathname).toBe("/roles");
   });
 
-  it("is not linked for anyone else, who see only Help's page about roles", async () => {
+  it("is not linked for anyone else", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
       "GET /api/greeting": greeting,
     });
     renderApp("/");
     await screen.findByText("Hello, Fathom");
-    expect(
-      screen
-        .getAllByRole("link", { name: "Roles" })
-        .map((link) => link.getAttribute("href")),
-    ).toEqual(["/help/roles"]);
+    expect(screen.queryAllByRole("link", { name: "Roles" })).toEqual([]);
   });
 
   it("is not shown to anyone else", async () => {

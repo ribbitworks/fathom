@@ -9,8 +9,10 @@
 // Shift+Tab does to the one before; clicking away saves what will do.
 
 import {
+  keptAddress,
   type Link,
   linkLabel,
+  type LinkPlace,
   linkLengths,
   linkProblems,
   webAddress,
@@ -90,6 +92,7 @@ export function useLinkForm({
   name,
   initial,
   typed,
+  place = "column",
   invalid = false,
   describedBy,
   onDone,
@@ -97,6 +100,8 @@ export function useLinkForm({
 }: {
   id: string;
   name: string;
+  // Where the link is kept, which decides the addresses it takes.
+  place?: LinkPlace;
   // Whether the link was refused, and what names why, when it is shown.
   invalid?: boolean;
   describedBy?: string | undefined;
@@ -113,7 +118,7 @@ export function useLinkForm({
   const [leftAddress, setLeftAddress] = useState(false);
   const link = { address: address.trim(), text: text.trim() };
   const cleared = link.address === "" && link.text === "";
-  const problems = cleared ? {} : linkProblems(link);
+  const problems = cleared ? {} : linkProblems(link, place);
   // An address is judged once it has been typed and left, or saving is tried, never while it is
   // being typed.
   const shownAddress = tried || leftAddress ? problems.address : undefined;
@@ -125,7 +130,10 @@ export function useLinkForm({
       cleared
         ? null
         : // Accepted, as just checked.
-          { address: webAddress(link.address) as string, text: link.text },
+          {
+            address: keptAddress(link.address, place) as string,
+            text: link.text,
+          },
       how,
     );
   };

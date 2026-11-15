@@ -107,7 +107,7 @@ Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you
 - **A total**, such as **7.5 of 9**, is the person-months allocated that month, out of those available. The share is under it. Point at it to see it in words. Totals count only the rows shown.
 - **Someone on a feature team with nothing allocated** reads **Under**, and counts as **0 of 1** in the totals. Being on a team doesn't allocate anyone to its features.
 - **A green dot inside a line**, in the light green Live row under a drafted row, marks a feature the draft takes off or changes. With **Live only** chosen in the **Draft** menu, it marks each one a waiting draft would change.
-- **People** is read only for now.
+- **People** is read only.
 
 ### In Settings
 
@@ -115,7 +115,7 @@ Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you
 - **Default focus** is the share of a person's time that goes to feature work at all, after meetings, support and the like.
 - **Default buffer** is a percentage added to a feature's effort before forecasting. The effort entered stays as it is.
 - **Ramp-up for new starters** is the share of full output a new starter delivers in each of their first months. The last row, such as **From month 3**, shows that they deliver **100%** from then on.
-- Nothing forecasts with focus, buffer or ramp-up yet.
+- Focus, buffer and ramp-up don't change any figure Fathom shows.
 - **A yellow dot** marks a setting a draft changes, with the live value under it after a green dot. **No month 3**, or the like, marks a month the draft adds or removes. **Draft**, above **Working time**, chooses how drafts show.
 
 ## Where Changes Go

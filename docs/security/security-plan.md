@@ -26,7 +26,7 @@ The threat model groups threats by STRIDE: spoofing, tampering, repudiation, inf
 ### Tampering
 
 - **Injection:** Database queries are parameterized, output is encoded, and input is checked by shared schemas, which drop fields they don't name. A content security policy allows scripts only from Fathom's own files.
-- **Stored content:** Web links accept only http and https addresses, and notes only an allowlist of formats.
+- **Stored content:** Web links accept only http and https addresses, and notes only an allowlist of formats, whose links lead only to such addresses or, by file name alone, to Help pages, which open inside Fathom.
 - **Framing and redirects:** Other sites can't frame Fathom's pages, and sign-in takes no address to send the user on to.
 - **The audit log:** The database refuses the application's role any change to or deletion of the access history. The change history can only be added to, apart from marking a change published. The migration role, used only for upgrades, owns both.
 - **The schema:** The application's database role can only read and write data, and a separate role changes the schema.
@@ -41,7 +41,7 @@ The threat model groups threats by STRIDE: spoofing, tampering, repudiation, inf
 
 ### Information Disclosure
 
-- **Before sign-in:** Only the front end's files, sign-in, sign-out, changing a password and the session checks are served without a signed-in account. The front end's script names Fathom's release. Accepted: anyone who reaches it can look up the release's known weaknesses, which are fixed by updating, not hidden.
+- **Before sign-in:** Only the front end's files, sign-in, sign-out, changing a password and the session checks are served without a signed-in account. The front end's script names Fathom's release, and holds every Help page. Accepted: anyone who reaches it can look up the release's known weaknesses, which are fixed by updating, not hidden, and the Help pages are public with Fathom's source, holding no organization's data.
 - **Data beyond a role:** One shared data access layer checks permissions and classifications for every page, export and search. A page, view or column is shown only to roles that see every classification it needs, and a column that needs a permission as well, such as People's Feature teams, which needs View on Feature teams, only to roles that hold it.
 - **Drafts and history:** Drafts, unpublished changes and the change history go through the same checks. Unpublished changes are seen only by their maker.
 - **Exports:** An exported file holds only what the role was sent. The browser asks the server to record an export of Personal or Confidential data before saving it. Accepted: a changed browser or a script can save the data without the record, as it could copy it from the screen.

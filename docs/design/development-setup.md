@@ -27,7 +27,7 @@ deploy/
 scripts/                  Development, check, and release scripts
 .github/workflows/        The workflows that publish a release's images and scan images daily on GitHub
 .github/ISSUE_TEMPLATE/   The forms for filing issues on GitHub, one for each kind
-docs/                     Documentation
+docs/                     Documentation, with the Help pages in docs/help/, which the front end builds in
 LICENSES/                 Licence texts, as the REUSE specification requires
 ```
 

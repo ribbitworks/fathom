@@ -44,7 +44,8 @@ import { useMemo } from "react";
 import { z } from "zod";
 import { AccountsPage } from "./accounts-page.tsx";
 import { FirstPasswordChange } from "./change-password.tsx";
-import { DraftsHelpPage, RolesHelpPage } from "./help-page.tsx";
+import { HelpPageView } from "./help-page.tsx";
+import { helpIndexPage, shownHelpPage } from "./help-pages.ts";
 import { ChangeHistoryPage } from "./change-history-page.tsx";
 import { draftsSeen } from "./draft-entries.ts";
 import { DraftsPage } from "./drafts-page.tsx";
@@ -208,7 +209,7 @@ const signedInRoute = createRoute({
 });
 
 // The Overview, for those who may see the plan. Anyone else is sent to the first page their role
-// lets them open, or, with none, to Help's Roles page.
+// lets them open, or, with none, to Help's index.
 const homeRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/",
@@ -219,10 +220,7 @@ const homeRoute = createRoute({
     )
       return;
     // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
-    throw redirect({
-      to: firstPage(context.access) ?? "/help/roles",
-      replace: true,
-    });
+    throw redirect({ to: firstPage(context.access) ?? "/help", replace: true });
   },
   component: Home,
 });
@@ -736,20 +734,28 @@ const featureAssignmentsRoute = createRoute({
   },
 });
 
-// What each role allows, open to every signed-in user, whatever their role.
-const helpRoute = createRoute({
+// Help's index, open to every signed-in user, whatever their role.
+const helpIndexRoute = createRoute({
   getParentRoute: () => signedInRoute,
-  path: "/help/roles",
-  component: function RolesHelp() {
-    return <RolesHelpPage role={signedIn.useRouteContext().role} />;
+  path: "/help",
+  component: function HelpIndex() {
+    return <HelpPageView page={helpIndexPage} />;
   },
 });
 
-// Open to every signed-in user, whatever their role.
-const draftsHelpRoute = createRoute({
+// A Help page, open to every signed-in user, whatever their role; the index has its own address.
+const helpRoute = createRoute({
   getParentRoute: () => signedInRoute,
-  path: "/help/drafts",
-  component: DraftsHelpPage,
+  path: "/help/$page",
+  loader: ({ params }) => {
+    const page = shownHelpPage(params.page);
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to say so
+    if (page === undefined) throw notFound();
+    return page;
+  },
+  component: function Help() {
+    return <HelpPageView page={helpRoute.useLoaderData()} />;
+  },
 });
 
 const signInRoute = createRoute({
@@ -784,8 +790,8 @@ const routeTree = rootRoute.addChildren([
     capacityRoute,
     featureAssignmentsRoute,
     draftsRoute,
+    helpIndexRoute,
     helpRoute,
-    draftsHelpRoute,
   ]),
   signInRoute,
 ]);

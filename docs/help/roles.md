@@ -15,7 +15,7 @@ The **Roles** page lists the roles accounts can hold, and what each one lets its
 
 Select **View** in the role's row. If you may change roles, select **Edit** instead.
 
-The dialog shows a grid of boxes on the left, and a summary of what the role sees and does on the right. **Roles** under **Help** in the left-hand menu says what each role Fathom starts with is for.
+The dialog shows a grid of boxes on the left, and a summary of what the role sees and does on the right. Each role Fathom starts with has a Help page saying what it does most, such as [Working as a Team Member](working-as-a-team-member.md), listed under **Working in Fathom** in [Help](index.md).
 
 ## Change a Role
 

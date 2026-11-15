@@ -8,6 +8,7 @@
 // taken as a host.
 
 import { z } from "zod";
+import { helpLinkOfPath, isHelpLink, isMarkdownFile } from "./help-links.ts";
 import { isPlainText } from "./text.ts";
 
 export const linkLengths = { address: 2000, text: 200 } as const;
@@ -107,21 +108,57 @@ export function webAddress(address: string): string | null {
 export const addressProblem =
   "Enter a web address starting with http:// or https://, such as https://example.com";
 
+// The address a note keeps for a link: a web address in the form webAddress gives it back, or a
+// link to a Help page by its file name, given so or as Fathom's own address for the page, such as
+// /help/lists; or null when a note does not allow it.
+export function noteAddress(address: string): string | null {
+  const value = address.trim();
+  const file = helpLinkOfPath(value) ?? value;
+  if (isHelpLink(file)) return file;
+  return isMarkdownFile(value) ? null : webAddress(value);
+}
+
+// Where a link is kept, which decides the addresses it takes: a web link column takes only web
+// addresses, and a note links to Help pages too.
+export type LinkPlace = "column" | "note";
+
+const linkPlaces: Record<
+  LinkPlace,
+  { kept: (address: string) => string | null; problem: string }
+> = {
+  column: { kept: webAddress, problem: addressProblem },
+  note: {
+    kept: noteAddress,
+    problem: `${addressProblem}, or a Help page, such as lists.md`,
+  },
+};
+
+// The address a link keeps in a place, or null when the place does not take it.
+export const keptAddress = (address: string, place: LinkPlace): string | null =>
+  // The place is one of those its type names.
+  // eslint-disable-next-line security/detect-object-injection
+  linkPlaces[place].kept(address);
+
 export interface LinkProblems {
   address?: string;
   text?: string;
 }
 
 // What is wrong with a link, if anything, by the field that is wrong.
-export function linkProblems(link: Link): LinkProblems {
+export function linkProblems(
+  link: Link,
+  place: LinkPlace = "column",
+): LinkProblems {
   const address = link.address.trim();
   const text = link.text.trim();
   const problems: LinkProblems = {};
   // The address as it would be kept, which can be longer than typed once https:// is added and
   // characters outside ASCII are encoded.
-  const kept = webAddress(address);
+  const kept = keptAddress(address, place);
   if (address === "") problems.address = "Enter the address";
-  else if (kept === null) problems.address = addressProblem;
+  // The place is one of those its type names.
+  // eslint-disable-next-line security/detect-object-injection
+  else if (kept === null) problems.address = linkPlaces[place].problem;
   else if (kept.length > linkLengths.address) {
     problems.address = `The address is too long; use at most ${String(linkLengths.address)} characters`;
   }

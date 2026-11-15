@@ -26,6 +26,8 @@ RUN pnpm install --frozen-lockfile --filter @fathom/web...
 COPY packages/shared/src packages/shared/src
 COPY packages/shared/tsconfig.json packages/shared/
 COPY apps/web apps/web
+# The Help pages, which the front end builds in.
+COPY docs/help docs/help
 # The release, commit and commit date the front end shows, which the build reads from these. Declared
 # here, after the packages are installed, so a new commit does not install them again.
 ARG FATHOM_VERSION=""
