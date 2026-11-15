@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Acceptance, Engineering Manager
@@ -123,10 +123,22 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** Under the 'Payments core' group, cells list features, each on a line of its own with its percentage at the right, such as "50%".
   - **Notes:**
 
-- [ ] `66FF` In the current month's column, find a cell whose last line reads "Over", and one whose last line reads "Under".
+- [ ] `FAE8` Search for `Blaise Gislason`, and read his cell in the current month's column.
   - **Expected:**
-    - "Over" and its percentage are red and bold.
-    - "Under" and its percentage are grey.
+    - The cell lists 'Depot Operations' at "25%" and 'Transit Displays' at "100%".
+    - The last line reads "Over" and "125%", in red and bold.
+  - **Notes:**
+
+- [ ] `6AC8` Clear the search box, and type `Jeremiah Bogisich`. Read his cell in the current month's column.
+  - **Expected:**
+    - The cell lists 'Depot Operations' at "50%".
+    - The last line reads "Under" and "50%", in grey.
+  - **Notes:**
+
+- [ ] `7165` Clear the search box, and type `Carmine Labadie`. Read his cell in the current month's column.
+  - **Expected:**
+    - The cell lists no feature.
+    - Its only line reads "Under" and "0%", in grey.
   - **Notes:**
 
 ### MANAGER-03: A Feature Is Estimated
@@ -240,7 +252,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `4DDB` Set **and by** to **Site**.
   - **Expected:**
-    - A table headed **Position by Site** has a column for each site, an **Empty** column for the planned hires, which have no site, and an **All** column.
+    - A table headed **Position by Site** has a column for each site, an **Empty** column for the planned hires that have no site, and an **All** column.
     - The **Position by Site** table has a row for each position and an **All** row.
   - **Notes:**
 
@@ -256,8 +268,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `D6E7` Press Esc.
   - **Expected:**
-    - The bar above the table says how many rows are shown of how many, such as "47 of 158".
-    - The count line under the panel's title gives the first number in the bar, such as "47 people".
+    - The bar above the table says how many rows are shown of how many, such as "48 of 160".
+    - The count line under the panel's title gives the first number in the bar, such as "47 people and 1 planned hire".
     - The **Position by Site** table has only the 'Ashgrove' column besides **All**.
   - **Notes:**
 

@@ -71,11 +71,9 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
 
 - [ ] `C68D` Choose **Feature teams** in the teams switch.
   - **Expected:**
-    - The chart shows four feature teams side by side, each first card naming its team:
-      - 'Mobile apps'
-      - 'Payments core'
-      - 'Search and discovery', with a yellow dot before it
-      - 'Platform reliability', with a grey lock before it
+    - The chart shows the feature teams of the [Fictional Seed Data](../../design/development-setup.md#fictional-seed-data) side by side, each first card naming its team.
+    - 'Search and discovery' has a yellow dot before its name.
+    - 'Platform reliability' has a grey lock before its name.
     - There is no date row between the finder and the chart.
   - **Notes:**
 

@@ -92,8 +92,8 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
 
 - [ ] `1BAD` Select **Group by: Cycle** above the table, then **Release** under **Group by**.
   - **Expected:**
-    - The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2 LTS**, **Platform: Harbor 3**, **Platform: Not released yet** and **Later**.
-    - Each of the three 'Harbor' headings is followed by a comma, "ships" and a date.
+    - The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2 LTS**, **Platform: Harbor 3**, **Field Apps: Lantern 1**, **Field Apps: Lantern 2**, **Platform: Not released yet**, **Field Apps: Not released yet** and **Later**.
+    - Each of the five 'Harbor' and 'Lantern' headings is followed by a comma, "ships" and a date.
     - There is no **New feature** button.
   - **Notes:**
 
@@ -143,10 +143,12 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Expected:** The **People** page opens.
   - **Notes:**
 
-- [ ] `4A2E` Search for `Chatura Abbott`.
+- [ ] `78A5` Search for `Data engineer`.
   - **Expected:**
-    - Her row is shown, with a date after today in **Start**.
+    - The row of the planned hire 'Data engineer' is shown, reading "Approved to hire" in **State**.
+    - Its **Start** is a date before today, such as "15 Oct 2026".
     - The table has **Start** and **End** columns.
+    - The table has **Compensation band** and **Performance rating** columns.
     - There is no **New person** and no **New column** button.
   - **Notes:**
 

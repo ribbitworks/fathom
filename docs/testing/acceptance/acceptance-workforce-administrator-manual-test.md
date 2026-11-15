@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-workforce-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Acceptance, Workforce Administrator
@@ -124,8 +124,11 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu, with no filters.
 
-- [ ] `77C9` Search for `Engineering Manager TBD`.
-  - **Expected:** Among the rows listed, one's **Name** reads "Engineering Manager, TBD-" and a number.
+- [ ] `332F` Search for `Mobile developer`.
+  - **Expected:**
+    - Among the rows listed is a hire row named 'Mobile developer'.
+    - It reads 'REQ-2055' in **ID**.
+    - It reads "Request to hire" in **State**.
   - **Notes:**
 
 - [ ] `28CF` Select that row's **State** cell, press Enter, choose **Approved to hire**, and press Enter.

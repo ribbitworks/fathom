@@ -200,8 +200,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `2EDD` Select **Group by: Cycle** above the table, then **Release** under **Group by**.
   - **Expected:**
-    - The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2 LTS**, **Platform: Harbor 3**, **Platform: Not released yet** and **Later**.
-    - Each of the three 'Harbor' headings is followed by a comma, "ships" and a date.
+    - The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2 LTS**, **Platform: Harbor 3**, **Field Apps: Lantern 1**, **Field Apps: Lantern 2**, **Platform: Not released yet**, **Field Apps: Not released yet** and **Later**.
+    - Each of the five 'Harbor' and 'Lantern' headings is followed by a comma, "ships" and a date.
   - **Notes:**
 
 - [ ] `9BF5` Select **Group by: Release**, then **Cycle** under **Group by**.
@@ -333,7 +333,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `121F` Open the Views menu, and select **Clear view**.
   - **Expected:**
     - The search box is empty.
-    - The table lists 'Platform' and 'Patches'.
+    - The table lists 'Platform', 'Patches' and 'Field Apps'.
   - **Notes:**
 
 - [ ] `FDC2` Open the Views menu, and select `Fictional my stream` under **My views**.

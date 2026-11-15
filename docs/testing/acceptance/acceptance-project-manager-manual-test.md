@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-project-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Acceptance, Project Manager
@@ -48,12 +48,12 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Projects** tab is chosen.
   - **Notes:**
 
-- [ ] `DE76` Select the details button at the right of the **Name** cell of 'Crane Control'.
+- [ ] `AA7F` Select the details button at the right of the **Name** cell of 'Depot Operations'.
   - **Expected:**
-    - The side panel is headed 'Crane Control'.
-    - Under **Milestones** are 'Kickoff', 'Factory test' and 'First crane live', each with its date.
-    - 'Second crane live' and 'Final handover' are there too, each with a yellow dot before it.
-    - 'First crane live' is followed by ", customer delivery".
+    - The side panel is headed 'Depot Operations'.
+    - Under **Milestones** are 'Depot pilot', dated before today, and 'All depots live', dated after it.
+    - Each is followed by ", customer delivery".
+    - **Next delivery** shows the date of 'All depots live'.
   - **Notes:**
 
 - [ ] `CECC` Select **Add milestone**.
@@ -74,16 +74,16 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - Under it, the date for `2030-03-15`.
   - **Notes:**
 
-- [ ] `096F` Read **Scope history**, at the end of the panel.
+- [ ] `B474` Read **Scope history**, at the end of the panel.
   - **Expected:**
-    - 'Audit Export' and 'Offline Sync' are listed.
+    - 'Parts Lookup', 'Barcode Scanning' and 'Work Order Sync' are listed.
     - Each is followed in grey by "Added" and a date.
   - **Notes:**
 
-- [ ] `99A7` Open the **⋯** menu of 'Crane Control' in the table, and select **Show features**.
+- [ ] `34CA` Open the **⋯** menu of 'Depot Operations' in the table, and select **Show features**.
   - **Expected:**
-    - The **Features** page opens, showing only 'Audit Export' and 'Offline Sync'.
-    - A pill above the table reads "Projects: P-2001 Crane Control".
+    - The **Features** page opens, showing only 'Parts Lookup', 'Barcode Scanning' and 'Work Order Sync'.
+    - A pill above the table reads "Projects: P-2017 Depot Operations".
   - **Notes:**
 
 - [ ] `D014` Select the **×** on the pill.
@@ -152,15 +152,24 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - Cells list features, each on a line of its own with its percentage at the right, such as "50%".
   - **Notes:**
 
-- [ ] `7E22` In the current month's column, find a cell that lists two features.
+- [ ] `7E22` Search for `Alvena Sanford`, and read her cell in the current month's column.
   - **Expected:**
-    - Under the two features, a last line gives the two percentages added up, at the right.
+    - The cell lists 'Barcode Scanning' with "10%" and 'Signature Capture' with "90%", each on a line of its own.
+    - Under them, a last line reads "Total", with "100%" at the right.
     - A thin line above it sets it off.
   - **Notes:**
 
-- [ ] `FBBB` In the current month's column, find a cell whose last line reads "Over", and one whose last line reads "Under".
+- [ ] `FBBB` Clear the search box, and type `Blaise Gislason`. Read his cell in the current month's column.
   - **Expected:**
+    - The cell lists 'Depot Operations' with "25%" and 'Transit Displays' with "100%".
+    - Its last line reads "Over", with "125%" at the right.
     - "Over" and its percentage are red and bold.
+  - **Notes:**
+
+- [ ] `4A9E` Clear the search box, and type `Anahi Bins`. Read her cell in the current month's column.
+  - **Expected:**
+    - The cell lists 'Depot Operations' with "50%".
+    - Its last line reads "Under", with "50%" at the right.
     - "Under" and its percentage are grey.
   - **Notes:**
 
@@ -242,34 +251,34 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `C19F` Select the **Project** header, then **Filter…**.
-  - **Expected:** The choices include 'P-2001 Crane Control'.
+  - **Expected:** The choices include 'P-2017 Depot Operations'.
   - **Notes:**
 
-- [ ] `078B` Tick 'P-2001 Crane Control'.
-  - **Expected:** 'P-2001 Crane Control' is the only choice ticked.
+- [ ] `078B` Tick 'P-2017 Depot Operations'.
+  - **Expected:** 'P-2017 Depot Operations' is the only choice ticked.
   - **Notes:**
 
 - [ ] `F30F` Press Esc.
   - **Expected:**
-    - Only milestones of 'Crane Control' are listed, such as 'Kickoff'.
+    - Only milestones of 'Depot Operations' are listed, such as 'Depot pilot'.
     - `Fictional site survey`, approved in PROJECT-01, is among them.
   - **Notes:**
 
 - [ ] `F2B5` Open the Views menu, and select **Save view…**.
   - **Expected:**
     - A dialog titled "Save view" shows **Name**.
-    - Under **Includes**, **Filter** reads "Project: P-2001 Crane Control".
+    - Under **Includes**, **Filter** reads "Project: P-2017 Depot Operations".
     - It offers no choice about sharing.
   - **Notes:**
 
-- [ ] `6CAE` Type `Fictional crane milestones` in **Name**.
+- [ ] `6CAE` Type `Fictional depot milestones` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
 - [ ] `B2F7` Select **Save view**.
   - **Expected:**
     - The dialog closes.
-    - The Views button reads `Fictional crane milestones`.
+    - The Views button reads `Fictional depot milestones`.
   - **Notes:**
 
 - [ ] `ACCD` Select the **Projects** tab.
@@ -282,8 +291,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Milestones** tab is chosen.
   - **Notes:**
 
-- [ ] `B134` Open the Views menu, and select `Fictional crane milestones` under **My views**.
-  - **Expected:** Only milestones of 'Crane Control' are listed.
+- [ ] `B134` Open the Views menu, and select `Fictional depot milestones` under **My views**.
+  - **Expected:** Only milestones of 'Depot Operations' are listed.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.
