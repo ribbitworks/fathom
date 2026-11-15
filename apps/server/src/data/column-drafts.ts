@@ -9,6 +9,7 @@
 import { changes, type Database, fields, lists } from "@fathom/db";
 import {
   builtInColumnTiers,
+  seesBuiltInColumn,
   type ColumnTable,
   columnTablePolicies,
   featureColumnKeys,
@@ -839,7 +840,11 @@ export async function readColumnsOut(
   const builtIn = builtInColumnTiers(await readBuiltInTiers(reader));
   const visible = new Set([
     ...[...builtIn]
-      .filter(([, tier]) => seesSensitivity(actor, tier))
+      .filter(
+        ([key, tier]) =>
+          seesSensitivity(actor, tier) &&
+          seesBuiltInColumn(actor.permissions, key),
+      )
       .map(([key]) => key),
     ...shown.map(({ id }) => id),
   ]);

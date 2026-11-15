@@ -3,13 +3,13 @@
 // The People table: the table of records record-grid.tsx sets out, with what is particular to
 // people and planned hires, its two kinds of row. Its columns are each row's name, ID, position,
 // and state, Hired for every person, their manager, whether they are marked as a manager, whom
-// others can report to, their team, which follows from their manager, and their own team's name,
-// the added columns, the month a planned hire is expected, and, for those who may see them, start
-// and end dates and the date their manager is theirs from. A planned hire's name is optional, and
-// while it has none its position and ID stand in for it; it has no end date, mark as a manager,
-// date its manager is its own from, or team name, and its start date is its target date. No two
-// rows have the same ID, a person's end date cannot be before their start date, and an ID typed in
-// cannot look like a temporary one.
+// others can report to, their team, which follows from their manager, the feature teams they are
+// on, for those who see feature teams, and their own team's name, the added columns, the month a
+// planned hire is expected, and, for those who may see them, start and end dates and the date their
+// manager is theirs from. A planned hire's name is optional, and while it has none its position and
+// ID stand in for it; it has no end date, mark as a manager, date its manager is its own from, or
+// team name, and its start date is its target date. No two rows have the same ID, a person's end
+// date cannot be before their start date, and an ID typed in cannot look like a temporary one.
 
 import { dayNeeded } from "./day-input.tsx";
 import { FillHireButton } from "./row-controls.tsx";
@@ -51,7 +51,7 @@ import {
   recordsAsShown,
   shownSchema,
 } from "./record-grid.tsx";
-import { byChoice, holdsOneChoice } from "./choice-grouping.ts";
+import { byChoice, holdsChoices } from "./choice-grouping.ts";
 import { flagChoice } from "./cell-kinds.tsx";
 import {
   isHire,
@@ -176,6 +176,32 @@ function teamChoices(people: readonly Person[]): Choice[] {
   );
 }
 
+// The Feature teams column, naming the teams each person is on, which are changed on the teams
+// themselves, or none for readers who are not sent feature teams.
+function featureTeamsColumn(people: readonly Person[]): Column | undefined {
+  if (!people.some(({ featureTeams }) => featureTeams !== undefined)) {
+    return undefined;
+  }
+  const teams = new Map(
+    people.flatMap(({ featureTeams = [] }) =>
+      featureTeams.map(({ id, name }) => [id, name] as const),
+    ),
+  );
+  return {
+    key: "featureTeams",
+    kind: "choice",
+    label: builtInColumnNames.get("featureTeams") as string,
+    required: false,
+    multiple: true,
+    choices: byLabel([...teams].map(([id, name]) => choice(id, name, false))),
+    emptyLabel: "No feature team",
+    readOnly: true,
+    value: (person) => (person.featureTeams ?? []).map(({ id }) => id),
+    live: () => [],
+    change: () => ({}),
+  };
+}
+
 const asIds = (value: CellValue) => value as string[];
 
 const markedChoice = choice(flagChoice, "Yes", false);
@@ -274,9 +300,9 @@ const offeredOnHires = (field: Field) =>
 // The People table's columns, in the order given by their keys: each row's name, optional for a
 // planned hire, its ID, and position, from the built-in Positions list, for those who may see them,
 // its state, Hired for every person, start and end dates, their manager, for those who may see it,
-// the date their manager is theirs from, their team and team name, the added columns, which planned
-// hires have only where offered on them, and the month a planned hire is expected. A column the
-// order does not name yet comes at the end. Managers are picked from the people given.
+// the date their manager is theirs from, their team, feature teams and team name, the added columns,
+// which planned hires have only where offered on them, and the month a planned hire is expected. A
+// column the order does not name yet comes at the end. Managers are picked from the people given.
 export function columnsFor(
   fields: readonly Field[],
   lists: readonly List[],
@@ -307,6 +333,7 @@ export function columnsFor(
     offeredOn: peopleOnly,
   });
   const [manager, team] = reportingColumns(people, lists, today());
+  const featureTeams = featureTeamsColumn(people);
   const position: Column = {
     key: "positionId",
     kind: "choice",
@@ -424,6 +451,7 @@ export function columnsFor(
           ]
         : []),
       team,
+      ...(featureTeams === undefined ? [] : [featureTeams]),
       onPeopleOnly({
         ...builtIn("teamName", "text", false, personLengths.teamName),
         breaksDown: false,
@@ -663,7 +691,7 @@ function requestFor(parts: readonly RowChange[]): RowRequest {
 // The only value changed from another day, since the rest take no date.
 export const datedKey = "managerId";
 
-const builtInGroupings = ["managerId", "positionId", "stateId"];
+const builtInGroupings = ["managerId", "featureTeams", "positionId", "stateId"];
 
 // Team follows from Manager, so isn't offered apart.
 function peopleGroupings(columns: readonly Column[]): RowGrouping<Person>[] {
@@ -681,7 +709,7 @@ function peopleGroupings(columns: readonly Column[]): RowGrouping<Person>[] {
       columns.filter((column) => column.key === key),
     ),
     ...columns.filter(
-      (column) => column.field !== undefined && holdsOneChoice(column),
+      (column) => column.field !== undefined && holdsChoices(column),
     ),
   ].map((column) =>
     column.key === "managerId"

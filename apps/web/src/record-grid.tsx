@@ -142,7 +142,7 @@ import {
 import { AppMenu, closesOnBlankClick } from "./app-menu.tsx";
 import type { HeldDetail } from "./exports.ts";
 import { useTableExport } from "./table-export.tsx";
-import { tipAttribute } from "./table-tips.tsx";
+import { Tipped } from "./table-tips.tsx";
 import { metricsButtonId, metricsPanelId } from "./metrics.ts";
 import { type CountedRows, MetricsPanel } from "./metrics-panel.tsx";
 import classes from "./pages.module.css";
@@ -1442,18 +1442,30 @@ export function AlsoUnder({ others }: { others: readonly OtherPlace[] }) {
         .join(": "),
     )
     .join(", ");
-  const tip = `Also under ${names}.`;
+  const tip = `Also under ${names}`;
   return (
-    <Text
-      component="span"
-      fz="sm"
-      c="dimmed"
-      ml="xs"
-      {...{ [tipAttribute]: tip }}
-    >
+    <Tipped tip={tip} className={classes.alsoUnder}>
       <span aria-hidden="true">+{others.length}</span>
       <VisuallyHidden>{`, also under ${names}.`}</VisuallyHidden>
-    </Text>
+    </Tipped>
+  );
+}
+
+// A Name cell's content with its +1 after it, the name cut short first, so the +1 stays in view
+// while the row's controls take room from the cell.
+function NamedWithOthers({
+  others,
+  children,
+}: {
+  others: readonly OtherPlace[];
+  children: ReactNode;
+}) {
+  if (others.length === 0) return children;
+  return (
+    <span className={classes.namedWithOthers}>
+      <span className={classes.namedWithOthersName}>{children}</span>
+      <AlsoUnder others={others} />
+    </span>
   );
 }
 
@@ -3643,100 +3655,109 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                               }
                             }}
                           >
-                            <DraftedItem
-                              slot={columnIndex === 0 && !editingHere}
-                              draft={
-                                columnIndex === 0 && !editingHere
-                                  ? recordDraft(marked)
-                                  : undefined
-                              }
-                              heldBy={
-                                columnIndex === 0 && !editingHere
-                                  ? row.record?.heldBy
-                                  : undefined
-                              }
-                              unpublished={
-                                newRowMarked &&
-                                newRowWords(
-                                  columnsOn(allColumns, rowKind(row))
-                                    .filter(
-                                      (other) =>
-                                        other.required &&
-                                        isEmpty(newValue(row.newRow, other)),
-                                    )
-                                    .map(({ label }) => label),
-                                  row.newRow.soFar?.message,
-                                )
+                            <NamedWithOthers
+                              others={
+                                column.key === table.nameColumn && !editingHere
+                                  ? (row.others ?? [])
+                                  : []
                               }
                             >
                               <DraftedItem
+                                slot={columnIndex === 0 && !editingHere}
                                 draft={
-                                  editingHere
-                                    ? undefined
-                                    : wholeCellDraft(marked, column)
-                                }
-                                by={
-                                  editingHere
-                                    ? undefined
-                                    : changedBy(draft, column)
-                                }
-                                was={
-                                  !editingHere &&
-                                  draft !== undefined &&
-                                  wholeCellDraft(draft, column) !== undefined
-                                    ? wasWords(
-                                        shown(
-                                          liveColumn(column),
-                                          column.live(draft),
-                                        ),
-                                        column.label,
-                                        column.emptyLabel,
-                                      )
+                                  columnIndex === 0 && !editingHere
+                                    ? recordDraft(marked)
                                     : undefined
                                 }
-                              >
-                                <MarkedItem
-                                  tone={
-                                    warning === undefined
-                                      ? undefined
-                                      : "warning"
-                                  }
-                                  words={warning?.words}
-                                  spoken={warning?.spoken}
-                                >
-                                  {editingHere
-                                    ? editor(
-                                        cell,
-                                        onRow(column, row.record, rowKind(row)),
-                                        valueAt(row, column),
+                                heldBy={
+                                  columnIndex === 0 && !editingHere
+                                    ? row.record?.heldBy
+                                    : undefined
+                                }
+                                unpublished={
+                                  newRowMarked &&
+                                  newRowWords(
+                                    columnsOn(allColumns, rowKind(row))
+                                      .filter(
+                                        (other) =>
+                                          other.required &&
+                                          isEmpty(newValue(row.newRow, other)),
                                       )
-                                    : has &&
-                                      (standInAt(row, column) === undefined ? (
-                                        row.record && column.content ? (
-                                          column.content(row.record)
-                                        ) : (
-                                          cellContent(
-                                            column,
-                                            shownAt(row, column),
-                                          )
+                                      .map(({ label }) => label),
+                                    row.newRow.soFar?.message,
+                                  )
+                                }
+                              >
+                                <DraftedItem
+                                  draft={
+                                    editingHere
+                                      ? undefined
+                                      : wholeCellDraft(marked, column)
+                                  }
+                                  by={
+                                    editingHere
+                                      ? undefined
+                                      : changedBy(draft, column)
+                                  }
+                                  was={
+                                    !editingHere &&
+                                    draft !== undefined &&
+                                    wholeCellDraft(draft, column) !== undefined
+                                      ? wasWords(
+                                          shown(
+                                            liveColumn(column),
+                                            column.live(draft),
+                                          ),
+                                          column.label,
+                                          column.emptyLabel,
                                         )
-                                      ) : (
-                                        <Text
-                                          component="span"
-                                          inherit
-                                          c="dimmed"
-                                          fs="italic"
-                                        >
-                                          {standInAt(row, column)}
-                                        </Text>
-                                      ))}
-                                </MarkedItem>
+                                      : undefined
+                                  }
+                                >
+                                  <MarkedItem
+                                    tone={
+                                      warning === undefined
+                                        ? undefined
+                                        : "warning"
+                                    }
+                                    words={warning?.words}
+                                    spoken={warning?.spoken}
+                                  >
+                                    {editingHere
+                                      ? editor(
+                                          cell,
+                                          onRow(
+                                            column,
+                                            row.record,
+                                            rowKind(row),
+                                          ),
+                                          valueAt(row, column),
+                                        )
+                                      : has &&
+                                        (standInAt(row, column) ===
+                                        undefined ? (
+                                          row.record && column.content ? (
+                                            column.content(row.record)
+                                          ) : (
+                                            cellContent(
+                                              column,
+                                              shownAt(row, column),
+                                            )
+                                          )
+                                        ) : (
+                                          <Text
+                                            component="span"
+                                            inherit
+                                            c="dimmed"
+                                            fs="italic"
+                                          >
+                                            {standInAt(row, column)}
+                                          </Text>
+                                        ))}
+                                  </MarkedItem>
+                                </DraftedItem>
                               </DraftedItem>
-                            </DraftedItem>
-                            {column.key === table.nameColumn &&
-                              !editingHere && (
-                                <AlsoUnder others={row.others ?? []} />
-                              )}
+                            </NamedWithOthers>
                             {column.key === table.nameColumn &&
                               !editingHere &&
                               nameCellControls(row)}

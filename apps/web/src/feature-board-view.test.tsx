@@ -21,6 +21,7 @@ import {
   renderApp,
   serverAnswers,
   streamId,
+  tipOn,
 } from "./test-support.tsx";
 
 // The board's width, which the simulated browser can't measure, changed by the tests.
@@ -517,12 +518,12 @@ describe("a feature under several values", () => {
     const [first, second] = copies();
     expect(first?.id).not.toBe(second?.id);
     expect(first?.textContent).toContain("+1");
-    expect(
-      within(first as HTMLElement).getByText("+1").parentElement?.dataset.tip,
-    ).toBe("Also under Fictional Quay.");
-    expect(
-      within(second as HTMLElement).getByText("+1").parentElement?.dataset.tip,
-    ).toBe("Also under Fictional Harbour.");
+    expect(await tipOn(within(first as HTMLElement).getByText("+1"))).toBe(
+      "Also under Fictional Quay",
+    );
+    expect(await tipOn(within(second as HTMLElement).getByText("+1"))).toBe(
+      "Also under Fictional Harbour",
+    );
   });
 
   it("steps through each card with the keyboard, and puts focus back on the one opened", async () => {

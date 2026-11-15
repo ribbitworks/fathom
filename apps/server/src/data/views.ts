@@ -22,6 +22,7 @@ import {
   opensWith,
   type SavedViewChange,
   type SavedViewRequest,
+  seesBuiltInColumn,
   seesClass,
   seesView,
   sharesViews,
@@ -114,7 +115,11 @@ const groups = (table: Table, grouping: string) =>
 
 const seesColumn = (actor: Actor, table: Table, key: string) => {
   const column = table.columns.classed.get(key);
-  return column === undefined || seesClass(actor.permissions, column.tier);
+  return (
+    column === undefined ||
+    (seesClass(actor.permissions, column.tier) &&
+      seesBuiltInColumn(actor.permissions, key))
+  );
 };
 
 // The classes a view's columns and groupings are kept in; a deleted column is ignored, as it is in

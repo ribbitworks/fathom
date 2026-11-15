@@ -132,6 +132,7 @@ export function builtInColumnTiers(tiers: BuiltInTiers): Map<string, Tier> {
     ["managerId", "general"],
     ["isManager", "general"],
     ["team", "general"],
+    ["featureTeams", "general"],
     ["teamName", "general"],
     ...[...classifiedColumns].map(([key, field]): [string, Tier] => [
       key,
@@ -140,6 +141,21 @@ export function builtInColumnTiers(tiers: BuiltInTiers): Map<string, Tier> {
       tiers.dataClasses[field],
     ]),
   ]);
+}
+
+// The People table's built-in columns that need a permission besides People's own, by key: Feature
+// teams, sent only to those who see feature teams.
+export const builtInColumnNeeds: ReadonlyMap<string, Permission> = new Map([
+  ["featureTeams", "feature-teams:view"],
+]);
+
+// Whether a role holds the permission a built-in column of People needs, where it needs one.
+export function seesBuiltInColumn(
+  permissions: readonly Permission[],
+  key: string,
+): boolean {
+  const needs = builtInColumnNeeds.get(key);
+  return needs === undefined || permissions.includes(needs);
 }
 
 // What decides a role's access to classified data: what its role grants, and the classes the

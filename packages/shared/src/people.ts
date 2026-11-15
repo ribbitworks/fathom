@@ -197,6 +197,11 @@ export const personSchema = z.object({
   teamName: z.string().nullable().optional(),
   // Whether others can be named as reporting to the person, which is General.
   isManager: z.boolean().optional(),
+  // The feature teams the person is on, live, on the day shown, by name; none for a planned hire.
+  // Left out for users who cannot see feature teams.
+  featureTeams: z
+    .array(z.object({ id: z.string(), name: z.string() }))
+    .optional(),
   values: valuesSchema,
   links: linksSchema.default({}),
   notes: notesSchema.optional(),

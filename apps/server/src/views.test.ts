@@ -1264,6 +1264,46 @@ describe("views of every table", () => {
     expect((await remove(other.cookie, grouped.id)).statusCode).toBe(404);
   });
 
+  it("keep a view on Feature teams from readers who don't see feature teams, naming it as what's missing", async () => {
+    // Given a maker who sees feature teams, with a view grouped by them and one filtering them
+    const maker = await test.signedIn(generalReader);
+    const grouped = (
+      await save(maker.cookie, unique("By feature team"), {
+        grouping: "featureTeams",
+      })
+    ).json<Saved>().view;
+    const filtered = (
+      await save(maker.cookie, unique("Sorted by feature team"), {
+        sort: ["featureTeams"],
+      })
+    ).json<Saved>().view;
+    expect(await viewsOf(maker.cookie)).toContainEqual(grouped);
+
+    // When the maker's role no longer sees feature teams
+    await test.holdOnly(
+      maker.id,
+      generalReader.filter((permission) => permission !== "feature-teams:view"),
+    );
+
+    // Then each comes by name with Feature teams missing, and none can be saved on them
+    const listed = await viewsOf(maker.cookie);
+    expect(listed).toContainEqual({
+      id: grouped.id,
+      name: grouped.name,
+      missing: { columns: [], groupings: ["Feature teams"] },
+    });
+    expect(listed).toContainEqual({
+      id: filtered.id,
+      name: filtered.name,
+      missing: { columns: ["Feature teams"], groupings: [] },
+    });
+    expect(
+      (
+        await save(maker.cookie, unique("Again"), { grouping: "featureTeams" })
+      ).json(),
+    ).toEqual({ error: "Choose only columns this role can see" });
+  });
+
   it("name a grouping whose data the maker no longer sees as what's missing", async () => {
     const maker = await test.signedIn([
       ...assignmentsReader,

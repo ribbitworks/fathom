@@ -2,7 +2,7 @@
 
 // Helpers for the front-end tests: a simulated server that answers each request the test expects, a
 // fictional signed-in user, fictional release streams, fictional people's feature teams month by
-// month, and Fathom's front end started on a page of the test's choosing.
+// month, Fathom's front end started on a page of the test's choosing, and the tip shown on pointing.
 
 import type {
   FeatureDraft,
@@ -357,4 +357,15 @@ export async function undoWithKeys(fetch: ReturnType<typeof serverAnswers>) {
     await userEvent.keyboard("{Meta>}z{/Meta}");
     expect(undoRequests(fetch)).toBeGreaterThan(before);
   });
+}
+
+// The tooltip shown while the pointer is over an element, read once it opens and closed again.
+export async function tipOn(element: HTMLElement): Promise<string | null> {
+  await userEvent.hover(element);
+  const tip = (await screen.findByRole("tooltip")).textContent;
+  await userEvent.unhover(element);
+  await waitFor(() => {
+    expect(screen.queryByRole("tooltip")).toBeNull();
+  });
+  return tip;
 }

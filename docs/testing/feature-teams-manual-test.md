@@ -2,16 +2,16 @@
 title: "Manual Test: Feature Teams"
 category: "How-To"
 audience: "AI Coding Assistant"
-applies_to: ["apps/web/src/org-chart*", "apps/web/src/feature-team*", "apps/web/src/choice-picker.tsx", "apps/server/src/data/feature-teams.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
+applies_to: ["apps/web/src/org-chart*", "apps/web/src/people-grid.tsx", "apps/web/src/feature-team*", "apps/web/src/choice-picker.tsx", "apps/server/src/data/feature-teams.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Feature Teams
 
 ## Scope
 
-Verifies feature teams on the **Org chart** page: how each team is drawn under its lead, a team's panel, proposing, adding, renaming and removing teams as drafts with their marks on the chart and in the panel, what a reader who may not change teams sees, changing teams from another date, approving a team's draft on the Drafts page, using a team's panel from the keyboard, and choices shown with their descriptions when picked. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies feature teams on the **Org chart** page: how each team is drawn under its lead, a team's panel, proposing, adding, renaming and removing teams as drafts with their marks on the chart and in the panel, what a reader who may not change teams sees, changing teams from another date, approving a team's draft on the Drafts page, using a team's panel from the keyboard, choices shown with their descriptions when picked, and each person's feature teams on the **People** page, grouped by team. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -706,4 +706,51 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - **Feature lead** reads 'Gilda Effertz'.
     - **Feature lead** has no dot.
+  - **Notes:**
+
+### FT-12: People Names Each Person's Feature Teams
+
+**Account:** Product Manager, `product.manager@fathom.test`, changed from FT-11.
+
+**Preconditions:** Run Restore the Seed Data. Signed in with this account. Select the **People** page in the left-hand menu.
+
+- [ ] `1B95` Type `Lorenza` in the search field above the table.
+  - **Expected:**
+    - One row shows, 'Lorenza Thiel'.
+    - A **Feature teams** column follows the **Team** column.
+    - Its cell reads "Payments core, Search".
+    - The **Feature teams** cell shows no pencil.
+  - **Notes:**
+
+- [ ] `7B3F` Select the **Feature teams** cell, then press Enter.
+  - **Expected:** No list of choices opens; the cell stays as it was.
+  - **Notes:**
+
+### FT-13: People Grouped by Feature Teams
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account FT-12 ended with.
+
+**Preconditions:** Select the **People** page in the left-hand menu.
+
+- [ ] `C5B9` Choose **Feature teams** in **Group by**.
+  - **Expected:**
+    - The button reads "Group by: Feature teams".
+    - The headings are, in order: "Mobile apps", "Payments core", "Platform reliability", "Search", "No feature team".
+    - Each heading shows how many rows are under it.
+  - **Notes:**
+
+- [ ] `DC77` Type `Lorenza` in the search field above the table.
+  - **Expected:**
+    - 'Lorenza Thiel' shows under "Payments core" and again under "Search".
+    - Each of the two rows has a dimmed "+1" after the name.
+  - **Notes:**
+
+- [ ] `E9DE` Point at the "+1" in the row under "Payments core".
+  - **Expected:** A tip reads "Also under Search".
+  - **Notes:**
+
+- [ ] `7128` Clear the search field, then type `Backend engineer 1`.
+  - **Expected:**
+    - One row shows, 'Backend engineer 1', under "No feature team".
+    - Its **Feature teams** cell is empty.
   - **Notes:**

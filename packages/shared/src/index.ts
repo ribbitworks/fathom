@@ -49,7 +49,9 @@ export {
   withImplied,
 } from "./access.ts";
 export {
+  builtInColumnNeeds,
   builtInColumnTiers,
+  seesBuiltInColumn,
   type BuiltInTiers,
   type ClassAccess,
   changesField,

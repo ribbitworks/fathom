@@ -1580,3 +1580,27 @@ th.liveColumn {
   height: 0;
   pointer-events: none;
 }
+
+/* A Name cell's name and its +1 for the other headings it's under: the name is cut short first, so
+   the +1 stays in view while the row's controls take room. */
+.namedWithOthers {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.namedWithOthersName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.namedWithOthers > :last-child {
+  flex: none;
+}
+
+.alsoUnder {
+  margin-left: var(--mantine-spacing-xs);
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-sm);
+}

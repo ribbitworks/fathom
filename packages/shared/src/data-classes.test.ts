@@ -10,6 +10,7 @@ import {
   classesNamedIn,
   columnClass,
   builtInColumnTiers,
+  seesBuiltInColumn,
   changesHiringPlan,
   changesField,
   changesLinesOn,
@@ -94,6 +95,16 @@ describe("the classes of People's built-in columns", () => {
     expect(tiers.get("stateId")).toBe("confidential");
     expect(tiers.get("startDate")).toBe("personal");
     expect(tiers.get("managerFrom")).toBe("general");
+  });
+});
+
+describe("built-in columns needing a permission of their own", () => {
+  it("show Feature teams only to roles that see feature teams, and the rest to anyone", () => {
+    expect(seesBuiltInColumn(["people:view"], "featureTeams")).toBe(false);
+    expect(
+      seesBuiltInColumn(["people:view", "feature-teams:view"], "featureTeams"),
+    ).toBe(true);
+    expect(seesBuiltInColumn(["people:view"], "team")).toBe(true);
   });
 });
 

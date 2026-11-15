@@ -286,6 +286,25 @@ export async function readLiveTeams(
   };
 }
 
+// The live teams each person is on as of a day, by name, by person.
+export async function readTeamsOfPeople(
+  reader: Reader,
+  day: string,
+): Promise<Map<string, { id: string; name: string }[]>> {
+  const { teams } = await readLiveTeams(reader, day);
+  const teamsOf = new Map<string, { id: string; name: string }[]>();
+  for (const [id, team] of teams) {
+    for (const personId of membersOf(team)) {
+      teamsOf.set(personId, [
+        ...(teamsOf.get(personId) ?? []),
+        { id, name: String(team.name) },
+      ]);
+    }
+  }
+  for (const held of teamsOf.values()) held.sort(byName);
+  return teamsOf;
+}
+
 export const readTeamDrafts = (
   reader: Reader,
   ids?: readonly string[],

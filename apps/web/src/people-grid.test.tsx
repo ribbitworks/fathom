@@ -744,6 +744,65 @@ describe("managers and teams", () => {
     expect(team?.readOnly).toBe(true);
   });
 
+  describe("the Feature teams column", () => {
+    const sent = [
+      person("p1", {
+        featureTeams: [
+          { id: "t2", name: "Search" },
+          { id: "t1", name: "Payments core" },
+        ],
+      }),
+      person("p2", { featureTeams: [{ id: "t2", name: "Search" }] }),
+    ];
+    const columnOf = (records: readonly Person[]) =>
+      columnsFor([], [], [], false, records).find(
+        ({ key }) => key === "featureTeams",
+      );
+
+    it("comes just after Team", () => {
+      const keys = columnsFor([], [], [], false, sent).map(({ key }) => key);
+      expect(keys.indexOf("featureTeams")).toBe(keys.indexOf("team") + 1);
+    });
+
+    it("isn't offered when people's feature teams aren't sent", () => {
+      expect(columnOf(people)).toBeUndefined();
+    });
+
+    it("offers every team someone is on as a choice, by name", () => {
+      expect(
+        columnOf(sent)?.choices.map(({ id, label }) => [id, label]),
+      ).toEqual([
+        ["t1", "Payments core"],
+        ["t2", "Search"],
+      ]);
+    });
+
+    it("holds each person's teams, and none for someone just added, not yet read back", () => {
+      expect(columnOf(sent)?.value(sent[0] as Person)).toEqual(["t2", "t1"]);
+      expect(columnOf(sent)?.value(person("p3"))).toEqual([]);
+    });
+
+    it("is read only, saving nothing and never in a person's draft, since teams are changed on the teams", () => {
+      const column = columnOf(sent);
+      expect(column?.readOnly).toBe(true);
+      expect(column?.multiple).toBe(true);
+      expect(column?.change(["t1"])).toEqual({});
+      expect(
+        column?.live({
+          action: "changed",
+          changed: [],
+          live: { values: {}, links: {} },
+          state: "waiting",
+          madeBy: null,
+          madeAs: null,
+          madeAt: null,
+          editors: [],
+          changedBy: {},
+        }),
+      ).toEqual([]);
+    });
+  });
+
   it("breaks people down by manager, counting each manager's direct reports", () => {
     const manager = columnsFor([], [], [], true, people).find(
       ({ key }) => key === "managerId",
@@ -853,7 +912,7 @@ describe("managers and teams", () => {
     ]);
   });
 
-  it("offers Group by Manager, Position, State and added columns of one choice, but not Team", async () => {
+  it("offers Group by Manager, Position, State and added choice columns, but not Team", async () => {
     const levels: Field = { ...site, id: "f2", name: "Levels", multiple: true };
     const states: List = {
       ...sites,
@@ -867,7 +926,53 @@ describe("managers and teams", () => {
       (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["None, chosen", "Manager", "Position", "State", "Site"]);
+    ).toEqual([
+      "None, chosen",
+      "Manager",
+      "Position",
+      "State",
+      "Site",
+      "Levels",
+    ]);
+  });
+
+  it("offers Group by Feature teams after Manager, once people's feature teams are sent", async () => {
+    render(
+      grid({
+        people: [person("p1", { featureTeams: [] })],
+        lists: [positions],
+      }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Group by" }));
+    expect(
+      (await screen.findAllByRole("menuitem")).map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual(["None, chosen", "Manager", "Feature teams", "Position"]);
+  });
+
+  it("groups people under each feature team they are on, by name, then those on none, counting each once", () => {
+    const mobile = { id: "t2", name: "Mobile apps" };
+    const payments = { id: "t1", name: "Payments core" };
+    render(
+      grid({
+        people: [
+          person("p1", { featureTeams: [mobile, payments] }),
+          person("p2", { featureTeams: [] }),
+        ],
+        lists: [positions],
+        view: { ...emptyView, grouping: "featureTeams" },
+      }),
+    );
+    expect(
+      screen.getAllByRole("rowheader").map(({ textContent }) => textContent),
+    ).toEqual([
+      "Mobile apps1 person",
+      "Payments core1 person",
+      "No feature team1 person",
+    ]);
+    expect(screen.getAllByText("+1")).toHaveLength(2);
+    expect(screen.getByRole("status").textContent).toBe("2 people");
   });
 
   it("groups people by an added column's choice, in its list's order, then those with none", () => {

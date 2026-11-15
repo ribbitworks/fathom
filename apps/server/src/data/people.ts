@@ -20,6 +20,7 @@ import {
 import {
   changesLinesOn,
   monthOf,
+  seesBuiltInColumn,
   seesEmployment,
   seesField,
 } from "@fathom/shared";
@@ -91,7 +92,10 @@ import {
 import { isNote, isNumber, type LiveValues, typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
 import { readToday } from "./settings.ts";
-import { refuseRemovingPeopleOnTeams } from "./feature-teams.ts";
+import {
+  readTeamsOfPeople,
+  refuseRemovingPeopleOnTeams,
+} from "./feature-teams.ts";
 import {
   hireDraftsNaming,
   hireRow,
@@ -938,6 +942,14 @@ async function readPeopleIn(
   const teamOf = new Map(
     shown.map(({ id, teamName }) => [id, teamName ?? null]),
   );
+  // Feature teams are General, and sent to those who see feature teams, as their page is.
+  const featureTeamsOf = seesBuiltInColumn(actor.permissions, "featureTeams")
+    ? await readTeamsOfPeople(database, day)
+    : undefined;
+  const withFeatureTeams = (row: Person): Person =>
+    featureTeamsOf === undefined
+      ? row
+      : { ...row, featureTeams: featureTeamsOf.get(row.id) ?? [] };
   return {
     people: [
       ...(stateOf === undefined
@@ -950,7 +962,7 @@ async function readPeopleIn(
             ) as string,
           }))),
       ...hiring.hires.map((hire) => hireRow(hire, teamOf)),
-    ],
+    ].map(withFeatureTeams),
     columns,
     positionHidden: !shownFields.has("positionId"),
     includedPersonal:

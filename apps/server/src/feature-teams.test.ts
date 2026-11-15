@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for feature teams, against a migrated PostgreSQL server: reading them, with members who have
-// not started and the days a draft gives left out for readers who do not see Personal details, and
-// drafts for those who do not see people; drafting teams added, changed, and removed, with their
-// names, leads, and members checked; the day members join or leave from; people who have left;
-// colours; each month's teams for the monthly table; approving, rejecting, discarding, resubmitting,
-// and undoing their drafts, and publishing and discarding unpublished ones; the change history
-// naming members and leads; and refusing to remove a person who leads a team or is in a draft of
-// one. Which permissions each route needs is checked with every other route in permissions.test.ts.
+// Tests for feature teams, against a migrated PostgreSQL server: reading them, with members who
+// have not started and the days a draft gives left out for readers who do not see Personal details,
+// and drafts for those who do not see people; drafting teams added, changed, and removed, with
+// their names, leads, and members checked; the day members join or leave from; people who have
+// left; colours; each month's teams for the monthly table; approving, rejecting, discarding,
+// resubmitting, and undoing their drafts, and publishing and discarding unpublished ones; the
+// change history naming members and leads; each person's feature teams as People sends them; and
+// refusing to remove a person who leads a team or is in a draft of one. Which permissions each
+// route needs is checked with every other route in permissions.test.ts.
 
 import {
   accessHistory,
@@ -23,6 +24,7 @@ import {
   type ChangeHistory,
   type FeatureTeam,
   type FeatureTeams,
+  type Person,
   startingRoles,
   type TeamMonths,
   type Unpublished,
@@ -3521,5 +3523,127 @@ describe("unpublished changes to teams", () => {
     const { id } = await drafted({}, proposer, unpublished);
     await ok(await send(proposer, "POST", "/api/unpublished/publish"));
     expect((await teamSeen(id, planner))?.draft?.unpublished).toBeUndefined();
+  });
+});
+
+describe("each person's feature teams on People", () => {
+  const peopleSeen = async (who: User, on?: string) =>
+    (
+      await ok<{ people: Person[] }>(
+        await send(
+          who,
+          "GET",
+          on === undefined ? "/api/people" : `/api/people?on=${on}`,
+        ),
+      )
+    ).people;
+
+  const teamsOf = async (personId: string, who = editor, on?: string) =>
+    (await peopleSeen(who, on)).find(({ id }) => id === personId)?.featureTeams;
+
+  it("names each live team someone is on, by name, to readers who see feature teams", async () => {
+    // Given someone on two teams, named so the second comes first
+    const member = await person();
+    const later = await liveTeam({ name: unique("Fictional Zeta Team") });
+    const earlier = await liveTeam({ name: unique("Fictional Alpha Team") });
+    await changed(later, { add: [member] });
+    await approved(later);
+    await changed(earlier, { add: [member] });
+    await approved(earlier);
+
+    // When People is read by a reader without Personal details
+    const teams = await teamsOf(member, planner);
+
+    // Then both teams are named, in order of name
+    expect(teams?.map(({ id }) => id)).toEqual([earlier, later]);
+    expect(teams?.[0]?.name).toMatch(/^Fictional Alpha Team/);
+  });
+
+  it("names no team for someone on none", async () => {
+    const loner = await person();
+
+    expect(await teamsOf(loner, planner)).toEqual([]);
+  });
+
+  it("leaves out a team's drafts: a member not yet approved, and a new name", async () => {
+    // Given a live team, with a draft renaming it and adding someone
+    const lead = await person();
+    const newcomer = await person();
+    const name = unique("Fictional Live Team");
+    const id = await liveTeam({ name, leadId: lead });
+    await changed(id, { name: unique("Fictional Renamed"), add: [newcomer] });
+
+    // When People is read
+    const everyone = await peopleSeen(editor);
+
+    // Then the team shows as live: by its live name, without the newcomer
+    expect(everyone.find((one) => one.id === lead)?.featureTeams).toEqual([
+      { id, name },
+    ]);
+    expect(everyone.find((one) => one.id === newcomer)?.featureTeams).toEqual(
+      [],
+    );
+    await ok(await discard(id));
+  });
+
+  it("names no team for a planned hire", async () => {
+    // Given a planned hire, drafted and approved, so it is live
+    const { ids } = await ok<{ ids: string[] }>(
+      await send(editor, "POST", "/api/planned-hires", {
+        hires: [{ positionId: testPosition, targetDate: "2027-03-15" }],
+      }),
+      201,
+    );
+    const hire = String(ids[0]);
+    await ok(
+      await send(approver, "POST", "/api/drafts/approval", {
+        plannedHires: [hire],
+      }),
+    );
+
+    // When People is read, its planned hires among its rows
+    const row = (await peopleSeen(editor)).find(({ id }) => id === hire);
+
+    // Then the hire is on no team
+    expect(row?.kind).toBe("planned-hire");
+    expect(row?.featureTeams).toEqual([]);
+  });
+
+  it("names the teams of the day People shows", async () => {
+    // Given someone approved to join a team from a later day
+    const lead = await person();
+    const joinsLater = await person();
+    const id = await liveTeam({ leadId: lead, from: "2025-01-15" });
+    await changed(id, { add: [joinsLater], from: "2099-02-01" });
+    await approved(id);
+
+    // When People is read on the day before and the day itself
+    const before = await teamsOf(joinsLater, editor, "2099-01-31");
+    const after = await teamsOf(joinsLater, editor, "2099-02-01");
+
+    // Then they are on it only from that day
+    expect(before).toEqual([]);
+    expect(after?.map((team) => team.id)).toEqual([id]);
+  });
+
+  it("is sent to no reader who doesn't see feature teams", async () => {
+    // Given someone on a team, and a reader who sees people but not feature teams
+    const lead = await person();
+    await liveTeam({ leadId: lead });
+    const peopleOnly = await test.signedIn(["people:view"]);
+
+    // When that reader reads People
+    const read = await ok<{ people: Person[]; order: string[] }>(
+      await send(peopleOnly, "GET", "/api/people"),
+    );
+
+    // Then no one's feature teams are sent, nor the column in the order
+    expect(read.people.some(({ id }) => id === lead)).toBe(true);
+    expect(read.people.every((one) => !("featureTeams" in one))).toBe(true);
+    expect(read.order).not.toContain("featureTeams");
+    expect(
+      (await ok<{ order: string[] }>(await send(planner, "GET", "/api/people")))
+        .order,
+    ).toContain("featureTeams");
   });
 });

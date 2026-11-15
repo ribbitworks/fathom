@@ -2961,8 +2961,8 @@ describe("the Features page", () => {
     expect(
       screen.getAllByText("+1").map((mark) => mark.parentElement?.dataset.tip),
     ).toEqual([
-      "Also under FP-2 Fictional Other.",
-      "Also under FP-1 Fictional Project.",
+      "Also under FP-2 Fictional Other",
+      "Also under FP-1 Fictional Project",
     ]);
   });
 

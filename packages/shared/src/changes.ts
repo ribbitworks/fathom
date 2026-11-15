@@ -23,6 +23,7 @@ export const builtInColumnNames: ReadonlyMap<string, string> = new Map([
   ["isManager", "Manager?"],
   ["managerFrom", "Manager assigned"],
   ["team", "Team"],
+  ["featureTeams", "Feature teams"],
   ["teamName", "Team name"],
 ]);
 

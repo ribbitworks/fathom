@@ -12,11 +12,6 @@ export const holdsChoices = <Rec extends GridRecord, Change>(
   column: Column<Rec, Change>,
 ) => column.kind === "choice";
 
-// Where a table gives each record one row, a column holding several choices can't group it.
-export const holdsOneChoice = <Rec extends GridRecord, Change>(
-  column: Column<Rec, Change>,
-) => holdsChoices(column) && !column.multiple;
-
 export function byChoice<Rec extends GridRecord, Change>(
   column: Column<Rec, Change>,
   headingOf: (choice: Choice) => string = ({ label }) => label,

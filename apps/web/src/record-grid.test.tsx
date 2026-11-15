@@ -55,6 +55,7 @@ import {
   recordCell,
   rowActions,
   testTheme,
+  tipOn,
 } from "./test-support.tsx";
 
 interface Gadget extends CellRecord {
@@ -1664,12 +1665,12 @@ describe("a record under several groups", () => {
     expect(screen.getByRole("status").textContent).toBe("3 gadgets");
   });
 
-  it("names the other groups in the mark's tip", () => {
+  it("names the other groups in the mark's tip, shown on pointing at it", async () => {
     renderGadgets({ gadgets, table: byLetters });
 
-    expect(
-      screen.getAllByText("+1").map((mark) => mark.parentElement?.dataset.tip),
-    ).toEqual(["Also under Group Y.", "Also under Group X."]);
+    const tips = [];
+    for (const mark of screen.getAllByText("+1")) tips.push(await tipOn(mark));
+    expect(tips).toEqual(["Also under Group Y", "Also under Group X"]);
   });
 
   it("gives each row of a record a cell of its own, which the arrows step through", async () => {
@@ -1844,20 +1845,20 @@ describe("rows grouped again under each heading", () => {
     expect(screen.getByRole("status").textContent).toBe("3 gadgets");
   });
 
-  it("marks a record under several second groups, naming the others", () => {
+  it("marks a record under several second groups, naming the others", async () => {
     renderGadgets({ gadgets, table: nested(), view });
 
-    expect(
-      screen.getAllByText("+1").map((mark) => mark.parentElement?.dataset.tip),
-    ).toEqual([
-      "Also under Group Y.",
-      "Also under Group X.",
-      "Also under Group Z.",
-      "Also under Group Y.",
+    const tips = [];
+    for (const mark of screen.getAllByText("+1")) tips.push(await tipOn(mark));
+    expect(tips).toEqual([
+      "Also under Group Y",
+      "Also under Group X",
+      "Also under Group Z",
+      "Also under Group Y",
     ]);
   });
 
-  it("names another place differing in both groups by both, the first, a colon, then the second", () => {
+  it("names another place differing in both groups by both, the first, a colon, then the second", async () => {
     renderGadgets({
       gadgets: [gadget("a", { code: "XY" })],
       table: nested({
@@ -1877,8 +1878,8 @@ describe("rows grouped again under each heading", () => {
       view: { ...emptyView, grouping: "letters", thenBy: "again" },
     });
 
-    expect(screen.getAllByText("+3")[0]?.parentElement?.dataset.tip).toBe(
-      "Also under Again Y, Group Y, Group Y: Again Y.",
+    expect(await tipOn(screen.getAllByText("+3")[0] as HTMLElement)).toBe(
+      "Also under Again Y, Group Y, Group Y: Again Y",
     );
   });
 

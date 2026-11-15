@@ -4,7 +4,7 @@
 // its heading, a row's place under each of several, and the group of rows with none.
 
 import { describe, expect, it } from "vitest";
-import { byChoice, holdsChoices, holdsOneChoice } from "./choice-grouping.ts";
+import { byChoice, holdsChoices } from "./choice-grouping.ts";
 import type { Column, GridRecord } from "./record-grid.tsx";
 
 interface Row extends GridRecord {
@@ -60,11 +60,8 @@ describe("grouping by a column's choices", () => {
     ]);
   });
 
-  it("tells columns holding choices, and those holding one, from the rest", () => {
+  it("tells columns holding choices from the rest", () => {
     expect(holdsChoices({ ...column, multiple: true })).toBe(true);
     expect(holdsChoices({ ...column, kind: "text" })).toBe(false);
-    expect(holdsOneChoice(column)).toBe(true);
-    expect(holdsOneChoice({ ...column, multiple: true })).toBe(false);
-    expect(holdsOneChoice({ ...column, kind: "text" })).toBe(false);
   });
 });

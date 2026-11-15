@@ -573,6 +573,7 @@ describe("orders stored before the reporting columns", () => {
     "isManager",
     "managerFrom",
     "team",
+    "featureTeams",
     "teamName",
   ];
 
@@ -615,6 +616,7 @@ describe("orders stored before the reporting columns", () => {
         "managerId",
         "isManager",
         "team",
+        "featureTeams",
         "teamName",
         ...added.filter((key) => seen.fields.some(({ id }) => id === key)),
       ]);
