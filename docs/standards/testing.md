@@ -102,7 +102,7 @@ A step in this form:
 
 Rules:
 
-- **Must** give each step an ID of 4 upper-case hexadecimal characters in backticks, such as `A3F9`, chosen at random when the step is written and unique within its file. An ID is never reused or changed; a removed step's ID goes with it. Steps are never numbered, and a step is referred to by its test case and ID, such as REL-11 `7C2E`. Results already saved in `docs/testing/results/` keep their step numbers. Decided by the owner on 2026-11-12.
+- **Must** give each step an ID of 4 upper-case hexadecimal characters in backticks, such as `A3F9`, chosen at random when the step is written and unique within its file. An ID is never reused or changed; a removed step's ID goes with it. Steps are never numbered, and a step is referred to by its test case and ID, such as REL-11 `7C2E`. Results saved before then keep their step numbers. Decided by the owner on 2026-11-12.
 - **Must** mark text this way in manual tests and [Manual Test Basics](../testing/manual-test-basics.md), with no italics or underlines. Decided by the owner on 2026-11-12.
   - **Bold** for what to select or read on screen: buttons, menus, pages, fields and columns.
   - `Backticks` for what to type, exact values, and step IDs.
@@ -119,7 +119,7 @@ Rules:
 - **Must Not** describe what to do or see by comparison with another screen, page or record, such as "laid out as a person's details are" or "as on People": the tester cannot judge it without leaving the step, and the step changes meaning when the other screen does. Say what is on this screen.
 - **Must** say only what to do and what to see: no explanations of why, design rationale, or history of fixes.
 - **Must Not** repeat facts other documents own, such as the contents of the seed data, or what [Manual Test Basics](../testing/manual-test-basics.md) holds for every test; link to them.
-- **Must** save a run's marked copy in `docs/testing/results/` before clearing its marks and notes, as [Recording Results](../testing/manual-test-basics.md#recording-results) sets out.
+- **Must** save a run's marked copy outside the repository, where the maintainer keeps results, before clearing its marks and notes, as [Recording Results](../testing/manual-test-basics.md#recording-results) sets out.
 - **Must** be updated in the same change as the behaviour or the seed data it tests, together with [Visual Design](../design/visual-design.md) where that changes too. When a step fails because the behaviour is wrong, the behaviour is fixed, not the step.
 - **Must Not** depend on data a tester adds by hand, other than through the steps themselves, or on real data.
 - **Must Not** repeat a check another test case makes. A test case removed because another covers it keeps its heading, with one line under it linking to the case that covers it, so the other cases keep their numbers and links to them still lead somewhere. Decided by the owner on 2026-11-13.

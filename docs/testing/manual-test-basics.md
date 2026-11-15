@@ -51,7 +51,7 @@ Mark each step's checkbox while running it, and write anything else under its **
 
 Marks and notes are kept while a test is being run and changed, and cleared before the test is committed, so every committed test starts unmarked.
 
-Before they are cleared, the marked copy is saved in `docs/testing/results/`, named after the test with the date and time it was last run, as `<test>_YYYY_MM_DD_hh_mm.md`, such as `roles-manual-test_2026_11_12_14_30.md`, apart from the kebab-case file names [Documentation](../standards/shared/documentation.md) asks for. The copy has no front matter, and its links to other documents point one folder up: it starts with the test's title, followed by a line giving that date and time and the branch it was run on, such as **Last run:** 2026-11-12 14:30, on `feat/simpler-roles`. Decided by the owner on 2026-11-12.
+Before they are cleared, the marked copy is saved outside the repository, where the maintainer keeps every run's results, since its notes are working notes. It is named after the test with the date and time it was last run, as `<test>_YYYY_MM_DD_hh_mm.md`, such as `roles-manual-test_2026_11_12_14_30.md`, and starts with the test's title, followed by a line giving that date and time and the branch it was run on, such as **Last run:** 2026-11-12 14:30, on `feat/simpler-roles`. Decided by the maintainer on 2026-11-12, and kept outside the repository since 2026-11-14.
 
 ## Common Procedures
 
@@ -85,7 +85,7 @@ Run after Start Fathom, before the first test case unless the test starts anothe
 
 ### Reset the Database
 
-Run only where a test says so. This deletes every account and record in the development database, including anything added by hand, and puts every role back as Fathom starts it. Ask the owner before running it on a database others use.
+Run only where a test says so. This deletes every account and record in the development database, including anything added by hand, and puts every role back as Fathom starts it. Ask the maintainer before running it on a database others use.
 
 1. Stop Fathom: press Ctrl+C in the first terminal.
 2. In the second terminal, run:
@@ -100,7 +100,7 @@ Run only where a test says so. This deletes every account and record in the deve
 
 ### Start From an Empty Database
 
-Run only where a test says so. This deletes every account and record in the development database, including anything added by hand, puts every role back as Fathom starts it, and adds back only the development accounts, with no other data. Ask the owner before running it on a database others use.
+Run only where a test says so. This deletes every account and record in the development database, including anything added by hand, puts every role back as Fathom starts it, and adds back only the development accounts, with no other data. Ask the maintainer before running it on a database others use.
 
 1. Stop Fathom: press Ctrl+C in the first terminal.
 2. In the second terminal, run:

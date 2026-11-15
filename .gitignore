@@ -50,9 +50,14 @@ output/
 
 # --- Local data ---
 private/
+docs/testing/results/
 *.sqlite
 *.sqlite3
 *.db
 
-# --- Claude Code local settings ---
-.claude/settings.local.json
+# --- Claude Code personal files ---
+.claude/*
+!.claude/settings.json
+!.claude/agents/
+!.claude/commands/
+!.claude/skills/
