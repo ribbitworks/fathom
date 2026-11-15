@@ -6,7 +6,7 @@
 
 - **Schedule:** a repeating set of cycles, such as one product line's, with releases where it ships them. **Platform** is one example.
 - **Cycle:** a planning period, such as a quarter. A schedule makes its cycles from how long each lasts, such as 3 months, and names them by its **Name pattern**, such as `{YY}.{N}` for 27.1, 27.2 and on. Fathom lays cycles out two years ahead of today, so you can plan that far.
-- **Release:** what ships the features that target its cycles. It covers one cycle, or several in a row. For now, the page shows releases on the timeline and in the table, but you can't make or change them here. That comes with a **Releases** tab, still to come.
+- **Release:** what ships the features that target its cycles. It covers one cycle, or several in a row. The page shows releases on the timeline and in the table. You can't make or change them here.
 - **Ships on:** the day a release ships. It's the end of its last cycle, unless another day was set.
 - **Schedule ends:** a schedule's last day, or **No end date** if it keeps going. No cycle starts after that day, and the cycle holding it ends on it. Once that day has passed, the schedule shows **Ended** after its name. It stays on the page until you retire it.
 - **Panel:** a schedule's details open in a panel beside the timeline and the table. To close it, select the **×** at its top right, or press Esc.

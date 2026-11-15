@@ -37,7 +37,7 @@ As a Product Manager, you shape the plan. That's the projects customers need, th
 1. To see what each release holds, group **Features** by **Release**. See [Features](features.md#group-the-table).
 1. Select **Publish** in the top bar.
 
-You can't make or change releases on **Releases** for now. That comes with its **Releases** tab, still to come.
+**Releases** shows releases, but you can't make or change them there.
 
 ## Approve Others' Drafts
 
