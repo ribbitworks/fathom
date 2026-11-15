@@ -253,7 +253,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The columns are Field Apps' cycles, named such as "Cycle FA26.2", each six months long.
     - The current cycle's column, with the red line along its heading's top, is headed "Lantern 2" in an indigo box.
     - The column after it has no release at its top.
-    - That column holds the card 'Work Order Sync', with no "Not staffed" box.
+    - That column holds the card 'Work Order Sync', with no "Not staffed".
   - **Notes:**
 
 **Afterwards:** Select **Stream: Field Apps**, then **Platform**.
