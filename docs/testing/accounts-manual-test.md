@@ -72,7 +72,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Signed in with this account.
 
 - [ ] `1B9E` Look at the left-hand menu.
-  - **Expected:** There is no **Administration** section and no **Accounts** page.
+  - **Expected:** The **Administration** section shows only **Lists** and **Data classes**, with no **Accounts** page.
   - **Notes:**
 
 - [ ] `E144` Sign out, and sign in as the Administrator, `fathom.administrator@fathom.test`.
@@ -412,7 +412,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `AD5B` Select the **Access history** page in the left-hand menu.
   - **Expected:**
     - The latest entry says "Fathom Administrator" (`fathom.administrator@fathom.test`) "reactivated the account for" `Test Arrival` (`test.arrival@fathom.test`)
-    - The entry before it says "deactivated the account for" `Test Arrival` (`test.arrival@fathom.test`), with a yellow dot before it, marking it as worth checking
+    - The entry before it says "deactivated the account for" `Test Arrival` (`test.arrival@fathom.test`), ending in a grey **Worth checking** box
   - **Notes:**
 
 ### ACCT-07: Fathom Keeps One Account That Can Manage Accounts

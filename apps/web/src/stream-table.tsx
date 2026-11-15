@@ -35,9 +35,10 @@ import {
 } from "./releases.ts";
 import {
   DraftedItem,
-  type DraftLike,
+  EmptiedValue,
   MarkedItem,
   partsMark,
+  type DraftLike,
   useBesideLive,
 } from "./status-mark.tsx";
 import { LiveParts, Parts, type SummaryPart } from "./summary-row.tsx";
@@ -77,7 +78,8 @@ export interface StreamRow extends GridRecord, StreamValues {
   live: boolean;
 }
 
-const noSchedule = "No cycles yet";
+// A stream with no cycles yet, in its group's heading; its cell is blank, as every empty cell is.
+const noSchedule = "None";
 
 // The release that ships next, on or after a day, of those not removed.
 function nextRelease(stream: ReleaseStream, day: string) {
@@ -274,9 +276,15 @@ function ShownOrLive({
   return row.live && besideLive ? live : shown;
 }
 
+// An empty schedule is blank, unless a draft fills or empties it, when the empty side says so.
 function scheduleCell(row: StreamRow) {
-  const words = row.schedule === "" ? noSchedule : row.schedule;
   const mark = row.scheduleMark;
+  const words =
+    mark !== undefined && row.schedule === "" ? (
+      <EmptiedValue name="cycles" />
+    ) : (
+      row.schedule
+    );
   return (
     <ShownOrLive
       row={row}

@@ -347,14 +347,8 @@ export function draftInFile(draft: DraftLike | undefined): string {
   return draft.unpublished === true ? `${word}, not published` : word;
 }
 
-const versionWords: Readonly<Record<ExportVersion, string>> = {
-  draft: "Draft",
-  live: "Live",
-  record: "",
-};
-
-// The columns a file holding drafts starts with: whether each row is a draft or its live form, and
-// what the draft does, so a spreadsheet's filters leave out either.
+// The columns a file holding drafts starts with: whether each row differs from live, the same under
+// every Draft choice, and what the draft does, so a spreadsheet's filters leave out either.
 function draftColumns<Rec extends GridRecord>(): ExportColumn<
   ExportRow<Rec>
 >[] {
@@ -371,9 +365,9 @@ function draftColumns<Rec extends GridRecord>(): ExportColumn<
     value,
   });
   return [
-    // The version is one of the typed versions, each a key of the words.
-    // eslint-disable-next-line security/detect-object-injection
-    words("exportRow", "Row", ({ version }) => versionWords[version]),
+    words("exportDraft", "Draft", ({ version }) =>
+      version === "draft" ? "Yes" : "",
+    ),
     words("exportChange", "Change", ({ record, version, waiting }) => {
       if (version === "draft") return draftInFile(record.draft);
       return waiting === undefined ? "" : waitingWords(waiting);
@@ -404,8 +398,8 @@ function onRows<Rec extends GridRecord>(
 
 // The rows and columns a view shows, as a file holds them, so the file matches the screen: with the
 // drafts beside their live values, each drafted record's draft row, then its Live row; with the
-// drafts applied, the records as drafted; live only, the records as they are, each Live, with what
-// the draft waiting to change it does, as its green dot's tip says; each after the Row and Change
+// drafts applied, the records as drafted; live only, the records as they are, none marked as a draft, with what
+// the draft waiting to change it does, as its green dot's tip says; each after the Draft and Change
 // columns.
 export function shownForExport<
   Rec extends GridRecord,

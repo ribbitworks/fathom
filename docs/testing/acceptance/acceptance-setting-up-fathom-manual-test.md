@@ -480,8 +480,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - A notification says "Drafted the new release stream."
     - The side panel is headed with a hollow yellow dot before `Fictional Mainline`.
-    - "No cycles yet." is under **Cycle schedule**.
-    - "No releases yet." is under **Releases**.
+    - "None" is under **Cycle schedule**.
+    - "None" is under **Releases**.
   - **Notes:**
 
 - [ ] `BC71` Select **Set up cycles…**.

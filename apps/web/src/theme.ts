@@ -5,7 +5,7 @@
 // meaning, or as chosen for a release; light and dark modes that follow the computer's setting
 // unless the person chooses one; tables that look alike, each header row staying in view; and
 // drop-down lists whose keyboard place is light grey, as pointing is, and whose search finds options
-// as every search in Fathom does.
+// as every search in Fathom does; and switches whose chosen side is filled with the accent.
 
 import { matchesWords, searchWords } from "@fathom/shared";
 import {
@@ -18,6 +18,7 @@ import {
   type MantineColorsTuple,
   Modal,
   type OptionsFilter,
+  SegmentedControl,
   Select,
   Table,
 } from "@mantine/core";
@@ -94,6 +95,11 @@ export const theme = createTheme({
     Modal: Modal.extend({
       defaultProps: { closeButtonProps: { "aria-label": "Close dialog" } },
     }),
+    // The chosen side of every switch is filled with the accent, as a choice made is, rather than
+    // white on grey, which reads as turned off.
+    SegmentedControl: SegmentedControl.extend({
+      defaultProps: { color: "sea" },
+    }),
     Table: Table.extend({
       classNames: { table: tableClasses.table },
       defaultProps: {
@@ -146,6 +152,8 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
   light: {
     "--mantine-color-body": "#ffffff",
     "--fathom-canvas": "#f4f6f8",
+    // Behind the sign-in card, tinted so the white card stands out.
+    "--fathom-sign-in": "var(--mantine-color-sea-1)",
     "--mantine-color-dimmed": mantine.colors.gray[7],
     // A row, column or card with a draft, faintly in its dot's colour: yellow, or red once rejected.
     // A cell the draft changes is tinted as its row is, since its dot and semibold value mark it.
@@ -163,6 +171,7 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
   dark: {
     "--mantine-color-body": "#17212a",
     "--fathom-canvas": "#0f161c",
+    "--fathom-sign-in": "var(--fathom-sidebar)",
     // The same colours as faint washes over the dark background, so light text stays readable.
     "--fathom-draft-tint":
       "color-mix(in srgb, var(--mantine-color-yellow-5) 5%, transparent)",

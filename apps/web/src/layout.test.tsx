@@ -204,6 +204,33 @@ describe("the sidebar", () => {
   });
 });
 
+describe("the sidebar's sections", () => {
+  it("puts Lists under Administration, after Settings", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: [
+            "configuration:view",
+            "administration:view",
+            "administration:edit",
+          ],
+        }),
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    const nav = await screen.findByRole("navigation", { name: "Sections" });
+    const administration = await within(nav).findByRole("group", {
+      name: "Administration",
+    });
+    expect(
+      within(administration)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual(["Accounts", "Roles", "Settings", "Lists"]);
+  });
+});
+
 describe("the collapsed sidebar", () => {
   afterEach(() => {
     localStorage.clear();
@@ -225,7 +252,9 @@ describe("the collapsed sidebar", () => {
     });
     expect(expand.getAttribute("aria-expanded")).toBe("false");
     expect(
-      within(sidebar()).getByRole("link", { name: "Accounts" }),
+      within(
+        within(sidebar()).getByRole("group", { name: "Administration" }),
+      ).getByRole("link", { name: "Accounts" }),
     ).toBeDefined();
     await userEvent.hover(
       within(sidebar()).getByRole("link", { name: "Accounts" }),

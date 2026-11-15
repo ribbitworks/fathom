@@ -309,7 +309,7 @@ export function FirstPasswordChange({
   }
 
   return (
-    <Center mih="100vh" p="md" className={classes.canvas}>
+    <Center mih="100vh" p="md" className={classes.signIn}>
       <Stack w="100%" maw={400} gap="xl">
         <Center>
           <Brand size="large" />

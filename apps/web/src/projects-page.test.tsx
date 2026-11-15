@@ -179,6 +179,18 @@ describe("the page's tabs", () => {
     }
   });
 
+  it("names its tabs, each pointing at the table it shows", async () => {
+    await openPage("/projects", plan({ canEdit: false }), {}, [
+      "plan:view",
+      "features:view",
+    ]);
+    const tabs = screen.getByRole("tablist", { name: "Projects tables" });
+    const chosen = within(tabs).getByRole("tab", { name: "Projects" });
+    const shown = screen.getByRole("tabpanel", { name: "Projects" });
+    expect(chosen.getAttribute("aria-controls")).toBe(shown.id);
+    expect(within(shown).getByRole("grid", { name: "Projects" })).toBeTruthy();
+  });
+
   it("says when the projects cannot be loaded, and tries again", async () => {
     let healthy = false;
     serverAnswers({
@@ -410,7 +422,11 @@ describe("the side panel", () => {
       name: "Fictional Project",
     });
     expect(details).toBeTruthy();
-    expect(screen.getByText("No milestones yet")).toBeTruthy();
+    expect(
+      within(screen.getByRole("region", { name: "Milestones" })).getByText(
+        "None",
+      ),
+    ).toBeTruthy();
     await userEvent.click(
       screen.getByRole("button", { name: "Fictional Customer" }),
     );
@@ -568,7 +584,7 @@ describe("the side panel", () => {
   it("opens nothing for a record that is not there", async () => {
     await openPage(`/projects?open=${newId}`, plan());
     expect(screen.queryByRole("button", { name: "Close details" })).toBeNull();
-    expect(screen.queryByText("No milestones yet")).toBeNull();
+    expect(screen.queryByRole("region", { name: "Milestones" })).toBeNull();
   });
 
   it("closes, and goes to the project's milestones", async () => {
@@ -2188,7 +2204,7 @@ describe("the Features page", () => {
         expect(address.location.search).toContain(`open=${second.id}`);
       });
 
-      it("says when a project has no features yet", async () => {
+      it("reads None when a project has no features", async () => {
         await openPage(
           `/projects?open=${projectId}`,
           featurePlan({ canEdit: true }),
@@ -2199,7 +2215,7 @@ describe("the Features page", () => {
           },
           planEditor,
         );
-        expect(await rows().findByText("No features yet")).toBeTruthy();
+        expect(await rows().findByText("None")).toBeTruthy();
       });
 
       it("says when the history can't be loaded, and tries again", async () => {
@@ -3506,7 +3522,7 @@ describe("exporting a plan table", () => {
       await screen.findByRole("menuitem", { name: "CSV file" }),
     );
 
-    // Then no question is asked, and the file holds the project, after the Row and Change columns
+    // Then no question is asked, and the file holds the project, after the Draft and Change columns
     await waitFor(() => {
       expect(files).toHaveLength(1);
     });
@@ -3517,7 +3533,7 @@ describe("exporting a plan table", () => {
     );
     const lines = (await file?.text())?.split("\r\n") ?? [];
     // Reading the file as text takes off its byte order mark.
-    expect(lines[0]).toMatch(/^Row,Change,Name,/u);
+    expect(lines[0]).toMatch(/^Draft,Change,Name,/u);
     expect(lines.some((line) => line.includes("Fictional Project"))).toBe(true);
   });
 });

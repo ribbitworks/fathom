@@ -164,7 +164,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `5D1B` In the second browser, reload the page.
-  - **Expected:** The left-hand menu shows **Lists** in the **People** section.
+  - **Expected:** The left-hand menu shows **Lists** in the **Administration** section.
   - **Notes:**
 
 ### ADMIN-03: A Role Is Changed After Checking Who Gains What

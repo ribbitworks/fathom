@@ -76,7 +76,7 @@ Run the test cases in order, in about 30 minutes, straight after [Setting Up Fat
 - [ ] `F0FE` Select **Add**.
   - **Expected:**
     - The side panel is headed with a hollow yellow dot before `Fictional Lamp Room`.
-    - Under **Milestones**, it reads "No milestones yet".
+    - Under **Milestones**, it reads "None".
   - **Notes:**
 
 - [ ] `94DB` Select the **Features** page in the left-hand menu.

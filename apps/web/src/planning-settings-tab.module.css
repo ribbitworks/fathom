@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-/* The planning settings, laid out as a details panel's rows, with labels wide enough for the
-   longest, such as Working days a month, to stay on one line on a page. */
+/* The planning settings, laid out as a details panel's rows, their labels at least this wide, so the
+   column keeps its width on a wide page whatever the longest label. */
 
 .settings {
   --fathom-record-label-width: 12rem;

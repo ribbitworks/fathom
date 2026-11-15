@@ -124,7 +124,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The side panel is headed with a hollow yellow dot before `Fictional Harbour Lights`.
     - **First milestone**, **Last milestone** and **Next delivery** read "None".
-    - Under **Milestones**, "No milestones yet" and an **Add milestone** button.
+    - Under **Milestones**, "None" and an **Add milestone** button.
   - **Notes:**
 
 - [ ] `659F` Select **Add milestone**.

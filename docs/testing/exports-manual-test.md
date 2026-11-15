@@ -76,9 +76,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `24E9` Open the file in the spreadsheet application.
   - **Expected:**
-    - The first row holds the column headings: **Row**, **Change**, then the People table's columns, in the order it shows them.
-    - '西尾 亮', who has a draft, is on two rows: the first with "Draft" in **Row** and "Changed" in **Change**, the second with "Live" in **Row**.
-    - A person without a draft is on one row, with **Row** and **Change** empty.
+    - The first row holds the column headings: **Draft**, **Change**, then the People table's columns, in the order it shows them.
+    - '西尾 亮', who has a draft, is on two rows: the first with "Yes" in **Draft** and "Changed" in **Change**, the second with **Draft** and **Change** empty.
+    - A person without a draft is on one row, with **Draft** and **Change** empty.
     - Names in other scripts, such as '西尾 亮', read as they do in Fathom.
     - Start and End dates read as digits, such as "2027-03-31", or as the spreadsheet shows dates.
     - Each Onboarding note is in one cell, its lines kept.
@@ -108,7 +108,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `73A6` Open the file in the spreadsheet application.
   - **Expected:**
-    - Each column is in a column of its own, headed as on the Features table, after **Row** and **Change**, with **Effort** followed by its unit, such as **Effort (h)**.
+    - Each column is in a column of its own, headed as on the Features table, after **Draft** and **Change**, with **Effort** followed by its unit, such as **Effort (h)**.
     - Effort cells hold numbers alone, without a unit.
     - Cells naming several customers or projects list them separated by `;`.
     - **Notes** cells hold the notes' words without formatting.
@@ -130,6 +130,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `6DE4` Open the file in the spreadsheet application.
   - **Expected:**
-    - Every row has "Live" in **Row**.
+    - **Draft** is empty on every row.
     - A feature with a green dot on the table has words in **Change**, such as "A change is waiting for approval."
   - **Notes:**

@@ -17,7 +17,7 @@ You're done when you find the entry you want.
 
 ### Check What Deserves a Second Look
 
-Look for the yellow dots. They mark changes that could give someone access or take it away:
+Look for the entries ending in a grey **Worth checking** box. They mark changes that could give someone access or take it away:
 
 - a new account;
 - a change to an account's roles, or to a role;
@@ -27,12 +27,12 @@ Look for the yellow dots. They mark changes that could give someone access or ta
 - someone changing their own name;
 - a move of data to another class.
 
-You're done when you've checked each entry with a yellow dot.
+You're done when you've checked each entry marked **Worth checking**.
 
 ## Marks and Terms
 
 - **An entry** gives the date and time, then a sentence: who did what, and to what. For example, an Administrator **reactivated the account for** someone. An email address follows each account's name, so you can tell accounts apart.
-- **A yellow dot** before an entry means it deserves a second look.
+- **Worth checking**, in a grey box after an entry, means it deserves a second look.
 - **Viewing private details** is recorded at most once a day for each account. The entry doesn't name whose details they were. Viewing the hiring plan, your organization's planned hires, is recorded the same way.
 - **An export** is recorded only when the file held Personal or Confidential data. The entry names the table, and that data.
 - **A change to private details** is recorded without its values. It names the person only to roles that see people.

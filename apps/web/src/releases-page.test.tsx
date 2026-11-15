@@ -538,7 +538,7 @@ describe("the table of release streams", () => {
     await detailsOf("Fictional Majors");
     const liveRow = cellOf("Fictional Majors", 0).closest("tr")
       ?.nextElementSibling as HTMLElement;
-    expect(liveRow.textContent).toContain("No cycles yet");
+    expect(liveRow.textContent).toContain("No cycles");
   });
 
   it("finds streams by any word in them", async () => {
@@ -587,7 +587,7 @@ describe("the table of release streams", () => {
     expect(rowTexts().map((text) => text.slice(0, 13))).toEqual([
       "Every 3 month",
       "Fictional Maj",
-      "No cycles yet",
+      "None1 release",
       "Fictional New",
     ]);
   });
@@ -692,7 +692,7 @@ describe("a stream's panel", () => {
     ).toEqual([
       "27.1 · ships Mar 31, 2027",
       "27.2 to 27.3 · ships Aug 15, 2027, 46 days before 27.3 ends",
-      "2031-01-01 · ships ",
+      "2031-01-01 · ships None",
     ]);
   });
 
@@ -783,11 +783,11 @@ describe("a stream's panel", () => {
     ]).toEqual([expect.anything(), expect.anything()]);
   });
 
-  it("says when a stream has no cycles or releases yet", async () => {
+  it("says None when a stream has no cycles or releases yet", async () => {
     await openStream([fictionalStream({ patterns: [], cycles: [] })]);
     expect([
-      within(panel()).getByText("No cycles yet."),
-      within(panel()).getByText("No releases yet."),
+      within(section("Cycle schedule")).getByText("None"),
+      within(section("Releases")).getByText("None"),
       within(panel()).queryByRole("region", { name: /^Cycles \(/ }),
     ]).toEqual([expect.anything(), expect.anything(), null]);
   });

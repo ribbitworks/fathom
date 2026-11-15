@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the date control the Org chart and People share: stepping by month, typing a day,
-// stopping at today for roles that do not see future dates, and what it says while the page shows
-// another day.
+// stopping at today for roles that do not see future dates, what it says while the page shows
+// another day, and how far apart its months' names are, so they never overlap.
 
 import { MantineProvider } from "@mantine/core";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DateControl } from "./date-control.tsx";
+import { DateControl, labelEvery } from "./date-control.tsx";
 import { testTheme } from "./test-support.tsx";
 
 const now = "2027-03-10";
@@ -198,5 +198,17 @@ describe("the date control", () => {
     control(undefined, false);
     expect(document.querySelectorAll(".mantine-Slider-mark")).toHaveLength(25);
     expect(button("Next month").disabled).toBe(true);
+  });
+});
+
+describe("the months the timeline names", () => {
+  it("are a year apart where there is room, and until its width is known", () => {
+    expect(labelEvery(960, 48)).toBe(12);
+    expect(labelEvery(0, 48)).toBe(12);
+  });
+
+  it("are whole years further apart as the timeline narrows", () => {
+    expect(labelEvery(240, 48)).toBe(24);
+    expect(labelEvery(100, 48)).toBe(48);
   });
 });

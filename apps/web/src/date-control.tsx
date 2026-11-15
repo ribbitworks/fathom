@@ -12,6 +12,7 @@ import {
   monthOf,
 } from "@fathom/shared";
 import { ActionIcon, Button, Group, Slider, Stack, Text } from "@mantine/core";
+import { useElementSize } from "@mantine/hooks";
 import { useState } from "react";
 import { DayInput } from "./day-input.tsx";
 import { focusSoon } from "./focus.ts";
@@ -20,8 +21,19 @@ import { today } from "./today.ts";
 
 const dateBoxId = "date-shown";
 const monthsEachWay = 24;
-// Every month has a mark, and every twelfth its name, which is all there is room for.
+// Every month has a mark, and every twelfth its name, or fewer where the slider is narrow.
 const monthsBetweenLabels = 12;
+// The room a month's label needs beside the next, such as Nov 2026, in pixels.
+const labelRoom = 80;
+
+// How many months apart the slider's labels are, a whole number of years, so they never overlap
+// however narrow it is; a year apart until its width is known.
+export function labelEvery(width: number, months: number): number {
+  if (width === 0) return monthsBetweenLabels;
+  const yearWidth = (width / months) * monthsBetweenLabels;
+  return monthsBetweenLabels * Math.max(1, Math.ceil(labelRoom / yearWidth));
+}
+
 // How far down the arrows and timeline sit, to line up with the box under its label.
 const dayBoxLabelHeight = 24;
 const handleOffset = 6;
@@ -81,11 +93,13 @@ export function DateControl({
     choose(dayOfMonthFromNow(months));
   };
   const latest = laterDays ? monthsEachWay : 0;
+  const { ref: sliderRef, width: sliderWidth } = useElementSize();
+  const every = labelEvery(sliderWidth, monthsEachWay + latest);
   const marks = Array.from(
     { length: monthsEachWay + latest + 1 },
     (_, index) => {
       const value = index - monthsEachWay;
-      return value % monthsBetweenLabels === 0
+      return value % every === 0
         ? { value, label: formatMonth(monthOf(dayOfMonthFromNow(value))) }
         : { value };
     },
@@ -126,6 +140,7 @@ export function DateControl({
           ‹
         </ActionIcon>
         <Slider
+          ref={sliderRef}
           thumbLabel="Month shown"
           thumbValueText={(months) =>
             formatMonth(monthOf(dayOfMonthFromNow(months)))

@@ -31,7 +31,6 @@ function Entry({ entry }: { entry: HistoryEntry }) {
   return (
     <EntryRow at={entry.occurredAt}>
       <Text fz="sm">
-        {words.caution && <WorthChecking />}
         <Text span inherit fw={600}>
           {actorName(entry)}
         </Text>{" "}
@@ -45,6 +44,7 @@ function Entry({ entry }: { entry: HistoryEntry }) {
           </>
         )}
         {details && <EntryDetails>{details}</EntryDetails>}
+        {words.caution && <WorthChecking />}
       </Text>
     </EntryRow>
   );

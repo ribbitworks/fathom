@@ -14,7 +14,7 @@ const layers = [
 
 // The sidebar's size, or a larger one for the sign-in page.
 const sidebarSize = { mark: 26, name: 17, gap: 10 };
-const largeSize = { mark: 44, name: 32, gap: 14 };
+const largeSize = { mark: 44, name: 40, gap: 14 };
 
 export function Brand({
   onDark = false,

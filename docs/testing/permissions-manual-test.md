@@ -494,7 +494,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `9A70` Look at the left-hand menu.
   - **Expected:**
     - **Plan** section: **Releases**
-    - **People** section: **Drafts**, **Capacity** and **Lists**
+    - **People** section: **Drafts** and **Capacity**
+    - **Administration** section: **Lists**
     - **History** section: **Change history**
     - The **Help** section, and no other page
   - **Notes:**
@@ -688,7 +689,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `850A` Look at the left-hand menu.
   - **Expected:**
     - **Plan** section: **Releases**
-    - **People** section: **Drafts**, **Capacity** and **Lists**
+    - **People** section: **Drafts** and **Capacity**
+    - **Administration** section: **Lists**
     - **History** section: **Change history**
     - The **Help** section, and no other page
   - **Notes:**

@@ -170,13 +170,6 @@ const sections: { label: string; items: Item[] }[] = [
         to: "/capacity",
         page: "capacity",
       },
-      {
-        label: "Lists",
-        icon: "lists",
-        to: "/lists/{-$listId}",
-        page: "lists",
-        nested: true,
-      },
     ],
   },
   {
@@ -199,6 +192,13 @@ const sections: { label: string; items: Item[] }[] = [
         icon: "settings",
         to: "/settings",
         page: "settings",
+      },
+      {
+        label: "Lists",
+        icon: "lists",
+        to: "/lists/{-$listId}",
+        page: "lists",
+        nested: true,
       },
       {
         label: "Data classes",
@@ -376,7 +376,7 @@ function AboutItem({ item, rail }: { item: Item; rail: boolean }) {
 
 function Sidebar({ access, rail }: { access: ClassAccess; rail: boolean }) {
   return (
-    <Stack gap={rail ? 14 : 22}>
+    <Stack gap={22}>
       {sections.map((section) => {
         const items = section.items.filter((item) => opens(item, access));
         if (items.length === 0) return null;
@@ -388,18 +388,15 @@ function Sidebar({ access, rail }: { access: ClassAccess; rail: boolean }) {
             role="group"
             aria-labelledby={`${sidebarId}-${section.label}`}
           >
-            {rail ? (
-              <VisuallyHidden id={`${sidebarId}-${section.label}`}>
-                {section.label}
-              </VisuallyHidden>
-            ) : (
-              <Text
-                id={`${sidebarId}-${section.label}`}
-                className={classes.section}
-              >
-                {section.label}
-              </Text>
-            )}
+            <Text
+              id={`${sidebarId}-${section.label}`}
+              className={[
+                classes.section,
+                rail ? classes.railHeading : "",
+              ].join(" ")}
+            >
+              {section.label}
+            </Text>
             {items.map((item) =>
               item.box === "about" ? (
                 <AboutItem key={item.label} item={item} rail={rail} />
@@ -628,7 +625,8 @@ export function Layout({
         id={sidebarId}
         aria-label="Sections"
         className={classes.sidebar}
-        p={rail ? "xs" : "md"}
+        py="md"
+        px={rail ? "xs" : "md"}
         // Hidden off screen on narrow screens until opened, so it must not be reachable either.
         inert={narrow && !opened}
       >
@@ -638,7 +636,9 @@ export function Layout({
             justify={rail ? "center" : "space-between"}
             wrap="nowrap"
             gap={rail ? 10 : 8}
-            className={rail ? classes.railBrand : undefined}
+            className={[classes.brandRow, rail ? classes.railBrand : ""].join(
+              " ",
+            )}
           >
             <Brand onDark markOnly={rail} />
             <Tooltip

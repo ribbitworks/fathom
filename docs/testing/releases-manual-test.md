@@ -85,8 +85,8 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - The streams table shows one row, **Testing Stream**.
     - The row has a hollow yellow dot in its slot.
     - The side panel opens on the right, headed by a hollow yellow dot and **Testing Stream**.
-    - **No cycles yet.** is under **Cycle schedule**.
-    - **No releases yet.** is under **Releases**.
+    - **None** is under **Cycle schedule**.
+    - **None** is under **Releases**.
   - **Notes:**
 
 #### REL-03: A New Stream's Cycles Show Their Names Before They Are Saved

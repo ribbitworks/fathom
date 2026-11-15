@@ -48,7 +48,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Signed in with this account.
 
 - [ ] `777D` Look at the left-hand menu.
-  - **Expected:** There is no **Administration** section and no **Roles** page.
+  - **Expected:** The **Administration** section shows only **Lists** and **Data classes**, with no **Roles** page.
   - **Notes:**
 
 - [ ] `CCFB` Sign out, and sign in as the Administrator, `fathom.administrator@fathom.test`.
@@ -240,7 +240,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `1D13` Select the **Access history** page in the left-hand menu.
   - **Expected:**
     - The latest entry says "Fathom Administrator" "changed the role" **Project Manager**, granting View Administration
-    - It has a yellow dot before it, marking it as worth checking
+    - It ends in a grey **Worth checking** box
   - **Notes:**
 
 ### ROLE-07: Restoring a Starting Role's Template
@@ -367,7 +367,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `4E87` Sign out, and sign in as the Team Member, `team.member@fathom.test`.
-  - **Expected:** The left-hand menu shows **Lists** in the **People** section.
+  - **Expected:** The left-hand menu shows **Lists** in the **Administration** section.
   - **Notes:**
 
 - [ ] `B83E` Select the **Roles** page under **Help** in the left-hand menu.

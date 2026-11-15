@@ -12,7 +12,7 @@ import classes from "./pages.module.css";
 
 function ProblemPage({ children }: { children: ReactNode }) {
   return (
-    <Center mih="100vh" p="md" className={classes.canvas}>
+    <Center mih="100vh" p="md" className={classes.signIn}>
       <Stack w="100%" maw={400} gap="xl" align="center">
         <Brand size="large" />
         {children}

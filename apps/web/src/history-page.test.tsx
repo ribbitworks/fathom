@@ -170,7 +170,7 @@ describe("the entries", () => {
     );
     expect(lines).toEqual([
       "Fictional Planner changed their own password",
-      "Worth checking: Fictional Planner changed their own name",
+      "Fictional Planner changed their own name, Worth checking",
     ]);
   });
 
@@ -198,7 +198,7 @@ describe("the entries", () => {
         String(item.querySelector("time")?.textContent).length,
       ),
     ).toBe(
-      "Worth checking: Fictional Person (person@example.test) changed their own name",
+      "Fictional Person (person@example.test) changed their own name, Worth checking",
     );
   });
 
@@ -215,10 +215,10 @@ describe("the entries", () => {
       ),
     );
     expect(lines).toEqual([
-      "Worth checking: Fictional Person changed the role of Fictional Planner: from Team Member to Planner",
-      "Worth checking: Fictional Person reset the password for A removed account",
+      "Fictional Person changed the role of Fictional Planner: from Team Member to Planner, Worth checking",
+      "Fictional Person reset the password for A removed account, Worth checking",
       "A removed account future-action: Fictional Planner",
-      "Worth checking: Fathom's operators created the account for Fictional Planner: with Team Member",
+      "Fathom's operators created the account for Fictional Planner: with Team Member, Worth checking",
     ]);
   });
 
@@ -340,8 +340,8 @@ describe("the entries", () => {
       ),
     );
     expect(lines).toEqual([
-      "Worth checking: Fictional Person changed the role: Fictional Checkers, before named Fictional Auditors; granting View People; withdrawing View Personal details",
-      "Worth checking: Fictional Person changed the role: Fictional Checkers",
+      "Fictional Person changed the role: Fictional Checkers, before named Fictional Auditors; granting View People; withdrawing View Personal details, Worth checking",
+      "Fictional Person changed the role: Fictional Checkers, Worth checking",
       "Fictional Person created the role: Fictional Auditors; granting View Plan, View Features and releases, retired:permission",
       "Fictional Person created the role: Fictional Empty",
     ]);
@@ -417,8 +417,8 @@ describe("the entries", () => {
         ),
       ),
     ).toEqual([
-      "Worth checking: Fictional Person changed the role of Fictional Planner: from Team Member to Planner",
-      "Worth checking: Fathom's operators created the account for Fictional Planner: with Team Member",
+      "Fictional Person changed the role of Fictional Planner: from Team Member to Planner, Worth checking",
+      "Fathom's operators created the account for Fictional Planner: with Team Member, Worth checking",
     ]);
     const field = screen.getByRole("textbox", {
       name: "Search access history",
@@ -437,7 +437,7 @@ describe("the entries", () => {
       "GET /api/access-history": () => Response.json({ entries }),
     });
     renderApp("/history");
-    expect(await screen.findAllByText("Worth checking:")).toHaveLength(3);
+    expect(await screen.findAllByText("Worth checking")).toHaveLength(3);
   });
 
   it("show a loading indicator until they arrive", async () => {

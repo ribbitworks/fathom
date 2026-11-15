@@ -453,7 +453,7 @@ describe("the table of streams", () => {
         label: "Every 3 months, named {YY}.{N}",
         rank: 0,
       },
-      { key: "", label: "No cycles yet", rank: 1 },
+      { key: "", label: "None", rank: 1 },
     ]);
   });
 

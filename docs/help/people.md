@@ -152,7 +152,7 @@ Exporting saves the table as a file you can open in a spreadsheet.
 
 If the file would hold Personal or Confidential data, such as start dates or planned hires, Fathom asks first, and names what the file holds. Select **Export** to go ahead. That export is recorded in the access history, which roles that see administration can read.
 
-The file holds what the table shows, in the same order. Rows that your search or filters hide are left out. If the table shows **Drafts & Live**, each changed row comes twice, the draft first and then the live row. The **Row** column says which is which, so you can filter out either one in a spreadsheet, and the **Change** column says what each draft does.
+The file holds what the table shows, in the same order. Rows that your search or filters hide are left out. If the table shows **Drafts & Live**, each changed row comes twice, the draft first and then the live row. The **Draft** column says **Yes** on each draft row and is empty on the rest, so you can filter out either one in a spreadsheet, and the **Change** column says what each draft does.
 
 The file is named after the page, the saved view if you applied one, who exported it and the day, such as **fathom_people_engineering-director_drafts-and-live_2027-03-31.csv**.
 

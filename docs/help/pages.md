@@ -27,7 +27,6 @@ The left-hand menu shows only the pages your role lets you open. A page your rol
 | [Feature assignments](feature-assignments.md) | It shows who is on which feature team, month by month. | **View Feature teams** with **View Personal details** | Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive |
 | [Drafts](drafts-page.md) | It lists the drafts waiting. Approvers approve or reject them there. | Any of **View Plan**, **View Features and releases**, **View People** or **View Configuration** | Every role but Administrator |
 | [Capacity](capacity.md) | It shows what each person works on, month by month, and the planning settings. | Its **People** mode needs **View Allocations**, **View Feature teams**, **View People** and **View Personal details**. Its **Settings** mode needs **View Configuration**. Either mode shows the page. | Product Manager, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive |
-| [Lists](lists.md) | It holds the lists of choices that columns offer. | **View Configuration** | Product Manager, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive |
 
 The Product Manager sees Capacity in its **Settings** mode only, since the role doesn't hold **View Personal details**.
 
@@ -38,6 +37,7 @@ The Product Manager sees Capacity in its **Settings** mode only, since the role 
 | [Accounts](accounts.md) | It lists who can sign in, and the roles each holds. | **View Administration** | Engineering Director, Executive, Administrator |
 | [Roles](roles.md) | It shows what each role lets its holders see and do. | **View Administration** | Engineering Director, Executive, Administrator |
 | [Settings](settings.md) | It holds the time zone and the rules for passwords. | **View Administration** | Engineering Director, Executive, Administrator |
+| [Lists](lists.md) | It holds the lists of choices that columns offer. | **View Configuration** | Product Manager, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive |
 | [Data classes](data-classes.md) | It shows the class of each detail, column and list. | **Classify data** | Engineering Director, Workforce Administrator |
 
 ## History

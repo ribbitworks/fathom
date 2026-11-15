@@ -74,7 +74,7 @@ export function SignIn({
   }
 
   return (
-    <Center mih="100vh" p="md" className={classes.canvas}>
+    <Center mih="100vh" p="md" className={classes.signIn}>
       <Stack w="100%" maw={360} gap="xl">
         <Center>
           <Brand size="large" />

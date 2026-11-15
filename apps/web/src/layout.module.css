@@ -20,10 +20,12 @@
   color: var(--fathom-sidebar-muted);
 }
 
+/* As tall with its name as the rail's icon alone, so pages stay put as the sidebar opens and closes. */
 .link {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-height: 36px;
   padding: 7px 10px;
   border-radius: 6px;
   font-size: 14px;
@@ -51,17 +53,40 @@
   background: var(--fathom-canvas);
 }
 
-/* The collapsed rail: icons only, centred, with sections divided by a line. */
+/* The brand row is as tall open as the rail's mark over its toggle, so the pages under it stay put. */
+.brandRow {
+  min-height: 64px;
+}
+
+/* The collapsed rail: icons only, centred, with each section's heading a line of the same height,
+   still naming the section for assistive technology. */
 .railSection {
   align-items: center;
-  padding-top: 12px;
+}
+
+/* Its words are kept for assistive technology but not drawn, even where the system forces colours. */
+.railHeading {
+  position: relative;
+  align-self: stretch;
+  overflow: hidden;
+  color: transparent;
+  white-space: nowrap;
+  forced-color-adjust: none;
+}
+
+.railHeading::after {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  left: 6px;
   border-top: 1px solid var(--fathom-sidebar-line);
+  content: "";
 }
 
 .railSection .link {
   justify-content: center;
   width: 40px;
-  padding: 8px 0;
+  padding: 7px 0;
 }
 
 .railBrand {

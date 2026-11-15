@@ -186,6 +186,7 @@ export const projectTabSchema = z.enum(projectTabs);
 
 const newButtonId = "projects-new";
 const newColumnId = "features-new-column";
+const tabsId = "projects-tabs";
 const panelId = "project-record-panel";
 const panelTitleId = "project-record-panel-title";
 
@@ -849,6 +850,7 @@ export function ProjectsPage({
         beside={
           page.tabbed ? (
             <Tabs
+              id={tabsId}
               value={tab}
               classNames={{
                 list: classes.headingTabs,
@@ -860,9 +862,16 @@ export function ProjectsPage({
                 });
               }}
             >
-              <Tabs.List>
+              <Tabs.List aria-label={`${page.title} tables`}>
                 {projectTabs.map((one) => (
-                  <Tabs.Tab key={one} value={one}>
+                  <Tabs.Tab
+                    key={one}
+                    value={one}
+                    // Only the chosen tab's table is drawn, so only it has a panel to point at.
+                    aria-controls={
+                      one === tab ? `${tabsId}-panel-${one}` : undefined
+                    }
+                  >
                     {wordsOf(one).label}
                   </Tabs.Tab>
                 ))}
@@ -909,7 +918,20 @@ export function ProjectsPage({
           </Group>
         }
       />
-      <Fragment key={tab}>{content}</Fragment>
+      {page.tabbed ? (
+        // Named by its tab, whose id Mantine makes from the tabs' id.
+        <div
+          key={tab}
+          role="tabpanel"
+          id={`${tabsId}-panel-${tab}`}
+          aria-labelledby={`${tabsId}-tab-${tab}`}
+          className={classes.tabPanel}
+        >
+          {content}
+        </div>
+      ) : (
+        <Fragment key={tab}>{content}</Fragment>
+      )}
       {question.dialog}
       <DecisionModal
         decision={decision}
@@ -1534,7 +1556,7 @@ function ProjectExtras({
         </Group>
         {milestones.length === 0 && (
           <Text fz="sm" c="dimmed">
-            No milestones yet
+            None
           </Text>
         )}
         <Stack gap={0}>

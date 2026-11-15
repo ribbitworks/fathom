@@ -190,10 +190,11 @@ function monthsInWords(months: readonly { month: string; share: number }[]) {
     .join(", ");
 }
 
-// The day a release ships, or nothing while its last cycle is not made.
+// The day a release ships, or None while its last cycle is not made, as an empty value in a panel
+// reads.
 const shipDay = (stream: ReleaseStream, release: Release) => {
   const day = releaseDate(stream, release);
-  return day === undefined ? "" : formatDay(day);
+  return day === undefined ? "None" : formatDay(day);
 };
 
 // What can be done on the page, for the menus to offer.
@@ -295,7 +296,7 @@ function Patterns({
     >
       {stream.patterns.length === 0 && (
         <Text fz="sm" c="dimmed">
-          No cycles yet.
+          None
         </Text>
       )}
       <div className={classes.recordRows}>
@@ -442,7 +443,7 @@ function Releases({
     >
       {stream.releases.length === 0 && (
         <Text fz="sm" c="dimmed">
-          No releases yet.
+          None
         </Text>
       )}
       <div className={classes.recordRows}>

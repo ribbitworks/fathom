@@ -160,7 +160,7 @@ export function ScopeHistory({
       )}
       {approved !== undefined && rows.length === 0 && (
         <Text fz="sm" c="dimmed">
-          No features yet
+          None
         </Text>
       )}
       <Stack gap={0}>

@@ -559,30 +559,30 @@ describe("the rows a view shows, as a file holds them", () => {
   it("holds each draft row then its Live row beside live, saying what each draft does", () => {
     expect(asFile("both", drafted)).toEqual([
       ["", "", "Fictional Unchanged"],
-      ["Draft", "Changed", "Fictional Renamed"],
-      ["Live", "", "Fictional Before (live)"],
-      ["Draft", "Added", "Fictional New"],
-      ["Draft", "Changed, rejected", "Fictional Kept"],
-      ["Live", "", "Fictional Kept (live)"],
-      ["Draft", "Changed, not published", "Fictional Mine"],
-      ["Live", "", "Fictional Mine before (live)"],
+      ["Yes", "Changed", "Fictional Renamed"],
+      ["", "", "Fictional Before (live)"],
+      ["Yes", "Added", "Fictional New"],
+      ["Yes", "Changed, rejected", "Fictional Kept"],
+      ["", "", "Fictional Kept (live)"],
+      ["Yes", "Changed, not published", "Fictional Mine"],
+      ["", "", "Fictional Mine before (live)"],
     ]);
   });
 
   it("holds the draft rows alone with the drafts applied", () => {
     expect(asFile("drafts", drafted.slice(0, 3))).toEqual([
       ["", "", "Fictional Unchanged"],
-      ["Draft", "Changed", "Fictional Renamed"],
-      ["Draft", "Added", "Fictional New"],
+      ["Yes", "Changed", "Fictional Renamed"],
+      ["Yes", "Added", "Fictional New"],
     ]);
   });
 
   it("holds the live rows alone, live only, with what a waiting draft would change, as the green dot says", () => {
     expect(asFile("live", live)).toEqual([
-      ["Live", "", "Fictional Unchanged (live)"],
-      ["Live", "A change is waiting for approval.", "Fictional Before (live)"],
-      ["Live", "", "Fictional Kept (live)"],
-      ["Live", "A change isn't published yet.", "Fictional Mine before (live)"],
+      ["", "", "Fictional Unchanged (live)"],
+      ["", "A change is waiting for approval.", "Fictional Before (live)"],
+      ["", "", "Fictional Kept (live)"],
+      ["", "A change isn't published yet.", "Fictional Mine before (live)"],
     ]);
   });
 
@@ -640,7 +640,7 @@ describe("the rows a view shows, as a file holds them", () => {
       draft: draft({ action: "deleted" }),
     };
     expect(asFile("both", [removed])).toEqual([
-      ["Draft", "Removed", "Fictional Leaving"],
+      ["Yes", "Removed", "Fictional Leaving"],
     ]);
   });
 });

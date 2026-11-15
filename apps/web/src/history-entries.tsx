@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // How both history pages show their entries, so they look alike: a list of rows, newest first, each
-// with its date and time, then who did what, with details dimmed after a colon, and a yellow dot
-// before entries worth checking.
+// with its date and time, then who did what, with details dimmed after a colon, and a grey Worth
+// checking box after entries that deserve a second look.
 
 import { Group, Text, VisuallyHidden } from "@mantine/core";
 import type { ReactNode } from "react";
 import classes from "./pages.module.css";
+import { FactBox } from "./status-mark.tsx";
 
 const when = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
@@ -59,15 +60,13 @@ export function EntryRow({
   );
 }
 
-// Marks an entry that deserves a second look: a yellow dot, read aloud as words, since the
-// sentence itself says what happened.
+// Marks an entry that deserves a second look with a grey box after it, as a fact is, since a dot
+// always means a draft.
 export function WorthChecking() {
   return (
     <>
-      <Text span c="yellow" mr={8}>
-        <span className={classes.statusDot} />
-      </Text>
-      <VisuallyHidden>Worth checking: </VisuallyHidden>
+      <VisuallyHidden>, </VisuallyHidden>
+      <FactBox>Worth checking</FactBox>
     </>
   );
 }

@@ -174,7 +174,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 
 ## History
 
-- **An entry:** Each entry names who did what in a sentence, with details dimmed after a colon, newest first, with its day, year and time. An entry that deserves a second look has a yellow dot before it, read aloud as Worth checking.
+- **An entry:** Each entry names who did what in a sentence, with details dimmed after a colon, newest first, with its day, year and time. An entry that deserves a second look ends in a grey Worth checking box, as a fact does, since a dot always means a draft, decided by the owner on 2026-11-14.
   - **Drawn by:** `EntryList`, `EntryRow`, `EntryDetails` and `WorthChecking` in `apps/web/src/history-entries.tsx`.
   - **Example:** the seeded rejections on the Change history page.
 - **A change in words:** Wherever a change is described, in a record's menu, on the Drafts page or in the change history, the field is in semibold and each value is set apart on a light ground, as a value is in code.
@@ -186,7 +186,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 
 ## Details Panels
 
-- **Follow the Person panel:** Every record's details follow Person details: the record's name and draft mark at the top; headed sections of rows, each label beside its value while the panel is wide and over it once narrow; the columns an organization added under Columns. Each value that can be changed has a pencil at its right, named Change and the label, shown while its row is pointed at or has focus, or always on a screen that can't be pointed at; a click anywhere on the row, its label included, does the same, and the row is marked in the hover grey while pointed at. A panel never mixes in another layout, such as labels over form fields. Decided by the owner on 2026-11-11; the pencil shown on hover or focus decided on 2026-11-13.
+- **Follow the Person panel:** Every record's details follow Person details: the record's name and draft mark at the top; headed sections of rows, each label beside its value while the panel is wide and over it once narrow, the labels in a column as wide as the section's longest, up to half the panel, so none wraps (decided by the owner on 2026-11-14); the columns an organization added under Columns. Each value that can be changed has a pencil at its right, named Change and the label, shown while its row is pointed at or has focus, or always on a screen that can't be pointed at; a click anywhere on the row, its label included, does the same, and the row is marked in the hover grey while pointed at. A panel never mixes in another layout, such as labels over form fields. Decided by the owner on 2026-11-11; the pencil shown on hover or focus decided on 2026-11-13.
   - **Drawn by:** `RecordSection`, `Row`, `changeButton` and `RecordLink` in `apps/web/src/record-details.tsx`, with `useRecordEditing` in `apps/web/src/record-editing.tsx` for the pencils, and `ValueField` there for a value typed in place, which a scope history's reason for a removal uses too.
   - **Example:** any seeded person's details beside People.
 - **Columns follow the panel's order:** A table's default column order follows its details panel's sections and rows, and the other way round, defined once and used by both.
@@ -213,6 +213,9 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **The keyboard's option in a drop-down list:** The option the keyboard is on, which Enter would pick, is light grey in light mode and a dark grey in dark mode, the same as an option pointed at; never the accent colour, which looks like a choice already made. Decided by the owner on 2026-11-11.
   - **Drawn by:** the theme, through `Combobox.extend` and `Select.extend` in `apps/web/src/theme.ts`, both giving their options the class in `apps/web/src/combobox.module.css`, which the feature team change adds, so every drop-down list, Select and table cell's choices follow it. A new kind of drop-down list from Mantine, such as `MultiSelect`, needs the same class in the theme.
   - **Example:** on Features, once that change is merged, open a Status cell's choices and press the Down arrow.
+- **A switch's chosen side:** A switch between a page's views, such as the Org chart's Reporting teams and Feature teams, fills its chosen side with the accent colour, as a choice made is, never white on grey, which reads as turned off. Decided by the owner on 2026-11-14.
+  - **Drawn by:** the theme, through `SegmentedControl.extend` in `apps/web/src/theme.ts`, so every switch follows it, `ModeSwitch` in `apps/web/src/page-header.tsx` included.
+  - **Example:** the Org chart's switch.
 - **The chosen one ticked:** A group of choices in a menu ticks the one chosen, read aloud as chosen, as in the Views menu's applied view. Decided by the owner on 2026-11-11.
   - **Drawn by:** `MenuChoices` in `apps/web/src/app-menu.tsx`.
   - **Example:** Hours ticked under Show in, in Effort's column menu.
