@@ -4,7 +4,7 @@
 # database, each with the container hardening the security plan requires. Only the proxy is on a
 # network with a route out, so users can reach it; the application and the database are each on
 # internal networks with no route out, and the database is reachable only from the application and
-# the migration run. Images are built for the production server's processor. The settings on the
+# the migration run. Images are built for linux/amd64. The settings on the
 # host are listed in compose.env.example; scripts/stack.sh runs this file on a development machine.
 
 name: fathom

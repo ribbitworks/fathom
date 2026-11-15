@@ -334,9 +334,8 @@ async function saveFieldDraft(
 const unseenTier =
   "Choose a list, or a visibility, whose details this role can see";
 
-// Refuses a column whose tier the actor cannot see: the Security Plan lets a column be given only a
-// tier its creator can see, and, as with removing one, only someone who sees a column's details
-// may change it.
+// Refuses a column whose tier the actor cannot see: a column may be given only a tier its creator
+// can see, and, as with removing one, only someone who sees a column's details may change it.
 function refuseUnseenTier(
   actor: Actor,
   state: ColumnsState,

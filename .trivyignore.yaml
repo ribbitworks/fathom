@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Overdue findings the security report's scans leave out, each an exception the Security Plan
-# records with its reason, approval, and expiry. An entry stops applying on its expiry date, so the
+# allows, recorded here with its reason, approval, and expiry. An entry stops applying on its expiry date, so the
 # finding fails the report again unless the exception is renewed. Findings with no fix released are
 # warnings, never failures, so they need no entry.
 
