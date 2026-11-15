@@ -1,5 +1,7 @@
 # Security Policy
 
+This policy covers Fathom's code, container images and Compose configuration in this repository. The machine and network Fathom runs on are for whoever runs it to secure, as [Securing Your Environment](docs/operations/securing-your-environment.md) sets out.
+
 ## Reporting a Vulnerability
 
 Report a vulnerability privately, through GitHub's private vulnerability reporting: on the repository's **Security** tab, select **Report a vulnerability**. Never report one in an issue, a pull request or a discussion, since those are public.

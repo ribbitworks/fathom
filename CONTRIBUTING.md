@@ -8,7 +8,7 @@ Pull requests from outside the project are closed without review. This isn't a j
 
 ## Issues and Questions
 
-Issues and questions come from people the maintainer invites into the `ribbitworks` organization on GitHub, who can file and sort issues there. There is no way to ask to be invited yet; that will change once Fathom is ready for wider use. Issues from people who weren't invited may be closed without a reply.
+Issues and questions come from people the maintainer invites into the `ribbitworks` organization on GitHub, who can file and sort issues there. There is no way to ask to be invited yet. Issues from people who weren't invited may be closed without a reply.
 
 Invited people file issues through the forms on the [New issue](https://github.com/jlarue26/fathom/issues/new/choose) page, as [Issues](docs/issues.md) describes.
 
