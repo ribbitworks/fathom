@@ -26,6 +26,6 @@ As an Executive, you see the whole plan and everyone in it, with every person's 
 
 ## Keep a View
 
-A view is how you've set up a table, such as its search and filters. You can save one on **People** to come back to. See [Saved views](saved-views.md#save-a-view).
+A view is how you've set up a table, such as its search and filters. You can save one on **People**, **Feature assignments** or **Capacity**'s **People** to come back to. See [Saved views](saved-views.md#save-a-view).
 
 You're done when you've found what you came for.

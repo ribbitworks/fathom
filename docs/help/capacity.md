@@ -37,6 +37,20 @@ Each group ends with a total row. **Manager** is offered only to roles that see 
 - To find people by name, type in the search box. You can also type a feature's name, such as `Checkout`, to find everyone allocated to it in any month.
 - To filter one month by feature, open that month's column menu, select **Filter…**, and pick the features.
 
+### Keep a View of People
+
+To come back to **People** as you've set it up, with its grouping and search, save it as a view. **Settings** has no views.
+
+1. Set up the table the way you want it.
+1. Select **Views**, the last button after the search box.
+1. Select **Save view…**.
+1. Type the view's **Name**.
+1. Select **Save view**.
+
+See [Saved views](saved-views.md#save-a-view).
+
+You're done when the **Views** button shows the view's name.
+
 ### Change a Setting
 
 1. In **Settings**, select the setting's value.

@@ -38,7 +38,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 
 ## Tables
 
-- [Saved views](saved-views.md): saving, sharing and applying a table's views, on People, Features, Projects and Releases for now.
+- [Saved views](saved-views.md): saving, sharing and applying a table's views, on People, Features, Projects, Releases, Feature assignments and Capacity for now.
 
 ## Changes
 

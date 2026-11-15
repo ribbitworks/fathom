@@ -1,13 +1,13 @@
 # Saved views
 
-A view is how you've set up a table: its search, filters, sort, metrics, **Group by**, with its **Then by**, the **Draft** menu's choice, and its columns' order, hidden columns, widths, frozen columns, and units and decimal places. On **Releases**, it also keeps whether **Show retired** is on. On **Features**, it also keeps the board's stream and what its cards show. The table and the board share one view. Switching between them doesn't change it. You can save a view under a name, and apply it again later. For now you can save views on the **People**, **Features**, **Projects** and **Releases** pages. Each tab of **Projects** has views of its own. Other pages are to follow.
+A view is how you've set up a table: its search, filters, sort, metrics, **Group by**, with its **Then by**, the **Draft** menu's choice, and its columns' order, hidden columns, widths, frozen columns, and units and decimal places. On **Releases**, it also keeps whether **Show retired** is on. On **Features**, it also keeps the board's stream and what its cards show. The table and the board share one view. Switching between them doesn't change it. You can save a view under a name, and apply it again later. For now you can save views on the **People**, **Features**, **Projects**, **Releases** and **Feature assignments** pages, and in **Capacity**'s **People** mode. Each tab of **Projects** has views of its own. **Feature assignments** and **Capacity** each have their own views too. Other pages are to follow.
 
 You save and apply views from the **Views** menu: the last button after the search box. It shows once there's a view to save or apply.
 
 ## What to Know First
 
 - **Personal views:** a view you save is yours alone, unless you share it. Your own views are under **My views**.
-- **Shared views:** a shared view is seen by everyone who can open the page. They're under **Shared views**. Someone who can't see a column the view uses doesn't see the view.
+- **Shared views:** a shared view is seen by everyone who can open the page. They're under **Shared views**. Someone who can't see a column the view uses doesn't see the view. On **Feature assignments** and **Capacity**, a view grouped by **Manager** is seen only by roles that see Confidential data.
 - **Who can share:** you can share a view you saved yourself, if your role changes configuration. Only a view's maker, or such a role, can change, rename or delete a shared view.
 
 ## Main Tasks
