@@ -23,7 +23,7 @@ Fathom's additions to the shared [Documentation](shared/documentation.md) standa
 - Contributing (`CONTRIBUTING.md`): who may contribute, and how issues and questions come in
 - Security policy (`SECURITY.md`): how to report a vulnerability, and which versions are supported
 - Code of conduct (`CODE_OF_CONDUCT.md`): the Contributor Covenant, with where reports go
-- Product brief (`docs/product/brief.md`): problem, vision, users, goals, scope, and constraints, with one-line key decisions that link to the decisions log or an ADR
+- Product brief (`docs/product/brief.md`): what Fathom is, its users, goals, scope, and constraints, with one-line key decisions that link to the decisions log or an ADR
 - Domain concepts (`docs/product/domain.md`): definitions of terms
 - Decisions log (`docs/product/decisions.md`): product decisions and their details
 - Use cases (`docs/product/use-cases.md`): scenarios

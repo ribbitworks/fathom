@@ -1,6 +1,5 @@
 # Fathom: UI Conventions
 
-**Status:** Proposal for the maintainer's review
 **Last updated:** 2026-11-14
 
 A short lookup of the conventions every screen follows, for those who build screens. Each entry gives the rule, the shared piece that draws it, so a new screen reuses it rather than drawing its own, and an example from the [fictional seed data](development-setup.md#fictional-seed-data), or the steps that make one. The principles behind them, and how each page is laid out, are in [Visual Design](visual-design.md).

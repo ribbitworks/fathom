@@ -1,6 +1,5 @@
 # Fathom: Development Setup
 
-**Status:** Proposal for the maintainer's review
 **Last updated:** 2026-11-14
 
 How Fathom's repository is organized, how developers run it locally, and how fictional data is generated. It applies the libraries in [ADR 0002](../adr/0002-libraries.md) and the platforms in [Supported Platforms](../operations/supported-platforms.md).
@@ -39,7 +38,7 @@ LICENSES/                 Licence texts, as the REUSE specification requires
 
 ## Local Development
 
-Developers may use any machine and container runtime listed for development in Supported Platforms, as long as their use of it needs no paid licence. Development may happen on machines not managed by IT, using fictional data only.
+Developers may use any machine and container runtime listed for development in Supported Platforms, as long as their use of it needs no paid licence. Development uses fictional data only.
 
 ### Prerequisites
 
