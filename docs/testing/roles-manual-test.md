@@ -340,11 +340,15 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:**
     - "Team Member" row: **Team Member**
     - "Product Manager" row: **Product Manager**
-    - "Feature Lead" row: **Feature Lead (default)** and **Engineering Manager**
+    - "Feature Lead" row: "Feature Lead (default), Engineering Manager"
     - "Fathom Administrator" row: **Administrator**
   - **Notes:**
 
-- [ ] `7B20` Select **Edit** in the "Team Member" row.
+- [ ] `6EA5` Select the details button at the right of the **Name** cell of "Team Member".
+  - **Expected:** A side panel headed **Team Member** opens beside the table, ending with **Edit…**.
+  - **Notes:**
+
+- [ ] `7B20` Select **Edit…** in the side panel.
   - **Expected:**
     - A dialog titled "Edit Team Member", with **Name**, **Email address**, and **Roles**.
     - **Roles** lists every role, **Copy of Team Member** among them, each with a tick box and its description under its name.

@@ -2,16 +2,16 @@
 title: "Manual Test: Accounts"
 category: "How-To"
 audience: "AI Coding Assistant"
-applies_to: ["apps/web/src/accounts-page.tsx", "apps/web/src/accounts.ts", "apps/web/src/change-password.tsx", "apps/web/src/guessable.ts", "apps/web/src/password-settings.tsx", "apps/web/src/history*.ts*", "apps/web/src/layout.tsx", "apps/web/src/session.ts", "apps/web/src/names.ts", "apps/server/src/create-account.ts", "apps/server/src/create-administrator.ts", "apps/server/src/data/accounts.ts", "apps/server/src/data/settings.ts", "apps/server/src/routes/accounts.ts", "apps/server/src/routes/auth.ts", "packages/shared/src/passwords.ts", "packages/shared/src/guessable-passwords.ts", "packages/seed/src/accounts.ts"]
+applies_to: ["apps/web/src/accounts-page.tsx", "apps/web/src/accounts-table.tsx", "apps/web/src/accounts-panel.tsx", "apps/web/src/accounts.ts", "apps/web/src/change-password.tsx", "apps/web/src/guessable.ts", "apps/web/src/password-settings.tsx", "apps/web/src/history*.ts*", "apps/web/src/layout.tsx", "apps/web/src/session.ts", "apps/web/src/names.ts", "apps/server/src/create-account.ts", "apps/server/src/create-administrator.ts", "apps/server/src/data/accounts.ts", "apps/server/src/data/settings.ts", "apps/server/src/routes/accounts.ts", "apps/server/src/routes/auth.ts", "packages/shared/src/passwords.ts", "packages/shared/src/guessable-passwords.ts", "packages/seed/src/accounts.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Accounts
 
 ## Scope
 
-Verifies what only a person can judge on the Accounts page and the screens around it: who sees the Accounts page, creating an account and the one-time password Fathom generates for it, with its eye button and Copy button; the journey from the administrator's browser to the new person's first sign-in, the forced change of the generated password with its checklist, and a reset; editing, deactivating, and reactivating an account, and the greyed-out control that keeps one account with Edit Administration; giving an account several roles and a default, switching role from the account menu with the pages following at once, the role chosen last coming back at sign-in, and the role a change was made as in the change history and on the Drafts page; the password settings and a generated password that follows them; and the command that creates the Fathom Administrator account at install. The server's refusals, validation messages, permissions, and every wording of the access history are proven by automated tests.
+Verifies what only a person can judge on the Accounts page and the screens around it: who sees the Accounts page, creating an account and the one-time password Fathom generates for it, with its eye button and Copy button; the journey from the administrator's browser to the new person's first sign-in, the forced change of the generated password with its checklist, and a reset; an account's side panel, editing, deactivating, and reactivating an account, finding accounts by status, and the greyed-out control that keeps one account with Edit Administration; giving an account several roles and a default, switching role from the account menu with the pages following at once, the role chosen last coming back at sign-in, and the role a change was made as in the change history and on the Drafts page; the password settings and a generated password that follows them; and the command that creates the Fathom Administrator account at install. The server's refusals, validation messages, permissions, and every wording of the access history are proven by automated tests.
 
 ## Test Environment
 
@@ -57,7 +57,8 @@ Use only where a test case asks for it. Like Reset the Database, it deletes ever
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the account menu and the Role menu. This test adds:
 
 - **Search box:** the box above the table with a magnifying glass at its left and the hint **Search**, and, once something is typed in it, a **×** at its right end.
-- **Filter:** the three buttons beside the search box: **All**, **Active** and **Deactivated**, each followed by a count.
+- **Status filter:** the choices that open from **Filter…** in the **Status** column menu, with a tick box for each status, such as **Active** and **Deactivated**. While a filter is in use, a box in the bar above the table, after the **Views** button, names it, such as **Status: Deactivated**, with a **×** at its right that removes it.
+- **Account's side panel:** the side panel that opens from the details button of an account's row, headed with the account's name. Its **Details** section lists **Name**, **Email address**, **Roles**, **Status** and **Created**. Under it are the buttons **Edit…**, **Reset password…** and **Deactivate…**, or **Reactivate…** in its place for a deactivated account.
 - **Role list:** the **Roles** tick boxes in the **New account** and **Edit** dialogs, one square box for each role, with its description under its name.
 - **Default role:** the round buttons under the role list, one for each role ticked, shown only while more than one is ticked.
 
@@ -91,32 +92,25 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `328E` Read the column headings, and the top right of the page.
   - **Expected:**
-    - The columns are **Person**, **Roles**, **Status** and **Created**
+    - The columns are **Name**, **Email address**, **Roles**, **Status** and **Created**
     - **New account** is at the top right
   - **Notes:**
 
 - [ ] `1D11` Read the rows from top to bottom.
   - **Expected:**
     - There are 12 rows, in alphabetical order by name
-    - Each **Person** cell shows the person's initials, name, and email address
+    - Each **Email address** cell shows the account's email address
     - Each **Roles** cell shows the account's roles, as [Development Setup](../design/development-setup.md#development-accounts) lists: one for every account but "Feature Lead"
-    - The "Feature Lead" row's **Roles** cell shows **Feature Lead (default)** then **Engineering Manager**
-    - Each **Status** cell says "Active", in green
+    - The "Feature Lead" row's **Roles** cell reads "Feature Lead (default), Engineering Manager"
+    - Each **Status** cell reads "Active"
     - Each **Created** cell shows a date
-    - Each row ends with an **Edit** button
   - **Notes:**
 
 - [ ] `1CB3` Look at the "Fathom Administrator" row.
   - **Expected:**
-    - The name is followed by "This account"
+    - The name is followed by a grey "This account" box
     - The role is **Administrator**
     - No other row says "This account"
-  - **Notes:**
-
-- [ ] `55A8` Read the buttons of the filter.
-  - **Expected:**
-    - "All 12", "Active 12" and "Deactivated 0"
-    - "All 12" is selected
   - **Notes:**
 
 - [ ] `944E` Type `director` in the search box.
@@ -300,11 +294,19 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The **Accounts** page opens.
   - **Notes:**
 
-- [ ] `50C5` Select **Edit** in the `Test Newcomer` row.
-  - **Expected:** A dialog titled "Edit Test Newcomer" opens.
+- [ ] `D3DE` Select the details button at the right of the **Name** cell of `Test Newcomer`.
+  - **Expected:**
+    - The account's side panel opens, headed "Test Newcomer"
+    - Under **Details**, **Name** reads `Test Newcomer`
+    - **Email address** reads `test.newcomer@fathom.test`
+    - **Roles** reads "Team Member"
+    - **Status** reads "Active"
+    - **Created** shows today's date, in Fathom's time zone
+    - Under them are **Edit…**, **Reset password…** and **Deactivate…**
+    - **Deactivate…** is outlined in red
   - **Notes:**
 
-- [ ] `FB2A` Select **Reset password**.
+- [ ] `FB2A` Select **Reset password…** in the side panel.
   - **Expected:**
     - A dialog titled "Reset the password for Test Newcomer" opens
     - It says "Test Newcomer will be signed out of every session. Fathom will generate a new password, which Test Newcomer must change at the next sign-in."
@@ -333,13 +335,13 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-05.
 
-**Preconditions:** ACCT-05 run. The first browser signed in with this account, with the **Accounts** page open.
+**Preconditions:** ACCT-05 run. The first browser signed in with this account, with the **Accounts** page open and the side panel of `Test Newcomer` still open.
 
-- [ ] `B955` Select **Edit** in the `Test Newcomer` row.
+- [ ] `B955` Select **Edit…** in the side panel.
   - **Expected:**
     - A dialog titled "Edit Test Newcomer" opens
     - It shows the account's name, email address, and roles, with only **Team Member** ticked
-    - Its buttons are **Reset password** and **Deactivate** at the left, and **Cancel** and **Save** at the right
+    - At its foot, the only buttons are **Cancel** and **Save**, with no **Reset password** or **Deactivate**
   - **Notes:**
 
 - [ ] `7C32` Replace the text in **Name** with `Test Arrival`.
@@ -366,15 +368,12 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:**
     - The dialog closes
     - A notification says "Saved the account for Test Arrival."
-    - The table has a `Test Arrival` row with `test.arrival@fathom.test` and **Product Manager**
+    - The table has a `Test Arrival` row, with `test.arrival@fathom.test` under **Email address** and "Product Manager" under **Roles**
     - There is no `Test Newcomer` row
+    - The side panel is now headed "Test Arrival"
   - **Notes:**
 
-- [ ] `0F6F` Select **Edit** in the `Test Arrival` row.
-  - **Expected:** A dialog titled "Edit Test Arrival" opens.
-  - **Notes:**
-
-- [ ] `45E7` Select **Deactivate**.
+- [ ] `45E7` Select **Deactivate…** in the side panel.
   - **Expected:**
     - A dialog titled "Deactivate Test Arrival" opens
     - It says "Test Arrival will be signed out everywhere, and will not be able to sign in until the account is reactivated."
@@ -385,19 +384,32 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:**
     - The dialog closes
     - A notification says "Deactivated the account for Test Arrival."
-    - The `Test Arrival` row says "Deactivated", in grey
-    - The filter reads "All 13", "Active 12" and "Deactivated 1"
+    - The **Status** cell of the `Test Arrival` row reads "Deactivated"
+    - In the side panel, **Status** reads "Deactivated"
+    - The side panel's last button reads **Reactivate…**, with no red outline
   - **Notes:**
 
-- [ ] `1518` Select **Deactivated 1** in the filter.
+- [ ] `A777` Open the **Status** column menu, and select **Filter…**.
+  - **Expected:** The Status filter opens, with **Active** and **Deactivated** among its choices, none ticked.
+  - **Notes:**
+
+- [ ] `D9FE` Tick **Deactivated**.
   - **Expected:** Only the `Test Arrival` row shows.
   - **Notes:**
 
-- [ ] `1288` Select **Edit** in the `Test Arrival` row.
-  - **Expected:** The dialog offers **Reactivate** in place of **Deactivate**.
+- [ ] `B78D` Press Esc.
+  - **Expected:**
+    - The Status filter closes
+    - In the bar above the table, after the **Views** button, a box reads **Status: Deactivated**
   - **Notes:**
 
-- [ ] `E8F7` Select **Reactivate**.
+- [ ] `437E` Select the **×** in the **Status: Deactivated** box.
+  - **Expected:**
+    - The box is gone
+    - Every account shows again, 13 in all
+  - **Notes:**
+
+- [ ] `E8F7` Select **Reactivate…** in the side panel.
   - **Expected:**
     - A dialog titled "Reactivate Test Arrival" opens
     - It says "Test Arrival will be able to sign in again."
@@ -406,7 +418,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `2E69` Select **Reactivate** in the dialog.
   - **Expected:**
     - A notification says "Reactivated the account for Test Arrival."
-    - The filter reads "All 13", "Active 13" and "Deactivated 0"
+    - The **Status** cell of the `Test Arrival` row reads "Active"
+    - Every other **Status** cell reads "Active" too
   - **Notes:**
 
 - [ ] `AD5B` Select the **Access history** page in the left-hand menu.
@@ -425,11 +438,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The **Accounts** page opens.
   - **Notes:**
 
-- [ ] `874F` Select **Edit** in the "Superuser" row.
-  - **Expected:** A dialog titled "Edit Superuser" opens.
+- [ ] `DE07` Select the details button at the right of the **Name** cell of "Superuser".
+  - **Expected:** The account's side panel opens, headed "Superuser".
   - **Notes:**
 
-- [ ] `B485` Select **Deactivate**.
+- [ ] `B485` Select **Deactivate…** in the side panel.
   - **Expected:** A dialog titled "Deactivate Superuser" opens.
   - **Notes:**
 
@@ -437,9 +450,16 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** A notification says "Deactivated the account for Superuser."
   - **Notes:**
 
-- [ ] `1A99` Select **Edit** in the "Fathom Administrator" row.
+- [ ] `916F` Select the details button at the right of the **Name** cell of "Fathom Administrator".
   - **Expected:**
-    - **Deactivate** is greyed out
+    - The account's side panel opens, headed "Fathom Administrator", followed by a grey "This account" box
+    - Under the **Details** section, the buttons are **Edit…** and **Deactivate…**, with no **Reset password…**
+    - **Deactivate…** is greyed out
+  - **Notes:**
+
+- [ ] `1A99` Select **Edit…** in the side panel.
+  - **Expected:**
+    - A dialog titled "Edit Fathom Administrator" opens
     - In the role list, **Administrator** is ticked and greyed out
     - Every other role can be ticked
   - **Notes:**
@@ -542,8 +562,13 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 **Preconditions:** Signed in with this account in the first browser, with the **Accounts** page open.
 
-- [ ] `26F2` Select **Edit** in the "Team Member" row.
+- [ ] `7393` Select the details button at the right of the **Name** cell of "Team Member".
+  - **Expected:** The account's side panel opens, headed "Team Member".
+  - **Notes:**
+
+- [ ] `26F2` Select **Edit…** in the side panel.
   - **Expected:**
+    - A dialog titled "Edit Team Member" opens
     - In the role list, only **Team Member** is ticked
     - There is no **Default role**
   - **Notes:**
@@ -559,10 +584,10 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 - [ ] `6EB1` Select **Save**.
   - **Expected:**
     - A notification says "Saved the account for Team Member."
-    - The **Roles** cell of the "Team Member" row shows **Executive (default)** then **Team Member**
+    - The **Roles** cell of the "Team Member" row reads "Executive (default), Team Member"
   - **Notes:**
 
-- [ ] `4B2F` Select **Edit** in the "Team Member" row.
+- [ ] `4B2F` Select **Edit…** in the side panel.
   - **Expected:** **Executive** and **Team Member** are ticked.
   - **Notes:**
 
@@ -575,7 +600,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 - [ ] `3E3B` Select **Save**.
   - **Expected:**
     - A notification says "Saved the account for Team Member."
-    - The **Roles** cell of the "Team Member" row shows only **Team Member**
+    - The **Roles** cell of the "Team Member" row reads only "Team Member"
   - **Notes:**
 
 ### ACCT-11: Switching Role From the Account Menu
@@ -740,5 +765,5 @@ Proven by automated tests, as the scope sets out; ACCT-06 checks an access histo
   - **Expected:**
     - The table lists 12 accounts, with no `Test Arrival` or `Test Rules`
     - `fathom.administrator@fathom.test` is the "Fathom Administrator"
-    - The filter reads "All 12", "Active 12" and "Deactivated 0"
+    - Every **Status** cell reads "Active"
   - **Notes:**

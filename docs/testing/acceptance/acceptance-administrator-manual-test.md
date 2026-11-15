@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Acceptance, Administrator
@@ -145,7 +145,14 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Accounts** page opens, with a `Fictional Newcomer` row.
   - **Notes:**
 
-- [ ] `A74D` Select **Edit** in the `Fictional Newcomer` row.
+- [ ] `910A` Select the details button at the right of the **Name** cell of `Fictional Newcomer`.
+  - **Expected:**
+    - A side panel opens, headed "Fictional Newcomer".
+    - Its **Details** section lists **Name**, **Email address**, **Roles**, **Status** and **Created**.
+    - Under them are **Edit…**, **Reset password…** and **Deactivate…**.
+  - **Notes:**
+
+- [ ] `A74D` Select **Edit…** in the side panel.
   - **Expected:** A dialog titled "Edit Fictional Newcomer" opens, with only **Team Member** ticked.
   - **Notes:**
 
@@ -231,11 +238,11 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** ADMIN-02 done. **Accounts** page open.
 
-- [ ] `096E` Select **Edit** in the `Fictional Newcomer` row.
-  - **Expected:** A dialog titled "Edit Fictional Newcomer" opens.
+- [ ] `3F66` Select the details button at the right of the **Name** cell of `Fictional Newcomer`.
+  - **Expected:** A side panel opens, headed "Fictional Newcomer".
   - **Notes:**
 
-- [ ] `CC99` Select **Deactivate**.
+- [ ] `CC99` Select **Deactivate…** in the side panel.
   - **Expected:**
     - A dialog titled "Deactivate Fictional Newcomer" says "Fictional Newcomer will be signed out everywhere, and will not be able to sign in until the account is reactivated."
     - It offers **Cancel** and a red **Deactivate**.
@@ -244,29 +251,37 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `E2DE` Select **Deactivate**.
   - **Expected:**
     - A green banner says "Deactivated the account for Fictional Newcomer."
-    - The row says "Deactivated", in grey.
+    - The row's **Status** cell reads "Deactivated".
+    - The side panel offers **Reactivate…** in place of **Deactivate…**.
   - **Notes:**
 
 - [ ] `F8D7` In the second browser, select any page in the left-hand menu.
   - **Expected:** The **Sign in** page opens.
   - **Notes:**
 
-- [ ] `B703` In the main browser, select **Deactivated 1** in the filter beside the search box.
+- [ ] `A325` In the main browser, open the **Status** column menu, and select **Filter…**.
+  - **Expected:** **Active** and **Deactivated** are among the choices.
+  - **Notes:**
+
+- [ ] `BB20` Tick **Deactivated**.
   - **Expected:** Only the `Fictional Newcomer` row is listed.
   - **Notes:**
 
-- [ ] `3B2E` Select **Edit** in the `Fictional Newcomer` row.
-  - **Expected:** A dialog titled "Edit Fictional Newcomer" opens.
+- [ ] `AC16` Press Esc.
+  - **Expected:**
+    - The choices close.
+    - In the bar above the table, after the **Views** button, a box reads **Status: Deactivated**.
   - **Notes:**
 
-- [ ] `FACA` Select **Reactivate**.
+- [ ] `FACA` Select **Reactivate…** in the side panel.
   - **Expected:** A dialog opens with a **Reactivate** button.
   - **Notes:**
 
 - [ ] `D3CC` Select **Reactivate** in the dialog.
   - **Expected:**
     - A green banner says "Reactivated the account for Fictional Newcomer."
-    - The filter reads "Deactivated 0".
+    - The table shows "No matching accounts".
+    - The side panel still shows "Fictional Newcomer", with **Status** reading "Active" and **Deactivate…** in place of **Reactivate…**.
   - **Notes:**
 
 - [ ] `DB1D` In the second browser, sign in as the new account, `fictional.newcomer@fathom.test`, with `fictional password 2`.
@@ -279,17 +294,13 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, the same as ADMIN-05.
 
-**Preconditions:** **Accounts** page open.
+**Preconditions:** **Accounts** page open, with the **Status: Deactivated** filter and the side panel of `Fictional Newcomer` that ADMIN-05 left open.
 
-- [ ] `2D7C` Select **All** in the filter beside the search box.
+- [ ] `61CF` Select the **×** in the **Status: Deactivated** box above the table.
   - **Expected:** Every account is listed, `Fictional Newcomer` among them.
   - **Notes:**
 
-- [ ] `E447` Select **Edit** in the `Fictional Newcomer` row.
-  - **Expected:** A dialog titled "Edit Fictional Newcomer" opens.
-  - **Notes:**
-
-- [ ] `9F93` Select **Reset password**.
+- [ ] `9F93` Select **Reset password…** in the side panel.
   - **Expected:**
     - A dialog titled "Reset the password for Fictional Newcomer" opens.
     - It says "Fictional Newcomer will be signed out of every session. Fathom will generate a new password, which Fictional Newcomer must change at the next sign-in."

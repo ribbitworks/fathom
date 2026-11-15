@@ -710,8 +710,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The page has a dark ground, and every word is easy to read.
     - The **×** in the search box is easy to see.
-    - The "This account" badge is sea-blue and easy to read.
-    - **Active** is green.
+    - The grey "This account" box after "Superuser" is easy to read.
+  - **Notes:**
+
+- [ ] `BC33` Select the details button at the right of the **Name** cell of "Superuser".
+  - **Expected:**
+    - The side panel opens, headed "Superuser".
+    - The grey "This account" box after the heading is easy to read.
+    - Every label and value under **Details** is easy to read.
+    - **Edit…** and the red outline and words of **Deactivate…** are easy to read.
+  - **Notes:**
+
+- [ ] `5F62` Close the side panel with the **×** at its top right.
+  - **Expected:** The side panel closes.
   - **Notes:**
 
 - [ ] `F493` Select the **Roles** page in the left-hand menu.

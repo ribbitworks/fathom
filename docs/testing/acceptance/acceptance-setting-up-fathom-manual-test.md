@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-15"
 ---
 
 # Manual Test: Acceptance, Setting Up Fathom
@@ -60,7 +60,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `734C` Select the **Accounts** page in the left-hand menu.
   - **Expected:**
     - The table lists the development accounts, as [Development Setup](../../design/development-setup.md#development-accounts) lists them, and no other.
-    - The filter beside the search box reads "All 12", "Active 12" and "Deactivated 0".
+    - Every **Status** cell reads "Active".
   - **Notes:**
 
 - [ ] `4B6E` Select **New account**.

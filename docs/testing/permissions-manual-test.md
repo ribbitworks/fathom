@@ -708,7 +708,13 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `07A4` Select the **Accounts** page in the left-hand menu.
   - **Expected:**
     - Every account is in the table with its role
-    - There is no **New account** button and no **Edit** button in any row
+    - There is no **New account** button
+  - **Notes:**
+
+- [ ] `FF34` Select the details button at the right of the **Name** cell of 'Product Manager'.
+  - **Expected:**
+    - A side panel headed **Product Manager** opens beside the table.
+    - It has no **Edit…**, **Reset password…** or **Deactivate…** button.
   - **Notes:**
 
 - [ ] `5E53` Select the **Roles** page in the left-hand menu.
@@ -749,7 +755,14 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `B8CB` Select the **Accounts** page in the left-hand menu.
   - **Expected:**
     - **New account** is at the top right
-    - Each row ends with **Edit**
+  - **Notes:**
+
+- [ ] `74E6` Select the details button at the right of the **Name** cell of 'Product Manager'.
+  - **Expected:** The side panel headed **Product Manager** ends with **Edit…**, **Reset password…** and **Deactivate…**.
+  - **Notes:**
+
+- [ ] `84F5` Close the side panel with its **×**.
+  - **Expected:** The side panel closes.
   - **Notes:**
 
 - [ ] `B97C` Select **New account**.
