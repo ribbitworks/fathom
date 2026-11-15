@@ -11,7 +11,7 @@ import {
   endsTooEarly,
   hasEnded,
   horizonFrom,
-  lastStartOf,
+  pastAnyMove,
   lastDayOfMonth,
   type CyclePatternLike,
   type LengthChange,
@@ -179,18 +179,8 @@ describe("a stream that ends", () => {
   });
 });
 
-describe("how far a stream's cycles go", () => {
-  const span = (endsOn: string | null) => ({
-    cyclesUntil: "2028-12-31",
-    endsOn,
-  });
-
-  it("starts its last cycle by its last day when it ends, or else by the day its cycles are made until", () => {
-    expect([lastStartOf(span("2027-05-15")), lastStartOf(span(null))]).toEqual([
-      "2027-05-15",
-      "2028-12-31",
-    ]);
-  });
+describe("a schedule's last day", () => {
+  const span = (endsOn: string | null) => ({ endsOn });
 
   it("has ended only once its last day has passed", () => {
     expect([
@@ -202,17 +192,21 @@ describe("how far a stream's cycles go", () => {
 
   it("ends too early only before its first cycle starts, and never without cycle patterns", () => {
     expect([
-      endsTooEarly([quarters], span("2026-12-31")),
-      endsTooEarly([quarters], span("2027-01-01")),
-      endsTooEarly([quarters], span(null)),
-      endsTooEarly([], span("2026-12-31")),
+      endsTooEarly([quarters], "2026-12-31"),
+      endsTooEarly([quarters], "2027-01-01"),
+      endsTooEarly([quarters], null),
+      endsTooEarly([], "2026-12-31"),
     ]).toEqual([true, false, false, false]);
   });
 });
 
-describe("a new stream's cycles", () => {
-  it("are made until two years from the day it is drafted", () => {
+describe("how far a schedule's cycles are laid out", () => {
+  it("is two years from today", () => {
     expect(horizonFrom("2026-11-03")).toBe("2028-11-03");
+  });
+
+  it("reaches past a day by the longest a cycle can be, once a change moves cycles", () => {
+    expect(pastAnyMove("2028-11-03")).toBe("2030-11-03");
   });
 });
 

@@ -11,7 +11,8 @@ import {
   type Cycle,
   cycleUnitSchema,
   laterCyclesSchema,
-  type StreamSpan,
+  longestCycle,
+  type ScheduleEnd,
 } from "./cycles.ts";
 import { daySchema } from "./days.ts";
 import { heldBySchema, recordDraftSchema } from "./drafts.ts";
@@ -26,7 +27,7 @@ export const releaseLengths = {
 // How drafts and decisions name a stream, a change of its cycles, and a release, in the server and
 // the browser alike.
 export const planSubjects = {
-  stream: (stream: string) => `the release stream ${stream}`,
+  stream: (stream: string) => `the schedule ${stream}`,
   pattern: (stream: string, startsOn: string) =>
     `the cycles of ${stream} from ${startsOn}`,
   release: (release: string, stream: string) =>
@@ -35,9 +36,6 @@ export const planSubjects = {
 
 export const shipsBeforeStart =
   "A release cannot ship before its first cycle starts";
-
-// The longest cycle in each unit: two years.
-export const longestCycle = { weeks: 104, months: 24 } as const;
 
 const day = daySchema;
 
@@ -87,7 +85,7 @@ export const releaseStreamSchema = z.object({
   keyNumber: keyNumberSchema,
   name: z.string(),
   retired: z.boolean(),
-  // While the stream keeps going, its cycles are those starting on or before it.
+  // How far the server lays the cycles out: two years from today, or further where a record reaches.
   cyclesUntil: z.string(),
   // The stream's last day, which cuts its last cycle short, or null while it keeps going.
   endsOn: z.string().nullable(),
@@ -118,12 +116,10 @@ export const releaseStreamRequestSchema = z.object({
 
 export type ReleaseStreamRequest = z.infer<typeof releaseStreamRequestSchema>;
 
-// How far a stream's cycles go: the day they are made until while it keeps going, and its last day,
-// or null to keep going.
-export const cyclesUntilRequestSchema = z.object({
-  cyclesUntil: day,
+// A schedule's last day, or null to keep going.
+export const scheduleEndRequestSchema = z.object({
   endsOn: day.nullable(),
-}) satisfies z.ZodType<StreamSpan>;
+}) satisfies z.ZodType<ScheduleEnd>;
 
 export const cyclePatternRequestSchema = z
   .object({
@@ -214,7 +210,7 @@ export function movedReleases<Moved extends ReleaseCycles>(
     }
     if (firstCycle === undefined || lastCycle === undefined) {
       return {
-        problem: `${named ? release.name : "Work planned on these cycles"} would move past ${until}, the end of ${stream}'s plan.`,
+        problem: `${named ? release.name : "Work planned on these cycles"} would move past ${until}, the day ${stream} ends.`,
       };
     }
     if (release.shipsOn !== null && firstCycle > release.shipsOn) {

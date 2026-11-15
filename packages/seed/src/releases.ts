@@ -21,7 +21,7 @@ import { fictionalId } from "@fathom/fixtures";
 import {
   addDays,
   addMonths,
-  lastDayOfMonth,
+  horizonFrom,
   type PaletteColour,
 } from "@fathom/shared";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
@@ -163,15 +163,10 @@ export const seededKeys = [
   fieldAppsKeys,
 ] as const;
 
-// Platform starts some quarters before today's, is in halves from some quarters after it, and is
-// planned to the end of a year some years on. Patches starts some cycles before this week's, in
-// cycles of some weeks, and is planned to the end of the month before two years on.
-const platformDates = {
-  quartersBefore: 3,
-  quartersUntilHalves: 3,
-  yearsPlanned: 3,
-} as const;
-const patchDates = { weeks: 4, cyclesBefore: 2, monthsPlanned: 23 } as const;
+// Platform starts some quarters before today's, and is in halves from some quarters after it.
+// Patches starts some cycles before this week's, in cycles of some weeks.
+const platformDates = { quartersBefore: 3, quartersUntilHalves: 3 } as const;
+const patchDates = { weeks: 4, cyclesBefore: 2 } as const;
 
 // The first day of the quarter a day is in, as YYYY-MM-DD.
 function quarterStart(of: string): string {
@@ -212,7 +207,7 @@ export function seededStreams(today: string): readonly SeededStream[] {
   return [
     {
       name: platform.name,
-      cyclesUntil: `${String(Number(today.slice(0, 4)) + platformDates.yearsPlanned)}-12-31`,
+      cyclesUntil: horizonFrom(today),
       patterns: [
         {
           key: platform.patterns[0],
@@ -267,9 +262,7 @@ export function seededStreams(today: string): readonly SeededStream[] {
     },
     {
       name: patches.name,
-      cyclesUntil: lastDayOfMonth(
-        addMonths(patchStart, patchDates.monthsPlanned),
-      ),
+      cyclesUntil: horizonFrom(today),
       patterns: [
         {
           key: patches.patterns[0],
@@ -430,7 +423,7 @@ export async function unseedReleases(database: Database): Promise<string[]> {
         targeting.length > 0
       ) {
         kept.push(
-          `The ${row.name} release stream, which has releases, cycles, or features added by hand`,
+          `The ${row.name} schedule, which has releases, cycles, or features added by hand`,
         );
         continue;
       }

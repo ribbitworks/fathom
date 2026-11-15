@@ -42,7 +42,7 @@ export const shownParts = (
   new Set(offered.filter((part) => hidden?.includes(part) !== true));
 
 // The words of the Board's menus, on their buttons and where Save view names their choices.
-export const boardMenuWords = { stream: "Stream", card: "Card" } as const;
+export const boardMenuWords = { stream: "Schedule", card: "Card" } as const;
 
 // How Save view names the Board's choices a view keeps: its stream and the parts its cards show,
 // each once chosen.

@@ -33,7 +33,7 @@ const table = (streams: ReleaseStream[] = []) =>
   streamTable({ streams, day, onOpen: vi.fn() });
 
 describe("a stream's row", () => {
-  it("shows its name, cycles in force, releases kept, and how far its cycles are made", () => {
+  it("shows its name, cycles in force, releases kept, and the day it ends", () => {
     const row = rowOf(
       fictionalStream({
         releases: [
@@ -46,11 +46,11 @@ describe("a stream's row", () => {
         ],
       }),
     );
-    expect([row.name, row.schedule, row.releases, row.cyclesUntil]).toEqual([
+    expect([row.name, row.schedule, row.releases, row.endsOn]).toEqual([
       "Fictional Majors",
       "Every 3 months, named {YY}.{N}",
       "Fictional One",
-      "2027-12-31",
+      "",
     ]);
   });
 
@@ -153,7 +153,7 @@ describe("a stream's row", () => {
         schedule: "",
         releases: "Fictional One, Fictional Was",
         nextRelease: "Fictional One, ships Mar 31, 2027",
-        cyclesUntil: "2027-12-31",
+        endsOn: "",
       },
     });
   });
@@ -307,20 +307,20 @@ describe("the row's draft standing for every draft it shows", () => {
     ]).toEqual([false, true]);
   });
 
-  it("marks the next release as changed when a draft of how far the cycles are made changes it", () => {
+  it("marks the next release as changed when a draft of the day it ends changes it", () => {
     const row = rowOf(
       fictionalStream({
-        cyclesUntil: "2026-12-31",
+        endsOn: "2026-12-31",
         cycles: [],
         draft: recordDraft({
-          changed: ["cyclesUntil"],
-          live: { cyclesUntil: "2027-12-31" },
+          changed: ["endsOn"],
+          live: { endsOn: null },
         }),
         releases: [fictionalRelease()],
         liveCycles: fictionalStream().cycles,
       }),
     );
-    expect(row.draft?.changed).toEqual(["cyclesUntil", "nextRelease"]);
+    expect(row.draft?.changed).toEqual(["endsOn", "nextRelease"]);
   });
 
   it("marks the next release as changed when a cycle change moves it", () => {
@@ -420,7 +420,7 @@ describe("the table of streams", () => {
       {
         key: "name",
         field: {
-          field: "Stream",
+          field: "Schedule",
           oldValue: "Fictional Majors",
           newValue: "Fictional New Name",
         },

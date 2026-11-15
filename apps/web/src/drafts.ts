@@ -40,7 +40,7 @@ export interface DraftSelection {
   choices: string[];
   orders: string[];
   columns: string[];
-  // The plan's records, such as release streams, by kind.
+  // The plan's records, such as schedules, by kind.
   records: RecordRef[];
 }
 

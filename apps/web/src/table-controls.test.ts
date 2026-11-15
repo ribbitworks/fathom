@@ -120,7 +120,7 @@ describe("viewParts of a grouping and a page's choices", () => {
     count: 1,
     on: (view) => view.retired === true,
     turned: (view) => view,
-    part: { name: "Show", value: "Retired streams" },
+    part: { name: "Show", value: "Retired schedules" },
   };
   const groupings = [
     { key: "status", label: "Status" },
@@ -140,7 +140,7 @@ describe("viewParts of a grouping and a page's choices", () => {
         { groupings, choices: [toggle] },
       ),
     ).toEqual([
-      { name: "Show", value: "Retired streams" },
+      { name: "Show", value: "Retired schedules" },
       { name: "Group by", value: "Site" },
     ]);
     expect(

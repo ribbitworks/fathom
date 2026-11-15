@@ -65,12 +65,15 @@ const cycle = {
   fourth: "2027-10-01",
 };
 
-// A live stream of quarters from the start of 2027, made until the day given.
-async function liveStream(cyclesUntil = "2029-01-01"): Promise<string> {
+// A live schedule of quarters from the start of 2027, ending on the day given, if any.
+async function liveStream(endsOn: string | null = null): Promise<string> {
   const id = randomUUID();
-  await test.connection
-    .insert(releaseStreams)
-    .values({ id, name: unique("Fictional Stream"), cyclesUntil });
+  await test.connection.insert(releaseStreams).values({
+    id,
+    name: unique("Fictional Stream"),
+    cyclesUntil: "2029-01-01",
+    endsOn,
+  });
   await test.connection.insert(cyclePatterns).values({
     streamId: id,
     startsOn: cycle.first,
@@ -513,13 +516,13 @@ describe("target cycles", () => {
     });
   });
 
-  it("refuses a day that starts none of the stream's cycles", async () => {
+  it("refuses a day that starts none of the schedule's cycles", async () => {
     const response = await post({
       name: unique("Fictional Feature"),
       ...target(await liveStream(), "2027-02-01"),
     });
     expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toBe("Choose a cycle of the feature's stream");
+    expect(errorOf(response)).toBe("Choose a cycle of the feature's schedule");
   });
 
   it("refuses a stream that does not exist", async () => {
@@ -834,7 +837,7 @@ describe("when a stream's cycles change", () => {
     expect(response.statusCode).toBe(409);
   });
 
-  it("refuses a change that would push a feature past the stream's plan", async () => {
+  it("refuses a change that would push a feature past the day its schedule ends", async () => {
     const streamId = await liveStream("2027-10-15");
     const feature = await liveFeature(target(streamId, cycle.fourth));
     const response = await changeLength(streamId, cycle.second, 6);
@@ -848,23 +851,8 @@ describe("when a stream's cycles change", () => {
     const response = await test.request(
       configurer.cookie,
       "PUT",
-      `/api/release-streams/${streamId}/cycles-until`,
-      { cyclesUntil: "2029-01-01", endsOn: "2027-09-30" },
-    );
-    expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toBe(
-      `The feature ${feature.name} targets a cycle after that day; change it first`,
-    );
-  });
-
-  it("refuses moving Cycles until earlier than a cycle a feature targets", async () => {
-    const streamId = await liveStream();
-    const feature = await liveFeature(target(streamId, cycle.fourth));
-    const response = await test.request(
-      configurer.cookie,
-      "PUT",
-      `/api/release-streams/${streamId}/cycles-until`,
-      { cyclesUntil: "2027-08-01", endsOn: null },
+      `/api/release-streams/${streamId}/ends-on`,
+      { endsOn: "2027-09-30" },
     );
     expect(response.statusCode).toBe(409);
     expect(errorOf(response)).toBe(
@@ -883,7 +871,7 @@ describe("when a stream's cycles change", () => {
     );
     expect(response.statusCode).toBe(409);
     expect(errorOf(response)).toBe(
-      `The feature ${feature.name} would no longer target a cycle of its stream; change it first`,
+      `The feature ${feature.name} would no longer target a cycle of its schedule; change it first`,
     );
   });
 
@@ -904,7 +892,7 @@ describe("when a stream's cycles change", () => {
 
     expect(response.statusCode).toBe(409);
     expect(errorOf(response)).toBe(
-      "Work planned on these cycles would no longer fit the stream's cycles",
+      "Work planned on these cycles would no longer fit the schedule's cycles",
     );
   });
 

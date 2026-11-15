@@ -72,7 +72,7 @@ const movedMilestoneDays = 30;
 const draftedEstimateHours = 720;
 const heldEstimateHours = 1500;
 // The cycles after the moved release's last before the one the release drafted adding is on.
-const addedReleaseGap = 2;
+const addedReleaseGap = 1;
 // The colours drafted for the renamed release and the release whose colour is rejected.
 const renamedReleaseColour = "teal";
 const refusedReleaseColour = "red";

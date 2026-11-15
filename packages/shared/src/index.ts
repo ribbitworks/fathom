@@ -168,7 +168,7 @@ export {
   endsTooEarly,
   hasEnded,
   horizonFrom,
-  lastStartOf,
+  longestCycle,
   type LaterCycles,
   laterCyclesSchema,
   type LengthChange,
@@ -177,8 +177,9 @@ export {
   movedCycles,
   namingTokens,
   patternsForLength,
+  pastAnyMove,
   patternStartFits,
-  type StreamSpan,
+  type ScheduleEnd,
   yearsAhead,
 } from "./cycles.ts";
 export {
@@ -349,8 +350,6 @@ export {
   cyclePatternRequestSchema,
   cyclePatternSchema,
   cycleSchema,
-  cyclesUntilRequestSchema,
-  longestCycle,
   movedReleases,
   namesPlannedWork,
   type Release,
@@ -368,6 +367,7 @@ export {
   type ReleaseStreamRequest,
   releaseStreamRequestSchema,
   releaseStreamSchema,
+  scheduleEndRequestSchema,
   type ReleaseStreams,
   releaseStreamsSchema,
 } from "./releases.ts";

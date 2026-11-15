@@ -239,7 +239,7 @@ export function FeatureBoard({
         </AppMenu.Target>
         <AppMenu.Dropdown>
           <MenuChoices
-            label="Release stream"
+            label="Schedule"
             choices={offeredStreams(shownStreams, retired, stream).map(
               ({ id, name }) => {
                 const own = streams.find((one) => one.id === id);

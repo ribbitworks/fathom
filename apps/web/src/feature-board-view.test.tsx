@@ -470,7 +470,7 @@ describe("a card's menu", () => {
   });
 });
 
-describe("the strip and the Stream menu", () => {
+describe("the strip and the Schedule menu", () => {
   it("steps by cycle, and Today goes back to the current one", async () => {
     await openBoard();
     await userEvent.click(screen.getByRole("button", { name: "Next cycle" }));
@@ -503,11 +503,12 @@ describe("the strip and the Stream menu", () => {
     ).toBe(true);
   });
 
-  it("offers streams not retired as they are live, and shows the one chosen", async () => {
+  it("offers schedules not retired as they are live, under Schedule, and shows the one chosen", async () => {
     const history = await openBoard();
     await userEvent.click(
-      screen.getByRole("button", { name: "Stream: Fictional Majors" }),
+      screen.getByRole("button", { name: "Schedule: Fictional Majors" }),
     );
+    expect(await screen.findByRole("group", { name: "Schedule" })).toBeTruthy();
     expect(
       (await screen.findAllByRole("menuitem")).map(({ textContent }) =>
         textContent.replace(", chosen", ""),
@@ -519,7 +520,7 @@ describe("the strip and the Stream menu", () => {
       }),
     );
     expect(
-      screen.getByRole("button", { name: "Stream: Fictional Minors" }),
+      screen.getByRole("button", { name: "Schedule: Fictional Minors" }),
     ).toBeTruthy();
     expect(history.location.search).toContain(retiring.id);
   });

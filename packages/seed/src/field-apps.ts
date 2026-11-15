@@ -11,7 +11,7 @@ import {
   addDays,
   addMonths,
   addToMonth,
-  lastDayOfMonth,
+  horizonFrom,
   monthOf,
 } from "@fathom/shared";
 import type { SeededFeature } from "./features.ts";
@@ -24,27 +24,24 @@ export const fieldAppsKeys = {
 } as const;
 
 // The current cycle starts on the first of the month this many months before the seed day's, so a
-// fresh seed is always about two thirds through it; cycles start this many before it, and are
-// planned this many years on.
+// fresh seed is always about two thirds through it, and cycles start this many before it.
 const fieldAppsDates = {
   monthsIntoCycle: 4,
   cycleMonths: 6,
   cyclesBefore: 2,
-  yearsPlanned: 2,
 } as const;
 
 // How many days after its last cycle's end Lantern 2 ships.
 const shipsAfterDays = 14;
 
 export function fieldAppsStream(today: string): SeededStream {
-  const { monthsIntoCycle, cycleMonths, cyclesBefore, yearsPlanned } =
-    fieldAppsDates;
+  const { monthsIntoCycle, cycleMonths, cyclesBefore } = fieldAppsDates;
   const current = `${addToMonth(monthOf(today), -monthsIntoCycle)}-01`;
   const cycle = (offset: number) => addMonths(current, offset * cycleMonths);
   const [first, second, third] = fieldAppsKeys.releases;
   return {
     name: fieldAppsKeys.name,
-    cyclesUntil: lastDayOfMonth(addMonths(today, yearsPlanned * 12)),
+    cyclesUntil: horizonFrom(today),
     patterns: [
       {
         key: fieldAppsKeys.patterns[0],

@@ -43,7 +43,7 @@ const node = (
 // A stream drafted to be added, a change of its cycles that uses it, and a release that uses the
 // change of cycles, so uses the stream through it. Another release has no draft.
 const nodes = [
-  node(stream, "the release stream Fictional Majors", recordDraft()),
+  node(stream, "the schedule Fictional Majors", recordDraft()),
   node(
     pattern,
     "the cycles of Fictional Majors from 2027-01-01",
@@ -111,7 +111,7 @@ describe("rejected drafts of the plan's records", () => {
 describe("the plan's records named and combined", () => {
   it("names the records given, as the Drafts page names them", () => {
     expect(recordNames([release, stream], nodes)).toEqual([
-      "the release stream Fictional Majors",
+      "the schedule Fictional Majors",
       "the release Fictional One in Fictional Majors",
     ]);
   });

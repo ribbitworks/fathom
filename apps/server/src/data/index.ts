@@ -18,7 +18,6 @@ import type {
   ChoiceRequest,
   CycleLengthRequest,
   CyclePatternRequest,
-  StreamSpan,
   DraftsAsked,
   Field,
   FieldRequest,
@@ -247,10 +246,10 @@ export interface ReleaseAccess {
     id: string,
     change: Partial<ReleaseStreamRequest & RetiredRequest>,
   ): Promise<Saved<ReleaseStream>>;
-  changeStreamSpan(
+  setStreamEnd(
     actor: Actor,
     id: string,
-    request: StreamSpan,
+    endsOn: string | null,
   ): Promise<Saved<ReleaseStream>>;
   addPattern(
     actor: Actor,
@@ -752,8 +751,8 @@ function createReleaseAccess(database: Database): ReleaseAccess {
       releases.createStream(database, streams(actor), request),
     updateStream: async (actor, id, change) =>
       releases.updateStream(database, streams(actor), id, change),
-    changeStreamSpan: async (actor, id, request) =>
-      releases.changeStreamSpan(database, streams(actor), id, request),
+    setStreamEnd: async (actor, id, endsOn) =>
+      releases.setStreamEnd(database, streams(actor), id, endsOn),
     addPattern: async (actor, streamId, request) =>
       releases.addToStream(database, streams(actor), streamId, {
         type: "cycle-pattern",

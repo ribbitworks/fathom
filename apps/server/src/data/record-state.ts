@@ -51,7 +51,7 @@ export interface RecordKind {
   // The kind of owner holding values in the columns added to the kind's table, for a kind that can
   // have them, and the table.
   addedColumns?: { owner: ValueOwner; table: ColumnTable };
-  // The record as the Drafts page names it, such as "the release stream Major".
+  // The record as the Drafts page names it, such as "the schedule Major".
   subject: (state: RecordsState, id: string) => string;
   // The record as named to a role that can't read the kind, such as "a release".
   unseenSubject: string;

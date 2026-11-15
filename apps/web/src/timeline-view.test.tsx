@@ -341,9 +341,9 @@ describe("a view's own rows", () => {
     const timeline = showTimeline({ rows: ownRows("2027-05-20") });
     expect(
       within(timeline)
-        .getAllByRole("list", { name: /^(Release streams|Fictional rows)$/ })
+        .getAllByRole("list", { name: /^(Schedules|Fictional rows)$/ })
         .map((list) => list.getAttribute("aria-label")),
-    ).toEqual(["Release streams", "Fictional rows"]);
+    ).toEqual(["Schedules", "Fictional rows"]);
     const row = within(
       within(timeline).getByRole("list", { name: "Fictional rows" }),
     ).getByRole("listitem");
@@ -363,7 +363,7 @@ describe("a view's own rows", () => {
   it("shows the view's rows alone without a release layer", () => {
     const timeline = showTimeline({ streams: [], rows: ownRows("2027-05-20") });
     expect(
-      within(timeline).queryByRole("list", { name: "Release streams" }),
+      within(timeline).queryByRole("list", { name: "Schedules" }),
     ).toBeNull();
     expect(
       within(timeline).getByRole("list", { name: "Fictional rows" }),

@@ -11,7 +11,6 @@ import {
   capitalized,
   type CyclePattern,
   hasEnded,
-  lastStartOf,
   type RecordDraft,
   type RecordKeyOf,
   type RecordRef,
@@ -72,7 +71,7 @@ interface StreamValues {
   schedule: string;
   releases: string;
   nextRelease: string;
-  cyclesUntil: string;
+  endsOn: string;
 }
 
 export interface StreamRow extends GridRecord, StreamValues {
@@ -116,7 +115,7 @@ function valuesOf(stream: ReleaseStream, day: string): StreamValues {
       .map(({ name }) => name)
       .join(", "),
     nextRelease: nextReleaseWords(stream, day),
-    cyclesUntil: lastStartOf(stream),
+    endsOn: stream.endsOn ?? "",
   };
 }
 
@@ -363,7 +362,7 @@ function columns(day: string): Column<StreamRow, never>[] {
     });
   return [
     {
-      ...text("name", "Stream"),
+      ...text("name", "Schedule"),
       mark: (row) => <EndedBox stream={row.stream} day={day} />,
     },
     {
@@ -380,8 +379,8 @@ function columns(day: string): Column<StreamRow, never>[] {
     },
     { ...text("nextRelease", "Next release"), breaksDown: false },
     {
-      ...fieldColumn<StreamRow, never>("cyclesUntil", "date", {
-        label: "Planned to",
+      ...fieldColumn<StreamRow, never>("endsOn", "date", {
+        label: "Schedule ends",
         required: false,
         multiple: false,
         choices: [],
@@ -396,7 +395,7 @@ export const streamColumnOrder = [
   "schedule",
   "releases",
   "nextRelease",
-  "cyclesUntil",
+  "endsOn",
 ];
 
 const decidableRefs = (

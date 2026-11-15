@@ -14,7 +14,7 @@ import {
   type DraftState,
   hasEnded,
   type Show,
-  type StreamSpan,
+  type ScheduleEnd,
   type Tier,
 } from "@fathom/shared";
 import { Text, VisuallyHidden } from "@mantine/core";
@@ -559,8 +559,14 @@ export function FactBox({
   );
 }
 
-// A release stream's Ended, once its last day has passed.
-export function EndedBox({ stream, day }: { stream: StreamSpan; day: string }) {
+// A schedule's Ended, once its last day has passed.
+export function EndedBox({
+  stream,
+  day,
+}: {
+  stream: ScheduleEnd;
+  day: string;
+}) {
   return hasEnded(stream, day) && <FactBox>Ended</FactBox>;
 }
 

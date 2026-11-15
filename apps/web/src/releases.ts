@@ -12,8 +12,7 @@ import {
   type CycleLengthRequest,
   type CyclePatternRequest,
   cyclesOf,
-  type StreamSpan,
-  lastStartOf,
+  pastAnyMove,
   movedCycles,
   movedReleases,
   patternsForLength,
@@ -67,11 +66,11 @@ export const setStreamRetired = (
 ): Promise<SavedStream> =>
   sendJsonFor("PUT", `${streamPath(id)}/retired`, { retired }, streamResponse);
 
-export const setStreamSpan = (
+export const setStreamEnd = (
   id: string,
-  span: StreamSpan,
+  endsOn: string | null,
 ): Promise<SavedStream> =>
-  sendJsonFor("PUT", `${streamPath(id)}/cycles-until`, span, streamResponse);
+  sendJsonFor("PUT", `${streamPath(id)}/ends-on`, { endsOn }, streamResponse);
 
 type Member = "patterns" | "releases";
 
@@ -179,7 +178,8 @@ export function lengthChangeOf(
       problem: made.problem,
     };
   }
-  const cycles = cyclesOf(made.patterns, stream.cyclesUntil, stream.endsOn);
+  const until = pastAnyMove(stream.cyclesUntil);
+  const cycles = cyclesOf(made.patterns, until, stream.endsOn);
   const kept = keptReleases(stream);
   const moved = movedCycles(stream.cycles, cycles);
   const moving = movedReleases(
@@ -198,7 +198,7 @@ export function lengthChangeOf(
         })),
     ],
     moved,
-    lastStartOf(stream),
+    stream.endsOn ?? until,
     stream.name,
     permissions,
   );
@@ -434,10 +434,10 @@ export function releaseCycles(
   return first === last ? first : `${first} to ${last}`;
 }
 
-// What a release stream is called, one and several, wherever a table names its kind.
+// What a schedule is called, one and several, wherever a table names its kind.
 export const streamNames = {
-  one: "release stream",
-  noun: "release streams",
+  one: "schedule",
+  noun: "schedules",
 } as const;
 
 // How decisions name a stream, a change of its cycles, and a release.

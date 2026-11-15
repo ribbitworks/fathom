@@ -16,7 +16,6 @@ import {
   type Cycle,
   type CyclePattern,
   type DraftKind,
-  lastStartOf,
   type RecordDraft,
   type RecordRef,
   type Release,
@@ -58,7 +57,6 @@ import classes from "./pages.module.css";
 import type { RecordNode } from "./record-drafts.ts";
 import {
   CycleLengthDialog,
-  CyclesUntilDialog,
   EndsDialog,
   PatternDialog,
   ReleaseDialog,
@@ -127,7 +125,6 @@ import { planNodes, projectPlanQuery } from "./projects.ts";
 type Dialog =
   | { kind: "stream"; stream?: ReleaseStream }
   | { kind: "pattern"; stream: ReleaseStream; pattern?: CyclePattern }
-  | { kind: "cycles-until"; stream: ReleaseStream }
   | { kind: "ends"; stream: ReleaseStream }
   | { kind: "cycle-length"; stream: ReleaseStream; cycle: Cycle }
   | { kind: "release"; stream: ReleaseStream; release?: Release };
@@ -155,11 +152,8 @@ function focusRelease(release: { id: string }) {
 const dialogTitle = (dialog: Dialog): string => {
   if (dialog.kind === "stream") {
     return dialog.stream === undefined
-      ? "New release stream"
+      ? "New schedule"
       : `Rename ${dialog.stream.name}`;
-  }
-  if (dialog.kind === "cycles-until") {
-    return `Change how far ahead ${dialog.stream.name}'s cycles are made`;
   }
   if (dialog.kind === "ends") {
     return `Change when ${dialog.stream.name} ends`;
@@ -397,10 +391,14 @@ function Patterns({
       </div>
       <Group gap="xs" mih={36}>
         <Text fz="sm">
-          {stream.endsOn === null ? "Cycles until" : "Ends"}{" "}
-          <span className={classes.figures}>
-            {formatDay(lastStartOf(stream))}
-          </span>
+          Schedule ends{" "}
+          {stream.endsOn === null ? (
+            <Text span fz="sm" c="dimmed">
+              No end date
+            </Text>
+          ) : (
+            <span className={classes.figures}>{formatDay(stream.endsOn)}</span>
+          )}
         </Text>
       </Group>
       {editable && stream.patterns.length > 0 && (
@@ -411,21 +409,12 @@ function Patterns({
             </Button>
           </Menu.Target>
           <Menu.Dropdown>
-            {stream.endsOn === null && (
-              <Menu.Item
-                onClick={() => {
-                  actions.open({ kind: "cycles-until", stream });
-                }}
-              >
-                Cycles until…
-              </Menu.Item>
-            )}
             <Menu.Item
               onClick={() => {
                 actions.open({ kind: "ends", stream });
               }}
             >
-              Ends…
+              Schedule ends…
             </Menu.Item>
             <Menu.Item
               onClick={() => {
@@ -899,7 +888,7 @@ export function ReleasesPage({
     return (
       <Alert color="red" role="alert">
         <Group justify="space-between">
-          Fathom could not load the release streams.
+          Fathom could not load the schedules.
           <Button
             variant="light"
             color="red"
@@ -932,7 +921,7 @@ export function ReleasesPage({
               ...shown,
               retired: on ? true : undefined,
             }),
-            part: { name: "Show", value: "Retired streams" },
+            part: { name: "Show", value: "Retired schedules" },
           },
         ]
       : [];
@@ -1090,7 +1079,7 @@ export function ReleasesPage({
         {
           key: "stream",
           id: panelId,
-          name: "the stream's panel",
+          name: "the schedule's panel",
           node: (
             <StreamPanel
               key={open.id}
@@ -1131,14 +1120,14 @@ export function ReleasesPage({
                 setDialog({ kind: "stream" });
               }}
             >
-              New release stream
+              New schedule
             </Button>
           )
         }
       />
       {all.length === 0 ? (
         <Text fz="sm" c="dimmed">
-          No release streams yet.
+          No schedules yet.
         </Text>
       ) : (
         <TableTips>
@@ -1193,7 +1182,7 @@ export function ReleasesPage({
             streams={all}
             onSaved={
               dialog.stream === undefined
-                ? saved("Drafted the new release stream.", true)
+                ? saved("Drafted the new schedule.", true)
                 : saved("Drafted the new name.")
             }
             {...savingProps}
@@ -1208,13 +1197,6 @@ export function ReleasesPage({
                 ? "Drafted the cycles."
                 : "Drafted the change to the cycles.",
             )}
-            {...savingProps}
-          />
-        )}
-        {dialog?.kind === "cycles-until" && (
-          <CyclesUntilDialog
-            stream={dialog.stream}
-            onSaved={saved("Drafted the change to the cycles.")}
             {...savingProps}
           />
         )}

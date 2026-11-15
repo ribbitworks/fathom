@@ -1813,7 +1813,7 @@ describe("the Features page", () => {
 
       // Then Includes names the board, and the view keeps its choices alone
       expect(dialog.textContent).toContain(
-        "Stream Fictional Stream, Card Key, Status, Priority, Size, Needed by, Staffed months",
+        "Schedule Fictional Stream, Card Key, Status, Priority, Size, Needed by, Staffed months",
       );
       await userEvent.type(
         within(dialog).getByRole("textbox", { name: "Name" }),

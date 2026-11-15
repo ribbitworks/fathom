@@ -1,17 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Release streams, their cycle patterns, and their releases: reading every stream, with its cycles;
-// drafting streams added, renamed, retired, restored, and given the day their cycles are made
-// until, patterns and releases added, changed, and removed, a release's note, and one cycle given a
-// new length; and discarding the drafts of the plan's records, of any kind, or sending rejected
-// ones for approval again. Every change answers with the change set it was saved in. The data
-// access layer checks the actor's permissions.
+// Schedules, their cycle patterns, and their releases: reading every schedule, with its cycles laid
+// out two years ahead; drafting schedules added, renamed, retired, restored, and given a last day,
+// patterns and releases added, changed, and removed, a release's note, and one cycle given a new
+// length; and discarding the drafts of the plan's records, of any kind, or sending rejected ones
+// for approval again. Every change answers with the change set it was saved in. The data access
+// layer checks the actor's permissions.
 
 import {
   changeSetIdSchema,
   cycleLengthRequestSchema,
   cyclePatternRequestSchema,
-  cyclesUntilRequestSchema,
   daySchema,
   recordRefIdSchema,
   recordTypeSchema,
@@ -23,6 +22,7 @@ import {
   releaseStreamsSchema,
   retiredRequestSchema,
   savedSchema,
+  scheduleEndRequestSchema,
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
@@ -116,19 +116,19 @@ export function releaseRoutes(
     );
 
     app.put(
-      "/api/release-streams/:streamId/cycles-until",
+      "/api/release-streams/:streamId/ends-on",
       {
         schema: {
           params: streamParams,
-          body: cyclesUntilRequestSchema,
+          body: scheduleEndRequestSchema,
           response: { 200: streamResponse },
         },
       },
       async (request) => {
-        const { result, changeSetId } = await releases.changeStreamSpan(
+        const { result, changeSetId } = await releases.setStreamEnd(
           request.actor,
           request.params.streamId,
-          request.body,
+          request.body.endsOn,
         );
         return { stream: result, changeSetId };
       },

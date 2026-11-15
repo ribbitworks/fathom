@@ -188,7 +188,7 @@ export function TimelineView({
     const releaseRows = layerRows(frame.from);
     return [
       ...(releaseRows.length > 0
-        ? [{ name: "Release streams", rows: releaseRows }]
+        ? [{ name: "Schedules", rows: releaseRows }]
         : []),
       ...(rows === undefined ? [] : [rows]),
     ];

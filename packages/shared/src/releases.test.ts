@@ -102,7 +102,7 @@ describe("planSubjects", () => {
       planSubjects.pattern("Fictional Majors", "2027-07-01"),
       planSubjects.release("Fictional One", "Fictional Majors"),
     ]).toEqual([
-      "the release stream Fictional Majors",
+      "the schedule Fictional Majors",
       "the cycles of Fictional Majors from 2027-07-01",
       "the release Fictional One in Fictional Majors",
     ]);
@@ -166,7 +166,7 @@ describe("releases moved with their cycles", () => {
       ),
     ).toEqual({
       problem:
-        "Fictional Later would move past 2027-12-31, the end of Fictional Majors's plan.",
+        "Fictional Later would move past 2027-12-31, the day Fictional Majors ends.",
     });
   });
 
@@ -203,7 +203,7 @@ describe("releases moved with their cycles", () => {
         ),
       ).toEqual({
         problem:
-          "Work planned on these cycles would move past 2027-12-31, the end of Fictional Majors's plan.",
+          "Work planned on these cycles would move past 2027-12-31, the day Fictional Majors ends.",
       });
     });
 

@@ -868,7 +868,7 @@ describe("the seed command", () => {
     expect(log.mock.calls.map(([line]) => line as string)).toEqual([
       "Added 150 fictional people, with their lists and columns",
       "Added 12 fictional planned hires",
-      "Added fictional release streams, with their cycles and releases",
+      "Added fictional schedules, with their cycles and releases",
       "Added fictional features",
       "Added fictional customers, proposals, and projects with their milestones",
       "Added fictional allocations",
@@ -1069,7 +1069,7 @@ describe("the seed command", () => {
       "error: Usage: seed.ts seed | unseed | accounts",
       expect.stringMatching(/^error: /),
       "error: FATHOM_SEED_PASSWORD_FILE is not set",
-      "error: A list, column, release stream, feature, customer, project, proposal, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again",
+      "error: A list, column, schedule, feature, customer, project, proposal, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again",
     ]);
   });
 

@@ -11,7 +11,7 @@ type NodeDraft = Omit<RecordDraft, "live"> & { live: object };
 
 export interface RecordNode {
   ref: RecordRef;
-  // The record as the Drafts page names it, such as "the release stream Platform".
+  // The record as the Drafts page names it, such as "the schedule Platform".
   subject: string;
   draft: NodeDraft | undefined;
   heldBy: string | undefined;

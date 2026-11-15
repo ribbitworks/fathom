@@ -125,7 +125,7 @@ describe("the Releases page", () => {
     });
     renderApp("/releases/s1");
     const edge = await screen.findByRole("separator", {
-      name: "Resize the stream's panel",
+      name: "Resize the schedule's panel",
     });
     fireEvent.click(edge);
     expect(
@@ -168,7 +168,7 @@ const release = fictionalRelease();
 
 type Answers = Parameters<typeof serverAnswers>[0];
 
-// Opens the stream's panel, with the streams given, and any other answers the test needs.
+// Opens the schedule's panel, with the streams given, and any other answers the test needs.
 async function openStream(
   shown: ReleaseStream[],
   {
@@ -199,11 +199,10 @@ async function chooseInMenu(of: string, item: string) {
   await userEvent.click(await screen.findByRole("menuitem", { name: item }));
 }
 
-const streamsGrid = () =>
-  screen.findByRole("grid", { name: "Release streams" });
+const streamsGrid = () => screen.findByRole("grid", { name: "Schedules" });
 // The rows of the table, after its header, as read.
 const rowTexts = () =>
-  within(screen.getByRole("grid", { name: "Release streams" }))
+  within(screen.getByRole("grid", { name: "Schedules" }))
     .getAllByRole("row")
     .slice(1)
     .map(({ textContent }) => textContent);
@@ -230,7 +229,7 @@ describe("the table of release streams", () => {
     vi.useRealTimers();
   });
 
-  it("shows each stream's cycles in force, releases, next release and how far its cycles are made", async () => {
+  it("shows each schedule's cycles in force, releases, next release and the day it ends", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
     serverAnswers({
@@ -242,8 +241,8 @@ describe("the table of release streams", () => {
     renderApp("/releases");
     await streamsGrid();
     expect(rowTexts()).toEqual([
-      "Current1 release stream",
-      "Fictional MajorsEvery 3 months, named {YY}.{N}(1) Fictional OneFictional One, ships Mar 31, 2027Dec 31, 2027",
+      "Current1 schedule",
+      "Fictional MajorsEvery 3 months, named {YY}.{N}(1) Fictional OneFictional One, ships Mar 31, 2027",
     ]);
   });
 
@@ -257,7 +256,7 @@ describe("the table of release streams", () => {
     renderApp("/releases");
     await streamsGrid();
     expect(rowTexts().at(1)).toBe(
-      "Fictional MajorsEvery 3 months, named {YY}.{N}Dec 31, 2027",
+      "Fictional MajorsEvery 3 months, named {YY}.{N}",
     );
   });
 
@@ -280,9 +279,9 @@ describe("the table of release streams", () => {
     );
     await detailsOf("Fictional Old");
     expect(rowTexts().map((text) => text.slice(0, 13))).toEqual([
-      "Current1 rele",
+      "Current1 sche",
       "Fictional New",
-      "Retired1 rele",
+      "Retired1 sche",
       "Fictional Old",
     ]);
     expect(history.location.search).toContain("retired=true");
@@ -321,7 +320,7 @@ describe("the table of release streams", () => {
       await screen.findByRole("menuitem", { name: "Save view…" }),
     );
     const dialog = await screen.findByRole("dialog", { name: "Save view" });
-    expect(within(dialog).getByText("Retired streams")).toBeDefined();
+    expect(within(dialog).getByText("Retired schedules")).toBeDefined();
     await userEvent.type(
       within(dialog).getByRole("textbox"),
       "Everything{Enter}",
@@ -464,10 +463,10 @@ describe("the table of release streams", () => {
     renderApp("/releases?retired=true");
     await detailsOf("Fictional E");
     expect(rowTexts().map((text) => text.replace(/Every.*$/, ""))).toEqual([
-      "Current2 release streams",
+      "Current2 schedules",
       "Fictional A, Draft: added, draft",
       "Fictional DRetired, Draft: retired",
-      "Retired1 release stream",
+      "Retired1 schedule",
       "Fictional E, Rejected, restored",
     ]);
   });
@@ -563,7 +562,7 @@ describe("the table of release streams", () => {
     renderApp("/releases");
     await detailsOf("Fictional Patches");
     await userEvent.type(
-      screen.getByRole("textbox", { name: "Search release streams" }),
+      screen.getByRole("textbox", { name: "Search schedules" }),
       "patch",
     );
     await waitFor(() => {
@@ -596,7 +595,7 @@ describe("the table of release streams", () => {
     expect(rowTexts().map((text) => text.slice(0, 13))).toEqual([
       "Every 3 month",
       "Fictional Maj",
-      "None1 release",
+      "None1 schedul",
       "Fictional New",
     ]);
   });
@@ -638,7 +637,7 @@ describe("the table of release streams", () => {
       "GET /api/release-streams": answer([]),
     });
     renderApp("/releases");
-    expect(await screen.findByText("No release streams yet.")).toBeDefined();
+    expect(await screen.findByText("No schedules yet.")).toBeDefined();
   });
 
   it("says when the streams cannot be loaded, and loads them when tried again", async () => {
@@ -785,7 +784,7 @@ describe("a stream's panel", () => {
   });
 
   it("shows the cycle schedule's days with a short month and the year", async () => {
-    await openStream([fictionalStream()]);
+    await openStream([fictionalStream({ endsOn: "2027-12-31" })]);
     expect([
       within(section("Cycle schedule")).getByText("From Jan 1, 2027"),
       within(section("Cycle schedule")).getByText("Dec 31, 2027"),
@@ -859,7 +858,7 @@ describe("a stream's panel", () => {
   it("stays open when the search field is clicked, so what is typed goes there", async () => {
     const { history } = await openStream([fictionalStream()]);
     const search = screen.getByRole("textbox", {
-      name: "Search release streams",
+      name: "Search schedules",
     });
     await userEvent.click(search);
     expect([history.location.pathname, document.activeElement]).toEqual([
@@ -913,21 +912,19 @@ describe("changing streams", () => {
     });
     const history = renderApp("/releases");
     await userEvent.click(
-      await screen.findByRole("button", { name: "New release stream" }),
+      await screen.findByRole("button", { name: "New schedule" }),
     );
     const dialog = await screen.findByRole("dialog", {
-      name: "New release stream",
+      name: "New schedule",
     });
     await userEvent.type(
       within(dialog).getByRole("textbox", { name: "Name" }),
       "Fictional Minors",
     );
     await userEvent.click(
-      within(dialog).getByRole("button", { name: "Add stream" }),
+      within(dialog).getByRole("button", { name: "Add schedule" }),
     );
-    expect(
-      await screen.findByText("Drafted the new release stream."),
-    ).toBeDefined();
+    expect(await screen.findByText("Drafted the new schedule.")).toBeDefined();
     await waitFor(() => {
       expect(history.location.pathname).toBe(`/releases/${added.id}`);
     });
@@ -1171,10 +1168,10 @@ describe("changing a stream's cycles", () => {
     ).toEqual(["Discard draft"]);
   });
 
-  it("changes the day the cycles end", async () => {
+  it("ends the schedule on a day from Schedule ends…", async () => {
     await openStream([fictionalStream()], {
       can: editsAll,
-      answers: { [`PUT ${streamPath}/cycles-until`]: saved },
+      answers: { [`PUT ${streamPath}/ends-on`]: saved },
     });
     await userEvent.click(
       within(section("Cycle schedule")).getByRole("button", {
@@ -1182,35 +1179,13 @@ describe("changing a stream's cycles", () => {
       }),
     );
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Cycles until…" }),
-    );
-    const dialog = await screen.findByRole("dialog", {
-      name: "Change how far ahead Fictional Majors's cycles are made",
-    });
-    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(
-      await screen.findByText("Drafted the change to the cycles."),
-    ).toBeDefined();
-  });
-
-  it("ends the stream on a day from Ends…", async () => {
-    await openStream([fictionalStream()], {
-      can: editsAll,
-      answers: { [`PUT ${streamPath}/cycles-until`]: saved },
-    });
-    await userEvent.click(
-      within(section("Cycle schedule")).getByRole("button", {
-        name: "Change…",
-      }),
-    );
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Ends…" }),
+      await screen.findByRole("menuitem", { name: "Schedule ends…" }),
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Change when Fictional Majors ends",
     });
     await userEvent.type(
-      within(dialog).getByRole("textbox", { name: "Ends" }),
+      within(dialog).getByRole("textbox", { name: "Schedule ends" }),
       "20270515",
     );
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -1219,13 +1194,13 @@ describe("changing a stream's cycles", () => {
     ).toBeDefined();
   });
 
-  it("reads Cycles until and its day for a stream that keeps going, or Ends and its last day", async () => {
+  it("reads Schedule ends with No end date for a schedule that keeps going, or its last day", async () => {
     const line = async (stream: ReleaseStream) => {
       await openStream([stream], { can: editsAll });
       const words = within(section("Cycle schedule")).getByText(
         (_text, element) =>
           element?.tagName === "P" &&
-          /^(Cycles until|Ends) /.test(element.textContent),
+          element.textContent.startsWith("Schedule ends "),
       ).textContent;
       cleanup();
       return words;
@@ -1233,30 +1208,21 @@ describe("changing a stream's cycles", () => {
     expect([
       await line(fictionalStream()),
       await line(fictionalStream({ endsOn: "2027-05-15" })),
-    ]).toEqual(["Cycles until Dec 31, 2027", "Ends May 15, 2027"]);
+    ]).toEqual(["Schedule ends No end date", "Schedule ends May 15, 2027"]);
   });
 
-  it("offers Ends…, and Cycles until… only while the stream keeps going", async () => {
-    const offered = async (stream: ReleaseStream) => {
-      await openStream([stream], { can: editsAll });
-      await userEvent.click(
-        within(section("Cycle schedule")).getByRole("button", {
-          name: "Change…",
-        }),
-      );
-      const items = (await screen.findAllByRole("menuitem")).map(
+  it("offers Schedule ends… and a change of length or names from a date", async () => {
+    await openStream([fictionalStream()], { can: editsAll });
+    await userEvent.click(
+      within(section("Cycle schedule")).getByRole("button", {
+        name: "Change…",
+      }),
+    );
+    expect(
+      (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
-      );
-      cleanup();
-      return items;
-    };
-    expect([
-      await offered(fictionalStream()),
-      await offered(fictionalStream({ endsOn: "2027-05-15" })),
-    ]).toEqual([
-      ["Cycles until…", "Ends…", "Length or names from a date…"],
-      ["Ends…", "Length or names from a date…"],
-    ]);
+      ),
+    ).toEqual(["Schedule ends…", "Length or names from a date…"]);
   });
 });
 
@@ -1393,7 +1359,7 @@ describe("the Draft menu", () => {
     }),
   ];
   const names = () =>
-    within(screen.getByRole("grid", { name: "Release streams" }))
+    within(screen.getByRole("grid", { name: "Schedules" }))
       .getAllByRole("button", { name: /^Show details of / })
       .map((button) =>
         button.getAttribute("aria-label")?.replace("Show details of ", ""),
@@ -1677,7 +1643,7 @@ describe("drafts in a stream's panel", () => {
       name: "Approve 2 drafts?",
     });
     expect(
-      within(dialog).getByText("the release stream Fictional Majors"),
+      within(dialog).getByText("the schedule Fictional Majors"),
     ).toBeDefined();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Approve" }),
@@ -2390,7 +2356,7 @@ describe("the timeline", () => {
         "Fictional One: 27.1, ships 2027-03-31. Live.",
       ]);
       expect(
-        within(items(timeline, "Release streams")[0] as HTMLElement).getByText(
+        within(items(timeline, "Schedules")[0] as HTMLElement).getByText(
           "Retired",
         ),
       ).toBeDefined();
@@ -2488,7 +2454,7 @@ describe("the timeline", () => {
       expect(names(timeline, "Releases of Fictional Majors")).toEqual([
         "Fictional One: 27.1, ships 2027-03-31. Being changed by Fictional Editor.",
       ]);
-      expect(items(timeline, "Release streams")[0]?.textContent).toContain(
+      expect(items(timeline, "Schedules")[0]?.textContent).toContain(
         "being changed by Fictional Editor",
       );
     });
@@ -2542,11 +2508,11 @@ describe("a release's note", () => {
     ).toBeNull();
   });
 
-  it("opens the note under the stream's panel, read only, to those who may not change releases, and closes it, putting focus back on its link", async () => {
+  it("opens the note under the schedule's panel, read only, to those who may not change releases, and closes it, putting focus back on its link", async () => {
     await openStream([fictionalStream({ releases: [noted] })]);
     await userEvent.click(noteButton());
     const opened = await notePanel();
-    // Under the stream's panel, as a person's note opens under their details.
+    // Under the schedule's panel, as a person's note opens under their details.
     expect(
       panel().compareDocumentPosition(opened) &
         Node.DOCUMENT_POSITION_FOLLOWING,
@@ -2636,7 +2602,7 @@ describe("a release's note", () => {
     expect((markdown as HTMLTextAreaElement).value).toBe("Kept");
   });
 
-  it("leaves the timeline and the stream's panel waiting, and opens no other stream, while the note is being changed", async () => {
+  it("leaves the timeline and the schedule's panel waiting, and opens no other stream, while the note is being changed", async () => {
     const other = fictionalStream({
       id: "10000000-0000-4000-8000-000000000002",
       name: "Fictional Other",

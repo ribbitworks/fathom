@@ -34,7 +34,7 @@ import {
   wholeText,
 } from "./test-support.tsx";
 
-// No release streams, for drafts of other kinds.
+// No schedules, for drafts of other kinds.
 const noStreams = () =>
   Response.json({ streams: [], canEditStreams: false, canEditReleases: false });
 
@@ -932,7 +932,7 @@ describe("the Drafts page", () => {
     });
   });
 
-  it("lists the plan's drafts for a role seeing only the plan, without asking for release streams", async () => {
+  it("lists the plan's drafts for a role seeing only the plan, without asking for schedules", async () => {
     const fetch = serverAnswers({
       "GET /api/session": session(["plan:view"]),
       "GET /api/projects": noPlan,
@@ -1036,7 +1036,7 @@ describe("the Drafts page", () => {
     });
     const app = renderApp("/drafts");
     expect(await entries()).toEqual([
-      "Fictional Majors, Draft: added | Added | Waiting |  | Release stream | Features and releases | Fictional Editor | Oct 30, 2026 | ",
+      "Fictional Majors, Draft: added | Added | Waiting |  | Schedule | Features and releases | Fictional Editor | Oct 30, 2026 | ",
       "Fictional Majors from Jan 1, 2027, Draft | Changed | Waiting | Length from 2 to 3 | Cycles | Features and releases | Fictional Editor | Oct 30, 2026 | ",
       "Fictional One in Fictional Majors, Draft: added | Added | Waiting |  | Release | Features and releases | Fictional Editor | Oct 30, 2026 | ",
     ]);
@@ -1052,7 +1052,7 @@ describe("the Drafts page", () => {
       name: "Approve 2 drafts?",
     });
     expect(
-      within(dialog).getByText("the release stream Fictional Majors"),
+      within(dialog).getByText("the schedule Fictional Majors"),
     ).toBeDefined();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Approve" }),
@@ -1184,7 +1184,7 @@ describe("the Drafts page", () => {
     ).toBeDefined();
   });
 
-  it("reloads the release streams after an approval, so a release's approved draft leaves the page", async () => {
+  it("reloads the schedules after an approval, so a release's approved draft leaves the page", async () => {
     const { fetch } = await openDrafts({
       "GET /api/session": session([
         "people:approve",

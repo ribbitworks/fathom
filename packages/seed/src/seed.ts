@@ -777,7 +777,7 @@ export async function seedCommand(
       }
       if (await seedReleases(database, organization.referenceDate)) {
         console.log(
-          "Added fictional release streams, with their cycles and releases",
+          "Added fictional schedules, with their cycles and releases",
         );
       }
       if (
@@ -889,7 +889,7 @@ export async function seedCommand(
     console.error(
       `error: ${
         hasDatabaseCode(error, databaseCodes.uniqueViolation)
-          ? "A list, column, release stream, feature, customer, project, proposal, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again"
+          ? "A list, column, schedule, feature, customer, project, proposal, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again"
           : describeFailure(error)
       }`,
     );

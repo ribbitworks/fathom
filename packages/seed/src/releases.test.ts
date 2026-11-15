@@ -16,7 +16,7 @@ import {
   releaseStreams,
 } from "@fathom/db";
 import { actorFor } from "@fathom/server/access";
-import { cyclesOf, noteProblem } from "@fathom/shared";
+import { cyclesOf, horizonFrom, noteProblem } from "@fathom/shared";
 import { createDataAccess } from "@fathom/server/data";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { eq, inArray, isNull } from "drizzle-orm";
@@ -141,7 +141,7 @@ describe("the streams as dated from a day", () => {
   function placed(on: string) {
     return new Map(
       seededStreams(on).flatMap((stream) => {
-        const cycles = cyclesOf(stream.patterns, stream.cyclesUntil);
+        const cycles = cyclesOf(stream.patterns, horizonFrom(on));
         return stream.releases.map(({ key, name, firstCycle, lastCycle }) => {
           const first = cycles.find(({ startsOn }) => startsOn === firstCycle);
           const last = cycles.find(({ startsOn }) => startsOn === lastCycle);
@@ -173,7 +173,7 @@ describe("the streams as dated from a day", () => {
     "on %s, start and end each release with its stream's cycles, in order, with none shared",
     (on) => {
       for (const stream of seededStreams(on)) {
-        const cycles = cyclesOf(stream.patterns, stream.cyclesUntil);
+        const cycles = cyclesOf(stream.patterns, horizonFrom(on));
         let after = -1;
         for (const { firstCycle, lastCycle } of stream.releases) {
           const first = cycles.findIndex(
@@ -267,7 +267,7 @@ describe("removing release streams", () => {
       lastCycle: "2027-07-01",
     });
     expect(await unseedReleases(connection)).toEqual([
-      "The Platform release stream, which has releases, cycles, or features added by hand",
+      "The Platform schedule, which has releases, cycles, or features added by hand",
     ]);
     expect(await streamNames()).toEqual(["Platform"]);
   });

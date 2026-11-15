@@ -100,7 +100,7 @@ export const permissionDescriptions: Record<
   },
   "features:approve": {
     allows:
-      "Approves or rejects drafts of features, releases, release streams, and cycle patterns.",
+      "Approves or rejects drafts of features, releases, schedules, and cycle patterns.",
     without: "Cannot approve drafts of features or releases.",
     needs: ["features:view", "configuration:view"],
   },
@@ -173,7 +173,7 @@ export const permissionDescriptions: Record<
   },
   "configuration:edit": {
     allows:
-      "Changes configuration, such as lists of choices, People's columns, and release streams.",
+      "Changes configuration, such as lists of choices, People's columns, and schedules.",
     without: "Cannot change configuration.",
   },
   "configuration:approve": {

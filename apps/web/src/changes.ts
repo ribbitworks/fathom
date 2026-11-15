@@ -104,11 +104,11 @@ const fieldNames = new Map([
   ...Object.entries(planningSettingNames),
   ["removalReasons", "Reasons for removing features"],
   ["externalId", "ID"],
-  ["targetStreamId", "Target stream"],
-  ["streamId", "Stream"],
+  ["targetStreamId", "Target schedule"],
+  ["streamId", "Schedule"],
   ["shipsOn", "Ships on"],
   ["cyclesUntil", "Cycles until"],
-  ["endsOn", "Ends"],
+  ["endsOn", "Schedule ends"],
   ["personId", "Person"],
   ["plannedHireId", "Planned hire"],
   ["featureId", "Feature"],
@@ -271,9 +271,9 @@ function thing({ kind, name, list }: ChangedRecord): string {
     case "saved-view":
       return `the view ${called}`;
     case "release-stream":
-      return `the release stream ${called}`;
+      return `the schedule ${called}`;
     case "cycle-pattern":
-      return list === null ? "a stream's cycles" : `the cycles of ${list}`;
+      return list === null ? "a schedule's cycles" : `the cycles of ${list}`;
     case "release":
       return list === null
         ? `the release ${called}`
@@ -340,7 +340,7 @@ const plurals = new Map([
   ["list-item", "choices"],
   ["field", "columns"],
   ["saved-view", "views"],
-  ["release-stream", "release streams"],
+  ["release-stream", "schedules"],
   ["cycle-pattern", "changes of cycles"],
   ["feature", "features"],
   ["release", "releases"],

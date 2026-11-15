@@ -18,14 +18,13 @@ import {
   cyclesOf,
   endsBeforeFirstCycle,
   endsTooEarly,
-  lastStartOf,
+  horizonFrom,
   namesPlannedWork,
   patternStartFits,
   type Permission,
   planSubjects,
   projectSubjects,
   type RecordRef,
-  type StreamSpan,
 } from "@fathom/shared";
 import type { Recorded } from "./drafts.ts";
 import {
@@ -59,8 +58,8 @@ const onCycles = [
     afterPlan: (name: string) =>
       `The release ${name} includes cycles after that day; change it first`,
     offCycles: (name: string) =>
-      `The release ${name} would no longer start and end with cycles of its stream; change it first`,
-    notOfStream: "Choose a first and last cycle of the release's stream",
+      `The release ${name} would no longer start and end with cycles of its schedule; change it first`,
+    notOfStream: "Choose a first and last cycle of the release's schedule",
   },
   {
     type: "feature",
@@ -68,8 +67,8 @@ const onCycles = [
     afterPlan: (name: string) =>
       `The feature ${name} targets a cycle after that day; change it first`,
     offCycles: (name: string) =>
-      `The feature ${name} would no longer target a cycle of its stream; change it first`,
-    notOfStream: "Choose a cycle of the feature's stream",
+      `The feature ${name} would no longer target a cycle of its schedule; change it first`,
+    notOfStream: "Choose a cycle of the feature's schedule",
   },
 ] as const;
 
@@ -78,7 +77,7 @@ const onCycles = [
 const unnamedRefusals = {
   afterPlan: "Work is planned on cycles after that day",
   offCycles:
-    "Work planned on these cycles would no longer fit the stream's cycles",
+    "Work planned on these cycles would no longer fit the schedule's cycles",
 } as const;
 
 // Release streams and cycles are seen with features and releases, and with planning configuration.
@@ -95,11 +94,11 @@ export const streamKind: RecordKind = {
   unique: [
     {
       field: "name",
-      message: "There is already a release stream with that name",
+      message: "There is already a schedule with that name",
     },
   ],
   readWith: featuresOrConfiguration,
-  unseenSubject: "a release stream",
+  unseenSubject: "a schedule",
   subject: (state, id) => planSubjects.stream(nameIn(state, id)),
   // A stream added goes at the end of the order.
   added: (rows) => ({
@@ -121,11 +120,11 @@ export const patternKind: RecordKind = {
     {
       field: "startsOn",
       within: "streamId",
-      message: "This stream already has cycles that change on that day",
+      message: "This schedule already has cycles that change on that day",
     },
   ],
   readWith: featuresOrConfiguration,
-  unseenSubject: "a change of a stream's cycles",
+  unseenSubject: "a change of a schedule's cycles",
   subject: (state, id) => {
     const pattern = shownVersion(state, "cycle-pattern", id);
     return planSubjects.pattern(
@@ -184,7 +183,7 @@ export const releaseKind: RecordKind = {
     {
       field: "name",
       within: "streamId",
-      message: "This stream already has a release with that name",
+      message: "This schedule already has a release with that name",
     },
   ],
   // Releases themselves are seen with features, not with planning configuration, as Roles sets out.
@@ -356,19 +355,42 @@ export function streamReleases(
     );
 }
 
-// How far a stream's cycles go, from its record.
-export const spanOf = (stream: Recorded): StreamSpan => ({
-  cyclesUntil: String(stream.cyclesUntil),
-  endsOn: typeof stream.endsOn === "string" ? stream.endsOn : null,
-});
+// A schedule's last day, from its record, or null while it keeps going.
+export const endsOnIn = (stream: Recorded): string | null =>
+  typeof stream.endsOn === "string" ? stream.endsOn : null;
 
-// How far a stream's cycles go, as its draft, if any, makes it.
-export const streamSpanOf = (
+// A schedule's last day, as its draft, if any, makes it.
+export const endsOnOf = (
   state: RecordsState,
   streamId: string,
-): StreamSpan =>
-  // A stream is never removed, so what belongs to it always has one.
-  spanOf(versionOf(state, "release-stream", streamId) ?? {});
+): string | null =>
+  // A schedule is never removed, so what belongs to it always has one.
+  endsOnIn(versionOf(state, "release-stream", streamId) ?? {});
+
+// The day the last cycle anything on a schedule's cycles includes starts, as drafts make them, or
+// none when nothing is on them: how far its cycles must be worked out to judge them, since Fathom
+// lays them out ahead from today.
+export const reachOf = (state: RecordsState, streamId: string): string =>
+  onCycles
+    .flatMap(({ type, cycles: asCycles }) =>
+      onStream(state, type, streamId, asCycles).map(({ record }) =>
+        String(asCycles(record).lastCycle),
+      ),
+    )
+    .sort()
+    .at(-1) ?? "";
+
+// How far a schedule's cycles are laid out: two years from today, or further, to the cycle the
+// furthest record on them includes, such as one a change of cycles moved past that day.
+export function laidOutUntil(
+  state: RecordsState,
+  streamId: string,
+  today: string,
+): string {
+  const horizon = horizonFrom(today);
+  const reach = reachOf(state, streamId);
+  return reach > horizon ? reach : horizon;
+}
 
 // Whether a release's first and last cycles are cycles of its stream, in order.
 function releaseFits(cycles: readonly Cycle[], release: Recorded): boolean {
@@ -441,26 +463,16 @@ export function releaseProblem(
         (other) => pattern.startsOn < other.startsOn,
       );
       if (!earliest && !patternStartFits(others, pattern.startsOn)) {
-        return "Cycles can change only from the start of one of the stream's cycles";
+        return "Cycles can change only from the start of one of the schedule's cycles";
       }
     }
     const found = streamReleases(state, streamId);
-    const span = streamSpanOf(state, streamId);
-    const lastStart = lastStartOf(span);
-    const cycles = cyclesOf(
-      patterns.map(({ pattern }) => pattern),
-      span.cyclesUntil,
-      span.endsOn,
-    );
-    if (
-      (streamTouched || patternTouched) &&
-      endsTooEarly(
-        patterns.map(({ pattern }) => pattern),
-        span,
-      )
-    ) {
+    const endsOn = endsOnOf(state, streamId);
+    const made = patterns.map(({ pattern }) => pattern);
+    if ((streamTouched || patternTouched) && endsTooEarly(made, endsOn)) {
       return endsBeforeFirstCycle;
     }
+    const cycles = cyclesOf(made, reachOf(state, streamId), endsOn);
     for (const { type, cycles: asCycles, ...refusals } of onCycles) {
       for (const { id, record } of onStream(state, type, streamId, asCycles)) {
         const recordTouched = touched.some(
@@ -469,7 +481,11 @@ export function releaseProblem(
         if (!patternTouched && !streamTouched && !recordTouched) continue;
         const name = String(record.name);
         const own = asCycles(record);
-        if (streamTouched && String(own.lastCycle) > lastStart) {
+        if (
+          streamTouched &&
+          endsOn !== null &&
+          String(own.lastCycle) > endsOn
+        ) {
           return worded(refusals.afterPlan(name), unnamedRefusals.afterPlan);
         }
         if (!releaseFits(cycles, own)) {

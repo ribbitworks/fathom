@@ -792,9 +792,9 @@ const routes: Route[] = [
   },
   {
     method: "PUT",
-    pattern: "/api/release-streams/:streamId/cycles-until",
+    pattern: "/api/release-streams/:streamId/ends-on",
     needs: allOf("configuration:edit"),
-    body: () => ({ cyclesUntil: "2027-06-30", endsOn: null }),
+    body: () => ({ endsOn: null }),
   },
   {
     method: "PUT",

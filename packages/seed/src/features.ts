@@ -29,6 +29,7 @@ import {
   type Cycle,
   cyclesOf,
   featureBuiltInLists,
+  horizonFrom,
   type Meaning,
   monthOf,
 } from "@fathom/shared";
@@ -303,7 +304,7 @@ function placingIn(name: StreamName, today: string): StreamPlacing {
   const stream = seededStreams(today).find(
     (seeded) => seeded.name === name,
   ) as SeededStream;
-  const cycles = cyclesOf(stream.patterns, stream.cyclesUntil);
+  const cycles = cyclesOf(stream.patterns, horizonFrom(today));
   const current = cycles.findIndex(
     ({ startsOn, endsOn }) => startsOn <= today && today <= endsOn,
   );

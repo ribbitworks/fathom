@@ -9,13 +9,12 @@
 import type { Database } from "@fathom/db";
 import {
   cyclesOf,
-  type StreamSpan,
   horizonFrom,
-  lastStartOf,
   knownColour,
   longestCycle,
   movedCycles,
   movedReleases,
+  pastAnyMove,
   patternsForLength,
   type CycleLengthRequest,
   type CyclePattern,
@@ -56,9 +55,10 @@ import {
   type Wanted,
 } from "./records.ts";
 import {
-  spanOf,
+  endsOnIn,
+  endsOnOf,
+  laidOutUntil,
   streamPatterns,
-  streamSpanOf,
   livePatterns,
   releaseKind,
   streamFeatures,
@@ -85,10 +85,13 @@ function inStream(
     );
 }
 
+// A schedule as the viewer sees it, its cycles laid out until two years from today, or as far as
+// anything on them reaches.
 function streamOut(
   state: RecordsState,
   makers: Makers,
   id: string,
+  today: string,
 ): ReleaseStream {
   const stream = shownVersion(state, "release-stream", id) as Recorded;
   const patterns = inStream(state, "cycle-pattern", id, "startsOn").map(
@@ -114,26 +117,25 @@ function streamOut(
       ...recordExtras(state, makers, "release", releaseId),
     }),
   );
-  const span = spanOf(stream);
+  const cyclesUntil = laidOutUntil(state, id, today);
+  const endsOn = endsOnIn(stream);
   const cycles = cyclesOf(
     streamPatterns(state, id).map(({ pattern }) => pattern),
-    span.cyclesUntil,
-    span.endsOn,
-  );
-  const liveSpan = spanOf(
-    stateOf(state, "release-stream").live.get(id) ?? stream,
+    cyclesUntil,
+    endsOn,
   );
   const liveCycles = cyclesOf(
     livePatterns(state, id),
-    liveSpan.cyclesUntil,
-    liveSpan.endsOn,
+    cyclesUntil,
+    endsOnIn(stateOf(state, "release-stream").live.get(id) ?? stream),
   );
   return {
     id,
     keyNumber: recordKeyNumber(state, "release-stream", id),
     name: String(stream.name),
     retired: stream.retired === true,
-    ...span,
+    cyclesUntil,
+    endsOn,
     patterns,
     cycles,
     ...(JSON.stringify(liveCycles) === JSON.stringify(cycles)
@@ -148,6 +150,7 @@ function streamOut(
 export function streamsOut(
   state: RecordsState,
   makers: Makers,
+  today: string,
 ): ReleaseStream[] {
   const { rows } = stateOf(state, "release-stream");
   const placeOf = (id: string) =>
@@ -155,7 +158,7 @@ export function streamsOut(
   return shownIds(state, "release-stream")
     .map((id, drafted) => ({ id, place: placeOf(id), drafted }))
     .sort((a, b) => a.place - b.place || a.drafted - b.drafted)
-    .map(({ id }) => streamOut(state, makers, id));
+    .map(({ id }) => streamOut(state, makers, id, today));
 }
 
 // A stream as the viewer may see it, its releases only to those who may read releases, as the
@@ -179,6 +182,7 @@ export async function readReleaseStreams(
       return streamsOut(
         state,
         await readRecordMakers(transaction, state, viewer),
+        await readToday(transaction),
       ).map(asSeenBy(viewer));
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
@@ -205,6 +209,7 @@ async function changingStream(
           now,
           await readRecordMakers(transaction, now, editor),
           streamId,
+          await readToday(transaction),
         ),
       ),
       changeSetId,
@@ -212,7 +217,7 @@ async function changingStream(
   });
 }
 
-// A stream's cycles are made until two years from the day it is drafted.
+// Drafts a schedule, which keeps going until given a last day.
 export async function createStream(
   database: Database,
   maker: Actor,
@@ -235,7 +240,7 @@ export async function updateStream(
   database: Database,
   maker: Actor,
   id: string,
-  change: Partial<{ name: string; retired: boolean } & StreamSpan>,
+  change: Partial<{ name: string; retired: boolean; endsOn: string | null }>,
 ): Promise<Saved<ReleaseStream>> {
   return changingStream(database, maker, id, (transaction, state) => {
     const stream = changeableRecord(state, "release-stream", id);
@@ -246,13 +251,14 @@ export async function updateStream(
   });
 }
 
-// Drafts how far a stream's cycles go: the day they are made until, and its last day, if any.
-export const changeStreamSpan = (
+// Drafts a schedule's last day, or null to keep going.
+export const setStreamEnd = (
   database: Database,
   maker: Actor,
   id: string,
-  span: StreamSpan,
-): Promise<Saved<ReleaseStream>> => updateStream(database, maker, id, span);
+  endsOn: string | null,
+): Promise<Saved<ReleaseStream>> =>
+  updateStream(database, maker, id, { endsOn });
 
 // A record of a stream to change, refusing one that is not in the stream.
 function inStreamRecord(
@@ -263,7 +269,7 @@ function inStreamRecord(
 ): Recorded {
   const record = changeableRecord(state, type, id);
   if (record.streamId !== streamId) {
-    throw new NotFoundError("There is no such record in this stream");
+    throw new NotFoundError("There is no such record in this schedule");
   }
   return record;
 }
@@ -428,6 +434,7 @@ function movingDrafts(
   state: RecordsState,
   streamId: string,
   moved: ReadonlyMap<string, string | undefined>,
+  until: string,
   permissions: readonly Permission[],
 ): Wanted[] {
   const found = [
@@ -453,7 +460,7 @@ function movingDrafts(
   const moving = movedReleases(
     found,
     moved,
-    lastStartOf(streamSpanOf(state, streamId)),
+    until,
     nameOf(state, streamId),
     permissions,
   );
@@ -483,32 +490,46 @@ export async function changeCycleLength(
   startsOn: string,
   request: CycleLengthRequest,
 ): Promise<Saved<ReleaseStream>> {
-  return changingStream(database, maker, streamId, (transaction, state) => {
-    changeableRecord(state, "release-stream", streamId);
-    const kept = streamPatterns(state, streamId);
-    const patterns = kept.map(({ pattern }) => pattern);
-    const { cyclesUntil, endsOn } = streamSpanOf(state, streamId);
-    const before = cyclesOf(patterns, cyclesUntil, endsOn);
-    if (!before.some((cycle) => cycle.startsOn === startsOn)) {
-      throw new NotFoundError("There is no such cycle in this stream");
-    }
-    const { unit } = patterns
-      .filter((pattern) => pattern.startsOn <= startsOn)
-      .sort((a, b) => a.startsOn.localeCompare(b.startsOn))
-      // A cycle starts on that day, so a pattern makes it.
-      .at(-1) as CyclePatternLike;
-    if (request.length > longestCycle[unit === "weeks" ? "weeks" : "months"]) {
-      throw new ConflictError("A cycle can be at most two years long.");
-    }
-    const made = patternsForLength(patterns, { startsOn, ...request });
-    if ("problem" in made) throw new ConflictError(made.problem);
-    const moved = movedCycles(
-      before,
-      cyclesOf(made.patterns, cyclesUntil, endsOn),
-    );
-    return saveRecordDrafts(transaction, maker, state, [
-      ...patternDrafts(state, streamId, kept, made.patterns),
-      ...movingDrafts(state, streamId, moved, maker.permissions),
-    ]);
-  });
+  return changingStream(
+    database,
+    maker,
+    streamId,
+    async (transaction, state) => {
+      changeableRecord(state, "release-stream", streamId);
+      const kept = streamPatterns(state, streamId);
+      const patterns = kept.map(({ pattern }) => pattern);
+      const endsOn = endsOnOf(state, streamId);
+      const until = laidOutUntil(state, streamId, await readToday(transaction));
+      const before = cyclesOf(patterns, until, endsOn);
+      if (!before.some((cycle) => cycle.startsOn === startsOn)) {
+        throw new NotFoundError("There is no such cycle in this schedule");
+      }
+      const { unit } = patterns
+        .filter((pattern) => pattern.startsOn <= startsOn)
+        .sort((a, b) => a.startsOn.localeCompare(b.startsOn))
+        // A cycle starts on that day, so a pattern makes it.
+        .at(-1) as CyclePatternLike;
+      if (
+        request.length > longestCycle[unit === "weeks" ? "weeks" : "months"]
+      ) {
+        throw new ConflictError("A cycle can be at most two years long.");
+      }
+      const made = patternsForLength(patterns, { startsOn, ...request });
+      if ("problem" in made) throw new ConflictError(made.problem);
+      const moved = movedCycles(
+        before,
+        cyclesOf(made.patterns, pastAnyMove(until), endsOn),
+      );
+      return saveRecordDrafts(transaction, maker, state, [
+        ...patternDrafts(state, streamId, kept, made.patterns),
+        ...movingDrafts(
+          state,
+          streamId,
+          moved,
+          endsOn ?? pastAnyMove(until),
+          maker.permissions,
+        ),
+      ]);
+    },
+  );
 }

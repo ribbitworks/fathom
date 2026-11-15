@@ -65,9 +65,9 @@ const planRecord = (
 describe("the plan's records in the change history", () => {
   it.each([
     [
-      "a release stream",
+      "a schedule",
       planRecord("release-stream", "Fictional Majors", null),
-      "drafted adding the release stream Fictional Majors",
+      "drafted adding the schedule Fictional Majors",
     ],
     [
       "a change of cycles by its stream",
@@ -77,7 +77,7 @@ describe("the plan's records in the change history", () => {
     [
       "a change of cycles whose stream is not named",
       planRecord("cycle-pattern", null, null),
-      "drafted adding a stream's cycles",
+      "drafted adding a schedule's cycles",
     ],
     [
       "a release with its stream",
@@ -210,7 +210,7 @@ describe("how far a stream's cycles go in the change history", () => {
         "release-stream",
       ).at(0),
     ]).toEqual([
-      [{ strong: "Ends" }, " set to ", { value: "Mar 31, 2027" }],
+      [{ strong: "Schedule ends" }, " set to ", { value: "Mar 31, 2027" }],
       { strong: "Cycles until" },
     ]);
   });

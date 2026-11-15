@@ -23,7 +23,7 @@ import {
   savePattern,
   saveRelease,
   setStreamRetired,
-  setStreamSpan,
+  setStreamEnd,
   shipsOffCycle,
 } from "./releases.ts";
 import {
@@ -90,17 +90,14 @@ describe("changes to release streams sent to the server", () => {
     ).toEqual({ retired: true });
   });
 
-  it("changes the day a stream's cycles are made until", async () => {
+  it("changes the day a schedule ends", async () => {
     expect(
       (
-        await sent(`PUT ${streamPath}/cycles-until`, () =>
-          setStreamSpan(streamId, {
-            cyclesUntil: "2028-06-30",
-            endsOn: "2027-12-31",
-          }),
+        await sent(`PUT ${streamPath}/ends-on`, () =>
+          setStreamEnd(streamId, "2027-12-31"),
         )
       ).body,
-    ).toEqual({ cyclesUntil: "2028-06-30", endsOn: "2027-12-31" });
+    ).toEqual({ endsOn: "2027-12-31" });
   });
 
   const pattern = {
@@ -257,7 +254,7 @@ describe("the records of release streams", () => {
     expect(nodes).toEqual([
       {
         ref: { type: "release-stream", id: streamId },
-        subject: "the release stream Fictional Majors",
+        subject: "the schedule Fictional Majors",
         draft,
         heldBy: "Fictional Colleague",
       },

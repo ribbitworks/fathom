@@ -42,11 +42,14 @@ export const namingTokens = [
   { token: "{YYYY}", means: "the year the cycle ends in" },
   { token: "{YY}", means: "the last two digits of that year" },
   { token: "{N}", means: "the cycle's number within that year" },
-  { token: "{#}", means: "the cycle's number in the stream, from its first" },
+  { token: "{#}", means: "the cycle's number in the schedule, from its first" },
 ] as const;
 
-// How far ahead a new stream's cycles are made, so features expected far ahead can target one.
+// How far ahead Fathom lays a schedule's cycles out, so features expected far ahead can target one.
 export const yearsAhead = 2;
+
+// The longest cycle in each unit: two years.
+export const longestCycle = { weeks: 104, months: 24 } as const;
 
 // The most cycles one stream makes, so a pattern of one week from long ago cannot make too many.
 const mostCycles = 5000;
@@ -93,7 +96,7 @@ const cycleStart = (pattern: CyclePatternLike, index: number): string =>
     ? addDays(pattern.startsOn, 7 * pattern.length * index)
     : addMonths(pattern.startsOn, pattern.length * index);
 
-// The day a new stream's cycles are made until, from the day it is drafted: two years on.
+// The day Fathom lays a schedule's cycles out until, from today: two years on.
 export const horizonFrom = (today: string): string =>
   addMonths(today, 12 * yearsAhead);
 
@@ -131,20 +134,13 @@ export function monthShares(startsOn: string, endsOn: string): MonthShare[] {
   return shares;
 }
 
-// How far a stream's cycles go: the day its last cycle starts by while it keeps going, and its last
-// day, or null while it keeps going. The first is kept while the stream ends, unused, so it can
-// keep going again from that day.
-export interface StreamSpan {
-  cyclesUntil: string;
+// A schedule's last day, or null while it keeps going.
+export interface ScheduleEnd {
   endsOn: string | null;
 }
 
-// The last day a stream's cycles may start on, whether it ends or keeps going.
-export const lastStartOf = ({ cyclesUntil, endsOn }: StreamSpan): string =>
-  endsOn ?? cyclesUntil;
-
-// Whether a stream has ended: its last day is before the day given.
-export const hasEnded = ({ endsOn }: StreamSpan, today: string): boolean =>
+// Whether a schedule has ended: its last day is before the day given.
+export const hasEnded = ({ endsOn }: ScheduleEnd, today: string): boolean =>
   endsOn !== null && endsOn < today;
 
 // A stream's cycles, in order, from its first pattern's start to the first cycle that starts after
@@ -156,7 +152,7 @@ export function cyclesOf(
   until: string,
   endsOn: string | null = null,
 ): Cycle[] {
-  const lastStart = lastStartOf({ cyclesUntil: until, endsOn });
+  const lastStart = endsOn ?? until;
   const sorted = [...patterns].sort((a, b) =>
     a.startsOn.localeCompare(b.startsOn),
   );
@@ -193,16 +189,21 @@ export function cyclesOf(
 }
 
 export const endsBeforeFirstCycle =
-  "The stream can't end before its first cycle starts";
+  "The schedule can't end before its first cycle starts";
 
-// Whether a stream with cycle patterns would end before its first cycle starts, so make none.
+// Whether a schedule with cycle patterns would end before its first cycle starts, so make none.
 export const endsTooEarly = (
   patterns: readonly CyclePatternLike[],
-  span: StreamSpan,
+  endsOn: string | null,
 ): boolean =>
-  span.endsOn !== null &&
+  endsOn !== null &&
   patterns.length > 0 &&
-  cyclesOf(patterns, span.cyclesUntil, span.endsOn).length === 0;
+  cyclesOf(patterns, endsOn, endsOn).length === 0;
+
+// How far to work cycles out once a change of cycles moves them: past the day given by the longest
+// a cycle can be, so every cycle moved from on or before that day is still among them.
+export const pastAnyMove = (day: string): string =>
+  addMonths(day, longestCycle.months);
 
 // Whether a pattern may start on a day, among a stream's other patterns: any day when there are
 // none, and otherwise only on the start of one of the cycles they make, so the cycles before it
