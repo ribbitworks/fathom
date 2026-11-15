@@ -9,7 +9,6 @@
 import type { Database } from "@fathom/db";
 import {
   cyclesOf,
-  horizonFrom,
   knownColour,
   longestCycle,
   movedCycles,
@@ -222,15 +221,12 @@ export async function createStream(
   database: Database,
   maker: Actor,
   request: ReleaseStreamRequest,
-  asOf?: string,
 ): Promise<Saved<ReleaseStream>> {
-  const today = asOf ?? (await readToday(database));
   const id = randomUUID();
   return changingStream(database, maker, id, (transaction, state) =>
     saveRecordDraft(transaction, maker, state, "release-stream", id, {
       name: request.name,
       retired: false,
-      cyclesUntil: horizonFrom(today),
       endsOn: null,
     }),
   );

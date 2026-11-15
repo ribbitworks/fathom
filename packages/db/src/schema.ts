@@ -310,7 +310,6 @@ export const releaseStreams = fathomSchema.table(
     // Lower comes first.
     position: integer("position").notNull().default(0),
     retired: boolean("retired").notNull().default(false),
-    cyclesUntil: date("cycles_until").notNull(),
     endsOn: date("ends_on"),
   },
   (table) => [

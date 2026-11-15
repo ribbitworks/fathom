@@ -526,7 +526,7 @@ async function addStreams(client: Client, ...names: string[]) {
   const ids: string[] = [];
   for (const name of names) {
     const added = await client.query<{ id: string }>(
-      "INSERT INTO release_streams (name, cycles_until) VALUES ($1, '2029-01-01') RETURNING id",
+      "INSERT INTO release_streams (name) VALUES ($1) RETURNING id",
       [name],
     );
     ids.push(added.rows[0]?.id as string);
@@ -538,7 +538,6 @@ describe("release streams", () => {
   const uniqueViolation = "23505";
   const checkViolation = "23514";
   const restrictViolation = "23001";
-  const notNullViolation = "23502";
 
   const addPattern = (
     client: Client,
@@ -624,18 +623,6 @@ describe("release streams", () => {
       expect(
         await errorCodeOf(addRelease(client, id, "Fictional", "2026-10-01")),
       ).toBe(checkViolation);
-    });
-  });
-
-  it("refuses a stream without the date its cycles are made until", async () => {
-    await withClient(database.app, async (client) => {
-      expect(
-        await errorCodeOf(
-          client.query(
-            "INSERT INTO release_streams (name) VALUES ('Fictional Endless')",
-          ),
-        ),
-      ).toBe(notNullViolation);
     });
   });
 

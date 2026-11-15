@@ -474,7 +474,6 @@ async function recordOfEveryKind(): Promise<KindCase[]> {
   await connection.insert(releaseStreams).values({
     id: ids.schedule,
     name: unique("Fictional Stream"),
-    cyclesUntil: "2028-01-01",
   });
   await connection.insert(cyclePatterns).values({
     streamId: ids.schedule,

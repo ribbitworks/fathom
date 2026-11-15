@@ -18,12 +18,7 @@ import {
   unpublishedDrafts,
 } from "@fathom/db";
 import { fictionalId } from "@fathom/fixtures";
-import {
-  addDays,
-  addMonths,
-  horizonFrom,
-  type PaletteColour,
-} from "@fathom/shared";
+import { addDays, addMonths, type PaletteColour } from "@fathom/shared";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { fieldAppsKeys, fieldAppsStream } from "./field-apps.ts";
 import { recorded, type SeededChange } from "./recorded.ts";
@@ -125,7 +120,6 @@ const harborThreePlan = [
 
 export interface SeededStream {
   name: string;
-  cyclesUntil: string;
   // Each pattern and release has a key of its own, which its identifier is made from, so the seed
   // data added on one day is found and removed on another, when its dates and names have moved.
   patterns: {
@@ -207,7 +201,6 @@ export function seededStreams(today: string): readonly SeededStream[] {
   return [
     {
       name: platform.name,
-      cyclesUntil: horizonFrom(today),
       patterns: [
         {
           key: platform.patterns[0],
@@ -262,7 +255,6 @@ export function seededStreams(today: string): readonly SeededStream[] {
     },
     {
       name: patches.name,
-      cyclesUntil: horizonFrom(today),
       patterns: [
         {
           key: patches.patterns[0],
@@ -330,14 +322,12 @@ export async function seedReleases(
       await transaction.insert(releaseStreams).values({
         id,
         name: stream.name,
-        cyclesUntil: stream.cyclesUntil,
         position: Number(last?.position) + index + 1,
       });
       made.push(
         ...recorded("release-stream", id, "created", {
           name: stream.name,
           retired: false,
-          cyclesUntil: stream.cyclesUntil,
         }),
       );
       for (const { key, ...pattern } of stream.patterns) {
@@ -440,7 +430,6 @@ export async function unseedReleases(database: Database): Promise<string[]> {
         ...recorded("release-stream", id, "deleted", {
           name: row.name,
           retired: row.retired,
-          cyclesUntil: row.cyclesUntil,
         }),
       );
       await transaction.delete(releases).where(eq(releases.streamId, id));

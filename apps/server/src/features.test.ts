@@ -71,7 +71,6 @@ async function liveStream(endsOn: string | null = null): Promise<string> {
   await test.connection.insert(releaseStreams).values({
     id,
     name: unique("Fictional Stream"),
-    cyclesUntil: "2029-01-01",
     endsOn,
   });
   await test.connection.insert(cyclePatterns).values({

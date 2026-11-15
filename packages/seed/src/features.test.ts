@@ -208,7 +208,6 @@ describe("seeding features", () => {
     await connection.insert(releaseStreams).values({
       id: streamId({ name: "Platform" }),
       name: "Platform",
-      cyclesUntil: "2029-12-31",
     });
     expect(await seedFeatures(connection, today, [])).toBe(false);
     expect(await everyFeature()).toEqual([]);

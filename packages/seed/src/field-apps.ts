@@ -7,13 +7,7 @@
 // by last month, so a cycle late in its life shows what is still to start. A development-only
 // package, never included in the runtime image.
 
-import {
-  addDays,
-  addMonths,
-  addToMonth,
-  horizonFrom,
-  monthOf,
-} from "@fathom/shared";
+import { addDays, addMonths, addToMonth, monthOf } from "@fathom/shared";
 import type { SeededFeature } from "./features.ts";
 import type { SeededStream } from "./releases.ts";
 
@@ -41,7 +35,6 @@ export function fieldAppsStream(today: string): SeededStream {
   const [first, second, third] = fieldAppsKeys.releases;
   return {
     name: fieldAppsKeys.name,
-    cyclesUntil: horizonFrom(today),
     patterns: [
       {
         key: fieldAppsKeys.patterns[0],

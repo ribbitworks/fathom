@@ -219,10 +219,7 @@ describe("the streams as dated from a day", () => {
         ({ name }) => name === fieldAppsKeys.name,
       );
       const [, current, coming] = fieldApps?.releases ?? [];
-      const cycles = cyclesOf(
-        fieldApps?.patterns ?? [],
-        String(fieldApps?.cyclesUntil),
-      );
+      const cycles = cyclesOf(fieldApps?.patterns ?? [], horizonFrom(on));
       const ofCurrent = cycles.find(
         ({ startsOn }) => startsOn === current?.lastCycle,
       );
@@ -355,9 +352,7 @@ describe("removing release streams", () => {
   });
 
   it("does not seed a stream whose name a stream added by hand has", async () => {
-    await connection
-      .insert(releaseStreams)
-      .values({ name: "patches", cyclesUntil: "2028-12-31" });
+    await connection.insert(releaseStreams).values({ name: "patches" });
     await seedReleases(connection, today);
     expect(await streamNames()).toEqual(["Field Apps", "Platform", "patches"]);
   });

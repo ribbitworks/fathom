@@ -89,7 +89,7 @@ const featuresOrConfiguration = [
 export const streamKind: RecordKind = {
   type: "release-stream",
   table: releaseStreams,
-  fields: ["name", "retired", "cyclesUntil", "endsOn"],
+  fields: ["name", "retired", "endsOn"],
   links: {},
   unique: [
     {
