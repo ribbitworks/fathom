@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-11-14
 
-The threats Fathom guards against as it ships: its code, its container images and its Compose configuration. The machine, network, certificates, secrets and backups around it come from whoever runs it. [How Data Is Safeguarded](../privacy/data-protection.md) covers who sees which data, and the [Security Policy](../../SECURITY.md) how to report a vulnerability.
+The threats Fathom guards against as it ships: its code, its container images and its Compose configuration. The machine, network, certificates, secrets and backups around it come from whoever runs it, as [Securing Your Environment](../operations/securing-your-environment.md) sets out. [How Data Is Safeguarded](../privacy/data-protection.md) covers who sees which data, and the [Security Policy](../../SECURITY.md) how to report a vulnerability.
 
 ## Threats and Mitigations
 
@@ -15,7 +15,7 @@ The threats Fathom guards against as it ships: its code, its container images an
 - **Approval:** Nobody approves their own change unless their role is given that permission.
 - **Injection:** Database queries are parameterized, output is encoded, and input is checked by shared schemas. Web links accept only http and https addresses, and notes only an allowlist of formats.
 - **Audit log:** The database refuses any change to or deletion of the access history. The change history can only be added to, apart from marking a change published.
-- **Database:** The application's database role can only read and write data, and a separate role changes the schema. Passwords are stored with SCRAM-SHA-256, and the database refuses superuser logins over the network. The database isn't encrypted at rest; protecting its disk is up to whoever runs Fathom.
+- **Database:** The application's database role can only read and write data, and a separate role changes the schema. Passwords are stored with SCRAM-SHA-256, and the database refuses superuser logins over the network. The database isn't encrypted at rest; [ADR 0012](../adr/0012-encryption-at-rest.md) leaves that to the disk.
 - **Containers:** Every container runs as a user other than root, with a read-only filesystem, all Linux capabilities dropped, no privilege escalation, and memory and process limits. The application's runtime image is distroless.
 - **Logs and errors:** Requests are logged by method, path and network address only, database errors without their messages, and known sensitive fields are redacted. A path can still name a record's ID. Errors shown to users are generic.
 - **Dependencies:** Packages are installed from the lockfile exactly, base images are pinned by digest and GitHub Actions by commit, and Renovate proposes updates.
