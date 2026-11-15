@@ -233,7 +233,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `8C55` Select **Stream: Platform**.
   - **Expected:**
-    - A menu headed "Release stream" lists **Platform** and **Patches**.
+    - A menu headed "Release stream" lists, from the top, **Platform**, **Patches** and **Field Apps**.
     - **Platform** is ticked.
     - **Patches** has a yellow dot before it and a yellow **Retired** box after it.
   - **Notes:**
@@ -247,7 +247,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - "Later" holds 'Partner Portal', 'Voice Notes' and 'Shift Handover Notes'.
   - **Notes:**
 
-**Afterwards:** Select **Stream: Patches**, then **Platform**.
+- [ ] `C87D` Select **Stream: Patches**, then **Field Apps**.
+  - **Expected:**
+    - The button reads **Stream: Field Apps**.
+    - The columns are Field Apps' cycles, named such as "Cycle FA26.2", each six months long.
+    - The current cycle's column, with the red line along its heading's top, is headed "Lantern 2" in an indigo box.
+    - The column after it has no release at its top.
+    - That column holds the card 'Work Order Sync', with no "Not staffed" box.
+  - **Notes:**
+
+**Afterwards:** Select **Stream: Field Apps**, then **Platform**.
 
 ### BOARD-04: Group By Puts the Cards in Rows
 
@@ -330,10 +339,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Features** page open, showing Platform's board from the current cycle, with no rows.
 
-- [ ] `8A3D` Type `offline` in the search box.
+- [ ] `8A3D` Type `offline sync` in the search box.
   - **Expected:**
     - Only the card 'Offline Sync' shows.
-    - Beside the search box, the count reads "1 of 12".
+    - Beside the search box, the count reads "1 of 22".
   - **Notes:**
 
 - [ ] `A605` Empty the search box, then select the card 'Offline Sync'.

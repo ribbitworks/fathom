@@ -70,7 +70,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **Feature team**
       - **Staffed**
       - **Kind**
-    - Beside the search box, the count reads "12 features".
+    - Beside the search box, the count reads "22 features".
   - **Notes:**
 
 - [ ] `F6D0` Look down the **Status** column.
@@ -94,7 +94,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - Each heading names the stream and the cycle, such as **Platform: 27.1**.
     - Each heading has how many features it holds.
-    - The headings run from the earliest cycle to the latest.
+    - The headings for **Platform** come first, from the earliest cycle to the latest, then those for **Field Apps**, such as **Field Apps: FA26.2**, from the earliest to the latest.
     - The last heading is **Later**.
   - **Notes:**
 
@@ -106,8 +106,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `7DF5` Type `offline` in the search box.
   - **Expected:**
-    - Only the row 'Offline Sync' shows.
-    - It is under its cycle's heading.
+    - Only the rows 'Offline Sync' and 'Offline Forms' show.
+    - 'Offline Sync' is under a **Platform** heading, and 'Offline Forms' under a **Field Apps** heading.
     - No heading without a row shows.
   - **Notes:**
 
@@ -115,15 +115,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - Each heading names the stream and the cycle, such as **Platform: 27.1**.
     - Each heading has how many features it holds.
-    - The headings run from the earliest cycle to the latest.
+    - The headings for **Platform** come first, from the earliest cycle to the latest, then those for **Field Apps**, such as **Field Apps: FA26.2**, from the earliest to the latest.
     - The last heading is **Later**.
-    - All 12 rows show.
+    - All 22 rows show.
   - **Notes:**
 
 - [ ] `B4B0` Select **Group by: Cycle** above the table, then **None** under **Group by**.
   - **Expected:**
     - The headings are gone.
-    - The 12 rows show as one list.
+    - The 22 rows show as one list.
   - **Notes:**
 
 - [ ] `2AD1` Reload the page.
@@ -134,7 +134,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - Each heading names the stream and the cycle, such as **Platform: 27.1**.
     - Each heading has how many features it holds.
-    - The headings run from the earliest cycle to the latest.
+    - The headings for **Platform** come first, from the earliest cycle to the latest, then those for **Field Apps**, such as **Field Apps: FA26.2**, from the earliest to the latest.
     - The last heading is **Later**.
   - **Notes:**
 
@@ -1139,10 +1139,17 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 - [ ] `CD88` Select **Release** under **Group by**.
   - **Expected:**
     - The button reads **Group by: Release**.
-    - The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2 LTS**, **Platform: Harbor 3**, **Platform: Not released yet** and **Later**.
-    - Each of the three 'Harbor' headings is followed by a comma, "ships" and a date with its day, month and year, such as "ships 31 Mar 2027".
-    - The counts beside the headings read "1", "4", "2", "2" and "3".
-    - No heading names 'Harbor 4' or a 'Patches' release.
+    - The headings and their counts read, from top to bottom:
+      - **Platform: Harbor 1**, "1"
+      - **Platform: Harbor 2 LTS**, "4"
+      - **Platform: Harbor 3**, "2"
+      - **Field Apps: Lantern 1**, "2"
+      - **Field Apps: Lantern 2**, "7"
+      - **Platform: Not released yet**, "2"
+      - **Field Apps: Not released yet**, "1"
+      - **Later**, "3"
+    - Each 'Harbor' and 'Lantern' heading is followed by a comma, "ships" and a date with its day, month and year, such as "ships 31 Mar 2027".
+    - No heading names 'Harbor 4', 'Lantern 3' or a 'Patches' release.
   - **Notes:**
 
 - [ ] `80BD` Select the **Releases** page in the left-hand menu.
@@ -1162,9 +1169,16 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `F508` Select **Group by: Cycle** above the table, then **Release** under **Group by**.
   - **Expected:**
-    - The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2 LTS**, **Platform: Harbor 3**, **Platform: Not released yet** and **Later**.
-    - Each of the three 'Harbor' headings is followed by a comma, "ships" and a date with its day, month and year, such as "ships 31 Mar 2027".
-    - The counts beside the headings read "1", "4", "2", "2" and "3".
+    - The headings and their counts read, from top to bottom:
+      - **Platform: Harbor 1**, "1"
+      - **Platform: Harbor 2 LTS**, "4"
+      - **Platform: Harbor 3**, "2"
+      - **Field Apps: Lantern 1**, "2"
+      - **Field Apps: Lantern 2**, "7"
+      - **Platform: Not released yet**, "2"
+      - **Field Apps: Not released yet**, "1"
+      - **Later**, "3"
+    - Each 'Harbor' and 'Lantern' heading is followed by a comma, "ships" and a date with its day, month and year, such as "ships 31 Mar 2027".
   - **Notes:**
 
 - [ ] `7D6A` In the row 'Report Builder', under **Platform: Harbor 3**, select the **Target cycle** cell and choose the cycle two after the one it shows.
@@ -1394,7 +1408,13 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 - [ ] `AC75` Select **Group by: Cycle** above the table, then **Projects** under **Group by**.
   - **Expected:**
     - The button reads **Group by: Projects**.
-    - The headings read, from the top, **Clinic Booking**, **P-2001 Crane Control**, **Internal Tools**, **P-1984 Transit Displays** and **No projects**.
+    - The headings read, from the top:
+      - **Clinic Booking**
+      - **P-2001 Crane Control**
+      - **P-2017 Depot Operations**
+      - **Internal Tools**
+      - **P-1984 Transit Displays**
+      - **No projects**
     - 'Offline Sync' is under both **Clinic Booking** and **P-2001 Crane Control**.
   - **Notes:**
 

@@ -524,8 +524,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `F2CE` Open the Views menu, and select **Clear view**.
   - **Expected:**
-    - The table lists 'Platform' and 'Patches'.
-    - The timeline shows a row for 'Platform' and a row for 'Patches'.
+    - The table lists 'Platform', 'Patches' and 'Field Apps'.
+    - The timeline shows a row for each of 'Platform', 'Patches' and 'Field Apps'.
   - **Notes:**
 
 - [ ] `AA19` Open the Views menu, and select `Fictional patches` under **My views**.
@@ -734,7 +734,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** In the main window, this account is signed in on **Features**, showing the table, with no view applied. In the second window, Product Manager, `product.manager@fathom.test` is signed in on **Features**, showing the table, with no view applied.
 
-- [ ] `CBA2` In the main window, type `offline` in the search box.
+- [ ] `CBA2` In the main window, type `offline sync` in the search box.
   - **Expected:** The table lists 'Offline Sync' alone.
   - **Notes:**
 
@@ -755,7 +755,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `7291` Open the Views menu, and select **Save view…**.
   - **Expected:**
     - A dialog titled "Save view" opens.
-    - Under **Includes**, **Search** reads “offline”.
+    - Under **Includes**, **Search** reads “offline sync”.
     - Under **Includes**, **Board** reads "Card Status, Priority, Size, Needed by, Staffed months".
   - **Notes:**
 

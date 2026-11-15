@@ -35,7 +35,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Start From a
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, marks and the Publish button. This test adds:
 
-- **Seeded dates in this test:** **This quarter** is the quarter today is in, and **the first half** is Platform's first half-year cycle, three quarters after this quarter. Patches' cycles are named such as **P24.3**. The examples after "such as" are as the seed data is when added on 7 November 2026.
+- **Seeded dates in this test:** **This quarter** is the quarter today is in, and **the first half** is Platform's first half-year cycle, three quarters after this quarter. Patches' cycles are named such as **P24.3**, and Field Apps' cycles, each six months long, such as **FA26.2**. The examples after "such as" are as the seed data is when added on 7 November 2026.
 - **Streams table:** the table on the Releases page, under the timeline, with a row for each release stream and the columns **Stream**, **Cycle schedule**, **Releases**, **Next release** and **Planned to**. Its rows are under a **Current** heading, and, while retired streams are shown, a **Retired** heading. The search field, the Draft menu, **Metrics**, **Group by** and **Views** are in the bar above the timeline; while any stream is retired, **Show retired** and how many are retired is first in the **Views** menu.
 - **Selecting a stream in the table:** selecting the details button at the right of the stream's **Stream** cell, which opens the stream in the side panel.
 - **Side panel on Releases:** the panel beside the timeline and the streams table for the selected stream, which they narrow to make room for, with the sections **Cycle schedule**, **Releases** and **Cycles**. Dragging its left edge resizes it.
@@ -201,7 +201,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 ### Part 2: With the Seed Data
 
-#### REL-06: The Seed Data Adds Two Release Streams
+#### REL-06: The Seed Data Adds Three Release Streams
 
 **Account:** Team Member, `team.member@fathom.test`, changed from REL-05.
 
@@ -210,7 +210,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `9A9D` Run Restore the Seed Data.
   - **Expected:**
     - Restore the Seed Data finishes with no error.
-    - After the page reloads, the table shows a **Current** heading, then **Testing Stream**, **Platform** and **Patches**, in that order.
+    - After the page reloads, the table shows a **Current** heading, then **Testing Stream**, **Platform**, **Patches** and **Field Apps**, in that order.
     - **Testing Stream** has no dot.
     - **Platform** has a grey lock in its slot.
     - **Patches** has a yellow dot in its slot.
@@ -229,6 +229,16 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
       - under it, a Live row: a green dot in its slot, and **Harbor 3** from next quarter's cycle to the first half, shipping on its last day, such as **27.1 to 27.3 · ships Dec 31, 2027**
       - **Harbor 4**, with a yellow dot in its slot
     - There is no **New release…** button.
+  - **Notes:**
+
+- [ ] `D05B` Select **Field Apps** in the table.
+  - **Expected:**
+    - The side panel opens, headed **Field Apps**, with no dot.
+    - Under **Releases**, the rows read, from the top (see [Seeded dates](#terms)):
+      - **Lantern 1**, with a teal square before it, on the cycle before the current one, shipping on its last day, such as **FA26.1 · ships Jun 30, 2026**
+      - **Lantern 2**, with an indigo square before it, on the current cycle, shipping two weeks after it ends, such as **FA26.2 · ships Jan 14, 2027**, followed in bold by **14 days after FA26.2 ends**
+      - **Lantern 3**, with a lime square before it, on the cycle after next, such as **FA27.2 · ships Dec 31, 2027**
+    - No row has a dot.
   - **Notes:**
 
 #### REL-07: Cycles Show the Months They Span
@@ -364,7 +374,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `EB91` Select **Views**, then **Show retired (1)**.
   - **Expected:**
-    - Under the **Current** heading are **Testing Stream** and **Platform**.
+    - Under the **Current** heading are **Testing Stream**, **Platform** and **Field Apps**.
     - Under a **Retired** heading is **Patches**, with no dot.
   - **Notes:**
 
@@ -578,7 +588,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `6CDB` Run Restore the Seed Data.
   - **Expected:**
     - Restore the Seed Data finishes with no error.
-    - After the page reloads, the streams table shows **Testing Stream**, **Platform** and **Patches** under the **Current** heading.
+    - After the page reloads, the streams table shows **Testing Stream**, **Platform**, **Patches** and **Field Apps** under the **Current** heading.
     - There is no **Retired** heading, and no **Views** button in the bar.
     - The **Timeline** heading shows above the streams table, with the zoom buttons at its top right.
   - **Notes:**
@@ -586,7 +596,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `56D9` Select **Year**.
   - **Expected:**
     - **Year** is highlighted.
-    - The timeline has three rows, named **Testing Stream**, **Platform** and **Patches**.
+    - The timeline has four rows, named **Testing Stream**, **Platform**, **Patches** and **Field Apps**.
     - The axis's top row names years, such as **2027**.
     - Its second row names half years, such as **Jan to Jun 27** and **Jul to Dec 27**.
     - A red line crosses every row, about a sixth of the way across the timeline.
@@ -650,7 +660,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `060D` Select **All**.
   - **Expected:**
-    - The whole timeline fits across, from the earliest cycle of any stream to the end of the last, such as 2026 to 2030, with no scrolling sideways.
+    - The whole timeline fits across, from the earliest cycle of any stream to the end of the last, such as 2025 to 2030, with no scrolling sideways.
     - The **−** button is greyed out.
   - **Notes:**
 
@@ -1152,13 +1162,13 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `17A8` Type `patch`.
   - **Expected:**
     - The streams table shows **Patches** alone.
-    - The timeline still shows **Platform** and **Patches**.
+    - The timeline still shows **Platform**, **Patches** and **Field Apps**.
   - **Notes:**
 
 - [ ] `93B7` Press Esc.
   - **Expected:**
     - The search field is empty.
-    - The streams table shows **Platform** and **Patches** again.
+    - The streams table shows **Platform**, **Patches** and **Field Apps** again.
   - **Notes:**
 
 - [ ] `39AF` Select **Platform** in the table.
