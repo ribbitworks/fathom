@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies the workflows of [Working as an Engineering Director](../../help/working-as-an-engineering-director.md) on the seed data: filling a planned hire and approving the director's own drafts, changing a reporting line from an earlier date and seeing it on the org chart, changing a detail's class, and sharing a view of People that another account sees until it is taken back.
+Verifies the workflows of [Working as an Engineering Director](../../help/working-as-an-engineering-director.md) on the seed data: filling a planned hire and approving the director's own drafts, changing a reporting line from an earlier date and seeing it on the org chart, changing a detail's class, sharing a view of People that another account sees until it is no longer shared, and sharing views of the release streams, of Features and of the Proposals tab.
 
 ## Test Environment
 
@@ -218,7 +218,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The newest entry reads "Engineering Director changed End date's class: from Personal to General", with a yellow dot before it.
   - **Notes:**
 
-### DIRECTOR-04: A Shared View Is Seen by Others Until It Is Taken Back
+### DIRECTOR-04: A Shared View Is Seen by Others Until It Stops Being Shared
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, in the main browser, the same as DIRECTOR-03. The second browser signs in as another account in step `F3B1`.
 
@@ -249,7 +249,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `891E` Open the Views menu.
   - **Expected:**
     - The heading **Shared views** is above `Fictional hiring`.
-    - **Take back current view** is offered.
+    - **Stop sharing current view** is offered.
   - **Notes:**
 
 - [ ] `F3B1` In the second browser, sign in as the Engineering Manager, `engineering.manager@fathom.test`.
@@ -269,16 +269,16 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `BC69` In the second browser, open the Views menu again.
-  - **Expected:** **Rename…**, **Delete view** and **Take back current view** are not offered.
+  - **Expected:** **Rename…**, **Delete view** and **Stop sharing current view** are not offered.
   - **Notes:**
 
 - [ ] `99E4` In the main browser, press Esc.
   - **Expected:** The Views menu closes.
   - **Notes:**
 
-- [ ] `3B91` In the main browser, open the Views menu, and select **Take back current view**.
+- [ ] `3B91` In the main browser, open the Views menu, and select **Stop sharing current view**.
   - **Expected:**
-    - A notice says "Took back the Fictional hiring view."
+    - A notice says "Stopped sharing the Fictional hiring view."
     - The notice offers **Undo**.
     - In the Views menu, `Fictional hiring` is under **My views**.
   - **Notes:**
@@ -297,6 +297,116 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `170D` Open the Views menu, and select **Delete view**.
   - **Expected:** `Fictional hiring` is gone from the Views menu.
+  - **Notes:**
+
+### DIRECTOR-05: Shared Views of the Plan
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, in the main browser, the same as DIRECTOR-04. The second browser is still signed in as the Engineering Manager.
+
+**Preconditions:** None beyond DIRECTOR-04.
+
+- [ ] `9B78` Select the **Releases** page in the left-hand menu.
+  - **Expected:** The **Releases** page opens, with no view applied.
+  - **Notes:**
+
+- [ ] `1069` Type `Platform` in the search box.
+  - **Expected:** The table lists only 'Platform'.
+  - **Notes:**
+
+- [ ] `E050` Open the Views menu, and select **Save view…**.
+  - **Expected:**
+    - A dialog titled "Save view" shows **Name**.
+    - Below it is a checkbox, **Share with everyone who sees this table**, not ticked.
+  - **Notes:**
+
+- [ ] `F359` Type `Fictional platform` in **Name**.
+  - **Expected:** **Name** shows what was typed.
+  - **Notes:**
+
+- [ ] `57B0` Tick **Share with everyone who sees this table**.
+  - **Expected:** The checkbox is ticked.
+  - **Notes:**
+
+- [ ] `AA82` Select **Save view**.
+  - **Expected:**
+    - The dialog closes.
+    - The Views button reads `Fictional platform`.
+  - **Notes:**
+
+- [ ] `E5B9` In the second browser, select the **Releases** page in the left-hand menu.
+  - **Expected:** The **Releases** page opens.
+  - **Notes:**
+
+- [ ] `74B0` In the second browser, open the Views menu, and select `Fictional platform` under **Shared views**.
+  - **Expected:**
+    - The search box shows `Platform`.
+    - The table lists only 'Platform'.
+  - **Notes:**
+
+- [ ] `D43E` Select the **Features** page in the left-hand menu.
+  - **Expected:** The **Features** page opens, showing the table, with no view applied.
+  - **Notes:**
+
+- [ ] `2C7B` Select **Group by: Cycle** above the table, then **Status**.
+  - **Expected:** The headings name feature statuses, such as **In progress**.
+  - **Notes:**
+
+- [ ] `9B19` Open the Views menu, and select **Save view…**.
+  - **Expected:** Under **Includes**, **Group by** reads "Status".
+  - **Notes:**
+
+- [ ] `4A1F` Type `Fictional by status` in **Name**.
+  - **Expected:** **Name** shows what was typed.
+  - **Notes:**
+
+- [ ] `1D44` Tick **Share with everyone who sees this table**.
+  - **Expected:** The checkbox is ticked.
+  - **Notes:**
+
+- [ ] `1CCD` Select **Save view**.
+  - **Expected:** The Views button reads `Fictional by status`.
+  - **Notes:**
+
+- [ ] `D738` In the second browser, select the **Features** page in the left-hand menu.
+  - **Expected:** The **Features** page opens, with its headings naming cycles.
+  - **Notes:**
+
+- [ ] `D6DB` In the second browser, open the Views menu, and select `Fictional by status` under **Shared views**.
+  - **Expected:** The headings name feature statuses, such as **In progress**.
+  - **Notes:**
+
+- [ ] `7D8F` Select the **Projects** page in the left-hand menu, then the **Proposals** tab.
+  - **Expected:** The **Proposals** tab is chosen, with no view applied.
+  - **Notes:**
+
+- [ ] `20FA` Type `Harbour` in the search box.
+  - **Expected:** 'Harbour Cranes Upgrade' is listed.
+  - **Notes:**
+
+- [ ] `46B7` Open the Views menu, and select **Save view…**.
+  - **Expected:** Under **Includes**, **Search** reads “Harbour”.
+  - **Notes:**
+
+- [ ] `5D3A` Type `Fictional harbour bids` in **Name**.
+  - **Expected:** **Name** shows what was typed.
+  - **Notes:**
+
+- [ ] `C609` Tick **Share with everyone who sees this table**.
+  - **Expected:** The checkbox is ticked.
+  - **Notes:**
+
+- [ ] `E0E8` Select **Save view**.
+  - **Expected:** The Views button reads `Fictional harbour bids`.
+  - **Notes:**
+
+- [ ] `8CF5` In the second browser, select the **Projects** page in the left-hand menu, then the **Proposals** tab.
+  - **Expected:** The **Proposals** tab is chosen.
+  - **Notes:**
+
+- [ ] `BB2A` In the second browser, open the Views menu, and select `Fictional harbour bids` under **Shared views**.
+  - **Expected:**
+    - The search box shows `Harbour`.
+    - 'Harbour Cranes Upgrade' is listed.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

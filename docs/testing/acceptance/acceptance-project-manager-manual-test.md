@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-project-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Acceptance, Project Manager
 
 ## Scope
 
-Verifies the workflows of [Working as a Project Manager](../../help/working-as-a-project-manager.md) on the seed data: keeping a project on track with a new milestone, its scope history and its features, approved by a Product Manager; seeing who works on what in Feature assignments and Capacity; and approving and rejecting others' drafts.
+Verifies the workflows of [Working as a Project Manager](../../help/working-as-a-project-manager.md) on the seed data: keeping a project on track with a new milestone, its scope history and its features, approved by a Product Manager; seeing who works on what in Feature assignments and Capacity; approving and rejecting others' drafts; and keeping a view of one project's milestones.
 
 ## Test Environment
 
@@ -229,6 +229,61 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - A team's first card names 'Search and discovery'.
     - No dot is before the name.
+  - **Notes:**
+
+### PROJECT-04: A Project Manager Keeps a View of One Project's Milestones
+
+**Account:** Project Manager, `project.manager@fathom.test`, the same as PROJECT-03.
+
+**Preconditions:** None beyond PROJECT-03.
+
+- [ ] `404D` Select the **Projects** page in the left-hand menu, then the **Milestones** tab.
+  - **Expected:** The **Milestones** tab is chosen, with no view applied.
+  - **Notes:**
+
+- [ ] `C19F` Select the **Project** header, then **Filter…**.
+  - **Expected:** The choices include 'P-2001 Crane Control'.
+  - **Notes:**
+
+- [ ] `078B` Tick 'P-2001 Crane Control'.
+  - **Expected:** 'P-2001 Crane Control' is the only choice ticked.
+  - **Notes:**
+
+- [ ] `F30F` Press Esc.
+  - **Expected:**
+    - Only milestones of 'Crane Control' are listed, such as 'Kickoff'.
+    - `Fictional site survey`, approved in PROJECT-01, is among them.
+  - **Notes:**
+
+- [ ] `F2B5` Open the Views menu, and select **Save view…**.
+  - **Expected:**
+    - A dialog titled "Save view" shows **Name**.
+    - Under **Includes**, **Filter** reads "Project: P-2001 Crane Control".
+    - It offers no choice about sharing.
+  - **Notes:**
+
+- [ ] `6CAE` Type `Fictional crane milestones` in **Name**.
+  - **Expected:** **Name** shows what was typed.
+  - **Notes:**
+
+- [ ] `B2F7` Select **Save view**.
+  - **Expected:**
+    - The dialog closes.
+    - The Views button reads `Fictional crane milestones`.
+  - **Notes:**
+
+- [ ] `ACCD` Select the **Projects** tab.
+  - **Expected:**
+    - Every project is listed.
+    - No **Views** button shows.
+  - **Notes:**
+
+- [ ] `7E76` Select the **Milestones** tab.
+  - **Expected:** The **Milestones** tab is chosen.
+  - **Notes:**
+
+- [ ] `B134` Open the Views menu, and select `Fictional crane milestones` under **My views**.
+  - **Expected:** Only milestones of 'Crane Control' are listed.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

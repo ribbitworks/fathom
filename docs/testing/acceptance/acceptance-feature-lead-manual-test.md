@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-feature-lead.md", "docs/product/roles.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-14"
 ---
 
 # Manual Test: Acceptance, Feature Lead
 
 ## Scope
 
-Verifies the workflows of [Working as a Feature Lead](../../help/working-as-a-feature-lead.md) on the seed data: shaping a feature team, approved by a Project Manager; keeping a feature's status and estimate current, approved by a Product Manager; seeing what each release and cycle holds; and finding someone on the org chart. It also verifies that the account, which holds a second role, switches between them at once, and that the change history names the role a change was made as.
+Verifies the workflows of [Working as a Feature Lead](../../help/working-as-a-feature-lead.md) on the seed data: shaping a feature team, approved by a Project Manager; keeping a feature's status and estimate current, approved by a Product Manager; seeing what each release and cycle holds, and keeping views of one stream and of the Features board; and finding someone on the org chart. It also verifies that the account, which holds a second role, switches between them at once, and that the change history names the role a change was made as.
 
 ## Test Environment
 
@@ -299,6 +299,81 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `04D0` Choose **Feature Lead** in the role menu.
   - **Expected:** The **People** section of the left-hand menu shows no **Feature assignments** and no **Capacity**.
+  - **Notes:**
+
+### LEAD-08: A Feature Lead Keeps Views of One Stream and the Board
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as LEAD-07.
+
+**Preconditions:** LEAD-07 done, acting as **Feature Lead**, with the **Releases** page open.
+
+- [ ] `3293` Type `Platform` in the search box.
+  - **Expected:**
+    - The table lists only 'Platform'.
+    - The timeline shows only 'Platform'.
+  - **Notes:**
+
+- [ ] `8D38` Open the Views menu, and select **Save view…**.
+  - **Expected:**
+    - A dialog titled "Save view" shows **Name**.
+    - Under **Includes**, **Search** reads “Platform”.
+    - It offers no choice about sharing.
+  - **Notes:**
+
+- [ ] `728E` Type `Fictional my stream` in **Name**.
+  - **Expected:** **Name** shows what was typed.
+  - **Notes:**
+
+- [ ] `F3C2` Select **Save view**.
+  - **Expected:**
+    - The dialog closes.
+    - The Views button reads `Fictional my stream`.
+  - **Notes:**
+
+- [ ] `121F` Open the Views menu, and select **Clear view**.
+  - **Expected:**
+    - The search box is empty.
+    - The table lists 'Platform' and 'Patches'.
+  - **Notes:**
+
+- [ ] `FDC2` Open the Views menu, and select `Fictional my stream` under **My views**.
+  - **Expected:**
+    - The search box shows `Platform`.
+    - The table and the timeline show only 'Platform'.
+  - **Notes:**
+
+- [ ] `D14D` Select the **Features** page in the left-hand menu.
+  - **Expected:** The **Features** page opens, with no view applied.
+  - **Notes:**
+
+- [ ] `494C` Select **Board** in the switch after the **Features** heading.
+  - **Expected:**
+    - The board shows, with the button **Stream: Platform**.
+    - Its columns are 'Platform' cycles, then **Later**.
+  - **Notes:**
+
+- [ ] `DC97` Select **Card**, then **Risk**.
+  - **Expected:** The cards no longer show **Risk**.
+  - **Notes:**
+
+- [ ] `CAD3` Press Esc.
+  - **Expected:** The Card menu closes.
+  - **Notes:**
+
+- [ ] `71F1` Open the Views menu, and select **Save view…**.
+  - **Expected:**
+    - A dialog titled "Save view" shows **Name**.
+    - Under **Includes**, **Board** reads "Card Status, Priority, Size, Needed by, Staffed months".
+  - **Notes:**
+
+- [ ] `00CA` Type `Fictional board` in **Name**.
+  - **Expected:** **Name** shows what was typed.
+  - **Notes:**
+
+- [ ] `A48F` Select **Save view**.
+  - **Expected:**
+    - The dialog closes.
+    - The Views button reads `Fictional board`.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

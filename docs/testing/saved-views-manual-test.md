@@ -11,7 +11,7 @@ last_updated: "2026-11-14"
 
 ## Scope
 
-Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and taking it back, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its streams in the timeline; and that a view on Features is shared by its table and Board, and kept to Features.
+Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and stopping sharing it, moving columns as part of a view, and a view on a column the role can no longer see, as seen from more than one account; hiding a column and showing it again; that a view on Releases shows only its streams in the timeline; and that a view on Features is shared by its table and Board, and kept to Features.
 
 ## Test Environment
 
@@ -173,7 +173,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The stop-sharing item.
   - **Notes:**
 
-### VIEW-03: A View Is Shared and Taken Back
+### VIEW-03: A View Is Shared and Then Stops Being Shared
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as VIEW-02.
 
@@ -184,10 +184,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `E7E3` Open the Views menu.
-  - **Expected:** **Save view…** is offered.
+  - **Expected:**
+    - **Save as new view…** is offered.
+    - **Update Fictional team view** is offered.
   - **Notes:**
 
-- [ ] `3AB9` Select **Save view…**.
+- [ ] `3AB9` Select **Save as new view…**.
   - **Expected:**
     - A dialog titled "Save view" shows.
     - **Share with everyone who sees this table** is not ticked.
@@ -261,10 +263,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `3F47` Open the Views menu.
-  - **Expected:** **Save view…** is offered.
+  - **Expected:** **Save as new view…** is offered.
   - **Notes:**
 
-- [ ] `DC7D` Select **Save view…**.
+- [ ] `DC7D` Select **Save as new view…**.
   - **Expected:**
     - A dialog titled "Save view" shows.
     - **Share with everyone who sees this table** is not ticked.
@@ -341,7 +343,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The menu closes.
   - **Notes:**
 
-- [ ] `2DAC` Open the Views menu and select **Save view…**.
+- [ ] `2DAC` Open the Views menu and select **Save as new view…**.
   - **Expected:**
     - The dialog opens.
     - Focus is in **Name**.

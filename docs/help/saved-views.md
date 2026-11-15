@@ -16,7 +16,7 @@ You save and apply views from the **Views** menu: the last button after the sear
 
 1. Set up the table the way you want it.
 1. Select **Views**.
-1. Select **Save view…**.
+1. Select **Save view…**. While a view is applied, it reads **Save as new view…**, and the view applied stays as it was.
 1. Type the view's **Name**.
 1. Check what the view keeps, under **Includes**.
 1. To share it, tick **Share with everyone who sees this table**.
@@ -42,11 +42,11 @@ To rename the view, select **Rename…** in the same menu. To delete it, select 
 
 You're done when the dot after the button's name is gone.
 
-### Share a View or Take It Back
+### Share a View or Stop Sharing It
 
 1. Apply a view you saved.
 1. Select **Views**.
-1. Select **Share current view** to share it, or **Take back current view** to make it personal again.
+1. Select **Share current view** to share it, or **Stop sharing current view** to make it personal again.
 
 You're done when the view moves to **Shared views**, or back to **My views**.
 
@@ -105,4 +105,4 @@ In the **Views** menu, under **Sort**, each level of the sort is named, and then
 
 ## Where Changes Go
 
-A saved view isn't a draft. It's saved straight away, without approval. Sharing, taking back and deleting a view each offer **Undo** for a few seconds. Renaming or deleting a view you can no longer use can't be undone.
+A saved view isn't a draft. It's saved straight away, without approval. Sharing a view, stopping sharing it and deleting it each offer **Undo** for a few seconds. Renaming or deleting a view you can no longer use can't be undone.

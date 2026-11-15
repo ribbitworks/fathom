@@ -18,6 +18,10 @@ As a Feature Lead, you lead a feature team: a group that works on features toget
 
 On **Features**, select **Group by**, and choose **Cycle** or **Release**. See [Features](features.md#group-the-table).
 
+## Keep a View
+
+A view is how you've set up a table, such as its search and grouping. You can save one on **Features**, the board included, or on **Releases**, to come back to. Only you see it. See [Saved views](saved-views.md#save-a-view).
+
 ## Shape the Feature Team
 
 1. On the **Org chart**, choose **Feature teams**, and open your team's panel. See [Org chart](org-chart.md#change-a-feature-team).
