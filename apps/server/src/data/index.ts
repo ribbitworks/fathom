@@ -77,9 +77,11 @@ import {
 import { sql } from "drizzle-orm";
 import {
   type Actor,
+  holdsAnyPermission,
   requireAnyPermission,
   requirePermission,
 } from "../access.ts";
+import { ForbiddenError } from "../errors.ts";
 import { approveDrafts, rejectDrafts } from "./approvals.ts";
 import {
   changePlanningSettings,
@@ -100,7 +102,8 @@ import * as featureTeamData from "./feature-teams.ts";
 import { readTeamMonths } from "./team-months.ts";
 import { recordExport } from "./exports.ts";
 import { readHistory, recordPersonalView } from "./history.ts";
-import { discardRecordDraft, resubmitRecordDraft } from "./records.ts";
+import { discardRecordDraft, kindOf, resubmitRecordDraft } from "./records.ts";
+import { readsKind } from "./record-state.ts";
 import * as projectData from "./projects.ts";
 import { readScopeHistory } from "./scope-history.ts";
 import type { PlanKind, PlanRecordRequest } from "./projects.ts";
@@ -715,24 +718,31 @@ function createListAccess(database: Database): ListAccess {
   };
 }
 
-// Who may change each kind of the plan's records.
-const recordEditors: Record<RecordType, Permission> = {
-  "release-stream": "configuration:edit",
-  "cycle-pattern": "configuration:edit",
-  release: "features:edit",
-  feature: "features:edit",
-  customer: "plan:edit",
-  proposal: "plan:edit",
-  project: "plan:edit",
-  milestone: "plan:edit",
-  allocation: "allocations:edit",
-  "planning-settings": "configuration:edit",
+// Who may change each kind of the plan's records, any one of the permissions sufficing. Schedules
+// and their cycles are part of the plan, and planning configuration too.
+const recordEditors: Record<RecordType, readonly Permission[]> = {
+  "release-stream": ["plan:edit", "configuration:edit"],
+  "cycle-pattern": ["plan:edit", "configuration:edit"],
+  release: ["features:edit"],
+  feature: ["features:edit"],
+  customer: ["plan:edit"],
+  proposal: ["plan:edit"],
+  project: ["plan:edit"],
+  milestone: ["plan:edit"],
+  allocation: ["allocations:edit"],
+  "planning-settings": ["configuration:edit"],
 };
 
-function recordEditor(actor: Actor, type: RecordType): Actor {
+// Whether the actor may change a kind of record: one who may change it, and who sees it, since
+// some, such as editing the plan, change kinds they do not grant seeing.
+const editsKind = (actor: Actor, type: RecordType): boolean =>
   // The kind is always one of the fixed kinds listed above.
   // eslint-disable-next-line security/detect-object-injection
-  requirePermission(actor, recordEditors[type]);
+  holdsAnyPermission(actor, recordEditors[type]) &&
+  readsKind(kindOf(type), actor.permissions);
+
+function recordEditor(actor: Actor, type: RecordType): Actor {
+  if (!editsKind(actor, type)) throw new ForbiddenError();
   return actor;
 }
 
@@ -743,8 +753,8 @@ function createReleaseAccess(database: Database): ReleaseAccess {
     read: async (actor) => {
       return {
         streams: await seenStreams(database, actor),
-        canEditStreams: actor.permissions.includes("configuration:edit"),
-        canEditReleases: actor.permissions.includes("features:edit"),
+        canEditStreams: editsKind(actor, "release-stream"),
+        canEditReleases: editsKind(actor, "release"),
       };
     },
     createStream: async (actor, request) =>
@@ -789,7 +799,7 @@ function createReleaseAccess(database: Database): ReleaseAccess {
         streamId,
         "release",
         id,
-        actor.permissions.includes(recordEditors["cycle-pattern"]),
+        editsKind(actor, "cycle-pattern"),
       ),
     updateReleaseNote: async (actor, streamId, id, request) =>
       releases.changeReleaseNote(
@@ -1108,7 +1118,7 @@ export function createDataAccess(database: Database): DataAccess {
           recordEditor(actor, type),
           type,
           id,
-          actor.permissions.includes(recordEditors["cycle-pattern"]),
+          editsKind(actor, "cycle-pattern"),
         ),
       resubmitDraft: async (actor, type, id) =>
         resubmitRecordDraft(database, recordEditor(actor, type), type, id),

@@ -1413,7 +1413,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 #### REL-34: A Role That Can't Change Schedules Sees No Pencils
 
-**Account:** Project Manager, `project.manager@fathom.test`, changed from REL-33.
+**Account:** Team Member, `team.member@fathom.test`, changed from REL-33.
 
 **Preconditions:** Signed in with this account. **Releases** page open on the **Schedules** tab.
 

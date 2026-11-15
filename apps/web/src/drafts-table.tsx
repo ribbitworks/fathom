@@ -8,6 +8,7 @@
 
 import {
   approvedAreaNames,
+  eitherOf,
   approvePermissions,
   capitalized,
   type DraftKind,
@@ -68,12 +69,17 @@ const typeNames: Record<DraftKind, string> = {
   "planning-settings": "Planning settings",
 };
 
-// The area whose Approvers decide a kind's drafts, in a sentence, such as "features and releases",
-// and as the Area column names it, such as "Features and releases".
+// The areas whose Approvers decide a kind's drafts, either being enough, in a sentence, such as
+// "features and releases", or "the plan or configuration", and as the Area column names them.
 export const areaWords = (kind: DraftKind): string =>
-  // The kind is always one of the fixed kinds.
-  // eslint-disable-next-line security/detect-object-injection
-  approvedAreaNames[approvePermissions[kind]];
+  eitherOf(
+    // The kind, and each Approve permission that decides it, always come from the fixed lists.
+    // eslint-disable-next-line security/detect-object-injection
+    approvePermissions[kind].map(
+      // eslint-disable-next-line security/detect-object-injection
+      (permission) => approvedAreaNames[permission],
+    ),
+  );
 
 export const areaOf = (kind: DraftKind): string => capitalized(areaWords(kind));
 

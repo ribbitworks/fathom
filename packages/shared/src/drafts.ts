@@ -7,7 +7,7 @@
 
 import { z } from "zod";
 import { linkShape } from "./links.ts";
-import type { Permission } from "./access.ts";
+import { holdsAny, type Permission } from "./access.ts";
 
 // A draft waits for approval until an Approver approves or rejects it; a rejected draft keeps its
 // reason until it is changed again or discarded.
@@ -186,29 +186,38 @@ export const draftKinds = [
 
 export type DraftKind = (typeof draftKinds)[number];
 
-// The permission that approves or rejects each kind's drafts, that of the area it belongs to, as the
-// Decisions Log sets out. Every kind must be listed, which the compiler checks.
-export const approvePermissions = {
-  person: "people:approve",
-  "planned-hire": "hiring-plan:approve",
-  "feature-team": "feature-teams:approve",
-  list: "configuration:approve",
-  "list-item": "configuration:approve",
-  "choice-order": "configuration:approve",
-  field: "configuration:approve",
-  "release-stream": "features:approve",
-  "cycle-pattern": "features:approve",
-  release: "features:approve",
-  feature: "features:approve",
-  customer: "plan:approve",
-  proposal: "plan:approve",
-  project: "plan:approve",
-  milestone: "plan:approve",
-  allocation: "allocations:approve",
-  "planning-settings": "configuration:approve",
-} as const satisfies Record<DraftKind, Permission>;
+// The Approve permissions, one for each area whose drafts an Approver decides.
+export type ApprovePermission = Exclude<
+  Extract<Permission, `${string}:approve`>,
+  "drafts:approve-own"
+>;
 
-export type ApprovePermission = (typeof approvePermissions)[DraftKind];
+// The permissions that approve or reject each kind's drafts, any one of them sufficing: that of the
+// area it belongs to, as the Decisions Log sets out, and, for schedules and their cycles, which are
+// part of both the plan and planning configuration, either's. Every kind must be listed, which the
+// compiler checks.
+export const approvePermissions: Record<
+  DraftKind,
+  readonly [ApprovePermission, ...ApprovePermission[]]
+> = {
+  person: ["people:approve"],
+  "planned-hire": ["hiring-plan:approve"],
+  "feature-team": ["feature-teams:approve"],
+  list: ["configuration:approve"],
+  "list-item": ["configuration:approve"],
+  "choice-order": ["configuration:approve"],
+  field: ["configuration:approve"],
+  "release-stream": ["plan:approve", "configuration:approve"],
+  "cycle-pattern": ["plan:approve", "configuration:approve"],
+  release: ["features:approve"],
+  feature: ["features:approve"],
+  customer: ["plan:approve"],
+  proposal: ["plan:approve"],
+  project: ["plan:approve"],
+  milestone: ["plan:approve"],
+  allocation: ["allocations:approve"],
+  "planning-settings": ["configuration:approve"],
+};
 
 // What the drafts each area's Approve permission decides are of, as refusals name them.
 export const approvedAreaNames: Record<ApprovePermission, string> = {
@@ -224,13 +233,18 @@ export const approvedAreaNames: Record<ApprovePermission, string> = {
 // Whether drafts are being approved or rejected.
 export type Asking = "approve" | "reject";
 
+// Whether some permissions let a user approve and reject a kind's drafts.
+export const approvesKind = (
+  permissions: readonly string[],
+  kind: DraftKind,
+): boolean =>
+  // The kind is always one of the fixed list above.
+  // eslint-disable-next-line security/detect-object-injection
+  holdsAny(permissions, approvePermissions[kind]);
+
 // The kinds of draft some permissions let a user approve and reject.
 export const approvableKinds = (permissions: readonly string[]): DraftKind[] =>
-  draftKinds.filter((kind) =>
-    // The kind is always one of the fixed list above.
-    // eslint-disable-next-line security/detect-object-injection
-    permissions.includes(approvePermissions[kind]),
-  );
+  draftKinds.filter((kind) => approvesKind(permissions, kind));
 
 // The drafts asked for of the kinds a test keeps.
 export function draftsWhere(

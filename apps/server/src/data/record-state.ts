@@ -7,12 +7,13 @@
 // approving it approves them, and they are rejected only together with it, as the Decisions Log
 // sets out. Part of the data access layer; records.ts reads and changes the records.
 
-import type {
-  ClassifiedView,
-  ColumnTable,
-  Permission,
-  RecordRef,
-  RecordType,
+import {
+  type ClassifiedView,
+  type ColumnTable,
+  holdsAny,
+  type Permission,
+  type RecordRef,
+  type RecordType,
 } from "@fathom/shared";
 import type { PgTable } from "drizzle-orm/pg-core";
 import type { Transaction } from "./changes.ts";
@@ -140,8 +141,7 @@ export const shownVersion = (
 export const readsKind = (
   kind: RecordKind,
   permissions: readonly Permission[],
-): boolean =>
-  kind.readWith.some((permission) => permissions.includes(permission));
+): boolean => holdsAny(permissions, kind.readWith);
 
 // A record as refusals and the Drafts page name it to a role: by its own name only to a role that
 // reads its kind, and only when the record is shown to them, not held in someone else's

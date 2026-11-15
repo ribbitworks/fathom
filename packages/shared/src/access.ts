@@ -22,11 +22,13 @@ export const roleSchema = z.enum([
 export type Role = z.infer<typeof roleSchema>;
 
 export const permissionSchema = z.enum([
-  // Projects, proposals, customers and milestones.
+  // Projects, proposals, customers and milestones, and schedules and their cycle patterns, which
+  // planning configuration changes and approves too. Schedules are seen with features and releases,
+  // or with configuration, not with the plan.
   "plan:view",
   "plan:edit",
   "plan:approve",
-  // Features and their estimates, releases, release streams and cycle patterns.
+  // Features and their estimates, and releases.
   "features:view",
   "features:edit",
   "features:approve",
@@ -65,6 +67,12 @@ export const permissionSchema = z.enum([
 
 export type Permission = z.infer<typeof permissionSchema>;
 
+// Whether some granted permissions include at least one of those wanted.
+export const holdsAny = (
+  granted: readonly string[],
+  wanted: readonly Permission[],
+): boolean => wanted.some((permission) => granted.includes(permission));
+
 // What each permission lets a user do, and what a user without it cannot, in plain English, for
 // showing the result of setting roles, and the permissions it does nothing without any of. Pages that
 // do not appear without a permission are worked out from the pages themselves, so these speak only of
@@ -79,12 +87,13 @@ export const permissionDescriptions: Record<
     without: "Does not see the plan.",
   },
   "plan:edit": {
-    allows: "Drafts changes to projects, proposals, customers, and milestones.",
+    allows:
+      "Drafts changes to projects, proposals, customers, and milestones, and, with View Features and releases or View Configuration, to schedules with their cycles.",
     without: "Cannot change the plan.",
   },
   "plan:approve": {
     allows:
-      "Approves or rejects drafts of projects, proposals, customers, and milestones.",
+      "Approves or rejects drafts of projects, proposals, customers, and milestones, and, with View Features and releases or View Configuration, of schedules and cycle patterns.",
     without: "Cannot approve drafts of the plan.",
     needs: ["plan:view"],
   },
@@ -99,10 +108,9 @@ export const permissionDescriptions: Record<
     without: "Cannot change features or estimates.",
   },
   "features:approve": {
-    allows:
-      "Approves or rejects drafts of features, releases, schedules, and cycle patterns.",
+    allows: "Approves or rejects drafts of features and releases.",
     without: "Cannot approve drafts of features or releases.",
-    needs: ["features:view", "configuration:view"],
+    needs: ["features:view"],
   },
   "allocations:view": {
     allows: "Sees allocations: who is assigned to what, and when.",
@@ -178,7 +186,7 @@ export const permissionDescriptions: Record<
   },
   "configuration:approve": {
     allows:
-      "Approves or rejects drafts of configuration, such as lists of choices and People's columns.",
+      "Approves or rejects drafts of configuration, such as lists of choices and People's columns, and, with View Features and releases or View Configuration, of schedules and cycle patterns.",
     without: "Cannot approve drafts of configuration.",
     needs: ["configuration:view", "people:view"],
   },

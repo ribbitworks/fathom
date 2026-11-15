@@ -996,17 +996,29 @@ describe("when a stream's cycles change", () => {
     expect(await patternDrafts(streamId)).toEqual([]);
   });
 
-  it("refuses approving a moved feature with Approve Plan alone", async () => {
-    const { feature } = await movedFeature();
-    const planOnly = await test.signedIn(["plan:approve", "plan:view"]);
-    const response = await test.request(
-      planOnly.cookie,
-      "POST",
-      "/api/drafts/approval",
-      { records: featureRecords(feature.id) },
-    );
-    expect(response.statusCode).toBe(403);
-  });
+  it.each([
+    ["Approve Plan", ["plan:approve", "plan:view", "features:view"]],
+    [
+      "Approve Configuration",
+      ["configuration:approve", "configuration:view", "features:view"],
+    ],
+    ["Approve Features", ["features:approve", "features:view"]],
+  ] as const)(
+    "refuses approving a moved feature with %s alone, leaving it and the cycles drafts",
+    async (_name, permissions) => {
+      const { streamId, feature } = await movedFeature();
+      const decider = await test.signedIn([...permissions]);
+      const response = await test.request(
+        decider.cookie,
+        "POST",
+        "/api/drafts/approval",
+        { records: featureRecords(feature.id) },
+      );
+      expect(response.statusCode).toBe(403);
+      expect((await shown(feature.id)).draft).toBeDefined();
+      expect(await patternDrafts(streamId)).not.toEqual([]);
+    },
+  );
 
   it("uses none when moved to Later while they wait", async () => {
     const streamId = await liveStream();

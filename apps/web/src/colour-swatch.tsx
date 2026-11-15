@@ -57,9 +57,10 @@ export const Swatch = ({
   );
 };
 
-// A name in its colour, as panels and tables show a team or release that has one: its colour's
-// square before it, centred on its text, in the line that holds it, such as a cell's after a
-// draft's dot. A grid of months shows the name in a tinted box instead.
+// A name in its colour, as tables, panels and timelines show a team or release that has one: its
+// colour's square before it, centred on its text, in the line that holds it, such as a cell's after
+// a draft's dot. The grid of months and the Features Board's headings still draw the name in its
+// colour's tinted box, with TeamLabels.
 export function ColouredName({
   colour,
   children,

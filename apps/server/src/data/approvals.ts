@@ -23,10 +23,12 @@ import {
 import {
   approvedAreaNames,
   approvePermissions,
+  approvesKind,
   type Asking,
   type DraftKind,
   draftKinds,
   type DraftsRequest,
+  eitherOf,
   kindsAsked,
   seesEmployment,
 } from "@fathom/shared";
@@ -357,14 +359,15 @@ function refuseBeyondRole(
   asking: Asking,
 ): void {
   for (const kind of kinds) {
-    // The kind is always one of the fixed list.
-    // eslint-disable-next-line security/detect-object-injection
-    const permission = approvePermissions[kind];
-    if (!actor.permissions.includes(permission)) {
-      throw new ForbiddenError(
-        // The permission is always one of the fixed list above.
+    if (!approvesKind(actor.permissions, kind)) {
+      // The kind, and each Approve permission that decides it, always come from the fixed lists.
+      // eslint-disable-next-line security/detect-object-injection
+      const areas = approvePermissions[kind].map(
         // eslint-disable-next-line security/detect-object-injection
-        `This role can't ${asking} drafts of ${approvedAreaNames[permission]}`,
+        (permission) => approvedAreaNames[permission],
+      );
+      throw new ForbiddenError(
+        `This role can't ${asking} drafts of ${eitherOf(areas)}`,
       );
     }
   }

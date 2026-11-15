@@ -18,6 +18,8 @@ import {
   defaultClasses,
   type ChangeHistory,
   type Permission,
+  type Role,
+  roleSchema,
   dayIn,
   defaultTimeZone,
   horizonFrom,
@@ -41,6 +43,7 @@ let configurer: { id: string; cookie: string };
 let planner: { id: string; cookie: string };
 let viewer: { id: string; cookie: string };
 let approver: { id: string; cookie: string };
+let featureLead: { id: string; cookie: string };
 
 beforeAll(async () => {
   test = await startTestApp();
@@ -48,6 +51,7 @@ beforeAll(async () => {
   planner = await test.signedIn("product-manager");
   viewer = await test.signedIn("team-member");
   approver = await test.signedIn("project-manager");
+  featureLead = await test.signedIn("feature-lead");
 });
 
 afterAll(async () => {
@@ -174,12 +178,10 @@ describe("reading release streams", () => {
 
 describe("who may change what", () => {
   let stream: ReleaseStream;
-  let pattern: string;
   let release: string;
 
   beforeAll(async () => {
     stream = await liveStream();
-    pattern = String(stream.patterns[0]?.id);
     await draftRelease(stream.id, {
       name: unique("Fictional Guarded"),
       ...firstHalf,
@@ -274,40 +276,6 @@ describe("who may change what", () => {
   });
 
   it.each([
-    ["renaming a stream", "PUT", "", { name: "Fictional Renamed" }],
-    ["retiring a stream", "PUT", "/retired", { retired: true }],
-    ["changing the day it ends", "PUT", "/ends-on", { endsOn: "2031-12-31" }],
-    ["adding a change of cycles", "POST", "/patterns", quarters],
-  ] as const)(
-    "refuses %s to those who do not edit planning configuration",
-    async (_name, method, tail, body) => {
-      const response = await test.request(
-        planner.cookie,
-        method,
-        `${path()}${tail}`,
-        body,
-      );
-      expect(response.statusCode).toBe(403);
-    },
-  );
-
-  it.each([
-    ["changing", "PUT"],
-    ["removing", "DELETE"],
-  ] as const)(
-    "refuses %s a change of cycles to those who do not edit planning configuration",
-    async (_name, method) => {
-      const response = await test.request(
-        planner.cookie,
-        method,
-        `${path()}/patterns/${pattern}`,
-        method === "PUT" ? quarters : undefined,
-      );
-      expect(response.statusCode).toBe(403);
-    },
-  );
-
-  it.each([
     ["changing", "PUT"],
     ["removing", "DELETE"],
   ] as const)(
@@ -318,21 +286,6 @@ describe("who may change what", () => {
         method,
         `${path()}/releases/${release}`,
         method === "PUT" ? { name: "Fictional", ...firstHalf } : undefined,
-      );
-      expect(response.statusCode).toBe(403);
-    },
-  );
-
-  it.each([
-    ["discarding", "/draft"],
-    ["resubmitting", "/draft/rejection"],
-  ])(
-    "refuses %s a stream's draft to those who do not edit planning configuration",
-    async (_name, tail) => {
-      const response = await test.request(
-        planner.cookie,
-        "DELETE",
-        `/api/records/release-stream/${stream.id}${tail}`,
       );
       expect(response.statusCode).toBe(403);
     },
@@ -354,17 +307,409 @@ describe("who may change what", () => {
   );
 });
 
-describe("changing release streams", () => {
-  it("is refused to those who do not edit planning configuration", async () => {
+// Schedules and their cycles are changed by those who edit the plan or planning configuration, and
+// their drafts decided by those who approve either, as Roles sets out.
+const scheduleEditors: readonly Role[] = [
+  "product-manager",
+  "project-manager",
+  "engineering-manager",
+  "engineering-director",
+  "workforce-administrator",
+];
+const scheduleApprovers: readonly Role[] = [
+  "product-manager",
+  "project-manager",
+  "engineering-director",
+];
+const others = (allowed: readonly Role[]) =>
+  roleSchema.options.filter((role) => !allowed.includes(role));
+
+// Each change to a schedule or its cycles, sent to a live quarterly schedule, retired first when
+// restoring it, with the status it is answered with when allowed.
+const scheduleChanges: {
+  name: string;
+  retired?: boolean;
+  status: number;
+  send: (
+    cookie: string,
+    stream: ReleaseStream,
+  ) => ReturnType<TestApp["request"]>;
+}[] = [
+  {
+    name: "adding a schedule",
+    status: 201,
+    send: (cookie) =>
+      test.request(cookie, "POST", "/api/release-streams", {
+        name: unique("Fictional Added"),
+      }),
+  },
+  {
+    name: "renaming a schedule",
+    status: 200,
+    send: (cookie, stream) =>
+      test.request(cookie, "PUT", `/api/release-streams/${stream.id}`, {
+        name: unique("Fictional Renamed"),
+      }),
+  },
+  {
+    name: "retiring a schedule",
+    status: 200,
+    send: (cookie, stream) =>
+      test.request(cookie, "PUT", `/api/release-streams/${stream.id}/retired`, {
+        retired: true,
+      }),
+  },
+  {
+    name: "restoring a schedule",
+    retired: true,
+    status: 200,
+    send: (cookie, stream) =>
+      test.request(cookie, "PUT", `/api/release-streams/${stream.id}/retired`, {
+        retired: false,
+      }),
+  },
+  {
+    name: "ending a schedule",
+    status: 200,
+    send: (cookie, stream) =>
+      test.request(cookie, "PUT", `/api/release-streams/${stream.id}/ends-on`, {
+        endsOn: "2031-12-31",
+      }),
+  },
+  {
+    name: "adding a change of cycles",
+    status: 201,
+    send: (cookie, stream) =>
+      test.request(
+        cookie,
+        "POST",
+        `/api/release-streams/${stream.id}/patterns`,
+        {
+          ...quarters,
+          startsOn: "2027-07-01",
+          length: 6,
+        },
+      ),
+  },
+  {
+    name: "changing a change of cycles",
+    status: 200,
+    send: (cookie, stream) =>
+      test.request(
+        cookie,
+        "PUT",
+        `/api/release-streams/${stream.id}/patterns/${String(stream.patterns[0]?.id)}`,
+        { ...quarters, naming: "Q{N} {YYYY}" },
+      ),
+  },
+  {
+    name: "removing a change of cycles",
+    status: 200,
+    send: (cookie, stream) =>
+      test.request(
+        cookie,
+        "DELETE",
+        `/api/release-streams/${stream.id}/patterns/${String(stream.patterns[0]?.id)}`,
+      ),
+  },
+  {
+    name: "changing one cycle's length",
+    status: 200,
+    send: (cookie, stream) =>
+      test.request(
+        cookie,
+        "PUT",
+        `/api/release-streams/${stream.id}/cycles/2027-04-01/length`,
+        { length: 2, later: "move" },
+      ),
+  },
+];
+
+describe("who may change schedules and their cycles", () => {
+  const allowed = scheduleChanges.flatMap((change) =>
+    scheduleEditors.map((role) => ({ ...change, role })),
+  );
+  const refused = scheduleChanges.flatMap((change) =>
+    others(scheduleEditors).map((role) => ({ ...change, role })),
+  );
+
+  it.each(allowed)(
+    "allows $name to $role",
+    async ({ role, retired, status, send }) => {
+      const stream = await liveStream();
+      if (retired === true) {
+        await test.request(
+          configurer.cookie,
+          "PUT",
+          `/api/release-streams/${stream.id}/retired`,
+          { retired: true },
+        );
+        await approveAll((await readStream(stream.id)) as ReleaseStream);
+      }
+      const { cookie } = await test.signedIn(role);
+
+      const response = await send(
+        cookie,
+        (await readStream(stream.id)) as ReleaseStream,
+      );
+
+      expect(response.statusCode, response.body).toBe(status);
+    },
+  );
+
+  it.each(refused)(
+    "refuses $name to $role, changing nothing",
+    async ({ role, send }) => {
+      const stream = await liveStream();
+      const { cookie } = await test.signedIn(role);
+
+      const response = await send(cookie, stream);
+
+      expect(response.statusCode, response.body).toBe(403);
+      expect(await readStream(stream.id)).toEqual(stream);
+    },
+  );
+
+  it.each(scheduleEditors)(
+    "tells %s they may change schedules",
+    async (role) => {
+      const { cookie } = await test.signedIn(role);
+      expect((await readStreams(cookie)).canEditStreams).toBe(true);
+    },
+  );
+
+  it.each(others(scheduleEditors).filter((role) => role !== "administrator"))(
+    "tells %s they may not change schedules",
+    async (role) => {
+      const { cookie } = await test.signedIn(role);
+      expect((await readStreams(cookie)).canEditStreams).toBe(false);
+    },
+  );
+
+  it("refuses changing a schedule to one who edits the plan but sees neither features nor planning configuration", async () => {
+    const stream = await liveStream();
+    const editor = await test.signedIn(["plan:edit"]);
+
     const response = await test.request(
-      planner.cookie,
-      "POST",
-      "/api/release-streams",
-      { name: unique("Fictional Refused") },
+      editor.cookie,
+      "PUT",
+      `/api/release-streams/${stream.id}`,
+      { name: unique("Fictional Unseen") },
     );
+
     expect(response.statusCode).toBe(403);
   });
+});
 
+// A live schedule renamed, or its cycles renamed, by the Workforce Administrator, as a draft waiting
+// for approval.
+const drafted = {
+  schedule: async () => {
+    const stream = await liveStream();
+    await test.request(
+      configurer.cookie,
+      "PUT",
+      `/api/release-streams/${stream.id}`,
+      { name: unique("Fictional Drafted") },
+    );
+    return { type: "release-stream", id: stream.id };
+  },
+  "change of cycles": async () => {
+    const stream = await liveStream();
+    const id = String(stream.patterns[0]?.id);
+    await test.request(
+      configurer.cookie,
+      "PUT",
+      `/api/release-streams/${stream.id}/patterns/${id}`,
+      { ...quarters, naming: "Q{N} {YYYY}" },
+    );
+    return { type: "cycle-pattern", id };
+  },
+};
+const draftedKinds = Object.entries(drafted);
+
+// A schedule's or a change of cycles' draft, if it has one.
+const draftOf = async ({ type, id }: { type: string; id: string }) => {
+  const stream = (await readStreams()).streams.find(
+    (each) =>
+      each.id === id || each.patterns.some((pattern) => pattern.id === id),
+  );
+  return type === "release-stream"
+    ? stream?.draft
+    : stream?.patterns.find((pattern) => pattern.id === id)?.draft;
+};
+
+describe("who may discard and resend drafts of schedules and their cycles", () => {
+  // Another user's draft, rejected when it is to be resent.
+  const handlings = [
+    {
+      handling: "discard",
+      tail: "/draft",
+      rejected: false,
+      after: undefined,
+      kept: { state: "waiting" },
+    },
+    {
+      handling: "resend",
+      tail: "/draft/rejection",
+      rejected: true,
+      after: { state: "waiting" },
+      kept: { state: "rejected" },
+    },
+  ] as const;
+  const cases = (roles: readonly Role[]) =>
+    draftedKinds.flatMap(([kind, draft]) =>
+      handlings.flatMap((handling) =>
+        roles.map((role) => ({ kind, draft, ...handling, role })),
+      ),
+    );
+  const prepare = async (
+    draft: () => Promise<{ type: string; id: string }>,
+    rejected: boolean,
+  ) => {
+    const record = await draft();
+    if (rejected) {
+      await decide("rejection", { records: [record], reason: "Not yet" });
+    }
+    return record;
+  };
+
+  it.each(cases(scheduleEditors))(
+    "lets $role $handling another's draft of a $kind",
+    async ({ draft, tail, rejected, after, role }) => {
+      const record = await prepare(draft, rejected);
+      const { cookie } = await test.signedIn(role);
+
+      const response = await test.request(
+        cookie,
+        "DELETE",
+        `/api/records/${record.type}/${record.id}${tail}`,
+      );
+
+      expect(response.statusCode, response.body).toBe(200);
+      const left = await draftOf(record);
+      if (after === undefined) expect(left).toBeUndefined();
+      else expect(left).toMatchObject(after);
+    },
+  );
+
+  it.each(cases(others(scheduleEditors)))(
+    "refuses $role to $handling a draft of a $kind",
+    async ({ draft, tail, rejected, kept, role }) => {
+      const record = await prepare(draft, rejected);
+      const { cookie } = await test.signedIn(role);
+
+      const response = await test.request(
+        cookie,
+        "DELETE",
+        `/api/records/${record.type}/${record.id}${tail}`,
+      );
+
+      expect(response.statusCode, response.body).toBe(403);
+      expect(await draftOf(record)).toMatchObject(kept);
+    },
+  );
+});
+
+describe("who may decide drafts of schedules and their cycles", () => {
+  const askings = [
+    { asking: "approval", body: {} },
+    { asking: "rejection", body: { reason: "Fictional reason" } },
+  ] as const;
+  const cases = (roles: readonly Role[]) =>
+    draftedKinds.flatMap(([kind, draft]) =>
+      askings.flatMap(({ asking, body }) =>
+        roles.map((role) => ({ kind, draft, asking, body, role })),
+      ),
+    );
+
+  it.each(cases(scheduleApprovers))(
+    "lets $role decide a $kind's draft by $asking",
+    async ({ draft, asking, body, role }) => {
+      const record = await draft();
+      const { cookie } = await test.signedIn(role);
+
+      const response = await test.request(
+        cookie,
+        "POST",
+        `/api/drafts/${asking}`,
+        {
+          records: [record],
+          ...body,
+        },
+      );
+
+      expect(response.statusCode, response.body).toBe(200);
+    },
+  );
+
+  it.each(cases(others(scheduleApprovers)))(
+    "refuses $role deciding a $kind's draft by $asking",
+    async ({ draft, asking, body, role }) => {
+      const record = await draft();
+      const { cookie } = await test.signedIn(role);
+
+      const response = await test.request(
+        cookie,
+        "POST",
+        `/api/drafts/${asking}`,
+        {
+          records: [record],
+          ...body,
+        },
+      );
+
+      expect(response.statusCode, response.body).toBe(403);
+      expect(await draftOf(record)).toMatchObject({ state: "waiting" });
+    },
+  );
+
+  it.each([
+    ["Approve Plan", ["plan:approve", "features:view"]],
+    ["Approve Configuration", ["configuration:approve", "configuration:view"]],
+  ] as const)(
+    "puts a %s holder's one approval of a schedule's and its cycles' drafts live",
+    async (_name, permissions) => {
+      const schedule = await drafted.schedule();
+      const cycles = await drafted["change of cycles"]();
+      const decider = await test.signedIn([...permissions]);
+
+      const response = await test.request(
+        decider.cookie,
+        "POST",
+        "/api/drafts/approval",
+        {
+          records: [schedule, cycles],
+        },
+      );
+
+      expect(response.statusCode, response.body).toBe(200);
+      expect(await draftOf(schedule)).toBeUndefined();
+      expect(await draftOf(cycles)).toBeUndefined();
+    },
+  );
+
+  it("refuses an Approver of features and releases alone, naming the plan and configuration", async () => {
+    const record = await drafted.schedule();
+    const decider = await test.signedIn(["features:approve", "features:view"]);
+
+    const response = await test.request(
+      decider.cookie,
+      "POST",
+      "/api/drafts/approval",
+      {
+        records: [record],
+      },
+    );
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json<{ error: string }>().error).toBe(
+      "This role can't approve drafts of the plan or configuration",
+    );
+  });
+});
+
+describe("changing release streams", () => {
   it("drafts a stream, which reaches the live streams once approved", async () => {
     const stream = await draftStream();
     expect(stream.draft).toMatchObject({ action: "created" });
@@ -1141,6 +1486,31 @@ describe("changing one cycle's length", () => {
     };
   }
 
+  it.each([
+    ["Approve Plan", ["plan:approve", "features:view"]],
+    ["Approve Configuration", ["configuration:approve", "configuration:view"]],
+  ] as const)(
+    "refuses one holding %s alone approving it while it moves a release, leaving it a draft",
+    async (_name, permissions) => {
+      const { stream, patterns, release } = await draftedChange();
+      const decider = await test.signedIn([...permissions]);
+
+      const response = await test.request(
+        decider.cookie,
+        "POST",
+        "/api/drafts/approval",
+        { records: [...patterns, release] },
+      );
+
+      expect(response.statusCode).toBe(403);
+      const waiting = await readStream(stream.id);
+      expect(waiting?.patterns.some(({ draft }) => draft !== undefined)).toBe(
+        true,
+      );
+      expect(waiting?.releases[0]?.draft).toBeDefined();
+    },
+  );
+
   it("refuses rejecting part of it", async () => {
     const { patterns, release } = await draftedChange();
     const reason = "Not yet";
@@ -1254,7 +1624,7 @@ describe("changing one cycle's length", () => {
   it("refuses discarding it to someone who may not change cycles", async () => {
     const { release } = await draftedChange();
     const response = await test.request(
-      planner.cookie,
+      featureLead.cookie,
       "DELETE",
       `/api/records/release/${release.id}/draft`,
     );
@@ -1410,17 +1780,6 @@ describe("changing one cycle's length", () => {
     );
   });
 
-  it("is refused to those who do not edit planning configuration", async () => {
-    const stream = await liveStream();
-    const response = await changeLength(
-      stream.id,
-      "2027-04-01",
-      { length: 2, later: "move" },
-      planner.cookie,
-    );
-    expect(response.statusCode).toBe(403);
-  });
-
   it("refuses a day no cycle of the stream starts on", async () => {
     const stream = await liveStream();
     const response = await changeLength(stream.id, "2027-04-02", {
@@ -1506,6 +1865,30 @@ describe("drafts of streams, patterns, and releases", () => {
       live?.patterns[0]?.draft,
       live?.releases[0]?.draft,
     ]).toEqual([undefined, undefined, undefined]);
+  });
+
+  it("refuses an Approver of features and releases alone a release in a stream drafted to be added, leaving all of it a draft", async () => {
+    const stream = await draftStream();
+    await draftPattern(stream.id);
+    const release = (
+      await draftRelease(stream.id, { name: "Fictional", ...firstHalf })
+    ).json<{ stream: ReleaseStream }>().stream.releases[0];
+    const decider = await test.signedIn(["features:approve", "features:view"]);
+
+    const response = await test.request(
+      decider.cookie,
+      "POST",
+      "/api/drafts/approval",
+      { records: [{ type: "release", id: release?.id }] },
+    );
+
+    expect(response.statusCode).toBe(403);
+    const waiting = await readStream(stream.id);
+    expect([
+      waiting?.draft?.action,
+      waiting?.patterns[0]?.draft?.action,
+      waiting?.releases[0]?.draft?.action,
+    ]).toEqual(["created", "created", "created"]);
   });
 
   it("rejecting a stream drafted to be added is refused unless what uses it is rejected too", async () => {

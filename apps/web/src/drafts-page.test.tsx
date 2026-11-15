@@ -1036,8 +1036,8 @@ describe("the Drafts page", () => {
     });
     const app = renderApp("/drafts");
     expect(await entries()).toEqual([
-      "Fictional Majors, Draft: added | Added | Waiting |  | Schedule | Features and releases | Fictional Editor | Oct 30, 2026 | ",
-      "Fictional Majors from Jan 1, 2027, Draft | Changed | Waiting | Length from 2 to 3 | Cycles | Features and releases | Fictional Editor | Oct 30, 2026 | ",
+      "Fictional Majors, Draft: added | Added | Waiting |  | Schedule | The plan or configuration | Fictional Editor | Oct 30, 2026 | ",
+      "Fictional Majors from Jan 1, 2027, Draft | Changed | Waiting | Length from 2 to 3 | Cycles | The plan or configuration | Fictional Editor | Oct 30, 2026 | ",
       "Fictional One in Fictional Majors, Draft: added | Added | Waiting |  | Release | Features and releases | Fictional Editor | Oct 30, 2026 | ",
     ]);
     await userEvent.click(

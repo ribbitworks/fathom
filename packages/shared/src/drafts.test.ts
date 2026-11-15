@@ -130,7 +130,9 @@ describe("approving by area", () => {
     for (const kind of draftKinds) {
       // The kind is always one of the fixed list.
       // eslint-disable-next-line security/detect-object-injection
-      expect(approving).toContain(approvePermissions[kind]);
+      for (const permission of approvePermissions[kind]) {
+        expect(approving).toContain(permission);
+      }
     }
   });
 
@@ -160,12 +162,12 @@ describe("approving by area", () => {
   it("names the kinds some permissions approve", () => {
     expect(approvableKinds(["people:approve", "features:approve"])).toEqual([
       "person",
-      "release-stream",
-      "cycle-pattern",
       "release",
       "feature",
     ]);
     expect(approvableKinds(["plan:approve", "people:view"])).toEqual([
+      "release-stream",
+      "cycle-pattern",
       "customer",
       "proposal",
       "project",

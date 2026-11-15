@@ -58,11 +58,11 @@ vi.mock("fastify", async (importOriginal) => {
 type Needs =
   | { kind: "open" }
   | { kind: "signed-in" }
-  // Every permission in all, and, when any names some, at least one of them.
+  // Every permission in all, and at least one of each group in any.
   | {
       kind: "permissions";
       all: readonly Permission[];
-      any: readonly Permission[];
+      any: readonly (readonly Permission[])[];
     };
 
 interface Route {
@@ -86,8 +86,18 @@ const allOf = (...all: Permission[]): Needs => ({
 const anyOf = (...any: Permission[]): Needs => ({
   kind: "permissions",
   all: [],
-  any,
+  any: [any],
 });
+// Those who change schedules and their cycles: those who edit the plan or planning configuration,
+// who see them.
+const changingSchedules: Needs = {
+  kind: "permissions",
+  all: [],
+  any: [
+    ["plan:edit", "configuration:edit"],
+    ["features:view", "configuration:view"],
+  ],
+};
 
 // What opens each table's page, and so its views.
 const viewTableNeeds: Record<ViewTable, Needs> = {
@@ -186,7 +196,7 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     needs: {
       kind: "permissions",
       all: ["configuration:approve"],
-      any: ["configuration:view", "people:view"],
+      any: [["configuration:view", "people:view"]],
     } as const,
   })),
   {
@@ -200,6 +210,24 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     needs: allOf("features:approve", "features:view"),
     asked: () => ({ records: [{ type: "release", id: id() }] }),
   },
+  ...[
+    { variant: "schedules", type: "release-stream" },
+    { variant: "cycle patterns", type: "cycle-pattern" },
+  ].map(({ variant, type }) => ({
+    variant,
+    // Schedules and their cycles are part of the plan and of planning configuration, either of whose
+    // Approvers decides them, and are seen with features and releases, and with planning
+    // configuration.
+    needs: {
+      kind: "permissions",
+      all: [],
+      any: [
+        ["plan:approve", "configuration:approve"],
+        ["features:view", "configuration:view"],
+      ],
+    } as const,
+    asked: () => ({ records: [{ type, id: id() }] }),
+  })),
   {
     // Projects and features are seen with the plan.
     variant: "plan records",
@@ -225,8 +253,8 @@ const changingTeams = allOf("people:view", "feature-teams:edit");
 
 // Who may discard and resend drafts of each kind of the plan's records.
 const recordKinds: { type: string; needs: Needs; recordId?: string }[] = [
-  { type: "release-stream", needs: allOf("configuration:edit") },
-  { type: "cycle-pattern", needs: allOf("configuration:edit") },
+  { type: "release-stream", needs: changingSchedules },
+  { type: "cycle-pattern", needs: changingSchedules },
   { type: "release", needs: allOf("features:edit") },
   { type: "feature", needs: allOf("features:edit") },
   { type: "customer", needs: allOf("plan:edit") },
@@ -775,50 +803,50 @@ const routes: Route[] = [
   {
     method: "POST",
     pattern: "/api/release-streams",
-    needs: allOf("configuration:edit"),
+    needs: changingSchedules,
     body: named,
   },
   {
     method: "PUT",
     pattern: "/api/release-streams/:streamId",
-    needs: allOf("configuration:edit"),
+    needs: changingSchedules,
     body: named,
   },
   {
     method: "PUT",
     pattern: "/api/release-streams/:streamId/retired",
-    needs: allOf("configuration:edit"),
+    needs: changingSchedules,
     body: retired,
   },
   {
     method: "PUT",
     pattern: "/api/release-streams/:streamId/ends-on",
-    needs: allOf("configuration:edit"),
+    needs: changingSchedules,
     body: () => ({ endsOn: null }),
   },
   {
     method: "PUT",
     pattern: "/api/release-streams/:streamId/cycles/:startsOn/length",
     url: `/api/release-streams/${id()}/cycles/2027-01-04/length`,
-    needs: allOf("configuration:edit"),
+    needs: changingSchedules,
     body: () => ({ length: 2, later: "keep" }),
   },
   {
     method: "POST",
     pattern: "/api/release-streams/:streamId/patterns",
-    needs: allOf("configuration:edit"),
+    needs: changingSchedules,
     body: pattern,
   },
   {
     method: "PUT",
     pattern: "/api/release-streams/:streamId/patterns/:id",
-    needs: allOf("configuration:edit"),
+    needs: changingSchedules,
     body: pattern,
   },
   {
     method: "DELETE",
     pattern: "/api/release-streams/:streamId/patterns/:id",
-    needs: allOf("configuration:edit"),
+    needs: changingSchedules,
   },
   // Releases are part of features and releases, though they sit in a stream.
   {
@@ -971,7 +999,7 @@ interface Case {
 }
 
 // Accounts holding every permission but some of those a route needs, one case for each permission
-// it needs all of, and one for those it needs any of.
+// it needs all of, and one for each group it needs one of.
 const refusals: Case[] = routes.flatMap((route) => {
   if (route.needs.kind !== "permissions") return [];
   const { all, any } = route.needs;
@@ -981,19 +1009,16 @@ const refusals: Case[] = routes.flatMap((route) => {
       route,
       holds: allExcept([permission]),
     })),
-    ...(any.length === 0
-      ? []
-      : [
-          {
-            name: `refuses ${nameOf(route)} without ${any.join(" or ")}`,
-            route,
-            holds: allExcept(any),
-          },
-        ]),
+    ...any.map((group) => ({
+      name: `refuses ${nameOf(route)} without ${group.join(" or ")}`,
+      route,
+      holds: allExcept(group),
+    })),
   ];
 });
 
-// Accounts holding only what a route needs, one case for each of the permissions it needs any of.
+// Accounts holding only what a route needs, one case for each permission of each group it needs one
+// of, held with the first of every other group.
 const allowances: Case[] = routes.flatMap((route) => {
   if (route.needs.kind === "open") return [];
   if (route.needs.kind === "signed-in") {
@@ -1002,13 +1027,22 @@ const allowances: Case[] = routes.flatMap((route) => {
     ];
   }
   const { all, any } = route.needs;
-  return (any.length === 0 ? [all] : any.map((one) => [...all, one])).map(
-    (holds) => ({
-      name: `allows ${nameOf(route)} with only ${holds.join(" and ")}`,
-      route,
-      holds,
-    }),
+  const firsts = (except: number) =>
+    any.flatMap((group, at) => (at === except ? [] : group.slice(0, 1)));
+  const options =
+    any.length === 0
+      ? [all]
+      : any.flatMap((group, at) =>
+          group.map((one) => [...new Set([...all, ...firsts(at), one])].sort()),
+        );
+  const distinct = new Map(
+    options.map((holds) => [holds.join(" and "), holds]),
   );
+  return [...distinct].map(([joined, holds]) => ({
+    name: `allows ${nameOf(route)} with only ${joined}`,
+    route,
+    holds,
+  }));
 });
 
 const signedOut = routes.filter(({ needs }) => needs.kind !== "open");

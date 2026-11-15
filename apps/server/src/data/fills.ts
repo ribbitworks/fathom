@@ -10,7 +10,7 @@
 import { refuseFillingAllocated } from "./allocations.ts";
 import { type Database, plannedHires } from "@fathom/db";
 import {
-  approvePermissions,
+  approvesKind,
   changesHiringPlan,
   type DraftsRequest,
   type HireFill,
@@ -169,9 +169,8 @@ export async function withFills(
       );
     }
     if (
-      (fill.people.length > 0 &&
-        !actor.permissions.includes(approvePermissions.person)) ||
-      !actor.permissions.includes(approvePermissions["planned-hire"])
+      (fill.people.length > 0 && !approvesKind(actor.permissions, "person")) ||
+      !approvesKind(actor.permissions, "planned-hire")
     ) {
       throw new ForbiddenError(
         "This draft is part of filling a planned hire, which this role can't decide",

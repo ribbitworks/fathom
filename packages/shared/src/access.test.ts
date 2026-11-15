@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  holdsAny,
   permissionDescriptions,
   permissionGrid,
   permissionLabel,
@@ -38,6 +39,29 @@ describe("permissionDescriptions", () => {
     expect(
       [...(permissionDescriptions["drafts:approve-own"].needs ?? [])].sort(),
     ).toEqual(approving.sort());
+  });
+});
+
+describe("schedules in the descriptions", () => {
+  it.each(["plan:edit", "plan:approve", "configuration:approve"] as const)(
+    "says %s reaches schedules only with sight of them",
+    (permission) => {
+      // The permission is always one of the fixed list above.
+      // eslint-disable-next-line security/detect-object-injection
+      expect(permissionDescriptions[permission].allows).toContain(
+        `with ${permissionLabel("features:view")} or ${permissionLabel("configuration:view")}, `,
+      );
+    },
+  );
+});
+
+describe("holdsAny", () => {
+  it("holds when any wanted permission is granted, and not when none is or none is wanted", () => {
+    expect(
+      holdsAny(["plan:view", "plan:edit"], ["features:edit", "plan:edit"]),
+    ).toBe(true);
+    expect(holdsAny(["plan:view"], ["features:edit", "plan:edit"])).toBe(false);
+    expect(holdsAny(["plan:view"], [])).toBe(false);
   });
 });
 

@@ -17,6 +17,7 @@ import type {
 } from "@fathom/shared";
 import {
   changesField,
+  holdsAny,
   changesHiringPlan,
   defaultClasses,
   editsClass,
@@ -84,13 +85,17 @@ export function requirePermission(actor: Actor, permission: Permission): void {
   requireAnyPermission(actor, [permission]);
 }
 
+export const holdsAnyPermission = (
+  actor: Actor,
+  permissions: readonly Permission[],
+): boolean => holdsAny(actor.permissions, permissions);
+
 // Allows an actor whose roles grant at least one of the permissions.
 export function requireAnyPermission(
   actor: Actor,
   permissions: readonly Permission[],
 ): void {
-  if (!permissions.some((permission) => actor.permissions.includes(permission)))
-    throw new ForbiddenError();
+  if (!holdsAnyPermission(actor, permissions)) throw new ForbiddenError();
 }
 
 // What lets a user see and change some data: its tier, or, for the hiring plan's own details, the
