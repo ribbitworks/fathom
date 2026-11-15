@@ -23,6 +23,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 - **Administrator:** `fathom.administrator@fathom.test`, shown in Fathom as "Fathom Administrator"
 - **Team Member:** `team.member@fathom.test`, with the permissions each test case grants it through Grant Team Member Only Some Permissions
+- **Product Manager:** `product.manager@fathom.test`. PERM-22 uses it to approve a schedule.
 
 ## Common Procedures
 
@@ -92,11 +93,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The table of schedules shows.
   - **Notes:**
 
-- [ ] `50E9` Select the details button at the right of the **Schedule** cell of 'Platform'.
+- [ ] `6081` Read the row for 'Platform'.
   - **Expected:**
-    - Under **Releases**, the side panel lists 'Harbor 1', 'Harbor 2 LTS', 'Harbor 3' and 'Harbor 4'
-    - A light green Live row is under 'Harbor 2 LTS' and under 'Harbor 3'
-    - There is no **New release…** button and no **New schedule** button
+    - **Next release** reads 'Harbor 2 LTS', with a yellow dot before it
+    - A light green Live row under it reads 'Harbor 2' under **Next release**
+    - There is no **New schedule** button
   - **Notes:**
 
 - [ ] `3EDC` Select the **Drafts** page in the left-hand menu.
@@ -109,61 +110,13 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 #### PERM-03: Edit Features and Releases Makes Releases
 
-**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-02 ended with.
-
-**Preconditions:** Team Member granted only **Edit** on **Features and releases** through Grant Team Member Only Some Permissions, signed in with this account.
-
-- [ ] `4D73` Look at the left-hand menu.
-  - **Expected:**
-    - **Plan** section: **Features** and **Releases**
-    - **History** section: **Drafts** and **Change history**
-    - The **Help** section, and no other page
-  - **Notes:**
-
-- [ ] `B4C1` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The table of schedules shows.
-  - **Notes:**
-
-- [ ] `F936` Select the details button at the right of the **Schedule** cell of 'Platform'.
-  - **Expected:**
-    - The side panel opens, with **New release…** under **Releases**
-    - There is no **New schedule** button at the top right of the page
-  - **Notes:**
-
-- [ ] `5F2C` Select **New release…**.
-  - **Expected:** A dialog titled "New release in Platform" opens.
-  - **Notes:**
-
-- [ ] `18CD` Type `Harbor 5` in **Name**.
-  - **Expected:** **Name** reads `Harbor 5`.
-  - **Notes:**
-
-- [ ] `ED11` In **First cycle**, choose the third half-year cycle of 'Platform': the third in the list whose dates span six months.
-  - **Expected:** **First cycle** shows that cycle.
-  - **Notes:**
-
-- [ ] `306D` Look at **Last cycle**.
-  - **Expected:** **Last cycle** already shows the cycle chosen in **First cycle**.
-  - **Notes:**
-
-- [ ] `698F` Select **Make release**.
-  - **Expected:**
-    - A notification says "Drafted the new release."
-    - Under **Releases**, a row reads `Harbor 5`, with a hollow yellow dot in its slot
-    - The Publish button reads **Publish 1 change**
-  - **Notes:**
-
-- [ ] `A9A0` Run Discard the Unpublished Changes.
-  - **Expected:** `Harbor 5` is gone from the side panel.
-  - **Notes:**
-
-**Afterwards:** Run Restore Team Member.
+Not run for now: releases are made and changed on the Releases tab, which is still to come.
 
 ### People
 
 #### PERM-04: View People Shows People Without Their Personal Details
 
-**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-03 ended with.
+**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-02 ended with.
 
 **Preconditions:** Team Member granted only **View** on **People** through Grant Team Member Only Some Permissions, signed in with this account.
 
@@ -562,24 +515,12 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** Team Member granted only **Edit** on **Features and releases**, **Approve** on **Features and releases** and **Approve own drafts** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] `3A4B` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The table of schedules shows.
+- [ ] `673C` Select the **Features** page in the left-hand menu.
+  - **Expected:** The table of features shows.
   - **Notes:**
 
-- [ ] `2EE1` Select the details button at the right of the **Schedule** cell of 'Platform'.
-  - **Expected:** The side panel opens, headed 'Platform', with **Releases** listed.
-  - **Notes:**
-
-- [ ] `A0FF` Under **Releases** in the side panel, select the **⋯** button at the end of the 'Harbor 1' row, then **Change…**.
-  - **Expected:** A dialog titled "Change Harbor 1" opens.
-  - **Notes:**
-
-- [ ] `D01C` Replace the name with `Harbor One`.
-  - **Expected:** The name reads `Harbor One`.
-  - **Notes:**
-
-- [ ] `A9FD` Select **Save**.
-  - **Expected:** Under **Releases** in the side panel, `Harbor One` has a hollow yellow dot before it.
+- [ ] `68D6` In the row 'Scheduler API', select the **Name** cell, replace its text with `Scheduler Service`, then press Enter.
+  - **Expected:** The cell reads `Scheduler Service`, with a hollow yellow dot before it.
   - **Notes:**
 
 - [ ] `7FBC` Select **Publish 1 change** in the top bar.
@@ -587,10 +528,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `899B` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** An entry names `Harbor One`.
+  - **Expected:** An entry names `Scheduler Service`.
   - **Notes:**
 
-- [ ] `7BBD` Select the `Harbor One` entry's checkbox.
+- [ ] `A8C2` Select the `Scheduler Service` entry's checkbox.
   - **Expected:** **Approve 1 draft…** can be selected, and no line says another approver is needed.
   - **Notes:**
 
@@ -667,11 +608,66 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Afterwards:** Run Restore Team Member.
 
+#### PERM-22: Edit Plan Changes Schedules, and Approve Plan Approves Them
+
+**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-17 ended with. Step `75C3` signs in as another account.
+
+**Preconditions:** Team Member granted only **View** on **Features and releases** and **Edit** on **Plan** through Grant Team Member Only Some Permissions, signed in with this account.
+
+- [ ] `6D0D` Select the **Releases** page in the left-hand menu.
+  - **Expected:** **New schedule** is at the top right of the page.
+  - **Notes:**
+
+- [ ] `6D9B` Select **New schedule**.
+  - **Expected:** A dialog titled "New schedule" opens.
+  - **Notes:**
+
+- [ ] `6F8F` Type `Testing Schedule` in **Name**.
+  - **Expected:** **Name** reads `Testing Schedule`.
+  - **Notes:**
+
+- [ ] `7136` Select **Add schedule**.
+  - **Expected:**
+    - A notification says "Drafted the new schedule."
+    - The table has a `Testing Schedule` row, with a hollow yellow dot in its slot
+    - The Publish button reads **Publish 1 change**
+  - **Notes:**
+
+- [ ] `7355` Select **Publish 1 change** in the top bar.
+  - **Expected:** The Publish button is gone.
+  - **Notes:**
+
+- [ ] `75C3` Sign out, and sign in as the Product Manager, `product.manager@fathom.test`.
+  - **Expected:** The top bar's right end reads "Product Manager".
+  - **Notes:**
+
+- [ ] `75FD` Select the **Drafts** page in the left-hand menu.
+  - **Expected:** The **Drafts** page lists drafts.
+  - **Notes:**
+
+- [ ] `7D76` Type `Testing Schedule` in the search box.
+  - **Expected:** One entry is shown, naming `Testing Schedule`, with a checkbox.
+  - **Notes:**
+
+- [ ] `7E26` Select the entry's checkbox.
+  - **Expected:** **Approve 1 draft…** can be selected, and no line says another approver is needed.
+  - **Notes:**
+
+- [ ] `7FA2` Select **Approve 1 draft…**.
+  - **Expected:** A dialog titled "Approve 1 draft?" opens.
+  - **Notes:**
+
+- [ ] `7FD3` Select **Approve** in the dialog.
+  - **Expected:** A notification reads "Approved 1 draft."
+  - **Notes:**
+
+**Afterwards:** Run Restore Team Member, then Reset the Database.
+
 ### Change History
 
 #### PERM-18: The Change History Comes With Each Area, Showing Only Its Changes
 
-**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-17 ended with.
+**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-22 ended with.
 
 **Preconditions:** Team Member granted only **View** on **Configuration** through Grant Team Member Only Some Permissions, signed in with this account.
 

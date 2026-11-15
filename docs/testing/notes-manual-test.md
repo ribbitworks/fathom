@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings, checkboxes and numbered lists look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, or any value in a choice column, and a long note folded in a person's details and read in full on Releases.
+Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings, checkboxes and numbered lists look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, or any value in a choice column, and a long note folded in a person's details.
 
 ## Test Environment
 
@@ -609,25 +609,11 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Onboarding** panel opens under the details again, on **Note**.
   - **Notes:**
 
-- [ ] `3BA2` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The **Releases** page opens, with **Platform** in its table.
-  - **Notes:**
-
-- [ ] `7324` Select **Platform** in the table.
-  - **Expected:** The schedule's panel lists **Harbor 3** under **Releases**, its name underlined.
-  - **Notes:**
-
-- [ ] `C9C4` Select **Harbor 3**'s underlined name.
-  - **Expected:**
-    - A panel titled **Harbor 3** opens under the schedule's panel.
-    - It shows the whole note, starting with the heading **What Harbor 3 is for**.
-  - **Notes:**
-
-- [ ] `0C5E` Select **Editor** at the top of the **Harbor 3** panel.
+- [ ] `D4E7` Select **Editor** at the top of the **Onboarding** panel.
   - **Expected:** The toolbar is above the note's text.
   - **Notes:**
 
-- [ ] `FAB9` Scroll the **Harbor 3** panel to the middle of the note.
+- [ ] `E91C` Scroll the **Onboarding** panel to the middle of the note.
   - **Expected:** The toolbar stays in sight at the top, on a plain background, with no text showing through it.
   - **Notes:**
 

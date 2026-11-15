@@ -620,21 +620,16 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
   - **Notes:**
 
 - [ ] `141F` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The **Releases** page opens.
-  - **Notes:**
-
-- [ ] `DAAD` Select the details button at the right of the **Schedule** cell of 'Platform'.
-  - **Expected:** In the panel beside the table, under **Releases**:
-    - The 'Harbor 1' row has no **⋯** button
-    - There is no **New release…** button
+  - **Expected:**
+    - The **Releases** page opens.
+    - There is no **New schedule** button at the top right.
   - **Notes:**
 
 - [ ] `FD20` Choose **Engineering Manager** in the role menu.
   - **Expected:**
     - The menu closes
-    - The page stays on **Releases** with 'Platform' open, without the browser reloading
-    - Under **Releases**, the 'Harbor 1' row now ends with a **⋯** button
-    - **New release…** shows
+    - The page stays on **Releases**, without the browser reloading
+    - **New schedule** shows at the top right
   - **Notes:**
 
 - [ ] `5B6D` Open the account menu.
@@ -645,18 +640,18 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
   - **Expected:** The account menu closes.
   - **Notes:**
 
-- [ ] `C1E3` Select the **⋯** button at the end of the 'Harbor 1' row, then **Change…**.
-  - **Expected:** A dialog titled "Change Harbor 1" opens.
+- [ ] `1532` Select **New schedule**.
+  - **Expected:** A dialog titled "New schedule" opens.
   - **Notes:**
 
-- [ ] `06AB` Replace the name with `Harbor One`.
-  - **Expected:** The name reads `Harbor One`.
+- [ ] `1B0F` Type `Testing Schedule` in **Name**.
+  - **Expected:** **Name** reads `Testing Schedule`.
   - **Notes:**
 
-- [ ] `234F` Select **Save**.
+- [ ] `1E5E` Select **Add schedule**.
   - **Expected:**
-    - A notification says "Drafted the change to the release."
-    - The row reads `Harbor One`, with a hollow yellow dot before its square
+    - A notification says "Drafted the new schedule."
+    - The table has a `Testing Schedule` row, with a hollow yellow dot in its slot
   - **Notes:**
 
 - [ ] `B3D9` Select the Publish button in the top bar.
@@ -667,18 +662,18 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 - [ ] `B92F` Select the **Change history** page in the left-hand menu.
   - **Expected:** The latest entry:
-    - Names `Harbor One`
+    - Names `Testing Schedule`
     - Starts with "Feature Lead as Engineering Manager"
   - **Notes:**
 
 - [ ] `EB91` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The entry for `Harbor One` starts with "Feature Lead as Engineering Manager".
+  - **Expected:** The entry for `Testing Schedule` starts with "Feature Lead as Engineering Manager".
   - **Notes:**
 
 - [ ] `D396` Choose **Feature Lead** in the role menu.
   - **Expected:**
     - The page stays on **Drafts**
-    - The entry for `Harbor One` still starts with "Feature Lead as Engineering Manager"
+    - The entry for `Testing Schedule` still starts with "Feature Lead as Engineering Manager"
   - **Notes:**
 
 ### ACCT-12: Signing In Again Comes Back to the Last Role

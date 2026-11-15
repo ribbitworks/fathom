@@ -480,11 +480,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - A notification says "Drafted the new schedule."
     - The side panel is headed with a hollow yellow dot before `Fictional Mainline`.
-    - "None" is under **Cycle schedule**.
-    - "None" is under **Releases**.
+    - "None" is under **Cycles**.
   - **Notes:**
 
-- [ ] `BC71` Select **Set up cycles…**.
+- [ ] `0F83` In the side panel, select the pencil at the right of the **Name pattern** row.
   - **Expected:** A dialog titled "Set up cycles for Fictional Mainline" opens.
   - **Notes:**
 
@@ -498,7 +497,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `C0C7` Select **Set up cycles**.
   - **Expected:**
     - A notification says "Drafted the cycles."
-    - Under **Cycle schedule**, a row reads "From" and the first day of next year, such as "From 2027-01-01", then "Every 3 months, named {YY}.{N}".
+    - **Name pattern** reads `{YY}.{N}`.
+    - **Cycle length** reads "3 months".
+    - The first row under **Cycles** is next year's first cycle, such as "27.1", starting on January 1 and ending on March 31.
   - **Notes:**
 
 ### SETUP-07: The Working Time Is Set

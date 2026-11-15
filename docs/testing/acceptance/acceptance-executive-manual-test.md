@@ -57,11 +57,10 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] `7DFE` Select the details button at the right of the **Schedule** cell of 'Platform'.
+- [ ] `7DFE` Select the details button at the right of the first cell of the row for 'Platform'.
   - **Expected:**
+    - The side panel's heading reads 'Platform'.
     - There is no **New schedule** button.
-    - There is no **New release…** button.
-    - 'Harbor 1' has no **⋯** button at its end.
   - **Notes:**
 
 - [ ] `7C20` Close the side panel.

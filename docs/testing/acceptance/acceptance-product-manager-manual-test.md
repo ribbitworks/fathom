@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies the workflows of [Working as a Product Manager](../../help/working-as-a-product-manager.md) on the seed data: keeping customers, proposals, projects and milestones current, planning a feature for a cycle, a team and a month, choosing a project's features and taking one off a proposal with a reason, as the scope history shows, making a release with a note, and approving and rejecting others' drafts, each sent on to an approver where the role needs one. It also checks that the Product Manager doesn't see someone who has not started.
+Verifies the workflows of [Working as a Product Manager](../../help/working-as-a-product-manager.md) on the seed data: keeping customers, proposals, projects and milestones current, planning a feature for a cycle, a team and a month, choosing a project's features and taking one off a proposal with a reason, as the scope history shows, changing the length of a schedule's cycle, and approving and rejecting others' drafts, each sent on to an approver where the role needs one. It also checks that the Product Manager doesn't see someone who has not started.
 
 ## Test Environment
 
@@ -384,7 +384,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The pill is gone, and the table lists every feature.
   - **Notes:**
 
-### PRODUCT-05: A Release Is Made, With a Note
+### PRODUCT-05: A Schedule's Cycle Is Changed
 
 **Account:** Product Manager, `product.manager@fathom.test`, in the main browser, changed from PRODUCT-04. Steps `131E` and `047C` act in the second browser. Step `3DB5` signs in as another account in the main browser.
 
@@ -404,53 +404,32 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Releases** page shows again.
   - **Notes:**
 
-- [ ] `B18B` Select the details button at the right of the **Schedule** cell of 'Platform'.
+- [ ] `B18B` Select the details button at the right of the first cell of the row for 'Platform'.
   - **Expected:**
     - The side panel's heading reads 'Platform'.
     - No lock is before it.
   - **Notes:**
 
-- [ ] `38DB` Select **New release…** under **Releases** in the side panel.
+- [ ] `1EA9` In the side panel's **Cycles** table, select the pencil in the **Duration** cell of next quarter's cycle, such as "27.1", the row under the one marked **Current**.
+  - **Expected:** A menu offers **This cycle only…** and **This and later cycles…**.
+  - **Notes:**
+
+- [ ] `1EFF` Select **This cycle only…**.
+  - **Expected:** A dialog titled "Change the length of" next quarter's cycle opens, such as "Change the length of 27.1".
+  - **Notes:**
+
+- [ ] `2228` Replace `3` in **Length** with `2`.
+  - **Expected:** **Length** reads `2`, and **Later cycles** has **Move with it** chosen.
+  - **Notes:**
+
+- [ ] `2611` Select **Change length**.
   - **Expected:**
-    - A dialog titled "New release in Platform" opens.
-    - It has **Name**, **First cycle**, **Last cycle** and an empty **Ships on**.
-  - **Notes:**
-
-- [ ] `B1A8` Type `Fictional Harbor 4` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `1FE0` Choose the last cycle in the list in **First cycle**.
-  - **Expected:** **First cycle** shows the cycle chosen.
-  - **Notes:**
-
-- [ ] `D146` Choose the last cycle in the list in **Last cycle**.
-  - **Expected:** Under **Ships on**, the dialog reads "Leave empty to ship at the end of its last cycle, on" that cycle's last day.
-  - **Notes:**
-
-- [ ] `C642` Select **Make release**.
-  - **Expected:** A notification says "Drafted the new release."
-  - **Notes:**
-
-- [ ] `67E5` Select the **⋯** button at the end of the `Fictional Harbor 4` row, then **Add note…**.
-  - **Expected:**
-    - A panel titled `Fictional Harbor 4` opens.
-    - **Editor** is chosen.
-  - **Notes:**
-
-- [ ] `C123` Type `Fictional ferry timetables`.
-  - **Expected:** The note shows what was typed.
-  - **Notes:**
-
-- [ ] `58FA` Select **Save**.
-  - **Expected:**
-    - A notification says "Drafted the note on Fictional Harbor 4."
-    - The note's panel closes.
-    - `Fictional Harbor 4` is underlined.
+    - A notification says "Drafted the new length."
+    - Next quarter's cycle has a hollow yellow dot before its name, and its **Duration** reads "2 months".
   - **Notes:**
 
 - [ ] `FF3E` Run Publish.
-  - **Expected:** Under **Releases**, a row reads `Fictional Harbor 4`, with a yellow dot in its slot.
+  - **Expected:** The Publish button is gone.
   - **Notes:**
 
 - [ ] `F083` Select the **Features** page in the left-hand menu.
@@ -472,24 +451,18 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] `3F69` Select the details button at the right of the **Schedule** cell of 'Platform'.
+- [ ] `3F69` Select the details button at the right of the first cell of the row for 'Platform'.
   - **Expected:** The side panel's heading reads 'Platform'.
   - **Notes:**
 
-- [ ] `5E58` Select the **⋯** button at the end of the `Fictional Harbor 4` row, then **Approve…**.
-  - **Expected:** A dialog titled "Approve 1 draft?" opens.
+- [ ] `26EE` Select the **⋯** button at the right of the first cell of the row for 'Platform', then **Approve…**.
+  - **Expected:** A dialog opens, titled "Approve", then how many drafts it approves, then "drafts?".
   - **Notes:**
 
-- [ ] `B441` Select **Approve** in the dialog.
+- [ ] `272B` Select **Approve** in the dialog.
   - **Expected:**
-    - A notification says "Approved 1 draft."
-    - `Fictional Harbor 4` has no dot.
-  - **Notes:**
-
-- [ ] `CBD5` Select `Fictional Harbor 4`.
-  - **Expected:**
-    - A panel titled `Fictional Harbor 4` opens.
-    - It reads `Fictional ferry timetables`.
+    - A notification says "Approved", then the same number, then "drafts."
+    - In the side panel, next quarter's cycle has no dot, and its **Duration** reads "2 months".
   - **Notes:**
 
 ### PRODUCT-06: A Feature Lead's Change Is Rejected With a Reason

@@ -647,30 +647,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Project Manager, `project.manager@fathom.test`, changed from DRAFT-24. Step `B553` signs in as another account.
 
-**Preconditions:** Run Reset the Database first. Signed in with this account. **Releases** page open from the left-hand menu, with 'Platform' open in the side panel.
+**Preconditions:** Run Reset the Database first. Signed in with this account. **Features** page open from the left-hand menu.
 
-- [ ] `D7A6` Under **Releases** in the side panel, select the **⋯** button at the end of the row of 'Harbor 1', then **Change…**.
+- [ ] `5C1A` In the row 'Scheduler API', select the **Name** cell, replace its text with `Scheduler Service`, then press Enter.
   - **Expected:**
-    - A dialog titled "Change Harbor 1" opens.
-    - **Name** holds 'Harbor 1'.
+    - The cell reads `Scheduler Service`, with a hollow yellow dot before it.
+    - The top bar shows **Publish 1 change**.
   - **Notes:**
 
-- [ ] `BDCF` Replace the name with `Harbor One`.
-  - **Expected:** **Name** holds `Harbor One`.
-  - **Notes:**
-
-- [ ] `7F16` Select **Save**.
-  - **Expected:**
-    - The dialog closes.
-    - A hollow yellow dot before `Harbor One`.
-    - The top bar shows **Publish 2 changes**.
-  - **Notes:**
-
-- [ ] `EFB7` Select **Publish 2 changes** in the top bar.
+- [ ] `6E2B` Select **Publish 1 change** in the top bar.
   - **Expected:** The top bar no longer offers to publish.
   - **Notes:**
 
-- [ ] `12ED` Select the **⋯** button at the end of the row of `Harbor One`.
+- [ ] `8A3F` Select the **⋯** button at the end of the row of `Scheduler Service`.
   - **Expected:**
     - **Approve…** is greyed out.
     - "Changed by this account, so another approver must approve it" is under it, easy to read.
@@ -683,7 +672,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `7DEE` Select the **Drafts** page in the left-hand menu.
   - **Expected:**
-    - A row's **Record** reads `Harbor One in Platform`.
+    - A row's **Record** reads `Scheduler Service`.
     - After it, a grey box reads "Needs another approver".
     - Its **Made by** reads "Project Manager".
   - **Notes:**
@@ -701,10 +690,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `9FAB` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** A row's **Record** reads `Harbor One in Platform`, with no box after it.
+  - **Expected:** A row's **Record** reads `Scheduler Service`, with no box after it.
   - **Notes:**
 
-- [ ] `2A5A` Tick the tick box of the row of `Harbor One in Platform`.
+- [ ] `9D15` Tick the tick box of the row of `Scheduler Service`.
   - **Expected:** The bar above the table reads "1 selected".
   - **Notes:**
 

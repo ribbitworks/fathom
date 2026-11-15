@@ -267,11 +267,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'Platform' has no grey lock in its slot.
   - **Notes:**
 
-- [ ] `AE97` Select the details button at the right of the **Schedule** cell of 'Platform'.
+- [ ] `AE97` Select the details button at the right of the first cell of the row for 'Platform'.
   - **Expected:** The side panel opens, headed 'Platform'.
   - **Notes:**
 
-- [ ] `966D` In the side panel's **Cycles** table, find the row whose dates include today. Select the **⋯** button at the end of the row directly below it, then **Change length…**.
+- [ ] `7E3A` In the side panel's **Cycles** table, select the pencil in the **Duration** cell of the row under the one marked **Current**.
+  - **Expected:** A menu offers **This cycle only…** and **This and later cycles…**.
+  - **Notes:**
+
+- [ ] `0B9D` Select **This cycle only…**.
   - **Expected:** A dialog titled "Change the length of" that cycle opens.
   - **Notes:**
 
@@ -1150,35 +1154,6 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
       - **Later**, "3"
     - Each 'Harbor' and 'Lantern' heading is followed by a comma, "ships" and a date with its day, month and year, such as "ships 31 Mar 2027".
     - No heading names 'Harbor 4', 'Lantern 3' or a 'Patches' release.
-  - **Notes:**
-
-- [ ] `80BD` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The schedules table shows 'Platform'.
-  - **Notes:**
-
-- [ ] `451F` Select the details button at the right of the **Schedule** cell of 'Platform'.
-  - **Expected:**
-    - A side panel for 'Platform' opens.
-    - Under **Releases**, each 'Harbor' row ends with "ships" and a day, such as "26.3 to 26.4 · ships 2026-12-31".
-    - The rows naming 'Harbor 1', 'Harbor 2 LTS' and 'Harbor 3', not their Live rows, each ship on the day their heading on the Features page shows, written year first, such as "ships 2027-03-31" for "ships 31 Mar 2027".
-  - **Notes:**
-
-- [ ] `DCB7` Select the **Features** page in the left-hand menu.
-  - **Expected:** The button above the table reads **Group by: Cycle**.
-  - **Notes:**
-
-- [ ] `F508` Select **Group by: Cycle** above the table, then **Release** under **Group by**.
-  - **Expected:**
-    - The headings and their counts read, from top to bottom:
-      - **Platform: Harbor 1**, "1"
-      - **Platform: Harbor 2 LTS**, "4"
-      - **Platform: Harbor 3**, "2"
-      - **Field Apps: Lantern 1**, "2"
-      - **Field Apps: Lantern 2**, "7"
-      - **Platform: Not released yet**, "2"
-      - **Field Apps: Not released yet**, "1"
-      - **Later**, "3"
-    - Each 'Harbor' and 'Lantern' heading is followed by a comma, "ships" and a date with its day, month and year, such as "ships 31 Mar 2027".
   - **Notes:**
 
 - [ ] `7D6A` In the row 'Report Builder', under **Platform: Harbor 3**, select the **Target cycle** cell and choose the cycle two after the one it shows.

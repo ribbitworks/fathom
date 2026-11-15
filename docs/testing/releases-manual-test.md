@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies the Releases page: how schedules, their cycles and their releases are shown, in the table, the side panel and the timeline, what a Workforce Administrator, a Product Manager and a Project Manager can do with them, including changing one cycle's length and writing a release's note, and how their drafts are published, approved, rejected, resubmitted and discarded.
+Verifies the Releases page's **Schedules** tab: how schedules, their cycles and their releases are shown, in the table, the side panel and the timeline, what a Workforce Administrator and a Project Manager can do with schedules and their cycles, including changing one cycle's length, and how their drafts are published, approved and discarded.
 
 ## Test Environment
 
@@ -22,7 +22,6 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out. If a r
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
-- **Product Manager:** `product.manager@fathom.test`
 - **Project Manager:** `project.manager@fathom.test`
 - **Team Member:** `team.member@fathom.test`
 - **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as **Second Engineering Operations Manager**
@@ -36,16 +35,17 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Start From a
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, marks and the Publish button. This test adds:
 
 - **Seeded dates in this test:** **This quarter** is the quarter today is in, and **the first half** is Platform's first half-year cycle, three quarters after this quarter. Patches' cycles are named such as **P24.3**, and Field Apps' cycles, each six months long, such as **FA26.2**. The examples after "such as" are as the seed data is when added on 7 November 2026.
-- **Schedules table:** the table on the Releases page, under the timeline, with a row for each schedule and the columns **Schedule**, **Cycle schedule**, **Releases**, **Next release** and **Schedule ends**. Its rows are under a **Current** heading, and, while retired schedules are shown, a **Retired** heading. The search field, the Draft menu, **Metrics**, **Group by** and **Views** are in the bar above the timeline; while any schedule is retired, **Show retired** and how many are retired is first in the **Views** menu.
-- **Selecting a schedule in the table:** selecting the details button at the right of the schedule's **Schedule** cell, which opens the schedule in the side panel.
-- **Side panel on Releases:** the panel beside the timeline and the schedules table for the selected schedule, which they narrow to make room for, with the sections **Cycle schedule**, **Releases** and **Cycles**. Dragging its left edge resizes it.
+- **Schedules table:** the table on the Releases page's **Schedules** tab, under the timeline, with a row for each schedule. Its first column has no heading and holds the schedule's name; the others are **Current cycle**, **Cycle starts**, **Cycle ends**, **Next release**, **Release date**, **Cycle length** and **Schedule ends**. The search field, the Draft menu, **Metrics**, **Group by** and **Views** are in the bar above the timeline; while any schedule is retired, **Show retired** and how many are retired is first in the **Views** menu.
+- **Selecting a schedule in the table:** selecting the details button at the right of the schedule's name, in its row's first cell, which opens the schedule in the side panel.
+- **Side panel on Releases:** the panel beside the timeline and the schedules table for the selected schedule, which they narrow to make room for, with the sections **Details** and **Cycles**. **Details** has a row for each of the table's columns, the first named **Schedule**, then **Name pattern**. **Cycles** is a table with the columns **Cycle**, **Starts**, **Ends** and **Duration**. Dragging the panel's left edge resizes it.
+- **A row's pencil:** the pencil at the right of a row in the side panel's **Details**, shown while the row is pointed at, for a value that can be changed. In **Cycles**, the pencil in a cycle's **Duration** cell opens a menu of **This cycle only…** and **This and later cycles…**.
 - **Timeline:** the section headed **Timeline** above the schedules table, with **−** and **+** buttons and the zoom buttons **All**, **Year**, **6 months**, **Quarter**, **Month**, **Week** and **Days** at its top right, and the strip under them. It has a row for each schedule that is not retired, named on the left, with a lane of the schedule's cycles above a lane of its releases, under an axis of two rows of dates. Hovering over a cycle or a release shows its name and dates.
 - **Strip:** the row between the timeline's zoom buttons and its rows: **‹**, a box for each quarter of the timeline, **›**, and **Today** while today is on the timeline.
-- **⋯ menu on Releases:** a **⋯** button beside the side panel's close button acts on the schedule itself, when it has a draft; one at the end of a row in the side panel acts on that change of cycles or release; one at the end of a row of the **Cycles** table acts on that cycle.
+- **A schedule's ⋯ menu:** the **⋯** at the right of a schedule's first cell in the schedules table, shown while its row is pointed at, or the **⋯** at the row's end. It offers **Retire** or **Restore**, **Discard draft** and **Resubmit** for the schedule's own draft, and **Approve…** and **Reject…** for an account whose role approves its drafts.
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Start From an Empty Database. Part 1 starts from an empty database; REL-06 adds the seed data for Part 2; Part 3 changes what Parts 1 and 2 left; REL-18 restores the seed data for Part 4, and REL-23 restores it again for Part 5, which Part 6 follows. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out. To run the test again, start again from Start From an Empty Database.
+Run the test cases in order. Start with Start Fathom, then Start From an Empty Database. Part 1 starts from an empty database; REL-06 adds the seed data for Part 2; Part 3 changes what Parts 1 and 2 left; REL-18 restores the seed data for Part 4, and REL-23 restores it again for Part 5. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out. To run the test again, start again from Start From an Empty Database.
 
 ### Part 1: From an Empty Database
 
@@ -57,9 +57,9 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `575D` Select the **Releases** page in the left-hand menu.
   - **Expected:**
-    - The **Releases** page opens.
+    - The **Releases** page opens, with a **Schedules** tab beside its heading.
     - There is no table.
-    - It reads **No schedules yet.**
+    - It reads "No schedules yet."
     - A **New schedule** button is at the top right.
   - **Notes:**
 
@@ -85,8 +85,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - The schedules table shows one row, **Testing Schedule**.
     - The row has a hollow yellow dot in its slot.
     - The side panel opens on the right, headed by a hollow yellow dot and **Testing Schedule**.
-    - **None** is under **Cycle schedule**.
-    - **None** is under **Releases**.
+    - Under **Cycles**, it reads "None".
   - **Notes:**
 
 #### REL-03: A New Schedule's Cycles Show Their Names Before They Are Saved
@@ -95,7 +94,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-02. **Testing Schedule** open in the side panel.
 
-- [ ] `4A29` In the side panel, select **Set up cycles…** under **Cycle schedule**.
+- [ ] `CC32` In the side panel, point at the **Name pattern** row, then select its pencil.
   - **Expected:**
     - A dialog titled **Set up cycles for Testing Schedule** opens.
     - The **First cycle starts** box is empty, showing the example date **2027-01-01** in grey.
@@ -126,77 +125,36 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `1E14` Select **Set up cycles**.
   - **Expected:**
     - The dialog closes.
-    - Under **Cycle schedule**, a row reads **From Jan 4, 2027**, then **Every 2 weeks, named Sprint {#}**.
-    - The row has a hollow yellow dot in its slot.
-    - Below it, a line reads **Schedule ends**, then **No end date**.
-    - A **Change…** button is under that line.
-    - Below **Releases** is a **Cycles** section, its count in brackets.
-    - It lists the cycles from **Sprint 1** on.
-    - In the table, the **Cycle schedule** column of **Testing Schedule** reads **Every 2 weeks, named Sprint {#}**.
+    - A notification says "Drafted the cycles."
+    - Under **Details**, **Name pattern** reads `Sprint {#}`.
+    - **Cycle length** reads "2 weeks".
+    - **Schedule ends** reads "No end date".
+    - The **Cycles** table lists six cycles, from **Sprint 1**, which starts on Jan 4, 2027.
+    - Under the table, "Show all" and how many cycles there are.
   - **Notes:**
 
 - [ ] `7D69` Run Publish.
-  - **Expected:** The dots before **Testing Schedule** and its cycles' row are now solid yellow.
+  - **Expected:** The dot before **Testing Schedule**, in the table and in the panel's heading, is now solid yellow.
   - **Notes:**
 
 #### REL-04: The Product Manager Makes a Release From a Schedule's Cycles
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from REL-03.
+Not run for now: releases are made and changed on the Releases tab, which is still to come.
+
+#### REL-05: Approving a New Schedule Approves Its Cycles With It
+
+**Account:** Project Manager, `project.manager@fathom.test`, changed from REL-03.
 
 **Preconditions:** Signed in with this account. Run after REL-03. **Releases** page open from the left-hand menu.
 
-- [ ] `EF30` Select **Testing Schedule** in the table.
-  - **Expected:** The side panel opens, headed **Testing Schedule**.
-  - **Notes:**
-
-- [ ] `5D68` Select **New release…** under **Releases** in the side panel.
-  - **Expected:**
-    - A dialog titled **New release in Testing Schedule** opens.
-    - It has **Name**, **First cycle**, **Last cycle** and **Ships on**.
-    - **Ships on** is empty.
-  - **Notes:**
-
-- [ ] `5AAC` Type `Testing Release` in **Name**.
-  - **Expected:** The **Name** box holds **Testing Release**.
-  - **Notes:**
-
-- [ ] `2C25` Choose **Sprint 1 (2027-01-04 to 2027-01-17)** in **First cycle**.
-  - **Expected:** **First cycle** reads **Sprint 1 (2027-01-04 to 2027-01-17)**.
-  - **Notes:**
-
-- [ ] `D84E` Choose **Sprint 2 (2027-01-18 to 2027-01-31)** in **Last cycle**.
-  - **Expected:** Under **Ships on**, the dialog reads **Leave empty to ship at the end of its last cycle, on 2027-01-31**.
-  - **Notes:**
-
-- [ ] `DDC5` Select **Make release**.
-  - **Expected:**
-    - Under **Releases** in the side panel, a row reads **Testing Release**, then **Sprint 1 to Sprint 2 · ships Jan 31, 2027**.
-    - The row has a hollow yellow dot in its slot.
-    - In the table, the **Releases** column of **Testing Schedule** reads **(1) Testing Release**.
-  - **Notes:**
-
-- [ ] `B93D` Run Publish.
-  - **Expected:** The dot before **Testing Release** is now solid yellow.
-  - **Notes:**
-
-#### REL-05: Approving a Release Approves the Schedule and Cycles It Depends On
-
-**Account:** Project Manager, `project.manager@fathom.test`, changed from REL-04.
-
-**Preconditions:** Signed in with this account. Run after REL-04. **Testing Schedule** open in the side panel.
-
-- [ ] `83E2` Under **Releases** in the side panel, select the **⋯** button at the end of the **Testing Release** row, then **Approve…**.
-  - **Expected:**
-    - A dialog titled **Approve 3 drafts?** opens.
-    - It says **Also approves the drafts these depend on:**, and lists:
-      - **the schedule Testing Schedule**.
-      - **the cycles of Testing Schedule from 2027-01-04**.
+- [ ] `1115` Select the **⋯** at the right of the first cell of the row for **Testing Schedule**, then **Approve…**.
+  - **Expected:** A dialog titled "Approve 2 drafts?" opens.
   - **Notes:**
 
 - [ ] `A9B9` Select **Approve**.
   - **Expected:**
-    - A notification says **Approved 3 drafts.**
-    - **Testing Schedule**, its cycles' row and **Testing Release** no longer have dots, in the table or the side panel.
+    - A notification says "Approved 2 drafts."
+    - **Testing Schedule** no longer has a dot in the table.
   - **Notes:**
 
 ### Part 2: With the Seed Data
@@ -210,7 +168,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `9A9D` Run Restore the Seed Data.
   - **Expected:**
     - Restore the Seed Data finishes with no error.
-    - After the page reloads, the table shows a **Current** heading, then **Testing Schedule**, **Platform**, **Patches** and **Field Apps**, in that order.
+    - After the page reloads, the table shows **Testing Schedule**, **Platform**, **Patches** and **Field Apps**, in that order, under no heading.
     - **Testing Schedule** has no dot.
     - **Platform** has a grey lock in its slot.
     - **Patches** has a yellow dot in its slot.
@@ -219,29 +177,10 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Notes:**
 
 - [ ] `17E3` Select **Platform** in the table.
-  - **Expected:**
-    - The side panel opens, headed by the grey lock and **Platform**.
-    - Under **Releases**, the rows read, from the top (see [Seeded dates](#terms)):
-      - **Harbor 1**, with a blue square before it, from the cycle three quarters ago to the one two quarters ago, shipping on the last day of the second, such as **26.1 to 26.2 · ships Jun 30, 2026**, with no dot and no **⋯** button
-      - **Harbor 2 LTS**, its name underlined, with a yellow dot before its teal square, from last quarter's cycle to this quarter's, shipping on the last day of this quarter, such as **26.3 to 26.4 · ships Dec 31, 2026**
-      - under it, a Live row: a green dot before a purple square and **Harbor 2**
-      - **Harbor 3**, with a yellow dot in its slot, a blue square and the yellow **Moved** box, then a yellow dot before cycles one later than in its Live row
-      - under it, a Live row: a green dot in its slot, and **Harbor 3** from next quarter's cycle to the first half, shipping on its last day, such as **27.1 to 27.3 · ships Dec 31, 2027**
-      - **Harbor 4**, with a yellow dot in its slot
-    - There is no **New release…** button.
+  - **Expected:** The side panel opens, headed by the grey lock and **Platform**.
   - **Notes:**
 
-- [ ] `D05B` Select **Field Apps** in the table.
-  - **Expected:**
-    - The side panel opens, headed **Field Apps**, with no dot.
-    - Under **Releases**, the rows read, from the top (see [Seeded dates](#terms)):
-      - **Lantern 1**, with a teal square before it, on the cycle before the current one, shipping on its last day, such as **FA26.1 · ships Jun 30, 2026**
-      - **Lantern 2**, with an indigo square before it, on the current cycle, shipping two weeks after it ends, such as **FA26.2 · ships Jan 14, 2027**, followed in bold by **14 days after FA26.2 ends**
-      - **Lantern 3**, with a lime square before it, on the cycle after next, such as **FA27.2 · ships Dec 31, 2027**
-    - No row has a dot.
-  - **Notes:**
-
-#### REL-07: Cycles Show the Months They Span
+#### REL-07: A Schedule's Cycles Show How Long Each Lasts
 
 **Account:** Team Member, `team.member@fathom.test`, the same as REL-06.
 
@@ -252,16 +191,15 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Notes:**
 
 - [ ] `403B` Scroll the side panel down to **Cycles**.
-  - **Expected:** A table with the columns **Name**, **Starts**, **Ends**, **Release**, **Months**.
+  - **Expected:** A table with the columns **Cycle**, **Starts**, **Ends** and **Duration**.
   - **Notes:**
 
-- [ ] `4B79` Read the first row, each column in order.
+- [ ] `C9E8` Read the first row, each column in order.
   - **Expected:** The row reads, from left to right:
-    - the first cycle's name, such as **P24.1**
-    - the Monday eight weeks before this week's Monday, such as **2026-09-07**
-    - the Sunday four weeks later, such as **2026-10-04**
-    - nothing under **Release**
-    - the share of each month it spans, such as **Sep 2026 80%, Oct 13%**
+    - the current cycle's name, such as **P24.3**, then a **Current** box
+    - this week's Monday, such as **Nov 2, 2026**
+    - the Sunday four weeks later, such as **Nov 29, 2026**
+    - "4 weeks"
   - **Notes:**
 
 #### REL-08: Cycles Change Only From the Start of a Cycle
@@ -270,15 +208,11 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-07. **Releases** page open from the left-hand menu, with **Testing Schedule** selected in the table.
 
-- [ ] `F37F` In the side panel, select **Change…** under **Cycle schedule**.
-  - **Expected:** The menu offers **Schedule ends…** and **Length or names from a date…**.
-  - **Notes:**
-
-- [ ] `80EC` Select **Length or names from a date…**.
+- [ ] `A34D` In the side panel, point at the **Name pattern** row, then select its pencil.
   - **Expected:**
     - A dialog titled **Change the length or names of Testing Schedule's cycles** opens.
     - It has **From the start of**.
-    - It shows the text **Cycles before it keep their names and dates**.
+    - It shows the text "Cycles before it keep their names and dates".
   - **Notes:**
 
 - [ ] `B1D3` Choose **2027-02-01 (Sprint 3)** in **From the start of**.
@@ -291,14 +225,16 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `81B0` Select **Change cycles**.
   - **Expected:**
-    - A second row, **From Feb 1, 2027**, then **Every 4 weeks, named Sprint {#}**, appears.
-    - It has a hollow yellow dot in its slot.
+    - The dialog closes.
+    - A notification says "Drafted the change to the cycles."
+    - In the **Cycles** table, **Sprint 1** and **Sprint 2** have no dot, and their **Duration** reads "2 weeks".
+    - **Sprint 3** and the cycles after it have a hollow yellow dot before their names, and their **Duration** reads "4 weeks".
   - **Notes:**
 
-- [ ] `FDA2` Select the **⋯** button at the end of that row, then **Discard draft**.
+- [ ] `53D1` Run Discard the Unpublished Changes.
   - **Expected:**
-    - A notification says **Discarded the draft.**
-    - The row is gone.
+    - No cycle in the **Cycles** table has a dot.
+    - Each cycle's **Duration** reads "2 weeks".
   - **Notes:**
 
 ### Part 3: Changing What Is Already There
@@ -309,7 +245,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-08. **Releases** page open from the left-hand menu, with **Testing Schedule** selected in the table.
 
-- [ ] `130B` Select **Rename** at the top of the side panel.
+- [ ] `7FC0` In the side panel, point at the **Schedule** row, then select its pencil.
   - **Expected:**
     - A dialog titled **Rename Testing Schedule** opens.
     - The **Name** box holds **Testing Schedule**.
@@ -325,8 +261,9 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - The table shows a hollow yellow dot before **Tested Schedule**.
   - **Notes:**
 
-- [ ] `472A` Select **Discard draft**.
+- [ ] `E7F7` Select the **⋯** at the right of the first cell of the row for **Tested Schedule**, then **Discard draft**.
   - **Expected:**
+    - A notification says "Discarded the draft."
     - The side panel and the table show **Testing Schedule** again.
     - **Testing Schedule** has no dot in either.
   - **Notes:**
@@ -337,45 +274,42 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Signed in with this account. Run after REL-09. **Releases** page open, with **Testing Schedule** selected in the table.
 
-- [ ] `050B` Select **Retire** at the top of the side panel.
+- [ ] `9ABF` Select the **⋯** at the right of the first cell of the row for **Testing Schedule**, then **Retire**.
   - **Expected:**
+    - A notification says "Drafted retiring Testing Schedule."
     - The side panel's heading shows a hollow yellow dot, **Testing Schedule**, then the yellow **Retired** box.
-    - The side panel's button now reads **Restore**.
-    - In the table, **Testing Schedule** is still the first schedule under the **Current** heading.
+    - In the table, **Testing Schedule** is still the first row.
     - It has a hollow yellow dot in its slot.
     - The yellow **Retired** box follows its name.
   - **Notes:**
 
-- [ ] `0C4B` Select the **⋯** button beside the close button at the top of the side panel, then **Discard draft**.
+- [ ] `F297` Select the **⋯** at the right of the first cell of the row for **Testing Schedule**, then **Discard draft**.
   - **Expected:**
-    - A notification says **Discarded the draft.**
+    - A notification says "Discarded the draft."
     - **Testing Schedule** has no dot.
     - **Testing Schedule** has no **Retired** box.
-    - The button reads **Retire** again.
   - **Notes:**
 
-#### REL-11: Approving a Retired Schedule Stops New Releases in It
+#### REL-11: Approving a Retiring Schedule Takes It Off the Table
 
 **Account:** Project Manager, `project.manager@fathom.test`, changed from REL-10.
 
 **Preconditions:** Signed in with this account. Run after REL-10. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
 
-- [ ] `30D8` Select the **⋯** button beside the close button at the top of the side panel, then **Approve…**.
-  - **Expected:** A dialog titled **Approve 1 draft?** opens.
+- [ ] `13A5` Select the **⋯** at the right of the first cell of the row for **Patches**, then **Approve…**.
+  - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
 - [ ] `5D18` Select **Approve**.
   - **Expected:**
-    - A notification says **Approved 1 draft.**
+    - A notification says "Approved 1 draft."
     - In the table, **Patches** is no longer listed.
     - A **Views** button is at the right of the bar above the timeline.
     - The side panel's heading shows **Patches**, then a grey **Retired** box.
   - **Notes:**
 
-- [ ] `EB91` Select **Views**, then **Show retired (1)**.
-  - **Expected:**
-    - Under the **Current** heading are **Testing Schedule**, **Platform** and **Field Apps**.
-    - Under a **Retired** heading is **Patches**, with no dot.
+- [ ] `A9FD` Select **Views**, then **Show retired (1)**.
+  - **Expected:** **Patches** is listed in the table again, with no dot.
   - **Notes:**
 
 - [ ] `A5A4` Select **Views**.
@@ -385,120 +319,30 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Notes:**
 
 - [ ] `9C3B` Reload the page.
-  - **Expected:** **Patches** is still under the **Retired** heading.
-  - **Notes:**
-
-- [ ] `EEA9` Look under **Releases** in the side panel.
-  - **Expected:**
-    - Both patch releases are listed, such as **Patch November** and **Patch December**.
-    - The later has a red dot in a ring before it.
-    - There is no **New release…** button.
+  - **Expected:** **Patches** is still listed in the table.
   - **Notes:**
 
 #### REL-12: A Release Is Changed by a Draft
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from REL-11.
-
-**Preconditions:** Signed in with this account. Run after REL-11. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
-
-- [ ] `3F25` Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
-  - **Expected:**
-    - A dialog titled **Change Harbor 1** opens.
-    - **Name** holds **Harbor 1**.
-    - The first cycle is the cycle three quarters ago, such as **26.1 (2026-01-01 to 2026-03-31)**.
-    - The last cycle is the cycle two quarters ago, such as **26.2 (2026-04-01 to 2026-06-30)**.
-  - **Notes:**
-
-- [ ] `3CA7` Replace the name with `Harbor One`.
-  - **Expected:** The **Name** box holds **Harbor One**.
-  - **Notes:**
-
-- [ ] `43E8` Select **Save**.
-  - **Expected:**
-    - The row reads **Harbor One**.
-    - A hollow yellow dot is before its square.
-  - **Notes:**
-
-- [ ] `3E52` Run Publish.
-  - **Expected:** The dot before **Harbor One** is now solid yellow.
-  - **Notes:**
+Not run for now: releases are made and changed on the Releases tab, which is still to come.
 
 #### REL-13: A Rejected Draft Says Why It Was Rejected
 
-**Account:** Project Manager, `project.manager@fathom.test`, changed from REL-12.
-
-**Preconditions:** Signed in with this account. Run after REL-12. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
-
-- [ ] `E857` Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor One** row, then **Reject…**.
-  - **Expected:**
-    - A dialog titled **Reject 1 draft?** opens.
-    - It has a **Reason** box.
-  - **Notes:**
-
-- [ ] `EC7D` Type `Keep the old name` in **Reason**.
-  - **Expected:** The **Reason** box holds **Keep the old name**.
-  - **Notes:**
-
-- [ ] `784C` Select **Reject**.
-  - **Expected:**
-    - A notification says **Rejected 1 draft.**
-    - The row shows a red dot in a ring before **Harbor One**'s square.
-  - **Notes:**
+Not run for now: releases are made and changed on the Releases tab, which is still to come.
 
 #### REL-14: A Rejected Draft Can Be Resubmitted
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from REL-13.
-
-**Preconditions:** Signed in with this account. Run after REL-13. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
-
-- [ ] `331A` Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor One** row.
-  - **Expected:**
-    - Under **Harbor One**, the menu offers **Change…** and **Remove**.
-    - Then it shows:
-      - A red dot in a ring and **Rejected**
-      - **Reason: Keep the old name**
-      - **Changed by Product Manager**
-      - Then **Resubmit** and **Discard draft**
-  - **Notes:**
-
-- [ ] `6DE5` Select **Resubmit**.
-  - **Expected:**
-    - A notification says **Resubmitted the draft.**
-    - The row shows a yellow dot before **Harbor One**'s square again.
-  - **Notes:**
+Not run for now: releases are made and changed on the Releases tab, which is still to come.
 
 #### REL-15: A Release Is Removed by a Draft
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as REL-14.
-
-**Preconditions:** Signed in with this account. Run after REL-14. **Testing Schedule** selected in the table.
-
-- [ ] `C20C` Under **Releases**, select the **⋯** button at the end of the **Testing Release** row, then **Remove**.
-  - **Expected:**
-    - The **Testing Release** row has a hollow yellow dot in its slot.
-    - The row is struck through.
-  - **Notes:**
-
-- [ ] `25FE` Read **Testing Schedule**'s releases lane on the timeline.
-  - **Expected:**
-    - **Testing Release** is still there, struck through.
-    - A hollow yellow dot is before its name.
-  - **Notes:**
-
-- [ ] `1DF3` Under **Releases** in the side panel, select **Discard draft** in the **Testing Release** row's **⋯** menu.
-  - **Expected:**
-    - A notification says **Discarded the draft.**
-    - The **Testing Release** row is no longer struck through.
-    - The **Testing Release** row has no dot.
-    - On the timeline, **Testing Release** is not struck through.
-    - On the timeline, **Testing Release** has no dot.
-  - **Notes:**
+Not run for now: releases are made and changed on the Releases tab, which is still to come.
 
 #### REL-16: A Schedule With No End Date Has Cycles Two Years Ahead
 
-**Account:** Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, changed from REL-15. Step `A85C` signs in as another account.
+**Account:** Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, changed from REL-11. Step `A85C` signs in as another account.
 
-**Preconditions:** Signed in with this account. Run after REL-15. **Releases** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. Run after REL-11. **Releases** page open from the left-hand menu.
 
 - [ ] `9F3F` Run Discard the Unpublished Changes.
   - **Expected:** The Publish button is gone.
@@ -522,54 +366,27 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `CADE` Scroll the side panel down to the last row of **Cycles**.
   - **Expected:**
+    - Nothing is under the table.
     - The last row is the half-year cycle holding the day two years from today, such as **28.2** from **Jul 1, 2028** to **Dec 31, 2028**.
-    - The **Cycles** heading counts the cycles up to it, such as **Cycles (9)**.
   - **Notes:**
 
 #### REL-17: A Release Ships on a Day of Its Own
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from REL-16.
-
-**Preconditions:** Signed in with this account. Run after REL-16. **Releases** page open from the left-hand menu, with **Testing Schedule** selected in the table.
-
-- [ ] `DC88` Under **Releases**, select the **⋯** button at the end of the **Testing Release** row, then **Change…**.
-  - **Expected:**
-    - A dialog titled **Change Testing Release** opens.
-    - **Ships on** is empty.
-    - Under it, **Leave empty to ship at the end of its last cycle, on 2027-01-31**.
-  - **Notes:**
-
-- [ ] `DED5` Type `20270303` in **Ships on**.
-  - **Expected:** **Ships on** shows **2027-03-03**.
-  - **Notes:**
-
-- [ ] `C5B2` Select **Save**.
-  - **Expected:**
-    - The **Testing Release** row has a hollow yellow dot before **Sprint 1 to Sprint 2 · ships Mar 3, 2027**.
-    - After it, in bold, the row reads **31 days after Sprint 2 ends**.
-    - In the **Cycles** section, **Sprint 3** still starts on **Feb 1, 2027**.
-  - **Notes:**
-
-- [ ] `5D17` Select the **⋯** button at the end of the **Testing Release** row, then **Discard draft**.
-  - **Expected:**
-    - A notification says **Discarded the draft.**
-    - The row reads **Sprint 1 to Sprint 2 · ships Jan 31, 2027**.
-    - Nothing follows the date.
-  - **Notes:**
+Not run for now: releases are made and changed on the Releases tab, which is still to come.
 
 ### Part 4: The Timeline
 
 #### REL-18: The Timeline Shows Every Current Schedule
 
-**Account:** Team Member, `team.member@fathom.test`, changed from REL-17.
+**Account:** Team Member, `team.member@fathom.test`, changed from REL-16.
 
-**Preconditions:** Signed in with this account. Run after REL-17. **Releases** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. Run after REL-16. **Releases** page open from the left-hand menu.
 
 - [ ] `6CDB` Run Restore the Seed Data.
   - **Expected:**
     - Restore the Seed Data finishes with no error.
-    - After the page reloads, the schedules table shows **Testing Schedule**, **Platform**, **Patches** and **Field Apps** under the **Current** heading.
-    - There is no **Retired** heading, and no **Views** button in the bar.
+    - After the page reloads, the schedules table shows **Testing Schedule**, **Platform**, **Patches** and **Field Apps**.
+    - There is no **Views** button in the bar.
     - The **Timeline** heading shows above the schedules table, with the zoom buttons at its top right.
   - **Notes:**
 
@@ -776,154 +593,26 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 #### REL-21: A Release's Own Ship Day Is Marked on the Timeline
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from REL-20.
-
-**Preconditions:** Signed in with this account. Run after REL-20. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
-
-- [ ] `752C` In the side panel's **Cycles** table, find the row of last quarter's cycle, the one after **Harbor 1**'s last, such as **26.3**.
-  - **Expected:** Its **Ends** shows a day, such as **Sep 30, 2026**. Write that day down.
-  - **Notes:**
-
-- [ ] `EBEE` Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
-  - **Expected:** A dialog titled **Change Harbor 1** opens.
-  - **Notes:**
-
-- [ ] `004F` Type the day written down in step `752C` in **Ships on**, as its digits, such as `20260930`.
-  - **Expected:** **Ships on** shows that day, such as **2026-09-30**.
-  - **Notes:**
-
-- [ ] `C4FC` Select **Save**.
-  - **Expected:** The dialog closes.
-  - **Notes:**
-
-- [ ] `23DD` Close the side panel.
-  - **Expected:** The side panel closes.
-  - **Notes:**
-
-- [ ] `EFE7` Select **6 months**.
-  - **Expected:** **6 months** is highlighted.
-  - **Notes:**
-
-- [ ] `CAEE` Find **Harbor 1** in **Platform**'s releases lane, scrolling the timeline left to it.
-  - **Expected:**
-    - **Harbor 1**'s span, across the cycles three and two quarters ago, such as **26.1** and **26.2**, has a hollow yellow dot before its name.
-    - Under the span, a dashed line runs from its right end, under the next release, to a diamond a quarter later, on the day typed.
-    - In a lane under **Platform**'s releases, a faded **Harbor 1** after a green dot has its diamond under its right end.
-  - **Notes:**
-
-- [ ] `8BD8` Select **Platform** in the table.
-  - **Expected:** The side panel opens, headed **Platform**.
-  - **Notes:**
-
-- [ ] `9D42` In the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Discard draft**.
-  - **Expected:**
-    - A notification says **Discarded the draft.**
-    - On the timeline, **Harbor 1**'s span has no dot before its name.
-    - Its diamond is under its right end.
-    - There is no dashed line.
-    - The faded **Harbor 1** is gone.
-  - **Notes:**
+Not run for now: releases are made and changed on the Releases tab, which is still to come.
 
 #### REL-22: A Release's Colour Is Chosen in Its Dialog
 
-**Account:** Product Manager, `product.manager@fathom.test`, the same as REL-21. Step `004B` signs in as another account.
-
-**Preconditions:** Signed in with this account. Run after REL-21. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
-
-- [ ] `8A38` Close the side panel.
-  - **Expected:** The side panel closes.
-  - **Notes:**
-
-- [ ] `A5E5` Select **Year**.
-  - **Expected:** **Year** is highlighted.
-  - **Notes:**
-
-- [ ] `F2EF` Find **Platform**'s releases lane, scrolling the timeline left if **Harbor 1** is not wholly in view.
-  - **Expected:**
-    - **Harbor 1** and **Harbor 3** are blue.
-    - **Harbor 2 LTS** is teal.
-    - Each diamond is the colour of its span.
-    - Each name is in the page's usual text colour.
-  - **Notes:**
-
-- [ ] `1D69` Select **Platform** in the table.
-  - **Expected:** The side panel opens, headed **Platform**.
-  - **Notes:**
-
-- [ ] `962F` In the side panel, select the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
-  - **Expected:**
-    - A dialog titled **Change Harbor 1** opens.
-    - Its last field, **Colour**, reads **Sea (default)**.
-    - A blue square is before **Sea (default)**.
-    - **How the release is drawn on the timeline** is under its label.
-  - **Notes:**
-
-- [ ] `2CB3` Open **Colour**.
-  - **Expected:**
-    - The list offers **Sea (default)**, then **Indigo**, **Violet**, **Grape**, **Pink**, **Red**, **Orange**, **Yellow**, **Lime**, **Green** and **Teal**.
-    - Each has a square of its colour.
-  - **Notes:**
-
-- [ ] `50B5` Select **Teal**.
-  - **Expected:**
-    - **Colour** reads **Teal**.
-    - A teal square is before it.
-  - **Notes:**
-
-- [ ] `CE70` Select **Save**.
-  - **Expected:**
-    - The **Harbor 1** row has a hollow yellow dot before its square.
-    - The square is teal.
-    - On the timeline, **Harbor 1**'s span is teal.
-    - The span has a hollow yellow dot before its name.
-  - **Notes:**
-
-- [ ] `D4FC` Run Publish.
-  - **Expected:** The dot before **Harbor 1**'s square is now solid yellow.
-  - **Notes:**
-
-- [ ] `004B` Sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads **Project Manager**.
-  - **Notes:**
-
-- [ ] `4A39` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The draft of **the release Harbor 1 in Platform** lists **Colour from Sea to Teal**.
-  - **Notes:**
-
-- [ ] `DC38` Tick the entry for **the release Harbor 1 in Platform**.
-  - **Expected:** The button at the top right reads **Approve 1 draft…**.
-  - **Notes:**
-
-- [ ] `BF5D` Select **Approve 1 draft…**.
-  - **Expected:**
-    - A dialog headed **Approve 1 draft?** opens.
-    - It has an **Approve** button.
-  - **Notes:**
-
-- [ ] `7B68` Select **Approve** in the dialog.
-  - **Expected:** A notification says **Approved 1 draft.**
-  - **Notes:**
-
-- [ ] `2C9B` Select the **Releases** page in the left-hand menu.
-  - **Expected:**
-    - **Harbor 1**'s span on the timeline is teal.
-    - The span has no dot before its name.
-  - **Notes:**
+Not run for now: releases are made and changed on the Releases tab, which is still to come.
 
 ### Part 5: Changing One Cycle's Length
 
 #### REL-23: A Cycle's New Length Moves the Cycles and Releases After It
 
-**Account:** Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, changed from REL-22. Step `9D01` signs in as another account, and step `B6FF` as the Workforce Administrator.
+**Account:** Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, changed from REL-20. Step `6FE2` signs in as another account, and step `B6FF` as the Workforce Administrator.
 
-**Preconditions:** Run after REL-22. Run Restore the Seed Data. Signed in with this account.
+**Preconditions:** Run after REL-20. Run Restore the Seed Data. Signed in with this account.
 
 - [ ] `11A6` Run Discard the Unpublished Changes.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
-- [ ] `9D01` Sign in as the Product Manager, `product.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads **Product Manager**.
+- [ ] `6FE2` Sign in as the Project Manager, `project.manager@fathom.test`.
+  - **Expected:** The top bar's right end reads **Project Manager**.
   - **Notes:**
 
 - [ ] `F216` Select the **Releases** page in the left-hand menu.
@@ -932,24 +621,14 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - **Platform** has no grey lock in its slot.
   - **Notes:**
 
-- [ ] `3F63` Select **Platform** in the table.
-  - **Expected:** The side panel opens, headed **Platform**.
+- [ ] `39A5` Select the **⋯** at the right of the first cell of the row for **Platform**, then **Approve…**.
+  - **Expected:** A dialog titled "Approve 3 drafts?" opens.
   - **Notes:**
 
-- [ ] `F31C` Under **Releases**, select the **⋯** button at the end of the **Harbor 2 LTS** row, then **Discard draft**.
+- [ ] `A102` Select **Approve**.
   - **Expected:**
-    - The row reads **Harbor 2**.
-    - It has no dot.
-  - **Notes:**
-
-- [ ] `844A` Select the **⋯** button at the end of the **Harbor 3** row, then **Discard draft**.
-  - **Expected:**
-    - **Harbor 3** has no dot.
-    - **Harbor 3** has no **Moved** box.
-  - **Notes:**
-
-- [ ] `D78C` Select the **⋯** button at the end of the **Harbor 4** row, then **Discard draft**.
-  - **Expected:** **Harbor 4** is gone.
+    - A notification says "Approved 3 drafts."
+    - **Platform** has no dot in the table.
   - **Notes:**
 
 - [ ] `B6FF` Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`.
@@ -966,9 +645,13 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Expected:** The side panel opens, headed **Platform**.
   - **Notes:**
 
-- [ ] `19CE` In the side panel's **Cycles** table, select the **⋯** button at the end of next quarter's cycle, such as **27.1**, then **Change length…**.
+- [ ] `9A23` In the side panel's **Cycles** table, select the pencil in the **Duration** cell of next quarter's cycle, such as **27.1**.
+  - **Expected:** A menu offers **This cycle only…** and **This and later cycles…**.
+  - **Notes:**
+
+- [ ] `1DD2` Select **This cycle only…**.
   - **Expected:**
-    - A dialog titled **Change the length of** that cycle opens.
+    - A dialog titled **Change the length of** that cycle opens, such as "Change the length of 27.1".
     - **Length** reads **3**, followed by **months**.
     - The cycle's dates are under its label.
     - Under **Later cycles**, **Move with it** is selected.
@@ -981,49 +664,58 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - **New dates** lists the cycle two months long, then the next a quarter and the first half half a year, such as **27.1**, **2027-01-01 to 2027-02-28**; **27.2**, **2027-03-01 to 2027-05-31**; and **27.3**, **2027-06-01 to 2027-11-30**.
     - The changed cycle starts on the first day of next quarter, such as **27.1** on **2027-01-01**.
     - Each next cycle starts the day after the one before it ends.
-    - Below it, the dialog says that **Harbor 3**, **Data Retention Controls** and **Report Builder** move with their cycles.
-    - It says **Harbor 3 ships** on the first half's new last day, such as **Harbor 3 ships 2027-11-30.**
+    - Under **Releases that move**: **Harbor 3** and **Harbor 4**.
+    - Under **Features that move**: **Data Retention Controls** and **Report Builder**.
+    - Below them, a line for each release that moves says the day it now ships, such as "Harbor 3 ships 2028-05-31." and "Harbor 4 ships 2028-11-30."
   - **Notes:**
 
 - [ ] `CDF0` Select **Change length**.
   - **Expected:**
-    - Under **Cycle schedule**, a row reads **From** the changed cycle's first day, **Every 2 months, named {YY}.{N}**, such as **From 2027-01-01**.
-    - It has a hollow yellow dot in its slot.
-    - A row reads **From** the next cycle's new first day, **Every 3 months, named {YY}.{N}**, such as **From 2027-03-01**.
-    - It has a hollow yellow dot in its slot.
-    - The first half's row reads **From** the first half's new first day, **Every 6 months, named {YY}.{N}**, such as **From 2027-06-01**.
-    - It has a hollow yellow dot before its new day.
-    - The **Harbor 3** row has a hollow yellow dot before its cycles.
-    - It ships on the first half's new last day, such as **27.1 to 27.3 · ships 2027-11-30**.
-    - In the **Cycles** table, the first half runs on its new dates, such as **27.3** from **2027-06-01** to **2027-11-30**.
+    - The dialog closes.
+    - A notification says "Drafted the new length."
+    - In the **Cycles** table, the changed cycle has a hollow yellow dot before its name, and its **Duration** reads "2 months".
+    - The cycles after it have a hollow yellow dot before their names.
+    - The first half runs on its new dates, such as **27.3** from **Jun 1, 2027** to **Nov 30, 2027**.
   - **Notes:**
 
 - [ ] `4CBE` Run Publish.
-  - **Expected:** The dots on the three rows of the cycle schedule and on **Harbor 3** are solid yellow.
+  - **Expected:** The dots before the changed cycle and the cycles after it are solid yellow.
   - **Notes:**
 
 #### REL-24: Approving One Draft of a New Length Approves Them All
 
 **Account:** Project Manager, `project.manager@fathom.test`, changed from REL-23.
 
-**Preconditions:** Signed in with this account. Run after REL-23. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+**Preconditions:** Signed in with this account. Run after REL-23.
 
-- [ ] `6F59` Under **Releases**, select the **⋯** button at the end of the **Harbor 3** row, then **Approve…**.
+- [ ] `A722` Select the **Drafts** page in the left-hand menu.
+  - **Expected:** Among the drafts is the draft of **the cycles of Platform from** the changed cycle's first day, such as **the cycles of Platform from 2027-01-01**.
+  - **Notes:**
+
+- [ ] `1913` Tick the entry for **the cycles of Platform from** the changed cycle's first day.
+  - **Expected:** The button at the top right reads **Approve 1 draft…**.
+  - **Notes:**
+
+- [ ] `81A4` Select **Approve 1 draft…**.
   - **Expected:**
-    - A dialog titled **Approve 6 drafts?** opens.
-    - It says **Also approves the drafts these depend on:**, and lists:
-      - **the cycles of Platform from** the changed cycle's first day, such as **the cycles of Platform from 2027-01-01**.
+    - A dialog titled "Approve 7 drafts?" opens.
+    - It says "Also approves the drafts these depend on:", and lists:
       - **the cycles of Platform from** the next cycle's new first day, such as **the cycles of Platform from 2027-03-01**.
       - **the cycles of Platform from** the first half's new first day, such as **the cycles of Platform from 2027-06-01**.
+      - **the release Harbor 3 in Platform**.
+      - **the release Harbor 4 in Platform**.
       - **the feature Data Retention Controls**.
       - **the feature Report Builder**.
   - **Notes:**
 
 - [ ] `3A60` Select **Approve**.
+  - **Expected:** A notification says "Approved 7 drafts."
+  - **Notes:**
+
+- [ ] `E604` Select the **Releases** page in the left-hand menu, then **Platform** in the table.
   - **Expected:**
-    - A notification says **Approved 6 drafts.**
-    - No row under **Cycle schedule** or **Releases** has a dot.
-    - **Harbor 3** still ships on the first half's new last day, such as **27.1 to 27.3 · ships 2027-11-30**.
+    - No cycle in the side panel's **Cycles** table has a dot.
+    - The first half still runs on its new dates, such as **27.3** from **Jun 1, 2027** to **Nov 30, 2027**.
   - **Notes:**
 
 #### REL-25: Later Cycles Can Keep Their Dates
@@ -1032,7 +724,17 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 **Preconditions:** Run after REL-24. Signed in with this account. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
 
-- [ ] `1D3D` In the **Cycles** table, select the **⋯** button at the end of the later patch release's last cycle, the fourth cycle, such as **P24.4**, then **Change length…**.
+- [ ] `B25E` Select the **⋯** at the right of the first cell of the row for **Patches**, then **Discard draft**.
+  - **Expected:**
+    - A notification says "Discarded the draft."
+    - **Patches** has no **Retired** box, in the table or the side panel.
+  - **Notes:**
+
+- [ ] `9490` In the side panel's **Cycles** table, select the pencil in the **Duration** cell of the later patch release's last cycle, the cycle after the current one, such as **P24.4**.
+  - **Expected:** A menu offers **This cycle only…** and **This and later cycles…**.
+  - **Notes:**
+
+- [ ] `3DF6` Select **This cycle only…**.
   - **Expected:** A dialog titled **Change the length of** that cycle opens.
   - **Notes:**
 
@@ -1043,7 +745,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `B0CC` Select **Keep their dates**.
   - **Expected:**
     - **New dates** lists that cycle two weeks long, then a cycle from the next day to the end of the cycle after it, six weeks long, then the cycle after that, four weeks long, such as **P24.4**, **2026-11-30 to 2026-12-13**; **P25.1**, **2026-12-14 to 2027-01-24**; and **P25.2**, **2027-01-25 to 2027-02-21**.
-    - Below it, the dialog says the later patch release ships on that cycle's new last day, such as **Patch December ships 2026-12-13.**
+    - Below it, the dialog says the later patch release ships on that cycle's new last day, such as "Patch December ships 2026-12-13."
   - **Notes:**
 
 - [ ] `58F4` Select **Change length**.
@@ -1052,87 +754,32 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `CD05` Run Publish.
   - **Expected:**
-    - Under **Cycle schedule**, there is a row **From** each of the three cycles' first days, such as **From 2026-11-30**, **From 2026-12-14** and **From 2027-01-25**.
-    - Each of these rows has a yellow dot in its slot.
-    - The later patch release has only the red dot in a ring before its name.
-    - It ships on the changed cycle's new last day, such as **Patch December**, **P24.3 to P24.4 · ships 2026-12-13**.
+    - In the **Cycles** table, the changed cycle and the cycle after it have a yellow dot before their names.
+    - The changed cycle's **Duration** reads "2 weeks", and the next cycle's "6 weeks".
+    - The cycle after those still reads "4 weeks", with no dot.
+    - In the table, the **Release date** of **Patches** is the changed cycle's new last day, such as **Dec 13, 2026**.
   - **Notes:**
 
 #### REL-26: Discarding One Draft of a New Length Discards Them All
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as REL-25.
-
-**Preconditions:** Signed in with this account. Run after REL-25. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
-
-- [ ] `BC43` Select the **⋯** button at the end of the second of the three rows REL-25 added, such as **From 2026-12-14**, then **Discard draft**.
-  - **Expected:** A notification says **Discarded the draft.**
-  - **Notes:**
-
-- [ ] `9B5E` Run Publish.
-  - **Expected:**
-    - The cycle schedule has only its first row.
-    - The fourth cycle is four weeks long again, such as **P24.4** from **2026-11-30** to **2026-12-27**.
-  - **Notes:**
+Not run for now: a draft of a schedule's cycles has no **Discard draft** on the Releases page.
 
 ### Part 6: Release Notes
 
 #### REL-27: A Release's Note Is Read and Written Beside Its Schedule
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from REL-26.
-
-**Preconditions:** Signed in with this account. Run after REL-26. **Light** chosen in the Appearance menu. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
-
-- [ ] `81AA` Select **Harbor 2**'s underlined name.
-  - **Expected:**
-    - A panel titled **Harbor 2** opens under the schedule's panel.
-    - It shows the note as it reads:
-      - two headings
-      - a bullet list with **every** in bold
-      - a checklist with its first box ticked
-      - red text
-      - a link
-  - **Notes:**
-
-- [ ] `A90C` Choose **Dark** in the Appearance menu.
-  - **Expected:** Both panels read well in dark mode.
-  - **Notes:**
-
-- [ ] `DA1F` Choose **Light** in the Appearance menu.
-  - **Expected:** The panels are light.
-  - **Notes:**
-
-- [ ] `C2A8` Select **Editor**.
-  - **Expected:** The note opens for editing.
-  - **Notes:**
-
-- [ ] `E879` Type a few words at the end of the note.
-  - **Expected:** The words show at the end of the note.
-  - **Notes:**
-
-- [ ] `AAD0` Select **Save**.
-  - **Expected:**
-    - The note's panel closes.
-    - The **Harbor 2** row has a hollow yellow dot in its slot.
-  - **Notes:**
+Not run for now: releases are made and changed on the Releases tab, which is still to come.
 
 ### Part 7: The Schedules Table
 
 #### REL-28: Schedules Are Found, Opened and Grouped in the Table
 
-**Account:** Team Member, `team.member@fathom.test`, changed from REL-27.
+**Account:** Team Member, `team.member@fathom.test`, changed from REL-25.
 
-**Preconditions:** Signed in with this account. Run after REL-27, or on its own. **Releases** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. Run after REL-25, or on its own. **Releases** page open from the left-hand menu.
 
 - [ ] `DCE3` Run Restore the Seed Data.
-  - **Expected:** After the page reloads, **Platform** and **Patches** are among the schedules under the **Current** heading.
-  - **Notes:**
-
-- [ ] `FAC3` Read **Platform**'s row in the schedules table.
-  - **Expected:**
-    - **Cycle schedule** reads **Every 3 months, named {YY}.{N}**.
-    - **Releases** reads **(4)**, then the names of its four releases.
-    - **Next release** reads **Harbor 2 LTS**, then **ships** and the last day of this quarter, such as **Harbor 2 LTS, ships Dec 31, 2026**.
-    - **Schedule ends** is empty.
+  - **Expected:** After the page reloads, **Platform** and **Patches** are among the schedules in the table.
   - **Notes:**
 
 - [ ] `7314` Press Cmd+F on a Mac, or Ctrl+F elsewhere.
@@ -1142,13 +789,13 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `17A8` Type `patch`.
   - **Expected:**
     - The schedules table shows **Patches** alone.
-    - The timeline still shows **Platform**, **Patches** and **Field Apps**.
+    - The timeline shows **Patches** alone.
   - **Notes:**
 
 - [ ] `93B7` Press Esc.
   - **Expected:**
     - The search field is empty.
-    - The schedules table shows **Platform**, **Patches** and **Field Apps** again.
+    - The schedules table and the timeline show **Platform**, **Patches** and **Field Apps** again.
   - **Notes:**
 
 - [ ] `39AF` Select **Platform** in the table.
@@ -1160,17 +807,17 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `B372` Press Esc.
   - **Expected:**
     - The side panel closes.
-    - **Platform**'s **Schedule** cell is selected in the schedules table.
+    - **Platform**'s first cell, holding its name, is selected in the schedules table.
   - **Notes:**
 
-- [ ] `38AD` Select **Group by: Status**, then **Cycle schedule** under **Group by**.
+- [ ] `E45B` Select **Group by: None**, then **Status** under **Group by**.
   - **Expected:**
-    - The **Group by** button reads **Group by: Cycle schedule**.
-    - Each cycle schedule heads the schedules that have it, such as **Every 3 months, named {YY}.{N}** over **Platform**, with how many each holds.
+    - The **Group by** button reads "Group by: Status".
+    - A **Current** heading is over the schedules, with how many it holds.
   - **Notes:**
 
 - [ ] `8D0D` Reload the page.
-  - **Expected:** The schedules table is still grouped by cycle schedule.
+  - **Expected:** The schedules table is still grouped by status, under the **Current** heading.
   - **Notes:**
 
 #### REL-29: A Schedule Ends on Its Last Day
@@ -1186,28 +833,27 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `C6A8` Select **Platform** in the table.
   - **Expected:**
     - The side panel opens, headed **Platform**, with no grey lock.
-    - Under **Cycle schedule**, below the cycle changes, a line reads **Schedule ends**, then **No end date**.
-    - A **Change…** button is under that line.
+    - Under **Details**, **Schedule ends** reads "No end date".
   - **Notes:**
 
-- [ ] `5E2A` Select the **Change…** button under the **Schedule ends** line, then **Schedule ends…** in its menu.
+- [ ] `096D` Point at the **Schedule ends** row, then select its pencil.
   - **Expected:**
     - A dialog titled **Change when Platform ends** opens.
-    - Its one field, **Schedule ends**, is empty.
-    - Under **Schedule ends**, a line reads **The cycle holding this day ends on it. With no day, the schedule keeps going.**
+    - Its one field, **Schedule ends**, reads "No end date" in grey.
+    - Under **Schedule ends**, a line reads "Its last cycle ends on this day."
   - **Notes:**
 
 - [ ] `0C94` Type the day two years from today in **Schedule ends**, such as `20281107`.
   - **Expected:**
     - Under **Last cycles**, the last row is a half-year cycle cut short to end on that day, such as **28.2** with **2028-07-01 to 2028-11-07**.
-    - The line above it counts as many cycles in all as the **Cycles** heading, such as **9 cycles in all**.
+    - The line above it says how many cycles there are in all, such as "9 cycles in all".
   - **Notes:**
 
 - [ ] `E61F` Select **Save**.
   - **Expected:**
     - The dialog closes.
     - The panel's heading shows a hollow yellow dot before **Platform**.
-    - Under **Cycle schedule**, the line below the cycle changes reads **Schedule ends** and that day, such as **Schedule ends Nov 7, 2028**.
+    - **Schedule ends** reads that day, such as **Nov 7, 2028**, after a hollow yellow dot.
     - The last row of **Cycles** is the cut cycle, such as **28.2** from **Jul 1, 2028** to **Nov 7, 2028**.
   - **Notes:**
 
@@ -1217,28 +863,15 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - **Patches**' lane has no such line.
   - **Notes:**
 
-- [ ] `D48E` Select the **⋯** button in the panel's heading, then **Discard draft**.
+- [ ] `E1D0` Select the **⋯** at the right of the first cell of the row for **Platform**, then **Discard draft**.
   - **Expected:**
-    - The line below the cycle changes reads **Schedule ends**, then **No end date**.
+    - **Schedule ends** reads "No end date" again.
     - On the timeline, **Platform**'s lane has no upright line at its end.
   - **Notes:**
 
-#### REL-30: Schedules Group by Status, Then by Cycle Schedule
+#### REL-30: Schedules Group by Status
 
-**Account:** Second Workforce Administrator, `engineering.operations.manager.2@fathom.test`, the account REL-29 ended with.
-
-**Preconditions:** Signed in with this account. Run after REL-29. **Releases** page open from the left-hand menu, with no grouping chosen, so the button reads **Group by: Status**.
-
-- [ ] `0B65` Select **Group by: Status**, then **Cycle schedule** under **Then by**.
-  - **Expected:**
-    - The button reads **Group by: Status, then Cycle schedule**.
-    - Under **Current**, smaller, lighter headings set in from it name each cycle schedule, such as **Every 3 months, named {YY}.{N}** over **Platform**.
-  - **Notes:**
-
-- [ ] `0BE0` Select **Group by: Status, then Cycle schedule**, then **Clear grouping**.
-  - **Expected:**
-    - The button reads **Group by: Status**.
-    - The schedules table has one heading, **Current**, with no headings set in under it.
+Covered by [REL-28](#rel-28-schedules-are-found-opened-and-grouped-in-the-table), which groups the schedules by status.
 
 ### Part 8: The Schedules Tab
 

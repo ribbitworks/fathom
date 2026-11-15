@@ -230,7 +230,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as LEAD-05.
 
-**Preconditions:** Acting as **Feature Lead**. Select the **Releases** page in the left-hand menu, and the details button at the right of the **Schedule** cell of 'Platform'.
+**Preconditions:** Acting as **Feature Lead**. Select the **Releases** page in the left-hand menu, and the details button at the right of the first cell of the row for 'Platform'.
 
 - [ ] `95E5` Open the account menu.
   - **Expected:**
@@ -242,12 +242,14 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - It shows **People** and **Org chart**.
     - There is no **Feature assignments** and no **Capacity**.
+    - There is no **New schedule** at the top right of the page.
   - **Notes:**
 
 - [ ] `FDE2` Choose **Engineering Manager** in the role menu.
   - **Expected:**
     - The menu closes.
     - The page stays on **Releases** with 'Platform' open, without the browser reloading.
+    - **New schedule** shows at the top right of the page.
     - The **People** section of the left-hand menu now shows **Feature assignments** and **Capacity**.
   - **Notes:**
 
@@ -257,20 +259,18 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** LEAD-06 done, acting as **Engineering Manager**. **Releases** page open, with 'Platform' open in the side panel.
 
-- [ ] `2E35` Select the **⋯** button at the end of the 'Harbor 1' row, then **Change…**.
-  - **Expected:**
-    - A dialog titled "Change Harbor 1" opens.
-    - **Name** holds 'Harbor 1'.
+- [ ] `2972` Select **New schedule**.
+  - **Expected:** A dialog titled "New schedule" opens.
   - **Notes:**
 
-- [ ] `507D` Replace the name with `Fictional Harbor One`.
-  - **Expected:** **Name** holds `Fictional Harbor One`.
+- [ ] `3232` Type `Fictional Side Schedule` in **Name**.
+  - **Expected:** **Name** holds `Fictional Side Schedule`.
   - **Notes:**
 
-- [ ] `DE68` Select **Save**.
+- [ ] `3712` Select **Add schedule**.
   - **Expected:**
-    - A notification says "Drafted the change to the release."
-    - The row reads `Fictional Harbor One`, with a hollow yellow dot before it.
+    - A notification says "Drafted the new schedule."
+    - The table has a `Fictional Side Schedule` row, with a hollow yellow dot in its slot.
   - **Notes:**
 
 - [ ] `CB6B` Run Publish.
@@ -279,7 +279,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `DC52` Select the **Change history** page in the left-hand menu.
   - **Expected:**
-    - The latest entry names `Fictional Harbor One`.
+    - The latest entry names `Fictional Side Schedule`.
     - It starts with "Feature Lead as Engineering Manager".
   - **Notes:**
 
@@ -287,14 +287,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
-- [ ] `D9AF` Select the details button at the right of the **Schedule** cell of 'Platform'.
-  - **Expected:** The side panel's heading reads 'Platform'.
-  - **Notes:**
-
-- [ ] `BB58` Select the **⋯** button at the end of the `Fictional Harbor One` row, then **Discard draft**.
+- [ ] `39E5` Select the **⋯** button at the right of the first cell of the row for `Fictional Side Schedule`, then **Discard draft**.
   - **Expected:**
     - A notification says "Discarded the draft."
-    - The row reads 'Harbor 1', with no dot.
+    - The `Fictional Side Schedule` row is gone.
   - **Notes:**
 
 - [ ] `04D0` Choose **Feature Lead** in the role menu.

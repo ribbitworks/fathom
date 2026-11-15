@@ -580,7 +580,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `A49F` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The page is titled **Releases**.
+  - **Expected:**
+    - The page is titled **Releases**.
+    - The chosen **Schedules** tab beside the heading is easy to read.
   - **Notes:**
 
 - [ ] `89F3` Select **Quarter** among the timeline's zoom buttons.
@@ -593,36 +595,24 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** That quarter's box is filled blue, and its white name is easy to read.
   - **Notes:**
 
-- [ ] `36A8` Select the details button at the right of the **Schedule** cell of 'Platform'.
-  - **Expected:** The panel of 'Platform' opens.
+- [ ] `36A8` Select the details button at the right of the first cell of the row for 'Platform'.
+  - **Expected:**
+    - The panel of 'Platform' opens.
+    - The grey lock before 'Platform' in the panel's heading is easy to see.
+    - The **Details** rows and the **Cycles** table are easy to read.
   - **Notes:**
 
-- [ ] `EC95` Select the underlined name 'Harbor 2' in the panel.
-  - **Expected:**
-    - A panel titled 'Harbor 2' opens under the schedule's panel.
-    - The note's headings, bullets, checklist, red text and link are easy to read.
-    - Both panels read well.
+- [ ] `01BB` Select **Earlier cycles** in the **Cycles** section.
+  - **Expected:** The earlier cycles, in grey, are easy to read.
   - **Notes:**
 
-- [ ] `CD9F` Select the details button at the right of the **Schedule** cell of 'Patches'.
+- [ ] `CD9F` Select the details button at the right of the first cell of the row for 'Patches'.
   - **Expected:**
-    - The panel of 'Patches' opens, and the panel of 'Harbor 2' closes.
+    - The panel of 'Patches' opens.
     - The yellow **Retired** box in its heading is easy to read.
   - **Notes:**
 
-- [ ] `4B7C` Under **Cycle schedule**, select **Change…**, then **Schedule ends…** in its menu.
-  - **Expected:** A dialog titled **Change when Patches ends** opens, and is easy to read.
-  - **Notes:**
-
-- [ ] `E2D5` Type the last day of next month in **Schedule ends**, such as `20261231`.
-  - **Expected:** The cycles under **Last cycles** are easy to read.
-  - **Notes:**
-
-- [ ] `6A1F` Select **Cancel**.
-  - **Expected:** The dialog closes.
-  - **Notes:**
-
-- [ ] `9AAE` Select the **⋯** button beside the close button at the top of the side panel, then **Approve…**.
+- [ ] `3F7A` Select the **⋯** button at the right of the first cell of the row for 'Patches', then **Approve…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens, and is easy to read.
   - **Notes:**
 
@@ -637,11 +627,49 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `0D38` Select **Show retired (1)**.
+  - **Expected:** 'Patches' is listed again, and the **Retired** box after its name is easy to read.
+  - **Notes:**
+
+- [ ] `5D2C` Select **Group by**, then **Status**.
   - **Expected:** The **Current** and **Retired** headings, and the counts at their right, are easy to read.
   - **Notes:**
 
+- [ ] `043E` Select the **⋯** button at the right of the first cell of the row for 'Patches', then **Restore**.
+  - **Expected:** A notification says "Drafted restoring Patches."
+  - **Notes:**
+
+- [ ] `B6E1` In the side panel, select the pencil at the right of the **Schedule ends** row.
+  - **Expected:** A dialog titled "Change when Patches ends" opens, and is easy to read.
+  - **Notes:**
+
+- [ ] `E2D5` Type the last day of next month in **Schedule ends**, such as `20261231`.
+  - **Expected:** The cycles under **Last cycles** are easy to read.
+  - **Notes:**
+
+- [ ] `6A1F` Select **Cancel**.
+  - **Expected:** The dialog closes.
+  - **Notes:**
+
+- [ ] `C4A9` In the side panel's **Cycles** section, select the pencil in the **Duration** cell of the row marked **Current**.
+  - **Expected:** The menu, with **This cycle only…** and **This and later cycles…**, is easy to read.
+  - **Notes:**
+
+- [ ] `E07D` Select **This cycle only…**.
+  - **Expected:** A dialog titled "Change the length of" and the cycle's name opens, and is easy to read.
+  - **Notes:**
+
+- [ ] `1F8B` Select **Cancel**.
+  - **Expected:** The dialog closes.
+  - **Notes:**
+
+- [ ] `071B` Select the **⋯** button at the right of the first cell of the row for 'Patches', then **Discard draft**.
+  - **Expected:** A notification says "Discarded the draft."
+  - **Notes:**
+
 - [ ] `A5EF` Select **Views**, then **Clear view**.
-  - **Expected:** The **Retired** heading is gone.
+  - **Expected:**
+    - The headings are gone.
+    - 'Patches' is no longer listed.
   - **Notes:**
 
 ### DARK-07: The Other Pages
