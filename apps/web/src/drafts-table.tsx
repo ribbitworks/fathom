@@ -12,6 +12,7 @@ import {
   capitalized,
   type DraftKind,
 } from "@fathom/shared";
+import { z } from "zod";
 import { joined, noDrafts } from "./drafts.ts";
 import type { Entry } from "./draft-entries.ts";
 import { PhraseList, phraseText } from "./phrase.tsx";
@@ -26,6 +27,7 @@ import {
 import { byChoice } from "./choice-grouping.ts";
 import { FactBox } from "./status-mark.tsx";
 import type { ViewChoice } from "./table-controls.tsx";
+import type { View } from "./table-view.ts";
 import { streamNames } from "./releases.ts";
 import { dayOf } from "./today.ts";
 
@@ -66,12 +68,14 @@ const typeNames: Record<DraftKind, string> = {
   "planning-settings": "Planning settings",
 };
 
-// The area whose Approvers decide a kind's drafts, as the Area column names it, such as "Features
-// and releases".
-export const areaOf = (kind: DraftKind): string =>
+// The area whose Approvers decide a kind's drafts, in a sentence, such as "features and releases",
+// and as the Area column names it, such as "Features and releases".
+export const areaWords = (kind: DraftKind): string =>
   // The kind is always one of the fixed kinds.
   // eslint-disable-next-line security/detect-object-injection
-  capitalized(approvedAreaNames[approvePermissions[kind]]);
+  approvedAreaNames[approvePermissions[kind]];
+
+export const areaOf = (kind: DraftKind): string => capitalized(areaWords(kind));
 
 const changeNames = {
   created: "Added",
@@ -147,6 +151,7 @@ const inOrderSeen = (values: readonly string[]) => [...new Set(values)];
 // The table's columns, its choices those the rows hold, in a steady order.
 export function draftColumns(
   rows: readonly DraftRow[],
+  tab: DraftsTab = "approval",
 ): Column<DraftRow, never>[] {
   const column = (
     key: Exclude<keyof DraftRow, "entry" | "facts" | "draft" | "heldBy">,
@@ -190,14 +195,19 @@ export function draftColumns(
       kindsShown((kind) => typeNames[kind]),
     ),
     column("area", "Area", "choice", kindsShown(areaOf)),
-    column(
-      "madeBy",
-      "Made by",
-      "choice",
-      inOrderSeen(rows.map(({ madeBy }) => madeBy)).sort((one, other) =>
-        one.localeCompare(other),
-      ),
-    ),
+    // One's own changes are always one's own.
+    ...(tab === "mine"
+      ? []
+      : [
+          column(
+            "madeBy",
+            "Made by",
+            "choice",
+            inOrderSeen(rows.map(({ madeBy }) => madeBy)).sort((one, other) =>
+              one.localeCompare(other),
+            ),
+          ),
+        ]),
     // A draft with no time recorded has no day.
     {
       ...column("drafted", "Drafted", "date"),
@@ -211,6 +221,43 @@ export function draftColumns(
 export const draftColumnOrder = draftColumns([]).map(({ key }) => key);
 
 const groupedBy = ["change", "type", "area", "madeBy", "state"];
+
+// The page's tabs, kept in its view as a choice of its own: the drafts others see, for approval,
+// and the reader's own changes, not yet published.
+export const draftsTabs = ["approval", "mine"] as const;
+
+export const draftsTabSchema = z.enum(draftsTabs);
+
+export type DraftsTab = z.infer<typeof draftsTabSchema>;
+
+export const draftsTabNames: Record<DraftsTab, string> = {
+  approval: "For approval",
+  mine: "My changes",
+};
+
+export const myChanges = "mine";
+
+export const draftsTabOf = (view: View): DraftsTab =>
+  view.choices?.tab === myChanges ? "mine" : "approval";
+
+// The view on a tab, keeping the rest of the view, Mine to decide aside, which My changes doesn't
+// offer.
+export function viewOnTab(view: View, tab: DraftsTab): View {
+  const others = Object.entries(view.choices ?? {}).filter(
+    ([key]) => key !== "tab" && (tab === "approval" || key !== "decide"),
+  );
+  const kept = Object.fromEntries(
+    tab === "mine" ? [...others, ["tab", myChanges]] : others,
+  );
+  return {
+    ...view,
+    choices: Object.keys(kept).length === 0 ? undefined : kept,
+  };
+}
+
+// Whether a draft is on a tab: one's own unpublished changes on My changes, the rest for approval.
+export const isOnTab = (tab: DraftsTab, row: DraftRow): boolean =>
+  row.entry.unpublished === (tab === "mine");
 
 // The page's own choice kept in its view: only the drafts the reader may decide now.
 export const mineToDecide = "mine";
@@ -242,13 +289,18 @@ export const selectionOf = (rows: readonly DraftRow[]) =>
 export function draftsTable({
   rows,
   decidable,
+  tab = "approval",
+  onOpen,
 }: {
   rows: readonly DraftRow[];
   // Whether a row's draft can be decided now: waiting, published, not held, and not waiting on a
   // rejected draft.
   decidable: (row: DraftRow) => boolean;
+  tab?: DraftsTab;
+  // Shows a draft's details beside the table.
+  onOpen?: (row: DraftRow) => void;
 }): RecordTable<DraftRow, never, undefined> {
-  const columns = draftColumns(rows);
+  const columns = draftColumns(rows, tab);
   const byId = new Map(rows.map((row) => [row.id, row]));
   return {
     ...readOnlyTableParts,
@@ -261,6 +313,7 @@ export function draftsTable({
     liveRecords: () => [],
     drafts: (ids) => selectionOf(ids.flatMap((id) => byId.get(id) ?? [])),
     decidable,
+    ...(onOpen === undefined ? {} : { showDetails: onOpen }),
     slotMarksOnly: true,
     groupings: columns
       .filter(({ key }) => groupedBy.includes(key))

@@ -242,38 +242,36 @@ export function MenuNote({ children }: { children: ReactNode }) {
   );
 }
 
+// Why a draft can't be decided by this account, or yet, as its menu and its details say it.
+export const otherApproverWords =
+  "Changed by this account, so another approver must approve it";
+export const waitingWords = "Waiting for a rejected draft to be resubmitted";
+export const heldWords = (by: string) =>
+  `Being changed by ${by}. It can be changed once they publish or discard their changes.`;
+export const unpublishedWords =
+  "Nobody else sees these changes until they're published.";
+
 // Under Approve, greyed out, for a draft this account changed when its role does not let it approve
 // its own.
 export function OtherApproverNote() {
-  return (
-    <MenuNote>
-      Changed by this account, so another approver must approve it
-    </MenuNote>
-  );
+  return <MenuNote>{otherApproverWords}</MenuNote>;
 }
 
 // Under an Approve item that is disabled because the draft depends on a rejected one.
 export function WaitingNote() {
-  return <MenuNote>Waiting for a rejected draft to be resubmitted</MenuNote>;
+  return <MenuNote>{waitingWords}</MenuNote>;
 }
 
 // In the menu of a record someone else has unpublished changes to, which nobody else may change,
 // approve, or reject until they publish or discard them.
 export function HeldNote({ by }: { by: string }) {
-  return (
-    <MenuNote>
-      Being changed by {by}. It can be changed once they publish or discard
-      their changes.
-    </MenuNote>
-  );
+  return <MenuNote>{heldWords(by)}</MenuNote>;
 }
 
 // In the menu of a record whose draft holds the user's own unpublished changes, which nobody can
 // approve until they publish them.
 export function UnpublishedNote() {
-  return (
-    <MenuNote>Nobody else sees these changes until they're published.</MenuNote>
-  );
+  return <MenuNote>{unpublishedWords}</MenuNote>;
 }
 
 // The name at the top of a record's menu, set apart from what follows it.

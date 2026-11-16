@@ -630,12 +630,30 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `63F6` Type `Ophélie Roussel` in the search box.
   - **Expected:**
-    - The red dot's ring before the entry is easy to see.
-    - The **Reason:** line under it is easy to read.
+    - The red dot's ring before her name, in the **Record** column, is easy to see.
+    - The **Reason** in her row is easy to read.
   - **Notes:**
 
 - [ ] `4D57` Type `Viktoria Holmberg` in the search box.
-  - **Expected:** The yellow dot and the grey lock before the entry are easy to see.
+  - **Expected:** The yellow dot and the grey lock before her name are easy to see.
+  - **Notes:**
+
+- [ ] `F7EB` Select the details button at the right of her **Record** cell.
+  - **Expected:**
+    - The side panel opens, headed by the yellow dot, the grey lock and her name, each easy to see.
+    - Every label and value under **Details** is easy to read.
+    - The dimmed line saying who is changing her, and **Show on People**, are easy to read.
+  - **Notes:**
+
+- [ ] `102D` Close the side panel with the **×** at its top right.
+  - **Expected:** The side panel closes.
+  - **Notes:**
+
+- [ ] `2045` Look at the tabs beside the page's title.
+  - **Expected:**
+    - **For approval** and **My changes** are easy to read.
+    - The chosen tab, **For approval**, is easy to tell from the other.
+    - The dimmed count after each is easy to read.
   - **Notes:**
 
 - [ ] `AC4B` Select the **Lists** page in the left-hand menu.

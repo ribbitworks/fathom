@@ -61,10 +61,23 @@ describe("the Org chart's choices", () => {
   });
 });
 
+describe("the Drafts page's choices", () => {
+  const fits = (choices: object) =>
+    viewChoiceSchemas.drafts.safeParse(choices).success;
+
+  it("keeps My changes and Mine to decide, refusing anything else", () => {
+    expect(fits({ decide: "mine", tab: "mine" })).toBe(true);
+    expect(fits({})).toBe(true);
+    expect(fits({ tab: "theirs" })).toBe(false);
+    expect(fits({ hide: ["status"] })).toBe(false);
+  });
+});
+
 describe("the choices of tables whose pages keep none", () => {
   it.each(
     viewTableSchema.options.filter(
-      (table) => table !== "features" && table !== "org-chart",
+      (table) =>
+        table !== "features" && table !== "org-chart" && table !== "drafts",
     ),
   )("refuses any choice on %s, and accepts none", (table) => {
     // The table is always one of the fixed tables.

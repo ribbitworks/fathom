@@ -85,6 +85,8 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
   drafts: z.strictObject({
     // Only the drafts the reader may decide now.
     decide: z.literal("mine").optional(),
+    // The reader's own changes, not yet published, in place of those for approval.
+    tab: z.literal("mine").optional(),
   }),
 };
 

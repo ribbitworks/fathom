@@ -12,6 +12,7 @@ import {
   type ChangeValue,
   type Choice,
   type DraftKind,
+  draftKinds,
   type DraftState,
   type FeatureTeam,
   type FeatureTeamDraft,
@@ -35,6 +36,7 @@ import { personDraftFields } from "./draft-details.tsx";
 import {
   type Columns,
   decidable,
+  decisionFor,
   type DraftSelection,
   mayDecide,
   noDrafts,
@@ -56,6 +58,8 @@ import {
 import { planDraftFields } from "./project-grids.tsx";
 import {
   listedPlanRecords,
+  type PlanRecordKind,
+  type ProjectTab,
   planChoicesQuery,
   planNodes,
   projectPlanQuery,
@@ -78,6 +82,16 @@ function draftedPeople(data: PeopleData): Drafted[] {
     )
     .sort((a, b) => (b.draft.madeAt ?? "").localeCompare(a.draft.madeAt ?? ""));
 }
+
+// Where a draft's record is shown on its own page, with its details open where the page opens one.
+export type DraftPlace =
+  | { page: "people"; open: string | undefined }
+  | { page: "lists"; listId: string }
+  | { page: "releases"; streamId: string }
+  | { page: "features"; open: string | undefined }
+  | { page: "projects"; tab: ProjectTab; open: string }
+  | { page: "org-chart"; featureTeam: string }
+  | { page: "capacity" };
 
 // A draft on the page, of any kind: its record, by kind and name, who made it, what it changes, and
 // why it was rejected, with the draft it selects.
@@ -102,6 +116,7 @@ export interface Entry {
   // Changed by this user, whose role does not let them approve their own drafts.
   needsOtherApprover: boolean;
   selects: DraftSelection;
+  place: DraftPlace;
 }
 
 function entry(
@@ -121,6 +136,7 @@ function entry(
   name: string,
   details: Phrase[],
   selects: Partial<DraftSelection>,
+  place: DraftPlace,
   heldBy?: string,
 ): Entry {
   return {
@@ -138,6 +154,7 @@ function entry(
     heldBy,
     needsOtherApprover: draft.needsOtherApprover === true,
     selects: { ...noDrafts(), ...selects },
+    place,
   };
 }
 
@@ -233,6 +250,7 @@ function listEntries(lists: readonly List[]): Entry[] {
                   list,
                 ),
             { lists: [list.id] },
+            { page: "lists", listId: list.id },
             list.heldBy,
           ),
         ]
@@ -247,6 +265,7 @@ function listEntries(lists: readonly List[]): Entry[] {
               `${choice.label} in ${list.name}`,
               configFields(choice.draft, choice),
               { choices: [choice.id] },
+              { page: "lists", listId: list.id },
               choice.heldBy,
             ),
           ]
@@ -268,6 +287,7 @@ function listEntries(lists: readonly List[]): Entry[] {
               ),
             ],
             { orders: [list.id] },
+            { page: "lists", listId: list.id },
             list.orderHeldBy,
           ),
         ]
@@ -280,6 +300,7 @@ function columnEntries(
   data: Pick<PeopleData, "fields">,
   lists: readonly List[],
   columnName: (name: string) => string = (name) => name,
+  place: DraftPlace = { page: "people", open: undefined },
 ): Entry[] {
   // A web link column has no list, and a list not sent to the reader goes unnamed.
   const listName = (id: unknown) =>
@@ -309,6 +330,7 @@ function columnEntries(
                     { ...field, listId: listName(field.listId) },
                   ),
               { columns: [field.id] },
+              place,
               field.heldBy,
             ),
           ]
@@ -340,6 +362,7 @@ function personEntries(data: PeopleData, lists: readonly List[]): Entry[] {
       isHire(drafted.person)
         ? { plannedHires: [drafted.person.id] }
         : { people: [drafted.person.id] },
+      { page: "people", open: drafted.person.employeeId },
       drafted.person.heldBy,
     ),
   );
@@ -356,6 +379,7 @@ function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
     },
     now: Record<string, unknown>,
     name: string,
+    streamId: string,
   ): Entry[] =>
     record.draft === undefined
       ? []
@@ -367,21 +391,29 @@ function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
             name,
             configFields(record.draft, now, type),
             { records: [{ type, id: record.id }] },
+            { page: "releases", streamId },
             record.heldBy,
           ),
         ];
   return streams.flatMap((stream) => [
-    ...of("release-stream", stream, stream, stream.name),
+    ...of("release-stream", stream, stream, stream.name, stream.id),
     ...stream.patterns.flatMap((pattern) =>
       of(
         "cycle-pattern",
         pattern,
         { ...pattern, length: String(pattern.length) },
         `${stream.name} from ${formatDay(pattern.startsOn)}`,
+        stream.id,
       ),
     ),
     ...stream.releases.flatMap((release) =>
-      of("release", release, release, `${release.name} in ${stream.name}`),
+      of(
+        "release",
+        release,
+        release,
+        `${release.name} in ${stream.name}`,
+        stream.id,
+      ),
     ),
   ]);
 }
@@ -400,6 +432,7 @@ function settingsEntries(settings: PlanningSettingsShown): Entry[] {
       planningSettingsName,
       configFields(...settingsDraftWords(draft, settings), "planning-settings"),
       { records: [planningSettingsRef] },
+      { page: "capacity" },
       settings.heldBy,
     ),
   ];
@@ -473,11 +506,27 @@ function teamEntries(
         team.name,
         details,
         { featureTeams: [team.id] },
+        { page: "org-chart", featureTeam: team.id },
         team.heldBy,
       ),
     ];
   });
 }
+
+// Where a plan record is shown: a feature on Features, the rest on their tab of Projects.
+const planTabs: Record<Exclude<PlanRecordKind, "feature">, ProjectTab> = {
+  project: "projects",
+  proposal: "proposals",
+  customer: "customers",
+  milestone: "milestones",
+};
+
+const planPlace = (kind: PlanRecordKind, id: string): DraftPlace =>
+  kind === "feature"
+    ? { page: "features", open: id }
+    : // The kind is always one of the fixed kinds.
+      // eslint-disable-next-line security/detect-object-injection
+      { page: "projects", tab: planTabs[kind], open: id };
 
 // Every draft of the plan's records, as entries.
 function planEntries(
@@ -500,6 +549,7 @@ function planEntries(
           credited(describeField(field), key, draft),
         ),
         { records: [ref] },
+        planPlace(kind, record.id),
         heldBy,
       ),
     ];
@@ -558,6 +608,9 @@ export type DraftEntries =
       choosable: (one: Entry) => boolean;
       // Whether the reader may decide a draft now, as toDecide keeps it.
       decidesNow: (one: Entry) => boolean;
+      // The other drafts deciding a published draft takes with it, named, whatever the reader's role
+      // decides: those approved with it while it waits, or those waiting on it once rejected.
+      related: (one: Entry) => string[];
       drafted: DraftedData;
     };
 
@@ -629,6 +682,7 @@ export function useDraftEntries({
           planData.featureColumns,
           planData.featureColumns.lists,
           (name) => `${name} on Features`,
+          { page: "features", open: undefined },
         )),
     ...(planData === undefined || choicesData === undefined
       ? []
@@ -661,6 +715,16 @@ export function useDraftEntries({
     all,
     ...reading,
     decidesNow: (one) => toDecide([one], reading).length > 0,
+    related: ({ unpublished, state, selects }) =>
+      unpublished
+        ? []
+        : (decisionFor(
+            state === "rejected" ? "reject" : "approve",
+            selects,
+            draftKinds,
+            drafted.lists,
+            drafted.columns,
+          ).included ?? []),
     drafted,
   };
 }

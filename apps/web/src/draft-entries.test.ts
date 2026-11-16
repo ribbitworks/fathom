@@ -20,6 +20,7 @@ const entry = (key: string, more: Partial<Entry> = {}): Entry => ({
   unpublished: false,
   heldBy: undefined,
   needsOtherApprover: false,
+  place: { page: "people", open: `E-${key}` },
   selects: noDrafts(),
   ...more,
 });

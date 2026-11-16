@@ -8,6 +8,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import {
   approvableKinds,
+  capacityModeNeeds,
   type ClassAccess,
   changesField,
   changesLinesOn,
@@ -17,6 +18,7 @@ import {
   editsField,
   opensWith,
   pageNeeds,
+  type PageNeeds,
   reaches,
   seesEmployment,
   seesHiringPlan,
@@ -31,11 +33,14 @@ import {
   cardPartSchema,
   planModeSchema,
 } from "@fathom/shared";
+import { Anchor } from "@mantine/core";
 import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
   getRouteApi,
+  Link,
+  type LinkOptions,
   notFound,
   type RouterHistory,
   redirect,
@@ -47,9 +52,10 @@ import { FirstPasswordChange } from "./change-password.tsx";
 import { HelpPageView } from "./help-page.tsx";
 import { helpIndexPage, shownHelpPage } from "./help-pages.ts";
 import { ChangeHistoryPage } from "./change-history-page.tsx";
-import { draftsSeen } from "./draft-entries.ts";
+import { type DraftPlace, draftsSeen } from "./draft-entries.ts";
 import { DraftsPage } from "./drafts-page.tsx";
-import { mineToDecide } from "./drafts-table.tsx";
+import { placePageNames } from "./drafts-panel.tsx";
+import { mineToDecide, myChanges } from "./drafts-table.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
 import { firstPage, Layout } from "./layout.tsx";
@@ -323,11 +329,14 @@ const changesRoute = createRoute({
   },
 });
 
-// Drafts, for those who see the data they change, with the table's view in the address, and whether
-// it shows only the drafts the reader may decide; Approvers approve and reject here those of the
-// areas their role approves.
+// Drafts, for those who see the data they change, with the table's view in the address, its tab,
+// whether it shows only the drafts the reader may decide, and the draft whose details are shown
+// beside it; Approvers approve and reject here those of the areas their role approves.
+const draftRowLength = 100;
 const draftsSearch = viewSearchSchema.extend({
   decide: z.literal(mineToDecide).optional().catch(undefined),
+  tab: z.literal(myChanges).optional().catch(undefined),
+  open: z.string().max(draftRowLength).optional().catch(undefined),
 });
 
 const draftsRoute = createRoute({
@@ -336,23 +345,81 @@ const draftsRoute = createRoute({
   validateSearch: draftsSearch,
   beforeLoad: reaching("drafts"),
   component: function Drafts() {
-    const { permissions } = signedIn.useRouteContext();
+    const { permissions, access } = signedIn.useRouteContext();
     const navigate = draftsRoute.useNavigate();
+    const { open, ...search } = draftsRoute.useSearch();
     return (
       <DraftsPage
         {...draftsSeen(permissions)}
         canShareViews={sharesViews("drafts", permissions)}
         {...viewProps(
-          draftsRoute.useSearch(),
+          search,
           (next, replace) => {
-            void navigate({ search: next, replace });
+            // A draft's details stay open while its tab does.
+            const kept = next.tab === search.tab ? open : undefined;
+            void navigate({ search: { ...next, open: kept }, replace });
           },
-          ["decide"],
+          ["decide", "tab"],
         )}
+        open={open}
+        onOpen={(next, replace = false) => {
+          void navigate({ search: { ...search, open: next }, replace });
+        }}
+        recordLink={(place) =>
+          opensWith(placeNeeds(place), access) && (
+            <Anchor
+              size="sm"
+              renderRoot={(props) => (
+                <Link {...props} {...placeAddress(place)} />
+              )}
+            >
+              Show on {placePageNames[place.page]}
+            </Anchor>
+          )
+        }
       />
     );
   },
 });
+
+// What needs reaching to see a draft's record on its page: the planning settings, Capacity's
+// Settings.
+const placeNeeds = (place: DraftPlace): PageNeeds =>
+  place.page === "capacity"
+    ? [capacityModeNeeds.settings]
+    : pageNeeds[place.page];
+
+// Where a draft's record is shown, with its details open where its page opens them.
+function placeAddress(place: DraftPlace): LinkOptions {
+  switch (place.page) {
+    case "people":
+      return { to: "/people" as const, search: { open: place.open } };
+    case "lists":
+      return {
+        to: "/lists/{-$listId}" as const,
+        params: { listId: place.listId },
+      };
+    case "releases":
+      return {
+        to: "/releases/{-$streamId}" as const,
+        params: { streamId: place.streamId },
+      };
+    case "features":
+      return planAddress("features", place.open);
+    case "projects":
+      return planAddress(place.tab, place.open);
+    case "org-chart":
+      return {
+        to: "/org-chart" as const,
+        search: { teams: "feature" as const, featureTeam: place.featureTeam },
+      };
+    case "capacity":
+      return {
+        to: "/capacity" as const,
+        search: { mode: "settings" as const },
+      };
+  }
+}
 
 const historyRoute = createRoute({
   getParentRoute: () => signedInRoute,

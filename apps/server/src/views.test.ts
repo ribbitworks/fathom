@@ -1056,23 +1056,21 @@ describe("views of every table", () => {
     ).toEqual({ error: "Choose only what this page offers" });
   });
 
-  it("keep Drafts showing only the drafts its reader may decide, refusing any other choice", async () => {
+  it("keep Drafts' tab and showing only the drafts its reader may decide, refusing any other choice", async () => {
     const { cookie } = await test.signedIn("engineering-director");
     const drafts = onTable("drafts");
-    const choices = { decide: "mine" };
-    const response = await drafts.save(cookie, unique("Mine to decide"), {
-      choices,
-    });
-    expect(response.statusCode).toBe(201);
-    expect(response.json<Saved>().view.definition).toEqual({ choices });
-
-    expect(
-      (
-        await drafts.save(cookie, unique("Theirs"), {
-          choices: { decide: "theirs" },
-        })
-      ).json(),
-    ).toEqual({ error: "Choose only what this page offers" });
+    for (const choices of [{ decide: "mine" }, { tab: "mine" }]) {
+      const response = await drafts.save(cookie, unique("Drafts"), {
+        choices,
+      });
+      expect(response.statusCode).toBe(201);
+      expect(response.json<Saved>().view.definition).toEqual({ choices });
+    }
+    for (const choices of [{ decide: "theirs" }, { tab: "theirs" }]) {
+      expect(
+        (await drafts.save(cookie, unique("Theirs"), { choices })).json(),
+      ).toEqual({ error: "Choose only what this page offers" });
+    }
   });
 
   it("keep names unique within each table, allowing one name on two tables", async () => {

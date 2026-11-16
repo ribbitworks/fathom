@@ -17,6 +17,9 @@ import {
   draftColumns,
   draftRows,
   draftsTable,
+  draftsTabOf,
+  viewOnTab,
+  isOnTab,
   mineToDecide,
   mineToDecideChoice,
   needsAnotherApprover,
@@ -37,6 +40,7 @@ const entry = (key: string, more: Partial<Entry> = {}): Entry => ({
   unpublished: false,
   heldBy: undefined,
   needsOtherApprover: false,
+  place: { page: "people", open: `E-${key}` },
   selects: { ...noDrafts(), people: [key] },
   ...more,
 });
@@ -173,6 +177,46 @@ describe("the Drafts table's columns", () => {
     );
     expect(screen.getByText(waitsOnRejected)).toBeDefined();
     expect(rows[0] && record?.mark?.(rows[0])).toBe(false);
+  });
+});
+
+describe("the page's tabs", () => {
+  it("are kept in the view, My changes dropping Mine to decide and For approval keeping the rest", () => {
+    const view = {
+      ...emptyView,
+      search: "fictional",
+      choices: { decide: mineToDecide },
+    };
+    const mine = viewOnTab(view, "mine");
+    expect(mine).toMatchObject({
+      search: "fictional",
+      choices: { tab: "mine" },
+    });
+    expect(draftsTabOf(mine)).toBe("mine");
+    const back = viewOnTab(mine, "approval");
+    expect(back.choices).toBeUndefined();
+    expect(draftsTabOf(back)).toBe("approval");
+    expect(draftsTabOf(emptyView)).toBe("approval");
+  });
+
+  it("put one's own unpublished changes on My changes, and the rest for approval", () => {
+    const [own, others] = draftRows(
+      [entry("p1", { unpublished: true }), entry("p2")],
+      reading,
+    );
+    expect(own && [isOnTab("mine", own), isOnTab("approval", own)]).toEqual([
+      true,
+      false,
+    ]);
+    expect(
+      others && [isOnTab("mine", others), isOnTab("approval", others)],
+    ).toEqual([false, true]);
+  });
+
+  it("leave Made by out of My changes", () => {
+    expect(draftColumns([], "mine").some(({ key }) => key === "madeBy")).toBe(
+      false,
+    );
   });
 });
 

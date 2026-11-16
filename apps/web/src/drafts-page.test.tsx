@@ -14,6 +14,7 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { drafts } from "./decision-dialog.tsx";
 import { DraftsPage } from "./drafts-page.tsx";
+import { draftPanelId } from "./drafts-panel.tsx";
 import { noDrafts } from "./drafts.ts";
 import { peopleQuery } from "./people.ts";
 import { emptyView } from "./table-view.ts";
@@ -166,9 +167,28 @@ async function openDrafts(answers: Answers = {}) {
     "GET /api/lists": () => Response.json({ lists: [sites] }),
     ...answers,
   });
-  renderApp("/drafts");
+  const app = renderApp("/drafts");
   await screen.findByRole("heading", { name: "Drafts" });
-  return fetch;
+  return { fetch, app };
+}
+
+// Opens a draft's details from its row, and follows its link to the record's own page, giving the
+// address it went to.
+async function showOn(
+  app: ReturnType<typeof renderApp>,
+  record: string,
+  page: string,
+) {
+  await userEvent.click(
+    await screen.findByRole("button", { name: `Show details of ${record}` }),
+  );
+  await userEvent.click(
+    await screen.findByRole("link", { name: `Show on ${page}` }),
+  );
+  await waitFor(() => {
+    expect(app.location.pathname).not.toBe("/drafts");
+  });
+  return `${app.location.pathname}${app.location.search}`;
 }
 
 // Each row's cells, from Record to Reason, as the table shows them.
@@ -188,13 +208,16 @@ const entries = async () => {
 
 describe("the Drafts page", () => {
   it("puts each draft in words, newest first, with what it changes", async () => {
-    await openDrafts();
+    const { app } = await openDrafts();
     expect(await entries()).toEqual([
       "Avery Fictional, Draft | Changed | Waiting | Start set to Nov 2, 2026; Site from Northmere to Harbour; A removed column changed | Person | People | Fictional Editor | Oct 31, 2026 | ",
       "Blake Fictional, Draft: added | Added | Waiting | ID set to E-p2; Site set to Harbour | Person | People | Fictional Editor | Oct 30, 2026 | ",
       "Casey Fictional, Draft: removed | Removed | Waiting |  | Person | People | Fathom | Oct 30, 2026 | ",
       "Drew Fictional, Rejected: Fictional reason | Changed | Rejected | Name from Drew Before to Drew Fictional | Person | People | Fictional Editor | Oct 29, 2026 | Fictional reason",
     ]);
+    expect(await showOn(app, "Avery Fictional", "People")).toBe(
+      "/people?open=E-p1",
+    );
   });
 
   it("puts drafts of lists, choices, and orders in words, and approves one with the drafts it uses", async () => {
@@ -249,7 +272,7 @@ describe("the Drafts page", () => {
       visibility: "confidential",
       choices: [],
     };
-    const fetch = await openDrafts({
+    const { fetch } = await openDrafts({
       "GET /api/people": peopleWith([]),
       "GET /api/release-streams": noStreams,
       "GET /api/lists": () =>
@@ -340,7 +363,7 @@ describe("the Drafts page", () => {
       values: { f2: ["c4"] },
       draft: draft({ action: "changed", changed: ["f2"] }),
     });
-    const fetch = await openDrafts({
+    const { fetch } = await openDrafts({
       "GET /api/people": () =>
         Response.json({
           people: [given],
@@ -413,7 +436,7 @@ describe("the Drafts page", () => {
           order: [],
         }),
     });
-    const fetch = await openDrafts(answers(["people:approve"]));
+    const { fetch } = await openDrafts(answers(["people:approve"]));
     await userEvent.click(
       await screen.findByRole("checkbox", {
         name: "Select the draft of Finley Fictional",
@@ -589,13 +612,14 @@ describe("the Drafts page", () => {
           ],
         }),
     });
-    renderApp("/drafts");
+    const app = renderApp("/drafts");
     expect(await entries()).toEqual([
       "Sites, Draft | Changed | Waiting | Name from Old Sites to Sites | List | Configuration | Fictional Editor | Oct 30, 2026 | ",
     ]);
     expect(fetch.mock.calls.some(([url]) => url.endsWith("/api/people"))).toBe(
       false,
     );
+    expect(await showOn(app, "Sites", "Lists")).toBe("/lists/l1");
   });
 
   it("lists a draft of the planning settings in words, for Approvers of configuration to approve", async () => {
@@ -618,7 +642,7 @@ describe("the Drafts page", () => {
       "POST /api/drafts/approval": () =>
         Response.json({ changeSetId: "20000000-0000-4000-8000-000000000001" }),
     });
-    renderApp("/drafts");
+    const app = renderApp("/drafts");
     expect(await entries()).toEqual([
       "Planning settings, Draft | Changed | Waiting | Hours a day from 8 to 7.5 | Planning settings | Configuration | Fictional Editor | Oct 30, 2026 | ",
     ]);
@@ -642,6 +666,9 @@ describe("the Drafts page", () => {
         }),
       ]);
     });
+    expect(await showOn(app, "Planning settings", "Capacity")).toBe(
+      "/capacity?mode=settings",
+    );
   });
 
   it("tries the planning settings again when they could not be loaded", async () => {
@@ -741,13 +768,16 @@ describe("the Drafts page", () => {
           featureColumns: noFeatureColumns,
         }),
     });
-    renderApp("/drafts");
+    const app = renderApp("/drafts");
     const listed = (await entries()).join(" ");
     expect(listed).toContain("Fictional Customer, Draft: added | Added");
     expect(listed).toContain("Fictional Proposal");
     expect(listed).toContain("Fictional Project");
     expect(listed).toContain("Fictional Kickoff of Fictional Project");
     expect(listed).not.toContain("Settled");
+    expect(
+      await showOn(app, "Fictional Kickoff of Fictional Project", "Projects"),
+    ).toMatch(/^\/projects\?tab=milestones&open=/u);
   });
 
   it("names a draft of a column on Features as being on Features", async () => {
@@ -801,8 +831,11 @@ describe("the Drafts page", () => {
           canEditFeatures: false,
         }),
     });
-    renderApp("/drafts");
+    const app = renderApp("/drafts");
     expect(await screen.findByText("Fictional Size on Features")).toBeDefined();
+    expect(await showOn(app, "Fictional Size on Features", "Features")).toBe(
+      "/features",
+    );
   });
 
   it("lists a feature's draft, naming the cycle in words", async () => {
@@ -863,12 +896,15 @@ describe("the Drafts page", () => {
           featureColumns: noFeatureColumns,
         }),
     });
-    renderApp("/drafts");
+    const app = renderApp("/drafts");
     expect((await entries()).join(" ")).toContain(
       "Fictional Moving, Draft | Changed | Waiting | ",
     );
     expect(document.body.textContent).toContain(
       `${streamOfCycles.name}: ${String(second?.name)}`,
+    );
+    expect(await showOn(app, "Fictional Moving", "Features")).toMatch(
+      /^\/features\?open=/u,
     );
   });
 
@@ -998,7 +1034,7 @@ describe("the Drafts page", () => {
         }),
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
-    renderApp("/drafts");
+    const app = renderApp("/drafts");
     expect(await entries()).toEqual([
       "Fictional Majors, Draft: added | Added | Waiting |  | Release stream | Features and releases | Fictional Editor | Oct 30, 2026 | ",
       "Fictional Majors from Jan 1, 2027, Draft | Changed | Waiting | Length from 2 to 3 | Cycles | Features and releases | Fictional Editor | Oct 30, 2026 | ",
@@ -1031,6 +1067,9 @@ describe("the Drafts page", () => {
         }),
       ]);
     });
+    expect(await showOn(app, "Fictional Majors", "Releases")).toBe(
+      `/releases/${streamId}`,
+    );
   });
 
   it("names everyone who changed a draft", async () => {
@@ -1146,7 +1185,7 @@ describe("the Drafts page", () => {
   });
 
   it("reloads the release streams after an approval, so a release's approved draft leaves the page", async () => {
-    const fetch = await openDrafts({
+    const { fetch } = await openDrafts({
       "GET /api/session": session([
         "people:approve",
         "people:view",
@@ -1179,7 +1218,7 @@ describe("the Drafts page", () => {
   });
 
   it("approves the drafts selected, after asking", async () => {
-    const fetch = await openDrafts({
+    const { fetch } = await openDrafts({
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
     const approve = await screen.findByRole("button", { name: "Approve…" });
@@ -1273,7 +1312,7 @@ describe("the Drafts page", () => {
         live: { stateId: "s-proposed", values: {} },
       }),
     });
-    const fetch = await openDrafts({
+    const { fetch } = await openDrafts({
       "GET /api/people": peopleWith([hire]),
       "GET /api/lists": () =>
         Response.json({ lists: [sites, positions, states] }),
@@ -1348,7 +1387,7 @@ describe("the Drafts page", () => {
   });
 
   it("keeps a new order that waits on a rejected choice from being selected, and approves the rest", async () => {
-    const fetch = await openDrafts({
+    const { fetch } = await openDrafts({
       "GET /api/people": peopleWith([changed]),
       "GET /api/release-streams": noStreams,
       "GET /api/lists": () =>
@@ -1415,7 +1454,7 @@ describe("the Drafts page", () => {
   });
 
   it("rejects the drafts selected, asking for a reason", async () => {
-    const fetch = await openDrafts({
+    const { fetch } = await openDrafts({
       "POST /api/drafts/rejection": () => Response.json({ changeSetId: s1 }),
     });
     await userEvent.click(
@@ -1573,7 +1612,7 @@ describe("the Drafts page", () => {
 
   it("says when the drafts cannot be loaded, and tries again", async () => {
     let failing = true;
-    const fetch = await openDrafts({
+    const { fetch } = await openDrafts({
       "GET /api/people": () =>
         failing
           ? Response.json({ error: "Down" }, { status: 503 })
@@ -1667,7 +1706,7 @@ describe("the Drafts page", () => {
       "GET /api/release-streams": noStreams,
       "GET /api/lists": () => Response.json({ lists: [sites] }),
     });
-    const history = renderApp("/drafts");
+    const app = renderApp("/drafts");
     expect(await entries()).toHaveLength(4);
 
     // When Mine to decide is chosen in the Views menu
@@ -1682,7 +1721,7 @@ describe("the Drafts page", () => {
     await waitFor(async () => {
       expect(await entries()).toHaveLength(3);
     });
-    expect(history.location.search).toContain("decide=mine");
+    expect(app.location.search).toContain("decide=mine");
 
     // And choosing it again shows every draft, leaving the address without it
     await userEvent.click(screen.getByRole("button", { name: /^Views/u }));
@@ -1692,7 +1731,7 @@ describe("the Drafts page", () => {
     await waitFor(async () => {
       expect(await entries()).toHaveLength(4);
     });
-    expect(history.location.search).not.toContain("decide");
+    expect(app.location.search).not.toContain("decide");
   });
 
   it("offers a reader who decides nothing a way out of Mine to decide, as a link may give it", async () => {
@@ -1710,7 +1749,7 @@ describe("the Drafts page", () => {
   });
 
   it("decides one draft from its row's menu", async () => {
-    const fetch = await openDrafts({
+    const { fetch } = await openDrafts({
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
     // A row has two, one beside its name and one at its end, which open the same menu.
@@ -1751,6 +1790,272 @@ describe("the Drafts page", () => {
         "[role=gridcell]",
       )?.textContent,
     ).toContain("Kit Fictional");
+  });
+
+  it("opens a draft's details, with the drafts approved with it, and decides it from there", async () => {
+    // Given a person given a choice only drafted to be added
+    const given = person("p6", "Kai Fictional", {
+      values: { f1: ["c3"] },
+      draft: draft({
+        action: "changed",
+        changed: ["f1"],
+        live: { values: {} },
+      }),
+    });
+    const withPlatform = {
+      ...sites,
+      choices: [
+        ...sites.choices,
+        {
+          id: "c3",
+          label: "Platform",
+          description: "",
+          retired: false,
+          draft: draft({ action: "created", changed: [], live: {} }),
+        },
+      ],
+    };
+    const { fetch, app } = await openDrafts({
+      "GET /api/people": peopleWith([given]),
+      "GET /api/lists": () => Response.json({ lists: [withPlatform] }),
+      "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
+    });
+
+    // When its details are opened
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Show details of Kai Fictional",
+      }),
+    );
+
+    // Then they name the choice approved with it, and the address keeps them open
+    expect(
+      within(
+        await screen.findByRole("region", { name: "Approved with it" }),
+      ).getByText("the choice Platform in Sites"),
+    ).toBeDefined();
+    expect(app.location.search).toContain("open=");
+
+    // And approving from there approves both
+    const panel = document.getElementById(draftPanelId) as HTMLElement;
+    await userEvent.click(
+      within(panel).getByRole("button", { name: "Approve…" }),
+    );
+    await userEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Approve",
+      }),
+    );
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
+        { ...noDrafts(), people: ["p6"], choices: ["c3"] },
+      ]);
+    });
+  });
+
+  it("rejects a draft from its details", async () => {
+    await openDrafts();
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Show details of Blake Fictional",
+      }),
+    );
+    const panel = document.getElementById(draftPanelId) as HTMLElement;
+    await userEvent.click(
+      within(panel).getByRole("button", { name: "Reject…" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Reject 1 draft?" }),
+    ).toBeDefined();
+  });
+
+  it("closes a draft's details back to its row", async () => {
+    const { app } = await openDrafts();
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Show details of Blake Fictional",
+      }),
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Close details" }),
+    );
+    await waitFor(() => {
+      expect(document.activeElement?.textContent).toContain("Blake Fictional");
+    });
+    expect(app.location.search).not.toContain("open=");
+  });
+
+  it("counts each tab's drafts, and keeps the tab in the address", async () => {
+    const { app } = await openDrafts({
+      "GET /api/people": peopleWith([
+        changed,
+        {
+          ...added,
+          draft: draft({
+            action: "created",
+            changed: [],
+            unpublished: true,
+          }),
+        },
+      ]),
+    });
+    const tabs = await screen.findAllByRole("tab");
+    expect(tabs.map(({ textContent }) => textContent)).toEqual([
+      "For approval 1",
+      "My changes 1",
+    ]);
+    await userEvent.click(screen.getByRole("tab", { name: /^My changes/u }));
+    expect(app.location.search).toContain("tab=mine");
+    expect(screen.getByRole("tab", { name: /^My changes/u })).toHaveProperty(
+      "ariaSelected",
+      "true",
+    );
+    // And one's own change's details say nobody else sees it yet, naming nothing approved with it
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Show details of Blake Fictional",
+      }),
+    );
+    expect(
+      await screen.findByText(
+        "Nobody else sees these changes until they're published.",
+      ),
+    ).toBeDefined();
+    expect(
+      screen.queryByRole("region", { name: "Approved with it" }),
+    ).toBeNull();
+  });
+
+  it("names the drafts waiting on a rejected draft in its details", async () => {
+    const listDraft = (action: string, more: object = {}) =>
+      draft({ action, changed: [], live: {}, ...more });
+    await openDrafts({
+      "GET /api/people": peopleWith([]),
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...sites,
+              choices: [
+                ...sites.choices,
+                {
+                  id: "c3",
+                  label: "Platform",
+                  description: "",
+                  retired: false,
+                  draft: listDraft("created", {
+                    state: "rejected",
+                    reason: "Fictional reason",
+                  }),
+                },
+              ],
+              orderDraft: draft({ live: ["c1", "c2"], uses: ["c3"] }),
+            },
+          ],
+        }),
+    });
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Show details of Platform in Sites",
+      }),
+    );
+    expect(
+      within(
+        await screen.findByRole("region", { name: "Waiting on it" }),
+      ).getByText("the new order for Sites"),
+    ).toBeDefined();
+  });
+
+  it("offers no link to a record's page this role can't open", async () => {
+    // Given a reader of people, who sees a list's draft but not the Lists page
+    await openDrafts({
+      "GET /api/session": session(["people:view"]),
+      "GET /api/people": peopleWith([]),
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...sites,
+              draft: draft({
+                action: "changed",
+                changed: ["name"],
+                live: { name: "Old Sites" },
+              }),
+            },
+          ],
+        }),
+    });
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Show details of Sites" }),
+    );
+    await screen.findByRole("region", { name: "Details" });
+    expect(screen.queryByRole("link", { name: /^Show on/u })).toBeNull();
+  });
+
+  it("starts each tab unticked, keeping no draft's details from the other tab", async () => {
+    // Given a draft ticked, and another's details open
+    const { app } = await openDrafts({
+      "GET /api/people": peopleWith([
+        changed,
+        removed,
+        {
+          ...added,
+          draft: draft({ action: "created", changed: [], unpublished: true }),
+        },
+      ]),
+    });
+    await userEvent.click(
+      await screen.findByRole("checkbox", {
+        name: "Select the draft of Avery Fictional",
+      }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Show details of Casey Fictional" }),
+    );
+    expect(app.location.search).toContain("open=");
+
+    // When My changes, then For approval, is chosen
+    await userEvent.click(screen.getByRole("tab", { name: /^My changes/u }));
+    await userEvent.click(screen.getByRole("button", { name: /^Views/u }));
+    expect(
+      screen.queryByRole("menuitem", { name: /Mine to decide/u }),
+    ).toBeNull();
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(screen.getByRole("tab", { name: /^For approval/u }));
+
+    // Then nothing is ticked, and no details are open
+    expect(await screen.findByText("None selected")).toBeDefined();
+    expect(app.location.search).not.toContain("open=");
+  });
+
+  it("closes the details of a draft no longer listed, such as once decided", async () => {
+    serverAnswers({
+      "GET /api/session": approver,
+      "GET /api/people": peopleWith([changed]),
+      "GET /api/release-streams": noStreams,
+      "GET /api/lists": () => Response.json({ lists: [sites] }),
+    });
+    const app = renderApp("/drafts?open=person%20gone");
+    await screen.findByRole("grid", { name: "Drafts" });
+    await waitFor(() => {
+      expect(app.location.search).not.toContain("open=");
+    });
+  });
+
+  it("shows My changes whole, though the address asks for Mine to decide", async () => {
+    serverAnswers({
+      "GET /api/session": approver,
+      "GET /api/people": peopleWith([
+        {
+          ...added,
+          draft: draft({ action: "created", changed: [], unpublished: true }),
+        },
+      ]),
+      "GET /api/release-streams": noStreams,
+      "GET /api/lists": () => Response.json({ lists: [sites] }),
+    });
+    renderApp("/drafts?tab=mine&decide=mine");
+    expect(await entries()).toHaveLength(1);
   });
 
   it("counts drafts in words", () => {
@@ -1803,7 +2108,7 @@ describe("drafts of feature teams on the Drafts page", () => {
     });
 
   it("puts a team's changes in words, naming its lead and members", async () => {
-    await open([
+    const { app } = await open([
       featureTeam("Fictional Pier", {
         leadId: "m1",
         members: ["m1", "m2", "gone"],
@@ -1822,6 +2127,9 @@ describe("drafts of feature teams on the Drafts page", () => {
     expect(await entries()).toEqual([
       "Fictional Pier, Draft | Changed | Waiting | Name from Fictional Quay to Fictional Pier; Feature lead from Blake Fictional to Avery Fictional; Members from Avery Fictional to Avery Fictional, Blake Fictional, Someone this role can't see; Joining and leaving dates set to Avery Fictional, Jan 5, 2026; Blake Fictional, Jan 6, 2026; Someone this role can't see, Jan 7, 2026 | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
+    expect(await showOn(app, "Fictional Pier", "org chart")).toBe(
+      `/org-chart?teams=feature&featureTeam=${t1}`,
+    );
   });
 
   it("names someone who has not started from the team's own names", async () => {
@@ -1969,7 +2277,7 @@ describe("drafts of feature teams on the Drafts page", () => {
   });
 
   it("approves a team's draft as a feature team", async () => {
-    const fetch = await open(
+    const { fetch } = await open(
       [
         featureTeam("Fictional Beacon", {
           draft: draft({ action: "created", changed: ["name"] }),
@@ -2029,7 +2337,7 @@ describe("drafts of feature teams on the Drafts page", () => {
 });
 
 describe("unpublished and held drafts on the Drafts page", () => {
-  it("keeps drafts someone is changing, and one's own unpublished drafts, from being selected", async () => {
+  it("keeps drafts someone is changing from being selected, and one's own unpublished drafts on My changes", async () => {
     await openDrafts({
       "GET /api/people": peopleWith([
         { ...changed, heldBy: "Second Fictional Editor" },
@@ -2055,9 +2363,8 @@ describe("unpublished and held drafts on the Drafts page", () => {
     expect(recordOf("Avery Fictional")).toMatch(
       /, Draft, being changed by Second Fictional Editor$/,
     );
-    expect(recordOf("Blake Fictional")).toMatch(/, Draft: added, unpublished$/);
+    expect(recordOf("Blake Fictional")).toBeUndefined();
     expect(box("Avery Fictional")).toHaveProperty("disabled", true);
-    expect(box("Blake Fictional")).toHaveProperty("disabled", true);
     await userEvent.click(
       screen.getByRole("checkbox", {
         name: "Select all drafts this role can decide",
@@ -2068,6 +2375,18 @@ describe("unpublished and held drafts on the Drafts page", () => {
     expect(
       screen.getByRole("button", { name: "Approve 1 draft…" }),
     ).toBeDefined();
+
+    // And one's own unpublished draft is on My changes, with no ticks and no Made by
+    await userEvent.click(screen.getByRole("tab", { name: /^My changes/u }));
+    await waitFor(async () => {
+      expect(await entries()).toEqual([
+        "Blake Fictional, Draft: added, unpublished | Added | Not published | ID set to E-p2; Site set to Harbour | Person | People | Oct 30, 2026 | ",
+      ]);
+    });
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /^Made by column/u }),
+    ).toBeNull();
   });
 });
 
@@ -2101,6 +2420,9 @@ describe("loading for a role that sees part of the drafts", () => {
             onView={() => undefined}
             applied={undefined}
             onApply={() => undefined}
+            open={undefined}
+            onOpen={() => undefined}
+            recordLink={() => undefined}
           />
         </MantineProvider>
       </QueryClientProvider>,

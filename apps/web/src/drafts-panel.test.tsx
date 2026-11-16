@@ -1,0 +1,178 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Tests for a draft's details: its columns as rows, the drafts approved with it or waiting on it,
+// deciding it, why it can't be decided yet, and the link to its record's own page.
+
+import { MantineProvider } from "@mantine/core";
+import { render, screen, within } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
+import type { ReactNode } from "react";
+import { describe, expect, it, vi } from "vitest";
+import type { Entry } from "./draft-entries.ts";
+import { noDrafts } from "./drafts.ts";
+import { DraftPanel, type DraftActions } from "./drafts-panel.tsx";
+import { draftColumns, draftRows, type DraftsTab } from "./drafts-table.tsx";
+import { testTheme } from "./test-support.tsx";
+
+const entry = (more: Partial<Entry> = {}): Entry => ({
+  key: "person p1",
+  madeAt: "2026-11-01T10:00:00.000Z",
+  action: "changed",
+  state: "waiting",
+  who: "Fictional Editor",
+  kind: "person",
+  name: "Avery Fictional",
+  details: [[{ strong: "Start" }, " set to ", { value: "Nov 2, 2026" }]],
+  reason: undefined,
+  unpublished: false,
+  heldBy: undefined,
+  needsOtherApprover: false,
+  selects: { ...noDrafts(), people: ["p1"] },
+  place: { page: "people", open: "E-1" },
+  ...more,
+});
+
+function show({
+  one = entry(),
+  related = [],
+  actions,
+  approves = true,
+  waits = false,
+  tab = "approval",
+  recordLink,
+}: {
+  one?: Entry;
+  related?: string[];
+  actions?: DraftActions;
+  approves?: boolean;
+  waits?: boolean;
+  tab?: DraftsTab;
+  recordLink?: ReactNode;
+}) {
+  const rows = draftRows([one], {
+    waits: () => waits,
+    choosable: () => approves,
+  });
+  const [row] = rows;
+  if (row === undefined) throw new Error("No row");
+  render(
+    <MantineProvider theme={testTheme}>
+      <DraftPanel
+        row={row}
+        columns={draftColumns(rows, tab)}
+        related={related}
+        actions={actions}
+        approves={approves}
+        waits={waits}
+        narrow={false}
+        recordLink={recordLink}
+        onClose={vi.fn()}
+      />
+    </MantineProvider>,
+  );
+}
+
+const deciding = (): DraftActions => ({ approve: vi.fn(), reject: vi.fn() });
+
+describe("a draft's details", () => {
+  it("lists its columns as rows, beside its record", () => {
+    show({});
+    expect(
+      screen.getByRole("heading", { name: /Avery Fictional/u }),
+    ).toBeDefined();
+    const details = screen.getByRole("region", { name: "Details" });
+    expect(within(details).getByText("Start")).toBeDefined();
+    expect(within(details).getByText("Fictional Editor")).toBeDefined();
+    expect(within(details).queryByText("Record")).toBeNull();
+  });
+
+  it("leaves Made by out on My changes", () => {
+    show({ one: entry({ unpublished: true }), tab: "mine" });
+    expect(screen.queryByText("Made by")).toBeNull();
+  });
+
+  it("names the drafts approved with a waiting draft", () => {
+    show({ related: ["the list Skills", "the column Skills"] });
+    expect(
+      within(
+        screen.getByRole("region", { name: "Approved with it" }),
+      ).getByText("the column Skills"),
+    ).toBeDefined();
+  });
+
+  it("heads the drafts a rejected draft holds back Waiting on it", () => {
+    show({
+      one: entry({ state: "rejected", reason: "Fictional reason" }),
+      related: ["the new order for Sites"],
+    });
+    expect(screen.getByRole("region", { name: "Waiting on it" })).toBeDefined();
+  });
+
+  it("approves or rejects a draft this role may decide now", async () => {
+    const actions = deciding();
+    show({ actions });
+    await userEvent.click(screen.getByRole("button", { name: "Approve…" }));
+    await userEvent.click(screen.getByRole("button", { name: "Reject…" }));
+    expect(actions.approve).toHaveBeenCalledOnce();
+    expect(actions.reject).toHaveBeenCalledOnce();
+  });
+
+  it("offers no approval of a draft this account changed, saying why", () => {
+    show({ one: entry({ needsOtherApprover: true }), actions: deciding() });
+    expect(screen.getByRole("button", { name: "Approve…" })).toHaveProperty(
+      "disabled",
+      true,
+    );
+    expect(
+      screen.getByText(
+        "Changed by this account, so another approver must approve it",
+      ),
+    ).toBeDefined();
+  });
+
+  it.each([
+    [
+      "one's own, not yet published",
+      { one: entry({ unpublished: true }) },
+      "Nobody else sees these changes until they're published.",
+    ],
+    [
+      "being changed by someone else",
+      { one: entry({ heldBy: "Fictional Other" }) },
+      "Being changed by Fictional Other. It can be changed once they publish or discard their changes.",
+    ],
+    [
+      "rejected",
+      { one: entry({ state: "rejected" }) },
+      "Back with Fictional Editor to change and resubmit.",
+    ],
+    [
+      "of an area this role doesn't approve",
+      { approves: false },
+      "This role doesn't approve people.",
+    ],
+    [
+      "waiting on a rejected draft",
+      { waits: true },
+      "Waiting for a rejected draft to be resubmitted",
+    ],
+  ] as const)("says why a draft %s can't be decided", (_case, given, why) => {
+    show(given);
+    expect(screen.getByText(why)).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Approve…" })).toBeNull();
+  });
+
+  it("gives no reason beside a decision this role may make now", () => {
+    show({ actions: deciding() });
+    expect(
+      screen.queryByText(
+        /another approver|resubmitted|Back with|doesn't approve/u,
+      ),
+    ).toBeNull();
+  });
+
+  it("ends with the link to its record, where given", () => {
+    show({ recordLink: <a href="/lists/l1">Show on Lists</a> });
+    expect(screen.getByRole("link", { name: "Show on Lists" })).toBeDefined();
+  });
+});

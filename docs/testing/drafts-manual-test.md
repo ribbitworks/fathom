@@ -811,3 +811,100 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 **Afterwards:** Open the Views menu, and select **Clear view**.
+
+### DRAFT-29: A Draft's Details Show What Comes With It and Lead to Its Record
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-28.
+
+**Preconditions:** Run Reset the Database first. Signed in with this account. **Drafts** page open from the left-hand menu.
+
+- [ ] `0A9E` Search for `Silje Skills`.
+  - **Expected:** One row is shown, whose **Record** reads 'Silje Holm-Schrøder'.
+  - **Notes:**
+
+- [ ] `71D2` Point at that row, and select the details button that shows at the right of its **Record** cell.
+  - **Expected:** A details panel opens beside the table:
+    - Its title is a yellow dot, then 'Silje Holm-Schrøder'.
+    - Under **Details**, **Change** reads "Changed".
+    - **State** reads "Waiting".
+    - **What changes** reads **Skills** set to `Rust`.
+    - **Type** reads "Person".
+    - **Area** reads "People".
+    - **Made by** reads "Engineering Operations Manager".
+    - **Drafted** reads today's date.
+    - **Reason** reads "None".
+    - Under **Approved with it**, **Drafts** reads "the column Skills", "the list Skills" and "the choice Rust in Skills", one to a line.
+    - Under them come the buttons **Approve…** and **Reject…**, then the link **Show on People**.
+  - **Notes:**
+
+- [ ] `9BE7` Select **Show on People**.
+  - **Expected:**
+    - The **People** page opens.
+    - The details of 'Silje Holm-Schrøder' are open beside the table.
+  - **Notes:**
+
+- [ ] `26F0` Select the browser's Back button.
+  - **Expected:**
+    - The **Drafts** page shows, with only the row of 'Silje Holm-Schrøder'.
+    - Her draft's details are open beside the table.
+  - **Notes:**
+
+- [ ] `D29F` Clear the search box.
+  - **Expected:**
+    - Every draft is shown again.
+    - The details of 'Silje Holm-Schrøder' stay open.
+  - **Notes:**
+
+- [ ] `53B1` Search for `Harbourside`.
+  - **Expected:** A row's **Record** reads 'Harbourside in Sites', after a red dot in a ring.
+  - **Notes:**
+
+- [ ] `5374` Select the details button of that row.
+  - **Expected:**
+    - **State** reads "Rejected".
+    - **Reason** reads "Fictional reason: leave Positions and Sites as they are until both are reviewed."
+    - Under **Waiting on it**, **Draft** reads "the new order for Sites".
+    - There are no **Approve…** or **Reject…** buttons.
+    - A dimmed line reads "Back with Engineering Operations Manager to change and resubmit."
+    - Under it comes the link **Show on Lists**.
+  - **Notes:**
+
+- [ ] `D238` Press Esc.
+  - **Expected:**
+    - The details panel closes.
+    - The **Record** cell of 'Harbourside in Sites' has focus.
+  - **Notes:**
+
+### DRAFT-30: My Changes Shows One's Own Unpublished Changes
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-29.
+
+**Preconditions:** Run Restore the Seed Data first. Signed in with this account. **Drafts** page open from the left-hand menu.
+
+- [ ] `A627` Read the tabs beside the page's title.
+  - **Expected:**
+    - **For approval** comes first, chosen.
+    - **My changes** comes second, followed by a dimmed 3.
+    - No row's **State** reads "Not published".
+  - **Notes:**
+
+- [ ] `DD28` Select **My changes**.
+  - **Expected:**
+    - Three rows are shown, whose **Record** reads 'Laptop in Equipment', 'Equipment' and 'Mariana Metz', each after a hollow yellow dot.
+    - Each row's **State** reads "Not published".
+    - There is no **Made by** column.
+    - There are no tick boxes, and no bar above the table.
+  - **Notes:**
+
+- [ ] `A6C5` Select the details button of the row of 'Mariana Metz'.
+  - **Expected:**
+    - The details panel has no **Made by** row.
+    - A dimmed line reads "Nobody else sees these changes until they're published."
+    - Under it comes the link **Show on People**.
+  - **Notes:**
+
+- [ ] `81E6` Select **For approval**.
+  - **Expected:**
+    - The details panel closes.
+    - No row's **Record** reads 'Mariana Metz' with **State** "Not published".
+  - **Notes:**
