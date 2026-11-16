@@ -14,16 +14,17 @@ See [Drafts](drafts.md) for more.
 
 A Product Manager adds the feature and plans it, and adds the project that needs it, if it's new.
 
-1. On **Features**, select **New feature**.
+1. On **Features**, select **New feature**. A panel opens beside the table.
 1. Type the feature's **Name**.
+1. In **Target cycle**, choose the cycle it's planned to ship in.
+1. In **Feature team**, choose the team that builds it.
 1. Select **Add**.
-1. In the feature's **Target cycle**, choose the cycle it's planned to ship in.
-1. In its **Feature team**, choose the team that builds it.
 1. If the project is new, add it on **Projects**. See [Projects](projects.md#add-a-project-proposal-customer-or-milestone).
 1. On **Projects**, select the **Features** cell of the project that needs it.
-1. Press Enter.
-1. Pick the feature.
-1. Press Esc.
+1. Press Enter to open the list of features.
+1. Type part of the feature's name.
+1. Press Enter to pick it.
+1. Press Enter again to finish.
 1. Select **Publish** in the top bar.
 
 The changes are now drafts that others can see, each with a yellow dot. See [Features](features.md) for more.
@@ -32,7 +33,7 @@ The changes are now drafts that others can see, each with a yellow dot. See [Fea
 
 The Engineering Director, or another role that approves the plan and features, decides on the drafts.
 
-1. Select the **Drafts** page.
+1. Select the **Drafts** page, under **History**.
 1. Tick the drafts.
 1. Select **Approve 2 drafts…**. The number is how many you ticked.
 1. Check the dialog. It lists any other drafts these depend on, which are approved with them.

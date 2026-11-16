@@ -6,7 +6,7 @@ The left-hand menu shows only the pages your role lets you open. A page your rol
 
 - **Sections:** the left-hand menu groups the pages into sections: **Plan**, **People**, **Administration**, **History** and **Help**.
 - **Permissions:** a role is a set of permissions. Each one is a box in the grid on the [Roles](roles.md) page. **View Plan**, for example, is the **View** box in the **Plan** row. **Edit** brings **View** with it, so a role that edits an area sees it too.
-- **Personal details:** **View Personal details** is the **Personal** box under **Data classification**. Some pages need it, since they show the months people join and leave teams. Those dates are Personal unless they're moved to another class. If it does, these pages need the class the dates are in instead. See [Data classes](data-classes.md).
+- **Personal details:** **View Personal details** is the **Personal** box under **Data classification**, and **View Confidential data** is the **Confidential** box. Some pages need **View Personal details**, since they show when people start and leave, and the months they join and leave teams. Those dates are Personal unless someone moves them to another class. If they're moved, these pages need the class the dates are in instead. See [Data classes](data-classes.md).
 - **Starting roles:** Fathom starts with nine roles, one for each kind of work. The lists below say which of them see each page. These roles can be changed, and others made, so check a role's own boxes on the Roles page.
 
 ## Plan
@@ -29,7 +29,7 @@ The left-hand menu shows only the pages your role lets you open. A page your rol
 - [People](people.md): It lists everyone and the planned hires, as a table.
   - **Shown with:** **View People**
   - **Starting roles that see it:** Every role but Administrator
-- [Org chart](org-chart.md): It draws reporting teams and feature teams as cards, today or, with **View Personal details**, on other dates.
+- [Org chart](org-chart.md): It draws reporting teams and feature teams as cards, today or, with **View Personal details**, on past dates. Future dates in **Reporting teams** also need **View Confidential data**.
   - **Shown with:** **View People**
   - **Starting roles that see it:** Every role but Administrator
 - [Feature assignments](feature-assignments.md): It shows who is on which feature team, month by month.

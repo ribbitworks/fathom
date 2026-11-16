@@ -1,6 +1,8 @@
 # Settings
 
-**Settings** holds Fathom's settings, which apply to everyone: its time zone, and the rules for passwords. Each has its own panel.
+**Settings** holds Fathom's settings, which apply to everyone: its time zone, and the rules for passwords. Each has its own panel. You find it under **Administration** in the left-hand menu.
+
+Only a role with **Edit** on **Administration**, such as the Administrator, changes them. The Engineering Director and the Executive see the settings without **Save**.
 
 ## What to Know First
 
@@ -24,11 +26,11 @@ You're done when **Save** is greyed out again, and the day and time under **Time
 
 ### Set the Rules for Passwords
 
-1. In the **Passwords** panel, under **Password requirements**, set the **Minimum length**.
+1. Under **Password requirements**, set the **Minimum length**.
 1. Tick what each password **Must have**.
 1. Under **Generated passwords**, set the **Length**.
-1. Choose what generated passwords **Use**.
-1. Choose whether they **Leave out characters that look alike**.
+1. Tick what generated passwords **Use**.
+1. Tick **Leave out characters that look alike**, if you want them left out.
 1. Select **Save**.
 
 A tighter rule applies the next time each person changes their password.
