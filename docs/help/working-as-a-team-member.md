@@ -26,6 +26,6 @@ As a Team Member, you see the plan and people's General details, such as their n
 
 ## Keep a View
 
-A view is how you've set up a table, such as its search and filters. You can save one on **People** to come back to. Only you see it. See [Saved views](saved-views.md#save-a-view).
+A view is how you've set up a table, such as its search and filters. You can save one on **People**, **Features**, **Projects**, **Releases** or the **Org chart**, to come back to. Only you see it. See [Saved views](saved-views.md#save-a-view).
 
 You're done when you've found what you came for.

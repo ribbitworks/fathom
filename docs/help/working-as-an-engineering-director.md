@@ -9,7 +9,7 @@ As an Engineering Director, you run the plan and people. You change and approve 
 
 ## Approve the Drafts
 
-1. Select the **Drafts** page.
+1. Select the **Drafts** page, under **History**.
 1. Approve or reject the drafts waiting. See [Drafts page](drafts-page.md#approve-drafts).
 
 ## Change Reporting Lines
@@ -43,7 +43,7 @@ The change takes effect straight away, with no draft.
 
 A view is how you've set up a table, such as its search, filters and columns. A shared view is seen by everyone who sees the page.
 
-1. Set up the table on **People**, **Features**, **Releases**, **Feature assignments**, **Capacity**'s **People** or a **Projects** tab the way others need it.
+1. Set up the table on **People**, **Features**, **Releases**, **Feature assignments**, **Capacity**'s **People** or a **Projects** tab, or the **Org chart**, the way others need it.
 1. Save the view, and tick **Share with everyone who sees this page**. See [Saved views](saved-views.md#save-a-view).
 
 You're done when the plan and people show what you approved, and no drafts are waiting.

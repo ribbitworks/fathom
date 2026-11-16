@@ -24,7 +24,9 @@ The account is ready once its row shows **Active**. See [Accounts](accounts.md#m
 
 ## Look After Accounts
 
-On **Accounts**, open an account's details from the button at the right of its **Name**. Under them, **Edit…** changes its name or roles, **Reset password…** gives it a new password, and **Deactivate…** stops it signing in. A deactivated account has **Reactivate…** there instead. To find accounts by status, filter the **Status** column. See [Accounts](accounts.md).
+On **Accounts**, point at an account's row, and select the details button at the right of its **Name**. Under its details, **Edit…** changes its name or roles, **Reset password…** gives it a new password, and **Deactivate…** stops it signing in. A deactivated account has **Reactivate…** there instead. To find accounts by status, filter the **Status** column. See [Accounts](accounts.md).
+
+To come back to a filter, save it as a view from the **Views** menu. Tick **Share with everyone who sees this page** to share it with everyone who opens **Accounts**. See [Saved views](saved-views.md#save-a-view).
 
 ## Change What a Role Lets Its Holders Do
 
