@@ -26,6 +26,7 @@ import {
   colourName,
   draftedStreams,
   hasShipped,
+  includesCycle,
   liveStreams,
   releaseDate,
   releaseRowFields,
@@ -38,6 +39,8 @@ import {
   bySchedule,
   type DetailRows,
   detailRows,
+  featuresColumn,
+  type PlannedFeatures,
   scheduleColumn,
 } from "./release-tabs.ts";
 
@@ -76,10 +79,7 @@ function valuesOf(
     schedule: stream.id,
     shipsOn: releaseDate(stream, release) ?? "",
     cycles: stream.cycles
-      .filter(
-        ({ startsOn }) =>
-          startsOn >= release.firstCycle && startsOn <= release.lastCycle,
-      )
+      .filter(({ startsOn }) => includesCycle(release, startsOn))
       .map(({ startsOn }) => cycleChoiceId(stream.id, startsOn)),
     status: hasShipped(stream, release, day) ? shippedChoice.id : "",
     colour: colourName(release.colour),
@@ -221,10 +221,12 @@ const column = (
 const releaseColour = (row: ReleaseRow) => shownColour(row.release.colour);
 
 // The table's columns, in its order, which a release's details show first too, given every schedule
-// and the releases the table can show, which the Release and Cycles filters offer.
+// and the releases the table can show, which the Release and Cycles filters offer, and the features
+// targeting its cycles, for those who see them.
 export function releaseColumns(
   streams: readonly ReleaseStream[],
   records: readonly ReleaseRow[],
+  planned?: PlannedFeatures,
 ): Column<ReleaseRow, never>[] {
   const listed = releaseListNames(streams);
   const names = new Map(records.map((row) => [row.releaseId, row.name]));
@@ -257,6 +259,16 @@ export function releaseColumns(
       choicesInWords: (chosen) =>
         cycleRunWords(nameOf(chosen.at(0) ?? ""), nameOf(chosen.at(-1) ?? "")),
     },
+    ...(planned === undefined
+      ? []
+      : [
+          featuresColumn<ReleaseValues, ReleaseRow>(
+            "Features",
+            planned,
+            ({ cycles }) => cycles,
+            "cycles",
+          ),
+        ]),
     {
       ...column("status", "Status", "choice", {
         emptyLabel: "Not shipped",
@@ -273,6 +285,7 @@ export const releaseColumnOrder = [
   "schedule",
   "shipsOn",
   "cycles",
+  "features",
   "status",
 ];
 
@@ -281,8 +294,9 @@ export const releaseColumnOrder = [
 export const releaseDetailColumns = (
   streams: readonly ReleaseStream[],
   records: readonly ReleaseRow[],
+  planned?: PlannedFeatures,
 ): Column<ReleaseRow, never>[] => [
-  ...releaseColumns(streams, withLiveCopies(records)).map((each) =>
+  ...releaseColumns(streams, withLiveCopies(records), planned).map((each) =>
     each.key === "name"
       ? { ...each, ...column("name", "Release", "text") }
       : each,
@@ -303,10 +317,12 @@ export function releaseTable({
   changeable,
   onOpen,
   menuItems,
+  planned,
 }: {
   // Every schedule, with its drafts, whatever the view.
   streams: readonly ReleaseStream[];
   day: string;
+  planned?: PlannedFeatures | undefined;
   // Whether the user may change a release now.
   changeable: (row: ReleaseRow) => boolean;
   onOpen: (release: Release) => void;
@@ -315,7 +331,7 @@ export function releaseTable({
 }): RecordTable<ReleaseRow, never, undefined> {
   // A draft's menu names every value it changes, those only the details show included.
   const describedColumns = (row: ReleaseRow) => [
-    ...releaseDetailColumns(streams, [row]),
+    ...releaseDetailColumns(streams, [row], planned),
     releaseNoteColumn,
   ];
   const drafts = (ids: string[]): DraftSelection => ({
@@ -343,7 +359,7 @@ export function releaseTable({
     },
     readOnlyRecord: (row) => !changeable(row),
     columnsFor: (_fields, _lists, _order, records) =>
-      releaseColumns(streams, records),
+      releaseColumns(streams, records, planned),
     liveRecords: (rows) => liveRows(rows, day),
     draftFields: (row, draft) =>
       draftFieldsOf(describedColumns(row), row, draft),

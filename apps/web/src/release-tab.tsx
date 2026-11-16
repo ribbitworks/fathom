@@ -42,11 +42,16 @@ import {
   slotDraft,
 } from "./releases.ts";
 import { ReleasesTabTable } from "./releases-tab-table.tsx";
+import { listingFeatures } from "./release-features.tsx";
 import {
+  type FeaturesAt,
   hiddenUnlessShown,
   namedChoice,
   ownDraftActions,
+  type PlannedFeatures,
 } from "./release-tabs.ts";
+import { releaseColumnKey } from "./project-grids.tsx";
+import { releaseGroupKey } from "./projects.ts";
 import type { SidePanel } from "./side-panel.tsx";
 import type { ChangeView, SavedViews } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
@@ -73,9 +78,13 @@ function ReleaseDetails({
   onChange,
   note,
   notes,
+  planned,
+  onFeatures,
 }: {
   // Every schedule, which a release's Schedule is chosen from.
   streams: readonly ReleaseStream[];
+  planned: PlannedFeatures | undefined;
+  onFeatures: (at: FeaturesAt) => void;
   rows: ReleaseDetailRows;
   canEdit: boolean;
   onChange: (part: ReleasePart) => void;
@@ -93,7 +102,21 @@ function ReleaseDetails({
   return (
     <RecordSection id="release-details" title="Details">
       <ColumnRows
-        columns={releaseDetailColumns(streams, [shown, drafted, live])}
+        columns={listingFeatures(
+          releaseDetailColumns(streams, [shown, drafted, live], planned),
+          planned,
+          {
+            cyclesOf: ({ cycles }) => cycles,
+            at: ({ stream, release }) => ({
+              filter: {
+                key: releaseColumnKey,
+                value: releaseGroupKey(stream.id, release.id),
+              },
+              board: { stream: stream.id, from: release.firstCycle },
+            }),
+            onFeatures,
+          },
+        )}
         shown={shown}
         draft={draft}
         live={live}
@@ -131,10 +154,14 @@ function ReleasePanel({
   note,
   notes,
   onClose,
+  planned,
+  onFeatures,
 }: {
   streams: readonly ReleaseStream[];
   release: Release;
   rows: ReleaseDetailRows;
+  planned: PlannedFeatures | undefined;
+  onFeatures: (at: FeaturesAt) => void;
   canEdit: boolean;
   narrow: boolean;
   onChange: (part: ReleasePart) => void;
@@ -162,6 +189,8 @@ function ReleasePanel({
         onChange={onChange}
         note={note}
         notes={notes}
+        planned={planned}
+        onFeatures={onFeatures}
       />
     </RecordPanel>
   );
@@ -179,6 +208,8 @@ export function ReleasesTable({
   open,
   onOpen,
   onClose,
+  planned,
+  onFeatures,
   notes,
   notePanel,
   onChange,
@@ -201,6 +232,8 @@ export function ReleasesTable({
   onOpen: (id: string, opened?: () => void) => void;
   // Closes the release's details, given its ID.
   onClose: (id: string) => void;
+  planned: PlannedFeatures | undefined;
+  onFeatures: (at: FeaturesAt) => void;
   // Opens a release's note, which the page holds, and its panel while one is open.
   notes: Pick<NoteEditing, "start">;
   notePanel: SidePanel | undefined;
@@ -257,6 +290,7 @@ export function ReleasesTable({
   const table = releaseTable({
     streams,
     day,
+    planned,
     changeable: (row) => !row.live && changeable(row.stream, row.release),
     onOpen: (release) => {
       onOpen(release.id);
@@ -348,6 +382,8 @@ export function ReleasesTable({
                 onClose={() => {
                   onClose(opened.release.id);
                 }}
+                planned={planned}
+                onFeatures={onFeatures}
               />
             ),
           },

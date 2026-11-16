@@ -5,6 +5,7 @@
 // month, Fathom's front end started on a page of the test's choosing, and the tip shown on pointing.
 
 import type {
+  Feature,
   FeatureDraft,
   Cycle,
   CyclePattern,
@@ -229,6 +230,61 @@ export const fictionalStream = (
   releases: [],
   ...fields,
 });
+
+export const fictionalFeature = (fields: Partial<Feature> = {}): Feature => ({
+  id: "60000000-0000-4000-8000-000000000001",
+  keyNumber: 1,
+  name: "Fictional Feature",
+  statusId: "50000000-0000-4000-8000-000000000001",
+  priorityId: null,
+  sizeId: null,
+  riskId: null,
+  neededBy: null,
+  customerIds: [],
+  targetStreamId: null,
+  targetCycle: null,
+  estimateHours: null,
+  featureTeamId: null,
+  description: null,
+  note: null,
+  values: {},
+  links: {},
+  staffed: false,
+  staffedLive: false,
+  ...fields,
+});
+
+// The server's answer giving the plan's features.
+export const planAnswers = (features: readonly Feature[]) => ({
+  "GET /api/projects": () =>
+    Response.json({
+      customers: [],
+      projects: [],
+      proposals: [],
+      features,
+      featureColumns: noFeatureColumns,
+      canEdit: false,
+      canEditFeatures: false,
+    }),
+});
+
+// Where a link to Features went: its page, the filters in its address, and the Board's place, if
+// any.
+export function featuresAddress(history: {
+  location: { pathname: string; search: string };
+}) {
+  const search = new URLSearchParams(history.location.search);
+  return {
+    page: history.location.pathname,
+    filters: JSON.parse(search.get("filters") ?? "null") as unknown,
+    board: Object.fromEntries(
+      ["mode", "stream", "from"].flatMap((key) => {
+        const value = search.get(key);
+        return value === null ? [] : [[key, value]];
+      }),
+    ),
+  };
+}
 
 // Catches each file the browser is handed to save, by name, with its text, in place of the
 // browser's download. The page needs no Save dialog of the browser's own, as jsdom offers none.

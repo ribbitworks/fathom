@@ -387,17 +387,30 @@ function namesCell(records: readonly Identified[]) {
   };
 }
 
-// A column of records picked by ID and name, several in one cell.
-function pickedColumn<Rec extends PlanRecord>(
+// A column of records named by ID and name, several in one cell, in one line cut short with every
+// name in its tip, as any table shows several records; read only where they are worked out.
+export function recordsColumn<
+  Rec extends GridRecord & { draft?: { live: object } | undefined },
+  Change,
+>(
   key: string,
   label: string,
   records: readonly Identified[],
-  // The records a row names, when they are not its own field.
-  namedBy?: (record: Rec) => string[],
-): Column<Rec, PlanChange> {
-  const column = field<Rec>(key, label, "choice", {
-    choices: identified(records),
+  {
+    namedBy,
+    readOnly = false,
+  }: {
+    // The records a row names, when they are not its own field.
+    namedBy?: ((record: Rec) => string[]) | undefined;
+    readOnly?: boolean;
+  } = {},
+): Column<Rec, Change> {
+  const column = fieldColumn<Rec, Change>(key, "choice", {
+    label,
+    required: false,
     multiple: true,
+    choices: identified(records),
+    readOnly,
   });
   const value = namedBy ?? ((record: Rec) => column.value(record) as string[]);
   const names = namesCell(records);
@@ -407,6 +420,14 @@ function pickedColumn<Rec extends PlanRecord>(
     content: (record) => names(value(record)),
   };
 }
+
+const pickedColumn = <Rec extends PlanRecord>(
+  key: string,
+  label: string,
+  records: readonly Identified[],
+  namedBy?: (record: Rec) => string[],
+): Column<Rec, PlanChange> =>
+  recordsColumn<Rec, PlanChange>(key, label, records, { namedBy });
 
 // A column of the projects or proposals that name a feature, which those records hold, so a change
 // to it is a draft of each record added or taken away. It is set on a feature once it is added.

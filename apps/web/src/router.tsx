@@ -581,6 +581,21 @@ const releasesRoute = createRoute({
         onOpen={(next) => {
           void navigate({ search: { ...search, ...kept, open: next } });
         }}
+        onFeatures={(at) => {
+          void navigate(
+            "feature" in at
+              ? planAddress("features", at.feature)
+              : {
+                  to: "/features",
+                  search: {
+                    filters: { [at.filter.key]: { any: [at.filter.value] } },
+                    ...(at.board === undefined
+                      ? {}
+                      : { mode: "board" as const, ...at.board }),
+                  },
+                },
+          );
+        }}
         approves={approvableKinds(permissions)}
         // The tab is always one of the fixed tabs.
         // eslint-disable-next-line security/detect-object-injection

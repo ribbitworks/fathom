@@ -14,10 +14,13 @@ import type { SavedViews } from "./table-controls.tsx";
 import { emptyView } from "./table-view.ts";
 import {
   bodyOf,
+  detailRow,
   detailValue,
+  fictionalFeature,
   fictionalRelease,
   fictionalStream,
   fictionalUser,
+  planAnswers,
   recordCell,
   recordDraft,
   renderApp,
@@ -25,6 +28,7 @@ import {
   signedIn,
   streamId,
   testTheme,
+  featuresAddress,
 } from "./test-support.tsx";
 
 // No saved views, for the tab drawn on its own.
@@ -847,6 +851,8 @@ describe("a release's note", () => {
               if (opens) opened?.();
             }}
             onClose={vi.fn()}
+            planned={undefined}
+            onFeatures={vi.fn()}
             notes={{ start }}
             notePanel={undefined}
             onChange={vi.fn()}
@@ -1153,5 +1159,82 @@ describe("making a release", () => {
     expect(
       await screen.findByText("No schedule takes new releases now"),
     ).toBeDefined();
+  });
+});
+
+describe("a release's features", () => {
+  const spanning = fictionalRelease({ lastCycle: "2027-04-01" });
+  const inCycle = (name: string, targetCycle: string, at: number) =>
+    fictionalFeature({
+      id: `60000000-0000-4000-8000-00000000000${String(at)}`,
+      name,
+      targetStreamId: streamId,
+      targetCycle,
+    });
+  const answers = planAnswers([
+    inCycle("Fictional Sync", "2027-01-01", 1),
+    inCycle("Fictional Maps", "2027-04-01", 2),
+    inCycle("Fictional Later", "2027-07-01", 3),
+  ]);
+  // The Features row of the release's details, once the features are read.
+  const section = async () => {
+    await within(releasePanel()).findByRole("button", {
+      name: "Fictional Sync",
+    });
+    return detailRow("Features", releasePanel());
+  };
+
+  it("names those in every cycle it spans, in one line in the table and one to a line in its details", async () => {
+    await openRelease(inStream(spanning), { answers });
+
+    const listed = await section();
+    expect(
+      within(listed)
+        .getAllByRole("button")
+        .map(({ textContent }) => textContent),
+    ).toEqual([
+      "Fictional Sync",
+      "Fictional Maps",
+      "Show on Features",
+      "Show on the Board",
+    ]);
+    expect(recordCell(spanning.id, "features")?.textContent).toBe(
+      "Fictional Sync, Fictional Maps",
+    );
+  });
+
+  it.each([
+    ["Show on Features", {}],
+    [
+      "Show on the Board",
+      { mode: "board", stream: streamId, from: "2027-01-01" },
+    ],
+  ])("shows them with %s, filtered to the release", async (button, board) => {
+    const user = userEvent.setup();
+    const { history } = await openRelease(inStream(spanning), { answers });
+
+    await user.click(
+      within(await section()).getByRole("button", { name: button }),
+    );
+
+    expect(featuresAddress(history)).toEqual({
+      page: "/features",
+      filters: { release: { any: [`${streamId} ${spanning.id}`] } },
+      board,
+    });
+  });
+
+  it("opens a feature's details on Features", async () => {
+    const user = userEvent.setup();
+    const { history } = await openRelease(inStream(spanning), { answers });
+
+    await user.click(
+      within(await section()).getByRole("button", { name: "Fictional Sync" }),
+    );
+
+    expect([history.location.pathname, searchOf(history).get("open")]).toEqual([
+      "/features",
+      "60000000-0000-4000-8000-000000000001",
+    ]);
   });
 });

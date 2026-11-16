@@ -10,11 +10,14 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   bodyOf,
+  detailRow,
   detailValue,
+  fictionalFeature,
   fictionalPattern,
   fictionalRelease,
   fictionalStream,
   fictionalUser,
+  planAnswers,
   quarters,
   recordCell,
   recordDraft,
@@ -22,6 +25,7 @@ import {
   serverAnswers,
   signedIn,
   streamId,
+  featuresAddress,
 } from "./test-support.tsx";
 
 beforeEach(() => {
@@ -1090,5 +1094,113 @@ describe("the Cycles timeline", () => {
       "27.2: Apr 1, 2027 to Jun 30, 2027, current",
       "27.3: Jul 1, 2027 to Sep 30, 2027",
     ]);
+  });
+});
+
+describe("a cycle's features", () => {
+  const inCycle = (name: string, at: number) =>
+    fictionalFeature({
+      id: `60000000-0000-4000-8000-00000000000${String(at)}`,
+      name,
+      targetStreamId: streamId,
+      targetCycle: "2027-04-01",
+    });
+  const features = [
+    inCycle("Fictional Export", 1),
+    inCycle("Fictional Search", 2),
+    inCycle("Fictional Sync", 3),
+    inCycle("Fictional Maps", 4),
+    inCycle("Fictional Voice", 5),
+    inCycle("Fictional Fax", 6),
+  ];
+  const openWithFeatures = () =>
+    openCycle([fictionalStream()], { answers: planAnswers(features) });
+  // The Features row of the cycle's details, once the features are read.
+  const featuresRow = async () => {
+    await within(cyclePanel()).findByRole("button", {
+      name: "Fictional Export",
+    });
+    return detailRow("Features", cyclePanel());
+  };
+
+  it("names them in one line in the table", async () => {
+    await openWithFeatures();
+
+    await waitFor(() => {
+      expect(recordCell(cycleId("2027-04-01"), "features")?.textContent).toBe(
+        "Fictional Export, Fictional Search, Fictional Sync, Fictional Maps, Fictional Voice, Fictional Fax",
+      );
+    });
+    expect(recordCell(cycleId("2027-07-01"), "features")?.textContent).toBe("");
+  });
+
+  it("lists the first five one to a line in its details, and folds the rest", async () => {
+    const user = userEvent.setup();
+    await openWithFeatures();
+    const row = await featuresRow();
+    const links = () =>
+      within(row)
+        .getAllByRole("button")
+        .map(({ textContent }) => textContent);
+
+    expect(links()).toEqual([
+      "Fictional Export",
+      "Fictional Search",
+      "Fictional Sync",
+      "Fictional Maps",
+      "Fictional Voice",
+      "Show all (6)",
+      "Show on Features",
+      "Show on the Board",
+    ]);
+
+    await user.click(within(row).getByRole("button", { name: "Show all (6)" }));
+
+    expect(links()).toContain("Fictional Fax");
+  });
+
+  it("opens a feature's details on Features", async () => {
+    const user = userEvent.setup();
+    const { history } = await openWithFeatures();
+
+    await user.click(
+      within(await featuresRow()).getByRole("button", {
+        name: "Fictional Maps",
+      }),
+    );
+
+    expect([history.location.pathname, searchOf(history).get("open")]).toEqual([
+      "/features",
+      "60000000-0000-4000-8000-000000000004",
+    ]);
+  });
+
+  it.each([
+    ["Show on Features", {}],
+    [
+      "Show on the Board",
+      { mode: "board", stream: streamId, from: "2027-04-01" },
+    ],
+  ])("shows them with %s, filtered to the cycle", async (button, board) => {
+    const user = userEvent.setup();
+    const { history } = await openWithFeatures();
+
+    await user.click(
+      within(await featuresRow()).getByRole("button", { name: button }),
+    );
+
+    expect(featuresAddress(history)).toEqual({
+      page: "/features",
+      filters: { targetCycle: { any: [cycleId("2027-04-01")] } },
+      board,
+    });
+  });
+
+  it("says None for a cycle with no features", async () => {
+    await openCycle([fictionalStream()], { answers: planAnswers([]) });
+
+    await waitFor(() => {
+      expect(detailValue("Features", cyclePanel())).toBe("None");
+    });
   });
 });

@@ -21,8 +21,10 @@ import {
   recordDraft,
   streamId,
 } from "./test-support.tsx";
+import { plannedFeatures } from "./release-tabs.ts";
 
 const day = "2027-02-15";
+const noFeatures = plannedFeatures([]);
 const secondId = "30000000-0000-4000-8000-000000000002";
 
 const inStream = (...releases: Release[]) => fictionalStream({ releases });
@@ -382,10 +384,9 @@ describe("the table of releases", () => {
   });
 
   it("shows the table's columns in a release's details, then its colour", () => {
-    expect(releaseDetailColumns([], []).map(({ key }) => key)).toEqual([
-      ...releaseColumnOrder,
-      "colour",
-    ]);
+    expect(
+      releaseDetailColumns([], [], noFeatures).map(({ key }) => key),
+    ).toEqual([...releaseColumnOrder, "colour"]);
   });
 
   it("names the drafts of each release named that can be decided", () => {
@@ -457,7 +458,10 @@ describe("the table of releases", () => {
   });
 
   it("has its columns in its own order, offers what a release's menu adds, and refuses to add a record itself", () => {
-    const releases = table([], { menuItems: () => "Add note…" });
+    const releases = table([], {
+      menuItems: () => "Add note…",
+      planned: noFeatures,
+    });
     const row = rowOf(fictionalRelease());
     expect([
       releases.columnsFor([], [], [], []).map(({ key }) => key),

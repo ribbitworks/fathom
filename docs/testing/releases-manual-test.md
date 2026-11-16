@@ -1275,7 +1275,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `C61E` Select the **Schedules** tab.
   - **Expected:**
     - **Schedules** is chosen, and the button at the top right reads **New schedule**.
-    - The table's columns are, in order: **Schedule**, **Current cycle**, **Cycle starts**, **Cycle ends**, **Next release**, **Release date**, **Cycle length** and **Schedule ends**.
+    - The table's columns are, in order: **Schedule**, **Current cycle**, **Cycle starts**, **Cycle ends**, **Features this cycle**, **Next release**, **Release date**, **Cycle length** and **Schedule ends**.
     - The rows are not under any heading, and the button beside **Metrics** reads "Group by", with nothing after it.
   - **Notes:**
 
@@ -1494,7 +1494,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `F2C3` Select the **Releases** page in the left-hand menu.
   - **Expected:**
     - **Releases** is the tab chosen, and the button at the top right reads **New release**.
-    - The table's columns are, in order: **Release**, **Schedule**, **Ships on**, **Cycles** and **Status**.
+    - The table's columns are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Features** and **Status**.
     - The rows are under the headings 'Platform' and 'Patches'.
   - **Notes:**
 
@@ -1636,7 +1636,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `4BA7` Select the **Cycles** tab.
   - **Expected:**
     - **Cycles** is chosen, and there is no button at the top right.
-    - The table's columns are, in order: **Cycle**, **Schedule**, **Starts**, **Ends**, **Current** and **Release**.
+    - The table's columns are, in order: **Cycle**, **Schedule**, **Starts**, **Ends**, **Current**, **Release** and **Features**.
     - The rows are under the headings 'Platform', 'Patches' and 'Field Apps'.
   - **Notes:**
 
@@ -1774,4 +1774,72 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `AD62` Select **Show past cycles** in the **Views** menu.
   - **Expected:** The row for 'Field Apps' starts with two more blocks, before the one whose tip ends ", current".
+  - **Notes:**
+
+#### REL-45: Each Tab Names the Features of Its Records
+
+**Account:** Product Manager, `product.manager@fathom.test`, changed from REL-44.
+
+**Preconditions:** Signed in with this account. **Releases** page open on the **Releases** tab, with no side panel open.
+
+- [ ] `3F83` Point at the **Features** cell of the row for 'Harbor 2 LTS'.
+  - **Expected:**
+    - The cell reads "Bulk Import, Offline Sync, Single Sign-On Setup, Usage Alerts", cut short where it doesn't fit.
+    - Its tip names the same four features, one to a line.
+  - **Notes:**
+
+- [ ] `4D31` Select the details button at the right of the first cell of the row for 'Lantern 2'.
+  - **Expected:**
+    - The **Features** row lists 'Barcode Scanning', 'Offline Forms', 'Parts Lookup', 'Signature Capture' and 'Site Diary', one to a line, then **Show all (7)**.
+    - **Show on Features** and **Show on the Board** follow.
+  - **Notes:**
+
+- [ ] `34D2` Select **Show all (7)**.
+  - **Expected:** 'Timesheet Sync' and 'Weather Alerts' follow 'Site Diary', then **Show less**.
+  - **Notes:**
+
+- [ ] `F073` Select 'Parts Lookup'.
+  - **Expected:** The **Features** page opens, with the details of 'Parts Lookup' beside the table.
+  - **Notes:**
+
+- [ ] `92EB` Select **Releases** in the left-hand menu.
+  - **Expected:** The **Releases** tab shows, with no side panel open.
+  - **Notes:**
+
+- [ ] `07D9` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS'.
+  - **Expected:** The **Features** row lists 'Bulk Import', 'Offline Sync', 'Single Sign-On Setup' and 'Usage Alerts', one to a line.
+  - **Notes:**
+
+- [ ] `671F` Select **Show on Features**.
+  - **Expected:**
+    - The **Features** page opens with a **Release** filter on.
+    - The table lists 'Bulk Import', 'Offline Sync', 'Single Sign-On Setup' and 'Usage Alerts', and no other feature.
+  - **Notes:**
+
+- [ ] `9B5F` Select **Releases** in the left-hand menu.
+  - **Expected:** The **Releases** tab shows, with no side panel open.
+  - **Notes:**
+
+- [ ] `B62F` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS'.
+  - **Expected:** The release's details open beside the table.
+  - **Notes:**
+
+- [ ] `C274` Select **Show on the Board**.
+  - **Expected:**
+    - The **Features** page opens on its board for 'Platform', with a **Release** filter on.
+    - Its cards are 'Bulk Import', 'Offline Sync', 'Single Sign-On Setup' and 'Usage Alerts', and no other.
+  - **Notes:**
+
+- [ ] `43EF` Select **Releases** in the left-hand menu.
+  - **Expected:** The **Releases** tab shows, with no side panel open.
+  - **Notes:**
+
+- [ ] `0492` Select the **Cycles** tab.
+  - **Expected:** Under 'Platform', the **Features** cell of the row whose **Current** reads "Current" reads "Offline Sync, Usage Alerts".
+  - **Notes:**
+
+- [ ] `2C6B` Select the **Schedules** tab.
+  - **Expected:**
+    - **Features this cycle** reads "Offline Sync, Usage Alerts" in the row for 'Platform'.
+    - It is blank in the row for 'Patches'.
   - **Notes:**

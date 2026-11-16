@@ -37,6 +37,8 @@ import {
   streamColumns,
   type StreamRow,
 } from "./stream-table.tsx";
+import { listingFeatures } from "./release-features.tsx";
+import type { FeaturesAt, PlannedFeatures } from "./release-tabs.ts";
 import { formatDay } from "./table-view.ts";
 
 // What a schedule's details open to change it.
@@ -60,11 +62,15 @@ export function ScheduleDetails({
   day,
   canEdit,
   onChange,
+  planned,
+  onFeatures,
 }: {
   rows: ScheduleRows;
   day: string;
   canEdit: boolean;
   onChange: (change: ScheduleChange) => void;
+  planned: PlannedFeatures | undefined;
+  onFeatures: (at: FeaturesAt) => void;
 }) {
   const { draft } = drafted;
   const pencil = (label: string, change: ScheduleChange) =>
@@ -88,7 +94,18 @@ export function ScheduleDetails({
   return (
     <RecordSection id="schedule-details" title="Details">
       <ColumnRows
-        columns={streamColumns(day, [shown, drafted, live])}
+        columns={listingFeatures(
+          streamColumns(day, [shown, drafted, live], planned),
+          planned,
+          {
+            cyclesOf: ({ currentCycleId }) => [currentCycleId],
+            at: (row) => ({
+              filter: { key: "targetCycle", value: row.currentCycleId },
+              board: { stream: row.stream.id, from: row.cycleStarts },
+            }),
+            onFeatures,
+          },
+        )}
         shown={shown}
         draft={draft}
         live={live}

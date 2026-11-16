@@ -684,7 +684,7 @@ export interface ReleaseGroup {
   name: string;
 }
 
-const releaseGroupKey = (streamId: string, releaseId: string | null) =>
+export const releaseGroupKey = (streamId: string, releaseId: string | null) =>
   `${streamId} ${releaseId ?? "unreleased"}`;
 
 // The stream whose release, or cycles in none, a release group's key names.

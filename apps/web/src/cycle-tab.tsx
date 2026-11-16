@@ -27,10 +27,13 @@ import { ColumnRows, RecordPanel, RecordSection } from "./record-details.tsx";
 import { noRecordActions } from "./record-grid.tsx";
 import { inShownOrder, streamsShown } from "./releases.ts";
 import { ReleasesTabTable } from "./releases-tab-table.tsx";
+import { listingFeatures } from "./release-features.tsx";
 import {
   draftActions,
+  type FeaturesAt,
   hiddenUnlessShown,
   namedChoice,
+  type PlannedFeatures,
 } from "./release-tabs.ts";
 import type { ScheduleActions } from "./schedule-tab.tsx";
 import { DurationChange } from "./schedule-panel.tsx";
@@ -50,9 +53,13 @@ function CyclePanel({
   actions,
   narrow,
   onClose,
+  planned,
+  onFeatures,
 }: {
   // Every schedule, which a cycle's Schedule and Release are named from.
   streams: readonly ReleaseStream[];
+  planned: PlannedFeatures | undefined;
+  onFeatures: (at: FeaturesAt) => void;
   // The cycle's schedule, as the Draft view shows it, which its Duration changes.
   stream: ReleaseStream;
   rows: CycleDetailRows;
@@ -64,7 +71,18 @@ function CyclePanel({
   // A cycle a draft removes can't be changed until the draft is discarded or decided.
   const editable = actions.changeable(stream) && draft?.action !== "deleted";
   const columns = [
-    ...cycleDetailColumns(streams, [shown, drafted, live]),
+    ...listingFeatures(
+      cycleDetailColumns(streams, [shown, drafted, live], planned),
+      planned,
+      {
+        cyclesOf: ({ cycleId }) => [cycleId],
+        at: (row) => ({
+          filter: { key: "targetCycle", value: row.cycleId },
+          board: { stream: row.stream.id, from: row.startsOn },
+        }),
+        onFeatures,
+      },
+    ),
     durationColumn,
   ];
   return (
@@ -138,10 +156,14 @@ export function CyclesTable({
   onClose,
   actions,
   decide,
+  planned,
+  onFeatures,
 }: {
   // Every schedule, with its drafts, whatever the view.
   streams: readonly ReleaseStream[];
   day: string;
+  planned: PlannedFeatures | undefined;
+  onFeatures: (at: FeaturesAt) => void;
   view: View;
   onView: ChangeView;
   approves: readonly DraftKind[];
@@ -175,7 +197,13 @@ export function CyclesTable({
   });
   const { rows } = later;
   const choices = [...past.choices, ...later.choices];
-  const table = cycleTable({ streams, rows: everyRow, day, onOpen });
+  const table = cycleTable({
+    streams,
+    rows: everyRow,
+    day,
+    onOpen,
+    planned,
+  });
   // A cycle named in the address opens even while past cycles are hidden, while its schedule shows.
   const opened = streams
     .filter(({ id }) =>
@@ -208,6 +236,8 @@ export function CyclesTable({
                 onClose={() => {
                   onClose(opened.detail.shown.id);
                 }}
+                planned={planned}
+                onFeatures={onFeatures}
               />
             ),
           },

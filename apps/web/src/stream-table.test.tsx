@@ -19,7 +19,11 @@ import {
   fictionalRelease,
   fictionalStream,
   recordDraft,
+  streamId,
+  fictionalFeature,
+  quarters,
 } from "./test-support.tsx";
+import { plannedFeatures } from "./release-tabs.ts";
 
 const day = "2027-02-15";
 const releaseId = (at: number) =>
@@ -194,6 +198,7 @@ describe("a schedule's row", () => {
       live: {
         name: "Fictional Majors",
         currentCycle: "27.1",
+        currentCycleId: `${streamId} 2027-01-01`,
         cycleStarts: "2027-01-01",
         cycleEnds: "2027-03-31",
         nextRelease: "Fictional One",
@@ -549,8 +554,63 @@ describe("the table of schedules", () => {
     ]).toEqual([true, "Retire", undefined]);
   });
 
+  it("names the features of the current cycle as drafted, and as live in its Live row, marked where a draft moves the cycle", () => {
+    // Given a pattern drafted to start a month later, moving the current cycle
+    const drafted = {
+      startsOn: "2027-02-01",
+      endsOn: "2027-04-30",
+      name: "27.1",
+      months: [],
+    };
+    const stream = fictionalStream({
+      patterns: [
+        fictionalPattern({
+          startsOn: "2027-02-01",
+          draft: recordDraft({
+            changed: ["startsOn"],
+            live: { startsOn: "2027-01-01" },
+          }),
+        }),
+      ],
+      cycles: [drafted],
+      liveCycles: quarters(1),
+    });
+    const inCycle = (id: string, targetCycle: string) =>
+      fictionalFeature({ id, targetStreamId: streamId, targetCycle });
+    const planned = plannedFeatures([
+      inCycle("60000000-0000-4000-8000-000000000001", "2027-01-01"),
+      inCycle("60000000-0000-4000-8000-000000000002", "2027-02-01"),
+    ]);
+    const schedules = streamTable({
+      streams: [stream],
+      day,
+      onOpen: vi.fn(),
+      planned,
+    });
+    const row = rowOf(stream);
+    const [liveRow] = schedules.liveRecords([row]);
+    const column = schedules
+      .columnsFor([], [], [], [row])
+      .find(({ key }) => key === "features");
+
+    expect([
+      column?.value(row),
+      liveRow === undefined ? undefined : column?.value(liveRow),
+      row.draft?.changed.includes(column?.changesWith ?? ""),
+    ]).toEqual([
+      ["60000000-0000-4000-8000-000000000002"],
+      ["60000000-0000-4000-8000-000000000001"],
+      true,
+    ]);
+  });
+
   it("has its columns in its own order, and names each stream", () => {
-    const streams = table();
+    const streams = streamTable({
+      streams: [],
+      day,
+      onOpen: vi.fn(),
+      planned: plannedFeatures([]),
+    });
     expect([
       streams.columnsFor([], [], [], []).map(({ key }) => key),
       streams.nameOf(rowOf(fictionalStream())),

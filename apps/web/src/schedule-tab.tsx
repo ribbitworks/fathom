@@ -28,6 +28,8 @@ import {
   hiddenUnlessShown,
   ownDraftActions,
   type ShowingChoice,
+  type FeaturesAt,
+  type PlannedFeatures,
 } from "./release-tabs.ts";
 import {
   ScheduleCycles,
@@ -100,9 +102,13 @@ function StreamPanel({
   actions,
   narrow,
   onClose,
+  planned,
+  onFeatures,
 }: {
   stream: ReleaseStream;
   rows: ScheduleRows;
+  planned: PlannedFeatures | undefined;
+  onFeatures: (at: FeaturesAt) => void;
   // Today, for whether the stream has ended.
   day: string;
   actions: ScheduleActions;
@@ -144,6 +150,8 @@ function StreamPanel({
         day={day}
         canEdit={editable}
         onChange={onChange}
+        planned={planned}
+        onFeatures={onFeatures}
       />
       <ScheduleCycles
         key={`cycles-${stream.id}`}
@@ -169,10 +177,14 @@ export function SchedulesTable({
   onClose,
   actions,
   decide,
+  planned,
+  onFeatures,
 }: {
   // Every schedule, with its drafts, whatever the view.
   streams: readonly ReleaseStream[];
   day: string;
+  planned: PlannedFeatures | undefined;
+  onFeatures: (at: FeaturesAt) => void;
   view: View;
   onView: ChangeView;
   approves: readonly DraftKind[];
@@ -209,6 +221,7 @@ export function SchedulesTable({
     streams: kept,
     day,
     onOpen,
+    planned,
     menuItems: (row) =>
       !row.live &&
       actions.changeable({ ...row.stream, retired: false }) && (
@@ -233,6 +246,8 @@ export function SchedulesTable({
                 onClose={() => {
                   onClose(open.id);
                 }}
+                planned={planned}
+                onFeatures={onFeatures}
               />
             ),
           },

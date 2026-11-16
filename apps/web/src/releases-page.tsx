@@ -30,7 +30,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type MouseEvent, type ReactNode, useState } from "react";
+import { type MouseEvent, type ReactNode, useMemo, useState } from "react";
 import { z } from "zod";
 import { describeProblem } from "./api.ts";
 import { DecisionModal } from "./decision-dialog.tsx";
@@ -65,6 +65,11 @@ import type { View } from "./table-view.ts";
 import { type ScheduleActions, SchedulesTable } from "./schedule-tab.tsx";
 import { CyclesTable } from "./cycle-tab.tsx";
 import { planNodes, projectPlanQuery } from "./projects.ts";
+import {
+  type FeaturesAt,
+  type PlannedFeatures,
+  plannedFeatures,
+} from "./release-tabs.ts";
 import type { ScheduleChange } from "./schedule-panel.tsx";
 
 type Dialog =
@@ -152,6 +157,7 @@ export function ReleasesPage({
   onTab,
   open: openId,
   onOpen,
+  onFeatures,
   approves,
   view,
   onView,
@@ -164,6 +170,7 @@ export function ReleasesPage({
   // The record of the tab open in the side panel, if any.
   open?: string | undefined;
   onOpen: (id: string | undefined) => void;
+  onFeatures: (at: FeaturesAt) => void;
   // The kinds of draft the user's role approves and rejects.
   approves: readonly DraftKind[];
   view: View;
@@ -178,6 +185,11 @@ export function ReleasesPage({
   const query = useQuery(releaseStreamsQuery);
   // Drafts of features move with cycles; those who see only configuration are sent none.
   const plan = useQuery(projectPlanQuery);
+  const planned: PlannedFeatures | undefined = useMemo(
+    () =>
+      plan.data === undefined ? undefined : plannedFeatures(plan.data.features),
+    [plan.data],
+  );
   const narrow = useNarrow();
   const [dialog, setDialog] = useState<Dialog>();
   const [busy, setBusy] = useState(false);
@@ -207,6 +219,11 @@ export function ReleasesPage({
       queryClient.invalidateQueries({ queryKey: unpublishedQuery.queryKey }),
       queryClient.invalidateQueries({ queryKey: ["changes"] }),
     ]);
+  };
+  const showFeatures = (at: FeaturesAt) => {
+    leave(() => {
+      onFeatures(at);
+    });
   };
   const openRecord = (record: { id: string }) => {
     leave(() => {
@@ -369,6 +386,8 @@ export function ReleasesPage({
           });
         }}
         onClose={closePanel}
+        planned={planned}
+        onFeatures={showFeatures}
         notes={notes}
         notePanel={notePanel}
         onChange={(stream, release, part) => {
@@ -392,6 +411,8 @@ export function ReleasesPage({
         onClose={closePanel}
         actions={actions}
         decide={decide}
+        planned={planned}
+        onFeatures={showFeatures}
       />
     ),
     schedules: () => (
@@ -408,6 +429,8 @@ export function ReleasesPage({
         onClose={closePanel}
         actions={actions}
         decide={decide}
+        planned={planned}
+        onFeatures={showFeatures}
       />
     ),
   };

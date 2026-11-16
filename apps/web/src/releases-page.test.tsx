@@ -22,11 +22,13 @@ import {
   detailRow,
   detailValue,
   featureDraft,
+  fictionalFeature,
   fictionalPattern,
   fictionalRelease,
   fictionalStream,
   fictionalUser,
   noFeatureColumns,
+  planAnswers,
   quarters,
   recordCell,
   recordDraft,
@@ -35,6 +37,7 @@ import {
   signedIn,
   streamId,
   testTheme,
+  featuresAddress,
 } from "./test-support.tsx";
 
 afterEach(() => {
@@ -269,6 +272,131 @@ describe("the Schedules table", () => {
     expect(rowTexts()).toEqual([
       "Fictional Majors27.1Jan 1, 2027Mar 31, 2027Fictional OneMar 31, 20273 months",
     ]);
+  });
+
+  it("names the features of each schedule's current cycle, in one line in the table and one to a line in its details", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
+    const targeting = (targetCycle: string, at: number) =>
+      fictionalFeature({
+        id: `60000000-0000-4000-8000-00000000000${String(at)}`,
+        name: `Fictional Feature ${String(at)}`,
+        targetStreamId: streamId,
+        targetCycle,
+      });
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer([fictionalStream()]),
+      ...planAnswers([
+        targeting("2027-01-01", 1),
+        targeting("2027-01-01", 2),
+        targeting("2027-04-01", 3),
+      ]),
+    });
+    renderApp(`/releases?tab=schedules&open=${streamId}`);
+    await streamsGrid();
+
+    await waitFor(() => {
+      expect(recordCell(streamId, "features")?.textContent).toBe(
+        "Fictional Feature 1, Fictional Feature 2",
+      );
+    });
+    expect(
+      within(detailRow("Features this cycle"))
+        .getAllByRole("button")
+        .map(({ textContent }) => textContent),
+    ).toEqual([
+      "Fictional Feature 1",
+      "Fictional Feature 2",
+      "Show on Features",
+      "Show on the Board",
+    ]);
+  });
+
+  it.each([
+    ["Fictional Feature 1", { page: "/features", filters: null, board: {} }],
+    [
+      "Show on Features",
+      {
+        page: "/features",
+        filters: { targetCycle: { any: [`${streamId} 2027-01-01`] } },
+        board: {},
+      },
+    ],
+    [
+      "Show on the Board",
+      {
+        page: "/features",
+        filters: { targetCycle: { any: [`${streamId} 2027-01-01`] } },
+        board: { mode: "board", stream: streamId, from: "2027-01-01" },
+      },
+    ],
+  ])(
+    "sends %s from a schedule's details to Features",
+    async (button, address) => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
+      serverAnswers({
+        "GET /api/session": signedIn,
+        "GET /api/release-streams": answer([fictionalStream()]),
+        ...planAnswers([
+          fictionalFeature({
+            name: "Fictional Feature 1",
+            targetStreamId: streamId,
+            targetCycle: "2027-01-01",
+          }),
+        ]),
+      });
+      const history = renderApp(`/releases?tab=schedules&open=${streamId}`);
+      await streamsGrid();
+
+      await userEvent.click(
+        await within(detailRow("Features this cycle")).findByRole("button", {
+          name: button,
+        }),
+      );
+
+      expect(featuresAddress(history)).toEqual(address);
+    },
+  );
+
+  it("says None for features this cycle once a schedule's cycles are over", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2028-06-15T12:00:00Z"));
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer([fictionalStream()]),
+      ...planAnswers([
+        fictionalFeature({
+          targetStreamId: streamId,
+          targetCycle: "2027-10-01",
+        }),
+      ]),
+    });
+    renderApp(`/releases?tab=schedules&open=${streamId}`);
+    await streamsGrid();
+
+    await waitFor(() => {
+      expect(detailValue("Features this cycle")).toBe("None");
+    });
+  });
+
+  it("leaves Features out for a role that can't see the plan", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer([fictionalStream()]),
+      "GET /api/projects": () =>
+        Response.json({ error: "No" }, { status: 403 }),
+    });
+    renderApp(`/releases?tab=schedules&open=${streamId}`);
+    await streamsGrid();
+
+    expect([
+      screen.queryByRole("columnheader", { name: /Features this cycle/ }),
+      [...panel().querySelectorAll("dt")].map(({ textContent }) => textContent),
+    ]).toEqual([null, expect.not.arrayContaining(["Features this cycle"])]);
   });
 
   it("heads each column, Schedule first, each offering a filter of its kind from its menu", async () => {

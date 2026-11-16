@@ -25,6 +25,8 @@ import {
 } from "./drafts.ts";
 import { retiredLive } from "./lists.ts";
 import { draftFieldsOf } from "./project-grids.tsx";
+import { cycleChoiceId } from "./projects.ts";
+import { featuresColumn, type PlannedFeatures } from "./release-tabs.ts";
 import {
   type Column,
   fieldColumn,
@@ -55,6 +57,8 @@ import { EndedBox, type DraftLike } from "./status-mark.tsx";
 interface StreamValues {
   name: string;
   currentCycle: string;
+  // Not a column: the current cycle by its choice, which its features are found by.
+  currentCycleId: string;
   cycleStarts: string;
   cycleEnds: string;
   nextRelease: string;
@@ -77,6 +81,8 @@ function valuesOf(stream: ReleaseStream, day: string): StreamValues {
   return {
     name: stream.name,
     currentCycle: now?.name ?? "",
+    currentCycleId:
+      now === undefined ? "" : cycleChoiceId(stream.id, now.startsOn),
     cycleStarts: now?.startsOn ?? "",
     cycleEnds: now?.endsOn ?? "",
     nextRelease: next?.release.name ?? "",
@@ -277,6 +283,7 @@ type StreamColumnKey = Exclude<keyof StreamValues, "nextReleaseColour">;
 export function streamColumns(
   day: string,
   records: readonly StreamRow[],
+  planned?: PlannedFeatures,
 ): Column<StreamRow, never>[] {
   const column = (
     key: StreamColumnKey,
@@ -311,6 +318,17 @@ export function streamColumns(
     listColumn("currentCycle", "Current cycle"),
     valueColumn("cycleStarts", "Cycle starts", "date"),
     valueColumn("cycleEnds", "Cycle ends", "date"),
+    ...(planned === undefined
+      ? []
+      : [
+          featuresColumn<StreamValues, StreamRow>(
+            "Features this cycle",
+            planned,
+            ({ currentCycleId }) => [currentCycleId],
+            // A draft moving the current cycle moves its first day.
+            "cycleStarts",
+          ),
+        ]),
     {
       ...listColumn("nextRelease", "Next release"),
       colour: (row) => {
@@ -329,6 +347,7 @@ export const streamColumnOrder = [
   "currentCycle",
   "cycleStarts",
   "cycleEnds",
+  "features",
   "nextRelease",
   "releaseDate",
   "lengthNow",
@@ -357,17 +376,19 @@ export function streamTable({
   day,
   onOpen,
   menuItems,
+  planned,
 }: {
   // Every stream, with its drafts, whatever the view.
   streams: readonly ReleaseStream[];
   day: string;
+  planned?: PlannedFeatures | undefined;
   onOpen: (stream: ReleaseStream) => void;
   // What else a schedule's menu offers, such as retiring it.
   menuItems?: ((row: StreamRow) => ReactNode) | undefined;
 }): RecordTable<StreamRow, never, undefined> {
   // A draft's menu words a schedule's values as drafted and as they are live.
   const describedColumns = (row: StreamRow) =>
-    streamColumns(day, withLiveCopies([row]));
+    streamColumns(day, withLiveCopies([row]), planned);
   const drafts = (ids: string[]): DraftSelection => ({
     ...noDrafts(),
     records: streams
@@ -394,7 +415,7 @@ export function streamTable({
     },
     keyOf: streamKeyOf,
     columnsFor: (_fields, _lists, _order, records) =>
-      streamColumns(day, records),
+      streamColumns(day, records, planned),
     liveRecords: (rows) => liveRows(rows, streams, day),
     draftFields: (row, draft) =>
       draftFieldsOf(describedColumns(row), row, draft),

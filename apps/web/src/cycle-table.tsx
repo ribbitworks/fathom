@@ -46,6 +46,8 @@ import {
   bySchedule,
   type DetailRows,
   detailRows,
+  featuresColumn,
+  type PlannedFeatures,
   scheduleColumn,
 } from "./release-tabs.ts";
 import {
@@ -303,6 +305,7 @@ const releaseColourOf = ({ releaseColour }: CycleRow) =>
 export function cycleColumns(
   streams: readonly ReleaseStream[],
   records: readonly CycleRow[],
+  planned?: PlannedFeatures,
 ): Column<CycleRow, never>[] {
   const cycles = [
     ...new Map(records.map((row) => [row.cycleId, row])).values(),
@@ -354,6 +357,16 @@ export function cycleColumns(
       changesWith: "releaseColour",
       colour: releaseColourOf,
     },
+    ...(planned === undefined
+      ? []
+      : [
+          featuresColumn<CycleValues, CycleRow>(
+            "Features",
+            planned,
+            ({ cycleId }) => [cycleId],
+            "startsOn",
+          ),
+        ]),
   ];
 }
 
@@ -364,6 +377,7 @@ export const cycleColumnOrder = [
   "endsOn",
   "current",
   "release",
+  "features",
 ];
 
 // What a cycle's details show: the table's columns, its name in words, with its name as it is live
@@ -371,8 +385,9 @@ export const cycleColumnOrder = [
 export const cycleDetailColumns = (
   streams: readonly ReleaseStream[],
   records: readonly CycleRow[],
+  planned?: PlannedFeatures,
 ): Column<CycleRow, never>[] =>
-  cycleColumns(streams, withLiveCopies(records)).map((each) =>
+  cycleColumns(streams, withLiveCopies(records), planned).map((each) =>
     each.key === "name"
       ? { ...each, ...column("name", "Cycle", "text", { required: true }) }
       : each,
@@ -389,17 +404,19 @@ export function cycleTable({
   rows,
   day,
   onOpen,
+  planned,
 }: {
   // Every schedule, with its drafts, whatever the view.
   streams: readonly ReleaseStream[];
   // Every cycle's row, as the Draft view shows it, whatever else the view shows.
   rows: readonly CycleRow[];
   day: string;
+  planned?: PlannedFeatures | undefined;
   onOpen: (row: CycleRow) => void;
 }): RecordTable<CycleRow, never, undefined> {
   // A draft's menu names every value it changes, the Duration only the details show included.
   const describedColumns = (row: CycleRow) => [
-    ...cycleDetailColumns(streams, [row]),
+    ...cycleDetailColumns(streams, [row], planned),
     durationColumn,
   ];
   return {
@@ -412,7 +429,7 @@ export function cycleTable({
     nameColumn: "name",
     showDetails: onOpen,
     columnsFor: (_fields, _lists, _order, records) =>
-      cycleColumns(streams, records),
+      cycleColumns(streams, records, planned),
     liveRecords: (records) => liveRows(records, day),
     draftFields: (row, draft) =>
       draftFieldsOf(describedColumns(row), row, draft),
