@@ -54,7 +54,7 @@ A schedule's panel lists its cycles under **Cycles**, starting with the current 
 
 ### Change a Schedule's Cycles
 
-You can change cycles in four ways. Each change is a draft, and releases and features on cycles that move go with them.
+You can change cycles in three ways. Each change is a draft, and releases and features on cycles that move go with them.
 
 To change the length or names of cycles from a cycle on:
 
