@@ -20,8 +20,8 @@ See [Drafts](drafts.md) for more.
 
 1. Select **New person**.
 1. In **State**, choose **Hired** for a person, or a hiring state, such as **Request to hire**, for a planned hire.
-1. Fill in the rest of the form.
-1. Select **Add**.
+1. Fill in the rest of the details, in the panel that opens beside the table.
+1. Select **Add**, at the foot of the panel.
 
 To add several people quickly, type each one in the empty row at the end of the table, and press Enter after each.
 
@@ -92,8 +92,8 @@ Fathom doesn't move a planned hire's allocations to the person. An allocation is
 
 1. In the planned hire's **Name** cell, select **Fill**.
 1. Choose **New person** to add someone new, or **Existing person** to move someone who's already here.
-1. Fill in the form.
-1. Select **Fill**.
+1. Fill in the form, which opens in the hire's details beside the table.
+1. Select **Fill** under the form.
 1. Select **Publish**, and ask your approver to approve it.
 
 You're done once the fill is approved. The person then takes the hire's place.
@@ -137,13 +137,13 @@ In a person's details, a long note shows only its first lines. Select **Show mor
 
 ### Count People
 
-1. Select **Metrics**.
+1. Select **Metrics**. The **Metrics** panel opens beside the table.
 1. Under **Break down by**, choose the column to count by.
 1. To count by two columns at once, choose the second under **and by**.
 
 The counts include every row the table shows, planned hires too. So a search or a filter changes them.
 
-You're done when the counts show under the column you chose.
+You're done when the panel shows how many rows hold each value of the column you chose.
 
 ### Group People
 
@@ -166,7 +166,7 @@ You're done when the rows show under the headings you chose.
 
 Exporting saves the table as a file you can open in a spreadsheet.
 
-1. Select the **Export** button at the right of the page's heading. Its icon is an arrow pointing down to a line.
+1. Select the **Export** button at the right of the page's heading, before **New column** and **New person** if you have them. Its icon is an arrow pointing down to a line.
 1. Choose **CSV file** or **TSV file**.
 1. Choose where to save it, if your browser asks.
 
@@ -174,7 +174,7 @@ If the file would hold Personal or Confidential data, such as start dates or pla
 
 The file holds what the table shows, in the same order. Rows that your search or filters hide are left out. If the table shows **Drafts & Live**, each changed row comes twice, the draft first and then the live row. The **Draft** column says **Yes** on each draft row and is empty on the rest, so you can filter out either one in a spreadsheet, and the **Change** column says what each draft does.
 
-The file is named after the page, the saved view if you applied one, who exported it and the day, such as **fathom_people_engineering-director_drafts-and-live_2027-03-31.csv**.
+The file is named after the page, the saved view if you applied one, who exported it, the drafts it holds, if any, and the day the table shows, such as **fathom_people_engineering-director_drafts-and-live_2027-03-31.csv**.
 
 You're done when the file is saved.
 

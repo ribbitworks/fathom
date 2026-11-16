@@ -6,7 +6,7 @@
 
 ### Find a Change
 
-1. Type in **Search change history**: a person's name, a value, or who made the change.
+1. Type in the **Search** box at the top of the page: a person's name, a value, or who made the change.
 1. To see older entries, select **Show more** at the end of the page. It works while you're searching too.
 
 You're done when you find the entry you want.

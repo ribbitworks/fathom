@@ -1,6 +1,6 @@
 # Org chart
 
-The **Org chart** draws everyone as cards, one for each person. It draws reporting teams or feature teams, and the switch at the top right chooses between them.
+The **Org chart** draws everyone as cards, one for each person. It draws reporting teams or feature teams, and the switch beside the heading chooses between them.
 
 ## What to Know First
 

@@ -11,7 +11,7 @@
 
 ### Find an Entry
 
-Type in **Search access history**: a name, an email address, or a word such as `switched`. The search looks only through the latest 200 entries, which are all the page holds.
+Type in the **Search** box at the top of the page: a name, an email address, or a word such as `switched`. The search looks only through the latest 200 entries, which are all the page holds.
 
 You're done when you find the entry you want.
 

@@ -58,7 +58,7 @@ Use the team's panel on the **Org chart**, under **Feature teams**. See [Org cha
 
 - **A team's label** names the team in its colour, or in grey when it has none. Point at a label to see the team's whole name.
 - **Shaded months** come before someone started or after they left.
-- **No feature team**, when grouped by **Feature team**, heads the people who are on no team in those months.
+- **No feature team**, when grouped by **Feature team**, heads the people who are on no team in all the months shown.
 - **No manager**, when grouped by **Manager**, heads the people who report to nobody today.
 - **A green dot inside a label**, in the light green Live row under a drafted row, marks a team the draft takes away. With **Live only** chosen in the **Draft** menu, it marks each team a waiting draft would take away. Point at it to see the change.
 

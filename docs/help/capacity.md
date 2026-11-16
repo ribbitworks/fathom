@@ -30,6 +30,8 @@ In **People**, the table opens at the current month. Scroll sideways to see the 
 1. Select **Group by**.
 1. Choose **Manager**, **Feature team** or **None**.
 
+Grouped by **Manager**, someone who changed manager has a row under each one, holding only the months they reported to them. Grouped by **Feature team**, someone has a row under each team they're on, and one under **No feature team** for any months they're on none.
+
 Each group ends with a total row. **Manager** is offered only to roles that see Confidential data, since a later month's manager can be a reorganization not yet announced.
 
 ### Find People
