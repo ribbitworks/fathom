@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies each record's key under its details' title, copying its link and key from there and from row, card and column menus, one table row's buttons shown at a time, the key and menu on the Features Board's cards, finding a person on the Org chart by key, following a link to the record, Back after it, signing in first, and a link a role may not follow, as the [Decisions Log](../product/decisions.md#configuration) sets out under Record keys and Links to records.
+Verifies each record's key under its details' title, copying its link and key from there and from row, card and column menus, one table row's buttons shown at a time, the key and menu on the Features Board's cards, finding a person on the Org chart by key, following a link to the record, Back after it, signing in first, a link a role may not follow, and a table's **Key** column, as the [Decisions Log](../product/decisions.md#configuration) sets out under Record keys and Links to records.
 
 ## Test Environment
 
@@ -255,4 +255,27 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `F04A` Paste the link into the browser's address bar, and press Enter.
   - **Expected:** The **People** page opens with the **Skills** column in view and its menu open.
+  - **Notes:**
+
+### KEY-09: The Key Column Shows Whole Keys
+
+**Account:** Engineering Director, the account KEY-08 ended with.
+
+**Preconditions:** **Features** page open from the left-hand menu.
+
+- [ ] `FDB3` Open the **Views** menu.
+  - **Expected:**
+    - Under the heading **Hidden**, the menu lists **Key**.
+    - The table has no **Key** column.
+  - **Notes:**
+
+- [ ] `A9C0` Select **Key** under **Hidden**.
+  - **Expected:**
+    - A **Key** column shows straight after the **Name** column.
+    - Each row's **Key** cell shows **#FEATURE-** and a number.
+    - Every key shows whole, with none cut short.
+  - **Notes:**
+
+- [ ] `3E7C` Write down the first row's key, then type it in the search box above the table.
+  - **Expected:** The table shows that row alone, its **Key** cell showing the key typed.
   - **Notes:**

@@ -109,6 +109,17 @@ describe("searching", () => {
     expect(shownBy({ search: "   " })).toEqual(["a", "b", "c", "d"]);
   });
 
+  it("leaves out a column not searched, still filtering and sorting by it", () => {
+    const unsearched = columns.map((column) =>
+      column.key === "name" ? { ...column, searched: false as const } : column,
+    );
+    const shown = (changes: Partial<View>) =>
+      ids(applyView(rows, unsearched, view(changes)));
+    expect(shown({ search: "zoe" })).toEqual([]);
+    expect(shown({ search: "2024-03" })).toEqual(["a", "d"]);
+    expect(shown({ filters: { name: { contains: "cy" } } })).toEqual(["d"]);
+  });
+
   it("folds text for matching", () => {
     expect(folded("Zoë ÉCOLE")).toBe("zoe ecole");
     expect(folded("ВЕРОНИКА Ёлкина")).toBe("вероника елкина");

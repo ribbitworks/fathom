@@ -88,6 +88,9 @@ export interface TableColumn<Row> {
   dataClass?: Tier | undefined;
   // Set for a column hidden until a view shows it, such as one that repeats what a mark says.
   hiddenAtFirst?: boolean | undefined;
+  // False for a column the search leaves out, such as the Key column, whose numbers would match
+  // inside other words; a key typed whole finds its record.
+  searched?: false | undefined;
 }
 
 // What a field editing a column's value is called: its label, and its unit's words, if any.
@@ -907,9 +910,11 @@ export function applyView<Row>(
     );
     if (!filtered || words.length === 0) return filtered;
     if (keyed !== undefined) return keyed(row);
-    const cells = [...byKey.values()].map((column) =>
-      folded(rulesFor(column).words(column, read(column, row))),
-    );
+    const cells = [...byKey.values()]
+      .filter(({ searched }) => searched !== false)
+      .map((column) =>
+        folded(rulesFor(column).words(column, read(column, row))),
+      );
     return words.every((word) => cells.some((cell) => cell.includes(word)));
   });
 

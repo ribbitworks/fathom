@@ -2168,6 +2168,9 @@ describe("searching, sorting, and filtering", () => {
     expect(await viewsMenuLayout()).toEqual([
       "Frozen to Site, reset",
       "—",
+      "Hidden",
+      "Key, show",
+      "—",
       "Clear view",
       "Save view…",
     ]);
@@ -2222,6 +2225,9 @@ describe("searching, sorting, and filtering", () => {
       "Name ↓descending, remove sort",
       "—",
       "Frozen to Site, reset",
+      "—",
+      "Hidden",
+      "Key, show",
       "—",
       "Clear view",
       "Save view…",
@@ -2780,11 +2786,7 @@ describe("searching, sorting, and filtering", () => {
 
     it("offers nothing to save or apply until there is a view or a saved one", async () => {
       await openAt("/people");
-      expect(
-        screen.queryByRole("button", {
-          name: (name) => name.startsWith("Views"),
-        }),
-      ).toBeNull();
+      expect(await viewsMenuLayout()).toEqual(["Hidden", "Key, show"]);
     });
 
     it("saves the view under a name, applies it, and goes back with Back", async () => {
@@ -2847,6 +2849,9 @@ describe("searching, sorting, and filtering", () => {
         "Shared views",
         "Harbour, chosen",
         "Theirs",
+        "—",
+        "Hidden",
+        "Key, show",
         "—",
         "Rename…",
         "Delete view",
@@ -2930,12 +2935,21 @@ describe("searching, sorting, and filtering", () => {
         "Harbour",
         "Shared views",
         "Theirs",
+        "—",
+        "Hidden",
+        "Key, show",
       ]);
     });
 
     it("leaves out a group with no views", async () => {
       await openAt("/people", { "GET /api/views/people": withViews([theirs]) });
-      expect(await viewsMenuLayout()).toEqual(["Shared views", "Theirs"]);
+      expect(await viewsMenuLayout()).toEqual([
+        "Shared views",
+        "Theirs",
+        "—",
+        "Hidden",
+        "Key, show",
+      ]);
     });
 
     describe("a view of the user's own that their role can no longer use", () => {
@@ -2955,6 +2969,9 @@ describe("searching, sorting, and filtering", () => {
           "Leaving soonUses End, which this role can't see.",
           "Shared views",
           "Theirs",
+          "—",
+          "Hidden",
+          "Key, show",
         ]);
       });
 
@@ -3293,13 +3310,11 @@ describe("searching, sorting, and filtering", () => {
       ).toBeNull();
     });
 
-    it("starts the menu with clearing the view when there are no saved views", async () => {
+    it("starts the menu with no divider when there are no saved views", async () => {
       await openAt("/people?show=drafts", {
         "GET /api/views/people": withViews([]),
       });
-      await userEvent.click(viewsButton());
-      const menu = await screen.findByRole("menu");
-      expect(menu.querySelector(".mantine-Menu-divider")).toBeNull();
+      expect((await viewsMenuLayout())[0]).not.toBe("—");
     });
 
     it("lets others apply a view without changing it, save it as their own, and clear it", async () => {
@@ -3312,6 +3327,7 @@ describe("searching, sorting, and filtering", () => {
         "Harbour",
         "Theirs, chosen",
         "Name ↓descending, remove sort",
+        "Key, show",
         "Clear view",
         "Save as new view…",
       ]);
@@ -3337,6 +3353,7 @@ describe("searching, sorting, and filtering", () => {
       expect(items.map((item) => item.textContent)).toEqual([
         "Harbour",
         "Theirs",
+        "Key, show",
       ]);
       expect(
         items.filter((item) => item.querySelector("[data-chosen]")),
@@ -4800,6 +4817,38 @@ describe("exporting People", () => {
     for (const hidden of ["Start", "End", "Manager assigned", "Role on team"]) {
       expect(headings).not.toContain(hidden);
     }
+  });
+
+  it("exports a shown Key column as each record's key number, after Name", async () => {
+    // Given People with the Key column shown, and its Personal columns hidden
+    const files = savedFiles();
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/people": peopleAnswer,
+      "GET /api/lists": listsAnswer,
+    });
+    renderApp(
+      '/people?hidden=["startDate","endDate","managerFrom","f2"]&shown=["recordKey"]',
+    );
+    await screen.findByRole("grid", { name: "People" });
+
+    // When People is exported
+    await userEvent.click(screen.getByRole("button", { name: "Export" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "CSV file" }),
+    );
+
+    // Then the file holds each key's number under Key, after Name
+    await waitFor(() => {
+      expect(files).toHaveLength(1);
+    });
+    const [heading = "", ...lines] =
+      (await files[0]?.text())?.split(/\r?\n/u) ?? [];
+    const headings = heading.split(",");
+    const keyAt = headings.indexOf("Key");
+    expect(keyAt).toBe(headings.indexOf("Name") + 1);
+    const averyLine = lines.find((line) => line.includes("Avery Fictional"));
+    expect(averyLine?.split(",").at(keyAt)).toBe(String(avery.keyNumber));
   });
 
   it("names past managers for a drafted change of manager", async () => {

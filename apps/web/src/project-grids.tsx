@@ -31,6 +31,7 @@ import {
   projectLengths,
   type Proposal,
   type ProposalRequest,
+  type RecordKeyOf,
   roundedUpTo,
   shownEffort,
   startingEffortConversions,
@@ -233,6 +234,17 @@ const drafts = (type: PlanRecordKind) => (ids: string[]) => ({
 // The plan's records have no rule that takes their values together.
 export const noRecordProblem = () => undefined;
 
+// Made once for each kind, so a table's Key column is made again only when its records change.
+const planKeyOf: Readonly<
+  Record<PlanRecordKind, (record: PlanRecord) => RecordKeyOf>
+> = {
+  customer: ({ keyNumber }) => ({ kind: "customer", keyNumber }),
+  project: ({ keyNumber }) => ({ kind: "project", keyNumber }),
+  proposal: ({ keyNumber }) => ({ kind: "proposal", keyNumber }),
+  milestone: ({ keyNumber }) => ({ kind: "milestone", keyNumber }),
+  feature: ({ keyNumber }) => ({ kind: "feature", keyNumber }),
+};
+
 function planTable<Rec extends PlanRecord, Request>({
   type,
   label,
@@ -282,7 +294,9 @@ function planTable<Rec extends PlanRecord, Request>({
     drafts: drafts(type),
     ...(menuItems === undefined ? {} : { menuItems }),
     ...(showDetails === undefined ? {} : { showDetails }),
-    keyOf: (record) => ({ kind: type, keyNumber: record.keyNumber }),
+    // The kind is always one of the plan's kinds.
+    // eslint-disable-next-line security/detect-object-injection
+    keyOf: planKeyOf[type],
   };
 }
 

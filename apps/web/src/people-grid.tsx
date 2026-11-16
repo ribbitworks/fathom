@@ -719,6 +719,10 @@ function peopleGroupings(columns: readonly Column[]): RowGrouping<Person>[] {
   );
 }
 
+// Made once, so the table's Key column is made again only when the people change.
+const personRowKeyOf = (row: Person) =>
+  personKeyOf({ keyNumber: row.keyNumber, hire: isHire(row) });
+
 function peopleTable(
   // The columns and lists as the Draft menu's choice shows them, which the rows can be grouped by.
   schema: { fields: readonly Field[]; lists: readonly List[] },
@@ -856,8 +860,7 @@ function peopleTable(
       plannedHires: ids.filter((id) => hireIds.has(id)),
     }),
     ...(onOpen === undefined ? {} : { showDetails: onOpen }),
-    keyOf: (row) =>
-      personKeyOf({ keyNumber: row.keyNumber, hire: isHire(row) }),
+    keyOf: personRowKeyOf,
   };
 }
 

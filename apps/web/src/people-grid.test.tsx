@@ -533,6 +533,12 @@ describe("a start date after the end date", () => {
 });
 
 describe("managers and teams", () => {
+  it("changes nothing through Team, which follows from Manager", () => {
+    const team = columnsFor([], [], [], true).find(({ key }) => key === "team");
+    expect(team?.readOnly).toBe(true);
+    expect(team?.change(["p1"])).toEqual({});
+  });
+
   const person = (id: string, more: Partial<Person> = {}): Person => ({
     id,
     keyNumber: 1,

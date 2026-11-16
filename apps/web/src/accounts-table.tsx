@@ -5,7 +5,7 @@
 // roles, the default first, whether it is active, and the day it was made, each account's details
 // opening beside it.
 
-import type { Account } from "@fathom/shared";
+import type { Account, RecordKeyOf } from "@fathom/shared";
 import { noDrafts } from "./drafts.ts";
 import { rolesHeld } from "./names.ts";
 import {
@@ -123,6 +123,12 @@ export function accountColumns(
   ];
 }
 
+// Made once, so the table's Key column is made again only when the accounts change.
+const accountKeyOf = (row: AccountRow): RecordKeyOf => ({
+  kind: "account",
+  keyNumber: row.account.keyNumber,
+});
+
 // The table of accounts, read only.
 export function accountsTable({
   accounts,
@@ -147,6 +153,6 @@ export function accountsTable({
     showDetails: (row) => {
       onOpen(row.account);
     },
-    keyOf: (row) => ({ kind: "account", keyNumber: row.account.keyNumber }),
+    keyOf: accountKeyOf,
   };
 }

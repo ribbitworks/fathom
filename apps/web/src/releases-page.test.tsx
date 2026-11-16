@@ -352,14 +352,19 @@ describe("the table of release streams", () => {
     });
   });
 
-  it("offers no Views menu while it would hold nothing", async () => {
+  it("offers only the hidden Key column in its Views menu while it would hold nothing else", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer([fictionalStream()]),
     });
     renderApp("/releases");
     await streamsGrid();
-    expect(screen.queryByRole("button", { name: "Views" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Views" }));
+    expect(
+      (await screen.findAllByRole("menuitem")).map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual(["Key, show"]);
   });
 
   it("offers hiding retired streams again while they show, though none is retired any more", async () => {

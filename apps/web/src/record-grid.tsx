@@ -41,7 +41,11 @@ import type {
   Tier,
   RecordKeyOf,
 } from "@fathom/shared";
-import { draftFilterKey, type ExportedTable } from "@fathom/shared";
+import {
+  draftFilterKey,
+  type ExportedTable,
+  shownRecordKey,
+} from "@fathom/shared";
 import { Menu, Paper, Table, Text, VisuallyHidden } from "@mantine/core";
 import {
   type ClipboardEvent,
@@ -52,6 +56,7 @@ import {
   type ReactNode,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -113,7 +118,7 @@ import {
   tickedOf,
 } from "./row-ticks.tsx";
 import { draftedLists, liveLists } from "./lists.ts";
-import { CopyLinkItem } from "./record-key.tsx";
+import { CopyLinkItem, isSaved } from "./record-key.tsx";
 import {
   type ChangeView,
   ColumnViewItems,
@@ -248,7 +253,9 @@ export interface Column<
   // For number columns: the least and most a value may be.
   least?: number;
   most?: number;
-  // Set for a column whose values follow from another's, which is edited instead.
+  // Set for a column whose values follow from another's, which is edited instead, or from saving, as
+  // a key's do. Its change is never asked for: a new record asks nothing of it, and its cells and
+  // details are never edited.
   readOnly?: boolean;
   // The key of the column whose drafts change this one's values, when another's do.
   changesWith?: string;
@@ -1513,6 +1520,59 @@ function NamedWithOthers({
   );
 }
 
+export const keyColumnKey = "recordKey";
+
+// A key is mostly capitals, each about a third wider than the digit a column's width counts in.
+const keyCharWidth = 1.3;
+
+// Each record's key, hidden until a view shows it, sorted and filtered by its number. A key never
+// changes, so the column is read only, and no draft changes it.
+export function keyColumn<Rec extends GridRecord, Change>(
+  keyOf: (record: Rec) => RecordKeyOf,
+  records: readonly Rec[],
+): Column<Rec, Change> {
+  const label = "Key";
+  const shown = (record: Rec) => {
+    const { kind, keyNumber } = keyOf(record);
+    return shownRecordKey(kind, keyNumber);
+  };
+  return {
+    // As wide as the longest key shown, so none is cut short.
+    cellChars: Math.ceil(
+      Math.max(label.length, ...records.map((one) => shown(one).length)) *
+        keyCharWidth,
+    ),
+    key: keyColumnKey,
+    label,
+    kind: "number",
+    choices: [],
+    multiple: false,
+    required: false,
+    readOnly: true,
+    breaksDown: false,
+    hiddenAtFirst: true,
+    searched: false,
+    live: () => null,
+    change: () => {
+      throw new Error("A record's key can't be changed");
+    },
+    value: (record) =>
+      isSaved(keyOf(record)) ? String(keyOf(record).keyNumber) : "",
+    content: (record) => (isSaved(keyOf(record)) ? shown(record) : null),
+  };
+}
+
+// Items with one put right after the name column's, where a record's key is read with its name, or
+// first in a table with no name column.
+function afterName<Item>(
+  items: readonly Item[],
+  isName: (item: Item) => boolean,
+  item: Item,
+): Item[] {
+  const after = items.findIndex(isName) + 1;
+  return [...items.slice(0, after), item, ...items.slice(after)];
+}
+
 export function RecordGrid<Rec extends GridRecord, Change, Request>({
   records: everyone,
   table,
@@ -1550,14 +1610,31 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     lists,
   );
   const order = asked.order ?? tableOrder;
+  // A table whose records have keys gets the Key column, made again only when they change.
+  const { keyOf } = table;
+  const madeKeyColumn = useMemo(
+    () => keyOf && keyColumn<Rec, Change>(keyOf, everyone),
+    [keyOf, everyone],
+  );
+  const withKey = (made: Column<Rec, Change>[]) =>
+    madeKeyColumn === undefined
+      ? made
+      : afterName(made, ({ key }) => key === table.nameColumn, madeKeyColumn);
+  // A view's order made before the Key column existed puts it after the name column too.
+  const viewOrder = (named: readonly string[]) =>
+    madeKeyColumn === undefined || named.includes(keyColumnKey)
+      ? named
+      : afterName(named, (key) => key === table.nameColumn, keyColumnKey);
   // Not every table starts its columns in the order it is given.
   const inViewOrder = (made: Column<Rec, Change>[]) =>
-    asked.order === undefined ? made : inOrder(made, asked.order);
+    asked.order === undefined ? made : inOrder(made, viewOrder(asked.order));
   // The columns with their lists as they are live, for the live records and each live row, so a
   // choice's drafted name is not shown as live.
   const listsLive = liveLists(lists);
   const liveColumns = inViewOrder(
-    table.columnsFor(fields, listsLive, order, table.liveRecords(everyone)),
+    withKey(
+      table.columnsFor(fields, listsLive, order, table.liveRecords(everyone)),
+    ),
   ).map((column) => inViewUnits(column, asked));
   // Both are made from the same fields, so every column has its live one.
   const liveColumn = (column: Column<Rec, Change>) =>
@@ -1565,9 +1642,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const allColumns =
     asked.show === "live"
       ? liveColumns
-      : inViewOrder(table.columnsFor(fields, listsShown, order, everyone)).map(
-          (column) => inViewUnits(column, asked),
-        );
+      : inViewOrder(
+          withKey(table.columnsFor(fields, listsShown, order, everyone)),
+        ).map((column) => inViewUnits(column, asked));
   const knownAsked = knownView(
     asked,
     allColumns,
@@ -2321,9 +2398,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       return {
         id: pendingId(),
         request: table.request(
-          columnsOn(allColumns, kind).map((column) =>
-            column.change(newValue(newRow, column)),
-          ),
+          columnsOn(allColumns, kind)
+            .filter(({ readOnly }) => readOnly !== true)
+            .map((column) => column.change(newValue(newRow, column))),
           kind,
         ),
       };

@@ -13,6 +13,7 @@ import {
   hasEnded,
   lastStartOf,
   type RecordDraft,
+  type RecordKeyOf,
   type RecordRef,
   type ReleaseStream,
   type Show,
@@ -407,6 +408,12 @@ const decidableRefs = (
   }[],
 ): RecordRef[] => records.filter(decidable).map(({ id }) => ({ type, id }));
 
+// Made once, so the table's Key column is made again only when the streams change.
+const streamKeyOf = (row: StreamRow): RecordKeyOf => ({
+  kind: "schedule",
+  keyNumber: row.stream.keyNumber,
+});
+
 // The table of streams, read only: streams are changed in their panel.
 export function streamTable({
   streams,
@@ -440,7 +447,7 @@ export function streamTable({
     showDetails: (row) => {
       onOpen(row.stream);
     },
-    keyOf: (row) => ({ kind: "schedule", keyNumber: row.stream.keyNumber }),
+    keyOf: streamKeyOf,
     columnsFor: () => shownColumns,
     liveRecords: (rows) => liveRows(rows, streams, day),
     draftFields: (row, draft) => draftFieldsOf(shownColumns, row, draft),
