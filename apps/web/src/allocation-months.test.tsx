@@ -75,6 +75,7 @@ const draft = (fields: Partial<AllocationDraft> = {}): AllocationDraft => ({
 
 const card = (fields: Partial<OrgChartPerson>): OrgChartPerson => ({
   id: "p-blair",
+  keyNumber: 1,
   preferredName: "Blair Fictional",
   employeeId: null,
   position: null,
@@ -330,12 +331,14 @@ describe("planned hires' allocations", () => {
       card({}),
       card({
         id: "h-tester",
+        keyNumber: 1,
         preferredName: "Payments tester",
         managerId: "p-blair",
         planned: { expected: "2027-03" },
       }),
       card({
         id: "h-unnamed",
+        keyNumber: 1,
         preferredName: "SDET, TBD-7",
         managerId: null,
         planned: { expected: "2027-04", shownId: "TBD-7" },
@@ -380,6 +383,7 @@ describe("planned hires' allocations", () => {
       people: teamMonths.people.map(
         ({ id, preferredName, manager, teams }) => ({
           id,
+          keyNumber: 1,
           preferredName,
           manager,
           teams,

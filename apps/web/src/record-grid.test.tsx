@@ -73,6 +73,7 @@ type GadgetChange = {
 
 const colour: Field = {
   id: "f1",
+  keyNumber: 1,
   name: "Colour",
   type: "choice" as const,
   listId: "l1",
@@ -83,6 +84,7 @@ const colour: Field = {
 };
 const colours: List = {
   id: "l1",
+  keyNumber: 1,
   name: "Colours",
   description: "",
   visibility: "general",
@@ -1208,6 +1210,7 @@ describe("column widths", () => {
 describe("the live columns", () => {
   const column = {
     id: "f1",
+    keyNumber: 1,
     name: "Grade",
     type: "choice" as const,
     listId: "l1",
@@ -1237,11 +1240,13 @@ describe("the live columns", () => {
         {
           ...column,
           id: "f2",
+          keyNumber: 1,
           draft: { ...draft, action: "created", changed: [], live: {} },
         },
         {
           ...column,
           id: "f4",
+          keyNumber: 1,
           listId: "l2",
           draft: {
             ...draft,
@@ -1253,6 +1258,7 @@ describe("the live columns", () => {
         {
           ...column,
           id: "f3",
+          keyNumber: 1,
           draft: { ...draft, action: "deleted", changed: [], live: {} },
         },
       ]),
@@ -1499,6 +1505,7 @@ describe("a refused value", () => {
   it("marks a web link's address when the link is refused, described by the problem under the row", async () => {
     const site: Field = {
       id: "f2",
+      keyNumber: 1,
       name: "Site",
       type: "link",
       listId: null,

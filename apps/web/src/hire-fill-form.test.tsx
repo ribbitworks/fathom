@@ -16,6 +16,7 @@ import {
 
 const person = (id: string, name: string, details: object = {}) => ({
   id,
+  keyNumber: 1,
   preferredName: name,
   employeeId: `E${id}`,
   positionId: "engineer",
@@ -42,6 +43,7 @@ const hire = (details: object = {}) =>
   });
 const builtIn = (id: string, choices: object[]) => ({
   id,
+  keyNumber: 1,
   name: id,
   description: "",
   visibility: "general",
@@ -58,6 +60,7 @@ const choice = (id: string, label: string, meaning?: string) => ({
 });
 const grade = {
   id: "grade",
+  keyNumber: 1,
   name: "Grade",
   type: "choice",
   listId: "grades",
@@ -203,6 +206,7 @@ describe("filling a planned hire with a new person", () => {
       fields: [
         {
           id: "background",
+          keyNumber: 1,
           name: "Background",
           type: "note",
           listId: null,
@@ -250,6 +254,7 @@ describe("filling a planned hire with a new person", () => {
       fields: [
         {
           id: "background",
+          keyNumber: 1,
           name: "Background",
           type: "note",
           listId: null,
@@ -308,6 +313,7 @@ describe("filling a planned hire with a new person", () => {
       fields: [
         {
           id: "site",
+          keyNumber: 1,
           name: "Site",
           type: "link",
           listId: null,

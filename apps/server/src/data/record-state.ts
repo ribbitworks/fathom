@@ -23,6 +23,7 @@ import {
   type Held,
   type Recorded,
 } from "./drafts.ts";
+import type { KeyNumbers } from "./record-keys.ts";
 import type { ValueOwner } from "./values.ts";
 
 export interface RecordKind {
@@ -104,6 +105,8 @@ export interface KindState {
   drafts: Map<string, Draft>;
   // The records others hold by having unpublished changes to them.
   held: Map<string, Held>;
+  // The key numbers of the records, live and drafted to be added, of a kind with keys.
+  keys: KeyNumbers;
 }
 
 export type RecordsState = Record<RecordType, KindState>;
@@ -304,7 +307,13 @@ export const liveOnly = (state: RecordsState): RecordsState =>
   Object.fromEntries(
     Object.entries(state).map(([type, kind]) => [
       type,
-      { live: kind.live, rows: kind.rows, drafts: new Map(), held: new Map() },
+      {
+        live: kind.live,
+        rows: kind.rows,
+        drafts: new Map(),
+        held: new Map(),
+        keys: kind.keys,
+      },
     ]),
   ) as RecordsState;
 

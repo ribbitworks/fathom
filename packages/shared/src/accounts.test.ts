@@ -178,6 +178,7 @@ describe("responses", () => {
       createdAccountSchema.safeParse({
         account: {
           id: accountId,
+          keyNumber: 1,
           name: "Fictional User",
           email: "user@example.test",
           role: { id: roleId, name: "Fictional Role" },
@@ -196,6 +197,7 @@ describe("responses", () => {
         accounts: [
           {
             id: "1",
+            keyNumber: 1,
             name: "Fictional User",
             email: "user@example.test",
             role: null,
@@ -214,6 +216,7 @@ describe("responses", () => {
         accounts: [
           {
             id: accountId,
+            keyNumber: 1,
             name: "Fictional User",
             email: "user@example.test",
             role: { id: roleId, name: "Fictional Role" },

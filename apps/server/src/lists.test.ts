@@ -273,6 +273,7 @@ describe("lists", () => {
     const created = await createList(cookie, { name: `  ${name}  ` });
     expect(created).toEqual({
       id: created.id,
+      keyNumber: created.keyNumber,
       name,
       description: "",
       visibility: "general",

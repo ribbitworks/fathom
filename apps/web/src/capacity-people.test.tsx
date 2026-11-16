@@ -48,6 +48,7 @@ const chart: OrgChart = {
   people: [
     {
       id: "p-blair",
+      keyNumber: 1,
       preferredName: "Blair Fictional",
       employeeId: null,
       position: null,
@@ -57,6 +58,7 @@ const chart: OrgChart = {
     },
     {
       id: "h-tester",
+      keyNumber: 1,
       preferredName: "Payments tester",
       employeeId: null,
       position: null,

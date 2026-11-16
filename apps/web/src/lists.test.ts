@@ -32,6 +32,7 @@ describe("lists as their drafts will make them", () => {
   it("takes back rejected drafts, and leaves out what drafts remove", () => {
     const sites: List = {
       id: "l1",
+      keyNumber: 1,
       name: "Sites",
       description: "",
       visibility: "general",
@@ -62,6 +63,7 @@ describe("lists with meanings as their drafts will make them", () => {
   it("puts back a choice's meaning when its rejected draft changed it", () => {
     const states: List = {
       id: "l3",
+      keyNumber: 1,
       name: "States",
       description: "",
       visibility: "confidential",
@@ -106,6 +108,7 @@ describe("drafts that retire or restore", () => {
 describe("the order of lists", () => {
   const list = (name: string, builtIn: List["builtIn"] = null): List => ({
     id: name,
+    keyNumber: 1,
     name,
     description: "",
     visibility: "general",

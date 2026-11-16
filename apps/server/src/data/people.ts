@@ -104,6 +104,7 @@ import {
   refuseRemovingHiresPeople,
   refuseUnmarkingHireManagers,
 } from "./hires.ts";
+import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { keptNote, refuseRemovingNamed } from "./records.ts";
 import {
   changedReporting,
@@ -793,6 +794,7 @@ async function readPeopleIn(
       },
       day,
     );
+  const keys = await readKeyNumbers(database, "person", ids);
   const shown = ids.flatMap((id): Person[] => {
     const before = live.get(id);
     const draft = draftsNow.get(id);
@@ -810,6 +812,7 @@ async function readPeopleIn(
     return [
       {
         id,
+        keyNumber: keyNumberOf(keys, id),
         preferredName: String(person.preferredName),
         employeeId: String(person.employeeId),
         ...(shownFields.has("positionId")

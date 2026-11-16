@@ -47,6 +47,8 @@ export {
   projects,
   proposals,
   rateLimits,
+  recordKeyCounters,
+  recordKeys,
   releases,
   releaseStreams,
   reportingLines,

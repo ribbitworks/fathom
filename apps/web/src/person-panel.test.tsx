@@ -36,6 +36,7 @@ const viewer = session([
 
 const background = {
   id: "f1",
+  keyNumber: 1,
   name: "Background",
   type: "note",
   listId: null,
@@ -56,6 +57,7 @@ const person = (
   details: object = {},
 ): object => ({
   id,
+  keyNumber: 1,
   preferredName,
   employeeId: `E${id}`,
   positionId: "position-1",
@@ -107,6 +109,7 @@ const peopleAnswer =
     });
 const positions = {
   id: "positions",
+  keyNumber: 1,
   name: "Positions",
   description: "",
   visibility: "general",
@@ -127,6 +130,7 @@ const chartPerson = (
   managerId: string | null,
 ): OrgChartPerson => ({
   id,
+  keyNumber: 1,
   preferredName: name,
   employeeId: `E${id}`,
   position: "Fictional Engineer",
@@ -584,6 +588,7 @@ describe("a person's details", () => {
       person(id, name, {
         manager: {
           id: managerId,
+          keyNumber: 1,
           preferredName:
             managerId === "1" ? "Robin Fictional" : "Sasha Fictional",
         },
@@ -893,6 +898,7 @@ describe("changing a manager beside the org chart on an earlier day", () => {
 describe("a person's feature teams", () => {
   const team = (id: string, name: string, leadId: string | null) => ({
     id,
+    keyNumber: 1,
     name,
     leadId,
     colour: null,
@@ -1326,6 +1332,7 @@ describe("changing a person's details", () => {
     const skills = {
       ...background,
       id: "f3",
+      keyNumber: 1,
       name: "Skills",
       type: "choice",
       listId: "skills",
@@ -1348,6 +1355,7 @@ describe("changing a person's details", () => {
             {
               ...positions,
               id: "skills",
+              keyNumber: 1,
               name: "Skills",
               builtIn: null,
               choices: [
@@ -1943,6 +1951,7 @@ describe("changing a planned hire's details", () => {
   const states = {
     ...positions,
     id: "states",
+    keyNumber: 1,
     name: "Hiring states",
     builtIn: "hiring-states",
     choices: [

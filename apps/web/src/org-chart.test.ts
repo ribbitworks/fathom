@@ -36,6 +36,7 @@ const person = (
   preferredName = id,
 ): OrgChartPerson => ({
   id,
+  keyNumber: 1,
   preferredName,
   employeeId: `E-${id}`,
   position: "Fictional Engineer",

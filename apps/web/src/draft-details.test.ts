@@ -87,6 +87,7 @@ describe("a draft's details", () => {
   it("names a person's old and new managers, the date, and their team's name", () => {
     const someone = (id: string, preferredName: string): Person => ({
       id,
+      keyNumber: 1,
       preferredName,
       employeeId: id,
       positionId: "position-1",
@@ -133,6 +134,7 @@ describe("a draft's details", () => {
     const [field] = personDraftFields(
       {
         id: "p3",
+        keyNumber: 1,
         preferredName: "Fictional Moved Report",
         employeeId: "p3",
         positionId: "position-1",
@@ -157,6 +159,7 @@ describe("a draft's details", () => {
   it("says a planned hire is filled, naming its person only when they are among the people shown", () => {
     const hire = (filler: string | null): Person => ({
       id: "h1",
+      keyNumber: 1,
       kind: "planned-hire",
       preferredName: "",
       employeeId: "REQ-9001",
@@ -175,6 +178,7 @@ describe("a draft's details", () => {
     };
     const starter: Person = {
       id: "p9",
+      keyNumber: 1,
       preferredName: "Fictional Starter",
       employeeId: "E90001",
       values: {},
@@ -196,6 +200,7 @@ describe("a draft's details", () => {
     const [field] = personDraftFields(
       {
         id: "p4",
+        keyNumber: 1,
         preferredName: "Fictional Menu Report",
         employeeId: "p4",
         positionId: "position-1",
@@ -220,6 +225,7 @@ describe("a draft's details", () => {
     const fields = personDraftFields(
       {
         id: "p2",
+        keyNumber: 1,
         preferredName: "Fictional Starter",
         employeeId: "p2",
         positionId: "position-1",
@@ -252,6 +258,7 @@ describe("a draft's details", () => {
   it("names positions by their labels, with none for one no longer in any list", () => {
     const positions = {
       id: "positions",
+      keyNumber: 1,
       name: "Positions",
       description: "",
       visibility: "general" as const,
@@ -269,6 +276,7 @@ describe("a draft's details", () => {
     };
     const person = (positionId: string): Person => ({
       id: "p3",
+      keyNumber: 1,
       preferredName: "Fictional Mover",
       employeeId: "p3",
       positionId,

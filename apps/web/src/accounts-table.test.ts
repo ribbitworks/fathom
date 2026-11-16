@@ -16,6 +16,7 @@ afterEach(() => {
 const role = (id: string, name: string) => ({ id, name });
 const account: Account = {
   id: "10000000-0000-4000-8000-000000000001",
+  keyNumber: 1,
   name: "Fictional Person",
   email: "person@example.test",
   role: role("r2", "Product Manager"),

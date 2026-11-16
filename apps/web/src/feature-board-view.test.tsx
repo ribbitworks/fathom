@@ -69,6 +69,7 @@ const ids = {
 
 const feature = (name: string, more: Partial<Feature> = {}): Feature => ({
   id: crypto.randomUUID(),
+  keyNumber: 1,
   name,
   statusId: ids.planned,
   priorityId: null,
@@ -119,8 +120,16 @@ const gamma = feature("Fictional Gamma", {
 const later = feature("Fictional Later", { staffed: true });
 
 const customers = [
-  { id: "c0000000-0000-4000-8000-000000000001", name: "Fictional Harbour" },
-  { id: "c0000000-0000-4000-8000-000000000002", name: "Fictional Quay" },
+  {
+    id: "c0000000-0000-4000-8000-000000000001",
+    keyNumber: 1,
+    name: "Fictional Harbour",
+  },
+  {
+    id: "c0000000-0000-4000-8000-000000000002",
+    keyNumber: 2,
+    name: "Fictional Quay",
+  },
 ];
 
 const plan = (features: Feature[]): ProjectPlan => ({

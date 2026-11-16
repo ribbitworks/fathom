@@ -111,6 +111,7 @@ describe("shortcuts shown in menus", () => {
 describe("the last choice a built-in list keeps", () => {
   const states = (...meant: Choice[]): List => ({
     id: "l1",
+    keyNumber: 1,
     name: "Fictional States",
     description: "",
     visibility: "confidential",

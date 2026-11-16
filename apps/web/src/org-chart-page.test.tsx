@@ -45,6 +45,7 @@ const person = (
   details: Partial<OrgChartPerson> = {},
 ): OrgChartPerson => ({
   id,
+  keyNumber: 1,
   preferredName,
   employeeId: `FX-${id}`,
   position: "Fictional Engineer",
@@ -79,6 +80,7 @@ const peopleAnswers = {
       people: [
         {
           id: "p4",
+          keyNumber: 1,
           preferredName: "Uma Fictional",
           employeeId: "FX-p4",
           positionId: "position-1",
@@ -1524,6 +1526,7 @@ describe("feature teams on the org chart", () => {
   const undone = "00000000-0000-4000-8000-0000000000c2";
 
   const featureTeam = (fields: object) => ({
+    keyNumber: 1,
     colour: null,
     leadId: null,
     members: [],

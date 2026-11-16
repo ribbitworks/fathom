@@ -1058,6 +1058,31 @@ export const unpublishedDrafts = fathomSchema.table(
   ],
 );
 
+// Each record's key number, by the kind's word as packages/shared/src/record-keys.ts fixes it and the
+// record's identifier, as the Decisions Log sets out. Triggers number a record when it's added, or
+// drafted to be added, in the same transaction, so every way of adding one is covered. Rows outlive
+// their records, so numbers are never reused and a removed record's key still names it; the
+// application's role cannot change or delete them.
+export const recordKeys = fathomSchema.table(
+  "record_keys",
+  {
+    kind: text("kind").notNull(),
+    keyNumber: integer("key_number").notNull(),
+    recordId: text("record_id").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.kind, table.keyNumber] }),
+    uniqueIndex("record_keys_record_index").on(table.kind, table.recordId),
+    check("record_keys_number_positive", sql`${table.keyNumber} > 0`),
+  ],
+);
+
+// The last key number given to each kind, which numbering a record raises under the row's lock.
+export const recordKeyCounters = fathomSchema.table("record_key_counters", {
+  kind: text("kind").primaryKey(),
+  lastNumber: integer("last_number").notNull(),
+});
+
 // Who each person reports to, from a date until their next line starts, so past managers are kept
 // and capacity by manager can be counted for past months. A line with no manager records that the
 // person has none from that date. Anyone named as a manager is kept, since past lines name them.

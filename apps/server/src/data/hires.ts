@@ -101,6 +101,7 @@ import {
   writeDraft,
 } from "./drafts.ts";
 import { recordEvent } from "./history.ts";
+import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import {
   checkedLinks,
   checkedNotes,
@@ -544,6 +545,7 @@ export async function readHiresIn(
       ];
     }),
   );
+  const keys = await readKeyNumbers(transaction, "hire");
   const hires = versions.flatMap(({ id, before, draft, hire }): Hire[] => {
     const filledBy = text(before?.filledBy);
     const filler = filledBy === null ? undefined : named.get(filledBy);
@@ -569,6 +571,7 @@ export async function readHiresIn(
     return [
       {
         id,
+        keyNumber: keyNumberOf(keys, id),
         name: text(hire.name),
         ...hireIdOf(hire),
         ...(seesPositions ? { positionId: String(hire.positionId) } : {}),
@@ -2000,6 +2003,7 @@ export function hireRow(
   const live = draft?.live;
   return {
     id: hire.id,
+    keyNumber: hire.keyNumber,
     kind: "planned-hire",
     preferredName: hire.name ?? "",
     employeeId: id,

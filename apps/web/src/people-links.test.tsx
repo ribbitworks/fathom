@@ -40,6 +40,7 @@ const editor = () =>
 
 const profile = {
   id: "f1",
+  keyNumber: 1,
   name: "Profile",
   type: "link",
   listId: null,
@@ -53,6 +54,7 @@ const page = {
 };
 const avery = {
   id: "p1",
+  keyNumber: 1,
   preferredName: "Avery Fictional",
   employeeId: "E1",
   positionId: "position-1",
@@ -61,6 +63,7 @@ const avery = {
 };
 const blake = {
   id: "p2",
+  keyNumber: 1,
   preferredName: "Blake Fictional",
   employeeId: "E2",
   positionId: "position-1",
@@ -79,6 +82,7 @@ const saved = () => Response.json({ changeSetId: s1 });
 // The built-in Positions list, with the one position everyone here has.
 const positions = {
   id: "positions",
+  keyNumber: 1,
   name: "Positions",
   description: "",
   visibility: "general",

@@ -40,6 +40,8 @@ import {
   seesClass,
   seesEmployment,
   seesView,
+  opensWith,
+  pageNeeds,
   temporaryId,
   type Tier,
   tierSchema,
@@ -1017,16 +1019,43 @@ function searchedText(entry: ChangeEntry): string {
   ].join(" ");
 }
 
-// The change sets saved before the one named, or the latest, holding a change the actor may see,
-// and, when searching, holding every word searched for. Reading goes on until there is a page of
-// entries or as many change sets have been read as one request may, and the next page goes on from
-// there.
-export async function readChangeHistory(
+// Whether the change history shows the actor a record's removal, as the History page would, with
+// nothing since: undoing a removal puts the record back, live, as a later change.
+export async function historyShowsRemoval(
   database: Database,
   actor: Actor,
-  before?: string,
-  search = "",
-): Promise<ReadChangeHistory> {
+  recordId: string,
+): Promise<boolean> {
+  const mayShow = opensWith(pageNeeds.changes, actor)
+    ? changesShownTo(actor)
+    : undefined;
+  if (mayShow === undefined) return false;
+  const [latest] = await database
+    .select({ action: changes.action, changeSetId: changes.changeSetId })
+    .from(changes)
+    .where(and(eq(changes.recordId, recordId), eq(changes.draft, false)))
+    .orderBy(desc(changes.id))
+    .limit(1);
+  if (latest?.action !== "deleted") return false;
+  const [shown] = await database
+    .select({ id: changes.id })
+    .from(changes)
+    .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
+    .where(
+      and(
+        eq(changes.changeSetId, latest.changeSetId),
+        eq(changes.recordId, recordId),
+        eq(changes.action, "deleted"),
+        mayShow,
+        seenSets(actor),
+      ),
+    )
+    .limit(1);
+  return shown !== undefined;
+}
+
+// Which changes the actor may see: those of the kinds and classes each area they see shows, or none.
+export function changesShownTo(actor: Actor): SQL | undefined {
   const kinds = [
     ...(actor.permissions.includes("configuration:view")
       ? configurationKinds
@@ -1042,10 +1071,7 @@ export async function readChangeHistory(
     seesSensitivity(actor, tier),
   );
   const views = opensAnyViews(actor);
-  if (kinds.length === 0 && plan.length === 0 && !teams && !views) {
-    return { entries: [], next: null, includedSensitive: false };
-  }
-  const mayShow = or(
+  return or(
     kinds.length === 0
       ? undefined
       : and(
@@ -1084,6 +1110,22 @@ export async function readChangeHistory(
         )
       : undefined,
   );
+}
+
+// The change sets saved before the one named, or the latest, holding a change the actor may see,
+// and, when searching, holding every word searched for. Reading goes on until there is a page of
+// entries or as many change sets have been read as one request may, and the next page goes on from
+// there.
+export async function readChangeHistory(
+  database: Database,
+  actor: Actor,
+  before?: string,
+  search = "",
+): Promise<ReadChangeHistory> {
+  const mayShow = changesShownTo(actor);
+  if (mayShow === undefined) {
+    return { entries: [], next: null, includedSensitive: false };
+  }
   const words = searchWords(search);
   // Each column's tier now, read once for every batch.
   const tierNow = personTier(await columnsWithAdded(database, undefined));

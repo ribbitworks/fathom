@@ -49,6 +49,7 @@ const live = (id: string): Choice => ({
 // and leaves another at the end, where it would go anyway.
 const teams: List = {
   id: "l1",
+  keyNumber: 1,
   name: "Teams",
   description: "",
   visibility: "general",
@@ -61,6 +62,7 @@ const teams: List = {
 // A live list whose order puts a choice drafted to be added first.
 const sites: List = {
   id: "l2",
+  keyNumber: 1,
   name: "Sites",
   description: "",
   visibility: "general",
@@ -132,6 +134,7 @@ describe("drafts an approval includes", () => {
 describe("planned hires an approval includes", () => {
   const hire: Person = {
     id: "h1",
+    keyNumber: 1,
     kind: "planned-hire",
     preferredName: "",
     employeeId: "TBD-7",
@@ -169,6 +172,7 @@ describe("drafts of columns an approval or rejection includes", () => {
     fields: [
       {
         id: "f1",
+        keyNumber: 1,
         name: "Previous site",
         type: "choice" as const,
         listId: "l1",
@@ -226,6 +230,7 @@ describe("drafts that wait on rejected ones", () => {
     fields: [
       {
         id: "f1",
+        keyNumber: 1,
         name: "Previous site",
         type: "choice" as const,
         listId: "l2",
@@ -292,6 +297,7 @@ describe("drafts of people and columns that use drafts of another kind", () => {
   // A column drafted to be added, drawing on the list Teams, itself drafted to be added.
   const squad: Field = {
     id: "f2",
+    keyNumber: 1,
     name: "Squad",
     type: "choice" as const,
     listId: "l1",
@@ -304,6 +310,7 @@ describe("drafts of people and columns that use drafts of another kind", () => {
   // A live column on the live list Sites.
   const site: Field = {
     id: "f3",
+    keyNumber: 1,
     name: "Site",
     type: "choice" as const,
     listId: "l2",
@@ -318,6 +325,7 @@ describe("drafts of people and columns that use drafts of another kind", () => {
     draft: Partial<NonNullable<Person["draft"]>> = {},
   ): Person => ({
     id,
+    keyNumber: 1,
     preferredName: id.toUpperCase(),
     employeeId: id,
     positionId: "position-1",
@@ -420,6 +428,7 @@ describe("drafts of people and columns that use drafts of another kind", () => {
 describe("drafts the approver changed", () => {
   const person = (id: string, needsOtherApprover?: true): Person => ({
     id,
+    keyNumber: 1,
     kind: "person",
     preferredName: `Fictional ${id}`,
     employeeId: `E-${id}`,
@@ -464,6 +473,7 @@ describe("drafts the approver changed", () => {
     const marked = { ...waiting, needsOtherApprover: true as const };
     const ownList: List = {
       id: "l9",
+      keyNumber: 1,
       name: "Own",
       description: "",
       visibility: "general",
@@ -479,6 +489,7 @@ describe("drafts the approver changed", () => {
     };
     const field = {
       id: "f9",
+      keyNumber: 1,
       name: "Own column",
       listId: "l9",
       multiple: false,
@@ -556,6 +567,7 @@ describe("the drafts of a fill", () => {
   const row = (id: string, details: object) =>
     ({
       id,
+      keyNumber: 1,
       preferredName: id,
       employeeId: id,
       values: {},

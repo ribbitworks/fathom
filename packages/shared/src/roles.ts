@@ -11,6 +11,7 @@ import {
   permissionSchema,
 } from "./access.ts";
 import { type Account, accountName } from "./accounts.ts";
+import { keyNumberSchema } from "./record-keys.ts";
 import { isPlainText } from "./text.ts";
 
 export const roleLengths = { description: 500 } as const;
@@ -50,6 +51,7 @@ export type RoleChange = z.infer<typeof roleChangeSchema>;
 
 export const roleSummarySchema = z.object({
   id: z.uuid(),
+  keyNumber: keyNumberSchema,
   // The starting role it is, if any, which roles made later do not have.
   key: z.string().nullable(),
   name: z.string(),

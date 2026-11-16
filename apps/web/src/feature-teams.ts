@@ -199,6 +199,8 @@ export function featureTeamPeople(
       lead === undefined
         ? {
             id: rootId,
+            keyNumber: team.keyNumber,
+            keyKind: "team",
             preferredName: shown.name,
             employeeId: null,
             position: "No feature lead",

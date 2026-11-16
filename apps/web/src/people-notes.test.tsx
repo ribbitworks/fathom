@@ -40,6 +40,7 @@ const viewer = session(["people:view", "plan:view", "features:view"]);
 
 const background = {
   id: "f1",
+  keyNumber: 1,
   name: "Background",
   type: "note",
   listId: null,
@@ -50,6 +51,7 @@ const background = {
 const averyNote = `**Joined** from the ${colourTag("teal")}platform</span> team`;
 const avery = {
   id: "p1",
+  keyNumber: 1,
   preferredName: "Avery Fictional",
   employeeId: "E1",
   positionId: "position-1",
@@ -59,6 +61,7 @@ const avery = {
 };
 const blake = {
   id: "p2",
+  keyNumber: 1,
   preferredName: "Blake Fictional",
   employeeId: "E2",
   positionId: "position-1",
@@ -76,6 +79,7 @@ const peopleAnswer =
 const saved = () => Response.json({ changeSetId: s1 });
 const positions = {
   id: "positions",
+  keyNumber: 1,
   name: "Positions",
   description: "",
   visibility: "general",

@@ -45,6 +45,7 @@ async function openWithDrop() {
         lists: [
           {
             id: "l1",
+            keyNumber: 1,
             name: "Locations",
             description: "",
             visibility: "general",

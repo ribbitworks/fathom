@@ -18,7 +18,7 @@ import type {
   RecordRef,
   RecordType,
 } from "@fathom/shared";
-import { noteProblem, recordTypeSchema } from "@fathom/shared";
+import { draftKeyKinds, noteProblem, recordTypeSchema } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import type { Actor } from "../access.ts";
@@ -63,6 +63,7 @@ import {
 } from "./drafts.ts";
 import { allocationKind, allocationProblem } from "./allocation-kinds.ts";
 import { planningSettingsKind } from "./planning-settings-kind.ts";
+import { keyNumberOf, readKindsKeyNumbers } from "./record-keys.ts";
 import { projectKinds } from "./project-kinds.ts";
 import {
   releaseKinds,
@@ -265,7 +266,12 @@ export async function readRecordsState(
   viewer?: Viewer,
 ): Promise<RecordsState> {
   const entries: [RecordType, KindState][] = [];
+  const keys = await readKindsKeyNumbers(
+    reader,
+    recordKinds.flatMap((kind) => draftKeyKinds[kind.type] ?? []),
+  );
   for (const kind of recordKinds) {
+    const keyKind = draftKeyKinds[kind.type];
     const rows = (await reader
       .select()
       .from(kind.table)
@@ -283,6 +289,7 @@ export async function readRecordsState(
         rows: new Map(rows.map((row) => [String(row.id), row])),
         drafts: await readDrafts(reader, kind.type, undefined, viewer),
         held: await readHeld(reader, kind.type, viewer),
+        keys: (keyKind === null ? undefined : keys.get(keyKind)) ?? new Map(),
       },
     ]);
   }
@@ -379,6 +386,27 @@ export const recordHeldBy = (
   type: RecordType,
   id: string,
 ): { heldBy?: string } => heldByOf(stateOf(state, type).held, id);
+
+// A record's draft and who holds it, as the API sends them beside its fields.
+export const recordExtras = (
+  state: RecordsState,
+  makers: Makers,
+  type: RecordType,
+  id: string,
+) => {
+  const draft = recordDraftOut(kindOf(type), state, makers, id);
+  return {
+    ...(draft === undefined ? {} : { draft }),
+    ...recordHeldBy(state, type, id),
+  };
+};
+
+// A record's key number, live or drafted to be added.
+export const recordKeyNumber = (
+  state: RecordsState,
+  type: RecordType,
+  id: string,
+): number => keyNumberOf(stateOf(state, type).keys, id);
 
 // A record's note as it is kept: null when empty, refusing one a note may not hold.
 export function keptNote(note: string | null): string | null {

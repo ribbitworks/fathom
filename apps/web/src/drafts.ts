@@ -581,6 +581,9 @@ export const decidable = (record: {
   record.draft.unpublished !== true &&
   record.heldBy === undefined;
 
+// A record being added has no key until the server numbers it; no key has this number.
+export const unsavedKeyNumber = 0;
+
 // A draft as it is shown until the server has saved it, holding its live values.
 export const pendingDraft = <Live>(
   action: "created" | "changed" | "deleted",

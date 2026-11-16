@@ -12,6 +12,7 @@ import { z } from "zod";
 import { tierSchema } from "./access.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { numberProblem, outOfRange } from "./numbers.ts";
+import { keyNumberSchema } from "./record-keys.ts";
 
 export const listLengths = {
   name: 40,
@@ -206,6 +207,7 @@ export const keptOf = (
 // it is.
 export const listSchema = z.object({
   id: z.string(),
+  keyNumber: keyNumberSchema,
   name: z.string(),
   description: z.string(),
   visibility: tierSchema,

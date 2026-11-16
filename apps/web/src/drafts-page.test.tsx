@@ -51,6 +51,7 @@ const reader = session(["people:view"]);
 
 const sites = {
   id: "l1",
+  keyNumber: 1,
   name: "Sites",
   description: "",
   visibility: "general",
@@ -62,6 +63,7 @@ const sites = {
 };
 const site = {
   id: "f1",
+  keyNumber: 1,
   name: "Site",
   listId: "l1",
   multiple: false,
@@ -79,6 +81,7 @@ const draft = (fields: object) => ({
 
 const person = (id: string, preferredName: string, more: object = {}) => ({
   id,
+  keyNumber: 1,
   preferredName,
   employeeId: `E-${id}`,
   positionId: "position-1",
@@ -208,6 +211,7 @@ describe("the Drafts page", () => {
     };
     const teams = {
       id: "l2",
+      keyNumber: 1,
       name: "Teams",
       description: "",
       visibility: "general",
@@ -292,6 +296,7 @@ describe("the Drafts page", () => {
       draft({ action: "created", changed: [], live: {}, ...more });
     const guilds = {
       id: "l3",
+      keyNumber: 1,
       name: "Guilds",
       description: "",
       visibility: "general",
@@ -309,6 +314,7 @@ describe("the Drafts page", () => {
     };
     const guild = {
       id: "f2",
+      keyNumber: 1,
       name: "Guild",
       listId: "l3",
       multiple: false,
@@ -372,6 +378,7 @@ describe("the Drafts page", () => {
       draft({ action: "created", changed: [], live: {}, ...more });
     const guild = {
       id: "f2",
+      keyNumber: 1,
       name: "Guild",
       listId: "l1",
       multiple: false,
@@ -418,6 +425,7 @@ describe("the Drafts page", () => {
   it("names the drafts of other areas that rejecting would take with it", async () => {
     const guild = {
       id: "f2",
+      keyNumber: 1,
       name: "Guild",
       listId: "l1",
       multiple: false,
@@ -496,6 +504,7 @@ describe("the Drafts page", () => {
             {
               ...site,
               id: "f5",
+              keyNumber: 1,
               name: "Wiki",
               type: "link",
               listId: null,
@@ -658,14 +667,20 @@ describe("the Drafts page", () => {
           customers: [
             {
               id: "c0000000-0000-4000-8000-000000000001",
+              keyNumber: 1,
               name: "Fictional Customer",
               draft: recordDraft({ action: "created" }),
             },
-            { id: "c0000000-0000-4000-8000-000000000002", name: "Settled" },
+            {
+              id: "c0000000-0000-4000-8000-000000000002",
+              keyNumber: 2,
+              name: "Settled",
+            },
           ],
           proposals: [
             {
               id: "b0000000-0000-4000-8000-000000000001",
+              keyNumber: 1,
               name: "Fictional Proposal",
               externalId: null,
               link: null,
@@ -680,6 +695,7 @@ describe("the Drafts page", () => {
           projects: [
             {
               id: projectId,
+              keyNumber: 1,
               name: "Fictional Project",
               externalId: null,
               ownerId: null,
@@ -691,6 +707,7 @@ describe("the Drafts page", () => {
               milestones: [
                 {
                   id: "d0000000-0000-4000-8000-000000000001",
+                  keyNumber: 1,
                   projectId,
                   name: "Fictional Kickoff",
                   date: "2030-03-15",
@@ -746,6 +763,7 @@ describe("the Drafts page", () => {
             fields: [
               {
                 id: "f1",
+                keyNumber: 1,
                 name: "Fictional Size",
                 type: "choice",
                 listId: "also-not-sent",
@@ -802,6 +820,7 @@ describe("the Drafts page", () => {
           features: [
             {
               id: "00000000-0000-4000-8000-0000000000f1",
+              keyNumber: 1,
               name: "Fictional Moving",
               statusId: "s1",
               priorityId: null,
@@ -1199,6 +1218,7 @@ describe("the Drafts page", () => {
     const positions = {
       ...sites,
       id: "positions",
+      keyNumber: 1,
       name: "Positions",
       builtIn: "positions",
       choices: [
@@ -1213,6 +1233,7 @@ describe("the Drafts page", () => {
     const states = {
       ...sites,
       id: "states",
+      keyNumber: 1,
       name: "Hiring states",
       builtIn: "hiring-states",
       choices: [
@@ -1641,6 +1662,7 @@ describe("drafts of feature teams on the Drafts page", () => {
   const t1 = "00000000-0000-4000-8000-0000000000f1";
   const featureTeam = (name: string, fields: object) => ({
     id: t1,
+    keyNumber: 1,
     name,
     leadId: null,
     colour: null,
@@ -1654,6 +1676,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       { id: "m2", preferredName: "Blake Fictional" },
     ].map((one) => ({
       ...one,
+      keyNumber: 1,
       employeeId: `E-${one.id}`,
       position: "Fictional Engineer",
       teamName: null,

@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What the plan's records share in the API, whatever their kind: their identifier, their draft and
-// who holds it, a name, and optional text.
+// What the plan's records share in the API, whatever their kind: their identifier, key number, their
+// draft and who holds it, a name, and optional text.
 
 import { z } from "zod";
 import { heldBySchema, recordDraftSchema } from "./drafts.ts";
+import { keyNumberSchema } from "./record-keys.ts";
 
 export const recordNameLength = 100;
 
 export const recordShape = {
   id: z.string(),
+  keyNumber: keyNumberSchema,
   draft: recordDraftSchema.optional(),
   heldBy: heldBySchema,
 };

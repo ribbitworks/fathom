@@ -409,7 +409,7 @@ export type MilestoneAdding = MilestoneRequest & { projectId: string };
 // What each kind of the plan's records has in common: what a new one holds until the server has
 // saved it, where they are in the plan, and how each is saved. Requests are built from the kind's
 // own columns, and the server parses them.
-type Blank<Rec> = Omit<Rec, "id" | "draft" | "heldBy">;
+type Blank<Rec> = Omit<Rec, "id" | "keyNumber" | "draft" | "heldBy">;
 
 interface PlanRecordOperations {
   blank:

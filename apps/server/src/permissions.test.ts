@@ -367,6 +367,10 @@ const routes: Route[] = [
     body: () => startingPlanningSettings,
   },
   { method: "GET", pattern: "/api/greeting", needs: allOf("plan:view") },
+  // Any signed-in account may follow a link; what it finds depends on what the role sees, which
+  // the record keys tests cover.
+  { method: "GET", pattern: "/api/go/:kind/:keyNumber", needs: signedIn },
+  { method: "GET", pattern: "/api/go/:key", needs: signedIn },
   {
     method: "GET",
     pattern: "/api/allocations",

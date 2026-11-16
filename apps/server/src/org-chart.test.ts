@@ -920,6 +920,7 @@ describe("planned hires on the chart", () => {
     const shown = await chart();
     expect(shown.get(planned)).toEqual({
       id: planned,
+      keyNumber: expect.any(Number) as unknown,
       preferredName: expect.stringMatching(madeName) as unknown,
       employeeId: null,
       position: "Fictional Engineer",

@@ -67,6 +67,7 @@ const choice = (id: string, label: string, extra: object = {}) => ({
 
 const locations = {
   id: "l1",
+  keyNumber: 1,
   name: "Locations",
   description: "Offices and labs.",
   visibility: "general",
@@ -80,6 +81,7 @@ const locations = {
 };
 const skills = {
   id: "l2",
+  keyNumber: 1,
   name: "Skills",
   description: "",
   visibility: "personal",
@@ -88,6 +90,7 @@ const skills = {
 };
 const empty = {
   id: "l3",
+  keyNumber: 1,
   name: "Empty List",
   description: "",
   visibility: "general",
@@ -96,6 +99,7 @@ const empty = {
 };
 const regions = {
   id: "l4",
+  keyNumber: 1,
   name: "Regions",
   description: "",
   visibility: "confidential",
@@ -2175,6 +2179,7 @@ describe("drafts on the Lists page", () => {
   // choice and a draft of its order.
   const added = {
     id: "l5",
+    keyNumber: 1,
     name: "Teams",
     description: "",
     visibility: "general",
@@ -2723,6 +2728,7 @@ describe("drafts on the Lists page", () => {
         people: [
           {
             id: "p9",
+            keyNumber: 1,
             preferredName: "Casey Fictional",
             employeeId: "E9",
             positionId: "position-1",
@@ -2740,6 +2746,7 @@ describe("drafts on the Lists page", () => {
         fields: [
           {
             id: "f9",
+            keyNumber: 1,
             name: "Team",
             listId: "l5",
             multiple: false,
@@ -3604,6 +3611,7 @@ describe("unpublished and held changes on the Lists page", () => {
 describe("built-in lists and lists with meanings", () => {
   const states = {
     id: "l5",
+    keyNumber: 1,
     name: "Hiring states",
     description: "",
     visibility: "confidential",
@@ -3963,6 +3971,7 @@ describe("built-in lists and lists with meanings", () => {
   it("shows nothing for a meaning the server no longer knows, and a changed meaning's live one under it", async () => {
     const changed = {
       id: "l5",
+      keyNumber: 1,
       name: "Hiring states",
       description: "",
       visibility: "confidential",
@@ -4145,6 +4154,7 @@ describe("the weights of feature sizes", () => {
   });
   const sizes = {
     id: "l6",
+    keyNumber: 1,
     name: "Feature sizes",
     description: "",
     visibility: "general",

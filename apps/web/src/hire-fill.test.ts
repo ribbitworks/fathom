@@ -17,6 +17,7 @@ import {
 const day = "2026-11-08";
 const person = (id: string, details: Partial<Person> = {}): Person => ({
   id,
+  keyNumber: 1,
   preferredName: `Fictional ${id}`,
   employeeId: id,
   values: {},

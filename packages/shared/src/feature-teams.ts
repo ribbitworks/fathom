@@ -17,6 +17,7 @@ import {
   heldBySchema,
 } from "./drafts.ts";
 import { paletteColourSchema } from "./palette.ts";
+import { keyNumberSchema } from "./record-keys.ts";
 
 // At most as many members as a team could hold.
 export const featureTeamLengths = { name: 60, members: 500 } as const;
@@ -51,6 +52,7 @@ export type FeatureTeamDraft = z.infer<typeof featureTeamDraftSchema>;
 // A feature team as the reader sees it, as its draft, if any, makes it, with the draft beside.
 export const featureTeamSchema = z.object({
   id: z.string(),
+  keyNumber: keyNumberSchema,
   name: z.string(),
   leadId: z.string().nullable(),
   // The colour of its cards on the feature team chart; null unless it has one the palette has.

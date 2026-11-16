@@ -9,6 +9,7 @@ import { orgChartSchema } from "./org-chart.ts";
 
 const person = {
   id: "p1",
+  keyNumber: 1,
   preferredName: "Robin Fictional",
   employeeId: "FX-1",
   position: "Fictional Lead",

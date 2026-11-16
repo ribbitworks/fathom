@@ -45,6 +45,7 @@ type Milestone = Project["milestones"][number];
 
 const milestone = (more: Partial<Milestone> = {}): Milestone => ({
   id: milestoneId,
+  keyNumber: 1,
   projectId,
   name: "Fictional Kickoff",
   date: "2030-03-15",
@@ -54,6 +55,7 @@ const milestone = (more: Partial<Milestone> = {}): Milestone => ({
 
 const project = (more: Partial<Project> = {}): Project => ({
   id: projectId,
+  keyNumber: 1,
   name: "Fictional Project",
   externalId: "FP-1",
   ownerId,
@@ -67,6 +69,7 @@ const project = (more: Partial<Project> = {}): Project => ({
 
 const proposal = (more: Partial<Plan["proposals"][number]> = {}) => ({
   id: proposalId,
+  keyNumber: 1,
   name: "Fictional Proposal",
   externalId: null,
   link: null,
@@ -80,6 +83,7 @@ const proposal = (more: Partial<Plan["proposals"][number]> = {}) => ({
 
 const customer = (more: Partial<Plan["customers"][number]> = {}) => ({
   id: customerId,
+  keyNumber: 1,
   name: "Fictional Customer",
   ...more,
 });
@@ -1609,6 +1613,7 @@ describe("the Features page", () => {
       streams: [
         {
           id: streamId,
+          keyNumber: 1,
           name: "Fictional Stream",
           position: 1,
           retired: false,
@@ -1662,6 +1667,7 @@ describe("the Features page", () => {
     });
   const feature = (name: string, targetCycle: string | null) => ({
     id: crypto.randomUUID(),
+    keyNumber: 1,
     name,
     statusId: possibleId,
     priorityId: null,
@@ -3025,6 +3031,7 @@ describe("the Features page", () => {
   describe("added columns", () => {
     const sizes = {
       id: "10000000-0000-4000-8000-0000000000a1",
+      keyNumber: 1,
       name: "Fictional Sizes",
       description: "",
       visibility: "general",
@@ -3041,11 +3048,13 @@ describe("the Features page", () => {
     const hidden = {
       ...sizes,
       id: "10000000-0000-4000-8000-0000000000a2",
+      keyNumber: 1,
       name: "Fictional Hidden",
       visibility: "personal",
     };
     const size = {
       id: "10000000-0000-4000-8000-0000000000c1",
+      keyNumber: 1,
       name: "Fictional Size",
       type: "choice" as const,
       listId: sizes.id,
@@ -3256,6 +3265,7 @@ describe("the Features page", () => {
       const score = {
         ...size,
         id: "10000000-0000-4000-8000-0000000000c3",
+        keyNumber: 1,
         name: "Fictional Points",
         type: "number" as const,
         listId: null,
@@ -3310,6 +3320,7 @@ describe("the Features page", () => {
       const score = {
         ...size,
         id: "10000000-0000-4000-8000-0000000000c2",
+        keyNumber: 1,
         name: "Fictional Score",
         type: "number" as const,
         listId: null,
@@ -3361,6 +3372,7 @@ describe("the Features page", () => {
     const requiredNote = {
       ...size,
       id: "10000000-0000-4000-8000-0000000000c4",
+      keyNumber: 1,
       name: "Fictional Why",
       type: "note" as const,
       listId: null,

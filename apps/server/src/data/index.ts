@@ -65,6 +65,8 @@ import type {
   TeamMonths,
   TimeZoneSetting,
   Unpublished,
+  RecordKeyKind,
+  RecordLookup,
 } from "@fathom/shared";
 import {
   type AllocationChange,
@@ -88,7 +90,6 @@ import {
 import { changeAllocation, readAllocations } from "./allocations.ts";
 import { readGreeting } from "./greeting.ts";
 import * as columnDrafts from "./column-drafts.ts";
-import { readColumnsOut } from "./column-drafts.ts";
 import { readChangeHistory } from "./change-history.ts";
 import { moveFieldClass } from "./data-classes.ts";
 import * as lists from "./lists.ts";
@@ -126,6 +127,16 @@ import {
   readTimeZone,
 } from "./settings.ts";
 import * as views from "./views.ts";
+import {
+  planOrFeatures,
+  readPeopleColumns,
+  seenLists,
+  seenPeople,
+  seenPeopleColumns,
+  seenPlan,
+  seenStreams,
+} from "./page-reads.ts";
+import { createRecordFinders, findKeyedRecord } from "./record-links.ts";
 
 export interface DataAccess {
   // Fails, with a message naming the settings to check, unless the database can be queried.
@@ -145,6 +156,13 @@ export interface DataAccess {
   // Gives the session with this token, which a password change starts, the role the session it
   // replaces acted as.
   keepSessionRole(token: string, roleId: string | null): Promise<void>;
+  // The record a link names by its key, as the page that shows it would to the actor, its removal
+  // to those who may see its history, or nothing.
+  findRecord(
+    actor: Actor,
+    kind: RecordKeyKind,
+    keyNumber: number,
+  ): Promise<RecordLookup>;
   readGreeting(actor: Actor): Promise<string>;
   // Settings for the whole of Fathom, which every signed-in user's screens follow, so reading them
   // checks no permission.
@@ -657,11 +675,7 @@ function editor(actor: Actor): Actor {
 
 function createListAccess(database: Database): ListAccess {
   return {
-    // Lists' choices are also read by those who see People, whose columns draw on them.
-    read: async (actor) => {
-      requireAnyPermission(actor, ["configuration:view", "people:view"]);
-      return lists.readLists(database, actor);
-    },
+    read: async (actor) => seenLists(database, actor),
     create: async (actor, request) => {
       editor(actor);
       return lists.createList(database, actor, request);
@@ -728,9 +742,8 @@ function createReleaseAccess(database: Database): ReleaseAccess {
   const plan = (actor: Actor) => recordEditor(actor, "release");
   return {
     read: async (actor) => {
-      requireAnyPermission(actor, ["features:view", "configuration:view"]);
       return {
-        streams: await releases.readReleaseStreams(database, actor),
+        streams: await seenStreams(database, actor),
         canEditStreams: actor.permissions.includes("configuration:edit"),
         canEditReleases: actor.permissions.includes("features:edit"),
       };
@@ -826,42 +839,12 @@ const planChanges = {
   feature: { add: projectData.addFeature, change: projectData.changeFeature },
 } as const;
 
-// The plan's records, features among them, are read by those who see either, each kind shown only
-// to those who may read it.
-const planOrFeatures = ["plan:view", "features:view"] as const;
-
-// The plan's records a reader may see: features and their columns with features, and the rest with
-// the plan.
-function seenRecords(
-  actor: Actor,
-  records: projectData.PlanRecords,
-): projectData.PlanRecords {
-  const seesPlan = actor.permissions.includes("plan:view");
-  const seesFeatures = actor.permissions.includes("features:view");
-  return {
-    ...records,
-    customers: seesPlan ? records.customers : [],
-    projects: seesPlan ? records.projects : [],
-    proposals: seesPlan ? records.proposals : [],
-    features: seesFeatures ? records.features : [],
-    featureColumns: seesFeatures
-      ? records.featureColumns
-      : { fields: [], order: [], lists: [] },
-  };
-}
-
 function createProjectAccess(database: Database): ProjectAccess {
   return {
-    read: async (actor) => {
-      requireAnyPermission(actor, planOrFeatures);
-      return {
-        ...seenRecords(
-          actor,
-          await projectData.readPlanRecords(database, actor),
-        ),
-        ...planAbilities(actor),
-      };
-    },
+    read: async (actor) => ({
+      ...(await seenPlan(database, actor)),
+      ...planAbilities(actor),
+    }),
     readChoices: async (actor) => {
       requireAnyPermission(actor, planOrFeatures);
       return projectData.readPlanChoices(database);
@@ -970,25 +953,11 @@ function createProjectAccess(database: Database): ProjectAccess {
   };
 }
 
-// The columns as their drafts make them, and their order, as the actor may see them, read as of one
-// moment, so an approval saved meanwhile is seen whole or not at all.
-const readPeopleColumns = (database: Database, actor: Actor) =>
-  database.transaction((transaction) => readColumnsOut(transaction, actor), {
-    isolationLevel: "repeatable read",
-    accessMode: "read only",
-  });
-
 function createPeopleAccess(database: Database): PeopleAccess {
   return {
-    readColumns: async (actor) => {
-      requirePermission(actor, "people:view");
-      return readPeopleColumns(database, actor);
-    },
+    readColumns: async (actor) => seenPeopleColumns(database, actor),
     read: async (actor, on) => {
-      requirePermission(actor, "people:view");
-      const read = await (on === undefined
-        ? peopleData.readPeople(database, actor)
-        : peopleData.readPeopleOn(database, actor, on));
+      const read = await seenPeople(database, actor, on);
       if (read.includedPersonal) {
         await recordPersonalView(
           database,
@@ -1073,6 +1042,7 @@ function createPeopleAccess(database: Database): PeopleAccess {
 }
 
 export function createDataAccess(database: Database): DataAccess {
+  const finders = createRecordFinders(database);
   return {
     async checkConnection() {
       try {
@@ -1086,6 +1056,8 @@ export function createDataAccess(database: Database): DataAccess {
     },
     readActorAccess: (userId, sessionId, rememberedRoleId) =>
       readActorAccess(database, userId, sessionId, rememberedRoleId),
+    findRecord: (actor, kind, keyNumber) =>
+      findKeyedRecord(database, finders, actor, kind, keyNumber),
     switchRole: (actor, sessionId, roleId) =>
       switchRole(database, actor.user.id, sessionId, roleId),
     keepSessionRole: (token, roleId) =>

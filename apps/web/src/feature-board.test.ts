@@ -110,6 +110,7 @@ describe("the columns", () => {
 
 const feature = (more: Partial<Feature> = {}): Feature => ({
   id: crypto.randomUUID(),
+  keyNumber: 1,
   name: "Fictional Feature",
   statusId: "planned",
   priorityId: null,

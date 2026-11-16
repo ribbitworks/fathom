@@ -11,6 +11,7 @@ import { daySchema, monthSchema } from "./days.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { meaningSchema } from "./lists.ts";
 import { linkValueSchema } from "./links.ts";
+import { keyNumberSchema } from "./record-keys.ts";
 import {
   hireNameSchema,
   linksSchema,
@@ -82,6 +83,7 @@ export type HireDraft = z.infer<typeof hireDraftSchema>;
 // draft, if any, makes it, and the draft beside.
 export const hireSchema = z.object({
   id: z.string(),
+  keyNumber: keyNumberSchema,
   name: z.string().nullable(),
   // Exactly one of the two is set: the requisition, or the temporary ID until it has one.
   requisition: z.string().nullable(),

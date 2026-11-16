@@ -34,6 +34,7 @@ const editor = () =>
 
 const score = {
   id: "f1",
+  keyNumber: 1,
   name: "Score",
   type: "number",
   listId: null,
@@ -43,6 +44,7 @@ const score = {
 };
 const personWith = (id: string, name: string, numbers: object) => ({
   id,
+  keyNumber: 1,
   preferredName: name,
   employeeId: id,
   positionId: "position-1",
@@ -55,6 +57,7 @@ const blake = personWith("p2", "Blake Fictional", { f1: -7 });
 const casey = personWith("p3", "Casey Fictional", {});
 const positions = {
   id: "positions",
+  keyNumber: 1,
   name: "Positions",
   description: "",
   visibility: "general",

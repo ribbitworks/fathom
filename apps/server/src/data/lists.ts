@@ -101,6 +101,7 @@ import {
   requireClassify,
   requireMove,
 } from "./data-classes.ts";
+import { type KeyNumbers, keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { isNamedByRecord } from "./records.ts";
 
 type ListRow = typeof lists.$inferSelect;
@@ -200,6 +201,8 @@ export interface ListsState {
     choices: Map<string, Held>;
     orders: Map<string, Held>;
   };
+  // The key numbers of the lists, live and drafted to be added.
+  keys: KeyNumbers;
 }
 
 export async function readState(
@@ -232,6 +235,7 @@ export async function readState(
       choices: await readHeld(reader, "list-item", viewer),
       orders: await readHeld(reader, "choice-order", viewer),
     },
+    keys: await readKeyNumbers(reader, "list"),
   };
 }
 
@@ -944,6 +948,7 @@ export function listsOut(
     return [
       {
         id,
+        keyNumber: keyNumberOf(state.keys, id),
         name: String(list.name),
         description: String(list.description),
         // A tier the server no longer knows is treated as General rather than trusted.

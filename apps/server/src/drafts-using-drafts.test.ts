@@ -187,6 +187,7 @@ describe("the tier of values in a column drafted to be added", () => {
           choiceDrafts: new Map(),
           orderDrafts: new Map(),
           held: { lists: new Map(), choices: new Map(), orders: new Map() },
+          keys: new Map(),
         } satisfies ListsState,
         "missing",
       ),

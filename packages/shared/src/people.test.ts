@@ -129,6 +129,7 @@ describe("notes", () => {
   it("may be left out of a person, their draft, and a request to add them", () => {
     const person = personSchema.parse({
       id: "p1",
+      keyNumber: 1,
       preferredName: "Fictional Person",
       employeeId: "E-1",
       values: {},

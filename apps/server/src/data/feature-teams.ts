@@ -92,6 +92,7 @@ import {
 import { recordEvents } from "./history.ts";
 import { bySubject, inForceOn, inForceOrLater } from "./in-force.ts";
 import { currentOn, noPerson, notStarted } from "./people.ts";
+import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { refuseRemovingNamed } from "./records.ts";
 import { text } from "./reporting.ts";
 import { readToday } from "./settings.ts";
@@ -658,6 +659,7 @@ export async function readFeatureTeams(
         field === "members"
           ? membersOf(team).filter(shown).sort()
           : [team?.leadId].filter(shown);
+      const keys = await readKeyNumbers(transaction, "team");
       const teams = versions.flatMap(
         ({ id, before, teamToday, draft, after, team }): FeatureTeam[] => {
           // A draft changing a team that is not live, as when seed data is removed, makes none.
@@ -674,6 +676,7 @@ export async function readFeatureTeams(
           return [
             {
               id,
+              keyNumber: keyNumberOf(keys, id),
               name: String(team.name),
               leadId: shown(team.leadId) ? team.leadId : null,
               colour: knownColour(live.colours.get(id)),

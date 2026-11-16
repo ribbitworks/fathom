@@ -32,6 +32,7 @@ function role(
 ) {
   return {
     id: `00000000-0000-4000-8000-00000000000${String(id)}`,
+    keyNumber: 1,
     key,
     name,
     description,
@@ -109,6 +110,7 @@ const manager = () =>
 
 const own = {
   id: "10000000-0000-4000-8000-000000000001",
+  keyNumber: 1,
   name: "Fictional Person",
   email: "person@example.test",
   ...holdingRoles(administratorRole),
@@ -117,6 +119,7 @@ const own = {
 };
 const planner = {
   id: "10000000-0000-4000-8000-000000000002",
+  keyNumber: 1,
   name: "Fictional Planner",
   email: "planner@example.test",
   ...holdingRoles(productManagerRole),
@@ -125,6 +128,7 @@ const planner = {
 };
 const former = {
   id: "10000000-0000-4000-8000-000000000003",
+  keyNumber: 1,
   name: "Fictional Former",
   email: "former@example.test",
   ...holdingRoles(teamMemberRole),

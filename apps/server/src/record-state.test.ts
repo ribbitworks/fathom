@@ -35,6 +35,7 @@ const kindState = (
   rows: new Map(live),
   drafts: new Map(drafts),
   held,
+  keys: new Map(),
 });
 
 const recordsState = (parts: Partial<RecordsState>): RecordsState => ({

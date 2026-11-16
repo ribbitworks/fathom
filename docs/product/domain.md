@@ -1,7 +1,7 @@
 # Fathom: Domain Concepts
 
 **Status:** Draft
-**Last updated:** 2026-11-14
+**Last updated:** 2026-11-15
 
 The terms Fathom uses, defined so they fit any software organization, whatever its titles and practices. How an organization works with them, such as who leads what or how often it releases, is its own configuration. See also the [Product Brief](brief.md) and the [Decisions Log](decisions.md).
 
@@ -40,6 +40,7 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 
 ## Table Terms
 
+- **Key:** A record's short name in Fathom, the word for its kind, a hyphen and a number, shown after a #, such as #FEATURE-123, which a link to the record names. It is Fathom's, apart from an organization's own IDs, such as a Project ID.
 - **Retired:** A retired choice or list stays on records that already have it, but is no longer offered for new ones, and can be restored.
 - **View:** What a table shows: its search, filters, sort, grouping, which version of each record it shows, its metrics, which of its first columns are frozen, staying in view while the rest scroll sideways, the order of its columns, which are hidden, the widths set for them, the units and decimal places they are shown in, and any of the page's own choices of which records show, such as Show retired.
 - **Metrics:** Counts of a table's rows shown, broken down by the values of one column, or of two crossed, each with its share of those rows.

@@ -26,6 +26,7 @@ const roleEditor = () =>
 
 const teamMemberRole = {
   id: "00000000-0000-4000-8000-000000000001",
+  keyNumber: 1,
   key: "team-member",
   name: "Team Member",
   description: startingRoles["team-member"].description,
@@ -35,6 +36,7 @@ const teamMemberRole = {
 };
 const auditors = {
   id: "00000000-0000-4000-8000-000000000002",
+  keyNumber: 1,
   key: null,
   name: "Fictional Auditors",
   description: "Checks Personal and Confidential data for audits.",
@@ -46,11 +48,13 @@ const roleList = () => Response.json({ roles: [teamMemberRole, auditors] });
 
 const planner = {
   id: "10000000-0000-4000-8000-000000000002",
+  keyNumber: 1,
   name: "Fictional Planner",
   email: "planner@example.test",
 };
 const self = {
   id: "10000000-0000-4000-8000-000000000001",
+  keyNumber: 1,
   name: "Fictional Person",
   email: "person@example.test",
 };
@@ -1094,6 +1098,7 @@ describe("the permissions that keep access managed", () => {
   };
   const lastAdministrator = {
     id: "10000000-0000-4000-8000-000000000005",
+    keyNumber: 1,
     name: "Fictional Administrator",
     email: "administrator@example.test",
     role: { id: administrators.id, name: administrators.name },

@@ -32,6 +32,7 @@ import { type Actor, requirePermission } from "../access.ts";
 import { ConflictError, NotFoundError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
 import { recordEvent } from "./history.ts";
+import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { keepAccessManaged, lockAccessManagers } from "./roles.ts";
 
 export interface RoleAdministration {
@@ -75,26 +76,27 @@ export function createRoleAdministration(
       .orderBy(asc(roles.name));
     const ids = rows.map((row) => row.id);
     if (ids.length === 0) return [];
-    const [grants, holders] = await Promise.all([
-      reader
-        .select({
-          roleId: rolePermissions.roleId,
-          permission: rolePermissions.permission,
-        })
-        .from(rolePermissions)
-        .where(inArray(rolePermissions.roleId, ids)),
-      reader
-        .select({
-          roleId: userRoles.roleId,
-          accounts: sql<number>`count(*)::int`,
-        })
-        .from(userRoles)
-        .innerJoin(users, eq(users.id, userRoles.userId))
-        .where(and(inArray(userRoles.roleId, ids), isNull(users.deactivatedAt)))
-        .groupBy(userRoles.roleId),
-    ]);
+    // One after another, since a transaction's queries share one connection.
+    const grants = await reader
+      .select({
+        roleId: rolePermissions.roleId,
+        permission: rolePermissions.permission,
+      })
+      .from(rolePermissions)
+      .where(inArray(rolePermissions.roleId, ids));
+    const holders = await reader
+      .select({
+        roleId: userRoles.roleId,
+        accounts: sql<number>`count(*)::int`,
+      })
+      .from(userRoles)
+      .innerJoin(users, eq(users.id, userRoles.userId))
+      .where(and(inArray(userRoles.roleId, ids), isNull(users.deactivatedAt)))
+      .groupBy(userRoles.roleId);
+    const keys = await readKeyNumbers(reader, "role", ids);
     return rows.map((row) => ({
       ...row,
+      keyNumber: keyNumberOf(keys, row.id),
       updatedAt: row.updatedAt.toISOString(),
       permissions: known(
         grants

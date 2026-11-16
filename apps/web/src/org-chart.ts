@@ -56,6 +56,8 @@ const liveLineHeight = 18;
 // manager they report to now, and a drafted position or team name is drawn with the live one under
 // it.
 export interface ChartPerson extends OrgChartPerson {
+  // Set on a feature team's own card, drawn while it has no lead, whose key number is its team's.
+  keyKind?: "team";
   // On the copy under the live manager: the person it is a copy of. A copy has no Employee ID, so
   // it opens nothing, and leads no team.
   liveCopyOf?: string;

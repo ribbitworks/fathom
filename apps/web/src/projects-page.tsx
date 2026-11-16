@@ -71,6 +71,7 @@ import {
   draftSentAgain,
   noDrafts,
   pendingDraft,
+  unsavedKeyNumber,
   type DraftSelection,
 } from "./drafts.ts";
 import { Icon } from "./icons.tsx";
@@ -215,6 +216,7 @@ function adding(
     ...request,
     ...("values" in blank ? withCellChange(blank, request) : {}),
     id,
+    keyNumber: unsavedKeyNumber,
     draft: { ...pendingDraft("created", {}), uses: [] },
   };
 }

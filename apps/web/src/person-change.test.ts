@@ -10,6 +10,7 @@ const day = "2025-01-01";
 
 const live = (details: Partial<Person> = {}): Person => ({
   id: "3",
+  keyNumber: 1,
   preferredName: "Uma Fictional",
   employeeId: "E3",
   values: {},

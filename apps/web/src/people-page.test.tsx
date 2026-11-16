@@ -80,6 +80,7 @@ const list = (
   retired = false,
 ) => ({
   id,
+  keyNumber: 1,
   name,
   description: "",
   visibility: "general",
@@ -134,6 +135,7 @@ const states = {
 
 const site = {
   id: "f1",
+  keyNumber: 1,
   name: "Site",
   listId: "l1",
   multiple: false,
@@ -141,6 +143,7 @@ const site = {
 };
 const role = {
   id: "f2",
+  keyNumber: 1,
   name: "Role on team",
   listId: "l2",
   multiple: true,
@@ -148,6 +151,7 @@ const role = {
 };
 const avery = {
   id: "p1",
+  keyNumber: 1,
   preferredName: "Avery Fictional",
   employeeId: "E1",
   positionId: "position-1",
@@ -157,6 +161,7 @@ const avery = {
 };
 const blake = {
   id: "p2",
+  keyNumber: 1,
   preferredName: "Blake Fictional",
   employeeId: "E2",
   positionId: "position-1",
@@ -754,6 +759,7 @@ describe("adding people", () => {
     const casey = {
       ...avery,
       id: "p9",
+      keyNumber: 1,
       preferredName: "Casey",
       employeeId: "E9",
       positionId: "position-1",
@@ -1202,6 +1208,7 @@ describe("drafts", () => {
             {
               ...blake,
               id: "p3",
+              keyNumber: 1,
               preferredName: "Casey Fictional",
               employeeId: "E3",
               positionId: "position-1",
@@ -1310,6 +1317,7 @@ describe("drafts", () => {
             {
               ...blake,
               id: "p3",
+              keyNumber: 1,
               preferredName: "Casey Fictional",
               employeeId: "E3",
               positionId: "position-1",
@@ -2120,6 +2128,7 @@ describe("searching, sorting, and filtering", () => {
               {
                 ...blake,
                 id: "p9",
+                keyNumber: 1,
                 preferredName: "Casey Fictional",
                 employeeId: "E9",
                 positionId: "position-1",
@@ -2324,6 +2333,7 @@ describe("searching, sorting, and filtering", () => {
             {
               ...blake,
               id: "p3",
+              keyNumber: 1,
               preferredName: "Casey Fictional",
               employeeId: "E3",
               positionId: "position-1",
@@ -2443,6 +2453,7 @@ describe("searching, sorting, and filtering", () => {
             {
               ...blake,
               id: "p3",
+              keyNumber: 1,
               preferredName: "Casey Fictional",
               employeeId: "E3",
               positionId: "position-1",
@@ -3390,6 +3401,7 @@ describe("drafts of columns", () => {
   };
   const added = {
     id: "f3",
+    keyNumber: 1,
     name: "Previous site",
     listId: "l1",
     multiple: false,
@@ -3990,6 +4002,7 @@ describe("planned hires", () => {
   };
   const opening = {
     id: "h1",
+    keyNumber: 1,
     kind: "planned-hire",
     preferredName: "",
     employeeId: "REQ-1",
@@ -4003,6 +4016,7 @@ describe("planned hires", () => {
   };
   const drafted = {
     id: "h2",
+    keyNumber: 1,
     kind: "planned-hire",
     preferredName: "Fictional hire",
     employeeId: "TBD-2",
@@ -4258,6 +4272,7 @@ describe("adding from New", () => {
   const casey = {
     ...avery,
     id: "p9",
+    keyNumber: 1,
     preferredName: "Casey Fictional",
     employeeId: "E9",
     stateId: "s-hired",

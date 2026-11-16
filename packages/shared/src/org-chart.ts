@@ -15,6 +15,7 @@ import { z } from "zod";
 import { daySchema, monthSchema } from "./days.ts";
 import { draftStateSchema, heldBySchema } from "./drafts.ts";
 import { paletteColourSchema } from "./palette.ts";
+import { keyNumberSchema } from "./record-keys.ts";
 
 // What a person's draft changes on the chart, as the reader may see it: their manager, or none,
 // their position, by its label, and the name of the team they lead, or none, each left out when the
@@ -36,6 +37,7 @@ export type OrgChartDraft = z.infer<typeof orgChartDraftSchema>;
 // its manager, a person or a planned manager. A placeholder opens nothing and leads no named team.
 export const orgChartPersonSchema = z.object({
   id: z.string(),
+  keyNumber: keyNumberSchema,
   preferredName: z.string(),
   // Null for a manager who has left, to readers who do not see Personal details, and for everyone
   // to readers who do not see people.

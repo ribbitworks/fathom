@@ -46,12 +46,11 @@ import {
   discardRecordDraft,
   drafting,
   keptNote,
-  kindOf,
   type Makers,
   readRecordMakers,
   readRecordsState,
-  recordDraftOut,
-  recordHeldBy,
+  recordExtras,
+  recordKeyNumber,
   saveRecordDraft,
   saveRecordDrafts,
   type Wanted,
@@ -86,19 +85,6 @@ function inStream(
     );
 }
 
-const extras = (
-  state: RecordsState,
-  makers: Makers,
-  type: RecordType,
-  id: string,
-) => {
-  const draft = recordDraftOut(kindOf(type), state, makers, id);
-  return {
-    ...(draft === undefined ? {} : { draft }),
-    ...recordHeldBy(state, type, id),
-  };
-};
-
 function streamOut(
   state: RecordsState,
   makers: Makers,
@@ -112,19 +98,20 @@ function streamOut(
       length: Number(record.length),
       unit: record.unit === "weeks" ? "weeks" : "months",
       naming: String(record.naming),
-      ...extras(state, makers, "cycle-pattern", patternId),
+      ...recordExtras(state, makers, "cycle-pattern", patternId),
     }),
   );
   const releases = inStream(state, "release", id, "firstCycle").map(
     ({ id: releaseId, record }): Release => ({
       id: releaseId,
+      keyNumber: recordKeyNumber(state, "release", releaseId),
       name: String(record.name),
       firstCycle: String(record.firstCycle),
       lastCycle: String(record.lastCycle),
       shipsOn: typeof record.shipsOn === "string" ? record.shipsOn : null,
       colour: knownColour(record.colour),
       note: typeof record.note === "string" ? record.note : null,
-      ...extras(state, makers, "release", releaseId),
+      ...recordExtras(state, makers, "release", releaseId),
     }),
   );
   const span = spanOf(stream);
@@ -143,6 +130,7 @@ function streamOut(
   );
   return {
     id,
+    keyNumber: recordKeyNumber(state, "release-stream", id),
     name: String(stream.name),
     retired: stream.retired === true,
     ...span,
@@ -152,7 +140,7 @@ function streamOut(
       ? {}
       : { liveCycles }),
     releases,
-    ...extras(state, makers, "release-stream", id),
+    ...recordExtras(state, makers, "release-stream", id),
   };
 }
 

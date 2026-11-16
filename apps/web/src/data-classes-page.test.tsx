@@ -37,6 +37,7 @@ const session =
 
 const field = (id: string, name: string, extra: object) => ({
   id,
+  keyNumber: 1,
   name,
   type: "link",
   listId: null,
@@ -48,6 +49,7 @@ const field = (id: string, name: string, extra: object) => ({
 
 const sites = {
   id: "l1",
+  keyNumber: 1,
   name: "Sites",
   description: "",
   visibility: "general",

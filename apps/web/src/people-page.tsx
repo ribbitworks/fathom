@@ -61,6 +61,7 @@ import { useNarrow } from "./side-panel.tsx";
 import {
   draftSentAgain,
   pendingDraft,
+  unsavedKeyNumber,
   type Decision,
   decisionFor,
 } from "./drafts.ts";
@@ -130,6 +131,7 @@ function adding(id: string, request: RowRequest): Person {
   const { values, links, notes, numbers, ...details } = request;
   return {
     id,
+    keyNumber: unsavedKeyNumber,
     ...details,
     values,
     links: kept(links),

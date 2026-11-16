@@ -9,6 +9,7 @@ import { liveLists } from "./lists.ts";
 
 const listIn = (live: string[], drafted: string[]): List => ({
   id: "l1",
+  keyNumber: 1,
   name: "Levels",
   description: "",
   visibility: "general",
@@ -56,6 +57,7 @@ const waiting = { state: "waiting" as const, madeBy: null, madeAt: null };
 
 const plain = (id: string, more: Partial<List> = {}): List => ({
   id,
+  keyNumber: 1,
   name: `List ${id}`,
   description: "",
   visibility: "general",

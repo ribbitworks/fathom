@@ -5,6 +5,7 @@
 // is never refused by the server.
 
 import { z } from "zod";
+import { keyNumberSchema } from "./record-keys.ts";
 import { isPlainText } from "./text.ts";
 
 // The bounds of every password: the rules an organization sets in Settings may ask for more than the
@@ -44,6 +45,7 @@ export type AccountRole = z.infer<typeof accountRoleSchema>;
 
 export const accountSchema = z.object({
   id: z.uuid(),
+  keyNumber: keyNumberSchema,
   name: z.string(),
   email: z.string(),
   // The account's default role, which it signs in as the first time; null only for an account

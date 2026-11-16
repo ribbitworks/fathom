@@ -47,6 +47,7 @@ const streams: ReleaseStreams = {
   streams: [
     {
       id: "s1",
+      keyNumber: 1,
       name: "Fictional Majors",
       retired: false,
       cyclesUntil: "2028-12-31",
@@ -77,6 +78,7 @@ const streams: ReleaseStreams = {
       releases: [
         {
           id: "r1",
+          keyNumber: 1,
           name: "Fictional One",
           firstCycle: "2027-01-01",
           lastCycle: "2027-04-01",
@@ -1607,6 +1609,7 @@ describe("drafts in a stream's panel", () => {
             features: [
               {
                 id: featureId,
+                keyNumber: 1,
                 name: "Fictional Moving",
                 statusId: "s1",
                 priorityId: null,

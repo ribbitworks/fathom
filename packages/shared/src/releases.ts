@@ -16,6 +16,7 @@ import {
 import { daySchema } from "./days.ts";
 import { heldBySchema, recordDraftSchema } from "./drafts.ts";
 import { paletteColourSchema } from "./palette.ts";
+import { keyNumberSchema } from "./record-keys.ts";
 
 export const releaseLengths = {
   name: 40,
@@ -61,6 +62,7 @@ export type CyclePattern = z.infer<typeof cyclePatternSchema>;
 
 export const releaseSchema = z.object({
   id: z.string(),
+  keyNumber: keyNumberSchema,
   name: z.string(),
   // The days the release's first and last cycles start.
   firstCycle: z.string(),
@@ -82,6 +84,7 @@ export type Release = z.infer<typeof releaseSchema>;
 // record shows it as it is.
 export const releaseStreamSchema = z.object({
   id: z.string(),
+  keyNumber: keyNumberSchema,
   name: z.string(),
   retired: z.boolean(),
   // While the stream keeps going, its cycles are those starting on or before it.

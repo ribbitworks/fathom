@@ -27,6 +27,7 @@ import { testTheme } from "./test-support.tsx";
 
 const site: Field = {
   id: "f1",
+  keyNumber: 1,
   name: "Site",
   type: "choice" as const,
   listId: "l1",
@@ -38,6 +39,7 @@ const site: Field = {
 // The built-in Positions list, with the one position the people below have.
 const positions: List = {
   id: "positions",
+  keyNumber: 1,
   name: "Positions",
   description: "",
   visibility: "general",
@@ -54,6 +56,7 @@ const positions: List = {
 };
 const sites: List = {
   id: "l1",
+  keyNumber: 1,
   name: "Sites",
   description: "",
   visibility: "general",
@@ -93,6 +96,7 @@ describe("the order of the columns", () => {
     expect(
       position?.value({
         id: "p9",
+        keyNumber: 1,
         preferredName: "Fictional Person",
         employeeId: "E9",
         isManager: false,
@@ -146,6 +150,7 @@ const actions = {
 describe("how wide each column is", () => {
   const person = (id: string, preferredName: string): Person => ({
     id,
+    keyNumber: 1,
     preferredName,
     employeeId: "E1",
     positionId: "position-1",
@@ -233,6 +238,7 @@ describe("how wide each column is", () => {
         [
           {
             id: "f1",
+            keyNumber: 1,
             name: "Score",
             type: "number",
             listId: null,
@@ -349,6 +355,7 @@ describe("the live people", () => {
   };
   const person = (id: string, more: Partial<Person> = {}): Person => ({
     id,
+    keyNumber: 1,
     preferredName: `Fictional ${id}`,
     employeeId: id,
     positionId: "position-1",
@@ -396,6 +403,7 @@ describe("the live links", () => {
     const [person] = livePeople([
       {
         id: "p1",
+        keyNumber: 1,
         preferredName: "Fictional p1",
         employeeId: "p1",
         positionId: "position-1",
@@ -428,6 +436,7 @@ describe("adding someone with an Employee ID already taken", () => {
           people={[
             {
               id: "p1",
+              keyNumber: 1,
               preferredName: "Jo Fictional",
               employeeId: "E1",
               positionId: "position-1",
@@ -488,6 +497,7 @@ describe("a start date after the end date", () => {
           people={[
             {
               id: "p1",
+              keyNumber: 1,
               preferredName: "Jo Fictional",
               employeeId: "E1",
               positionId: "position-1",
@@ -525,6 +535,7 @@ describe("a start date after the end date", () => {
 describe("managers and teams", () => {
   const person = (id: string, more: Partial<Person> = {}): Person => ({
     id,
+    keyNumber: 1,
     preferredName: `Fictional ${id}`,
     employeeId: id,
     positionId: "position-1",
@@ -1386,6 +1397,7 @@ describe("managers and teams", () => {
 describe("planned hires beside people", () => {
   const states: List = {
     id: "states",
+    keyNumber: 1,
     name: "Hiring states",
     description: "",
     visibility: "general",
@@ -1418,6 +1430,7 @@ describe("planned hires beside people", () => {
   const rows: Person[] = [
     {
       id: "p1",
+      keyNumber: 1,
       preferredName: "Avery Fictional",
       employeeId: "E1",
       positionId: "position-1",
@@ -1427,6 +1440,7 @@ describe("planned hires beside people", () => {
     },
     {
       id: "h1",
+      keyNumber: 1,
       kind: "planned-hire",
       preferredName: "",
       employeeId: "TBD-1",
@@ -1697,6 +1711,7 @@ describe("the buttons over a Name cell", () => {
 describe("people as the Draft menu shows them", () => {
   const someone = (id: string, details: Partial<Person> = {}): Person => ({
     id,
+    keyNumber: 1,
     preferredName: `Fictional ${id}`,
     employeeId: `E${id}`,
     values: {},

@@ -57,6 +57,7 @@ export function bodyOf(
 export const fictionalUser = {
   user: {
     id: "10000000-0000-4000-8000-000000000001",
+    keyNumber: 1,
     name: "Fictional Person",
     email: "person@example.test",
   },
@@ -185,6 +186,7 @@ export const fictionalPattern = (
 
 export const fictionalRelease = (fields: Partial<Release> = {}): Release => ({
   id: "30000000-0000-4000-8000-000000000001",
+  keyNumber: 1,
   name: "Fictional One",
   firstCycle: "2027-01-01",
   lastCycle: "2027-01-01",
@@ -217,6 +219,7 @@ export const fictionalStream = (
   fields: Partial<ReleaseStream> = {},
 ): ReleaseStream => ({
   id: streamId,
+  keyNumber: 1,
   name: "Fictional Majors",
   retired: false,
   cyclesUntil: "2027-12-31",

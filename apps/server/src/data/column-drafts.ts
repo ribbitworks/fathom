@@ -81,6 +81,7 @@ import {
   unpublishedMark,
   unseenDetails,
 } from "./lists.ts";
+import { keyNumberOf, readKeyNumber, readKeyNumbers } from "./record-keys.ts";
 import { type FieldRow, readBuiltInTiers } from "./values.ts";
 
 type Reader = Pick<Database, "select">;
@@ -269,10 +270,15 @@ export const columnRow = (id: string, field: Recorded): FieldRow => ({
   onPlannedHires: field.onPlannedHires === true,
 });
 
-export const toFieldOut = (id: string, field: Recorded): Field => {
+export const toFieldOut = (
+  id: string,
+  keyNumber: number,
+  field: Recorded,
+): Field => {
   const { type, listId, visibility, multiple } = typeOf(field).settings(field);
   return {
     id,
+    keyNumber,
     name: String(field.name),
     type,
     listId,
@@ -405,7 +411,14 @@ export async function createField(
       undefined,
       field,
     );
-    return { result: toFieldOut(id, field), changeSetId };
+    return {
+      result: toFieldOut(
+        id,
+        await readKeyNumber(transaction, "column", id),
+        field,
+      ),
+      changeSetId,
+    };
   });
 }
 
@@ -480,7 +493,14 @@ async function changeField(
     field,
     after,
   );
-  return { result: toFieldOut(id, after), changeSetId };
+  return {
+    result: toFieldOut(
+      id,
+      await readKeyNumber(transaction, "column", id),
+      after,
+    ),
+    changeSetId,
+  };
 }
 
 export const columnMoved = (name: unknown) => `the ${String(name)} column`;
@@ -804,6 +824,7 @@ export async function readColumnsOut(
     ...addedFields(state, tableName),
   ];
   const makers = await draftMakers(reader, "field", ids, everything, actor);
+  const keys = await readKeyNumbers(reader, "column", ids);
   const shown = ids.flatMap((id): Field[] => {
     const live = state.fields.get(id);
     const draft = state.fieldDrafts.get(id);
@@ -819,7 +840,7 @@ export async function readColumnsOut(
     }
     return [
       {
-        ...toFieldOut(id, field),
+        ...toFieldOut(id, keyNumberOf(keys, id), field),
         ...(draft === undefined
           ? {}
           : { draft: draftOut(live, draft, makers.get(id)) }),

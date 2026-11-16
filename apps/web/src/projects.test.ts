@@ -28,6 +28,7 @@ const otherId = "a0000000-0000-4000-8000-000000000002";
 
 const namer = (id: string, featureIds: string[]) => ({
   id,
+  keyNumber: 1,
   name: `Fictional ${id}`,
   externalId: null,
   ownerId: null,
@@ -85,6 +86,7 @@ describe("a change to a feature", () => {
     });
     const feature = {
       id: featureId,
+      keyNumber: 1,
       name: "Fictional Feature",
       statusId: "possible",
       priorityId: null,

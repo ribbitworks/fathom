@@ -321,6 +321,26 @@ export {
   webAddress,
 } from "./links.ts";
 export {
+  draftKeyKinds,
+  keyMark,
+  keyNumberSchema,
+  type ParsedRecordKey,
+  parseRecordKey,
+  parseRecordLink,
+  recordKey,
+  type RecordKeyKind,
+  recordKeyKinds,
+  recordKeyKindSchema,
+  recordLinkPath,
+  shownRecordKey,
+} from "./record-keys.ts";
+export {
+  type FoundRecord,
+  type RecordLookup,
+  recordLookupSchema,
+  recordPage,
+} from "./record-links.ts";
+export {
   type CycleLengthRequest,
   cycleLengthRequestSchema,
   type CyclePattern,
@@ -431,6 +451,7 @@ export {
   fieldDraftSchema,
   type FieldRequest,
   type ColumnTable,
+  columnTables,
   columnTablePolicies,
   fieldRequestSchema,
   fieldSchema,

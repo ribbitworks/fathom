@@ -28,6 +28,7 @@ const person = (
   details: Partial<OrgChartPerson> = {},
 ): OrgChartPerson => ({
   id,
+  keyNumber: 1,
   preferredName,
   employeeId: `E-${id}`,
   position: "Fictional Engineer",
@@ -57,6 +58,7 @@ const people = [
 
 const team = (fields: Partial<FeatureTeam> = {}): FeatureTeam => ({
   id: "t1",
+  keyNumber: 1,
   name: "Fictional Lighthouse",
   leadId: "m1",
   colour: null,

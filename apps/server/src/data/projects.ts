@@ -86,13 +86,12 @@ import {
   discardRecordDraft,
   drafting,
   keptNote,
-  kindOf,
   type Makers,
   readRecordMakers,
   readRecordsState,
-  recordDraftOut,
   type RecordDraftOut,
-  recordHeldBy,
+  recordExtras,
+  recordKeyNumber,
   saveRecordDraft,
   saveRecordDrafts,
   type Wanted,
@@ -100,19 +99,6 @@ import {
 import { readToday } from "./settings.ts";
 
 export type PlanRecords = Omit<ProjectPlan, "canEdit" | "canEditFeatures">;
-
-const extras = (
-  state: RecordsState,
-  makers: Makers,
-  type: RecordType,
-  id: string,
-) => {
-  const draft = recordDraftOut(kindOf(type), state, makers, id);
-  return {
-    ...(draft === undefined ? {} : { draft }),
-    ...recordHeldBy(state, type, id),
-  };
-};
 
 // A draft of a feature, naming its added columns as a person's draft does.
 function featureDraftOf(draft: RecordDraftOut): FeatureDraft {
@@ -209,11 +195,12 @@ function milestoneOut(
   const milestone = shownVersion(state, "milestone", id) as Recorded;
   return {
     id,
+    keyNumber: recordKeyNumber(state, "milestone", id),
     projectId: String(milestone.projectId),
     name: String(milestone.name),
     date: String(milestone.date),
     customerDelivery: milestone.customerDelivery === true,
-    ...extras(state, makers, "milestone", id),
+    ...recordExtras(state, makers, "milestone", id),
   };
 }
 
@@ -243,6 +230,7 @@ function projectOut(
   const liveDates = projectDates(live, today);
   return {
     id,
+    keyNumber: recordKeyNumber(state, "project", id),
     name: String(project.name),
     externalId: text(project.externalId),
     ownerId: text(project.ownerId),
@@ -256,7 +244,7 @@ function projectOut(
       ),
     dates,
     ...(sameDates(dates, liveDates) ? {} : { liveDates }),
-    ...extras(state, makers, "project", id),
+    ...recordExtras(state, makers, "project", id),
   };
 }
 
@@ -272,6 +260,7 @@ function proposalOut(
   const proposal = shownVersion(state, "proposal", id) as Recorded;
   return {
     id,
+    keyNumber: recordKeyNumber(state, "proposal", id),
     name: String(proposal.name),
     externalId: text(proposal.externalId),
     link: text(proposal.link),
@@ -280,7 +269,7 @@ function proposalOut(
     statusId: String(proposal.statusId),
     featureIds: linkedIds(proposal, "featureIds"),
     removalReasons: reasonsOf(proposal),
-    ...extras(state, makers, "proposal", id),
+    ...recordExtras(state, makers, "proposal", id),
   };
 }
 
@@ -291,9 +280,10 @@ function featureOut(
   id: string,
 ): Feature {
   const feature = shownVersion(state, "feature", id) as Recorded;
-  const { draft, ...heldBy } = extras(state, makers, "feature", id);
+  const { draft, ...heldBy } = recordExtras(state, makers, "feature", id);
   return {
     id,
+    keyNumber: recordKeyNumber(state, "feature", id),
     name: String(feature.name),
     statusId: String(feature.statusId),
     priorityId: text(feature.priorityId),
@@ -330,8 +320,9 @@ async function planOut(
   return {
     customers: inOrder(state, "customer").map((id): Customer => ({
       id,
+      keyNumber: recordKeyNumber(state, "customer", id),
       name: String(shownVersion(state, "customer", id)?.name),
-      ...extras(state, makers, "customer", id),
+      ...recordExtras(state, makers, "customer", id),
     })),
     projects: inOrder(state, "project").map((id) =>
       projectOut(state, makers, id, today),

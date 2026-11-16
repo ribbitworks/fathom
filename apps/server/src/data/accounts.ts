@@ -12,6 +12,7 @@
 import {
   accounts,
   type Database,
+  recordKeys,
   roles as roleTable,
   userRoles,
   users,
@@ -56,7 +57,10 @@ async function findRoles(
   database: Pick<Database, "select">,
   roleIds: readonly string[],
 ): Promise<AccountRole[]> {
-  return byName(await Promise.all(roleIds.map((id) => findRole(database, id))));
+  // One after another, since a transaction's queries share one connection.
+  const found: AccountRole[] = [];
+  for (const id of roleIds) found.push(await findRole(database, id));
+  return byName(found);
 }
 
 // What the access history records of an account's roles: the default's name, and every role's.
@@ -355,6 +359,18 @@ export interface AccountAdministration {
   renameSelf(actor: Actor, name: string): Promise<void>;
 }
 
+// Whether an account exists, deactivated or not.
+export async function accountExists(
+  database: Pick<Database, "select">,
+  id: string,
+): Promise<boolean> {
+  const [account] = await database
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.id, id));
+  return account !== undefined;
+}
+
 export function createAccountAdministration(
   database: Database,
   auth: Auth,
@@ -377,10 +393,15 @@ export function createAccountAdministration(
         id: users.id,
         name: users.name,
         email: users.email,
+        keyNumber: recordKeys.keyNumber,
         deactivatedAt: users.deactivatedAt,
         createdAt: users.createdAt,
       })
       .from(users)
+      .innerJoin(
+        recordKeys,
+        and(eq(recordKeys.kind, "account"), eq(recordKeys.recordId, users.id)),
+      )
       .where(eq(users.id, userId));
     if (user === undefined) throw new NotFoundError("There is no such account");
     const { roles, defaultRoleId } = await readRoles(reader, userId);

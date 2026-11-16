@@ -16,6 +16,7 @@ import {
 
 const person = (id: string, preferredName: string): OrgChartPerson => ({
   id,
+  keyNumber: 1,
   preferredName,
   employeeId: `E-${id}`,
   position: "Fictional Engineer",
@@ -33,6 +34,7 @@ const everyone = [
 
 const team = (fields: Partial<FeatureTeam> = {}): FeatureTeam => ({
   id: "t1",
+  keyNumber: 1,
   name: "Fictional Harbour",
   leadId: "lead",
   colour: "grape",
@@ -134,6 +136,8 @@ describe("feature teams on the chart", () => {
     );
     expect(own).toEqual({
       id: teamCardId("t1"),
+      keyNumber: 1,
+      keyKind: "team",
       preferredName: "Fictional Harbour",
       employeeId: null,
       position: "No feature lead",

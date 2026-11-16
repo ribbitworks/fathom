@@ -14,6 +14,7 @@ import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { type Link, linkValueSchema } from "./links.ts";
 import { listLengths } from "./lists.ts";
 import { numberValueSchema } from "./numbers.ts";
+import { keyNumberSchema } from "./record-keys.ts";
 
 export const personLengths = {
   preferredName: 100,
@@ -58,6 +59,7 @@ export type FieldDraft = z.infer<typeof fieldDraftSchema>;
 // hires too unless it is switched off for them, and is never required on them.
 export const fieldSchema = z.object({
   id: z.string(),
+  keyNumber: keyNumberSchema,
   name: z.string(),
   type: fieldTypeSchema.default("choice"),
   // Null for a web link or note column.
@@ -164,6 +166,8 @@ export type RowKind = z.infer<typeof rowKindSchema>;
 // target date its start date.
 export const personSchema = z.object({
   id: z.string(),
+  // A person's key number, or a planned hire's for its row.
+  keyNumber: keyNumberSchema,
   // Left out for a person.
   kind: rowKindSchema.optional(),
   preferredName: z.string(),
@@ -317,7 +321,9 @@ const heldAlone = {
 };
 
 // The tables that can have columns added.
-export type ColumnTable = "people" | "features";
+export const columnTables = ["people", "features"] as const;
+
+export type ColumnTable = (typeof columnTables)[number];
 
 // What sets each table apart: its name, what reading it needs, whether planned hires are offered
 // its added columns, whether they must be General, and what removing one needs besides changing

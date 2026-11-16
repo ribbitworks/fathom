@@ -10,6 +10,7 @@ import { addedNames, personOnly, rowName } from "./people-rows.ts";
 
 const positions: List = {
   id: "positions",
+  keyNumber: 1,
   name: "Positions",
   description: "",
   visibility: "general",
@@ -26,6 +27,7 @@ const positions: List = {
 };
 const hire: Person = {
   id: "h1",
+  keyNumber: 1,
   kind: "planned-hire",
   preferredName: "",
   employeeId: "TBD-7",

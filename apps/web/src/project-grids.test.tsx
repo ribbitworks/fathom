@@ -72,6 +72,7 @@ const choices = (more: Partial<TableChoices> = {}): TableChoices => ({
 
 const feature = (more: Partial<Feature> = {}): Feature => ({
   id: "f1",
+  keyNumber: 1,
   name: "Fictional Feature",
   statusId: "planned",
   priorityId: null,
@@ -426,6 +427,7 @@ describe("a column of features picked", () => {
   };
   const proposal = (featureIds: string[]) => ({
     id: "p1",
+    keyNumber: 1,
     name: "Proposal",
     externalId: null,
     link: null,
@@ -457,6 +459,7 @@ describe("the columns' values", () => {
   };
   const proposal = {
     id: "p1",
+    keyNumber: 1,
     name: "Proposal",
     externalId: null,
     ownerId: null,
@@ -487,6 +490,7 @@ describe("the columns' values", () => {
     expect(
       milestoneColumn("customerDelivery").value({
         id: "m1",
+        keyNumber: 1,
         projectId: "p1",
         name: "One",
         date: "2030-01-01",
@@ -496,6 +500,7 @@ describe("the columns' values", () => {
     expect(
       milestoneColumn("customerDelivery").value({
         id: "m1",
+        keyNumber: 1,
         projectId: "p1",
         name: "One",
         date: "2030-01-01",
@@ -523,6 +528,7 @@ describe("the records a draft uses", () => {
       customers: [
         {
           id: "c",
+          keyNumber: 1,
           name: "Fictional Customer",
           draft: recordDraft({ action: "created" }),
         },
@@ -546,6 +552,7 @@ describe("what a draft changes, in words", () => {
         "customer",
         {
           id: "c",
+          keyNumber: 1,
           name: "After",
           draft: recordDraft({ changed: ["name"], live: { name: "Before" } }),
         },
@@ -572,6 +579,7 @@ describe("what a draft changes, in words", () => {
         "milestone",
         {
           id: "m1",
+          keyNumber: 1,
           projectId: "p1",
           name: "One",
           date: "2030-01-01",
@@ -594,6 +602,7 @@ describe("what a draft changes, in words", () => {
         "project",
         {
           id: "p1",
+          keyNumber: 1,
           name: "One",
           externalId: null,
           ownerId: "o1",
@@ -619,6 +628,7 @@ describe("what a draft changes, in words", () => {
         "proposal",
         {
           id: "p1",
+          keyNumber: 1,
           name: "One",
           externalId: null,
           link: "https://example.test/new",
@@ -645,7 +655,12 @@ describe("what a draft changes, in words", () => {
     expect(
       planDraftFields(
         "customer",
-        { id: "c1", name: "New", draft: draft(["name"], { name: "Old" }) },
+        {
+          id: "c1",
+          keyNumber: 1,
+          name: "New",
+          draft: draft(["name"], { name: "Old" }),
+        },
         given,
       ),
     ).toEqual([
@@ -659,6 +674,7 @@ describe("what a draft changes, in words", () => {
         "milestone",
         {
           id: "m1",
+          keyNumber: 1,
           projectId: "p1",
           name: "One",
           date: "2030-01-01",
@@ -671,7 +687,7 @@ describe("what a draft changes, in words", () => {
   });
 
   it("says nothing for a record without a draft, or one added", () => {
-    const customer = { id: "c1", name: "One" };
+    const customer = { id: "c1", keyNumber: 1, name: "One" };
     expect(planDraftFields("customer", customer, given)).toEqual([]);
     expect(
       planDraftFields(
@@ -723,6 +739,7 @@ describe("a month cell", () => {
 describe("columns added to Features", () => {
   const sizes = {
     id: "sizes",
+    keyNumber: 1,
     name: "Fictional Sizes",
     description: "",
     visibility: "general" as const,
@@ -731,6 +748,7 @@ describe("columns added to Features", () => {
   };
   const size = {
     id: "size",
+    keyNumber: 1,
     name: "Fictional Size",
     type: "choice" as const,
     listId: "sizes",
@@ -742,6 +760,7 @@ describe("columns added to Features", () => {
   const score = {
     ...size,
     id: "score",
+    keyNumber: 1,
     name: "Fictional Score",
     type: "number" as const,
     listId: null,

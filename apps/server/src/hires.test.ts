@@ -221,6 +221,7 @@ const placeholderKeys = [
   "expected",
   "id",
   "isManager",
+  "keyNumber",
   "links",
   "managerId",
   "managerName",

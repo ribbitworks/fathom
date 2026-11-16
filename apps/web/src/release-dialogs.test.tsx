@@ -977,6 +977,7 @@ describe("the dialog changing one cycle's length", () => {
   it("names the features that move with their cycles", async () => {
     const featureOf = (name: string, more: object) => ({
       id: name,
+      keyNumber: 1,
       name,
       statusId: "s1",
       priorityId: null,

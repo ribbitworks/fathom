@@ -60,6 +60,7 @@ import {
   readTeams,
   text,
 } from "./reporting.ts";
+import { type KeyNumbers, keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { readToday } from "./settings.ts";
 import { builtInTier, choiceLabels } from "./values.ts";
 
@@ -107,6 +108,8 @@ interface Reader {
   seesPersonal: boolean;
   seesPositions: boolean;
   today: string;
+  // The key numbers of people and planned hires, by identifier.
+  keys: KeyNumbers;
 }
 
 // The chart the records give: everyone current today, with each manager they still report to, up
@@ -115,7 +118,7 @@ interface Reader {
 function chartOf(
   records: ReadonlyMap<string, ChartRecord>,
   colours: ReadonlyMap<string, string | null>,
-  { seesPersonal, seesPositions, today }: Reader,
+  { seesPersonal, seesPositions, today, keys }: Reader,
 ): OrgChartPerson[] {
   // Every person on the chart is among the records.
   const recordOf = (id: string) => records.get(id) as ChartRecord;
@@ -148,6 +151,7 @@ function chartOf(
       case "planned-hire":
         return {
           id,
+          keyNumber: keyNumberOf(keys, id),
           preferredName: record.preferredName,
           employeeId: null,
           position: seesPositions ? record.position : null,
@@ -168,6 +172,7 @@ function chartOf(
     const gone = record.endDate !== null && record.endDate < today;
     return {
       id,
+      keyNumber: keyNumberOf(keys, id),
       preferredName: record.preferredName,
       // People hides someone who has left from those who do not see end dates, so their card
       // names no one there.
@@ -228,6 +233,7 @@ export async function readOrgChart(
     positionTier,
     labelOf,
     held,
+    keys,
   } = await database.transaction(
     async (transaction) => {
       const drafts = !approvedOnly
@@ -270,6 +276,12 @@ export async function readOrgChart(
         drafts,
         positionTier: await builtInTier(transaction, "positions"),
         labelOf: await choiceLabels(transaction, draftedPositions),
+        keys: new Map([
+          ...(await readKeyNumbers(transaction, "person")),
+          ...(withHires || wholePlan
+            ? await readKeyNumbers(transaction, "hire")
+            : []),
+        ]),
         // Who holds each person or planned hire by unpublished changes, to those sent their drafts.
         held: new Map([
           ...(!approvedOnly
@@ -302,6 +314,7 @@ export async function readOrgChart(
     seesPositions:
       positionTier === "general" || seesSensitivity(actor, positionTier),
     today: shownDay,
+    keys,
   };
   // Start dates of everyone live, and of those only drafted to be added, such as a new person a
   // fill drafts, so a hire is drawn under them, or gives way to them, only once they start.

@@ -25,6 +25,7 @@ import { chooseIn, optionsIn, testTheme } from "./test-support.tsx";
 
 const level: Field = {
   id: "f1",
+  keyNumber: 1,
   name: "Level",
   type: "choice" as const,
   listId: "l1",
@@ -35,6 +36,7 @@ const level: Field = {
 };
 const role: Field = {
   id: "f2",
+  keyNumber: 1,
   name: "Role",
   type: "choice" as const,
   listId: "l2",
@@ -52,6 +54,7 @@ const choice = (id: string, label: string) => ({
 const lists: List[] = [
   {
     id: "l1",
+    keyNumber: 1,
     name: "Levels",
     description: "",
     visibility: "general",
@@ -60,6 +63,7 @@ const lists: List[] = [
   },
   {
     id: "l2",
+    keyNumber: 1,
     name: "Roles",
     description: "",
     visibility: "general",
@@ -75,6 +79,7 @@ const person = (
   draft?: PersonDraft,
 ): Person => ({
   id,
+  keyNumber: 1,
   preferredName: `Fictional ${id}`,
   employeeId: id,
   positionId: "position-1",
