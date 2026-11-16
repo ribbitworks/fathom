@@ -5,7 +5,13 @@
 // are grouped by schedule to start. A release's row is marked where its draft changes what the row
 // shows, and has its own mark for a draft of what it doesn't show, such as its note.
 
-import type { Choice, Release, ReleaseStream, Show } from "@fathom/shared";
+import type {
+  Choice,
+  RecordKeyOf,
+  Release,
+  ReleaseStream,
+  Show,
+} from "@fathom/shared";
 import type { ReactNode } from "react";
 import { differingKeys, type DraftSelection, noDrafts } from "./drafts.ts";
 import { choice } from "./lists.ts";
@@ -310,6 +316,12 @@ export const releaseNoteColumn = {
   readOnly: false,
 };
 
+// Made once, so the table's Key column is made again only when the releases change.
+const releaseKeyOf = (row: ReleaseRow): RecordKeyOf => ({
+  kind: "release",
+  keyNumber: row.release.keyNumber,
+});
+
 // The table of releases, read only: releases are changed in their panel.
 export function releaseTable({
   streams,
@@ -354,6 +366,7 @@ export function releaseTable({
     removeLabel: () => "Remove release",
     nameOf: (row) => row.name,
     nameColumn: "name",
+    keyOf: releaseKeyOf,
     showDetails: (row) => {
       onOpen(row.release);
     },

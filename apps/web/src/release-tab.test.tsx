@@ -1278,3 +1278,30 @@ describe("links from a release", () => {
     expect(openedIn(history)).toEqual({ tab: "schedules", open: streamId });
   });
 });
+
+describe("a release's key", () => {
+  it("shows under the release's name in its details", async () => {
+    await openRelease(inStream(release));
+
+    expect(
+      within(releasePanel()).getByRole("button", {
+        name: "#RELEASE-1, copy link or key",
+      }),
+    ).toBeDefined();
+  });
+
+  it("is copied as a link from the release's row menu", async () => {
+    const user = userEvent.setup();
+    await openPage(inStream(release));
+    const [more] = within(
+      screen.getByRole("grid", { name: "Releases" }),
+    ).getAllByRole("button", { name: "Actions for Fictional One" });
+
+    await user.click(more as HTMLElement);
+    await user.click(await screen.findByRole("menuitem", { name: "Copy link" }));
+
+    expect(await navigator.clipboard.readText()).toBe(
+      `${window.location.origin}/go/release/1`,
+    );
+  });
+});

@@ -15,6 +15,7 @@ import { Button, Group, Menu } from "@mantine/core";
 import type { DraftSelection } from "./drafts.ts";
 import { RecordPanel } from "./record-details.tsx";
 import { noRecordActions } from "./record-grid.tsx";
+import { RecordKey } from "./record-key.tsx";
 import {
   markedDraft,
   setStreamRetired,
@@ -132,6 +133,9 @@ function StreamPanel({
       titleId={panelTitleId}
       recordId={stream.id}
       title={stream.name}
+      subtitle={
+        <RecordKey record={{ kind: "schedule", keyNumber: stream.keyNumber }} />
+      }
       narrow={narrow}
       draft={slotDraft(
         actions.draftOf(stream.id),

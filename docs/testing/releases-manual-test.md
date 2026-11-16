@@ -1854,6 +1854,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Expected:**
     - The **Cycles** row lists the release's two cycles, one to a line, each underlined as a link.
     - The **Schedule** row reads 'Platform', underlined as a link.
+    - Under the release's name, its key reads "#RELEASE-" and a number.
   - **Notes:**
 
 - [ ] `8210` Select the second cycle in the **Cycles** row.

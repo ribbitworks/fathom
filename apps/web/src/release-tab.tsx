@@ -25,6 +25,7 @@ import {
 } from "./record-details.tsx";
 import { useRecordEditing } from "./record-editing.tsx";
 import { noRecordActions } from "./record-grid.tsx";
+import { RecordKey } from "./record-key.tsx";
 import type { ReleasePart } from "./release-dialogs.tsx";
 import {
   releaseColumnOrder,
@@ -213,6 +214,9 @@ function ReleasePanel({
       titleId={releasePanelTitleId}
       recordId={release.id}
       title={rows.shown.name}
+      subtitle={
+        <RecordKey record={{ kind: "release", keyNumber: release.keyNumber }} />
+      }
       narrow={narrow}
       draft={slotDraft(release.draft, releaseRowFields)}
       nameDraft={release.draft}

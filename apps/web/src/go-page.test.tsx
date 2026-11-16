@@ -9,8 +9,6 @@ import type { RecordKeyKind, RecordLookup } from "@fathom/shared";
 import { act, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  fictionalRelease,
-  fictionalStream,
   fictionalUser,
   greeting,
   renderApp,
@@ -45,15 +43,6 @@ const peopleAnswer = () =>
     order: [],
   });
 
-const streamsAnswer = () =>
-  Response.json({
-    streams: [
-      fictionalStream({ releases: [fictionalRelease({ id: recordId })] }),
-    ],
-    canEditStreams: false,
-    canEditReleases: false,
-  });
-
 // Follows a link from the home page, as a reader would, giving the browser's history and the
 // requests the page sent.
 async function follow(
@@ -81,7 +70,8 @@ describe("a link to a record found", () => {
     ["proposal", "/projects", `?tab=proposals&open=${recordId}`],
     ["customer", "/projects", `?tab=customers&open=${recordId}`],
     ["milestone", "/projects", `?tab=milestones&open=${recordId}`],
-    ["schedule", `/releases/${recordId}`, ""],
+    ["schedule", "/releases", `?tab=schedules&open=${recordId}`],
+    ["release", "/releases", `?open=${recordId}`],
     ["team", "/org-chart", `?teams=feature&featureTeam=${recordId}`],
     ["list", `/lists/${recordId}`, ""],
     ["account", "/accounts", `?open=${recordId}`],
@@ -120,32 +110,6 @@ describe("a link to a record found", () => {
     });
     await waitFor(() => {
       expect(history.location.pathname).toBe("/features");
-    });
-  });
-
-  it("opens a release on its schedule, whose panel lists it", async () => {
-    const { history } = await follow("/go/release/2", {
-      "GET /api/go/release/2": found("release"),
-      "GET /api/release-streams": streamsAnswer,
-    });
-    await waitFor(() => {
-      expect(history.location.pathname).toBe(
-        `/releases/${fictionalStream().id}`,
-      );
-    });
-  });
-
-  it("opens Releases alone for a release on no schedule the reader has", async () => {
-    const { history } = await follow("/go/release/2", {
-      "GET /api/go/release/2": lookup({
-        result: "found",
-        kind: "release",
-        id: otherId,
-      }),
-      "GET /api/release-streams": streamsAnswer,
-    });
-    await waitFor(() => {
-      expect(history.location.pathname).toBe("/releases");
     });
   });
 

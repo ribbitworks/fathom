@@ -986,6 +986,7 @@ describe("a stream's panel", () => {
         ),
     ).toEqual([
       "Close details",
+      "#SCHEDULE-1, copy link or key",
       "Fictional One",
       "Show its releases",
       "Show its cycles",

@@ -15,13 +15,13 @@ import { redirect } from "@tanstack/react-router";
 import { getJson } from "./api.ts";
 import { peopleQuery } from "./people.ts";
 import { planAddress } from "./projects.ts";
-import { releaseStreamsQuery } from "./releases.ts";
 
 type RecordAddress =
   | ReturnType<typeof planAddress>
   | {
       to: "/releases/{-$streamId}";
-      params: { streamId: string | undefined };
+      params: { streamId: undefined };
+      search: { tab?: "schedules"; open: string };
     }
   | { to: "/people"; search: { open: string | undefined } }
   | { to: "/org-chart"; search: { teams: "feature"; featureTeam: string } }
@@ -46,15 +46,17 @@ async function recordAddress(
     case "milestone":
       return planAddress("milestones", id);
     case "schedule":
-      return { to: "/releases/{-$streamId}", params: { streamId: id } };
-    // A release opens its schedule, whose panel lists it, until releases have panels of their own.
-    case "release": {
-      const streams = await queryClient.query(releaseStreamsQuery);
-      const stream = streams.streams.find((one) =>
-        one.releases.some((release) => release.id === id),
-      );
-      return { to: "/releases/{-$streamId}", params: { streamId: stream?.id } };
-    }
+      return {
+        to: "/releases/{-$streamId}",
+        params: { streamId: undefined },
+        search: { tab: "schedules", open: id },
+      };
+    case "release":
+      return {
+        to: "/releases/{-$streamId}",
+        params: { streamId: undefined },
+        search: { open: id },
+      };
     // People's and planned hires' details open by the ID People shows them by.
     case "person":
     case "hire": {
