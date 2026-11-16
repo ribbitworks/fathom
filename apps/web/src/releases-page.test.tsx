@@ -38,6 +38,7 @@ import {
   streamId,
   testTheme,
   featuresAddress,
+  openedIn,
 } from "./test-support.tsx";
 
 afterEach(() => {
@@ -359,6 +360,104 @@ describe("the Schedules table", () => {
       expect(featuresAddress(history)).toEqual(address);
     },
   );
+
+  it.each([
+    [
+      "Current cycle",
+      "27.1",
+      { tab: "cycles", open: `${streamId} 2027-01-01` },
+    ],
+    [
+      "Next release",
+      "Fictional One",
+      { tab: null, open: "30000000-0000-4000-8000-000000000001" },
+    ],
+  ])(
+    "opens what a schedule's %s row names, on its own tab",
+    async (label, link, address) => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
+      serverAnswers({
+        "GET /api/session": signedIn,
+        "GET /api/release-streams": answer([
+          fictionalStream({ releases: [fictionalRelease()] }),
+        ]),
+      });
+      const history = renderApp(`/releases?tab=schedules&open=${streamId}`);
+      await streamsGrid();
+
+      await userEvent.click(
+        await within(detailRow(label)).findByRole("button", { name: link }),
+      );
+
+      expect(openedIn(history)).toEqual(address);
+    },
+  );
+
+  it.each([
+    ["Show its releases", null],
+    ["Show its cycles", "cycles"],
+  ])("shows a schedule's own records with %s", async (button, tab) => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer([
+        fictionalStream({ releases: [fictionalRelease()] }),
+        fictionalStream({
+          id: "10000000-0000-4000-8000-000000000002",
+          name: "Fictional Minors",
+          releases: [
+            fictionalRelease({
+              id: "30000000-0000-4000-8000-000000000002",
+              name: "Fictional Other",
+            }),
+          ],
+        }),
+      ]),
+    });
+    const history = renderApp(`/releases?tab=schedules&open=${streamId}`);
+    await streamsGrid();
+
+    await userEvent.click(await screen.findByRole("button", { name: button }));
+
+    const search = new URLSearchParams(history.location.search);
+    expect([
+      search.get("tab"),
+      JSON.parse(search.get("filters") ?? "null"),
+      search.get("open"),
+    ]).toEqual([tab, { schedule: { any: [streamId] } }, null]);
+    expect(
+      within(
+        await screen.findByRole("grid", {
+          name: tab === null ? "Releases" : "Cycles",
+        }),
+      ).queryByText("Fictional Minors"),
+    ).toBeNull();
+  });
+
+  it("opens a schedule from its name on the timeline, and a cycle from its block", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-02-15T12:00:00Z"));
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer([fictionalStream()]),
+    });
+    const history = renderApp("/releases?tab=schedules");
+    await streamsGrid();
+    const timeline = () => screen.getByRole("region", { name: "Timeline" });
+
+    await userEvent.click(
+      within(timeline()).getByRole("button", { name: "Fictional Majors" }),
+    );
+    expect(openedIn(history)).toEqual({ tab: "schedules", open: streamId });
+
+    await userEvent.click(
+      within(timeline()).getByRole("button", { name: /^27\.2, / }),
+    );
+    expect(openedIn(history)).toEqual({
+      tab: "cycles",
+      open: `${streamId} 2027-04-01`,
+    });
+  });
 
   it("says None for features this cycle once a schedule's cycles are over", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
@@ -877,13 +976,20 @@ describe("a stream's panel", () => {
     expect(within(panel()).getByText("Retired")).toBeDefined();
   });
 
-  it("offers viewers no changes", async () => {
+  it("offers viewers no changes, only links and ways to see its records", async () => {
     await openStream([fictionalStream({ releases: [release] })]);
     expect(
       within(panel())
         .queryAllByRole("button")
-        .map(({ textContent }) => textContent),
-    ).toEqual(["#SCHEDULE-1", ""]);
+        .map(
+          (button) => button.getAttribute("aria-label") ?? button.textContent,
+        ),
+    ).toEqual([
+      "Close details",
+      "Fictional One",
+      "Show its releases",
+      "Show its cycles",
+    ]);
   });
 
   it.each([

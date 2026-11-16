@@ -26,7 +26,11 @@ import {
 } from "react";
 import classes from "./pages.module.css";
 import { Icon } from "./icons.tsx";
-import { type ReleaseLayerForm, useReleaseLayer } from "./release-layer.tsx";
+import {
+  type LayerRecord,
+  type ReleaseLayerForm,
+  useReleaseLayer,
+} from "./release-layer.tsx";
 import { daysBetween } from "./releases.ts";
 import {
   type AxisScale,
@@ -134,6 +138,7 @@ export function TimelineView({
   today,
   releaseStreams = noStreams,
   layerForm,
+  onOpen,
   rows,
 }: {
   title: string;
@@ -144,6 +149,8 @@ export function TimelineView({
   // drafts, shown as the Draft view around the timeline shows them.
   releaseStreams?: readonly ReleaseStream[];
   layerForm: ReleaseLayerForm;
+  // Opens the record a mark of the release layer stands for, which makes each mark a button.
+  onOpen?: ((record: LayerRecord) => void) | undefined;
   // The view's own rows, under the release layer, with the days they cover.
   rows?: (RowGroup & { range: DayRange }) | undefined;
 }) {
@@ -166,6 +173,7 @@ export function TimelineView({
     releaseStreams,
     today,
     layerForm,
+    onOpen,
   );
   // The frame is built from days alone, so a view handing over equal streams or rows anew on each
   // render doesn't rebuild the axis, the quarters and the strip.

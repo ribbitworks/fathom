@@ -5,12 +5,16 @@
 // cycles, drawn at their real lengths, and its releases: each a span across its cycles with its
 // Ships on diamond under it, and, beside live, a Live lane holding each release a draft moves in its
 // old place; or each its diamond alone, on its cycles. The streams are shown as the Draft view
-// around the timeline shows them, and each mark is given its record's own draft.
+// around the timeline shows them, and each mark is given its record's own draft. Where the timeline
+// asks, each release, cycle, diamond and schedule's name is a button, in the tab order, named as its
+// tip reads, that opens its record.
 
 import type { RecordDraft, ReleaseStream } from "@fathom/shared";
+import { UnstyledButton } from "@mantine/core";
 import { type ReactNode, useCallback, useMemo } from "react";
 import { ColouredName, colouredNameChars } from "./colour-swatch.tsx";
 import { isCurrent } from "./feature-board.ts";
+import { cycleChoiceId } from "./projects.ts";
 import classes from "./pages.module.css";
 import {
   draftsById,
@@ -46,6 +50,34 @@ import {
   type TimelineRow,
 } from "./timeline.ts";
 
+// A record a mark on the layer stands for, which the timeline opens where it asks: a cycle by its
+// choice, as Features names it.
+export type LayerRecord =
+  | { kind: "release"; id: string }
+  | { kind: "cycle"; id: string }
+  | { kind: "schedule"; id: string };
+
+type OpenMark = ((record: LayerRecord) => void) | undefined;
+
+// A mark's words for assistive technology, and, where the timeline opens records, the button over
+// the mark that opens it, named by them.
+function MarkWords({
+  words,
+  onOpen,
+}: {
+  words: string;
+  onOpen: (() => void) | undefined;
+}) {
+  const hidden = <span className={classes.visuallyHidden}>{words}</span>;
+  return onOpen === undefined ? (
+    hidden
+  ) : (
+    <UnstyledButton className={classes.timelineMark} onClick={onOpen}>
+      {hidden}
+    </UnstyledButton>
+  );
+}
+
 // A bar's mark: its release's own draft, and who is changing it, or Live's, on a live copy of a
 // release a draft moves.
 type BarMark =
@@ -58,10 +90,12 @@ function ReleaseBar({
   span,
   px,
   mark,
+  onOpen,
 }: {
   span: ReleaseSpan;
   px: Px;
   mark: BarMark;
+  onOpen: OpenMark;
 }) {
   const show = useDraftView();
   const { release, at, days, shipsAt } = span;
@@ -147,7 +181,15 @@ function ReleaseBar({
         style={{ left: from(shipsAt) }}
         aria-hidden
       />
-      <span className={classes.visuallyHidden}>{words}</span>
+      <MarkWords
+        words={words}
+        onOpen={
+          onOpen &&
+          (() => {
+            onOpen({ kind: "release", id: release.id });
+          })
+        }
+      />
     </li>
   );
 }
@@ -179,12 +221,16 @@ function CycleBlock({
   px,
   today,
   named,
+  streamId,
+  onOpen,
 }: {
   cycle: ReleaseLayerRow["cycles"][number];
   index: number;
   px: Px;
   today: string;
   named: boolean;
+  streamId: string;
+  onOpen: OpenMark;
 }) {
   const days = `${formatDay(cycle.startsOn)} to ${formatDay(cycle.endsOn)}`;
   const current = named && isCurrent(cycle, today);
@@ -204,15 +250,32 @@ function CycleBlock({
           {cycle.name}
         </span>
       )}
-      <span className={classes.visuallyHidden}>
-        {cycle.name}, {days}
-      </span>
+      <MarkWords
+        words={`${cycle.name}, ${days}${current ? ", current" : ""}`}
+        onOpen={
+          onOpen &&
+          (() => {
+            onOpen({
+              kind: "cycle",
+              id: cycleChoiceId(streamId, cycle.startsOn),
+            });
+          })
+        }
+      />
     </li>
   );
 }
 
 // A release's Ships on diamond alone, on its schedule's cycles.
-function ShipsMark({ span, px }: { span: ReleaseSpan; px: Px }) {
+function ShipsMark({
+  span,
+  px,
+  onOpen,
+}: {
+  span: ReleaseSpan;
+  px: Px;
+  onOpen: OpenMark;
+}) {
   const words = `${span.release.name} ships ${formatDay(span.shipsOn)}`;
   return (
     <li
@@ -223,7 +286,15 @@ function ShipsMark({ span, px }: { span: ReleaseSpan; px: Px }) {
       }}
       {...{ [tipAttribute]: words }}
     >
-      <span className={classes.visuallyHidden}>{words}</span>
+      <MarkWords
+        words={words}
+        onOpen={
+          onOpen &&
+          (() => {
+            onOpen({ kind: "release", id: span.release.id });
+          })
+        }
+      />
     </li>
   );
 }
@@ -234,12 +305,14 @@ function ReleaseLanes({
   markOf,
   px,
   today,
+  onOpen,
 }: {
   row: ReleaseLayerRow;
   form: ReleaseLayerForm;
   markOf: (id: string) => BarMark;
   px: Px;
   today: string;
+  onOpen: OpenMark;
 }): ReactNode {
   // The stream's end line, named with its last day where asked.
   const endLine = (named: boolean) =>
@@ -262,6 +335,7 @@ function ReleaseLanes({
       span={span}
       px={px}
       mark={markOf(span.release.id)}
+      onOpen={onOpen}
     />
   ));
   const releaseLaneClass = [
@@ -279,6 +353,7 @@ function ReleaseLanes({
           span={span}
           px={px}
           mark={{ live: true }}
+          onOpen={onOpen}
         />
       ))}
     </ul>
@@ -323,6 +398,8 @@ function ReleaseLanes({
                 px={px}
                 today={today}
                 named={false}
+                streamId={stream.id}
+                onOpen={onOpen}
               />
             ))}
             {endLine(true)}
@@ -346,11 +423,18 @@ function ReleaseLanes({
                 px={px}
                 today={today}
                 named
+                streamId={stream.id}
+                onOpen={onOpen}
               />
             ))}
             {endLine(false)}
             {releases.map((span) => (
-              <ShipsMark key={span.release.id} span={span} px={px} />
+              <ShipsMark
+                key={span.release.id}
+                span={span}
+                px={px}
+                onOpen={onOpen}
+              />
             ))}
           </ul>
         </TableTips>
@@ -364,6 +448,7 @@ export function useReleaseLayer(
   releaseStreams: readonly ReleaseStream[],
   today: string,
   form: ReleaseLayerForm,
+  onOpen?: OpenMark,
 ): {
   range: DayRange | undefined;
   rows: (from: string) => TimelineRow[];
@@ -412,7 +497,18 @@ export function useReleaseLayer(
                 tip={row.stream.name}
                 className={classes.timelineLabelName}
               >
-                {row.stream.name}
+                {onOpen === undefined ? (
+                  row.stream.name
+                ) : (
+                  <UnstyledButton
+                    className={classes.timelineLabelButton}
+                    onClick={() => {
+                      onOpen({ kind: "schedule", id: row.stream.id });
+                    }}
+                  >
+                    {row.stream.name}
+                  </UnstyledButton>
+                )}
               </Tipped>
             </DraftedItem>
             <EndedBox stream={row.stream} day={today} />
@@ -425,11 +521,12 @@ export function useReleaseLayer(
             markOf={markOf}
             px={px}
             today={today}
+            onOpen={onOpen}
           />
         ),
       }));
     },
-    [releaseStreams, shown, live, today, form],
+    [releaseStreams, shown, live, today, form, onOpen],
   );
   return { range, rows };
 }

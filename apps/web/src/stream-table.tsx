@@ -64,6 +64,8 @@ interface StreamValues {
   nextRelease: string;
   // Not a column: the next release's colour, so a draft changing it marks Next release.
   nextReleaseColour: string;
+  // Not a column: the next release's identifier, which its link opens it by.
+  nextReleaseId: string;
   releaseDate: string;
   lengthNow: string;
   endsOn: string;
@@ -87,6 +89,7 @@ function valuesOf(stream: ReleaseStream, day: string): StreamValues {
     cycleEnds: now?.endsOn ?? "",
     nextRelease: next?.release.name ?? "",
     nextReleaseColour: next?.release.colour ?? "",
+    nextReleaseId: next?.release.id ?? "",
     releaseDate: next?.ships ?? "",
     lengthNow: lengthNow(stream, day),
     endsOn: stream.endsOn ?? "",

@@ -23,7 +23,12 @@ import {
 } from "./cycle-table.tsx";
 import type { DraftSelection } from "./drafts.ts";
 import { cycleChoiceId } from "./projects.ts";
-import { ColumnRows, RecordPanel, RecordSection } from "./record-details.tsx";
+import {
+  ColumnRows,
+  RecordLink,
+  RecordPanel,
+  RecordSection,
+} from "./record-details.tsx";
 import { noRecordActions } from "./record-grid.tsx";
 import { inShownOrder, streamsShown } from "./releases.ts";
 import { ReleasesTabTable } from "./releases-tab-table.tsx";
@@ -33,7 +38,10 @@ import {
   type FeaturesAt,
   hiddenUnlessShown,
   namedChoice,
+  drawnAs,
+  markOpener,
   type PlannedFeatures,
+  type ShowIn,
 } from "./release-tabs.ts";
 import type { ScheduleActions } from "./schedule-tab.tsx";
 import { DurationChange } from "./schedule-panel.tsx";
@@ -55,11 +63,13 @@ function CyclePanel({
   onClose,
   planned,
   onFeatures,
+  showIn,
 }: {
   // Every schedule, which a cycle's Schedule and Release are named from.
   streams: readonly ReleaseStream[];
   planned: PlannedFeatures | undefined;
   onFeatures: (at: FeaturesAt) => void;
+  showIn: ShowIn;
   // The cycle's schedule, as the Draft view shows it, which its Duration changes.
   stream: ReleaseStream;
   rows: CycleDetailRows;
@@ -72,7 +82,24 @@ function CyclePanel({
   const editable = actions.changeable(stream) && draft?.action !== "deleted";
   const columns = [
     ...listingFeatures(
-      cycleDetailColumns(streams, [shown, drafted, live], planned),
+      drawnAs(cycleDetailColumns(streams, [shown, drafted, live], planned), {
+        release: (row) => (
+          <RecordLink
+            name={row.releaseName}
+            onShow={() => {
+              showIn("releases", row.release);
+            }}
+          />
+        ),
+        schedule: ({ stream: schedule }) => (
+          <RecordLink
+            name={schedule.name}
+            onShow={() => {
+              showIn("schedules", schedule.id);
+            }}
+          />
+        ),
+      }),
       planned,
       {
         cyclesOf: ({ cycleId }) => [cycleId],
@@ -158,12 +185,17 @@ export function CyclesTable({
   decide,
   planned,
   onFeatures,
+  showIn,
+  canEditReleases,
 }: {
   // Every schedule, with its drafts, whatever the view.
   streams: readonly ReleaseStream[];
   day: string;
   planned: PlannedFeatures | undefined;
   onFeatures: (at: FeaturesAt) => void;
+  showIn: ShowIn;
+  // Whether the user may change releases in the Draft view shown, whose drafts a cycle can carry.
+  canEditReleases: boolean;
   view: View;
   onView: ChangeView;
   approves: readonly DraftKind[];
@@ -171,7 +203,7 @@ export function CyclesTable({
   narrow: boolean;
   // The cycle whose details are open, if any.
   open: string | undefined;
-  onOpen: (row: CycleRow) => void;
+  onOpen: (record: { id: string }) => void;
   onClose: (id: string) => void;
   actions: ScheduleActions;
   decide: (asking: Asking, selection: DraftSelection) => void;
@@ -238,6 +270,7 @@ export function CyclesTable({
                 }}
                 planned={planned}
                 onFeatures={onFeatures}
+                showIn={showIn}
               />
             ),
           },
@@ -247,6 +280,13 @@ export function CyclesTable({
       none={everyRow.length === 0 ? "No cycles yet." : undefined}
       day={day}
       layerForm="cycles"
+      onOpenMark={markOpener(
+        "cycle",
+        (id) => {
+          onOpen({ id });
+        },
+        showIn,
+      )}
       timelineOf={(shown) => cyclesTimeline(streams, shown)}
       records={rows}
       table={table}
@@ -256,7 +296,13 @@ export function CyclesTable({
       canEdit={false}
       canAdd={false}
       rowActions={false}
-      canEditDrafts={actions.canEditStreams}
+      // A cycle's row carries its schedule's draft, or its release's, which only those who change
+      // releases discard or resubmit.
+      canEditDrafts={(row) =>
+        row.draft?.ref.type === "release"
+          ? canEditReleases
+          : actions.canEditStreams
+      }
       approves={approves}
       canEditColumns={false}
       actions={{

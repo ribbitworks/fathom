@@ -8,11 +8,11 @@ import type { ReleaseStream } from "@fathom/shared";
 import { Text } from "@mantine/core";
 import classes from "./pages.module.css";
 import { type GridRecord, RecordGrid } from "./record-grid.tsx";
-import type { ReleaseLayerForm } from "./release-layer.tsx";
+import type { LayerRecord, ReleaseLayerForm } from "./release-layer.tsx";
 import { TableTips } from "./table-tips.tsx";
 import { TimelineView } from "./timeline-view.tsx";
 
-// Where both tabs keep the timeline's zoom in the browser, so each opens at the zoom last chosen.
+// Where every tab keeps the timeline's zoom in the browser, so each opens at the zoom last chosen.
 export const releasesTimelineZoomKey = "fathom-releases-timeline-zoom";
 
 type GridProps<Rec extends GridRecord> = Parameters<
@@ -24,6 +24,7 @@ export function ReleasesTabTable<Rec extends GridRecord>({
   day,
   layerForm,
   timelineOf,
+  onOpenMark,
   ...grid
 }: Omit<GridProps<Rec>, "above"> & {
   // What the tab says in place of the table while there is nothing to list yet.
@@ -32,6 +33,8 @@ export function ReleasesTabTable<Rec extends GridRecord>({
   layerForm: ReleaseLayerForm;
   // The schedules the timeline draws, from the rows the table shows.
   timelineOf: (shown: readonly Rec[]) => readonly ReleaseStream[];
+  // Opens the record a mark on the timeline stands for.
+  onOpenMark: (record: LayerRecord) => void;
 }) {
   if (none !== undefined) {
     return (
@@ -51,6 +54,7 @@ export function ReleasesTabTable<Rec extends GridRecord>({
               zoomKey={releasesTimelineZoomKey}
               releaseStreams={timelineOf(shown)}
               layerForm={layerForm}
+              onOpen={onOpenMark}
               today={day}
             />
           </div>

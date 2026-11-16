@@ -1427,8 +1427,9 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   // menu; true unless told otherwise. False where a row's draft is seen to elsewhere.
   rowActions?: boolean;
   // For a table whose records are changed outside it, such as in their panel: whether the user may
-  // still discard and resubmit each record's own draft from its row's menu.
-  canEditDrafts?: boolean;
+  // still discard and resubmit each record's own draft from its row's menu, or, where rows carry
+  // drafts of different kinds, each row's.
+  canEditDrafts?: boolean | ((record: Rec) => boolean);
   // The kinds of draft the user's role approves and rejects.
   approves?: readonly DraftKind[];
   // Whether a change is still saving, which approving all shown waits for, so it never sends a
@@ -1805,7 +1806,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     ),
   );
   const canEdit = mayEdit && !liveOnly;
-  const canEditDrafts = mayEditDrafts && !liveOnly;
+  const canEditDrafts = mayEditDrafts !== false && !liveOnly;
+  const editsDraftOf = (record: Rec) =>
+    canEditDrafts &&
+    (typeof mayEditDrafts === "function" ? mayEditDrafts(record) : true);
   const approves = liveOnly ? [] : mayApprove;
   // Whether the user's role approves a record's draft, and those it decides with it.
   const approvesRecord = (record: Rec) =>
@@ -2122,7 +2126,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // On a table whose records are changed elsewhere, whether the user may discard or resubmit a
   // record's own draft from its menu.
   const decidesOwnDraft = (record: Rec) =>
-    canEditDrafts &&
+    editsDraftOf(record) &&
     record.heldBy === undefined &&
     ownDraftOf(record) !== undefined;
   // What a record's menu offers of the table's own: its details, then whatever else the table offers.

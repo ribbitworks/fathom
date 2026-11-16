@@ -17,6 +17,8 @@ import { noOthers } from "./new-plan-record-panel.tsx";
 import type { NoteContext, NoteEditing } from "./note-editing.tsx";
 import {
   ColumnRows,
+  RecordLink,
+  RecordLinkList,
   RecordPanel,
   RecordSection,
   Row,
@@ -48,10 +50,13 @@ import {
   hiddenUnlessShown,
   namedChoice,
   ownDraftActions,
+  drawnAs,
+  markOpener,
   type PlannedFeatures,
+  type ShowIn,
 } from "./release-tabs.ts";
 import { releaseColumnKey } from "./project-grids.tsx";
-import { releaseGroupKey } from "./projects.ts";
+import { cycleChoiceId, releaseGroupKey } from "./projects.ts";
 import type { SidePanel } from "./side-panel.tsx";
 import type { ChangeView, SavedViews } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
@@ -80,11 +85,13 @@ function ReleaseDetails({
   notes,
   planned,
   onFeatures,
+  showIn,
 }: {
   // Every schedule, which a release's Schedule is chosen from.
   streams: readonly ReleaseStream[];
   planned: PlannedFeatures | undefined;
   onFeatures: (at: FeaturesAt) => void;
+  showIn: ShowIn;
   rows: ReleaseDetailRows;
   canEdit: boolean;
   onChange: (part: ReleasePart) => void;
@@ -103,7 +110,36 @@ function ReleaseDetails({
     <RecordSection id="release-details" title="Details">
       <ColumnRows
         columns={listingFeatures(
-          releaseDetailColumns(streams, [shown, drafted, live], planned),
+          drawnAs(
+            releaseDetailColumns(streams, [shown, drafted, live], planned),
+            {
+              cycles: ({ cycles, stream }) => (
+                <RecordLinkList
+                  links={stream.cycles
+                    .map(({ name, startsOn }) => ({
+                      name,
+                      id: cycleChoiceId(stream.id, startsOn),
+                    }))
+                    .filter(({ id }) => cycles.includes(id))
+                    .map(({ id, name }) => ({
+                      id,
+                      name,
+                      onShow: () => {
+                        showIn("cycles", id);
+                      },
+                    }))}
+                />
+              ),
+              schedule: ({ stream }) => (
+                <RecordLink
+                  name={stream.name}
+                  onShow={() => {
+                    showIn("schedules", stream.id);
+                  }}
+                />
+              ),
+            },
+          ),
           planned,
           {
             cyclesOf: ({ cycles }) => cycles,
@@ -156,12 +192,14 @@ function ReleasePanel({
   onClose,
   planned,
   onFeatures,
+  showIn,
 }: {
   streams: readonly ReleaseStream[];
   release: Release;
   rows: ReleaseDetailRows;
   planned: PlannedFeatures | undefined;
   onFeatures: (at: FeaturesAt) => void;
+  showIn: ShowIn;
   canEdit: boolean;
   narrow: boolean;
   onChange: (part: ReleasePart) => void;
@@ -191,6 +229,7 @@ function ReleasePanel({
         notes={notes}
         planned={planned}
         onFeatures={onFeatures}
+        showIn={showIn}
       />
     </RecordPanel>
   );
@@ -210,6 +249,7 @@ export function ReleasesTable({
   onClose,
   planned,
   onFeatures,
+  showIn,
   notes,
   notePanel,
   onChange,
@@ -234,6 +274,7 @@ export function ReleasesTable({
   onClose: (id: string) => void;
   planned: PlannedFeatures | undefined;
   onFeatures: (at: FeaturesAt) => void;
+  showIn: ShowIn;
   // Opens a release's note, which the page holds, and its panel while one is open.
   notes: Pick<NoteEditing, "start">;
   notePanel: SidePanel | undefined;
@@ -384,6 +425,7 @@ export function ReleasesTable({
                 }}
                 planned={planned}
                 onFeatures={onFeatures}
+                showIn={showIn}
               />
             ),
           },
@@ -395,6 +437,13 @@ export function ReleasesTable({
       none={everyRow.length === 0 ? "No releases yet." : undefined}
       day={day}
       layerForm="releases"
+      onOpenMark={markOpener(
+        "release",
+        (id) => {
+          onOpen(id);
+        },
+        showIn,
+      )}
       timelineOf={(shown) => {
         const listed = new Set(shown.map(({ id }) => id));
         // Each schedule holding a release the table shows, with only those releases.

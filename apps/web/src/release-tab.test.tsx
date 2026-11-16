@@ -29,6 +29,7 @@ import {
   streamId,
   testTheme,
   featuresAddress,
+  openedIn,
 } from "./test-support.tsx";
 
 // No saved views, for the tab drawn on its own.
@@ -853,6 +854,7 @@ describe("a release's note", () => {
             onClose={vi.fn()}
             planned={undefined}
             onFeatures={vi.fn()}
+            showIn={vi.fn()}
             notes={{ start }}
             notePanel={undefined}
             onChange={vi.fn()}
@@ -1236,5 +1238,43 @@ describe("a release's features", () => {
       "/features",
       "60000000-0000-4000-8000-000000000001",
     ]);
+  });
+});
+
+describe("links from a release", () => {
+  const spanning = fictionalRelease({ lastCycle: "2027-04-01" });
+  it.each([
+    ["Cycles", "27.2", { tab: "cycles", open: `${streamId} 2027-04-01` }],
+    ["Schedule", "Fictional Majors", { tab: "schedules", open: streamId }],
+  ])(
+    "opens what its %s row names, on its own tab",
+    async (label, link, address) => {
+      const user = userEvent.setup();
+      const { history } = await openRelease(inStream(spanning));
+
+      await user.click(
+        within(detailRow(label, releasePanel())).getByRole("button", {
+          name: link,
+        }),
+      );
+
+      expect(openedIn(history)).toEqual(address);
+    },
+  );
+
+  it("opens a release from its span on the timeline, and its schedule from its name there", async () => {
+    const user = userEvent.setup();
+    const { history } = await openPage(inStream(spanning));
+    const timeline = () => screen.getByRole("region", { name: "Timeline" });
+
+    await user.click(
+      within(timeline()).getByRole("button", { name: /^Fictional One: / }),
+    );
+    expect(openedIn(history)).toEqual({ tab: null, open: spanning.id });
+
+    await user.click(
+      within(timeline()).getByRole("button", { name: "Fictional Majors" }),
+    );
+    expect(openedIn(history)).toEqual({ tab: "schedules", open: streamId });
   });
 });

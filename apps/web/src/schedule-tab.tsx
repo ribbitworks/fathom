@@ -11,7 +11,7 @@ import type {
   RecordDraft,
   ReleaseStream,
 } from "@fathom/shared";
-import { Menu } from "@mantine/core";
+import { Button, Group, Menu } from "@mantine/core";
 import type { DraftSelection } from "./drafts.ts";
 import { RecordPanel } from "./record-details.tsx";
 import { noRecordActions } from "./record-grid.tsx";
@@ -30,6 +30,9 @@ import {
   type ShowingChoice,
   type FeaturesAt,
   type PlannedFeatures,
+  markOpener,
+  type ShowIn,
+  type ShowScheduleIn,
 } from "./release-tabs.ts";
 import {
   ScheduleCycles,
@@ -104,11 +107,15 @@ function StreamPanel({
   onClose,
   planned,
   onFeatures,
+  showIn,
+  showScheduleIn,
 }: {
   stream: ReleaseStream;
   rows: ScheduleRows;
   planned: PlannedFeatures | undefined;
   onFeatures: (at: FeaturesAt) => void;
+  showIn: ShowIn;
+  showScheduleIn: ShowScheduleIn;
   // Today, for whether the stream has ended.
   day: string;
   actions: ScheduleActions;
@@ -152,6 +159,7 @@ function StreamPanel({
         onChange={onChange}
         planned={planned}
         onFeatures={onFeatures}
+        showIn={showIn}
       />
       <ScheduleCycles
         key={`cycles-${stream.id}`}
@@ -160,6 +168,24 @@ function StreamPanel({
         canEdit={editable}
         onChange={onChange}
       />
+      <Group gap="xs">
+        <Button
+          variant="default"
+          onClick={() => {
+            showScheduleIn("releases", stream.id);
+          }}
+        >
+          Show its releases
+        </Button>
+        <Button
+          variant="default"
+          onClick={() => {
+            showScheduleIn("cycles", stream.id);
+          }}
+        >
+          Show its cycles
+        </Button>
+      </Group>
     </RecordPanel>
   );
 }
@@ -179,12 +205,16 @@ export function SchedulesTable({
   decide,
   planned,
   onFeatures,
+  showIn,
+  showScheduleIn,
 }: {
   // Every schedule, with its drafts, whatever the view.
   streams: readonly ReleaseStream[];
   day: string;
   planned: PlannedFeatures | undefined;
   onFeatures: (at: FeaturesAt) => void;
+  showIn: ShowIn;
+  showScheduleIn: ShowScheduleIn;
   view: View;
   onView: ChangeView;
   approves: readonly DraftKind[];
@@ -192,7 +222,7 @@ export function SchedulesTable({
   narrow: boolean;
   // The schedule whose details are open, if any.
   open: string | undefined;
-  onOpen: (stream: ReleaseStream) => void;
+  onOpen: (record: { id: string }) => void;
   onClose: (id: string) => void;
   actions: ScheduleActions;
   decide: (asking: Asking, selection: DraftSelection) => void;
@@ -248,6 +278,8 @@ export function SchedulesTable({
                 }}
                 planned={planned}
                 onFeatures={onFeatures}
+                showIn={showIn}
+                showScheduleIn={showScheduleIn}
               />
             ),
           },
@@ -258,6 +290,13 @@ export function SchedulesTable({
       none={all.length === 0 ? "No schedules yet." : undefined}
       day={day}
       layerForm="schedules"
+      onOpenMark={markOpener(
+        "schedule",
+        (id) => {
+          onOpen({ id });
+        },
+        showIn,
+      )}
       timelineOf={(shown) =>
         inShownOrder(
           kept,

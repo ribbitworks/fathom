@@ -26,6 +26,7 @@ import {
   signedIn,
   streamId,
   featuresAddress,
+  openedIn,
 } from "./test-support.tsx";
 
 beforeEach(() => {
@@ -841,6 +842,28 @@ describe("a cycle's drafts", () => {
     );
   });
 
+  it("mark a cycle's Release that its release's own draft changes, saying so in the row's menu", async () => {
+    const renamed = fictionalRelease({
+      firstCycle: "2027-04-01",
+      lastCycle: "2027-04-01",
+      name: "Fictional New",
+      draft: recordDraft({
+        changed: ["name"],
+        live: { name: "Fictional Old" },
+      }),
+    });
+    await openPage([fictionalStream({ releases: [renamed] })], {
+      can: editsStreams,
+    });
+
+    expect(recordCell(cycleId("2027-04-01"), "release")?.textContent).toContain(
+      "Draft",
+    );
+    expect(await rowMenuTexts("Fictional Majors: 27.2")).toEqual(
+      expect.arrayContaining(["Part of a change to Fictional New"]),
+    );
+  });
+
   it("are discarded from the row's menu, as the draft of the pattern behind the cycle", async () => {
     const { fetch } = await openPage([shortened()], {
       can: editsStreams,
@@ -856,6 +879,59 @@ describe("a cycle's drafts", () => {
         .map(([url]) => url),
     ).toEqual([`/api/records/cycle-pattern/${patternId}/draft`]);
   });
+
+  it("discard a release's own draft from a cycle's menu, as the release's draft", async () => {
+    const renamed = fictionalRelease({
+      firstCycle: "2027-04-01",
+      lastCycle: "2027-04-01",
+      draft: recordDraft({
+        changed: ["name"],
+        live: { name: "Fictional Old" },
+      }),
+    });
+    const { fetch } = await openPage(
+      [fictionalStream({ releases: [renamed] })],
+      {
+        can: { canEditReleases: true },
+        answers: {
+          [`DELETE /api/records/release/${renamed.id}/draft`]: savedAs,
+        },
+      },
+    );
+
+    await chooseRowAction("Fictional Majors: 27.2", "Discard draft");
+
+    expect(await screen.findByText("Discarded the draft.")).toBeDefined();
+    expect(
+      fetch.mock.calls
+        .filter(([, init]) => init?.method === "DELETE")
+        .map(([url]) => url),
+    ).toEqual([`/api/records/release/${renamed.id}/draft`]);
+  });
+
+  it.each([
+    ["those who change releases", { canEditReleases: true }, true],
+    ["those who change only schedules", editsStreams, false],
+  ])(
+    "offer a release's own draft in a cycle's menu to %s alone",
+    async (_who, can, offered) => {
+      const renamed = fictionalRelease({
+        firstCycle: "2027-04-01",
+        lastCycle: "2027-04-01",
+        draft: recordDraft({
+          changed: ["name"],
+          live: { name: "Fictional Old" },
+        }),
+      });
+      await openPage([fictionalStream({ releases: [renamed] })], { can });
+
+      expect(
+        (await rowMenuTexts("Fictional Majors: 27.2")).includes(
+          "Discard draft",
+        ),
+      ).toBe(offered);
+    },
+  );
 
   it("are resubmitted from the row's menu once rejected", async () => {
     const rejected = shortened({
@@ -1050,7 +1126,7 @@ describe("the Cycles timeline", () => {
     const items = within(lane("Fictional Majors")).getAllByRole("listitem");
     // Each name shows inside its block, and its words follow for assistive technology.
     expect(items.map(({ textContent }) => textContent)).toEqual([
-      "27.227.2, Apr 1, 2027 to Jun 30, 2027",
+      "27.227.2, Apr 1, 2027 to Jun 30, 2027, current",
       "27.327.3, Jul 1, 2027 to Sep 30, 2027",
       "Fictional One ships Jun 30, 2027",
     ]);
@@ -1201,6 +1277,74 @@ describe("a cycle's features", () => {
 
     await waitFor(() => {
       expect(detailValue("Features", cyclePanel())).toBe("None");
+    });
+  });
+});
+
+describe("links from a cycle", () => {
+  const withRelease = () =>
+    fictionalStream({
+      releases: [
+        fictionalRelease({ firstCycle: "2027-04-01", lastCycle: "2027-04-01" }),
+      ],
+    });
+  it.each([
+    [
+      "Release",
+      "Fictional One",
+      { tab: null, open: "30000000-0000-4000-8000-000000000001" },
+    ],
+    ["Schedule", "Fictional Majors", { tab: "schedules", open: streamId }],
+  ])(
+    "opens what its %s row names, on its own tab",
+    async (label, link, address) => {
+      const user = userEvent.setup();
+      const { history } = await openCycle([withRelease()]);
+
+      await user.click(
+        within(detailRow(label, cyclePanel())).getByRole("button", {
+          name: link,
+        }),
+      );
+
+      expect(openedIn(history)).toEqual(address);
+    },
+  );
+
+  it("opens a cycle from its block on the timeline, and a release from its diamond", async () => {
+    const user = userEvent.setup();
+    const { history } = await openPage([withRelease()]);
+    const timeline = () => screen.getByRole("region", { name: "Timeline" });
+
+    await user.click(
+      within(timeline()).getByRole("button", { name: /^27\.3, / }),
+    );
+    expect(openedIn(history)).toEqual({
+      tab: "cycles",
+      open: cycleId("2027-07-01"),
+    });
+
+    await user.click(
+      within(timeline()).getByRole("button", { name: /^Fictional One ships / }),
+    );
+    expect(openedIn(history)).toEqual({
+      tab: null,
+      open: "30000000-0000-4000-8000-000000000001",
+    });
+  });
+
+  it("opens a cycle from its block on the timeline with the keyboard", async () => {
+    const user = userEvent.setup();
+    const { history } = await openPage([withRelease()]);
+
+    within(screen.getByRole("region", { name: "Timeline" }))
+      .getByRole("button", { name: /^27\.3, / })
+      .focus();
+    await user.keyboard("{Enter}");
+
+    expect(openedIn(history)).toEqual({
+      tab: "cycles",
+      open: cycleId("2027-07-01"),
     });
   });
 });

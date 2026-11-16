@@ -268,6 +268,12 @@ export const planAnswers = (features: readonly Feature[]) => ({
     }),
 });
 
+// The tab and the record a link on the Releases page opened, from the page's address.
+export function openedIn(history: { location: { search: string } }) {
+  const search = new URLSearchParams(history.location.search);
+  return { tab: search.get("tab"), open: search.get("open") };
+}
+
 // Where a link to Features went: its page, the filters in its address, and the Board's place, if
 // any.
 export function featuresAddress(history: {

@@ -1178,6 +1178,32 @@ th.liveColumn {
   text-overflow: ellipsis;
 }
 
+/* A row's name that opens its record, read as the name and cut short as it is, its focus ring drawn
+   inside it, since the name's box clips what is drawn outside it. */
+.timelineLabelButton {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timelineLabelButton:hover {
+  text-decoration: underline;
+}
+
+/* A button over a mark that opens its record, as large as the mark, drawing only its focus ring. */
+.timelineMark {
+  position: absolute;
+  inset: 0;
+}
+
+/* Inside the button, since the lane clips what is drawn outside it. */
+.timelineMark:focus-visible,
+.timelineLabelButton:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: -2px;
+}
+
 .timelineTrack {
   position: relative;
   flex: none;

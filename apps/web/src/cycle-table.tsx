@@ -146,24 +146,70 @@ const subjectOf = (stream: ReleaseStream, change: CycleChange) =>
     ? `Part of a change to when ${stream.name} ends`
     : `Part of a change to the cycles of ${stream.name} from ${cycleNamed(stream, change.startsOn)}`;
 
+// The values of a cycle that come from the release including it.
+const releaseKeys: ReadonlySet<string> = new Set<keyof CycleValues>([
+  "release",
+  "releaseName",
+  "releaseColour",
+]);
+
+// The draft of the release a cycle is in, as drafted, or else as it is live, as the change behind
+// the cycle's Release. A view leaving rejected drafts out leaves the cycle's values unchanged by
+// one, so it marks nothing.
+function releaseChange(
+  stream: ReleaseStream,
+  releaseIds: readonly string[],
+): (CycleChange & { name: string }) | undefined {
+  const release = releaseIds
+    .map((id) => stream.releases.find((each) => each.id === id))
+    .find((each) => each?.draft !== undefined);
+  return release?.draft === undefined
+    ? undefined
+    : {
+        ref: { type: "release", id: release.id },
+        record: {
+          id: release.id,
+          draft: release.draft,
+          heldBy: release.heldBy,
+        },
+        startsOn: undefined,
+        name: release.name,
+      };
+}
+
 // A row's draft, who holds the record it is the draft of, and what it is: the change behind the
-// cycle, where it adds or removes the cycle, or changes a value of it.
+// cycle, where it adds or removes the cycle, or changes a value of it; or, where it changes only
+// what the cycle shows of its release, that release's draft.
 function marksOf(
   stream: ReleaseStream,
   change: CycleChange | undefined,
   action: CycleDraft["action"],
   values: CycleValues,
   live: CycleValues,
+  ofRelease?: CycleChange & { name: string },
 ): Pick<CycleRow, "draft" | "heldBy" | "subject"> {
-  const changed =
+  const differing =
     action === "changed" ? differingKeys(values, live, shownKeys) : [];
-  if (change === undefined || (action === "changed" && changed.length === 0)) {
+  // The Release column shows the release's name, so a new name changes it.
+  const changed =
+    differing.includes("releaseName") && !differing.includes("release")
+      ? [...differing, "release"]
+      : differing;
+  const byRelease =
+    action === "changed" &&
+    ofRelease !== undefined &&
+    changed.length > 0 &&
+    changed.every((key) => releaseKeys.has(key));
+  const behind = byRelease ? ofRelease : change;
+  if (behind === undefined || (action === "changed" && changed.length === 0)) {
     return { subject: "" };
   }
   return {
-    draft: { ...change.record.draft, action, changed, live, ref: change.ref },
-    heldBy: change.record.heldBy,
-    subject: subjectOf(stream, change),
+    draft: { ...behind.record.draft, action, changed, live, ref: behind.ref },
+    heldBy: behind.record.heldBy,
+    subject: byRelease
+      ? `Part of a change to ${ofRelease.name}`
+      : subjectOf(stream, behind),
   };
 }
 
@@ -212,6 +258,8 @@ export function cycleRows(
           ];
         }
         const values = valuesOf(shown, cycle, day);
+        const liveValues =
+          twin === undefined ? values : valuesOf(live, twin, day);
         return [
           {
             id: values.cycleId,
@@ -221,7 +269,8 @@ export function cycleRows(
               changeBehind(changes, cycle),
               twin === undefined ? "created" : "changed",
               values,
-              twin === undefined ? values : valuesOf(live, twin, day),
+              liveValues,
+              releaseChange(stream, [values.release, liveValues.release]),
             ),
             stream: shown,
             cycle,

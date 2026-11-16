@@ -12,7 +12,9 @@ import {
   type Show,
   shownChoiceSchema,
 } from "@fathom/shared";
+import type { ReactNode } from "react";
 import { byChoice } from "./choice-grouping.ts";
+import type { LayerRecord } from "./release-layer.tsx";
 import { columnOf } from "./feature-board.ts";
 import {
   livePlanRecords,
@@ -92,6 +94,48 @@ export type FeaturesAt =
     };
 
 export const featuresColumnKey = "features";
+
+// Opens a record's details on its own tab of the Releases page, as a link in another's details does.
+export type ShowIn = (
+  tab: "releases" | "cycles" | "schedules",
+  record: string,
+) => void;
+
+// The tab each kind of record a timeline mark stands for is on.
+const tabOf = {
+  release: "releases",
+  cycle: "cycles",
+  schedule: "schedules",
+} as const;
+
+// Opens a timeline mark's record: on this tab where it is of the tab's own kind, and on its own tab
+// otherwise.
+export const markOpener =
+  (own: LayerRecord["kind"], openOwn: (id: string) => void, showIn: ShowIn) =>
+  ({ kind, id }: LayerRecord) => {
+    if (kind === own) openOwn(id);
+    // The kind is always one of the fixed kinds.
+    // eslint-disable-next-line security/detect-object-injection
+    else showIn(tabOf[kind], id);
+  };
+
+// Shows a schedule's releases or cycles on their tab, filtered to it.
+export type ShowScheduleIn = (
+  tab: "releases" | "cycles",
+  schedule: string,
+) => void;
+
+// A record's details' columns, each named here drawing its value as given, such as a link.
+export const drawnAs = <Rec extends GridRecord>(
+  columns: readonly Column<Rec, never>[],
+  drawn: Partial<Record<keyof Rec & string, (row: Rec) => ReactNode>>,
+): Column<Rec, never>[] =>
+  columns.map((column) => {
+    const draw = new Map<string, ((row: Rec) => ReactNode) | undefined>(
+      Object.entries(drawn),
+    ).get(column.key);
+    return draw === undefined ? column : { ...column, content: draw };
+  });
 
 // A row's features, named in one line as any table names several records, worked out from the
 // cycles they target, so read only: as drafts make them, or, in a row as it is live and under a

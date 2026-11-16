@@ -1300,7 +1300,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `40DF` Select 'Platform' in the table.
   - **Expected:**
     - The side panel opens, headed 'Platform'.
-    - Under **Details**, the rows are, in order: **Schedule**, **Current cycle**, **Cycle starts**, **Cycle ends**, **Next release**, **Release date**, **Cycle length**, **Schedule ends** and **Name pattern**.
+    - Under **Details**, the rows are, in order: **Schedule**, **Current cycle**, **Cycle starts**, **Cycle ends**, **Features this cycle**, **Next release**, **Release date**, **Cycle length**, **Schedule ends** and **Name pattern**.
     - **Schedule ends** reads "No end date".
     - **Name pattern** reads `{YY}.{N}`, then "(now" and the current cycle's name, such as "(now 26.4)".
     - **Next release** shows the same square and name as the table's row.
@@ -1459,12 +1459,12 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
     - No releases are drawn.
   - **Notes:**
 
-- [ ] `2E93` Select the details button at the right of the first cell of the row for 'Platform'.
-  - **Expected:** The side panel opens, headed 'Platform'.
+- [ ] `2E93` Select the details button at the right of the first cell of the row for 'Field Apps'.
+  - **Expected:** The side panel opens, headed 'Field Apps'.
   - **Notes:**
 
 - [ ] `9F18` Select the pencil at the right of the **Schedule ends** row.
-  - **Expected:** A dialog titled "Change when Platform ends" opens.
+  - **Expected:** A dialog titled "Change when Field Apps ends" opens.
   - **Notes:**
 
 - [ ] `A5C2` Type 30 September three years after this year in **Schedule ends**, as its digits, such as `20290930`.
@@ -1477,7 +1477,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `5E7C` Select **All** at the top right of the timeline.
   - **Expected:**
-    - At the right end of 'Platform''s row, its cycles stop at that day, with a short upright grey line there.
+    - At the right end of 'Field Apps''s row, its cycles stop at that day, with a short upright grey line there.
     - After the line, it reads "Ends" and the day, such as "Ends Sep 30, 2029".
   - **Notes:**
 
@@ -1495,7 +1495,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Expected:**
     - **Releases** is the tab chosen, and the button at the top right reads **New release**.
     - The table's columns are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Features** and **Status**.
-    - The rows are under the headings 'Platform' and 'Patches'.
+    - The rows are under the headings 'Platform', 'Patches' and 'Field Apps'.
   - **Notes:**
 
 - [ ] `C42A` Read the rows under 'Field Apps'.
@@ -1531,7 +1531,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Notes:**
 
 - [ ] `8A1D` Select **Filter…** in the **Schedule** column's menu.
-  - **Expected:** A dialog opens listing 'Platform' and 'Patches', each with a checkbox.
+  - **Expected:** A dialog opens listing 'Platform', 'Patches' and 'Field Apps', each with a checkbox.
   - **Notes:**
 
 - [ ] `3D7A` Tick 'Platform'.
@@ -1550,7 +1550,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `EC21` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS'.
   - **Expected:**
     - The side panel opens, headed 'Harbor 2 LTS'.
-    - Under **Details**, the rows are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Status**, **Colour** and **Note**.
+    - Under **Details**, the rows are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Status**, **Colour** and **Note**.
     - **Status** reads "Not shipped", and **Schedule** reads 'Platform'.
     - **Note** shows the release's whole note.
   - **Notes:**
@@ -1699,7 +1699,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 - [ ] `BC9F` Select the details button at the right of the first cell of the second row under 'Field Apps'.
   - **Expected:**
     - The side panel opens, headed "Field Apps:" and the cycle's name, as **Cycle** reads it in the row.
-    - Under **Details**, the rows are, in order: **Cycle**, **Schedule**, **Starts**, **Ends**, **Current**, **Release** and **Duration**.
+    - Under **Details**, the rows are, in order: **Cycle**, **Schedule**, **Starts**, **Ends**, **Current**, **Release**, **Features** and **Duration**.
     - **Current** reads "Not current".
     - **Release** reads "None".
     - **Duration** reads "6 months".
@@ -1842,4 +1842,92 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
   - **Expected:**
     - **Features this cycle** reads "Offline Sync, Usage Alerts" in the row for 'Platform'.
     - It is blank in the row for 'Patches'.
+  - **Notes:**
+
+#### REL-46: A Record's Details Link the Records They Name
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account REL-45 ended with.
+
+**Preconditions:** Signed in with this account. **Releases** page open from the left-hand menu, on the **Releases** tab, with no side panel open.
+
+- [ ] `FAB7` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS'.
+  - **Expected:**
+    - The **Cycles** row lists the release's two cycles, one to a line, each underlined as a link.
+    - The **Schedule** row reads 'Platform', underlined as a link.
+  - **Notes:**
+
+- [ ] `8210` Select the second cycle in the **Cycles** row.
+  - **Expected:** The **Cycles** tab shows, with that cycle's details beside the table.
+  - **Notes:**
+
+- [ ] `E2AA` Select 'Harbor 2 LTS' in the **Release** row.
+  - **Expected:** The **Releases** tab shows, with the details of 'Harbor 2 LTS' beside the table.
+  - **Notes:**
+
+- [ ] `9191` Select 'Platform' in the **Schedule** row.
+  - **Expected:** The **Schedules** tab shows, with the details of 'Platform' beside the table.
+  - **Notes:**
+
+- [ ] `E50C` Select the cycle in the **Current cycle** row.
+  - **Expected:**
+    - The **Cycles** tab shows, with that cycle's details beside the table.
+    - Its **Current** row reads "Current".
+  - **Notes:**
+
+#### REL-47: A Schedule Shows Its Releases and Its Cycles
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account REL-46 ended with.
+
+**Preconditions:** Signed in with this account. **Releases** page open on the **Schedules** tab, with the details of 'Platform' beside the table.
+
+- [ ] `C4C8` Select **Show its cycles**.
+  - **Expected:**
+    - The **Cycles** tab shows.
+    - The only heading over its rows is 'Platform'.
+  - **Notes:**
+
+- [ ] `3D3D` Select the **Schedules** tab.
+  - **Expected:** The table of schedules shows, with no side panel open.
+  - **Notes:**
+
+- [ ] `EE04` Select the details button at the right of the first cell of the row for 'Platform'.
+  - **Expected:** The details of 'Platform' open beside the table.
+  - **Notes:**
+
+- [ ] `9C98` Select **Show its releases**.
+  - **Expected:**
+    - The **Releases** tab shows.
+    - The only heading over its rows is 'Platform'.
+  - **Notes:**
+
+#### REL-48: The Timeline's Marks Open Their Records
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account REL-47 ended with.
+
+**Preconditions:** Signed in with this account. **Releases** page open from the left-hand menu, on the **Releases** tab, with no side panel open.
+
+- [ ] `BB2C` Select the span of 'Harbor 3' on the timeline.
+  - **Expected:** The details of 'Harbor 3' open beside the table.
+  - **Notes:**
+
+- [ ] `3981` Select the name 'Field Apps' at the left of the timeline.
+  - **Expected:** The **Schedules** tab shows, with the details of 'Field Apps' beside the table.
+  - **Notes:**
+
+- [ ] `11C5` Select the block that today's red line crosses in the row for 'Platform' on the timeline.
+  - **Expected:**
+    - The **Cycles** tab shows, with that cycle's details beside the table.
+    - Its **Current** row reads "Current".
+  - **Notes:**
+
+- [ ] `E850` Select **Releases** in the left-hand menu.
+  - **Expected:** The **Releases** tab shows, with no side panel open.
+  - **Notes:**
+
+- [ ] `1EAC` Press Tab until the span of 'Harbor 3' on the timeline has focus.
+  - **Expected:** A ring shows around the span.
+  - **Notes:**
+
+- [ ] `57F2` Press Enter.
+  - **Expected:** The details of 'Harbor 3' open beside the table.
   - **Notes:**

@@ -2,15 +2,15 @@
 
 // The Releases page, under its tabs: Releases, the default, Cycles and Schedules, the tab and the
 // record open in a side panel kept in the address. Each tab has its own table, with its saved
-// views, a timeline of what the table shows above it, and the selected record's details beside it.
-// On
-// Schedules, those who change schedules add them, retire and restore them from each row's menu, and
-// change one from its details: its name, its end, its cycles' length and names from a cycle on, and
-// one cycle's length. A retired schedule, or one drafted to be retired, is only restored. Releases
-// are made from the heading on the Releases tab and changed from their details. A cycle's length is
-// changed from its details on Cycles, as from its schedule's. Every change is a
-// draft, shown in place with its mark, which its makers discard or resubmit, and Approvers approve
-// or reject, here or on the Drafts page, from each row's menu.
+// views, a timeline of what the table shows above it, and the selected record's details beside it,
+// linking the records they name on their own tabs. On Schedules, those who change schedules add
+// them, retire and restore them from each row's menu, and change one from its details: its name,
+// its end, its cycles' length and names from a cycle on, and one cycle's length. A retired schedule,
+// or one drafted to be retired, is only restored. Releases are made from the heading on the Releases
+// tab and changed from their details. A cycle's length is changed from its details on Cycles, as
+// from its schedule's. Every change is a draft, shown in place with its mark, which its makers
+// discard or resubmit, and Approvers approve or reject, here or on the Drafts page, from each row's
+// menu.
 
 import type {
   Asking,
@@ -69,6 +69,7 @@ import {
   type FeaturesAt,
   type PlannedFeatures,
   plannedFeatures,
+  type ShowIn,
 } from "./release-tabs.ts";
 import type { ScheduleChange } from "./schedule-panel.tsx";
 
@@ -166,7 +167,9 @@ export function ReleasesPage({
   canShareViews,
 }: {
   tab: ReleasesTab;
-  onTab: (tab: ReleasesTab) => void;
+  // Changes the tab, with a record's details open on it, or its rows filtered to a schedule, if
+  // one is named.
+  onTab: (tab: ReleasesTab, at?: { open?: string; schedule?: string }) => void;
   // The record of the tab open in the side panel, if any.
   open?: string | undefined;
   onOpen: (id: string | undefined) => void;
@@ -219,6 +222,16 @@ export function ReleasesPage({
       queryClient.invalidateQueries({ queryKey: unpublishedQuery.queryKey }),
       queryClient.invalidateQueries({ queryKey: ["changes"] }),
     ]);
+  };
+  const showIn: ShowIn = (next, record) => {
+    leave(() => {
+      onTab(next, { open: record });
+    });
+  };
+  const showScheduleIn = (next: ReleasesTab, schedule: string) => {
+    leave(() => {
+      onTab(next, { schedule });
+    });
   };
   const showFeatures = (at: FeaturesAt) => {
     leave(() => {
@@ -388,6 +401,7 @@ export function ReleasesPage({
         onClose={closePanel}
         planned={planned}
         onFeatures={showFeatures}
+        showIn={showIn}
         notes={notes}
         notePanel={notePanel}
         onChange={(stream, release, part) => {
@@ -413,6 +427,8 @@ export function ReleasesPage({
         decide={decide}
         planned={planned}
         onFeatures={showFeatures}
+        showIn={showIn}
+        canEditReleases={canEditReleases && show !== "live"}
       />
     ),
     schedules: () => (
@@ -431,6 +447,8 @@ export function ReleasesPage({
         decide={decide}
         planned={planned}
         onFeatures={showFeatures}
+        showIn={showIn}
+        showScheduleIn={showScheduleIn}
       />
     ),
   };

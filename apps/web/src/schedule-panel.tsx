@@ -15,6 +15,7 @@ import details from "./record-details.module.css";
 import {
   changeButton,
   ColumnRows,
+  RecordLink,
   RecordSection,
   Row,
 } from "./record-details.tsx";
@@ -38,7 +39,12 @@ import {
   type StreamRow,
 } from "./stream-table.tsx";
 import { listingFeatures } from "./release-features.tsx";
-import type { FeaturesAt, PlannedFeatures } from "./release-tabs.ts";
+import {
+  drawnAs,
+  type FeaturesAt,
+  type PlannedFeatures,
+  type ShowIn,
+} from "./release-tabs.ts";
 import { formatDay } from "./table-view.ts";
 
 // What a schedule's details open to change it.
@@ -64,6 +70,7 @@ export function ScheduleDetails({
   onChange,
   planned,
   onFeatures,
+  showIn,
 }: {
   rows: ScheduleRows;
   day: string;
@@ -71,6 +78,7 @@ export function ScheduleDetails({
   onChange: (change: ScheduleChange) => void;
   planned: PlannedFeatures | undefined;
   onFeatures: (at: FeaturesAt) => void;
+  showIn: ShowIn;
 }) {
   const { draft } = drafted;
   const pencil = (label: string, change: ScheduleChange) =>
@@ -95,7 +103,24 @@ export function ScheduleDetails({
     <RecordSection id="schedule-details" title="Details">
       <ColumnRows
         columns={listingFeatures(
-          streamColumns(day, [shown, drafted, live], planned),
+          drawnAs(streamColumns(day, [shown, drafted, live], planned), {
+            currentCycle: (row) => (
+              <RecordLink
+                name={row.currentCycle}
+                onShow={() => {
+                  showIn("cycles", row.currentCycleId);
+                }}
+              />
+            ),
+            nextRelease: (row) => (
+              <RecordLink
+                name={row.nextRelease}
+                onShow={() => {
+                  showIn("releases", row.nextReleaseId);
+                }}
+              />
+            ),
+          }),
           planned,
           {
             cyclesOf: ({ currentCycleId }) => [currentCycleId],

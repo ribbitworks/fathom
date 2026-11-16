@@ -572,9 +572,15 @@ const releasesRoute = createRoute({
     return (
       <ReleasesPage
         tab={tab}
-        onTab={(next) => {
+        onTab={(next, { open: record, schedule } = {}) => {
           void navigate({
-            search: next === "releases" ? {} : { tab: next },
+            search: {
+              ...(next === "releases" ? {} : { tab: next }),
+              ...(record === undefined ? {} : { open: record }),
+              ...(schedule === undefined
+                ? {}
+                : { filters: { schedule: { any: [schedule] } } }),
+            },
           });
         }}
         open={open}
