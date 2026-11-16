@@ -1,0 +1,20 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The outline shows only while the key is pointed at or has focus, so it reads as a label, not a
+   button, until reached. */
+
+.key {
+  margin-left: -5px;
+  padding: 1px 5px;
+  border: 1px solid transparent;
+  border-radius: var(--mantine-radius-sm);
+  font-family: var(--mantine-font-family-monospace);
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-dimmed);
+}
+
+.key:hover,
+.key:focus-visible {
+  border-color: var(--mantine-color-default-border);
+  color: var(--mantine-color-text);
+}

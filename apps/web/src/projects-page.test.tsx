@@ -1731,6 +1731,48 @@ describe("the Features page", () => {
       )
       .filter((name) => name !== undefined);
 
+  describe("a feature's key", () => {
+    const keyed = () =>
+      featurePlan({
+        features: [
+          { ...later, keyNumber: 2 },
+          { ...second, keyNumber: 20 },
+          first,
+        ],
+      });
+
+    it.each([
+      ["#FEATURE-2", ["Fictional Later"]],
+      ["feature-2", ["Fictional Later"]],
+      ["#Feature-20", ["Fictional Second"]],
+      ["#PROJECT-2", []],
+    ])(
+      "finds from the search %s only the feature with it",
+      async (typed, shown) => {
+        await open(keyed());
+        await userEvent.type(
+          screen.getByRole("textbox", { name: "Search features" }),
+          typed,
+        );
+        await waitFor(() => {
+          expect(rowNames()).toEqual(shown);
+        });
+      },
+    );
+
+    it("copies a feature's link from its row's menu", async () => {
+      const user = userEvent.setup();
+      await open(keyed());
+      await user.click(await findRowActions("Fictional Second"));
+      await user.click(
+        await screen.findByRole("menuitem", { name: "Copy link" }),
+      );
+      expect(await navigator.clipboard.readText()).toBe(
+        `${window.location.origin}/go/feature/20`,
+      );
+    });
+  });
+
   describe("saved views on Features", () => {
     const roadmap = {
       id: crypto.randomUUID(),
@@ -1771,7 +1813,7 @@ describe("the Features page", () => {
 
       // Then Includes names the board, and the view keeps its choices alone
       expect(dialog.textContent).toContain(
-        "Stream Fictional Stream, Card Status, Priority, Size, Needed by, Staffed months",
+        "Stream Fictional Stream, Card Key, Status, Priority, Size, Needed by, Staffed months",
       );
       await userEvent.type(
         within(dialog).getByRole("textbox", { name: "Name" }),
@@ -3259,6 +3301,57 @@ describe("the Features page", () => {
       await waitFor(() => {
         expect(sentTo(fetch)).toContain(path);
       });
+    });
+
+    it("opens a linked column's menu, offering its link, and takes the column out of the address", async () => {
+      const user = userEvent.setup();
+      const linked = { ...size, keyNumber: 7 };
+      const { history } = await openPage(
+        `/features?column=${size.id}`,
+        withColumns({ featureColumns: columnsOf([linked]) }),
+        { ...answers, "GET /api/lists": lists },
+        columnEditor,
+      );
+      const menu = await screen.findByRole("menu");
+      expect(menu.textContent).toContain("Fictional Size");
+      await waitFor(() => {
+        expect(history.location.search).not.toContain("column=");
+      });
+      await user.click(
+        within(menu).getByRole("menuitem", { name: "Copy link" }),
+      );
+      expect(await navigator.clipboard.readText()).toBe(
+        `${window.location.origin}/go/column/7`,
+      );
+    });
+
+    it("doesn't open a linked column's menu again when the table is drawn again", async () => {
+      // Given a linked column's menu, opened and closed
+      const user = userEvent.setup();
+      const { history } = await openPage(
+        `/features?column=${size.id}`,
+        withColumns({ featureColumns: columnsOf([size]) }),
+        { ...answers, "GET /api/lists": lists },
+        columnEditor,
+      );
+      await screen.findByRole("menu");
+      await waitFor(() => {
+        expect(history.location.search).not.toContain("column=");
+      });
+      await user.keyboard("{Escape}");
+
+      // When the Board is shown, then the table again
+      await user.click(screen.getByRole("radio", { name: "Board" }));
+      await waitFor(() => {
+        expect(history.location.search).toContain("mode=board");
+      });
+      await user.click(screen.getByRole("radio", { name: "Table" }));
+
+      // Then the column's menu stays closed
+      const header = await screen.findByRole("button", {
+        name: /^Fictional Size column/,
+      });
+      expect(header.getAttribute("aria-expanded")).toBe("false");
     });
 
     it("shows a new feature with an empty optional number while it saves", async () => {

@@ -426,13 +426,27 @@ export function WithSidePanel({
   );
 }
 
-// A side panel's frame: its title, with a close button unless it closes only by its own buttons,
-// what it holds, scrolling, and a foot that stays in view, such as Save. Esc closes it too. Covering
-// the content on a narrow screen, it holds focus until it is closed.
+// The line under a panel's title, such as its record's key, placed by the panel's own layout.
+export function PanelSubtitle({
+  className,
+  children,
+}: {
+  className: string | undefined;
+  children: ReactNode;
+}) {
+  return (
+    <div className={[classes.subtitle, className].join(" ")}>{children}</div>
+  );
+}
+
+// A side panel's frame: its title, with a line under it and a close button unless it closes only by
+// its own buttons, what it holds, scrolling, and a foot that stays in view, such as Save. Esc closes
+// it too. Covering the content on a narrow screen, it holds focus until it is closed.
 export function SidePanelFrame({
   id,
   titleId,
   title,
+  subtitle,
   narrow,
   close,
   foot,
@@ -441,6 +455,7 @@ export function SidePanelFrame({
   id: string;
   titleId: string;
   title: ReactNode;
+  subtitle?: ReactNode;
   narrow: boolean;
   // The close button's name, such as "Close metrics", what it does, and whether Esc does it too, as
   // it does unless said otherwise; none for a panel that closes only by its own buttons.
@@ -483,6 +498,11 @@ export function SidePanelFrame({
             </ActionIcon>
           )}
         </div>
+        {subtitle !== undefined && (
+          <PanelSubtitle className={classes.subtitlePlace}>
+            {subtitle}
+          </PanelSubtitle>
+        )}
         <div className={classes.body}>{children}</div>
         {foot !== undefined && <div className={classes.foot}>{foot}</div>}
       </section>

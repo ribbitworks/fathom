@@ -12,6 +12,7 @@ import { type AccountRow, rolesText } from "./accounts-table.tsx";
 import { focusSoon } from "./focus.ts";
 import type { Column } from "./record-grid.tsx";
 import { RecordSection, Row } from "./record-details.tsx";
+import { RecordKey } from "./record-key.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import { FactBox } from "./status-mark.tsx";
 
@@ -61,6 +62,9 @@ export function AccountPanel({
             </>
           )}
         </span>
+      }
+      subtitle={
+        <RecordKey record={{ kind: "account", keyNumber: account.keyNumber }} />
       }
       narrow={narrow}
       close={{ label: "Close details", onClose }}

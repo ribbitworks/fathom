@@ -39,6 +39,7 @@ import type {
   List,
   Show,
   Tier,
+  RecordKeyOf,
 } from "@fathom/shared";
 import { draftFilterKey, type ExportedTable } from "@fathom/shared";
 import { Menu, Paper, Table, Text, VisuallyHidden } from "@mantine/core";
@@ -49,6 +50,7 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -97,7 +99,12 @@ import {
 } from "./frozen-columns.ts";
 import { shortcutsFor } from "./list-panel.tsx";
 import { Icon } from "./icons.tsx";
-import { actionsFor, MoreButton, RowControls } from "./row-controls.tsx";
+import {
+  actionsFor,
+  MoreButton,
+  opensMenu,
+  RowControls,
+} from "./row-controls.tsx";
 import {
   AllTick,
   RowTick,
@@ -106,6 +113,7 @@ import {
   tickedOf,
 } from "./row-ticks.tsx";
 import { draftedLists, liveLists } from "./lists.ts";
+import { CopyLinkItem } from "./record-key.tsx";
 import {
   type ChangeView,
   ColumnViewItems,
@@ -392,6 +400,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   drafts: (ids: string[]) => DraftSelection;
   // What else a record's menu offers, after its columns' own items, such as showing its details.
   menuItems?: (record: Rec) => ReactNode;
+  // Each record's key, for a table whose records have keys: its menu offers Copy link, and typing
+  // the key in the search finds the record.
+  keyOf?: (record: Rec) => RecordKeyOf;
   // For a table that makes a record of each of someone's rows under several groups: what each row
   // is of, so the count above the table and the metrics count it once. Otherwise the record's id.
   countedAs?: (record: Rec) => string;
@@ -1289,6 +1300,12 @@ function fieldDraftLines(field: Field, lists: readonly List[]): Phrase[] {
 }
 
 // The props a table of one kind of record takes, which its own component passes on.
+// A column a link names, and what the page does once the table has opened it.
+export interface LinkedColumn {
+  key: string;
+  onOpened: () => void;
+}
+
 export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   // Every record the user may see; the view decides which are shown, and in what order.
   records: Rec[];
@@ -1318,6 +1335,8 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   saved?: SavedViews | undefined;
   // The key of the column the table opens scrolled to, just after any frozen columns.
   opensAtColumn?: string | undefined;
+  // A column a link names, which the table opens scrolled to, with its menu open.
+  linkedColumn?: LinkedColumn | undefined;
   // False for a table whose records never have drafts, which offers no Draft menu.
   withDrafts?: boolean;
   // Choices of which records the table shows, beyond its filters, such as Show retired, first in
@@ -1511,6 +1530,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   onView,
   saved,
   opensAtColumn,
+  linkedColumn,
   withDrafts = true,
   panels = [],
   viewChoices,
@@ -1793,7 +1813,13 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     (rows) =>
       rowsInOrder(
         rows,
-        applyView(recordsOf(rows), allColumns, view, [draftColumn]),
+        applyView(
+          recordsOf(rows),
+          allColumns,
+          view,
+          [draftColumn],
+          table.keyOf,
+        ),
       ),
     ({ key }) => key,
     addedRows,
@@ -1879,6 +1905,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
           Show details
         </Menu.Item>
       ),
+      table.keyOf !== undefined && (
+        <CopyLinkItem key="copy-link" record={table.keyOf(record)} />
+      ),
       table.menuItems?.(record),
     ].filter(Boolean);
   // Whether a record's cells cannot be changed: by those who may only view it, while it is drafted
@@ -1911,12 +1940,19 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     const box = scrollRef.current;
     if (box !== null) setEdges(scrollEdges(box));
   }, [measured, scrollRef]);
+  // Held from the table's first drawing, so the page can let the link go at once.
+  const [linkedAtFirst] = useState(linkedColumn?.key);
+  const onLinkedOpened = linkedColumn?.onOpened;
+  useEffect(() => {
+    onLinkedOpened?.();
+  }, [onLinkedOpened]);
+  const scrolledTo = opensAtColumn ?? linkedAtFirst;
   const openedAtColumn = useRef(false);
   useLayoutEffect(() => {
-    if (opensAtColumn === undefined || openedAtColumn.current) return;
+    if (scrolledTo === undefined || openedAtColumn.current) return;
     const scroll = scrollBesideFrozen(
       frozen,
-      columns.findIndex(({ key }) => key === opensAtColumn),
+      columns.findIndex(({ key }) => key === scrolledTo),
     );
     if (scroll === undefined || measured.widths.length === 0) return;
     openedAtColumn.current = true;
@@ -2426,10 +2462,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       moveTo(Math.floor(index / columns.length), index % columns.length);
       return;
     }
-    if (
-      event.key === "ContextMenu" ||
-      (event.shiftKey && event.key === "F10")
-    ) {
+    if (opensMenu(event)) {
       event.preventDefault();
       if (hasRowMenu(row)) setMenuFor({ key: rowKey(row), place: "end" });
       return;
@@ -2606,6 +2639,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
           position="bottom-start"
           withinPortal
           hideDetached={false}
+          defaultOpened={column.key === linkedAtFirst}
         >
           <AppMenu.Target>
             <button
@@ -2651,6 +2685,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
           </AppMenu.Target>
           <AppMenu.Dropdown>
             <MenuTitle>{column.label}</MenuTitle>
+            {field !== undefined && (
+              <CopyLinkItem
+                record={{ kind: "column", keyNumber: field.keyNumber }}
+              />
+            )}
             {field?.heldBy !== undefined && !liveOnly && (
               <HeldNote by={field.heldBy} />
             )}
@@ -3619,6 +3658,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                     <Table.Tr
                       key={key}
                       className={rowClass}
+                      // A menu opened by a right-click hangs from no control in the row, so the row
+                      // says it has one open, keeping its controls shown and others' hidden.
+                      data-menu-open={menuFor?.key === key || undefined}
                       aria-label={
                         row.newRow ? table.newRowLabel(rowKind(row)) : undefined
                       }

@@ -260,9 +260,11 @@ describe("who sees the Accounts page", () => {
     expect(screen.getByRole("link", { name: "Accounts" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "New account" })).toBeNull();
     const panel = await openPanelFor("Fictional Planner");
-    expect(within(panel).queryByRole("button")).toBe(
-      within(panel).getByRole("button", { name: "Close details" }),
-    );
+    expect(
+      within(panel)
+        .getAllByRole("button")
+        .map((button) => button.getAttribute("aria-label")),
+    ).toEqual(["Close details", "#ACCOUNT-1, copy link or key"]);
     expect(fetch).not.toHaveBeenCalledWith("/api/roles", expect.anything());
   });
 
@@ -361,7 +363,7 @@ describe("the list of accounts", () => {
       within(panel)
         .getAllByRole("button")
         .map(({ textContent }) => textContent),
-    ).toEqual(["", "Edit…", "Deactivate…"]);
+    ).toEqual(["", "#ACCOUNT-1", "Edit…", "Deactivate…"]);
   });
 
   it("shows an account left without a role as holding none, and asks for one before saving it", async () => {

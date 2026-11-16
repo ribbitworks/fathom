@@ -5,7 +5,7 @@
 // The data access layer checks the actor's permissions.
 
 import {
-  type ParsedRecordKey,
+  type RecordKeyOf,
   parseRecordKey,
   parseRecordLink,
   type RecordLookup,
@@ -27,7 +27,7 @@ const response = { 200: recordLookupSchema };
 export function goRoutes(data: DataAccess): FastifyPluginCallbackZod {
   const find = async (
     actor: Actor,
-    parsed: ParsedRecordKey | undefined,
+    parsed: RecordKeyOf | undefined,
   ): Promise<RecordLookup> =>
     parsed === undefined
       ? { result: "nothing" }

@@ -13,14 +13,21 @@ import {
   Menu,
   Select,
   Tooltip,
+  isOptionsGroup,
+  type ComboboxParsedItemGroup,
 } from "@mantine/core";
-import type { OrgChartPerson } from "@fathom/shared";
+import {
+  type OrgChartPerson,
+  parseRecordKey,
+  sameRecordKey,
+} from "@fathom/shared";
 import { useReactFlow } from "@xyflow/react";
 import { type ReactNode, useMemo, useState } from "react";
 import { AppMenu } from "./app-menu.tsx";
 import { OptionWords } from "./choice-picker.tsx";
 import { Icon } from "./icons.tsx";
 import {
+  chartKeyOf,
   type ChartPerson,
   findFieldId,
   fitOptions,
@@ -29,6 +36,7 @@ import {
   type OrgTree,
 } from "./org-chart.ts";
 import { PersonMarks, TeamMarks } from "./org-chart-marks.tsx";
+import { byWords } from "./theme.ts";
 
 const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 
@@ -108,6 +116,31 @@ export function ChartControls({
           placeholder="Find a person or team"
           leftSection={<Icon name="search" />}
           data={choices}
+          filter={(input) => {
+            const key = parseRecordKey(input.search);
+            if (key === undefined) return byWords(input);
+            // A key finds the person or planned hire with it, by their card's key, or the feature
+            // team with it, by its own card or its lead's.
+            const keyed = (value: string) => {
+              if (value.startsWith(teamPrefix)) {
+                const card = tree.people.get(value.slice(teamPrefix.length));
+                return (
+                  key.kind === "team" && card?.teamKeyNumber === key.keyNumber
+                );
+              }
+              const card = tree.people.get(value);
+              return card !== undefined && sameRecordKey(chartKeyOf(card), key);
+            };
+            // The finder's options are always groups, of people and of teams.
+            return input.options
+              .filter((option): option is ComboboxParsedItemGroup =>
+                isOptionsGroup(option),
+              )
+              .map((group) => ({
+                ...group,
+                items: group.items.filter(({ value }) => keyed(value)),
+              }));
+          }}
           value={found}
           searchable
           clearable

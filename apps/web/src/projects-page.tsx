@@ -145,6 +145,7 @@ import {
   inViewUnits,
   newRecordProblems,
   pendingId,
+  type LinkedColumn,
   RecordGrid,
   recordsAsShown,
   type RecordActions,
@@ -175,6 +176,7 @@ import {
   resubmitRecordDraft,
 } from "./releases.ts";
 import { useSavedViews } from "./saved-views.tsx";
+import { RecordKey } from "./record-key.tsx";
 import { useSaving } from "./saving.ts";
 import {
   type SidePanel,
@@ -315,7 +317,10 @@ export function ProjectsPage({
   onFeaturesOf,
   onReleaseStream,
   board,
+  linkedColumn,
 }: {
+  // An added column on Features a link opens, whose menu the table opens with open.
+  linkedColumn?: LinkedColumn | undefined;
   tab: PlanTab;
   // Shows another of the plan's pages or tabs, with a record's details open if one is named.
   onTab?: (tab: PlanTab, open?: string) => void;
@@ -808,6 +813,7 @@ export function ProjectsPage({
                 // The table is drawn afresh in each mode, so it measures what it shows.
                 key={mode}
                 {...shared}
+                linkedColumn={linkedColumn}
                 panels={panelsWith("feature", table, plan.features, actions)}
                 records={plan.features}
                 table={table}
@@ -1290,6 +1296,9 @@ function recordPanel({
               {shown.name}
             </DraftedItem>
           </span>
+        }
+        subtitle={
+          <RecordKey record={{ kind: type, keyNumber: shown.keyNumber }} />
         }
         close={{ label: "Close details", onClose }}
       >

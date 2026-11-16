@@ -104,6 +104,17 @@
     var(--mantine-primary-color-filled);
 }
 
+/* Room beside the name for the card's ⋯, which sits over the card's corner, so a long name wraps
+   before it rather than running under it. */
+.name {
+  padding-right: calc(var(--fathom-small-button-size) - 2px);
+}
+
+.key {
+  font-family: var(--mantine-font-family-monospace);
+  color: var(--mantine-color-dimmed);
+}
+
 .line {
   display: flex;
   align-items: center;

@@ -1416,6 +1416,34 @@ describe("searching lists", () => {
       );
     });
   });
+
+  it.each([
+    ["#LIST-2", ["Skills"]],
+    ["list-2", ["Skills"]],
+    ["#LIST-20", []],
+    ["#FEATURE-2", []],
+  ])("finds by the key %s only the list with it", async (typed, shown) => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [locations, { ...skills, keyNumber: 2 }, empty, regions],
+        }),
+    });
+    renderApp("/lists");
+    const table = await screen.findByRole("table", { name: "Lists" });
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Search lists" }),
+      typed,
+    );
+    await waitFor(() => {
+      expect(
+        within(table)
+          .queryAllByRole("link")
+          .map((link) => link.textContent),
+      ).toEqual(shown);
+    });
+  });
 });
 
 describe("choice menus", () => {

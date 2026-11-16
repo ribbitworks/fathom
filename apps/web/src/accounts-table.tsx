@@ -147,5 +147,6 @@ export function accountsTable({
     showDetails: (row) => {
       onOpen(row.account);
     },
+    keyOf: (row) => ({ kind: "account", keyNumber: row.account.keyNumber }),
   };
 }

@@ -282,6 +282,7 @@ function planTable<Rec extends PlanRecord, Request>({
     drafts: drafts(type),
     ...(menuItems === undefined ? {} : { menuItems }),
     ...(showDetails === undefined ? {} : { showDetails }),
+    keyOf: (record) => ({ kind: type, keyNumber: record.keyNumber }),
   };
 }
 

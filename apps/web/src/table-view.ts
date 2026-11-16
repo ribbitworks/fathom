@@ -21,6 +21,9 @@ import {
   type ViewDefinition,
   inPlacesOf,
   viewDefinitionSchema,
+  parseRecordKey,
+  type RecordKeyOf,
+  sameRecordKey,
 } from "@fathom/shared";
 import { useState } from "react";
 import { z } from "zod";
@@ -860,14 +863,16 @@ function matchesFilter(
 }
 
 // The rows the view shows, in its order: those matching every filter and every word searched for,
-// sorted by each level in turn and otherwise left in the order given. Filters and sorts on columns
-// the table does not have, such as ones the user may not see, are left out. Filters that are not
-// columns filter the rows too, but are neither searched nor sorted on.
+// or, where the search is a record's key, the record with that key, sorted by each level in turn
+// and otherwise left in the order given. Filters and sorts on columns the table does not have, such
+// as ones the user may not see, are left out. Filters that are not columns filter the rows too, but
+// are neither searched nor sorted on.
 export function applyView<Row>(
   rows: readonly Row[],
   columns: readonly TableColumn<Row>[],
   view: View,
   filterOnly: readonly TableColumn<Row>[] = [],
+  keyOf?: (row: Row) => RecordKeyOf,
 ): Row[] {
   const byKey = new Map(
     columns.map((column) => [column.key, column as TableColumn<never>]),
@@ -883,6 +888,12 @@ export function applyView<Row>(
     return column && isActive(filter) ? [{ column, filter }] : [];
   });
   const words = searchWords(view.search);
+  const searchedKey = parseRecordKey(view.search);
+  // A search that is a key finds the one record with it, in a table whose records have keys.
+  const keyed =
+    keyOf === undefined || searchedKey === undefined
+      ? undefined
+      : (row: Row) => sameRecordKey(keyOf(row), searchedKey);
   const levels = view.sort.flatMap((level) => {
     const column = byKey.get(level.key);
     return column ? [{ column, descending: level.descending }] : [];
@@ -895,6 +906,7 @@ export function applyView<Row>(
       matchesFilter(column, read(column, row), filter),
     );
     if (!filtered || words.length === 0) return filtered;
+    if (keyed !== undefined) return keyed(row);
     const cells = [...byKey.values()].map((column) =>
       folded(rulesFor(column).words(column, read(column, row))),
     );

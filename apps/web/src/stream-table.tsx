@@ -440,6 +440,7 @@ export function streamTable({
     showDetails: (row) => {
       onOpen(row.stream);
     },
+    keyOf: (row) => ({ kind: "schedule", keyNumber: row.stream.keyNumber }),
     columnsFor: () => shownColumns,
     liveRecords: (rows) => liveRows(rows, streams, day),
     draftFields: (row, draft) => draftFieldsOf(shownColumns, row, draft),

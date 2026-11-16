@@ -807,7 +807,7 @@ describe("a stream's panel", () => {
       within(panel())
         .queryAllByRole("button")
         .map(({ textContent }) => textContent),
-    ).toEqual([""]);
+    ).toEqual(["#SCHEDULE-1", ""]);
   });
 
   it.each([

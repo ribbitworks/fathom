@@ -324,7 +324,7 @@ export {
   draftKeyKinds,
   keyMark,
   keyNumberSchema,
-  type ParsedRecordKey,
+  type RecordKeyOf,
   parseRecordKey,
   parseRecordLink,
   recordKey,
@@ -332,6 +332,7 @@ export {
   recordKeyKinds,
   recordKeyKindSchema,
   recordLinkPath,
+  sameRecordKey,
   shownRecordKey,
 } from "./record-keys.ts";
 export {

@@ -1518,6 +1518,107 @@ describe("the org chart", () => {
   });
 });
 
+describe("a card's menu and finding by key", () => {
+  // Uma, and a planned hire, under the same number, as each kind counts its own.
+  const keyed = () =>
+    chartJson({
+      people: [
+        ...people.map((one) =>
+          one.id === "p4" ? { ...one, keyNumber: 4 } : one,
+        ),
+        person("h1", "Fictional Engineer, TBD-7", "p1", {
+          keyNumber: 4,
+          employeeId: null,
+          planned: { expected: "2027-03", shownId: "TBD-7" },
+        }),
+      ],
+    });
+
+  // The items of the card's menu, which opens while Show levels' menu may still be closing.
+  const items = async () => {
+    const copy = await screen.findByRole("menuitem", { name: "Copy link" });
+    return within(copy.closest<HTMLElement>("[role=menu]") as HTMLElement)
+      .getAllByRole("menuitem")
+      .map(({ textContent }) => textContent);
+  };
+
+  it("opens a person's card menu from a right-click, with no ⋯, and copies their link", async () => {
+    const user = userEvent.setup();
+    await openChart(keyed);
+    await screen.findByRole("link", { name: "Uma Fictional" });
+    expect(
+      screen.queryByRole("button", { name: "Actions for Uma Fictional" }),
+    ).toBeNull();
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByRole("link", { name: "Uma Fictional" }),
+    });
+    expect(await items()).toEqual(["Show details", "Copy link"]);
+    await user.click(screen.getByRole("menuitem", { name: "Copy link" }));
+    expect(await navigator.clipboard.readText()).toBe(
+      `${window.location.origin}/go/person/4`,
+    );
+  });
+
+  it("shows a person's details from their card's menu, opened from the menu key", async () => {
+    const history = await openChart(keyed);
+    screen.getByRole("link", { name: "Uma Fictional" }).focus();
+    await userEvent.keyboard("{ContextMenu}");
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Show details" }),
+    );
+    expect(history.location.search).toContain("open=FX-p4");
+  });
+
+  it("offers a planned hire's placeholder only Copy link, linking the hire", async () => {
+    const user = userEvent.setup();
+    await openChart(keyed);
+    const placeholder = (await screen.findAllByText("TBD-7")).find(
+      (shown) => shown.closest("div.react-flow__node") !== null,
+    ) as HTMLElement;
+    await user.pointer({ keys: "[MouseRight]", target: placeholder });
+    expect(await items()).toEqual(["Copy link"]);
+    await user.click(screen.getByRole("menuitem", { name: "Copy link" }));
+    expect(await navigator.clipboard.readText()).toBe(
+      `${window.location.origin}/go/hire/4`,
+    );
+  });
+
+  it("opens the menu of a card with no link from Shift+F10 on the card itself", async () => {
+    await openChart(keyed);
+    const placeholder = await screen.findByRole("group", { name: "TBD-7" });
+    placeholder.focus();
+    await userEvent.keyboard("{Shift>}{F10}{/Shift}");
+    expect(await items()).toEqual(["Copy link"]);
+  });
+
+  it.each([
+    ["#person-4", "Uma Fictional"],
+    ["HIRE-4", "Fictional Engineer, TBD-7"],
+  ])("finds by the key %s only who has it", async (typed, name) => {
+    await openChart(keyed);
+    await userEvent.type(
+      screen.getByRole("combobox", { name: "Find a person or team" }),
+      typed,
+    );
+    await screen.findByRole("option", {
+      name: (label) => label.startsWith(name),
+    });
+    const options = screen.getAllByRole("option");
+    expect(options).toHaveLength(1);
+    expect(options[0]?.textContent.startsWith(name)).toBe(true);
+  });
+
+  it("says nobody has a key nobody on the chart has", async () => {
+    await openChart(keyed);
+    await userEvent.type(
+      screen.getByRole("combobox", { name: "Find a person or team" }),
+      "#PERSON-40",
+    );
+    expect(await screen.findByText("Nobody has that key")).toBeDefined();
+  });
+});
+
 describe("feature teams on the org chart", () => {
   const lighthouse = "00000000-0000-4000-8000-0000000000f1";
   const quay = "00000000-0000-4000-8000-0000000000f2";
@@ -1744,6 +1845,70 @@ describe("feature teams on the org chart", () => {
     expect(history.location.search).toContain(`featureTeam=${quay}`);
     expect(history.location.search).not.toContain("open=");
     expect(card("Fictional Quay").querySelector("[data-found]")).not.toBeNull();
+  });
+
+  it("copies a team's link from the menu of its own card", async () => {
+    const user = userEvent.setup();
+    await openFeatureTeams({
+      shown: [
+        ...teams.slice(0, 1),
+        featureTeam({
+          id: quay,
+          keyNumber: 6,
+          name: "Fictional Quay",
+          members: ["p4", "p3"],
+        }),
+      ],
+    });
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: await screen.findByRole("link", { name: "Fictional Quay" }),
+    });
+    await user.click(
+      await screen.findByRole("menuitem", { name: "Copy link" }),
+    );
+    expect(await navigator.clipboard.readText()).toBe(
+      `${window.location.origin}/go/team/6`,
+    );
+  });
+
+  it.each([
+    ["#TEAM-1", "Fictional Lighthouse"],
+    ["team-6", "Fictional Quay"],
+  ])(
+    "finds by the key %s only the team with it, led or not",
+    async (typed, name) => {
+      await openFeatureTeams({
+        shown: [
+          ...teams.slice(0, 1),
+          featureTeam({
+            id: quay,
+            keyNumber: 6,
+            name: "Fictional Quay",
+            members: ["p4", "p3"],
+          }),
+        ],
+      });
+      await screen.findByRole("link", { name: "Sasha Fictional" });
+      await userEvent.type(
+        screen.getByRole("combobox", { name: "Find a person or team" }),
+        typed,
+      );
+      await screen.findByRole("option", {
+        name: (label) => label.startsWith(name),
+      });
+      expect(screen.getAllByRole("option")).toHaveLength(1);
+    },
+  );
+
+  it("says no team has a team key no team on the chart has", async () => {
+    await openFeatureTeams();
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    await userEvent.type(
+      screen.getByRole("combobox", { name: "Find a person or team" }),
+      "#TEAM-40",
+    );
+    expect(await screen.findByText("No team has that key")).toBeDefined();
   });
 
   it("opens another team chosen from the Feature teams button while one is open", async () => {

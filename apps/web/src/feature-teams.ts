@@ -200,7 +200,6 @@ export function featureTeamPeople(
         ? {
             id: rootId,
             keyNumber: team.keyNumber,
-            keyKind: "team",
             preferredName: shown.name,
             employeeId: null,
             position: "No feature lead",
@@ -210,6 +209,7 @@ export function featureTeamPeople(
             approvedTeamName: liveName,
             featureTeam: shown.name,
             featureTeamId: team.id,
+            teamKeyNumber: team.keyNumber,
             teamCard: true,
           }
         : {
@@ -221,6 +221,7 @@ export function featureTeamPeople(
             approvedTeamName: liveName,
             featureTeam: shown.name,
             featureTeamId: team.id,
+            teamKeyNumber: team.keyNumber,
           };
     // A draft renaming the team, in any Draft view, which decides how it shows, with the live name
     // drawn under it beside live, and who holds the team, all marked on its root card's team name.

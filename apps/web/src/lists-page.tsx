@@ -19,6 +19,7 @@ import {
   searchWords,
   type Show,
   type Tier,
+  parseRecordKey,
 } from "@fathom/shared";
 import {
   Button,
@@ -744,21 +745,26 @@ export function ListsPage({
     }
   };
 
-  // The lists of the kind chosen whose name, description, or choices hold every word searched for.
+  // The lists of the kind chosen whose name, description, or choices hold every word searched for,
+  // or, where the search is a list's key, that list.
   const words = searchWords(search);
+  const searchedKey = parseRecordKey(search);
   const shownLists = lists.filter(
     (list) =>
       isKind(list, kind) &&
-      matchesWords(
-        [
-          list.name,
-          list.description,
-          ...list.choices.map(
-            ({ label, description }) => `${label} ${description}`,
-          ),
-        ].join(" "),
-        words,
-      ),
+      (searchedKey === undefined
+        ? matchesWords(
+            [
+              list.name,
+              list.description,
+              ...list.choices.map(
+                ({ label, description }) => `${label} ${description}`,
+              ),
+            ].join(" "),
+            words,
+          )
+        : searchedKey.kind === "list" &&
+          searchedKey.keyNumber === list.keyNumber),
   );
 
   // Every draft waiting among the lists shown, which Approvers approve or reject all at once, with

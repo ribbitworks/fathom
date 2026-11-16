@@ -32,7 +32,7 @@ import {
   personKind,
   recordProblem,
 } from "./people-grid.tsx";
-import { isHire, rowName, type RowChange } from "./people-rows.ts";
+import { isHire, personKeyOf, rowName, type RowChange } from "./people-rows.ts";
 import { changedFrom, managerChangesFrom } from "./person-change.ts";
 import type { NoteEditing } from "./note-editing.tsx";
 import { peopleQuery, peopleQueryOn } from "./people.ts";
@@ -45,6 +45,7 @@ import {
 import classes from "./record-details.module.css";
 import { RecordLink, RecordSection, Row } from "./record-details.tsx";
 import { heldBack, onRow, shownSchema } from "./record-grid.tsx";
+import { RecordKey } from "./record-key.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {
   besideLive,
@@ -173,11 +174,20 @@ export function PersonPanel({
   useEffect(() => {
     focusSoon(titleId);
   }, [shown]);
-  const frame = (title: ReactNode, content: ReactNode) => (
+  const frame = ({
+    title,
+    subtitle,
+    content,
+  }: {
+    title: ReactNode;
+    subtitle?: ReactNode;
+    content: ReactNode;
+  }) => (
     <SidePanelFrame
       id={personPanelId}
       titleId={titleId}
       title={title}
+      subtitle={subtitle}
       narrow={narrow}
       close={{ label: "Close details", onClose }}
     >
@@ -185,54 +195,63 @@ export function PersonPanel({
     </SidePanelFrame>
   );
   if (query.isPending || lists.isPending) {
-    return frame("Details", <Loader role="status" aria-label="Loading" />);
+    return frame({
+      title: "Details",
+      content: <Loader role="status" aria-label="Loading" />,
+    });
   }
   if (query.isError || lists.isError) {
-    return frame(
-      "Details",
-      <Alert color="red" role="alert">
-        <Group justify="space-between">
-          Fathom could not load this person.
-          <Button
-            variant="light"
-            color="red"
-            size="xs"
-            onClick={() => {
-              void query.refetch();
-              void lists.refetch();
-            }}
-          >
-            Try again
-          </Button>
-        </Group>
-      </Alert>,
-    );
+    return frame({
+      title: "Details",
+      content: (
+        <Alert color="red" role="alert">
+          <Group justify="space-between">
+            Fathom could not load this person.
+            <Button
+              variant="light"
+              color="red"
+              size="xs"
+              onClick={() => {
+                void query.refetch();
+                void lists.refetch();
+              }}
+            >
+              Try again
+            </Button>
+          </Group>
+        </Alert>
+      ),
+    });
   }
   const asShown = peopleAsShown(query.data.people, show);
   const person = asShown.find(({ id }) => id === drafted?.id);
   if (person === undefined) {
     if (drafted === undefined) {
       const today = todays.data?.people.find((one) => sameId(one, employeeId));
-      return frame(
-        "Details",
-        <Text>
-          {shownOn === undefined
-            ? `Nobody in People has the ID ${employeeId}.`
-            : `${today === undefined ? employeeId : rowName(today, lists.data)} isn't employed on ${formatDay(shownOn)}.`}
-        </Text>,
-      );
+      return frame({
+        title: "Details",
+        content: (
+          <Text>
+            {shownOn === undefined
+              ? `Nobody in People has the ID ${employeeId}.`
+              : `${today === undefined ? employeeId : rowName(today, lists.data)} isn't employed on ${formatDay(shownOn)}.`}
+          </Text>
+        ),
+      });
     }
     const name = rowName(drafted, lists.data);
-    return frame(
-      name,
-      <Text>
-        {drafted.draft?.action === "deleted"
-          ? `${name} is drafted to be removed.`
-          : drafted.draft?.state === "rejected"
-            ? `Adding ${name} was rejected.`
-            : `${name} is only drafted to be added, so is not live yet.`}
-      </Text>,
-    );
+    return frame({
+      title: name,
+      content: (
+        <Text>
+          {drafted.draft?.action === "deleted"
+            ? `${name} is drafted to be removed.`
+            : drafted.draft?.state === "rejected"
+              ? `Adding ${name} was rejected.`
+              : `${name} is only drafted to be added, so is not live yet.`}
+        </Text>
+      ),
+    });
   }
   const kind = person.kind ?? personKind;
   const schema = shownSchema(show, query.data.fields, lists.data);
@@ -396,105 +415,119 @@ export function PersonPanel({
   const fill = isHire(person)
     ? hireFill?.(person, asShown, allColumns)
     : undefined;
-  return frame(
-    <DraftedItem draft={ownDraft?.action === "changed" ? undefined : ownDraft}>
-      {nameOf(person)}
-    </DraftedItem>,
-    <Stack gap="lg">
-      <div>
-        <Group gap={0} align="baseline">
-          <MarkedItem
-            tone={
-              left
-                ? "warning"
-                : person.expected === undefined
-                  ? undefined
-                  : "planned"
-            }
-            words={
-              left
-                ? leftWarning.words
-                : person.expected === undefined
-                  ? undefined
-                  : plannedWords({
-                      expected: person.expected,
-                      undated: person.undated,
-                    })
-            }
-            spoken={left ? leftWarning.spoken : undefined}
-          >
-            {position !== undefined && (
-              <Text c="dimmed">
-                {cellKinds.choice.inWords(position, position.value(person))}
-              </Text>
+  return frame({
+    title: (
+      <DraftedItem
+        draft={ownDraft?.action === "changed" ? undefined : ownDraft}
+      >
+        {nameOf(person)}
+      </DraftedItem>
+    ),
+    subtitle: (
+      <RecordKey
+        record={personKeyOf({
+          keyNumber: person.keyNumber,
+          hire: isHire(person),
+        })}
+      />
+    ),
+    content: (
+      <Stack gap="lg">
+        <div>
+          <Group gap={0} align="baseline">
+            <MarkedItem
+              tone={
+                left
+                  ? "warning"
+                  : person.expected === undefined
+                    ? undefined
+                    : "planned"
+              }
+              words={
+                left
+                  ? leftWarning.words
+                  : person.expected === undefined
+                    ? undefined
+                    : plannedWords({
+                        expected: person.expected,
+                        undated: person.undated,
+                      })
+              }
+              spoken={left ? leftWarning.spoken : undefined}
+            >
+              {position !== undefined && (
+                <Text c="dimmed">
+                  {cellKinds.choice.inWords(position, position.value(person))}
+                </Text>
+              )}
+            </MarkedItem>
+          </Group>
+          {elsewhere(person)}
+          {fill?.action}
+        </div>
+        {fill?.form ?? (
+          <>
+            {teams === "feature-teams" && (
+              <RecordSection id="person-reporting" title="Reporting">
+                {section(["managerId"]).map(rowOf)}
+              </RecordSection>
             )}
-          </MarkedItem>
-        </Group>
-        {elsewhere(person)}
-        {fill?.action}
-      </div>
-      {fill?.form ?? (
-        <>
-          {teams === "feature-teams" && (
-            <RecordSection id="person-reporting" title="Reporting">
-              {section(["managerId"]).map(rowOf)}
+            {teams === "reporting" && (
+              <RecordSection id="person-reporting" title="Reporting">
+                {section(reportingKeys).map(reportingLabel).map(rowOf)}
+                <div className={classes.row}>
+                  <dt className={classes.label}>Direct reports</dt>
+                  <dd className={classes.value}>
+                    {reports.length === 0 ? (
+                      <Text c="dimmed">None</Text>
+                    ) : (
+                      <ul className={classes.reports}>
+                        {reports.map((report) => (
+                          <li key={report.id}>
+                            <DraftedPartItem
+                              draft={draftOf.get(report.id)}
+                              part={partOf(report.id)}
+                            >
+                              <RecordLink
+                                name={nameOf(report)}
+                                onShow={() => {
+                                  onPerson(report.employeeId);
+                                }}
+                              />
+                            </DraftedPartItem>
+                            {typeof report.startDate === "string" &&
+                              report.startDate > day && (
+                                <Text span c="dimmed" size="sm" ml={8}>
+                                  Starts {formatDay(report.startDate)}
+                                </Text>
+                              )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </dd>
+                </div>
+              </RecordSection>
+            )}
+            {!isHire(person) && (
+              <PersonFeatureTeams
+                shownOn={shownOn}
+                personId={person.id}
+                employeeId={person.employeeId}
+                seesFeatureTeams={seesFeatureTeams}
+              />
+            )}
+            <RecordSection id="person-details" title="Details">
+              {section(detailKeys).map(rowOf)}
             </RecordSection>
-          )}
-          {teams === "reporting" && (
-            <RecordSection id="person-reporting" title="Reporting">
-              {section(reportingKeys).map(reportingLabel).map(rowOf)}
-              <div className={classes.row}>
-                <dt className={classes.label}>Direct reports</dt>
-                <dd className={classes.value}>
-                  {reports.length === 0 ? (
-                    <Text c="dimmed">None</Text>
-                  ) : (
-                    <ul className={classes.reports}>
-                      {reports.map((report) => (
-                        <li key={report.id}>
-                          <DraftedPartItem
-                            draft={draftOf.get(report.id)}
-                            part={partOf(report.id)}
-                          >
-                            <RecordLink
-                              name={nameOf(report)}
-                              onShow={() => {
-                                onPerson(report.employeeId);
-                              }}
-                            />
-                          </DraftedPartItem>
-                          {typeof report.startDate === "string" &&
-                            report.startDate > day && (
-                              <Text span c="dimmed" size="sm" ml={8}>
-                                Starts {formatDay(report.startDate)}
-                              </Text>
-                            )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </dd>
-              </div>
-            </RecordSection>
-          )}
-          {!isHire(person) && (
-            <PersonFeatureTeams
-              shownOn={shownOn}
-              personId={person.id}
-              employeeId={person.employeeId}
-              seesFeatureTeams={seesFeatureTeams}
-            />
-          )}
-          <RecordSection id="person-details" title="Details">
-            {section(detailKeys).map(rowOf)}
-          </RecordSection>
-          {added.length > 0 && (
-            <RecordSection id="person-columns" title="Columns">
-              {added.map(rowOf)}
-            </RecordSection>
-          )}
-        </>
-      )}
-    </Stack>,
-  );
+            {added.length > 0 && (
+              <RecordSection id="person-columns" title="Columns">
+                {added.map(rowOf)}
+              </RecordSection>
+            )}
+          </>
+        )}
+      </Stack>
+    ),
+  });
 }

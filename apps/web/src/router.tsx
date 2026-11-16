@@ -32,6 +32,8 @@ import {
   daySchema,
   cardPartSchema,
   planModeSchema,
+  parseRecordKey,
+  parseRecordLink,
 } from "@fathom/shared";
 import { Anchor } from "@mantine/core";
 import {
@@ -45,10 +47,11 @@ import {
   type RouterHistory,
   redirect,
 } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { AccountsPage } from "./accounts-page.tsx";
 import { FirstPasswordChange } from "./change-password.tsx";
+import { RecordNotShown } from "./go-page.tsx";
 import { HelpPageView } from "./help-page.tsx";
 import { helpIndexPage, shownHelpPage } from "./help-pages.ts";
 import { ChangeHistoryPage } from "./change-history-page.tsx";
@@ -76,7 +79,9 @@ import { setTimeZone, shownDay, today } from "./today.ts";
 import { ReleasesPage } from "./releases-page.tsx";
 import { PeoplePage } from "./people-page.tsx";
 import { ProjectsPage, projectTabSchema } from "./projects-page.tsx";
-import { featureNamers, type PlanTab } from "./projects.ts";
+import { featureNamers, planAddress } from "./projects.ts";
+import { followLink } from "./record-links.ts";
+import type { LinkedColumn } from "./record-grid.tsx";
 import { PageNotFound, ServerProblem } from "./problems.tsx";
 import { RolesPage } from "./roles-page.tsx";
 import { sessionQuery } from "./session.ts";
@@ -263,17 +268,30 @@ const accountsRoute = createRoute({
   },
 });
 
+// The Roles page's address: only a role a link opens, which the page takes out once its dialog is
+// open.
+const rolesSearch = z.object({
+  open: z.uuid().optional().catch(undefined),
+});
+
 const rolesRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/roles",
+  validateSearch: rolesSearch,
   beforeLoad: reaching("roles"),
   component: function Roles() {
     const { user, permissions, access } = signedIn.useRouteContext();
+    const { open } = rolesRoute.useSearch();
+    const navigate = rolesRoute.useNavigate();
     return (
       <RolesPage
         user={user}
         canEdit={permissions.includes("administration:edit")}
         dataClasses={access.dataClasses}
+        linked={open}
+        onLinkedOpened={() => {
+          void navigate({ search: {}, replace: true });
+        }}
       />
     );
   },
@@ -557,24 +575,36 @@ const projectsSearch = planRecordSearch.extend({
   tab: projectTabSchema.optional().catch(undefined),
 });
 
-// The Projects page's address for a tab, with a record's details open if one is named.
-const projectsTabSearch = (
-  next: z.infer<typeof projectTabSchema>,
-  record?: string,
-) => ({
-  ...(next === "projects" ? {} : { tab: next }),
-  ...(record === undefined ? {} : { open: record }),
-});
+// An added column a link opens, taken out of the address at once, since a menu isn't kept there,
+// and kept until the table has opened its menu, then let go, so drawing the table again, as
+// switching to the Board and back does, doesn't open it again.
+const linkedColumnSearch = z.uuid().optional().catch(undefined);
 
-// The address of one of the plan's pages or tabs, with a record's details open if one is named.
-const planAddress = (next: PlanTab, record?: string) =>
-  next === "features"
-    ? { to: "/features" as const, search: { open: record } }
-    : { to: "/projects" as const, search: projectsTabSearch(next, record) };
+function useLinkedColumn(
+  column: string | undefined,
+  drop: () => void,
+): LinkedColumn | undefined {
+  const [linked, setLinked] = useState(column);
+  const dropped = useRef(false);
+  useEffect(() => {
+    if (column === undefined || dropped.current) return;
+    dropped.current = true;
+    drop();
+  }, [column, drop]);
+  return linked === undefined
+    ? undefined
+    : {
+        key: linked,
+        onOpened: () => {
+          setLinked(undefined);
+        },
+      };
+}
 
 // Features' address adds whether it shows a board, and the board's stream, the cycle it starts from,
 // and the parts of its cards hidden.
 const featuresSearch = planRecordSearch.extend({
+  column: linkedColumnSearch,
   mode: planModeSchema.optional().catch(undefined),
   stream: z.uuid().optional().catch(undefined),
   from: daySchema.optional().catch(undefined),
@@ -591,10 +621,17 @@ const featuresRoute = createRoute({
     const navigate = featuresRoute.useNavigate();
     // Table or Board, and the cycle the Board starts from, are kept in the address but not the
     // view, which the table and the Board share.
-    const { open, mode, from, ...search } = featuresRoute.useSearch();
+    const { open, mode, from, column, ...search } = featuresRoute.useSearch();
     const { stream, hide } = search;
+    const linkedColumn = useLinkedColumn(column, () => {
+      void navigate({
+        search: (shown) => ({ ...shown, column: undefined }),
+        replace: true,
+      });
+    });
     return (
       <ProjectsPage
+        linkedColumn={linkedColumn}
         tab="features"
         canEditColumns={permissions.includes("configuration:edit")}
         canShareViews={sharesViews("features", permissions)}
@@ -691,6 +728,7 @@ const projectsRoute = createRoute({
 
 // People's address: its view, and the person whose details are shown beside it, by Employee ID.
 const peopleSearch = viewSearchSchema.extend({
+  column: linkedColumnSearch,
   open: z.string().max(personLengths.employeeId).optional().catch(undefined),
   day: daySchema.optional().catch(undefined),
 });
@@ -703,7 +741,13 @@ const peopleRoute = createRoute({
   component: function People() {
     const { permissions, access } = signedIn.useRouteContext();
     const navigate = people.useNavigate();
-    const { open, day: asked, ...search } = people.useSearch();
+    const { open, day: asked, column, ...search } = people.useSearch();
+    const linkedColumn = useLinkedColumn(column, () => {
+      void navigate({
+        search: (shown) => ({ ...shown, column: undefined }),
+        replace: true,
+      });
+    });
     const otherDates = seesView("orgChartOtherDates", access);
     const futureDates = seesView("orgChartFutureDates", access);
     const day = shownDay(asked, { otherDates, futureDates });
@@ -712,6 +756,7 @@ const peopleRoute = createRoute({
     const onToday = day === undefined;
     return (
       <PeoplePage
+        linkedColumn={linkedColumn}
         canEdit={permissions.includes("people:edit")}
         canEditHires={
           onToday &&
@@ -865,6 +910,30 @@ const signInRoute = createRoute({
   },
 });
 
+const goLinkRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/go/$kind/$keyNumber",
+  loader: async ({ context, params }) =>
+    followLink(
+      context.queryClient,
+      parseRecordLink(params.kind, params.keyNumber),
+      `#${params.kind.toUpperCase()}-${params.keyNumber}`,
+    ),
+  component: function GoLink() {
+    return <RecordNotShown {...goLinkRoute.useLoaderData()} />;
+  },
+});
+
+const goKeyRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/go/$key",
+  loader: async ({ context, params }) =>
+    followLink(context.queryClient, parseRecordKey(params.key), params.key),
+  component: function GoKey() {
+    return <RecordNotShown {...goKeyRoute.useLoaderData()} />;
+  },
+});
+
 const routeTree = rootRoute.addChildren([
   signedInRoute.addChildren([
     homeRoute,
@@ -885,6 +954,8 @@ const routeTree = rootRoute.addChildren([
     draftsRoute,
     helpIndexRoute,
     helpRoute,
+    goLinkRoute,
+    goKeyRoute,
   ]),
   signInRoute,
 ]);

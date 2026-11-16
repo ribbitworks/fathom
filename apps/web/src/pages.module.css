@@ -219,6 +219,11 @@
   line-height: var(--fathom-panel-name-line);
 }
 
+/* A subtitle wraps onto a line of its own under the name. */
+.panelSubtitle {
+  flex-basis: 100%;
+}
+
 .panelNameBlock .panelName {
   flex: 0 1 auto;
   min-width: 0;

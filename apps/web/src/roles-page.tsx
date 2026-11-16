@@ -735,13 +735,27 @@ export function RolesPage({
   user,
   canEdit,
   dataClasses,
+  linked,
+  onLinkedOpened,
 }: {
   user: SignedInUser;
   canEdit: boolean;
   dataClasses: DataClasses;
+  // A role a link opens, whose dialog opens once the roles are read; a dialog isn't kept in the
+  // address, so the page then takes it out.
+  linked?: string | undefined;
+  onLinkedOpened?: () => void;
 }) {
   const roles = useQuery(rolesQuery);
   const { dialog, opened, open, close } = useDialogState<Dialog>();
+  const linkedOpened = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const role = roles.data?.find(({ id }) => id === linked);
+    if (role === undefined || linkedOpened.current === role.id) return;
+    linkedOpened.current = role.id;
+    open({ kind: canEdit ? "edit" : "view", role });
+    onLinkedOpened?.();
+  }, [roles.data, linked, canEdit, open, onLinkedOpened]);
   const [busy, setBusy] = useState(false);
 
   return (

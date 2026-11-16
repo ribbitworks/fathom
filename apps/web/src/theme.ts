@@ -55,7 +55,7 @@ const deepWater: MantineColorsTuple = [
 // A drop-down list's search finds the options holding every word typed, in any order, whatever
 // their accents, as every search in Fathom does, rather than by Mantine's own, which minds accents
 // and order. Like Mantine's, it shows no more than a list's limit.
-const byWords: OptionsFilter = ({ options, search, limit }) => {
+export const byWords: OptionsFilter = ({ options, search, limit }) => {
   const words = searchWords(search);
   let left = limit;
   const found = (items: readonly ComboboxItem[]) => {

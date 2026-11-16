@@ -287,6 +287,16 @@
   font-weight: 600;
 }
 
+.subtitle {
+  font-size: var(--mantine-font-size-sm);
+  line-height: normal;
+  color: var(--mantine-color-dimmed);
+}
+
+.subtitlePlace {
+  padding: 0 12px 4px 16px;
+}
+
 .body {
   flex: 1;
   min-height: 0;

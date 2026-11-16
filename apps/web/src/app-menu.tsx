@@ -33,9 +33,10 @@ const CloseMenu = createContext<() => void>(() => undefined);
 
 export function AppMenu({
   children,
+  defaultOpened = false,
   ...props
 }: Omit<MenuProps, "opened" | "onChange"> & { children: ReactNode }) {
-  const [opened, setOpened] = useState(false);
+  const [opened, setOpened] = useState(defaultOpened);
   return (
     <Menu {...props} opened={opened} onChange={setOpened}>
       <CloseMenu.Provider

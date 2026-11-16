@@ -14,7 +14,9 @@
 // or given another meaning. In feature sizes, each choice shows its weight, typed when it is added
 // or edited; pasted choices take the weight typed in the empty row.
 
-import { actionsFor, MoreButton } from "./row-controls.tsx";
+import { actionsFor, MoreButton, opensMenu } from "./row-controls.tsx";
+import { RecordKey } from "./record-key.tsx";
+import { PanelSubtitle } from "./side-panel.tsx";
 import { movedItem } from "./table-view.ts";
 import {
   DragDropContext,
@@ -741,10 +743,7 @@ export function ListPanel({
     } else if (plain && (event.key === "Delete" || event.key === "Backspace")) {
       handled();
       remove(choice);
-    } else if (
-      event.key === "ContextMenu" ||
-      (event.key === "F10" && event.shiftKey)
-    ) {
+    } else if (opensMenu(event)) {
       handled();
       setMenuFor(choice.id);
     }
@@ -1324,6 +1323,11 @@ export function ListPanel({
                   </h2>
                 </DraftedValue>
               </DraftedItem>
+              <PanelSubtitle className={classes.panelSubtitle}>
+                <RecordKey
+                  record={{ kind: "list", keyNumber: list.keyNumber }}
+                />
+              </PanelSubtitle>
             </div>
             {canEdit && (
               <Button variant="default" size="compact-sm" onClick={onEditList}>

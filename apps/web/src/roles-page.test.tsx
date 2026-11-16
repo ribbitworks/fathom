@@ -1225,3 +1225,32 @@ describe("the permissions that keep access managed", () => {
     expect(box(dialog, "View Plan").checked).toBe(true);
   });
 });
+
+describe("a link to a role", () => {
+  it.each([
+    ["an editor", roleEditor, "Edit Fictional Auditors"],
+    [
+      "a viewer",
+      () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["administration:view"],
+        }),
+      "Fictional Auditors",
+    ],
+  ])(
+    "opens the role's dialog for %s, then takes the role out of the address",
+    async (_reader, session, title) => {
+      serverAnswers({
+        "GET /api/session": session,
+        "GET /api/roles": roleList,
+      });
+      const history = renderApp(`/roles?open=${auditors.id}`);
+      expect(await screen.findByRole("dialog", { name: title })).toBeDefined();
+      await waitFor(() => {
+        expect(history.location.search).toBe("");
+      });
+      expect(history.location.pathname).toBe("/roles");
+    },
+  );
+});

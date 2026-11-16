@@ -55,6 +55,7 @@ import { byChoice, holdsChoices } from "./choice-grouping.ts";
 import { flagChoice } from "./cell-kinds.tsx";
 import {
   isHire,
+  personKeyOf,
   peopleAndHires,
   type RowChange,
   rowName,
@@ -855,6 +856,8 @@ function peopleTable(
       plannedHires: ids.filter((id) => hireIds.has(id)),
     }),
     ...(onOpen === undefined ? {} : { showDetails: onOpen }),
+    keyOf: (row) =>
+      personKeyOf({ keyNumber: row.keyNumber, hire: isHire(row) }),
   };
 }
 

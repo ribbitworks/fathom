@@ -36,6 +36,7 @@ import {
   UnstyledButton,
   VisuallyHidden,
   useComputedColorScheme,
+  Menu,
 } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -60,6 +61,8 @@ import {
   type ReactNode,
 } from "react";
 import { Swatch, teamSwatchSize } from "./colour-swatch.tsx";
+import { CardMenu } from "./card-menu.tsx";
+import { CopyLinkItem } from "./record-key.tsx";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
 import { TeamNameEditor } from "./team-name-editor.tsx";
 import { TeamsPanel } from "./teams-panel.tsx";
@@ -99,6 +102,7 @@ import {
   openLevels,
   findFieldId,
   managersAbove,
+  chartKeyOf,
   type OrgTree,
   orgChartQuery,
   orgChartQueryOn,
@@ -335,138 +339,163 @@ function PersonCard({ data }: NodeProps<CardNode>) {
   const shownId = planned?.shownId;
   const madeName = shownId !== undefined;
   const cardName = shownId ?? person.preferredName;
+  const linked =
+    (person.employeeId !== null || person.teamCard === true) &&
+    onOpen !== undefined;
   return (
-    <div
-      className={classes.card}
-      data-found={found || undefined}
-      data-planned={planned === undefined ? undefined : true}
-      data-draft={
-        person.moved !== undefined ||
-        person.added !== undefined ||
-        person.repositioned !== undefined ||
-        person.renamed !== undefined ||
-        undefined
-      }
-      data-coloured={colour === undefined ? undefined : true}
-      style={
-        colour === undefined
-          ? undefined
-          : ({
-              "--team-colour": colourVariable(colour, "filled"),
-            } as CSSProperties)
+    <CardMenu
+      name={cardName}
+      withMore={false}
+      items={
+        <>
+          {onOpen !== undefined && (
+            <Menu.Item onClick={onOpen}>Show details</Menu.Item>
+          )}
+          <CopyLinkItem record={chartKeyOf(person)} />
+        </>
       }
     >
-      <Handle
-        id="row"
-        type="target"
-        position={Position.Top}
-        isConnectable={false}
-        className={classes.handle}
-      />
-      <Handle
-        id="stack"
-        type="target"
-        position={Position.Left}
-        isConnectable={false}
-        className={classes.handle}
-      />
-      <div className={classes.name}>
-        <PersonMarks person={person}>
-          <MarkedItem
-            tone={person.left === true ? "warning" : undefined}
-            words={leftWarning.words}
-            spoken={leftWarning.spoken}
-          >
-            {(person.employeeId === null && person.teamCard !== true) ||
-            onOpen === undefined ? (
-              <span
-                className={[
-                  classes.label,
-                  madeName ? classes.madeName : "",
-                ].join(" ")}
-              >
-                {cardName}
-              </span>
-            ) : (
-              <Link
-                id={cardLinkId(person.id)}
-                to="/org-chart"
-                search={opened}
-                className={[
-                  classes.label,
-                  classes.link,
-                  "nodrag",
-                  "nopan",
-                ].join(" ")}
-                onClick={(event) => {
-                  if (!plainClick(event)) return;
-                  event.preventDefault();
-                  onOpen();
-                }}
-              >
-                {person.preferredName}
-              </Link>
-            )}
-          </MarkedItem>
-        </PersonMarks>
-        {onTeam !== undefined && (
-          <Tooltip label="Show only this team">
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              size="sm"
-              className={[classes.team, "nodrag", "nopan"].join(" ")}
-              aria-label={`Show only the team of ${person.preferredName}`}
-              onClick={onTeam}
-            >
-              <Icon name="orgChart" />
-            </ActionIcon>
-          </Tooltip>
-        )}
-      </div>
-      <PositionRow person={person} />
-      {person.movedFrom !== undefined && (
-        <Text size="xs" c="dimmed">
-          From {person.movedFrom}
-        </Text>
-      )}
-      {planned !== undefined && (
-        <MarkedItem tone="planned" words={plannedWords(planned)} />
-      )}
-      <TeamRow
-        person={person}
-        editsTeams={editsTeams}
-        onFeatureTeam={onFeatureTeam}
-      />
-      {reports > 0 && (
-        <UnstyledButton
-          className={[classes.toggle, "nodrag", "nopan"].join(" ")}
-          aria-expanded={!collapsed}
-          onClick={() => {
-            onToggle(person.id);
+      {({ onContextMenu, onMenuKey }) => (
+        <div
+          onContextMenu={onContextMenu}
+          onKeyDown={(event) => {
+            onMenuKey(event);
           }}
+          // A card whose name isn't a link takes focus itself, so its menu opens from the keyboard.
+          {...(linked
+            ? {}
+            : { tabIndex: 0, role: "group", "aria-label": cardName })}
+          className={classes.card}
+          data-found={found || undefined}
+          data-planned={planned === undefined ? undefined : true}
+          data-draft={
+            person.moved !== undefined ||
+            person.added !== undefined ||
+            person.repositioned !== undefined ||
+            person.renamed !== undefined ||
+            undefined
+          }
+          data-coloured={colour === undefined ? undefined : true}
+          style={
+            colour === undefined
+              ? undefined
+              : ({
+                  "--team-colour": colourVariable(colour, "filled"),
+                } as CSSProperties)
+          }
         >
-          {`${collapsed ? "Show" : "Hide"} ${String(reports)} ${members ? (reports === 1 ? "member" : "members") : reports === 1 ? "report" : "reports"}`}{" "}
-          <VisuallyHidden>of {person.preferredName}</VisuallyHidden>
-        </UnstyledButton>
+          <Handle
+            id="row"
+            type="target"
+            position={Position.Top}
+            isConnectable={false}
+            className={classes.handle}
+          />
+          <Handle
+            id="stack"
+            type="target"
+            position={Position.Left}
+            isConnectable={false}
+            className={classes.handle}
+          />
+          <div className={classes.name}>
+            <PersonMarks person={person}>
+              <MarkedItem
+                tone={person.left === true ? "warning" : undefined}
+                words={leftWarning.words}
+                spoken={leftWarning.spoken}
+              >
+                {!linked ? (
+                  <span
+                    className={[
+                      classes.label,
+                      madeName ? classes.madeName : "",
+                    ].join(" ")}
+                  >
+                    {cardName}
+                  </span>
+                ) : (
+                  <Link
+                    id={cardLinkId(person.id)}
+                    to="/org-chart"
+                    search={opened}
+                    className={[
+                      classes.label,
+                      classes.link,
+                      "nodrag",
+                      "nopan",
+                    ].join(" ")}
+                    onClick={(event) => {
+                      if (!plainClick(event)) return;
+                      event.preventDefault();
+                      onOpen();
+                    }}
+                  >
+                    {person.preferredName}
+                  </Link>
+                )}
+              </MarkedItem>
+            </PersonMarks>
+            {onTeam !== undefined && (
+              <Tooltip label="Show only this team">
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  size="sm"
+                  className={[classes.team, "nodrag", "nopan"].join(" ")}
+                  aria-label={`Show only the team of ${person.preferredName}`}
+                  onClick={onTeam}
+                >
+                  <Icon name="orgChart" />
+                </ActionIcon>
+              </Tooltip>
+            )}
+          </div>
+          <PositionRow person={person} />
+          {person.movedFrom !== undefined && (
+            <Text size="xs" c="dimmed">
+              From {person.movedFrom}
+            </Text>
+          )}
+          {planned !== undefined && (
+            <MarkedItem tone="planned" words={plannedWords(planned)} />
+          )}
+          <TeamRow
+            person={person}
+            editsTeams={editsTeams}
+            onFeatureTeam={onFeatureTeam}
+          />
+          {reports > 0 && (
+            <UnstyledButton
+              className={[classes.toggle, "nodrag", "nopan"].join(" ")}
+              aria-expanded={!collapsed}
+              onClick={() => {
+                onToggle(person.id);
+              }}
+            >
+              {`${collapsed ? "Show" : "Hide"} ${String(reports)} ${members ? (reports === 1 ? "member" : "members") : reports === 1 ? "report" : "reports"}`}{" "}
+              <VisuallyHidden>of {person.preferredName}</VisuallyHidden>
+            </UnstyledButton>
+          )}
+          <Handle
+            id="row"
+            type="source"
+            position={Position.Bottom}
+            isConnectable={false}
+            className={classes.handle}
+          />
+          {/* Lines to a stack leave from the manager's left, halfway to where the stack starts. */}
+          <Handle
+            id="stack"
+            type="source"
+            position={Position.Bottom}
+            isConnectable={false}
+            className={classes.handle}
+            style={{ left: stackIndent / 2 }}
+          />
+        </div>
       )}
-      <Handle
-        id="row"
-        type="source"
-        position={Position.Bottom}
-        isConnectable={false}
-        className={classes.handle}
-      />
-      {/* Lines to a stack leave from the manager's left, halfway to where the stack starts. */}
-      <Handle
-        id="stack"
-        type="source"
-        position={Position.Bottom}
-        isConnectable={false}
-        className={classes.handle}
-        style={{ left: stackIndent / 2 }}
-      />
-    </div>
+    </CardMenu>
   );
 }
 

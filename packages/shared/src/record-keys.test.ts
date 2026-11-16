@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for record keys: how a key and its link are written, and which keys and links are read.
+// Tests for record keys: how a key and its link are written, which keys and links are read, and
+// when two keys are the same.
 
 import { describe, expect, it } from "vitest";
 import {
@@ -8,6 +9,7 @@ import {
   parseRecordLink,
   recordKey,
   recordLinkPath,
+  sameRecordKey,
   shownRecordKey,
 } from "./record-keys.ts";
 
@@ -70,5 +72,14 @@ describe("reading a link", () => {
 
   it("refuses a link whose parts aren't a key's", () => {
     expect(parseRecordLink("feature", "x")).toBeUndefined();
+  });
+});
+
+describe("comparing keys", () => {
+  it("finds two keys the same only when both kind and number match", () => {
+    const key = { kind: "feature", keyNumber: 2 } as const;
+    expect(sameRecordKey(key, { kind: "feature", keyNumber: 2 })).toBe(true);
+    expect(sameRecordKey(key, { kind: "feature", keyNumber: 20 })).toBe(false);
+    expect(sameRecordKey(key, { kind: "project", keyNumber: 2 })).toBe(false);
   });
 });

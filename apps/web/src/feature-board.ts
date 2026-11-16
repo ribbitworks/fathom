@@ -25,6 +25,7 @@ export const planModes: readonly { value: PlanMode; label: string }[] = [
 ];
 
 export const cardPartLabels: Readonly<Record<CardPart, string>> = {
+  key: "Key",
   status: "Status",
   priority: "Priority",
   size: "Size",

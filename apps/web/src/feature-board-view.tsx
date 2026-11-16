@@ -13,11 +13,20 @@ import {
   type PlanChoices,
   type ReleaseStream,
   type CardPart,
+  shownRecordKey,
 } from "@fathom/shared";
-import { Button, Group, Paper, Text, UnstyledButton } from "@mantine/core";
+import {
+  Button,
+  Group,
+  Menu,
+  Paper,
+  Text,
+  UnstyledButton,
+} from "@mantine/core";
 import { useElementSize } from "@mantine/hooks";
 import { type KeyboardEvent, useState } from "react";
 import { AppMenu, MenuChoices, MenuToggle } from "./app-menu.tsx";
+import { CardMenu } from "./card-menu.tsx";
 import { focusFoundSoon } from "./focus.ts";
 import {
   type BoardColumn,
@@ -36,6 +45,7 @@ import {
 import classes from "./feature-board-view.module.css";
 import { draftRowClass } from "./list-drafts.tsx";
 import { RiskMark, SizeMark } from "./planning-marks.tsx";
+import { CopyLinkItem, isSaved } from "./record-key.tsx";
 import { AlsoUnder, type ShownRows } from "./record-grid.tsx";
 import {
   daysBetween,
@@ -611,88 +621,118 @@ function FeatureCard({
       status?.meaning,
       show === "live" ? feature.staffedLive : feature.staffed,
     );
+  const record = { kind: "feature" as const, keyNumber: feature.keyNumber };
   return (
-    <UnstyledButton
-      id={cardId(id)}
-      {...{ [cardAttribute]: feature.id }}
-      component="div"
-      role="button"
-      className={[
-        classes.card,
-        draftRowClass(draft, besideLive(show)),
-        selected ? classes.selected : "",
-      ].join(" ")}
-      tabIndex={tabIndex}
-      aria-current={selected || undefined}
-      onFocus={onFocus}
-      onKeyDown={(event: KeyboardEvent) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onOpen();
-        } else onKeyDown(event);
-      }}
-      onClick={onOpen}
+    <CardMenu
+      name={feature.name}
+      items={
+        <>
+          <Menu.Item onClick={onOpen}>Show details</Menu.Item>
+          <CopyLinkItem record={record} />
+        </>
+      }
     >
-      <Text component="span" fw={500} size="sm" className={classes.line}>
-        <DraftedItem draft={own} heldBy={feature.heldBy}>
-          <DraftedValue {...value(["name"], "Name")}>
-            {feature.name}
-          </DraftedValue>
-        </DraftedItem>
-        <AlsoUnder others={others} />
-      </Text>
-      {(parts.has("status") || (parts.has("priority") && priority)) && (
-        <Text component="span" size="xs" className={classes.words}>
-          {parts.has("status") && status !== undefined && (
-            <DraftedValue {...value(["statusId"], "Status")}>
-              <span
-                className={
-                  status.meaning === "possible" ? classes.possible : undefined
-                }
-              >
-                {status.name}
-              </span>
-            </DraftedValue>
+      {({ onContextMenu, onMenuKey }) => (
+        <UnstyledButton
+          id={cardId(id)}
+          {...{ [cardAttribute]: feature.id }}
+          component="div"
+          role="button"
+          className={[
+            classes.card,
+            draftRowClass(draft, besideLive(show)),
+            selected ? classes.selected : "",
+          ].join(" ")}
+          tabIndex={tabIndex}
+          aria-current={selected || undefined}
+          onFocus={onFocus}
+          onContextMenu={onContextMenu}
+          onKeyDown={(event: KeyboardEvent<HTMLElement>) => {
+            if (onMenuKey(event)) return;
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onOpen();
+            } else onKeyDown(event);
+          }}
+          onClick={onOpen}
+        >
+          <Text
+            component="span"
+            fw={500}
+            size="sm"
+            className={[classes.line, classes.name].join(" ")}
+          >
+            <DraftedItem draft={own} heldBy={feature.heldBy}>
+              <DraftedValue {...value(["name"], "Name")}>
+                {feature.name}
+              </DraftedValue>
+            </DraftedItem>
+            <AlsoUnder others={others} />
+          </Text>
+          {parts.has("key") && isSaved(record) && (
+            <Text component="span" size="xs" className={classes.key}>
+              {shownRecordKey("feature", feature.keyNumber)}
+            </Text>
           )}
-          {parts.has("status") && parts.has("priority") && priority && " · "}
-          {parts.has("priority") && priority !== undefined && (
-            <DraftedValue {...value(["priorityId"], "Priority")}>
-              {priority.name} priority
-            </DraftedValue>
+          {(parts.has("status") || (parts.has("priority") && priority)) && (
+            <Text component="span" size="xs" className={classes.words}>
+              {parts.has("status") && status !== undefined && (
+                <DraftedValue {...value(["statusId"], "Status")}>
+                  <span
+                    className={
+                      status.meaning === "possible"
+                        ? classes.possible
+                        : undefined
+                    }
+                  >
+                    {status.name}
+                  </span>
+                </DraftedValue>
+              )}
+              {parts.has("status") &&
+                parts.has("priority") &&
+                priority &&
+                " · "}
+              {parts.has("priority") && priority !== undefined && (
+                <DraftedValue {...value(["priorityId"], "Priority")}>
+                  {priority.name} priority
+                </DraftedValue>
+              )}
+            </Text>
           )}
-        </Text>
+          {parts.has("size") && size !== undefined && (
+            <span className={classes.line}>
+              <DraftedValue {...value(["sizeId"], "Size")}>
+                <SizeMark name={size.name} weight={size.weight} />
+              </DraftedValue>
+            </span>
+          )}
+          {parts.has("risk") && risk !== undefined && (
+            <span className={classes.line}>
+              <DraftedValue {...value(["riskId"], "Risk")}>
+                <RiskMark {...risk} />
+              </DraftedValue>
+            </span>
+          )}
+          {parts.has("neededBy") && feature.neededBy !== null && (
+            <Text component="span" size="xs" className={classes.line}>
+              <DraftedValue {...value(["neededBy"], "Needed by")}>
+                Needed by {formatMonth(feature.neededBy)}
+              </DraftedValue>
+            </Text>
+          )}
+          {notStaffed && (
+            <Text component="span" size="xs" className={classes.line}>
+              <MarkedItem
+                tone="warning"
+                words="Not staffed"
+                spoken="it's planned or in progress, with nobody allocated to it"
+              />
+            </Text>
+          )}
+        </UnstyledButton>
       )}
-      {parts.has("size") && size !== undefined && (
-        <span className={classes.line}>
-          <DraftedValue {...value(["sizeId"], "Size")}>
-            <SizeMark name={size.name} weight={size.weight} />
-          </DraftedValue>
-        </span>
-      )}
-      {parts.has("risk") && risk !== undefined && (
-        <span className={classes.line}>
-          <DraftedValue {...value(["riskId"], "Risk")}>
-            <RiskMark {...risk} />
-          </DraftedValue>
-        </span>
-      )}
-      {parts.has("neededBy") && feature.neededBy !== null && (
-        <Text component="span" size="xs" className={classes.line}>
-          <DraftedValue {...value(["neededBy"], "Needed by")}>
-            Needed by {formatMonth(feature.neededBy)}
-          </DraftedValue>
-        </Text>
-      )}
-      {notStaffed && (
-        <Text component="span" size="xs" className={classes.line}>
-          <MarkedItem
-            tone="warning"
-            words="Not staffed"
-            spoken="it's planned or in progress, with nobody allocated to it"
-          />
-        </Text>
-      )}
-    </UnstyledButton>
+    </CardMenu>
   );
 }
 

@@ -415,6 +415,18 @@ export type ProjectTab = (typeof projectTabs)[number];
 // What the plan's page shows: one of the Projects page's tabs, or the Features page.
 export type PlanTab = ProjectTab | "features";
 
+// The Projects page's address for a tab, with a record's details open if one is named.
+const projectsTabSearch = (next: ProjectTab, record?: string) => ({
+  ...(next === "projects" ? {} : { tab: next }),
+  ...(record === undefined ? {} : { open: record }),
+});
+
+// The address of one of the plan's pages or tabs, with a record's details open if one is named.
+export const planAddress = (next: PlanTab, record?: string) =>
+  next === "features"
+    ? { to: "/features" as const, search: { open: record } }
+    : { to: "/projects" as const, search: projectsTabSearch(next, record) };
+
 export type PlanRecord = Customer | Project | Proposal | Milestone | Feature;
 export const isFeature = (record: PlanRecord): record is Feature =>
   "featureTeamId" in record;

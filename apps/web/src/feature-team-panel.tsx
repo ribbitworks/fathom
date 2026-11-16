@@ -40,6 +40,7 @@ import {
   useRecordEditing,
 } from "./record-editing.tsx";
 import { type Column, fieldColumn } from "./record-grid.tsx";
+import { RecordKey } from "./record-key.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {
   DraftedItem,
@@ -410,6 +411,9 @@ function TeamDetails({
             {shown.name}
           </DraftedItem>
         </span>
+      }
+      subtitle={
+        <RecordKey record={{ kind: "team", keyNumber: team.keyNumber }} />
       }
       narrow={narrow}
       close={{ label: "Close feature team", onClose }}

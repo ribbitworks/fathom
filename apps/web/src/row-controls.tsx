@@ -7,7 +7,7 @@
 // them. Every other ⋯ that opens a menu, such as a list's or a cycle's, is the same button.
 
 import { ActionIcon, Button } from "@mantine/core";
-import type { MouseEvent, ReactNode } from "react";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 import { Icon } from "./icons.tsx";
 import classes from "./row-controls.module.css";
 
@@ -71,6 +71,10 @@ export function RowControls({
   );
 }
 
+// The keys that open a row's or card's menu from the keyboard.
+export const opensMenu = (event: KeyboardEvent): boolean =>
+  event.key === "ContextMenu" || (event.key === "F10" && event.shiftKey);
+
 // What a menu of one thing's actions is called.
 export const actionsFor = (name: string) => `Actions for ${name}`;
 
@@ -84,6 +88,9 @@ export function MoreButton({
   id?: string;
   tabIndex?: number;
   disabled?: boolean;
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void;
+  "aria-haspopup"?: "menu";
+  "aria-expanded"?: boolean;
 }) {
   return (
     <ActionIcon

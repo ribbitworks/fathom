@@ -89,7 +89,8 @@ import {
 } from "./releases.ts";
 import { Swatch } from "./colour-swatch.tsx";
 import { actionsFor, MoreButton } from "./row-controls.tsx";
-import { useNarrow } from "./side-panel.tsx";
+import { RecordKey } from "./record-key.tsx";
+import { PanelSubtitle, useNarrow } from "./side-panel.tsx";
 import {
   focusRecordCell,
   noRecordActions,
@@ -753,6 +754,11 @@ function StreamPanel({
                   </h2>
                 </DraftedValue>
               </DraftedItem>
+              <PanelSubtitle className={classes.panelSubtitle}>
+                <RecordKey
+                  record={{ kind: "schedule", keyNumber: stream.keyNumber }}
+                />
+              </PanelSubtitle>
               {/* A draft retiring the stream says so in its own box. */}
               {stream.retired &&
                 markedDraft(stream.draft, stream.retired)?.retiring ===

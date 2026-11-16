@@ -502,6 +502,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - They stand apart from the rows under them.
   - **Notes:**
 
+- [ ] `81D1` Point at the key under the side panel's title, such as **#FEATURE-** and a number.
+  - **Expected:** The key and the thin outline around it are easy to see.
+  - **Notes:**
+
+- [ ] `30A0` Select the key.
+  - **Expected:** The menu, with **Copy link** and **Copy key**, is easy to read.
+  - **Notes:**
+
+- [ ] `66CE` Press Esc.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
 - [ ] `AFE9` Close the side panel with the **×** at its top right.
   - **Expected:** The side panel closes.
   - **Notes:**
@@ -531,6 +543,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **Later** column's shade is clear, and its cards stand out from it.
     - The blocks after **Size**, from dark to light, and the bars after **Risk**, green to red, are clear.
     - The red "Not staffed" on 'Scheduler API' is easy to read.
+  - **Notes:**
+
+- [ ] `C673` Point at the card of 'Offline Sync'.
+  - **Expected:**
+    - The grey key under its name is easy to read.
+    - The **⋯** at its top right is easy to see.
+  - **Notes:**
+
+- [ ] `0BD3` Select the **⋯** on the card of 'Offline Sync'.
+  - **Expected:** The menu, titled **Offline Sync**, is easy to read.
+  - **Notes:**
+
+- [ ] `AD25` Press Esc.
+  - **Expected:** The menu closes.
   - **Notes:**
 
 - [ ] `2514` Select **Table** beside the **Features** heading.
@@ -775,6 +801,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `7BF4` Close the box.
   - **Expected:** The box closes.
+  - **Notes:**
+
+- [ ] `67D9` In the browser's address bar, add `/go/FEATURE-99999` after the address Fathom is open at, replacing the rest, and press Enter.
+  - **Expected:** The heading "Nothing found for #FEATURE-99999" is easy to read.
   - **Notes:**
 
 ### DARK-08: Other Accounts' Marks and Menus

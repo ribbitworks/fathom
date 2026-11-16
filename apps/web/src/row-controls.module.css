@@ -43,15 +43,19 @@ td:has(> .rowControls > :nth-child(2)) {
   --row-controls-count: 2;
 }
 
-tr:hover .rowControls,
-td:focus-within > .rowControls,
-.rowControls:has(:focus-visible, [aria-expanded="true"]) {
+/* One row shows its controls at a time: the row whose menu is open, else the row pointed at, else
+   the row whose Name cell has focus. */
+tbody:not(:has([data-menu-open])) tr:hover .rowControls,
+tbody:not(:has(tr:hover, [data-menu-open])) td:focus-within > .rowControls,
+tr[data-menu-open] .rowControls,
+.rowControls:has(:focus-visible) {
   opacity: 1;
 }
 
-tr:hover td:has(> .rowControls > *),
-td:focus-within:has(> .rowControls > *),
-td:has(> .rowControls [aria-expanded="true"]),
+tbody:not(:has([data-menu-open])) tr:hover td:has(> .rowControls > *),
+tbody:not(:has(tr:hover, [data-menu-open]))
+  td:focus-within:has(> .rowControls > *),
+tr[data-menu-open] td:has(> .rowControls > *),
 td:has(> .fillHire) {
   padding-right: calc(
     var(--table-horizontal-spacing, var(--mantine-spacing-sm)) +

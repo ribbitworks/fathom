@@ -116,6 +116,7 @@ describe("feature teams on the chart", () => {
       approvedTeamName: "Fictional Harbour",
       featureTeam: "Fictional Harbour",
       featureTeamId: "t1",
+      teamKeyNumber: 1,
     });
     expect(lead?.teamCard).toBeUndefined();
     expect(member).toMatchObject({
@@ -137,7 +138,6 @@ describe("feature teams on the chart", () => {
     expect(own).toEqual({
       id: teamCardId("t1"),
       keyNumber: 1,
-      keyKind: "team",
       preferredName: "Fictional Harbour",
       employeeId: null,
       position: "No feature lead",
@@ -147,6 +147,7 @@ describe("feature teams on the chart", () => {
       approvedTeamName: "Fictional Harbour",
       featureTeam: "Fictional Harbour",
       featureTeamId: "t1",
+      teamKeyNumber: 1,
       teamCard: true,
     });
     expect(member?.managerId).toBe(teamCardId("t1"));

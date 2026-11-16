@@ -22,8 +22,11 @@ import {
   allOf,
   matchesWords,
   searchWords,
+  parseRecordKey,
+  type RecordKeyOf,
 } from "@fathom/shared";
 import { dayQuery, sendJson } from "./api.ts";
+import { personKeyOf } from "./people-rows.ts";
 import { formatDay, type ViewSearch } from "./table-view.ts";
 import { shownDay, today } from "./today.ts";
 
@@ -56,8 +59,8 @@ const liveLineHeight = 18;
 // manager they report to now, and a drafted position or team name is drawn with the live one under
 // it.
 export interface ChartPerson extends OrgChartPerson {
-  // Set on a feature team's own card, drawn while it has no lead, whose key number is its team's.
-  keyKind?: "team";
+  // On the feature team chart, the key number of the team a card stands for or whose lead it is.
+  teamKeyNumber?: number;
   // On the copy under the live manager: the person it is a copy of. A copy has no Employee ID, so
   // it opens nothing, and leads no team.
   liveCopyOf?: string;
@@ -420,12 +423,24 @@ export function reportColours(tree: OrgTree): Map<string, PaletteColour> {
   return colours;
 }
 
+// The key a card carries, for its menu's Copy link and the finder.
+export const chartKeyOf = (person: ChartPerson): RecordKeyOf =>
+  personKeyOf({
+    keyNumber: person.keyNumber,
+    hire: person.planned !== undefined,
+    team: person.teamCard === true,
+  });
+
 // What the finder says when nobody on the chart has the name typed. While one team is shown alone,
 // it names those outside the team who have it, so nobody takes them for missing.
 export function nothingFound(
   outside: readonly OrgChartPerson[],
   typed: string,
 ): string {
+  const key = parseRecordKey(typed);
+  if (key !== undefined) {
+    return key.kind === "team" ? "No team has that key" : "Nobody has that key";
+  }
   const wanted = searchWords(typed);
   const names = outside
     .map((person) => person.preferredName)

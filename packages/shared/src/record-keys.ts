@@ -77,12 +77,15 @@ export const recordLinkPath = (
   keyNumber: number,
 ): string => `/go/${kind}/${String(keyNumber)}`;
 
-export type ParsedRecordKey = { kind: RecordKeyKind; keyNumber: number };
+export type RecordKeyOf = { kind: RecordKeyKind; keyNumber: number };
+
+export const sameRecordKey = (one: RecordKeyOf, other: RecordKeyOf): boolean =>
+  one.kind === other.kind && one.keyNumber === other.keyNumber;
 
 const keyPattern = /^#?([a-z]+)-([1-9][0-9]*)$/iu;
 
 // A key as typed, in any letter case and with or without the #, or undefined when it isn't one.
-export function parseRecordKey(text: string): ParsedRecordKey | undefined {
+export function parseRecordKey(text: string): RecordKeyOf | undefined {
   const match = keyPattern.exec(text.trim());
   if (match === null) return undefined;
   const [, word = "", digits = ""] = match;
@@ -98,4 +101,4 @@ export function parseRecordKey(text: string): ParsedRecordKey | undefined {
 export const parseRecordLink = (
   kind: string,
   keyNumber: string,
-): ParsedRecordKey | undefined => parseRecordKey(`${kind}-${keyNumber}`);
+): RecordKeyOf | undefined => parseRecordKey(`${kind}-${keyNumber}`);

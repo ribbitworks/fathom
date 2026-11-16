@@ -145,6 +145,32 @@ describe("searching", () => {
   });
 });
 
+describe("searching by key", () => {
+  // Each row's key, numbered by its place, so row "a" is #FEATURE-1 and the tenth would be
+  // #FEATURE-10.
+  const keyOf = (row: Row) => ({
+    kind: "feature" as const,
+    keyNumber: rows.indexOf(row) + 1,
+  });
+  const keyed = (search: string) =>
+    ids(applyView(rows, columns, view({ search }), [], keyOf));
+
+  it("finds only the row with a key typed, in any letter case, with or without the #", () => {
+    expect(keyed("#FEATURE-2")).toEqual(["b"]);
+    expect(keyed("feature-4")).toEqual(["d"]);
+  });
+
+  it("finds nothing for a key no row has, or a key of another kind", () => {
+    expect(keyed("#FEATURE-20")).toEqual([]);
+    expect(keyed("#PROJECT-2")).toEqual([]);
+  });
+
+  it("searches words as usual where the table's rows have no keys", () => {
+    expect(shownBy({ search: "#FEATURE-2" })).toEqual([]);
+    expect(shownBy({ search: "e2" })).toEqual(["b"]);
+  });
+});
+
 describe("filtering", () => {
   it("matches text that contains what is typed, or is empty", () => {
     expect(shownBy({ filters: { name: { contains: " E " } } })).toEqual([

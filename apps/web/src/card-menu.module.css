@@ -1,0 +1,20 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* A card's ⋯ sits over its corner, out of the card's flow, so showing it moves nothing. */
+
+.holder {
+  position: relative;
+}
+
+.more {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  opacity: 0;
+}
+
+.holder:hover .more,
+.holder:focus-within .more,
+.more:has([aria-expanded="true"]) {
+  opacity: 1;
+}

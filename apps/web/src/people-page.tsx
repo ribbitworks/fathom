@@ -86,6 +86,7 @@ import {
 import {
   focusRecordCell,
   isPending,
+  type LinkedColumn,
   pendingId,
   withLiveValues,
 } from "./record-grid.tsx";
@@ -185,7 +186,10 @@ export function PeoplePage({
   seesFeatureTeams = false,
   access = { permissions: [], dataClasses: defaultClasses },
   dates,
+  linkedColumn,
 }: {
+  // An added column a link opens, whose menu the table opens with open.
+  linkedColumn?: LinkedColumn | undefined;
   // The day People is shown as of, and how to choose another, for a role that sees other dates.
   // On another day only a person's manager changes, from that day, in their details, for a role
   // that may date a change then, as on the Org chart; the rest is read only.
@@ -565,6 +569,7 @@ export function PeoplePage({
     content = (
       <>
         <PeopleGrid
+          linkedColumn={linkedColumn}
           dataClasses={access.dataClasses}
           // On a day where nothing can be changed, People is read as approved, as the Org chart is.
           withDrafts={day === undefined || changesFrom !== undefined}

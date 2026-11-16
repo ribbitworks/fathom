@@ -2507,6 +2507,21 @@ describe("the row's controls", () => {
     ).toBeDefined();
   });
 
+  it("marks only the row whose right-click menu is open, which keeps its controls shown", async () => {
+    renderGadgets({ gadgets: [gadget("a"), gadget("b")] });
+
+    fireEvent.contextMenu(
+      document.getElementById("cell-b-code") as HTMLElement,
+      { clientX: 40, clientY: 60 },
+    );
+    await screen.findByRole("menu");
+
+    const marked = [...document.querySelectorAll("tr[data-menu-open]")];
+    expect(marked).toEqual([
+      document.getElementById("cell-b-code")?.closest("tr"),
+    ]);
+  });
+
   it("opens a new row's menu where it is right-clicked, once it holds something", async () => {
     renderGadgets({ gadgets: [] });
     act(() => {

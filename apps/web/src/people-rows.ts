@@ -12,6 +12,7 @@ import {
   type Person,
   type PersonChange,
   type PersonRequest,
+  type RecordKeyOf,
   type RowKind,
 } from "@fathom/shared";
 
@@ -32,6 +33,21 @@ export function personOnly<Row extends RowChange | RowRequest>(
 
 export const isHire = (row: Pick<Person, "kind">) =>
   row.kind === "planned-hire";
+
+// The key of someone's row in People or card on the Org chart: a planned hire's, a feature team's
+// own card's, which stands for the team while it has no lead, or a person's.
+export const personKeyOf = ({
+  keyNumber,
+  hire,
+  team = false,
+}: {
+  keyNumber: number;
+  hire: boolean;
+  team?: boolean;
+}): RecordKeyOf => ({
+  kind: team ? "team" : hire ? "hire" : "person",
+  keyNumber,
+});
 
 export const positionLabel = (
   lists: readonly List[],

@@ -31,6 +31,11 @@
 
 /* A card on a team with a colour is topped with it. The band stands up into the gap above the
    card rather than inside it, so the text sits where it does on a card with no band. */
+.card:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-filled);
+  outline-offset: 2px;
+}
+
 .card[data-coloured] {
   position: relative;
   border-top-left-radius: 0;

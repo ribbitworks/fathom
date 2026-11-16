@@ -32,6 +32,7 @@ export type PlanMode = z.infer<typeof planModeSchema>;
 
 // What a Features card may show besides its name, in the order it shows them.
 export const cardPartSchema = z.enum([
+  "key",
   "status",
   "priority",
   "size",

@@ -362,7 +362,7 @@ describe("who sees the People page", () => {
     await screen.findByRole("menuitem", { name: "Show details" });
     expect(
       screen.getAllByRole("menuitem").map(({ textContent }) => textContent),
-    ).toEqual(["Show details"]);
+    ).toEqual(["Show details", "Copy link"]);
   });
 
   it("makes adding a person the main action for those who may, and otherwise adding a column", async () => {
@@ -1286,7 +1286,7 @@ describe("drafts", () => {
       (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["Show details", "Resubmit", "Discard draft"]);
+    ).toEqual(["Show details", "Copy link", "Resubmit", "Discard draft"]);
     await userEvent.click(screen.getByRole("menuitem", { name: "Resubmit" }));
     await waitFor(() => {
       expect(
@@ -1348,7 +1348,7 @@ describe("drafts", () => {
     expect(await screen.findByText("Reason: Fictional reason")).toBeDefined();
     expect(
       screen.queryAllByRole("menuitem").map(({ textContent }) => textContent),
-    ).toEqual(["Show details"]);
+    ).toEqual(["Show details", "Copy link"]);
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
@@ -1358,7 +1358,7 @@ describe("drafts", () => {
       (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["Show details", "Approve draft", "Reject draft…"]);
+    ).toEqual(["Show details", "Copy link", "Approve draft", "Reject draft…"]);
     await userEvent.click(
       screen.getByRole("menuitem", { name: "Approve draft" }),
     );
@@ -1541,7 +1541,7 @@ describe("drafts", () => {
       (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["Show details", "Discard draft"]);
+    ).toEqual(["Show details", "Copy link", "Discard draft"]);
     await userEvent.click(
       screen.getByRole("menuitem", { name: "Discard draft" }),
     );
@@ -4973,5 +4973,39 @@ describe("on another date", () => {
     await openOn(viewer, "/people");
     expect(screen.queryByRole("button", { name: "Today" })).toBeNull();
     expect(screen.queryByText(/^Showing/)).toBeNull();
+  });
+});
+
+describe("a link to a column", () => {
+  it("opens the column's menu, offering its link, and takes the column out of the address", async () => {
+    // Given a column whose id a link can name
+    const user = userEvent.setup();
+    const linked = {
+      ...site,
+      id: "f0000000-0000-4000-8000-0000000000f1",
+      keyNumber: 5,
+    };
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/people": () =>
+        Response.json({
+          people: [{ ...avery, values: { [linked.id]: ["c1"] } }],
+          fields: [linked],
+          order: order.map((key) => (key === "f1" ? linked.id : key)),
+        }),
+      "GET /api/lists": listsAnswer,
+    });
+    // When
+    const history = renderApp(`/people?column=${linked.id}`);
+    // Then
+    const menu = await screen.findByRole("menu");
+    expect(menu.textContent).toContain("Site");
+    await waitFor(() => {
+      expect(history.location.search).not.toContain("column=");
+    });
+    await user.click(within(menu).getByRole("menuitem", { name: "Copy link" }));
+    expect(await navigator.clipboard.readText()).toBe(
+      `${window.location.origin}/go/column/5`,
+    );
   });
 });
