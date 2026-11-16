@@ -46,7 +46,7 @@ You're done when the changed value shows a hollow dot.
 
 Choose a cycle in the feature's **Target cycle**.
 
-**Release** then names the release that covers that cycle. Once the view changes, the feature moves under that cycle's heading.
+**Release** then names the release that covers that cycle. While the table is grouped by cycle, the feature stays under its old heading, so rows don't jump as you work. It moves under the new cycle's heading the next time you change the view, such as a sort or a filter, or open the page again.
 
 You're done when **Target cycle** shows the cycle, with a hollow dot.
 
@@ -90,7 +90,7 @@ The board shows one release stream's cycles side by side, with a card for each f
 1. To choose what the cards show, select **Card**, and tick or untick each part.
 1. To put the cards in rows, select **Group by**, and choose how, such as **Feature team**. Grouped by **Projects**, a feature two projects need has a card in each project's row.
 
-While **Staffed months** is ticked under **Card**, a card marked **Not staffed** is planned or in progress, but nobody is allocated to it yet. Select a card to see the feature's details. The search, the **Draft** menu and **Metrics** work on the board as they do on the table. So does **Views**: the table and the board share one view, and a saved view keeps the board's stream and what its cards show. See [Saved views](saved-views.md).
+While **Staffed months** is ticked under **Card**, a card that says **Not staffed** in red is planned or in progress, but nobody is allocated to it yet. Select a card to see the feature's details. The search, the **Draft** menu and **Metrics** work on the board as they do on the table. So does **Views**: the table and the board share one view, and a saved view keeps the board's stream and what its cards show. See [Saved views](saved-views.md).
 
 You're done when the board shows the stream and cycles you want.
 
@@ -119,7 +119,7 @@ You're done when the row is struck through. It's removed once the removal is app
 
 - **Later** heads the features that target no cycle yet.
 - **Not released yet**, after a stream's name, such as **Platform: Not released yet**, means the feature's cycle isn't in any release.
-- **No team** marks a planned or in-progress feature that has no feature team yet.
+- **No team**, in red in the **Feature team** cell, marks a planned or in-progress feature that has no feature team yet.
 - **Needed by** is the month the feature is wanted. Type it as digits, such as `2027-03`, and it shows as Mar 2027. It's a rough wish; **Target cycle** is the commitment.
 - **Status** says how far along the feature is. Statuses are named on the **Lists** page, and each one means Possible, Planned, In progress, Done or Cancelled. A new feature starts on the first status that means Possible.
 - **Projects** and **Proposals** name the projects that need the feature, and the proposals that propose it. Changing them changes that project or proposal. If you take a feature off a proposal, you give the reason on the proposal; see [Projects](projects.md#give-a-reason-for-removing-a-feature-from-a-proposal).

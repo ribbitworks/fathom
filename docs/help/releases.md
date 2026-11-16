@@ -12,9 +12,9 @@
 - **Ends:** a stream's last day, if it has one. No cycle starts after it, and the cycle holding it ends on it. Once that day has passed, the stream shows **Ended** after its name. It stays on the page until you retire it.
 - **Panel:** a stream's details open in a panel beside the timeline and the table. To close it, select the **×** at its top right, or press Esc.
 - **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. It goes live once someone whose role approves features and releases approves it. A dot before a name marks its draft.
-- **Who changes what:** if your role changes planning settings, you add streams and change their cycles. If your role changes features, you make and change releases. Others see the page without these buttons.
+- **Who changes what:** if your role can change **Configuration**, you add streams and change their cycles. If your role can change **Features and releases**, you make and change releases. Others see the page without these buttons.
 
-The page shows a timeline of the streams the table shows, apart from retired ones, with the table of streams under it. A search, a filter or a saved view narrows both. The table lists each stream's cycle schedule, its releases, the next release to ship, and its **Planned to** day. Above the timeline are the search field and the **Draft**, **Metrics**, **Group by** and **Views** menus.
+The page shows a timeline of the streams the table shows, with the table of streams under it. A search, a filter or a saved view narrows both. The table lists each stream's cycle schedule, its releases, the next release to ship, and its **Planned to** day. **Planned to** is the stream's **Ends** day if it has one, and its **Cycles until** day if not. Above the timeline are the search field, the **Draft** menu, the **Metrics** button, and the **Group by** and **Views** menus.
 
 See [Drafts](drafts.md) for more.
 
@@ -38,9 +38,10 @@ Adding a stream takes two parts: you add it, then you set up its cycles.
 1. Type its name in **Name**.
 1. Select **Add stream**. The new stream opens in its panel.
 1. Under **Cycle schedule**, select **Set up cycles…**.
-1. In **First cycle starts**, choose when the first cycle starts.
-1. In **Each cycle lasts**, choose how long each cycle lasts.
-1. In **Names**, type how the cycles are named.
+1. In **First cycle starts**, type the day the first cycle starts.
+1. In **Each cycle lasts**, type a number.
+1. Choose **Weeks** or **Months** beside it.
+1. In **Names**, type how the cycles are named. It starts as `{YY}.{N}`, so the first cycle that ends in 2027 is named **27.1**. The codes a name can hold are listed under it, and the first cycles it makes show below them.
 1. Select **Set up cycles**.
 
 You're done when the panel lists the stream's cycles under **Cycles**.
@@ -79,7 +80,7 @@ You're done when the release's name is underlined.
 
 ### Change a Stream's Cycles
 
-You can change cycles in three ways. Each change is a draft, and releases and features on cycles that move go with them.
+You can change cycles in four ways. Each change is a draft, and releases and features on cycles that move go with them.
 
 To change the length or names of cycles from a date on:
 
@@ -90,6 +91,8 @@ To change the length or names of cycles from a date on:
 1. Select **Change cycles**.
 
 Cycles before that date keep their names and dates.
+
+Each row under **Cycle schedule** gives the cycles from one date. To change or remove that row, select the **⋯** at its end, then **Change…** or **Remove**.
 
 To make cycles further ahead, or stop them sooner:
 
@@ -106,6 +109,7 @@ To end a stream on a day:
 1. Select **Save**.
 
 The panel then reads **Ends** and the day, and the timeline's cycles stop there. To let the stream keep going again, empty **Ends** and save. While a stream ends, **Cycles until…** isn't offered, since that day isn't used.
+
 To change just one cycle's length:
 
 1. Under **Cycles**, select the **⋯** at the end of the cycle's row.

@@ -43,8 +43,10 @@ You're done when the changed value shows a hollow dot.
 ### Choose the Features a Project Needs
 
 1. Select the project's **Features** cell, and press Enter.
-1. Pick each feature the project needs.
-1. Press Esc.
+1. Pick each feature the project needs. The list stays open after each one.
+1. Press Enter again to finish.
+
+Esc closes the list and drops the features you picked.
 
 You choose a proposal's features the same way. The **Features** page shows the same links, in its **Projects** and **Proposals** columns.
 
