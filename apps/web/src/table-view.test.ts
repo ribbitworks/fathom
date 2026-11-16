@@ -421,7 +421,7 @@ describe("the view in the page address", () => {
           filters: {
             start: { from: "2026-02-30" },
             name: { contains: "a" },
-            ["k".repeat(70)]: { empty: true },
+            ["k".repeat(129)]: { empty: true },
           },
         }),
       ).filters,

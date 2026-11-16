@@ -18,7 +18,9 @@ export const viewLengths = { name: 80 } as const;
 // Limits on what a view may hold, which only a hand-made address or request reaches. The history
 // pages' searches share the limit on text.
 export const textLimit = 200;
-const keyLimit = 64;
+// A key or a choice's identifier, room for one made of two identifiers, such as a release's on
+// Features, its schedule's and its own.
+const keyLimit = 128;
 const filtersLimit = 100;
 const levelsLimit = 10;
 // A breakdown counts the rows by one column, or by two crossed.

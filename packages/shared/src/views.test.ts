@@ -28,6 +28,19 @@ describe("viewDefinitionSchema", () => {
     ).toEqual({ score: { atLeast: -1.5, atMost: 10 } });
   });
 
+  it("keeps a choice made of two identifiers, such as a release's, and drops one too long", () => {
+    const release =
+      "10000000-0000-4000-8000-000000000001 30000000-0000-4000-8000-000000000001";
+    expect(
+      viewDefinitionSchema.parse({
+        filters: {
+          release: { any: [release] },
+          cycle: { any: ["x".repeat(129)] },
+        },
+      }).filters,
+    ).toEqual({ release: { any: [release] } });
+  });
+
   it("reads an empty view", () => {
     expect(viewDefinitionSchema.parse({})).toEqual({});
   });
@@ -196,6 +209,18 @@ describe("savedViewRequestSchema", () => {
     expect(
       savedViewRequestSchema.safeParse({ ...named, scope: "team" }).success,
     ).toBe(false);
+  });
+
+  it("accepts a choice made of two identifiers, and refuses one too long", () => {
+    const filtered = (value: string) =>
+      request({ filters: { release: { any: [value] } } }).success;
+    expect([
+      filtered(
+        "10000000-0000-4000-8000-000000000001 30000000-0000-4000-8000-000000000001",
+      ),
+      filtered("x".repeat(128)),
+      filtered("x".repeat(129)),
+    ]).toEqual([true, true, false]);
   });
 
   it("accepts a view that fits", () => {

@@ -578,6 +578,25 @@ describe("saved views", () => {
     expect((await undo(viewer.cookie, changeSetId)).statusCode).toBe(403);
   });
 
+  it("keep a filter on a release, chosen by its schedule's identifier and its own", async () => {
+    const maker = await test.signedIn("product-manager");
+    const release =
+      "10000000-0000-4000-8000-000000000001 30000000-0000-4000-8000-000000000001";
+    const definition = { filters: { release: { any: [release] } } };
+
+    const saved = await test.request(
+      maker.cookie,
+      "POST",
+      "/api/views/features",
+      { name: unique("By release"), scope: "personal", definition },
+    );
+
+    expect([saved.statusCode, saved.json<Saved>().view.definition]).toEqual([
+      201,
+      definition,
+    ]);
+  });
+
   it("refuses names and views that do not fit", async () => {
     const { cookie } = await test.signedIn(generalReader);
     const refusals = [
