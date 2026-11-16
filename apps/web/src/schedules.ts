@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What the Schedules tab says about a schedule: the pattern in force and the release that ships
-// next, how long a cycle lasts, in its pattern's unit where it fills whole ones and in days where it
-// is cut short, how long its cycles last now, and where today falls among them, so its details can
-// start at the current cycle.
+// What the Schedules and Cycles tabs say about a schedule: the pattern in force and the release that
+// ships next, how long a cycle lasts, in its pattern's unit where it fills whole ones and in days
+// where it is cut short, how long its cycles last now, where today falls among them, so its details
+// can start at the current cycle, and the drafts that change its cycles, with the one behind each
+// cycle a draft changes.
 
 import {
   addDays,
@@ -12,6 +13,12 @@ import {
   type CyclePattern,
   type CycleUnit,
   hasEnded,
+  monthNumber,
+  monthOf,
+  monthsInQuarter,
+  addToMonth,
+  type RecordDraft,
+  type RecordRef,
   type ReleaseStream,
 } from "@fathom/shared";
 import { isCurrent } from "./feature-board.ts";
@@ -19,6 +26,7 @@ import {
   daysBetween,
   hasShipped,
   keptReleases,
+  nameCounts,
   releaseDate,
 } from "./releases.ts";
 
@@ -105,4 +113,105 @@ export function lengthNow(stream: ReleaseStream, day: string): string {
 export function startingCycle(cycles: readonly Cycle[], day: string): number {
   const found = cycles.findIndex(({ endsOn }) => endsOn >= day);
   return found === -1 ? Math.max(cycles.length - 1, 0) : found;
+}
+
+// A draft that changes a schedule's cycles, with the record it is the draft of, as decisions name
+// it, and, for a pattern's, the day the pattern starts.
+export interface CycleChange {
+  ref: RecordRef;
+  record: { id: string; draft: RecordDraft; heldBy?: string | undefined };
+  startsOn: string | undefined;
+}
+
+// The drafts that change a schedule's cycles: its own, where it changes when the schedule ends, then
+// its patterns', in their order, leaving out rejected ones where asked.
+export function cycleChanges(
+  stream: ReleaseStream,
+  leaveOutRejected: boolean,
+): CycleChange[] {
+  const kept = (draft: RecordDraft | undefined): draft is RecordDraft =>
+    draft !== undefined && !(leaveOutRejected && draft.state === "rejected");
+  const { draft } = stream;
+  const ownEnd: CycleChange[] =
+    kept(draft) &&
+    draft.action === "changed" &&
+    draft.changed.includes("endsOn")
+      ? [
+          {
+            ref: { type: "release-stream", id: stream.id },
+            record: { id: stream.id, draft, heldBy: stream.heldBy },
+            startsOn: undefined,
+          },
+        ]
+      : [];
+  return [
+    ...ownEnd,
+    ...stream.patterns.flatMap(
+      ({ id, draft: patternDraft, heldBy, startsOn }) =>
+        kept(patternDraft)
+          ? [
+              {
+                ref: { type: "cycle-pattern" as const, id },
+                record: { id, draft: patternDraft, heldBy },
+                startsOn,
+              },
+            ]
+          : [],
+    ),
+  ];
+}
+
+// The change behind a cycle a draft changes: that of the last pattern starting on or before it, or
+// else the first, such as a change of when the schedule ends.
+export const changeBehind = (
+  changes: readonly CycleChange[],
+  cycle: Pick<Cycle, "startsOn">,
+): CycleChange | undefined =>
+  changes
+    .filter(
+      ({ startsOn }) => startsOn !== undefined && startsOn <= cycle.startsOn,
+    )
+    .at(-1) ?? changes[0];
+
+// Each cycle of a schedule as shown beside the same cycle as it is live, if it is, and each live
+// cycle no longer among those shown on its own: matched by name where the name is the only one of
+// its kind on both sides, as a cycle moved by a new length keeps its name, and else by its first day.
+export type CycleTwin =
+  { cycle: Cycle; twin: Cycle | undefined } | { cycle: undefined; twin: Cycle };
+
+export function cycleTwins(
+  shown: readonly Cycle[],
+  live: readonly Cycle[],
+): CycleTwin[] {
+  const once = (cycles: readonly Cycle[]) => {
+    const counts = nameCounts(cycles.map(({ name }) => name));
+    return (name: string) => counts(name) === 1;
+  };
+  const shownOnce = once(shown);
+  const liveOnce = once(live);
+  const byName = (cycle: Cycle) =>
+    shownOnce(cycle.name) && liveOnce(cycle.name);
+  const unmatched = new Set(live.filter((cycle) => !byName(cycle)));
+  const pairs = shown.map((cycle): CycleTwin => {
+    const twin = byName(cycle)
+      ? live.find(({ name }) => name === cycle.name)
+      : [...unmatched].find(({ startsOn }) => startsOn === cycle.startsOn);
+    if (twin !== undefined) unmatched.delete(twin);
+    return { cycle, twin };
+  });
+  const matched = new Set(pairs.map(({ twin }) => twin));
+  return [
+    ...pairs,
+    ...live
+      .filter((cycle) => !matched.has(cycle))
+      .map((twin) => ({ cycle: undefined, twin })),
+  ];
+}
+
+// The first day of the quarter after next, from the day given: a cycle starting on or after it is
+// a later one, which the Cycles tab shows only when asked for.
+export function laterCyclesFrom(day: string): string {
+  const month = monthOf(day);
+  const intoQuarter = (monthNumber(month) - 1) % monthsInQuarter;
+  return `${addToMonth(month, 2 * monthsInQuarter - intoQuarter)}-01`;
 }

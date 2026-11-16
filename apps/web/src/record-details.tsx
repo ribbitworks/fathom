@@ -450,6 +450,7 @@ export function ColumnRows<Rec extends GridRecord, Change>({
   draft,
   live,
   changeOf,
+  actionOf = () => undefined,
 }: {
   columns: readonly Column<Rec, Change>[];
   shown: Rec;
@@ -457,6 +458,8 @@ export function ColumnRows<Rec extends GridRecord, Change>({
   live: Rec;
   // What opens a change to a column's value, such as a dialog, where it may be changed.
   changeOf: (column: Column<Rec, Change>) => (() => void) | undefined;
+  // A control of its own for a value with no pencil, such as a menu of ways to change it.
+  actionOf?: (column: Column<Rec, Change>) => ReactNode;
 }) {
   return (
     <>
@@ -479,7 +482,9 @@ export function ColumnRows<Rec extends GridRecord, Change>({
                 : undefined
             }
             action={
-              change === undefined ? undefined : (
+              change === undefined ? (
+                actionOf(column)
+              ) : (
                 <ActionIcon {...changeButton(column.label)} onClick={change} />
               )
             }

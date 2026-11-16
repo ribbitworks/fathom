@@ -519,6 +519,8 @@ export {
   type PlanMode,
   planModeSchema,
   sharesViews,
+  cyclesViewChoices,
+  releasesViewChoices,
   shownChoiceSchema,
   viewChoiceSchemas,
   type ViewTable,

@@ -81,6 +81,9 @@ export interface TableColumn<Row> {
   choicesInWords?: (chosen: readonly string[]) => string;
   // Whether every row has a value, so its filter offers neither Empty nor Not empty.
   required?: boolean;
+  // For a choice column of one choice whose blank simply means no, such as a cycle's Current: its
+  // filter offers that choice alone, since Empty and Not empty would only say it again.
+  blankMeansNo?: true;
   // Whether the column offers a filter, as every column does unless another control already chooses
   // the rows by it, such as Show shipped for a release's Status.
   filterable?: false;

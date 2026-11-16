@@ -454,17 +454,11 @@ export const releaseCycles = (
     cycleNamed(stream, release.lastCycle),
   );
 
-// How a list of every release names each: by its name, with its schedule's before it where another
-// release of the schedules given has the same name.
-export function releaseListNames(
-  streams: readonly ReleaseStream[],
-): (stream: { name: string }, release: { name: string }) => string {
-  const uses = new Map<string, number>();
-  for (const { name } of streams.flatMap(({ releases }) => releases)) {
-    uses.set(name, (uses.get(name) ?? 0) + 1);
-  }
-  return (stream, { name }) =>
-    (uses.get(name) ?? 0) > 1 ? withSchedule(stream, name) : name;
+// How many times each name is in a list of names, none for a name not in it.
+export function nameCounts(names: readonly string[]): (name: string) => number {
+  const counts = new Map<string, number>();
+  for (const name of names) counts.set(name, (counts.get(name) ?? 0) + 1);
+  return (name) => counts.get(name) ?? 0;
 }
 
 // What a schedule is called, one and several, wherever a table names its kind.
@@ -472,6 +466,22 @@ export const streamNames = {
   one: "schedule",
   noun: "schedules",
 } as const;
+
+// How a list of things in schedules names each, given every name in it: by its name, with its
+// schedule's before it where another thing in the list has the same name.
+export function scheduledNames(
+  names: readonly string[],
+): (stream: { name: string }, named: { name: string }) => string {
+  const uses = nameCounts(names);
+  return (stream, { name }) =>
+    uses(name) > 1 ? withSchedule(stream, name) : name;
+}
+
+// How a list of every release names each.
+export const releaseListNames = (streams: readonly ReleaseStream[]) =>
+  scheduledNames(
+    streams.flatMap(({ releases }) => releases.map(({ name }) => name)),
+  );
 
 // How decisions name a stream, a change of its cycles, and a release.
 export const recordSubjects = {

@@ -16,6 +16,7 @@ export const viewTableSchema = z.enum([
   "customers",
   "milestones",
   "releases",
+  "cycles",
   "release-streams",
   "lists",
   "feature-assignments",
@@ -60,6 +61,16 @@ const noChoices = z.strictObject({});
 // A choice that shows records a table otherwise leaves out, such as shipped releases, while set.
 export const shownChoiceSchema = z.literal("shown");
 
+// The Releases page's tables' own choices: shipped releases on Releases, and past and later cycles
+// on Cycles, each shown while set.
+export const releasesViewChoices = z.strictObject({
+  shipped: shownChoiceSchema.optional(),
+});
+export const cyclesViewChoices = z.strictObject({
+  past: shownChoiceSchema.optional(),
+  later: shownChoiceSchema.optional(),
+});
+
 // Each table's choices, which a request must fit as a whole. A table whose page keeps no choices in
 // its view takes none.
 export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
@@ -76,9 +87,8 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
   proposals: noChoices,
   customers: noChoices,
   milestones: noChoices,
-  releases: z.strictObject({
-    shipped: shownChoiceSchema.optional(),
-  }),
+  releases: releasesViewChoices,
+  cycles: cyclesViewChoices,
   "release-streams": noChoices,
   lists: noChoices,
   "feature-assignments": noChoices,
@@ -108,6 +118,7 @@ const viewSharers: Record<ViewTable, Permission> = {
   customers: "configuration:edit",
   milestones: "configuration:edit",
   releases: "configuration:edit",
+  cycles: "configuration:edit",
   "release-streams": "configuration:edit",
   lists: "configuration:edit",
   "feature-assignments": "configuration:edit",

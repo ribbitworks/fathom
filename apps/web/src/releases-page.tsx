@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Releases page, under its tabs: Releases, the default, and Schedules, the tab and the record
-// open in a side panel kept in the address. Each tab has its own table, with its saved views, a
-// timeline of what the table shows above it, and the selected record's details beside it. On
+// The Releases page, under its tabs: Releases, the default, Cycles and Schedules, the tab and the
+// record open in a side panel kept in the address. Each tab has its own table, with its saved
+// views, a timeline of what the table shows above it, and the selected record's details beside it.
+// On
 // Schedules, those who change schedules add them, retire and restore them from each row's menu, and
 // change one from its details: its name, its end, its cycles' length and names from a cycle on, and
 // one cycle's length. A retired schedule, or one drafted to be retired, is only restored. Releases
-// are made from the heading on the Releases tab and changed from their details. Every change is a
+// are made from the heading on the Releases tab and changed from their details. A cycle's length is
+// changed from its details on Cycles, as from its schedule's. Every change is a
 // draft, shown in place with its mark, which its makers discard or resubmit, and Approvers approve
 // or reject, here or on the Drafts page, from each row's menu.
 
@@ -28,7 +30,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type MouseEvent, useState } from "react";
+import { type MouseEvent, type ReactNode, useState } from "react";
 import { z } from "zod";
 import { describeProblem } from "./api.ts";
 import { DecisionModal } from "./decision-dialog.tsx";
@@ -61,6 +63,7 @@ import type { ChangeView } from "./table-controls.tsx";
 import { useSavedViews } from "./saved-views.tsx";
 import type { View } from "./table-view.ts";
 import { type ScheduleActions, SchedulesTable } from "./schedule-tab.tsx";
+import { CyclesTable } from "./cycle-tab.tsx";
 import { planNodes, projectPlanQuery } from "./projects.ts";
 import type { ScheduleChange } from "./schedule-panel.tsx";
 
@@ -78,18 +81,20 @@ type Dialog =
     };
 
 const tabsId = "releases-tabs";
-export const releasesTabSchema = z.enum(["releases", "schedules"]);
+export const releasesTabSchema = z.enum(["releases", "cycles", "schedules"]);
 
 export type ReleasesTab = z.infer<typeof releasesTabSchema>;
 
 const releasesTabs = [
   { value: "releases", label: "Releases" },
+  { value: "cycles", label: "Cycles" },
   { value: "schedules", label: "Schedules" },
 ] as const satisfies readonly { value: ReleasesTab; label: string }[];
 
 // The table each tab keeps its saved views in.
 export const releasesTabTables = {
   releases: "releases",
+  cycles: "cycles",
   schedules: "release-streams",
 } as const satisfies Record<ReleasesTab, ViewTable>;
 
@@ -315,36 +320,97 @@ export function ReleasesPage({
   };
 
   const takers = all.filter(takesReleases);
-  // Nothing is made under Live only, where it would not show.
-  const newButton =
-    tab === "releases"
-      ? canEditReleases &&
-        show !== "live" && (
-          <Tooltip
-            label="No schedule takes new releases now"
-            disabled={takers.length > 0}
-          >
-            <span>
-              <Button
-                disabled={takers.length === 0}
-                onClick={() => {
-                  setDialog({ kind: "new-release" });
-                }}
-              >
-                New release
-              </Button>
-            </span>
-          </Tooltip>
-        )
-      : canEditStreams && (
+  // Nothing is made under Live only, where it would not show. Cycles come from their schedules.
+  const newButtons: Record<ReleasesTab, ReactNode> = {
+    releases: canEditReleases && show !== "live" && (
+      <Tooltip
+        label="No schedule takes new releases now"
+        disabled={takers.length > 0}
+      >
+        <span>
           <Button
+            disabled={takers.length === 0}
             onClick={() => {
-              setDialog({ kind: "stream" });
+              setDialog({ kind: "new-release" });
             }}
           >
-            New schedule
+            New release
           </Button>
-        );
+        </span>
+      </Tooltip>
+    ),
+    cycles: undefined,
+    schedules: canEditStreams && (
+      <Button
+        onClick={() => {
+          setDialog({ kind: "stream" });
+        }}
+      >
+        New schedule
+      </Button>
+    ),
+  };
+  const tables: Record<ReleasesTab, () => ReactNode> = {
+    releases: () => (
+      <ReleasesTable
+        streams={all}
+        day={day}
+        view={view}
+        onView={onView}
+        approves={approves}
+        saved={views.saved}
+        canEdit={canEditReleases && show !== "live"}
+        narrow={narrow}
+        open={openId}
+        onOpen={(id, opened) => {
+          leave(() => {
+            onOpen(id);
+            opened?.();
+          });
+        }}
+        onClose={closePanel}
+        notes={notes}
+        notePanel={notePanel}
+        onChange={(stream, release, part) => {
+          setDialog({ kind: "release", stream, release, part });
+        }}
+        run={actions.run}
+        decide={decide}
+      />
+    ),
+    cycles: () => (
+      <CyclesTable
+        streams={all}
+        day={day}
+        view={view}
+        onView={onView}
+        approves={approves}
+        saved={views.saved}
+        narrow={narrow}
+        open={openId}
+        onOpen={openRecord}
+        onClose={closePanel}
+        actions={actions}
+        decide={decide}
+      />
+    ),
+    schedules: () => (
+      <SchedulesTable
+        streams={all}
+        day={day}
+        view={view}
+        onView={onView}
+        approves={approves}
+        saved={views.saved}
+        narrow={narrow}
+        open={openId}
+        onOpen={openRecord}
+        onClose={closePanel}
+        actions={actions}
+        decide={decide}
+      />
+    ),
+  };
 
   return (
     <Stack gap="md" className={classes.tablePage} onClick={onPageClick}>
@@ -363,51 +429,14 @@ export function ReleasesPage({
             }}
           />
         }
-        action={newButton}
+        // The tab is always one of the fixed tabs.
+        // eslint-disable-next-line security/detect-object-injection
+        action={newButtons[tab]}
       />
       <HeadingTabPanel id={tabsId} tab={tab}>
-        {tab === "releases" ? (
-          <ReleasesTable
-            streams={all}
-            day={day}
-            view={view}
-            onView={onView}
-            approves={approves}
-            saved={views.saved}
-            canEdit={canEditReleases && show !== "live"}
-            narrow={narrow}
-            open={openId}
-            onOpen={(id, opened) => {
-              leave(() => {
-                onOpen(id);
-                opened?.();
-              });
-            }}
-            onClose={closePanel}
-            notes={notes}
-            notePanel={notePanel}
-            onChange={(stream, release, part) => {
-              setDialog({ kind: "release", stream, release, part });
-            }}
-            run={actions.run}
-            decide={decide}
-          />
-        ) : (
-          <SchedulesTable
-            streams={all}
-            day={day}
-            view={view}
-            onView={onView}
-            approves={approves}
-            saved={views.saved}
-            narrow={narrow}
-            open={openId}
-            onOpen={openRecord}
-            onClose={closePanel}
-            actions={actions}
-            decide={decide}
-          />
-        )}
+        {/* The tab is always one of the fixed tabs. */}
+        {/* eslint-disable-next-line security/detect-object-injection */}
+        {tables[tab]()}
       </HeadingTabPanel>
       {views.dialogs}
       {question.dialog}

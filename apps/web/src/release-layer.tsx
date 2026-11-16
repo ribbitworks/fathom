@@ -2,14 +2,15 @@
 
 // The release layer a timeline may show: a row for each release stream, labelled with its name and
 // its draft's marks and Ended once its last day has passed, holding what its form shows of its
-// cycles, drawn at their real lengths, and its releases, each a span across its cycles with its
+// cycles, drawn at their real lengths, and its releases: each a span across its cycles with its
 // Ships on diamond under it, and, beside live, a Live lane holding each release a draft moves in its
-// old place. The streams are shown as the Draft view around the timeline shows them, and each mark
-// is given its record's own draft.
+// old place; or each its diamond alone, on its cycles. The streams are shown as the Draft view
+// around the timeline shows them, and each mark is given its record's own draft.
 
 import type { RecordDraft, ReleaseStream } from "@fathom/shared";
 import { type ReactNode, useCallback, useMemo } from "react";
 import { ColouredName, colouredNameChars } from "./colour-swatch.tsx";
+import { isCurrent } from "./feature-board.ts";
 import classes from "./pages.module.css";
 import {
   draftsById,
@@ -151,9 +152,10 @@ function ReleaseBar({
   );
 }
 
-// What the release layer shows on each stream's row: its releases over its cycles drawn faint, or
-// its cycles alone, with its end named.
-export type ReleaseLayerForm = "releases" | "schedules";
+// What the release layer shows on each stream's row: its releases over its cycles drawn faint, its
+// cycles alone, with its end named, or its cycles named, the current one marked, with its releases'
+// diamonds on them.
+export type ReleaseLayerForm = "releases" | "schedules" | "cycles";
 
 // Every other cycle is shaded apart from the one before, so each shows its own length unnamed.
 const blockShades = [
@@ -168,6 +170,63 @@ const blockClass = (index: number, cycle: { endsOn: string }, today: string) =>
   ]
     .filter(Boolean)
     .join(" ");
+
+// A cycle's block, with its name and days in its tip and for assistive technology, and, where asked,
+// its name inside where it fits, marked as current while it holds today.
+function CycleBlock({
+  cycle,
+  index,
+  px,
+  today,
+  named,
+}: {
+  cycle: ReleaseLayerRow["cycles"][number];
+  index: number;
+  px: Px;
+  today: string;
+  named: boolean;
+}) {
+  const days = `${formatDay(cycle.startsOn)} to ${formatDay(cycle.endsOn)}`;
+  const current = named && isCurrent(cycle, today);
+  return (
+    <li
+      className={[classes.timelineCycle, blockClass(index, cycle, today)].join(
+        " ",
+      )}
+      style={{ left: px(cycle.at), width: px(cycle.days) }}
+      aria-current={current ? "date" : undefined}
+      {...{
+        [tipAttribute]: `${cycle.name}: ${days}${current ? ", current" : ""}`,
+      }}
+    >
+      {named && fits(cycle.name, px.of(cycle.days)) && (
+        <span className={classes.timelineCycleName} aria-hidden>
+          {cycle.name}
+        </span>
+      )}
+      <span className={classes.visuallyHidden}>
+        {cycle.name}, {days}
+      </span>
+    </li>
+  );
+}
+
+// A release's Ships on diamond alone, on its schedule's cycles.
+function ShipsMark({ span, px }: { span: ReleaseSpan; px: Px }) {
+  const words = `${span.release.name} ships ${formatDay(span.shipsOn)}`;
+  return (
+    <li
+      className={classes.timelineShips}
+      style={{
+        ...releaseColourStyle(span.release.colour),
+        left: px(span.shipsAt),
+      }}
+      {...{ [tipAttribute]: words }}
+    >
+      <span className={classes.visuallyHidden}>{words}</span>
+    </li>
+  );
+}
 
 function ReleaseLanes({
   row: { stream, cycles, end, releases, live },
@@ -251,28 +310,50 @@ function ReleaseLanes({
       );
     case "schedules":
       return (
-        <ul
-          className={classes.timelineLane}
-          aria-label={`Cycles of ${stream.name}`}
-        >
-          {cycles.map((cycle, index) => (
-            <li
-              key={cycle.startsOn}
-              className={[
-                classes.timelineCycle,
-                blockClass(index, cycle, today),
-              ].join(" ")}
-              style={{ left: px(cycle.at), width: px(cycle.days) }}
-              title={`${cycle.name}: ${formatDay(cycle.startsOn)} to ${formatDay(cycle.endsOn)}`}
-            >
-              <span className={classes.visuallyHidden}>
-                {cycle.name}, {formatDay(cycle.startsOn)} to{" "}
-                {formatDay(cycle.endsOn)}
-              </span>
-            </li>
-          ))}
-          {endLine(true)}
-        </ul>
+        <TableTips>
+          <ul
+            className={classes.timelineLane}
+            aria-label={`Cycles of ${stream.name}`}
+          >
+            {cycles.map((cycle, index) => (
+              <CycleBlock
+                key={cycle.startsOn}
+                cycle={cycle}
+                index={index}
+                px={px}
+                today={today}
+                named={false}
+              />
+            ))}
+            {endLine(true)}
+          </ul>
+        </TableTips>
+      );
+    case "cycles":
+      return (
+        <TableTips>
+          <ul
+            className={[classes.timelineLane, classes.timelineCycleLane].join(
+              " ",
+            )}
+            aria-label={`Cycles of ${stream.name}`}
+          >
+            {cycles.map((cycle, index) => (
+              <CycleBlock
+                key={cycle.startsOn}
+                cycle={cycle}
+                index={index}
+                px={px}
+                today={today}
+                named
+              />
+            ))}
+            {endLine(false)}
+            {releases.map((span) => (
+              <ShipsMark key={span.release.id} span={span} px={px} />
+            ))}
+          </ul>
+        </TableTips>
       );
   }
 }

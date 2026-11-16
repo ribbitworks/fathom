@@ -41,24 +41,20 @@ import {
   saveReleaseNote,
   slotDraft,
 } from "./releases.ts";
-import { ownDraftActions, ReleasesTabTable } from "./releases-tab-table.tsx";
+import { ReleasesTabTable } from "./releases-tab-table.tsx";
+import {
+  hiddenUnlessShown,
+  namedChoice,
+  ownDraftActions,
+} from "./release-tabs.ts";
 import type { SidePanel } from "./side-panel.tsx";
-import type { ChangeView, SavedViews, ViewChoice } from "./table-controls.tsx";
-import { withChoice, type View } from "./table-view.ts";
+import type { ChangeView, SavedViews } from "./table-controls.tsx";
+import type { View } from "./table-view.ts";
 
 const panelId = "release-panel";
 export const releasePanelTitleId = "release-panel-title";
 
 type ReleaseNote = NoteContext<ReleaseRow, never>;
-
-// The view's choice that shows shipped releases too, by its name in the address.
-const shippedChoice = "shipped";
-const shownValue = "shown";
-
-const showsShipped = (view: View) => {
-  const { shipped } = view.choices ?? {};
-  return shipped === shownValue;
-};
 
 // The values a release's details change, by their columns' keys, each with its own pencil.
 const parts: ReadonlySet<string> = new Set<ReleasePart>([
@@ -218,23 +214,14 @@ export function ReleasesTable({
 }) {
   const { show } = view;
   const everyRow = releaseRows(streams, show, day);
-  const shippedCount = everyRow.filter(({ status }) => status !== "").length;
-  const rows = showsShipped(view)
-    ? everyRow
-    : everyRow.filter(({ status }) => status === "");
-  const choices: ViewChoice[] =
-    shippedCount > 0 || showsShipped(view)
-      ? [
-          {
-            label: "Show shipped",
-            count: shippedCount,
-            on: showsShipped,
-            turned: (shown, on) =>
-              withChoice(shown, shippedChoice, on ? shownValue : undefined),
-            part: { name: "Show", value: "Shipped releases" },
-          },
-        ]
-      : [];
+  const { rows, choices } = hiddenUnlessShown({
+    rows: everyRow,
+    hidden: ({ status }) => status !== "",
+    choice: namedChoice("shipped"),
+    label: "Show shipped",
+    records: "Shipped releases",
+    view,
+  });
   const changeable = (stream: ReleaseStream, release: Release) =>
     canEdit &&
     release.heldBy === undefined &&

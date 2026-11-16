@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for what the Schedules tab says about a schedule's cycles: how long each lasts, how long
-// they last now, and where its details start them.
+// Tests for what the Schedules and Cycles tabs say about a schedule's cycles: how long each lasts,
+// how long they last now, where its details start them, the drafts that change them, and each cycle
+// beside itself as it is live.
 
+import type { Cycle } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
+  changeBehind,
+  cycleChanges,
+  cycleTwins,
   durationWords,
+  laterCyclesFrom,
   lengthNow,
   nextRelease,
   patternOn,
@@ -17,6 +23,8 @@ import {
   fictionalRelease,
   fictionalStream,
   quarters,
+  recordDraft,
+  streamId,
 } from "./test-support.tsx";
 
 const cycle = (startsOn: string, endsOn: string) => ({
@@ -148,5 +156,125 @@ describe("the release that ships next", () => {
       "Fictional Sooner",
       "2027-03-31",
     ]);
+  });
+});
+
+describe("the drafts that change a schedule's cycles", () => {
+  const waiting = recordDraft();
+  const rejected = recordDraft({ state: "rejected" });
+  const stream = fictionalStream({
+    draft: recordDraft({ changed: ["endsOn"] }),
+    heldBy: "Fictional Colleague",
+    patterns: [
+      fictionalPattern({ id: "p1", draft: waiting }),
+      fictionalPattern({ id: "p2", startsOn: "2027-07-01" }),
+      fictionalPattern({ id: "p3", startsOn: "2027-10-01", draft: rejected }),
+    ],
+  });
+
+  it("are the schedule's own, where it changes its end, then each pattern's, rejected ones left out where asked", () => {
+    expect(
+      [true, false].map((leaveOut) =>
+        cycleChanges(stream, leaveOut).map(({ ref, startsOn, record }) => [
+          ref.type,
+          ref.id,
+          startsOn,
+          record.heldBy,
+        ]),
+      ),
+    ).toEqual([
+      [
+        ["release-stream", streamId, undefined, "Fictional Colleague"],
+        ["cycle-pattern", "p1", "2027-01-01", undefined],
+      ],
+      [
+        ["release-stream", streamId, undefined, "Fictional Colleague"],
+        ["cycle-pattern", "p1", "2027-01-01", undefined],
+        ["cycle-pattern", "p3", "2027-10-01", undefined],
+      ],
+    ]);
+  });
+
+  it("leave out the schedule's own draft where it changes anything but its end", () => {
+    expect(
+      cycleChanges(
+        fictionalStream({ draft: recordDraft({ changed: ["name"] }) }),
+        false,
+      ),
+    ).toEqual([]);
+  });
+
+  it("put behind a cycle the last pattern starting on or before it, or else the first change", () => {
+    const changes = cycleChanges(stream, false);
+    expect(
+      ["2026-10-01", "2027-04-01", "2027-10-01"].map(
+        (startsOn) => changeBehind(changes, { startsOn })?.ref.id,
+      ),
+    ).toEqual([streamId, "p1", "p3"]);
+  });
+});
+
+describe("each cycle beside itself as it is live", () => {
+  const cycle = (name: string, startsOn: string, endsOn: string) => ({
+    name,
+    startsOn,
+    endsOn,
+    months: [],
+  });
+
+  it("is matched by name where the name is its own on both sides, else by its first day, with each live cycle no longer shown on its own", () => {
+    const shown = [
+      cycle("27.1", "2027-01-01", "2027-03-31"),
+      cycle("27.2", "2027-04-01", "2027-05-31"),
+      cycle("Freeze", "2027-06-01", "2027-06-30"),
+      cycle("Freeze", "2027-07-01", "2027-07-31"),
+      cycle("27.9", "2027-08-01", "2027-08-31"),
+    ];
+    const live = [
+      cycle("27.1", "2027-01-01", "2027-03-31"),
+      cycle("27.2", "2027-04-01", "2027-06-30"),
+      cycle("Freeze", "2027-07-01", "2027-07-31"),
+      cycle("27.3", "2027-09-01", "2027-09-30"),
+    ];
+    expect(
+      cycleTwins(shown, live).map(({ cycle: one, twin }) => [
+        one?.startsOn,
+        twin?.startsOn,
+      ]),
+    ).toEqual([
+      ["2027-01-01", "2027-01-01"],
+      ["2027-04-01", "2027-04-01"],
+      ["2027-06-01", undefined],
+      ["2027-07-01", "2027-07-01"],
+      ["2027-08-01", undefined],
+      [undefined, "2027-09-01"],
+    ]);
+  });
+
+  it("is the same cycle moved by a new length, by its name", () => {
+    const [twin] = cycleTwins(
+      [cycle("27.3", "2027-06-01", "2027-09-30")],
+      [cycle("27.3", "2027-07-01", "2027-09-30")],
+    );
+    expect(twin?.twin?.startsOn).toBe("2027-07-01");
+  });
+
+  it("is the cycle starting the same day, once renamed", () => {
+    expect(
+      cycleTwins(quarters(1), [
+        { ...(quarters(1)[0] as Cycle), name: "Old" },
+      ]).map(({ twin }) => twin?.name),
+    ).toEqual(["Old"]);
+  });
+});
+
+describe("where later cycles start", () => {
+  it.each([
+    ["the quarter's first day", "2027-04-01", "2027-10-01"],
+    ["its middle", "2027-05-15", "2027-10-01"],
+    ["its last day", "2027-06-30", "2027-10-01"],
+    ["the last quarter of a year", "2027-11-15", "2028-04-01"],
+  ])("is the quarter after next's first day, from %s", (_case, day, from) => {
+    expect(laterCyclesFrom(day)).toBe(from);
   });
 });

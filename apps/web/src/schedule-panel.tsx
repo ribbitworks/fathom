@@ -131,8 +131,8 @@ export function ScheduleDetails({
 }
 
 // A cycle's Duration pencil, asking whether the change is for that cycle only or for every cycle
-// from it on.
-function DurationChange({
+// from it on, in a schedule's details and a cycle's.
+export function DurationChange({
   cycle,
   onChange,
 }: {

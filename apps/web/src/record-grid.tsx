@@ -218,7 +218,7 @@ export interface RecordActions<Rec extends GridRecord, Change, Request> {
   remove: (record: Rec) => void;
   discard: (record: Rec, draft: DraftOf<Rec>) => void;
   // Sends a rejected draft for approval again, unchanged.
-  resubmit: (record: Rec) => void;
+  resubmit: (record: Rec, draft: DraftOf<Rec>) => void;
   editColumn: (field: Field) => void;
   // Removes an added column as a draft, for a role that may.
   removeColumn?: ((field: Field) => void) | undefined;
@@ -409,6 +409,12 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   request: (changes: Change[], kind: string) => Request;
   // The drafts of the records named, to approve or reject.
   drafts: (ids: string[]) => DraftSelection;
+  // For a row whose draft is another record's, such as a change of the cycles a cycle's row shows:
+  // what that draft is, which its menu says before what it changes.
+  draftSubject?: (record: Rec) => string;
+  // For a table whose rows can share one draft, such as cycles one change of their schedule's cycles
+  // moves: which draft a record's is, so the drafts waiting are counted once each.
+  draftKey?: (draft: DraftOf<Rec>) => string;
   // What else a record's menu offers, after its columns' own items, such as showing its details.
   menuItems?: (record: Rec) => ReactNode;
   // Each record's key, for a table whose records have keys: its menu offers Copy link, and typing
@@ -615,6 +621,13 @@ export function wordsColumn<
     live: (draft) => read(draft.live),
   };
 }
+
+// A cell's choices in words by the names given, such as records' own names where their filter names
+// them with more, or by themselves where none is given.
+export const choicesNamed =
+  (names: ReadonlyMap<string, string>) =>
+  (chosen: readonly string[]): string =>
+    chosen.map((id) => names.get(id) ?? id).join(", ");
 
 // Each record, and, beside one with a draft, a copy of it as it is live, so a column built from them
 // names every value either holds.
@@ -3276,10 +3289,15 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         {draft && (
           <MenuDraftLines
             draft={draft}
-            lines={draftLines(
-              draft,
-              table.draftFields(record, draft, fields, lists),
-            )}
+            lines={[
+              ...(table.draftSubject === undefined
+                ? []
+                : [[table.draftSubject(record)]]),
+              ...draftLines(
+                draft,
+                table.draftFields(record, draft, fields, lists),
+              ),
+            ]}
             // Set apart from the items after it, when any are offered.
             divider={
               (mayChange(record) && record.heldBy === undefined) ||
@@ -3332,7 +3350,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             {ownDraft?.state === "rejected" && (
               <Menu.Item
                 onClick={() => {
-                  actions.resubmit(record);
+                  actions.resubmit(record, ownDraft);
                 }}
               >
                 Resubmit
@@ -3637,8 +3655,13 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             <DecideAllItems
               total={waitingTotal}
               everywhere={
-                everyone.filter(({ draft }) => draft?.state === "waiting")
-                  .length +
+                new Set(
+                  everyone.flatMap(({ id, draft }) =>
+                    draft?.state === "waiting"
+                      ? [table.draftKey?.(draft) ?? id]
+                      : [],
+                  ),
+                ).size +
                 draftedFields.filter(({ draft }) => draft?.state === "waiting")
                   .length
               }

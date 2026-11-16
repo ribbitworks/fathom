@@ -2044,7 +2044,7 @@ describe("the timeline", () => {
   it("draws each cycle at its real length, with its dates", async () => {
     const timeline = await showTimeline([fictionalStream()], "2027-02-15");
     const cycles = items(timeline, "Cycles of Fictional Majors");
-    expect(cycles.map((cycle) => cycle.getAttribute("title"))).toEqual([
+    expect(cycles.map((cycle) => cycle.getAttribute("data-tip"))).toEqual([
       "27.1: Jan 1, 2027 to Mar 31, 2027",
       "27.2: Apr 1, 2027 to Jun 30, 2027",
       "27.3: Jul 1, 2027 to Sep 30, 2027",

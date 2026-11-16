@@ -95,6 +95,7 @@ type AnyColumn = Pick<
   | "emptyLabel"
   | "retiredLabel"
   | "required"
+  | "blankMeansNo"
   | "filterable"
   | "unit"
   | "places"
@@ -1623,9 +1624,11 @@ function FilterForm({
       }}
     />
   );
-  // A required column's value is never empty, so it offers neither Empty nor Not empty.
+  // A required column's value is never empty, so it offers neither Empty nor Not empty, nor does a
+  // column whose blank means no.
   const empty = (label: string) =>
-    column.required !== true && (
+    column.required !== true &&
+    column.blankMeansNo !== true && (
       <>
         {emptyBox(label, "empty")}
         {emptyBox(notEmptyLabels[column.kind], "notEmpty")}

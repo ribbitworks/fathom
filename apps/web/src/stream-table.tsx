@@ -43,7 +43,12 @@ import {
   shownColour,
   streamNames,
 } from "./releases.ts";
-import { currentCycle, lengthNow, nextRelease } from "./schedules.ts";
+import {
+  currentCycle,
+  cycleChanges,
+  lengthNow,
+  nextRelease,
+} from "./schedules.ts";
 import { EndedBox, type DraftLike } from "./status-mark.tsx";
 
 // What a row shows of its schedule, by column key, as a draft's live values hold it too.
@@ -233,14 +238,8 @@ export function scheduleRows(
 ): ScheduleRows {
   const [drafted] = streamRows([stream], show, day) as [StreamRow];
   const live = liveRows([drafted], [stream], day).at(0) ?? drafted;
-  const ownEnd =
-    stream.draft?.action === "changed" &&
-    stream.draft.changed.includes("endsOn")
-      ? [stream.draft]
-      : [];
-  const drafts = draftsOf(
-    [...ownEnd.map((draft) => ({ draft })), ...stream.patterns],
-    show === "drafts",
+  const drafts = cycleChanges(stream, show === "drafts").map(
+    ({ record }) => record.draft,
   );
   return {
     shown: show === "live" ? live : drafted,

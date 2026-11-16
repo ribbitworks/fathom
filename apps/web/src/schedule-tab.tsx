@@ -23,7 +23,12 @@ import {
   streamsShown,
   inShownOrder,
 } from "./releases.ts";
-import { ownDraftActions, ReleasesTabTable } from "./releases-tab-table.tsx";
+import { ReleasesTabTable } from "./releases-tab-table.tsx";
+import {
+  hiddenUnlessShown,
+  ownDraftActions,
+  type ShowingChoice,
+} from "./release-tabs.ts";
 import {
   ScheduleCycles,
   ScheduleDetails,
@@ -39,10 +44,16 @@ import {
   streamRows,
   streamTable,
 } from "./stream-table.tsx";
-import type { ChangeView, SavedViews, ViewChoice } from "./table-controls.tsx";
+import type { ChangeView, SavedViews } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
 
 const panelId = "release-stream-panel";
+
+// Show retired, which the view keeps as its own, as every table with retired records does.
+const retiredChoice: ShowingChoice = {
+  on: (view) => view.retired === true,
+  turned: (view, on) => ({ ...view, retired: on ? true : undefined }),
+};
 const panelTitleId = "release-stream-panel-title";
 
 // What can be done on the tab, for its panel and row menus.
@@ -175,24 +186,15 @@ export function SchedulesTable({
   decide: (asking: Asking, selection: DraftSelection) => void;
 }) {
   const { show } = view;
-  const kept = view.retired === true ? all : all.filter(shownUnlessRetired);
-  const retiredCount = all.length - all.filter(shownUnlessRetired).length;
+  const { rows: kept, choices } = hiddenUnlessShown({
+    rows: all,
+    hidden: (stream) => !shownUnlessRetired(stream),
+    choice: retiredChoice,
+    label: "Show retired",
+    records: "Retired schedules",
+    view,
+  });
   const rows = streamRows(kept, show, day);
-  const choices: ViewChoice[] =
-    retiredCount > 0 || view.retired === true
-      ? [
-          {
-            label: "Show retired",
-            count: retiredCount,
-            on: (shown) => shown.retired === true,
-            turned: (shown, on) => ({
-              ...shown,
-              retired: on ? true : undefined,
-            }),
-            part: { name: "Show", value: "Retired schedules" },
-          },
-        ]
-      : [];
   // A stream named in the address opens even while retired streams are hidden, such as from a
   // release's link on Features.
   const open =

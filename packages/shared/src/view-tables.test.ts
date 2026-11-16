@@ -89,7 +89,35 @@ describe("Releases' choices", () => {
   });
 });
 
-const keepsChoices = new Set(["features", "releases", "org-chart", "drafts"]);
+describe("Cycles' choices", () => {
+  const fits = (choices: object) =>
+    viewChoiceSchemas.cycles.safeParse(choices).success;
+
+  it("accepts past or later cycles shown, both, or nothing chosen", () => {
+    expect([
+      fits({ past: "shown" }),
+      fits({ later: "shown" }),
+      fits({ past: "shown", later: "shown" }),
+      fits({}),
+    ]).toEqual([true, true, true, true]);
+  });
+
+  it.each([
+    ["past cycles set any other way", { past: "hidden" }],
+    ["later cycles set any other way", { later: "hidden" }],
+    ["shipped releases, which only Releases keeps", { shipped: "shown" }],
+  ])("refuses %s", (_, choices) => {
+    expect(fits(choices)).toBe(false);
+  });
+});
+
+const keepsChoices = new Set([
+  "features",
+  "releases",
+  "cycles",
+  "org-chart",
+  "drafts",
+]);
 
 describe("the choices of tables whose pages keep none", () => {
   it.each(viewTableSchema.options.filter((table) => !keepsChoices.has(table)))(

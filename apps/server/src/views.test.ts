@@ -1093,6 +1093,26 @@ describe("views of every table", () => {
     ]);
   });
 
+  it("keep whether Cycles shows past and later cycles, and nothing else in its place", async () => {
+    // Given someone who sees the plan
+    const { cookie } = await test.signedIn(generalReader);
+    const cycles = onTable("cycles");
+
+    // When views are saved with past cycles shown, and with shipped releases, which Cycles doesn't keep
+    const shown = await cycles.save(cookie, unique("Past"), {
+      choices: { past: "shown", later: "shown" },
+    });
+    const other = await cycles.save(cookie, unique("Other"), {
+      choices: { shipped: "shown" },
+    });
+
+    // Then the first is kept as asked, and the second refused
+    expect([shown.json<Saved>().view.definition, other.json()]).toEqual([
+      { choices: { past: "shown", later: "shown" } },
+      { error: "Choose only what this page offers" },
+    ]);
+  });
+
   it("keep names unique within each table, allowing one name on two tables", async () => {
     const { cookie } = await test.signedIn(generalReader);
     const name = unique("Mine");
@@ -1470,6 +1490,7 @@ describe("every starting role on every view table", () => {
     customers: { opens: everyoneButAdministrator, shares: configurers },
     milestones: { opens: everyoneButAdministrator, shares: configurers },
     releases: { opens: everyoneButAdministrator, shares: configurers },
+    cycles: { opens: everyoneButAdministrator, shares: configurers },
     "release-streams": { opens: everyoneButAdministrator, shares: configurers },
     lists: { opens: seesConfiguration, shares: configurers },
     "feature-assignments": { opens: seesAssignments, shares: configurers },

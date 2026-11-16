@@ -546,7 +546,7 @@ describe("the release layer's forms", () => {
     expect(majors.querySelector("[aria-hidden='true']")).toBeNull();
     expect(majors.lastElementChild?.textContent).toBe("Ends Dec 31, 2027");
     const [first] = within(majors).getAllByRole("listitem");
-    expect([first?.title, first?.textContent]).toEqual([
+    expect([first?.getAttribute("data-tip"), first?.textContent]).toEqual([
       "27.1: Jan 1, 2027 to Mar 31, 2027",
       "27.1, Jan 1, 2027 to Mar 31, 2027",
     ]);
@@ -558,5 +558,66 @@ describe("the release layer's forms", () => {
     expect(
       within(timeline).queryByRole("list", { name: /^Releases of/ }),
     ).toBeNull();
+  });
+
+  it("names each cycle where its name fits, marks the one holding today, and draws each release's diamond alone, for cycles", () => {
+    // Given weeks too short for their names, beside quarters, today in the second quarter
+    const weekly = fictionalStream({
+      id: "s2",
+      name: "Fictional Weeks",
+      cycles: [
+        {
+          startsOn: "2027-06-07",
+          endsOn: "2027-06-13",
+          name: "W23",
+          months: [],
+        },
+        {
+          startsOn: "2027-06-14",
+          endsOn: "2027-06-20",
+          name: "W24",
+          months: [],
+        },
+      ],
+    });
+    const timeline = showTimeline({
+      streams: [ending(), weekly],
+      layerForm: "cycles",
+    });
+    const lanes = rowLists(timeline);
+    expect(lanes).toEqual([
+      {
+        name: "Cycles of Fictional Majors",
+        items: [
+          "timelineCycle timelineCycleBlock timelineCyclePast",
+          "timelineCycle timelineCycleAlternate",
+          "timelineCycle timelineCycleBlock",
+          "timelineCycle timelineCycleAlternate",
+          "timelineStreamEnd",
+          "timelineShips",
+        ],
+      },
+    ]);
+    // The cycle holding today is marked as today's.
+    expect(
+      [
+        ...within(timeline)
+          .getByRole("list", { name: "Cycles of Fictional Majors" })
+          .querySelectorAll("li"),
+      ].map((item) => item.getAttribute("aria-current")),
+    ).toEqual([null, "date", null, null, null, null]);
+    const named = (name: string) =>
+      within(timeline)
+        .getByRole("list", { name })
+        .querySelectorAll("[class*='timelineCycleName']").length;
+    expect([
+      named("Cycles of Fictional Majors"),
+      named("Cycles of Fictional Weeks"),
+    ]).toEqual([4, 0]);
+    expect(
+      within(timeline)
+        .getByRole("list", { name: "Cycles of Fictional Majors" })
+        .lastElementChild?.getAttribute("data-tip"),
+    ).toBe("Fictional One ships Jun 30, 2027");
   });
 });

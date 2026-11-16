@@ -1269,7 +1269,7 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 **Preconditions:** Restore the Seed Data run, then signed in with this account.
 
 - [ ] `5B30` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The tabs **Releases** and **Schedules** are beside the **Releases** heading, and **Releases** is chosen.
+  - **Expected:** The tabs **Releases**, **Cycles** and **Schedules** are beside the **Releases** heading, and **Releases** is chosen.
   - **Notes:**
 
 - [ ] `C61E` Select the **Schedules** tab.
@@ -1623,4 +1623,155 @@ Run the test cases in order. Start with Start Fathom, then Start From an Empty D
 
 - [ ] `4205` Point at the **Ships on** row.
   - **Expected:** No pencil shows.
+  - **Notes:**
+
+### Part 10: The Cycles Tab
+
+#### REL-41: The Cycles Tab Lists Every Schedule's Cycles
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-40.
+
+**Preconditions:** Restore the Seed Data run, then signed in with this account. **Releases** page open.
+
+- [ ] `4BA7` Select the **Cycles** tab.
+  - **Expected:**
+    - **Cycles** is chosen, and there is no button at the top right.
+    - The table's columns are, in order: **Cycle**, **Schedule**, **Starts**, **Ends**, **Current** and **Release**.
+    - The rows are under the headings 'Platform', 'Patches' and 'Field Apps'.
+  - **Notes:**
+
+- [ ] `20B5` Read the first row under 'Field Apps'.
+  - **Expected:**
+    - **Cycle** is a name starting with "FA", and **Schedule** reads 'Field Apps'.
+    - **Starts** is on or before today, and **Ends** is on or after today.
+    - **Current** reads "Current".
+    - **Release** shows a small coloured square, then 'Lantern 2'.
+  - **Notes:**
+
+- [ ] `559C` Read the second row under 'Field Apps'.
+  - **Expected:**
+    - **Starts** is the day after the first row's **Ends**.
+    - **Current** and **Release** are blank.
+  - **Notes:**
+
+- [ ] `1E5A` Select **Filter…** in the **Current** column's menu.
+  - **Expected:** A dialog opens with one checkbox, **Current**, and nothing else.
+  - **Notes:**
+
+- [ ] `6450` Tick **Current**.
+  - **Expected:**
+    - Each of 'Platform', 'Patches' and 'Field Apps' has one row under it.
+    - Each row's **Current** reads "Current".
+  - **Notes:**
+
+- [ ] `276A` Untick **Current**.
+  - **Expected:** The rows listed before the box was ticked are listed again.
+  - **Notes:**
+
+- [ ] `C4B0` Open the **Views** menu.
+  - **Expected:**
+    - It offers "Show past cycles" and how many cycles have ended, such as "Show past cycles (7)".
+    - It offers "Show later cycles" and how many more cycles there are.
+  - **Notes:**
+
+- [ ] `E2B2` Select **Show past cycles**.
+  - **Expected:**
+    - Two more rows are listed under 'Field Apps', before the one whose **Current** reads "Current".
+    - The first of them has a blank **Release**, and the second shows a square, then 'Lantern 1'.
+  - **Notes:**
+
+- [ ] `B184` Read the last row under 'Platform'.
+  - **Expected:** Its **Starts** is no later than the last day of the quarter after this quarter.
+  - **Notes:**
+
+- [ ] `24B9` Select **Show later cycles** in the **Views** menu.
+  - **Expected:**
+    - More rows are listed under each heading, after those listed before.
+    - The last row under 'Platform' has a **Starts** on or before the day two years from today, and an **Ends** on or after it.
+  - **Notes:**
+
+#### REL-42: A Cycle's Duration Is Changed From Its Details
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-41 ended with.
+
+**Preconditions:** **Releases** page selected again in the left-hand menu, then the **Cycles** tab.
+
+- [ ] `BC9F` Select the details button at the right of the first cell of the second row under 'Field Apps'.
+  - **Expected:**
+    - The side panel opens, headed "Field Apps:" and the cycle's name, as **Cycle** reads it in the row.
+    - Under **Details**, the rows are, in order: **Cycle**, **Schedule**, **Starts**, **Ends**, **Current**, **Release** and **Duration**.
+    - **Current** reads "Not current".
+    - **Release** reads "None".
+    - **Duration** reads "6 months".
+  - **Notes:**
+
+- [ ] `17EB` Point at the **Duration** row.
+  - **Expected:** A pencil shows at the row's right, and no other row shows one.
+  - **Notes:**
+
+- [ ] `1D29` Select the pencil.
+  - **Expected:** A menu offers **This cycle only…** and **This and later cycles…**.
+  - **Notes:**
+
+- [ ] `36DD` Select **This cycle only…**.
+  - **Expected:** A dialog opens titled "Change the length of" and the cycle's name, with a **Length** field reading `6`.
+  - **Notes:**
+
+- [ ] `2982` Clear **Length** and type `5`.
+  - **Expected:** **Length** reads `5`, and the dialog shows no problem.
+  - **Notes:**
+
+- [ ] `DA6C` Select **Change length**.
+  - **Expected:**
+    - The dialog closes.
+    - **Duration** in the side panel reads "5 months", after a hollow dot.
+    - In the table, the cycle's row has a hollow dot in its slot.
+  - **Notes:**
+
+- [ ] `965D` Select **⋯** at the right of the first cell of the cycle's row.
+  - **Expected:**
+    - The menu's heading names the draft after a hollow dot.
+    - Under it, a line reads "Part of a change to the cycles of Field Apps from" and the cycle's name.
+    - Lines under it name **Ends** and **Duration**, each with its value before and after.
+    - It offers **Discard draft**.
+  - **Notes:**
+
+**Afterwards:** Run Discard the Unpublished Changes.
+
+#### REL-43: A Role That Can't Change Schedules Sees No Duration Pencil
+
+**Account:** Team Member, `team.member@fathom.test`, changed from REL-42.
+
+**Preconditions:** Signed in with this account. **Releases** page open on the **Cycles** tab.
+
+- [ ] `8F1F` Select the details button at the right of the first cell of the first row under 'Field Apps'.
+  - **Expected:** The side panel opens, headed "Field Apps:" and the cycle's name.
+  - **Notes:**
+
+- [ ] `7423` Point at the **Duration** row.
+  - **Expected:** No pencil shows.
+  - **Notes:**
+
+#### REL-44: The Cycles Timeline Names Each Cycle and Marks Today's
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-43.
+
+**Preconditions:** Signed in with this account. **Releases** page open on the **Cycles** tab, with no side panel open, and **Year** chosen on the timeline.
+
+- [ ] `7EAF` Read the row for 'Field Apps' on the timeline.
+  - **Expected:**
+    - Each cycle is a block with its name inside it, as **Cycle** reads it in the table.
+    - The first block is the cycle whose **Current** reads "Current" in the table.
+  - **Notes:**
+
+- [ ] `8973` Point at the first block in the row for 'Field Apps'.
+  - **Expected:** Its tip reads the cycle's name, its first and last days, then ", current".
+  - **Notes:**
+
+- [ ] `202F` Point at the diamond after the end of the first block.
+  - **Expected:** Its tip reads "Lantern 2 ships" and its day.
+  - **Notes:**
+
+- [ ] `AD62` Select **Show past cycles** in the **Views** menu.
+  - **Expected:** The row for 'Field Apps' starts with two more blocks, before the one whose tip ends ", current".
   - **Notes:**

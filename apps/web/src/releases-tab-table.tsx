@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What each tab of the Releases page shares around its table: the table on the shared table, with a
+// What each tab of the Releases page draws around its table: the table on the shared table, with a
 // timeline above it of the schedules its rows show, in the rows' order, or words in its place while
-// there is nothing to list yet; and a row's menu discarding or resubmitting the record's own draft.
+// there is nothing to list yet.
 
-import type { RecordRef, ReleaseStream } from "@fathom/shared";
+import type { ReleaseStream } from "@fathom/shared";
 import { Text } from "@mantine/core";
 import classes from "./pages.module.css";
 import { type GridRecord, RecordGrid } from "./record-grid.tsx";
 import type { ReleaseLayerForm } from "./release-layer.tsx";
-import { discardRecordDraft, resubmitRecordDraft } from "./releases.ts";
 import { TableTips } from "./table-tips.tsx";
 import { TimelineView } from "./timeline-view.tsx";
 
@@ -60,19 +59,3 @@ export function ReleasesTabTable<Rec extends GridRecord>({
     </TableTips>
   );
 }
-
-// A row's menu's discarding and resubmitting of the record's own draft, never its parts'.
-export const ownDraftActions = (
-  type: RecordRef["type"],
-  run: (work: () => Promise<unknown>, done: string) => void,
-) => ({
-  discard: (row: { id: string }) => {
-    run(() => discardRecordDraft({ type, id: row.id }), "Discarded the draft.");
-  },
-  resubmit: (row: { id: string }) => {
-    run(
-      () => resubmitRecordDraft({ type, id: row.id }),
-      "Resubmitted the draft.",
-    );
-  },
-});

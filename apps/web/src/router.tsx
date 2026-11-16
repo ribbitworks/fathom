@@ -34,6 +34,8 @@ import {
   planModeSchema,
   parseRecordKey,
   parseRecordLink,
+  cyclesViewChoices,
+  releasesViewChoices,
   shownChoiceSchema,
 } from "@fathom/shared";
 import { Anchor } from "@mantine/core";
@@ -77,8 +79,10 @@ import {
 import { SettingsPage } from "./settings-page.tsx";
 import { DataClassesPage } from "./data-classes-page.tsx";
 import { setTimeZone, shownDay, today } from "./today.ts";
+import { removedCycleMark } from "./cycle-table.tsx";
 import {
   ReleasesPage,
+  type ReleasesTab,
   releasesTabSchema,
   releasesTabTables,
 } from "./releases-page.tsx";
@@ -514,14 +518,31 @@ const listsRoute = createRoute({
   },
 });
 
+// A cycle's own identifier: its schedule's, a space, and its first day, then, for a cycle a draft
+// removes, its mark.
+const cycleIdLength =
+  fathomIdLength + " YYYY-MM-DD".length + removedCycleMark.length;
+
 // The Releases page's address: its tab, the record of the tab whose details are shown beside it,
-// the tab's view, and, on Releases, whether shipped releases show. Changing the tab starts its view
-// afresh.
+// the tab's view, and whether shipped releases show, on Releases, or past and later cycles, on
+// Cycles. Changing the tab starts its view afresh.
 const releasesSearch = viewSearchSchema.extend({
   tab: releasesTabSchema.optional().catch(undefined),
-  open: z.string().max(fathomIdLength).optional().catch(undefined),
+  open: z.string().max(cycleIdLength).optional().catch(undefined),
   shipped: shownChoiceSchema.optional().catch(undefined),
+  past: shownChoiceSchema.optional().catch(undefined),
+  later: shownChoiceSchema.optional().catch(undefined),
 });
+
+// The choices each tab of the Releases page keeps in its view, by their names in the address.
+const releasesTabChoices: Record<
+  ReleasesTab,
+  readonly ("shipped" | "past" | "later")[]
+> = {
+  releases: releasesViewChoices.keyof().options,
+  cycles: cyclesViewChoices.keyof().options,
+  schedules: [],
+};
 
 // Releases, their schedules and cycles, seen with the plan or planning configuration. An address
 // naming a schedule after the page, as links made before the page had tabs do, opens it on
@@ -569,7 +590,9 @@ const releasesRoute = createRoute({
           (next, replace) => {
             void navigate({ search: { ...next, ...kept }, replace });
           },
-          tab === "releases" ? ["shipped"] : [],
+          // The tab is always one of the fixed tabs.
+          // eslint-disable-next-line security/detect-object-injection
+          releasesTabChoices[tab],
         )}
       />
     );

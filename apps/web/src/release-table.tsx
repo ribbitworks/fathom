@@ -8,18 +8,17 @@
 import type { Choice, Release, ReleaseStream, Show } from "@fathom/shared";
 import type { ReactNode } from "react";
 import { differingKeys, type DraftSelection, noDrafts } from "./drafts.ts";
-import { byChoice } from "./choice-grouping.ts";
 import { choice } from "./lists.ts";
 import { draftFieldsOf } from "./project-grids.tsx";
 import { cycleChoiceId, cycleChoices, cycleNames } from "./projects.ts";
 import {
+  choicesNamed,
   type Column,
   fieldColumn,
   type GridDraft,
   type GridRecord,
   readOnlyTableParts,
   type RecordTable,
-  type RowGrouping,
   withLiveCopies,
   wordsColumn,
 } from "./record-grid.tsx";
@@ -35,6 +34,12 @@ import {
   releaseListNames,
 } from "./releases.ts";
 import { decidableRefs } from "./stream-table.tsx";
+import {
+  bySchedule,
+  type DetailRows,
+  detailRows,
+  scheduleColumn,
+} from "./release-tabs.ts";
 
 // What a row shows of its release, by column key, as a draft's live values hold it too, with what
 // only a release's details show.
@@ -176,38 +181,21 @@ function liveRows(rows: readonly ReleaseRow[], day: string): ReleaseRow[] {
   });
 }
 
-// A release's row for its details, by its ID, if its schedule holds it: as the Draft view shows it,
-// with its draft whatever the view, which its marks are worked out from, and as it is live, or,
-// while it is only drafted to be added, as drafted.
-export interface ReleaseDetailRows {
-  shown: ReleaseRow;
-  drafted: ReleaseRow;
-  live: ReleaseRow;
-}
+// A release's row for its details, by its ID, if its schedule holds it.
+export type ReleaseDetailRows = DetailRows<ReleaseRow>;
 
-export function releaseDetailRows(
+export const releaseDetailRows = (
   stream: ReleaseStream,
   releaseId: string | undefined,
   show: Show,
   day: string,
-): ReleaseDetailRows | undefined {
-  const [drafted] = releaseRows([stream], "both", day).filter(
-    ({ id }) => id === releaseId,
+): ReleaseDetailRows | undefined =>
+  detailRows(
+    (shown) => releaseRows([stream], shown, day),
+    (row) => liveRows([row], day).at(0),
+    releaseId,
+    show,
   );
-  if (drafted === undefined) return undefined;
-  const live = liveRows([drafted], day).at(0) ?? drafted;
-  const applied = releaseRows([stream], "drafts", day).find(
-    ({ id }) => id === releaseId,
-  );
-  const shownBy: Record<Show, ReleaseRow> = {
-    both: drafted,
-    drafts: applied ?? drafted,
-    live,
-  };
-  // The view is always one of the fixed views.
-  // eslint-disable-next-line security/detect-object-injection
-  return { shown: shownBy[show], drafted, live };
-}
 
 type ReleaseColumnKey = keyof ReleaseValues;
 
@@ -229,18 +217,6 @@ const column = (
     readOnly: true,
     ...(emptyLabel === undefined ? {} : { emptyLabel }),
   });
-
-// Each release's schedule, a choice of every schedule.
-const scheduleColumn = (streams: readonly ReleaseStream[]) => ({
-  ...column("schedule", "Schedule", "choice", {
-    choices: streams.map(({ id, name }) => choice(id, name, false)),
-  }),
-  required: true,
-});
-
-const groupings = (
-  streams: readonly ReleaseStream[],
-): RowGrouping<ReleaseRow>[] => [byChoice(scheduleColumn(streams))];
 
 const releaseColour = (row: ReleaseRow) => shownColour(row.release.colour);
 
@@ -264,14 +240,13 @@ export function releaseColumns(
       }),
       // A release's cell reads its name alone, beside its schedule; its filter names the schedule
       // where two releases share a name.
-      choicesInWords: (chosen) =>
-        chosen.map((id) => names.get(id) ?? id).join(", "),
+      choicesInWords: choicesNamed(names),
       breaksDown: false,
       // The name's square shows the release's colour.
       changesWith: "colour",
       colour: releaseColour,
     },
-    scheduleColumn(streams),
+    scheduleColumn<ReleaseRow>(streams),
     column("shipsOn", "Ships on", "date"),
     {
       ...column("cycles", "Cycles", "choice", {
@@ -357,7 +332,7 @@ export function releaseTable({
     label: "Releases",
     one: "release",
     noun: "releases",
-    groupings: groupings(streams),
+    groupings: bySchedule(streams),
     menuItems,
     newRowLabel: () => "New release",
     removeLabel: () => "Remove release",
