@@ -21,6 +21,7 @@ export const viewTableSchema = z.enum([
   "capacity",
   "org-chart",
   "accounts",
+  "drafts",
 ]);
 
 export type ViewTable = z.infer<typeof viewTableSchema>;
@@ -81,6 +82,10 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
     team: z.uuid().optional(),
   }),
   accounts: noChoices,
+  drafts: z.strictObject({
+    // Only the drafts the reader may decide now.
+    decide: z.literal("mine").optional(),
+  }),
 };
 
 // The permission that shares a table's views, and changes or deletes others' shared ones. Nobody who
@@ -98,6 +103,7 @@ const viewSharers: Record<ViewTable, Permission> = {
   capacity: "configuration:edit",
   "org-chart": "configuration:edit",
   accounts: "administration:edit",
+  drafts: "configuration:edit",
 };
 
 export const sharesViews = (

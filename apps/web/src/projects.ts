@@ -344,36 +344,55 @@ type PlanLists = Pick<
   "customers" | "projects" | "proposals" | "features"
 >;
 
-// Every customer, proposal, project, milestone, and feature, named as the Drafts page names them.
-export function listedPlanRecords(
-  plan: PlanLists,
-): { kind: PlanRecordKind; record: PlanRecord; subject: string }[] {
+// A record named with its ID first, where it has one, such as P-2001 Crane Control.
+export const identifiedLabel = ({
+  externalId,
+  name,
+}: {
+  name: string;
+  externalId?: string | null;
+}) => (externalId == null ? name : `${externalId} ${name}`);
+
+// Every customer, proposal, project, milestone, and feature, named as decisions name them, and as
+// the Drafts table names them.
+export function listedPlanRecords(plan: PlanLists): {
+  kind: PlanRecordKind;
+  record: PlanRecord;
+  subject: string;
+  // The record's name as a table names it, with its project's for a milestone.
+  name: string;
+}[] {
   return [
     ...plan.features.map((record) => ({
       kind: "feature" as const,
       record,
       subject: projectSubjects.feature(record.name),
+      name: record.name,
     })),
     ...plan.customers.map((record) => ({
       kind: "customer" as const,
       record,
       subject: projectSubjects.customer(record.name),
+      name: record.name,
     })),
     ...plan.proposals.map((record) => ({
       kind: "proposal" as const,
       record,
       subject: projectSubjects.proposal(record.name),
+      name: identifiedLabel(record),
     })),
     ...plan.projects.flatMap((project) => [
       {
         kind: "project" as const,
         record: project,
         subject: projectSubjects.project(project.name),
+        name: identifiedLabel(project),
       },
       ...project.milestones.map((record) => ({
         kind: "milestone" as const,
         record,
         subject: projectSubjects.milestone(record.name, project.name),
+        name: `${record.name} of ${identifiedLabel(project)}`,
       })),
     ]),
   ];

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // A table's view, its search, filters, sort, breakdown, groupings, frozen columns, the order of its
-// columns, those hidden, the widths set for them, the unit and decimal places each column that
-// offers units is shown in, whether its retired records show, and its page's own choices, as the
-// page address holds it and as a saved view keeps it, and the saved views themselves. A saved view
+// columns, those hidden, those hidden at first that it shows, the widths set for them, the unit and
+// decimal places each column that offers units is shown in, whether its retired records show, and
+// its page's own choices, as the page address holds it and as a saved view keeps it, and the saved
+// views themselves. A saved view
 // is personal, seen and changed only by its maker, or shared: seen by everyone who opens its page,
 // except those it filters, sorts, breaks down, or groups by a column they may not see, and changed
 // by its maker and those who may share views on its table.
@@ -170,6 +171,7 @@ export const viewDefinitionSchema = z.object({
   frozen: frozen.optional().catch(undefined),
   order: looseColumnKeys(columnsLimit),
   hidden: looseColumnKeys(columnsLimit),
+  shown: looseColumnKeys(columnsLimit),
   widths: looseByColumn(width),
   units: looseByColumn(unit),
   places: looseByColumn(places),
@@ -190,6 +192,8 @@ export interface ViewDefinition {
   frozen?: number | undefined;
   order?: string[] | undefined;
   hidden?: string[] | undefined;
+  // The columns a table hides until asked that the view shows.
+  shown?: string[] | undefined;
   widths?: Record<string, number> | undefined;
   units?: Record<string, string> | undefined;
   places?: Record<string, number> | undefined;
@@ -215,6 +219,7 @@ const strictDefinitionSchema = z.object({
   frozen: frozen.optional(),
   order: columnKeys(columnsLimit).optional(),
   hidden: columnKeys(columnsLimit).optional(),
+  shown: columnKeys(columnsLimit).optional(),
   widths: z
     .record(columnKey, width)
     .refine(

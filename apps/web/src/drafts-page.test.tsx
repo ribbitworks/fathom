@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Drafts page, with the server's responses simulated: each draft in words, newest
-// first, with what it changes from the live values; rejected drafts with their reason; selecting
-// drafts, and approving or rejecting them after asking, with a reason for rejecting; who may; what
-// the page says when there are none or they cannot be loaded; and drafts of feature teams.
+// Tests for the Drafts page, with the server's responses simulated: a row for each draft, newest
+// first, naming its record, what it does and changes from the live values, its type, area, maker,
+// day and a rejection's reason; ticking drafts, and approving or rejecting them after asking, with
+// a reason for rejecting; who may; what the page says when there are none or they cannot be
+// loaded; and drafts of feature teams.
 
 import { startingPlanningSettings } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
@@ -13,7 +14,9 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { drafts } from "./decision-dialog.tsx";
 import { DraftsPage } from "./drafts-page.tsx";
+import { noDrafts } from "./drafts.ts";
 import { peopleQuery } from "./people.ts";
+import { emptyView } from "./table-view.ts";
 import {
   bodyOf,
   featureDraft,
@@ -151,6 +154,8 @@ const noPlanChoices = () =>
     risks: [],
   });
 
+const columnCount = 9;
+
 type Answers = Parameters<typeof serverAnswers>[0];
 
 async function openDrafts(answers: Answers = {}) {
@@ -166,19 +171,29 @@ async function openDrafts(answers: Answers = {}) {
   return fetch;
 }
 
-const entries = async () =>
-  (await screen.findAllByRole("listitem")).map(({ textContent }) =>
-    textContent.replace(/^.*?(AM|PM|\d\d:\d\d)/, ""),
-  );
+// Each row's cells, from Record to Reason, as the table shows them.
+const entries = async () => {
+  const table = await screen.findByRole("grid", { name: "Drafts" });
+  return within(table)
+    .getAllByRole("row")
+    .filter((row) => within(row).queryAllByRole("gridcell").length > 0)
+    .map((row) =>
+      within(row)
+        .getAllByRole("gridcell")
+        .slice(0, columnCount)
+        .map((cell) => cell.textContent.trim())
+        .join(" | "),
+    );
+};
 
 describe("the Drafts page", () => {
   it("puts each draft in words, newest first, with what it changes", async () => {
     await openDrafts();
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to Avery Fictional: Start set to Nov 2, 2026; Site from Northmere to Harbour; A removed column changed, Draft",
-      "Fictional Editor drafted adding Blake Fictional: ID set to E-p2; Site set to Harbour, Draft: added",
-      "Fathom drafted removing Casey Fictional, Draft: removed",
-      "Fictional Editor drafted changes to Drew Fictional: Name from Drew Before to Drew Fictional, RejectedReason: Fictional reason",
+      "Avery Fictional, Draft | Changed | Waiting | Start set to Nov 2, 2026; Site from Northmere to Harbour; A removed column changed | Person | People | Fictional Editor | Oct 31, 2026 | ",
+      "Blake Fictional, Draft: added | Added | Waiting | ID set to E-p2; Site set to Harbour | Person | People | Fictional Editor | Oct 30, 2026 | ",
+      "Casey Fictional, Draft: removed | Removed | Waiting |  | Person | People | Fathom | Oct 30, 2026 | ",
+      "Drew Fictional, Rejected: Fictional reason | Changed | Rejected | Name from Drew Before to Drew Fictional | Person | People | Fictional Editor | Oct 29, 2026 | Fictional reason",
     ]);
   });
 
@@ -243,23 +258,23 @@ describe("the Drafts page", () => {
     });
     const shown = await entries();
     expect(shown).toContain(
-      "Fictional Editor drafted changes to the list Sites: Description set to Our offices, Draft",
+      "Sites, Draft | Changed | Waiting | Description set to Our offices | List | Configuration | Fictional Editor | Oct 30, 2026 | ",
     );
     expect(shown).toContain(
-      "Fictional Editor drafted changes to the choice Northmere Labs in Sites: Name from Northmere to Northmere Labs; gone changed, Draft",
+      "Northmere Labs in Sites, Draft | Changed | Waiting | Name from Northmere to Northmere Labs; gone changed | Choice | Configuration | Fictional Editor | Oct 30, 2026 | ",
     );
     expect(shown).toContain(
-      "Fictional Editor drafted a new order for Sites: Order from Harbour, Northmere, a removed choice to Northmere Labs, Harbour, Rejected, reorderedReason: Keep the order",
+      "Sites, Rejected: Keep the order | Reordered | Rejected | Order from Harbour, Northmere, a removed choice to Northmere Labs, Harbour | Order of choices | Configuration | Fictional Editor | Oct 30, 2026 | Keep the order",
     );
     expect(shown).toContain(
-      "Fictional Editor drafted adding the list Teams, Draft: added",
+      "Teams, Draft: added | Added | Waiting |  | List | Configuration | Fictional Editor | Oct 30, 2026 | ",
     );
     expect(shown).toContain(
-      "Fictional Editor drafted adding the list Lockers: Class Confidential, Draft: added",
+      "Lockers, Draft: added | Added | Waiting | Class Confidential | List | Configuration | Fictional Editor | Oct 30, 2026 | ",
     );
     await userEvent.click(
       screen.getByRole("checkbox", {
-        name: "Select the draft of the choice Platform in Teams",
+        name: "Select the draft of Platform in Teams",
       }),
     );
     await userEvent.click(
@@ -405,10 +420,8 @@ describe("the Drafts page", () => {
       }),
     );
     expect(
-      screen.queryByRole("checkbox", {
-        name: "Select the draft of the column Guild",
-      }),
-    ).toBeNull();
+      screen.getByRole("checkbox", { name: "Select the draft of Guild" }),
+    ).toHaveProperty("disabled", true);
     await userEvent.click(
       screen.getByRole("button", { name: "Approve 1 draft…" }),
     );
@@ -447,7 +460,7 @@ describe("the Drafts page", () => {
     });
     await userEvent.click(
       await screen.findByRole("checkbox", {
-        name: "Select the draft of the column Guild",
+        name: "Select the draft of Guild",
       }),
     );
     await userEvent.click(screen.getByRole("button", { name: "Reject…" }));
@@ -517,15 +530,15 @@ describe("the Drafts page", () => {
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
     renderApp("/drafts");
-    expect(await screen.findByText("the column Site")).toBeDefined();
+    expect(await screen.findByText("Site")).toBeDefined();
     expect(
       screen.getByText(wholeText(/List from Sites to Levels/)),
     ).toBeDefined();
-    expect(screen.getByText("the column Previous site")).toBeDefined();
-    expect(screen.getByText("the column Wiki")).toBeDefined();
+    expect(screen.getByText("Previous site")).toBeDefined();
+    expect(screen.getByText("Wiki")).toBeDefined();
     await userEvent.click(
       screen.getByRole("checkbox", {
-        name: "Select the draft of the column Previous site",
+        name: "Select the draft of Previous site",
       }),
     );
     await userEvent.click(screen.getByRole("button", { name: /^Approve/ }));
@@ -577,7 +590,9 @@ describe("the Drafts page", () => {
         }),
     });
     renderApp("/drafts");
-    expect(await screen.findByText("the list Sites")).toBeDefined();
+    expect(await entries()).toEqual([
+      "Sites, Draft | Changed | Waiting | Name from Old Sites to Sites | List | Configuration | Fictional Editor | Oct 30, 2026 | ",
+    ]);
     expect(fetch.mock.calls.some(([url]) => url.endsWith("/api/people"))).toBe(
       false,
     );
@@ -605,11 +620,11 @@ describe("the Drafts page", () => {
     });
     renderApp("/drafts");
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the planning settings: Hours a day from 8 to 7.5, Draft",
+      "Planning settings, Draft | Changed | Waiting | Hours a day from 8 to 7.5 | Planning settings | Configuration | Fictional Editor | Oct 30, 2026 | ",
     ]);
     await userEvent.click(
       screen.getByRole("checkbox", {
-        name: "Select the draft of the planning settings",
+        name: "Select the draft of Planning settings",
       }),
     );
     await userEvent.click(
@@ -728,12 +743,10 @@ describe("the Drafts page", () => {
     });
     renderApp("/drafts");
     const listed = (await entries()).join(" ");
-    expect(listed).toContain("the customer Fictional Customer");
-    expect(listed).toContain("the proposal Fictional Proposal");
-    expect(listed).toContain("the project Fictional Project");
-    expect(listed).toContain(
-      "the milestone Fictional Kickoff of Fictional Project",
-    );
+    expect(listed).toContain("Fictional Customer, Draft: added | Added");
+    expect(listed).toContain("Fictional Proposal");
+    expect(listed).toContain("Fictional Project");
+    expect(listed).toContain("Fictional Kickoff of Fictional Project");
     expect(listed).not.toContain("Settled");
   });
 
@@ -789,9 +802,7 @@ describe("the Drafts page", () => {
         }),
     });
     renderApp("/drafts");
-    expect(
-      await screen.findByText(/the column Fictional Size on Features/),
-    ).toBeDefined();
+    expect(await screen.findByText("Fictional Size on Features")).toBeDefined();
   });
 
   it("lists a feature's draft, naming the cycle in words", async () => {
@@ -853,8 +864,9 @@ describe("the Drafts page", () => {
         }),
     });
     renderApp("/drafts");
-    const entry = await screen.findByText(/the feature Fictional Moving/);
-    expect(entry).not.toBeNull();
+    expect((await entries()).join(" ")).toContain(
+      "Fictional Moving, Draft | Changed | Waiting | ",
+    );
     expect(document.body.textContent).toContain(
       `${streamOfCycles.name}: ${String(second?.name)}`,
     );
@@ -893,9 +905,7 @@ describe("the Drafts page", () => {
         Response.json({ error: "Forbidden" }, { status: 403 }),
     });
     renderApp("/drafts");
-    expect(
-      await screen.findByText("No drafts waiting for approval."),
-    ).not.toBeNull();
+    expect(await screen.findByText("No drafts")).not.toBeNull();
     expect(screen.queryByText("Fathom could not load the drafts.")).toBeNull();
     expect(fetch.mock.calls.map(([url]) => url)).not.toContain(
       "/api/release-streams",
@@ -936,7 +946,7 @@ describe("the Drafts page", () => {
     });
     renderApp("/drafts");
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the release Fictional One in Fictional Majors: Note from Scope open to Scope frozen, Draft",
+      "Fictional One in Fictional Majors, Draft | Changed | Waiting | Note from Scope open to Scope frozen | Release | Features and releases | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });
 
@@ -990,13 +1000,13 @@ describe("the Drafts page", () => {
     });
     renderApp("/drafts");
     expect(await entries()).toEqual([
-      "Fictional Editor drafted adding the release stream Fictional Majors, Draft: added",
-      "Fictional Editor drafted changes to the cycles of Fictional Majors from 2027-01-01: Length from 2 to 3, Draft",
-      "Fictional Editor drafted adding the release Fictional One in Fictional Majors, Draft: added",
+      "Fictional Majors, Draft: added | Added | Waiting |  | Release stream | Features and releases | Fictional Editor | Oct 30, 2026 | ",
+      "Fictional Majors from Jan 1, 2027, Draft | Changed | Waiting | Length from 2 to 3 | Cycles | Features and releases | Fictional Editor | Oct 30, 2026 | ",
+      "Fictional One in Fictional Majors, Draft: added | Added | Waiting |  | Release | Features and releases | Fictional Editor | Oct 30, 2026 | ",
     ]);
     await userEvent.click(
       screen.getByRole("checkbox", {
-        name: "Select the draft of the release Fictional One in Fictional Majors",
+        name: "Select the draft of Fictional One in Fictional Majors",
       }),
     );
     await userEvent.click(
@@ -1038,8 +1048,8 @@ describe("the Drafts page", () => {
       ]),
     });
     expect(await entries()).toEqual([
-      "Ann Fictional, Fathom, and Ben Fictional drafted removing Finley Fictional, Draft: removed",
-      "Ann Fictional drafted removing Gray Fictional, Draft: removed",
+      "Finley Fictional, Draft: removed | Removed | Waiting |  | Person | People | Ann Fictional, Fathom, and Ben Fictional | Oct 30, 2026 | ",
+      "Gray Fictional, Draft: removed | Removed | Waiting |  | Person | People | Ann Fictional | Oct 30, 2026 | ",
     ]);
   });
 
@@ -1080,8 +1090,8 @@ describe("the Drafts page", () => {
         }),
     });
     expect(await entries()).toEqual([
-      "Ann Fictional and Ben Fictional drafted changes to Hollis Fictional: Name from Hollis Before to Hollis Fictional (Ann Fictional); Start set to Nov 2, 2026; Site from Northmere to Harbour (Fathom), Draft",
-      "Ann Fictional and Ben Fictional drafted changes to the list Sites: Description set to Offices, Draft",
+      "Hollis Fictional, Draft | Changed | Waiting | Name from Hollis Before to Hollis Fictional (Ann Fictional); Start set to Nov 2, 2026; Site from Northmere to Harbour (Fathom) | Person | People | Ann Fictional and Ben Fictional | Oct 30, 2026 | ",
+      "Sites, Draft | Changed | Waiting | Description set to Offices | List | Configuration | Ann Fictional and Ben Fictional | Oct 30, 2026 | ",
     ]);
   });
 
@@ -1270,11 +1280,11 @@ describe("the Drafts page", () => {
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the planned hire Engineer, REQ-7: State from Request to hire to Approved to hire, Draft",
+      "Engineer, REQ-7, Draft | Changed | Waiting | State from Request to hire to Approved to hire | Planned hire | Planned hires | Fictional Editor | Oct 30, 2026 | ",
     ]);
     await userEvent.click(
       screen.getByRole("checkbox", {
-        name: "Select the draft of the planned hire Engineer, REQ-7",
+        name: "Select the draft of Engineer, REQ-7",
       }),
     );
     await userEvent.click(
@@ -1304,7 +1314,7 @@ describe("the Drafts page", () => {
   it("selects all waiting drafts at once, and none again", async () => {
     await openDrafts();
     const all = await screen.findByRole("checkbox", {
-      name: "Select all waiting",
+      name: "Select all drafts this role can decide",
     });
     await userEvent.click(
       screen.getByRole("checkbox", {
@@ -1371,11 +1381,11 @@ describe("the Drafts page", () => {
       name: "Select the draft of Sites",
     });
     expect(order).toHaveProperty("disabled", true);
-    expect(
-      screen.getByText("Waiting for a rejected draft to be resubmitted"),
-    ).toBeDefined();
+    expect(screen.getByText("Waits on a rejected draft")).toBeDefined();
     await userEvent.click(
-      screen.getByRole("checkbox", { name: "Select all waiting" }),
+      screen.getByRole("checkbox", {
+        name: "Select all drafts this role can decide",
+      }),
     );
     expect(order).toHaveProperty("checked", false);
     await userEvent.click(
@@ -1538,21 +1548,26 @@ describe("the Drafts page", () => {
     await openDrafts({ "GET /api/session": reader });
     expect(await entries()).toHaveLength(4);
     expect(screen.queryByRole("checkbox")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+    expect(screen.queryByRole("group", { name: "Selected rows" })).toBeNull();
   });
 
   it("says when there are no drafts, and offers nothing to select", async () => {
     await openDrafts({ "GET /api/people": peopleWith([live]) });
+    expect(await screen.findByText("No drafts")).toBeDefined();
     expect(
-      await screen.findByText("No drafts waiting for approval."),
-    ).toBeDefined();
-    expect(screen.queryByRole("checkbox")).toBeNull();
+      screen.getByRole("checkbox", {
+        name: "Select all drafts this role can decide",
+      }),
+    ).toHaveProperty("disabled", true);
+    expect(screen.getByText("None selected")).toBeDefined();
   });
 
   it("offers no waiting drafts to select all when every draft is rejected", async () => {
     await openDrafts({ "GET /api/people": peopleWith([rejected]) });
     expect(
-      await screen.findByRole("checkbox", { name: "Select all waiting" }),
+      await screen.findByRole("checkbox", {
+        name: "Select all drafts this role can decide",
+      }),
     ).toHaveProperty("disabled", true);
   });
 
@@ -1587,7 +1602,7 @@ describe("the Drafts page", () => {
       ]),
     });
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to Fin Fictional: Start changed, Draft",
+      "Fin Fictional, Draft | Changed | Waiting | Start changed | Person | People | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });
 
@@ -1604,9 +1619,7 @@ describe("the Drafts page", () => {
       screen.getByRole("textbox", { name: "Search drafts" }),
       " nobody",
     );
-    expect(
-      await screen.findByText("No drafts match the search."),
-    ).toBeDefined();
+    expect(await screen.findByText("No matching drafts")).toBeDefined();
     await userEvent.clear(
       screen.getByRole("textbox", { name: "Search drafts" }),
     );
@@ -1615,7 +1628,7 @@ describe("the Drafts page", () => {
     });
   });
 
-  it("says when a draft's time was not recorded", async () => {
+  it("leaves Drafted empty for a draft whose time was not recorded, after those with one", async () => {
     await openDrafts({
       "GET /api/people": peopleWith([
         person("p7", "Gale Fictional", {
@@ -1638,15 +1651,106 @@ describe("the Drafts page", () => {
         }),
       ]),
     });
-    const items = await screen.findAllByRole("listitem");
-    expect(
-      items.map(({ textContent }) =>
-        textContent.startsWith("Time not recorded"),
-      ),
-    ).toEqual([false, true, true]);
-    expect(items[2]?.textContent).toMatch(
-      /Hollis Fictional, Rejected, removed$/,
+    // Those with no time come last, their Drafted empty.
+    expect(await entries()).toEqual([
+      "Avery Fictional, Draft | Changed | Waiting | Start set to Nov 2, 2026; Site from Northmere to Harbour; A removed column changed | Person | People | Fictional Editor | Oct 31, 2026 | ",
+      "Gale Fictional, Draft: added | Added | Waiting |  | Person | People | Fathom |  | ",
+      "Hollis Fictional, Rejected, removed | Removed | Rejected |  | Person | People | Fathom |  | ",
+    ]);
+  });
+
+  it("shows only the drafts the reader may decide now while Mine to decide is on, keeping it in the address", async () => {
+    // Given three waiting drafts and a rejected one
+    serverAnswers({
+      "GET /api/session": approver,
+      "GET /api/people": peopleWith([changed, added, removed, rejected, live]),
+      "GET /api/release-streams": noStreams,
+      "GET /api/lists": () => Response.json({ lists: [sites] }),
+    });
+    const history = renderApp("/drafts");
+    expect(await entries()).toHaveLength(4);
+
+    // When Mine to decide is chosen in the Views menu
+    await userEvent.click(screen.getByRole("button", { name: /^Views/u }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", {
+        name: /Mine to decide \(3\)/u,
+      }),
     );
+
+    // Then only the waiting drafts show, and the address keeps the choice
+    await waitFor(async () => {
+      expect(await entries()).toHaveLength(3);
+    });
+    expect(history.location.search).toContain("decide=mine");
+
+    // And choosing it again shows every draft, leaving the address without it
+    await userEvent.click(screen.getByRole("button", { name: /^Views/u }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: /Mine to decide/u }),
+    );
+    await waitFor(async () => {
+      expect(await entries()).toHaveLength(4);
+    });
+    expect(history.location.search).not.toContain("decide");
+  });
+
+  it("offers a reader who decides nothing a way out of Mine to decide, as a link may give it", async () => {
+    serverAnswers({
+      "GET /api/session": reader,
+      "GET /api/people": peopleWith([changed, rejected]),
+      "GET /api/lists": () => Response.json({ lists: [sites] }),
+    });
+    renderApp("/drafts?decide=mine");
+    await screen.findByText("No drafts");
+    await userEvent.click(screen.getByRole("button", { name: /^Views/u }));
+    expect(
+      await screen.findByRole("menuitem", { name: /Mine to decide \(0\)/u }),
+    ).toBeDefined();
+  });
+
+  it("decides one draft from its row's menu", async () => {
+    const fetch = await openDrafts({
+      "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
+    });
+    // A row has two, one beside its name and one at its end, which open the same menu.
+    const [rowMenu] = await screen.findAllByRole("button", {
+      name: "Actions for Blake Fictional",
+    });
+    await userEvent.click(rowMenu as HTMLElement);
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Approve draft" }),
+    );
+    await userEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Approve",
+      }),
+    );
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
+        { ...noDrafts(), people: ["p2"] },
+      ]);
+    });
+  });
+
+  it("shows why a draft this account changed can't be approved by it, after its record", async () => {
+    await openDrafts({
+      "GET /api/people": peopleWith([
+        person("p9", "Kit Fictional", {
+          draft: draft({
+            action: "changed",
+            changed: ["preferredName"],
+            live: { preferredName: "Kit Before", values: {} },
+            needsOtherApprover: true,
+          }),
+        }),
+      ]),
+    });
+    expect(
+      (await screen.findByText("Needs another approver")).closest(
+        "[role=gridcell]",
+      )?.textContent,
+    ).toContain("Kit Fictional");
   });
 
   it("counts drafts in words", () => {
@@ -1716,7 +1820,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Name from Fictional Quay to Fictional Pier; Feature lead from Blake Fictional to Avery Fictional; Members from Avery Fictional to Avery Fictional, Blake Fictional, Someone this role can't see; Joining and leaving dates set to Avery Fictional, Jan 5, 2026; Blake Fictional, Jan 6, 2026; Someone this role can't see, Jan 7, 2026, Draft",
+      "Fictional Pier, Draft | Changed | Waiting | Name from Fictional Quay to Fictional Pier; Feature lead from Blake Fictional to Avery Fictional; Members from Avery Fictional to Avery Fictional, Blake Fictional, Someone this role can't see; Joining and leaving dates set to Avery Fictional, Jan 5, 2026; Blake Fictional, Jan 6, 2026; Someone this role can't see, Jan 7, 2026 | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });
 
@@ -1734,7 +1838,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Members set to Ellis Fictional; Joining and leaving dates set to Ellis Fictional, Jan 5, 2026, Draft",
+      "Fictional Pier, Draft | Changed | Waiting | Members set to Ellis Fictional; Joining and leaving dates set to Ellis Fictional, Jan 5, 2026 | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });
 
@@ -1752,7 +1856,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Feature lead from Blake Fictional to Avery Fictional; Date the feature lead changes set to Jan 5, 2026, Draft",
+      "Fictional Pier, Draft | Changed | Waiting | Feature lead from Blake Fictional to Avery Fictional; Date the feature lead changes set to Jan 5, 2026 | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });
 
@@ -1763,7 +1867,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Date the feature lead changes changed, Draft",
+      "Fictional Pier, Draft | Changed | Waiting | Date the feature lead changes changed | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });
 
@@ -1792,7 +1896,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Nothing is left to change, since the people it named have left, Draft",
+      "Fictional Pier, Draft | Changed | Waiting | Nothing is left to change, since the people it named have left | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });
 
@@ -1803,7 +1907,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Joining and leaving dates changed, Draft",
+      "Fictional Pier, Draft | Changed | Waiting | Joining and leaving dates changed | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });
 
@@ -1818,7 +1922,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Name set to Fictional Pier; Feature lead changed; Members changed, Draft",
+      "Fictional Pier, Draft | Changed | Waiting | Name set to Fictional Pier; Feature lead changed; Members changed | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });
 
@@ -1840,8 +1944,8 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted adding the feature team Fictional Beacon: Feature lead Avery Fictional; Members Avery Fictional, Blake Fictional; Joining and leaving dates set to Blake Fictional, Jan 6, 2026, Draft: added",
-      "Fictional Editor drafted removing the feature team Fictional Wharf: Members Avery Fictional, Draft: removed",
+      "Fictional Beacon, Draft: added | Added | Waiting | Feature lead Avery Fictional; Members Avery Fictional, Blake Fictional; Joining and leaving dates set to Blake Fictional, Jan 6, 2026 | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
+      "Fictional Wharf, Draft: removed | Removed | Waiting | Members Avery Fictional | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });
 
@@ -1859,8 +1963,8 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted adding the feature team Fictional Beacon, Draft: added",
-      "Fictional Editor drafted removing the feature team Fictional Wharf, Draft: removed",
+      "Fictional Beacon, Draft: added | Added | Waiting |  | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
+      "Fictional Wharf, Draft: removed | Removed | Waiting |  | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
   });
 
@@ -1875,7 +1979,7 @@ describe("drafts of feature teams on the Drafts page", () => {
     );
     await userEvent.click(
       await screen.findByRole("checkbox", {
-        name: "Select the draft of the feature team Fictional Beacon",
+        name: "Select the draft of Fictional Beacon",
       }),
     );
     await userEvent.click(
@@ -1942,18 +2046,22 @@ describe("unpublished and held drafts on the Drafts page", () => {
     });
     const box = (name: string) =>
       screen.getByRole("checkbox", { name: `Select the draft of ${name}` });
-    await screen.findByRole("checkbox", { name: "Select all waiting" });
+    await screen.findByRole("checkbox", {
+      name: "Select all drafts this role can decide",
+    });
     const shown = await entries();
-    expect(shown.find((text) => text.includes("Avery Fictional"))).toMatch(
+    const recordOf = (name: string) =>
+      shown.find((text) => text.startsWith(name))?.split(" | ")[0];
+    expect(recordOf("Avery Fictional")).toMatch(
       /, Draft, being changed by Second Fictional Editor$/,
     );
-    expect(shown.find((text) => text.includes("Blake Fictional"))).toMatch(
-      /, Draft: added, unpublished$/,
-    );
+    expect(recordOf("Blake Fictional")).toMatch(/, Draft: added, unpublished$/);
     expect(box("Avery Fictional")).toHaveProperty("disabled", true);
     expect(box("Blake Fictional")).toHaveProperty("disabled", true);
     await userEvent.click(
-      screen.getByRole("checkbox", { name: "Select all waiting" }),
+      screen.getByRole("checkbox", {
+        name: "Select all drafts this role can decide",
+      }),
     );
     expect(box("Casey Fictional")).toHaveProperty("checked", true);
     expect(box("Avery Fictional")).toHaveProperty("checked", false);
@@ -1989,17 +2097,17 @@ describe("loading for a role that sees part of the drafts", () => {
           <DraftsPage
             approves={[]}
             seesPeople={false}
-            search=""
-            onSearch={() => undefined}
+            view={emptyView}
+            onView={() => undefined}
+            applied={undefined}
+            onApply={() => undefined}
           />
         </MantineProvider>
       </QueryClientProvider>,
     );
 
     // Then it loads
-    expect(
-      await screen.findByText("No drafts waiting for approval."),
-    ).toBeDefined();
+    expect(await screen.findByText("No drafts")).toBeDefined();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   });
 });

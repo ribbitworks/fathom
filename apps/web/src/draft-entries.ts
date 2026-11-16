@@ -2,8 +2,9 @@
 
 // The drafts a reader sees, as entries: every draft of people, planned hires, People's columns,
 // lists, choices, the order of lists' choices and of People's columns, the plan's records and its
-// columns, feature teams and the planning settings, each in words saying who drafted what and what
-// it changes, newest first, with the reads that give them, and those the reader may decide now.
+// columns, feature teams and the planning settings, each naming its record, its kind, who drafted
+// it and what it changes, newest first, with the reads that give them, and those the reader may
+// decide now.
 
 import {
   allOf,
@@ -45,12 +46,11 @@ import { makerNames } from "./names.ts";
 import { orgChartQuery } from "./org-chart.ts";
 import { type PeopleData, peopleQuery } from "./people.ts";
 import { isHire, rowName } from "./people-rows.ts";
-import { type Phrase, phraseText } from "./phrase.tsx";
+import type { Phrase } from "./phrase.tsx";
 import {
   planningSettingsNode,
   planningSettingsQuery,
   planningSettingsRef,
-  planningSettingsSubject,
   settingsDraftWords,
 } from "./planning-settings.ts";
 import { planDraftFields } from "./project-grids.tsx";
@@ -62,12 +62,7 @@ import {
   tableChoices,
 } from "./projects.ts";
 import { recordKey } from "./record-drafts.ts";
-import {
-  recordNodes,
-  recordSubjects,
-  releaseStreamsQuery,
-} from "./releases.ts";
-import { draftWords } from "./status-mark.tsx";
+import { recordNodes, releaseStreamsQuery } from "./releases.ts";
 import { formatDay } from "./table-view.ts";
 
 interface Drafted {
@@ -84,16 +79,8 @@ function draftedPeople(data: PeopleData): Drafted[] {
     .sort((a, b) => (b.draft.madeAt ?? "").localeCompare(a.draft.madeAt ?? ""));
 }
 
-// What a draft did, after who made it.
-function verb(action: PersonDraft["action"] | undefined): string {
-  if (action === "created") return "drafted adding";
-  if (action === "deleted") return "drafted removing";
-  if (action === undefined) return "drafted a new order for";
-  return "drafted changes to";
-}
-
-// A draft on the page, of any kind, in words: who made it, what they drafted, what it changes, and
-// why it was rejected, as shown and as searched, with the draft it selects.
+// A draft on the page, of any kind: its record, by kind and name, who made it, what it changes, and
+// why it was rejected, with the draft it selects.
 export interface Entry {
   key: string;
   madeAt: string | null;
@@ -101,8 +88,10 @@ export interface Entry {
   action: PersonDraft["action"] | undefined;
   state: DraftState;
   who: string;
-  verb: string;
-  subject: string;
+  kind: DraftKind;
+  // The record's name, with what it belongs to where its name alone may not say, such as a choice's
+  // list.
+  name: string;
   details: Phrase[];
   // Why a rejected draft was rejected, when it says.
   reason: string | undefined;
@@ -112,7 +101,6 @@ export interface Entry {
   heldBy: string | undefined;
   // Changed by this user, whose role does not let them approve their own drafts.
   needsOtherApprover: boolean;
-  text: string;
   selects: DraftSelection;
 }
 
@@ -129,30 +117,26 @@ function entry(
     unpublished?: boolean | undefined;
     needsOtherApprover?: boolean | undefined;
   },
-  subject: string,
+  kind: DraftKind,
+  name: string,
   details: Phrase[],
   selects: Partial<DraftSelection>,
   heldBy?: string,
 ): Entry {
-  // Everyone who changed the draft, since several people's changes to one record make one draft.
-  const who = allOf(makerNames(draft));
-  const reason = draft.state === "rejected" ? draft.reason : undefined;
-  const rejected = draft.state === "rejected" ? draftWords(draft) : "";
-  const did = verb(draft.action);
   return {
     key,
     madeAt: draft.madeAt,
     action: draft.action,
     state: draft.state,
-    who,
-    verb: did,
-    subject,
+    // Everyone who changed the draft, since several people's changes to one record make one draft.
+    who: allOf(makerNames(draft)),
+    kind,
+    name,
     details,
-    reason,
+    reason: draft.state === "rejected" ? draft.reason : undefined,
     unpublished: draft.unpublished === true,
     heldBy,
     needsOtherApprover: draft.needsOtherApprover === true,
-    text: [who, did, subject, ...details.map(phraseText), rejected].join(" "),
     selects: { ...noDrafts(), ...selects },
   };
 }
@@ -235,7 +219,8 @@ function listEntries(lists: readonly List[]): Entry[] {
           entry(
             `list ${list.id}`,
             list.draft,
-            `the list ${list.name}`,
+            "list",
+            list.name,
             list.draft.action === "created"
               ? addedClass(list.visibility)
               : configFields(
@@ -258,7 +243,8 @@ function listEntries(lists: readonly List[]): Entry[] {
             entry(
               `choice ${choice.id}`,
               choice.draft,
-              `the choice ${choice.label} in ${list.name}`,
+              "list-item",
+              `${choice.label} in ${list.name}`,
               configFields(choice.draft, choice),
               { choices: [choice.id] },
               choice.heldBy,
@@ -271,6 +257,7 @@ function listEntries(lists: readonly List[]): Entry[] {
           entry(
             `order ${list.id}`,
             list.orderDraft,
+            "choice-order",
             list.name,
             [
               orderPhrase(
@@ -292,7 +279,7 @@ function listEntries(lists: readonly List[]): Entry[] {
 function columnEntries(
   data: Pick<PeopleData, "fields">,
   lists: readonly List[],
-  columnSubject: (name: string) => string = (name) => `the column ${name}`,
+  columnName: (name: string) => string = (name) => name,
 ): Entry[] {
   // A web link column has no list, and a list not sent to the reader goes unnamed.
   const listName = (id: unknown) =>
@@ -304,7 +291,8 @@ function columnEntries(
             entry(
               `column ${field.id}`,
               field.draft,
-              columnSubject(field.name),
+              "field",
+              columnName(field.name),
               field.draft.action === "created"
                 ? addedClass(field.visibility)
                 : // Lists are named, not identified, on both sides of a change.
@@ -334,8 +322,9 @@ function personEntries(data: PeopleData, lists: readonly List[]): Entry[] {
     entry(
       `person ${drafted.person.id}`,
       drafted.draft,
+      isHire(drafted.person) ? "planned-hire" : "person",
       isHire(drafted.person)
-        ? `the planned hire ${rowName(drafted.person, lists)}`
+        ? rowName(drafted.person, lists)
         : drafted.person.preferredName,
       drafted.draft.action === "deleted"
         ? []
@@ -366,7 +355,7 @@ function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
       heldBy?: string | undefined;
     },
     now: Record<string, unknown>,
-    subject: string,
+    name: string,
   ): Entry[] =>
     record.draft === undefined
       ? []
@@ -374,27 +363,30 @@ function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
           entry(
             `${type} ${record.id}`,
             record.draft,
-            subject,
+            type,
+            name,
             configFields(record.draft, now, type),
             { records: [{ type, id: record.id }] },
             record.heldBy,
           ),
         ];
   return streams.flatMap((stream) => [
-    ...of("release-stream", stream, stream, recordSubjects.stream(stream)),
+    ...of("release-stream", stream, stream, stream.name),
     ...stream.patterns.flatMap((pattern) =>
       of(
         "cycle-pattern",
         pattern,
         { ...pattern, length: String(pattern.length) },
-        recordSubjects.pattern(stream, pattern),
+        `${stream.name} from ${formatDay(pattern.startsOn)}`,
       ),
     ),
     ...stream.releases.flatMap((release) =>
-      of("release", release, release, recordSubjects.release(stream, release)),
+      of("release", release, release, `${release.name} in ${stream.name}`),
     ),
   ]);
 }
+
+const planningSettingsName = "Planning settings";
 
 // The draft of the planning settings, as an entry, with each setting it changes.
 function settingsEntries(settings: PlanningSettingsShown): Entry[] {
@@ -404,7 +396,8 @@ function settingsEntries(settings: PlanningSettingsShown): Entry[] {
     entry(
       `planning-settings ${planningSettingsRef.id}`,
       draft,
-      planningSettingsSubject,
+      "planning-settings",
+      planningSettingsName,
       configFields(...settingsDraftWords(draft, settings), "planning-settings"),
       { records: [planningSettingsRef] },
       settings.heldBy,
@@ -476,7 +469,8 @@ function teamEntries(
       entry(
         `feature-team ${team.id}`,
         draft,
-        `the feature team ${team.name}`,
+        "feature-team",
+        team.name,
         details,
         { featureTeams: [team.id] },
         team.heldBy,
@@ -492,7 +486,7 @@ function planEntries(
   streams: readonly ReleaseStream[],
 ): Entry[] {
   const offered = tableChoices(plan, picks, streams);
-  return listedPlanRecords(plan).flatMap(({ kind, record, subject }) => {
+  return listedPlanRecords(plan).flatMap(({ kind, record, name }) => {
     const { draft, heldBy } = record;
     if (draft === undefined) return [];
     const ref = { type: kind, id: record.id };
@@ -500,7 +494,8 @@ function planEntries(
       entry(
         recordKey(ref),
         draft,
-        subject,
+        kind,
+        name,
         planDraftFields(kind, record, offered).map(({ key, field }) =>
           credited(describeField(field), key, draft),
         ),
@@ -561,6 +556,8 @@ export type DraftEntries =
       waits: (one: Entry) => boolean;
       // Whether the reader's role decides a draft of its kind.
       choosable: (one: Entry) => boolean;
+      // Whether the reader may decide a draft now, as toDecide keeps it.
+      decidesNow: (one: Entry) => boolean;
       drafted: DraftedData;
     };
 
@@ -631,7 +628,7 @@ export function useDraftEntries({
       : columnEntries(
           planData.featureColumns,
           planData.featureColumns.lists,
-          (name) => `the column ${name} on Features`,
+          (name) => `${name} on Features`,
         )),
     ...(planData === undefined || choicesData === undefined
       ? []
@@ -653,13 +650,17 @@ export function useDraftEntries({
       ],
     },
   };
+  const reading = {
+    waits: ({ state, selects }: Entry) =>
+      state === "waiting" &&
+      waitsForRejected(selects, drafted.lists, drafted.columns),
+    choosable: ({ selects }: Entry) => mayDecide(approves, selects),
+  };
   return {
     state: "loaded",
     all,
-    waits: ({ state, selects }) =>
-      state === "waiting" &&
-      waitsForRejected(selects, drafted.lists, drafted.columns),
-    choosable: ({ selects }) => mayDecide(approves, selects),
+    ...reading,
+    decidesNow: (one) => toDecide([one], reading).length > 0,
     drafted,
   };
 }

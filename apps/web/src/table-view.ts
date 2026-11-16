@@ -83,6 +83,8 @@ export interface TableColumn<Row> {
   standIn?: (row: Row) => string;
   // The class of data the column's values belong to, which its heading marks unless General.
   dataClass?: Tier | undefined;
+  // Set for a column hidden until a view shows it, such as one that repeats what a mark says.
+  hiddenAtFirst?: boolean | undefined;
 }
 
 // What a field editing a column's value is called: its label, and its unit's words, if any.
@@ -128,6 +130,8 @@ export interface View {
   order?: string[] | undefined;
   // The keys of the columns the table leaves out, which keep their filters, sorts and places.
   hidden?: string[] | undefined;
+  // The keys of the columns hidden at first that the view shows.
+  shown?: string[] | undefined;
   // The width set for each column, in pixels, by key, for those not left to fit what they hold.
   widths?: Record<string, number> | undefined;
   // The unit each column that offers units is shown in, by key, for those not in their first, and
@@ -177,6 +181,7 @@ export function viewFrom(search: ViewDefinition): View {
     ...(search.frozen === undefined ? {} : { frozen: search.frozen }),
     ...(hasKeys(search.order) ? { order: search.order } : {}),
     ...(hasKeys(search.hidden) ? { hidden: search.hidden } : {}),
+    ...(hasKeys(search.shown) ? { shown: search.shown } : {}),
     ...(hasEntries(search.widths) ? { widths: search.widths } : {}),
     ...(hasEntries(search.units) ? { units: search.units } : {}),
     ...(hasEntries(search.places) ? { places: search.places } : {}),
@@ -329,6 +334,7 @@ export function searchFor(view: View): ViewDefinition {
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
     ...(hasKeys(view.order) ? { order: view.order } : {}),
     ...(hasKeys(view.hidden) ? { hidden: view.hidden } : {}),
+    ...(hasKeys(view.shown) ? { shown: view.shown } : {}),
     ...(hasEntries(view.widths) ? { widths: view.widths } : {}),
     ...(hasEntries(view.units) ? { units: view.units } : {}),
     ...(hasEntries(view.places) ? { places: view.places } : {}),
@@ -425,6 +431,7 @@ export function setsApart(view: View): boolean {
     view.frozen !== undefined ||
     view.order !== undefined ||
     view.hidden !== undefined ||
+    view.shown !== undefined ||
     view.widths !== undefined ||
     view.units !== undefined ||
     view.places !== undefined ||
@@ -477,7 +484,8 @@ export function knownView(
     ...(view.retired === true ? { retired: true as const } : {}),
     ...(view.choices === undefined ? {} : { choices: view.choices }),
     ...orderOf(view.order, known),
-    ...knownHidden(view.hidden, known),
+    ...knownKeys("hidden", view.hidden, known),
+    ...knownKeys("shown", view.shown, known),
     ...knownEntries("widths", view.widths, known),
     ...knownEntries("units", view.units, known),
     ...knownEntries("places", view.places, known),
@@ -493,23 +501,40 @@ function orderOf(
   return order?.some((key) => known.has(key)) === true ? { order } : {};
 }
 
-// The hidden columns while they name any column the table has, keeping those the Draft menu's
-// choice leaves out for now, as the order does.
-function knownHidden(
-  hidden: string[] | undefined,
+// The hidden, or shown, columns while they name any column the table has, keeping those the Draft
+// menu's choice leaves out for now, as the order does.
+function knownKeys<Key extends "hidden" | "shown">(
+  name: Key,
+  keys: string[] | undefined,
   known: ReadonlySet<string>,
-): { hidden?: string[] } {
-  return hidden?.some((key) => known.has(key)) === true ? { hidden } : {};
+): Partial<Record<Key, string[]>> {
+  return keys?.some((key) => known.has(key)) === true
+    ? ({ [name]: keys } as Record<Key, string[]>)
+    : {};
 }
 
-export const shownColumnsOf = <Column extends { key: string }>(
-  view: Pick<View, "hidden">,
+// A column the view hides: one it names hidden, or one hidden at first it doesn't name shown.
+export interface Hideable {
+  key: string;
+  hiddenAtFirst?: boolean | undefined;
+}
+
+const hiddenIn = (
+  view: Pick<View, "hidden" | "shown">,
+  { key, hiddenAtFirst }: Hideable,
+) =>
+  hiddenAtFirst === true
+    ? view.shown?.includes(key) !== true
+    : view.hidden?.includes(key) === true;
+
+export const shownColumnsOf = <Column extends Hideable>(
+  view: Pick<View, "hidden" | "shown">,
   columns: readonly Column[],
-): Column[] => columns.filter(({ key }) => view.hidden?.includes(key) !== true);
-export const hiddenColumnsOf = <Column extends { key: string }>(
-  view: Pick<View, "hidden">,
+): Column[] => columns.filter((column) => !hiddenIn(view, column));
+export const hiddenColumnsOf = <Column extends Hideable>(
+  view: Pick<View, "hidden" | "shown">,
   columns: readonly Column[],
-): Column[] => columns.filter(({ key }) => view.hidden?.includes(key) === true);
+): Column[] => columns.filter((column) => hiddenIn(view, column));
 
 // The view with a column that is never hidden shown, such as the one naming each record.
 export function alwaysShowing(view: View, key: string): View {
@@ -517,16 +542,26 @@ export function alwaysShowing(view: View, key: string): View {
   return { ...view, hidden: hidden.length === 0 ? undefined : hidden };
 }
 
-// The view with columns hidden, or shown again, given the keys of the table's columns in the view's
-// order. Frozen columns count the columns shown, so a frozen column hidden leaves one fewer frozen,
-// and one shown again before the last frozen column joins them.
+// The view with columns hidden, or shown again, given the table's columns in the view's order.
+// Frozen columns count the columns shown, so a frozen column hidden leaves one fewer frozen, and one
+// shown again before the last frozen column joins them. A column hidden at first is shown by naming
+// it shown, and hidden again by no longer naming it.
 export function withHidden(
   view: View,
-  ordered: readonly string[],
+  columns: readonly Hideable[],
   keys: readonly string[],
   hide: boolean,
 ): View {
-  const before = new Set(view.hidden ?? []);
+  const ordered = columns.map(({ key }) => key);
+  const atFirst = new Set(
+    columns.flatMap(({ key, hiddenAtFirst }) =>
+      hiddenAtFirst === true ? [key] : [],
+    ),
+  );
+  const before = new Set([
+    ...(view.hidden ?? []),
+    ...hiddenColumnsOf(view, columns).map(({ key }) => key),
+  ]);
   const after = new Set(
     hide
       ? [...before, ...keys]
@@ -543,14 +578,19 @@ export function withHidden(
   const frozen = ordered
     .slice(0, frozenEnd)
     .filter((key) => !after.has(key)).length;
-  // Columns the Draft menu's choice leaves out for now stay hidden, after the rest.
+  // Columns the Draft menu's choice leaves out for now stay hidden, or shown, after the rest.
   const hidden = [
-    ...ordered.filter((key) => after.has(key)),
+    ...ordered.filter((key) => after.has(key) && !atFirst.has(key)),
     ...[...after].filter((key) => !ordered.includes(key)),
+  ];
+  const shown = [
+    ...ordered.filter((key) => atFirst.has(key) && !after.has(key)),
+    ...(view.shown ?? []).filter((key) => !ordered.includes(key)),
   ];
   return {
     ...view,
     hidden: hidden.length === 0 ? undefined : hidden,
+    shown: shown.length === 0 ? undefined : shown,
     frozen: frozen === frozenByDefault ? undefined : frozen,
   };
 }

@@ -213,10 +213,10 @@ function widthsSeen(
 }
 
 // The view as a reader is sent it: without filters, sorts, breakdowns, and groupings on columns
-// deleted since it was saved, nor the order, hidden columns, or widths of columns the reader may not
-// see. None of those reveals a value, so a view keeps them for columns others may not see, and for
-// any the table no longer has. Every reader is sent the unit and decimal places each column is shown
-// in.
+// deleted since it was saved, nor the order, hidden or shown columns, or widths of columns the
+// reader may not see. None of those reveals a value, so a view keeps them for columns others may
+// not see, and for any the table no longer has. Every reader is sent the unit and decimal places
+// each column is shown in.
 function sentTo(
   actor: Actor,
   table: Table,
@@ -243,6 +243,7 @@ function sentTo(
     frozen: definition.frozen,
     order: definition.order?.filter(seen),
     hidden: definition.hidden?.filter(seen),
+    shown: definition.shown?.filter(seen),
     widths:
       definition.widths && widthsSeen(actor, table, definition.widths, true),
     units: definition.units,
@@ -437,8 +438,8 @@ export async function updateView(
       ) {
         throw new ForbiddenError(notSharer);
       }
-      // The actor was not sent the order, hidden columns, or widths of columns they may not see, so
-      // keeps those already set.
+      // The actor was not sent the order, hidden or shown columns, or widths of columns they may not
+      // see, so keeps those already set.
       const keepingUnseen = (row: ViewRow, definition: ViewDefinition) => {
         const kept = definitionOf(row);
         const unseen = (key: string) => !seesColumn(actor, table, key);
@@ -446,12 +447,15 @@ export async function updateView(
           ...widthsSeen(actor, table, kept.widths, false),
           ...definition.widths,
         };
-        const hidden = [
-          ...new Set([
-            ...(kept.hidden ?? []).filter(unseen),
-            ...(definition.hidden ?? []),
-          ]),
-        ];
+        const keptUnseen = (
+          before: readonly string[] | undefined,
+          after: readonly string[] | undefined,
+        ) => {
+          const keys = [
+            ...new Set([...(before ?? []).filter(unseen), ...(after ?? [])]),
+          ];
+          return keys.length === 0 ? undefined : keys;
+        };
         return {
           ...definition,
           order:
@@ -463,7 +467,8 @@ export async function updateView(
               ),
               definition.order,
             ),
-          hidden: hidden.length === 0 ? undefined : hidden,
+          hidden: keptUnseen(kept.hidden, definition.hidden),
+          shown: keptUnseen(kept.shown, definition.shown),
           widths: Object.keys(widths).length === 0 ? undefined : widths,
         };
       };

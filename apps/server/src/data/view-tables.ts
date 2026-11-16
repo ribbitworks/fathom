@@ -70,4 +70,5 @@ export const viewTables: Record<ViewTable, ViewTableRules> = {
   },
   "org-chart": generalTable(pageNeeds["org-chart"]),
   accounts: generalTable(pageNeeds.accounts),
+  drafts: generalTable(pageNeeds.drafts),
 };

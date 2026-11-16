@@ -434,7 +434,13 @@ export function releaseCycles(
   return first === last ? first : `${first} to ${last}`;
 }
 
-// How the Drafts page and decisions name a stream, a change of its cycles, and a release.
+// What a release stream is called, one and several, wherever a table names its kind.
+export const streamNames = {
+  one: "release stream",
+  noun: "release streams",
+} as const;
+
+// How decisions name a stream, a change of its cycles, and a release.
 export const recordSubjects = {
   stream: (stream: ReleaseStream) => planSubjects.stream(stream.name),
   pattern: (stream: ReleaseStream, pattern: { startsOn: string }) =>
@@ -443,7 +449,7 @@ export const recordSubjects = {
     planSubjects.release(release.name, stream.name),
 };
 
-// Every stream, pattern, and release, named as the Drafts page names them.
+// Every stream, pattern, and release, named as decisions name them.
 export function recordNodes(streams: readonly ReleaseStream[]): RecordNode[] {
   return streams.flatMap((stream) => [
     recordNode("release-stream", stream, recordSubjects.stream(stream)),

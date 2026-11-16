@@ -656,7 +656,7 @@ describe("a view's order of columns", () => {
 });
 
 describe("a view's hidden columns", () => {
-  const ordered = ["name", "code", "colour", "size"];
+  const ordered = ["name", "code", "colour", "size"].map((key) => ({ key }));
 
   it("is read from and written to the address, leaving out an empty one", () => {
     expect(viewFrom({ hidden: ["code"] }).hidden).toEqual(["code"]);
@@ -698,7 +698,7 @@ describe("a view's hidden columns", () => {
   });
 
   it("tells the columns shown from those hidden, in the table's order", () => {
-    const columns = ordered.map((key) => ({ key }));
+    const columns = ordered;
     const view = { ...emptyView, hidden: ["size", "code"] };
     expect(shownColumnsOf(view, columns).map(({ key }) => key)).toEqual([
       "name",
@@ -754,6 +754,63 @@ describe("a view's hidden columns", () => {
     expect(
       withHidden(emptyView, ordered, ["code"], true).frozen,
     ).toBeUndefined();
+  });
+
+  describe("hidden at first", () => {
+    const columns = [
+      { key: "name" },
+      { key: "state", hiddenAtFirst: true },
+      { key: "code" },
+    ];
+
+    it("is hidden until the view shows it, and only then named in the address", () => {
+      expect(hiddenColumnsOf(emptyView, columns).map(({ key }) => key)).toEqual(
+        ["state"],
+      );
+      const shown = withHidden(emptyView, columns, ["state"], false);
+      expect(shown.shown).toEqual(["state"]);
+      expect(shown.hidden).toBeUndefined();
+      expect(shownColumnsOf(shown, columns)).toEqual(columns);
+      expect(searchFor(shown).shown).toEqual(["state"]);
+      expect(viewFrom({ shown: ["state"] }).shown).toEqual(["state"]);
+      expect(setsApart(shown)).toBe(true);
+    });
+
+    it("is hidden again by no longer being named shown, leaving the view as it started", () => {
+      const shown = withHidden(emptyView, columns, ["state"], false);
+      expect(withHidden(shown, columns, ["state"], true)).toEqual({
+        ...emptyView,
+        hidden: undefined,
+        shown: undefined,
+        frozen: undefined,
+      });
+    });
+
+    it("stays hidden while others are hidden and shown again", () => {
+      const hidden = withHidden(emptyView, columns, ["code"], true);
+      expect(hidden).toMatchObject({ hidden: ["code"], shown: undefined });
+      expect(
+        hiddenColumnsOf(
+          withHidden(hidden, columns, ["code"], false),
+          columns,
+        ).map(({ key }) => key),
+      ).toEqual(["state"]);
+    });
+
+    it("is shown with every other column by Show all columns", () => {
+      const hidden = withHidden(emptyView, columns, ["code"], true);
+      const all = withHidden(hidden, columns, ["state", "code"], false);
+      expect(all).toMatchObject({ hidden: undefined, shown: ["state"] });
+    });
+
+    it("keeps the columns shown while it names any the table has", () => {
+      expect(
+        knownView({ ...emptyView, shown: ["state"] }, columns).shown,
+      ).toEqual(["state"]);
+      expect(
+        knownView({ ...emptyView, shown: ["gone"] }, columns),
+      ).not.toHaveProperty("shown");
+    });
   });
 });
 

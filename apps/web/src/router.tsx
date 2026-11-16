@@ -49,6 +49,7 @@ import { helpIndexPage, shownHelpPage } from "./help-pages.ts";
 import { ChangeHistoryPage } from "./change-history-page.tsx";
 import { draftsSeen } from "./draft-entries.ts";
 import { DraftsPage } from "./drafts-page.tsx";
+import { mineToDecide } from "./drafts-table.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
 import { firstPage, Layout } from "./layout.tsx";
@@ -322,12 +323,17 @@ const changesRoute = createRoute({
   },
 });
 
-// Drafts, for those who see the data they change, with their search in the address; Approvers
-// approve and reject here those of the areas their role approves.
+// Drafts, for those who see the data they change, with the table's view in the address, and whether
+// it shows only the drafts the reader may decide; Approvers approve and reject here those of the
+// areas their role approves.
+const draftsSearch = viewSearchSchema.extend({
+  decide: z.literal(mineToDecide).optional().catch(undefined),
+});
+
 const draftsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/drafts",
-  validateSearch: historySearch,
+  validateSearch: draftsSearch,
   beforeLoad: reaching("drafts"),
   component: function Drafts() {
     const { permissions } = signedIn.useRouteContext();
@@ -335,10 +341,14 @@ const draftsRoute = createRoute({
     return (
       <DraftsPage
         {...draftsSeen(permissions)}
-        search={draftsRoute.useSearch().search ?? ""}
-        onSearch={(search, replace) => {
-          void navigate({ search: { search: search || undefined }, replace });
-        }}
+        canShareViews={sharesViews("drafts", permissions)}
+        {...viewProps(
+          draftsRoute.useSearch(),
+          (next, replace) => {
+            void navigate({ search: next, replace });
+          },
+          ["decide"],
+        )}
       />
     );
   },

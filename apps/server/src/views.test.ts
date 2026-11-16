@@ -1056,6 +1056,25 @@ describe("views of every table", () => {
     ).toEqual({ error: "Choose only what this page offers" });
   });
 
+  it("keep Drafts showing only the drafts its reader may decide, refusing any other choice", async () => {
+    const { cookie } = await test.signedIn("engineering-director");
+    const drafts = onTable("drafts");
+    const choices = { decide: "mine" };
+    const response = await drafts.save(cookie, unique("Mine to decide"), {
+      choices,
+    });
+    expect(response.statusCode).toBe(201);
+    expect(response.json<Saved>().view.definition).toEqual({ choices });
+
+    expect(
+      (
+        await drafts.save(cookie, unique("Theirs"), {
+          choices: { decide: "theirs" },
+        })
+      ).json(),
+    ).toEqual({ error: "Choose only what this page offers" });
+  });
+
   it("keep names unique within each table, allowing one name on two tables", async () => {
     const { cookie } = await test.signedIn(generalReader);
     const name = unique("Mine");
@@ -1217,6 +1236,31 @@ describe("views of every table", () => {
       (await viewsOf(maker.cookie)).find(({ id }) => id === view.id)
         ?.definition,
     ).toEqual({ hidden: ["endDate", "preferredName"] });
+  });
+
+  it("send each reader only the columns shown that they can see, keeping the others when that reader updates them", async () => {
+    const maker = await test.signedIn("workforce-administrator");
+    const sharer = await test.signedIn([
+      ...generalReader,
+      "configuration:edit",
+    ]);
+    const { view } = (
+      await share(maker.cookie, unique("Showing"), {
+        shown: ["endDate", "employeeId"],
+      })
+    ).json<Saved>();
+    const sent = (await viewsOf(sharer.cookie)).find(
+      ({ id }) => id === view.id,
+    );
+    expect(sent?.definition).toEqual({ shown: ["employeeId"] });
+
+    await change(sharer.cookie, view.id, {
+      definition: { shown: ["preferredName"] },
+    });
+    expect(
+      (await viewsOf(maker.cookie)).find(({ id }) => id === view.id)
+        ?.definition,
+    ).toEqual({ shown: ["endDate", "preferredName"] });
   });
 
   it("send their maker a personal view they can no longer use by name and what's missing, to rename or delete alone", async () => {
@@ -1412,6 +1456,7 @@ describe("every starting role on every view table", () => {
     "feature-assignments": { opens: seesAssignments, shares: configurers },
     capacity: { opens: seesAssignments, shares: configurers },
     "org-chart": { opens: everyoneButAdministrator, shares: configurers },
+    drafts: { opens: everyoneButAdministrator, shares: configurers },
     accounts: {
       opens: ["engineering-director", "executive", "administrator"],
       shares: ["administrator"],

@@ -62,6 +62,7 @@ import {
   type PlanTab,
   type TableChoices,
   targetOf,
+  identifiedLabel,
 } from "./projects.ts";
 import { byChoice, holdsChoices } from "./choice-grouping.ts";
 import { tipAttribute } from "./table-tips.tsx";
@@ -171,9 +172,6 @@ export interface Identified {
   externalId?: string | null;
   draft?: { action: string } | undefined;
 }
-
-const identifiedLabel = ({ externalId, name }: Identified) =>
-  externalId == null ? name : `${externalId} ${name}`;
 
 // Records offered by their ID, if they have one, then their name, so similar names are told apart.
 const identified = (records: readonly Identified[]): Choice[] =>

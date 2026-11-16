@@ -108,6 +108,12 @@ const viewTableNeeds: Record<ViewTable, Needs> = {
     "personal:view",
   ),
   "org-chart": allOf("people:view"),
+  drafts: anyOf(
+    "people:view",
+    "configuration:view",
+    "plan:view",
+    "features:view",
+  ),
   accounts: allOf("administration:view"),
 };
 

@@ -38,11 +38,19 @@ export function PhraseText({ phrase }: { phrase: Phrase }): ReactNode {
 }
 
 // Several phrases in a run, such as a change's fields, each set apart by a semicolon.
-export function PhraseList({ phrases }: { phrases: readonly Phrase[] }) {
-  return phrases.map((phrase, index) => (
+export function PhraseList({
+  phrases,
+  light = false,
+}: {
+  phrases: readonly Phrase[];
+  // Lighter, for one of a column of them in a table.
+  light?: boolean;
+}) {
+  const list = phrases.map((phrase, index) => (
     <span key={index}>
       {index > 0 && "; "}
       <PhraseText phrase={phrase} />
     </span>
   ));
+  return light ? <span className={classes.phrasesLight}>{list}</span> : list;
 }

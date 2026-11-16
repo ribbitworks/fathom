@@ -284,54 +284,58 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** 'Certifications' and 'Languages' are in the table again.
   - **Notes:**
 
-### DRAFT-12: The Drafts Page Describes New Orders
+### DRAFT-12: The Drafts Table Shows a New Order and Why It Waits
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-11.
 
 **Preconditions:** Signed in with this account. **Drafts** page open from the left-hand menu.
 
-- [ ] `E9FE` Type `new order` in the search box.
-  - **Expected:** Three entries are shown:
-    - "drafted a new order for Levels"
-    - "drafted a new order for Positions"
-    - "drafted a new order for Sites"
-  - **Notes:**
-
-- [ ] `7F80` Read the entry for 'Sites'.
+- [ ] `25CB` Read the table's column names, from left to right.
   - **Expected:**
-    - It names the order 'Kestrel Bay', 'Northmere', 'Ashgrove', 'Corran Quay'.
-    - After it, it names the new order 'Harbourside', 'Kestrel Bay', 'Northmere Labs', 'Ashgrove', 'Corran Quay'.
-    - Its checkbox is greyed out.
-    - "Waiting for a rejected draft to be resubmitted" is under it.
+    - A tick box comes first, before **Record**.
+    - Then **Change**, **State**, **What changes**, **Type**, **Area**, **Made by**, **Drafted** and **Reason**.
   - **Notes:**
 
-- [ ] `CD13` Clear the search box.
+- [ ] `54D6` Search for `Order of choices`.
+  - **Expected:** Three rows are shown, whose **Record** reads 'Levels', 'Positions' and 'Sites'.
+  - **Notes:**
+
+- [ ] `F9BD` Read the row of 'Sites', from left to right.
+  - **Expected:**
+    - Its tick box is greyed out.
+    - A yellow dot, then 'Sites', then a grey box reading "Waits on a rejected draft".
+    - **Change** reads "Reordered".
+    - **State** reads "Waiting".
+    - **What changes** starts **Order** from 'Kestrel Bay', 'Northmere', 'Ashgrove', 'Corran Quay' to 'Harbourside', 'Kestrel Bay', 'Northmere Labs', 'Ashgrove', 'Corran Quay'.
+    - **Type** reads "Order of choices".
+    - **Area** reads "Configuration".
+    - **Made by** reads "Engineering Operations Manager".
+    - **Reason** is empty.
+  - **Notes:**
+
+- [ ] `B9B9` Clear the search box.
   - **Expected:** All drafts are shown again.
   - **Notes:**
 
-### DRAFT-13: Rejected Drafts Cannot Be Selected on the Drafts Page
+### DRAFT-13: Rejected Drafts Cannot Be Ticked on the Drafts Page
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-12.
 
 **Preconditions:** As DRAFT-12.
 
-- [ ] `64A2` Type `Rejected` in the search box.
-  - **Expected:** Eight entries are shown, each starting with a red dot in a ring, with **Reason:** and its reason under it:
-    - the column **Previous site**
-    - the list 'Positions'
-    - the new order for 'Positions'
-    - the choice 'Harbourside' in 'Sites'
-    - '우아현'
-    - 'Ophélie Roussel'
-    - the project 'Transit Displays Phase 2'
-    - a release in 'Patches', its colour changed
+- [ ] `485D` In the **State** column's menu, filter by **Rejected** alone.
+  - **Expected:**
+    - Each row shown starts with a red dot in a ring.
+    - Each row's **State** reads "Rejected".
+    - Each row's **Reason** holds its reason.
+    - Nine rows are shown, whose **Record** reads 'Ophélie Roussel', '우아현', 'Payments tester', 'Positions' twice ('List' and 'Order of choices' under **Type**), 'Harbourside in Sites', 'Previous site', 'P-1984 Transit Displays Phase 2' and 'Patch January in Patches', in any order.
   - **Notes:**
 
-- [ ] `72D0` Try to select the checkbox of each entry.
-  - **Expected:** None can be selected.
+- [ ] `0388` Try to tick the tick box of each row shown.
+  - **Expected:** None can be ticked.
   - **Notes:**
 
-- [ ] `51CB` Clear the search box.
+- [ ] `1B99` Open the Views menu, and select **Clear view**.
   - **Expected:** All drafts are shown again.
   - **Notes:**
 
@@ -491,21 +495,29 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Run Reset the Database first. Signed in with this account. **Drafts** page open.
 
-- [ ] `800D` Select **Select all waiting**.
+- [ ] `EAC2` Read the bar just above the table.
   - **Expected:**
-    - The button at the top right starts **Approve 32 drafts…**.
-    - The entry for the new order of 'Sites' is not selected.
-    - The entry for 'Viktoria Holmberg' is not selected.
+    - It starts "None selected".
+    - Its buttons **Reject…**, **Approve…** and **Clear selection** are greyed out.
   - **Notes:**
 
-- [ ] `5D0A` Select **Approve 32 drafts…**.
+- [ ] `DDAC` Tick the tick box before **Record** in the table's header.
+  - **Expected:**
+    - The bar reads "32 selected".
+    - Its button **Approve 32 drafts…** is not greyed out.
+    - The row of 'Sites', **Type** "Order of choices", is not ticked.
+    - The row of 'Viktoria Holmberg' is not ticked, and has a grey lock before her name.
+  - **Notes:**
+
+- [ ] `30E7` Select **Approve 32 drafts…**.
   - **Expected:** A dialog titled "Approve 32 drafts?" opens.
   - **Notes:**
 
-- [ ] `F061` Select **Approve** in the dialog.
+- [ ] `EA4D` Select **Approve** in the dialog.
   - **Expected:**
     - The dialog closes.
     - A notice reads "Approved 32 drafts."
+    - The bar reads "None selected".
   - **Notes:**
 
 ### DRAFT-21: A Resubmitted Choice Is Approved With the New Order That Depends on It
@@ -604,15 +616,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** As DRAFT-23. **Drafts** page open.
 
-- [ ] `6BF4` Type `Silje Skills` in the search box.
-  - **Expected:** One entry is shown: "Engineering Operations Manager drafted changes to Silje Holm-Schrøder: Skills set to Rust".
+- [ ] `6BF4` Search for `Silje Skills`.
+  - **Expected:** One row is shown:
+    - **Record** reads 'Silje Holm-Schrøder'.
+    - **What changes** reads **Skills** set to `Rust`.
+    - **Made by** reads "Engineering Operations Manager".
   - **Notes:**
 
-- [ ] `BEC2` Select the entry's checkbox.
-  - **Expected:** The entry's checkbox is ticked.
+- [ ] `BEC2` Tick that row's tick box.
+  - **Expected:** The bar above the table reads "1 selected".
   - **Notes:**
 
-- [ ] `C3F3` Select the button at the top right that starts **Approve**.
+- [ ] `C3F3` Select **Approve 1 draft…** in that bar.
   - **Expected:**
     - A dialog titled "Approve 4 drafts?" opens.
     - Under "Also approves the drafts these depend on:" it lists "the column Skills", "the list Skills" and "the choice Rust in Skills".
@@ -622,7 +637,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The dialog closes.
     - A notice reads "Approved 4 drafts."
-    - The page says "No drafts match the search."
+    - The table reads "No matching drafts".
+    - The bar reads "None selected".
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.
@@ -666,14 +682,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `7DEE` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** An entry names `Harbor One`, drafted by "Project Manager".
+  - **Expected:**
+    - A row's **Record** reads `Harbor One in Platform`.
+    - After it, a grey box reads "Needs another approver".
+    - Its **Made by** reads "Project Manager".
   - **Notes:**
 
-- [ ] `4F66` Select that entry's checkbox.
+- [ ] `4F66` Tick that row's tick box.
   - **Expected:**
+    - The bar above the table reads "1 selected".
     - **Approve 1 draft…** is greyed out.
     - **Reject…** is not greyed out.
-    - A line under them says another approver must approve it.
+    - In the bar, a line says "1 chosen draft was changed by this account, so another approver must approve it."
   - **Notes:**
 
 - [ ] `B553` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
@@ -681,11 +701,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `9FAB` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** An entry names `Harbor One`.
+  - **Expected:** A row's **Record** reads `Harbor One in Platform`, with no box after it.
   - **Notes:**
 
-- [ ] `2A5A` Select the checkbox of the entry for `Harbor One`.
-  - **Expected:** The entry's checkbox is ticked.
+- [ ] `2A5A` Tick the tick box of the row of `Harbor One in Platform`.
+  - **Expected:** The bar above the table reads "1 selected".
   - **Notes:**
 
 - [ ] `561B` Select **Approve 1 draft…**.
@@ -718,3 +738,76 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The row ends with one **⋯** button.
     - Nothing is beside it.
   - **Notes:**
+
+### DRAFT-27: Drafts Are Grouped and Counted by Area
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-26.
+
+**Preconditions:** Run Reset the Database first. Signed in with this account. **Drafts** page open from the left-hand menu.
+
+- [ ] `3A91` In the Group by menu, select **Area**.
+  - **Expected:**
+    - The button reads **Group by: Area**.
+    - Group headings read "People", "Planned hires", "Feature teams", "Configuration", "Features and releases" and "The plan".
+    - The heading "Features and releases" counts 7.
+  - **Notes:**
+
+- [ ] `E567` In the Group by menu, select **Made by** under **Then by**.
+  - **Expected:**
+    - The button reads **Group by: Area, then Made by**.
+    - Under "Features and releases", smaller, set-in headings read "Engineering Operations Manager", counting 1, and "Product Manager", counting 6.
+  - **Notes:**
+
+- [ ] `7C55` Select **Metrics**, then **Area** under **Break down by**.
+  - **Expected:**
+    - A **Metrics** panel opens beside the table.
+    - Its table has the columns **Area**, **Drafts** and **Share**.
+    - Its row "Features and releases" reads 7 under **Drafts**.
+  - **Notes:**
+
+**Afterwards:** Open the Views menu, and select **Clear view**.
+
+### DRAFT-28: Mine to Decide Shows Only the Drafts This Role Can Decide Now
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-27.
+
+**Preconditions:** Signed in with this account. **Drafts** page open from the left-hand menu.
+
+- [ ] `28F4` Open the Views menu.
+  - **Expected:** Its first item reads **Mine to decide (32)**, not ticked.
+  - **Notes:**
+
+- [ ] `4A36` Select **Mine to decide (32)**.
+  - **Expected:**
+    - Beside the buttons above the table, the count reads "32 drafts".
+    - No row's **State** reads "Rejected".
+    - No row's **Record** reads 'Viktoria Holmberg'.
+    - No row's **Type** reads "Order of choices" with **Record** 'Sites'.
+  - **Notes:**
+
+- [ ] `363B` Select the **Record** cell of the first row, away from its tick box.
+  - **Expected:** The cell is outlined, and its row's tick box is not ticked.
+  - **Notes:**
+
+- [ ] `4528` Press Space.
+  - **Expected:**
+    - That row's tick box is ticked.
+    - The bar above the table reads "1 selected".
+    - The **Record** cell still has focus.
+  - **Notes:**
+
+- [ ] `F554` Press Space again.
+  - **Expected:**
+    - That row's tick box is not ticked.
+    - The bar reads "None selected".
+  - **Notes:**
+
+- [ ] `7B1B` Tick the tick box before **Record** in the table's header.
+  - **Expected:** The bar above the table reads "32 selected".
+  - **Notes:**
+
+- [ ] `E16F` Select **Clear selection** in that bar.
+  - **Expected:** The bar reads "None selected".
+  - **Notes:**
+
+**Afterwards:** Open the Views menu, and select **Clear view**.

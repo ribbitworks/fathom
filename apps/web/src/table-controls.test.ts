@@ -89,6 +89,21 @@ describe("viewParts", () => {
     ]);
   });
 
+  it("names a column hidden at first only once the view shows it", () => {
+    const key = column({ key: "key", label: "Key", hiddenAtFirst: true });
+    const code = column({ key: "code", label: "Code", kind: "text" });
+    expect(viewParts(emptyView, [key, code])).toEqual([]);
+    expect(
+      viewParts({ ...emptyView, hidden: ["code"], shown: ["key"] }, [
+        key,
+        code,
+      ]),
+    ).toEqual([
+      { name: "Hidden", value: "Code" },
+      { name: "Shown", value: "Key" },
+    ]);
+  });
+
   it("names decimal places alone, and nothing for a unit a column does not take", () => {
     expect(
       viewParts(

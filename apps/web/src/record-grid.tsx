@@ -98,6 +98,13 @@ import {
 import { shortcutsFor } from "./list-panel.tsx";
 import { Icon } from "./icons.tsx";
 import { actionsFor, MoreButton, RowControls } from "./row-controls.tsx";
+import {
+  AllTick,
+  RowTick,
+  type RowTicks,
+  SelectionBar,
+  tickedOf,
+} from "./row-ticks.tsx";
 import { draftedLists, liveLists } from "./lists.ts";
 import {
   type ChangeView,
@@ -405,6 +412,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // For a table whose row stands for several records' drafts: whether the row has any that can be
   // decided now, in place of its own draft's state.
   decidable?: (record: Rec) => boolean;
+  // For a table whose every row is a draft, such as Drafts: the dot in a row's slot is its draft's
+  // only mark, with no tint, semibold or strike-through, which would mark every row alike.
+  slotMarksOnly?: true;
   // For a table that sums its rows: a total row ending each group, headed with the label, and one
   // for all the rows shown, kept in view at the foot, headed with the overall label; each column's
   // total is drawn from the rows it sums.
@@ -1320,6 +1330,8 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   above?: ((shown: readonly Rec[]) => ReactNode) | undefined;
   // Draws the rows the view shows in place of the table, such as a board, under the same bar.
   body?: ((shown: ShownRows<Rec>) => ReactNode) | undefined;
+  // Ticks for choosing rows to act on together, with the bar above the table that acts on them.
+  ticks?: RowTicks<Rec> | undefined;
 }
 
 // The rows a view shows, for a page that draws them its own way: in the view's order, each with its
@@ -1505,6 +1517,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   pageParts,
   above,
   body,
+  ticks,
 }: RecordGridProps<Rec, Change, Request>) {
   // An address may ask for drafts of a table that has none.
   const asked = withDrafts
@@ -1579,6 +1592,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   );
   const recordDraft = (draft: GridDraft | undefined) =>
     recordMark(draft, shownKeys);
+  // Whether a draft marks its row and cells too, beyond the dot in its slot.
+  const marksRows = table.slotMarksOnly !== true;
   // Each record as it is live, made from everyone, since a record's live form can depend on others,
   // such as its live manager's end date.
   const liveById = new Map(
@@ -1784,6 +1799,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     addedRows,
   );
   const shownRecords = recordsOf(shownRows);
+  const tickedShown =
+    ticks === undefined ? undefined : tickedOf(ticks, shownRecords);
   const groupRuns = runsOf(shownRows, false, ({ group }) => group);
   const subgroupRuns = runsOf(shownRows, true, ({ group, subgroup }) =>
     group === undefined || subgroup === undefined
@@ -2418,6 +2435,18 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       return;
     }
     if (!plain) return;
+    if (
+      ticks !== undefined &&
+      event.key === " " &&
+      cell.column === 0 &&
+      row.record !== undefined
+    ) {
+      event.preventDefault();
+      if (ticks.tickable(row.record)) {
+        ticks.onTick([row.record.id], !ticks.ticked.has(row.record.id));
+      }
+      return;
+    }
     if (row.record && locked(row.record)) {
       if (
         kindOf(column).inPanel === true &&
@@ -2559,6 +2588,265 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         onDrop(event, column);
       },
     };
+    const headerMenu = (
+      <FilterPopover
+        column={column}
+        view={view}
+        onView={onView}
+        opened={filtering === column.key}
+        onClose={() => {
+          // Focus goes back to the column's header, not to the menu the filter was opened from.
+          setFiltering(undefined);
+          focusSoon(headerId(column));
+        }}
+      >
+        <AppMenu
+          // The menu sets its button's id from its own, overriding one given to the button.
+          id={headerId(column)}
+          position="bottom-start"
+          withinPortal
+          hideDetached={false}
+        >
+          <AppMenu.Target>
+            <button
+              type="button"
+              className={classes.recordHeadButton}
+              aria-label={`${column.label} column${headerState(column, view)}`}
+              onKeyDown={(event) => {
+                const step = widthSteps[event.key];
+                if (event.altKey && event.shiftKey && step !== undefined) {
+                  event.preventDefault();
+                  widths.step(column.key, index, step);
+                  return;
+                }
+                if (!event.altKey) return;
+                if (event.key === "ArrowLeft") {
+                  event.preventDefault();
+                  moveColumnBy(column, -1);
+                } else if (event.key === "ArrowRight") {
+                  event.preventDefault();
+                  moveColumnBy(column, 1);
+                }
+              }}
+            >
+              <span className={classes.headerNames}>
+                <span className={classes.headerName}>
+                  <DraftedItem
+                    slot={index === 0}
+                    draft={
+                      draftedFields.find(({ id }) => id === field?.id)?.draft
+                    }
+                    heldBy={field?.heldBy}
+                    dataClass={column.dataClass}
+                  >
+                    <span className={classes.headerLabel}>{column.label}</span>
+                  </DraftedItem>
+                </span>
+                {renamedFrom(column) !== undefined && (
+                  <LiveLine>{renamedFrom(column)}</LiveLine>
+                )}
+              </span>
+              <HeaderMarks column={column} view={view} />
+            </button>
+          </AppMenu.Target>
+          <AppMenu.Dropdown>
+            <MenuTitle>{column.label}</MenuTitle>
+            {field?.heldBy !== undefined && !liveOnly && (
+              <HeldNote by={field.heldBy} />
+            )}
+            {field?.draft?.unpublished === true && !liveOnly && (
+              <UnpublishedNote />
+            )}
+            {field?.draft && !liveOnly && (
+              <>
+                <MenuDraftLines
+                  draft={field.draft}
+                  lines={fieldDraftLines(field, lists)}
+                  divider={
+                    (ownWaiting && mayDecide(approves, deciding)) ||
+                    changesColumn
+                  }
+                />
+                {/* A rejected draft is back with its makers until they send it again. */}
+                {ownWaiting && mayDecide(approves, deciding) && (
+                  <>
+                    <Menu.Item
+                      disabled={field.draft.needsOtherApprover === true}
+                      onClick={() => {
+                        actions.decide("approve", deciding);
+                      }}
+                    >
+                      Approve…
+                    </Menu.Item>
+                    {field.draft.needsOtherApprover === true && (
+                      <OtherApproverNote />
+                    )}
+                    <Menu.Item
+                      onClick={() => {
+                        actions.decide("reject", deciding);
+                      }}
+                    >
+                      Reject…
+                    </Menu.Item>
+                  </>
+                )}
+                {changesColumn && field.draft.state === "rejected" && (
+                  <Menu.Item
+                    onClick={() => {
+                      actions.resubmitColumn(field.id);
+                    }}
+                  >
+                    Resubmit
+                  </Menu.Item>
+                )}
+                {changesColumn && (
+                  <Menu.Item
+                    onClick={() => {
+                      actions.discardColumn(field.id, field.name);
+                    }}
+                  >
+                    Discard draft
+                  </Menu.Item>
+                )}
+                <Menu.Divider />
+              </>
+            )}
+            <ColumnViewItems
+              column={column}
+              view={view}
+              onView={onView}
+              onFilter={() => {
+                setFiltering(column.key);
+              }}
+              breaksDown={breaksDown(column)}
+              units={column.units}
+            />
+            <Menu.Divider />
+            {index + 1 !== frozenAsked && (
+              <Menu.Item
+                leftSection={<Icon name="freeze" />}
+                disabled={frozen.fits.at(index) !== true}
+                onClick={() => {
+                  freeze(index + 1);
+                }}
+              >
+                Freeze up to this column
+              </Menu.Item>
+            )}
+            {frozenAsked > 0 && (
+              <Menu.Item
+                onClick={() => {
+                  freeze(0);
+                }}
+              >
+                Unfreeze columns
+              </Menu.Item>
+            )}
+            <Menu.Item
+              rightSection={<kbd>{shortcuts.wider}</kbd>}
+              disabled={!widths.canWiden(column.key, index)}
+              onClick={() => {
+                widths.step(column.key, index, 1);
+              }}
+            >
+              Wider
+            </Menu.Item>
+            <Menu.Item
+              rightSection={<kbd>{shortcuts.narrower}</kbd>}
+              disabled={!widths.canNarrow(column.key, index)}
+              onClick={() => {
+                widths.step(column.key, index, -1);
+              }}
+            >
+              Narrower
+            </Menu.Item>
+            {widths.setWidthOf(column.key) !== undefined && (
+              <Menu.Item
+                onClick={() => {
+                  widths.reset(column.key);
+                }}
+              >
+                Reset width
+              </Menu.Item>
+            )}
+            {column.key !== table.nameColumn && (
+              <Menu.Item
+                onClick={() => {
+                  onView(withHidden(view, allColumns, [column.key], true));
+                  focusBeside(index);
+                }}
+              >
+                Hide column
+              </Menu.Item>
+            )}
+            <Menu.Divider />
+            {changesColumn && field && field.draft?.action !== "deleted" && (
+              <Menu.Item
+                onClick={() => {
+                  actions.editColumn(field);
+                }}
+              >
+                Edit column
+              </Menu.Item>
+            )}
+            {changesColumn &&
+              field &&
+              field.draft?.action !== "deleted" &&
+              actions.removeColumn && (
+                <Menu.Item
+                  color="red"
+                  onClick={() => {
+                    actions.removeColumn?.(field);
+                    focusBeside(index);
+                  }}
+                >
+                  Remove column
+                </Menu.Item>
+              )}
+            <Menu.Item
+              rightSection={<kbd>{shortcuts.left}</kbd>}
+              onClick={() => {
+                moveColumnBy(column, -1);
+              }}
+            >
+              Move left
+            </Menu.Item>
+            <Menu.Item
+              rightSection={<kbd>{shortcuts.right}</kbd>}
+              onClick={() => {
+                moveColumnBy(column, 1);
+              }}
+            >
+              Move right
+            </Menu.Item>
+            {field &&
+              actions.moveColumnClass &&
+              (changesColumn || field.draft?.action !== "created") &&
+              field.draft?.action !== "deleted" && (
+                <>
+                  <Menu.Divider />
+                  {ownClass === null ? (
+                    <>
+                      <Menu.Item disabled>Change class…</Menu.Item>
+                      <MenuNote>This column takes its list's class</MenuNote>
+                    </>
+                  ) : (
+                    <Menu.Item
+                      // Until someone else publishes or discards their changes, as the menu says.
+                      disabled={field.heldBy !== undefined}
+                      onClick={() => {
+                        actions.moveColumnClass?.(field, ownClass);
+                      }}
+                    >
+                      Change class…
+                    </Menu.Item>
+                  )}
+                </>
+              )}
+          </AppMenu.Dropdown>
+        </AppMenu>
+      </FilterPopover>
+    );
     const frozenAt = frozenCell(index);
     return (
       <Table.Th
@@ -2570,272 +2858,24 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         data-centred={column.headingCentred === true ? "" : undefined}
         {...dragProps}
       >
-        <FilterPopover
-          column={column}
-          view={view}
-          onView={onView}
-          opened={filtering === column.key}
-          onClose={() => {
-            // Focus goes back to the column's header, not to the menu the filter was opened from.
-            setFiltering(undefined);
-            focusSoon(headerId(column));
-          }}
-        >
-          <AppMenu
-            // The menu sets its button's id from its own, overriding one given to the button.
-            id={headerId(column)}
-            position="bottom-start"
-            withinPortal
-            hideDetached={false}
-          >
-            <AppMenu.Target>
-              <button
-                type="button"
-                className={classes.recordHeadButton}
-                aria-label={`${column.label} column${headerState(column, view)}`}
-                onKeyDown={(event) => {
-                  const step = widthSteps[event.key];
-                  if (event.altKey && event.shiftKey && step !== undefined) {
-                    event.preventDefault();
-                    widths.step(column.key, index, step);
-                    return;
-                  }
-                  if (!event.altKey) return;
-                  if (event.key === "ArrowLeft") {
-                    event.preventDefault();
-                    moveColumnBy(column, -1);
-                  } else if (event.key === "ArrowRight") {
-                    event.preventDefault();
-                    moveColumnBy(column, 1);
-                  }
-                }}
-              >
-                <span className={classes.headerNames}>
-                  <span className={classes.headerName}>
-                    <DraftedItem
-                      slot={index === 0}
-                      draft={
-                        draftedFields.find(({ id }) => id === field?.id)?.draft
-                      }
-                      heldBy={field?.heldBy}
-                      dataClass={column.dataClass}
-                    >
-                      <span className={classes.headerLabel}>
-                        {column.label}
-                      </span>
-                    </DraftedItem>
-                  </span>
-                  {renamedFrom(column) !== undefined && (
-                    <LiveLine>{renamedFrom(column)}</LiveLine>
-                  )}
-                </span>
-                <HeaderMarks column={column} view={view} />
-              </button>
-            </AppMenu.Target>
-            <AppMenu.Dropdown>
-              <MenuTitle>{column.label}</MenuTitle>
-              {field?.heldBy !== undefined && !liveOnly && (
-                <HeldNote by={field.heldBy} />
-              )}
-              {field?.draft?.unpublished === true && !liveOnly && (
-                <UnpublishedNote />
-              )}
-              {field?.draft && !liveOnly && (
-                <>
-                  <MenuDraftLines
-                    draft={field.draft}
-                    lines={fieldDraftLines(field, lists)}
-                    divider={
-                      (ownWaiting && mayDecide(approves, deciding)) ||
-                      changesColumn
-                    }
-                  />
-                  {/* A rejected draft is back with its makers until they send it again. */}
-                  {ownWaiting && mayDecide(approves, deciding) && (
-                    <>
-                      <Menu.Item
-                        disabled={field.draft.needsOtherApprover === true}
-                        onClick={() => {
-                          actions.decide("approve", deciding);
-                        }}
-                      >
-                        Approve…
-                      </Menu.Item>
-                      {field.draft.needsOtherApprover === true && (
-                        <OtherApproverNote />
-                      )}
-                      <Menu.Item
-                        onClick={() => {
-                          actions.decide("reject", deciding);
-                        }}
-                      >
-                        Reject…
-                      </Menu.Item>
-                    </>
-                  )}
-                  {changesColumn && field.draft.state === "rejected" && (
-                    <Menu.Item
-                      onClick={() => {
-                        actions.resubmitColumn(field.id);
-                      }}
-                    >
-                      Resubmit
-                    </Menu.Item>
-                  )}
-                  {changesColumn && (
-                    <Menu.Item
-                      onClick={() => {
-                        actions.discardColumn(field.id, field.name);
-                      }}
-                    >
-                      Discard draft
-                    </Menu.Item>
-                  )}
-                  <Menu.Divider />
-                </>
-              )}
-              <ColumnViewItems
-                column={column}
-                view={view}
-                onView={onView}
-                onFilter={() => {
-                  setFiltering(column.key);
-                }}
-                breaksDown={breaksDown(column)}
-                units={column.units}
-              />
-              <Menu.Divider />
-              {index + 1 !== frozenAsked && (
-                <Menu.Item
-                  leftSection={<Icon name="freeze" />}
-                  disabled={frozen.fits.at(index) !== true}
-                  onClick={() => {
-                    freeze(index + 1);
-                  }}
-                >
-                  Freeze up to this column
-                </Menu.Item>
-              )}
-              {frozenAsked > 0 && (
-                <Menu.Item
-                  onClick={() => {
-                    freeze(0);
-                  }}
-                >
-                  Unfreeze columns
-                </Menu.Item>
-              )}
-              <Menu.Item
-                rightSection={<kbd>{shortcuts.wider}</kbd>}
-                disabled={!widths.canWiden(column.key, index)}
-                onClick={() => {
-                  widths.step(column.key, index, 1);
-                }}
-              >
-                Wider
-              </Menu.Item>
-              <Menu.Item
-                rightSection={<kbd>{shortcuts.narrower}</kbd>}
-                disabled={!widths.canNarrow(column.key, index)}
-                onClick={() => {
-                  widths.step(column.key, index, -1);
-                }}
-              >
-                Narrower
-              </Menu.Item>
-              {widths.setWidthOf(column.key) !== undefined && (
-                <Menu.Item
-                  onClick={() => {
-                    widths.reset(column.key);
-                  }}
-                >
-                  Reset width
-                </Menu.Item>
-              )}
-              {column.key !== table.nameColumn && (
-                <Menu.Item
-                  onClick={() => {
-                    onView(
-                      withHidden(
-                        view,
-                        allColumns.map(({ key }) => key),
-                        [column.key],
-                        true,
-                      ),
-                    );
-                    focusBeside(index);
-                  }}
-                >
-                  Hide column
-                </Menu.Item>
-              )}
-              <Menu.Divider />
-              {changesColumn && field && field.draft?.action !== "deleted" && (
-                <Menu.Item
-                  onClick={() => {
-                    actions.editColumn(field);
-                  }}
-                >
-                  Edit column
-                </Menu.Item>
-              )}
-              {changesColumn &&
-                field &&
-                field.draft?.action !== "deleted" &&
-                actions.removeColumn && (
-                  <Menu.Item
-                    color="red"
-                    onClick={() => {
-                      actions.removeColumn?.(field);
-                      focusBeside(index);
-                    }}
-                  >
-                    Remove column
-                  </Menu.Item>
-                )}
-              <Menu.Item
-                rightSection={<kbd>{shortcuts.left}</kbd>}
-                onClick={() => {
-                  moveColumnBy(column, -1);
-                }}
-              >
-                Move left
-              </Menu.Item>
-              <Menu.Item
-                rightSection={<kbd>{shortcuts.right}</kbd>}
-                onClick={() => {
-                  moveColumnBy(column, 1);
-                }}
-              >
-                Move right
-              </Menu.Item>
-              {field &&
-                actions.moveColumnClass &&
-                (changesColumn || field.draft?.action !== "created") &&
-                field.draft?.action !== "deleted" && (
-                  <>
-                    <Menu.Divider />
-                    {ownClass === null ? (
-                      <>
-                        <Menu.Item disabled>Change class…</Menu.Item>
-                        <MenuNote>This column takes its list's class</MenuNote>
-                      </>
-                    ) : (
-                      <Menu.Item
-                        // Until someone else publishes or discards their changes, as the menu says.
-                        disabled={field.heldBy !== undefined}
-                        onClick={() => {
-                          actions.moveColumnClass?.(field, ownClass);
-                        }}
-                      >
-                        Change class…
-                      </Menu.Item>
-                    )}
-                  </>
-                )}
-            </AppMenu.Dropdown>
-          </AppMenu>
-        </FilterPopover>
+        {index === 0 && ticks !== undefined && tickedShown !== undefined ? (
+          <span className={classes.tickedHead}>
+            <AllTick
+              label={ticks.allLabel}
+              ticked={tickedShown.ticked.length}
+              tickable={tickedShown.tickable.length}
+              onChange={(on) => {
+                ticks.onTick(
+                  tickedShown.tickable.map(({ id }) => id),
+                  on,
+                );
+              }}
+            />
+            {headerMenu}
+          </span>
+        ) : (
+          headerMenu
+        )}
         <ResizeEdge
           className={classes.columnEdge}
           {...widths.edge(column.key, index)}
@@ -3337,13 +3377,27 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       }
     />
   );
+  const selectionBar = ticks !== undefined && tickedShown !== undefined && (
+    <SelectionBar
+      count={tickedShown.ticked.length}
+      onClear={() => {
+        ticks.onTick(
+          tickedShown.ticked.map(({ id }) => id),
+          false,
+        );
+      }}
+    >
+      {ticks.actions(tickedShown.ticked)}
+    </SelectionBar>
+  );
   const bar =
-    above === undefined ? (
+    above === undefined && selectionBar === false ? (
       viewBar
     ) : (
       <div>
         {viewBar}
-        {above(shownRecords)}
+        {above?.(shownRecords)}
+        {selectionBar}
       </div>
     );
   if (body !== undefined) {
@@ -3397,7 +3451,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             <Table
               role="grid"
               aria-label={table.label}
-              className={classes.recordTable}
+              className={[
+                classes.recordTable,
+                ticks === undefined ? "" : classes.tickingTable,
+              ].join(" ")}
               layout="fixed"
               tabularNums
             >
@@ -3472,20 +3529,23 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {shownRecords.length === 0 && narrows(view) && (
-                  <Table.Tr>
-                    <Table.Td
-                      colSpan={
-                        columns.length + besides.length + Number(withActions)
-                      }
-                      className={classes.recordNone}
-                    >
-                      <Text component="span" fz="sm" c="dimmed">
-                        No matching {table.noun}
-                      </Text>
-                    </Table.Td>
-                  </Table.Tr>
-                )}
+                {shownRecords.length === 0 &&
+                  (narrows(view) || rows.length === 0) && (
+                    <Table.Tr>
+                      <Table.Td
+                        colSpan={
+                          columns.length + besides.length + Number(withActions)
+                        }
+                        className={classes.recordNone}
+                      >
+                        <Text component="span" fz="sm" c="dimmed">
+                          {narrows(view)
+                            ? `No matching ${table.noun}`
+                            : `No ${table.noun}`}
+                        </Text>
+                      </Table.Td>
+                    </Table.Tr>
+                  )}
                 {rows.map((row, rowIndex) => {
                   const key = rowKey(row);
                   const rowProblem =
@@ -3514,7 +3574,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   const filling = row.newRow && !emptyNewRow(row.newRow);
                   if (row.newRow) {
                     rowClass = filling ? classes.recordFillingRow : undefined;
-                  } else if (draft) {
+                  } else if (draft && marksRows) {
                     rowClass = [
                       besideLive(view.show) ? classes.draftRow : "",
                       besideLive(view.show) && draft.state === "rejected"
@@ -3617,7 +3677,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                             className={[
                               classes.recordCell,
                               columnTint(column),
-                              changes && besideLive(view.show)
+                              changes && besideLive(view.show) && marksRows
                                 ? draft?.state === "rejected"
                                   ? classes.rejectedCell
                                   : classes.draftCell
@@ -3669,6 +3729,18 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                               }
                             }}
                           >
+                            {columnIndex === 0 &&
+                              ticks !== undefined &&
+                              record !== undefined && (
+                                <RowTick
+                                  label={ticks.label(record)}
+                                  checked={ticks.ticked.has(record.id)}
+                                  disabled={!ticks.tickable(record)}
+                                  onChange={(on) => {
+                                    ticks.onTick([record.id], on);
+                                  }}
+                                />
+                              )}
                             <NamedWithOthers
                               others={
                                 column.key === table.nameColumn && !editingHere
@@ -3781,7 +3853,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                             {row.record &&
                               !editingHere &&
                               column.mark?.(row.record)}
-                            {changes && !editingHere && (
+                            {changes && !editingHere && marksRows && (
                               <VisuallyHidden>
                                 {live === undefined
                                   ? ", draft"
@@ -3828,6 +3900,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                     // Assistive technology hears each changed cell's live value instead.
                     record !== undefined &&
                       draft?.action === "changed" &&
+                      liveRecord !== undefined &&
                       besideLive(view.show) && (
                         <Table.Tr
                           key={`${key}-live`}
@@ -3873,14 +3946,14 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                       spoken={liveWarning(column)?.spoken}
                                       empty={
                                         standIn === undefined &&
-                                        isEmpty(column.value(liveRecord as Rec))
+                                        isEmpty(column.value(liveRecord))
                                       }
                                     >
                                       {standIn === undefined ? (
                                         // Drawn only under a record whose draft changes it, which the
                                         // table gives a live record for.
                                         (liveColumn(column).content?.(
-                                          liveRecord as Rec,
+                                          liveRecord,
                                         ) ??
                                         liveContent(
                                           liveColumn(column),

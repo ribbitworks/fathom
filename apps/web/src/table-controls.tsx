@@ -97,6 +97,7 @@ type AnyColumn = Pick<
   | "unit"
   | "places"
   | "dataClass"
+  | "hiddenAtFirst"
 >;
 
 // Each kind's sorts, ascending then descending.
@@ -193,7 +194,13 @@ export function viewParts(
   const breakdown = (view.breakdown ?? []).flatMap(labelOf);
   const widths = widened(view, columns);
   const shownIn = unitsShown(view, columns);
-  const hidden = hiddenColumnsOf(view, columns).map(({ label }) => label);
+  // A column hidden at first is named only once the view shows it.
+  const hidden = hiddenColumnsOf(view, columns)
+    .filter(({ hiddenAtFirst }) => hiddenAtFirst !== true)
+    .map(({ label }) => label);
+  const shownAtFirstHidden = shownColumnsOf(view, columns)
+    .filter(({ hiddenAtFirst }) => hiddenAtFirst === true)
+    .map(({ label }) => label);
   // A grouping is named only where the view chooses one other than the table's own, or one under it.
   const thenBy = activeThenBy(view, groupings, ungrouped);
   const first =
@@ -238,6 +245,9 @@ export function viewParts(
     ...(hidden.length === 0
       ? []
       : [{ name: "Hidden", value: hidden.join(", ") }]),
+    ...(shownAtFirstHidden.length === 0
+      ? []
+      : [{ name: "Shown", value: shownAtFirstHidden.join(", ") }]),
     ...(widths.length === 0
       ? []
       : [{ name: "Widths", value: widths.join(", ") }]),
@@ -665,7 +675,6 @@ export function ViewsMenu({
   const widths = widened(view, columns);
   const shownIn = unitsShown(view, columns);
   const hidden = hiddenColumnsOf(view, columns);
-  const ordered = columns.map(({ key }) => key);
   // What the view sets beyond the rows it shows, each part set apart, removing what it names.
   const sections = [
     {
@@ -734,7 +743,7 @@ export function ViewsMenu({
                 onView(
                   withHidden(
                     view,
-                    ordered,
+                    columns,
                     hidden.map(({ key }) => key),
                     false,
                   ),
@@ -748,7 +757,7 @@ export function ViewsMenu({
             <Menu.Item
               key={column.key}
               onClick={() => {
-                onView(withHidden(view, ordered, [column.key], false));
+                onView(withHidden(view, columns, [column.key], false));
               }}
             >
               {column.label}
@@ -790,7 +799,8 @@ export function ViewsMenu({
   const actions = !empty || current?.canChange === true;
   const hasChoices = choices.length > 0;
   const listed = views.length + unusable.length > 0;
-  if (!listed && empty && !hasChoices) return null;
+  // A column hidden at first is shown again from here, even before the view sets anything.
+  if (!listed && empty && !hasChoices && hidden.length === 0) return null;
   return (
     <AppMenu position="bottom-start" hideDetached={false}>
       <AppMenu.Target>

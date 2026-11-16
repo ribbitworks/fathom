@@ -8,6 +8,7 @@
 // or restored stays where it is live until approved.
 
 import {
+  capitalized,
   type CyclePattern,
   hasEnded,
   lastStartOf,
@@ -36,6 +37,7 @@ import {
   liveStreams,
   markedDraft,
   releaseDate,
+  streamNames,
 } from "./releases.ts";
 import {
   DraftedItem,
@@ -429,9 +431,9 @@ export function streamTable({
   });
   return {
     ...readOnlyTableParts,
-    label: "Release streams",
-    one: "release stream",
-    noun: "release streams",
+    label: capitalized(streamNames.noun),
+    one: streamNames.one,
+    noun: streamNames.noun,
     groupings: groupings(day),
     nameOf: (row) => row.name,
     nameColumn: "name",
