@@ -23,6 +23,7 @@ import {
   serverAnswers,
   signedIn,
   undoWithKeys,
+  recordDraft,
 } from "./test-support.tsx";
 
 const viewer = () =>
@@ -1365,6 +1366,11 @@ describe("retiring and restoring choices", () => {
     expect(
       await screen.findByText("Drafted restoring Old Mill."),
     ).toBeDefined();
+    expect(
+      within(within(panel()).getByRole("grid", { name: "Retired" })).getByText(
+        "Old Mill",
+      ),
+    ).toBeDefined();
     await undoLast();
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
@@ -1372,6 +1378,41 @@ describe("retiring and restoring choices", () => {
     expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c4/retired")).toEqual([
       { retired: false },
     ]);
+  });
+
+  it("keeps a choice drafted to be restored among the retired beside live, with no moves", async () => {
+    const restoring = {
+      ...locations,
+      choices: [
+        ...locations.choices.filter((one) => one.id !== "c4"),
+        choice("c4", "Old Mill", {
+          retired: false,
+          draft: recordDraft({ changed: ["retired"], live: { retired: true } }),
+        }),
+      ],
+    };
+    const { fetch } = await openPanel({
+      "GET /api/lists": () =>
+        Response.json({ lists: [restoring, skills, empty, regions] }),
+    });
+    await userEvent.click(
+      within(panel()).getByRole("button", { name: "Show retired (1)" }),
+    );
+    expect(
+      within(
+        within(panel()).getByRole("grid", { name: "Retired" }),
+      ).getAllByText("Old Mill").length,
+    ).toBeGreaterThan(0);
+    focusRow("c4");
+    await userEvent.keyboard("{Alt>}{ArrowDown}{/Alt}");
+    await userEvent.keyboard("{ContextMenu}");
+    expect(
+      await screen.findByRole("menuitem", { name: /^Edit/ }),
+    ).toBeDefined();
+    expect(screen.queryByRole("menuitem", { name: /^Move/ })).toBeNull();
+    expect(fetch.mock.calls.some(([url]) => url.endsWith("/position"))).toBe(
+      false,
+    );
   });
 
   it("says when a choice cannot be retired", async () => {

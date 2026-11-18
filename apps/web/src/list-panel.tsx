@@ -1,18 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The side panel for one list: its name, description, and choices in order. Opening it puts focus
-// in it. Users who may edit lists work from the keyboard. An empty row at the end takes new
-// choices: Tab moves to the description and Enter adds the choice and starts the next, and pasting
-// several lines adds one choice for each. Arrow keys select a choice, Enter edits it in place,
-// Alt+arrows move it, R retires or restores it, and Delete removes it, each also in the choice's
-// menu. Choices can also be dragged by their grip. Esc closes an open menu, then the panel. Viewers
-// see the same choices, read only. Drafts are marked in place: the list's and its order's under its
-// name, each choice's on its row, with what can be done with them in the list's menu beside its
-// name and in each choice's menu. A list or choice a draft removes is struck through and read only.
-// A built-in list is marked so. In a list with meanings, each choice shows its meaning, chosen
-// when it is added or edited, and the last choice offered for a meaning cannot be retired, removed,
-// or given another meaning. In feature sizes, each choice shows its weight, typed when it is added
-// or edited; pasted choices take the weight typed in the empty row.
+// The side panel for one list: its name, description and choices in order, changed from the
+// keyboard, by dragging and from each choice's menu.
 
 import { actionsFor, MoreButton, opensMenu } from "./row-controls.tsx";
 import { RecordKey } from "./record-key.tsx";
@@ -686,13 +675,13 @@ export function ListPanel({
 
   const retireOrRestore = (choice: Choice) => {
     if (removed(choice) || kept(choice)) return;
-    select(neighbourIn(choice.retired ? retired : offered, choice));
+    select(neighbourIn(isRetired(choice) ? retired : offered, choice));
     actions.setRetired(choice, !choice.retired);
   };
 
   const remove = (choice: Choice) => {
     if (removed(choice) || kept(choice)) return;
-    select(neighbourIn(choice.retired ? retired : offered, choice));
+    select(neighbourIn(isRetired(choice) ? retired : offered, choice));
     actions.remove(choice);
   };
 
@@ -705,7 +694,7 @@ export function ListPanel({
     if (!canMove || removed(choice) || choice.heldBy !== undefined) return;
     const index = offered.indexOf(choice);
     const to = index + step;
-    if (choice.retired || to < 0 || to >= offered.length) return;
+    if (isRetired(choice) || to < 0 || to >= offered.length) return;
     moveTo(choice, followingAfterMove(offered, index, to));
   };
 
@@ -884,7 +873,7 @@ export function ListPanel({
               >
                 Edit
               </Menu.Item>
-              {!choice.retired && canMove && (
+              {!isRetired(choice) && canMove && (
                 <>
                   <Menu.Divider />
                   <Menu.Item
@@ -1018,6 +1007,7 @@ export function ListPanel({
       choice.heldBy === undefined &&
       !narrow &&
       !choice.retired &&
+      !isRetired(choice) &&
       !isEditing &&
       !removed(choice);
     const content = (handle?: object | null) => (
@@ -1170,7 +1160,9 @@ export function ListPanel({
           }
         : {}),
     };
-    if (choice.retired) {
+    // Only rows inside the DragDropContext may be Draggables; beside live, a choice drafted to be
+    // restored is still shown among the retired.
+    if (isRetired(choice)) {
       return (
         <div key={choice.id} {...rowProps}>
           {content()}
