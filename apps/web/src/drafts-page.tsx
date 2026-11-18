@@ -3,14 +3,18 @@
 // The Drafts page: every draft the user may see, of people, planned hires, People's columns, lists,
 // choices, the order of lists' choices and of People's columns, the plan's records, such as release
 // streams, and the planning settings, a row for each on the shared table, newest first, its view
-// saved as any table's is, in two tabs: those for approval, and the reader's own unpublished
-// changes. Approvers tick drafts, one or several at once, and approve or reject them, or decide one
-// from its row's menu or its details beside the table, which link to its record on its own page.
-// Approving or rejecting names any other drafts it includes.
+// saved as any table's is, in three tabs: To decide, the drafts the reader may decide now, for a
+// role that approves drafts; Not published, the reader's own changes; and All drafts, every
+// published draft, read only. On To decide, Approvers tick drafts, one or several at once, and
+// approve or reject them, or decide one from its row's menu or its details beside the table, which
+// link to its record on its own page; approving or rejecting names any other drafts it includes. On
+// Not published, the reader ticks their own changes and publishes or discards them; ticking one
+// ticks the changes it must go with.
 
-import { type Asking } from "@fathom/shared";
+import { allOf, type Asking, draftKeysOf } from "@fathom/shared";
 import { Button, Loader, Stack, Tabs, Text } from "@mantine/core";
-import { type ReactNode, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { DecisionModal, drafts } from "./decision-dialog.tsx";
 import { type DraftsSeen, useDraftEntries } from "./draft-entries.ts";
 import type { DraftPlace } from "./draft-places.ts";
@@ -19,6 +23,7 @@ import {
   type Decision,
   decisionFor,
   type DraftSelection,
+  linkedGroups,
   mayDecide,
 } from "./drafts.ts";
 import {
@@ -27,18 +32,17 @@ import {
   type DraftsTab,
   draftsTabNames,
   draftsTabOf,
-  draftsTabs,
   draftsTabSchema,
   isOnTab,
+  tabsFor,
   viewOnTab,
   type DraftRow,
   draftRows,
   draftsTable,
-  mineToDecide,
-  mineToDecideChoice,
   selectionOf,
 } from "./drafts-table.tsx";
 import { LoadProblem } from "./load-problem.tsx";
+import { count } from "./numbers.ts";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import {
@@ -51,12 +55,23 @@ import { useSavedViews } from "./saved-views.tsx";
 import { useNarrow } from "./side-panel.tsx";
 import { TableTips } from "./table-tips.tsx";
 import type { View } from "./table-view.ts";
+import {
+  changeCount,
+  DiscardChangesModal,
+  unpublishedQuery,
+  useUnpublishedActions,
+} from "./unpublished.tsx";
 
 const draftsKey = ["drafts"] as const;
+
 const tabsId = "drafts-tabs";
+
+// The most linked changes a tick's tip names; the rest are counted.
+const namedInTip = 3;
 
 export function DraftsPage({
   approves,
+  makesDrafts = true,
   seesPeople = true,
   seesLists = true,
   seesPlan = true,
@@ -97,8 +112,29 @@ export function DraftsPage({
   const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
   const [decision, setDecision] = useState<Decision>();
   const [opened, setOpened] = useState(false);
+  // The changes chosen to discard, while asking first.
+  const [discarding, setDiscarding] = useState<DraftRow[]>();
+  // The reader's own changes as the server links them, grouped once for every row on the page.
+  const unpublished = useQuery({ ...unpublishedQuery, enabled: makesDrafts });
+  const groups = useMemo(
+    () =>
+      linkedGroups(
+        new Map(
+          (unpublished.data?.changes ?? []).map(({ key, linked }) => [
+            key,
+            linked,
+          ]),
+        ),
+      ),
+    [unpublished.data],
+  );
+  const sent = useUnpublishedActions(() => {
+    setDiscarding(undefined);
+    setTicked(new Set());
+  });
   const narrow = useNarrow();
-  const tab = draftsTabOf(view);
+  const tabs = tabsFor(approves, makesDrafts);
+  const tab = draftsTabOf(view, tabs);
   const views = useSavedViews({
     table: "drafts",
     within: draftsKey,
@@ -109,8 +145,10 @@ export function DraftsPage({
   });
 
   let content: ReactNode;
+  // What can be done with the rows ticked, among the page's actions in its heading.
+  let actions: ReactNode;
   // How many drafts each tab holds, once they have loaded.
-  let counts: Record<DraftsTab, number> | undefined;
+  let counts: ReadonlyMap<DraftsTab, number> | undefined;
   // Whether the draft the address opens is no longer listed, such as once decided.
   let openGone = false;
   if (entries.state === "loading") {
@@ -120,16 +158,17 @@ export function DraftsPage({
   } else {
     const { all, drafted } = entries;
     const every = draftRows(all, entries);
-    const rows = every.filter((row) => isOnTab(tab, row));
-    counts = {
-      approval: every.filter((row) => isOnTab("approval", row)).length,
-      mine: every.filter((row) => isOnTab("mine", row)).length,
-    };
     // Whether the reader may decide a row's draft now.
-    const decidable = (row: DraftRow) => entries.decidesNow(row.entry);
-    // One's own changes are never others' to decide, so My changes ignores it.
-    const mine = tab === "approval" && view.choices?.decide === mineToDecide;
-    const shown = mine ? rows.filter(decidable) : rows;
+    const decidesNow = (row: DraftRow) => entries.decidesNow(row.entry);
+    const rows = every.filter((row) => isOnTab(tab, row, decidesNow));
+    counts = new Map(
+      tabs.map((one) => [
+        one,
+        every.filter((row) => isOnTab(one, row, decidesNow)).length,
+      ]),
+    );
+    // Drafts are decided on To decide; All drafts only lists them.
+    const decidable = (row: DraftRow) => tab === "decide" && decidesNow(row);
     const table = draftsTable({
       rows,
       decidable,
@@ -150,12 +189,27 @@ export function DraftsPage({
       );
       setOpened(true);
     };
-    // Offered to those who decide drafts, and to anyone a link gave it to, so it can be turned off;
-    // one's own changes are never others' to decide.
-    const choices =
-      (approves.length === 0 || tab === "mine") && !mine
-        ? []
-        : [mineToDecideChoice(rows.filter(decidable).length)];
+    // The reader's own changes that must go with each, as the server links them, which are
+    // published or discarded only together, in the table's order, worked out once for every row. A
+    // change the page doesn't list, such as one of a kind this role can't read, isn't ticked.
+    const rowsOfGroup = new Map<readonly string[], DraftRow[]>();
+    for (const row of rows) {
+      for (const key of draftKeysOf(row.entry.selects)) {
+        const group = groups.get(key);
+        if (group !== undefined) {
+          rowsOfGroup.set(group, [...(rowsOfGroup.get(group) ?? []), row]);
+        }
+      }
+    }
+    const groupOf = (row: DraftRow): DraftRow[] => {
+      const members = draftKeysOf(row.entry.selects).flatMap(
+        (key) => rowsOfGroup.get(groups.get(key) ?? []) ?? [],
+      );
+      return members.length === 0 ? [row] : members;
+    };
+    const together = (given: readonly DraftRow[]): DraftRow[] => [
+      ...new Set(given.flatMap(groupOf)),
+    ];
     const openRow = rows.find(({ id }) => id === open);
     openGone = open !== undefined && openRow === undefined;
     const closePanel = (id: string) => {
@@ -176,6 +230,19 @@ export function DraftsPage({
                   row={openRow}
                   columns={draftColumns(rows, tab)}
                   related={entries.related(openRow.entry)}
+                  linked={
+                    tab === "unpublished"
+                      ? together([openRow])
+                          .filter(({ id }) => id !== openRow.id)
+                          .map(({ id, record }) => ({
+                            id,
+                            name: record,
+                            onShow: () => {
+                              onOpen(id);
+                            },
+                          }))
+                      : []
+                  }
                   waits={entries.waits(openRow.entry)}
                   approves={mayDecide(approves, openRow.entry.selects)}
                   actions={
@@ -199,10 +266,68 @@ export function DraftsPage({
               ),
             },
           ];
+    const chosen = rows.filter(
+      (row) => ticked.has(row.id) && (tab === "unpublished" || decidable(row)),
+    );
+    const othersApprove = chosen.filter(
+      ({ entry }) => entry.needsOtherApprover,
+    ).length;
+    if (chosen.length > 0 && tab === "unpublished") {
+      actions = (
+        <>
+          <Button
+            variant="default"
+            disabled={sent.busy}
+            onClick={() => {
+              setDiscarding(chosen);
+            }}
+          >
+            Discard {changeCount(chosen.length)}…
+          </Button>
+          <Button
+            disabled={sent.discard.isPending}
+            loading={sent.publish.isPending}
+            onClick={() => {
+              sent.publish.mutate(selectionOf(chosen));
+            }}
+          >
+            Publish {changeCount(chosen.length)}
+          </Button>
+        </>
+      );
+    } else if (chosen.length > 0 && tab === "decide") {
+      actions = (
+        <>
+          {othersApprove > 0 && (
+            <Text fz="sm" c="dimmed" role="status">
+              {othersApprove === 1
+                ? "1 chosen draft needs another approver."
+                : `${String(othersApprove)} chosen drafts need another approver.`}
+            </Text>
+          )}
+          <Button
+            variant="default"
+            onClick={() => {
+              decide("reject", selectionOf(chosen));
+            }}
+          >
+            Reject…
+          </Button>
+          <Button
+            disabled={othersApprove > 0}
+            onClick={() => {
+              decide("approve", selectionOf(chosen));
+            }}
+          >
+            Approve {drafts(chosen.length)}…
+          </Button>
+        </>
+      );
+    }
     content = (
       <TableTips>
         <RecordGrid
-          records={shown}
+          records={rows}
           table={table}
           fields={[]}
           order={draftColumnOrder}
@@ -218,56 +343,65 @@ export function DraftsPage({
           saved={views.saved}
           panels={panels}
           withDrafts={false}
-          viewChoices={choices}
           ticks={
-            approves.length === 0 || tab === "mine"
-              ? undefined
-              : {
+            tab === "unpublished"
+              ? {
                   ticked,
+                  // A change is ticked and unticked with every change it must go with.
                   onTick: (ids, on) => {
-                    setTicked((current) => withTicks(current, ids, on));
-                  },
-                  tickable: decidable,
-                  label: (row) => `Select the draft of ${row.record}`,
-                  allLabel: "Select all drafts this role can decide",
-                  actions: (chosen) => {
-                    const othersApprove = chosen.filter(
-                      ({ entry }) => entry.needsOtherApprover,
-                    ).length;
-                    return (
-                      <>
-                        {othersApprove > 0 && (
-                          <Text fz="sm" c="dimmed" role="status">
-                            {othersApprove === 1
-                              ? "1 chosen draft needs another approver."
-                              : `${String(othersApprove)} chosen drafts need another approver.`}
-                          </Text>
-                        )}
-                        <Button
-                          variant="default"
-                          size="compact-sm"
-                          disabled={chosen.length === 0}
-                          onClick={() => {
-                            decide("reject", selectionOf(chosen));
-                          }}
-                        >
-                          Reject…
-                        </Button>
-                        <Button
-                          size="compact-sm"
-                          disabled={chosen.length === 0 || othersApprove > 0}
-                          onClick={() => {
-                            decide("approve", selectionOf(chosen));
-                          }}
-                        >
-                          {chosen.length === 0
-                            ? "Approve…"
-                            : `Approve ${drafts(chosen.length)}…`}
-                        </Button>
-                      </>
+                    // The ids given go too, such as a change no longer listed, unticked once gone.
+                    setTicked((current) =>
+                      withTicks(
+                        current,
+                        [
+                          ...ids,
+                          ...together(
+                            rows.filter(({ id }) => ids.includes(id)),
+                          ).map(({ id }) => id),
+                        ],
+                        on,
+                      ),
                     );
                   },
+                  // A change linked to one the view hides can't be ticked without it.
+                  tickable: (row, shown) =>
+                    together([row]).every(({ id }) => shown.has(id)),
+                  label: (row) => `Select the change to ${row.record}`,
+                  allLabel: "Select all changes",
+                  tip: (row, shown) => {
+                    const others = together([row]).filter(
+                      ({ id }) => id !== row.id,
+                    );
+                    if (others.length === 0) return undefined;
+                    const names =
+                      others.length > namedInTip
+                        ? `${others
+                            .slice(0, namedInTip)
+                            .map(({ record }) => record)
+                            .join(", ")} and ${count(
+                            others.length - namedInTip,
+                          )} more`
+                        : allOf(others.map(({ record }) => record));
+                    const linked =
+                      others.length === 1
+                        ? `Linked to the change to ${names}`
+                        : `Linked to the changes to ${names}`;
+                    return others.every(({ id }) => shown.has(id))
+                      ? linked
+                      : `${linked}, not shown in the table`;
+                  },
                 }
+              : tab === "all"
+                ? undefined
+                : {
+                    ticked,
+                    onTick: (ids, on) => {
+                      setTicked((current) => withTicks(current, ids, on));
+                    },
+                    tickable: decidable,
+                    label: (row) => `Select the draft of ${row.record}`,
+                    allLabel: "Select all drafts this role can decide",
+                  }
           }
         />
       </TableTips>
@@ -282,6 +416,7 @@ export function DraftsPage({
     <Stack gap="md" className={classes.tablePage}>
       <PageHeader
         title="Drafts"
+        action={actions}
         beside={
           <Tabs
             id={tabsId}
@@ -292,11 +427,11 @@ export function DraftsPage({
             }}
             onChange={(next) => {
               setTicked(new Set());
-              onView(viewOnTab(view, draftsTabSchema.parse(next)));
+              onView(viewOnTab(view, draftsTabSchema.parse(next), tabs));
             }}
           >
             <Tabs.List aria-label="Drafts shown">
-              {draftsTabs.map((one) => (
+              {tabs.map((one) => (
                 <Tabs.Tab
                   key={one}
                   value={one}
@@ -308,10 +443,9 @@ export function DraftsPage({
                   {/* The tab is always one of the fixed tabs. */}
                   {/* eslint-disable-next-line security/detect-object-injection */}
                   {draftsTabNames[one]}{" "}
-                  {counts !== undefined && (
+                  {counts?.has(one) === true && (
                     <Text span inherit c="dimmed">
-                      {/* eslint-disable-next-line security/detect-object-injection */}
-                      {counts[one]}
+                      {counts.get(one)}
                     </Text>
                   )}
                 </Tabs.Tab>
@@ -331,6 +465,23 @@ export function DraftsPage({
         {content}
       </div>
       {views.dialogs}
+      {discarding !== undefined && (
+        <DiscardChangesModal
+          opened
+          total={changeCount(discarding.length)}
+          pending={sent.discard.isPending}
+          onCancel={() => {
+            setDiscarding(undefined);
+          }}
+          onDiscard={() => {
+            sent.discard.mutate(selectionOf(discarding));
+          }}
+        >
+          {discarding.length === 1
+            ? "The chosen change is discarded. This cannot be undone."
+            : "The chosen changes are discarded. This cannot be undone."}
+        </DiscardChangesModal>
+      )}
       <DecisionModal
         decision={decision}
         opened={opened}

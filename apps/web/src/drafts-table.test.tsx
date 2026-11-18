@@ -2,8 +2,8 @@
 
 // Tests for the Drafts table's rows and columns: each draft's record, what it does, its state,
 // type, area, maker, day and reason; the facts that keep a draft from being decided now, shown
-// only to those whose role decides it; the choices each column offers; and the drafts a set of
-// rows names.
+// only to those whose role decides it; the choices each column offers; the page's tabs and which
+// drafts each holds; and the drafts a set of rows names.
 
 import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
@@ -20,10 +20,9 @@ import {
   draftsTabOf,
   viewOnTab,
   isOnTab,
-  mineToDecide,
-  mineToDecideChoice,
   needsAnotherApprover,
   selectionOf,
+  tabsFor,
   waitsOnRejected,
 } from "./drafts-table.tsx";
 
@@ -181,62 +180,74 @@ describe("the Drafts table's columns", () => {
 });
 
 describe("the page's tabs", () => {
-  it("are kept in the view, My changes dropping Mine to decide and For approval keeping the rest", () => {
+  const approverTabs = tabsFor(["person"], true);
+
+  it("offer To decide only to a role that approves drafts, first, and Not published only to one that makes them", () => {
+    expect(approverTabs).toEqual(["decide", "unpublished", "all"]);
+    expect(tabsFor([], true)).toEqual(["unpublished", "all"]);
+    expect(tabsFor(["person"], false)).toEqual(["decide", "all"]);
+    expect(tabsFor([], false)).toEqual(["all"]);
+  });
+
+  it("are kept in the view beside the rest of it, the first tab named by none", () => {
+    // Given a view with a search and another choice of the page's
     const view = {
       ...emptyView,
       search: "fictional",
-      choices: { decide: mineToDecide },
+      choices: { other: "kept" },
     };
-    const mine = viewOnTab(view, "mine");
-    expect(mine).toMatchObject({
+
+    // When it moves to All drafts, then back to the first tab
+    const all = viewOnTab(view, "all", approverTabs);
+    const back = viewOnTab(all, "decide", approverTabs);
+
+    // Then the tab is named only while it isn't the first, and the rest is kept
+    expect(all).toMatchObject({
       search: "fictional",
-      choices: { tab: "mine" },
+      choices: { other: "kept", tab: "all" },
     });
-    expect(draftsTabOf(mine)).toBe("mine");
-    const back = viewOnTab(mine, "approval");
-    expect(back.choices).toBeUndefined();
-    expect(draftsTabOf(back)).toBe("approval");
-    expect(draftsTabOf(emptyView)).toBe("approval");
+    expect(draftsTabOf(all, approverTabs)).toBe("all");
+    expect(back.choices).toEqual({ other: "kept" });
+    expect(draftsTabOf(back, approverTabs)).toBe("decide");
+    expect(
+      viewOnTab(emptyView, "decide", approverTabs).choices,
+    ).toBeUndefined();
   });
 
-  it("put one's own unpublished changes on My changes, and the rest for approval", () => {
-    const [own, others] = draftRows(
-      [entry("p1", { unpublished: true }), entry("p2")],
+  it("open on the first tab the role sees, whatever tab the view names that it doesn't", () => {
+    const named = (tab: string) => ({ ...emptyView, choices: { tab } });
+    expect(draftsTabOf(emptyView, ["unpublished", "all"])).toBe("unpublished");
+    expect(draftsTabOf(named("decide"), ["unpublished", "all"])).toBe(
+      "unpublished",
+    );
+    expect(draftsTabOf(named("mine"), approverTabs)).toBe("decide");
+    expect(draftsTabOf(emptyView, [])).toBe("all");
+  });
+
+  it("put drafts to decide now on To decide, one's own changes on Not published, and every published draft on All drafts", () => {
+    const [own, decided, other] = draftRows(
+      [
+        entry("p1", { unpublished: true }),
+        entry("p2"),
+        entry("p3", { state: "rejected" }),
+      ],
       reading,
     );
-    expect(own && [isOnTab("mine", own), isOnTab("approval", own)]).toEqual([
-      true,
-      false,
-    ]);
-    expect(
-      others && [isOnTab("mine", others), isOnTab("approval", others)],
-    ).toEqual([false, true]);
+    const decidesNow = (row: { id: string }) => row.id === "p2";
+    const tabsOf = (row: typeof own) =>
+      row === undefined
+        ? []
+        : approverTabs.filter((tab) => isOnTab(tab, row, decidesNow));
+    expect(tabsOf(own)).toEqual(["unpublished"]);
+    expect(tabsOf(decided)).toEqual(["decide", "all"]);
+    expect(tabsOf(other)).toEqual(["all"]);
   });
 
-  it("leave Made by out of My changes", () => {
-    expect(draftColumns([], "mine").some(({ key }) => key === "madeBy")).toBe(
-      false,
-    );
-  });
-});
-
-describe("Mine to decide", () => {
-  const choice = mineToDecideChoice(3);
-
-  it("counts the drafts to decide, and is kept in the view beside the page's other choices", () => {
-    expect(choice.label).toBe("Mine to decide");
-    expect(choice.count).toBe(3);
-    const view = { ...emptyView, choices: { other: "kept" } };
-    const on = choice.turned(view, true);
-    expect(on.choices).toEqual({ other: "kept", decide: mineToDecide });
-    expect(choice.on(on)).toBe(true);
-    expect(choice.turned(on, false).choices).toEqual({ other: "kept" });
-  });
-
-  it("leaves no choices once it was the only one", () => {
-    const on = choice.turned(emptyView, true);
-    expect(choice.turned(on, false).choices).toBeUndefined();
-    expect(choice.on(emptyView)).toBe(false);
+  it("leave Made by out of Not published", () => {
+    const keys = (tab: "unpublished" | "all") =>
+      draftColumns([], tab).map(({ key }) => key);
+    expect(keys("unpublished")).not.toContain("madeBy");
+    expect(keys("all")).toContain("madeBy");
   });
 });
 

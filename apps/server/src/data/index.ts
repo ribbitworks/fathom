@@ -19,6 +19,7 @@ import type {
   CycleLengthRequest,
   CyclePatternRequest,
   DraftsAsked,
+  DraftsRequest,
   Field,
   FieldRequest,
   FeatureProjectsRequest,
@@ -404,12 +405,12 @@ export interface DraftAccess {
   ): Promise<ChangeSetId>;
 }
 
-// Each user's changes to drafts are theirs alone until they publish them, all at once, or discard
-// them, all at once; both answer how many records' changes they took.
+// Each user's changes to drafts are theirs alone until they publish them, or discard them, all at
+// once or those chosen; both answer how many records' changes they took.
 export interface UnpublishedAccess {
   read(actor: Actor): Promise<Unpublished>;
-  publish(actor: Actor): Promise<number>;
-  discard(actor: Actor): Promise<number>;
+  publish(actor: Actor, chosen?: DraftsRequest): Promise<number>;
+  discard(actor: Actor, chosen?: DraftsRequest): Promise<number>;
 }
 
 // Which draft of a list: the list's own, one of its choices', or that of its choices' order.
@@ -1143,8 +1144,10 @@ export function createDataAccess(database: Database): DataAccess {
     featureTeams: createFeatureTeamAccess(database),
     unpublished: {
       read: async (actor) => readUnpublished(database, actor),
-      publish: async (actor) => publishUnpublished(database, actor),
-      discard: async (actor) => discardUnpublished(database, actor),
+      publish: async (actor, chosen) =>
+        publishUnpublished(database, actor, chosen),
+      discard: async (actor, chosen) =>
+        discardUnpublished(database, actor, chosen),
     },
     undo: async (actor, changeSetId) =>
       undoChangeSet(database, actor, changeSetId),

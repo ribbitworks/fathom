@@ -39,7 +39,7 @@ const addedChoice = (state: ColumnsState, id: string) =>
 
 // The columns and choices only drafted to be added that a person's or planned hire's draft gives
 // them.
-function usedByRecord(state: ColumnsState, draft: Draft) {
+export function usedByRecord(state: ColumnsState, draft: Draft) {
   const columns: string[] = [];
   const choices: string[] = [];
   for (const [field, value] of Object.entries(draft.fields)) {

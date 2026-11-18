@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for working out, as the server does, which other drafts approving or rejecting a selection
-// includes, how they are named, and whether the approver's role approves drafts of their areas.
+// includes, how they are named, and whether the approver's role approves drafts of their areas, and
+// for grouping the user's own changes the server links.
 
 import {
   type Choice,
@@ -21,6 +22,7 @@ import {
   draftTotal,
   heldBack,
   joined,
+  linkedGroups,
   mayDecide,
   noDrafts,
   rejectedAmong,
@@ -679,5 +681,28 @@ describe("the drafts of a fill", () => {
         columns,
       ).selection,
     ).toMatchObject({ people: [], plannedHires: ["other"] });
+  });
+});
+
+describe("the user's own changes that go together", () => {
+  it("groups changes linked either way, the whole way along, each alone otherwise", () => {
+    // Given a choice linked to its list, a person linked to the choice, and a change linked to none
+    const groups = linkedGroups(
+      new Map([
+        ["list-item c", ["list l"]],
+        ["person p", ["list-item c"]],
+        ["list l", []],
+        ["field f", []],
+      ]),
+    );
+
+    // Then the first three are one group, whichever is asked about, and the last is alone
+    expect([...(groups.get("list l") ?? [])].sort()).toEqual([
+      "list l",
+      "list-item c",
+      "person p",
+    ]);
+    expect(groups.get("person p")).toBe(groups.get("list l"));
+    expect(groups.get("field f")).toEqual(["field f"]);
   });
 });

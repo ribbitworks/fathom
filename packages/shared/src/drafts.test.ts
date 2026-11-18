@@ -16,6 +16,7 @@ import {
   planningSettingsId,
   recordRefSchema,
   rejectionRequestSchema,
+  draftKeysOf,
 } from "./drafts.ts";
 
 const message = (result: { error?: { issues: { message: string }[] } }) =>
@@ -190,5 +191,35 @@ describe("naming a record", () => {
     expect(
       recordRefSchema.safeParse({ type: "release", id: "settings" }).success,
     ).toBe(false);
+  });
+});
+
+describe("the keys of the drafts asked for", () => {
+  it("names each by its kind and its record's identifier, of every kind asked for", () => {
+    expect(
+      draftKeysOf({
+        people: ["p"],
+        plannedHires: ["h"],
+        featureTeams: ["t"],
+        lists: ["l"],
+        choices: ["c"],
+        orders: ["o"],
+        columns: ["f"],
+        records: [{ type: "release", id: "r" }],
+      }),
+    ).toEqual([
+      "person p",
+      "planned-hire h",
+      "feature-team t",
+      "list l",
+      "list-item c",
+      "choice-order o",
+      "field f",
+      "release r",
+    ]);
+  });
+
+  it("names none of the kinds not asked for", () => {
+    expect(draftKeysOf({ columns: ["f"] })).toEqual(["field f"]);
   });
 });

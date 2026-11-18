@@ -58,7 +58,7 @@ import { ChangeHistoryPage } from "./change-history-page.tsx";
 import { draftsSeen } from "./draft-entries.ts";
 import { shownPlace } from "./draft-places.ts";
 import { DraftsPage } from "./drafts-page.tsx";
-import { mineToDecide, myChanges } from "./drafts-table.tsx";
+import { draftsTabSchema } from "./drafts-table.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
 import { firstPage, Layout } from "./layout.tsx";
@@ -354,12 +354,11 @@ const changesRoute = createRoute({
 });
 
 // Drafts, for those who see the data they change, with the table's view in the address, its tab,
-// whether it shows only the drafts the reader may decide, and the draft whose details are shown
-// beside it; Approvers approve and reject here those of the areas their role approves.
+// and the draft whose details are shown beside it; Approvers approve and reject here those of the
+// areas their role approves.
 const draftRowLength = 100;
 const draftsSearch = viewSearchSchema.extend({
-  decide: z.literal(mineToDecide).optional().catch(undefined),
-  tab: z.literal(myChanges).optional().catch(undefined),
+  tab: draftsTabSchema.optional().catch(undefined),
   open: z.string().max(draftRowLength).optional().catch(undefined),
 });
 
@@ -383,7 +382,7 @@ const draftsRoute = createRoute({
             const kept = next.tab === search.tab ? open : undefined;
             void navigate({ search: { ...next, open: kept }, replace });
           },
-          ["decide", "tab"],
+          ["tab"],
         )}
         open={open}
         onOpen={(next, replace = false) => {

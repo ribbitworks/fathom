@@ -624,3 +624,30 @@ export function draftSentAgain<
   delete draft.reason;
   return { ...record, draft };
 }
+
+// The user's own changes that go together, as the server links them, each the whole way along both
+// ways: each change's group, by key, itself included, the same list for every change in a group.
+export function linkedGroups(
+  linked: ReadonlyMap<string, readonly string[]>,
+): Map<string, string[]> {
+  const groupOf = new Map<string, Set<string>>();
+  const join = (one: string, other: string) => {
+    const first = groupOf.get(one) ?? new Set([one]);
+    const second = groupOf.get(other) ?? new Set([other]);
+    if (first === second) return;
+    const both = new Set([...first, ...second]);
+    for (const key of both) groupOf.set(key, both);
+  };
+  for (const [key, others] of linked) {
+    join(key, key);
+    for (const other of others) join(key, other);
+  }
+  const lists = new Map<Set<string>, string[]>();
+  return new Map(
+    [...groupOf].map(([key, group]) => {
+      const list = lists.get(group) ?? [...group];
+      lists.set(group, list);
+      return [key, list];
+    }),
+  );
+}

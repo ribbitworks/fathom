@@ -288,11 +288,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-11.
 
-**Preconditions:** Signed in with this account. **Drafts** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **Drafts** page open from the left-hand menu, with **All drafts** chosen beside the page's title.
 
 - [ ] `25CB` Read the table's column names, from left to right.
   - **Expected:**
-    - A tick box comes first, before **Record**.
+    - No tick box comes before **Record**.
     - Then **Change**, **State**, **What changes**, **Type**, **Area**, **Made by**, **Drafted** and **Reason**.
   - **Notes:**
 
@@ -302,7 +302,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `F9BD` Read the row of 'Sites', from left to right.
   - **Expected:**
-    - Its tick box is greyed out.
     - A yellow dot, then 'Sites', then a grey box reading "Waits on a rejected draft".
     - **Change** reads "Reordered".
     - **State** reads "Waiting".
@@ -317,7 +316,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** All drafts are shown again.
   - **Notes:**
 
-### DRAFT-13: Rejected Drafts Cannot Be Ticked on the Drafts Page
+### DRAFT-13: Rejected Drafts Are Listed Under All Drafts, Not To Decide
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-12.
 
@@ -331,8 +330,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Nine rows are shown, whose **Record** reads 'Ophélie Roussel', '우아현', 'Payments tester', 'Positions' twice ('List' and 'Order of choices' under **Type**), 'Harbourside in Sites', 'Previous site', 'P-1984 Transit Displays Phase 2' and 'Patch January in Patches', in any order.
   - **Notes:**
 
-- [ ] `0388` Try to tick the tick box of each row shown.
-  - **Expected:** None can be ticked.
+- [ ] `C969` Select **To decide** beside the page's title.
+  - **Expected:** The table reads "No matching drafts".
   - **Notes:**
 
 - [ ] `1B99` Open the Views menu, and select **Clear view**.
@@ -495,18 +494,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Run Reset the Database first. Signed in with this account. **Drafts** page open.
 
-- [ ] `EAC2` Read the bar just above the table.
-  - **Expected:**
-    - It starts "None selected".
-    - Its buttons **Reject…**, **Approve…** and **Clear selection** are greyed out.
+- [ ] `EAC2` Read the page's heading.
+  - **Expected:** No buttons at the right of the page's heading: no **Reject…** or **Approve…**.
   - **Notes:**
 
 - [ ] `DDAC` Tick the tick box before **Record** in the table's header.
   - **Expected:**
-    - The bar reads "32 selected".
-    - Its button **Approve 32 drafts…** is not greyed out.
-    - The row of 'Sites', **Type** "Order of choices", is not ticked.
-    - The row of 'Viktoria Holmberg' is not ticked, and has a grey lock before her name.
+    - At the right of the page's heading: **Reject…** and **Approve 32 drafts…**.
+    - No row's **Record** reads 'Viktoria Holmberg'.
+    - No row's **Type** reads "Order of choices" with **Record** 'Sites'.
   - **Notes:**
 
 - [ ] `30E7` Select **Approve 32 drafts…**.
@@ -517,7 +513,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The dialog closes.
     - A notice reads "Approved 32 drafts."
-    - The bar reads "None selected".
+    - No buttons at the right of the page's heading.
   - **Notes:**
 
 ### DRAFT-21: A Resubmitted Choice Is Approved With the New Order That Depends on It
@@ -624,10 +620,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `BEC2` Tick that row's tick box.
-  - **Expected:** The bar above the table reads "1 selected".
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `C3F3` Select **Approve 1 draft…** in that bar.
+- [ ] `C3F3` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:**
     - A dialog titled "Approve 4 drafts?" opens.
     - Under "Also approves the drafts these depend on:" it lists "the column Skills", "the list Skills" and "the choice Rust in Skills".
@@ -638,7 +634,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The dialog closes.
     - A notice reads "Approved 4 drafts."
     - The table reads "No matching drafts".
-    - The bar reads "None selected".
+    - No buttons at the right of the page's heading.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.
@@ -679,10 +675,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `4F66` Tick that row's tick box.
   - **Expected:**
-    - The bar above the table reads "1 selected".
+    - At the right of the page's heading: "1 chosen draft needs another approver.", then **Reject…** and **Approve 1 draft…**.
     - **Approve 1 draft…** is greyed out.
     - **Reject…** is not greyed out.
-    - In the bar, a line says "1 chosen draft needs another approver."
   - **Notes:**
 
 - [ ] `B553` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
@@ -694,7 +689,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `9D15` Tick the tick box of the row of `Scheduler Service`.
-  - **Expected:** The bar above the table reads "1 selected".
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
 - [ ] `561B` Select **Approve 1 draft…**.
@@ -732,7 +727,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-26.
 
-**Preconditions:** Run Reset the Database first. Signed in with this account. **Drafts** page open from the left-hand menu.
+**Preconditions:** Run Reset the Database first. Signed in with this account. **Drafts** page open from the left-hand menu, with **All drafts** chosen beside the page's title.
 
 - [ ] `3A91` In the Group by menu, select **Area**.
   - **Expected:**
@@ -759,17 +754,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Afterwards:** Open the Views menu, and select **Clear view**.
 
-### DRAFT-28: Mine to Decide Shows Only the Drafts This Role Can Decide Now
+### DRAFT-28: To Decide Shows Only the Drafts This Role Can Decide Now
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-27.
 
 **Preconditions:** Signed in with this account. **Drafts** page open from the left-hand menu.
 
-- [ ] `28F4` Open the Views menu.
-  - **Expected:** Its first item reads **Mine to decide (32)**, not ticked.
+- [ ] `042E` Read the tabs beside the page's title.
+  - **Expected:**
+    - **To decide** comes first, chosen, followed by a dimmed 32.
+    - **Not published** comes second, followed by a dimmed 0.
+    - **All drafts** comes third.
   - **Notes:**
 
-- [ ] `4A36` Select **Mine to decide (32)**.
+- [ ] `57A5` Read the table.
   - **Expected:**
     - Beside the buttons above the table, the count reads "32 drafts".
     - No row's **State** reads "Rejected".
@@ -784,25 +782,27 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `4528` Press Space.
   - **Expected:**
     - That row's tick box is ticked.
-    - The bar above the table reads "1 selected".
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
     - The **Record** cell still has focus.
   - **Notes:**
 
 - [ ] `F554` Press Space again.
   - **Expected:**
     - That row's tick box is not ticked.
-    - The bar reads "None selected".
+    - No buttons at the right of the page's heading.
   - **Notes:**
 
 - [ ] `7B1B` Tick the tick box before **Record** in the table's header.
-  - **Expected:** The bar above the table reads "32 selected".
+  - **Expected:**
+    - Every row is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 32 drafts…**.
   - **Notes:**
 
-- [ ] `E16F` Select **Clear selection** in that bar.
-  - **Expected:** The bar reads "None selected".
+- [ ] `8AA9` Untick the tick box before **Record** in the table's header.
+  - **Expected:**
+    - No row is ticked.
+    - No buttons at the right of the page's heading.
   - **Notes:**
-
-**Afterwards:** Open the Views menu, and select **Clear view**.
 
 ### DRAFT-29: A Draft's Details Show What Comes With It and Lead to Its Record
 
@@ -843,8 +843,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `D29F` Clear the search box.
   - **Expected:**
-    - Every draft is shown again.
+    - The other drafts to decide are shown again.
     - The details of 'Silje Holm-Schrøder' stay open.
+  - **Notes:**
+
+- [ ] `B9A7` Select **All drafts** beside the page's title.
+  - **Expected:** The details panel closes.
   - **Notes:**
 
 - [ ] `53B1` Search for `Harbourside`.
@@ -867,7 +871,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **Record** cell of 'Harbourside in Sites' has focus.
   - **Notes:**
 
-### DRAFT-30: My Changes Shows One's Own Unpublished Changes
+### DRAFT-30: Not Published Shows One's Own Unpublished Changes
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-29.
 
@@ -875,28 +879,110 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `A627` Read the tabs beside the page's title.
   - **Expected:**
-    - **For approval** comes first, chosen.
-    - **My changes** comes second, followed by a dimmed 3.
-    - No row's **State** reads "Not published".
+    - **Not published** comes first, chosen, followed by a dimmed 3.
+    - **All drafts** comes second.
+    - There is no **To decide** tab.
   - **Notes:**
 
-- [ ] `DD28` Select **My changes**.
+- [ ] `191C` Read the table.
   - **Expected:**
     - Three rows are shown, whose **Record** reads 'Laptop in Equipment', 'Equipment' and 'Mariana Metz', each after a hollow yellow dot.
     - Each row's **State** reads "Not published".
     - There is no **Made by** column.
-    - There are no tick boxes, and no bar above the table.
   - **Notes:**
 
 - [ ] `A6C5` Select the details button of the row of 'Mariana Metz'.
   - **Expected:**
     - The details panel has no **Made by** row.
+    - There is no **Linked to** section.
     - A dimmed line reads "Nobody else sees these changes until they're published."
     - Under it comes the link **Show on People**.
   - **Notes:**
 
-- [ ] `81E6` Select **For approval**.
+- [ ] `6CC0` Select the details button of the row of 'Equipment'.
+  - **Expected:**
+    - The details panel's title reads 'Equipment'.
+    - Under **Linked to**, **Change** reads 'Laptop in Equipment', as a link.
+  - **Notes:**
+
+- [ ] `2043` Select the link 'Laptop in Equipment'.
+  - **Expected:**
+    - The details panel's title reads 'Laptop in Equipment'.
+    - Under **Linked to**, **Change** reads 'Equipment', as a link.
+  - **Notes:**
+
+- [ ] `81E6` Select **All drafts**.
   - **Expected:**
     - The details panel closes.
     - No row's **Record** reads 'Mariana Metz' with **State** "Not published".
   - **Notes:**
+
+### DRAFT-31: Changes That Depend on Each Other Are Published or Discarded Together
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account DRAFT-30 ended with.
+
+**Preconditions:** DRAFT-30 done. **Drafts** page open, on **All drafts**.
+
+- [ ] `238A` Select **Not published**.
+  - **Expected:**
+    - Each row starts with a tick box.
+    - No buttons at the right of the page's heading.
+  - **Notes:**
+
+- [ ] `215A` Point at the tick box of the row of 'Equipment'.
+  - **Expected:** A tip reads "Linked to the change to Laptop in Equipment".
+  - **Notes:**
+
+- [ ] `5F16` Tick the row of 'Equipment'.
+  - **Expected:**
+    - The rows of 'Equipment' and 'Laptop in Equipment' are both ticked.
+    - At the right of the page's heading: **Discard 2 changes…** and **Publish 2 changes**.
+  - **Notes:**
+
+- [ ] `8219` Untick the row of 'Laptop in Equipment'.
+  - **Expected:**
+    - Neither row is ticked.
+    - No buttons at the right of the page's heading.
+  - **Notes:**
+
+- [ ] `0837` Tick the row of 'Mariana Metz'.
+  - **Expected:**
+    - Only her row is ticked.
+    - At the right of the page's heading: **Discard 1 change…** and **Publish 1 change**.
+  - **Notes:**
+
+- [ ] `6CE5` Select **Discard 1 change…**.
+  - **Expected:**
+    - A dialog titled "Discard 1 change?" opens.
+    - It reads "The chosen change is discarded. This cannot be undone."
+  - **Notes:**
+
+- [ ] `56BF` Select **Cancel**.
+  - **Expected:**
+    - The dialog closes.
+    - Her row is still ticked.
+  - **Notes:**
+
+- [ ] `BABE` Untick the row of 'Mariana Metz'.
+  - **Expected:** No buttons at the right of the page's heading.
+  - **Notes:**
+
+- [ ] `1F4C` Tick the row of 'Laptop in Equipment'.
+  - **Expected:**
+    - The rows of 'Equipment' and 'Laptop in Equipment' are both ticked.
+    - The buttons read **Discard 2 changes…** and **Publish 2 changes**.
+  - **Notes:**
+
+- [ ] `D3B5` Select **Publish 2 changes**.
+  - **Expected:**
+    - A notice reads "Published 2 changes."
+    - The table shows one row, 'Mariana Metz'.
+    - **Not published** is followed by a dimmed 1.
+    - The top bar reads **Publish 1 change**.
+  - **Notes:**
+
+- [ ] `80E4` Select **All drafts**.
+  - **Expected:** Rows for 'Equipment' and 'Laptop in Equipment' are listed, each after a solid yellow dot.
+  - **Notes:**
+
+**Afterwards:** Run Restore the Seed Data.

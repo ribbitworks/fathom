@@ -2,9 +2,10 @@
 
 // Tests for the Drafts page, with the server's responses simulated: a row for each draft, newest
 // first, naming its record, what it does and changes from the live values, its type, area, maker,
-// day and a rejection's reason; ticking drafts, and approving or rejecting them after asking, with
-// a reason for rejecting; who may; what the page says when there are none or they cannot be
-// loaded; and drafts of feature teams.
+// day and a rejection's reason; its tabs, To decide, Not published and All drafts; ticking drafts,
+// and approving or rejecting them after asking, with a reason for rejecting; ticking one's own
+// changes, with those linked to them, and publishing or discarding them; who may; what the page says
+// when there are none or they cannot be loaded; and drafts of feature teams.
 
 import { startingPlanningSettings } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
@@ -49,6 +50,7 @@ const approver = session([
   "hiring-plan:approve",
   "configuration:approve",
   "people:view",
+  "people:edit",
   "personal:view",
 ]);
 const reader = session(["people:view"]);
@@ -159,7 +161,8 @@ const columnCount = 9;
 
 type Answers = Parameters<typeof serverAnswers>[0];
 
-async function openDrafts(answers: Answers = {}) {
+// Opens the Drafts page on the tab the address names, or on the role's first tab.
+async function openDrafts(answers: Answers = {}, address = "/drafts") {
   const fetch = serverAnswers({
     "GET /api/session": approver,
     "GET /api/people": peopleWith([changed, added, removed, rejected, live]),
@@ -167,7 +170,7 @@ async function openDrafts(answers: Answers = {}) {
     "GET /api/lists": () => Response.json({ lists: [sites] }),
     ...answers,
   });
-  const app = renderApp("/drafts");
+  const app = renderApp(address);
   await screen.findByRole("heading", { name: "Drafts" });
   return { fetch, app };
 }
@@ -199,7 +202,7 @@ const entries = async () => {
 
 describe("the Drafts page", () => {
   it("puts each draft in words, newest first, with what it changes", async () => {
-    await openDrafts();
+    await openDrafts({}, "/drafts?tab=all");
     expect(await entries()).toEqual([
       "Avery Fictional, Draft | Changed | Waiting | Start set to Nov 2, 2026; Site from Northmere to Harbour; A removed column changed | Person | People | Fictional Editor | Oct 31, 2026 | ",
       "Blake Fictional, Draft: added | Added | Waiting | ID set to E-p2; Site set to Harbour | Person | People | Fictional Editor | Oct 30, 2026 | ",
@@ -261,13 +264,16 @@ describe("the Drafts page", () => {
       visibility: "confidential",
       choices: [],
     };
-    const { fetch } = await openDrafts({
-      "GET /api/people": peopleWith([]),
-      "GET /api/release-streams": noStreams,
-      "GET /api/lists": () =>
-        Response.json({ lists: [drafted, teams, lockers] }),
-      "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
-    });
+    const { fetch } = await openDrafts(
+      {
+        "GET /api/people": peopleWith([]),
+        "GET /api/release-streams": noStreams,
+        "GET /api/lists": () =>
+          Response.json({ lists: [drafted, teams, lockers] }),
+        "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
+      },
+      "/drafts?tab=all",
+    );
     const shown = await entries();
     expect(shown).toContain(
       "Sites, Draft | Changed | Waiting | Description set to Our offices | List | Configuration | Fictional Editor | Oct 30, 2026 | ",
@@ -278,6 +284,7 @@ describe("the Drafts page", () => {
     expect(shown).toContain(
       "Sites, Rejected: Keep the order | Reordered | Rejected | Order from Harbour, Northmere, a removed choice to Northmere Labs, Harbour | Order of choices | Configuration | Fictional Editor | Oct 30, 2026 | Keep the order",
     );
+    await userEvent.click(screen.getByRole("tab", { name: /^To decide/u }));
     expect(shown).toContain(
       "Teams, Draft: added | Added | Waiting |  | List | Configuration | Fictional Editor | Oct 30, 2026 | ",
     );
@@ -431,9 +438,10 @@ describe("the Drafts page", () => {
         name: "Select the draft of Finley Fictional",
       }),
     );
+    // A draft this role doesn't approve isn't one to decide.
     expect(
-      screen.getByRole("checkbox", { name: "Select the draft of Guild" }),
-    ).toHaveProperty("disabled", true);
+      screen.queryByRole("checkbox", { name: "Select the draft of Guild" }),
+    ).toBeNull();
     await userEvent.click(
       screen.getByRole("button", { name: "Approve 1 draft…" }),
     );
@@ -907,7 +915,8 @@ describe("the Drafts page", () => {
           featureColumns: noFeatureColumns,
         }),
     });
-    renderApp("/drafts");
+    // Approving the plan doesn't approve features, so the draft is under All drafts.
+    renderApp("/drafts?tab=all");
     expect((await entries()).join(" ")).toContain(
       "Fictional Moving, Draft | Changed | Waiting | ",
     );
@@ -1252,10 +1261,8 @@ describe("the Drafts page", () => {
     const { fetch } = await openDrafts({
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
-    const approve = await screen.findByRole("button", { name: "Approve…" });
-    expect(approve).toHaveProperty("disabled", true);
     await userEvent.click(
-      screen.getByRole("checkbox", {
+      await screen.findByRole("checkbox", {
         name: "Select the draft of Avery Fictional",
       }),
     );
@@ -1264,12 +1271,12 @@ describe("the Drafts page", () => {
         name: "Select the draft of Blake Fictional",
       }),
     );
-    // A rejected draft is back with its makers until they send it again.
+    // A rejected draft is back with its makers until they send it again, so isn't one to decide.
     expect(
-      screen.getByRole("checkbox", {
+      screen.queryByRole("checkbox", {
         name: "Select the draft of Drew Fictional",
       }),
-    ).toHaveProperty("disabled", true);
+    ).toBeNull();
     await userEvent.click(
       screen.getByRole("button", { name: "Approve 2 drafts…" }),
     );
@@ -1387,6 +1394,8 @@ describe("the Drafts page", () => {
     const all = await screen.findByRole("checkbox", {
       name: "Select all drafts this role can decide",
     });
+    // Nothing to do while nothing is ticked.
+    expect(screen.queryByRole("button", { name: /^Approve/u })).toBeNull();
     await userEvent.click(
       screen.getByRole("checkbox", {
         name: "Select the draft of Avery Fictional",
@@ -1397,11 +1406,11 @@ describe("the Drafts page", () => {
     expect(
       screen.getByRole("button", { name: "Approve 3 drafts…" }),
     ).toBeDefined();
+    // Screen readers hear how many are ticked.
+    expect(screen.getByText("3 selected")).toBeDefined();
     await userEvent.click(all);
-    expect(screen.getByRole("button", { name: "Approve…" })).toHaveProperty(
-      "disabled",
-      true,
-    );
+    expect(screen.queryByRole("button", { name: /^Approve/u })).toBeNull();
+    expect(screen.queryByText(/selected$/u)).toBeNull();
     await userEvent.click(
       screen.getByRole("checkbox", {
         name: "Select the draft of Avery Fictional",
@@ -1412,53 +1421,54 @@ describe("the Drafts page", () => {
         name: "Select the draft of Avery Fictional",
       }),
     );
-    expect(screen.getByRole("button", { name: "Approve…" })).toHaveProperty(
-      "disabled",
-      true,
-    );
+    expect(screen.queryByRole("button", { name: /^Approve/u })).toBeNull();
   });
 
   it("keeps a new order that waits on a rejected choice from being selected, and approves the rest", async () => {
-    const { fetch } = await openDrafts({
-      "GET /api/people": peopleWith([changed]),
-      "GET /api/release-streams": noStreams,
-      "GET /api/lists": () =>
-        Response.json({
-          lists: [
-            {
-              ...sites,
-              choices: [
-                {
-                  id: "c9",
-                  label: "Fenwick",
-                  description: "",
-                  retired: false,
-                  draft: draft({
-                    action: "created",
-                    live: {},
-                    state: "rejected",
-                    reason: "Not yet",
-                  }),
-                },
-                ...sites.choices,
-              ],
-              orderDraft: draft({ live: ["c1", "c2"], uses: ["c9"] }),
-            },
-          ],
-        }),
-      "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
-    });
-    const order = await screen.findByRole("checkbox", {
-      name: "Select the draft of Sites",
-    });
-    expect(order).toHaveProperty("disabled", true);
-    expect(screen.getByText("Waits on a rejected draft")).toBeDefined();
+    const { fetch } = await openDrafts(
+      {
+        "GET /api/people": peopleWith([changed]),
+        "GET /api/release-streams": noStreams,
+        "GET /api/lists": () =>
+          Response.json({
+            lists: [
+              {
+                ...sites,
+                choices: [
+                  {
+                    id: "c9",
+                    label: "Fenwick",
+                    description: "",
+                    retired: false,
+                    draft: draft({
+                      action: "created",
+                      live: {},
+                      state: "rejected",
+                      reason: "Not yet",
+                    }),
+                  },
+                  ...sites.choices,
+                ],
+                orderDraft: draft({ live: ["c1", "c2"], uses: ["c9"] }),
+              },
+            ],
+          }),
+        "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
+      },
+      "/drafts?tab=all",
+    );
+    // Under All drafts, the new order says why it waits, with nothing to tick.
+    expect(await screen.findByText("Waits on a rejected draft")).toBeDefined();
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    await userEvent.click(screen.getByRole("tab", { name: /^To decide/u }));
     await userEvent.click(
-      screen.getByRole("checkbox", {
+      await screen.findByRole("checkbox", {
         name: "Select all drafts this role can decide",
       }),
     );
-    expect(order).toHaveProperty("checked", false);
+    expect(
+      screen.queryByRole("checkbox", { name: "Select the draft of Sites" }),
+    ).toBeNull();
     await userEvent.click(
       screen.getByRole("button", { name: "Approve 1 draft…" }),
     );
@@ -1616,10 +1626,10 @@ describe("the Drafts page", () => {
   });
 
   it("lets those who may not approve only read the drafts", async () => {
-    await openDrafts({ "GET /api/session": reader });
+    await openDrafts({ "GET /api/session": reader }, "/drafts?tab=all");
     expect(await entries()).toHaveLength(4);
     expect(screen.queryByRole("checkbox")).toBeNull();
-    expect(screen.queryByRole("group", { name: "Selected rows" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Approve/u })).toBeNull();
   });
 
   it("says when there are no drafts, and offers nothing to select", async () => {
@@ -1630,7 +1640,7 @@ describe("the Drafts page", () => {
         name: "Select all drafts this role can decide",
       }),
     ).toHaveProperty("disabled", true);
-    expect(screen.getByText("None selected")).toBeDefined();
+    expect(screen.queryByRole("button", { name: /^Approve/u })).toBeNull();
   });
 
   it("offers no waiting drafts to select all when every draft is rejected", async () => {
@@ -1678,7 +1688,7 @@ describe("the Drafts page", () => {
   });
 
   it("searches the drafts, saying when none match", async () => {
-    await openDrafts();
+    await openDrafts({}, "/drafts?tab=all");
     await userEvent.type(
       await screen.findByRole("textbox", { name: "Search drafts" }),
       "fictional reason",
@@ -1700,28 +1710,31 @@ describe("the Drafts page", () => {
   });
 
   it("leaves Drafted empty for a draft whose time was not recorded, after those with one", async () => {
-    await openDrafts({
-      "GET /api/people": peopleWith([
-        person("p7", "Gale Fictional", {
-          draft: draft({
-            action: "created",
-            changed: [],
-            madeBy: null,
-            madeAt: null,
+    await openDrafts(
+      {
+        "GET /api/people": peopleWith([
+          person("p7", "Gale Fictional", {
+            draft: draft({
+              action: "created",
+              changed: [],
+              madeBy: null,
+              madeAt: null,
+            }),
           }),
-        }),
-        changed,
-        person("p8", "Hollis Fictional", {
-          // Rejected, with a reason this user may not see.
-          draft: draft({
-            action: "deleted",
-            madeBy: null,
-            madeAt: null,
-            state: "rejected",
+          changed,
+          person("p8", "Hollis Fictional", {
+            // Rejected, with a reason this user may not see.
+            draft: draft({
+              action: "deleted",
+              madeBy: null,
+              madeAt: null,
+              state: "rejected",
+            }),
           }),
-        }),
-      ]),
-    });
+        ]),
+      },
+      "/drafts?tab=all",
+    );
     // Those with no time come last, their Drafted empty.
     expect(await entries()).toEqual([
       "Avery Fictional, Draft | Changed | Waiting | Start set to Nov 2, 2026; Site from Northmere to Harbour; A removed column changed | Person | People | Fictional Editor | Oct 31, 2026 | ",
@@ -1730,7 +1743,7 @@ describe("the Drafts page", () => {
     ]);
   });
 
-  it("shows only the drafts the reader may decide now while Mine to decide is on, keeping it in the address", async () => {
+  it("shows only the drafts the reader may decide now under To decide, and every published draft under All drafts, keeping the tab in the address", async () => {
     // Given three waiting drafts and a rejected one
     serverAnswers({
       "GET /api/session": approver,
@@ -1739,45 +1752,57 @@ describe("the Drafts page", () => {
       "GET /api/lists": () => Response.json({ lists: [sites] }),
     });
     const app = renderApp("/drafts");
-    expect(await entries()).toHaveLength(4);
 
-    // When Mine to decide is chosen in the Views menu
-    await userEvent.click(screen.getByRole("button", { name: /^Views/u }));
-    await userEvent.click(
-      await screen.findByRole("menuitem", {
-        name: /Mine to decide \(3\)/u,
-      }),
-    );
+    // Then an Approver opens on To decide, with only the waiting drafts, and the address names no tab
+    expect(await entries()).toHaveLength(3);
+    expect(app.location.search).not.toContain("tab");
 
-    // Then only the waiting drafts show, and the address keeps the choice
-    await waitFor(async () => {
-      expect(await entries()).toHaveLength(3);
-    });
-    expect(app.location.search).toContain("decide=mine");
+    // When All drafts is chosen
+    await userEvent.click(screen.getByRole("tab", { name: /^All drafts/u }));
 
-    // And choosing it again shows every draft, leaving the address without it
-    await userEvent.click(screen.getByRole("button", { name: /^Views/u }));
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: /Mine to decide/u }),
-    );
+    // Then every published draft shows, and the address keeps the tab
     await waitFor(async () => {
       expect(await entries()).toHaveLength(4);
     });
-    expect(app.location.search).not.toContain("decide");
+    expect(app.location.search).toContain("tab=all");
+
+    // And going back to To decide leaves the address without a tab
+    await userEvent.click(screen.getByRole("tab", { name: /^To decide/u }));
+    await waitFor(async () => {
+      expect(await entries()).toHaveLength(3);
+    });
+    expect(app.location.search).not.toContain("tab");
   });
 
-  it("offers a reader who decides nothing a way out of Mine to decide, as a link may give it", async () => {
+  it("opens a role that makes drafts but approves none on Not published, with no To decide, whatever an old address asks", async () => {
+    serverAnswers({
+      "GET /api/session": session(["people:view", "people:edit"]),
+      "GET /api/people": peopleWith([changed, rejected]),
+      "GET /api/lists": () => Response.json({ lists: [sites] }),
+    });
+    renderApp("/drafts?tab=decide&decide=mine");
+    expect(await screen.findByText("No drafts")).toBeDefined();
+    const tabs = screen.getAllByRole("tab");
+    expect(tabs.map(({ textContent }) => textContent)).toEqual([
+      "Not published 0",
+      "All drafts 2",
+    ]);
+    expect(
+      screen.getByRole("tab", { name: /^Not published/u, selected: true }),
+    ).toBeDefined();
+  });
+
+  it("shows a role that neither makes nor approves drafts only All drafts", async () => {
     serverAnswers({
       "GET /api/session": reader,
       "GET /api/people": peopleWith([changed, rejected]),
       "GET /api/lists": () => Response.json({ lists: [sites] }),
     });
-    renderApp("/drafts?decide=mine");
-    await screen.findByText("No drafts");
-    await userEvent.click(screen.getByRole("button", { name: /^Views/u }));
+    renderApp("/drafts?tab=unpublished");
     expect(
-      await screen.findByRole("menuitem", { name: /Mine to decide \(0\)/u }),
+      await screen.findByRole("tab", { name: /^All drafts/u, selected: true }),
     ).toBeDefined();
+    expect(screen.getAllByRole("tab")).toHaveLength(1);
   });
 
   it("decides one draft from its row's menu", async () => {
@@ -1933,12 +1958,13 @@ describe("the Drafts page", () => {
     });
     const tabs = await screen.findAllByRole("tab");
     expect(tabs.map(({ textContent }) => textContent)).toEqual([
-      "For approval 1",
-      "My changes 1",
+      "To decide 1",
+      "Not published 1",
+      "All drafts 1",
     ]);
-    await userEvent.click(screen.getByRole("tab", { name: /^My changes/u }));
-    expect(app.location.search).toContain("tab=mine");
-    expect(screen.getByRole("tab", { name: /^My changes/u })).toHaveProperty(
+    await userEvent.click(screen.getByRole("tab", { name: /^Not published/u }));
+    expect(app.location.search).toContain("tab=unpublished");
+    expect(screen.getByRole("tab", { name: /^Not published/u })).toHaveProperty(
       "ariaSelected",
       "true",
     );
@@ -1961,31 +1987,34 @@ describe("the Drafts page", () => {
   it("names the drafts waiting on a rejected draft in its details", async () => {
     const listDraft = (action: string, more: object = {}) =>
       draft({ action, changed: [], live: {}, ...more });
-    await openDrafts({
-      "GET /api/people": peopleWith([]),
-      "GET /api/lists": () =>
-        Response.json({
-          lists: [
-            {
-              ...sites,
-              choices: [
-                ...sites.choices,
-                {
-                  id: "c3",
-                  label: "Platform",
-                  description: "",
-                  retired: false,
-                  draft: listDraft("created", {
-                    state: "rejected",
-                    reason: "Fictional reason",
-                  }),
-                },
-              ],
-              orderDraft: draft({ live: ["c1", "c2"], uses: ["c3"] }),
-            },
-          ],
-        }),
-    });
+    await openDrafts(
+      {
+        "GET /api/people": peopleWith([]),
+        "GET /api/lists": () =>
+          Response.json({
+            lists: [
+              {
+                ...sites,
+                choices: [
+                  ...sites.choices,
+                  {
+                    id: "c3",
+                    label: "Platform",
+                    description: "",
+                    retired: false,
+                    draft: listDraft("created", {
+                      state: "rejected",
+                      reason: "Fictional reason",
+                    }),
+                  },
+                ],
+                orderDraft: draft({ live: ["c1", "c2"], uses: ["c3"] }),
+              },
+            ],
+          }),
+      },
+      "/drafts?tab=all",
+    );
     await userEvent.click(
       await screen.findByRole("button", {
         name: "Show details of Platform in Sites",
@@ -2000,23 +2029,26 @@ describe("the Drafts page", () => {
 
   it("offers no link to a record's page this role can't open", async () => {
     // Given a reader of people, who sees a list's draft but not the Lists page
-    await openDrafts({
-      "GET /api/session": session(["people:view"]),
-      "GET /api/people": peopleWith([]),
-      "GET /api/lists": () =>
-        Response.json({
-          lists: [
-            {
-              ...sites,
-              draft: draft({
-                action: "changed",
-                changed: ["name"],
-                live: { name: "Old Sites" },
-              }),
-            },
-          ],
-        }),
-    });
+    await openDrafts(
+      {
+        "GET /api/session": session(["people:view"]),
+        "GET /api/people": peopleWith([]),
+        "GET /api/lists": () =>
+          Response.json({
+            lists: [
+              {
+                ...sites,
+                draft: draft({
+                  action: "changed",
+                  changed: ["name"],
+                  live: { name: "Old Sites" },
+                }),
+              },
+            ],
+          }),
+      },
+      "/drafts?tab=all",
+    );
     await userEvent.click(
       await screen.findByRole("button", { name: "Show details of Sites" }),
     );
@@ -2046,17 +2078,17 @@ describe("the Drafts page", () => {
     );
     expect(app.location.search).toContain("open=");
 
-    // When My changes, then For approval, is chosen
-    await userEvent.click(screen.getByRole("tab", { name: /^My changes/u }));
-    await userEvent.click(screen.getByRole("button", { name: /^Views/u }));
-    expect(
-      screen.queryByRole("menuitem", { name: /Mine to decide/u }),
-    ).toBeNull();
-    await userEvent.keyboard("{Escape}");
-    await userEvent.click(screen.getByRole("tab", { name: /^For approval/u }));
+    // When Not published, then To decide, is chosen
+    await userEvent.click(screen.getByRole("tab", { name: /^Not published/u }));
+    await userEvent.click(screen.getByRole("tab", { name: /^To decide/u }));
 
     // Then nothing is ticked, and no details are open
-    expect(await screen.findByText("None selected")).toBeDefined();
+    expect(
+      await screen.findByRole("checkbox", {
+        name: "Select the draft of Avery Fictional",
+      }),
+    ).toHaveProperty("checked", false);
+    expect(screen.queryByRole("button", { name: /^Approve/u })).toBeNull();
     expect(app.location.search).not.toContain("open=");
   });
 
@@ -2072,22 +2104,6 @@ describe("the Drafts page", () => {
     await waitFor(() => {
       expect(app.location.search).not.toContain("open=");
     });
-  });
-
-  it("shows My changes whole, though the address asks for Mine to decide", async () => {
-    serverAnswers({
-      "GET /api/session": approver,
-      "GET /api/people": peopleWith([
-        {
-          ...added,
-          draft: draft({ action: "created", changed: [], unpublished: true }),
-        },
-      ]),
-      "GET /api/release-streams": noStreams,
-      "GET /api/lists": () => Response.json({ lists: [sites] }),
-    });
-    renderApp("/drafts?tab=mine&decide=mine");
-    expect(await entries()).toHaveLength(1);
   });
 
   it("counts drafts in words", () => {
@@ -2367,56 +2383,455 @@ describe("drafts of feature teams on the Drafts page", () => {
 });
 
 describe("unpublished and held drafts on the Drafts page", () => {
-  it("keeps drafts someone is changing from being selected, and one's own unpublished drafts on My changes", async () => {
-    await openDrafts({
-      "GET /api/people": peopleWith([
-        { ...changed, heldBy: "Second Fictional Editor" },
-        {
-          ...added,
-          draft: draft({
-            action: "created",
-            changed: ["preferredName", "employeeId", "f1"],
-            unpublished: true,
-          }),
-        },
-        removed,
-      ]),
-    });
-    const box = (name: string) =>
-      screen.getByRole("checkbox", { name: `Select the draft of ${name}` });
-    await screen.findByRole("checkbox", {
-      name: "Select all drafts this role can decide",
-    });
-    const shown = await entries();
-    const recordOf = (name: string) =>
-      shown.find((text) => text.startsWith(name))?.split(" | ")[0];
-    expect(recordOf("Avery Fictional")).toMatch(
-      /, Draft, being changed by Second Fictional Editor$/,
+  it("lists drafts someone is changing under All drafts, not To decide, and one's own unpublished drafts under Not published", async () => {
+    await openDrafts(
+      {
+        "GET /api/people": peopleWith([
+          { ...changed, heldBy: "Second Fictional Editor" },
+          {
+            ...added,
+            draft: draft({
+              action: "created",
+              changed: ["preferredName", "employeeId", "f1"],
+              unpublished: true,
+            }),
+          },
+          removed,
+        ]),
+      },
+      "/drafts?tab=all",
     );
-    expect(recordOf("Blake Fictional")).toBeUndefined();
-    expect(box("Avery Fictional")).toHaveProperty("disabled", true);
-    await userEvent.click(
-      screen.getByRole("checkbox", {
-        name: "Select all drafts this role can decide",
-      }),
-    );
-    expect(box("Casey Fictional")).toHaveProperty("checked", true);
-    expect(box("Avery Fictional")).toHaveProperty("checked", false);
-    expect(
-      screen.getByRole("button", { name: "Approve 1 draft…" }),
-    ).toBeDefined();
+    const records = async () =>
+      (await entries()).map((text) => text.split(" | ")[0]);
+    expect(await records()).toEqual([
+      "Avery Fictional, Draft, being changed by Second Fictional Editor",
+      "Casey Fictional, Draft: removed",
+    ]);
 
-    // And one's own unpublished draft is on My changes, with no ticks and no Made by
-    await userEvent.click(screen.getByRole("tab", { name: /^My changes/u }));
+    // And To decide holds only the draft nobody is changing
+    await userEvent.click(screen.getByRole("tab", { name: /^To decide/u }));
+    await waitFor(async () => {
+      expect(await records()).toEqual(["Casey Fictional, Draft: removed"]);
+    });
+
+    // And one's own unpublished draft is under Not published, with no Made by
+    await userEvent.click(screen.getByRole("tab", { name: /^Not published/u }));
     await waitFor(async () => {
       expect(await entries()).toEqual([
         "Blake Fictional, Draft: added, unpublished | Added | Not published | ID set to E-p2; Site set to Harbour | Person | People | Oct 30, 2026 | ",
       ]);
     });
-    expect(screen.queryByRole("checkbox")).toBeNull();
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Select the change to Blake Fictional",
+      }),
+    ).toBeDefined();
     expect(
       screen.queryByRole("button", { name: /^Made by column/u }),
     ).toBeNull();
+  });
+});
+
+describe("publishing and discarding one's own changes on the Drafts page", () => {
+  const own = (fields: object = {}) =>
+    draft({
+      action: "created",
+      changed: [],
+      live: {},
+      unpublished: true,
+      ...fields,
+    });
+  // A list only drafted to be added, with choices added to it, and an unrelated person, all the
+  // reader's own unpublished changes.
+  const equipment = (labels: string[]) => ({
+    id: "l9",
+    keyNumber: 9,
+    name: "Equipment",
+    description: "",
+    visibility: "general",
+    retired: false,
+    choices: labels.map((label, index) => ({
+      id: `c9${String(index)}`,
+      label,
+      description: "",
+      retired: false,
+      draft: own(),
+    })),
+    draft: own(),
+  });
+  const ownPerson = {
+    ...added,
+    draft: draft({
+      action: "created",
+      changed: ["preferredName"],
+      unpublished: true,
+    }),
+  };
+  // The changes as the server lists and links them: each choice uses the list it is added to.
+  const linked = (labels: string[]) => () =>
+    Response.json({
+      changes: [
+        {
+          subject: "the list Equipment",
+          action: "created",
+          key: "list l9",
+          linked: [],
+        },
+        ...labels.map((label, index) => ({
+          subject: `the choice ${label} in Equipment`,
+          action: "created",
+          key: `list-item c9${String(index)}`,
+          linked: ["list l9"],
+        })),
+        // A change the page doesn't list, linked to the list.
+        {
+          subject: "a column",
+          action: "created",
+          key: "field f-unlisted",
+          linked: ["list l9"],
+        },
+        {
+          subject: "Blake Fictional",
+          action: "created",
+          key: `person ${added.id}`,
+          linked: [],
+        },
+      ],
+    });
+  const openOwn = (labels: string[] = ["Laptop"], answers: Answers = {}) =>
+    openDrafts(
+      {
+        "GET /api/people": peopleWith([ownPerson]),
+        "GET /api/lists": () =>
+          Response.json({ lists: [sites, equipment(labels)] }),
+        "GET /api/unpublished": linked(labels),
+        ...answers,
+      },
+      "/drafts?tab=unpublished",
+    );
+  const box = (record: string) =>
+    screen.getByRole("checkbox", { name: `Select the change to ${record}` });
+  const selection = (more: object) => ({
+    people: [],
+    plannedHires: [],
+    featureTeams: [],
+    lists: [],
+    choices: [],
+    orders: [],
+    columns: [],
+    records: [],
+    ...more,
+  });
+
+  it("ticks a change with every change linked to it, both ways, and unticks them together", async () => {
+    // Given a list only drafted to be added, a choice added to it, and an unrelated change
+    await openOwn();
+    await screen.findByRole("checkbox", {
+      name: "Select the change to Equipment",
+    });
+
+    // When the list is ticked
+    await userEvent.click(box("Equipment"));
+
+    // Then the choice that uses it is ticked too, and nothing else
+    expect(box("Laptop in Equipment")).toHaveProperty("checked", true);
+    expect(box("Blake Fictional")).toHaveProperty("checked", false);
+    expect(
+      screen.getByRole("button", { name: "Publish 2 changes" }),
+    ).toBeDefined();
+
+    // And unticking the choice unticks the list it uses
+    await userEvent.click(box("Laptop in Equipment"));
+    expect(box("Equipment")).toHaveProperty("checked", false);
+    expect(
+      screen.queryByRole("button", { name: "Publish 2 changes" }),
+    ).toBeNull();
+
+    // And ticking the choice ticks the list it uses
+    await userEvent.click(box("Laptop in Equipment"));
+    expect(box("Equipment")).toHaveProperty("checked", true);
+  });
+
+  it("names the changes a tick is linked to in its tip, and gives an unlinked change none", async () => {
+    await openOwn();
+    await screen.findByRole("checkbox", {
+      name: "Select the change to Equipment",
+    });
+    const tipOf = (record: string) =>
+      box(record).closest("[data-tip]")?.getAttribute("data-tip");
+    expect(tipOf("Equipment")).toBe(
+      "Linked to the change to Laptop in Equipment",
+    );
+    expect(box("Equipment").getAttribute("aria-description")).toBe(
+      "Linked to the change to Laptop in Equipment",
+    );
+    expect(tipOf("Laptop in Equipment")).toBe(
+      "Linked to the change to Equipment",
+    );
+    expect(tipOf("Blake Fictional")).toBeUndefined();
+    expect(box("Blake Fictional").getAttribute("aria-description")).toBeNull();
+  });
+
+  it("names several linked changes in one tip", async () => {
+    await openOwn(["Laptop", "Monitor"]);
+    await screen.findByRole("checkbox", {
+      name: "Select the change to Equipment",
+    });
+    expect(
+      box("Equipment").closest("[data-tip]")?.getAttribute("data-tip"),
+    ).toBe(
+      "Linked to the changes to Laptop in Equipment and Monitor in Equipment",
+    );
+  });
+
+  it("publishes exactly the changes ticked, saying how many, and unticks them", async () => {
+    // Given the list and its choice ticked together
+    const { fetch } = await openOwn(["Laptop"], {
+      "POST /api/unpublished/publish": () => Response.json({ total: 2 }),
+    });
+    await userEvent.click(
+      await screen.findByRole("checkbox", {
+        name: "Select the change to Laptop in Equipment",
+      }),
+    );
+
+    // When Publish is chosen, which doesn't ask first
+    await userEvent.click(
+      screen.getByRole("button", { name: "Publish 2 changes" }),
+    );
+
+    // Then the ticked changes alone are published, and the page says so
+    expect(await screen.findByText("Published 2 changes.")).toBeDefined();
+    expect(bodyOf(fetch, "POST", "/api/unpublished/publish")).toEqual([
+      { drafts: selection({ lists: ["l9"], choices: ["c90"] }) },
+    ]);
+    await waitFor(() => {
+      expect(box("Equipment")).toHaveProperty("checked", false);
+    });
+  });
+
+  it("asks before discarding the changes ticked, and keeps them ticked when cancelled", async () => {
+    const { fetch } = await openOwn(["Laptop"], {
+      "POST /api/unpublished/discard": () => Response.json({ total: 1 }),
+    });
+    await userEvent.click(
+      await screen.findByRole("checkbox", {
+        name: "Select the change to Blake Fictional",
+      }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Discard 1 change…" }),
+    );
+    const asking = await screen.findByRole("dialog", {
+      name: "Discard 1 change?",
+    });
+    expect(
+      within(asking).getByText(
+        "The chosen change is discarded. This cannot be undone.",
+      ),
+    ).toBeDefined();
+    await userEvent.click(
+      within(asking).getByRole("button", { name: "Cancel" }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+    expect(bodyOf(fetch, "POST", "/api/unpublished/discard")).toEqual([]);
+    expect(box("Blake Fictional")).toHaveProperty("checked", true);
+
+    // And discarding it, once asked, discards only that change
+    await userEvent.click(
+      screen.getByRole("button", { name: "Discard 1 change…" }),
+    );
+    await userEvent.click(
+      within(
+        await screen.findByRole("dialog", { name: "Discard 1 change?" }),
+      ).getByRole("button", { name: "Discard" }),
+    );
+    expect(await screen.findByText("Discarded 1 change.")).toBeDefined();
+    expect(bodyOf(fetch, "POST", "/api/unpublished/discard")).toEqual([
+      { drafts: selection({ people: ["p2"] }) },
+    ]);
+  });
+
+  it("asks before discarding several changes in the plural", async () => {
+    await openOwn();
+    await userEvent.click(
+      await screen.findByRole("checkbox", {
+        name: "Select the change to Equipment",
+      }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Discard 2 changes…" }),
+    );
+    expect(
+      within(
+        await screen.findByRole("dialog", { name: "Discard 2 changes?" }),
+      ).getByText("The chosen changes are discarded. This cannot be undone."),
+    ).toBeDefined();
+  });
+
+  it("unticks changes a search hides, so only changes in sight are published", async () => {
+    await openOwn();
+    await userEvent.click(
+      await screen.findByRole("checkbox", {
+        name: "Select the change to Equipment",
+      }),
+    );
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Search drafts" }),
+      "Blake",
+    );
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("button", { name: "Publish 2 changes" }),
+      ).toBeNull();
+    });
+    await userEvent.clear(
+      screen.getByRole("textbox", { name: "Search drafts" }),
+    );
+    expect(
+      await screen.findByRole("checkbox", {
+        name: "Select the change to Equipment",
+      }),
+    ).toHaveProperty("checked", false);
+  });
+
+  it("names the first three linked changes in a tip, and counts the rest", async () => {
+    await openOwn(["Laptop", "Monitor", "Dock", "Mouse", "Stand"]);
+    await screen.findByRole("checkbox", {
+      name: "Select the change to Equipment",
+    });
+    expect(box("Equipment").getAttribute("aria-description")).toBe(
+      "Linked to the changes to Laptop in Equipment, Monitor in Equipment, Dock in Equipment and 2 more",
+    );
+  });
+
+  it("settles with nothing ticked once the changes ticked are published from the top bar", async () => {
+    // Given the list and its choice ticked
+    let published = false;
+    await openOwn(["Laptop"], {
+      "GET /api/unpublished": () =>
+        published ? Response.json({ changes: [] }) : linked(["Laptop"])(),
+      "GET /api/lists": () =>
+        Response.json({
+          lists: published ? [sites] : [sites, equipment(["Laptop"])],
+        }),
+      "POST /api/unpublished/publish": () => {
+        published = true;
+        return Response.json({ total: 4 });
+      },
+    });
+    await userEvent.click(
+      await screen.findByRole("checkbox", {
+        name: "Select the change to Equipment",
+      }),
+    );
+
+    // When every change is published from the top bar
+    await userEvent.click(
+      screen.getByRole("button", { name: "Publish 4 changes" }),
+    );
+
+    // Then the page settles, with nothing left to publish from its heading
+    expect(await screen.findByText("Published 4 changes.")).toBeDefined();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("checkbox", {
+          name: "Select the change to Equipment",
+        }),
+      ).toBeNull();
+    });
+    expect(
+      screen.queryByRole("button", { name: "Publish 2 changes" }),
+    ).toBeNull();
+  });
+
+  it("can't tick a change whose linked change the search hides, and says so", async () => {
+    // Given a search that shows the choice but not the list it uses
+    await openOwn();
+    await screen.findByRole("checkbox", {
+      name: "Select the change to Equipment",
+    });
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Search drafts" }),
+      "Laptop",
+    );
+
+    // Then the choice can't be ticked, and its tip says the list isn't shown
+    await waitFor(() => {
+      expect(box("Laptop in Equipment")).toHaveProperty("disabled", true);
+    });
+    expect(box("Laptop in Equipment").getAttribute("aria-description")).toBe(
+      "Linked to the change to Equipment, not shown in the table",
+    );
+  });
+
+  it("links a change's details to the changes linked to it, each opening its own details", async () => {
+    // Given the list's details open on Not published
+    await openOwn();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Show details of Equipment" }),
+    );
+    const linked = await screen.findByRole("region", { name: "Linked to" });
+
+    // When the linked choice is followed
+    await userEvent.click(
+      within(linked).getByRole("button", { name: "Laptop in Equipment" }),
+    );
+
+    // Then the choice's details open, linked back to the list
+    await waitFor(() => {
+      expect(
+        within(screen.getByRole("region", { name: "Linked to" })).getByRole(
+          "button",
+          { name: "Equipment" },
+        ),
+      ).toBeDefined();
+    });
+  });
+
+  it("gives an unlinked change's details no Linked to", async () => {
+    await openOwn();
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Show details of Blake Fictional",
+      }),
+    );
+    await screen.findByRole("region", { name: "Details" });
+    expect(screen.queryByRole("region", { name: "Linked to" })).toBeNull();
+  });
+
+  it("names no Linked to in the details of a published draft", async () => {
+    // A published list only drafted to be added, with a choice added to it
+    const published = (more: object = {}) =>
+      draft({ action: "created", changed: [], live: {}, ...more });
+    await openDrafts({
+      "GET /api/people": peopleWith([]),
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...equipment(["Laptop"]),
+              draft: published(),
+              choices: [
+                {
+                  id: "c90",
+                  label: "Laptop",
+                  description: "",
+                  retired: false,
+                  draft: published(),
+                },
+              ],
+            },
+          ],
+        }),
+    });
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Show details of Equipment" }),
+    );
+    await screen.findByRole("region", { name: "Details" });
+    expect(screen.queryByRole("region", { name: "Linked to" })).toBeNull();
   });
 });
 

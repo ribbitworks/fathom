@@ -240,6 +240,8 @@ export {
   draftKinds,
   type DraftsAsked,
   type DraftsRequest,
+  draftKey,
+  draftKeysOf,
   draftsWhere,
   type DraftState,
   draftShape,
@@ -259,6 +261,7 @@ export {
   recordTypeSchema,
   rejectionRequestSchema,
   type Unpublished,
+  unpublishedChosenSchema,
   unpublishedDoneSchema,
   unpublishedSchema,
 } from "./drafts.ts";

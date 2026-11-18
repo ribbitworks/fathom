@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for a draft's details: its columns as rows, the drafts approved with it or waiting on it,
-// deciding it, why it can't be decided yet, and the link to its record's own page.
+// the changes of one's own linked to it, deciding it, why it can't be decided yet, and the link to
+// its record's own page.
 
 import { MantineProvider } from "@mantine/core";
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -12,6 +13,7 @@ import type { Entry } from "./draft-entries.ts";
 import { noDrafts } from "./drafts.ts";
 import { DraftPanel, type DraftActions } from "./drafts-panel.tsx";
 import { draftColumns, draftRows, type DraftsTab } from "./drafts-table.tsx";
+import type { RecordLinkItem } from "./record-details.tsx";
 import { testTheme } from "./test-support.tsx";
 
 const entry = (more: Partial<Entry> = {}): Entry => ({
@@ -38,11 +40,13 @@ function show({
   actions,
   approves = true,
   waits = false,
-  tab = "approval",
+  tab = "all",
+  linked,
   recordLink,
 }: {
   one?: Entry;
   related?: string[];
+  linked?: (RecordLinkItem & { name: string })[];
   actions?: DraftActions;
   approves?: boolean;
   waits?: boolean;
@@ -61,6 +65,7 @@ function show({
         row={row}
         columns={draftColumns(rows, tab)}
         related={related}
+        {...(linked === undefined ? {} : { linked })}
         actions={actions}
         approves={approves}
         waits={waits}
@@ -86,9 +91,48 @@ describe("a draft's details", () => {
     expect(within(details).queryByText("Record")).toBeNull();
   });
 
-  it("leaves Made by out on My changes", () => {
-    show({ one: entry({ unpublished: true }), tab: "mine" });
+  it("leaves Made by out on Not published", () => {
+    show({ one: entry({ unpublished: true }), tab: "unpublished" });
     expect(screen.queryByText("Made by")).toBeNull();
+  });
+
+  it("links to each change it's published and discarded with, opening that change's details", async () => {
+    // Given one's own change linked to another
+    const onShow = vi.fn();
+    show({
+      one: entry({ unpublished: true }),
+      tab: "unpublished",
+      linked: [{ id: "list l1", name: "Equipment", onShow }],
+    });
+    const linked = screen.getByRole("region", { name: "Linked to" });
+    expect(within(linked).getByText("Change")).toBeDefined();
+
+    // When its link is followed
+    await userEvent.click(
+      within(linked).getByRole("button", { name: "Equipment" }),
+    );
+
+    // Then that change's details are asked for
+    expect(onShow).toHaveBeenCalled();
+  });
+
+  it("names several linked changes under Changes, and has no Linked to section with none", () => {
+    show({
+      one: entry({ unpublished: true }),
+      tab: "unpublished",
+      linked: [
+        { id: "list l1", name: "Equipment", onShow: vi.fn() },
+        { id: "choice c1", name: "Laptop in Equipment", onShow: vi.fn() },
+      ],
+    });
+    expect(
+      within(screen.getByRole("region", { name: "Linked to" })).getByText(
+        "Changes",
+      ),
+    ).toBeDefined();
+    cleanup();
+    show({ one: entry({ unpublished: true }), tab: "unpublished" });
+    expect(screen.queryByRole("region", { name: "Linked to" })).toBeNull();
   });
 
   it("names the drafts approved with a waiting draft", () => {

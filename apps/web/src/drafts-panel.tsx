@@ -13,7 +13,12 @@ import { areaWords, type DraftRow } from "./drafts-table.tsx";
 import { focusSoon } from "./focus.ts";
 import { PhraseList } from "./phrase.tsx";
 import type { Column } from "./record-grid.tsx";
-import { RecordSection, Row } from "./record-details.tsx";
+import {
+  type RecordLinkItem,
+  RecordLinkList,
+  RecordSection,
+  Row,
+} from "./record-details.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import { DraftedItem, FactBox } from "./status-mark.tsx";
 
@@ -28,6 +33,13 @@ const relatedColumn = (count: number) => ({
   multiple: false,
   choices: [],
   required: false,
+});
+
+// The row naming the user's own changes published and discarded only with this one.
+const linkedColumn = (count: number) => ({
+  ...relatedColumn(count),
+  key: "linked",
+  label: count === 1 ? "Change" : "Changes",
 });
 
 // What may be done with a draft from its details: deciding it, for a role that may now.
@@ -62,6 +74,7 @@ export function DraftPanel({
   row,
   columns,
   related,
+  linked = [],
   actions,
   approves,
   waits,
@@ -74,6 +87,8 @@ export function DraftPanel({
   // The other drafts deciding this one would take with it, named: those approved with it while it
   // waits, or those waiting on it once rejected.
   related: readonly string[];
+  // For one's own unpublished change, the others of one's own it is published and discarded with.
+  linked?: readonly (RecordLinkItem & { name: string })[];
   // Present while this role may decide the draft now.
   actions: DraftActions | undefined;
   // Whether this role decides drafts of the draft's kind.
@@ -148,6 +163,16 @@ export function DraftPanel({
                     <Text key={name}>{name}</Text>
                   ))}
                 </Stack>
+              </Row>
+            </RecordSection>
+          )}
+          {linked.length > 0 && (
+            <RecordSection id="draft-linked" title="Linked to">
+              <Row
+                column={linkedColumn(linked.length)}
+                value={linked.map(({ name }) => name).join(", ")}
+              >
+                <RecordLinkList links={linked} />
               </Row>
             </RecordSection>
           )}

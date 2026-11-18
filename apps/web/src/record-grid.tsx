@@ -111,13 +111,7 @@ import {
   opensMenu,
   RowControls,
 } from "./row-controls.tsx";
-import {
-  AllTick,
-  RowTick,
-  type RowTicks,
-  SelectionBar,
-  tickedOf,
-} from "./row-ticks.tsx";
+import { AllTick, RowTick, type RowTicks, tickedOf } from "./row-ticks.tsx";
 import { choice, draftedLists, liveLists } from "./lists.ts";
 import { CopyLinkItem, isSaved } from "./record-key.tsx";
 import {
@@ -2058,6 +2052,13 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const shownRecords = recordsOf(shownRows);
   const tickedShown =
     ticks === undefined ? undefined : tickedOf(ticks, shownRecords);
+  const shownIds = new Set(shownRecords.map(({ id }) => id));
+  // A row the view hides is unticked, so what the page does with the rows ticked is only ever to
+  // rows in sight. Checked after every render, since the view and the ticks both change it.
+  useEffect(() => {
+    const hidden = [...(ticks?.ticked ?? [])].filter((id) => !shownIds.has(id));
+    if (hidden.length > 0) ticks?.onTick(hidden, false);
+  });
   const groupRuns = runsOf(shownRows, false, ({ group }) => group);
   const subgroupRuns = runsOf(shownRows, true, ({ group, subgroup }) =>
     group === undefined || subgroup === undefined
@@ -2716,7 +2717,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       row.record !== undefined
     ) {
       event.preventDefault();
-      if (ticks.tickable(row.record)) {
+      if (ticks.tickable(row.record, shownIds)) {
         ticks.onTick([row.record.id], !ticks.ticked.has(row.record.id));
       }
       return;
@@ -3678,27 +3679,13 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       }
     />
   );
-  const selectionBar = ticks !== undefined && tickedShown !== undefined && (
-    <SelectionBar
-      count={tickedShown.ticked.length}
-      onClear={() => {
-        ticks.onTick(
-          tickedShown.ticked.map(({ id }) => id),
-          false,
-        );
-      }}
-    >
-      {ticks.actions(tickedShown.ticked)}
-    </SelectionBar>
-  );
   const bar =
-    above === undefined && selectionBar === false ? (
+    above === undefined ? (
       viewBar
     ) : (
       <div>
         {viewBar}
-        {above?.(shownRecords)}
-        {selectionBar}
+        {above(shownRecords)}
       </div>
     );
   if (body !== undefined) {
@@ -4039,8 +4026,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                               record !== undefined && (
                                 <RowTick
                                   label={ticks.label(record)}
+                                  tip={ticks.tip?.(record, shownIds)}
                                   checked={ticks.ticked.has(record.id)}
-                                  disabled={!ticks.tickable(record)}
+                                  disabled={!ticks.tickable(record, shownIds)}
                                   onChange={(on) => {
                                     ticks.onTick([record.id], on);
                                   }}

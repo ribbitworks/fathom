@@ -249,11 +249,18 @@ export function RecordLink({
   );
 }
 
+// A record named in a details panel, by its link, which shows its details.
+export interface RecordLinkItem {
+  id: string;
+  name: ReactNode;
+  onShow: () => void;
+}
+
 // Links to records, one to a line, as a details panel lists several records.
 export function RecordLinkList({
   links,
 }: {
-  links: readonly { id: string; name: ReactNode; onShow: () => void }[];
+  links: readonly RecordLinkItem[];
 }) {
   return (
     <Stack gap={0} align="flex-start">

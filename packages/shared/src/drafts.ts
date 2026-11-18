@@ -246,6 +246,25 @@ export const approvesKind = (
 export const approvableKinds = (permissions: readonly string[]): DraftKind[] =>
   draftKinds.filter((kind) => approvesKind(permissions, kind));
 
+// A draft's key, its kind and its record's identifier, naming it alike on the server and the page.
+export const draftKey = (kind: string, id: string): string => `${kind} ${id}`;
+
+// The key of each draft asked for.
+export const draftKeysOf = (asked: DraftsAsked): string[] => {
+  const of = (kind: DraftKind, ids: readonly string[] = []) =>
+    ids.map((id) => draftKey(kind, id));
+  return [
+    ...of("person", asked.people),
+    ...of("planned-hire", asked.plannedHires),
+    ...of("feature-team", asked.featureTeams),
+    ...of("list", asked.lists),
+    ...of("list-item", asked.choices),
+    ...of("choice-order", asked.orders),
+    ...of("field", asked.columns),
+    ...(asked.records ?? []).map(({ type, id }) => draftKey(type, id)),
+  ];
+};
+
 // The drafts asked for of the kinds a test keeps.
 export function draftsWhere(
   asked: DraftsRequest,
@@ -304,6 +323,10 @@ export const unpublishedSchema = z.object({
       action: draftActionSchema.optional(),
       // True when the change takes back the record's published draft, which publishing removes.
       discarded: z.boolean().optional(),
+      // The change's draft, by its key, and the user's other changes it goes together with: those it
+      // uses, and those saved with it or in the same fill, which the page ticks with it.
+      key: z.string(),
+      linked: z.array(z.string()),
     }),
   ),
 });
@@ -312,3 +335,9 @@ export type Unpublished = z.infer<typeof unpublishedSchema>;
 
 // How many records' changes publishing or discarding them took.
 export const unpublishedDoneSchema = z.object({ total: z.number().int() });
+
+// The user's own changes to publish or discard, by the drafts they make; every change when the
+// request has no drafts at all.
+export const unpublishedChosenSchema = z.object({
+  drafts: draftsRequestSchema.optional(),
+});

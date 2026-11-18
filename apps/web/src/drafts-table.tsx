@@ -27,7 +27,6 @@ import {
 } from "./record-grid.tsx";
 import { byChoice } from "./choice-grouping.ts";
 import { FactBox } from "./status-mark.tsx";
-import type { ViewChoice } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
 import { streamNames } from "./releases.ts";
 import { dayOf } from "./today.ts";
@@ -157,7 +156,7 @@ const inOrderSeen = (values: readonly string[]) => [...new Set(values)];
 // The table's columns, its choices those the rows hold, in a steady order.
 export function draftColumns(
   rows: readonly DraftRow[],
-  tab: DraftsTab = "approval",
+  tab: DraftsTab = "all",
 ): Column<DraftRow, never>[] {
   const column = (
     key: Exclude<keyof DraftRow, "entry" | "facts" | "draft" | "heldBy">,
@@ -202,7 +201,7 @@ export function draftColumns(
     ),
     column("area", "Area", "choice", kindsShown(areaOf)),
     // One's own changes are always one's own.
-    ...(tab === "mine"
+    ...(tab === "unpublished"
       ? []
       : [
           column(
@@ -228,32 +227,55 @@ export const draftColumnOrder = draftColumns([]).map(({ key }) => key);
 
 const groupedBy = ["change", "type", "area", "madeBy", "state"];
 
-// The page's tabs, kept in its view as a choice of its own: the drafts others see, for approval,
-// and the reader's own changes, not yet published.
-export const draftsTabs = ["approval", "mine"] as const;
+// The page's tabs, kept in its view as a choice of its own: the drafts the reader may decide now,
+// shown only to a role that approves drafts; the reader's own changes, not yet published; and every
+// published draft, to see what is waiting or rejected.
+export const draftsTabs = ["decide", "unpublished", "all"] as const;
 
 export const draftsTabSchema = z.enum(draftsTabs);
 
 export type DraftsTab = z.infer<typeof draftsTabSchema>;
 
 export const draftsTabNames: Record<DraftsTab, string> = {
-  approval: "For approval",
-  mine: "My changes",
+  decide: "To decide",
+  unpublished: "Not published",
+  all: "All drafts",
 };
 
-export const myChanges = "mine";
+// The tabs a role sees, in order: To decide for a role that approves drafts, Not published for one
+// that makes them, and All drafts for all; the first opens when the view names none.
+export const tabsFor = (
+  approves: readonly DraftKind[],
+  makesDrafts: boolean,
+): DraftsTab[] =>
+  draftsTabs.filter(
+    (tab) =>
+      (tab !== "decide" || approves.length > 0) &&
+      (tab !== "unpublished" || makesDrafts),
+  );
 
-export const draftsTabOf = (view: View): DraftsTab =>
-  view.choices?.tab === myChanges ? "mine" : "approval";
+// The tab a view shows, of those the role sees.
+export function draftsTabOf(
+  view: View,
+  shown: readonly DraftsTab[],
+): DraftsTab {
+  const named = draftsTabSchema.safeParse(view.choices?.tab);
+  return named.success && shown.includes(named.data)
+    ? named.data
+    : (shown[0] ?? "all");
+}
 
-// The view on a tab, keeping the rest of the view, Mine to decide aside, which My changes doesn't
-// offer.
-export function viewOnTab(view: View, tab: DraftsTab): View {
+// The view on a tab, keeping the rest of the view; the first tab is named by none.
+export function viewOnTab(
+  view: View,
+  tab: DraftsTab,
+  shown: readonly DraftsTab[],
+): View {
   const others = Object.entries(view.choices ?? {}).filter(
-    ([key]) => key !== "tab" && (tab === "approval" || key !== "decide"),
+    ([key]) => key !== "tab",
   );
   const kept = Object.fromEntries(
-    tab === "mine" ? [...others, ["tab", myChanges]] : others,
+    tab === shown[0] ? others : [...others, ["tab", tab]],
   );
   return {
     ...view,
@@ -261,31 +283,17 @@ export function viewOnTab(view: View, tab: DraftsTab): View {
   };
 }
 
-// Whether a draft is on a tab: one's own unpublished changes on My changes, the rest for approval.
-export const isOnTab = (tab: DraftsTab, row: DraftRow): boolean =>
-  row.entry.unpublished === (tab === "mine");
-
-// The page's own choice kept in its view: only the drafts the reader may decide now.
-export const mineToDecide = "mine";
-
-// Mine to decide in the Views menu, counting the drafts the reader may decide now, kept in the
-// view's choices beside any others.
-export const mineToDecideChoice = (count: number): ViewChoice => ({
-  label: "Mine to decide",
-  count,
-  on: (view) => view.choices?.decide === mineToDecide,
-  turned: (view, on) => {
-    const others = Object.fromEntries(
-      Object.entries(view.choices ?? {}).filter(([key]) => key !== "decide"),
-    );
-    const kept = on ? { ...others, decide: mineToDecide } : others;
-    return {
-      ...view,
-      choices: Object.keys(kept).length === 0 ? undefined : kept,
-    };
-  },
-  part: { name: "Show", value: "Mine to decide" },
-});
+// Whether a draft is on a tab: one the reader may decide now on To decide, one's own unpublished
+// changes on Not published, and every published draft on All drafts.
+export function isOnTab(
+  tab: DraftsTab,
+  row: DraftRow,
+  decidesNow: (row: DraftRow) => boolean,
+): boolean {
+  if (tab === "unpublished") return row.entry.unpublished;
+  if (row.entry.unpublished) return false;
+  return tab === "all" || decidesNow(row);
+}
 
 // The drafts a set of rows names, all together.
 export const selectionOf = (rows: readonly DraftRow[]) =>
@@ -295,7 +303,7 @@ export const selectionOf = (rows: readonly DraftRow[]) =>
 export function draftsTable({
   rows,
   decidable,
-  tab = "approval",
+  tab = "all",
   onOpen,
 }: {
   rows: readonly DraftRow[];

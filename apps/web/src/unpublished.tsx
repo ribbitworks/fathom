@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The user's unpublished changes, which only they see until they publish them, all at once, as the
-// Decisions Log sets out: a count in the top bar, shown while there are any, with Publish, and a menu
-// listing them with Discard all. Publishing or discarding reloads every page's data, since either
-// changes what others, and the user, see.
+// The user's unpublished changes, which only they see until they publish them, as the Decisions Log
+// sets out: a count in the top bar, shown while there are any, with Publish, and a menu listing them
+// with Discard all, and the publishing and discarding the Drafts page offers for those chosen too.
+// Publishing or discarding reloads every page's data, since either changes what others, and the
+// user, see.
 
 import {
+  type DraftsAsked,
   type Unpublished,
   unpublishedDoneSchema,
   unpublishedSchema,
@@ -17,7 +19,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { describeProblem, getJson, sendJsonFor } from "./api.ts";
 import { AppMenu } from "./app-menu.tsx";
 import { MenuTitle, UnpublishedNote } from "./draft-details.tsx";
@@ -64,23 +66,24 @@ function changeWords({
   return [{ strong: "Reordered" }, ` ${subject.slice(newOrder.length)}`];
 }
 
-export function UnpublishedControl() {
+// Publishing and discarding the user's changes: every one, or those chosen, with those that go with
+// them, which the server adds. Each says how many it took in a notification.
+export function useUnpublishedActions(onDone: () => void) {
   const queryClient = useQueryClient();
-  const unpublished = useQuery(unpublishedQuery);
-  const [discarding, setDiscarding] = useState(false);
   const done = (verb: string) => async (result: { total: number }) => {
-    setDiscarding(false);
+    onDone();
     notifySuccess(`${verb} ${changeCount(result.total)}.`);
     await queryClient.invalidateQueries();
   };
+  const sending = (url: string) => (drafts?: DraftsAsked) =>
+    sendJsonFor(
+      "POST",
+      url,
+      drafts === undefined ? {} : { drafts },
+      unpublishedDoneSchema,
+    );
   const publish = useMutation({
-    mutationFn: () =>
-      sendJsonFor(
-        "POST",
-        "/api/unpublished/publish",
-        {},
-        unpublishedDoneSchema,
-      ),
+    mutationFn: sending("/api/unpublished/publish"),
     onSuccess: done("Published"),
     onError: (error) => {
       notifyFailure(
@@ -89,13 +92,7 @@ export function UnpublishedControl() {
     },
   });
   const discard = useMutation({
-    mutationFn: () =>
-      sendJsonFor(
-        "POST",
-        "/api/unpublished/discard",
-        {},
-        unpublishedDoneSchema,
-      ),
+    mutationFn: sending("/api/unpublished/discard"),
     onSuccess: done("Discarded"),
     onError: (error) => {
       notifyFailure(
@@ -103,9 +100,59 @@ export function UnpublishedControl() {
       );
     },
   });
+  return { publish, discard, busy: publish.isPending || discard.isPending };
+}
+
+// Asks before discarding changes, which cannot be undone.
+export function DiscardChangesModal({
+  opened,
+  total,
+  pending,
+  onCancel,
+  onDiscard,
+  children,
+}: {
+  opened: boolean;
+  // Such as "3 changes".
+  total: string;
+  pending: boolean;
+  onCancel: () => void;
+  onDiscard: () => void;
+  // What is discarded, ending with "This cannot be undone."
+  children: ReactNode;
+}) {
+  return (
+    <Modal
+      opened={opened}
+      onClose={onCancel}
+      title={`Discard ${total}?`}
+      closeOnEscape={!pending}
+      closeOnClickOutside={!pending}
+      withCloseButton={!pending}
+    >
+      <Stack gap="md">
+        <Text fz="sm">{children}</Text>
+        <Group justify="flex-end">
+          <Button variant="default" disabled={pending} onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button color="red" loading={pending} onClick={onDiscard}>
+            Discard
+          </Button>
+        </Group>
+      </Stack>
+    </Modal>
+  );
+}
+
+export function UnpublishedControl() {
+  const unpublished = useQuery(unpublishedQuery);
+  const [discarding, setDiscarding] = useState(false);
+  const { publish, discard, busy } = useUnpublishedActions(() => {
+    setDiscarding(false);
+  });
   const changes = unpublished.data?.changes ?? [];
   if (changes.length === 0) return null;
-  const busy = publish.isPending || discard.isPending;
   const total = changeCount(changes.length);
   return (
     <Group gap={4} wrap="nowrap">
@@ -114,7 +161,7 @@ export function UnpublishedControl() {
         loading={publish.isPending}
         disabled={discard.isPending}
         onClick={() => {
-          publish.mutate();
+          publish.mutate(undefined);
         }}
       >
         Publish {total}
@@ -153,42 +200,19 @@ export function UnpublishedControl() {
           </Menu.Item>
         </AppMenu.Dropdown>
       </AppMenu>
-      <Modal
+      <DiscardChangesModal
         opened={discarding}
-        onClose={() => {
+        total={total}
+        pending={discard.isPending}
+        onCancel={() => {
           setDiscarding(false);
         }}
-        title={`Discard ${total}?`}
-        closeOnEscape={!discard.isPending}
-        closeOnClickOutside={!discard.isPending}
-        withCloseButton={!discard.isPending}
+        onDiscard={() => {
+          discard.mutate(undefined);
+        }}
       >
-        <Stack gap="md">
-          <Text fz="sm">
-            The unpublished changes are discarded. This cannot be undone.
-          </Text>
-          <Group justify="flex-end">
-            <Button
-              variant="default"
-              disabled={discard.isPending}
-              onClick={() => {
-                setDiscarding(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              color="red"
-              loading={discard.isPending}
-              onClick={() => {
-                discard.mutate();
-              }}
-            >
-              Discard
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
+        The unpublished changes are discarded. This cannot be undone.
+      </DiscardChangesModal>
     </Group>
   );
 }

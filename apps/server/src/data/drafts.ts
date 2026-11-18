@@ -23,7 +23,7 @@ import {
   unpublishedDrafts,
   users,
 } from "@fathom/db";
-import { type DraftKind, isLink, type Tier } from "@fathom/shared";
+import { type DraftKind, draftKey, isLink, type Tier } from "@fathom/shared";
 import {
   type AnyColumn,
   and,
@@ -637,14 +637,47 @@ export function changedBy(
   return changed;
 }
 
-// Every draft waiting or rejected, by kind and record, so an approval can tell which it decided.
+// The identifiers of the records given, by kind, in chunks small enough for one statement each.
+export function chunksByKind(
+  records: readonly { recordType: string; recordId: string }[],
+): [string, string[][]][] {
+  const ids = new Map<string, string[]>();
+  for (const { recordType, recordId } of records) {
+    const kind = ids.get(recordType) ?? [];
+    kind.push(recordId);
+    ids.set(recordType, kind);
+  }
+  return [...ids].map(([recordType, kind]) => [recordType, inChunks(kind)]);
+}
+
+// Every draft waiting or rejected, by kind and record, so an approval can tell which it decided, or
+// those of the records given.
 export async function draftKeys(
   reader: Pick<Database, "select">,
+  of?: readonly { recordType: string; recordId: string }[],
 ): Promise<Set<string>> {
-  const rows = await reader
-    .select({ recordType: drafts.recordType, recordId: drafts.recordId })
-    .from(drafts);
-  return new Set(rows.map((row) => `${row.recordType} ${row.recordId}`));
+  const keyed = (rows: readonly { recordType: string; recordId: string }[]) =>
+    rows.map((row) => draftKey(row.recordType, row.recordId));
+  const columns = { recordType: drafts.recordType, recordId: drafts.recordId };
+  if (of === undefined) {
+    return new Set(keyed(await reader.select(columns).from(drafts)));
+  }
+  const found = new Set<string>();
+  for (const [recordType, chunks] of chunksByKind(of)) {
+    for (const chunk of chunks) {
+      const rows = await reader
+        .select(columns)
+        .from(drafts)
+        .where(
+          and(
+            eq(drafts.recordType, recordType),
+            inArray(drafts.recordId, chunk),
+          ),
+        );
+      for (const key of keyed(rows)) found.add(key);
+    }
+  }
+  return found;
 }
 
 // Refuses an approval that applied drafts the approver changed since each was last approved or

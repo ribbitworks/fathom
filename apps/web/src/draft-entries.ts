@@ -15,8 +15,10 @@ import {
   type DraftKind,
   draftKinds,
   type DraftState,
+  draftingPermissions,
   type FeatureTeam,
   type FeatureTeamDraft,
+  holdsAny,
   type List,
   isNoteField,
   type LinkedRecord,
@@ -540,6 +542,8 @@ function planEntries(
 // What drafts a role sees, by the data it sees, and which kinds it approves.
 export interface DraftsSeen {
   approves: readonly DraftKind[];
+  // Whether the reader makes drafts, so has changes of their own to publish.
+  makesDrafts: boolean;
   // Whether the reader sees people, so their drafts; those who see only lists see only theirs.
   seesPeople: boolean;
   // Whether the reader sees lists, through people or planning configuration.
@@ -555,6 +559,7 @@ export interface DraftsSeen {
 
 export const draftsSeen = (permissions: readonly Permission[]): DraftsSeen => ({
   approves: approvableKinds(permissions),
+  makesDrafts: holdsAny(permissions, draftingPermissions),
   seesPeople: permissions.includes("people:view"),
   seesLists:
     permissions.includes("people:view") ||
@@ -605,7 +610,7 @@ export function useDraftEntries({
   seesTeams,
   seesProjects,
   seesSettings,
-}: DraftsSeen): DraftEntries {
+}: Omit<DraftsSeen, "makesDrafts">): DraftEntries {
   const people = useQuery({ ...peopleQuery, enabled: seesPeople });
   const lists = useQuery({ ...listsQuery, enabled: seesLists });
   const releases = useQuery({ ...releaseStreamsQuery, enabled: seesPlan });

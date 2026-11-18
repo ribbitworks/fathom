@@ -12,6 +12,13 @@ describe("ticking rows", () => {
     expect([...ticked]).toEqual(["a", "b", "c"]);
     expect([...withTicks(ticked, ["a", "c", "gone"], false)]).toEqual(["b"]);
   });
+
+  it("gives back the same ticks when nothing changes", () => {
+    const ticked = new Set(["a"]);
+    expect(withTicks(ticked, ["a"], true)).toBe(ticked);
+    expect(withTicks(ticked, ["gone"], false)).toBe(ticked);
+    expect(withTicks(ticked, [], true)).toBe(ticked);
+  });
 });
 
 describe("the rows ticked among those shown", () => {

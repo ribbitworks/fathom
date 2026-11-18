@@ -36,6 +36,7 @@ import {
   featuresListGeneral,
   featureBuiltInLists,
   builtInListSchema,
+  draftKey,
   type Kept,
   keptOf,
   type Meaning,
@@ -1432,7 +1433,7 @@ async function removeDiscarded(
 ): Promise<void> {
   const seen = new Set<string>();
   for (const { recordType, recordId } of made) {
-    const key = `${recordType} ${recordId}`;
+    const key = draftKey(recordType, recordId);
     if (seen.has(key)) continue;
     seen.add(key);
     await discardDrafts(transaction, editor, recordType as DraftKind, [

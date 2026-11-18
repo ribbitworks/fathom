@@ -3176,8 +3176,18 @@ describe("a read-only table of drafts", () => {
   }
 
   // Ticks that keep their own state, as a page would, with g3 never tickable.
-  function Ticked({ onDecide }: { onDecide: (ids: string[]) => void }) {
-    const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
+  function Ticked({
+    view = emptyView,
+    first = [],
+    tip,
+    onTicked = noop,
+  }: {
+    view?: View;
+    first?: string[];
+    tip?: RowTicks<Gadget>["tip"];
+    onTicked?: (ids: string[]) => void;
+  }) {
+    const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set(first));
     return (
       <MantineProvider theme={testTheme}>
         <RecordGrid
@@ -3188,28 +3198,22 @@ describe("a read-only table of drafts", () => {
           lists={[]}
           canEdit={false}
           canEditColumns={false}
-          view={emptyView}
+          view={view}
           onView={noop}
           actions={actions()}
           ticks={{
             ticked,
             onTick: (ids, on) => {
-              setTicked((current) => withTicks(current, ids, on));
+              setTicked((current) => {
+                const next = withTicks(current, ids, on);
+                onTicked([...next]);
+                return next;
+              });
             },
             tickable: ({ id }) => id !== "g3",
             label: (one) => `Select ${one.name}`,
             allLabel: "Select all",
-            actions: (chosen) => (
-              <button
-                type="button"
-                disabled={chosen.length === 0}
-                onClick={() => {
-                  onDecide(chosen.map(({ id }) => id));
-                }}
-              >
-                Decide
-              </button>
-            ),
+            ...(tip === undefined ? {} : { tip }),
           }}
         />
       </MantineProvider>
@@ -3285,15 +3289,10 @@ describe("a read-only table of drafts", () => {
     expect(screen.getByText("No gadgets")).toBeDefined();
   });
 
-  it("ticks rows one at a time or all those that may be, and acts on those ticked", async () => {
+  it("ticks rows one at a time or all those that may be, saying aloud how many", async () => {
     // Given a table of ticks, one of whose rows can't be ticked
-    const onDecide = vi.fn();
-    render(<Ticked onDecide={onDecide} />);
-    expect(screen.getByText("None selected")).toBeDefined();
-    expect(screen.getByRole("button", { name: "Decide" })).toHaveProperty(
-      "disabled",
-      true,
-    );
+    render(<Ticked />);
+    expect(screen.queryByText(/selected/u)).toBeNull();
     expect(
       screen.getByRole("checkbox", { name: "Select Gadget g3" }),
     ).toHaveProperty("disabled", true);
@@ -3305,20 +3304,48 @@ describe("a read-only table of drafts", () => {
     expect(screen.getByText("1 selected")).toBeDefined();
     await userEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
 
-    // Then the bar acts on both, never the one that can't be ticked
+    // Then both are ticked, never the one that can't be, and unticking all says nothing
     expect(screen.getByText("2 selected")).toBeDefined();
-    await userEvent.click(screen.getByRole("button", { name: "Decide" }));
-    expect(onDecide).toHaveBeenCalledWith(["g1", "g2"]);
+    await userEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    expect(screen.queryByText(/selected/u)).toBeNull();
+  });
 
-    // And Clear unticks them
-    await userEvent.click(
-      screen.getByRole("button", { name: "Clear selection" }),
+  it("gives a tick the table's tip for its row, read with it, and none where there is none", () => {
+    render(
+      <Ticked
+        tip={({ id }) =>
+          id === "g1" ? "Linked to the change to Gadget g2" : undefined
+        }
+      />,
     );
-    expect(screen.getByText("None selected")).toBeDefined();
+    const tickOf = (name: string) => screen.getByRole("checkbox", { name });
+    expect(tickOf("Select Gadget g1").getAttribute("aria-description")).toBe(
+      "Linked to the change to Gadget g2",
+    );
+    expect(
+      tickOf("Select Gadget g2").getAttribute("aria-description"),
+    ).toBeNull();
+  });
+
+  it("unticks a row the view hides, so nothing is done to rows out of sight", () => {
+    // Given two rows ticked
+    const onTicked = vi.fn<(ids: string[]) => void>();
+
+    // When a search hides one of them
+    render(
+      <Ticked
+        first={["g1", "g2"]}
+        view={{ ...emptyView, search: "g1" }}
+        onTicked={onTicked}
+      />,
+    );
+
+    // Then only the row in sight stays ticked
+    expect(onTicked).toHaveBeenLastCalledWith(["g1"]);
   });
 
   it("ticks a row with Space on its first cell, and only one that may be", async () => {
-    render(<Ticked onDecide={noop} />);
+    render(<Ticked />);
     act(() => {
       cellOf("g2", "name").focus();
     });
@@ -3337,7 +3364,7 @@ describe("a read-only table of drafts", () => {
   });
 
   it("leaves the select-all tick half ticked while only some are", async () => {
-    render(<Ticked onDecide={noop} />);
+    render(<Ticked />);
     await userEvent.click(
       screen.getByRole("checkbox", { name: "Select Gadget g1" }),
     );

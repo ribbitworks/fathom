@@ -29,6 +29,8 @@ const changes = (total: number) => () =>
     changes: Array.from({ length: total }, (_, index) => ({
       subject: `Fictional Person ${String(index + 1)}`,
       action: "changed",
+      key: `person p${String(index + 1)}`,
+      linked: [],
     })),
   });
 
@@ -57,7 +59,11 @@ describe("unpublished changes", () => {
             { subject: "the new order for Sites" },
             { subject: "the new order for Levels", discarded: true },
             { subject: "Fictional Other", discarded: true },
-          ],
+          ].map((change, index) => ({
+            ...change,
+            key: `person p${String(index)}`,
+            linked: [],
+          })),
         }),
     });
     await userEvent.click(

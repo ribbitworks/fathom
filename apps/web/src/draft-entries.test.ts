@@ -29,6 +29,7 @@ describe("the drafts a role sees", () => {
   it("sees nothing beyond what its permissions give", () => {
     expect(draftsSeen([])).toEqual({
       approves: [],
+      makesDrafts: false,
       seesPeople: false,
       seesLists: false,
       seesPlan: false,
@@ -44,6 +45,11 @@ describe("the drafts a role sees", () => {
       seesLists: true,
       seesTeams: true,
     });
+  });
+
+  it("makes drafts with any permission that edits data with drafts", () => {
+    expect(draftsSeen(["people:edit"]).makesDrafts).toBe(true);
+    expect(draftsSeen(["people:view"]).makesDrafts).toBe(false);
   });
 
   it("doesn't see feature teams without people", () => {

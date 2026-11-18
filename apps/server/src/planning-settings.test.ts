@@ -341,7 +341,14 @@ describe("deciding a draft of the settings", () => {
       "/api/unpublished",
     );
     expect(response.json()).toEqual({
-      changes: [{ subject: "the planning settings", action: "changed" }],
+      changes: [
+        {
+          subject: "the planning settings",
+          action: "changed",
+          key: `planning-settings ${planningSettingsId}`,
+          linked: [],
+        },
+      ],
     });
   });
 });
