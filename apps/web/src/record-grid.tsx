@@ -420,8 +420,16 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // what that draft is, which its menu says before what it changes.
   draftSubject?: (record: Rec) => string;
   // For a table whose rows can share drafts, such as cycles one change of their schedule's cycles
-  // moves: which drafts a record's waiting draft stands for, so each is counted once.
-  draftKeys?: (draft: DraftOf<Rec>) => readonly string[];
+  // moves: the waiting drafts a record stands for, its own or not, so each is counted once.
+  draftKeys?: (record: Rec) => readonly string[];
+  // For a table whose rows' menus decide another record's draft too. Approve sends those of the
+  // drafts the menu decides that need no other approver. Each item names whose draft it decides
+  // where the record's own is not among them.
+  menuDecides?: (record: Rec) => {
+    approved: DraftSelection;
+    approvedOf?: string | undefined;
+    rejectedOf?: string | undefined;
+  };
   // What else a record's menu offers, after its columns' own items, such as showing its details.
   menuItems?: (record: Rec) => ReactNode;
   // Each record's key, for a table whose records have keys: its menu offers Copy link, and typing
@@ -901,6 +909,9 @@ export function keptForKind<Col extends AnyColumn>(
     lost,
   };
 }
+
+const draftItemLabel = (verb: string, of: string | undefined) =>
+  of === undefined ? `${verb} draft` : `${verb} ${of}'s draft`;
 
 // A record added but not saved yet is shown at once under an identifier of the table's own, until
 // the server gives its own; until then it cannot be changed. The table goes on naming its row by it,
@@ -3347,6 +3358,12 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       rowActions && mayChange(record) && record.heldBy === undefined;
     const draftItems = changes || decidesOwnDraft(record);
     const deciding = decidedInMenu(record);
+    const decides = table.menuDecides?.(record);
+    // A draft keeps needing another approver once rejected, when it is no longer what Approve sends.
+    const othersApprove =
+      decides === undefined
+        ? ownDraft?.state === "waiting" && ownDraft.needsOtherApprover === true
+        : draftTotal(decides.approved) === 0;
     const removes =
       changes && draft?.action !== "created" && draft?.action !== "deleted";
     return (
@@ -3398,20 +3415,20 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
           <>
             {ownItems.length > 0 && <Menu.Divider />}
             <Menu.Item
-              disabled={ownDraft?.needsOtherApprover === true}
+              disabled={othersApprove}
               onClick={() => {
-                actions.decide("approve", deciding);
+                actions.decide("approve", decides?.approved ?? deciding);
               }}
             >
-              Approve draft
+              {draftItemLabel("Approve", decides?.approvedOf)}
             </Menu.Item>
-            {ownDraft?.needsOtherApprover === true && <OtherApproverNote />}
+            {othersApprove && <OtherApproverNote />}
             <Menu.Item
               onClick={() => {
                 actions.decide("reject", deciding);
               }}
             >
-              Reject draft…
+              {`${draftItemLabel("Reject", decides?.rejectedOf)}…`}
             </Menu.Item>
           </>
         )}
@@ -3723,10 +3740,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
               total={waitingTotal}
               everywhere={
                 new Set(
-                  everyone.flatMap(({ id, draft }) =>
-                    draft?.state === "waiting"
-                      ? (table.draftKeys?.(draft) ?? [id])
-                      : [],
+                  everyone.flatMap(
+                    (record) =>
+                      table.draftKeys?.(record) ??
+                      (record.draft?.state === "waiting" ? [record.id] : []),
                   ),
                 ).size +
                 draftedFields.filter(({ draft }) => draft?.state === "waiting")

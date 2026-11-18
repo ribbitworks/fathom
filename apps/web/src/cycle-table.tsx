@@ -5,7 +5,7 @@
 // its colour's square. The rows can be grouped by schedule. A cycle's row is marked where a
 // draft of its schedule's cycles changes it, adds it or removes it, and its menu decides, discards
 // or resubmits that draft, which may change other cycles too, deciding the release's own draft with
-// it where that changes the cycle as well.
+// it where that changes the cycle as well, or alone where the change behind it can't be decided.
 
 import {
   type Choice,
@@ -87,14 +87,20 @@ interface CycleValues {
 }
 
 // A cycle's draft: that of the change behind it, as it changes the cycle, and the record the change
-// is the draft of, which the row's menu decides, discards or resubmits; with the draft of the
-// cycle's own release, where that changes the cycle's Release as well and could be decided now,
-// which the menu decides with it for a role that approves releases.
+// is the draft of, which the row's menu decides, discards or resubmits; with the waiting draft of
+// the cycle's own release, where that changes the cycle's Release as well, which the menu decides
+// too, though the change behind it was rejected.
 export type CycleDraft = GridDraft & {
   live: CycleValues;
   ref: RecordRef;
-  release?: RecordRef | undefined;
+  release?: (Waiting & { name: string }) | undefined;
 };
+
+interface Waiting {
+  ref: RecordRef;
+  decidable: boolean;
+  needsOtherApprover: boolean;
+}
 
 export interface CycleRow extends GridRecord, CycleValues {
   draft?: CycleDraft | undefined;
@@ -252,9 +258,14 @@ function marksOf(
               ),
             },
             release:
-              decidable(alsoRelease.record) &&
-              alsoRelease.record.draft.needsOtherApprover !== true
-                ? alsoRelease.ref
+              alsoRelease.record.draft.state === "waiting"
+                ? {
+                    ref: alsoRelease.ref,
+                    name: alsoRelease.name,
+                    decidable: decidable(alsoRelease.record),
+                    needsOtherApprover:
+                      alsoRelease.record.draft.needsOtherApprover === true,
+                  }
                 : undefined,
           }),
     },
@@ -277,6 +288,29 @@ function subjectFor(
     ? own
     : `${own}, and of a change to ${alsoRelease.name}`;
 }
+
+// A row's waiting drafts, the change behind it first, each counted though the other was rejected.
+const waitingOf = ({
+  draft,
+  heldBy,
+}: CycleRow): (Waiting & { own: boolean })[] =>
+  draft === undefined
+    ? []
+    : [
+        ...(draft.state === "waiting"
+          ? [
+              {
+                ref: draft.ref,
+                decidable: decidable({ draft, heldBy }),
+                needsOtherApprover: draft.needsOtherApprover === true,
+                own: true,
+              },
+            ]
+          : []),
+        ...(draft.release === undefined
+          ? []
+          : [{ ...draft.release, own: false }]),
+      ];
 
 // The first day of a cycle, or of the cycle as it is live where a draft removes it.
 const startOf = ({ cycle, twin }: CycleTwin) => (cycle ?? twin).startsOn;
@@ -536,12 +570,12 @@ export function cycleTable({
   // The kinds of draft the user's role approves.
   approves: readonly DraftKind[];
 }): RecordTable<CycleRow, never, undefined> {
-  // The drafts a row's menu decides: the change behind it, with its release's draft for a role
-  // that approves both, so a role approving only one still decides the change behind the row.
-  const decidedBy = ({ ref, release }: CycleDraft): RecordRef[] => {
-    const both = release === undefined ? [ref] : [ref, release];
-    return mayDecide(approves, { ...noDrafts(), records: both }) ? both : [ref];
-  };
+  const decidedBy = (row: CycleRow) =>
+    waitingOf(row).filter(
+      ({ ref, decidable }) =>
+        decidable && mayDecide(approves, { ...noDrafts(), records: [ref] }),
+    );
+  const refsOf = (waiting: readonly Waiting[]) => waiting.map(({ ref }) => ref);
   // A draft's menu names every value it changes, the Duration only the details show included.
   const describedColumns = (row: CycleRow) => [
     ...cycleDetailColumns(streams, [row], planned),
@@ -562,7 +596,23 @@ export function cycleTable({
     draftFields: (row, draft) =>
       draftFieldsOf(describedColumns(row), row, draft),
     draftSubject: ({ subject }) => subject,
-    draftKeys: (draft) => decidedBy(draft).map(refKey),
+    draftKeys: (row) => waitingOf(row).map(({ ref }) => refKey(ref)),
+    decidable: (row) => decidedBy(row).length > 0,
+    menuDecides: (row) => {
+      const decided = decidedBy(row);
+      const approved = decided.filter(
+        ({ needsOtherApprover }) => !needsOtherApprover,
+      );
+      const othersOnly = (drafts: readonly { own: boolean }[]) =>
+        drafts.length > 0 && !drafts.some(({ own }) => own)
+          ? row.draft?.release?.name
+          : undefined;
+      return {
+        approved: { ...noDrafts(), records: refsOf(approved) },
+        approvedOf: othersOnly(approved),
+        rejectedOf: othersOnly(decided),
+      };
+    },
     // Each draft once, though it changes several of the cycles named.
     drafts: (ids) => ({
       ...noDrafts(),
@@ -570,11 +620,7 @@ export function cycleTable({
         ...new Map(
           rows
             .filter(({ id }) => ids.includes(id))
-            .flatMap((row) =>
-              row.draft !== undefined && decidable(row)
-                ? decidedBy(row.draft)
-                : [],
-            )
+            .flatMap((row) => refsOf(decidedBy(row)))
             .map((ref) => [refKey(ref), ref]),
         ).values(),
       ],
