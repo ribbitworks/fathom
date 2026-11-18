@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Prepares the simulated browser the front-end tests run in: browser features Mantine and the router
-// rely on that it lacks, how long tests wait for the page, and removing each test's page and
-// notifications afterwards.
+// rely on that it lacks, how long tests wait for the page, and removing each test's page cleanly.
 
 import { notifications } from "@mantine/notifications";
 import { cleanup, configure } from "@testing-library/react";
@@ -12,6 +11,9 @@ import { afterEach } from "vitest";
 // as it appears, so a long limit slows no test that passes; it keeps a busy computer from failing
 // one. The default second is far too short for that.
 configure({ asyncUtilTimeout: 10_000 });
+
+// Taken before any test can put fake timers in its place.
+const realSetTimeout = globalThis.setTimeout;
 
 if (typeof window !== "undefined") {
   // Tests run as people who ask for less motion, since the simulated browser runs no animations,
@@ -47,9 +49,12 @@ if (typeof window !== "undefined") {
   };
 }
 
-afterEach(() => {
+afterEach(async () => {
   cleanup();
   // Notifications are kept outside the page, so each test starts without any.
   notifications.clean();
   notifications.cleanQueue();
+  // Some components tidy up on a timer once removed, such as drag and drop's announcer, which would
+  // otherwise fire after a file's last test, once the simulated browser is gone.
+  await new Promise((resolve) => realSetTimeout(resolve, 0));
 });
