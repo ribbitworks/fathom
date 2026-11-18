@@ -7,7 +7,7 @@
 
 ## Context
 
-[ADR 0002](0002-libraries.md) left UI components, styling, charts, and the Gantt, timeline, and org chart components to the component evaluation in the roadmap's [After Hello Fathom](../product/roadmap.md#after-hello-fathom) section. The first stage needs forms, tables, date pickers, and simple charts. The Gantt, timeline, and org chart views were to come in the roadmap's later stage, The Organization; the org chart and, on 2026-11-11, the timeline views have since moved to the first stage.
+[ADR 0002](0002-libraries.md) left UI components, styling, charts, and the Gantt, timeline, and org chart components to a component evaluation. The first stage needs forms, tables, date pickers, and simple charts. The Gantt, timeline, and org chart views were to come in the roadmap's later stage, The Organization; the org chart and, on 2026-11-11, the timeline views have since moved to the first stage.
 
 Every choice must:
 

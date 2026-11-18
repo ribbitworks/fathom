@@ -20,7 +20,7 @@ The data access layer already writes every change through one place per kind of 
 
 ## Consequences
 
-- **Every table follows the same pattern:** Configuration, and every table later slices add, gains drafts by reading through the overlay and writing through the same draft functions, as the [Implementation Plan](../design/implementation-plan.md) sets out.
+- **Every table follows the same pattern:** Configuration, and every table later slices add, gains drafts by reading through the overlay and writing through the same draft functions.
 - **What the database cannot check:** Drafts refer to columns and choices without foreign keys, so the server refuses deleting what a draft uses, and approving checks that each draft still fits.
 - **One change to drafts at a time:** Changes to drafts wait for each other, which suits the number of editors the [Product Brief](../product/brief.md) expects.
 - **Drafts are read whole:** Every read of a table reads its drafts, which suits tables of the size [ADR 0006](0006-table-views-in-the-browser.md) expects.

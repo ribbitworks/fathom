@@ -7,7 +7,7 @@
 
 ## Context
 
-[ADR 0001](0001-tech-stack.md) chose TypeScript end to end, React with Vite, Node.js, and PostgreSQL, and left specific libraries to a follow-up decision. The [Implementation Plan](../design/implementation-plan.md) needs them before Hello Fathom.
+[ADR 0001](0001-tech-stack.md) chose TypeScript end to end, React with Vite, Node.js, and PostgreSQL, and left specific libraries to a follow-up decision.
 
 What matters most in these choices:
 
@@ -49,7 +49,7 @@ What matters most in these choices:
 | Copyright and licence information | The REUSE specification, checked with the REUSE tool | Per-file copyright headers only | A standard, machine-readable way to state each file's licence, checked automatically, while the copyright is stated once, matching NOTICE, rather than in every file |
 | Node.js version management | fnm | nvm, Volta | Fast, works on macOS, Linux, and Windows, and switches versions automatically from `.node-version` |
 
-UI components, styling, charts, and the Gantt, timeline, and org chart components are chosen in [ADR 0004](0004-ui-components.md), after the component evaluation in the roadmap's [After Hello Fathom](../product/roadmap.md#after-hello-fathom) section.
+UI components, styling, charts, and the Gantt, timeline, and org chart components are chosen in [ADR 0004](0004-ui-components.md), after a component evaluation.
 
 ### Versions
 
