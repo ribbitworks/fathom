@@ -4,13 +4,8 @@
 // first opens, since its dictionaries are too large for the bundle every page loads. Until it has
 // loaded, or if it cannot load, the form leaves the check to the server, which always makes it.
 
-import type { PasswordOwner } from "@fathom/shared";
+import type { GuessableCheck } from "@fathom/shared";
 import { useEffect, useState } from "react";
-
-export type GuessableCheck = (
-  password: string,
-  owner: PasswordOwner,
-) => boolean;
 
 let loading: Promise<GuessableCheck> | undefined;
 

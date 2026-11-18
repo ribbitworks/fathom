@@ -1,48 +1,181 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests of choosing the tests a change can affect, for 'pnpm test:changed': documentation alone
-// runs none, a Help page runs the web app's, the web app's stylesheets alone run its tests and the
-// linters, a change in packages runs the script tests and those packages' tests, and any other
-// change runs every test; any tests run in the check's turn, and none waits for it.
+// runs none, a package's source runs the tests importing it in that package and those depending on
+// it, any other change in a package runs every test of those packages, a Help page runs the web
+// app's tests importing the Help pages, the web app's stylesheets alone run its tests and the
+// linters, and any other change runs every test, all without coverage; any tests run in the check's
+// turn, and none waits for it.
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { runTests, testsFor, testsForArguments } from "./test-changed.mjs";
+import {
+  readWorkspace,
+  runTests,
+  testsFor,
+  testsForArguments,
+} from "./test-changed.mjs";
+
+// A workspace shaped as Fathom's: the seed depends on the server, which depends on the shared
+// package, as the web app does; the test helpers have no tests of their own.
+const workspace = new Map(
+  Object.entries({
+    "apps/server": {
+      dependsOn: ["packages/shared", "packages/test-utils"],
+      hasTests: true,
+    },
+    "apps/web": { dependsOn: ["packages/shared"], hasTests: true },
+    "packages/seed": { dependsOn: ["apps/server"], hasTests: true },
+    "packages/shared": { dependsOn: [], hasTests: true },
+    "packages/test-utils": { dependsOn: [], hasTests: false },
+  }),
+);
+
+const allExist = () => true;
+const choose = (paths, exists = allExist) =>
+  testsFor(paths, { workspace, exists });
 
 describe("choosing the tests a change can affect", () => {
   it("runs none when only documentation changed", () => {
     assert.deepEqual(
-      testsFor(["docs/issues.md", "README.md", "apps/web/README.md"]),
+      choose(["docs/issues.md", "README.md", "apps/web/README.md"]),
       { kind: "none" },
     );
   });
 
-  it("runs the web app's tests when a Help page changed, since it builds them in", () => {
-    assert.deepEqual(testsFor(["docs/help/lists.md", "docs/issues.md"]), {
+  it("runs none when nothing changed", () => {
+    assert.deepEqual(choose([]), { kind: "none" });
+  });
+
+  it("runs the tests importing a package's source, in it and in every package depending on it", () => {
+    assert.deepEqual(
+      choose([
+        "packages/shared/src/views.ts",
+        "apps/server/src/people.test.ts",
+        "packages/shared/src/views.ts",
+        "docs/issues.md",
+      ]),
+      {
+        kind: "packages",
+        whole: [],
+        related: [
+          "apps/server",
+          "apps/web",
+          "packages/seed",
+          "packages/shared",
+        ],
+        files: [
+          "apps/server/src/people.test.ts",
+          "packages/shared/src/views.ts",
+        ],
+      },
+    );
+  });
+
+  it("runs only the web app's tests importing a change to its components", () => {
+    assert.deepEqual(choose(["apps/web/src/app.tsx"]), {
       kind: "packages",
-      packages: ["apps/web"],
+      whole: [],
+      related: ["apps/web"],
+      files: ["apps/web/src/app.tsx"],
     });
   });
 
-  it("runs none when nothing changed", () => {
-    assert.deepEqual(testsFor([]), { kind: "none" });
+  it("runs the web app's tests importing the Help pages when one changed, since it builds them in", () => {
+    assert.deepEqual(
+      choose(["docs/help/lists.md", "docs/help/people.md", "docs/issues.md"]),
+      {
+        kind: "packages",
+        whole: [],
+        related: ["apps/web"],
+        files: ["apps/web/src/help-pages.ts"],
+      },
+    );
   });
 
-  it("runs the script tests and each changed package's tests, once each", () => {
+  it("runs the web app's tests importing the Help pages when one was removed", () => {
     assert.deepEqual(
-      testsFor([
-        "apps/server/src/people.ts",
-        "packages/shared/src/access.ts",
-        "apps/server/src/people.test.ts",
-        "docs/issues.md",
-      ]),
-      { kind: "packages", packages: ["apps/server", "packages/shared"] },
+      choose(
+        ["docs/help/retired.md"],
+        (path) => path !== "docs/help/retired.md",
+      ),
+      {
+        kind: "packages",
+        whole: [],
+        related: ["apps/web"],
+        files: ["apps/web/src/help-pages.ts"],
+      },
     );
+  });
+
+  it("runs every test of a package, and of those depending on it, when more than its source changed", () => {
+    for (const path of [
+      "apps/server/package.json",
+      "apps/server/vitest.config.ts",
+      "apps/server/migrations/0001_fictional.sql",
+      "apps/server/src/fixture.json",
+    ]) {
+      assert.deepEqual(
+        choose([path, "apps/web/src/app.tsx"]),
+        {
+          kind: "packages",
+          whole: ["apps/server", "packages/seed"],
+          related: ["apps/web"],
+          files: ["apps/web/src/app.tsx"],
+        },
+        path,
+      );
+    }
+  });
+
+  it("runs the tests importing a source file only in packages not already running every test", () => {
+    assert.deepEqual(
+      choose(["apps/server/package.json", "packages/shared/src/views.ts"]),
+      {
+        kind: "packages",
+        whole: ["apps/server", "packages/seed"],
+        related: ["apps/web", "packages/shared"],
+        files: ["packages/shared/src/views.ts"],
+      },
+    );
+  });
+
+  it("runs nothing of a removed source file, whose importers changed too", () => {
+    assert.deepEqual(
+      choose(
+        ["apps/server/src/removed.ts", "apps/server/src/people.ts"],
+        (path) => path !== "apps/server/src/removed.ts",
+      ),
+      {
+        kind: "packages",
+        whole: [],
+        related: ["apps/server", "packages/seed"],
+        files: ["apps/server/src/people.ts"],
+      },
+    );
+    assert.deepEqual(
+      choose(["apps/server/src/removed.ts"], () => false),
+      {
+        kind: "packages",
+        whole: [],
+        related: [],
+        files: [],
+      },
+    );
+  });
+
+  it("runs the tests of the packages depending on one without tests of its own", () => {
+    assert.deepEqual(choose(["packages/test-utils/package.json"]), {
+      kind: "packages",
+      whole: ["apps/server", "packages/seed"],
+      related: [],
+      files: [],
+    });
   });
 
   it("runs the web app's tests and the linters when only its stylesheets changed, with any documentation", () => {
     assert.deepEqual(
-      testsFor([
+      choose([
         "apps/web/src/record-grid.module.css",
         "apps/web/src/theme.css",
         "docs/design/visual-design.md",
@@ -51,21 +184,21 @@ describe("choosing the tests a change can affect", () => {
     );
   });
 
-  it("runs the packages' tests when a stylesheet changed with other code", () => {
+  it("runs every web app test when a stylesheet changed with other code", () => {
     assert.deepEqual(
-      testsFor(["apps/web/src/theme.css", "apps/web/src/app.tsx"]),
-      { kind: "packages", packages: ["apps/web"] },
+      choose(["apps/web/src/theme.css", "apps/web/src/app.tsx"]),
+      {
+        kind: "packages",
+        whole: ["apps/web"],
+        related: [],
+        files: ["apps/web/src/app.tsx"],
+      },
     );
   });
 
-  it("runs every test when a stylesheet outside the web app changed", () => {
-    assert.deepEqual(testsFor(["styles/theme.css"]), {
-      kind: "everything",
-    });
-  });
-
-  it("runs every test when a file outside the packages changed", () => {
+  it("runs every test of every package with tests when a file outside the packages changed", () => {
     for (const path of [
+      "styles/theme.css",
       "pnpm-lock.yaml",
       "package.json",
       "scripts/lib.sh",
@@ -73,11 +206,68 @@ describe("choosing the tests a change can affect", () => {
       "tsconfig.base.json",
     ]) {
       assert.deepEqual(
-        testsFor(["apps/web/src/app.tsx", path]),
-        { kind: "everything" },
+        choose(["apps/web/src/app.tsx", path]),
+        {
+          kind: "everything",
+          whole: [
+            "apps/server",
+            "apps/web",
+            "packages/seed",
+            "packages/shared",
+          ],
+          related: [],
+          files: [],
+        },
         path,
       );
     }
+  });
+});
+
+describe("reading the workspace", () => {
+  it("names each package's dependencies within it by folder, and whether it has tests", () => {
+    const manifests = [
+      {
+        folder: "apps/server",
+        manifest: {
+          name: "@fictional/server",
+          scripts: { test: "vitest run" },
+          dependencies: { "@fictional/shared": "workspace:*", zod: "4.0.0" },
+          devDependencies: { "@fictional/helpers": "workspace:*" },
+        },
+      },
+      {
+        folder: "packages/shared",
+        manifest: {
+          name: "@fictional/shared",
+          scripts: { test: "vitest run" },
+        },
+      },
+      { folder: "packages/helpers", manifest: { name: "@fictional/helpers" } },
+    ];
+    assert.deepEqual(
+      readWorkspace(manifests),
+      new Map([
+        [
+          "apps/server",
+          {
+            dependsOn: ["packages/shared", "packages/helpers"],
+            hasTests: true,
+          },
+        ],
+        ["packages/shared", { dependsOn: [], hasTests: true }],
+        ["packages/helpers", { dependsOn: [], hasTests: false }],
+      ]),
+    );
+  });
+
+  it("reads this repository's packages", () => {
+    const read = readWorkspace();
+    assert.deepEqual(read.get("apps/web"), {
+      dependsOn: ["packages/shared"],
+      hasTests: true,
+    });
+    assert.equal(read.get("packages/test-utils")?.hasTests, false);
   });
 });
 
@@ -93,27 +283,32 @@ describe("the command's arguments", () => {
     };
   }
 
+  const chooser = (paths) => choose(paths);
+
   it("counts everything since the branch left main by default", () => {
-    const { calls, listChanged } = lister(["apps/server/src/people.ts"]);
-    assert.deepEqual(testsForArguments([], listChanged), {
+    const { calls, listChanged } = lister(["apps/web/src/app.tsx"]);
+    assert.deepEqual(testsForArguments([], listChanged, chooser), {
       kind: "packages",
-      packages: ["apps/server"],
+      whole: [],
+      related: ["apps/web"],
+      files: ["apps/web/src/app.tsx"],
     });
     assert.deepEqual(calls, [{ uncommitted: false }]);
   });
 
   it("counts only the work not yet committed with --uncommitted", () => {
     const { calls, listChanged } = lister(["apps/web/src/theme.css"]);
-    assert.deepEqual(testsForArguments(["--uncommitted"], listChanged), {
-      kind: "stylesheets",
-    });
+    assert.deepEqual(
+      testsForArguments(["--uncommitted"], listChanged, chooser),
+      { kind: "stylesheets" },
+    );
     assert.deepEqual(calls, [{ uncommitted: true }]);
   });
 
   it("refuses an unknown argument", () => {
     const { calls, listChanged } = lister([]);
     assert.throws(
-      () => testsForArguments(["--everything"], listChanged),
+      () => testsForArguments(["--everything"], listChanged, chooser),
       /Unknown option '--everything'/,
     );
     assert.deepEqual(calls, []);
@@ -121,10 +316,13 @@ describe("the command's arguments", () => {
 });
 
 describe("running the tests chosen", () => {
-  function recorder() {
+  const root = "/fictional/fathom";
+
+  function recorder({ packagesPass = false } = {}) {
     const steps = [];
     return {
       steps,
+      root,
       inTurn: async (work) => {
         steps.push("turn");
         return work({ FATHOM_CHECK_SLOT: "1" });
@@ -137,7 +335,7 @@ describe("running the tests chosen", () => {
         steps.push(
           `packages ${args.join(" ")} ${environment.FATHOM_CHECK_SLOT}`,
         );
-        return false;
+        return packagesPass;
       },
     };
   }
@@ -149,24 +347,86 @@ describe("running the tests chosen", () => {
     assert.deepEqual(steps, []);
   });
 
-  it("runs the script tests and the packages' tests in the check's turn, marked as in it, failing when either fails", async (context) => {
+  it("runs the script tests, every test of some packages and the importing tests of others in the check's turn, without coverage", async (context) => {
     context.mock.method(console, "log", () => undefined);
-    const { steps, ...options } = recorder();
+    const { steps, ...options } = recorder({ packagesPass: true });
     assert.equal(
       await runTests(
-        { kind: "packages", packages: ["apps/server", "packages/shared"] },
+        {
+          kind: "packages",
+          whole: ["apps/server", "packages/seed"],
+          related: ["apps/web", "packages/shared"],
+          files: ["packages/shared/src/views.ts", "apps/web/src/app.tsx"],
+        },
         options,
       ),
-      false,
+      true,
     );
     assert.deepEqual(steps, [
       "turn",
       "pnpm test:scripts 1",
-      "packages --filter ...{./apps/server} --filter ...{./packages/shared} --parallel --no-bail --if-present test 1",
+      "packages --filter ./apps/server --filter ./packages/seed --parallel --no-bail exec vitest run 1",
+      "packages --filter ./apps/web --filter ./packages/shared --parallel --no-bail exec vitest related --run --passWithNoTests /fictional/fathom/packages/shared/src/views.ts /fictional/fathom/apps/web/src/app.tsx 1",
     ]);
   });
 
-  it("runs the linters and the web app's tests in the check's turn, failing when any fails", async (context) => {
+  it("runs only the script tests when no package has tests to run", async (context) => {
+    context.mock.method(console, "log", () => undefined);
+    const { steps, ...options } = recorder();
+    assert.equal(
+      await runTests(
+        { kind: "packages", whole: [], related: [], files: [] },
+        options,
+      ),
+      true,
+    );
+    assert.deepEqual(steps, ["turn", "pnpm test:scripts 1"]);
+  });
+
+  it("fails when either group of package tests fails", async (context) => {
+    context.mock.method(console, "log", () => undefined);
+    for (const failing of ["run", "related"]) {
+      const options = {
+        ...recorder(),
+        runPackages: async (args) => !args.includes(failing),
+      };
+      assert.equal(
+        await runTests(
+          {
+            kind: "packages",
+            whole: ["apps/server"],
+            related: ["apps/web"],
+            files: ["apps/web/src/app.tsx"],
+          },
+          options,
+        ),
+        false,
+        failing,
+      );
+    }
+  });
+
+  it("fails when the script tests fail", async (context) => {
+    context.mock.method(console, "log", () => undefined);
+    const options = {
+      ...recorder({ packagesPass: true }),
+      run: async () => false,
+    };
+    assert.equal(
+      await runTests(
+        {
+          kind: "packages",
+          whole: [],
+          related: ["apps/web"],
+          files: ["apps/web/src/app.tsx"],
+        },
+        options,
+      ),
+      false,
+    );
+  });
+
+  it("runs the linters and every web app test in the check's turn, failing when any fails", async (context) => {
     context.mock.method(console, "log", () => undefined);
     const { steps, ...options } = recorder();
     assert.equal(await runTests({ kind: "stylesheets" }, options), false);
@@ -174,7 +434,7 @@ describe("running the tests chosen", () => {
       "turn",
       "pnpm lint 1",
       "pnpm format:check 1",
-      "packages --filter ./apps/web --if-present test 1",
+      "packages --filter ./apps/web exec vitest run 1",
     ]);
   });
 
@@ -194,10 +454,29 @@ describe("running the tests chosen", () => {
     }
   });
 
-  it("runs every test in the check's turn", async (context) => {
-    context.mock.method(console, "log", () => undefined);
-    const { steps, ...options } = recorder();
-    assert.equal(await runTests({ kind: "everything" }, options), true);
-    assert.deepEqual(steps, ["turn", "pnpm test 1"]);
+  it("runs the script tests and every package test in the check's turn when anything else changed", async (context) => {
+    const said = context.mock.method(console, "log", () => undefined);
+    const { steps, ...options } = recorder({ packagesPass: true });
+    assert.equal(
+      await runTests(
+        {
+          kind: "everything",
+          whole: ["apps/server", "apps/web"],
+          related: [],
+          files: [],
+        },
+        options,
+      ),
+      true,
+    );
+    assert.deepEqual(steps, [
+      "turn",
+      "pnpm test:scripts 1",
+      "packages --filter ./apps/server --filter ./apps/web --parallel --no-bail exec vitest run 1",
+    ]);
+    assert.equal(
+      said.mock.calls[0]?.arguments[0],
+      "==> Files outside the packages changed, so every test runs",
+    );
   });
 });

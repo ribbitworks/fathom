@@ -4,17 +4,9 @@
 // what each persona drafts, publishes, holds, and rejects, that seeding again makes none of them
 // again, and that removing the seed data discards them, leaving drafts of other records alone.
 
-import {
-  createDatabase,
-  createPool,
-  type Database,
-  drafts,
-  unpublishedDrafts,
-  users,
-} from "@fathom/db";
+import { type Database, drafts, unpublishedDrafts, users } from "@fathom/db";
 import { fictionalOrganization } from "@fathom/fixtures";
 import { createDataAccess } from "@fathom/server/data";
-import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { eq, inArray } from "drizzle-orm";
 import {
   afterAll,
@@ -41,24 +33,23 @@ import {
   unseedPlanDrafts,
 } from "./plan-drafts.ts";
 import { developmentSize, seedCommand } from "./seed.ts";
-import { type TestSeedCommand, testSeedCommand } from "./test-seed-command.ts";
+import {
+  type SeedTestDatabase,
+  startSeedTestDatabase,
+  type TestSeedCommand,
+} from "./test-seed-command.ts";
 
-let database: TestDatabase;
-let pool: ReturnType<typeof createPool>;
+let database: SeedTestDatabase;
 let connection: Database;
 let command: TestSeedCommand;
 
 beforeAll(async () => {
-  database = await startTestDatabase();
-  pool = createPool(database.app, () => undefined);
-  connection = createDatabase(pool);
-  command = testSeedCommand(database);
+  database = await startSeedTestDatabase();
+  ({ connection, command } = database);
 });
 
 afterAll(async () => {
-  await pool.end();
   await database.remove();
-  command.remove();
 });
 
 const planDrafts = () =>

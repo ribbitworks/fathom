@@ -53,7 +53,7 @@ flowchart TD
 1. **Design:** Anything sizeable starts with a written design, checked against the real code. It lists every decision it needs, least certain first. The maintainer approves, changes or rejects each one, often from a mockup of the screen.
 1. **Small pull requests:** Each pull request covers one task, usually in one reviewed commit. A batch of issue fixes in one area commits each fix on its own, has one review and one approval for the whole branch, and stays under about 1,500 added lines, as [Issues](standards/issues.md#issue-batches) sets out.
 1. **The screen check:** The maintainer looks at every screen change, in a browser, before the tests and the review. Nothing goes further until the maintainer is satisfied with the screen.
-1. **Tests while working:** The tests of each package the change touches, and the linters, run while the change is made.
+1. **Tests while working:** The tests that import the changed code, and the linters, run while the change is made.
 1. **A separate review:** Another agent, which did not write the change, reviews it against the [Code Review Standards](standards/code-review.md). It rates each focus area from 1 to 5, and the change is ready only when every area rates 5. A faster model may review changes to documents, scripts, on-screen wording and ordinary tests. Anything that touches security, and any change where the choice is in doubt, is reviewed with the full model, as [Code Review Standards § Review Process](standards/code-review.md#review-process) sets out. Every finding is fixed, or the maintainer agrees in writing to leave it.
 1. **The full check:** `pnpm check` runs before the pull request and before each later push to it, on the final code: the linters, type checks, the unit, integration, access control, security and script tests with coverage, and the security scans. A change that affects the containers also runs the container tests.
 1. **Approval and merge:** The maintainer approves each commit before it is made. Nothing is merged without the maintainer's word.
@@ -83,8 +83,8 @@ A few things they demand:
 
 Automated tests run at every level:
 
-- **Unit tests** for rules, calculations and validation.
-- **Integration tests** of the API and the data layer, against a real PostgreSQL database.
+- **Unit tests** for rules, calculations and validation, which are most of the tests.
+- **Integration tests** of the API and the data layer, against a real PostgreSQL database: each route, who may use it, the queries and the database's own rules, leaving each rule's variations to the unit tests.
 - **Access control tests:** every API route is tested signed out, with every permission but those it needs, and with only those it needs. A new route fails the tests until it is listed. The [Testing Standards](standards/testing.md#access-control-tests) set out the rest.
 - **Security tests** for injection, sessions, request forgery, rate limiting, the access history, and personal values kept out of logs.
 - **Container tests** that check, from inside the application and database containers, that they can't reach the internet. These run with `pnpm test:containers`.

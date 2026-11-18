@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the password settings: the defaults, how the rules are put in words and checked against
-// a password a person chose, which characters a recipe draws on, and which recipes the rules refuse.
+// a password a person chose, with the check for one too easy to guess after them, which characters a
+// recipe draws on, and which recipes the rules refuse.
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   characterKinds,
+  chosenPasswordProblem,
   defaultPasswordSettings,
+  guessablePasswordMessage,
   type PasswordRules,
   passwordProblem,
   passwordRequirements,
@@ -234,5 +237,42 @@ describe("recipeProblems", () => {
     expect(
       recipeProblems(settings({ symbols: true }, { symbols: true })),
     ).toEqual([]);
+  });
+});
+
+describe("chosenPasswordProblem", () => {
+  const owner = { name: "Fictional Person", email: "person@example.test" };
+
+  it("names what the password lacks first, without asking whether it is easy to guess", () => {
+    const isGuessable = vi.fn(() => true);
+    expect(
+      chosenPasswordProblem(
+        { ...noRules, symbols: true },
+        "correcthorse9",
+        owner,
+        isGuessable,
+      ),
+    ).toBe("The password must include a symbol.");
+    expect(isGuessable).not.toHaveBeenCalled();
+  });
+
+  it("refuses a password that meets the rules but is easy to guess for its owner", () => {
+    const isGuessable = vi.fn(() => true);
+    expect(
+      chosenPasswordProblem(noRules, "correct-horse-9", owner, isGuessable),
+    ).toBe(guessablePasswordMessage);
+    expect(isGuessable).toHaveBeenCalledWith("correct-horse-9", owner);
+  });
+
+  it("accepts a password that meets the rules and is hard to guess", () => {
+    expect(
+      chosenPasswordProblem(noRules, "correct-horse-9", owner, () => false),
+    ).toBeUndefined();
+  });
+
+  it("accepts a password that meets the rules when there is no check to ask yet", () => {
+    expect(
+      chosenPasswordProblem(noRules, "correct-horse-9", owner, undefined),
+    ).toBeUndefined();
   });
 });

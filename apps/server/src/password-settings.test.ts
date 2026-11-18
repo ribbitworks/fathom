@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the password settings through the API: every signed-in user receives them with their
-// session, only those who may edit settings change them, a recipe that would break the rules is
-// refused, each change is recorded in the access history, every password a person chooses must
-// meet the rules and not be too common or easy to guess, and every password Fathom makes follows
-// the recipe.
+// session, only those who may edit settings change them, settings the rules refuse are refused,
+// each change is recorded in the access history, a password a person chooses is refused when it
+// breaks the rules or is too common or easy to guess, and every password Fathom makes follows the
+// recipe. Each rule's variations are unit-tested in the shared package's passwords.test.ts.
 
 import { appInfo } from "@fathom/db";
 import {
@@ -14,10 +14,8 @@ import {
   type PasswordSettings,
   roleSchema,
 } from "@fathom/shared";
-import { guessScore } from "@fathom/shared/guessable-passwords";
 import { eq } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { generatePassword } from "./data/accounts.ts";
 import { readPasswordSettings } from "./data/settings.ts";
 import { startTestApp, type TestApp } from "./test-app.ts";
 
@@ -174,81 +172,42 @@ describe("the password settings", () => {
     expect(await latestEntry()).toEqual(before);
   });
 
-  it.each([
-    [
-      "a recipe with no kind of character",
-      withRecipe({ uppercase: false, lowercase: false, digits: false }),
-      "Select at least one character type for generated passwords.",
-    ],
-    [
-      "a recipe shorter than the rules ask",
-      withRules({ minimumLength: 24 }),
-      "Generated passwords must have at least 24 characters to meet the minimum length.",
-    ],
-    [
-      "a recipe without a kind the rules need",
-      withRules({ symbols: true }),
-      "Generated passwords must include symbols, because passwords must contain a symbol.",
-    ],
-  ])("refuse %s, changing nothing", async (_, passwords, error) => {
+  it("refuse a recipe the rules refuse, saying why, changing and recording nothing", async () => {
     const before = await latestEntry();
-    const response = await save(passwords);
-    expect([response.statusCode, response.json()]).toEqual([400, { error }]);
+    const response = await save(withRules({ symbols: true }));
+    expect([response.statusCode, response.json()]).toEqual([
+      400,
+      {
+        error:
+          "Generated passwords must include symbols, because passwords must contain a symbol.",
+      },
+    ]);
     expect(await sessionPasswords()).toEqual(defaultPasswordSettings);
     expect(await latestEntry()).toEqual(before);
   });
 
-  it.each([
-    ["a minimum below 8", withRules({ minimumLength: 7 })],
-    ["a minimum above 128", withRules({ minimumLength: 129 })],
-    ["a length below 12", withRecipe({ length: 11 })],
-  ])("refuse %s", async (_, passwords) => {
-    expect((await save(passwords)).statusCode).toBe(400);
+  it("refuse settings outside their limits", async () => {
+    expect((await save(withRules({ minimumLength: 7 }))).statusCode).toBe(400);
   });
 });
 
 describe("a password a person chooses", () => {
-  it.each([
-    [
-      "at least 22 characters",
-      { minimumLength: 22 },
-      "The password must have at least 22 characters.",
-    ],
-    [
-      "an uppercase letter",
-      { uppercase: true },
-      "The password must include an uppercase letter.",
-    ],
-    ["a symbol", { symbols: true }, "The password must include a symbol."],
-  ])(
-    "is refused without %s when the rules need it, and the old one still works",
-    async (_, rules, error) => {
-      expect((await save(meeting(rules))).statusCode).toBe(200);
-      const user = await test.signedIn("team-member");
-      const response = await changePassword(
-        user.cookie,
-        password,
-        "fictional password 2",
-      );
-      expect([response.statusCode, response.json()]).toEqual([400, { error }]);
-      expect(
-        (await test.request(user.cookie, "GET", "/api/session")).statusCode,
-      ).toBe(200);
-    },
-  );
-
-  it.each([
-    ["a lowercase letter", { lowercase: true }, "FICTIONAL PASSWORD 2"],
-    ["a digit", { digits: true }, "fictional password two"],
-  ])(
-    "is refused without %s when the rules need it",
-    async (_, rules, newPassword) => {
-      await save(meeting(rules));
-      const user = await test.signedIn("team-member");
-      const response = await changePassword(user.cookie, password, newPassword);
-      expect(response.statusCode).toBe(400);
-    },
-  );
+  it("is refused when it breaks the rules, saying why, and the old one still works", async () => {
+    expect((await save(meeting({ symbols: true }))).statusCode).toBe(200);
+    const user = await test.signedIn("team-member");
+    const response = await changePassword(
+      user.cookie,
+      password,
+      "fictional password 2",
+    );
+    expect([response.statusCode, response.json()]).toEqual([
+      400,
+      { error: "The password must include a symbol." },
+    ]);
+    expect(
+      (await test.request(user.cookie, "GET", "/api/session")).statusCode,
+    ).toBe(200);
+  });
 
   it("is not checked against the rules for someone signed out, who is refused as before", async () => {
     await save(meeting({ symbols: true }));
@@ -338,19 +297,6 @@ describe("a password too common or easy to guess", () => {
     ).toBe(200);
   });
 
-  it("is checked only after the rules, which are named first", async () => {
-    await save(meeting({ symbols: true }));
-    const user = await test.signedIn("team-member");
-    const response = await changePassword(
-      user.cookie,
-      password,
-      "test12345678",
-    );
-    expect(response.json()).toEqual({
-      error: "The password must include a symbol.",
-    });
-  });
-
   it("is not checked for someone signed out, who is refused as before", async () => {
     const response = await changePassword("", password, "test12345678");
     expect(response.statusCode).toBe(401);
@@ -386,59 +332,6 @@ describe("a password Fathom makes", () => {
     expect(reset.json<{ password: string }>().password).toMatch(
       /^[\d!#$%&*+\-=?@^_~]{32}$/u,
     );
-  });
-});
-
-describe("generatePassword", () => {
-  const every: PasswordRecipe = {
-    length: 12,
-    uppercase: true,
-    lowercase: true,
-    digits: true,
-    symbols: true,
-    avoidLookAlikes: true,
-  };
-
-  it("has the recipe's length, from only the kinds it uses", () => {
-    expect(generatePassword(defaultPasswordSettings.recipe)).toMatch(
-      /^[A-Za-z\d]{20}$/u,
-    );
-    expect(
-      generatePassword({ ...every, length: 128, uppercase: false }),
-    ).toMatch(/^[a-z\d!#$%&*+\-=?@^_~]{128}$/u);
-  });
-
-  it("has at least one character of each kind the recipe uses, anywhere in it", () => {
-    const firsts = new Set<string>();
-    for (let tries = 0; tries < 200; tries += 1) {
-      const made = generatePassword(every);
-      expect(made).toMatch(/[A-Z]/u);
-      expect(made).toMatch(/[a-z]/u);
-      expect(made).toMatch(/\d/u);
-      expect(made).toMatch(/[!#$%&*+\-=?@^_~]/u);
-      firsts.add(/[A-Z]/u.test(made.charAt(0)) ? "uppercase" : "other");
-    }
-    expect(firsts.size).toBe(2);
-  });
-
-  it("is never too easy to guess with the default recipe, though it is not checked", () => {
-    const owner = { name: "Fictional Person", email: "person@example.test" };
-    for (let tries = 0; tries < 50; tries += 1) {
-      expect(
-        guessScore(generatePassword(defaultPasswordSettings.recipe), owner),
-      ).toBeGreaterThanOrEqual(3);
-    }
-  });
-
-  it("leaves out characters that look alike, unless asked not to", () => {
-    const made = Array.from({ length: 50 }, () =>
-      generatePassword({ ...every, length: 128 }),
-    ).join("");
-    expect(made).not.toMatch(/[ILOilo01]/u);
-    const mixed = Array.from({ length: 50 }, () =>
-      generatePassword({ ...every, length: 128, avoidLookAlikes: false }),
-    ).join("");
-    for (const character of "ILOilo01") expect(mixed).toContain(character);
   });
 });
 

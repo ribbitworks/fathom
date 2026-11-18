@@ -11,7 +11,12 @@ import {
   dictionary as commonDictionary,
 } from "@zxcvbn-ts/language-common";
 import { dictionary as englishDictionary } from "@zxcvbn-ts/language-en";
-import { ownerWords, type PasswordOwner, safeGuessScore } from "./passwords.ts";
+import {
+  type GuessableCheck,
+  ownerWords,
+  type PasswordOwner,
+  safeGuessScore,
+} from "./passwords.ts";
 
 const estimator = new ZxcvbnFactory({
   graphs: adjacencyGraphs,
@@ -22,5 +27,5 @@ const estimator = new ZxcvbnFactory({
 export const guessScore = (password: string, owner: PasswordOwner): number =>
   estimator.check(password, ownerWords(owner)).score;
 
-export const isGuessable = (password: string, owner: PasswordOwner): boolean =>
+export const isGuessable: GuessableCheck = (password, owner) =>
   guessScore(password, owner) < safeGuessScore;

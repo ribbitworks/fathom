@@ -3,13 +3,10 @@
 // Tests for loading the check for guessable passwords: it loads once and is kept, a failed load is
 // tried again, and the hook gives the check once it has loaded, and nothing if it cannot load.
 
+import type { GuessableCheck } from "@fathom/shared";
 import { renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import {
-  type GuessableCheck,
-  loadGuessableCheck,
-  useGuessableCheck,
-} from "./guessable.ts";
+import { loadGuessableCheck, useGuessableCheck } from "./guessable.ts";
 
 const owner = { name: "Fictional Person", email: "person@example.test" };
 

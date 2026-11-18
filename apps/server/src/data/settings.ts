@@ -7,10 +7,9 @@
 
 import { appInfo, type Database } from "@fathom/db";
 import {
+  chosenPasswordProblem,
   dayIn,
-  guessablePasswordMessage,
   type PasswordOwner,
-  passwordProblem,
   type PasswordSettings,
   passwordSettingsSchema,
   recipeProblems,
@@ -82,14 +81,13 @@ export async function checkChosenPassword(
   password: string,
   owner: PasswordOwner,
 ): Promise<void> {
-  const problem = passwordProblem(
+  const problem = chosenPasswordProblem(
     (await readPasswordSettings(reader)).rules,
     password,
+    owner,
+    isGuessable,
   );
   if (problem !== undefined) throw new BadRequestError(problem);
-  if (isGuessable(password, owner)) {
-    throw new BadRequestError(guessablePasswordMessage);
-  }
 }
 
 const sameSettings = (one: PasswordSettings, other: PasswordSettings) =>

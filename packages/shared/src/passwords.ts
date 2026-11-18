@@ -208,6 +208,30 @@ export const safeGuessScore = 3;
 export const guessablePasswordMessage =
   "This password is too common or easy to guess.";
 
+// Whether a password is too common or easy to guess for its owner. The check itself is in its own
+// entry, guessable-passwords.ts, since its dictionaries are large.
+export type GuessableCheck = (
+  password: string,
+  owner: PasswordOwner,
+) => boolean;
+
+// What is wrong with a password a person chose, or undefined when nothing is: what it lacks to meet
+// the rules, named first, then whether it is too common or easy to guess, when there is a check to
+// ask.
+export function chosenPasswordProblem(
+  rules: PasswordRules,
+  password: string,
+  owner: PasswordOwner,
+  isGuessable: GuessableCheck | undefined,
+): string | undefined {
+  return (
+    passwordProblem(rules, password) ??
+    (isGuessable?.(password, owner) === true
+      ? guessablePasswordMessage
+      : undefined)
+  );
+}
+
 // Whose password it is, so one built from their own name or email address counts as easy to guess.
 export interface PasswordOwner {
   name: string;

@@ -6,8 +6,9 @@
 // server depends on no development-only package, directly or through another workspace package.
 
 import assert from "node:assert/strict";
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
+import { workspaceManifests } from "./workspace.mjs";
 
 const read = (path) =>
   readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -19,21 +20,13 @@ const developmentOnlyFiles = ["packages/db/test-databases.ts"];
 
 // Every workspace package, by name, with the workspace packages it needs at run time.
 const workspace = new Map(
-  ["apps", "packages"].flatMap((group) =>
-    readdirSync(new URL(`../${group}/`, import.meta.url)).flatMap((folder) => {
-      let manifest;
-      try {
-        manifest = JSON.parse(read(`${group}/${folder}/package.json`));
-      } catch {
-        return [];
-      }
-      const needs = Object.keys({
-        ...manifest.dependencies,
-        ...manifest.optionalDependencies,
-      }).filter((name) => name.startsWith("@fathom/"));
-      return [[manifest.name, needs]];
-    }),
-  ),
+  workspaceManifests().map(({ manifest }) => [
+    manifest.name,
+    Object.keys({
+      ...manifest.dependencies,
+      ...manifest.optionalDependencies,
+    }).filter((name) => name.startsWith("@fathom/")),
+  ]),
 );
 
 describe("the runtime image", () => {

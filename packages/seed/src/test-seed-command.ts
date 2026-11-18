@@ -2,9 +2,11 @@
 
 // The seed command's settings for tests against a test database, with a fictional session secret and
 // account password in a folder of its own, and a clean start without the seed data, whatever the
-// test before left. Used only by tests.
+// test before left; and a test database of a test's own, with a connection and the command's
+// settings for it. Used only by tests.
 
-import type { TestDatabase } from "@fathom/test-utils";
+import { createDatabase, createPool, type Database } from "@fathom/db";
+import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -54,6 +56,29 @@ export function testSeedCommand(database: TestDatabase): TestSeedCommand {
     },
     remove() {
       rmSync(folder, { recursive: true, force: true });
+    },
+  };
+}
+
+export interface SeedTestDatabase {
+  connection: Database;
+  command: TestSeedCommand;
+  remove(): Promise<void>;
+}
+
+export async function startSeedTestDatabase(): Promise<SeedTestDatabase> {
+  const database = await startTestDatabase();
+  const pool = createPool(database.app, () => undefined);
+  const command = testSeedCommand(database);
+  return {
+    connection: createDatabase(pool),
+    command,
+    // Dropped first, which ends every connection to it, so work still going on from a test that ran
+    // out of time stops there rather than holding the pool open.
+    async remove() {
+      await database.remove();
+      await pool.end();
+      command.remove();
     },
   };
 }

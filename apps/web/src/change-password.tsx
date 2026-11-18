@@ -8,10 +8,10 @@
 // other sessions, such as on another computer, which the notification says once it is done.
 
 import {
-  guessablePasswordMessage,
+  chosenPasswordProblem,
+  type GuessableCheck,
   passwordChangeFields,
   type PasswordOwner,
-  passwordProblem,
   passwordRequirements,
   type PasswordRules,
   refusingSamePassword,
@@ -40,7 +40,7 @@ import { ApiError, describeProblem } from "./api.ts";
 import { changePassword } from "./accounts.ts";
 import { Brand } from "./brand.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
-import { type GuessableCheck, useGuessableCheck } from "./guessable.ts";
+import { useGuessableCheck } from "./guessable.ts";
 import { Icon } from "./icons.tsx";
 import { notifySuccess } from "./notices.tsx";
 import classes from "./pages.module.css";
@@ -55,11 +55,12 @@ const formSchemaFor = (
   refusingSamePassword(
     passwordChangeFields.extend({
       newPassword: z.string().superRefine((password, context) => {
-        const problem =
-          passwordProblem(rules, password) ??
-          (isGuessable?.(password, owner) === true
-            ? guessablePasswordMessage
-            : undefined);
+        const problem = chosenPasswordProblem(
+          rules,
+          password,
+          owner,
+          isGuessable,
+        );
         if (problem !== undefined) {
           context.addIssue({ code: "custom", message: problem });
         }
