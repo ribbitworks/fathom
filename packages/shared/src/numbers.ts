@@ -1,22 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Numbers as Fathom keeps them, for any column holding one: typed in one form everywhere, such as
-// 1234.5, whatever the reader's language, as a date is, since a comma or a point between digits
-// means different things in different places and a wrong guess would keep a value a thousand times
-// off. The limits keep every value exact in the browser and written without an exponent.
+// Numbers as Fathom keeps them in any column holding one: the form they're typed in, their digit
+// limits and rounding.
 
 import { z } from "zod";
 
+// Keeps every value exact in the browser and written without an exponent.
 export const numberDigits = { total: 15, afterPoint: 6 };
 
 const numberForm = "use a number such as 1234.5";
 const numberLimit = `use at most ${String(numberDigits.total)} digits, ${String(numberDigits.afterPoint)} of them after the point`;
 
-const typedForm = /^-?(\d+\.?\d*|\.\d+)$/;
+// One form in every language, since a comma or point between digits means different things.
+// Each branch reads a run of digits only one way, so refused text is checked in linear time.
+const typedForm = /^-?(\d+\.?|\d*\.\d+)$/;
+
+function placesUsed(fraction: string): number {
+  let places = fraction.length;
+  while (places > 0 && fraction[places - 1] === "0") places -= 1;
+  return places;
+}
 
 function withinDigits(text: string): boolean {
   const [whole = "", fraction = ""] = text.replace("-", "").split(".");
-  const placed = fraction.replace(/0+$/, "").length;
+  const placed = placesUsed(fraction);
   return (
     placed <= numberDigits.afterPoint &&
     whole.replace(/^0+/, "").length + placed <= numberDigits.total
