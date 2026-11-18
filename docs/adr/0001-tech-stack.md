@@ -3,7 +3,7 @@
 - **ADR:** 0001
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms; 2026-10-27, to time the component evaluation after Hello Fathom; 2026-10-30, to add the proxy container chosen in [ADR 0003](0003-edge-proxy.md); 2026-11-07, to point to releases in [ADR 0011](0011-releases-and-images.md); 2026-11-14, to leave backups to whoever runs Fathom and drop one deployment's assumptions
+- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms; 2026-10-27, to time the component evaluation after Hello Fathom; 2026-10-30, to add the proxy container chosen in [ADR 0003](0003-edge-proxy.md); 2026-11-07, to point to releases in [ADR 0011](0011-releases-and-images.md); 2026-11-14, to leave backups to whoever runs Fathom and drop one deployment's assumptions; 2026-11-17, to support Windows 11 with WSL2 as a server
 
 ## Context
 
@@ -58,7 +58,7 @@ ASP.NET Core and Java are modern, run on Linux, and are common in Windows Server
 - **Access control:** Implemented once in the server's data access layer, so every screen, export, snapshot, and search goes through the same tier-based checks.
 - **Transport security:** HTTPS, since passwords and personal data cross the network.
 - **Packaging:** Docker Compose with the application and PostgreSQL, and a proxy in front of the application, as chosen in [ADR 0003](0003-edge-proxy.md). The application server also serves the built front end.
-- **Container runtime:** Docker Engine with Compose on servers. Docker Desktop isn't supported on Windows Server, and requires a paid subscription for larger companies. Development machines may use any runtime that runs the same containers.
+- **Container runtime:** Docker Engine with Compose on servers: a Linux host or virtual machine, or Windows 11 with WSL2 in mirrored networking, running Docker Engine inside the distro. Docker Desktop isn't supported on Windows Server, and requires a paid subscription for larger companies. Development machines may use any runtime that runs the same containers.
 - **Backups:** Left to whoever runs Fathom, as [Securing Your Environment](../operations/securing-your-environment.md#backups) sets out.
 
 Specific libraries (API framework, ORM, Gantt and org chart components, test tools) are chosen in follow-up decisions.

@@ -48,19 +48,18 @@ Fathom is developed on the machines and container runtimes that [Supported Platf
 
 ### Prerequisites
 
-- **A container runtime,** installed and running.
+- **On Windows, WSL2** with a Linux distro, set up as [Developing on Windows](#developing-on-windows) sets out. Everything below then runs inside the distro.
+- **A container runtime,** installed and running. On Windows, Docker Engine inside the distro.
 - **mkcert,** for the local HTTPS certificate.
-- **Homebrew or fnm** on macOS and Linux, or **winget** on Windows, so the bootstrap script can install Node.js.
-- **Git Bash or WSL** on Windows, since `pnpm check` runs bash scripts.
+- **Homebrew or fnm,** so the bootstrap script can install Node.js.
 
 ### First Run
 
 1. Clone the repository and open a terminal in it.
-1. Run `bash scripts/dev-bootstrap.sh`, or `scripts/dev-bootstrap.ps1` in PowerShell on Windows.
+1. Run `bash scripts/dev-bootstrap.sh`.
    - It installs fnm unless it's already there, then the Node.js version in `.node-version`, the pnpm version in `package.json`, and the dependencies.
    - It's safe to run again at any time.
-   - Add `--configure-shell`, or `-ConfigureShell` on Windows, to add fnm to your shell profile.
-   - If PowerShell blocks the script, allow local scripts with `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+   - Add `--configure-shell` to add fnm to your shell profile.
 1. Run `pnpm dev:setup` to create the development secrets and the HTTPS certificate. mkcert may ask for your password the first time.
 1. Run `pnpm dev:reset` to create the database with the [fictional data](#fictional-data) and start Fathom.
 
@@ -68,6 +67,18 @@ Fathom opens at `https://localhost:8443`. Sign in with any of the [development a
 
 - Ctrl+C stops Fathom.
 - `pnpm dev` starts it again, keeping the data.
+
+### Developing on Windows
+
+Fathom is developed on Windows inside WSL2, with the same scripts as on Linux.
+
+1. In a terminal opened as administrator, run `wsl --install`, then restart. It installs WSL2 and Ubuntu.
+1. Inside the distro, install Docker Engine, following Docker's instructions for the distro, not Docker Desktop. WSL2 runs it with systemd.
+1. Clone the repository into the distro's own files, such as under your home folder, not under `/mnt/c`, where files are much slower.
+1. Follow [First Run](#first-run) inside the distro.
+1. So Windows browsers trust the local certificate, copy `rootCA.pem` from the folder `mkcert -CAROOT` prints to Windows, and add it to your trusted certificates with `certutil -addstore -user Root rootCA.pem`.
+
+Fathom then opens at `https://localhost:8443` in a Windows browser, since WSL2 passes `localhost` through to the distro.
 
 ### Ways to Run Fathom
 
@@ -206,7 +217,7 @@ The copy gets new names, and so a new, empty database.
 | `pnpm test:containers` | The container tests: users reach Fathom only through the proxy, and the application and database can't reach the internet |
 | `pnpm test:ui` | The UI tests |
 | `pnpm typecheck` | Type checking across the workspace |
-| `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:powershell`, `pnpm lint:licences` | Each linter on its own |
+| `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:licences` | Each linter on its own |
 | `pnpm format` | Format the source files |
 
 `pnpm lint` keeps a cache in `.tmp/eslint/`, so unchanged files aren't linted again. `pnpm check` lints without it, since a change to one file's types can break another file.
@@ -218,7 +229,6 @@ The copy gets new names, and so a new, empty database.
 | `pnpm security` | The security report, in a dated folder under `output/security/` |
 | `pnpm scan:images` | The daily image scan, as [Releases](#daily-image-scan) describes |
 | `pnpm updates` | List dependency updates, in `output/updates/`, changing nothing |
-| `pnpm update:analyzer <version>` | Pin a new PSScriptAnalyzer version with its SHA-256 |
 | `pnpm reset-caches` | Remove the scanners' cached data and ESLint's cache, which the next run rebuilds |
 | `pnpm prune-reports [days]` | Delete local reports older than the given days, 365 by default, always keeping security reports for a year |
 
@@ -243,13 +253,12 @@ See [Releases](#releases) for the steps.
   - Image scans read an exported image file, never the container runtime itself.
   - `pnpm security`, `pnpm scan:images` and `pnpm publish:images` share each copy's Trivy cache, so only one runs at a time in a copy. Another refuses to start, naming the process that holds the cache.
 - **Ignored files:** Every tool reads `.gitignore`.
-  - ShellCheck, PSScriptAnalyzer, the REUSE tool, Gitleaks, Semgrep and Trivy see only a copy of the files git would track, made under `.tmp/`, so folders such as `private/` are never read.
+  - ShellCheck, the REUSE tool, Gitleaks, Semgrep and Trivy see only a copy of the files git would track, made under `.tmp/`, so folders such as `private/` are never read.
   - Trivy also reads `node_modules`, read only, for package licences. The scan of git history sees only git's own folder.
   - ESLint, Prettier, markdownlint and `pnpm audit` run directly on the machine.
 - **Downloads:** Most scanners run without network access.
   - Semgrep downloads its rules, and Trivy its vulnerability database.
   - `pnpm audit` asks the package registry.
-  - The PowerShell linter downloads PSScriptAnalyzer once, and checks its hash.
 - **Database tests:** Each test file gets a database of its own.
   - It's copied from a template that the package's run migrates once, in one throwaway PostgreSQL container.
   - It's dropped when the file finishes.

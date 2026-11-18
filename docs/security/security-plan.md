@@ -1,6 +1,6 @@
 # Fathom: Security Plan
 
-**Last updated:** 2026-11-15
+**Last updated:** 2026-11-17
 
 How Fathom guards against threats as it ships: its code, its container images and its Compose configuration. The machine, network, certificates, secrets and backups around it come from whoever runs it, as [Securing Your Environment](../operations/securing-your-environment.md) sets out. [How Data Is Safeguarded](../privacy/data-protection.md) covers who sees which data, and the [Security Policy](../../SECURITY.md) how to report a vulnerability.
 
@@ -10,10 +10,52 @@ The threat model groups threats by STRIDE: spoofing, tampering, repudiation, inf
 
 ### Trust Boundaries
 
+The diagram shows where data crosses a trust boundary, each dashed box a boundary, and which groups of threats apply at each crossing.
+
+```mermaid
+flowchart LR
+  user["User's browser"]
+  admin["Whoever administers the machine"]
+  subgraph windows["Windows 11, on a WSL2 host only"]
+    subgraph machine["The machine: a Linux host, or a WSL2 distro"]
+      subgraph edge["Edge network"]
+        proxy["Proxy"]
+      end
+      subgraph appnet["Proxy to application network, no route out"]
+        app["Application: access checks, sessions, change and access history"]
+      end
+      subgraph dbnet["Application to database network, no route out"]
+        db[("Database")]
+        migrate["Migration run"]
+      end
+      secrets[["Secrets and certificate files"]]
+    end
+  end
+
+  user -- "HTTPS: spoofing, tampering, information disclosure, denial of service" --> proxy
+  proxy -- "HTTPS passed through: spoofing the user's address" --> app
+  app -- "Application role: elevation of privilege, tampering, repudiation" --> db
+  migrate -- "Migration role, at start-up" --> db
+  secrets --> app
+  secrets --> migrate
+  secrets --> db
+  admin -. "Outside Fathom's control: reads data and secrets" .-> machine
+
+  style windows stroke-dasharray: 5 5
+  style machine stroke-dasharray: 5 5
+  style edge stroke-dasharray: 5 5
+  style appnet stroke-dasharray: 5 5
+  style dbnet stroke-dasharray: 5 5
+```
+
 - **Browser to proxy:** HTTPS, over a network Fathom doesn't control. In Fathom's Compose configuration, only the proxy publishes a port.
 - **Proxy to application:** The proxy passes HTTPS traffic on without decrypting it, and holds no certificate.
 - **Application to database:** An internal network with no route out, which the proxy isn't on.
 - **The machine:** Anyone with administrator access to the machine Fathom runs on can reach its data and secrets. Fathom can't prevent that.
+- **Windows 11 with WSL2:** The distro runs in a virtual machine on Windows, which adds a boundary between Windows and the distro:
+  - **Who can reach the data:** anyone who can sign in as the Windows user that owns the distro can open it as root with `wsl`, and Windows administrators can mount its virtual disk, which holds the database and secrets.
+  - **How the port is reached:** WSL2's mirrored networking shares Windows' interfaces, so the proxy sees each user's own address, and the Hyper-V firewall decides which connections reach the distro. WSL2's NAT networking, whose port proxy would give every user Windows' address, isn't supported for running Fathom.
+  - [Securing Your Environment](../operations/securing-your-environment.md#on-windows-11-with-wsl2) sets out what whoever runs Fathom must do about each.
 
 ### Spoofing
 
