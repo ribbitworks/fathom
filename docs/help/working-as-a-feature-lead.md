@@ -20,7 +20,7 @@ On **Features**, select **Group by**, and choose **Cycle** or **Release**. See [
 
 ## Keep a View
 
-A view is how you've set up a table, such as its search and grouping. You can save one on **Features**, the board included, on **Releases**, or on the **Org chart**, to come back to. Only you see it. See [Saved views](saved-views.md#save-a-view).
+A view is how you've set up a table, such as its search and grouping. You can save one on the pages you open, such as **Features**, the board included, **Releases** or the **Org chart**, to come back to. Only you see it. See [Saved views](saved-views.md#save-a-view).
 
 ## Shape the Feature Team
 

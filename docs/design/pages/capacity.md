@@ -18,7 +18,7 @@ Capacity shows who is allocated to what, month by month, and holds the planning 
 - **Rows:** each person and planned hire.
   - Someone under several managers or feature teams in the months shown has a row under each, holding only that group's months and blank in the rest. Under No feature team, a row holds the months they were employed on none.
   - Planned hires sit under their manager by Manager, and under No feature team by Feature team.
-- **A month's cell:** each feature with its percentage, then a Total line.
+- **A month's cell:** each feature with its percentage, then a Total line when there are several features or the month is marked.
   - From the current month on, it reads Over or Under instead, so an empty month reads Under 0%. Past months show their figures unmarked.
   - These are a status, not a [warning](../../standards/ui-conventions.md#values).
 - **Over:** more than 100%, counting every feature but Possible ones. Done and Cancelled features count, since allocations are time spent, so future allocations to a cancelled feature show Over until cleared.

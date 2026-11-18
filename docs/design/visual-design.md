@@ -20,7 +20,6 @@ How Fathom's screens look and behave, so every page is built the same way. The p
 ## Layout
 
 - **Frame:** A deep-water sidebar on the left, the same in light and dark mode, groups pages into sections. It shows only the pages the user's role allows.
-  - **Later:** A page still to come is shown marked "Later", so people see what Fathom will offer.
   - **First page:** Fathom opens on the Overview, or, for a user who may not see the plan, the first page their role allows, else Help's index.
   - **Help:** The last section, open to everyone, holding Help pages and About Fathom.
 - **Top bar:** It names where the user is, as [The Top Bar](../standards/ui-conventions.md#the-top-bar) sets out, and holds the account menu.
@@ -74,10 +73,10 @@ How Fathom's screens look and behave, so every page is built the same way. The p
 - **Saved views:** A Views menu, the last button after the search field, as [What the Views menu holds](../standards/ui-conventions.md#tables) and [Saved views on every page](../standards/ui-conventions.md#tables) set out.
   - **Order:** The page's own choices; the views under My views and Shared views; then each change the view makes, such as Sort or Hidden, with an × to undo it.
   - **Name:** The applied view's name, with a dot once it has changed.
-  - **Actions:** Clear view, which also closes the metrics; Save view…; Update view; Rename…; sharing; and Delete view.
+  - **Actions:** Clear view, which also closes the metrics; Save view…, or Save as new view… while a view is applied; Update view; Rename…; sharing; and Delete view.
   - **Save dialog:** A name, a checkbox to share, and the parts the view keeps listed under Includes.
 - **Numbers:** A Number column's cells show each number as the reader's language writes it; a draft's details and the change history show it as typed. It is typed as 1234.5 in every language, since a comma or point means different things in different places and a wrong guess is a thousand times off; anything else is refused with the form to use. Its filter offers at least, at most, and No number.
-- **Units:** A number column shown in a unit, such as Effort, shows each amount with the unit's code: h, PD, PW, PM, or PQ. Effort is a column type only a feature's estimate uses.
+- **Units:** A number column shown in a unit, such as Effort, shows each amount with the unit's code: h, PD, PW, PM, or PQ. Effort, a feature's estimate, is the only such column.
   - **Menu:** Show in names each unit after Hours with the approved conversions behind it, such as Person-days (8 hours) or Person-weeks (8h / PD, 5 days / PW). Decimal places offers two, one, or none. Both are part of the view, and changing the unit clears the column's filter.
   - **Rounding:** An estimate is kept to its unit's step, rounded up when entered: whole hours, half person-days, and whole person-days for the larger units. Shown in any unit, it rounds up to that unit's step and the decimal places chosen, so it reads back as entered; totals are added before rounding. The tooltip gives the hours, then rounded up where the amount was, such as 1 hour, rounded up.
   - **Largest:** 999,999 hours, refused above that in whatever unit it is typed.
@@ -165,7 +164,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **A draft's menu items and deciding drafts:** `DraftItems` in `list-drafts.tsx`, `DecisionModal` in `decision-dialog.tsx`, and `OtherApproverNote` in `draft-details.tsx`.
 - **Draft and status marks:** `DraftedItem`, `DraftedValue`, `RowMarks`, `MarkedItem`, `FactBox` and `LiveLine` in `status-mark.tsx`, under the page's `DraftView`, as [Drafts](../standards/ui-conventions.md#drafts) sets out.
 - **A page's title row:** `PageHeader` in `page-header.tsx`, with the Export icon from `PageExportMenu` in `page-export.tsx`, and the tabs beside it from `HeadingTabs` and `HeadingTabPanel` there.
-- **Exporting a table:** `useOfferedExport` in `page-export.tsx`, the question in `export-question.tsx`, and the file, its name and saving it in `exports.ts`.
+- **Exporting a table:** `useTableExport` in `table-export.tsx`, offering the export to the Export icon through `useOfferedExport` in `page-export.tsx`, the question in `export-question.tsx`, and the file, its name and saving it in `exports.ts`.
 - **A dialog's buttons:** `DialogActions` in `dialog-actions.tsx`.
 - **A column's filter:** `FilterPopover` in `table-controls.tsx`.
 - **Icons and colour swatches:** `Icon` in `icons.tsx` and `Swatch` in `colour-swatch.tsx`.

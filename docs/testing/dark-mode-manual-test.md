@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Manual Test: Dark Mode
@@ -657,7 +657,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The yellow **Retired** box in its heading is easy to read.
   - **Notes:**
 
-- [ ] `3F7A` Select the **⋯** button at the right of the first cell of the row for 'Patches', then **Approve…**.
+- [ ] `3F7A` Select the **⋯** button at the right of the first cell of the row for 'Patches', then **Approve draft**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens, and is easy to read.
   - **Notes:**
 

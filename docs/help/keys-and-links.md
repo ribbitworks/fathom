@@ -4,9 +4,9 @@ Most records in Fathom have a key. You can copy a link to a record and send it t
 
 ## What to Know First
 
-- **Key:** a record's short name in Fathom. It's the word for its kind, a hyphen and a number, after a **#**, such as **#FEATURE-123**. Features, projects, proposals, customers, milestones, releases, schedules, people, planned hires, teams, lists, columns, accounts and roles have keys. Cycles don't, since they're named after their schedule.
+- **Key:** a record's short name in Fathom. It's the word for its kind, a hyphen and a number, after a **#**, such as **#FEATURE-123**. Features, projects, proposals, customers, milestones, releases, schedules, people, planned hires, feature teams, lists, columns, accounts and roles have keys. Cycles don't, since they're named after their schedule.
 - **A key stays the same:** renaming, retiring or removing a record doesn't change its key, and no other record ever gets it. It's Fathom's own, apart from your organization's IDs, such as a Project ID or an Employee ID.
-- **Link:** a link opens the page that shows the record, with its details open. It opens only for someone whose role sees that page and that record. Anyone else sees "Nothing found", so a link never shows that a record exists.
+- **Link:** a link opens the page that shows the record, with its details open. It opens only for someone whose role sees that page and that record. Anyone else sees "Nothing found for" and the key, so a link never shows that a record exists.
 
 ## Main Tasks
 

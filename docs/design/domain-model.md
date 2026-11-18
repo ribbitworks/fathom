@@ -66,7 +66,7 @@ A feature needs none of these links: one with no project or proposal is an idea 
 ### Proposal
 
 - **What it is:** work offered or requested that may become a project, such as a bid or a customer request. Projects link to proposals; a proposal is never made into a project, and nothing marks it Won.
-- **Fields:** a name, required and unique ignoring letter case, and a status, required, starting as Open. Optionally a Proposal ID, unique ignoring letter case when entered, a web link, an owner, who is a person, and customers, picked directly from Customers.
+- **Fields:** a name, required and unique ignoring letter case, and a status, required, starting as the first status offered, Open to start. Optionally a Proposal ID, unique ignoring letter case when entered, a web link, an owner, who is a person, and customers, picked directly from Customers.
 - **Status:** a choice of the built-in Proposal statuses, with no rules tied to them, so any status may follow any other.
 - **Scope:** the features it proposes, which count toward the forecast by their own status. Each change, from either side, is a draft of the proposal. It keeps the reason given for each feature removed from it while that feature is not in it.
 
@@ -126,7 +126,7 @@ Percentages are whole.
 ### Customers and Products
 
 - **Customer:** a row of the built-in Customers table, with a name, required and unique, picked directly by projects, proposals, and features.
-- **Product:** a built-in table with a name, required and unique. Features are part of products through a column users add.
+- **Product:** a built-in table with a name, required and unique. Features are part of products through a column users add. Not built yet.
 
 ## Release Entities
 
@@ -221,12 +221,12 @@ Fathom has a fixed core of built-in tables, such as people, teams, projects, fea
 
 ### Tables and Columns
 
-- **Field definition:** A custom field on a built-in or custom table, with a name, [field type](#field-types), sensitivity tier, and whether it must be filled in or be unique. A Person or Link field also names the table it links to. A "Choice from a list" field names its list, takes its tier from the list's visibility, and says whether it takes one choice or several. A Web link, Note or Number field has a visibility of its own as its tier. A field on People also says whether planned hires have it too, as [Planned Hires](#planned-hires) sets out.
+- **Field definition:** A custom field on a built-in or custom table, with a name, [field type](#field-types), sensitivity tier, and whether it must be filled in or be unique. A Person or Link field also names the table it links to. Columns are built on People and Features only, with the field types below; unique columns, Person and Link fields are not built yet. A "Choice from a list" field names its list, takes its tier from the list's visibility, and says whether it takes one choice or several. A Web link, Note or Number field has a visibility of its own as its tier. A field on People also says whether planned hires have it too, as [Planned Hires](#planned-hires) sets out.
   - **Changing:** its type is fixed once it is added. It can be made required only once every record has a value, and single-choice only once none has several. Its list cannot change while it has values.
 - **Column order:** A table's own order of its columns, built-in and custom alike, which every view starts from. A view may hold an order of its own.
 - **Saved view:** A table's search, filters, sort, what its Draft menu shows, the columns its metrics break down by, its grouping, the columns it hides, and its page's own choices, such as the schedule the Features Board shows, saved under a name, with the table it belongs to, one of a fixed set, the user who saved it, and whether it is personal to them or shared. A name is unique, ignoring letter case, among the table's shared views and among each user's personal views on it. Its sensitivity is that of the most sensitive column it filters, sorts, breaks down, or groups by, and of the data its grouping needs; a People view may also filter on drafts, which is General, since each user is sent only the drafts they may see.
 - **Last view:** The view an account last showed on a page with a Views menu, one for each account and page: the table shown, which on Projects and Releases is its tab, the view as a saved view holds it, the saved view it started from, if any, and the page's mode, such as Features' Board. It is the account's own setting: never a draft, with no change history, and removed only if the account is. Deleting the saved view it started from keeps the rest of it.
-- **Custom table:** A table users define, with a name, a sensitivity tier, and its field definitions.
+- **Custom table:** A table users define, with a name, a sensitivity tier, and its field definitions. Not built yet.
 - **Custom record:** One row of a custom table, holding values for its fields.
 - **Custom value:** The value of one custom field for one record, built-in or custom.
 
@@ -253,7 +253,7 @@ Fathom has a fixed core of built-in tables, such as people, teams, projects, fea
 
 ### Built-in Lists
 
-Each organization renames, adds to, reorders and retires these lists' choices. Choices are kept in the order shown.
+Each organization renames, adds to, reorders and retires these lists' choices. Choices are kept in the order shown. Each list keeps a choice offered: its last choice offered, or in a list with meanings the last for each meaning, cannot be retired or removed.
 
 | List | Choices Fathom starts with | Rules |
 | --- | --- | --- |
@@ -261,15 +261,15 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
 | Hiring states | Request to hire, Approved to hire, Hired, Left | Meanings Proposed, Open, Hired and Left, one choice each to start. |
 | Feature statuses | Possible, Planned, In progress, Done, Cancelled | Meanings Possible, Planned, In progress, Done and Cancelled, one choice each to start. |
 | Proposal statuses | Open, Won, Lost, Withdrawn | No meanings, since no rules are tied to them. |
-| Size | XS, S, M, L, XL | Each with a weight relative to S, starting at 0.5, 1, 2, 3 and 4: more than 0 and at most 9,999.99, to two decimal places. A changed weight is a draft of its choice. |
-| Priority | Critical, High, Medium, Low | Ordered, no meanings. |
-| Risk | Low, Medium, High | Ordered, no meanings. |
+| Feature sizes | XS, S, M, L, XL | Each with a weight relative to S, starting at 0.5, 1, 2, 3 and 4: more than 0 and at most 9,999.99, to two decimal places. A changed weight is a draft of its choice. |
+| Feature priorities | Critical, High, Medium, Low | Ordered, no meanings. |
+| Feature risks | Low, Medium, High | Ordered, no meanings. |
 
 ## Change and History Entities
 
 - **Change set:** Changes saved together, with who made them and when, and what they did: saved changes, or approved, rejected, or discarded drafts.
 - **Change:** One field of one record changed in a change set, with its sensitivity tier, its old and new values, and whether it changed the record's draft or the live record.
-- **Draft row:** The values a record is to have once approved: all of them for a record to be added, those that differ from the live record for a change, or none for a removal. Each record has at most one, waiting or rejected with a reason. People, lists, choices, and People's columns have drafts, and so does the order of each list's choices, held whole, as [ADR 0007](../adr/0007-draft-rows.md) sets out.
+- **Draft row:** The values a record is to have once approved: all of them for a record to be added, those that differ from the live record for a change, or none for a removal. Each record has at most one, waiting or rejected with a reason. People, planned hires, feature teams, lists, choices, columns, schedules, cycle patterns, releases, features, customers, proposals, projects, milestones, allocations and the planning settings have drafts, and so does the order of each list's choices, held whole, as [ADR 0007](../adr/0007-draft-rows.md) sets out.
 - **Record key:** A record's number within its kind, such as 123 for #FEATURE-123, shown after a # so it isn't taken for another tool's key, held apart from the record, so a record drafted to be added has one, and a removed record's key still names it. Numbers count up from 1 for each kind and are never reused, even when a draft is discarded. Each kind keeps the last number it gave.
   - **Kinds:** FEATURE, PROJECT, PROPOSAL, CUSTOMER, MILESTONE, RELEASE, SCHEDULE, PERSON, HIRE, TEAM (a feature team), LIST, COLUMN, ACCOUNT and ROLE, each whole, never shortened. Cycles have none, since they are named with their schedule.
   - **Reading:** a key is read in any letter case, with or without the #. It is General data, telling nothing about its record, and stands beside an organization's own IDs rather than replacing them.
@@ -279,7 +279,7 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
 
 - **What needs approval:** everything users change, except saved views, last views, team colours, and what an Administrator manages: accounts, roles, data classes and Fathom's settings.
 - **Approving:** approving drafts, whether one or several at once, applies them all to the live records as one change set, or none of them.
-- **Drafts that use drafts:** a draft uses another only when the other adds a record: a choice added to a list drafted to be added, an order placing a choice drafted to be added, a column drawing on a list drafted to be added, or a person given a value in a column, or a choice, drafted to be added. A schedule's cycles are the one exception, as [ADR 0010](../adr/0010-cycles-from-patterns.md) sets out.
+- **Drafts that use drafts:** a draft uses another only when the other adds a record: a choice added to a list drafted to be added, an order placing a choice drafted to be added, a column drawing on a list drafted to be added, a person or planned hire given a value in a column, or a choice, drafted to be added, or a record of the plan, such as a project, linking to one drafted to be added. A schedule's cycles are one exception, as [ADR 0010](../adr/0010-cycles-from-patterns.md) sets out, and a project's removal, which uses the removals of its milestones, is another.
   - Approving a draft approves the drafts it uses with it.
   - A draft that others use is rejected only together with them, or once they no longer use it.
   - It cannot be discarded, nor its adding undone, while others use it, except that discarding a list drafted to be added discards its choices' drafts, and discarding a schedule drafted to be added discards its cycles' and releases' drafts, whoever made them.

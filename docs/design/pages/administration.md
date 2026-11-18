@@ -27,7 +27,7 @@ The Administration pages hold accounts, roles, settings, lists and data classes.
   - **Classify data** and **Approve own drafts** are boxes of their own below.
   - A tick that comes with another is greyed; a box that needs another is unticked and greyed until that one is ticked.
   - The role that alone gives an active account Edit Administration has that box ticked and greyed.
-- **Summary:** Beside the grid, under Sees and Doesn't see, plain English says what the role sees, what it misses and what its holders can do. Pages it doesn't reach are under Doesn't see.
+- **Summary:** Beside the grid, under Sees, Doesn't see, Can and Cannot, plain English says what the role sees, what it misses and what its holders can do. Pages it doesn't reach are under Doesn't see.
   - A missed view names what it needs, such as "Org chart on other dates: needs Personal", never the details in a class, which each organization decides.
   - Each permission says what it allows and what a role without it can't do, such as "Cannot change allocations".
   - The lines come from the same list the pages use to decide what they show, so they can't drift apart.

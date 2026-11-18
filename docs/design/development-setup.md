@@ -27,8 +27,8 @@ deploy/
   fathom.env.example      The application's settings
   docker/                 Container image definitions and database initialization
 scripts/                  Development, check, and release scripts
-.github/actions/setup/    The setup each job of the full check shares: pnpm, Node.js and the dependencies
-.github/workflows/        The workflows that run the full check, draft a release for each tag, publish a release's images, and scan images daily on GitHub
+.github/actions/setup/    The setup the Check workflow's check and test jobs share: pnpm, Node.js and the dependencies
+.github/workflows/        The workflows that run the full check and the container tests, draft a release for each tag, publish a release's images, and scan images daily on GitHub
 .github/release.yml       How a release's generated notes are grouped
 .github/ISSUE_TEMPLATE/   The forms for filing issues on GitHub, one for each kind
 docs/                     Documentation, with the Help pages in docs/help/, which the front end builds in
