@@ -42,7 +42,7 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
 - **Sections, in order:**
   - Reporting: Manager, the date the line runs from, Reporting team, Reporting team name, Direct reports, including those yet to start, with Starts and the day
   - Feature teams, for those who see them: Leads and Member of, each team with its lead
-  - Details: Name, ID, Position, State, Start, End, Manager?
+  - Details: Name, ID, Position, State, Start, End, Expected for planned hires, Manager?
   - Columns: every added column People shows the reader
 - **Same as People:** The panel shows only what People shows the reader, and follows the Draft menu beside it. Personal details shown are recorded in the access history.
 - **Who gets it:** Readers who see the chart but not people have no panel.

@@ -82,6 +82,6 @@ You're done when its **Status** says **Active**.
 ## Marks on the Page
 
 - **This account** marks your own row.
-- **(default)** after a role, in **Roles**, marks the account's default role.
+- **(default)** after a role, in **Roles**, marks the default role of an account that holds several.
 - **Active** or **Deactivated**, in **Status**, says whether the account can sign in.
 - **A greyed-out role, or a greyed-out Deactivate…**, means the change would leave no active account that manages accounts. Fathom always keeps one, so nobody is locked out.

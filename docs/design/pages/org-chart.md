@@ -8,7 +8,7 @@ The Org chart draws the organization as cards, by reporting teams or by feature 
 
 ## Layout
 
-- **Heading:** A switch at the right chooses Reporting teams or Feature teams. The person found stays centred across it.
+- **Heading:** A switch beside the title chooses Reporting teams or Feature teams. The person found stays centred across it.
 - **Controls on the left:** Find a person or team, the Draft menu, Teams, then the Views menu.
   - The Draft menu only chooses the view, for every reader: it has no filter and decides no drafts.
   - Teams shows only to those who change people, as [Roles](../../product/roles.md#what-each-role-can-do) sets out.

@@ -130,7 +130,7 @@ The rest follow from them:
   - **Drawn by:** `formatMonth` in `apps/web/src/table-view.ts`.
   - **Example:** Offline Sync's Needed by.
 - **Typing a day or month:** Days and months are typed as their digits, laid out as typed, such as 2026-10-31 and 2027-03, whatever the reader's language.
-  - **Drawn by:** `DayInput` in `apps/web/src/day-input.tsx`.
+  - **Drawn by:** `DayInput` in `apps/web/src/day-input.tsx` for a day's box, and its `digitsAsTyped` for a table's day and month cells, through `cellKinds` in `apps/web/src/cell-kinds.tsx`.
   - **Example:** a milestone's Date.
 - **A time:** History entries give the day, its year and the time, in the reader's language.
   - **Drawn by:** `EntryRow` in `apps/web/src/history-entries.tsx`.
@@ -320,7 +320,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
   - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx`.
   - **Example:** type a name in the empty row at the end of Features.
 - **Moving items:** Where people set an order, items have a grip for dragging on wide screens, shown on hover or focus, and Alt with the arrow keys moves the selected one. Its menu offers the same moves and shows each one's keys.
-  - **Drawn by:** `apps/web/src/list-panel.tsx` for a list's choices, and the column menu in `apps/web/src/table-controls.tsx` for moving a column.
+  - **Drawn by:** `apps/web/src/list-panel.tsx` for a list's choices, and the column menu in `apps/web/src/record-grid.tsx` for moving a column.
   - **Example:** the choices of Sites on the Lists page.
 
 ## Saving and Undo
@@ -473,7 +473,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
   - **The file:** UTF-8 with a byte order mark, so spreadsheets read names in any script, and lines ending in a carriage return and line feed. A value holding the separator, a quote or a line break is quoted, as RFC 4180 sets out, in TSV as in CSV.
   - **The name:** Lower case, its parts joined by underscores and each part's words by hyphens: fathom, the page, the saved view if one is applied, the exporter's account name, drafts-and-live or drafts if it holds any, and the day shown, such as fathom_people_engineers_engineering-director_drafts-and-live_2027-03-31.csv.
   - **Saving:** The browser's Save dialog opens with the name filled in where the browser offers one, as Chromium browsers do; Safari and Firefox follow their download settings. Cancelling saves and records nothing.
-  - **Drawn by:** `PageExportMenu` and `useOfferedExport` in `apps/web/src/page-export.tsx`, the table's `exported` in `apps/web/src/record-grid.tsx`, `ExportQuestion` in `apps/web/src/export-question.tsx`, and the file from `apps/web/src/exports.ts`.
+  - **Drawn by:** `PageExportMenu` and `useOfferedExport` in `apps/web/src/page-export.tsx`, offered for a table by `useTableExport` in `apps/web/src/table-export.tsx` from the table's `exported` in `apps/web/src/record-grid.tsx`, `ExportQuestion` in `apps/web/src/export-question.tsx`, and the file from `apps/web/src/exports.ts`.
   - **Example:** on People, as the Engineering Director, choose the Export icon, then CSV file.
 
 ## Search
