@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["agent-workflow.md", "code-review.md", "typescript.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Testing Standards
@@ -134,7 +134,7 @@ While working, run `pnpm test:changed`, `pnpm lint`, `pnpm format:check`, `pnpm 
 
 - **Before the code review:** the checks run while working. The full `pnpm check` waits for the last step.
 - **After each round of fixes,** whether from a review, UI feedback or owner feedback: `pnpm test:changed`, `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, and `pnpm lint:md` or `pnpm lint:shell` for the files changed. `pnpm security` runs too, but only if the round changed dependencies, the lockfile, a container file or the security scans' settings.
-- **On the pull request:** the Check workflow on GitHub runs the full `pnpm check` on every push to a pull request and to `main`, with `pnpm test:containers` for every change but documentation alone, so every build pushed for review has every scan the [Security Plan](../security/security-plan.md#vulnerability-scanning) runs on every build. Once the review's findings are fixed and the checks after the last round of fixes pass, the code is rebased onto `main` and, with the owner's approval, which is the word to push, pushed. The pull request's green check is the [Agent Workflow](agent-workflow.md#workflow)'s full suite step, for a pull request's commit, or for an [issue batch](issues.md#issue-batches) once for the whole branch, and the owner merges only on green. Follow the run with `gh pr checks --watch`, and read a failure or warning with `gh run view --log` (or `--log-failed`); every warning it reports is fixed, as locally. Running the full `pnpm check` locally is optional, for when the workflow can't run.
+- **On the pull request:** the Check workflow on GitHub runs the full `pnpm check` on every push to a pull request and to `main`, its package tests on runners of their own, split by package, so the linters and scans never slow them, and Full check passes once every part has. Beside it, the workflow runs `pnpm test:containers` for every change but documentation alone, so every build pushed for review has every scan the [Security Plan](../security/security-plan.md#vulnerability-scanning) runs on every build. Once the review's findings are fixed and the checks after the last round of fixes pass, the code is rebased onto `main` and, with the owner's approval, which is the word to push, pushed. The pull request's green check is the [Agent Workflow](agent-workflow.md#workflow)'s full suite step, for a pull request's commit, or for an [issue batch](issues.md#issue-batches) once for the whole branch, and the owner merges only on green. Follow the run with `gh pr checks --watch`, and read a failure or warning with `gh run view --log` (or `--log-failed`); every warning it reports is fixed, as locally. Running the full `pnpm check` locally is optional, for when the workflow can't run.
 
 A change that affects the containers runs `pnpm test:containers` with the test step before the code review, and again only if a later fix changes the containers. A change to documentation only may skip the test step, as [agent-workflow.md](agent-workflow.md#autonomous-mode) allows, except a change to a Help page, which is built into Fathom.
 

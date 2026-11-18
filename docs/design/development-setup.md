@@ -1,6 +1,6 @@
 # Fathom: Development Setup
 
-**Last updated:** 2026-11-17
+**Last updated:** 2026-11-18
 
 How the repository is organized, how to run Fathom on your machine, its fictional data, and how releases are made.
 
@@ -27,6 +27,7 @@ deploy/
   fathom.env.example      The application's settings
   docker/                 Container image definitions and database initialization
 scripts/                  Development, check, and release scripts
+.github/actions/setup/    The setup each job of the full check shares: pnpm, Node.js and the dependencies
 .github/workflows/        The workflows that run the full check, draft a release for each tag, publish a release's images, and scan images daily on GitHub
 .github/release.yml       How a release's generated notes are grouped
 .github/ISSUE_TEMPLATE/   The forms for filing issues on GitHub, one for each kind
@@ -212,11 +213,12 @@ The copy gets new names, and so a new, empty database.
 
 | Command | What it does |
 | --- | --- |
-| `pnpm check` | Every linter, every test and the security report: the full check from the [Testing Standards](../standards/testing.md#running-tests) |
+| `pnpm check` | Every linter, every test and the security report: the full check from the [Testing Standards](../standards/testing.md#running-tests). `--skip` and a job's name, such as `--skip "Package tests"`, leaves that job out, as the Check workflow does where other runners run it |
 | `pnpm test` | Every test: the script tests, then every package's |
 | `pnpm test:changed` | The tests a change can affect; with `--uncommitted`, only the work not yet committed |
+| `pnpm test:scripts` | The script tests alone |
+| `pnpm test:packages` | Every package's tests; with `--filter` and a package, such as `--filter @fathom/web`, only those packages, as pnpm chooses them |
 | `pnpm test:containers` | The container tests: users reach Fathom only through the proxy, and the application and database can't reach the internet |
-| `pnpm test:ui` | The UI tests |
 | `pnpm typecheck` | Type checking across the workspace |
 | `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:licences` | Each linter on its own |
 | `pnpm format` | Format the source files |

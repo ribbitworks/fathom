@@ -533,7 +533,6 @@ describe("editing people", () => {
       "{Control>}a{/Control}{Backspace}E2",
       "Someone already has that ID",
     ],
-    ["preferredName", "x".repeat(101), "Name too long"],
   ])(
     "shows what is wrong with %s and keeps editing",
     async (key, keys, problem) => {
@@ -558,6 +557,24 @@ describe("editing people", () => {
       expect(screen.queryByRole("alert")).toBeNull();
     },
   );
+
+  it("says a name is too long and keeps editing", async () => {
+    const fetch = await openPeople();
+    focusCell("p1", "preferredName");
+    await userEvent.keyboard("{Enter}");
+    await userEvent.click(await screen.findByRole("textbox", { name: "Name" }));
+    // Pasted, as typing it key by key outlasts the test's time on a busy computer.
+    await userEvent.paste("x".repeat(101));
+    await userEvent.keyboard("{Enter}");
+    expect(await screen.findByRole("alert")).toHaveProperty(
+      "textContent",
+      "Name too long",
+    );
+    expect(
+      within(screen.getByRole("grid")).getByRole("textbox", { name: "Name" }),
+    ).toBeDefined();
+    expect(bodyOf(fetch, "PATCH", "/api/people/p1")).toEqual([]);
+  });
 
   it("finishes an edit when the cell is left, putting back a value that will not do", async () => {
     const fetch = await openPeople({ "PATCH /api/people/p1": savedAs() });

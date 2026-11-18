@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Runs the full check, 'pnpm check', on every pull request and every push to the default branch, so
-# a pull request's green check is the one the maintainer merges on. The container tests run too, on
-# the default branch and on a pull request that changes anything but documentation. A newer push to
-# a pull request cancels its older runs. The work is in scripts/, which runs the same anywhere; the
-# tests make their own throwaway secrets.
+# a pull request's green check is the one the maintainer merges on. Its package tests run on runners
+# of their own, split by package, since on one runner beside the linters and scans they ran up to
+# thirty times slower than on a developer's computer, until tests timed out. Full check passes only once
+# every part has. The container tests run too, on the default branch and on a pull request that
+# changes anything but documentation. A newer push to a pull request cancels its older runs. The
+# work is in scripts/, which runs the same anywhere; the tests make their own throwaway secrets.
 
 name: Check
 
@@ -22,7 +24,7 @@ concurrency:
 
 jobs:
   check:
-    name: Full check
+    name: Check without package tests
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -36,20 +38,67 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - name: Set up Node.js and the dependencies
+        uses: ./.github/actions/setup
 
-      - name: Set up Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      - name: Run the full check but the package tests
+        run: pnpm check --skip "Package tests"
+
+  packages:
+    name: Package tests (${{ matrix.name }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      # The web app's and the server's tests take longest, so each has a runner's four cores; the
+      # rest share one runner, a worker each. A package added later runs with the rest.
+      matrix:
+        include:
+          - name: web
+            packages: "@fathom/web"
+            workers: 4
+          - name: server
+            packages: "@fathom/server"
+            workers: 4
+          - name: the rest
+            packages: "!@fathom/web !@fathom/server"
+            workers: 1
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version-file: .node-version
-          cache: pnpm
+          persist-credentials: false
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Set up Node.js and the dependencies
+        uses: ./.github/actions/setup
 
-      - name: Run the full check
-        run: pnpm check
+      # A selector matching no package fails, so a renamed package is never left untested.
+      - name: Run the package tests
+        env:
+          PACKAGES: ${{ matrix.packages }}
+          VITEST_MAX_WORKERS: ${{ matrix.workers }}
+        run: |
+          read -r -a selectors <<<"$PACKAGES"
+          filters=()
+          for selector in "${selectors[@]}"; do filters+=(--filter "$selector"); done
+          pnpm test:packages "${filters[@]}" --fail-if-no-match
+
+  full:
+    name: Full check
+    needs: [check, packages]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Pass only if every part passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Parts: $RESULTS"
+          for result in $RESULTS; do [ "$result" = success ] || exit 1; done
 
   containers:
     name: Container tests
@@ -64,14 +113,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Set up pnpm
-        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-
-      - name: Set up Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .node-version
-          cache: pnpm
+      - name: Set up Node.js and the dependencies
+        uses: ./.github/actions/setup
 
       - name: Decide whether the change needs the container tests
         id: changed
@@ -85,10 +128,6 @@ jobs:
             run="$(node scripts/needs-container-tests.mjs "$BASE")" || run=true
           fi
           echo "run=$run" >>"$GITHUB_OUTPUT"
-
-      - name: Install dependencies
-        if: steps.changed.outputs.run == 'true'
-        run: pnpm install --frozen-lockfile
 
       - name: Run the container tests
         if: steps.changed.outputs.run == 'true'

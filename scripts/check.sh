@@ -5,6 +5,8 @@
 # type checking, Markdown, shell and licence linting, the script and package tests, and
 # the security report. Prints each job's output once it ends, and at once any wait for another copy
 # of the repository, then each job's result and time. Fails if any job fails.
+# Usage: scripts/check.sh [--skip <job name>]..., such as --skip "Package tests" where another
+# machine runs them, as the Check workflow does.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -37,6 +39,16 @@ seconds=()
 main() {
   local index started
   local -a starts=()
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --skip)
+        [ "$#" -ge 2 ] || fail "--skip needs a job's name, such as --skip \"Package tests\""
+        skip_job "$2"
+        shift 2
+        ;;
+      *) fail "Usage: check.sh [--skip <job name>]..." ;;
+    esac
+  done
   mkdir -p .tmp && chmod 700 .tmp
   logs="$(mktemp -d "$PWD/.tmp/check.XXXXXX")"
   trap 'stop_jobs; rm -rf "$logs"' EXIT
@@ -93,6 +105,22 @@ show_wait() {
   waiting="$(grep -m 1 '^Waiting to ' "$logs/$index.log" 2>/dev/null)" || return 0
   waits_shown[index]=1
   printf '==> %s: %s\n' "$(job_name "$index")" "$waiting"
+}
+
+skip_job() {
+  local job kept=() matched=""
+  for job in "${jobs[@]}"; do
+    if [ "${job%%|*}" = "$1" ]; then matched=1; else kept+=("$job"); fi
+  done
+  [ -n "$matched" ] || fail "No job left to skip is named $1; those left are: $(job_names)"
+  [ "${#kept[@]}" -gt 0 ] || fail "Every job is skipped, so there is nothing to check"
+  jobs=("${kept[@]}")
+}
+
+job_names() {
+  local job names=""
+  for job in "${jobs[@]}"; do names="${names:+$names, }${job%%|*}"; done
+  printf '%s\n' "$names"
 }
 
 job_name() { printf '%s\n' "${jobs[$1]%%|*}"; }
