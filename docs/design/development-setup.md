@@ -219,6 +219,7 @@ The copy gets new names, and so a new, empty database.
 | Command | What it does |
 | --- | --- |
 | `pnpm check` | Every linter, every test and the security report: the full check from the [Testing Standards](../standards/testing.md#running-tests). `--skip` and a job's name, such as `--skip "Package tests"`, leaves that job out, as the Check workflow does where other runners run it |
+| `pnpm check:push` | The tests a change can affect and the linters, side by side, before a push: `pnpm test:changed`, ESLint, the formatting check, type checking and the Markdown and shell linters. It lists each one's result and time, and names any that failed. `--skip` works as for `pnpm check` |
 | `pnpm test` | Every test: the script tests, then every package's |
 | `pnpm test:changed` | The tests a change can affect; with `--uncommitted`, only the work not yet committed |
 | `pnpm test:scripts` | The script tests alone |
@@ -228,7 +229,7 @@ The copy gets new names, and so a new, empty database.
 | `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:licences` | Each linter on its own |
 | `pnpm format` | Format the source files |
 
-`pnpm lint` keeps a cache in `.tmp/eslint/`, so unchanged files aren't linted again. `pnpm check` lints without it, since a change to one file's types can break another file.
+`pnpm lint` keeps a cache in `.tmp/eslint/`, so unchanged files aren't linted again. `pnpm check` and `pnpm check:push` lint without it, since a change to one file's types can break another file.
 
 #### Security and Upkeep
 

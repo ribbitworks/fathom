@@ -15,6 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "node scripts/check-turn.mjs bash scripts/check.sh",
+    "check:push": "node scripts/check-turn.mjs bash scripts/check.sh --before-push",
     "lint:licences": "bash scripts/lint-licences.sh",
     "security": "bash scripts/security-report.sh",
     "scan:images": "bash scripts/scan-images.sh",

@@ -1,28 +1,37 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 
-# Runs everything 'pnpm check' covers side by side, then lists each job's result and time.
-# Usage: scripts/check.sh [--skip <job name>]..., such as --skip "Package tests"
+# Runs everything 'pnpm check' covers side by side, then lists each job's result and time, or, with
+# --before-push, only the changed tests and the linters, for 'pnpm check:push'.
+# Usage: scripts/check.sh [--before-push] [--skip <job name>]..., such as --skip "Package tests"
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh
 source scripts/lib.sh
 
-# Each job is its name and its command. ESLint runs without its cache here: its type-aware rules
-# can fail in a file that has not changed when another file's types change, which the cache cannot
-# see.
-jobs=(
+# Each job is its name and its command. ESLint runs without its cache in both checks: its
+# type-aware rules can fail in a file that has not changed when another file's types change, which
+# the cache cannot see.
+linters=(
   "ESLint|pnpm lint --no-cache"
   "Formatting|pnpm format:check"
   "Types|pnpm typecheck"
   "Markdown|pnpm lint:md"
   "Shell scripts|pnpm lint:shell"
+)
+full_check=(
+  "${linters[@]}"
   "Licences|pnpm lint:licences"
   "Script tests|pnpm test:scripts"
   "Package tests|pnpm test:packages"
   "Security report|pnpm security"
 )
+before_push=(
+  "Changed tests|pnpm test:changed"
+  "${linters[@]}"
+)
+jobs=("${full_check[@]}")
 
 logs=""
 # The process of each job still running, emptied once it ends.
@@ -33,18 +42,23 @@ results=()
 seconds=()
 
 main() {
-  local index started
-  local -a starts=()
+  local index started skip
+  local -a starts=() skips=()
   while [ "$#" -gt 0 ]; do
     case "$1" in
+      --before-push)
+        jobs=("${before_push[@]}")
+        shift
+        ;;
       --skip)
         [ "$#" -ge 2 ] || fail "--skip needs a job's name, such as --skip \"Package tests\""
-        skip_job "$2"
+        skips+=("$2")
         shift 2
         ;;
-      *) fail "Usage: check.sh [--skip <job name>]..." ;;
+      *) fail "Usage: check.sh [--before-push] [--skip <job name>]..." ;;
     esac
   done
+  for skip in ${skips[@]+"${skips[@]}"}; do skip_job "$skip"; done
   mkdir -p .tmp && chmod 700 .tmp
   logs="$(mktemp -d "$PWD/.tmp/check.XXXXXX")"
   trap 'stop_jobs; rm -rf "$logs"' EXIT
@@ -129,14 +143,14 @@ run_job() {
 }
 
 print_results() {
-  local index failed=0
+  local index failed=""
   printf '\n| Job | Result | Seconds |\n| --- | --- | --- |\n'
   for index in "${!jobs[@]}"; do
     printf '| %s | %s | %s |\n' "$(job_name "$index")" "${results[index]}" "${seconds[index]}"
-    [ "${results[index]}" = "Pass" ] || failed=1
+    [ "${results[index]}" = "Pass" ] || failed="${failed:+$failed, }$(job_name "$index")"
   done
   printf '\nTotal: %ss\n' "$1"
-  [ "$failed" -eq 0 ] || fail "Some checks failed; see their output above"
+  [ -z "$failed" ] || fail "These checks failed: $failed; see their output above"
 }
 
 stop_jobs() {
