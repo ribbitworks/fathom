@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Test databases from Fathom's own PostgreSQL image, with the same roles and settings as development
-// apart from writing to disk, and random passwords for each run. Each package's test run starts one
-// server, migrated once into a template, and each test file works in a copy of it of its own, so test
-// files stay as independent as if each had its own server. Only a few servers start at once on this
-// computer.
+// Test databases from Fathom's own PostgreSQL image: one server for each package's run, and a copy
+// of a migrated template for each test file.
 
 import {
   PostgreSqlContainer,
@@ -59,15 +56,6 @@ function composeSetting(pattern: RegExp, description: string): string {
       `Could not find the ${description} in deploy/compose.dev.yaml`,
     );
   return value;
-}
-
-function developmentBuildEnvironment(): NodeJS.ProcessEnv {
-  const environment: NodeJS.ProcessEnv = {
-    ...process.env,
-    FATHOM_IMAGE_TAG: imageTag,
-  };
-  delete environment.DOCKER_DEFAULT_PLATFORM;
-  return environment;
 }
 
 // The settings for one connection, in the shape the database package's configuration uses.
@@ -171,16 +159,8 @@ function startContainer(
 function buildImage(): void {
   execFileSync(
     "bash",
-    [
-      "-c",
-      "source scripts/lib.sh && docker compose --file deploy/compose.dev.yaml build --quiet",
-    ],
-    {
-      cwd: repositoryRoot,
-      // Builds the development image for this machine, whatever the shell has set for scans.
-      env: developmentBuildEnvironment(),
-      stdio: "inherit",
-    },
+    ["-c", "source scripts/lib.sh && build_dev_database_image"],
+    { cwd: repositoryRoot, stdio: "inherit" },
   );
 }
 

@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of choosing which jobs run: the full check's, less any skipped, as the Check workflow does
-// when other runners run the package tests, or the changed tests and the linters before a push; and
-// of naming each job that failed. Each test runs the script from a copy in a throwaway folder, with
-// a pnpm that only says what it was asked to run, failing for the scripts named in FAILING.
+// Tests of choosing the check's jobs: skipping, before a push, without a connection and offline,
+// and naming each job that failed.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -30,6 +28,7 @@ const jobs = [
   "Script tests",
   "Package tests",
   "Security report",
+  "Renovate settings",
 ];
 const beforePush = [
   "Changed tests",
@@ -41,24 +40,38 @@ const beforePush = [
 ];
 const folders = [];
 
-function copy() {
+function copy({ prepared }) {
   const root = mkdtempSync(join(tmpdir(), "fathom-check-"));
   folders.push(root);
   mkdirSync(join(root, "scripts"));
   for (const name of ["lib.sh", "check.sh"])
     copyFileSync(join(scripts, name), join(root, "scripts", name));
+  writeFileSync(
+    join(root, "scripts", "offline.mjs"),
+    'process.exit(process.env.ONLINE === "0" ? 1 : 0);\n',
+  );
+  if (prepared) {
+    mkdirSync(join(root, ".cache", "offline"), { recursive: true });
+    writeFileSync(
+      join(root, ".cache", "offline", "security-fixes-date"),
+      "2026-11-01\n",
+    );
+  }
   const tools = join(root, "tools");
   mkdirSync(tools);
   writeFileSync(
     join(tools, "pnpm"),
-    '#!/usr/bin/env bash\ncase " ${FAILING:-} " in *" $1 "*) echo "failed $*"; exit 1 ;; esac\necho "ran $*"\n',
+    '#!/usr/bin/env bash\ncase " ${FAILING:-} " in *" $1 "*) echo "failed $*"; exit 1 ;; esac\necho "ran $*${FATHOM_OFFLINE:+ offline, fixes from $FATHOM_SECURITY_FIXES_DATE}"\n',
     { mode: 0o755 },
   );
   return { root, tools };
 }
 
-function checkFailing(failing, ...args) {
-  const { root, tools } = copy();
+function run(
+  args,
+  { failing = "", online = true, prepared = true, ci = undefined } = {},
+) {
+  const { root, tools } = copy({ prepared });
   return spawnSync("bash", ["scripts/check.sh", ...args], {
     cwd: root,
     encoding: "utf8",
@@ -66,11 +79,13 @@ function checkFailing(failing, ...args) {
       PATH: `${tools}:${process.env.PATH ?? ""}`,
       HOME: process.env.HOME,
       FAILING: failing,
+      ONLINE: online ? "1" : "0",
+      ...(ci === undefined ? {} : { CI: ci }),
     },
   });
 }
 
-const check = (...args) => checkFailing("", ...args);
+const check = (...args) => run(args);
 
 afterEach(() => {
   for (const made of folders.splice(0))
@@ -86,7 +101,9 @@ describe("scripts/check.sh", () => {
       "Security report",
     );
     assert.equal(result.status, 0, result.stderr);
-    for (const job of jobs.slice(0, -2))
+    for (const job of jobs.filter(
+      (one) => !["Package tests", "Security report"].includes(one),
+    ))
       assert.ok(result.stdout.includes(`| ${job} | Pass |`), result.stdout);
     assert.ok(!result.stdout.includes("Package tests"), result.stdout);
     assert.ok(!result.stdout.includes("Security report"), result.stdout);
@@ -138,7 +155,7 @@ describe("scripts/check.sh", () => {
     assert.equal(result.status, 1);
     assert.ok(
       result.stderr.includes(
-        "error: Usage: check.sh [--before-push] [--skip <job name>]...",
+        "error: Usage: check.sh [--before-push] [--offline] [--skip <job name>]...",
       ),
       result.stderr,
     );
@@ -174,7 +191,9 @@ describe("scripts/check.sh", () => {
   });
 
   it("fails naming each job that failed, after running every job", () => {
-    const result = checkFailing("test:changed typecheck", "--before-push");
+    const result = run(["--before-push"], {
+      failing: "test:changed typecheck",
+    });
     assert.equal(result.status, 1);
     assert.ok(
       result.stdout.includes("| Changed tests | Fail |"),
@@ -185,6 +204,111 @@ describe("scripts/check.sh", () => {
     assert.ok(
       result.stderr.includes(
         "error: These checks failed: Changed tests, Types; see their output above",
+      ),
+      result.stderr,
+    );
+  });
+
+  it("stops before starting any job without a connection, naming --offline", () => {
+    const result = run([], { online: false });
+    assert.equal(result.status, 1);
+    assert.ok(
+      result.stderr.includes(
+        "error: This computer can't reach the internet, which some of the security scans need. Run 'pnpm check --offline' or 'pnpm security --offline' to skip them",
+      ),
+      result.stderr,
+    );
+    assert.ok(!result.stdout.includes("ran"), result.stdout);
+  });
+
+  it("checks no connection when no job left needs the internet", () => {
+    for (const args of [
+      ["--before-push"],
+      ["--skip", "Security report", "--skip", "Renovate settings"],
+    ]) {
+      const result = run(args, { online: false });
+      assert.equal(result.status, 0, result.stderr);
+    }
+  });
+
+  it("offline, leaves out what needs the internet and runs the rest offline", () => {
+    const result = run(["--offline"], { online: false });
+    assert.equal(result.status, 0, result.stderr);
+    for (const job of jobs.filter((one) => one !== "Renovate settings"))
+      assert.ok(result.stdout.includes(`| ${job} | Pass |`), result.stdout);
+    assert.ok(!result.stdout.includes("| Renovate settings |"), result.stdout);
+    assert.ok(
+      result.stdout.includes(
+        "==> Working offline, so these are left out: Renovate settings",
+      ),
+      result.stdout,
+    );
+    assert.ok(
+      result.stdout.includes(
+        "==> The security report names each scan it skips offline",
+      ),
+      result.stdout,
+    );
+    assert.ok(
+      result.stdout.includes(
+        "ran security --offline offline, fixes from 2026-11-01",
+      ),
+      result.stdout,
+    );
+    assert.ok(
+      result.stdout.includes(
+        "ran test:packages offline, fixes from 2026-11-01",
+      ),
+      result.stdout,
+    );
+  });
+
+  it("offline, runs the changed tests and linters before a push", () => {
+    const result = run(["--before-push", "--offline"], { online: false });
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(
+      result.stdout.includes("ran test:changed offline, fixes from 2026-11-01"),
+      result.stdout,
+    );
+    assert.ok(!result.stdout.includes("left out"), result.stdout);
+    assert.ok(!result.stdout.includes("security report"), result.stdout);
+  });
+
+  it("refuses to work offline where CI is set, as on GitHub", () => {
+    const result = run(["--offline"], { ci: "true" });
+    assert.equal(result.status, 1);
+    assert.ok(
+      result.stderr.includes(
+        "error: --offline leaves out scans the Check workflow must run, so it can't be used where CI is set",
+      ),
+      result.stderr,
+    );
+    assert.ok(!result.stdout.includes("ran"), result.stdout);
+  });
+
+  it("refuses to work offline until prepared", () => {
+    const result = run(["--offline"], { prepared: false });
+    assert.equal(result.status, 1);
+    assert.ok(
+      result.stderr.includes(
+        "error: Not ready to work offline. Run 'pnpm offline:prepare' while connected, then try again",
+      ),
+      result.stderr,
+    );
+    assert.ok(!result.stdout.includes("ran"), result.stdout);
+  });
+
+  it("refuses to work offline when only jobs that need the internet are left", () => {
+    const result = run([
+      "--offline",
+      ...jobs
+        .filter((job) => job !== "Renovate settings")
+        .flatMap((job) => ["--skip", job]),
+    ]);
+    assert.equal(result.status, 1);
+    assert.ok(
+      result.stderr.includes(
+        "Every job left needs the internet, so there is nothing to check offline",
       ),
       result.stderr,
     );

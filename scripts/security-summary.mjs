@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Summarizes a security report folder into summary.md. A vulnerability fails the report only once
-// its fix is overdue, counted from the fix's release by the Security Plan's fix times; one with no
-// fix released is a warning. Any other critical or high finding fails it, as does any scan that
-// did not complete. Naming scan files after the report folder summarizes only those scans, as the
-// release's image scan does with container-images.json. With --first-seen-unknown-from, a fix
-// dated only by a sighting at or after that time counts as having no known release date, so a
-// scan on a machine with no earlier reports cannot pass a fix whose release it could not look up.
+// Summarizes a security report folder into summary.md, failing the report on an overdue fix, any
+// other critical or high finding, or a scan that did not complete.
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
@@ -322,23 +317,46 @@ export function checkScanFiles(files = []) {
     throw new Error(`Not a scan's file: ${unknown.join(", ")}`);
 }
 
-// The scans scripts/scan-reuse.mjs recorded as skipped, since nothing that decides them changed.
-// Only the image scan may be skipped, so no other scan can pass by being left out.
+// Why a scan may be skipped, and which scans may be, so no other scan can pass by being left out:
+// the image scan when nothing that decides it changed, and the scans that need the internet when
+// the report runs offline.
+const offlineNotes = new Map([
+  ["dependencies.json", "The Check workflow runs it on every pull request."],
+  [
+    "container-images.json",
+    "The Check workflow builds and scans them on a pull request that changes what they're built from.",
+  ],
+]);
+
+export const skipReasons = new Map([
+  [
+    "unchanged",
+    {
+      files: ["container-images.json"],
+      note: (scan) =>
+        `${scan.name} were not built or scanned, since nothing that can change their scan changed against origin/main: ${imageInputsDescription}. The default branch's images and the newest release's are scanned daily, and each release's as it is published.`,
+    },
+  ],
+  [
+    "offline",
+    {
+      files: [...offlineNotes.keys()],
+      note: (scan) =>
+        `${scan.name}: skipped, since the report ran offline. ${offlineNotes.get(scan.file) ?? ""}`,
+    },
+  ],
+]);
+
+// The scans scripts/scan-reuse.mjs recorded as skipped, each with its reason, for those its reason
+// allows.
 function skippedScans(reportDir) {
   const recorded = readResults(reportDir, "scans.json");
-  return new Set(
-    (Array.isArray(recorded) ? recorded : [])
-      .filter(
-        (entry) =>
-          entry?.file === "container-images.json" &&
-          typeof entry.skipped === "string",
-      )
-      .map((entry) => entry.file),
-  );
-}
-
-function skippedNote(scan) {
-  return `${scan.name} were not built or scanned, since nothing that can change their scan changed against origin/main: ${imageInputsDescription}. The default branch's images and the newest release's are scanned daily, and each release's as it is published.`;
+  const skipped = new Map();
+  for (const entry of Array.isArray(recorded) ? recorded : []) {
+    const reason = skipReasons.get(entry?.skipped);
+    if (reason?.files.includes(entry.file)) skipped.set(entry.file, reason);
+  }
+  return skipped;
 }
 
 // Names each result scripts/scan-reuse.mjs took from an earlier report, and which report.
@@ -380,7 +398,7 @@ export function summarize(
   const rows = chosen.map((scan) => {
     const results = readResults(reportDir, scan.file);
     if (results === undefined && skipped.has(scan.file)) {
-      notes.push(skippedNote(scan));
+      notes.push(skipped.get(scan.file).note(scan));
       return `| ${scan.name} | ${scan.tool} | Skipped | | | | |`;
     }
     if (results === undefined || results === null || !scan.completed(results)) {

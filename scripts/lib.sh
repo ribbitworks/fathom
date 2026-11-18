@@ -14,8 +14,26 @@ require_git_repository() {
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 || fail "Run this inside the Fathom git repository"
 }
 
+# What 'pnpm offline:prepare' keeps for working offline, in this copy's git-ignored .cache/: Semgrep's
+# rules, whose licence keeps them out of the repository, and the day the database image was built.
+# The rules come as JSON, which Semgrep reads as YAML.
+fathom_offline_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/.cache/offline"
+# shellcheck disable=SC2034 # Read by the scripts that source this file.
+fathom_semgrep_rules="$fathom_offline_dir/semgrep-rules.yaml"
+fathom_prepared_day="$fathom_offline_dir/security-fixes-date"
+
 # Container images built today pick up the security fixes released up to today; see the Dockerfiles.
-# Setting another value, such as the current time, fetches fixes again within the same day.
+# Setting another value, such as the current time, fetches fixes again within the same day. With
+# FATHOM_OFFLINE set, images are built with the fixes 'pnpm offline:prepare' fetched, whatever else
+# is set, since the build then reuses that image's layers, and fetching any other fixes needs the
+# internet.
+use_prepared_fixes() {
+  if [ -n "${FATHOM_OFFLINE:-}" ] && [ -s "$fathom_prepared_day" ]; then
+    FATHOM_SECURITY_FIXES_DATE="$(cat "$fathom_prepared_day")"
+    export FATHOM_SECURITY_FIXES_DATE
+  fi
+}
+use_prepared_fixes
 FATHOM_SECURITY_FIXES_DATE="${FATHOM_SECURITY_FIXES_DATE:-$(date -u +%Y-%m-%d)}"
 export FATHOM_SECURITY_FIXES_DATE
 
@@ -227,6 +245,14 @@ stop_dev_servers() {
 
 # Trivy, which the security report and the image scans share.
 fathom_trivy_image="aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
+# The security report's other scanners, which 'pnpm offline:prepare' pulls too.
+# shellcheck disable=SC2034 # Read by the scripts that source this file.
+fathom_gitleaks_image="zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"
+# shellcheck disable=SC2034 # Read by the scripts that source this file.
+fathom_semgrep_image="semgrep/semgrep:1.182.1@sha256:451b3d875c00dac7ed5db5293e584a07de11449a409c10b3c2d2652f429630b6"
+# Renovate, which lists dependency updates and validates its own settings.
+# shellcheck disable=SC2034 # Read by the scripts that source this file.
+fathom_renovate_image="renovate/renovate:44.172.2@sha256:2095d96fbb3d832d006eddb5fe71907a6ba4af7d339f47bca6f0df6a21d6fb9d"
 # How each image is scanned, all of which decides whether an earlier image scan can be reused.
 fathom_image_scan_arguments=(
   image --quiet --skip-version-check --disable-telemetry --skip-db-update --scanners 'vuln,secret'
@@ -279,8 +305,22 @@ release_trivy_cache() {
 update_trivy_database() {
   trivy_in_cache "$fathom_trivy_image" image --download-db-only --quiet --skip-version-check \
     --disable-telemetry >&2 &&
-    trivy_in_cache "$fathom_trivy_image" version --format json |
+    trivy_database
+}
+
+# Prints when the vulnerability database in this copy's cache was built, without updating it, or
+# fails when the cache holds none.
+trivy_database() {
+  trivy_in_cache --network none "$fathom_trivy_image" version --format json |
     node scripts/trivy-facts.mjs database-version
+}
+
+# Fails, saying what can't be reached, unless this computer reaches the package registry, which the
+# scans that need the internet use, so a check without a connection says so rather than failing in
+# a scanner.
+require_connection() {
+  NODE_USE_ENV_PROXY=1 node scripts/offline.mjs online ||
+    fail "This computer can't reach the internet, which some of the security scans need. Run 'pnpm check --offline' or 'pnpm security --offline' to skip them; the Check workflow runs them on the pull request"
 }
 
 # Scans the linux/amd64 build of an image for vulnerable packages and built-in secrets, writing
@@ -446,6 +486,19 @@ fathom_https_url() {
 require_container_runtime() {
   command -v docker >/dev/null 2>&1 || fail "A container runtime is required; see docs/operations/supported-platforms.md"
   docker info >/dev/null 2>&1 || fail "The container runtime is installed but not running"
+}
+
+# The Check workflow must run every scan, so working offline is refused where CI is set.
+refuse_offline_in_ci() {
+  [ -z "${CI:-}" ] || fail "--offline leaves out scans the Check workflow must run, so it can't be used where CI is set"
+}
+
+# Builds this copy's database image for this machine, as development and the database tests run it,
+# failing with the message given, or one for a build without the internet.
+build_dev_database_image() {
+  env -u DOCKER_DEFAULT_PLATFORM FATHOM_IMAGE_TAG="$(clone_name dev)" \
+    docker compose --file deploy/compose.dev.yaml build --quiet ||
+    fail "${1:-Could not build the database image. Without the internet, run 'pnpm offline:prepare' while connected, then work with --offline or FATHOM_OFFLINE=1}"
 }
 
 # Prints the files git would track, committed or new but never ignored, that exist on disk.

@@ -218,16 +218,18 @@ The copy gets new names, and so a new, empty database.
 
 | Command | What it does |
 | --- | --- |
-| `pnpm check` | Every linter, every test and the security report: the full check from the [Testing Standards](../standards/testing.md#running-tests). `--skip` and a job's name, such as `--skip "Package tests"`, leaves that job out, as the Check workflow does where other runners run it |
-| `pnpm check:push` | The tests a change can affect and the linters, side by side, before a push: `pnpm test:changed`, ESLint, the formatting check, type checking and the Markdown and shell linters. It lists each one's result and time, and names any that failed. `--skip` works as for `pnpm check` |
+| `pnpm check` | Every linter, every test and the security report: the full check from the [Testing Standards](../standards/testing.md#running-tests). `--skip` and a job's name, such as `--skip "Package tests"`, leaves that job out, as the Check workflow does where other runners run it. Without a connection to the internet it stops before starting, naming `--offline`, which leaves out the Renovate settings and the scans that need the internet, once `pnpm offline:prepare` has run |
+| `pnpm check:push` | The tests a change can affect and the linters, side by side, before a push: `pnpm test:changed`, ESLint, the formatting check, type checking and the Markdown and shell linters. It lists each one's result and time, and names any that failed. `--skip` and `--offline` work as for `pnpm check` |
 | `pnpm test` | Every test: the script tests, then every package's |
 | `pnpm test:changed` | The tests a change can affect; with `--uncommitted`, only the work not yet committed |
 | `pnpm test:scripts` | The script tests alone |
 | `pnpm test:packages` | Every package's tests; with `--filter` and a package, such as `--filter @fathom/web`, only those packages, as pnpm chooses them |
 | `pnpm test:containers` | The container tests: users reach Fathom only through the proxy, and the application and database can't reach the internet |
 | `pnpm typecheck` | Type checking across the workspace |
-| `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:licences` | Each linter on its own |
+| `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:licences`, `pnpm lint:renovate` | Each linter on its own. `pnpm lint:renovate` validates `renovate.json` with Renovate's own validator, only when it has changed since `origin/main` |
 | `pnpm format` | Format the source files |
+
+Without the internet, the database tests can't fetch the day's security fixes for their image. `pnpm check --offline` and `pnpm check:push --offline` build it with the fixes `pnpm offline:prepare` fetched; for other commands, such as `pnpm test` or `pnpm dev`, set `FATHOM_OFFLINE=1`.
 
 `pnpm lint` keeps a cache in `.tmp/eslint/`, so unchanged files aren't linted again. `pnpm check` and `pnpm check:push` lint without it, since a change to one file's types can break another file.
 
@@ -235,10 +237,11 @@ The copy gets new names, and so a new, empty database.
 
 | Command | What it does |
 | --- | --- |
-| `pnpm security` | The security report, in a dated folder under `output/security/` |
+| `pnpm security` | The security report, in a dated folder under `output/security/`; with `--offline`, without the dependency audit and the image scans, which need the internet |
+| `pnpm offline:prepare` | Fetch what `pnpm check --offline` needs, while connected: the scanners' images, Semgrep's rules, Trivy's database, and the database image with that day's security fixes |
 | `pnpm scan:images` | The daily image scan, as [Releases](#daily-image-scan) describes |
 | `pnpm updates` | List dependency updates, in `output/updates/`, changing nothing. On GitHub, the Renovate app opens a pull request for each update, or for each group of related ones, as `renovate.json` sets out, at most five open at once apart from security fixes |
-| `pnpm reset-caches` | Remove the scanners' cached data, ESLint's cache and Vitest's caches of compiled files, which the next run rebuilds. It waits for any package tests running on this computer to finish first |
+| `pnpm reset-caches` | Remove the scanners' cached data, ESLint's cache and Vitest's caches of compiled files, which the next run rebuilds. It waits for any package tests running on this computer to finish first. Run `pnpm offline:prepare` again after it, before working offline |
 | `pnpm prune-reports [days]` | Delete local reports older than the given days, 365 by default, always keeping security reports for a year |
 
 - `pnpm security` runs its scans side by side.
@@ -268,6 +271,8 @@ See [Releases](#releases) for the steps.
 - **Downloads:** Most scanners run without network access.
   - Semgrep downloads its rules, and Trivy its vulnerability database.
   - `pnpm audit` asks the package registry.
+  - Renovate's validator runs without network access.
+  - `pnpm offline:prepare` keeps a copy of Semgrep's rules in the git-ignored `.cache/offline/`, since their licence keeps them out of the repository.
 - **Database tests:** Each test file gets a database of its own.
   - It's copied from a template that the package's run migrates once, in one throwaway PostgreSQL container.
   - It's dropped when the file finishes.

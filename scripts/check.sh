@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 
-# Runs everything 'pnpm check' covers side by side, then lists each job's result and time, or, with
-# --before-push, only the changed tests and the linters, for 'pnpm check:push'.
-# Usage: scripts/check.sh [--before-push] [--skip <job name>]..., such as --skip "Package tests"
+# Runs the full check, or the changed tests and linters before a push, side by side, then lists
+# each job's result and time. Usage: check.sh [--before-push] [--offline] [--skip <job name>]...
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -26,12 +25,18 @@ full_check=(
   "Script tests|pnpm test:scripts"
   "Package tests|pnpm test:packages"
   "Security report|pnpm security"
+  "Renovate settings|pnpm lint:renovate"
 )
 before_push=(
   "Changed tests|pnpm test:changed"
   "${linters[@]}"
 )
 jobs=("${full_check[@]}")
+# The jobs that need the internet, and what each runs instead offline, or nothing to leave it out.
+online_jobs=(
+  "Security report|pnpm security --offline"
+  "Renovate settings|"
+)
 
 logs=""
 # The process of each job still running, emptied once it ends.
@@ -42,7 +47,7 @@ results=()
 seconds=()
 
 main() {
-  local index started skip
+  local index started skip offline=""
   local -a starts=() skips=()
   while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -50,15 +55,24 @@ main() {
         jobs=("${before_push[@]}")
         shift
         ;;
+      --offline)
+        offline=1
+        shift
+        ;;
       --skip)
         [ "$#" -ge 2 ] || fail "--skip needs a job's name, such as --skip \"Package tests\""
         skips+=("$2")
         shift 2
         ;;
-      *) fail "Usage: check.sh [--before-push] [--skip <job name>]..." ;;
+      *) fail "Usage: check.sh [--before-push] [--offline] [--skip <job name>]..." ;;
     esac
   done
   for skip in ${skips[@]+"${skips[@]}"}; do skip_job "$skip"; done
+  if [ -n "$offline" ]; then
+    work_offline
+  elif needs_connection; then
+    require_connection
+  fi
   mkdir -p .tmp && chmod 700 .tmp
   logs="$(mktemp -d "$PWD/.tmp/check.XXXXXX")"
   trap 'stop_jobs; rm -rf "$logs"' EXIT
@@ -125,6 +139,48 @@ skip_job() {
   [ -n "$matched" ] || fail "No job left to skip is named $1; those left are: $(job_names)"
   [ "${#kept[@]}" -gt 0 ] || fail "Every job is skipped, so there is nothing to check"
   jobs=("${kept[@]}")
+}
+
+# Whether any job left needs the internet.
+needs_connection() {
+  local job online
+  for job in "${jobs[@]}"; do
+    for online in "${online_jobs[@]}"; do
+      [ "${job%%|*}" != "${online%%|*}" ] || return 0
+    done
+  done
+  return 1
+}
+
+# Runs each job that needs the internet as it runs offline, leaving out those that can't, and builds
+# images with the security fixes 'pnpm offline:prepare' fetched, as the tests' database needs.
+work_offline() {
+  local job online name kept=() left_out=""
+  refuse_offline_in_ci
+  [ -s "$fathom_prepared_day" ] ||
+    fail "Not ready to work offline. Run 'pnpm offline:prepare' while connected, then try again"
+  export FATHOM_OFFLINE=1
+  use_prepared_fixes
+  for job in "${jobs[@]}"; do
+    name="${job%%|*}"
+    for online in "${online_jobs[@]}"; do
+      [ "$name" = "${online%%|*}" ] || continue
+      job="${online}"
+      break
+    done
+    if [ -n "${job#*|}" ]; then
+      kept+=("$job")
+    else
+      left_out="${left_out:+$left_out, }$name"
+    fi
+  done
+  [ "${#kept[@]}" -gt 0 ] || fail "Every job left needs the internet, so there is nothing to check offline"
+  jobs=("${kept[@]}")
+  [ -z "$left_out" ] || info "Working offline, so these are left out: $left_out"
+  for job in "${jobs[@]}"; do
+    [ "${job%%|*}" != "Security report" ] || info "The security report names each scan it skips offline"
+  done
+  info "The Check workflow runs everything on the pull request"
 }
 
 job_names() {

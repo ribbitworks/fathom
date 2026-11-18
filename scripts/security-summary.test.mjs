@@ -736,9 +736,7 @@ describe("security summary", () => {
   it("passes a skipped image scan, saying why and what it compared", () => {
     writeResults({
       "container-images.json": "",
-      "scans.json": [
-        { file: "container-images.json", skipped: "nothing changed" },
-      ],
+      "scans.json": [{ file: "container-images.json", skipped: "unchanged" }],
     });
     rmSync(join(reportDir, "container-images.json"));
     const { failed, markdown } = summarize(reportDir);
@@ -752,7 +750,40 @@ describe("security summary", () => {
 
   it("still fails a skipped scan other than the image scan when its results are missing", () => {
     writeResults({
-      "scans.json": [{ file: "code.json", skipped: "nothing changed" }],
+      "scans.json": [{ file: "code.json", skipped: "unchanged" }],
+    });
+    rmSync(join(reportDir, "code.json"));
+    const { failed, markdown } = summarize(reportDir);
+    assert.equal(failed, true);
+    assert.match(rowFor(markdown, "Code security flaws"), /Did not complete/);
+  });
+
+  it("passes the scans that need the internet skipped offline, naming each", () => {
+    writeResults({
+      "scans.json": [
+        { file: "dependencies.json", skipped: "offline" },
+        { file: "container-images.json", skipped: "offline" },
+      ],
+    });
+    rmSync(join(reportDir, "dependencies.json"));
+    rmSync(join(reportDir, "container-images.json"));
+    const { failed, markdown } = summarize(reportDir);
+    assert.equal(failed, false);
+    assert.match(
+      rowFor(markdown, "Dependency vulnerabilities"),
+      /\| Skipped \|/,
+    );
+    assert.match(rowFor(markdown, "Container images"), /\| Skipped \|/);
+    for (const note of [
+      "- Dependency vulnerabilities: skipped, since the report ran offline. The Check workflow runs it on every pull request.",
+      "- Container images: skipped, since the report ran offline. The Check workflow builds and scans them on a pull request that changes what they're built from.",
+    ])
+      assert.ok(markdown.includes(note), markdown);
+  });
+
+  it("still fails a scan skipped for a reason it does not allow", () => {
+    writeResults({
+      "scans.json": [{ file: "code.json", skipped: "offline" }],
     });
     rmSync(join(reportDir, "code.json"));
     const { failed, markdown } = summarize(reportDir);
@@ -763,9 +794,7 @@ describe("security summary", () => {
   it("fails a skipped image scan whose results are there but incomplete", () => {
     writeResults({
       "container-images.json": [{ image: "example/one:1", report: null }],
-      "scans.json": [
-        { file: "container-images.json", skipped: "nothing changed" },
-      ],
+      "scans.json": [{ file: "container-images.json", skipped: "unchanged" }],
     });
     const { failed } = summarize(reportDir);
     assert.equal(failed, true);
