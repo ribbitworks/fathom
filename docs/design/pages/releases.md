@@ -37,7 +37,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 ## Releases Tab
 
 - **Columns:** Release, Schedule, Ships on, Cycles, Features and Status. Features shows only to those who see features.
-- **Rows:** Grouped by schedule; shipped releases show only with **Show shipped**.
+- **Rows:** One list at first, or grouped by schedule; shipped releases show only with **Show shipped**.
 - **New release:** For those who change releases. It asks for the schedule first, and is greyed out while no schedule takes new releases.
 
 ## Release Details
@@ -48,7 +48,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 ## Cycles Tab
 
 - **Columns:** Cycle, Schedule, Starts, Ends, Current, Release and Features.
-- **Rows:** Grouped by schedule; past cycles and those after next quarter are hidden until chosen in **Views**.
+- **Rows:** One list at first, or grouped by schedule; past cycles and those after next quarter are hidden until chosen in **Views**.
 - **No New button:** Cycles come only from their schedule.
 - **Drafts:** A row is marked by the draft behind it, such as a change to its schedule's cycles.
 - **Duration:** Its pencil works as on a schedule's [cycles](#schedule-cycles).

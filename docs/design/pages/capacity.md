@@ -20,6 +20,7 @@ Capacity shows who is allocated to what, month by month, and holds the planning 
 - **A month's cell:** each feature with its percentage, then a Total line.
   - From the current month on, it reads Over or Under instead, so an empty month reads Under.
   - These are a status, not a [warning](../../standards/ui-conventions.md#values).
+- **Grouping:** one list at first; Group by offers None, Manager and Feature team, as on [Feature assignments](feature-assignments.md#layout).
 - **Drafts:** as on [Feature assignments](feature-assignments.md#drafts).
 - **Totals:** a Total, PM row per group and an Organization, PM row fixed at the foot, such as 7.5 of 9.
 

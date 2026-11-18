@@ -25,8 +25,9 @@ Features lists the plan's features in one table, with a board as a second way of
 
 ## Grouping
 
-- **Default:** by cycle, each schedule's cycles in order, then Later for features with no cycle.
-- **Group by:** Cycle, Release, Needed by, every list column and None, with Then by as [Tables](../../standards/ui-conventions.md#tables) sets out.
+- **Default:** one list, with no grouping.
+- **Group by:** None, Cycle, Release, Needed by and every list column, with Then by as [Tables](../../standards/ui-conventions.md#tables) sets out.
+- **By Cycle:** each schedule's cycles in order, then Later for features with no cycle.
 - **By Release:** each schedule's releases by date, then its cycles in no release, such as Platform: Not released yet, then Later.
 
 ## Features Board
