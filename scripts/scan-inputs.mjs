@@ -1,19 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Decides what can change the security scans' results, by one rule: Fathom's own code, tests,
-// documents and pictures cannot, since Trivy reads operating system packages and dependencies, and
-// secrets in them are found by the scans of files and git history; every other file can, so a new
-// kind of file always counts. The scan's own scripts, and everything the images are built from in
-// deploy/docker/, count too.
-// - image-scan prints each changed path that can change the container images' scan since this
-//   branch left origin/main, or "unchanged" when none can. Any failure exits non-zero, which the
-//   security report takes as not knowing, so it scans the images.
-// - dependency-hash prints one hash of the path and contents of every file in a folder that can
-//   change the dependency scan, such as the copy Trivy scans; it fails rather than print a hash
-//   an earlier run could match.
-// Usage:
-//   node scripts/scan-inputs.mjs image-scan
-//   node scripts/scan-inputs.mjs dependency-hash <folder>
+// Decides what can change the security scans' results: which changed paths decide the image scan,
+// and a hash of the files that decide the dependency scan.
 
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
@@ -36,6 +24,7 @@ const scanScripts = new Set([
   "scripts/trivy-facts.mjs",
   "scripts/combine-image-reports.mjs",
   "scripts/fix-dates.mjs",
+  "scripts/offline.mjs",
   "scripts/vulnerabilities.mjs",
   "scripts/security-summary.mjs",
   "scripts/prune-reports.mjs",

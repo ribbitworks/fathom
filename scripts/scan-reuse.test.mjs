@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of reusing an earlier security report's Trivy results: a result is reused only when every
-// input matches and the earlier scan completed, the newest match wins, each fresh scan's inputs
-// are recorded only once it completed, and when Trivy's database was built and which configuration
-// a saved image has are read from Trivy and from the saved image.
+// Tests of reusing an earlier security report's Trivy results, recording each scan's inputs, and
+// recording skipped scans.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -239,19 +237,38 @@ describe("the command", () => {
   });
 });
 
-describe("skipping the image scan", () => {
+describe("skipping a scan", () => {
   it("records that the image scan was skipped, and refuses to skip any other", () => {
     const current = report("2026-11-07T12-00-00Z");
     recordSkip(current, "container-images.json");
     assert.deepEqual(scansIn(current), [
-      {
-        file: "container-images.json",
-        skipped: "nothing that decides it changed against origin/main",
-      },
+      { file: "container-images.json", skipped: "unchanged" },
     ]);
     assert.throws(
       () => recordSkip(current, "code.json"),
-      /Only container-images\.json/,
+      /Only container-images\.json may be skipped as unchanged/,
+    );
+  });
+
+  it("records the scans that need the internet as skipped offline, and refuses any other", () => {
+    const current = report("2026-11-07T12-00-00Z");
+    recordSkip(current, "dependencies.json", "offline");
+    recordSkip(current, "container-images.json", "offline");
+    assert.deepEqual(scansIn(current), [
+      { file: "dependencies.json", skipped: "offline" },
+      { file: "container-images.json", skipped: "offline" },
+    ]);
+    assert.throws(
+      () => recordSkip(current, "code.json", "offline"),
+      /Only dependencies\.json or container-images\.json may be skipped as offline/,
+    );
+  });
+
+  it("refuses a reason it does not know", () => {
+    const current = report("2026-11-07T12-00-00Z");
+    assert.throws(
+      () => recordSkip(current, "container-images.json", "tired"),
+      /A scan is skipped only as unchanged or offline/,
     );
   });
 });

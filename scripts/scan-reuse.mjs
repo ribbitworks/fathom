@@ -1,25 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Lets a security report reuse a Trivy result from an earlier report when nothing the scan reads
-// has changed, and records the inputs of each scan in the report's scans.json, so a later report
-// can tell. Inputs are named values, such as the lockfile's hash, an image's configuration and the
-// version of Trivy's database; a result is reused only when every input has a value and matches,
-// and the earlier scan completed. The copy is written into the new report, so each report stands
-// on its own. Also records a skipped image scan, which only the image scan may be.
-// Usage:
-//   node scripts/scan-reuse.mjs reuse <report folder> files.json <name>=<value> ...
-//   node scripts/scan-reuse.mjs reuse-image <report folder> <image> <name>=<value> ...
-//   node scripts/scan-reuse.mjs record <report folder> files.json <name>=<value> ...
-//   node scripts/scan-reuse.mjs record-image <report folder> <image> <report file> <name>=<value> ...
-//   node scripts/scan-reuse.mjs record-skip <report folder> container-images.json
-// reuse writes files.json into the report folder; reuse-image prints the image's report. Both exit
-// 1 when nothing can be reused.
+// Lets a security report reuse an earlier report's Trivy result when nothing the scan reads has
+// changed, recording each scan's inputs, or that it was skipped, in the report's scans.json.
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseReportTime } from "./prune-reports.mjs";
-import { scans as summaryScans } from "./security-summary.mjs";
+import { skipReasons, scans as summaryScans } from "./security-summary.mjs";
 
 export const scansFile = "scans.json";
 export const imagesFile = "container-images.json";
@@ -151,14 +139,19 @@ export function record(reportDir, scan, inputs, result) {
 }
 
 // Records that a scan was skipped, since nothing that decides its result changed against
-// origin/main, so the summary shows it as skipped rather than as not completed. Only the image
-// scan may be skipped.
-export function recordSkip(reportDir, file) {
-  if (file !== imagesFile) throw new Error(`Only ${imagesFile} may be skipped`);
-  addScan(reportDir, {
-    file,
-    skipped: "nothing that decides it changed against origin/main",
-  });
+// origin/main or since the report ran offline, so the summary shows it as skipped rather than as
+// not completed. Only the scans the summary allows for that reason may be skipped.
+export function recordSkip(reportDir, file, why = "unchanged") {
+  const allowed = skipReasons.get(why);
+  if (allowed === undefined)
+    throw new Error(
+      `A scan is skipped only as ${[...skipReasons.keys()].join(" or ")}`,
+    );
+  if (!allowed.files.includes(file))
+    throw new Error(
+      `Only ${allowed.files.join(" or ")} may be skipped as ${why}`,
+    );
+  addScan(reportDir, { file, skipped: why });
 }
 
 function reuseCommand(reportDir, scan, pairs, write) {
@@ -207,12 +200,12 @@ function main([command, reportDir, ...rest]) {
     );
     return 0;
   }
-  if (command === "record-skip" && rest.length === 1) {
-    recordSkip(reportDir, rest[0]);
+  if (command === "record-skip" && [1, 2].includes(rest.length)) {
+    recordSkip(reportDir, rest[0], rest[1]);
     return 0;
   }
   console.error(
-    "Usage: node scripts/scan-reuse.mjs reuse|record <report folder> files.json <name>=<value> ..., reuse-image <report folder> <image> <name>=<value> ..., record-image <report folder> <image> <report file> <name>=<value> ..., or record-skip <report folder> container-images.json",
+    "Usage: node scripts/scan-reuse.mjs reuse|record <report folder> files.json <name>=<value> ..., reuse-image <report folder> <image> <name>=<value> ..., record-image <report folder> <image> <report file> <name>=<value> ..., or record-skip <report folder> <scan file> [unchanged|offline]",
   );
   return 2;
 }
