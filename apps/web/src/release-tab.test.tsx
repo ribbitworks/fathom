@@ -1021,7 +1021,7 @@ describe("a release's row menu", () => {
         },
       },
     );
-    await chooseRowAction("Fictional One", "Approve draft");
+    await chooseRowAction("Fictional One", "Approve draft…");
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 1 draft?",
     });

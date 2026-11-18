@@ -1060,7 +1060,7 @@ describe("the page around its tables", () => {
       { "POST /api/drafts/approval": deleted },
       approver,
     );
-    await chooseFrom(await rowMenu("Fictional Customer"), "Approve draft");
+    await chooseFrom(await rowMenu("Fictional Customer"), "Approve draft…");
     const dialog = await screen.findByRole("dialog");
     await userEvent.click(
       within(dialog).getByRole("button", { name: /^Approve/ }),
@@ -1574,7 +1574,7 @@ describe("changing a record from its row", () => {
       {},
       approver,
     );
-    await chooseFrom(await rowMenu("Fictional Customer"), "Approve draft");
+    await chooseFrom(await rowMenu("Fictional Customer"), "Approve draft…");
     const dialog = await screen.findByRole("dialog");
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Cancel" }),
@@ -3162,7 +3162,7 @@ describe("the Features page", () => {
         screen.getByRole("button", { name: "Fictional Size column" }),
       );
       await userEvent.click(
-        await screen.findByRole("menuitem", { name: "Edit column" }),
+        await screen.findByRole("menuitem", { name: "Edit column…" }),
       );
       return screen.findByRole("dialog", { name: "Edit column" });
     };

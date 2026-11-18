@@ -630,14 +630,14 @@ export function Layout({
                     setChangingName(true);
                   }}
                 >
-                  Change name
+                  Change name…
                 </Menu.Item>
                 <Menu.Item
                   onClick={() => {
                     setChangingPassword(true);
                   }}
                 >
-                  Change password
+                  Change password…
                 </Menu.Item>
                 <AppearanceChoices />
                 <Menu.Divider />

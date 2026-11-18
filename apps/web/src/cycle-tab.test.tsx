@@ -977,7 +977,7 @@ describe("a cycle's drafts", () => {
         "POST /api/drafts/approval": savedAs,
       },
     });
-    await chooseRowAction("Fictional Majors: 27.2", "Approve draft");
+    await chooseRowAction("Fictional Majors: 27.2", "Approve draft…");
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 1 draft?",
     });
@@ -1032,7 +1032,7 @@ describe("a cycle's drafts", () => {
           "POST /api/drafts/approval": savedAs,
         },
       });
-      await chooseRowAction("Fictional Majors: 27.2", "Approve draft");
+      await chooseRowAction("Fictional Majors: 27.2", "Approve draft…");
       return approvedBody(fetch);
     }
 
@@ -1095,10 +1095,10 @@ describe("a cycle's drafts", () => {
         });
 
         expect(await rowMenuTexts("Fictional Majors: 27.2")).toEqual(
-          expect.arrayContaining(["Approve Harbour's draft", reject]),
+          expect.arrayContaining(["Approve Harbour's draft…", reject]),
         );
         await userEvent.click(
-          screen.getByRole("menuitem", { name: "Approve Harbour's draft" }),
+          screen.getByRole("menuitem", { name: "Approve Harbour's draft…" }),
         );
 
         expect(await approvedBody(fetch)).toEqual(releaseAlone);
@@ -1170,7 +1170,7 @@ describe("a cycle's drafts", () => {
 
       expect(
         within(menu)
-          .getByRole("menuitem", { name: "Approve draft" })
+          .getByRole("menuitem", { name: "Approve draft…" })
           .hasAttribute("data-disabled"),
       ).toBe(true);
       expect(within(menu).getByText("Needs another approver")).toBeDefined();

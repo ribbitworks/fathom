@@ -471,7 +471,7 @@ describe("a web link column", () => {
       await screen.findByRole("button", { name: "Profile column" }),
     );
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Edit column" }),
+      await screen.findByRole("menuitem", { name: "Edit column…" }),
     );
     const edit = await screen.findByRole("dialog", { name: "Edit column" });
     expect(within(edit).queryByRole("radio")).toBe(null);
@@ -516,7 +516,7 @@ describe("a web link column", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Profile column" }),
     );
-    await screen.findByRole("menuitem", { name: "Edit column" });
+    await screen.findByRole("menuitem", { name: "Edit column…" });
     expect(screen.queryByRole("menuitem", { name: "Change class…" })).toBe(
       null,
     );
@@ -612,7 +612,7 @@ describe("a web link column", () => {
       await screen.findByRole("button", { name: /^Profile column/ }),
     );
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Edit column" }),
+      await screen.findByRole("menuitem", { name: "Edit column…" }),
     );
     const edit = await screen.findByRole("dialog", { name: "Edit column" });
     expect(
@@ -653,7 +653,7 @@ describe("a web link column", () => {
       await screen.findByRole("button", { name: "Profile column" }),
     );
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Edit column" }),
+      await screen.findByRole("menuitem", { name: "Edit column…" }),
     );
     const dialog = await screen.findByRole("dialog");
     expect(

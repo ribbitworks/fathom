@@ -1157,7 +1157,7 @@ describe("changing one's own password", () => {
       }),
     );
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Change password" }),
+      await screen.findByRole("menuitem", { name: "Change password…" }),
     );
     return screen.findByRole("dialog", { name: "Change password" });
   }
@@ -1458,7 +1458,7 @@ describe("the checklist for a new password", () => {
       }),
     );
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Change password" }),
+      await screen.findByRole("menuitem", { name: "Change password…" }),
     );
     return screen.findByRole("dialog", { name: "Change password" });
   }
@@ -1612,7 +1612,7 @@ describe("changing one's own name", () => {
       }),
     );
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Change name" }),
+      await screen.findByRole("menuitem", { name: "Change name…" }),
     );
     return screen.findByRole("dialog", { name: "Change name" });
   }
