@@ -142,6 +142,7 @@ flowchart LR
 - **Releases:** A release tag pushed is built and scanned before its release is drafted, and its images are scanned again when the release is published, before any is pushed to the registry. The Check workflow runs the security report on every pull request and every push to the default branch.
 - **Fix times:** Counted from when a fix is released: critical within 14 days, high within 60, and medium within 180. Low findings have no deadline.
 - **Failing:** The security report fails on an overdue fix, any other critical or high finding, or a scan that doesn't finish. A release isn't drafted, and its images aren't published, while any fix in them is overdue.
+- **Indirect dependencies:** Renovate updates only the dependencies the `package.json` files name. A security fix in a package one of them brings in is made by updating the package that brings it in, or, where no release of it takes the fix, by an override in `pnpm-workspace.yaml`, removed once one does.
 - **Exceptions:** An overdue finding that can't be fixed yet may be excepted, with a reason, an expiry date and the maintainer's approval, in `.trivyignore.yaml`.
 
 ## Source Code Assurance
