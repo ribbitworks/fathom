@@ -53,7 +53,7 @@ On the timeline, each release, cycle and schedule name opens its record too. Fro
 
 You're done when the record you followed is open in its panel, on its own tab.
 
-A release's and a schedule's panel shows its key under its name, such as **#RELEASE-3**. Select the key for **Copy link** and **Copy key**, to share a link that opens the record here.
+A release's and a schedule's panel shows its key under its name, such as **#RELEASE-3**. Select the key for **Copy link** and **Copy key**, to share a link that opens the record here. See [Keys and links](keys-and-links.md).
 
 ### Make a Release
 

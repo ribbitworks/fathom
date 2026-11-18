@@ -5,6 +5,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 ## Finding Your Way
 
 - [Pages](pages.md): every page of Fathom, where it is in the left-hand menu, and the permission that shows it.
+- [Keys and links](keys-and-links.md): each record's key, copying a link to it, and finding it by its key.
 
 ## Working in Fathom
 
