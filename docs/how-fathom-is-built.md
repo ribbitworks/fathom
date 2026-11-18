@@ -57,7 +57,7 @@ flowchart TD
 1. **A separate review:** Another agent, which did not write the change, reviews it against the [Code Review Standards](standards/code-review.md). It rates each focus area from 1 to 5, and the change is ready only when every area rates 5. A faster model may review changes to documents, scripts, on-screen wording and ordinary tests. Anything that touches security, and any change where the choice is in doubt, is reviewed with the full model, as [Code Review Standards § Review Process](standards/code-review.md#review-process) sets out. Every finding is fixed, or the maintainer agrees in writing to leave it.
 1. **Approval:** The maintainer approves each commit before it is made and pushed.
 1. **The full check:** GitHub runs `pnpm check` on every push to a pull request and to `main`: the linters, type checks, the unit, integration, access control, security and script tests with coverage, and the security scans. A change to anything but documentation also runs the container tests.
-1. **Merge:** Nothing is merged until the full check passes, and never without the maintainer's word.
+1. **Merge:** Nothing is merged until the full check and the container tests pass, which a rule on `main` enforces, and never without the maintainer's word.
 
 Duplicated code isn't allowed: a new component, helper or rule first looks for one that already does the job, and the review searches for one too. Only the maintainer can approve an exception.
 
