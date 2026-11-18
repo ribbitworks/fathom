@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Runs everything 'pnpm check' covers side by side: ESLint without its cache, the formatting check,
-# type checking, Markdown, shell, PowerShell and licence linting, the script and package tests, and
+# type checking, Markdown, shell and licence linting, the script and package tests, and
 # the security report. Prints each job's output once it ends, and at once any wait for another copy
 # of the repository, then each job's result and time. Fails if any job fails.
 
@@ -20,7 +20,6 @@ jobs=(
   "Types|pnpm typecheck"
   "Markdown|pnpm lint:md"
   "Shell scripts|pnpm lint:shell"
-  "PowerShell scripts|pnpm lint:powershell"
   "Licences|pnpm lint:licences"
   "Script tests|pnpm test:scripts"
   "Package tests|pnpm test:packages"

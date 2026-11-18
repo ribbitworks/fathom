@@ -2,7 +2,7 @@
 title: "Shell Script Standards"
 category: "Standards"
 audience: "AI Coding Assistant"
-applies_to: ["**/*.sh", "**/*.ps1"]
+applies_to: ["**/*.sh"]
 dependencies: ["core-principles.md", "code-review.md"]
 last_updated: "2026-11-17"
 ---
@@ -21,11 +21,12 @@ The baseline reference is the
 - Scripts are safe to run repeatedly, and stop on the first error with a clear
   message.
 - Use Bash for macOS, Linux and WSL, written to run on the Bash 3.2 that ships
-  with macOS. Use PowerShell for Windows hosts, installing Windows packages with
-  `winget`.
-- Name scripts in lowercase words joined by hyphens, with the extension for
-  their shell, such as `lint-shell.sh` or `dev-bootstrap.ps1`; linters find
-  scripts by extension.
+  with macOS. Fathom has no PowerShell scripts: on Windows, everything runs
+  inside WSL2, and the few Windows steps that set up WSL2 are documented in
+  [Securing Your Environment](../operations/securing-your-environment.md)
+  rather than scripted.
+- Name scripts in lowercase words joined by hyphens, ending in `.sh`, such as
+  `lint-shell.sh`; linters find scripts by extension.
 
 ## Structure
 

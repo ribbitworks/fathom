@@ -13,7 +13,7 @@ rm -rf .tmp/eslint
 
 require_container_runtime
 
-volumes="$(clone_name fathom-trivy-cache) fathom-powershell-modules"
+volumes="$(clone_name fathom-trivy-cache)"
 for volume in $volumes; do
   if [ -n "$(docker ps --quiet --filter "volume=$volume")" ]; then
     fail "A running check is using $volume; try again when it finishes"

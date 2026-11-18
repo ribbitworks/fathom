@@ -24,7 +24,7 @@ import { changedPaths } from "./changed-paths.mjs";
 export const unchanged = "unchanged";
 
 const codeAndDocuments =
-  /\.(ts|tsx|mjs|cjs|js|css|md|sql|sh|ps1|psm1|svg|png|ico|html)$/;
+  /\.(ts|tsx|mjs|cjs|js|css|md|sql|sh|svg|png|ico|html)$/;
 
 const scanScripts = new Set([
   "scripts/lib.sh",

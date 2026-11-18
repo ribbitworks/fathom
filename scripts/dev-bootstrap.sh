@@ -19,7 +19,7 @@ done
 
 case "$(uname -s)" in
   Darwin | Linux) ;;
-  MINGW* | MSYS* | CYGWIN*) fail "On Windows, run scripts/dev-bootstrap.ps1 in PowerShell instead" ;;
+  MINGW* | MSYS* | CYGWIN*) fail "On Windows, run this inside WSL2, as docs/design/development-setup.md sets out" ;;
   *) fail "Unsupported operating system: $(uname -s)" ;;
 esac
 require_git_repository

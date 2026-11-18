@@ -11,15 +11,6 @@
         "_image=\"(?<depName>[^\":@]+):(?<currentValue>[^\"@]+)@(?<currentDigest>sha256:[a-f0-9]+)\""
       ],
       "datasourceTemplate": "docker"
-    },
-    {
-      "customType": "regex",
-      "description": "PSScriptAnalyzer version in lint-powershell.sh; update it with 'pnpm update:analyzer <version>', which also updates its pinned SHA-256",
-      "managerFilePatterns": ["/^scripts/lint-powershell\\.sh$/"],
-      "matchStrings": ["analyzer_version=\"(?<currentValue>[^\"]+)\""],
-      "depNameTemplate": "PSScriptAnalyzer",
-      "datasourceTemplate": "nuget",
-      "registryUrlTemplate": "https://www.powershellgallery.com/api/v2/"
     }
   ],
   "packageRules": [

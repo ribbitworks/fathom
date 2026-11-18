@@ -29,7 +29,7 @@ const notSourceCode = [
 // comment that opens and closes.
 const sourceCode = [
   { pattern: /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/, comment: "//" },
-  { pattern: /\.(sh|ps1|psm1|psd1|ya?ml)$/, comment: "#" },
+  { pattern: /\.(sh|ya?ml)$/, comment: "#" },
   { pattern: /\.env\.example$/, comment: "#" },
   { pattern: /dockerignore$/, comment: "#" },
   { pattern: /\.cfg$/, comment: "#" },
@@ -42,7 +42,7 @@ const shebangScript = { comment: "#" };
 
 // Lines that tools require at the very top of a file, before the header.
 const requiredFirstLine =
-  /^(#!|#Requires |# shellcheck shell=|# ?(syntax|escape|check)=|<!doctype html>)/;
+  /^(#!|# shellcheck shell=|# ?(syntax|escape|check)=|<!doctype html>)/;
 
 // Tool directives, which are not descriptions.
 const directive =
@@ -65,10 +65,9 @@ function markersFor(file) {
   return sourceCode.find(({ pattern }) => pattern.test(file));
 }
 
-// Returns the comment lines at the start of the given lines: a PowerShell help block, a block
-// comment, or a run of line comments.
+// Returns the comment lines at the start of the given lines: a block comment, or a run of line
+// comments.
 function descriptionLines(lines, { comment, close }) {
-  if (lines[0] === "<#") return lines.slice(0, lines.indexOf("#>") + 1);
   if (close !== undefined) {
     if (!lines[0]?.startsWith(comment)) return [];
     return lines.slice(0, lines.findIndex((line) => line.endsWith(close)) + 1);
@@ -78,12 +77,6 @@ function descriptionLines(lines, { comment, close }) {
 }
 
 function describesTheFile(description, { comment }) {
-  if (description[0] === "<#") {
-    const keyword = description.findIndex((line) =>
-      /^\.(SYNOPSIS|DESCRIPTION)$/.test(line),
-    );
-    return keyword !== -1 && /\S/.test(description.at(keyword + 1) ?? "");
-  }
   const first = description[0] ?? "";
   return (
     first.startsWith(`${comment} `) &&
