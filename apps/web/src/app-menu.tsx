@@ -2,8 +2,9 @@
 
 // Fathom's menus: a click in a menu that is not on one of its items or fields, such as on its title,
 // a draft's details, or empty space, closes it, as a click outside it does. AppMenu keeps its own
-// open state for that; a menu that keeps its own uses closesOnBlankClick on its dropdown. A group
-// of choices in a menu ticks the chosen one.
+// open state for that; a menu that keeps its own uses closesOnBlankClick on its dropdown. A menu
+// may open beside a point on the screen rather than a control, such as a right-click. A group of
+// choices in a menu ticks the chosen one.
 
 import {
   Menu,
@@ -28,6 +29,62 @@ export const closesOnBlankClick =
     const item = "button, a, input, textarea, select, label, [role='menuitem']";
     if (!target.closest(item)) close();
   };
+
+// A point on the screen, in the window's coordinates, that a menu opens beside.
+export interface ScreenPoint {
+  x: number;
+  y: number;
+}
+
+export const noPoint: ScreenPoint = { x: 0, y: 0 };
+
+export const clickedPoint = (event: MouseEvent): ScreenPoint => ({
+  x: event.clientX,
+  y: event.clientY,
+});
+
+// Below an element's start, where a menu opened from its keys or its button goes.
+export const pointBelow = (element: Element): ScreenPoint => {
+  const { left, bottom } = element.getBoundingClientRect();
+  return { x: left, y: bottom };
+};
+
+// A menu beside a point on the screen, such as where a row or card was right-clicked. It stays
+// drawn while closed, at the point it last opened at, since a menu notes where focus was only as
+// it opens, to put it back when it closes. Mantine's Menu.ContextMenu would do the same, but it
+// stops text being selected in whatever it opens from.
+export function MenuAtPoint({
+  at,
+  opened,
+  onClose,
+  children,
+}: {
+  at: ScreenPoint;
+  opened: boolean;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Menu
+      opened={opened}
+      onClose={onClose}
+      position="bottom-start"
+      withinPortal
+      hideDetached={false}
+    >
+      <Menu.Target>
+        <span
+          aria-hidden="true"
+          className={classes.pointAnchor}
+          style={{ left: at.x, top: at.y }}
+        />
+      </Menu.Target>
+      <Menu.Dropdown onClick={closesOnBlankClick(onClose)}>
+        {children}
+      </Menu.Dropdown>
+    </Menu>
+  );
+}
 
 const CloseMenu = createContext<() => void>(() => undefined);
 

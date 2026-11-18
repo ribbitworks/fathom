@@ -5,25 +5,22 @@
 // pointed at or has focus. The ⋯ sits beside the card rather than in it, since the card is itself a
 // button, and isn't a stop for Tab, as the card's keys reach the menu.
 
-import { Menu } from "@mantine/core";
 import {
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
   useState,
 } from "react";
-import { closesOnBlankClick } from "./app-menu.tsx";
+import {
+  clickedPoint,
+  MenuAtPoint,
+  noPoint,
+  pointBelow,
+  type ScreenPoint,
+} from "./app-menu.tsx";
 import classes from "./card-menu.module.css";
 import { MenuTitle } from "./draft-details.tsx";
-import pageClasses from "./pages.module.css";
 import { actionsFor, MoreButton, opensMenu } from "./row-controls.tsx";
-
-type Place = { x: number; y: number };
-
-const below = (element: Element): Place => {
-  const { left, bottom } = element.getBoundingClientRect();
-  return { x: left, y: bottom };
-};
 
 export interface CardMenuHandlers {
   onContextMenu: (event: MouseEvent<HTMLElement>) => void;
@@ -44,21 +41,21 @@ export function CardMenu({
   withMore?: boolean;
   children: (handlers: CardMenuHandlers) => ReactNode;
 }) {
-  const [place, setPlace] = useState<Place | undefined>();
-  const close = () => {
-    setPlace(undefined);
+  const [menu, setMenu] = useState({ at: noPoint, opened: false });
+  const openAt = (at: ScreenPoint) => {
+    setMenu({ at, opened: true });
   };
   return (
     <div className={classes.holder}>
       {children({
         onContextMenu: (event) => {
           event.preventDefault();
-          setPlace({ x: event.clientX, y: event.clientY });
+          openAt(clickedPoint(event));
         },
         onMenuKey: (event) => {
           if (!opensMenu(event)) return false;
           event.preventDefault();
-          setPlace(below(event.currentTarget));
+          openAt(pointBelow(event.currentTarget));
           return true;
         },
       })}
@@ -70,31 +67,23 @@ export function CardMenu({
             tabIndex={-1}
             onClick={(event) => {
               event.stopPropagation();
-              setPlace(below(event.currentTarget));
+              openAt(pointBelow(event.currentTarget));
             }}
             aria-haspopup="menu"
-            aria-expanded={place !== undefined}
+            aria-expanded={menu.opened}
           />
         </span>
       )}
-      <Menu
-        opened={place !== undefined}
-        onClose={close}
-        position="bottom-start"
-        withinPortal
+      <MenuAtPoint
+        at={menu.at}
+        opened={menu.opened}
+        onClose={() => {
+          setMenu((shown) => ({ ...shown, opened: false }));
+        }}
       >
-        <Menu.Target>
-          <span
-            aria-hidden="true"
-            className={pageClasses.pointerAnchor}
-            style={{ left: place?.x, top: place?.y }}
-          />
-        </Menu.Target>
-        <Menu.Dropdown onClick={closesOnBlankClick(close)}>
-          <MenuTitle>{name}</MenuTitle>
-          {items}
-        </Menu.Dropdown>
-      </Menu>
+        <MenuTitle>{name}</MenuTitle>
+        {items}
+      </MenuAtPoint>
     </div>
   );
 }

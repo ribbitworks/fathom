@@ -148,6 +148,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **A text field with an × to empty it:** `ClearableInput` in `clearable-input.tsx`.
 - **Choosing from a list:** `ChoicePicker` in `choice-picker.tsx`.
 - **A group of choices in a menu, the chosen one ticked:** `MenuChoices` in `app-menu.tsx`.
+- **A menu beside the pointer:** `MenuAtPoint` in `app-menu.tsx`, for a right-click on a table's row or a card, and a card's menu opened from its keys or its ⋯.
 - **A column in units:** a column's `units` in `record-grid.tsx`, resolved into the unit and decimal places the view names by `inViewUnits`, with `useChosenUnits` in `record-editing.tsx` for a form or panel's own choice, and an estimate's cell in `EffortCell` in `effort-cell.tsx`.
 - **Entering a day:** `DayInput` in `day-input.tsx`. People's date cells and the Person details panel still have their own fields, as [issue #464](https://github.com/jlarue26/fathom/issues/464) records.
 - **Adding a record in a side panel:** `NewRecordPanel` in `new-record-panel.tsx`, driven by a table's columns, with each page drawing its own fields in it: `NewPersonPanel` in `new-person-panel.tsx` for People and `NewPlanRecordPanel` in `new-plan-record-panel.tsx` for the plan's records.

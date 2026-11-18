@@ -1582,14 +1582,6 @@ th.liveColumn {
   color: var(--mantine-color-dimmed);
 }
 
-/* Where a row was right-clicked, which its menu opens beside. */
-.pointerAnchor {
-  position: fixed;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
 /* A Name cell's name and its +1 for the other headings it's under: the name is cut short first, so
    the +1 stays in view while the row's controls take room. */
 .namedWithOthers {

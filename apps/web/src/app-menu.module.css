@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-/* Styles for Fathom's menus: the ticks beside a group of choices. */
+/* Styles for Fathom's menus: the point a menu opens beside, and the ticks beside a group of
+   choices. */
 
 /* Hidden ticks keep their space, so the choices' names line up. */
 .choiceTick {
@@ -10,4 +11,12 @@
 
 .choiceTick[data-chosen] {
   visibility: visible;
+}
+
+/* The point a menu opens beside, such as where a right-click was. */
+.pointAnchor {
+  position: fixed;
+  width: 0;
+  height: 0;
+  pointer-events: none;
 }

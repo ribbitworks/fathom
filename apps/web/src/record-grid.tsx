@@ -160,7 +160,14 @@ import {
   withHidden,
   withoutFilters,
 } from "./table-view.ts";
-import { AppMenu, closesOnBlankClick } from "./app-menu.tsx";
+import {
+  AppMenu,
+  clickedPoint,
+  closesOnBlankClick,
+  MenuAtPoint,
+  noPoint,
+  type ScreenPoint,
+} from "./app-menu.tsx";
 import type { HeldDetail } from "./exports.ts";
 import { useTableExport } from "./table-export.tsx";
 import { Tipped } from "./table-tips.tsx";
@@ -795,14 +802,9 @@ type Row<Rec> =
 
 // Where a row's menu is open from: the ⋯ at the row's end, which the keyboard opens it from too,
 // the ⋯ over its Name cell, or the pointer, where the row was right-clicked.
-type MenuPlace = "end" | "name" | PointedAt;
+type MenuPlace = MoreButtonPlace | ScreenPoint;
 
-interface PointedAt {
-  x: number;
-  y: number;
-}
-
-const notPointed: PointedAt = { x: 0, y: 0 };
+type MoreButtonPlace = "end" | "name";
 
 interface OpenMenu {
   key: string;
@@ -2092,7 +2094,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   }>();
   const [problem, setProblem] = useState<ShownProblem>();
   const [menuFor, setMenuFor] = useState<OpenMenu>();
-  const [pointedAt, setPointedAt] = useState<OpenMenu & { place: PointedAt }>();
+  const [pointedAt, setPointedAt] = useState<
+    OpenMenu & { place: ScreenPoint }
+  >();
   const [dragging, setDragging] = useState<string>();
   // Whether the table has columns out of view to either side: those to its left once scrolled
   // sideways, which the frozen columns' edge shows with a shadow, or else a fade, and those to its
@@ -3403,10 +3407,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const rowMenuItems = (row: Row<Rec>) =>
     row.newRow ? newRowMenuItems(row.newRow) : recordMenuItems(row.record);
 
-  // The menu of the row keyed, opened from the place given, from the target there.
+  // The menu of the row keyed, opened from its ⋯ at the place given.
   const rowMenu = (
     key: string,
-    place: MenuPlace,
+    place: MoreButtonPlace,
     target: ReactNode,
     items: ReactNode,
   ) => (
@@ -3417,7 +3421,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       onChange={(opened) => {
         setMenuFor(opened ? { key, place } : undefined);
       }}
-      position={typeof place === "string" ? "bottom-end" : "bottom-start"}
+      position="bottom-end"
       withinPortal
       hideDetached={false}
     >
@@ -3469,22 +3473,20 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     );
   };
 
-  // The menu of the row last right-clicked, beside the pointer. It is drawn before any right-click
-  // and stays drawn once closed, since the menu notes where focus was only as it opens, to put it
-  // back when it closes. Mantine's Menu.ContextMenu would do the same, but it stops text being
-  // selected in whatever it opens from, here every row.
+  // The menu of the row last right-clicked, beside the pointer, drawn before any right-click.
   const pointerMenu = () => {
-    const { key, place } = pointedAt ?? { key: "", place: notPointed };
+    const { key, place } = pointedAt ?? { key: "", place: noPoint };
     const row = rows.find((one) => rowKey(one) === key);
-    return rowMenu(
-      key,
-      place,
-      <span
-        aria-hidden="true"
-        className={classes.pointerAnchor}
-        style={{ left: place.x, top: place.y }}
-      />,
-      row !== undefined && rowMenuItems(row),
+    return (
+      <MenuAtPoint
+        at={place}
+        opened={menuFor?.key === key && menuFor.place === place}
+        onClose={() => {
+          setMenuFor(undefined);
+        }}
+      >
+        {row !== undefined && rowMenuItems(row)}
+      </MenuAtPoint>
     );
   };
 
@@ -3501,10 +3503,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       return;
     }
     event.preventDefault();
-    const opened = {
-      key: rowKey(row),
-      place: { x: event.clientX, y: event.clientY },
-    };
+    const opened = { key: rowKey(row), place: clickedPoint(event) };
     setPointedAt(opened);
     setMenuFor(opened);
   };
