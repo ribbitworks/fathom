@@ -4,17 +4,26 @@
 // its first and last days, Current on the one holding today, and the release that includes it, after
 // its colour's square. The rows can be grouped by schedule. A cycle's row is marked where a
 // draft of its schedule's cycles changes it, adds it or removes it, and its menu decides, discards
-// or resubmits that draft, which may change other cycles too.
+// or resubmits that draft, which may change other cycles too, deciding the release's own draft with
+// it where that changes the cycle as well.
 
-import type {
-  Choice,
-  Cycle,
-  RecordRef,
-  ReleaseStream,
-  Show,
+import {
+  type Choice,
+  type Cycle,
+  draftKey,
+  type DraftKind,
+  type RecordRef,
+  type ReleaseStream,
+  type Show,
 } from "@fathom/shared";
 import { formatDay } from "./table-view.ts";
-import { decidable, differingKeys, noDrafts } from "./drafts.ts";
+import {
+  creditedBy,
+  decidable,
+  differingKeys,
+  mayDecide,
+  noDrafts,
+} from "./drafts.ts";
 import { isCurrent } from "./feature-board.ts";
 import { choice } from "./lists.ts";
 import { draftFieldsOf } from "./project-grids.tsx";
@@ -78,8 +87,14 @@ interface CycleValues {
 }
 
 // A cycle's draft: that of the change behind it, as it changes the cycle, and the record the change
-// is the draft of, which the row's menu decides, discards or resubmits.
-export type CycleDraft = GridDraft & { live: CycleValues; ref: RecordRef };
+// is the draft of, which the row's menu decides, discards or resubmits; with the draft of the
+// cycle's own release, where that changes the cycle's Release as well and could be decided now,
+// which the menu decides with it for a role that approves releases.
+export type CycleDraft = GridDraft & {
+  live: CycleValues;
+  ref: RecordRef;
+  release?: RecordRef | undefined;
+};
 
 export interface CycleRow extends GridRecord, CycleValues {
   draft?: CycleDraft | undefined;
@@ -125,7 +140,7 @@ const removedValues = (values: CycleValues): CycleValues => ({
   cycleId: `${values.cycleId}${removedCycleMark}`,
 });
 
-const refKey = ({ type, id }: RecordRef) => `${type} ${id}`;
+const refKey = ({ type, id }: RecordRef) => draftKey(type, id);
 
 // The values a draft is said to change; a cycle's identifier changes with its first day.
 const shownKeys: readonly (keyof CycleValues)[] = [
@@ -179,7 +194,9 @@ function releaseChange(
 
 // A row's draft, who holds the record it is the draft of, and what it is: the change behind the
 // cycle, where it adds or removes the cycle, or changes a value of it; or, where it changes only
-// what the cycle shows of its release, that release's draft.
+// what the cycle shows of its release, that release's draft. Where both change the cycle and it
+// stays in the same release, the row carries the change behind it, crediting the Release to the
+// release's draft.
 function marksOf(
   stream: ReleaseStream,
   change: CycleChange | undefined,
@@ -195,22 +212,70 @@ function marksOf(
     differing.includes("releaseName") && !differing.includes("release")
       ? [...differing, "release"]
       : differing;
+  const ofReleaseKeys = changed.filter((key) => releaseKeys.has(key));
   const byRelease =
     action === "changed" &&
     ofRelease !== undefined &&
     changed.length > 0 &&
-    changed.every((key) => releaseKeys.has(key));
-  const behind = byRelease ? ofRelease : change;
+    ofReleaseKeys.length === changed.length;
+  const releaseBehind = byRelease ? ofRelease : undefined;
+  const behind = releaseBehind ?? change;
   if (behind === undefined || (action === "changed" && changed.length === 0)) {
     return { subject: "" };
   }
+  // Only the cycle's own release is credited, so approving the row never decides another
+  // release's draft.
+  const alsoRelease =
+    !byRelease &&
+    action === "changed" &&
+    values.release === live.release &&
+    ofReleaseKeys.length > 0
+      ? ofRelease
+      : undefined;
   return {
-    draft: { ...behind.record.draft, action, changed, live, ref: behind.ref },
+    draft: {
+      ...behind.record.draft,
+      action,
+      changed,
+      live,
+      ref: behind.ref,
+      ...(alsoRelease === undefined
+        ? {}
+        : {
+            changedBy: {
+              ...behind.record.draft.changedBy,
+              ...creditedBy(
+                ofReleaseKeys.map((key) => ({
+                  key,
+                  drafts: [alsoRelease.record.draft],
+                })),
+              ),
+            },
+            release:
+              decidable(alsoRelease.record) &&
+              alsoRelease.record.draft.needsOtherApprover !== true
+                ? alsoRelease.ref
+                : undefined,
+          }),
+    },
     heldBy: behind.record.heldBy,
-    subject: byRelease
-      ? `Part of a change to ${ofRelease.name}`
-      : subjectOf(stream, behind),
+    subject:
+      releaseBehind === undefined
+        ? subjectFor(stream, behind, alsoRelease)
+        : `Part of a change to ${releaseBehind.name}`,
   };
+}
+
+// What a row's draft is, in its menu: the change behind the cycle, with the release's change too.
+function subjectFor(
+  stream: ReleaseStream,
+  behind: CycleChange,
+  alsoRelease: { name: string } | undefined,
+): string {
+  const own = subjectOf(stream, behind);
+  return alsoRelease === undefined
+    ? own
+    : `${own}, and of a change to ${alsoRelease.name}`;
 }
 
 // The first day of a cycle, or of the cycle as it is live where a draft removes it.
@@ -454,6 +519,7 @@ export function cycleTable({
   day,
   onOpen,
   planned,
+  approves,
 }: {
   // Every schedule, with its drafts, whatever the view.
   streams: readonly ReleaseStream[];
@@ -462,7 +528,15 @@ export function cycleTable({
   day: string;
   planned?: PlannedFeatures | undefined;
   onOpen: (row: CycleRow) => void;
+  // The kinds of draft the user's role approves.
+  approves: readonly DraftKind[];
 }): RecordTable<CycleRow, never, undefined> {
+  // The drafts a row's menu decides: the change behind it, with its release's draft for a role
+  // that approves both, so a role approving only one still decides the change behind the row.
+  const decidedBy = ({ ref, release }: CycleDraft): RecordRef[] => {
+    const both = release === undefined ? [ref] : [ref, release];
+    return mayDecide(approves, { ...noDrafts(), records: both }) ? both : [ref];
+  };
   // A draft's menu names every value it changes, the Duration only the details show included.
   const describedColumns = (row: CycleRow) => [
     ...cycleDetailColumns(streams, [row], planned),
@@ -483,7 +557,7 @@ export function cycleTable({
     draftFields: (row, draft) =>
       draftFieldsOf(describedColumns(row), row, draft),
     draftSubject: ({ subject }) => subject,
-    draftKey: ({ ref }) => refKey(ref),
+    draftKeys: (draft) => decidedBy(draft).map(refKey),
     // Each draft once, though it changes several of the cycles named.
     drafts: (ids) => ({
       ...noDrafts(),
@@ -492,7 +566,9 @@ export function cycleTable({
           rows
             .filter(({ id }) => ids.includes(id))
             .flatMap((row) =>
-              row.draft !== undefined && decidable(row) ? [row.draft.ref] : [],
+              row.draft !== undefined && decidable(row)
+                ? decidedBy(row.draft)
+                : [],
             )
             .map((ref) => [refKey(ref), ref]),
         ).values(),

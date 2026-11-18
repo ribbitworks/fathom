@@ -37,7 +37,7 @@
 
 /* The current cycle, marked as today is, by a red line. */
 .header[aria-current] {
-  box-shadow: inset 0 3px 0 var(--fathom-today);
+  box-shadow: var(--fathom-today-overline);
 }
 
 /* Room for a release's box, kept when a cycle is in none, so every header's lines line up. */

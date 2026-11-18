@@ -142,6 +142,8 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-today": "var(--mantine-color-red-6)",
     // The underline of the period holding today, such as a strip's quarter or a grid's month.
     "--fathom-today-underline": "inset 0 -2px 0 var(--fathom-today)",
+    // The line along the top of the board's heading for the period holding today.
+    "--fathom-today-overline": "inset 0 3px 0 var(--fathom-today)",
     // A page's heading, as tall as a button beside it, so every page's heading is one height.
     "--fathom-heading-height": "calc(2.25rem * var(--mantine-scale))",
     // The last lines of a long note folded in a panel fade out over this height.

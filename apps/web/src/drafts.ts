@@ -589,6 +589,33 @@ export function differingKeys<Key extends string>(
   return keys.filter((key) => !sameValue(shownNow.get(key), liveNow.get(key)));
 }
 
+// The latest of several drafts, by when each was last changed.
+export const latestDraft = <Draft extends { madeAt?: string | null }>(
+  drafts: readonly Draft[],
+): Draft | undefined =>
+  drafts.reduce<Draft | undefined>(
+    (one, other) =>
+      one === undefined || (other.madeAt ?? "") > (one.madeAt ?? "")
+        ? other
+        : one,
+    undefined,
+  );
+
+// Who changed each value of a row whose values several drafts change, such as a schedule's row its
+// patterns' and releases' drafts change: whoever last changed a draft changing it.
+export const creditedBy = (
+  byKey: readonly {
+    key: string;
+    drafts: readonly { madeAt?: string | null; madeBy: string | null }[];
+  }[],
+): Record<string, string | null> =>
+  Object.fromEntries(
+    byKey.flatMap(({ key, drafts }) => {
+      const last = latestDraft(drafts);
+      return last === undefined ? [] : [[key, last.madeBy]];
+    }),
+  );
+
 // Whether an Approver may decide a record's draft now: it waits, is published, and nobody has
 // unpublished changes to it, so nobody approves a version that is about to change.
 export const decidable = (record: {

@@ -18,9 +18,11 @@ import {
 } from "@fathom/shared";
 import type { ReactNode } from "react";
 import {
+  creditedBy,
   decidable,
   differingKeys,
   type DraftSelection,
+  latestDraft,
   noDrafts,
 } from "./drafts.ts";
 import { retiredLive } from "./lists.ts";
@@ -109,12 +111,6 @@ const draftsOf = (
       : [draft],
   );
 
-// The latest of several drafts, by when each was last changed.
-const latest = (drafts: readonly RecordDraft[]) =>
-  drafts.reduce((one, other) =>
-    (other.madeAt ?? "") > (one.madeAt ?? "") ? other : one,
-  );
-
 const waitingIn = (drafts: readonly DraftLike[]) =>
   drafts.some(({ state }) => state === "waiting");
 
@@ -164,17 +160,15 @@ function rowDraft(
       live,
     };
   }
-  if (parts.length === 0) return undefined;
-  const last = latest(parts);
+  const last = latestDraft(parts);
+  if (last === undefined) return undefined;
   return {
     action: "changed",
     state: waitingIn(parts) ? "waiting" : "rejected",
     changed: changedParts.map(({ key }) => key),
     madeBy: last.madeBy,
     madeAs: last.madeAs,
-    changedBy: Object.fromEntries(
-      changedParts.map(({ key, drafts }) => [key, latest(drafts).madeBy]),
-    ),
+    changedBy: creditedBy(changedParts),
     unpublished: parts.every(({ unpublished }) => unpublished === true),
     needsOtherApprover: parts.some(
       ({ needsOtherApprover }) => needsOtherApprover === true,
@@ -254,7 +248,7 @@ export function scheduleRows(
     shown: show === "live" ? live : drafted,
     drafted,
     live,
-    cyclesDraft: drafts.length === 0 ? undefined : latest(drafts),
+    cyclesDraft: latestDraft(drafts),
   };
 }
 

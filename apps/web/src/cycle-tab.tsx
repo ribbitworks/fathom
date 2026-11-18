@@ -235,6 +235,7 @@ export function CyclesTable({
     day,
     onOpen,
     planned,
+    approves,
   });
   // A cycle named in the address opens even while past cycles are hidden, while its schedule shows.
   const opened = streams

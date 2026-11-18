@@ -419,9 +419,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // For a row whose draft is another record's, such as a change of the cycles a cycle's row shows:
   // what that draft is, which its menu says before what it changes.
   draftSubject?: (record: Rec) => string;
-  // For a table whose rows can share one draft, such as cycles one change of their schedule's cycles
-  // moves: which draft a record's is, so the drafts waiting are counted once each.
-  draftKey?: (draft: DraftOf<Rec>) => string;
+  // For a table whose rows can share drafts, such as cycles one change of their schedule's cycles
+  // moves: which drafts a record's waiting draft stands for, so each is counted once.
+  draftKeys?: (draft: DraftOf<Rec>) => readonly string[];
   // What else a record's menu offers, after its columns' own items, such as showing its details.
   menuItems?: (record: Rec) => ReactNode;
   // Each record's key, for a table whose records have keys: its menu offers Copy link, and typing
@@ -3725,7 +3725,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                 new Set(
                   everyone.flatMap(({ id, draft }) =>
                     draft?.state === "waiting"
-                      ? [table.draftKey?.(draft) ?? id]
+                      ? (table.draftKeys?.(draft) ?? [id])
                       : [],
                   ),
                 ).size +

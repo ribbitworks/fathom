@@ -998,6 +998,69 @@ describe("a cycle's drafts", () => {
     });
   });
 
+  describe("with the release's own draft changing the cycle too", () => {
+    const releaseId = "30000000-0000-4000-8000-000000000001";
+    // 27.2's release drafted to be renamed, besides the new pattern that shortens 27.2.
+    const renamedToo = () =>
+      shortened({
+        releases: [
+          fictionalRelease({
+            name: "Harbour",
+            firstCycle: "2027-04-01",
+            lastCycle: "2027-04-01",
+            draft: recordDraft({
+              changed: ["name"],
+              live: { name: "Fictional One" },
+            }),
+          }),
+        ],
+      });
+
+    async function approveFromRow(session: () => Response) {
+      const { fetch } = await openPage([renamedToo()], {
+        answers: {
+          "GET /api/session": session,
+          "POST /api/drafts/approval": savedAs,
+        },
+      });
+      await chooseRowAction("Fictional Majors: 27.2", "Approve draft");
+      const dialog = await screen.findByRole("dialog", {
+        name: /^Approve \d drafts?\?$/,
+      });
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Approve" }),
+      );
+      await waitFor(() => {
+        expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toHaveLength(1);
+      });
+      return bodyOf(fetch, "POST", "/api/drafts/approval");
+    }
+
+    it("are both approved from the row's menu", async () => {
+      expect(await approveFromRow(approver)).toEqual([
+        expect.objectContaining({
+          records: [
+            { type: "cycle-pattern", id: patternId },
+            { type: "release", id: releaseId },
+          ],
+        }),
+      ]);
+    });
+
+    it("leave the release's draft for a role that doesn't approve releases", async () => {
+      const plansOnly = () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["plan:view", "features:view", "plan:approve"],
+        });
+      expect(await approveFromRow(plansOnly)).toEqual([
+        expect.objectContaining({
+          records: [{ type: "cycle-pattern", id: patternId }],
+        }),
+      ]);
+    });
+  });
+
   it("offer nothing to decide on a cycle no draft changes", async () => {
     await openPage([shortened()], {
       path: "/releases?tab=cycles&later=shown",

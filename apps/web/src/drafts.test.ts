@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 import { recordDraft } from "./test-support.tsx";
 import {
   type Columns,
+  creditedBy,
   decisionFor,
   differingKeys,
   draftSentAgain,
@@ -85,6 +86,25 @@ describe("the values a draft changes", () => {
         ["name", "cycles", "moved", "cut"],
       ),
     ).toEqual(["name", "moved", "cut"]);
+  });
+});
+
+describe("who changed each value several drafts change", () => {
+  it("is whoever last changed a draft changing it, and nobody where no draft does", () => {
+    // Given a value two drafts change, and one none does
+    const earlier = {
+      madeBy: "Earlier Editor",
+      madeAt: "2027-01-01T09:00:00Z",
+    };
+    const later = { madeBy: "Later Editor", madeAt: "2027-01-02T09:00:00Z" };
+
+    // Then the first is credited to the later draft's maker, and the second to nobody
+    expect(
+      creditedBy([
+        { key: "name", drafts: [later, earlier] },
+        { key: "colour", drafts: [] },
+      ]),
+    ).toEqual({ name: "Later Editor" });
   });
 });
 
