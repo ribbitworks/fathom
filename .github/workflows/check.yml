@@ -1,12 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
-# Runs the full check, 'pnpm check', on every pull request and every push to the default branch, so
-# a pull request's green check is the one the maintainer merges on. Its package tests run on runners
-# of their own, split by package, since on one runner beside the linters and scans they ran up to
-# thirty times slower than on a developer's computer, until tests timed out. Full check passes only once
-# every part has. The container tests run too, on the default branch and on a pull request that
-# changes anything but documentation. A newer push to a pull request cancels its older runs. The
-# work is in scripts/, which runs the same anywhere; the tests make their own throwaway secrets.
+# Runs the full check, 'pnpm check', on every pull request and every push to the default branch,
+# and the container tests on each but a pull request of documentation alone.
 
 name: Check
 
@@ -44,6 +39,8 @@ jobs:
       - name: Run the full check but the package tests
         run: pnpm check --skip "Package tests"
 
+  # On one runner beside the linters and scans, the package tests ran up to thirty times slower than
+  # on a developer's computer, until tests timed out, so they have runners of their own.
   packages:
     name: Package tests (${{ matrix.name }})
     runs-on: ubuntu-24.04

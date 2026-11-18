@@ -1,20 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Runs the tests a change can affect, for the rounds of fixes before the full 'pnpm check', without
-// measuring coverage, which only the full check enforces. What changed since this branch left
-// origin/main counts, committed or not, or with --uncommitted, only the work not yet committed. A
-// TypeScript or JavaScript file in a package's src folder runs only the tests that import it,
-// directly or through other files, in that package and every package depending on it; a Help page
-// runs the web app's tests that import the Help pages. Any other change in a package, such as its
-// settings, stylesheets or migrations, runs every test of that package and of every package
-// depending on it. A source file removed runs nothing of its own, since whatever imported it
-// changed too. Any code changed runs the script tests, which also check package files. A change
-// outside the packages, other than to documentation, can affect any test, such as the lockfile,
-// scripts/ or deploy/, so it runs every test. A change to the web app's stylesheets alone runs only
-// the web app's tests and the linters. Tests that reach code other than by importing it, such as
-// building the web app, run in the full check. Runs any tests once no other copy of the repository
-// is running a check.
-// Usage: node scripts/test-changed.mjs [--uncommitted]
+// Runs the tests a change can affect, without coverage, as the Testing Standards' Running Tests sets
+// out. Usage: node scripts/test-changed.mjs [--uncommitted]
 
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
@@ -135,6 +122,7 @@ export function testsFor(
     ...new Set(
       imported
         .map((path) => (path.startsWith(helpPages) ? helpPagesModule : path))
+        // A removed file runs nothing of its own, since whatever imported it changed too.
         .filter((path) => exists(path)),
     ),
   ].sort();

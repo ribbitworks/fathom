@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
-# Builds, scans and publishes the container images of a release to the GitHub Container Registry,
-# when the maintainer publishes the release that draft-release.yml drafted for its tag, or by hand from
-# the Actions tab for a tag already released. It never makes a tag or a release itself. The work is
-# in scripts/publish-images.sh, which runs the same anywhere.
+# Builds, scans and publishes a release's container images to the GitHub Container Registry, when
+# its release is published or, for a tag already released, by hand from the Actions tab.
 
 name: Publish release images
 

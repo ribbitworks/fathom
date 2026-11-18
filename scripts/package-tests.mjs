@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Runs package tests in one copy of the repository at a time on this computer. Package tests start
-// test databases and run every package side by side, so several copies running them at once,
-// as checks in several clones do, starve each other until tests time out. A copy that has to wait
-// says so, naming the process and folder it waits for, and how long it waited. Each package's Vitest
-// gets a share of the cores, rather than a worker for nearly every core each.
-// Usage: node scripts/package-tests.mjs <pnpm arguments>, such as --recursive test. A --filter given
-// after them, as 'pnpm test:packages --filter @fathom/web' gives it, chooses the packages.
+// Runs package tests in one copy of the repository at a time on this computer, with each package's
+// workers limited. Usage: node scripts/package-tests.mjs <pnpm arguments>, such as --recursive test
 
 import { availableParallelism } from "node:os";
 import { pathToFileURL } from "node:url";
@@ -17,6 +12,8 @@ import {
 } from "../packages/test-utils/src/slots.ts";
 import { runCommand } from "./run-command.mjs";
 
+// Several copies running package tests at once, as checks in several clones do, starve each other
+// until tests time out.
 export const packageTestRuns = machineSlots("package-tests", {
   atOnce: 1,
   retryMilliseconds: millisecondsPerSecond,

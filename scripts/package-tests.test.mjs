@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of scripts/package-tests.mjs: package tests wait, saying so at once and how long they waited,
-// while another copy of the repository runs them, then run, reporting whether they passed;
-// each package's tests get a share of the cores; packages chosen after the script's name are
-// chosen; and pnpm failing to start is reported.
+// Tests of scripts/package-tests.mjs: waiting for another copy, workers per package, choosing
+// packages, and pnpm failing to start.
 
 import assert from "node:assert/strict";
 import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
