@@ -177,6 +177,7 @@ describe("the last view of a page", () => {
         sort: ["endDate", "preferredName"],
         grouping: "endDate",
         thenBy: "positionId",
+        groupsReversed: true,
         hidden: ["startDate", "employeeId"],
       },
     });
@@ -208,7 +209,7 @@ describe("the last view of a page", () => {
     ]);
     const byManager = {
       table: "feature-assignments",
-      definition: { grouping: "manager" },
+      definition: { grouping: "manager", groupsReversed: true },
     };
     await remember(cookie, "feature-assignments", byManager);
     const kept = await lastOf(cookie, "feature-assignments");

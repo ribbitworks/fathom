@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Features Board against a simulated server: switching Features between its table and
-// its board, the columns of one stream's cycles and Later with their releases' drafts, the cards
-// and the Card menu, the strip and the Stream menu, rows from Group by, search, the keyboard, a
-// feature's details, and the board holding its columns while a side panel is open.
+// Tests for the Features Board against a simulated server.
 
 import type { Feature, ProjectPlan, ReleaseStream } from "@fathom/shared";
 import { startingEffortConversions } from "@fathom/shared";
@@ -558,6 +555,35 @@ describe("rows from Group by", () => {
     expect(
       screen.getByRole("list", { name: "Later, No priority" }).textContent,
     ).toContain("Fictional Later");
+  });
+
+  it("turns the rows round once the second order is chosen, the row for none first", async () => {
+    const history = await openBoard("/features?mode=board&grouping=priorityId");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Group by: Priority" }),
+    );
+    const order = await screen.findByRole("group", { name: "Group order" });
+    await userEvent.click(
+      within(order).getByRole("menuitem", { name: "Reverse list order" }),
+    );
+
+    const rowLabel = (name: string) =>
+      screen.getByText(name, { selector: "div" });
+    const follows = (first: string, second: string) =>
+      rowLabel(first).compareDocumentPosition(rowLabel(second)) &
+      Node.DOCUMENT_POSITION_FOLLOWING;
+    expect(follows("No priority", "Critical")).toBeTruthy();
+    expect(history.location.search).toContain("groupsReversed=true");
+  });
+
+  it("names the order of records listed by name A to Z", async () => {
+    await openBoard("/features?mode=board&grouping=projectIds");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Group by: Projects" }),
+    );
+    expect(
+      await screen.findByRole("menuitem", { name: "Z to A" }),
+    ).toBeTruthy();
   });
 
   it("counts and groups only the features on the board, not other streams'", async () => {

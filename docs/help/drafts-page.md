@@ -21,7 +21,7 @@ The **Drafts** page, under **History** in the left-hand menu, lists the drafts i
 1. Select the tab that holds it. Rejected drafts, and drafts you can't decide, are under **All drafts**.
 1. Type in the search box: a name, a value, or who made the draft.
 
-To see only some drafts, such as the rejected ones, open the **State** column's menu and filter by **Rejected**. You can also group the rows, such as by **Area** or **Made by**, with **Group by**, and count them with **Metrics**, as on any table. You can save the way you've set up the table as a view, and the view keeps its tab. A shared view saved on a tab your role doesn't have opens on your first tab. See [Saved views](saved-views.md).
+To see only some drafts, such as the rejected ones, open the **State** column's menu and filter by **Rejected**. You can also group the rows, such as by **Area** or **Made by**, with **Group by**, turn the headings round with its second order, such as **Z to A**, and count them with **Metrics**, as on any table. You can save the way you've set up the table as a view, and the view keeps its tab. A shared view saved on a tab your role doesn't have opens on your first tab. See [Saved views](saved-views.md).
 
 You're done when the draft's row shows.
 

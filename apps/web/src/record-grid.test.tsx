@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the table of records on its own, with a made-up kind of record, gadgets, so nothing
-// particular to People is relied on: what the table calls its rows and menus, the checks a table
-// makes on a whole record, a text column's length, where a dragged column goes, the columns'
-// order, hiding columns, the records as they are live, the records the metrics count, the live
-// columns, and what a read-only table is never asked.
-// People's own table is tested in people-grid.test.tsx.
+// Tests for the shared table on its own, with a made-up kind of record, gadgets.
 
 import {
   type DraftKind,
@@ -1678,6 +1673,7 @@ describe("a record under several groups", () => {
       {
         key: "letters",
         label: "Letters",
+        holds: "list",
         of: ({ code }) => {
           const [first, ...rest] = Array.from(code, (letter) => ({
             key: letter,
@@ -1867,11 +1863,13 @@ describe("rows grouped again under each heading", () => {
       {
         key: "first",
         label: "First letter",
+        holds: "list",
         of: ({ code }) => [letterGroup("Starts")(code.charAt(0))],
       },
       {
         key: "letters",
         label: "Letters",
+        holds: "list",
         of: ({ code }) => {
           const [first, ...rest] = Array.from(code, letterGroup("Group"));
           // Every gadget here has a code.
@@ -1926,6 +1924,7 @@ describe("rows grouped again under each heading", () => {
           {
             key: "again",
             label: "Again",
+            holds: "list",
             of: ({ code }) => {
               const [first, ...rest] = Array.from(code, letterGroup("Again"));
               // Every gadget here has a code.
@@ -2010,6 +2009,7 @@ describe("rows grouped again under each heading", () => {
           {
             key: "code",
             label: "Code",
+            holds: "list",
             of: ({ code }) => [letterGroup("Code")(code)],
           },
         ],
@@ -2092,7 +2092,14 @@ describe("rows grouped again under each heading", () => {
       (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["None", "First letter, chosen", "Letters", "Clear grouping"]);
+    ).toEqual([
+      "None",
+      "First letter, chosen",
+      "Letters",
+      "List order, chosen",
+      "Reverse list order",
+      "Clear grouping",
+    ]);
     expect(screen.queryByRole("group", { name: "Then by" })).toBeNull();
     expect(headings()).toEqual(["Starts X2 gadgets", "Starts Y1 gadget"]);
   });
@@ -2105,6 +2112,7 @@ describe("total rows", () => {
       {
         key: "code",
         label: "Code",
+        holds: "list",
         of: ({ code }) => [{ key: code, label: `Group ${code}`, rank: 0 }],
       },
     ],

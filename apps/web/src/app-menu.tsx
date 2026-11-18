@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Fathom's menus: a click in a menu that is not on one of its items or fields, such as on its title,
-// a draft's details, or empty space, closes it, as a click outside it does. AppMenu keeps its own
-// open state for that; a menu that keeps its own uses closesOnBlankClick on its dropdown. A menu
-// may open beside a point on the screen rather than a control, such as a right-click. A group of
-// choices in a menu ticks the chosen one.
+// Fathom's menus, which a click on their blank space closes, opened from a control or beside a
+// point on the screen, and the groups of choices in them.
 
 import {
   Menu,
@@ -127,6 +124,7 @@ export function Tick({ chosen }: { chosen: boolean }) {
 // A group of choices in a menu, under a label where it shares the menu, the chosen one ticked.
 export function MenuChoices<Value extends string>({
   label,
+  spokenLabel,
   choices,
   chosen,
   onChoose,
@@ -135,6 +133,8 @@ export function MenuChoices<Value extends string>({
 }: {
   // Left out where the choices are the whole menu, which its button names.
   label?: string | undefined;
+  // Read aloud for choices with no label shown, whose words alone don't say what they choose.
+  spokenLabel?: string | undefined;
   // Each choice's words, with any marks they carry, such as a draft's dot.
   choices: readonly { value: Value; label: ReactNode }[];
   chosen: Value | undefined;
@@ -150,8 +150,11 @@ export function MenuChoices<Value extends string>({
       {divided && <Menu.Divider />}
       {label !== undefined && <Menu.Label id={labelId}>{label}</Menu.Label>}
       <div
-        role={label === undefined ? undefined : "group"}
+        role={
+          label === undefined && spokenLabel === undefined ? undefined : "group"
+        }
         aria-labelledby={label === undefined ? undefined : labelId}
+        aria-label={label === undefined ? spokenLabel : undefined}
       >
         {choices.map((choice) => (
           <Menu.Item

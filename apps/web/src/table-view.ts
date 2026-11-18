@@ -136,6 +136,8 @@ export interface View {
   grouping?: string | undefined;
   // Which of the table's groupings the rows under each of the first grouping's headings are under.
   thenBy?: string | undefined;
+  // Set when the first grouping's groups run the other way, with the group for none at the top.
+  groupsReversed?: true | undefined;
   // How many columns, from the first, stay in view while the table scrolls sideways, when not the
   // table's own default.
   frozen?: number | undefined;
@@ -195,6 +197,9 @@ export function viewFrom(search: ViewDefinition): View {
     ...(grouping === undefined || search.thenBy === undefined
       ? {}
       : { thenBy: search.thenBy }),
+    ...(grouping === undefined || search.groupsReversed !== true
+      ? {}
+      : { groupsReversed: true }),
     ...(search.frozen === undefined ? {} : { frozen: search.frozen }),
     ...(hasKeys(search.order) ? { order: search.order } : {}),
     ...(hasKeys(search.hidden) ? { hidden: search.hidden } : {}),
@@ -368,6 +373,7 @@ export function searchFor(view: View): ViewDefinition {
     ...(view.breakdown === undefined ? {} : { breakdown: view.breakdown }),
     ...(view.grouping === undefined ? {} : { grouping: view.grouping }),
     ...(view.thenBy === undefined ? {} : { thenBy: view.thenBy }),
+    ...(view.groupsReversed === true ? { groupsReversed: true } : {}),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
     ...(hasKeys(view.order) ? { order: view.order } : {}),
     ...(hasKeys(view.hidden) ? { hidden: view.hidden } : {}),
@@ -449,6 +455,33 @@ export function activeThenBy<Grouping extends { key: string }>(
     : groupings?.find(({ key }) => key === view.thenBy);
 }
 
+// The view with its rows grouped first by a grouping, or by none, keeping the second grouping
+// unless it is the first now, even on a board, which shows the first alone, and the groups' order
+// while the first grouping stays the same.
+export function groupedFirstBy(view: View, key: string | undefined): View {
+  const keepsThenBy = key !== undefined && key !== view.thenBy;
+  return {
+    ...view,
+    grouping: key,
+    thenBy: keepsThenBy ? view.thenBy : undefined,
+    groupsReversed: key === view.grouping ? view.groupsReversed : undefined,
+  };
+}
+
+// The view with its rows in one list again.
+export const ungrouped = (view: View): View => ({
+  ...view,
+  grouping: undefined,
+  thenBy: undefined,
+  groupsReversed: undefined,
+});
+
+// The view with the first grouping's groups in order of rank, or reversed.
+export const withGroupsReversed = (view: View, reversed: boolean): View => ({
+  ...view,
+  groupsReversed: reversed ? true : undefined,
+});
+
 // Whether the view sorts the rows, or sets which columns are frozen, their order, which are hidden,
 // how wide they are, the units and decimal places they are shown in, whether retired records show,
 // or the page's own choices, which the Views menu names and Clear all clears with the filters.
@@ -458,6 +491,7 @@ export function setsApart(view: View): boolean {
     view.choices !== undefined ||
     view.grouping !== undefined ||
     view.thenBy !== undefined ||
+    view.groupsReversed !== undefined ||
     view.frozen !== undefined ||
     view.order !== undefined ||
     view.hidden !== undefined ||
@@ -510,6 +544,7 @@ export function knownView(
         }),
     ...(view.grouping === undefined ? {} : { grouping: view.grouping }),
     ...(view.thenBy === undefined ? {} : { thenBy: view.thenBy }),
+    ...(view.groupsReversed === true ? { groupsReversed: true as const } : {}),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
     ...(view.retired === true ? { retired: true as const } : {}),
     ...(view.choices === undefined ? {} : { choices: view.choices }),
@@ -1017,6 +1052,29 @@ export interface RowGroup {
   rank: number;
 }
 
+// What a grouping's groups are, which names the two orders they can run in.
+export type GroupsHold = "time" | "names" | "list";
+
+// A way the rows can be grouped, as the Group by menu offers it.
+export interface GroupingChoice {
+  key: string;
+  label: string;
+  holds: GroupsHold;
+}
+
+// The rank of the group for none, after every other group.
+export const rankOfNone = Number.MAX_SAFE_INTEGER;
+
+// Groups in order of rank, the group for none last, or reversed, the group for none first, since
+// it ranks last.
+export const byGroupRank =
+  (reversed: boolean) =>
+  (first: Pick<RowGroup, "rank">, second: Pick<RowGroup, "rank">): number =>
+    reversed ? second.rank - first.rank : first.rank - second.rank;
+
+// Where a row stands among the groups while its rows aren't grouped.
+const inOneList: Pick<RowGroup, "rank"> = { rank: 0 };
+
 export type RowGroups = readonly [RowGroup, ...RowGroup[]];
 
 // A row's key under a group, since a record has a row under each group it's in.
@@ -1086,20 +1144,23 @@ export const recordsOf = <Rec>(rows: readonly PlacedRow<Rec>[]): Rec[] => [
   ...new Set(rows.map(({ record }) => record)),
 ];
 
-// The rows of the records shown, by their groups' rank, then their second groups', and within a
-// group in the order the records are shown.
+// The rows of the records shown, by their groups' rank, reversed if asked, then their second
+// groups', and within a group in the order the records are shown.
 export function rowsInOrder<Rec>(
   rows: readonly PlacedRow<Rec>[],
   shown: readonly Rec[],
+  groupsReversed = false,
 ): PlacedRow<Rec>[] {
   const place = new Map(shown.map((record, index) => [record, index]));
   const placeOf = (row: PlacedRow<Rec>) => Number(place.get(row.record));
+  const groupOrder = byGroupRank(groupsReversed);
+  const subgroupOrder = byGroupRank(false);
   return rows
     .filter(({ record }) => place.has(record))
     .sort(
       (a, b) =>
-        (a.group?.rank ?? 0) - (b.group?.rank ?? 0) ||
-        (a.subgroup?.rank ?? 0) - (b.subgroup?.rank ?? 0) ||
+        groupOrder(a.group ?? inOneList, b.group ?? inOneList) ||
+        subgroupOrder(a.subgroup ?? inOneList, b.subgroup ?? inOneList) ||
         placeOf(a) - placeOf(b),
     );
 }

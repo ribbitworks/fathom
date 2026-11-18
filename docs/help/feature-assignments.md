@@ -21,6 +21,8 @@ The table starts as one list. To put the rows under headings:
 1. Select **Group by**.
 1. Choose **Manager** or **Feature team**.
 
+To turn the headings round, select **Group by** again, and choose **Z to A**. The heading for none, such as **No manager**, then comes first.
+
 To show one list again, choose **Clear grouping**, at the end of the menu, or **None** under **Group by**.
 
 Someone on two feature teams has a row under each team. Grouped by **Manager**, each person is under the manager they report to today.

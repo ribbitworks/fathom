@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The controls that change what a table shows, for any table and any kind of column: the search
-// field, which Cmd+F or Ctrl+F focuses and Esc clears; each column's sort and filter, chosen from
-// its menu, each sort added as the next level; each column's filter, edited in a popover beside its
-// header; the bar naming each filter, which removes them one at a time or all at once; the menu of
-// the table's saved views, which applies, saves, renames, updates, and deletes them, and names each
-// level of the sort, the frozen columns, and the columns' widths, removing them one at a time; and
-// the Metrics button, and each column's Metrics, which open the Metrics panel. What they
-// change is the table's view, as table-view.ts sets out.
+// The controls that change what a table shows: its search, column menus, filters, Group by and
+// Views menu.
 
 import {
   Button,
@@ -51,6 +45,11 @@ import { focusSoon } from "./focus.ts";
 import {
   activeGrouping,
   activeThenBy,
+  type GroupingChoice,
+  type GroupsHold,
+  groupedFirstBy,
+  ungrouped,
+  withGroupsReversed,
   notGrouped,
   notGroupedLabel,
   type ColumnChoice,
@@ -113,6 +112,13 @@ const sortNames: Record<Kind, [string, string]> = {
   link: ["Sort A to Z", "Sort Z to A"],
   note: ["Sort A to Z", "Sort Z to A"],
   flag: ["Checked first", "Unchecked first"],
+};
+
+// The two orders a grouping's groups run in, by what the groups are: as ranked, then reversed.
+const groupOrderNames: Record<GroupsHold, [string, string]> = {
+  time: ["Earliest first", "Latest first"],
+  names: ["A to Z", "Z to A"],
+  list: ["List order", "Reverse list order"],
 };
 
 // Lists of more choices than this can be narrowed by typing.
@@ -178,7 +184,7 @@ export function viewParts(
     choices = [],
     pageParts = noPageParts,
   }: {
-    groupings?: readonly { key: string; label: string }[];
+    groupings?: readonly GroupingChoice[];
     choices?: readonly ViewChoice[];
     pageParts?: PageParts;
   } = {},
@@ -225,6 +231,9 @@ export function viewParts(
       ? []
       : [{ name: "Metrics", value: breakdown.join(" by ") }]),
     ...(grouping === undefined ? [] : [{ name: "Group by", value: grouping }]),
+    ...(first === undefined || view.groupsReversed !== true
+      ? []
+      : [{ name: "Group order", value: groupOrderNames[first.holds][1] }]),
     ...(view.frozen === undefined
       ? []
       : [
@@ -652,7 +661,7 @@ export function ViewsMenu({
   onClear: () => void;
   choices?: readonly ViewChoice[];
   pageParts?: PageParts;
-  groupings?: readonly { key: string; label: string }[];
+  groupings?: readonly GroupingChoice[];
 }) {
   const views = saved?.views ?? [];
   const unusable = saved?.unusable ?? [];
@@ -1139,7 +1148,7 @@ function GroupingMenu({
   view,
   onView,
 }: {
-  groupings: readonly { key: string; label: string }[];
+  groupings: readonly GroupingChoice[];
   nests: boolean;
   view: View;
   onView: ChangeView;
@@ -1165,15 +1174,14 @@ function GroupingMenu({
           choices={choicesOf([noGrouping, ...groupings])}
           chosen={(inUse ?? noGrouping).key}
           onChoose={(key) => {
-            // Kept by a choice on a board too, whose rows take the first grouping alone.
-            const keepsThenBy = key !== noGrouping.key && key !== view.thenBy;
-            onView({
-              ...view,
-              grouping: key === noGrouping.key ? undefined : key,
-              thenBy: keepsThenBy ? view.thenBy : undefined,
-            });
+            onView(
+              groupedFirstBy(view, key === noGrouping.key ? undefined : key),
+            );
           }}
         />
+        {inUse !== undefined && (
+          <GroupOrderChoices holds={inUse.holds} view={view} onView={onView} />
+        )}
         {offersThenBy && (
           <MenuChoices
             label="Then by"
@@ -1195,7 +1203,7 @@ function GroupingMenu({
             <Menu.Divider />
             <Menu.Item
               onClick={() => {
-                onView({ ...view, grouping: undefined, thenBy: undefined });
+                onView(ungrouped(view));
               }}
             >
               Clear grouping
@@ -1204,6 +1212,37 @@ function GroupingMenu({
         )}
       </AppMenu.Dropdown>
     </AppMenu>
+  );
+}
+
+const reversedOrder = "reversed";
+const rankedOrder = "ranked";
+
+// The order the first grouping's groups run in, named by what they are, such as A to Z.
+function GroupOrderChoices({
+  holds,
+  view,
+  onView,
+}: {
+  holds: GroupsHold;
+  view: View;
+  onView: ChangeView;
+}) {
+  // Each kind of grouping always has its two names.
+  // eslint-disable-next-line security/detect-object-injection
+  const [ranked, reversed] = groupOrderNames[holds];
+  return (
+    <MenuChoices
+      spokenLabel="Group order"
+      choices={[
+        { value: rankedOrder, label: ranked },
+        { value: reversedOrder, label: reversed },
+      ]}
+      chosen={view.groupsReversed === true ? reversedOrder : rankedOrder}
+      onChoose={(order) => {
+        onView(withGroupsReversed(view, order === reversedOrder));
+      }}
+    />
   );
 }
 
@@ -1244,7 +1283,7 @@ export function ViewBar({
   // planned hires".
   counted?: string | undefined;
   // What the rows can be grouped by, for a table that groups them.
-  groupings?: readonly { key: string; label: string }[] | undefined;
+  groupings?: readonly GroupingChoice[] | undefined;
   // False for rows drawn their own way, such as a board's, or made for their grouping.
   nests?: boolean;
   // Goes back to the table from the search field.

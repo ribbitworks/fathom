@@ -58,6 +58,8 @@ function seenParts(
     breakdown: definition.breakdown?.filter(seen),
     grouping,
     thenBy: grouping === undefined ? undefined : grouped(definition.thenBy),
+    groupsReversed:
+      grouping === undefined ? undefined : definition.groupsReversed,
   };
 }
 

@@ -448,6 +448,29 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The headings are still by month.
   - **Notes:**
 
+- [ ] `9088` Select **Group by: Needed by**.
+  - **Expected:**
+    - **Earliest first** and **Latest first** are listed after the groupings, under a line.
+    - **Earliest first** is ticked.
+  - **Notes:**
+
+- [ ] `D124` Select **Latest first**.
+  - **Expected:**
+    - The first heading is **No date**.
+    - The headings after it run from the latest month to the earliest.
+    - The button still reads **Group by: Needed by**.
+  - **Notes:**
+
+- [ ] `0F5D` Choose **Board** beside the **Features** heading.
+  - **Expected:**
+    - The first row label at the left of the board is **No date**.
+    - The row labels under it run from the latest month to the earliest.
+  - **Notes:**
+
+- [ ] `9B69` Choose **Table** beside the **Features** heading.
+  - **Expected:** The first heading is **No date**.
+  - **Notes:**
+
 - [ ] `424C` Select **Group by: Needed by**, then **None** under **Group by**.
   - **Expected:**
     - The headings are gone.
@@ -457,7 +480,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `E74A` Select **Group by**, then **Cycle**.
   - **Expected:**
-    - The headings name cycles again.
+    - The headings name cycles again, from the earliest to the latest.
     - The last heading is **Later**.
   - **Notes:**
 

@@ -34,6 +34,7 @@ Features lists the plan's features in one table, with a board as a second way of
   - A heading counts its features, not their effort. A release no feature targets has no heading.
   - A feature whose draft moves its target cycle is grouped by the draft.
 - **By Needed by:** earliest first, then No date.
+- **Order:** each grouping's headings can run the other way, latest first, Z to A or in reverse list order, with Later or the heading for none first, on the table and the Board alike, as [The groups' order](../../standards/ui-conventions.md#tables) sets out.
 
 ## Features Board
 

@@ -1,34 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A table of records, such as people or planned hires, edited like a spreadsheet. Arrow keys, Home,
-// End, and Tab move between cells, and Ctrl+Home and Ctrl+End go to the first and last. On a
-// record, Enter, F2, or typing edits the cell, and Delete clears it. While editing, Enter saves and
-// moves down, Tab saves and moves across, and Esc cancels. A column drawing on a list is edited by
-// typing to narrow its choices and picking one, as choice-picker.tsx sets out. Empty rows at the
-// end take new records: Tab moves straight on to editing the next cell, and Enter, in a cell or on
-// the row, adds the record and starts the next. Pasting rows copied from a spreadsheet into a new
-// row adds a record for each, all saved together; rows that will not do stay as new rows with their
-// problems shown. A new row with something in it has a menu, also opened with Shift+F10, that
-// clears it. A row's problem is named under it, in its first cell, and the value it is about is
-// marked red: a value its column cannot take first, then a problem with the record taken whole,
-// such as an Employee ID someone else has, then a value still needed. A new row's mark names what
-// is wrong as it is filled in, and a refused value keeps its editor open, marked. Every change to a
-// record is a draft, shown in place and marked, until an Approver approves it; a cell a draft
-// changes is marked, and names its live value. Each record's menu, also opened with Shift+F10,
-// drafts removing it or discards its draft. Every column can be dragged by its header, moved with
-// Alt and the arrow keys, or moved from its menu, which the view keeps, and columns drawing on lists
-// are changed from that menu too. Everyone can change a column's width, kept in the view, by
-// dragging its header's right edge, with Shift, Alt and the arrow keys, or from its menu.
-// Everyone, viewers included, can search the table and sort and filter it by any column they see,
-// as table-controls.tsx sets out; rows keep their place while they are edited, until the view next
-// changes. Viewers see the same table, read only. Changes to columns are drafts too, marked under
-// the columns' names, with each column's draft in its menu; the Draft menu also chooses what to
-// show and decides every draft waiting among those shown. What is particular to a kind of record,
-// such as its built-in columns and what adding one asks for, comes from its table, as
-// people-grid.tsx sets out for People.  A cell whose kind is edited in the side panel, such as a
-// note, opens there on a click, Enter, or F2, read only where the cell may not change. While it is
-// being changed, only the panel's own buttons close it, and the table changes nothing else until
-// then.
+// The shared table of records, edited like a spreadsheet.
 
 import type {
   Asking,
@@ -140,6 +112,7 @@ import {
   recordsOf,
   type RowGroup,
   type RowGroups,
+  type GroupingChoice,
   rowsInOrder,
   type CellValue,
   type ColumnUnit,
@@ -471,10 +444,7 @@ export interface RowTotals<Rec> {
   cell: (records: readonly Rec[], columnKey: string) => ReactNode;
 }
 
-export interface RowGrouping<Rec> {
-  key: string;
-  // What the choice of this grouping is called.
-  label: string;
+export interface RowGrouping<Rec> extends GroupingChoice {
   // The groups a record is in: one, or several for a column holding several values, never none,
   // since a record with no value is in the grouping's group for none.
   of: (record: Rec) => RowGroups;
@@ -1510,6 +1480,7 @@ export interface ShownRows<Rec extends GridRecord> {
   records: readonly Rec[];
   panelOpen: boolean;
   groupOf: ((record: Rec) => RowGroups) | undefined;
+  groupsReversed: boolean;
   draftOf: (record: Rec) => DraftOf<Rec> | undefined;
   liveOf: (record: Rec) => Rec | undefined;
 }
@@ -2092,6 +2063,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
           [draftColumn],
           table.keyOf,
         ),
+        view.groupsReversed === true,
       ),
     ({ key }) => key,
     addedRows,
@@ -3784,6 +3756,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             records: shownRecords,
             panelOpen: sidePanels.length > 0,
             groupOf,
+            groupsReversed: view.groupsReversed === true,
             draftOf: (record) => draftById.get(record.id),
             liveOf: (record) => liveById.get(record.id),
           })}

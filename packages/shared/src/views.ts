@@ -164,6 +164,7 @@ export const viewDefinitionSchema = z.object({
   breakdown: looseColumnKeys(breakdownLimit),
   grouping: columnKey.optional().catch(undefined),
   thenBy: columnKey.optional().catch(undefined),
+  groupsReversed: z.literal(true).optional().catch(undefined),
   frozen: frozen.optional().catch(undefined),
   order: looseColumnKeys(columnsLimit),
   hidden: looseColumnKeys(columnsLimit),
@@ -185,6 +186,8 @@ export interface ViewDefinition {
   grouping?: string | undefined;
   // The grouping of the rows under each of the first grouping's headings.
   thenBy?: string | undefined;
+  // Set when the first grouping's groups run the other way, with the group for none at the top.
+  groupsReversed?: true | undefined;
   frozen?: number | undefined;
   order?: string[] | undefined;
   hidden?: string[] | undefined;
@@ -212,6 +215,7 @@ export const strictDefinitionSchema = z.object({
   breakdown: columnKeys(breakdownLimit).optional(),
   grouping: columnKey.optional(),
   thenBy: columnKey.optional(),
+  groupsReversed: z.literal(true).optional(),
   frozen: frozen.optional(),
   order: columnKeys(columnsLimit).optional(),
   hidden: columnKeys(columnsLimit).optional(),

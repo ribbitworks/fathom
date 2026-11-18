@@ -232,14 +232,17 @@ export function sentTo(
   const grouped = (grouping: string | undefined) =>
     grouping !== undefined && groups(table, grouping) ? grouping : undefined;
   const seen = (key: string) => seesColumn(actor, table, key);
+  const grouping = grouped(definition.grouping);
   return stored({
     search: definition.search,
     show: definition.show,
     filters: filters.length === 0 ? undefined : Object.fromEntries(filters),
     sort: sort.length === 0 ? undefined : sort,
     breakdown: definition.breakdown?.filter(known),
-    grouping: grouped(definition.grouping),
+    grouping,
     thenBy: grouped(definition.thenBy),
+    groupsReversed:
+      grouping === undefined ? undefined : definition.groupsReversed,
     frozen: definition.frozen,
     order: definition.order?.filter(seen),
     hidden: definition.hidden?.filter(seen),
