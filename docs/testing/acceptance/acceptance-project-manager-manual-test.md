@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-project-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Acceptance, Project Manager
@@ -284,7 +284,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `ACCD` Select the **Projects** tab.
   - **Expected:**
     - Every project is listed.
-    - No **Views** button shows.
+    - The **Views** button reads **Views**.
   - **Notes:**
 
 - [ ] `7E76` Select the **Milestones** tab.

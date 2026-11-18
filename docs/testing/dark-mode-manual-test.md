@@ -193,7 +193,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `4D1D` Open the Views menu.
   - **Expected:**
-    - The heading **Hidden** and **Site** under it are easy to read.
+    - The heading **Hidden** and the column names under it, **Site** among them, are easy to read.
     - They are set apart from the items around them.
   - **Notes:**
 

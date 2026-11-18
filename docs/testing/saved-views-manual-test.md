@@ -627,7 +627,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The dialog closes.
     - A notification reads "Deleted the Fictional by place view." with no **Undo**.
-    - No **Views** button shows above the table.
+    - The Views menu's button reads **Views**, with no dot.
   - **Notes:**
 
 **Afterwards:** In the main window, on the **Data classes** page, in the **Lists** section, select **Change class…** on the row of 'Sites', select **General**, and select **Change**. The class of 'Sites' is an open eye, then **General**.
@@ -676,7 +676,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `AFC7` Open the Views menu.
   - **Expected:**
-    - Under the heading **Hidden**, the menu lists **Show all columns**, **Position** and **Site**, in that order.
+    - Under the heading **Hidden**, the menu lists **Show all columns**, **Key**, **Position** and **Site**, in that order.
     - The **Hidden** heading and its items are set apart from the items around them.
   - **Notes:**
 
@@ -714,7 +714,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `8787` Press Enter.
   - **Expected:**
     - The Views menu opens.
-    - Under **Hidden**, it lists **Position** alone, with no **Show all columns**.
+    - Under **Hidden**, it lists **Show all columns**, **Key** and **Position**, in that order.
   - **Notes:**
 
 - [ ] `B04F` Press the Down arrow key until **Position** is highlighted.
@@ -726,7 +726,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `49AA` Open the Views menu.
-  - **Expected:** The menu has no **Hidden** heading.
+  - **Expected:** Under **Hidden**, the menu lists **Key** alone, with no **Show all columns**.
   - **Notes:**
 
 ### VIEW-13: A View on Features Is Shared by Its Table and Board
@@ -803,7 +803,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `B1FA` Select the **Projects** page in the left-hand menu.
   - **Expected:**
     - The **Projects** tab is chosen.
-    - No Views menu shows above the table.
+    - The Views menu's button reads **Views**, with no dot.
   - **Notes:**
 
 - [ ] `AC9D` In the main window, open the Views menu and select **Delete view**.
@@ -815,7 +815,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `036B` Reload the page.
-  - **Expected:** No Views menu shows above the table.
+  - **Expected:** The Views menu's button reads **Views**, with no dot.
+  - **Notes:**
+
+- [ ] `71DF` Open the Views menu.
+  - **Expected:** The menu has no **Shared views** heading.
   - **Notes:**
 
 ### VIEW-14: A View Keeps People Grouped by Manager, Then Site
@@ -1049,7 +1053,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The table's columns are **Name**, **Email address**, **Roles**, **Status** and **Created**, in that order.
     - 'Fathom Administrator' has a grey **This account** box after the name.
     - Each row's **Status** reads "Active".
-    - No Views menu shows.
+    - The Views menu's button reads **Views**, with no dot.
   - **Notes:**
 
 - [ ] `ADA1` Select the details button in the 'Feature Lead' row's **Name** cell.
