@@ -340,9 +340,11 @@ export {
 } from "./record-keys.ts";
 export {
   type FoundRecord,
+  type LinkedRecord,
   type RecordLookup,
   recordLookupSchema,
   recordPage,
+  type RecordPage,
 } from "./record-links.ts";
 export {
   type CycleLengthRequest,

@@ -172,23 +172,14 @@ async function openDrafts(answers: Answers = {}) {
   return { fetch, app };
 }
 
-// Opens a draft's details from its row, and follows its link to the record's own page, giving the
-// address it went to.
-async function showOn(
-  app: ReturnType<typeof renderApp>,
-  record: string,
-  page: string,
-) {
+// Opens a draft's details from its row, giving where its link to the record's own page leads.
+async function showOn(record: string, page: string) {
   await userEvent.click(
     await screen.findByRole("button", { name: `Show details of ${record}` }),
   );
-  await userEvent.click(
-    await screen.findByRole("link", { name: `Show on ${page}` }),
-  );
-  await waitFor(() => {
-    expect(app.location.pathname).not.toBe("/drafts");
-  });
-  return `${app.location.pathname}${app.location.search}`;
+  return (
+    await screen.findByRole("link", { name: `Show on ${page}` })
+  ).getAttribute("href");
 }
 
 // Each row's cells, from Record to Reason, as the table shows them.
@@ -208,16 +199,14 @@ const entries = async () => {
 
 describe("the Drafts page", () => {
   it("puts each draft in words, newest first, with what it changes", async () => {
-    const { app } = await openDrafts();
+    await openDrafts();
     expect(await entries()).toEqual([
       "Avery Fictional, Draft | Changed | Waiting | Start set to Nov 2, 2026; Site from Northmere to Harbour; A removed column changed | Person | People | Fictional Editor | Oct 31, 2026 | ",
       "Blake Fictional, Draft: added | Added | Waiting | ID set to E-p2; Site set to Harbour | Person | People | Fictional Editor | Oct 30, 2026 | ",
       "Casey Fictional, Draft: removed | Removed | Waiting |  | Person | People | Fathom | Oct 30, 2026 | ",
       "Drew Fictional, Rejected: Fictional reason | Changed | Rejected | Name from Drew Before to Drew Fictional | Person | People | Fictional Editor | Oct 29, 2026 | Fictional reason",
     ]);
-    expect(await showOn(app, "Avery Fictional", "People")).toBe(
-      "/people?open=E-p1",
-    );
+    expect(await showOn("Avery Fictional", "People")).toBe("/go/person/1");
   });
 
   it("puts drafts of lists, choices, and orders in words, and approves one with the drafts it uses", async () => {
@@ -583,6 +572,7 @@ describe("the Drafts page", () => {
         },
       ]);
     });
+    expect(await showOn("Previous site", "People")).toBe("/go/column/1");
   });
 
   it("opens for Approvers who see lists but not people, with only the drafts of lists", async () => {
@@ -603,6 +593,18 @@ describe("the Drafts page", () => {
           lists: [
             {
               ...sites,
+              keyNumber: 7,
+              choices: [
+                {
+                  ...sites.choices[0],
+                  draft: draft({
+                    action: "changed",
+                    changed: ["label"],
+                    live: { label: "Old Harbour" },
+                  }),
+                },
+                sites.choices[1],
+              ],
               draft: draft({
                 action: "changed",
                 changed: ["name"],
@@ -612,14 +614,16 @@ describe("the Drafts page", () => {
           ],
         }),
     });
-    const app = renderApp("/drafts");
+    renderApp("/drafts");
     expect(await entries()).toEqual([
       "Sites, Draft | Changed | Waiting | Name from Old Sites to Sites | List | Configuration | Fictional Editor | Oct 30, 2026 | ",
+      "Harbour in Sites, Draft | Changed | Waiting | Name from Old Harbour to Harbour | Choice | Configuration | Fictional Editor | Oct 30, 2026 | ",
     ]);
     expect(fetch.mock.calls.some(([url]) => url.endsWith("/api/people"))).toBe(
       false,
     );
-    expect(await showOn(app, "Sites", "Lists")).toBe("/lists/l1");
+    expect(await showOn("Sites", "Lists")).toBe("/go/list/7");
+    expect(await showOn("Harbour in Sites", "Lists")).toBe("/go/list/7");
   });
 
   it("lists a draft of the planning settings in words, for Approvers of configuration to approve", async () => {
@@ -642,7 +646,7 @@ describe("the Drafts page", () => {
       "POST /api/drafts/approval": () =>
         Response.json({ changeSetId: "20000000-0000-4000-8000-000000000001" }),
     });
-    const app = renderApp("/drafts");
+    renderApp("/drafts");
     expect(await entries()).toEqual([
       "Planning settings, Draft | Changed | Waiting | Hours a day from 8 to 7.5 | Planning settings | Configuration | Fictional Editor | Oct 30, 2026 | ",
     ]);
@@ -666,7 +670,7 @@ describe("the Drafts page", () => {
         }),
       ]);
     });
-    expect(await showOn(app, "Planning settings", "Capacity")).toBe(
+    expect(await showOn("Planning settings", "Capacity")).toBe(
       "/capacity?mode=settings",
     );
   });
@@ -768,7 +772,7 @@ describe("the Drafts page", () => {
           featureColumns: noFeatureColumns,
         }),
     });
-    const app = renderApp("/drafts");
+    renderApp("/drafts");
     const listed = (await entries()).join(" ");
     expect(listed).toContain("Fictional Customer, Draft: added | Added");
     expect(listed).toContain("Fictional Proposal");
@@ -776,8 +780,15 @@ describe("the Drafts page", () => {
     expect(listed).toContain("Fictional Kickoff of Fictional Project");
     expect(listed).not.toContain("Settled");
     expect(
-      await showOn(app, "Fictional Kickoff of Fictional Project", "Projects"),
-    ).toMatch(/^\/projects\?tab=milestones&open=/u);
+      await showOn("Fictional Kickoff of Fictional Project", "Projects"),
+    ).toBe("/go/milestone/1");
+    expect(await showOn("Fictional Customer", "Projects")).toBe(
+      "/go/customer/1",
+    );
+    expect(await showOn("Fictional Proposal", "Projects")).toBe(
+      "/go/proposal/1",
+    );
+    expect(await showOn("Fictional Project", "Projects")).toBe("/go/project/1");
   });
 
   it("names a draft of a column on Features as being on Features", async () => {
@@ -831,10 +842,10 @@ describe("the Drafts page", () => {
           canEditFeatures: false,
         }),
     });
-    const app = renderApp("/drafts");
+    renderApp("/drafts");
     expect(await screen.findByText("Fictional Size on Features")).toBeDefined();
-    expect(await showOn(app, "Fictional Size on Features", "Features")).toBe(
-      "/features",
+    expect(await showOn("Fictional Size on Features", "Features")).toBe(
+      "/go/column/1",
     );
   });
 
@@ -896,16 +907,14 @@ describe("the Drafts page", () => {
           featureColumns: noFeatureColumns,
         }),
     });
-    const app = renderApp("/drafts");
+    renderApp("/drafts");
     expect((await entries()).join(" ")).toContain(
       "Fictional Moving, Draft | Changed | Waiting | ",
     );
     expect(document.body.textContent).toContain(
       `${streamOfCycles.name}: ${String(second?.name)}`,
     );
-    expect(await showOn(app, "Fictional Moving", "Features")).toMatch(
-      /^\/features\?open=/u,
-    );
+    expect(await showOn("Fictional Moving", "Features")).toBe("/go/feature/1");
   });
 
   it("tries the plan's records again when they could not be loaded", async () => {
@@ -1034,7 +1043,7 @@ describe("the Drafts page", () => {
         }),
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
-    const app = renderApp("/drafts");
+    renderApp("/drafts");
     expect(await entries()).toEqual([
       "Fictional Majors, Draft: added | Added | Waiting |  | Schedule | The plan or configuration | Fictional Editor | Oct 30, 2026 | ",
       "Fictional Majors from Jan 1, 2027, Draft | Changed | Waiting | Length from 2 to 3 | Cycles | The plan or configuration | Fictional Editor | Oct 30, 2026 | ",
@@ -1067,16 +1076,17 @@ describe("the Drafts page", () => {
         }),
       ]);
     });
-    expect(await showOn(app, "Fictional Majors", "Releases")).toBe(
-      `/releases?tab=schedules&open=${streamId}`,
+    expect(await showOn("Fictional Majors", "Releases")).toBe("/go/schedule/1");
+    expect(await showOn("Fictional Majors from Jan 1, 2027", "Releases")).toBe(
+      "/go/schedule/1",
     );
   });
 
-  it("shows a release's draft on Releases, with the release's details open", async () => {
+  it("links a release's draft to the release on Releases", async () => {
     const release = fictionalRelease({
       draft: recordDraft({ action: "created" }),
     });
-    const { app } = await openDrafts({
+    await openDrafts({
       "GET /api/session": session([
         "features:approve",
         "features:view",
@@ -1092,9 +1102,9 @@ describe("the Drafts page", () => {
         }),
     });
 
-    expect(
-      await showOn(app, "Fictional One in Fictional Majors", "Releases"),
-    ).toBe(`/releases?open=${release.id}`);
+    expect(await showOn("Fictional One in Fictional Majors", "Releases")).toBe(
+      "/go/release/1",
+    );
   });
 
   it("names everyone who changed a draft", async () => {
@@ -1369,6 +1379,7 @@ describe("the Drafts page", () => {
         records: [],
       },
     ]);
+    expect(await showOn("Engineer, REQ-7", "People")).toBe("/go/hire/1");
   });
 
   it("selects all waiting drafts at once, and none again", async () => {
@@ -2129,7 +2140,7 @@ describe("drafts of feature teams on the Drafts page", () => {
     });
 
   it("puts a team's changes in words, naming its lead and members", async () => {
-    const { app } = await open([
+    await open([
       featureTeam("Fictional Pier", {
         leadId: "m1",
         members: ["m1", "m2", "gone"],
@@ -2148,9 +2159,7 @@ describe("drafts of feature teams on the Drafts page", () => {
     expect(await entries()).toEqual([
       "Fictional Pier, Draft | Changed | Waiting | Name from Fictional Quay to Fictional Pier; Feature lead from Blake Fictional to Avery Fictional; Members from Avery Fictional to Avery Fictional, Blake Fictional, Someone this role can't see; Joining and leaving dates set to Avery Fictional, Jan 5, 2026; Blake Fictional, Jan 6, 2026; Someone this role can't see, Jan 7, 2026 | Feature team | Feature teams | Fictional Editor | Oct 30, 2026 | ",
     ]);
-    expect(await showOn(app, "Fictional Pier", "org chart")).toBe(
-      `/org-chart?teams=feature&featureTeam=${t1}`,
-    );
+    expect(await showOn("Fictional Pier", "org chart")).toBe("/go/team/1");
   });
 
   it("names someone who has not started from the team's own names", async () => {

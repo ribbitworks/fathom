@@ -11,6 +11,7 @@ import {
   approvableKinds,
   type ChangeValue,
   type Choice,
+  type ColumnTable,
   type DraftKind,
   draftKinds,
   type DraftState,
@@ -18,6 +19,7 @@ import {
   type FeatureTeamDraft,
   type List,
   isNoteField,
+  type LinkedRecord,
   notePlainText,
   type OrgChartPerson,
   type Permission,
@@ -33,6 +35,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { addedClass, describeField, describeValue } from "./changes.ts";
 import { personDraftFields } from "./draft-details.tsx";
+import type { DraftPlace } from "./draft-places.ts";
 import {
   type Columns,
   decidable,
@@ -58,8 +61,6 @@ import {
 import { planDraftFields } from "./project-grids.tsx";
 import {
   listedPlanRecords,
-  type PlanRecordKind,
-  type ProjectTab,
   planChoicesQuery,
   planNodes,
   projectPlanQuery,
@@ -82,16 +83,6 @@ function draftedPeople(data: PeopleData): Drafted[] {
     )
     .sort((a, b) => (b.draft.madeAt ?? "").localeCompare(a.draft.madeAt ?? ""));
 }
-
-// Where a draft's record is shown on its own page, with its details open where the page opens one.
-export type DraftPlace =
-  | { page: "people"; open: string | undefined }
-  | { page: "lists"; listId: string }
-  | { page: "releases"; tab: "releases" | "schedules"; open: string }
-  | { page: "features"; open: string | undefined }
-  | { page: "projects"; tab: ProjectTab; open: string }
-  | { page: "org-chart"; featureTeam: string }
-  | { page: "capacity" };
 
 // A draft on the page, of any kind: its record, by kind and name, who made it, what it changes, and
 // why it was rejected, with the draft it selects.
@@ -250,7 +241,7 @@ function listEntries(lists: readonly List[]): Entry[] {
                   list,
                 ),
             { lists: [list.id] },
-            { page: "lists", listId: list.id },
+            { kind: "list", keyNumber: list.keyNumber },
             list.heldBy,
           ),
         ]
@@ -265,7 +256,7 @@ function listEntries(lists: readonly List[]): Entry[] {
               `${choice.label} in ${list.name}`,
               configFields(choice.draft, choice),
               { choices: [choice.id] },
-              { page: "lists", listId: list.id },
+              { kind: "list", keyNumber: list.keyNumber },
               choice.heldBy,
             ),
           ]
@@ -287,7 +278,7 @@ function listEntries(lists: readonly List[]): Entry[] {
               ),
             ],
             { orders: [list.id] },
-            { page: "lists", listId: list.id },
+            { kind: "list", keyNumber: list.keyNumber },
             list.orderHeldBy,
           ),
         ]
@@ -300,7 +291,7 @@ function columnEntries(
   data: Pick<PeopleData, "fields">,
   lists: readonly List[],
   columnName: (name: string) => string = (name) => name,
-  place: DraftPlace = { page: "people", open: undefined },
+  table: ColumnTable = "people",
 ): Entry[] {
   // A web link column has no list, and a list not sent to the reader goes unnamed.
   const listName = (id: unknown) =>
@@ -330,7 +321,7 @@ function columnEntries(
                     { ...field, listId: listName(field.listId) },
                   ),
               { columns: [field.id] },
-              place,
+              { kind: "column", keyNumber: field.keyNumber, table },
               field.heldBy,
             ),
           ]
@@ -362,7 +353,10 @@ function personEntries(data: PeopleData, lists: readonly List[]): Entry[] {
       isHire(drafted.person)
         ? { plannedHires: [drafted.person.id] }
         : { people: [drafted.person.id] },
-      { page: "people", open: drafted.person.employeeId },
+      {
+        kind: isHire(drafted.person) ? "hire" : "person",
+        keyNumber: drafted.person.keyNumber,
+      },
       drafted.person.heldBy,
     ),
   );
@@ -379,9 +373,8 @@ function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
     },
     now: Record<string, unknown>,
     name: string,
-    // Where the record's details open: a release on Releases, anything else as its schedule's on
-    // Schedules.
-    place: DraftPlace,
+    // A stream's changes of cycles open as its schedule does.
+    place: LinkedRecord,
   ): Entry[] =>
     record.draft === undefined
       ? []
@@ -397,10 +390,9 @@ function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
             record.heldBy,
           ),
         ];
-  const onSchedules = (stream: { id: string }): DraftPlace => ({
-    page: "releases",
-    tab: "schedules",
-    open: stream.id,
+  const onSchedules = (stream: ReleaseStream): LinkedRecord => ({
+    kind: "schedule",
+    keyNumber: stream.keyNumber,
   });
   return streams.flatMap((stream) => [
     ...of("release-stream", stream, stream, stream.name, onSchedules(stream)),
@@ -415,9 +407,8 @@ function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
     ),
     ...stream.releases.flatMap((release) =>
       of("release", release, release, `${release.name} in ${stream.name}`, {
-        page: "releases",
-        tab: "releases",
-        open: release.id,
+        kind: "release",
+        keyNumber: release.keyNumber,
       }),
     ),
   ]);
@@ -437,7 +428,7 @@ function settingsEntries(settings: PlanningSettingsShown): Entry[] {
       planningSettingsName,
       configFields(...settingsDraftWords(draft, settings), "planning-settings"),
       { records: [planningSettingsRef] },
-      { page: "capacity" },
+      "capacity-settings",
       settings.heldBy,
     ),
   ];
@@ -511,27 +502,12 @@ function teamEntries(
         team.name,
         details,
         { featureTeams: [team.id] },
-        { page: "org-chart", featureTeam: team.id },
+        { kind: "team", keyNumber: team.keyNumber },
         team.heldBy,
       ),
     ];
   });
 }
-
-// Where a plan record is shown: a feature on Features, the rest on their tab of Projects.
-const planTabs: Record<Exclude<PlanRecordKind, "feature">, ProjectTab> = {
-  project: "projects",
-  proposal: "proposals",
-  customer: "customers",
-  milestone: "milestones",
-};
-
-const planPlace = (kind: PlanRecordKind, id: string): DraftPlace =>
-  kind === "feature"
-    ? { page: "features", open: id }
-    : // The kind is always one of the fixed kinds.
-      // eslint-disable-next-line security/detect-object-injection
-      { page: "projects", tab: planTabs[kind], open: id };
 
 // Every draft of the plan's records, as entries.
 function planEntries(
@@ -554,7 +530,7 @@ function planEntries(
           credited(describeField(field), key, draft),
         ),
         { records: [ref] },
-        planPlace(kind, record.id),
+        { kind, keyNumber: record.keyNumber },
         heldBy,
       ),
     ];
@@ -687,7 +663,7 @@ export function useDraftEntries({
           planData.featureColumns,
           planData.featureColumns.lists,
           (name) => `${name} on Features`,
-          { page: "features", open: undefined },
+          "features",
         )),
     ...(planData === undefined || choicesData === undefined
       ? []

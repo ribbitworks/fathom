@@ -8,7 +8,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import {
   approvableKinds,
-  capacityModeNeeds,
   type ClassAccess,
   changesField,
   changesLinesOn,
@@ -18,7 +17,6 @@ import {
   editsField,
   opensWith,
   pageNeeds,
-  type PageNeeds,
   reaches,
   seesEmployment,
   seesHiringPlan,
@@ -45,7 +43,6 @@ import {
   createRouter,
   getRouteApi,
   Link,
-  type LinkOptions,
   notFound,
   type RouterHistory,
   redirect,
@@ -58,9 +55,9 @@ import { RecordNotShown } from "./go-page.tsx";
 import { HelpPageView } from "./help-page.tsx";
 import { helpIndexPage, shownHelpPage } from "./help-pages.ts";
 import { ChangeHistoryPage } from "./change-history-page.tsx";
-import { type DraftPlace, draftsSeen } from "./draft-entries.ts";
+import { draftsSeen } from "./draft-entries.ts";
+import { shownPlace } from "./draft-places.ts";
 import { DraftsPage } from "./drafts-page.tsx";
-import { placePageNames } from "./drafts-panel.tsx";
 import { mineToDecide, myChanges } from "./drafts-table.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
@@ -392,65 +389,23 @@ const draftsRoute = createRoute({
         onOpen={(next, replace = false) => {
           void navigate({ search: { ...search, open: next }, replace });
         }}
-        recordLink={(place) =>
-          opensWith(placeNeeds(place), access) && (
-            <Anchor
-              size="sm"
-              renderRoot={(props) => (
-                <Link {...props} {...placeAddress(place)} />
-              )}
-            >
-              Show on {placePageNames[place.page]}
-            </Anchor>
-          )
-        }
+        recordLink={(place) => {
+          const { pageName, needs, address } = shownPlace(place);
+          return (
+            opensWith(needs, access) && (
+              <Anchor
+                size="sm"
+                renderRoot={(props) => <Link {...props} {...address} />}
+              >
+                Show on {pageName}
+              </Anchor>
+            )
+          );
+        }}
       />
     );
   },
 });
-
-// What needs reaching to see a draft's record on its page: the planning settings, Capacity's
-// Settings.
-const placeNeeds = (place: DraftPlace): PageNeeds =>
-  place.page === "capacity"
-    ? [capacityModeNeeds.settings]
-    : pageNeeds[place.page];
-
-// Where a draft's record is shown, with its details open where its page opens them.
-function placeAddress(place: DraftPlace): LinkOptions {
-  switch (place.page) {
-    case "people":
-      return { to: "/people" as const, search: { open: place.open } };
-    case "lists":
-      return {
-        to: "/lists/{-$listId}" as const,
-        params: { listId: place.listId },
-      };
-    case "releases":
-      return {
-        to: "/releases/{-$streamId}" as const,
-        params: { streamId: undefined },
-        search: {
-          ...(place.tab === "releases" ? {} : { tab: place.tab }),
-          open: place.open,
-        },
-      };
-    case "features":
-      return planAddress("features", place.open);
-    case "projects":
-      return planAddress(place.tab, place.open);
-    case "org-chart":
-      return {
-        to: "/org-chart" as const,
-        search: { teams: "feature" as const, featureTeam: place.featureTeam },
-      };
-    case "capacity":
-      return {
-        to: "/capacity" as const,
-        search: { mode: "settings" as const },
-      };
-  }
-}
 
 const historyRoute = createRoute({
   getParentRoute: () => signedInRoute,

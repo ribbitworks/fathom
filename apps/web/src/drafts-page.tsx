@@ -12,11 +12,8 @@ import { type Asking } from "@fathom/shared";
 import { Button, Loader, Stack, Tabs, Text } from "@mantine/core";
 import { type ReactNode, useEffect, useState } from "react";
 import { DecisionModal, drafts } from "./decision-dialog.tsx";
-import {
-  type DraftPlace,
-  type DraftsSeen,
-  useDraftEntries,
-} from "./draft-entries.ts";
+import { type DraftsSeen, useDraftEntries } from "./draft-entries.ts";
+import type { DraftPlace } from "./draft-places.ts";
 import { DraftPanel, draftPanelId } from "./drafts-panel.tsx";
 import {
   type Decision,

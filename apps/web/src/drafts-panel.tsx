@@ -8,7 +8,6 @@
 import { Button, Group, Stack, Text } from "@mantine/core";
 import { useEffect } from "react";
 import { heldWords, unpublishedWords, waitingWords } from "./draft-details.tsx";
-import type { DraftPlace } from "./draft-entries.ts";
 import type { ReactNode } from "react";
 import { areaWords, type DraftRow } from "./drafts-table.tsx";
 import { focusSoon } from "./focus.ts";
@@ -20,18 +19,6 @@ import { DraftedItem, FactBox } from "./status-mark.tsx";
 
 export const draftPanelId = "draft-panel";
 const titleId = "draft-panel-title";
-
-// What each page that shows a draft's record is called in its link, as People's Show on org
-// chart calls the Org chart.
-export const placePageNames: Record<DraftPlace["page"], string> = {
-  people: "People",
-  lists: "Lists",
-  releases: "Releases",
-  features: "Features",
-  projects: "Projects",
-  "org-chart": "org chart",
-  capacity: "Capacity",
-};
 
 // The row naming the other drafts a decision takes with it.
 const relatedColumn = (count: number) => ({

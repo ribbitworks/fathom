@@ -28,7 +28,7 @@ const entry = (more: Partial<Entry> = {}): Entry => ({
   heldBy: undefined,
   needsOtherApprover: false,
   selects: { ...noDrafts(), people: ["p1"] },
-  place: { page: "people", open: "E-1" },
+  place: { kind: "person", keyNumber: 1 },
   ...more,
 });
 
