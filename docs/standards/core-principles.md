@@ -4,13 +4,14 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["agent-workflow.md", "code-review.md", "documentation.md"]
-last_updated: "2026-11-01"
+last_updated: "2026-11-17"
 ---
 
 # Core Development Principles
 
-Rules that hold in every project, whatever its stack. The project's own
-standards define its architecture, layers and domain rules on top of these.
+Rules that hold for all of Fathom's code, whatever its language. Fathom's
+architecture, layers and domain rules are in its design documents and decision
+records.
 
 ## Workflow
 
@@ -32,12 +33,12 @@ separately. Violations are architectural defects, not style preferences.
   sends intent; state holders evolve state; domain helpers each own one product
   rule. When a UI or state type starts encoding product rules, move the rule
   into the domain and call it.
-- **Open/Closed:** extend behavior by adding a type, case or conformance, not by
+- **Open/Closed:** extend behaviour by adding a type, case or conformance, not by
   editing a cascade of unrelated branches. Prefer exhaustive matching on domain
   enums, so the compiler flags every extension point, over scattered `if`
   ladders. Table-driven dispatchers stay generic: edge cases become named cases
   or a resolver, never one-off early exits in the generic entry point.
-- **Liskov Substitution:** conformances honor their contract: stable identity,
+- **Liskov Substitution:** conformances honour their contract: stable identity,
   round-trip encoding, value equality. Any variant is substitutable wherever its
   base is expected, with no "works for one kind, silently wrong for another".
 - **Interface Segregation:** keep protocols and dependency clients small; a
@@ -45,7 +46,7 @@ separately. Violations are architectural defects, not style preferences.
   they render, not the whole feature state.
 - **Dependency Inversion:** features depend on abstractions, never on concrete
   I/O. External systems and ambient services (the clock, calendar, random IDs,
-  preferences storage) are reached through injected dependencies, so behavior
+  preferences storage) are reached through injected dependencies, so behaviour
   is deterministic and testable. Pure domain types stay dependency-free.
 
 ## Implementation Rules
@@ -63,7 +64,7 @@ separately. Violations are architectural defects, not style preferences.
 - **No abbreviations** in names.
 - **No forced unwraps or non-null assertions** outside tests, or after an
   explicit check.
-- **Design system:** colors, typography and spacing come from the project's
+- **Design system:** colours, typography and spacing come from the project's
   design tokens, never literals in features.
 
 ## Comments
@@ -73,7 +74,7 @@ Default to **none**. A well-named type, function or property already says
 the moment the code changes.
 
 Add a comment only when it captures a **why** the code cannot express: a hidden
-constraint, a subtle invariant, a workaround for a platform quirk, behavior that
+constraint, a subtle invariant, a workaround for a platform quirk, behaviour that
 would surprise the next reader. Ask "would deleting this leave someone confused
 about intent?" If not, delete it.
 

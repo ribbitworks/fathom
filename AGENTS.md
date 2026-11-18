@@ -1,12 +1,10 @@
 # Fathom: Agent Instructions
 
-Guidance for AI coding agents working in this repository. The shared rules below are copied from the ai-toolkit, the maintainer's separate repository of engineering standards and agent rules that several projects share. It isn't public yet; its standards are copied into `docs/standards/shared/`.
+Guidance for AI coding agents working in this repository.
 
-<!-- ai-toolkit:shared-rules:start -->
-## Shared Agent Rules
+## Agent Rules
 
-These rules come from `ai-toolkit/agent-rules/shared-rules.md`. Edit them there,
-not here. The standards they point to are in `docs/standards/shared/`.
+The standards these rules point to are in `docs/standards/`.
 
 ### Reading the Standards
 
@@ -25,7 +23,7 @@ not here. The standards they point to are in `docs/standards/shared/`.
 ### Working Mode
 
 - Before making any change in a session, ask the owner which mode to use, and
-  follow [agent-workflow.md](docs/standards/shared/agent-workflow.md):
+  follow [agent-workflow.md](docs/standards/agent-workflow.md):
   - **Autonomous:** have the owner verify UI changes, run the tests, fix
     failures and warnings, get a separate-agent code review, and commit only
     after the owner's explicit approval. Push and open a pull request only when
@@ -51,15 +49,11 @@ not here. The standards they point to are in `docs/standards/shared/`.
 - Never commit a submodule pointer change unless the task is to bump it.
 - Delete the local branches of merged pull requests, only when they hold
   nothing the pull request lacks, as
-  [agent-workflow.md § Rules for Both Modes](docs/standards/shared/agent-workflow.md#rules-for-both-modes)
+  [agent-workflow.md § Rules for Both Modes](docs/standards/agent-workflow.md#rules-for-both-modes)
   describes.
 
-### Hooks and Tags
+### Tags
 
-- Never bypass git hooks, with one exception: a push whose commits change only
-  documentation may skip a pre-push hook that only builds and tests, through
-  the skip switch it documents (such as `SKIP_PRE_PUSH=1`), unless the
-  project's documents are built into the product. Commit hooks always run.
 - Tag releases with semantic versioning: MAJOR for breaking changes, MINOR for
   any new feature or option, and PATCH for anything else (fixes,
   documentation, refactors, tests, chores). Before 1.0.0, a breaking change
@@ -74,7 +68,7 @@ not here. The standards they point to are in `docs/standards/shared/`.
 - Editing a file that was already staged is not permission to re-stage it.
 - Staging and committing are separate permissions.
 - Commit messages follow
-  [code-review.md § Commit Message Rules](docs/standards/shared/code-review.md#commit-message-rules).
+  [code-review.md § Commit Message Rules](docs/standards/code-review.md#commit-message-rules).
 
 ### No AI Attribution
 
@@ -88,8 +82,7 @@ or tool adds one, remove it.
 
 - Every code review, including built-in review skills such as `/code-review` and
   `/simplify`, follows
-  [code-review.md](docs/standards/shared/code-review.md) plus the project's own
-  review focus areas. Where a skill's defaults conflict, the standard wins.
+  [code-review.md](docs/standards/code-review.md). Where a skill's defaults conflict, the standard wins.
 - The deliverable is the standard's Markdown review file under
   `.tmp/code-review/`, not a skill's raw findings list.
 - A review never stages or commits. A skill's fix or comment modes apply only
@@ -101,16 +94,15 @@ or tool adds one, remove it.
 
 Default to no comment. Names carry *what*; comments carry only *why* the code
 cannot say. Never narrate names, UI, tickets, use-case numbers or history. See
-[core-principles.md § Comments](docs/standards/shared/core-principles.md#comments).
+[core-principles.md § Comments](docs/standards/core-principles.md#comments).
 
 ### Writing
 
 - No em dashes or en dashes in user-facing copy or documentation; use a period,
   comma, colon, semicolon or parentheses. Write ranges with "to".
 - Do not add Markdown files nobody asked for.
-- Follow [documentation.md](docs/standards/shared/documentation.md) and
-  [markdown-style-guidelines.md](docs/standards/shared/markdown-style-guidelines.md).
-<!-- ai-toolkit:shared-rules:end -->
+- Follow [documentation.md](docs/standards/documentation.md) and
+  [markdown-style-guidelines.md](docs/standards/markdown-style-guidelines.md).
 
 ## Project Commands
 
@@ -125,28 +117,29 @@ cannot say. Never narrate names, UI, tickets, use-case numbers or history. See
 
 ## Branching
 
-Changes reach `main` only through a pull request, as [agent-workflow.md](docs/standards/shared/agent-workflow.md) requires. Pull request titles, descriptions and comments follow the commit message rules and carry no AI attribution.
+Changes reach `main` only through a pull request, as [agent-workflow.md](docs/standards/agent-workflow.md) requires. Pull request titles, descriptions and comments follow the commit message rules and carry no AI attribution.
 
-Before starting a task, find and fix the issues in its areas, as [Issues § Fixing an Issue](docs/issues.md#fixing-an-issue) sets out. In Autonomous mode, a set of issues in one area is worked as a batch. A batch commits each fix on its own, then has one review and one approval for the whole branch, as an exception to the Autonomous workflow that [Issues § Issue Batches](docs/issues.md#issue-batches) sets out.
+Before starting a task, find and fix the issues in its areas, as [Issues § Fixing an Issue](docs/standards/issues.md#fixing-an-issue) sets out. In Autonomous mode, a set of issues in one area is worked as a batch. A batch commits each fix on its own, then has one review and one approval for the whole branch, as an exception to the Autonomous workflow that [Issues § Issue Batches](docs/standards/issues.md#issue-batches) sets out.
 
 ## Data
 
-Fathom holds company and employee data, so the shared data rule covers these in particular:
+Fathom holds company and employee data, so the data rule in [agent-workflow.md](docs/standards/agent-workflow.md#rules-for-both-modes) covers these in particular:
 
 - Never commit real company or employee information, including names, org structure, company plans, internal documents, or exports
 - Sample, seed, and test data must be fictional, and must not be derived from real people or real company data, including anonymized or masked copies
-- Do not put real data into documentation examples either (the shared rule covers prompts, issues and the rest)
-- Real data the maintainer keeps locally belongs only in `private/`, which is git-ignored; agents do not read from it
+- Do not put real data into documentation examples either (the data rule covers prompts, issues and the rest)
+- Agents do not read `private/`, a git-ignored folder for files that stay on one machine
 
 ## Automation
 
-Automate every repeatable setup, development, and operations task with a script in `scripts/`, following [Shell Script Standards](docs/standards/shared/shell/shell.md). The project's linters check every script.
+Automate every repeatable setup, development, and operations task with a script in `scripts/`, following [Shell Script Standards](docs/standards/shell.md). The project's linters check every script.
 
 ## Documentation
 
-- Follow the shared standards in `docs/standards/shared/` and Fathom's additions in `docs/standards/` when writing or editing files they cover. Fathom's own documentation rules, such as Canadian English, filing issues and which document owns each fact, are in [Documentation Standards](docs/standards/documentation.md)
-- Markdown formatting rules: [Markdown Style Guidelines](docs/standards/shared/markdown-style-guidelines.md)
-- Code review process: [Code Review Standards](docs/standards/shared/code-review.md), with Fathom's additions in [docs/standards/code-review.md](docs/standards/code-review.md)
-- Testing rules: [Testing Standards](docs/standards/shared/testing.md), with Fathom's additions in [docs/standards/testing.md](docs/standards/testing.md)
+- Follow the standards in `docs/standards/` when writing or editing files they cover. The documentation rules, such as Canadian English, filing issues and which document owns each fact, are in [Documentation Standards](docs/standards/documentation.md)
+- Markdown formatting rules: [Markdown Style Guidelines](docs/standards/markdown-style-guidelines.md)
+- Code review process: [Code Review Standards](docs/standards/code-review.md)
+- Testing rules: [Testing Standards](docs/standards/testing.md)
+- Screens: [UI Conventions](docs/standards/ui-conventions.md)
 - Help pages: [Help Page Standards](docs/standards/help-pages.md)
 - One exception to [No AI Attribution](#no-ai-attribution): [How Fathom Is Built](docs/how-fathom-is-built.md) names the AI tool and the models used, as the [Decisions Log](docs/product/decisions.md#platform-and-operations) records under How AI is credited. No other document, commit or pull request names them

@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*.md"]
 dependencies: ["documentation.md"]
-last_updated: "2026-11-01"
+last_updated: "2026-11-17"
 ---
 
 # Markdown Style Guidelines
@@ -86,8 +86,7 @@ live in [documentation.md](documentation.md).
 
 ## Line Length (MD013)
 
-Line length is not enforced. Projects that want a limit set it in their
-Markdown linter configuration and their own standards.
+Line length is not enforced.
 
 ## General Requirements
 

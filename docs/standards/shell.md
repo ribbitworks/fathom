@@ -3,13 +3,14 @@ title: "Shell Script Standards"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*.sh", "**/*.ps1"]
-dependencies: ["../core-principles.md", "../code-review.md"]
-last_updated: "2026-11-01"
+dependencies: ["core-principles.md", "code-review.md"]
+last_updated: "2026-11-17"
 ---
 
 # Shell Script Standards
 
-Rules for shell scripts. They add to the stack-neutral standards one folder up.
+Rules for Fathom's shell scripts, on top of
+[Core Development Principles](core-principles.md).
 The baseline reference is the
 [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html).
 
@@ -65,13 +66,13 @@ The baseline reference is the
 
 ## Linting
 
-Run [ShellCheck](https://www.shellcheck.net/) on every script, through the
-project's lint script where it has one. Silence a false positive only with
+Run [ShellCheck](https://www.shellcheck.net/) on every script, through
+`pnpm lint:shell`. Silence a false positive only with
 `# shellcheck disable=SCxxxx` and a one-line reason.
 
 ## Code Review Criteria
 
-Add these to the focus areas in [code-review.md](../code-review.md):
+Add these to the focus areas in [code-review.md](code-review.md):
 
 - Missing strict mode, unquoted expansions, backticks.
 - Paths resolved from the current directory without a stated contract.

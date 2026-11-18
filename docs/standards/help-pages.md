@@ -3,13 +3,13 @@ title: "Help Page Standards"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["docs/help/**"]
-dependencies: ["docs/standards/shared/documentation.md", "docs/design/visual-design.md"]
+dependencies: ["docs/standards/documentation.md", "docs/design/visual-design.md"]
 last_updated: "2026-11-15"
 ---
 
 # Help Page Standards
 
-How Fathom's Help pages in `docs/help/` are written, so they read the way a colleague would explain Fathom out loud. They add to [Documentation](shared/documentation.md), which covers every document. [Setting Up Fathom](../help/setting-up-fathom.md) is the model page. Decided by the owner on 2026-11-13.
+How Fathom's Help pages in `docs/help/` are written, so they read the way a colleague would explain Fathom out loud. They add to [Documentation](documentation.md), which covers every document. [Setting Up Fathom](../help/setting-up-fathom.md) is the model page.
 
 ## Rules
 
@@ -21,7 +21,7 @@ How Fathom's Help pages in `docs/help/` are written, so they read the way a coll
 - **Must** say the real sequence: where Fathom needs one change approved before the next is possible, the steps say so, in rounds.
 - **Must** end a guide by saying how the reader knows they're done.
 - **Must** check each fact against Fathom before writing it.
-- **Must** describe only what Fathom does now, never what is planned: no "for now", "later" or "to follow", since Help is shown in Fathom. Decided by the owner on 2026-11-15.
+- **Must** describe only what Fathom does now, never what is planned: no "for now", "later" or "to follow", since Help is shown in Fathom.
 - **Must** bring an existing Help page to these rules when it is next changed.
 
 ## Before and After
@@ -34,10 +34,10 @@ How Fathom's Help pages in `docs/help/` are written, so they read the way a coll
 
 ## Exceptions
 
-Help pages differ from other documents in these ways, decided by the owner on 2026-11-13:
+Help pages differ from other documents in these ways:
 
 - **"You":** [Visual Design](../design/visual-design.md)'s rule against the second person is for on-screen labels and messages, not Help pages.
 - **One line, then a link:** a role tutorial's step may give one line of a detail another Help page holds, then link to it, as the [Decisions Log](../product/decisions.md) sets out for role tutorials.
-- **No guide headings:** [Documentation](shared/documentation.md)'s Prerequisites, Steps and Verification headings aren't needed; "What to Know First" and the closing line saying how the reader knows they're done cover them.
+- **No guide headings:** [Documentation](documentation.md)'s Prerequisites, Steps and Verification headings aren't needed; "What to Know First" and the closing line saying how the reader knows they're done cover them.
 - **Links by file name:** links between Help pages use the file name, such as `lists.md`, not the full path from the repository root, since the pages are shown in Fathom.
 - **Length:** a longer page is fine when plain speech needs it; plain beats short.

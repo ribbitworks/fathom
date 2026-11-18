@@ -3,15 +3,15 @@ title: "TypeScript Standards"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*.ts", "**/*.tsx"]
-dependencies: ["../core-principles.md", "../code-review.md", "../testing.md", "../agent-workflow.md"]
-last_updated: "2026-11-14"
+dependencies: ["core-principles.md", "code-review.md", "testing.md", "agent-workflow.md"]
+last_updated: "2026-11-17"
 ---
 
 # TypeScript Standards
 
-Rules for TypeScript projects. They add to the stack-neutral standards one
-folder up. Each project's own standards define its architecture, its package
-manager commands and its decision records.
+Rules for Fathom's TypeScript code, on top of
+[Core Development Principles](core-principles.md). Its architecture is in the
+design documents, its commands in `AGENTS.md`, and its decisions in `docs/adr/`.
 
 ## Language
 
@@ -41,15 +41,14 @@ manager commands and its decision records.
 
 ## Tooling
 
-- One project command runs linting, type checking and the test suites, such as
-  `pnpm check`. It is the full suite, which the
-  [Agent Workflow](../agent-workflow.md#workflow) runs after the code review.
-  Before the review, run the project's targeted tests and linters.
-- Markdown is linted by the project's Markdown linter, such as `pnpm lint:md`.
+- `pnpm check` runs linting, type checking and the test suites. It is the full suite, which the
+  [Agent Workflow](agent-workflow.md#workflow) runs after the code review.
+  Before the review, run `pnpm test:changed` and the linters.
+- Markdown is linted with `pnpm lint:md`.
 
 ## Code Review Criteria
 
-Add these to the focus areas in [code-review.md](../code-review.md):
+Add these to the focus areas in [code-review.md](code-review.md):
 
 - `any`, non-null assertions outside tests, or a non-exhaustive union.
 - Unvalidated external input, or types asserted with `as` instead of parsed.

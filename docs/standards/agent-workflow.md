@@ -4,19 +4,18 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["code-review.md", "testing.md", "documentation.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Agent Workflow
 
-How an AI coding agent works in a repository. "Owner" means the user the agent
+How an AI coding agent works in this repository. "Owner" means the user the agent
 is working for. There are two working modes; the owner chooses one per session,
 and the rules for both modes hold either way.
 
-The project's own standards name its build, test and run commands, and the
-kinds of real data it must never hold. Where this document says "the project's
-test command" or "the project's targeted tests", use the ones they name. A
-project with no targeted tests runs its full test command in their place.
+`AGENTS.md` names Fathom's build, test and run commands, and the kinds of real
+data it must never hold. Where this document says "the project's test command"
+or "the project's targeted tests", use the ones it names.
 
 ## Choosing a Mode
 
@@ -68,13 +67,6 @@ project with no targeted tests runs its full test command in their place.
   commits, so `git branch -d` refuses.
 - **Tests and builds:** run only through the project's own commands, never the
   underlying tools directly.
-- **Git hooks:** **Must Not** be bypassed (`--no-verify`, `SKIP_PRE_PUSH=1` or
-  similar), with one exception: a push whose commits change only documentation
-  may skip a pre-push hook that only builds and tests, through the skip switch
-  the hook documents (for example `SKIP_PRE_PUSH=1`), unless the project's
-  standards say its documents are built into the product. Commit hooks always
-  run.
-  Hooks that run builds or tests are allowed in either mode.
 - **Versions and tags:** release tags follow semantic versioning,
   `vMAJOR.MINOR.PATCH`. A change that breaks something that uses the release
   bumps MAJOR; a new feature or option, even a small one, bumps MINOR and
@@ -119,7 +111,7 @@ project with no targeted tests runs its full test command in their place.
 Complete these steps, in order, for every change:
 
 1. **UI verification:** for any change to a screen, have the owner verify the
-   screens (layout, controls, wording, behavior) before running the tests or
+   screens (layout, controls, wording, behaviour) before running the tests or
    the code review, and iterate until the owner approves the UX. A build to run
    the app for this is allowed. A change with no screen changes skips this
    step.
