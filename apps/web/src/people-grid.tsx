@@ -804,7 +804,6 @@ function peopleTable(
     groupings: peopleGroupings(
       columnsShown(schema.fields, schema.lists, [], people),
     ),
-    ungrouped: true,
     exported: {
       recordedAs: "people",
       // Planned hires' rows are the hiring plan, whatever columns are exported.

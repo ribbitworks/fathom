@@ -69,6 +69,8 @@ const answer =
       ...can,
     });
 
+const bySchedule = { path: "/releases?tab=cycles&grouping=schedule" };
+
 // Opens the page at the address given, with the schedules given, and any other answers the test
 // needs, once the table of cycles shows.
 async function openPage(
@@ -228,7 +230,7 @@ describe("the Cycles tab", () => {
           releases: [fictionalRelease({ lastCycle: "2027-04-01" })],
         }),
       ],
-      { path: "/releases?tab=cycles&past=shown&later=shown" },
+      { path: "/releases?tab=cycles&grouping=schedule&past=shown&later=shown" },
     );
     expect(rowTexts()).toEqual([
       "Fictional Majors4 cycles",
@@ -240,13 +242,15 @@ describe("the Cycles tab", () => {
   });
 
   it("hides past cycles until Show past cycles is chosen in the Views menu, keeping the choice in the address", async () => {
-    const { history } = await openPage([fictionalStream()]);
+    const { history } = await openPage([fictionalStream()], bySchedule);
     expect(rowTexts()).toEqual([
       "Fictional Majors2 cycles",
       "27.2Fictional MajorsApr 1, 2027Jun 30, 2027Current",
       "27.3Fictional MajorsJul 1, 2027Sep 30, 2027",
     ]);
-    await userEvent.click(screen.getByRole("button", { name: "Views" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Views, changed" }),
+    );
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Show past cycles (1)" }),
     );
@@ -298,12 +302,10 @@ describe("the Cycles tab", () => {
 
   it("shows a cycle starting on next quarter's last day, hiding one starting the day after until Show later cycles is chosen", async () => {
     const { history } = await openPage([weeks()], {
-      path: "/releases?tab=cycles&grouping=none",
+      path: "/releases?tab=cycles",
     });
     expect(rowTexts().map(startOf)).toEqual(["Last"]);
-    await userEvent.click(
-      screen.getByRole("button", { name: "Views, changed" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Views" }));
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Show later cycles (1)" }),
     );
@@ -315,7 +317,7 @@ describe("the Cycles tab", () => {
 
   it("shows past and later cycles together once both are chosen, the timeline drawing them all", async () => {
     await openPage([fictionalStream()], {
-      path: "/releases?tab=cycles&past=shown&later=shown",
+      path: "/releases?tab=cycles&grouping=schedule&past=shown&later=shown",
     });
     expect(rowTexts().map((text) => text.slice(0, 4))).toEqual([
       "Fict",
@@ -468,7 +470,7 @@ describe("the Cycles table's columns", () => {
 
   it("names each cycle alone in its cell, beside its schedule", async () => {
     await openPage(twoSchedules(), {
-      path: "/releases?tab=cycles&grouping=none",
+      path: "/releases?tab=cycles",
     });
     expect(rowTexts()[0]).toBe(
       "27.2Fictional MajorsApr 1, 2027Jun 30, 2027CurrentFictional One",
@@ -476,7 +478,7 @@ describe("the Cycles table's columns", () => {
   });
 
   it("filter by schedule from the Schedule column's menu, narrowing the timeline too", async () => {
-    await openPage(twoSchedules());
+    await openPage(twoSchedules(), bySchedule);
     await chooseInColumn("Schedule", "Filter…");
     const dialog = await screen.findByRole("dialog", {
       name: "Filter Schedule",
@@ -495,7 +497,7 @@ describe("the Cycles table's columns", () => {
   });
 
   it("filter by release, listing the cycles it includes", async () => {
-    await openPage(twoSchedules());
+    await openPage(twoSchedules(), bySchedule);
     await chooseInColumn("Release", "Filter…");
     const dialog = await screen.findByRole("dialog", {
       name: "Filter Release",
@@ -513,7 +515,7 @@ describe("the Cycles table's columns", () => {
 
   it("filter by Current, listing the cycles holding today", async () => {
     await openPage(twoSchedules(), {
-      path: "/releases?tab=cycles&grouping=none",
+      path: "/releases?tab=cycles",
     });
     await chooseInColumn("Current", "Filter…");
     const dialog = await screen.findByRole("dialog", {
@@ -578,7 +580,7 @@ describe("the Cycles table's columns", () => {
           ],
         }),
       ],
-      { path: "/releases?tab=cycles&grouping=none" },
+      { path: "/releases?tab=cycles" },
     );
     expect(rowTexts()[0]).toBe(
       "27.2Fictional MajorsApr 1, 2027Jun 30, 2027CurrentFictional One",
@@ -814,7 +816,7 @@ describe("changing a cycle's Duration from its details", () => {
 
 describe("a cycle's drafts", () => {
   it("mark the values a draft of its schedule's cycles changes, with each as it is live, and the row for its Duration", async () => {
-    await openPage([shortened()]);
+    await openPage([shortened()], bySchedule);
     expect(rowTexts()).toEqual([
       "Fictional Majors2 cycles",
       "27.2, DraftFictional MajorsApr 1, 2027May 31, 2027, Draft: changed from “Jun 30, 2027”, draft, live Jun 30, 2027Current",
@@ -1037,7 +1039,9 @@ describe("a cycle's drafts", () => {
   };
 
   it("mark a cycle a draft adds, one it removes, and one starting the same day as it is live renamed", async () => {
-    await openPage([split()], { path: "/releases?tab=cycles&past=shown" });
+    await openPage([split()], {
+      path: "/releases?tab=cycles&grouping=schedule&past=shown",
+    });
     expect(rowTexts()).toEqual([
       "Fictional Majors4 cycles",
       "27.1Fictional MajorsJan 1, 2027Mar 31, 2027",
@@ -1049,7 +1053,7 @@ describe("a cycle's drafts", () => {
 
   it("leave out a cycle a draft removes once drafts are applied", async () => {
     await openPage([split()], {
-      path: "/releases?tab=cycles&past=shown&show=drafts",
+      path: "/releases?tab=cycles&grouping=schedule&past=shown&show=drafts",
     });
     expect(rowTexts().map((text) => text.slice(0, 5))).toEqual([
       "Ficti",
@@ -1085,7 +1089,7 @@ describe("a cycle's drafts", () => {
         fictionalStream({ draft: recordDraft({ action: "deleted" }) }),
         fictionalStream({ id: minorsId, name: "Fictional Minors" }),
       ],
-      { path: "/releases?tab=cycles&show=drafts" },
+      { path: "/releases?tab=cycles&grouping=schedule&show=drafts" },
     );
     expect(rowTexts()[0]).toBe("Fictional Minors2 cycles");
   });
@@ -1097,7 +1101,7 @@ describe("a cycle's drafts", () => {
       draft: recordDraft({ action: "created" }),
     });
     await openPage([fictionalStream(), added], {
-      path: `/releases?tab=cycles&show=live&open=${encodeURIComponent(cycleId("2027-04-01", minorsId))}`,
+      path: `/releases?tab=cycles&grouping=schedule&show=live&open=${encodeURIComponent(cycleId("2027-04-01", minorsId))}`,
     });
     expect(rowTexts()[0]).toBe("Fictional Majors2 cycles");
     expect(rowTexts()).toHaveLength(3);

@@ -433,10 +433,8 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // For a table that makes a record of each of someone's rows under several groups: what each row
   // is of, so the count above the table and the metrics count it once. Otherwise the record's id.
   countedAs?: (record: Rec) => string;
-  // The ways the rows can be grouped under headings, the first of which is the table's own, for a
-  // table that groups them, unless its rows are in one list until one is chosen.
+  // The ways the rows can be grouped under headings, for a table that groups them.
   groupings?: readonly RowGrouping<Rec>[];
-  ungrouped?: boolean;
   // For a table whose records are made for its grouping, such as one row under each manager in
   // the months shown: its rows group one level deep, with no second grouping under the first.
   oneLevel?: true;
@@ -2046,7 +2044,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const groupOf = useSteadyGroups(
     records,
     rowView,
-    activeGrouping(view, table.groupings, table.ungrouped),
+    activeGrouping(view, table.groupings),
     stableId,
   );
   // A page drawing the rows its own way, such as a board, shows the first grouping alone.
@@ -2054,7 +2052,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const subgroupOf = useSteadyGroups(
     records,
     rowView,
-    nests ? activeThenBy(view, table.groupings, table.ungrouped) : undefined,
+    nests ? activeThenBy(view, table.groupings) : undefined,
     stableId,
   );
   const countedAs = table.countedAs ?? ((record: Rec) => record.id);
@@ -3710,7 +3708,6 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       total={countedOnce(records).length}
       counted={table.counted?.counted(countedOnce(records))}
       groupings={table.groupings}
-      ungrouped={table.ungrouped}
       nests={nests}
       withDrafts={withDrafts}
       onLeave={() => {

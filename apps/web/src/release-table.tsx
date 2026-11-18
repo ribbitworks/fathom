@@ -2,7 +2,7 @@
 
 // The Releases tab's table on the shared table, read only: each release's name after its colour's
 // square, its schedule, the day it ships, its cycles, and Shipped once its day has passed. The rows
-// are grouped by schedule to start. A release's row is marked where its draft changes what the row
+// can be grouped by schedule. A release's row is marked where its draft changes what the row
 // shows, and has its own mark for a draft of what it doesn't show, such as its note.
 
 import type {

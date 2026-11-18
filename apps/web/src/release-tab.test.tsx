@@ -133,6 +133,7 @@ async function openRelease(
 }
 
 const inStream = (...releases: Release[]) => [fictionalStream({ releases })];
+const bySchedule = { path: "/releases?grouping=schedule" };
 const releasePanel = () =>
   screen.getByRole("region", { name: "Fictional One" });
 const searchOf = (history: { location: { search: string } }) =>
@@ -166,15 +167,18 @@ describe("the Releases tab", () => {
   });
 
   it("lists each release under its schedule, with the day it ships and its cycles", async () => {
-    await openPage(inStream(fictionalRelease({ lastCycle: "2027-04-01" })));
+    await openPage(
+      inStream(fictionalRelease({ lastCycle: "2027-04-01" })),
+      bySchedule,
+    );
     expect(rowTexts()).toEqual([
       "Fictional Majors1 release",
       "Fictional OneFictional MajorsJun 30, 202727.1 to 27.2",
     ]);
   });
 
-  it("names each release's cycles alone, without their schedule, once the rows are not grouped by schedule", async () => {
-    await openPage(inStream(release), { path: "/releases?grouping=none" });
+  it("names each release's cycles alone, without their schedule, while the rows are in one list", async () => {
+    await openPage(inStream(release));
     expect(rowTexts()).toEqual([
       "Fictional OneFictional MajorsMar 31, 202727.1",
     ]);
@@ -182,7 +186,7 @@ describe("the Releases tab", () => {
 
   it("hides shipped releases until Show shipped is chosen in the Views menu, keeping the choice in the address", async () => {
     // Given a release to come and one shipped
-    const { history } = await openPage(inStream(release, shipped));
+    const { history } = await openPage(inStream(release, shipped), bySchedule);
     await detailsOf("Fictional One");
     expect(
       screen.queryByRole("button", {
@@ -191,7 +195,9 @@ describe("the Releases tab", () => {
     ).toBeNull();
 
     // When Show shipped is chosen
-    await userEvent.click(screen.getByRole("button", { name: "Views" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Views, changed" }),
+    );
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Show shipped (1)" }),
     );
@@ -429,14 +435,17 @@ describe("the Releases table's columns", () => {
       firstCycle: "2027-04-01",
       lastCycle: "2027-04-01",
     });
-    await openPage([
-      ...inStream(release, third),
-      fictionalStream({
-        id: minorsId,
-        name: "Fictional Minors",
-        releases: [minor],
-      }),
-    ]);
+    await openPage(
+      [
+        ...inStream(release, third),
+        fictionalStream({
+          id: minorsId,
+          name: "Fictional Minors",
+          releases: [minor],
+        }),
+      ],
+      bySchedule,
+    );
     await chooseInColumn("Release", "Filter…");
     const dialog = await screen.findByRole("dialog", {
       name: "Filter Release",
@@ -462,14 +471,17 @@ describe("the Releases table's columns", () => {
 
   it("filter by a cycle, listing each release whose cycles hold it", async () => {
     const spanning = fictionalRelease({ lastCycle: "2027-07-01" });
-    await openPage([
-      ...inStream(spanning),
-      fictionalStream({
-        id: minorsId,
-        name: "Fictional Minors",
-        releases: [minor],
-      }),
-    ]);
+    await openPage(
+      [
+        ...inStream(spanning),
+        fictionalStream({
+          id: minorsId,
+          name: "Fictional Minors",
+          releases: [minor],
+        }),
+      ],
+      bySchedule,
+    );
     await chooseInColumn("Cycles", "Filter…");
     const dialog = await screen.findByRole("dialog", {
       name: "Filter Cycles",
@@ -486,7 +498,7 @@ describe("the Releases table's columns", () => {
   });
 
   it("filter by schedule from the Schedule column's menu, narrowing the timeline too", async () => {
-    await openPage(twoSchedules());
+    await openPage(twoSchedules(), bySchedule);
     await chooseInColumn("Schedule", "Filter…");
     const dialog = await screen.findByRole("dialog", {
       name: "Filter Schedule",
@@ -504,7 +516,7 @@ describe("the Releases table's columns", () => {
   });
 
   it("filter by the day a release ships, narrowing the timeline too", async () => {
-    await openPage(twoSchedules());
+    await openPage(twoSchedules(), bySchedule);
     await chooseInColumn("Ships on", "Filter…");
     const dialog = await screen.findByRole("dialog", {
       name: "Filter Ships on",
@@ -523,7 +535,7 @@ describe("the Releases table's columns", () => {
   });
 
   it("sort by schedule in the schedules' order, the timeline's lanes following the rows", async () => {
-    await openPage(twoSchedules(), { path: "/releases?grouping=none" });
+    await openPage(twoSchedules());
     await chooseInColumn("Schedule", "Reverse list order");
     await waitFor(() => {
       expect(
@@ -565,18 +577,18 @@ describe("the Releases table's cells", () => {
 
 describe("the Releases page's address", () => {
   it("keeps the tab and the view when a release is opened", async () => {
-    const { history } = await openPage(inStream(release), {
-      path: "/releases?grouping=none",
-    });
+    const { history } = await openPage(inStream(release), bySchedule);
     await userEvent.click(await detailsOf("Fictional One"));
     await waitFor(() => {
       expect(searchOf(history).get("open")).toBe(release.id);
     });
-    expect(searchOf(history).get("grouping")).toBe("none");
+    expect(searchOf(history).get("grouping")).toBe("schedule");
   });
 
   it("keeps the release open when the view changes", async () => {
-    const { history } = await openRelease(inStream(release));
+    const { history } = await openRelease(inStream(release), {
+      path: `/releases?grouping=schedule&open=${release.id}`,
+    });
     await userEvent.click(
       screen.getByRole("button", { name: "Group by: Schedule" }),
     );
@@ -584,14 +596,14 @@ describe("the Releases page's address", () => {
       await screen.findByRole("menuitem", { name: "None" }),
     );
     await waitFor(() => {
-      expect(searchOf(history).get("grouping")).toBe("none");
+      expect(searchOf(history).has("grouping")).toBe(false);
     });
     expect(searchOf(history).get("open")).toBe(release.id);
   });
 
   it("starts the other tab afresh, with nothing open and its own view", async () => {
     const { history } = await openRelease(inStream(release), {
-      path: `/releases?grouping=none&open=${release.id}`,
+      path: `/releases?grouping=schedule&open=${release.id}`,
     });
     await userEvent.click(screen.getByRole("tab", { name: "Schedules" }));
     await screen.findByRole("grid", { name: "Schedules" });
@@ -603,7 +615,7 @@ describe("the Releases page's address", () => {
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer(inStream(release)),
     });
-    const history = renderApp("/releases?tab=schedules&grouping=none");
+    const history = renderApp("/releases?tab=schedules&grouping=status");
     await screen.findByRole("grid", { name: "Schedules" });
     await userEvent.click(screen.getByRole("tab", { name: "Releases" }));
     await screen.findByRole("grid", { name: "Releases" });
@@ -628,14 +640,14 @@ describe("the Releases page's address", () => {
       "GET /api/session": signedIn,
       "GET /api/release-streams": answer(inStream(release)),
     });
-    const history = renderApp(`/releases/${streamId}?grouping=none`);
+    const history = renderApp(`/releases/${streamId}?grouping=status`);
     await screen.findByRole("heading", { name: "Fictional Majors", level: 2 });
     expect([
       history.location.pathname,
       Object.fromEntries(searchOf(history)),
     ]).toEqual([
       "/releases",
-      { grouping: "none", tab: "schedules", open: streamId },
+      { grouping: "status", tab: "schedules", open: streamId },
     ]);
   });
 });

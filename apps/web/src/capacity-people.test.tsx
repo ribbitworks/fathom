@@ -155,11 +155,9 @@ describe("Capacity's People mode", () => {
     await grid();
 
     expect(screen.queryByText(/needs Confidential access/u)).toBeNull();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Group by: Feature team" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Group by" }));
     expect(
-      await screen.findByRole("menuitem", { name: /None/u }),
+      await screen.findByRole("menuitem", { name: /Feature team/u }),
     ).toBeDefined();
     expect(screen.queryByRole("menuitem", { name: /Manager/u })).toBeNull();
   });
@@ -201,7 +199,7 @@ describe("Capacity's People mode", () => {
     };
 
     it("marks the feature with Live's dot in the Live row", async () => {
-      openPeople("?grouping=none", {
+      openPeople("", {
         allocationsAnswer: () => Response.json(drafted),
       });
       await grid();
@@ -216,7 +214,7 @@ describe("Capacity's People mode", () => {
     });
 
     it("marks the feature live only, naming the change", async () => {
-      openPeople("?grouping=none&show=live", {
+      openPeople("?show=live", {
         allocationsAnswer: () => Response.json(drafted),
       });
       await grid();

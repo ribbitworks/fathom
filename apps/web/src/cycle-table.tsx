@@ -2,7 +2,7 @@
 
 // The Cycles tab's table on the shared table, read only: each cycle of every schedule, its schedule,
 // its first and last days, Current on the one holding today, and the release that includes it, after
-// its colour's square. The rows are grouped by schedule to start. A cycle's row is marked where a
+// its colour's square. The rows can be grouped by schedule. A cycle's row is marked where a
 // draft of its schedule's cycles changes it, adds it or removes it, and its menu decides, discards
 // or resubmits that draft, which may change other cycles too.
 

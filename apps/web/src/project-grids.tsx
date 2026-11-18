@@ -256,7 +256,6 @@ function planTable<Rec extends PlanRecord, Request>({
   showDetails,
   kinds,
   groupings,
-  ungrouped = false,
   nameOf = (record) => (record as { name: string }).name,
 }: {
   type: PlanRecordKind;
@@ -269,7 +268,6 @@ function planTable<Rec extends PlanRecord, Request>({
   showDetails?: ((record: Rec) => void) | undefined;
   kinds?: readonly string[];
   groupings?: readonly RowGrouping<Rec>[];
-  ungrouped?: boolean;
   nameOf?: (record: Rec) => string;
 }): RecordTable<Rec, PlanChange, Request> {
   return {
@@ -280,7 +278,7 @@ function planTable<Rec extends PlanRecord, Request>({
     // nothing; Features is named for recording all the same, so no classified column escapes it.
     exported: type === "feature" ? { recordedAs: "features" } : {},
     ...(kinds === undefined ? {} : { kinds, kindOf: () => savedKind }),
-    ...(groupings === undefined ? {} : { groupings, ungrouped }),
+    ...(groupings === undefined ? {} : { groupings }),
     newRowLabel: () => `New ${one}`,
     removeLabel: () => `Remove ${one}`,
     nameOf,
@@ -958,8 +956,7 @@ const groupedByChoice = (column: Column<Feature, PlanChange>) =>
   column.key !== "targetCycle" &&
   column.key !== releaseColumnKey;
 
-// Features' table, or, for the board, whose columns are cycles, its rows grouped by anything else,
-// and in one list until a grouping is chosen.
+// Features' table, or, for the board, whose columns are cycles, its rows grouped by anything else.
 export function featureTable(
   choices: TableChoices,
   {
@@ -988,7 +985,6 @@ export function featureTable(
       byNeededBy,
       ...byListed,
     ],
-    ungrouped: board,
     request: (changes) => {
       const request: PlanChange = {
         ...merged(changes),

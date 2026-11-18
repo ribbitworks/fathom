@@ -332,6 +332,5 @@ export function draftsTable({
     groupings: columns
       .filter(({ key }) => groupedBy.includes(key))
       .map((column) => byChoice(column)),
-    ungrouped: true,
   };
 }

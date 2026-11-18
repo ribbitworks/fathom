@@ -50,7 +50,7 @@ export const scheduleColumn = <
     readOnly: true,
   });
 
-// The rows grouped by their schedule, as the Releases and Cycles tabs start.
+// The rows grouped by their schedule.
 export const bySchedule = <
   Rec extends GridRecord & {
     schedule: string;

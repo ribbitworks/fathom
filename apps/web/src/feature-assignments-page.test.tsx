@@ -84,14 +84,14 @@ describe("changing a month's teams", () => {
   const saved = "00000000-0000-4000-8000-000000000001";
   const undone = "00000000-0000-4000-8000-000000000002";
 
-  async function openEditing(permissions = proposes) {
+  async function openEditing(permissions = proposes, search = "") {
     const fetch = serverAnswers({
       "GET /api/session": permissions,
       [monthsUrl]: () => Response.json(months),
       [`PATCH ${caseyUrl}`]: () => Response.json({ changeSetId: saved }),
       [`POST /api/undo/${saved}`]: () => Response.json({ changeSetId: undone }),
     });
-    renderApp("/feature-assignments?grouping=none");
+    renderApp(`/feature-assignments${search}`);
     await screen.findByRole("grid", { name: "Feature teams by month" });
     return fetch;
   }
@@ -142,8 +142,8 @@ describe("changing a month's teams", () => {
   });
 
   it("leaves a change alone with Cmd+Z while a view is being named", async () => {
-    // Given a change saved, and the Save view dialog open
-    const fetch = await openEditing();
+    // Given a change saved, and the Save view dialog open on a sorted view
+    const fetch = await openEditing(proposes, "?sort=%5B%22name%22%5D");
     act(() => {
       cell("2027-03").focus();
     });
@@ -307,7 +307,7 @@ describe("the Feature assignments page", () => {
         .find((row) => row.getAttribute("aria-hidden") === null) as HTMLElement;
 
     it("marks the row as a draft, and the teams the draft adds and takes away", async () => {
-      await openPage("?grouping=none", {
+      await openPage("", {
         months: () => Response.json(drafted),
       });
 
@@ -318,7 +318,7 @@ describe("the Feature assignments page", () => {
     });
 
     it("shows the person's teams as approved in a Live row under it, as labels", async () => {
-      await openPage("?grouping=none", {
+      await openPage("", {
         months: () => Response.json(drafted),
       });
 
@@ -343,7 +343,7 @@ describe("the Feature assignments page", () => {
     ] as const)(
       "gives an added team's dot the draft's tone: %s",
       async (_, tone, toneClass) => {
-        await openPage("?grouping=none", {
+        await openPage("", {
           months: () =>
             Response.json({
               ...drafted,
@@ -358,7 +358,7 @@ describe("the Feature assignments page", () => {
     );
 
     it("marks the team the draft takes away with Live's dot in the Live row, and nothing else", async () => {
-      await openPage("?grouping=none", {
+      await openPage("", {
         months: () => Response.json(drafted),
       });
 
@@ -382,7 +382,7 @@ describe("the Feature assignments page", () => {
             : person,
         ),
       };
-      await openPage("?grouping=none", {
+      await openPage("", {
         months: () => Response.json(emptied),
       });
 
@@ -395,7 +395,7 @@ describe("the Feature assignments page", () => {
     });
 
     it("marks the team a waiting draft takes away, live only, naming the change", async () => {
-      await openPage("?grouping=none&show=live", {
+      await openPage("?show=live", {
         months: () => Response.json(drafted),
       });
 
@@ -409,7 +409,7 @@ describe("the Feature assignments page", () => {
     });
 
     it("leaves out the team a draft takes away once drafts are applied", async () => {
-      await openPage("?grouping=none&show=drafts", {
+      await openPage("?show=drafts", {
         months: () => Response.json(drafted),
       });
 
@@ -431,21 +431,16 @@ describe("the Feature assignments page", () => {
     await screen.findByRole("grid", { name: "Feature teams by month" });
 
     expect(screen.queryByText(/needs Confidential access/u)).toBeNull();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Group by: Feature team" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Group by" }));
     expect(
-      await screen.findByRole("menuitem", { name: /None/u }),
+      await screen.findByRole("menuitem", { name: /Feature team/u }),
     ).toBeDefined();
     expect(screen.queryByRole("menuitem", { name: /Manager/u })).toBeNull();
   });
 
-  it("groups by manager at first", async () => {
-    await openPage();
+  it("groups by manager", async () => {
+    await openPage("?grouping=manager");
 
-    expect(
-      screen.getByRole("button", { name: "Group by: Manager" }),
-    ).toBeDefined();
     expect(screen.getAllByText("Blair Fictional").length).toBeGreaterThan(1);
     expect(screen.getByText("No manager")).toBeDefined();
   });
@@ -458,27 +453,26 @@ describe("the Feature assignments page", () => {
     expect(screen.getByRole("status").textContent).toBe("3 people");
   });
 
-  it("lists everyone once with no grouping", async () => {
-    await openPage("?grouping=none");
+  it("lists everyone once, with no grouping, to start", async () => {
+    await openPage();
 
     expect(screen.queryByText("No manager")).toBeNull();
     expect(screen.getAllByText("Avery Fictional")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Group by" })).toBeDefined();
   });
 
   it("changes the grouping from the Group by menu", async () => {
     await openPage();
 
+    await userEvent.click(screen.getByRole("button", { name: "Group by" }));
     await userEvent.click(
-      screen.getByRole("button", { name: "Group by: Manager" }),
-    );
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: /None/u }),
+      await screen.findByRole("menuitem", { name: /Manager/u }),
     );
 
-    await waitFor(() => {
-      expect(screen.queryByText("No manager")).toBeNull();
-    });
-    expect(screen.getByRole("button", { name: "Group by" })).toBeDefined();
+    expect(await screen.findByText("No manager")).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Group by: Manager" }),
+    ).toBeDefined();
   });
 
   it("marks the months outside someone's employment", async () => {

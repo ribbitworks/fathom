@@ -439,14 +439,22 @@ describe("the view in the page address", () => {
     ).toHaveLength(10);
   });
 
+  it("reads an older grouping of none, and a second grouping with no first, as no grouping", () => {
+    expect(viewFrom({ grouping: "none", thenBy: "site" })).toEqual(emptyView);
+    expect(viewFrom({ thenBy: "site" })).toEqual(emptyView);
+    expect(setsApart(viewFrom({ grouping: "none" }))).toBe(false);
+  });
+
   it("reads and writes the columns the metrics break down by, kept while the metrics show with none", () => {
     expect(viewFrom({ breakdown: [] })).toEqual(view({ breakdown: [] }));
-    expect(viewFrom({ grouping: "none" })).toEqual(view({ grouping: "none" }));
-    expect(searchFor(view({ grouping: "none" }))).toEqual({ grouping: "none" });
-    expect(setsApart(view({ grouping: "none" }))).toBe(true);
-    expect(viewFrom({ thenBy: "site" })).toEqual(view({ thenBy: "site" }));
-    expect(searchFor(view({ thenBy: "site" }))).toEqual({ thenBy: "site" });
-    expect(setsApart(view({ thenBy: "site" }))).toBe(true);
+    expect(viewFrom({ grouping: "site", thenBy: "grade" })).toEqual(
+      view({ grouping: "site", thenBy: "grade" }),
+    );
+    expect(searchFor(view({ grouping: "site", thenBy: "grade" }))).toEqual({
+      grouping: "site",
+      thenBy: "grade",
+    });
+    expect(setsApart(view({ grouping: "site" }))).toBe(true);
     expect(knownView(view({ thenBy: "site" }), []).thenBy).toBe("site");
     expect(searchFor(view({ breakdown: ["level", "start"] }))).toEqual({
       breakdown: ["level", "start"],
@@ -1226,8 +1234,8 @@ describe("note columns", () => {
 describe("which grouping a view uses", () => {
   const groupings = [{ key: "cycle" }, { key: "month" }];
 
-  it("uses the table's first when the view names none", () => {
-    expect(activeGrouping({}, groupings)).toEqual({ key: "cycle" });
+  it("uses none when the view names none", () => {
+    expect(activeGrouping({}, groupings)).toBeUndefined();
   });
 
   it("uses the one the view names", () => {
@@ -1236,10 +1244,8 @@ describe("which grouping a view uses", () => {
     });
   });
 
-  it("uses the table's first for a grouping it does not have", () => {
-    expect(activeGrouping({ grouping: "gone" }, groupings)).toEqual({
-      key: "cycle",
-    });
+  it("uses none for a grouping the table does not have", () => {
+    expect(activeGrouping({ grouping: "gone" }, groupings)).toBeUndefined();
   });
 
   it("uses none for a view showing one list", () => {
@@ -1383,9 +1389,9 @@ describe("which grouping a view uses under each heading", () => {
   const groupings = [{ key: "cycle" }, { key: "status" }, { key: "size" }];
 
   it("uses the one the view names under the first", () => {
-    expect(activeThenBy({ thenBy: "status" }, groupings)).toEqual({
-      key: "status",
-    });
+    expect(
+      activeThenBy({ grouping: "cycle", thenBy: "status" }, groupings),
+    ).toEqual({ key: "status" });
     expect(
       activeThenBy({ grouping: "size", thenBy: "cycle" }, groupings),
     ).toEqual({ key: "cycle" });
@@ -1397,10 +1403,12 @@ describe("which grouping a view uses under each heading", () => {
   });
 
   it("uses none when it is the first grouping, or the rows show as one list", () => {
-    expect(activeThenBy({ thenBy: "cycle" }, groupings)).toBeUndefined();
+    expect(
+      activeThenBy({ grouping: "cycle", thenBy: "cycle" }, groupings),
+    ).toBeUndefined();
     expect(
       activeThenBy({ grouping: notGrouped, thenBy: "status" }, groupings),
     ).toBeUndefined();
-    expect(activeThenBy({ thenBy: "status" }, groupings, true)).toBeUndefined();
+    expect(activeThenBy({ thenBy: "status" }, groupings)).toBeUndefined();
   });
 });

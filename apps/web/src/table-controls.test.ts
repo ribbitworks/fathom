@@ -127,7 +127,7 @@ describe("viewParts of a grouping and a page's choices", () => {
     { key: "site", label: "Site" },
   ];
 
-  it("names the choices first, each only when set, and a grouping other than the table's own", () => {
+  it("names the choices first, each only when set, then the grouping", () => {
     expect(
       viewParts(
         {
@@ -148,29 +148,29 @@ describe("viewParts of a grouping and a page's choices", () => {
     ).toEqual([]);
   });
 
-  it("names a grouping of none as None", () => {
+  it("names no grouping for rows in one list", () => {
     expect(
       viewParts({ ...emptyView, grouping: "none" }, [], [], { groupings }),
-    ).toEqual([{ name: "Group by", value: "None" }]);
+    ).toEqual([]);
   });
 
-  it("names both groupings, the table's own too, once rows are grouped again under each heading", () => {
+  it("names both groupings once rows are grouped again under each heading", () => {
     expect(
       viewParts({ ...emptyView, grouping: "site", thenBy: "status" }, [], [], {
         groupings,
       }),
     ).toEqual([{ name: "Group by", value: "Site, then Status" }]);
-    expect(
-      viewParts({ ...emptyView, thenBy: "site" }, [], [], { groupings }),
-    ).toEqual([{ name: "Group by", value: "Status, then Site" }]);
   });
 
   it("leaves out a second grouping the rows can't be under", () => {
     expect(
-      viewParts({ ...emptyView, grouping: "none", thenBy: "site" }, [], [], {
+      viewParts({ ...emptyView, thenBy: "site" }, [], [], { groupings }),
+    ).toEqual([]);
+    expect(
+      viewParts({ ...emptyView, grouping: "site", thenBy: "site" }, [], [], {
         groupings,
       }),
-    ).toEqual([{ name: "Group by", value: "None" }]);
+    ).toEqual([{ name: "Group by", value: "Site" }]);
   });
 });
 

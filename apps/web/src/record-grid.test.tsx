@@ -53,7 +53,6 @@ import { type RowTicks, withTicks } from "./row-ticks.tsx";
 import {
   emptyView,
   formatDay,
-  notGrouped,
   type RowGroup,
   type View,
 } from "./table-view.ts";
@@ -1696,6 +1695,7 @@ describe("a record under several groups", () => {
     gadget("b", { code: "X" }),
     gadget("c", { code: "Y" }),
   ];
+  const view = { ...emptyView, grouping: "letters" };
   const nameCells = () =>
     screen
       .getAllByRole("gridcell")
@@ -1704,7 +1704,7 @@ describe("a record under several groups", () => {
       );
 
   it("shows a record under each of its groups, each heading counting its own rows, and the table counting it once", () => {
-    renderGadgets({ gadgets, table: byLetters });
+    renderGadgets({ gadgets, table: byLetters, view });
 
     expect(
       screen.getAllByRole("rowheader").map(({ textContent }) => textContent),
@@ -1719,7 +1719,7 @@ describe("a record under several groups", () => {
   });
 
   it("names the other groups in the mark's tip, shown on pointing at it", async () => {
-    renderGadgets({ gadgets, table: byLetters });
+    renderGadgets({ gadgets, table: byLetters, view });
 
     const tips = [];
     for (const mark of screen.getAllByText("+1")) tips.push(await tipOn(mark));
@@ -1727,7 +1727,7 @@ describe("a record under several groups", () => {
   });
 
   it("gives each row of a record a cell of its own, which the arrows step through", async () => {
-    renderGadgets({ gadgets, table: byLetters });
+    renderGadgets({ gadgets, table: byLetters, view });
     const [first, , second] = nameCells();
     expect(first?.id).not.toBe(second?.id);
     act(() => {
@@ -1742,7 +1742,12 @@ describe("a record under several groups", () => {
   it("saves a change made in any of a record's rows to the record", async () => {
     const update =
       vi.fn<RecordActions<Gadget, GadgetChange, GadgetChange>["update"]>();
-    renderGadgets({ gadgets, table: byLetters, given: actions({ update }) });
+    renderGadgets({
+      gadgets,
+      table: byLetters,
+      view,
+      given: actions({ update }),
+    });
     act(() => {
       nameCells()[2]?.focus();
     });
@@ -1785,7 +1790,7 @@ describe("a record under several groups", () => {
           lists={[]}
           canEdit
           canEditColumns={false}
-          view={emptyView}
+          view={view}
           onView={noop}
           actions={actions()}
         />
@@ -1815,6 +1820,7 @@ describe("a record under several groups", () => {
         }),
       ],
       table: byLetters,
+      view,
     });
 
     expect(screen.getAllByText("Gadget a")).toHaveLength(2);
@@ -1826,7 +1832,7 @@ describe("a record under several groups", () => {
   });
 
   it("puts focus on a record's cell in the row of the active cell, or else its first", async () => {
-    renderGadgets({ gadgets, table: byLetters });
+    renderGadgets({ gadgets, table: byLetters, view });
     const [first, , second, last] = nameCells();
 
     focusRecordCell("a", "name");
@@ -1880,7 +1886,7 @@ describe("rows grouped again under each heading", () => {
     gadget("b", { code: "X" }),
     gadget("c", { code: "YZ" }),
   ];
-  const view = { ...emptyView, thenBy: "letters" };
+  const view = { ...emptyView, grouping: "first", thenBy: "letters" };
   const headings = () =>
     screen.getAllByRole("rowheader").map(({ textContent }) => textContent);
 
@@ -1938,7 +1944,12 @@ describe("rows grouped again under each heading", () => {
 
   it("names both groupings on one button, offering the other groupings under the first, starting with none", async () => {
     const onView = vi.fn();
-    renderGadgets({ gadgets, table: nested(), onView });
+    renderGadgets({
+      gadgets,
+      table: nested(),
+      view: { ...emptyView, grouping: "first" },
+      onView,
+    });
 
     await userEvent.click(
       screen.getByRole("button", { name: "Group by: First letter" }),
@@ -1948,16 +1959,13 @@ describe("rows grouped again under each heading", () => {
       (await choicesUnder("Group by"))
         .getAllByRole("menuitem")
         .map(({ textContent }) => textContent),
-    ).toEqual(["First letter, chosen", "Letters", "None"]);
+    ).toEqual(["None", "First letter, chosen", "Letters"]);
     const thenBy = await choicesUnder("Then by");
     expect(
       thenBy.getAllByRole("menuitem").map(({ textContent }) => textContent),
     ).toEqual(["None, chosen", "Letters"]);
     await userEvent.click(thenBy.getByRole("menuitem", { name: "Letters" }));
-    expect(onView).toHaveBeenLastCalledWith({
-      ...emptyView,
-      thenBy: "letters",
-    });
+    expect(onView).toHaveBeenLastCalledWith(view);
   });
 
   it("takes the second grouping away when none is chosen for it", async () => {
@@ -1971,10 +1979,7 @@ describe("rows grouped again under each heading", () => {
     );
     await userEvent.click(await choiceUnder("Then by", "None"));
 
-    expect(onView).toHaveBeenLastCalledWith({
-      ...emptyView,
-      thenBy: undefined,
-    });
+    expect(onView).toHaveBeenLastCalledWith({ ...view, thenBy: undefined });
   });
 
   it("takes the second grouping away with the first, or when it becomes the first", async () => {
@@ -2027,7 +2032,7 @@ describe("rows grouped again under each heading", () => {
     });
   });
 
-  it("clears both groupings back to the table's own, offered only once either is chosen", async () => {
+  it("clears both groupings back to none, offered only once one is chosen", async () => {
     const onView = vi.fn();
     const { unmount } = renderGadgets({
       gadgets,
@@ -2051,15 +2056,8 @@ describe("rows grouped again under each heading", () => {
     });
     unmount();
 
-    // Named in the address, the table's own grouping is no change to clear.
-    renderGadgets({
-      gadgets,
-      table: nested(),
-      view: { ...emptyView, grouping: "first" },
-    });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Group by: First letter" }),
-    );
+    renderGadgets({ gadgets, table: nested() });
+    await userEvent.click(screen.getByRole("button", { name: "Group by" }));
     await screen.findAllByRole("menuitem");
     expect(
       screen.queryByRole("menuitem", { name: "Clear grouping" }),
@@ -2070,7 +2068,7 @@ describe("rows grouped again under each heading", () => {
     renderGadgets({
       gadgets,
       table: nested(),
-      view: { ...view, grouping: notGrouped },
+      view: { ...emptyView, thenBy: "letters" },
     });
 
     await userEvent.click(screen.getByRole("button", { name: "Group by" }));
@@ -2079,7 +2077,7 @@ describe("rows grouped again under each heading", () => {
       (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["First letter", "Letters", "None, chosen", "Clear grouping"]);
+    ).toEqual(["None, chosen", "First letter", "Letters"]);
     expect(screen.queryByRole("group", { name: "Then by" })).toBeNull();
   });
 
@@ -2090,7 +2088,11 @@ describe("rows grouped again under each heading", () => {
       screen.getByRole("button", { name: "Group by: First letter" }),
     );
 
-    expect(await screen.findAllByRole("menuitem")).toHaveLength(3);
+    expect(
+      (await screen.findAllByRole("menuitem")).map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual(["None", "First letter, chosen", "Letters", "Clear grouping"]);
     expect(screen.queryByRole("group", { name: "Then by" })).toBeNull();
     expect(headings()).toEqual(["Starts X2 gadgets", "Starts Y1 gadget"]);
   });
@@ -2118,6 +2120,7 @@ describe("total rows", () => {
     gadget("b", { code: "X" }),
     gadget("c", { code: "Y" }),
   ];
+  const view = { ...emptyView, grouping: "code" };
   const totalHeaders = () =>
     screen
       .queryAllByRole("rowheader")
@@ -2135,7 +2138,7 @@ describe("total rows", () => {
       );
 
   it("ends each group with its total, and the table with all the rows' total", () => {
-    renderGadgets({ gadgets, table: totalled });
+    renderGadgets({ gadgets, table: totalled, view });
 
     expect(totalHeaders()).toEqual(["Total", "Total", "All gadgets"]);
     expect(totalRows().map((cells) => cells.at(0))).toEqual([
@@ -2149,14 +2152,13 @@ describe("total rows", () => {
     renderGadgets({
       gadgets,
       table: totalled,
-      view: { ...emptyView, grouping: notGrouped },
     });
 
     expect(totalHeaders()).toEqual(["All gadgets"]);
   });
 
   it("leaves total rows out of the count above the table", () => {
-    renderGadgets({ gadgets, table: totalled });
+    renderGadgets({ gadgets, table: totalled, view });
 
     expect(screen.getByRole("status").textContent).toBe("3 gadgets");
   });
@@ -2165,14 +2167,14 @@ describe("total rows", () => {
     renderGadgets({
       gadgets,
       table: totalled,
-      view: { ...emptyView, search: "Gadget c", grouping: notGrouped },
+      view: { ...emptyView, search: "Gadget c" },
     });
 
     expect(totalRows().map((cells) => cells.at(0))).toEqual(["code c"]);
   });
 
   it("moves from a group's last row past its total to the next group's first", async () => {
-    renderGadgets({ gadgets, table: totalled });
+    renderGadgets({ gadgets, table: totalled, view });
     const [last] = screen.getAllByRole("gridcell", { name: /Gadget b/ });
     act(() => {
       last?.focus();

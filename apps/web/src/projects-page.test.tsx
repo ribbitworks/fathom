@@ -1708,6 +1708,7 @@ describe("the Features page", () => {
     more: typeof answers | object = {},
     path = "/features",
   ) => openPage(path, start, { ...answers, ...more }, featureEditor);
+  const byCycle = "/features?grouping=targetCycle";
   const groupHeading = /^(Fictional Stream: 27\.[12]|Later)\d+ features?$/;
   const headings = () =>
     screen
@@ -1718,9 +1719,14 @@ describe("the Features page", () => {
     screen.getByRole("button", {
       name: shown === "None" ? "Group by" : `Group by: ${shown}`,
     });
+  // With no grouping, the menu holds Group by's choices alone, under no label.
   const groupBy = async (shown: string, next: string) => {
     await userEvent.click(groupButton(shown));
-    await userEvent.click(await choiceUnder("Group by", next));
+    await userEvent.click(
+      shown === "None"
+        ? await screen.findByRole("menuitem", { name: next })
+        : await choiceUnder("Group by", next),
+    );
   };
   const rowNames = () =>
     screen
@@ -2879,7 +2885,7 @@ describe("the Features page", () => {
 
   it("groups features by release, then each stream's cycles in none, then Later", async () => {
     await open(featurePlan(), withRelease);
-    await groupBy("Cycle", "Release");
+    await groupBy("None", "Release");
     expect(
       screen
         .queryAllByRole("rowheader")
@@ -2898,8 +2904,17 @@ describe("the Features page", () => {
     expect(screen.queryByRole("tab")).toBeNull();
   });
 
-  it("groups features by cycle, in the cycles' order, with Later last", async () => {
+  it("opens with the features in one list", async () => {
     await open();
+    expect([headings(), rowNames()]).toEqual([
+      [],
+      ["Fictional Later", "Fictional Second", "Fictional First"],
+    ]);
+    expect(groupButton("None").textContent).toBe("Group by");
+  });
+
+  it("groups features by cycle, in the cycles' order, with Later last", async () => {
+    await open(featurePlan(), {}, byCycle);
     expect(headings()).toEqual([
       "Fictional Stream: 27.11 feature",
       "Fictional Stream: 27.21 feature",
@@ -2921,6 +2936,8 @@ describe("the Features page", () => {
           later,
         ],
       }),
+      {},
+      byCycle,
     );
     await userEvent.type(
       screen.getByRole("textbox", { name: "Search features" }),
@@ -2941,7 +2958,7 @@ describe("the Features page", () => {
         ],
       }),
       {},
-      "/features?sort=%5B%22name%22%5D",
+      `${byCycle}&sort=%5B%22name%22%5D`,
     );
     expect(
       screen
@@ -2955,19 +2972,19 @@ describe("the Features page", () => {
   });
 
   it("moves down past a heading to the next group's first row", async () => {
-    await open();
+    await open(featurePlan(), {}, byCycle);
     await userEvent.click(recordCell(first.id, "name") as HTMLElement);
     await userEvent.keyboard("{ArrowDown}");
     expect(document.activeElement).toBe(recordCell(second.id, "name"));
   });
 
-  it("shows one list once grouping is turned off, kept in the address", async () => {
-    const { history } = await open();
+  it("shows one list once grouping is turned off, leaving it out of the address", async () => {
+    const { history } = await open(featurePlan(), {}, byCycle);
     await groupBy("Cycle", "None");
     await waitFor(() => {
       expect(headings()).toEqual([]);
     });
-    expect(history.location.search).toContain("grouping=none");
+    expect(history.location.search).not.toContain("grouping=");
   });
 
   it("groups features by the month they are needed by, with No date last, kept in the address", async () => {
@@ -2979,7 +2996,7 @@ describe("the Features page", () => {
       ],
     });
     const { history } = await open(start);
-    await groupBy("Cycle", "Needed by");
+    await groupBy("None", "Needed by");
     await waitFor(() => {
       expect(
         screen
@@ -3013,7 +3030,7 @@ describe("the Features page", () => {
         ],
       }),
     );
-    await groupBy("Cycle", "Projects");
+    await groupBy("None", "Projects");
     await waitFor(() => {
       expect(
         screen
@@ -3042,16 +3059,12 @@ describe("the Features page", () => {
   });
 
   it("groups them again when turned back on", async () => {
-    await open();
+    await open(featurePlan(), {}, byCycle);
     await groupBy("Cycle", "None");
     await waitFor(() => {
       expect(headings()).toEqual([]);
     });
-    // With no grouping, the menu holds Group by's choices alone, under no label.
-    await userEvent.click(groupButton("None"));
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Cycle" }),
-    );
+    await groupBy("None", "Cycle");
     await waitFor(() => {
       expect(headings()).toHaveLength(3);
     });
@@ -3723,7 +3736,7 @@ describe("the Features page", () => {
 
   it("keeps a row under its heading until the view changes", async () => {
     const path = `DELETE /api/features/${later.id}`;
-    const { held } = await open(featurePlan(), { [path]: deleted });
+    const { held } = await open(featurePlan(), { [path]: deleted }, byCycle);
     held.plan = featurePlan({
       features: [
         later,

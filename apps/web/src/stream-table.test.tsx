@@ -539,7 +539,7 @@ describe("the table of schedules", () => {
     ]).toEqual(["grape", "sea", null]);
   });
 
-  it("starts with no grouping, and offers what a schedule's menu adds", () => {
+  it("offers what a schedule's menu adds", () => {
     const retire = vi.fn(() => "Retire");
     const withMenu = streamTable({
       streams: [],
@@ -548,11 +548,10 @@ describe("the table of schedules", () => {
       menuItems: retire,
     });
     const row = rowOf(fictionalStream());
-    expect([
-      table().ungrouped,
-      withMenu.menuItems?.(row),
-      table().menuItems,
-    ]).toEqual([true, "Retire", undefined]);
+    expect([withMenu.menuItems?.(row), table().menuItems]).toEqual([
+      "Retire",
+      undefined,
+    ]);
   });
 
   it("names the features of the current cycle as drafted, and as live in its Live row, marked where a draft moves the cycle", () => {

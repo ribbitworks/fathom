@@ -136,7 +136,7 @@ export interface View {
   sort: SortLevel[];
   // The keys of the columns the metrics break the rows down by, set while the metrics show.
   breakdown?: string[] | undefined;
-  // Which of a table's groupings the rows are under, when not its first, or notGrouped for one list.
+  // Which of a table's groupings the rows are under, when they aren't in one list.
   grouping?: string | undefined;
   // Which of the table's groupings the rows under each of the first grouping's headings are under.
   thenBy?: string | undefined;
@@ -183,6 +183,8 @@ export interface ViewSearch extends ViewDefinition {
 }
 
 export function viewFrom(search: ViewDefinition): View {
+  // An older address or saved view names none for one list, which is now no grouping at all.
+  const grouping = search.grouping === notGrouped ? undefined : search.grouping;
   return {
     search: search.search ?? "",
     show: search.show ?? "both",
@@ -193,8 +195,10 @@ export function viewFrom(search: ViewDefinition): View {
         : { key: level, descending: false },
     ),
     ...(search.breakdown === undefined ? {} : { breakdown: search.breakdown }),
-    ...(search.grouping === undefined ? {} : { grouping: search.grouping }),
-    ...(search.thenBy === undefined ? {} : { thenBy: search.thenBy }),
+    ...(grouping === undefined ? {} : { grouping }),
+    ...(grouping === undefined || search.thenBy === undefined
+      ? {}
+      : { thenBy: search.thenBy }),
     ...(search.frozen === undefined ? {} : { frozen: search.frozen }),
     ...(hasKeys(search.order) ? { order: search.order } : {}),
     ...(hasKeys(search.hidden) ? { hidden: search.hidden } : {}),
@@ -417,22 +421,16 @@ export function isActive(filter: Filter | undefined): boolean {
   );
 }
 
-// What a view's grouping is when the rows show as one list.
+// The Group by menu's choice of no grouping, which shows the rows in one list.
 export const notGrouped = "none";
 export const notGroupedLabel = "None";
 
-// The grouping a view puts the rows under: the one it names, or else the table's first, or none for
-// a table whose rows are in one list until a grouping is chosen.
+// The grouping a view puts the rows under: the one it names, or none, which shows them in one list.
 export function activeGrouping<Grouping extends { key: string }>(
   view: Pick<View, "grouping">,
   groupings: readonly Grouping[] | undefined,
-  ungrouped = false,
 ): Grouping | undefined {
-  if (view.grouping === notGrouped) return undefined;
-  return (
-    groupings?.find(({ key }) => key === view.grouping) ??
-    (ungrouped ? undefined : groupings?.at(0))
-  );
+  return groupings?.find(({ key }) => key === view.grouping);
 }
 
 // The grouping a view puts the rows under within each of the first grouping's headings: the one it
@@ -440,9 +438,8 @@ export function activeGrouping<Grouping extends { key: string }>(
 export function activeThenBy<Grouping extends { key: string }>(
   view: Pick<View, "grouping" | "thenBy">,
   groupings: readonly Grouping[] | undefined,
-  ungrouped = false,
 ): Grouping | undefined {
-  const first = activeGrouping(view, groupings, ungrouped);
+  const first = activeGrouping(view, groupings);
   return first === undefined || view.thenBy === first.key
     ? undefined
     : groupings?.find(({ key }) => key === view.thenBy);

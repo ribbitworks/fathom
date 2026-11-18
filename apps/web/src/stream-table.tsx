@@ -408,7 +408,6 @@ export function streamTable({
     one: streamNames.one,
     noun: streamNames.noun,
     groupings: groupings(day),
-    ungrouped: true,
     ownDraft: (row) => (row.stream.draft === undefined ? undefined : row.draft),
     ...(menuItems === undefined ? {} : { menuItems }),
     nameOf: (row) => row.name,
