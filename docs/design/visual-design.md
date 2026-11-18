@@ -63,7 +63,7 @@ How Fathom's screens look and behave, so every page is built the same way. The p
   - **List columns:** Typing narrows the choices, which drop below the cell; a check marks each one picked where several can be.
   - **Web link columns:** A link shows its text, or its host, and opens in a new tab. Editing opens a small form for the address and the text.
   - **Checkbox columns:** A click, Space, or Enter toggles the box; typing does nothing.
-  - **Widths:** Each column starts as wide as what it holds, up to about 30 characters, and never follows typing. Anyone can set it, as part of the view.
+  - **Widths:** Each column starts as wide as what it holds, up to about 30 characters, its cells up to 24 in the column naming each record, such as People's Name, and never follows typing. Anyone can set it, as part of the view.
   - **Column menu:** Grouped as sorting; filtering, Metrics, and units; freezing, width, and hiding; then changing, removing, and moving.
   - **Can't add:** A role that can't see a column every record needs, such as Position, has no empty row, and New is turned off with a line saying why.
 - **Searching, filtering, and sorting:** A search field above a table works as [Search](../standards/ui-conventions.md#search) sets out, with a × to clear it once something is typed.

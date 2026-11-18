@@ -14,7 +14,7 @@ Capacity shows who is allocated to what, month by month, and holds the planning 
 
 ## People
 
-- **Read only:** the allocations grid, on the shared table as on [Feature assignments](feature-assignments.md).
+- **Read only:** the allocations grid, on the shared table, with the months and strip of [Feature assignments](feature-assignments.md#layout).
 - **Rows:** each person and planned hire; planned hires sit under No feature team.
   - Rows under several groups are blank in months they don't hold, as [Capacity views](../../product/decisions.md#planning) sets out.
 - **A month's cell:** each feature with its percentage, then a Total line.
