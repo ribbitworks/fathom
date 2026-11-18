@@ -183,6 +183,8 @@ You're done when the schedule's row shows your draft: a **Retired** or **Restore
 
 Each row's **⋯** menu offers **Discard draft** for your own draft, and **Resubmit** once its draft is rejected. On **Cycles**, a cycle's menu names the change behind it, such as a change to its schedule's cycles, and acts on that change.
 
+A change to its schedule's cycles and a draft of the cycle's own release, such as a new name, can both change a cycle. Its menu then names both drafts, and who made each change. **Discard draft** and **Resubmit** act on the change to the schedule's cycles alone. **Approve…** and **Reject…** decide both if your role approves both and you can decide the release's draft now. Otherwise they decide the change to the schedule's cycles alone.
+
 You're done when the row's dot is gone, or shows the draft waiting again.
 
 ### Use the Timeline
