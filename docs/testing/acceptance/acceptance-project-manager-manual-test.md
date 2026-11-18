@@ -135,7 +135,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The page is headed **Feature assignments**.
     - **Group by: Manager** is above the table.
     - The table has a **Person** column on the left.
-    - The table has a column for each month, starting with the current month.
+    - The table has a column for each month, and the current month is the first beside the **Person** column.
   - **Notes:**
 
 - [ ] `E06A` Select **Feature team** in the Group by menu.
@@ -147,7 +147,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `1D47` Select the **Capacity** page in the left-hand menu.
   - **Expected:**
     - The mode switch has **People** chosen.
-    - The table opens at the current month.
+    - The current month is the first month beside the **Person** column.
   - **Notes:**
 
 - [ ] `5181` Select **Feature team** in the Group by menu.

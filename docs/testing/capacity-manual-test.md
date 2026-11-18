@@ -230,7 +230,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:**
     - The mode switch has **People** chosen.
     - Above the table, in order: a search box, a **Draft** button, **Metrics**, and **Group by: Manager**.
-    - The table opens at the current month.
+    - Under them, the strip of quarters, with **‹** before it, and **›** and **Today** after it.
+    - The current month is the first month beside the **Person** column, and its heading is underlined in red.
   - **Notes:**
 
 - [ ] `F7F1` Select **Settings** in the mode switch.
@@ -301,7 +302,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:** One row is listed, named 'Payments tester'.
   - **Notes:**
 
-- [ ] `1F82` Look along the row from 12 months ago to the right.
+- [ ] `1F82` Look along the row from its first month to the right.
   - **Expected:**
     - The cells before the month noted in step `4CD5` are empty.
     - For six months from that month, cells list a feature with "100%".
