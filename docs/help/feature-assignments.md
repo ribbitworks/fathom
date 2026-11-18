@@ -16,12 +16,18 @@ The table opens at the current month, whose heading is underlined in red. The ta
 
 ### Group the Rows
 
+The table starts as one list. To put the rows under headings:
+
 1. Select **Group by**.
-1. Choose **Manager**, **Feature team** or **None**.
+1. Choose **Manager** or **Feature team**.
+
+To show one list again, choose **Clear grouping**, at the end of the menu, or **None** under **Group by**.
 
 Someone on two feature teams has a row under each team. Grouped by **Manager**, each person is under the manager they report to today.
 
 **Manager** is offered only to roles that see Confidential data, since a later month's manager can be a reorganization not yet announced.
+
+You're done when the rows show under the headings you chose.
 
 ### Find People
 

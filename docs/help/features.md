@@ -1,6 +1,6 @@
 # Features
 
-**Features** lists every planned feature, one row each, grouped by the cycle it targets. A feature is a body of work that one feature team delivers, such as **Offline Sync**.
+**Features** lists every planned feature, one row each. A feature is a body of work that one feature team delivers, such as **Offline Sync**.
 
 ## What to Know First
 
@@ -69,15 +69,19 @@ You're done when **Effort** shows your estimate, with a hollow dot.
 
 ### Group the Table
 
+The table starts as one list. You can put the features under headings instead, such as one for each cycle.
+
 1. Select **Group by**.
-1. Choose **Cycle**, **Release**, **Needed by**, **Customers**, **Projects**, **Proposals**, a list such as **Status** or **Priority**, **Feature team**, **Staffed**, or **None**.
+1. Choose **Cycle**, **Release**, **Needed by**, **Customers**, **Projects**, **Proposals**, a list such as **Status** or **Priority**, **Feature team**, or **Staffed**.
 1. To group each heading's features again, such as each cycle's by status, select **Group by** again, and choose how under **Then by**.
 
 A feature with several customers, projects or proposals shows under each of them. Each of its rows has a grey **+1**, or **+2** and on, after its name; point at it to see the other headings. A change in one row shows in the others, since they're the same feature.
 
-To go back to grouping by cycle alone, choose **Clear grouping**, at the end of the menu.
+To show one list again, choose **Clear grouping**, at the end of the menu, or **None** under **Group by**.
 
 The board shows only the first grouping. **Then by** comes back when you switch to the table.
+
+You're done when the rows show under the headings you chose.
 
 ### See Features as a Board
 

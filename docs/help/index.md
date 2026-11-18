@@ -26,7 +26,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 
 - [Overview](overview.md): the page Fathom opens on.
 - [Projects](projects.md): projects, proposals, customers and milestones.
-- [Features](features.md): every feature planned, grouped by cycle.
+- [Features](features.md): every feature planned, as a table or a board.
 - [Releases](releases.md): schedules, their cycles and releases, and the timeline.
 
 ## People

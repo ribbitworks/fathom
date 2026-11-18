@@ -17,7 +17,7 @@ The left-hand menu shows only the pages your role lets you open. A page your rol
 - [Projects](projects.md): It holds projects, proposals, customers and milestones.
   - **Shown with:** **View Plan**
   - **Starting roles that see it:** Every role but Administrator
-- [Features](features.md): It shows every feature planned, grouped by cycle.
+- [Features](features.md): It shows every feature planned, as a table or a board.
   - **Shown with:** **View Features and releases**
   - **Starting roles that see it:** Every role but Administrator
 - [Releases](releases.md): It holds schedules, their cycles and releases, and the timeline.
