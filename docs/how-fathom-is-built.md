@@ -8,7 +8,7 @@ AI agents write most of Fathom's code and documents, under a human's direction a
 - **Manual tests that act as requirements:** Each feature has a written manual test of numbered cases with exact expected results, from a person's side. Each role has an acceptance test that follows its daily work. The maintainer has run them all, and runs them again as features change.
 - **Every screen seen by a person:** The maintainer looks at every screen change before it is tested or reviewed.
 - **Every change reviewed twice:** A separate agent reviews each change against written standards, then the maintainer approves each commit, or each batch of fixes, and every merge.
-- **Security checked before every pull request:** Dependency, source code and secret scans run with the tests before each pull request and each later push, and the container images are scanned again whenever what they're built from changes. The scans fail on a fix that is overdue or any other critical or high finding.
+- **Security checked before every pull request:** Dependency, source code and secret scans run with the tests before each pull request and each later push, and the container images are scanned again whenever what they're built from changes. The scans fail on a fix that is overdue or any other critical or high finding. CodeQL also scans the code on GitHub for each pull request.
 
 ## The Maintainer
 
@@ -60,7 +60,7 @@ flowchart TD
 
 Duplicated code isn't allowed: a new component, helper or rule first looks for one that already does the job, and the review searches for one too. Only the maintainer can approve an exception.
 
-Automated tests and scans don't yet run on GitHub for each pull request; they run in each copy of the repository with `pnpm check` before the pull request opens. GitHub runs the daily scan of the container images, and publishes a release's images when the maintainer starts it.
+Automated tests and scans run in each copy of the repository with `pnpm check` before the pull request opens, not yet on GitHub. The one exception is CodeQL's code scanning, which GitHub runs on each pull request. GitHub runs the daily scan of the container images, and publishes a release's images when the maintainer starts it.
 
 ## The Standards
 

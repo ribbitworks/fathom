@@ -1,6 +1,6 @@
 # Fathom: Security Plan
 
-**Last updated:** 2026-11-17
+**Last updated:** 2026-11-18
 
 How Fathom guards against threats as it ships: its code, its container images and its Compose configuration. The machine, network, certificates, secrets and backups around it come from whoever runs it, as [Securing Your Environment](../operations/securing-your-environment.md) sets out. [How Data Is Safeguarded](../privacy/data-protection.md) covers who sees which data, and the [Security Policy](../../SECURITY.md) how to report a vulnerability.
 
@@ -114,6 +114,7 @@ flowchart LR
 ## Vulnerability Scanning
 
 - **The security report:** `pnpm security` scans dependencies (pnpm audit and Trivy), source code (Semgrep), secrets in the repository and its history (Gitleaks), Dockerfiles (Trivy), and the container images (Trivy) whenever anything they're built from has changed. `pnpm check` runs it, along with tests of the Compose settings.
+- **Code scanning on GitHub:** CodeQL's default setup scans the JavaScript and TypeScript code and the GitHub Actions workflows on pull requests, pushes to `main`, and weekly, as [ADR 0002](../adr/0002-libraries.md) sets out. Its results show on each pull request but don't block a merge. Semgrep stays in the security report.
 - **Releases:** Publishing a release scans its images first.
 - **Fix times:** Counted from when a fix is released: critical within 14 days, high within 60, and medium within 180. Low findings have no deadline.
 - **Failing:** The security report fails on an overdue fix, any other critical or high finding, or a scan that doesn't finish. A release isn't published while any fix in its images is overdue.
