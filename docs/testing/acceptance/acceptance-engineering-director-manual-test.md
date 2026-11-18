@@ -88,18 +88,20 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `BAC3` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `02A5` Type `Backend engineer 2` in the search box.
-  - **Expected:** An entry naming 'Backend engineer 2' is listed, with a checkbox.
+  - **Expected:** A row whose **Record** reads 'Backend engineer 2' is listed, with a tick box.
   - **Notes:**
 
-- [ ] `BCDC` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
+- [ ] `BCDC` Tick that row's tick box.
+  - **Expected:**
+    - The tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `36FF` Select **Approve 1 draft…**.
+- [ ] `36FF` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:** The dialog reads "Also approves the drafts these depend on:" and names `Fictional new starter`.
   - **Notes:**
 
@@ -164,20 +166,23 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `9D2D` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `628C` Type `Candice Swift` in the search box.
   - **Expected:**
-    - One entry is shown, for 'Candice Swift', changing **Manager** from "Lorenza Thiel" to "Max Munk".
-    - The entry has a checkbox.
+    - One row is shown, whose **Record** reads 'Candice Swift'.
+    - Its **What changes** changes **Manager** from "Lorenza Thiel" to "Max Munk".
+    - The row has a tick box.
   - **Notes:**
 
-- [ ] `A951` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
+- [ ] `A951` Tick that row's tick box.
+  - **Expected:**
+    - The tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `03F9` Select **Approve 1 draft…**.
+- [ ] `03F9` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 

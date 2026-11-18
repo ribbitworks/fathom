@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Acceptance, Engineering Manager
@@ -88,20 +88,23 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `08A8` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `FCC5` Type `Candice Swift` in the search box.
   - **Expected:**
-    - One entry is shown, "the feature team Payments core", adding "Candice Swift" to its **Members**.
-    - The entry has a checkbox.
+    - One row is shown, whose **Record** reads 'Payments core', with **Type** "Feature team".
+    - Its **What changes** adds "Candice Swift" to **Members**.
+    - The row has a tick box.
   - **Notes:**
 
-- [ ] `FB97` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
+- [ ] `FB97` Tick that row's tick box.
+  - **Expected:**
+    - The tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `951E` Select **Approve 1 draft…**.
+- [ ] `951E` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 

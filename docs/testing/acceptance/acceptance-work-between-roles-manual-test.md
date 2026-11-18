@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-setting-up-fathom-manual-test.md", "docs/help/how-work-moves-between-roles.md", "docs/product/roles.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Acceptance, Work Between Roles
@@ -132,23 +132,25 @@ Run the test cases in order, in about 30 minutes, straight after [Setting Up Fat
 **Preconditions:** WORK-01 done. Signed in with this account.
 
 - [ ] `6C42` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** Two entries are shown, each with a checkbox, one each for:
-    - the project `Fictional Lamp Room`
-    - the feature `Fictional Tide Tables`
+  - **Expected:**
+    - **To decide** is chosen beside the page's title.
+    - Two rows are shown, each with a tick box, whose **Record** reads:
+      - `FLR-1 Fictional Lamp Room`, with **Type** "Project"
+      - `Fictional Tide Tables`, with **Type** "Feature"
   - **Notes:**
 
-- [ ] `6CFD` Tick **Select all waiting**.
-  - **Expected:** A button reads **Approve 2 drafts…**.
+- [ ] `6CFD` Tick the tick box before **Record** in the table's header.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 2 drafts…**.
   - **Notes:**
 
-- [ ] `655C` Select **Approve 2 drafts…**.
+- [ ] `655C` Select **Approve 2 drafts…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 2 drafts?" opens.
   - **Notes:**
 
 - [ ] `5BB4` Select **Approve** in the dialog.
   - **Expected:**
     - A notice reads "Approved 2 drafts."
-    - The page says "No drafts waiting for approval."
+    - The table reads "No drafts".
   - **Notes:**
 
 - [ ] `5CC2` Select the **Features** page in the left-hand menu.
@@ -264,14 +266,14 @@ Run the test cases in order, in about 30 minutes, straight after [Setting Up Fat
   - **Notes:**
 
 - [ ] `B822` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
-- [ ] `2ED1` Tick **Select all waiting**.
-  - **Expected:** A button reads **Approve 3 drafts…**.
+- [ ] `2ED1` Tick the tick box before **Record** in the table's header.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 3 drafts…**.
   - **Notes:**
 
-- [ ] `9D85` Select **Approve 3 drafts…**.
+- [ ] `9D85` Select **Approve 3 drafts…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 3 drafts?" opens.
   - **Notes:**
 
@@ -434,23 +436,24 @@ Run the test cases in order, in about 30 minutes, straight after [Setting Up Fat
 
 - [ ] `7B0E` Select the **Drafts** page in the left-hand menu.
   - **Expected:**
-    - One entry is shown, "the feature team Harbour team".
-    - A line for **Members** adds "Odile Brandt".
-    - It was made by "Engineering Manager".
+    - **To decide** is chosen beside the page's title.
+    - One row is shown, whose **Record** reads `Harbour team`, with **Type** "Feature team".
+    - Its **What changes** adds "Odile Brandt" to **Members**.
+    - Its **Made by** reads "Engineering Manager as Engineering Manager".
   - **Notes:**
 
-- [ ] `1C0E` Tick **Select all waiting**.
-  - **Expected:** A button reads **Approve 1 draft…**.
+- [ ] `1C0E` Tick the tick box before **Record** in the table's header.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `AF6E` Select **Approve 1 draft…**.
+- [ ] `AF6E` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
 - [ ] `4C25` Select **Approve** in the dialog.
   - **Expected:**
     - A notice reads "Approved 1 draft."
-    - The page says "No drafts waiting for approval."
+    - The table reads "No drafts".
   - **Notes:**
 
 - [ ] `0B5F` Select the **Feature assignments** page in the left-hand menu.

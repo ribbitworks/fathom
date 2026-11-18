@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Managers and Teams on People
@@ -116,17 +116,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, changed from MGR-03. Step `9D0D` signs in as another account.
 
-**Preconditions:** MGR-03 done. Signed in with this account. **Drafts** page open from the left-hand menu.
+**Preconditions:** MGR-03 done. Signed in with this account. **Drafts** page open from the left-hand menu, with **To decide** chosen beside the page's title.
 
 - [ ] `DFCC` Type `Lilian Lang` in the search box.
-  - **Expected:** One entry is shown: "Engineering Operations Manager drafted changes to Lilian Lang: Manager? from No to Yes".
+  - **Expected:** One row is shown:
+    - **Record** reads 'Lilian Lang'.
+    - **Change** reads "Changed".
+    - **What changes** reads "Manager? from No to Yes".
+    - **Made by** reads "Engineering Operations Manager as Workforce Administrator".
   - **Notes:**
 
-- [ ] `C48D` Select the entry's checkbox.
-  - **Expected:** The entry's checkbox is ticked.
+- [ ] `C48D` Tick that row's tick box.
+  - **Expected:**
+    - The row's tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `EA2A` Select **Approve 1 draft…**.
+- [ ] `EA2A` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:**
     - A dialog headed "Approve 1 draft?" opens.
     - It has an **Approve** button.

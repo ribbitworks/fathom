@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Capacity
@@ -472,18 +472,20 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `96FB` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `1E6F` Type `Bilwa Iyer` in the search box.
-  - **Expected:** One entry is listed.
+  - **Expected:** One row is listed, whose **Record** reads 'Bilwa Iyer'.
   - **Notes:**
 
-- [ ] `C245` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
+- [ ] `C245` Tick that row's tick box.
+  - **Expected:**
+    - The tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `740B` Select **Approve 1 draft…**.
+- [ ] `740B` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:**
     - A dialog opens.
     - It has an **Approve** button.

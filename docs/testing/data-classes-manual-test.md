@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/shared/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Data Classes
@@ -319,9 +319,14 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `2D81` Select the **Drafts** page in the left-hand menu.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen.
+  - **Notes:**
+
+- [ ] `4AD8` Select **Not published** beside the page's title.
   - **Expected:**
-    - An entry reads "Engineering Director drafted adding the column Portfolio"
-    - Under it, **Class** reads `Confidential`
+    - A row's **Record** reads `Portfolio`, after a hollow yellow dot
+    - Its **Change** reads "Added", and its **Type** "Column"
+    - Its **What changes** gives **Class** as `Confidential`
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

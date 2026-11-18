@@ -159,8 +159,9 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
 
 - [ ] `CAC5` Select **Drafts**.
   - **Expected:**
-    - Drafts are listed, with no checkboxes.
-    - There is no **Select all waiting** or **Approve** button.
+    - **All drafts** is the only tab beside the page's title, and is chosen.
+    - The table lists drafts, and no row has a tick box.
+    - No buttons at the right of the page's heading.
   - **Notes:**
 
 - [ ] `4B61` Select **Accounts**.

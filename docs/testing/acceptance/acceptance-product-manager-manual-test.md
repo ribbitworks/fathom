@@ -557,28 +557,31 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `3F3E` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `65C0` Type `Partner Portal` in the search box.
+  - **Expected:** One row is shown, with a tick box:
+    - **Record** reads 'Partner Portal'.
+    - **State** reads "Waiting".
+    - **Type** reads "Feature".
+    - **Made by** reads "Feature Lead as Feature Lead".
+  - **Notes:**
+
+- [ ] `DDD3` Tick that row's tick box.
   - **Expected:**
-    - One entry is shown, for the feature 'Partner Portal'.
-    - It was made by "Feature Lead".
-    - It has a checkbox.
+    - The tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `DDD3` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
-  - **Notes:**
-
-- [ ] `F240` Select **Approve 1 draft…**.
+- [ ] `F240` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
 - [ ] `AD8D` Select **Approve** in the dialog.
   - **Expected:**
     - A notice reads "Approved 1 draft."
-    - The page says "No drafts match the search."
+    - The table reads "No matching drafts".
   - **Notes:**
 
 - [ ] `AFA2` Select **Features**.

@@ -231,7 +231,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account.
 
 - [ ] `F088` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The list has an entry reading "Product Manager as Product Manager drafted adding the feature Fictional Reports".
+  - **Expected:**
+    - **To decide** is chosen beside the page's title.
+    - A row's **Record** reads `Fictional Reports`.
+    - Its **Change** reads "Added".
+    - Its **Type** reads "Feature".
+    - Its **Made by** reads "Product Manager as Product Manager".
   - **Notes:**
 
 ### FEAT-07: Those Who Only See the Plan Cannot Change Features
@@ -299,15 +304,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `B621` Select the **Drafts** page in the left-hand menu.
   - **Expected:**
-    - The list has entries naming "the feature Data Retention Controls" and "the feature Report Builder".
-    - It has entries for "the cycles of Platform".
+    - **To decide** is chosen beside the page's title.
+    - Rows' **Record** read 'Data Retention Controls' and 'Report Builder', each with **Type** "Feature".
+    - Rows whose **Type** reads "Cycles" have a **Record** starting 'Platform from'.
   - **Notes:**
 
-- [ ] `4BD5` Tick one entry for "the cycles of Platform".
-  - **Expected:** The entry's checkbox is ticked.
+- [ ] `4BD5` Tick the tick box of one row whose **Type** reads "Cycles".
+  - **Expected:**
+    - That row's tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `B27C` Select **Reject…**.
+- [ ] `B27C` Select **Reject…** at the right of the page's heading.
   - **Expected:** The dialog lists "the feature Data Retention Controls" and "the feature Report Builder" among the drafts it includes.
   - **Notes:**
 
@@ -316,7 +324,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `32B4` Select **Reject** in the dialog.
-  - **Expected:** The entries for "the cycles of Platform", "the feature Data Retention Controls" and "the feature Report Builder" each start with a red dot in a ring.
+  - **Expected:**
+    - The dialog closes.
+    - No row's **Record** reads 'Data Retention Controls' or 'Report Builder'.
+  - **Notes:**
+
+- [ ] `E856` Select **All drafts** beside the page's title.
+  - **Expected:**
+    - The rows of 'Data Retention Controls' and 'Report Builder' each start with a red dot in a ring.
+    - The row of the cycles ticked in `4BD5` starts with a red dot in a ring.
   - **Notes:**
 
 ### FEAT-09: The Keyboard Moves Across Group Headings
@@ -576,8 +592,9 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `3CA1` Select the **Drafts** page in the left-hand menu.
   - **Expected:**
-    - The list has an entry naming "the column Fictional Score on Features".
-    - The entry is drafted by "Engineering Operations Manager".
+    - **To decide** is chosen beside the page's title.
+    - A row's **Record** reads `Fictional Score on Features`, with **Type** "Column".
+    - Its **Made by** reads "Engineering Operations Manager as Workforce Administrator".
   - **Notes:**
 
 - [ ] `1F59` Select the **Features** page in the left-hand menu.
@@ -620,8 +637,12 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
     - The Live row's **Kind** cell stays empty.
   - **Notes:**
 
-- [ ] `F82A` Select the **Drafts** page in the left-hand menu, and find "the feature Usage Alerts".
-  - **Expected:** Its entry names both changes:
+- [ ] `F82A` Select the **Drafts** page in the left-hand menu.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen.
+  - **Notes:**
+
+- [ ] `DE24` Select **Not published** beside the page's title.
+  - **Expected:** Under **What changes**, the row whose **Record** reads 'Usage Alerts' names both changes:
     - `Fictional Score` to `3.5`.
     - **Kind** to 'Fix'.
   - **Notes:**
@@ -1048,8 +1069,12 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:** The panel closes.
   - **Notes:**
 
-- [ ] `66EC` Select the **Drafts** page in the left-hand menu, and find the draft of 'Scheduler API'.
-  - **Expected:** Its details read "Effort set to 40 hours".
+- [ ] `66EC` Select the **Drafts** page in the left-hand menu.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen.
+  - **Notes:**
+
+- [ ] `C8C2` Select **Not published** beside the page's title.
+  - **Expected:** In the row whose **Record** reads 'Scheduler API', **What changes** reads "Effort set to 40 hours".
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Projects, Proposals, Customers and Milestones
@@ -378,18 +378,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. Run after PROJ-05.
 
 - [ ] `725A` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `36AF` Type `Testing` in the search box.
   - **Expected:**
-    - There is an entry for each of these:
-      - "the customer Testing Customer"
-      - "the proposal Testing Proposal"
-      - "the project Testing Project"
-      - "the milestone Pilot of Testing Project", and `Go live` and `Sign-off` likewise
-    - Each entry says "Product Manager" made it.
-    - Each entry has a box to select it.
+    - There is a row whose **Record** reads each of these, in any order:
+      - `Testing Customer`, with **Type** "Customer"
+      - `Testing Proposal`, with **Type** "Proposal"
+      - `TP-1 Testing Project`, with **Type** "Project"
+      - `Pilot of TP-1 Testing Project`, `Go live of TP-1 Testing Project` and `Sign-off of TP-1 Testing Project`, each with **Type** "Milestone"
+    - Each row's **Made by** reads "Product Manager as Product Manager".
+    - Each row has a tick box.
   - **Notes:**
 
 - [ ] `318B` Select the **Projects** page in the left-hand menu.

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/org-chart*", "apps/web/src/people-grid.tsx", "apps/web/src/feature-team*", "apps/web/src/choice-picker.tsx", "apps/server/src/data/feature-teams.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Feature Teams
@@ -343,23 +343,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, changed from FT-03.
 
-**Preconditions:** Signed in with this account. Select the **Drafts** page in the left-hand menu.
+**Preconditions:** Signed in with this account. Select the **Drafts** page in the left-hand menu; **To decide** is chosen beside the page's title.
 
 - [ ] `A4F5` Type `Platform reliability` in the search box.
   - **Expected:**
-    - One entry is listed, "the feature team Platform reliability".
-    - Its **Feature lead** line sets it to "Polly Smith".
-    - Its **Members** line changes them:
+    - One row is listed, whose **Record** reads 'Platform reliability' and **Type** "Feature team".
+    - Its **What changes** sets **Feature lead** to "Polly Smith".
+    - Its **What changes** changes **Members**:
       - from "Bilwa Iyer, Fulcran Deschamps, Gloria Armas Guardado, Polly Smith, Thad Heidenreich, Valéry Caron"
       - to "Bilwa Iyer, Fulcran Deschamps, Gloria Armas Guardado, Polly Smith, Rosendo Champlin, Valéry Caron"
-    - Each line ends "by Engineering Manager".
+    - Its **Made by** reads "Engineering Manager as Engineering Manager".
   - **Notes:**
 
-- [ ] `B5F5` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
+- [ ] `B5F5` Tick that row's tick box.
+  - **Expected:**
+    - The tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `897A` Select **Approve 1 draft…**.
+- [ ] `897A` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:**
     - A dialog headed "Approve 1 draft?" opens.
     - It has an **Approve** button.
@@ -384,14 +386,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `77CD` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `E97B` Type `Fictional analytics team` in the search box.
   - **Expected:**
-    - One entry is listed, "the feature team Fictional analytics team".
-    - Its **Feature lead** line reads "Branson O'Keefe".
-    - Its **Members** line reads "Branson O'Keefe, Priscille Adam".
+    - One row is listed, whose **Record** reads `Fictional analytics team` and **Change** "Added".
+    - Its **What changes** gives **Feature lead** as "Branson O'Keefe".
+    - Its **What changes** gives **Members** as "Branson O'Keefe, Priscille Adam".
   - **Notes:**
 
 ### FT-05: A Team's Panel Works From the Keyboard
@@ -582,11 +584,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `5F31` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **Not published** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `B140` Type `Payments core` in the search box.
-  - **Expected:** The entry's **Joining and leaving dates** line gives the joiner and the first day of next month.
+  - **Expected:** In the row whose **Record** reads 'Payments core', **What changes** gives **Joining and leaving dates** as the joiner and the first day of next month.
   - **Notes:**
 
 - [ ] `7AFD` Select the **Org chart** page in the left-hand menu.

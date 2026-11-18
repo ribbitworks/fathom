@@ -108,22 +108,24 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 **Preconditions:** LEAD-01 done. Signed in with this account.
 
 - [ ] `2C45` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `2EBA` Type `Platform reliability` in the search box.
   - **Expected:**
-    - One entry is shown, "the feature team Platform reliability".
-    - A line sets **Feature lead** to "Polly Smith".
-    - A line for **Members** adds "Rosendo Champlin".
-    - It was made by "Feature Lead".
+    - One row is shown, whose **Record** reads 'Platform reliability', with **Type** "Feature team".
+    - Its **What changes** sets **Feature lead** to "Polly Smith".
+    - Its **What changes** adds "Rosendo Champlin" to **Members**.
+    - Its **Made by** reads "Feature Lead as Feature Lead".
   - **Notes:**
 
-- [ ] `D2E4` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
+- [ ] `D2E4` Tick that row's tick box.
+  - **Expected:**
+    - The tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `47EF` Select **Approve 1 draft…**.
+- [ ] `47EF` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 

@@ -79,10 +79,20 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `EC0B` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page lists the **Background** column.
+  - **Expected:**
+    - **To decide** is chosen beside the page's title.
+    - A row's **Record** reads `Background`, with **Type** "Column".
   - **Notes:**
 
-- [ ] `5BDF` Approve the **Background** column.
+- [ ] `D636` Tick the tick box of the row of `Background`.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
+  - **Notes:**
+
+- [ ] `1083` Select **Approve 1 draft…** at the right of the page's heading.
+  - **Expected:** A dialog opens, with an **Approve** button.
+  - **Notes:**
+
+- [ ] `5BDF` Select **Approve** in the dialog.
   - **Expected:** A notice reads "Approved 1 draft."
   - **Notes:**
 
@@ -518,11 +528,20 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `726B` Select the **Drafts** page in the left-hand menu.
   - **Expected:**
-    - The draft of 'Max Munk' shows the note's words without formatting.
+    - **To decide** is chosen beside the page's title.
+    - In the row whose **Record** reads 'Max Munk', **What changes** shows the note's words without formatting.
     - The words read clearly.
   - **Notes:**
 
-- [ ] `760F` Approve the draft of 'Max Munk'.
+- [ ] `3944` Tick the tick box of the row of 'Max Munk'.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
+  - **Notes:**
+
+- [ ] `BA55` Select **Approve 1 draft…** at the right of the page's heading.
+  - **Expected:** A dialog opens, with an **Approve** button.
+  - **Notes:**
+
+- [ ] `760F` Select **Approve** in the dialog.
   - **Expected:** A notice reads "Approved 1 draft."
   - **Notes:**
 

@@ -248,24 +248,26 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `E4BB` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** Five entries are shown, each with a checkbox, one each for:
-    - the choices `Software Engineer`, `Harbourside` and `Northmere`
-    - the list `Sites`
-    - the column `Site`
+  - **Expected:**
+    - **To decide** is chosen beside the page's title.
+    - Five rows are shown, each with a tick box, whose **Record** reads:
+      - `Software Engineer in Positions`, `Harbourside in Sites` and `Northmere in Sites`, each with **Type** "Choice"
+      - `Sites`, with **Type** "List"
+      - `Site`, with **Type** "Column"
   - **Notes:**
 
-- [ ] `97E9` Tick **Select all waiting**.
-  - **Expected:** A button reads **Approve 5 drafts…**.
+- [ ] `97E9` Tick the tick box before **Record** in the table's header.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 5 drafts…**.
   - **Notes:**
 
-- [ ] `E55E` Select **Approve 5 drafts…**.
+- [ ] `E55E` Select **Approve 5 drafts…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 5 drafts?" opens.
   - **Notes:**
 
 - [ ] `29D0` Select **Approve** in the dialog.
   - **Expected:**
     - A notice reads "Approved 5 drafts."
-    - The page says "No drafts waiting for approval."
+    - The table reads "No drafts".
   - **Notes:**
 
 ### SETUP-04: People Are Pasted Into an Empty People Table and Approved
@@ -329,21 +331,21 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `FE50` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
-- [ ] `A5E6` Tick **Select all waiting**.
-  - **Expected:** A button reads **Approve 7 drafts…**.
+- [ ] `A5E6` Tick the tick box before **Record** in the table's header.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 7 drafts…**.
   - **Notes:**
 
-- [ ] `6FA2` Select **Approve 7 drafts…**.
+- [ ] `6FA2` Select **Approve 7 drafts…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 7 drafts?" opens.
   - **Notes:**
 
 - [ ] `E674` Select **Approve** in the dialog.
   - **Expected:**
     - A notice reads "Approved 7 drafts."
-    - The page says "No drafts waiting for approval."
+    - The table reads "No drafts".
   - **Notes:**
 
 ### SETUP-05: Reporting Lines, Team Names and a Planned Hire Are Added
@@ -432,21 +434,21 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `9A27` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
-- [ ] `5B3B` Tick **Select all waiting**.
-  - **Expected:** A button reads **Approve 8 drafts…**.
+- [ ] `5B3B` Tick the tick box before **Record** in the table's header.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 8 drafts…**.
   - **Notes:**
 
-- [ ] `EEF7` Select **Approve 8 drafts…**.
+- [ ] `EEF7` Select **Approve 8 drafts…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 8 drafts?" opens.
   - **Notes:**
 
 - [ ] `CC83` Select **Approve** in the dialog.
   - **Expected:**
     - A notice reads "Approved 8 drafts."
-    - The page says "No drafts waiting for approval."
+    - The table reads "No drafts".
   - **Notes:**
 
 - [ ] `9D2E` Select the **People** page in the left-hand menu.
@@ -706,25 +708,27 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `BD9B` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** Six entries are shown, each with a checkbox, one each for:
-    - the schedule `Fictional Mainline`
-    - its cycles from the first day of next year, such as "2027-01-01"
-    - the planning settings
-    - the feature teams `Tide team`, `Harbour team` and `Beacon team`
+  - **Expected:**
+    - **To decide** is chosen beside the page's title.
+    - Six rows are shown, each with a tick box, whose **Record** reads:
+      - `Fictional Mainline`, with **Type** "Schedule"
+      - `Fictional Mainline from` and the first day of next year, such as "Fictional Mainline from Jan 1, 2027", with **Type** "Cycles"
+      - "Planning settings", with **Type** "Planning settings"
+      - `Tide team`, `Harbour team` and `Beacon team`, each with **Type** "Feature team"
   - **Notes:**
 
-- [ ] `F842` Tick **Select all waiting**.
-  - **Expected:** A button reads **Approve 6 drafts…**.
+- [ ] `F842` Tick the tick box before **Record** in the table's header.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 6 drafts…**.
   - **Notes:**
 
-- [ ] `30A0` Select **Approve 6 drafts…**.
+- [ ] `30A0` Select **Approve 6 drafts…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 6 drafts?" opens.
   - **Notes:**
 
 - [ ] `37C8` Select **Approve** in the dialog.
   - **Expected:**
     - A notice reads "Approved 6 drafts."
-    - The page says "No drafts waiting for approval."
+    - The table reads "No drafts".
   - **Notes:**
 
 ### SETUP-09: A Team Member Reads the New People and Teams

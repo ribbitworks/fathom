@@ -667,13 +667,17 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
   - **Notes:**
 
 - [ ] `EB91` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The entry for `Testing Schedule` starts with "Feature Lead as Engineering Manager".
+  - **Expected:** The **Drafts** page opens, with **Not published** chosen beside the page's title.
+  - **Notes:**
+
+- [ ] `005D` Select **All drafts** beside the page's title.
+  - **Expected:** In the row whose **Record** reads `Testing Schedule`, **Made by** reads "Feature Lead as Engineering Manager".
   - **Notes:**
 
 - [ ] `D396` Choose **Feature Lead** in the role menu.
   - **Expected:**
-    - The page stays on **Drafts**
-    - The entry for `Testing Schedule` still starts with "Feature Lead as Engineering Manager"
+    - The page stays on **Drafts**, with **All drafts** chosen
+    - In the row of `Testing Schedule`, **Made by** still reads "Feature Lead as Engineering Manager"
   - **Notes:**
 
 ### ACCT-12: Signing In Again Comes Back to the Last Role

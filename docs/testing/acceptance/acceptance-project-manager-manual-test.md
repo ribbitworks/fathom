@@ -99,20 +99,24 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `5A60` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `34BB` Type `Fictional site survey` in the search box.
+  - **Expected:** One row is shown:
+    - **Record** reads `Fictional site survey of P-2017 Depot Operations`.
+    - **Change** reads "Added".
+    - **Type** reads "Milestone".
+    - **Made by** reads "Project Manager as Project Manager".
+  - **Notes:**
+
+- [ ] `6F30` Tick that row's tick box.
   - **Expected:**
-    - One entry is shown, adding the milestone `Fictional site survey`.
-    - It was made by "Project Manager".
+    - The tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `6F30` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
-  - **Notes:**
-
-- [ ] `B83C` Select **Approve 1 draft…**.
+- [ ] `B83C` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
@@ -180,21 +184,24 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 **Preconditions:** None beyond PROJECT-02.
 
 - [ ] `AF7A` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `59A3` Type `Search and discovery` in the search box.
+  - **Expected:** One row is shown, with a tick box:
+    - **Record** reads 'Search and discovery'.
+    - **What changes** sets **Name** from "Search" to "Search and discovery".
+    - **Type** reads "Feature team".
+    - **Made by** reads "Engineering Operations Manager".
+  - **Notes:**
+
+- [ ] `BE6F` Tick that row's tick box.
   - **Expected:**
-    - One entry is shown: "Engineering Operations Manager drafted changes to the feature team Search and discovery".
-    - A line under it sets **Name** from "Search" to "Search and discovery".
-    - The entry has a checkbox.
+    - The tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `BE6F` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
-  - **Notes:**
-
-- [ ] `9D51` Select **Approve 1 draft…**.
+- [ ] `9D51` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
@@ -203,17 +210,20 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `4CBA` Type `Simone Jean` in the search box.
+  - **Expected:** One row is shown, with a tick box:
+    - **Record** reads 'Simone Jean'.
+    - **What changes** changes **Manager** from "Viktoria Holmberg" to "Silje Holm-Schrøder".
+    - **Type** reads "Person".
+    - **Made by** reads "Engineering Operations Manager".
+  - **Notes:**
+
+- [ ] `F85F` Tick that row's tick box.
   - **Expected:**
-    - One entry is shown: "Engineering Operations Manager drafted changes to Simone Jean".
-    - A line under it changes **Manager** from "Viktoria Holmberg" to "Silje Holm-Schrøder".
-    - The entry has a checkbox.
+    - The tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `F85F` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
-  - **Notes:**
-
-- [ ] `ADC8` Select **Reject…**.
+- [ ] `ADC8` Select **Reject…** at the right of the page's heading.
   - **Expected:**
     - A dialog titled "Reject 1 draft?" opens.
     - It has a **Reason** box.
@@ -226,8 +236,14 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `5B7D` Select **Reject**.
   - **Expected:**
     - A notice reads "Rejected 1 draft."
-    - The entry for 'Simone Jean' has a red dot in a ring before it.
-    - Under it, "Reason: Fictional reason: wait for the new team plan."
+    - The table reads "No matching drafts".
+  - **Notes:**
+
+- [ ] `75EA` Select **All drafts** beside the page's title.
+  - **Expected:** One row is shown, of 'Simone Jean':
+    - It starts with a red dot in a ring.
+    - **State** reads "Rejected".
+    - **Reason** reads "Fictional reason: wait for the new team plan."
   - **Notes:**
 
 - [ ] `C6D2` Select the **Org chart** page in the left-hand menu.

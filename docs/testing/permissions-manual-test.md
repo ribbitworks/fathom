@@ -68,10 +68,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `DE22` Select the **Drafts** page in the left-hand menu.
   - **Expected:**
-    - Drafts of the plan are listed, among them one naming 'Clinic Booking Rollout'
-    - No entry names 'Harbor 4', a draft of a release
-    - No entry has a checkbox
-    - There is no **Select all waiting** or **Approve** button
+    - **All drafts** is the only tab beside the page's title, and is chosen
+    - A row's **Record** reads 'Clinic Booking Rollout'
+    - No row's **Record** reads 'Harbor 4 in Platform'
+    - No row has a tick box
+    - No buttons at the right of the page's heading
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
@@ -103,8 +104,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `3EDC` Select the **Drafts** page in the left-hand menu.
   - **Expected:**
-    - An entry names 'Harbor 4'
-    - No entry has a checkbox
+    - **All drafts** is the only tab beside the page's title, and is chosen
+    - A row's **Record** reads 'Harbor 4 in Platform'
+    - No row has a tick box
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
@@ -494,27 +496,27 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `2CA7` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page lists drafts.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
-- [ ] `73D1` Type `new order for Levels` in the search box.
+- [ ] `73D1` Type `Order of choices` in the search box.
   - **Expected:**
-    - **Select all waiting**, **Reject…** and **Approve** are above the list
-    - One entry is shown, ending "drafted a new order for Levels", with a checkbox
+    - One row is shown, whose **Record** reads 'Levels', with a tick box before it
+    - No buttons at the right of the page's heading
   - **Notes:**
 
-- [ ] `0E6A` Select the entry's checkbox.
-  - **Expected:** The button above the list reads **Approve 1 draft…**.
+- [ ] `0E6A` Tick that row's tick box.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `42A2` Select **Approve 1 draft…**.
+- [ ] `42A2` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
 - [ ] `35A1` Select **Approve** in the dialog.
   - **Expected:**
     - A notification reads "Approved 1 draft."
-    - The page says "No drafts match the search."
+    - The table reads "No matching drafts"
   - **Notes:**
 
 - [ ] `C04B` Select the **Lists** page in the left-hand menu.
@@ -532,20 +534,22 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** Team Member granted only **View** and **Approve** on **People** through Grant Team Member Only Some Permissions, signed in with this account.
 
 - [ ] `9A3F` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page lists drafts.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `A824` Type `Skills` in the search box.
   - **Expected:**
-    - The entry "Engineering Operations Manager drafted changes to Silje Holm-Schrøder: Skills set to Rust" has a checkbox
-    - The entries for the list 'Skills', the column 'Skills' and its choices have none
+    - A row's **Record** reads 'Silje Holm-Schrøder', with a tick box before it
+    - Its **What changes** reads **Skills** set to `Rust`
+    - Its **Made by** reads "Engineering Operations Manager"
+    - No row's **Type** reads "List", "Column" or "Choice"
   - **Notes:**
 
-- [ ] `5FA1` Select the checkbox of the 'Silje Holm-Schrøder' entry.
-  - **Expected:** The button above the list reads **Approve 1 draft…**.
+- [ ] `5FA1` Tick the tick box of the row of 'Silje Holm-Schrøder'.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `219C` Select **Approve 1 draft…**.
+- [ ] `219C` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:**
     - A dialog titled "Another approver needed" opens
     - It reads "This role can't approve these drafts:" above "the column Skills", "the list Skills" and "the choice Rust in Skills"
@@ -555,7 +559,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `86CC` Select **Close**.
   - **Expected:**
     - The dialog closes
-    - The 'Silje Holm-Schrøder' entry is still shown
+    - The row of 'Silje Holm-Schrøder' is still shown
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
@@ -579,14 +583,19 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `899B` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** An entry names `Scheduler Service`.
+  - **Expected:**
+    - **To decide** is chosen beside the page's title
+    - A row's **Record** reads `Scheduler Service`, with no box after it
   - **Notes:**
 
-- [ ] `A8C2` Select the `Scheduler Service` entry's checkbox.
-  - **Expected:** **Approve 1 draft…** can be selected, and no line says another approver is needed.
+- [ ] `A8C2` Tick the tick box of the row of `Scheduler Service`.
+  - **Expected:**
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**
+    - **Approve 1 draft…** is not greyed out
+    - No line says another approver is needed
   - **Notes:**
 
-- [ ] `FAE2` Select **Approve 1 draft…**.
+- [ ] `FAE2` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
@@ -618,8 +627,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 - [ ] `C148` Select the **Drafts** page in the left-hand menu.
   - **Expected:**
-    - Drafts are listed, with no checkboxes
-    - There is no **Select all waiting** or **Approve** button
+    - **All drafts** is the only tab beside the page's title, and is chosen
+    - The table lists drafts, and no row has a tick box
+    - No buttons at the right of the page's heading
   - **Notes:**
 
 **Afterwards:** Run Restore Team Member.
@@ -693,18 +703,21 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `75FD` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page lists drafts.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `7D76` Type `Testing Schedule` in the search box.
-  - **Expected:** One entry is shown, naming `Testing Schedule`, with a checkbox.
+  - **Expected:** One row is shown, whose **Record** reads `Testing Schedule`, with a tick box before it.
   - **Notes:**
 
-- [ ] `7E26` Select the entry's checkbox.
-  - **Expected:** **Approve 1 draft…** can be selected, and no line says another approver is needed.
+- [ ] `7E26` Tick that row's tick box.
+  - **Expected:**
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**
+    - **Approve 1 draft…** is not greyed out
+    - No line says another approver is needed
   - **Notes:**
 
-- [ ] `7FA2` Select **Approve 1 draft…**.
+- [ ] `7FA2` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 

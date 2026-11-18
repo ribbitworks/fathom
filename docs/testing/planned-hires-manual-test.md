@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Planned Hires on People
@@ -232,18 +232,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `1C7A` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `EC7B` Type `REQ-3100` in the search box.
-  - **Expected:** One entry is shown, adding the planned hire `Fictional platform hire`.
+  - **Expected:** One row is shown:
+    - **Record** reads `Fictional platform hire`.
+    - **Change** reads "Added".
+    - **Type** reads "Planned hire".
   - **Notes:**
 
-- [ ] `041B` Select the entry's checkbox.
-  - **Expected:** The entry's checkbox is ticked.
+- [ ] `041B` Tick that row's tick box.
+  - **Expected:**
+    - The row's tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `EDBD` Select **Approve**.
+- [ ] `EDBD` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:**
     - A dialog opens.
     - It has an **Approve** button.
@@ -636,18 +641,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `1F65` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `83A3` Type `Backend engineer 2` in the search box.
-  - **Expected:** An entry for 'Backend engineer 2' is shown.
+  - **Expected:** A row's **Record** reads 'Backend engineer 2'.
   - **Notes:**
 
-- [ ] `D979` Select the entry's checkbox.
-  - **Expected:** The entry's checkbox is ticked.
+- [ ] `D979` Tick the tick box of the row of 'Backend engineer 2'.
+  - **Expected:**
+    - The row's tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `1BCB` Select **Approve**.
+- [ ] `1BCB` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:**
     - The dialog reads "Also approves the drafts these depend on:".
     - It names `Fictional new starter`.

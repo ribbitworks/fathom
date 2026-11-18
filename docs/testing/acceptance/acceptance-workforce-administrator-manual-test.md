@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-workforce-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Acceptance, Workforce Administrator
@@ -83,20 +83,23 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `EA10` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `0AF7` Type `REQ-5001` in the search box.
+  - **Expected:** One row is shown, with a tick box:
+    - **Record** reads `Fictional mobile tester`.
+    - **Change** reads "Added".
+    - **Type** reads "Planned hire".
+  - **Notes:**
+
+- [ ] `FC26` Tick that row's tick box.
   - **Expected:**
-    - One entry is shown, adding the planned hire `Fictional mobile tester`.
-    - The entry has a checkbox.
+    - The tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `FC26` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
-  - **Notes:**
-
-- [ ] `222E` Select **Approve 1 draft…**.
+- [ ] `222E` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
@@ -184,18 +187,20 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `ED93` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `65D6` Type `Samuel Richter` in the search box.
-  - **Expected:** An entry naming 'Samuel Richter' is listed, with a checkbox.
+  - **Expected:** A row whose **Record** reads 'Samuel Richter' is listed, with a tick box.
   - **Notes:**
 
-- [ ] `F760` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
+- [ ] `F760` Tick that row's tick box.
+  - **Expected:**
+    - The tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `E68F` Select **Approve 1 draft…**.
+- [ ] `E68F` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
@@ -341,21 +346,23 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `4DCA` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens.
+  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
 - [ ] `9AF6` Type `Candice` in the search box.
   - **Expected:**
-    - One entry is listed, "the feature team Search and discovery".
-    - Its **Members** line adds "Candice Swift".
-    - Its **Joining and leaving dates** line gives "Candice Swift" and the first day of last month.
+    - One row is listed, whose **Record** reads 'Search and discovery', with **Type** "Feature team".
+    - Its **What changes** adds "Candice Swift" to **Members**.
+    - Its **What changes** gives **Joining and leaving dates** as "Candice Swift" and the first day of last month.
   - **Notes:**
 
-- [ ] `F1BE` Select the entry's checkbox.
-  - **Expected:** The checkbox is ticked.
+- [ ] `F1BE` Tick that row's tick box.
+  - **Expected:**
+    - The tick box is ticked.
+    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
-- [ ] `BD38` Select **Approve 1 draft…**.
+- [ ] `BD38` Select **Approve 1 draft…** at the right of the page's heading.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
