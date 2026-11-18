@@ -331,6 +331,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:** No rows are listed.
   - **Notes:**
 
+**Afterwards:** Empty the search box.
+
 ### CAP-10: Each Group and Everyone Total Their Capacity
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-09.
@@ -386,6 +388,8 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `9D78` Hold the pointer over the cell of the **Organization, PM** row in the month the allocations of 'Payments tester' start.
   - **Expected:** After a moment, a tooltip reads "1 of 1 person-month allocated: 100%".
   - **Notes:**
+
+**Afterwards:** Empty the search box.
 
 ### CAP-12: Someone Who Left a Team Has a Row for Each Part
 

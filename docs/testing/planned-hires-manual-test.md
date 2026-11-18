@@ -842,6 +842,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Focus is on the **Fill** button.
   - **Notes:**
 
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
+
 ### HIRE-17: A Hire Under a Planned Manager Needs a Manager Chosen
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-16.

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Manual Test: Acceptance, Engineering Manager
@@ -166,7 +166,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as MANAGER-03.
 
-**Preconditions:** **Org chart** page open from the left-hand menu.
+**Preconditions:** **Org chart** page open from the left-hand menu, with **Reporting teams** chosen in the teams switch.
 
 - [ ] `11FE` On the card at the top of the chart, select the name 'Silje Holm-Schrøder'.
   - **Expected:**

@@ -389,7 +389,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
-- [ ] `E97B` Type `Fictional analytics team` in the search box.
+- [ ] `E97B` Clear the search box, and type `Fictional analytics team` in it.
   - **Expected:**
     - One row is listed, whose **Record** reads `Fictional analytics team` and **Change** "Added".
     - Its **What changes** gives **Feature lead** as "Branson O'Keefe".
@@ -737,6 +737,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `7B3F` Select the **Feature teams** cell, then press Enter.
   - **Expected:** No list of choices opens; the cell stays as it was.
   - **Notes:**
+
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
 
 ### FT-13: People Grouped by Feature Teams
 

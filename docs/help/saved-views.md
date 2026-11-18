@@ -8,6 +8,7 @@ You save and apply views from the **Views** menu: the last button after the sear
 
 - **Personal views:** a view you save is yours alone, unless you share it. Your own views are under **My views**.
 - **Shared views:** a shared view is seen by everyone who can open the page. They're under **Shared views**. Someone who can't see a column the view uses doesn't see the view. On **Feature assignments** and **Capacity**, a view grouped by **Manager** is seen only by roles that see Confidential data.
+- **Where a page opens:** when you open a page from the left-hand menu, it shows the view you last left it on, in any browser you sign in to. That includes its tab, the view you applied, and on **Features** the table or the board. It still opens on today's date, with no details open. A link that shows a view opens that view instead, and the page then keeps it. To have the page open on the table's own view again, select **Clear view**.
 - **Who can share:** you can share a view you saved yourself, if your role changes configuration, or, on **Accounts**, if it manages accounts. Only a view's maker, or a role that can share views on the page, can change, rename or delete a shared view.
 
 ## Main Tasks

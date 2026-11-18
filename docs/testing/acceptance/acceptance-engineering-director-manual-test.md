@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-director.md", "docs/product/roles.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Manual Test: Acceptance, Engineering Director
@@ -169,7 +169,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
-- [ ] `628C` Type `Candice Swift` in the search box.
+- [ ] `628C` Clear the search box, and type `Candice Swift`.
   - **Expected:**
     - One row is shown, whose **Record** reads 'Candice Swift'.
     - Its **What changes** changes **Manager** from "Lorenza Thiel" to "Max Munk".

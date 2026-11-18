@@ -156,6 +156,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - His card ends with "Hide 5 reports".
   - **Notes:**
 
+**Afterwards:** Select **Show levels**, then **2 levels**.
+
 ### ORG-05: The Chart Pans and Zooms
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-04.
@@ -227,6 +229,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `B75A` Go back with the browser's back button.
   - **Expected:** Only the team of 'Lorenza Thiel' is shown again.
   - **Notes:**
+
+**Afterwards:** Select **Show everyone**.
 
 ### ORG-08: Only Readers Who See Personal Details Are Told a Manager Has Left
 
@@ -499,6 +503,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Her card still ends with "Hide 7 reports".
     - 'Simone Jean' is not under her in **Direct reports** in the panel.
   - **Notes:**
+
+**Afterwards:** Select **Draft**, then **Drafts & Live**, and press Esc.
 
 ### ORG-15: Readers Who Do Not See Personal Details See No Drafted Manager
 

@@ -362,6 +362,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The dialog closes.
   - **Notes:**
 
+**Afterwards:** In each window, open the **Views** menu above the table and select **Clear view**.
+
 ### VIEW-07: A Column Moves for One Account Only
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the second window, changed from VIEW-06.
@@ -496,6 +498,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** `Fictional moved columns` is gone from the Views menu.
   - **Notes:**
 
+**Afterwards:** In each window, open the **Views** menu above the table and select **Clear view**.
+
 ### VIEW-10: A View on Releases Shows Its Schedules in the Timeline Too
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as VIEW-09.
@@ -559,6 +563,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `C2D4` Select **Save view** in the dialog.
   - **Expected:** The Views menu's button says `Fictional by site`.
+  - **Notes:**
+
+- [ ] `E147` In the second window, open the Views menu, and select **Clear view**.
+  - **Expected:** The Views menu's button reads **Views**.
   - **Notes:**
 
 - [ ] `D781` In the main window, select the **Data classes** page in the left-hand menu.
@@ -800,6 +808,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The Views menu's button still says `Fictional roadmap`, with no dot.
   - **Notes:**
 
+- [ ] `0690` Select **Table** in the switch after the **Features** heading.
+  - **Expected:** The table lists 'Offline Sync' alone.
+  - **Notes:**
+
+- [ ] `3750` Open the Views menu, and select **Clear view**.
+  - **Expected:** The Views menu's button reads **Views**, with no dot.
+  - **Notes:**
+
 - [ ] `B1FA` Select the **Projects** page in the left-hand menu.
   - **Expected:**
     - The **Projects** tab is chosen.
@@ -871,14 +887,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `91E6` Select the **People** page in the left-hand menu.
   - **Expected:**
-    - The rows show as one list.
-    - The button reads **Group by**, naming no grouping.
-  - **Notes:**
-
-- [ ] `F05D` Open the Views menu, and select `Fictional managers by site`.
-  - **Expected:**
     - The button reads **Group by: Manager, then Site**.
     - Under each manager's heading, smaller, lighter headings set in from it name sites, each with how many people it holds.
+    - The Views menu's button says `Fictional managers by site`, with no dot.
   - **Notes:**
 
 - [ ] `6B28` Open the Views menu, and select **Delete view**.
@@ -1008,15 +1019,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `39D9` Select the **Org chart** page in the left-hand menu.
   - **Expected:**
-    - 'Silje Holm-Schrøder' is at the top of the chart.
-    - No line reading "Only the team of" shows.
-    - The Views menu's button reads **Views**, with no dot.
-  - **Notes:**
-
-- [ ] `14D1` Open the Views menu, and select `Fictional Lorenza's team` under **My views**.
-  - **Expected:**
     - The page reads "Only the team of Lorenza Thiel is shown."
-    - Every card under 'Lorenza Thiel' that has reports shows them.
     - The Views menu's button says `Fictional Lorenza's team`, with no dot.
   - **Notes:**
 
@@ -1107,12 +1110,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `762F` Select the **Accounts** page in the left-hand menu.
-  - **Expected:**
-    - The search box is empty, and every account is listed.
-    - The Views menu's button reads **Views**, with no dot.
-  - **Notes:**
-
-- [ ] `5DC2` Open the Views menu, and select `Fictional operations` under **My views**.
   - **Expected:**
     - The search box reads `operations`.
     - The table lists only 'Engineering Operations Manager' and 'Second Engineering Operations Manager'.
