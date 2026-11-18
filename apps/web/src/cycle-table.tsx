@@ -448,6 +448,9 @@ export function cycleColumns(
       // A cycle's cell reads its name alone, beside its schedule; its filter tells apart cycles that
       // share a name.
       choicesInWords: choicesNamed(names),
+      // A Live row's cycle can have the identifier of another cycle, or none shown, so each row names
+      // its own.
+      content: ({ name }) => name,
       breaksDown: false,
     },
     scheduleColumn<CycleRow>(streams),
@@ -470,6 +473,8 @@ export function cycleColumns(
       // The release's square shows its colour.
       changesWith: "releaseColour",
       colour: releaseColourOf,
+      // A release renamed keeps its identifier, so each row names its own.
+      content: ({ releaseName }) => releaseName,
     },
     ...(planned === undefined
       ? []

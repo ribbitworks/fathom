@@ -1114,6 +1114,100 @@ describe("a cycle's drafts", () => {
     ]);
   });
 
+  describe("Live rows", () => {
+    const everyCycle = "/releases?tab=cycles&past=shown&later=shown";
+    // The Live rows under drafted ones, as seen; assistive technology hears each changed cell's live
+    // value instead.
+    const liveRowTexts = () =>
+      [...grid().querySelectorAll('tr[aria-hidden="true"]')].map(
+        ({ textContent }) => textContent,
+      );
+
+    it("name a cycle a new length moves", async () => {
+      // Given 27.3 drafted to start on Jun 1, so its identifier as it is live is another
+      await openPage([shortened()], { path: everyCycle });
+
+      // Then its Live row names it
+      expect(liveRowTexts()).toContainEqual(
+        expect.stringMatching(/^27\.3, live.*Jul 1, 2027/),
+      );
+      expect(liveRowTexts().join()).not.toContain(streamId);
+    });
+
+    it("name a cycle and its release as they are live, where drafts rename both", async () => {
+      // Given 27.2 renamed 27.04, and its release renamed
+      await openPage(
+        [
+          {
+            ...split(),
+            releases: [
+              fictionalRelease({
+                name: "Harbour",
+                colour: "teal",
+                firstCycle: "2027-04-01",
+                lastCycle: "2027-04-01",
+                draft: recordDraft({
+                  changed: ["name"],
+                  live: { name: "Fictional One" },
+                }),
+              }),
+            ],
+          },
+        ],
+        { path: everyCycle },
+      );
+
+      // Then its Live row names both as they are live
+      expect(liveRowTexts()).toContainEqual(
+        expect.stringMatching(/^27\.2, live.*Fictional One, live$/),
+      );
+      // And the release keeps its colour's square in both rows
+      const renamedRow = within(grid())
+        .getAllByRole("row")
+        .find(({ textContent }) => textContent.startsWith("27.04"));
+      const liveRow = grid().querySelector('tr[aria-hidden="true"]');
+      expect(renamedRow?.querySelector('[data-colour="teal"]')).not.toBeNull();
+      expect(liveRow?.querySelector('[data-colour="teal"]')).not.toBeNull();
+    });
+
+    it("name a cycle moved off a first day another drafted cycle now has", async () => {
+      // Given 27.2 moved from Apr 1 to Feb 1, and 27.04 drafted to start on Apr 1
+      const monthly = (name: string, startsOn: string, endsOn: string) => ({
+        name,
+        startsOn,
+        endsOn,
+        months: [],
+      });
+      await openPage(
+        [
+          fictionalStream({
+            patterns: [
+              fictionalPattern({
+                draft: recordDraft({ changed: ["length"] }),
+              }),
+            ],
+            cycles: [
+              monthly("27.1", "2027-01-01", "2027-01-31"),
+              monthly("27.2", "2027-02-01", "2027-02-28"),
+              monthly("27.3", "2027-03-01", "2027-03-31"),
+              monthly("27.04", "2027-04-01", "2027-04-30"),
+            ],
+            liveCycles: [
+              monthly("27.1", "2027-01-01", "2027-03-31"),
+              monthly("27.2", "2027-04-01", "2027-06-30"),
+            ],
+          }),
+        ],
+        { path: everyCycle },
+      );
+
+      // Then 27.2's Live row names it, not the cycle now starting on its old first day
+      expect(liveRowTexts()).toContainEqual(
+        expect.stringMatching(/^27\.2, live.*Apr 1, 2027/),
+      );
+    });
+  });
+
   it("leave out a cycle a draft removes once drafts are applied", async () => {
     await openPage([split()], {
       path: "/releases?tab=cycles&grouping=schedule&past=shown&show=drafts",
