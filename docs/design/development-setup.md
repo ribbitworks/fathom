@@ -271,14 +271,14 @@ See [Releases](#releases) for the steps.
 - **Downloads:** Most scanners run without network access.
   - Semgrep downloads its rules, and Trivy its vulnerability database.
   - `pnpm audit` asks the package registry.
-  - Renovate's validator runs without network access.
+  - Renovate's validator runs without network access, but its image is pulled when the job first runs, so `pnpm check --offline` leaves the job out.
   - `pnpm offline:prepare` keeps a copy of Semgrep's rules in the git-ignored `.cache/offline/`, since their licence keeps them out of the repository.
 - **Database tests:** Each test file gets a database of its own.
   - It's copied from a template that the package's run migrates once, in one throwaway PostgreSQL container.
   - It's dropped when the file finishes.
   - A test database server keeps its data in memory and doesn't wait for writes to reach the disk, since it's thrown away.
 - **One copy at a time:** Two copies testing at once slow each other until tests time out, so:
-  - `pnpm check`, and `pnpm test:changed` when it runs tests, run in one copy at a time on a computer.
+  - `pnpm check`, `pnpm check:push`, and `pnpm test:changed` when it runs tests, run in one copy at a time on a computer.
   - Package tests run in one copy at a time, whether from `pnpm test`, `pnpm test:changed` or `pnpm check`. `pnpm test` waits only for other copies' package tests, not their checks.
   - A copy that has to wait says so straight away, naming the process and folder it waits for.
   - No more than 8 test database servers start at once on one computer.

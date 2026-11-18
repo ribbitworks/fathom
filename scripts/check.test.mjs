@@ -214,7 +214,7 @@ describe("scripts/check.sh", () => {
     assert.equal(result.status, 1);
     assert.ok(
       result.stderr.includes(
-        "error: This computer can't reach the internet, which some of the security scans need. Run 'pnpm check --offline' or 'pnpm security --offline' to skip them",
+        "error: This computer can't reach the internet, which some checks need. Run 'pnpm check --offline' or 'pnpm security --offline' to leave them out",
       ),
       result.stderr,
     );
@@ -284,6 +284,32 @@ describe("scripts/check.sh", () => {
       result.stderr,
     );
     assert.ok(!result.stdout.includes("ran"), result.stdout);
+  });
+
+  it("offline, skips a job and leaves out the rest that need the internet", () => {
+    for (const [args, gone] of [
+      [["--offline", "--skip", "Renovate settings"], "Renovate settings"],
+      [
+        ["--before-push", "--offline", "--skip", "Changed tests"],
+        "Changed tests",
+      ],
+    ]) {
+      const result = run(args, { online: false });
+      assert.equal(result.status, 0, result.stderr);
+      assert.ok(!result.stdout.includes(`| ${gone} |`), result.stdout);
+      assert.ok(!result.stdout.includes("left out"), result.stdout);
+    }
+  });
+
+  it("offline, still fails naming each job that failed", () => {
+    const result = run(["--offline"], { online: false, failing: "security" });
+    assert.equal(result.status, 1);
+    assert.ok(
+      result.stderr.includes(
+        "error: These checks failed: Security report; see their output above",
+      ),
+      result.stderr,
+    );
   });
 
   it("refuses to work offline until prepared", () => {
