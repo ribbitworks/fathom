@@ -3,7 +3,7 @@ title: "Manual Test: Draft Marks"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
-dependencies: ["docs/standards/testing.md", "docs/design/conventions.md", "docs/design/visual-design.md", "docs/design/development-setup.md"]
+dependencies: ["docs/standards/testing.md", "docs/standards/ui-conventions.md", "docs/design/visual-design.md", "docs/design/development-setup.md"]
 last_updated: "2026-11-13"
 ---
 
