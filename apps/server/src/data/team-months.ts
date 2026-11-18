@@ -23,13 +23,10 @@ import {
   type TeamMonths,
 } from "@fathom/shared";
 import { type Actor, requirePermission, requireView } from "../access.ts";
-import {
-  type DraftedMembership,
-  readDraftedMemberships,
-} from "./feature-teams.ts";
+import { type DraftedTeam, readDraftedMemberships } from "./feature-teams.ts";
 import { bySubject, currentRecordOn, inForceOn } from "./in-force.ts";
 import { currentOn, employedMonths, type Employment } from "./people.ts";
-import { readLines } from "./reporting.ts";
+import { type LineRow, readLines } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 
 function employedIn(person: Employment, month: string): boolean {
@@ -40,11 +37,15 @@ function employedIn(person: Employment, month: string): boolean {
   );
 }
 
-interface Membership {
+// A record of someone joining or leaving a team from a day, approved or drafted.
+interface MembershipRecord {
   teamId: string;
+  personId: string;
   member: boolean;
   fromDate: string;
 }
+
+type Membership = Omit<MembershipRecord, "personId">;
 
 // The identifiers of the teams someone is on on a day, from their records by team, sorted.
 const teamsOn = (byTeam: ReadonlyMap<string, Membership[]>, day: string) =>
@@ -57,7 +58,7 @@ const teamsOn = (byTeam: ReadonlyMap<string, Membership[]>, day: string) =>
 // one is the one in force, leaving out the teams drafts remove.
 function withDrafted(
   records: readonly Membership[],
-  drafted: readonly DraftedMembership[],
+  drafted: readonly MembershipRecord[],
   removed: ReadonlySet<string>,
 ): Map<string, Membership[]> {
   return bySubject(
@@ -91,6 +92,28 @@ function draftedMonths(
     : { teams, by: [...changedBy].sort() };
 }
 
+// Read in one transaction, so the grid is made from one moment's data.
+export interface TeamMonthsRead {
+  readonly rows: readonly (Employment & {
+    id: string;
+    preferredName: string;
+  })[];
+  readonly lines: ReadonlyMap<
+    string,
+    readonly Pick<LineRow, "managerId" | "fromDate">[]
+  >;
+  readonly teams: readonly {
+    id: string;
+    name: string;
+    colour: string | null;
+  }[];
+  readonly memberships: readonly MembershipRecord[];
+  readonly drafts: {
+    readonly teams: readonly DraftedTeam[];
+    readonly records: readonly MembershipRecord[];
+  };
+}
+
 export async function readTeamMonths(
   database: Database,
   actor: Actor,
@@ -98,43 +121,55 @@ export async function readTeamMonths(
 ): Promise<TeamMonths> {
   requirePermission(actor, "feature-teams:view");
   requireView(actor, "featureAssignments");
-  const byManager = seesView("groupingByManager", actor);
   const today = await readToday(database);
-  const months = monthsBetween(from, to);
-  const { rows, lines, teams, memberships, drafts } =
-    await database.transaction(
-      async (transaction) => ({
-        // Drafts show only to readers who see people, as feature teams' drafts do everywhere.
-        drafts: actor.permissions.includes("people:view")
-          ? await readDraftedMemberships(transaction, actor.user.id, today)
-          : { teams: [], records: [] },
-        rows: await transaction
-          .select({
-            id: people.id,
-            preferredName: people.preferredName,
-            startDate: people.startDate,
-            endDate: people.endDate,
-          })
-          .from(people),
-        lines: await readLines(transaction),
-        teams: await transaction
-          .select({
-            id: featureTeams.id,
-            name: featureTeams.name,
-            colour: featureTeams.colour,
-          })
-          .from(featureTeams),
-        memberships: await transaction
-          .select({
-            teamId: featureTeamMemberships.teamId,
-            personId: featureTeamMemberships.personId,
-            member: featureTeamMemberships.member,
-            fromDate: featureTeamMemberships.fromDate,
-          })
-          .from(featureTeamMemberships),
-      }),
-      { isolationLevel: "repeatable read", accessMode: "read only" },
-    );
+  const read: TeamMonthsRead = await database.transaction(
+    async (transaction) => ({
+      // Drafts show only to readers who see people, as feature teams' drafts do everywhere.
+      drafts: actor.permissions.includes("people:view")
+        ? await readDraftedMemberships(transaction, actor.user.id, today)
+        : { teams: [], records: [] },
+      rows: await transaction
+        .select({
+          id: people.id,
+          preferredName: people.preferredName,
+          startDate: people.startDate,
+          endDate: people.endDate,
+        })
+        .from(people),
+      lines: await readLines(transaction),
+      teams: await transaction
+        .select({
+          id: featureTeams.id,
+          name: featureTeams.name,
+          colour: featureTeams.colour,
+        })
+        .from(featureTeams),
+      memberships: await transaction
+        .select({
+          teamId: featureTeamMemberships.teamId,
+          personId: featureTeamMemberships.personId,
+          member: featureTeamMemberships.member,
+          fromDate: featureTeamMemberships.fromDate,
+        })
+        .from(featureTeamMemberships),
+    }),
+    { isolationLevel: "repeatable read", accessMode: "read only" },
+  );
+  return teamMonthsFrom(read, {
+    months: monthsBetween(from, to),
+    today,
+    byManager: seesView("groupingByManager", actor),
+  });
+}
+
+export function teamMonthsFrom(
+  { rows, lines, teams, memberships, drafts }: TeamMonthsRead,
+  {
+    months,
+    today,
+    byManager,
+  }: { months: readonly string[]; today: string; byManager: boolean },
+): TeamMonths {
   const nameOf = new Map(rows.map((row) => [row.id, row.preferredName]));
   const recordsOf = bySubject(memberships, ({ personId }) => personId);
   const draftedOf = bySubject(drafts.records, ({ personId }) => personId);
@@ -205,7 +240,7 @@ export async function readTeamMonths(
     ({ teamId, action }) => action === "created" && draftedBy.has(teamId),
   );
   return {
-    months,
+    months: [...months],
     teams: [
       ...teams.map(({ id, name, colour }) => ({
         id,
