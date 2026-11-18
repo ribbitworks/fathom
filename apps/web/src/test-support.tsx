@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Helpers for the front-end tests: a simulated server that answers each request the test expects, a
-// fictional signed-in user, fictional release streams, fictional people's feature teams month by
-// month, Fathom's front end started on a page of the test's choosing, and the tip shown on pointing.
+// Helpers for the front-end tests: a simulated server and the changes sent to it, a fictional
+// signed-in user, fictional records, and Fathom's front end started on a page of the test's choosing.
 
 import type {
   Feature,
@@ -26,6 +25,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { expect, vi } from "vitest";
 import { App } from "./app.tsx";
+import { lastViewsPath } from "./last-views.ts";
 import { recordCellSelector } from "./record-grid.tsx";
 import { theme } from "./theme.ts";
 
@@ -53,6 +53,37 @@ export function bodyOf(
   return fetch.mock.calls
     .filter(([called, init]) => called === url && init?.method === method)
     .map(([, init]) => JSON.parse(init?.body as string) as unknown);
+}
+
+// The view a page with saved views keeps, which it sends on its own a second after its view
+// settles, so it can land in any test that runs past that.
+const lastViewSaves = `${lastViewsPath}/`;
+
+// The changes a page sent, as each one's address and body, in order: those with the method given,
+// or every one but a read, leaving out the view the page keeps.
+export function changesSent(
+  fetch: ReturnType<typeof serverAnswers>,
+  method?: string,
+): [string, unknown][] {
+  return fetch.mock.calls.flatMap(([url, init]): [string, unknown][] => {
+    const sentWith = init?.method;
+    if (
+      sentWith === undefined ||
+      sentWith === "GET" ||
+      (method !== undefined && sentWith !== method) ||
+      (sentWith === "PUT" && url.startsWith(lastViewSaves))
+    )
+      return [];
+    const body = init?.body;
+    return [
+      [
+        url,
+        body === undefined || body === null
+          ? undefined
+          : (JSON.parse(body as string) as unknown),
+      ],
+    ];
+  });
 }
 
 export const fictionalUser = {

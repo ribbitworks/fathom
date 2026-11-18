@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for Note columns on the People page, with the server's responses simulated: a note's
-// preview in its cell, opening its side panel with a click or Enter, saving it as a change, reading it
-// without being able to change it, clearing and pasting, a drafted note beside its live one,
-// searching by its words, and adding a Note column with its visibility. The note panel and format
-// alone are tested in note-editor.test.tsx and the shared package's notes.test.ts.
+// Tests for Note columns on the People page, with the server's responses simulated: a note in its
+// cell and its panel, saving, reading, clearing and pasting it, its drafts, and searching by it.
 
 import { colourTag } from "@fathom/shared";
 import {
@@ -22,6 +19,7 @@ import {
   fictionalUser,
   renderApp,
   serverAnswers,
+  changesSent,
 } from "./test-support.tsx";
 
 const s1 = "00000000-0000-4000-8000-000000000001";
@@ -400,11 +398,7 @@ describe("a Note column", () => {
       name.focus();
     });
     await userEvent.paste("Casey Fictional\tE3\n");
-    expect(
-      fetch.mock.calls.filter(
-        ([, init]) => init?.method !== undefined && init.method !== "GET",
-      ),
-    ).toEqual([]);
+    expect(changesSent(fetch)).toEqual([]);
   });
 
   it("stays open with what was written, saying why, when the note is refused", async () => {
