@@ -3,7 +3,7 @@ title: "Manual Test: Built-in Lists and Lists with Meanings"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/db/migrations/**"]
-dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
+dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/administration.md"]
 last_updated: "2026-11-15"
 ---
 

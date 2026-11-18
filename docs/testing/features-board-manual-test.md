@@ -3,7 +3,7 @@ title: "Manual Test: Features Board"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
-dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/standards/ui-conventions.md"]
+dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/features.md", "docs/standards/ui-conventions.md"]
 last_updated: "2026-11-15"
 ---
 

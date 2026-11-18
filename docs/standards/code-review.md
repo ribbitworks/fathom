@@ -156,7 +156,7 @@ When the change affects the user interface:
 
 - Interactive controls have accessibility labels and are reachable by keyboard or assistive technology.
 - The change was verified by the owner, as the workflow requires.
-- The change follows [UI Conventions](ui-conventions.md) and the page designs in [Visual Design](../design/visual-design.md).
+- The change follows [UI Conventions](ui-conventions.md), [Visual Design](../design/visual-design.md), and the page's design in `docs/design/pages/`.
 - Read aloud every sentence the change adds or rewords that people see, the server's refusals and the manual tests' expected text included, and flag any that a person would not say, as [UI Conventions § Principles](ui-conventions.md#principles) sets out under "Words people say".
 
 ### Documentation

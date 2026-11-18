@@ -135,6 +135,7 @@ Each kind of decision has one home, so nothing is decided twice or lost:
 - [Architecture Decision Records](adr/): technical decisions, each with the options considered
 - [UI Conventions](standards/ui-conventions.md): what every screen shares
 - [Visual Design](design/visual-design.md): how screens look and behave
+- [Page designs](design/pages/): each page's purpose, layout and the decisions a builder needs
 
 [Documentation Standards](standards/documentation.md#which-document-owns-what) lists which document owns which facts.
 

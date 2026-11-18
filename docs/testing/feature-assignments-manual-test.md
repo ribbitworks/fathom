@@ -3,7 +3,7 @@ title: "Manual Test: Feature Assignments"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/feature-assignments-page*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "packages/seed/src/**", "packages/fixtures/src/**"]
-dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
+dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/feature-assignments.md"]
 last_updated: "2026-11-17"
 ---
 

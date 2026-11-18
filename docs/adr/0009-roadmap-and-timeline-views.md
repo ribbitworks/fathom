@@ -32,7 +32,7 @@ Every choice must meet ADR 0004's rules: completely open source with no paid edi
 
 ## Decision
 
-- **Fathom's own views:** The Features Board is built on Mantine, with a column for each cycle of one stream and a row for each value of the Group by chosen, as [Visual Design](../design/visual-design.md#components) sets out. Cards are moved with the mouse by @hello-pangea/dnd, as ADR 0004 chose for ordering, with each cycle of each row its own list, since the library moves items between lists but does not lay out a grid. Keyboard users move cards with Fathom's own keys, as for ordering. The timelines are drawn by Fathom's own shared timeline, taken out of the Releases timeline.
+- **Fathom's own views:** The Features Board is built on Mantine, with a column for each cycle of one stream and a row for each value of the Group by chosen, as [the Features page](../design/pages/features.md#features-board) sets out. Cards are moved with the mouse by @hello-pangea/dnd, as ADR 0004 chose for ordering, with each cycle of each row its own list, since the library moves items between lists but does not lay out a grid. Keyboard users move cards with Fathom's own keys, as for ordering. The timelines are drawn by Fathom's own shared timeline, taken out of the Releases timeline.
 - **Moves are drafts:** Dropping a card on another cycle or row changes the feature's target cycle or that row's value through the same draft functions every table uses.
 - **No timeline library:** vis-timeline, chosen in ADR 0004 to be confirmed, is not used; this replaces that choice once accepted.
 - **Fallback:** If dragging months freely or resizing bars turns out to be needed, dnd-timeline is the first library to try, styled with Mantine.

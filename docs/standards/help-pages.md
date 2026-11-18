@@ -36,7 +36,7 @@ How Fathom's Help pages in `docs/help/` are written, so they read the way a coll
 
 Help pages differ from other documents in these ways:
 
-- **"You":** [Visual Design](../design/visual-design.md)'s rule against the second person is for on-screen labels and messages, not Help pages.
+- **"You":** [UI Conventions](ui-conventions.md#principles)'s rule against the second person is for on-screen labels and messages, not Help pages.
 - **One line, then a link:** a role tutorial's step may give one line of a detail another Help page holds, then link to it, as the [Decisions Log](../product/decisions.md) sets out for role tutorials.
 - **No guide headings:** [Documentation](documentation.md)'s Prerequisites, Steps and Verification headings aren't needed; "What to Know First" and the closing line saying how the reader knows they're done cover them.
 - **Links by file name:** links between Help pages use the file name, such as `lists.md`, not the full path from the repository root, since the pages are shown in Fathom.

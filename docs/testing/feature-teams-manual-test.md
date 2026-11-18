@@ -3,7 +3,7 @@ title: "Manual Test: Feature Teams"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/org-chart*", "apps/web/src/people-grid.tsx", "apps/web/src/feature-team*", "apps/web/src/choice-picker.tsx", "apps/server/src/data/feature-teams.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
-dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
+dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/org-chart.md"]
 last_updated: "2026-11-17"
 ---
 

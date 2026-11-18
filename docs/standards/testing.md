@@ -172,7 +172,7 @@ Rules:
 - **Must** say only what to do and what to see: no explanations of why, design rationale, or history of fixes.
 - **Must Not** repeat facts other documents own, such as the contents of the seed data, or what [Manual Test Basics](../testing/manual-test-basics.md) holds for every test; link to them.
 - **Must** save a run's marked copy outside the repository, where the maintainer keeps results, before clearing its marks and notes, as [Recording Results](../testing/manual-test-basics.md#recording-results) sets out.
-- **Must** be updated in the same change as the behaviour or the seed data it tests, together with [Visual Design](../design/visual-design.md) where that changes too. When a step fails because the behaviour is wrong, the behaviour is fixed, not the step.
+- **Must** be updated in the same change as the behaviour or the seed data it tests, together with [Visual Design](../design/visual-design.md) or the page's document in `docs/design/pages/` where that changes too. When a step fails because the behaviour is wrong, the behaviour is fixed, not the step.
 - **Must Not** depend on data a tester adds by hand, other than through the steps themselves, or on real data.
 - **Must Not** repeat a check another test case makes. A test case removed because another covers it keeps its heading, with one line under it linking to the case that covers it, so the other cases keep their numbers and links to them still lead somewhere.
 - **Must Not** re-check what automated tests prove: each validation message, each refusal of a rule, API responses, permissions by typing addresses, each access-history sentence, or each combination of settings. One case for a rule is enough to confirm the screen shows it.
