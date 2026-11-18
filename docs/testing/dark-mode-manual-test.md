@@ -719,6 +719,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The page is titled **Drafts**.
   - **Notes:**
 
+- [ ] `75B0` Select **All drafts** beside the page's title.
+  - **Expected:** **All drafts** is chosen.
+  - **Notes:**
+
 - [ ] `63F6` Type `Ophélie Roussel` in the search box.
   - **Expected:**
     - The red dot's ring before her name, in the **Record** column, is easy to see.
@@ -742,9 +746,19 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `2045` Look at the tabs beside the page's title.
   - **Expected:**
-    - **For approval** and **My changes** are easy to read.
-    - The chosen tab, **For approval**, is easy to tell from the other.
+    - **To decide**, **Not published** and **All drafts** are easy to read.
+    - The chosen tab, **All drafts**, is easy to tell from the others.
     - The dimmed count after each is easy to read.
+  - **Notes:**
+
+- [ ] `E77B` Select **To decide** beside the page's title.
+  - **Expected:** Each row starts with a tick box, easy to see.
+  - **Notes:**
+
+- [ ] `3F35` Tick the tick box of the first row.
+  - **Expected:**
+    - The ticked box is easy to tell from the others.
+    - **Reject…** and **Approve 1 draft…**, at the right of the page's heading, are easy to read.
   - **Notes:**
 
 - [ ] `AC4B` Select the **Lists** page in the left-hand menu.

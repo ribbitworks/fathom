@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/standards/ui-conventions.md", "docs/design/visual-design.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-13"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Draft Marks
@@ -185,20 +185,28 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - In that Live row, a green dot before the live description
   - **Notes:**
 
-### MARK-05: The Drafts Page Starts Each Entry With Its Mark
+### MARK-05: The Drafts Page Marks Each Row in Its Slot Alone
 
 **Account:** Superuser, `superuser@fathom.test`, the same as MARK-04.
 
-**Preconditions:** **Drafts** page open from the left-hand menu.
+**Preconditions:** **Drafts** page open from the left-hand menu, then **All drafts** selected beside the page's title.
 
 - [ ] `41DB` Type `Ophélie Roussel` in the search box.
-  - **Expected:** In the entry of 'Ophélie Roussel':
-    - A red dot in a ring before the sentence
-    - The **Reason:** line under the sentence
+  - **Expected:** In the row of 'Ophélie Roussel':
+    - A red dot in a ring before the name, in the **Record** column
+    - The row not tinted, and the name not in semibold
+    - The rejection's reason in the **Reason** column
   - **Notes:**
 
 - [ ] `34BF` Type `Viktoria Holmberg` in the search box.
-  - **Expected:** In the entry of 'Viktoria Holmberg', a yellow dot, then the grey lock, before the sentence.
+  - **Expected:** In the row of 'Viktoria Holmberg', a yellow dot, then the grey lock, before the name.
+  - **Notes:**
+
+- [ ] `6089` Type `Salvador Quiñones Méndez` in the search box.
+  - **Expected:** In the row of 'Salvador Quiñones Méndez':
+    - A yellow dot before the name
+    - The name not struck through
+    - No light green Live row under it
   - **Notes:**
 
 ### MARK-06: Drafts Applied Shows Dots Without Tints or Live Rows

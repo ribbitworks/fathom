@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["docs/testing/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test Basics
@@ -141,6 +141,8 @@ Run only where a test says so. This deletes every account and record in the deve
 - **Box:** a small outlined word just after an item: yellow for **Moved**, **Reordered**, **Retired** or **Restored**; red for a warning after a value, such as **Left**; grey for a fact, such as **Built in** or **Planned, expected** and a month.
 - **Slot:** the narrow space at the start of a table's row, before its first value, holding the mark of a draft that adds, removes, retires or moves the record. A draft that only changes values the row shows leaves the slot empty, with a dot before each changed value.
 - **Draft row and Live row:** while **Drafts & Live** is chosen in the Draft menu, as each page starts, a row with a draft is tinted faint yellow, or faint red once the draft is rejected, and its changed values are in semibold; under it, a light green Live row shows the record as it is now, with a green dot before each live value the draft changes, or in its slot. **Drafts applied** and **Live only** show no tints and no Live rows.
+- **Page's heading and title:** the line at the top of a page holding its title, such as **Drafts**, any tabs just after the title, and the page's buttons at its right. On the **Drafts** page, buttons for the ticked rows show there only while rows are ticked.
+- **Tick box:** the small box before a row's slot on a table whose rows can be chosen together, such as on the **Drafts** page. The tick box in the table's header, before the first column's name, ticks every row shown that can be ticked. A greyed-out tick box can't be ticked.
 - **Search for:** type the text in the search box above a table, so only the matching rows show.
 - **Views menu:** the menu that opens from the last of the buttons after the search box above a table. The button reads **Views**, or the name of the view applied.
 - **Draft menu:** the menu that opens from the **Draft** button above a table, beside the search box, or, on the **Org chart** page, just right of the finder. The button, with a funnel icon, names the choice shown, such as **Drafts & Live**, and has a dot after it while a draft filter is in use.
