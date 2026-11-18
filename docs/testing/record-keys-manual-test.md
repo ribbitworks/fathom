@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/conventions.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Record Keys and Links
 
 ## Scope
 
-Verifies each record's key under its details' title, copying its link and key from there and from row, card and column menus, one table row's buttons shown at a time, the key and menu on the Features Board's cards, finding a person on the Org chart by key, following a link to the record, Back after it, signing in first, a link a role may not follow, and a table's **Key** column, as the [Decisions Log](../product/decisions.md#configuration) sets out under Record keys and Links to records.
+Verifies each record's key under its details' title, copying its link and key from there and from row, card and column menus, one table row's buttons shown at a time, the key and menu on the Features Board's cards, finding a person on the Org chart by key, following a link to the record, Back after it, signing in first, a link a role may not follow, a table's **Key** column, and a release's and a schedule's links opening on their own tabs, as the [Decisions Log](../product/decisions.md#configuration) sets out under Record keys and Links to records.
 
 ## Test Environment
 
@@ -71,7 +71,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### KEY-02: A Link Opens Its Record, and Back Returns
 
-**Account:** Engineering Director, the account KEY-01 ended with.
+**Account:** Engineering Director, `engineering.director@fathom.test`, the account KEY-01 ended with.
 
 **Preconditions:** **Features** page open, with 'Offline Sync''s details beside the table.
 
@@ -101,7 +101,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### KEY-03: A Link Opens Once Signed In
 
-**Account:** Engineering Director, the account KEY-02 ended with.
+**Account:** Engineering Director, `engineering.director@fathom.test`, the account KEY-02 ended with.
 
 **Preconditions:** The link to 'Offline Sync' copied in KEY-02 `E3A6`, which nothing has been copied over since.
 
@@ -119,7 +119,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### KEY-04: A List's Key Copies Its Link
 
-**Account:** Engineering Director, the account KEY-03 ended with.
+**Account:** Engineering Director, `engineering.director@fathom.test`, the account KEY-03 ended with.
 
 **Preconditions:** **Lists** page open from the left-hand menu.
 
@@ -205,7 +205,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### KEY-07: The Org Chart Finds a Person by Key
 
-**Account:** Engineering Director, the account KEY-06 ended with.
+**Account:** Engineering Director, `engineering.director@fathom.test`, the account KEY-06 ended with.
 
 **Preconditions:** **People** page open from the left-hand menu.
 
@@ -237,7 +237,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### KEY-08: A Column's Link Opens Its Menu
 
-**Account:** Engineering Director, the account KEY-07 ended with.
+**Account:** Engineering Director, `engineering.director@fathom.test`, the account KEY-07 ended with.
 
 **Preconditions:** **People** page open from the left-hand menu.
 
@@ -259,7 +259,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 ### KEY-09: The Key Column Shows Whole Keys
 
-**Account:** Engineering Director, the account KEY-08 ended with.
+**Account:** Engineering Director, `engineering.director@fathom.test`, the account KEY-08 ended with.
 
 **Preconditions:** **Features** page open from the left-hand menu.
 
@@ -278,4 +278,54 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `3E7C` Write down the first row's key, then type it in the search box above the table.
   - **Expected:** The table shows that row alone, its **Key** cell showing the key typed.
+  - **Notes:**
+
+### KEY-10: A Release's and a Schedule's Links Open on Their Tabs
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, the account KEY-09 ended with.
+
+**Preconditions:** **Releases** page open from the left-hand menu, on the **Releases** tab.
+
+- [ ] `27AA` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS', and write down the key under the title.
+  - **Expected:**
+    - The details open beside the table, titled **Harbor 2 LTS**.
+    - Under the title, in grey, **#RELEASE-** and a number.
+  - **Notes:**
+
+- [ ] `8367` Select the key, then **Copy link**.
+  - **Expected:** A notification says "Link copied."
+  - **Notes:**
+
+- [ ] `9517` Select the **People** page in the left-hand menu.
+  - **Expected:** The **People** page shows.
+  - **Notes:**
+
+- [ ] `7B66` Paste the link into the browser's address bar, and press Enter.
+  - **Expected:**
+    - The **Releases** page opens, with the **Releases** tab chosen.
+    - 'Harbor 2 LTS''s details are beside the table, with the key written down in `27AA` under the title.
+  - **Notes:**
+
+- [ ] `A4D6` Select the **Schedules** tab.
+  - **Expected:** The **Schedules** tab is chosen.
+  - **Notes:**
+
+- [ ] `7FD4` Select the details button at the right of the first cell of the row for 'Platform', and write down the key under the title.
+  - **Expected:**
+    - The details open beside the table, titled **Platform**.
+    - Under the title, in grey, **#SCHEDULE-** and a number.
+  - **Notes:**
+
+- [ ] `0586` Select the key, then **Copy link**.
+  - **Expected:** A notification says "Link copied."
+  - **Notes:**
+
+- [ ] `D625` Select the **People** page in the left-hand menu.
+  - **Expected:** The **People** page shows.
+  - **Notes:**
+
+- [ ] `CB73` Paste the link into the browser's address bar, and press Enter.
+  - **Expected:**
+    - The **Releases** page opens, with the **Schedules** tab chosen.
+    - 'Platform''s details are beside the table, with the key written down in `7FD4` under the title.
   - **Notes:**
