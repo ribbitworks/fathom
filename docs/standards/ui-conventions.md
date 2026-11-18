@@ -13,7 +13,7 @@ The principles and conventions every screen follows, for those who build screens
 
 ## Principles
 
-The maintainer's principles come first:
+These principles come first:
 
 - **No instructional text:** If a screen needs explaining, the design is wrong. No hints, help lines, or placeholder sentences telling people what to do. This is for text always on screen: a refusal may say what to do next, and a menu or dialog may state a fact needed at that moment, but never how to use the control, as [Words](#words) sets out. Labels are one or two words, and an optional field may add "(optional)" to its label. Familiar patterns, such as a grip handle for dragging, speak for themselves. Saying what an action will do, as a confirmation does, is not instruction, and neither is reference material, such as what each role lets a user do.
 - **No assumptions:** Screens add no purposes, defaults, restrictions, or wording the maintainer has not asked for. Where something is unclear, it is left out and the maintainer is asked.
@@ -438,7 +438,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **A record's link:** A link to a record is its kind and number after `/go/`, such as `/go/feature/123`, and its key typed after `/go/`, such as `/go/FEATURE-123`, opens the same. The link gives way to the address of the page that shows the record, with its details open, replacing itself, so Back returns to where the reader came from. A filled planned hire's link opens the person who filled it. A link that opens no record shows "Nothing found for" its key, or, to those whose History shows the removal, that it was removed. Following a link records nothing in the access history; the page opened records what it shows, as it always does.
   - **Drawn by:** `recordLinkPath` in `packages/shared/src/record-keys.ts`, `followLink` in `apps/web/src/record-links.ts`, `RecordNotShown` in `apps/web/src/go-page.tsx`, and the server's lookup in `apps/server/src/routes/go.ts`.
   - **Example:** copy Offline Sync's link from its key on Features, then paste it into the address bar.
-- **The Org chart's address:** The Org chart keeps feature teams as `teams=feature`, the levels shown as `levels`, a count from the top or `all`, and the team shown alone as `team`, by the manager's Fathom ID. Older addresses still open as they did: `view=feature-teams` opens Feature teams, and a team named by its manager's Employee ID opens that team.
+- **The Org chart's address:** The Org chart keeps feature teams as `teams=feature`, the levels shown as `levels`, a count from the top or `all`, and the team shown alone as `team`, by the manager's Fathom ID. `view=feature-teams` opens Feature teams too, and a team named by its manager's Employee ID opens that team.
   - **Drawn by:** the Org chart's search parameters in `apps/web/src/router.tsx`, with its view in `packages/shared/src/view-tables.ts`.
   - **Example:** on the Org chart, choose Feature teams and 3 levels, and reload.
 - **Back to another page:** The browser's Back is the way back. A Back to button is offered only where Fathom itself jumps to another page.

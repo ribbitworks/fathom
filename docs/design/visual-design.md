@@ -8,7 +8,7 @@ How Fathom's screens look and behave, so every page is built the same way. The p
 
 - **[People](pages/people.md):** the People table's date row, a person's details, and grouping.
 - **[Org chart](pages/org-chart.md):** the chart of reporting and feature teams, its cards, and its team panels.
-- **[Feature assignments](pages/feature-assignments.md):** each person's feature teams month by month, the first monthly resource grid.
+- **[Feature assignments](pages/feature-assignments.md):** each person's feature teams month by month.
 - **[Capacity](pages/capacity.md):** who is allocated to what, month by month, and the planning settings.
 - **[Projects](pages/projects.md):** the tabs for projects, proposals, customers, and milestones, and their details.
 - **[Features](pages/features.md):** the features table and the Features Board.

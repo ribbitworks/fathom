@@ -37,11 +37,16 @@ Custom fields and tables use a values table.
 | No two records can have the same value | The partial unique indexes |
 | Identifier | Not shown; every record gets one automatically, as its primary key |
 
-## Built So Far
+## What Is Built
 
-The People feature builds the "Choice from a list" type for columns on People, as the [Domain Model](../design/domain-model.md#configuration-entities) records: field definitions, a values table with a person owner column and a link column for choices, one row for each chosen choice, and a check that exactly one owner column is set. A list or choice cannot be deleted while a column or value uses it. The "Web link" type follows, with a typed address column and text column, a check that each value row holds a choice or a link and never both, and an index allowing one link for each record and column; a web link column has a visibility of its own as its tier, since it draws on no list. The "Note" type follows, with a text column holding a note's Markdown, which is never empty, the check widened so each value row holds exactly one of a choice, a link, or a note, and an index allowing one note for each record and column; like a web link column, a note column has a visibility of its own. The order of a table's columns, built-in and added alike, is kept as one list of column keys for each table. The "Number" type follows, with a numeric column, the check widened so each value row holds exactly one of a choice, a link, a note, or a number, and an index allowing one number for each record and column; a number column has a visibility of its own too. The other field types, uniqueness, and custom tables come with the custom fields stage.
+Columns on People, planned hires and features can be of four types, "Choice from a list", "Web link", "Note", and "Number", as the [Domain Model](../design/domain-model.md#configuration-entities) records:
 
-Revised 2026-11-08: features have an owner column of their own, so columns can be added to them too.
+- **Storage:** field definitions, and a values table with an owner column each for people, planned hires and features, a link column for choices, a typed address column and text column for web links, a text column for a note's Markdown, which is never empty, and a numeric column for numbers.
+- **Checks:** exactly one owner column is set, and each value row holds exactly one of a choice, a link, a note, or a number. Each chosen choice has a row of its own, and an index allows one link, one note, and one number for each record and column. A list or choice cannot be deleted while a column or value uses it.
+- **Tiers:** a web link, note, or number column has a visibility of its own as its tier, since it draws on no list.
+- **Column order:** the order of a table's columns, built-in and added alike, is kept as one list of column keys for each table.
+
+The other field types, uniqueness, and custom tables come later, as the [Roadmap](../product/roadmap.md#stage-your-own-fields-and-tables) sets out.
 
 ## Consequences
 

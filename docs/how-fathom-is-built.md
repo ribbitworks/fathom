@@ -32,8 +32,6 @@ Each agent has one of these roles:
 | Test helper | Supports the maintainer's manual and acceptance testing |
 | Coordinator | Plans and assigns work, checks designs against the code, and keeps the record of the maintainer's decisions |
 
-Each agent that works on the repository has its own copy of it, with its own branch, database and ports, as [Development Setup](design/development-setup.md#ways-to-run-fathom) describes. No agent works in another's copy. This keeps one agent's unfinished work from mixing with another's, and lets each run the full tests without disturbing the rest.
-
 ## How a Change Is Made
 
 ```mermaid
@@ -116,7 +114,7 @@ Automated tests can't judge how a screen looks and reads, a journey across pages
 
 - **Feature tests:** each feature has one in [docs/testing](testing/), written as numbered cases, each with one action per step and its exact expected result. Each doubles as the feature's requirements: what it must do, step by step, from a person's side.
 - **Acceptance tests:** each role has one in [docs/testing/acceptance](testing/acceptance/), following the workflows of its [Help page](help/index.md) as that person would do them.
-- **Run by the maintainer:** the maintainer has run every one, and runs them again as features change. The marked copies of each run are kept privately.
+- **Run by the maintainer:** the maintainer has run every one, and runs them again as features change.
 
 They leave out what automated tests already prove, such as each validation message, so each runs in about 30 minutes.
 
@@ -154,7 +152,7 @@ Fathom is licensed under Apache 2.0, and the libraries it uses are open source, 
 
 ### The Agents' Tools
 
-The agents run in Claude Code, Anthropic's coding tool. Today, they use these models:
+The agents run in Claude Code, Anthropic's coding tool, with these models:
 
 - **Claude Opus 5.5 for the agents' own work:** designs, code, tests, documents and coordination.
 - **Claude Opus 5.5 for full reviews:** anything that touches security, and any change where the choice is in doubt.

@@ -3,7 +3,7 @@
 - **ADR:** 0002
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting; 2026-10-30, to reflect the proxy chosen in ADR 0003, to point to the UI components chosen in ADR 0004, to record session length and how sign-in limits find each client's address, to let users change their own password, and to record that Better Auth and its password hashing were confirmed in use; 2026-11-01, to shorten sessions from 12 hours to 30 minutes without use, with the browser signing out on its own; 2026-11-06, to add zxcvbn-ts for refusing passwords that are easy to guess, and to add the Markdown libraries for notes; 2026-11-15, to add rehype-slug for the anchors of Help pages' headings, with github-slugger in tests; 2026-11-17, to drop PowerShell linting, since Fathom has no PowerShell scripts, and to run Renovate as the GitHub App; 2026-11-18, to add CodeQL on GitHub beside Semgrep, now that the repository is public
+- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting; 2026-10-30, to reflect the proxy chosen in ADR 0003, to point to the UI components chosen in ADR 0004, to record session length and how sign-in limits find each client's address, to let users change their own password, and to record that Better Auth and its password hashing were confirmed in use; 2026-11-01, to shorten sessions from 12 hours to 30 minutes without use, with the browser signing out on its own; 2026-11-06, to add zxcvbn-ts for refusing passwords that are easy to guess, and to add the Markdown libraries for notes; 2026-11-15, to add rehype-slug for the anchors of Help pages' headings, with github-slugger in tests; 2026-11-17, to drop PowerShell linting, since Fathom has no PowerShell scripts, and to run Renovate as the GitHub App; 2026-11-18, to add CodeQL on GitHub beside Semgrep, now that the repository is public
 
 ## Context
 
@@ -31,7 +31,7 @@ What matters most in these choices:
 | PostgreSQL driver | node-postgres (`pg`) | postgres.js | The most widely used PostgreSQL driver for Node.js, and fully supported by Drizzle |
 | Migrations | drizzle-kit, generating SQL migration files | Hand-written SQL | Migrations are plain SQL files reviewed like any other change |
 | Authentication and sessions | Better Auth, with sessions stored in the database | A small in-house implementation | A maintained library for local accounts, password hashing, sessions, and sign-in rate limiting, rather than writing security-critical code ourselves |
-| Password hashing | Better Auth's default, scrypt | Argon2id through Better Auth's custom hashing hooks | scrypt is an accepted password hashing algorithm and needs no native module; confirmed in use when accounts were built |
+| Password hashing | Better Auth's default, scrypt | Argon2id through Better Auth's custom hashing hooks | scrypt is an accepted password hashing algorithm and needs no native module, and is confirmed in use |
 | Password strength | zxcvbn-ts, with its common and English dictionaries (MIT) | A list of common passwords alone | Estimates how easily a password is guessed from common passwords, words, names, keyboard patterns, and the person's own details, and runs the same in the browser and on the server; the browser loads its dictionaries only when a form for a new password opens |
 | Logging | Pino, Fastify's built-in logger | Winston | Structured logs, with redaction of known fields |
 | Front-end routing and data fetching | TanStack Router and TanStack Query | React Router | Type-safe routes and consistent loading, caching, and error handling |
@@ -39,7 +39,7 @@ What matters most in these choices:
 | Unit and integration tests | Vitest, with Testcontainers for PostgreSQL | Jest | Fast and Vite-native; integration tests run against a real PostgreSQL database |
 | Notes' Markdown | [unified](https://unifiedjs.com) with remark-parse, remark-gfm, and remark-stringify in the shared package, and react-markdown with rehype-raw and rehype-sanitize in the browser, with rehype-slug giving Help pages' headings GitHub's anchors, and github-slugger, the same slugs, in tests | markdown-it, or marked with DOMPurify | One parser, the same in the server and the browser, gives a syntax tree to check against the notes' allowlist and writes every note back the same way; rehype-sanitize filters what is shown by an allowlist without a browser's DOM. markdown-it and marked turn Markdown straight into HTML, which then needs sanitising and cannot be checked or written back |
 | Fictional data | Faker, as a development-only dependency | Hand-written generators | Widely used, with locale-aware realistic names and a fixed seed for repeatable data |
-| UI tests | Playwright | Cypress | Cross-browser; these are UI tests, so they are not run in the workflow's test step |
+| UI tests | Playwright | Cypress | Cross-browser; these are UI tests, so they are kept out of `pnpm test` |
 | Linting and formatting | ESLint with typescript-eslint's strict type-checked rules, eslint-plugin-security, and eslint-plugin-react-hooks for the front end, and Prettier | Biome | Type-aware rules, security rules, and React's rules of hooks |
 | Static analysis | Semgrep Community Edition, run with metrics off | CodeQL | Runs locally and in any build process; CodeQL is free only for public repositories |
 | Secret scanning | Gitleaks | TruffleHog | Fast, runs offline, and scans both files and git history |
@@ -52,7 +52,7 @@ UI components, styling, charts, and the Gantt, timeline, and org chart component
 
 ### Versions
 
-Node.js runs on its current Active LTS release, and PostgreSQL on its latest major release, when Hello Fathom is built. All versions are pinned and updated deliberately.
+Node.js runs on an Active LTS release, and PostgreSQL on its latest major release. All versions are pinned and updated deliberately.
 
 ### Security Responsibilities
 
@@ -85,10 +85,10 @@ Better Auth settings Fathom's security relies on:
 
 ## Consequences
 
-- **Authentication library maturity:** Better Auth is newer than the other choices. If it proves unsuitable, the alternative is a small in-house session layer following established guidance, with Argon2id password hashing. The Accounts and Access Control slice confirmed it, including its password hashing.
+- **Authentication library maturity:** Better Auth is newer than the other choices. If it proves unsuitable, the alternative is a small in-house session layer following established guidance, with Argon2id password hashing. Fathom's accounts confirm it in use, including its password hashing.
 - **Database access:** Drizzle keeps queries explicit, but tier checks are not automatic; the shared data access layer and its tests enforce them.
 - **Native modules:** If a native module is ever added, dependencies are installed inside the linux/amd64 build, never copied from a machine with a different processor, and the module is explicitly allowed to run its install script in pnpm.
 - **Testcontainers:** Must be verified on each development runtime in [Supported Platforms](../operations/supported-platforms.md). Runtimes other than Docker need extra configuration, and tests need access to the container images they use.
 - **Semgrep:** Community Edition checks one file at a time. Its registry rules are used at scan time, not copied into the repository, because they have their own licence. Opengrep is the fallback if Semgrep's licensing changes.
-- **CodeQL on GitHub:** Now that the repository is public, CodeQL's default setup also runs on GitHub, for the JavaScript and TypeScript code and the GitHub Actions workflows, on pull requests, pushes to `main`, and weekly. Semgrep stays in `pnpm check`, so every copy of the repository scans before it pushes.
+- **CodeQL on GitHub:** Since the repository is public, CodeQL's default setup also runs on GitHub, for the JavaScript and TypeScript code and the GitHub Actions workflows, on pull requests, pushes to `main`, and weekly. Semgrep stays in `pnpm check`, so every copy of the repository scans before it pushes.
 - **Two lint tools:** ESLint and Prettier mean two tools to configure, in exchange for type-aware and security rules.

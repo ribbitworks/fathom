@@ -3,7 +3,7 @@
 - **ADR:** 0001
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms; 2026-10-27, to time the component evaluation after Hello Fathom; 2026-10-30, to add the proxy container chosen in [ADR 0003](0003-edge-proxy.md); 2026-11-07, to point to releases in [ADR 0011](0011-releases-and-images.md); 2026-11-14, to leave backups to whoever runs Fathom and drop one deployment's assumptions; 2026-11-17, to support Windows 11 with WSL2 as a server
+- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms; 2026-10-27, to time the component evaluation; 2026-10-30, to add the proxy container chosen in [ADR 0003](0003-edge-proxy.md); 2026-11-07, to point to releases in [ADR 0011](0011-releases-and-images.md); 2026-11-14, to leave backups to whoever runs Fathom and drop one deployment's assumptions; 2026-11-17, to support Windows 11 with WSL2 as a server
 
 ## Context
 
@@ -67,7 +67,7 @@ Specific libraries (API framework, ORM, Gantt and org chart components, test too
 
 - **Maintainers** work in one language, which suits a small group of maintainers.
 - **Dependencies** need active care: Node.js stays on an LTS release, and dependency upgrades are planned rather than ad hoc.
-- **Gantt and timeline components** are the biggest technical risk. Free and commercial options vary widely in features and licensing. Some are GPL-licensed, which would require Fathom, if distributed, to be released under the GPL instead of Apache 2.0. A short evaluation should come before UI work beyond Hello Fathom starts.
+- **Gantt and timeline components** are the biggest technical risk. Free and commercial options vary widely in features and licensing. Some are GPL-licensed, which would require Fathom, if distributed, to be released under the GPL instead of Apache 2.0. A short evaluation came before the UI work, as [ADR 0004](0004-ui-components.md) records.
 - **Access control** depends on discipline: all data access must go through the shared layer, which the code review standards should check.
 - **Internet exposure:** Fathom's containers must not reach the internet at runtime. Releases are built and published by project scripts, as [ADR 0011](0011-releases-and-images.md) sets out.
 - **Several containers** instead of one, a small operational cost in exchange for PostgreSQL and network isolation.

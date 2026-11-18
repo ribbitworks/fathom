@@ -7,7 +7,7 @@
 
 ## Context
 
-The maintainer asked for searching, filtering, and sorting on every column of the People table, built so that every table added later, and every kind of column, gets them too. What a table shows this way is its view.
+Every column of the People table needs searching, filtering, and sorting, built so that every table added later, and every kind of column, gets them too. What a table shows this way is its view.
 
 Two earlier decisions constrain it. [ADR 0005](0005-flexible-data-model.md) requires that no one can filter or sort by a value their tiers do not cover, since the order of results could reveal it. [ADR 0004](0004-ui-components.md) builds tables edited like a spreadsheet, such as People, on Mantine rather than on a grid or table library.
 

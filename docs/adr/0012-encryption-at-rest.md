@@ -16,7 +16,7 @@ Fathom's database holds Personal and Confidential data. PostgreSQL, as Fathom sh
 
 ## Decision
 
-Encryption at rest is left to the disk, and the [Securing Your Environment](../operations/securing-your-environment.md) guide asks for it. Decided by the maintainer on 2026-11-14.
+Encryption at rest is left to the disk, and the [Securing Your Environment](../operations/securing-your-environment.md) guide asks for it.
 
 Encrypting columns in Fathom stops the database from searching, filtering and sorting them, makes every query that reads them more complex, and needs a key the server can read, usually kept on the same machine, which protects little against someone who has the machine. Fathom can't reliably tell whether the disk under a Docker volume is encrypted, so it can't refuse one.
 

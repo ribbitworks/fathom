@@ -10,7 +10,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 
 ## Working in Fathom
 
-- [Setting up Fathom](setting-up-fathom.md): a new Fathom, from an empty database to one ready to plan with.
+- [Setting up Fathom](setting-up-fathom.md): a brand-new Fathom, made ready to plan with.
 - [How work moves between roles](how-work-moves-between-roles.md): a change drafted, approved, and staffed.
 - [Working as a Team Member](working-as-a-team-member.md): the plan, projects and people, to read.
 - [Working as a Product Manager](working-as-a-product-manager.md): features, projects, proposals and releases.
