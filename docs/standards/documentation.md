@@ -19,30 +19,58 @@ How Fathom's documents are written and kept current. Documents are read by peopl
 
 ## Which Document Owns What
 
-- Contributing (`CONTRIBUTING.md`): who may contribute, and how issues and questions come in
-- Security policy (`SECURITY.md`): how to report a vulnerability, and which versions are supported
-- Code of conduct (`CODE_OF_CONDUCT.md`): the Contributor Covenant, with where reports go
-- Product brief (`docs/product/brief.md`): what Fathom is, its users, goals, scope, and constraints, with one-line key decisions that link to the decisions log or an ADR
-- Domain concepts (`docs/product/domain.md`): definitions of terms
-- Decisions log (`docs/product/decisions.md`): product decisions and their details
-- Use cases (`docs/product/use-cases.md`): scenarios
-- Roles (`docs/product/roles.md`): role definitions and what each role can do
-- Roadmap (`docs/product/roadmap.md`): the order in which Fathom's goals are delivered
-- Domain model (`docs/design/domain-model.md`): entities, relationships, and modeling proposals
-- Architecture (`docs/design/architecture.md`): a high-level view of Fathom's parts and how they connect, kept at the level of containers and networks
-- Development setup (`docs/design/development-setup.md`): repository layout, local development, the fictional data and development accounts, and releases
-- Visual design (`docs/design/visual-design.md`): how Fathom's screens look and behave
-- UI conventions (`docs/standards/ui-conventions.md`): the principles and conventions every screen shares, each with the shared piece that draws it and an example
-- Architecture decision records (`docs/adr/`): technical decisions
-- Issues ([GitHub Issues](https://github.com/ribbitworks/fathom/issues), as `docs/standards/issues.md` sets out): known problems and deferred work
-- Security plan (`docs/security/security-plan.md`): threats and their mitigations, vulnerability scanning, and source code assurance
-- Manual tests (`docs/testing/`, with each role's acceptance test in `docs/testing/acceptance/`): lasting step-by-step tests of a feature by hand in a real browser, following [Testing Standards § Manual Tests](testing.md#manual-tests)
-- Manual test basics (`docs/testing/manual-test-basics.md`): what every manual test shares, its environment, where its accounts come from, the common procedures, named, and the common terms
-- Help pages (`docs/help/`): how to use each page of Fathom, and the workflows each role does most, for the people who use it, listed in `docs/help/index.md`; a guide that repeats facts the documents above own, kept consistent with them, and updated by every change to the page it covers
-- Securing your environment (`docs/operations/securing-your-environment.md`): what whoever runs Fathom must secure, since Fathom can't
-- Supported platforms (`docs/operations/supported-platforms.md`): the platforms Fathom is tested and supported on, and their setup needs
-- How Fathom is built (`docs/how-fathom-is-built.md`): for outside readers, how Fathom is made and how its quality is checked; a summary that repeats facts the standards, the Security Plan, the data protection summary and the manual tests own, kept consistent with them; and the one home of the AI tool and models used, updated when either changes
-- Data protection summary (`docs/privacy/data-protection.md`): a short list of what safeguards Fathom's data, linking to the documents above that own the facts; update it whenever those facts change
+Each fact lives in the one document that owns it. The documents marked as summaries repeat facts on purpose, for outside readers, and are kept consistent with the documents that own those facts.
+
+### For Outside Readers
+
+| Document | Owns |
+| --- | --- |
+| [README](../../README.md) | What Fathom is, where its documents are, and a quick start for developers |
+| [Contributing](../../CONTRIBUTING.md) | Who may contribute, and how issues and questions come in |
+| [Security Policy](../../SECURITY.md) | How to report a vulnerability, and which versions are supported |
+| [Code of Conduct](../../CODE_OF_CONDUCT.md) | The Contributor Covenant, and where reports go |
+| [How Fathom Is Built](../how-fathom-is-built.md) | A summary of how Fathom is made and its quality checked, and the one home of the AI tool and models used |
+| [How Data Is Safeguarded](../privacy/data-protection.md) | A summary of what safeguards Fathom's data, linking to the documents that own each fact, updated whenever those facts change |
+
+### The Product
+
+| Document | Owns |
+| --- | --- |
+| [Product Brief](../product/brief.md) | What Fathom is, its users, goals, scope and constraints, with one-line key decisions |
+| [Domain Concepts](../product/domain.md) | Definitions of terms |
+| [Decisions Log](../product/decisions.md) | Product decisions and their details |
+| [Use Cases](../product/use-cases.md) | Scenarios |
+| [Roles](../product/roles.md) | Each role, and what it can do |
+| [Roadmap](../product/roadmap.md) | The order in which Fathom's goals are delivered |
+
+### Design and Building
+
+| Document | Owns |
+| --- | --- |
+| [Architecture](../design/architecture.md) | Fathom's parts and how they connect, at the level of containers and networks |
+| [Domain Model](../design/domain-model.md) | Entities, relationships and modelling proposals |
+| [Visual Design](../design/visual-design.md) | The layout, type, colour and components every screen shares, and the shared building blocks |
+| [Page designs](../design/pages/) | Each page's purpose, layout and the decisions a builder needs, one document per page |
+| [Development Setup](../design/development-setup.md) | The repository layout, local development, the fictional data and development accounts, and releases |
+| [Architecture decision records](../adr/) | Technical decisions |
+| [Standards](./) | How Fathom is built and reviewed, with [UI Conventions](ui-conventions.md) for the principles and conventions every screen shares, each with the shared piece that draws it and an example, and [Issues](issues.md) for filing and labelling issues |
+| [GitHub Issues](https://github.com/ribbitworks/fathom/issues) | Known problems and deferred work |
+
+### Security and Operations
+
+| Document | Owns |
+| --- | --- |
+| [Security Plan](../security/security-plan.md) | Threats and their mitigations, vulnerability scanning, and source code assurance |
+| [Securing Your Environment](../operations/securing-your-environment.md) | What whoever runs Fathom must secure, since Fathom can't |
+| [Supported Platforms](../operations/supported-platforms.md) | The platforms Fathom is tested and supported on, and their setup needs |
+
+### Testing and Help
+
+| Document | Owns |
+| --- | --- |
+| [Manual tests](../testing/) | Manual tests: lasting step-by-step tests of a feature, by hand in a real browser, as [Testing Standards § Manual Tests](testing.md#manual-tests) sets out, with each role's acceptance test in `docs/testing/acceptance/` |
+| [Manual Test Basics](../testing/manual-test-basics.md) | What every manual test shares: its environment, where its accounts come from, the common procedures and terms |
+| [Help pages](../help/) | How to use each page, and each role's most common work, listed in `docs/help/index.md`. A summary for the people who use Fathom, kept consistent with the documents above and updated by every change to the page it covers |
 
 ## Kept Current
 
