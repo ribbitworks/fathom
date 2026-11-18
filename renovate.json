@@ -1,7 +1,31 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", ":pinAllExceptPeerDependencies"],
+  "ignorePresets": [
+    ":semanticPrefixFixDepsChoreOthers",
+    "mergeConfidence:age-confidence-badges"
+  ],
   "minimumReleaseAge": "7 days",
+  "labels": ["area: dependencies"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "semanticCommits": "enabled",
+  "semanticCommitType": "chore",
+  "semanticCommitScope": null,
+  "commitMessageAction": "update",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to {{{prettyNewVersion}}}",
+  "commitBody": "{{#each upgrades}}- Move {{{depName}}} from {{{displayFrom}}} to {{{displayTo}}}\n{{/each}}",
+  "prBodyColumns": ["Package", "Change"],
+  "prBodyNotes": [
+    "- Released at least seven days ago, unless it fixes a security vulnerability, or is a PostgreSQL minor release or image digest, which arrive at once."
+  ],
+  "prBodyTemplate": "{{{table}}}{{{notes}}}{{{changelogs}}}",
+  "vulnerabilityAlerts": {
+    "labels": ["area: dependencies", "P1"],
+    "minimumReleaseAge": null,
+    "commitMessageSuffix": ""
+  },
   "customManagers": [
     {
       "customType": "regex",
@@ -21,5 +45,6 @@
       "matchUpdateTypes": ["minor", "patch", "digest", "pinDigest"],
       "minimumReleaseAge": null
     }
-  ]
+  ],
+  "dependencyDashboardLabels": ["area: dependencies"]
 }
