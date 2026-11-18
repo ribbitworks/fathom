@@ -45,6 +45,6 @@ As a Product Manager, you shape the plan. That's the projects customers need, th
 
 ## Approve Others' Drafts
 
-On the **Drafts** page, under **History**, approve or reject drafts of projects, proposals, features, releases and schedules. See [Drafts page](drafts-page.md#approve-drafts).
+On the **Drafts** page, under **History**, approve or reject the drafts under **To decide**: those of projects, proposals, features, releases and schedules. See [Drafts page](drafts-page.md#approve-drafts).
 
 You're done when your features, projects and releases show what's planned, each change approved.

@@ -6,7 +6,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 
 - [Pages](pages.md): every page of Fathom, where it is in the left-hand menu, and the permission that shows it.
 - [Keys and links](keys-and-links.md): each record's key, copying a link to it, and finding it by its key.
-- [Saved views](saved-views.md): saving, sharing and applying a table's views, on People, Features, Projects, Releases, Org chart, Feature assignments, Capacity and Accounts.
+- [Saved views](saved-views.md): saving, sharing and applying a table's views, on People, Features, Projects, Releases, Org chart, Feature assignments, Capacity, Accounts and Drafts.
 
 ## Working in Fathom
 
@@ -47,6 +47,6 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 ## History
 
 - [Drafts](drafts.md): what the marks on a draft mean, what happens to it, and undoing a change.
-- [Drafts page](drafts-page.md): the drafts waiting, and approving or rejecting them.
+- [Drafts page](drafts-page.md): the drafts, approving or rejecting them, and publishing or discarding some of your own changes.
 - [Change history](change-history.md): every change saved, who made it, and the values before and after.
 - [Access history](access-history.md): sign-ins, changes to accounts, roles and settings, and who viewed or exported private details.

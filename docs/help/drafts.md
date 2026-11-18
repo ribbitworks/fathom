@@ -6,13 +6,13 @@ Most changes you make to the plan and its people are drafts at first. A draft is
 
 A draft goes through these stages:
 
-- **Saved:** nobody else sees your change yet. **Publish** in the top bar says how many changes are waiting, such as **Publish 3 changes**. Select it to publish them all. The menu beside it lists them, and **Discard all…** throws them all away, after asking you first.
+- **Saved:** nobody else sees your change yet. **Publish** in the top bar says how many changes are waiting, such as **Publish 3 changes**. Select it to publish them all. The menu beside it lists them, and **Discard all…** throws them all away, after asking you first. To publish or discard only some of them, use the **Not published** tab of the [Drafts page](drafts-page.md#publish-some-of-your-changes).
 - **Published:** the draft waits for an approver, someone whose role approves that kind of change. If someone else changes it, only they see their changes until they publish them.
 - **Approved:** the change goes live. Any new list, column or choice it depends on is approved with it. Approving can't be undone.
 - **Rejected:** the draft goes back to whoever made it. They can change it, resubmit it, or discard it. Drafts that depend on it wait. Rejecting a new list, column or choice also rejects the drafts that depend on it.
 - **Discarded:** the draft is removed, and the record stays as it was. You can't discard a new list, column or choice while other drafts depend on it. Discard or change those drafts first.
 
-Approvers approve and reject drafts on the [Drafts page](drafts-page.md).
+Approvers approve and reject drafts on the [Drafts page](drafts-page.md), under **To decide**, as well as where the records are.
 
 ## Marks
 

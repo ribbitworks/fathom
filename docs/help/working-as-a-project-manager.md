@@ -30,6 +30,6 @@ A view is how you've set up a table, such as its search and filters. You can sav
 ## Approve Others' Drafts
 
 1. Select the **Drafts** page, under **History**.
-1. Approve or reject the drafts waiting. See [Drafts page](drafts-page.md#approve-drafts).
+1. Approve or reject the drafts under **To decide**, where the page opens. See [Drafts page](drafts-page.md#approve-drafts).
 
 You're done when your projects' milestones are current, and no drafts are waiting for you.

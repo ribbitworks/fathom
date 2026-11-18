@@ -10,7 +10,7 @@ As an Engineering Director, you run the plan and people. You change and approve 
 ## Approve the Drafts
 
 1. Select the **Drafts** page, under **History**.
-1. Approve or reject the drafts waiting. See [Drafts page](drafts-page.md#approve-drafts).
+1. Approve or reject the drafts under **To decide**, where the page opens. See [Drafts page](drafts-page.md#approve-drafts).
 
 ## Change Reporting Lines
 

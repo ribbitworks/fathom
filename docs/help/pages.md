@@ -61,7 +61,7 @@ The Product Manager sees Capacity in its **Settings** mode only, since the role 
 
 ## History
 
-- [Drafts](drafts-page.md): It lists the drafts waiting. Approvers approve or reject them there.
+- [Drafts](drafts-page.md): It lists the drafts in up to three tabs. Approvers approve or reject drafts under **To decide**, and you publish or discard some of your own changes under **Not published**.
   - **Shown with:** Any of **View Plan**, **View Features and releases**, **View People** or **View Configuration**
   - **Starting roles that see it:** Every role but Administrator
 - [Change history](change-history.md): It lists every change saved, who made it, and the values before and after.

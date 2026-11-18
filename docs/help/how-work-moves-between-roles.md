@@ -33,9 +33,9 @@ The changes are now drafts that others can see, each with a yellow dot. See [Fea
 
 The Engineering Director, or another role that approves the plan and features, decides on the drafts.
 
-1. Select the **Drafts** page, under **History**.
+1. Select the **Drafts** page, under **History**. It opens on **To decide**, the drafts you can decide now.
 1. Tick the drafts.
-1. Select **Approve 2 drafts…**. The number is how many you ticked.
+1. Select **Approve 2 drafts…** at the right of the page's heading. The number is how many you ticked.
 1. Check the dialog. It lists any other drafts these depend on, which are approved with them.
 1. Select **Approve**.
 
