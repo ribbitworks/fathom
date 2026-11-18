@@ -322,7 +322,7 @@ export function savedFiles(): { name: string; text: () => Promise<string> }[] {
 // The day the month grids' tests are run on, and the months the grids read around it.
 export const gridNow = "2027-03-10";
 export const monthsUrl =
-  "GET /api/feature-teams/months?from=2026-03&to=2028-02";
+  "GET /api/feature-teams/months?from=2026-01&to=2028-03";
 
 export const mobile = {
   id: "t-mobile",

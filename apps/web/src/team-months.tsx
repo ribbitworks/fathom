@@ -15,6 +15,8 @@ import {
   type MemberTeamsChange,
   type MonthRange,
   monthOf,
+  monthsInQuarter,
+  quarterStart,
   type Show,
   type TeamMonths,
   teamMonthsSchema,
@@ -71,13 +73,17 @@ type Table = RecordTable<PersonMonths, CellChange, CellChange>;
 // Labels are in a smaller font than the table, so this fits about 20 of their letters.
 const monthCellChars = 15;
 const monthsBack = 12;
-const monthsShown = 24;
+const monthsAhead = 11;
 
+// Whole quarters, from the one holding the month twelve months back to the one holding the month
+// eleven ahead, so the grid's strip of quarters starts and ends on whole quarters.
 export function gridMonthsAround(today: string): MonthRange {
-  const month = monthOf(today);
   return {
-    from: addToMonth(month, -monthsBack),
-    to: addToMonth(month, monthsShown - monthsBack - 1),
+    from: quarterStart(addToMonth(monthOf(today), -monthsBack)),
+    to: addToMonth(
+      quarterStart(addToMonth(monthOf(today), monthsAhead)),
+      monthsInQuarter - 1,
+    ),
   };
 }
 
@@ -165,6 +171,7 @@ export function monthGridTable<
   Rec extends MonthRow & { live?: Rec | undefined },
 >({
   months,
+  currentMonth,
   label,
   choices,
   content,
@@ -173,6 +180,7 @@ export function monthGridTable<
   groupings,
 }: {
   months: readonly string[];
+  currentMonth: string;
   label: string;
   choices: readonly { id: string; name: string }[];
   content: (record: Rec, month: string) => ReactNode;
@@ -202,6 +210,7 @@ export function monthGridTable<
       ) : undefined,
     cellChars: monthCellChars,
     headingCentred: true,
+    current: month === currentMonth,
     readOnly: readOnly(month),
   }));
   const columns = [
@@ -242,6 +251,7 @@ export function teamMonthsTable(
 ): Table {
   return monthGridTable<PersonMonths>({
     months: data.months,
+    currentMonth: monthOf(edits.today),
     label: "Feature teams by month",
     choices: data.teams,
     content: (person, month) => (

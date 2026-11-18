@@ -272,8 +272,13 @@ function ticks(
   return cut;
 }
 
-const quarterOf = (day: string) =>
+// The quarter a day is in, such as Q1.
+export const quarterOf = (day: string): string =>
   `Q${String(Math.ceil(monthNumber(day) / 3))}`;
+
+// The quarter a day is in with its year, such as Q1 2027, or Q1 27 with the year short.
+export const quarterName = (day: string, shortYear = false): string =>
+  `${quarterOf(day)} ${shortYear ? day.slice(2, 4) : day.slice(0, 4)}`;
 
 // The timeline cut into quarters, such as Q1 2027, or Q1 27 with the year short, each with the
 // quarter alone as its shorter label.
@@ -281,10 +286,9 @@ function quarterTicks(
   frame: TimelineFrame,
   shortYear: boolean,
 ): (Tick & { short: string })[] {
-  return ticks(frame, nextPeriod(3), (day) => {
-    const year = shortYear ? day.slice(2, 4) : day.slice(0, 4);
-    return `${quarterOf(day)} ${year}`;
-  }).map((tick) => ({ ...tick, short: quarterOf(tick.day) }));
+  return ticks(frame, nextPeriod(3), (day) => quarterName(day, shortYear)).map(
+    (tick) => ({ ...tick, short: quarterOf(tick.day) }),
+  );
 }
 
 // The quarters across the whole timeline, such as Q1 2027, the first and last cut short by its

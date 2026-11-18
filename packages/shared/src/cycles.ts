@@ -7,7 +7,8 @@
 // allocations, capacity, and demand. Days are ISO dates, such as 2027-01-01, worked out in UTC.
 
 import { z } from "zod";
-import { monthOf } from "./days.ts";
+import { monthNumber, monthOf } from "./days.ts";
+import { monthsInQuarter } from "./effort.ts";
 
 export const cycleUnitSchema = z.enum(["weeks", "months"]);
 
@@ -80,6 +81,10 @@ export function addMonths(day: string, months: number): string {
 
 export const addToMonth = (month: string, months: number): string =>
   monthOf(addMonths(`${month}-01`, months));
+
+// The first month of the quarter a month is in, such as 2027-01 for 2027-02.
+export const quarterStart = (month: string): string =>
+  addToMonth(month, -((monthNumber(month) - 1) % monthsInQuarter));
 
 // The last day of the month a day is in.
 export function lastDayOfMonth(day: string): string {

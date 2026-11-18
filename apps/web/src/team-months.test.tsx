@@ -27,10 +27,17 @@ import { serverAnswers } from "./test-support.tsx";
 const edits = { today: "2027-03-10", changesDates: false };
 
 describe("gridMonthsAround", () => {
-  it("is twelve months back to eleven ahead of the current month", () => {
+  it("is the whole quarters from twelve months back to eleven ahead", () => {
     expect(gridMonthsAround("2027-03-10")).toEqual({
-      from: "2026-03",
-      to: "2028-02",
+      from: "2026-01",
+      to: "2028-03",
+    });
+  });
+
+  it("starts and ends where those months already start and end quarters", () => {
+    expect(gridMonthsAround("2027-01-10")).toEqual({
+      from: "2026-01",
+      to: "2027-12",
     });
   });
 });
@@ -59,6 +66,27 @@ describe("the table", () => {
 
   it("names a row with no name by nothing, having no stand-in", () => {
     expect(table.nameOf({ name: "" } as never)).toBe("");
+  });
+
+  it("marks the current month's column as current, and no other", () => {
+    const withMonths = teamMonthsTable(
+      {
+        months: ["2027-02", "2027-03", "2027-04"],
+        teams: [],
+        people: [],
+        drafts: [],
+      },
+      "both",
+      edits,
+      [],
+    );
+
+    expect(
+      withMonths
+        .columnsFor([], [], [], [])
+        .filter(({ current }) => current === true)
+        .map(({ key }) => key),
+    ).toEqual(["2027-03"]);
   });
 });
 

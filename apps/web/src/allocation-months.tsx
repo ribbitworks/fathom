@@ -481,6 +481,7 @@ export function allocationMonthsTable({
   return {
     ...monthGridTable<AllocationRow>({
       months: teamMonths.months,
+      currentMonth,
       label: "Allocations by month",
       choices: features,
       content: (row, month) =>

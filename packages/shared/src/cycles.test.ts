@@ -19,6 +19,7 @@ import {
   movedCycles,
   patternsForLength,
   patternStartFits,
+  quarterStart,
 } from "./cycles.ts";
 
 const quarters = {
@@ -411,5 +412,16 @@ describe("the last day of a month", () => {
       lastDayOfMonth("2026-12-01"),
       lastDayOfMonth("2027-04-30"),
     ]).toEqual(["2027-02-28", "2028-02-29", "2026-12-31", "2027-04-30"]);
+  });
+});
+
+describe("quarterStart", () => {
+  it.each([
+    ["2027-01", "2027-01"],
+    ["2027-02", "2027-01"],
+    ["2027-03", "2027-01"],
+    ["2027-12", "2027-10"],
+  ])("puts %s in the quarter starting %s", (month, start) => {
+    expect(quarterStart(month)).toBe(start);
   });
 });

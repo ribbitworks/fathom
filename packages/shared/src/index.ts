@@ -157,6 +157,7 @@ export {
   addDays,
   addMonths,
   addToMonth,
+  quarterStart,
   lastDayOfMonth,
   type Cycle,
   cycleName,

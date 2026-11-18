@@ -88,6 +88,7 @@ export function CapacityPeople({
       actions={readOnlyMonthActions}
       canEdit={false}
       now={now}
+      range={range}
       view={view}
       onView={onView}
       views={views}

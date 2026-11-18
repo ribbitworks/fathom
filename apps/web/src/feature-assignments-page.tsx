@@ -95,6 +95,7 @@ function TeamsGrid({
       actions={actions}
       canEdit={editsTeams}
       now={now}
+      range={range}
       view={view}
       onView={onView}
       views={views}

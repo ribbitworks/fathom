@@ -16,6 +16,25 @@ export interface StripWords {
   next: string;
 }
 
+// Scrolling lands on whole pixels, so a view this close to where it was is still there.
+export const edgeTolerance = 1;
+
+// Whether a period chosen, or stepped to, is still the one the view is at: until the view moves
+// elsewhere, even when its end left it where it was.
+export const stillChosen = (
+  chosen: { key: string; left: number } | undefined,
+  key: string,
+  left: number,
+): boolean =>
+  chosen?.key === key && Math.abs(chosen.left - left) <= edgeTolerance;
+
+// The words of a strip of quarters, as timelines and month grids show.
+export const quarterWords: StripWords = {
+  group: "Quarters",
+  previous: "Previous quarter",
+  next: "Next quarter",
+};
+
 export interface StripPeriod {
   key: string;
   onChoose: () => void;

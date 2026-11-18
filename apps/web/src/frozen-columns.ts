@@ -67,6 +67,14 @@ export const scrollEdges = ({
   after: scrollLeft + clientWidth < scrollWidth - 1,
 });
 
+// The edges seen before, where nothing about them has changed, so a table isn't drawn again for
+// every step of scrolling.
+export const keptEdges = (
+  before: ScrollEdges,
+  next: ScrollEdges,
+): ScrollEdges =>
+  before.before === next.before && before.after === next.after ? before : next;
+
 const sameMeasure = (first: Measured, second: Measured) =>
   first.room === second.room &&
   first.height === second.height &&

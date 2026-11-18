@@ -207,6 +207,32 @@ describe("changing a month's teams", () => {
 });
 
 describe("the Feature assignments page", () => {
+  it("shows the strip of quarters the months fall in, marking the current one and month", async () => {
+    const grid = await openPage();
+
+    const strip = screen.getByRole("toolbar", { name: "Quarters" });
+    const quarters = within(strip).getAllByRole("button");
+    expect(quarters.map((quarter) => quarter.textContent)).toEqual([
+      "Q1 2026Q1",
+      "Q2 2026Q2",
+      "Q3 2026Q3",
+      "Q4 2026Q4",
+      "Q1 2027Q1",
+      "Q2 2027Q2",
+      "Q3 2027Q3",
+      "Q4 2027Q4",
+      "Q1 2028Q1",
+    ]);
+    expect(
+      within(strip).getByRole("button", { current: "date" }).textContent,
+    ).toBe("Q1 2027Q1");
+    expect(
+      grid
+        .querySelector('th[data-column="2027-03"]')
+        ?.getAttribute("aria-current"),
+    ).toBe("date");
+  });
+
   it("shows people as rows and months as columns, with each month's teams by name", async () => {
     await openPage();
 
@@ -590,6 +616,152 @@ describe("the Feature assignments page's saved views", () => {
     );
     await waitFor(() => {
       expect(history.location.search).toContain("grouping=manager");
+    });
+  });
+});
+
+describe("the strip of quarters", () => {
+  // Every column 100 pixels wide, the Person column frozen, in a table showing 400 pixels.
+  const columnWidth = 100;
+  const room = 400;
+  const months = 27;
+
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+      width: columnWidth,
+      left: 0,
+    } as DOMRect);
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(room);
+    vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(
+      (months + 1) * columnWidth,
+    );
+    vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(
+      columnWidth,
+    );
+    vi.spyOn(HTMLElement.prototype, "offsetLeft", "get").mockImplementation(
+      function (this: HTMLElement) {
+        const siblings = [...(this.parentElement?.children ?? [])];
+        return siblings.indexOf(this) * columnWidth;
+      },
+    );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const scroller = (grid: HTMLElement) => grid.parentElement as HTMLElement;
+  // The grid opens with the current month, the fifteenth, just after the Person column; another
+  // month is there when scrolled by its columns from it.
+  const currentMonth = 14;
+  let opened = 0;
+  const atMonth = (index: number) =>
+    opened + (index - currentMonth) * columnWidth;
+  const openStrip = async () => {
+    const grid = await openPage();
+    opened = scroller(grid).scrollLeft;
+    return grid;
+  };
+  const quarter = (name: string) =>
+    within(screen.getByRole("toolbar", { name: "Quarters" })).getByRole(
+      "button",
+      { name: (label) => label.startsWith(name) },
+    );
+  // The grid tells the strip it has scrolled, as a browser does.
+  const scrolled = (grid: HTMLElement) => {
+    fireEvent.scroll(scroller(grid));
+  };
+
+  it("opens at the current month, tinting the quarters on screen", async () => {
+    const grid = await openStrip();
+
+    expect(opened).toBeGreaterThan(0);
+    await waitFor(() => {
+      expect(quarter("Q1 2027").getAttribute("aria-label")).toBe(
+        "Q1 2027, in view",
+      );
+    });
+    expect(quarter("Q2 2027").getAttribute("aria-label")).toBe(
+      "Q2 2027, in view",
+    );
+    expect(quarter("Q3 2027").getAttribute("aria-label")).toBe("Q3 2027");
+
+    // Told it scrolled without moving, it keeps what it shows.
+    scrolled(grid);
+    await waitFor(() => {
+      expect(quarter("Q1 2027").getAttribute("aria-label")).toBe(
+        "Q1 2027, in view",
+      );
+    });
+  });
+
+  it("scrolls a quarter chosen to just after the Person column, selected until the grid moves", async () => {
+    const grid = await openStrip();
+
+    await userEvent.click(quarter("Q4 2026"));
+    scrolled(grid);
+
+    expect(scroller(grid).scrollLeft).toBe(atMonth(9));
+    await waitFor(() => {
+      expect(quarter("Q4 2026").getAttribute("aria-label")).toBe(
+        "Q4 2026, in view, selected",
+      );
+    });
+
+    scroller(grid).scrollLeft = atMonth(10);
+    scrolled(grid);
+
+    await waitFor(() => {
+      expect(quarter("Q4 2026").getAttribute("aria-label")).toBe(
+        "Q4 2026, in view",
+      );
+    });
+  });
+
+  it("steps a quarter at a time, and goes back to the current month with Today", async () => {
+    const grid = await openStrip();
+    await waitFor(() => {
+      expect(quarter("Q1 2027").getAttribute("aria-label")).toContain(
+        "in view",
+      );
+    });
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Previous quarter" }),
+    );
+    expect(scroller(grid).scrollLeft).toBe(atMonth(12));
+    scrolled(grid);
+    await waitFor(() => {
+      expect(quarter("Q1 2027").getAttribute("aria-label")).toContain(
+        "selected",
+      );
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: "Next quarter" }));
+    expect(scroller(grid).scrollLeft).toBe(atMonth(15));
+    scrolled(grid);
+
+    await userEvent.click(screen.getByRole("button", { name: "Today" }));
+    expect(scroller(grid).scrollLeft).toBe(atMonth(14));
+  });
+
+  it("turns ‹ off at the grid's start, and › off at its end", async () => {
+    const grid = await openStrip();
+
+    scroller(grid).scrollLeft = 0;
+    scrolled(grid);
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Previous quarter" }),
+      ).toHaveProperty("disabled", true);
+    });
+
+    scroller(grid).scrollLeft = (months + 1) * columnWidth - room;
+    scrolled(grid);
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Next quarter" }),
+      ).toHaveProperty("disabled", true);
     });
   });
 });

@@ -12,6 +12,7 @@ import {
   frozenWidened,
   scrollBesideFrozen,
   widestFrozen,
+  keptEdges,
 } from "./frozen-columns.ts";
 
 describe("frozen columns after a move", () => {
@@ -132,5 +133,20 @@ describe("frozen columns while one is made wider", () => {
       "--frozen-left-0-0": "0px",
       "--frozen-left-1-1": "80px",
     });
+  });
+});
+
+describe("keptEdges", () => {
+  const before = { before: true, after: false };
+
+  it("keeps the edges seen before when nothing has changed", () => {
+    expect(keptEdges(before, { before: true, after: false })).toBe(before);
+  });
+
+  it.each([
+    { before: false, after: false },
+    { before: true, after: true },
+  ])("takes the new edges when they change: %o", (next) => {
+    expect(keptEdges(before, next)).toBe(next);
   });
 });

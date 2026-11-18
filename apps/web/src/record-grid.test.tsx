@@ -15,7 +15,7 @@ import {
   draftFilterKey,
 } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import {
   act,
   fireEvent,
@@ -30,6 +30,7 @@ import { noDrafts } from "./drafts.ts";
 import {
   cellColumn,
   type CellRecord,
+  columnWidth,
   type Column,
   type GridDraft,
   wordsColumn,
@@ -46,6 +47,7 @@ import {
   type RecordActions,
   RecordGrid,
   type RecordTable,
+  useTableScroll,
 } from "./record-grid.tsx";
 import { type RowTicks, withTicks } from "./row-ticks.tsx";
 import {
@@ -954,6 +956,30 @@ describe("frozen columns", () => {
 describe("column widths", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  describe("as they start", () => {
+    const text = cellColumn("note", "text", {
+      label: "Note",
+      required: false,
+      choices: [],
+      multiple: false,
+    });
+    const long = new Map([["note", 60]]);
+
+    it("starts a column no wider than its widest", () => {
+      expect(columnWidth(text, long).cells).toBe(30);
+    });
+
+    it("starts a name column narrower, so the columns after it get the room", () => {
+      expect(columnWidth(text, long, "note").cells).toBe(24);
+    });
+
+    it("starts a name column of short names as wide as they need", () => {
+      expect(
+        columnWidth(text, new Map([["note", 12]]), "note").cells,
+      ).toBeLessThan(24);
+    });
   });
 
   // Every header cell 100 pixels wide, starting at the page's left edge, in a table with `room`
@@ -2232,6 +2258,7 @@ describe("what a table can ask of its columns and rows", () => {
       opensAtColumn?: string;
       withDrafts?: boolean;
       view?: View;
+      above?: () => ReactNode;
     } = {},
   ) =>
     render(
@@ -2256,6 +2283,7 @@ describe("what a table can ask of its columns and rows", () => {
           {...(more.rowActions === undefined
             ? {}
             : { rowActions: more.rowActions })}
+          {...(more.above === undefined ? {} : { above: more.above })}
         />
       </MantineProvider>,
     );
@@ -2410,6 +2438,76 @@ describe("what a table can ask of its columns and rows", () => {
         .querySelector<HTMLElement>('col[data-column="code"]')
         ?.style.getPropertyValue("--cell-chars"),
     ).toBe("7");
+  });
+
+  describe("scrolling from above the table", () => {
+    const frozenWidth = 100;
+    const withLater = (): RecordTable<Gadget, GadgetChange, GadgetChange> => ({
+      ...gadgetTable(),
+      columnsFor: () =>
+        [
+          ...gadgetColumns([], [], []),
+          cellColumn<Gadget, GadgetChange>("later", "text", {
+            label: "Later",
+            required: false,
+            choices: [],
+            multiple: false,
+          }),
+        ] as Column<Gadget, GadgetChange>[],
+    });
+
+    function ScrollTo({ column }: { column: string }) {
+      const scroll = useTableScroll();
+      return (
+        <button
+          type="button"
+          onClick={() => {
+            scroll.scrollTo(column);
+          }}
+        >
+          Scroll to {column}
+        </button>
+      );
+    }
+
+    it("scrolls a column to just after the frozen columns", async () => {
+      vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+        width: frozenWidth,
+      } as DOMRect);
+      renderTable(withLater(), [gadget("a")], {
+        above: () => <ScrollTo column="later" />,
+      });
+
+      await userEvent.click(
+        screen.getByRole("button", { name: "Scroll to later" }),
+      );
+
+      expect(screen.getByRole("grid").parentElement?.scrollLeft).toBe(
+        frozenWidth,
+      );
+    });
+
+    it("leaves the table where it is for a column it does not have", async () => {
+      renderTable(withLater(), [gadget("a")], {
+        above: () => <ScrollTo column="missing" />,
+      });
+      const box = screen.getByRole("grid").parentElement as HTMLElement;
+      box.scrollLeft = 30;
+
+      await userEvent.click(
+        screen.getByRole("button", { name: "Scroll to missing" }),
+      );
+
+      expect(box.scrollLeft).toBe(30);
+    });
+
+    it("is refused outside a table", () => {
+      vi.spyOn(console, "error").mockImplementation(noop);
+
+      expect(() => render(<ScrollTo column="later" />)).toThrow(
+        "Only what a table draws above itself follows its scrolling.",
+      );
+    });
   });
 
   describe("opening at a column", () => {

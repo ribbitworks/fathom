@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/feature-assignments-page*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Feature Assignments
 
 ## Scope
 
-Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, the page left out of the menu for a role without Personal details, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-data).
+Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls, moving through it with the strip of quarters above it, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, the page left out of the menu for a role without Personal details, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 
@@ -49,11 +49,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The page is headed **Feature assignments**.
     - Above the table, in order: a search box, a **Draft** button, **Metrics**, and **Group by: Manager**.
-    - The table has a **Person** column on the left and a column for each month.
+    - Under them, the strip of quarters, with **‹** before it, and **›** and **Today** after it.
+    - The table has a **Person** column on the left and a column for each month, with a line between each column.
   - **Notes:**
 
 - [ ] `428B` Look at the month headings without scrolling.
-  - **Expected:** The current month is the first month beside the **Person** column.
+  - **Expected:**
+    - The current month is the first month beside the **Person** column.
+    - Its heading is underlined in red.
+  - **Notes:**
+
+- [ ] `B7C1` Look at the strip of quarters.
+  - **Expected:**
+    - Its first quarter is the one holding the month a year before the current one, and its last the one holding the month eleven months after it, each named with its year, such as "Q4 2025".
+    - The quarter holding the current month is underlined in red.
+    - The quarters whose months are on screen in the table are shaded light blue.
   - **Notes:**
 
 ### FA-02: Names and Months Stay in View
@@ -555,3 +565,47 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
+
+### FA-19: The Strip of Quarters Moves the Table
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-18.
+
+**Preconditions:** **Feature assignments** open.
+
+- [ ] `5D2A` Scroll the table sideways to its right end.
+  - **Expected:**
+    - The quarters shaded light blue in the strip are the last two or three.
+    - **›** is turned off.
+  - **Notes:**
+
+- [ ] `0F6B` Select the strip's first quarter.
+  - **Expected:**
+    - The quarter's first month is the first month beside the **Person** column.
+    - The quarter is filled in blue.
+  - **Notes:**
+
+- [ ] `C3E8` Select **›**.
+  - **Expected:**
+    - The next quarter's first month is the first month beside the **Person** column.
+    - That quarter is filled in blue, and the one before is not.
+  - **Notes:**
+
+- [ ] `9A1E` Scroll the table sideways a little.
+  - **Expected:** No quarter is filled in blue.
+  - **Notes:**
+
+- [ ] `91D4` Select **Today**.
+  - **Expected:** The current month is the first month beside the **Person** column.
+  - **Notes:**
+
+- [ ] `D461` Press Shift+Tab until a quarter in the strip has a blue outline.
+  - **Expected:** The outline is on the quarter holding the current month.
+  - **Notes:**
+
+- [ ] `2B5C` Press the Right arrow key.
+  - **Expected:** The outline moves to the next quarter, and the table doesn't move.
+  - **Notes:**
+
+- [ ] `7E31` Press Enter.
+  - **Expected:** That quarter's first month is the first month beside the **Person** column.
+  - **Notes:**

@@ -13,10 +13,10 @@ import {
   type CyclePattern,
   type CycleUnit,
   hasEnded,
-  monthNumber,
   monthOf,
   monthsInQuarter,
   addToMonth,
+  quarterStart,
   type RecordDraft,
   type RecordRef,
   type ReleaseStream,
@@ -211,7 +211,5 @@ export function cycleTwins(
 // The first day of the quarter after next, from the day given: a cycle starting on or after it is
 // a later one, which the Cycles tab shows only when asked for.
 export function laterCyclesFrom(day: string): string {
-  const month = monthOf(day);
-  const intoQuarter = (monthNumber(month) - 1) % monthsInQuarter;
-  return `${addToMonth(month, 2 * monthsInQuarter - intoQuarter)}-01`;
+  return `${addToMonth(quarterStart(monthOf(day)), 2 * monthsInQuarter)}-01`;
 }

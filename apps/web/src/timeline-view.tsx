@@ -48,7 +48,12 @@ import {
   type TimelineRow,
 } from "./timeline.ts";
 import { MarkRow } from "./status-mark.tsx";
-import { TimelineStrip } from "./timeline-strip.tsx";
+import {
+  edgeTolerance,
+  quarterWords,
+  stillChosen,
+  TimelineStrip,
+} from "./timeline-strip.tsx";
 
 type Preset = "all" | "year" | "half" | "quarter" | "month" | "week" | "days";
 
@@ -107,9 +112,6 @@ const epochDay = (day: string) => daysBetween("1970-01-01", day);
 // Today, and a quarter chosen in the strip, go a sixth of the way across, so what came just before
 // stays in sight.
 const todayShare = 1 / 6;
-
-// Scrolling lands on whole pixels, so a quarter's start this close to a place is at it.
-const edgeTolerance = 1;
 
 const noStreams: readonly ReleaseStream[] = [];
 
@@ -354,12 +356,6 @@ export function TimelineView({
   );
 }
 
-const quarterWords = {
-  group: "Quarters",
-  previous: "Previous quarter",
-  next: "Next quarter",
-};
-
 // The strip of the timeline's quarters, following the view as it scrolls: a quarter chosen, or
 // reached by an arrow, is scrolled a sixth of the way across, as far as the timeline goes, and
 // selected.
@@ -396,7 +392,7 @@ function QuarterStrip({
   }, [view, frame, px, room]);
   // The quarter last chosen, by its first day, and where the view then was, so it shows as selected
   // until the view moves, even when the timeline's end left the view where it was.
-  const [chosen, setChosen] = useState<{ day: string; left: number; px: Px }>();
+  const [chosen, setChosen] = useState<{ key: string; left: number; px: Px }>();
   // Scrolls to a quarter's start, choosing it, or, with no quarter, to the day given, choosing none.
   const scrollTo = (
     quarter: { at: number; day: string } | undefined,
@@ -408,13 +404,11 @@ function QuarterStrip({
     setChosen(
       quarter === undefined
         ? undefined
-        : { day: quarter.day, left: landed, px },
+        : { key: quarter.day, left: landed, px },
     );
   };
   const isSelected = (day: string) =>
-    chosen?.day === day &&
-    chosen.px === px &&
-    Math.abs(chosen.left - left) <= edgeTolerance;
+    stillChosen(chosen, day, left) && chosen?.px === px;
   const right = left + room;
   const furthest = furthestScroll(frame, { px, room });
   // Where a quarter chosen lands, a sixth of the way across, which the arrows step from.

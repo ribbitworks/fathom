@@ -53,7 +53,9 @@ import {
   type DragEvent,
   type KeyboardEvent,
   type MouseEvent,
+  createContext,
   type ReactNode,
+  useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -100,6 +102,7 @@ import {
   scrollBesideFrozen,
   frozenVariables,
   type ScrollEdges,
+  keptEdges,
   scrollEdges,
   useMeasured,
 } from "./frozen-columns.ts";
@@ -274,6 +277,9 @@ export interface Column<
   marksParts?: boolean;
   // Whether a record's cell is shaded, such as a month outside someone's employment.
   shaded?: (record: Rec) => boolean;
+  // Whether the column is the period holding today, such as the current month, its heading
+  // underlined in today's red, as a strip's current period is.
+  current?: boolean;
   // How many characters the column's cells fit, in place of what its kind works out.
   cellChars?: number;
   headingCentred?: boolean;
@@ -1038,6 +1044,9 @@ function ariaSort(view: View, key: string) {
 }
 
 const widestChars = 30;
+// A table's name column starts no wider than most full names with the row's slot, so the columns
+// after it get the room; a longer name is cut short, and the column can be made wider.
+const widestNameChars = 24;
 
 // How many characters a row's slot takes before its first value: the record's marks, then the first
 // value's dot, which hangs back into it.
@@ -1047,12 +1056,14 @@ const slotChars = 2 + draftMarkChars;
 export function columnWidth(
   column: AnyColumn,
   longestText: ReadonlyMap<string, number>,
+  // The table's name column, which starts narrower than the rest.
+  nameColumn?: string,
 ): { cells: number; header: number } {
   return {
     cells: Math.min(
       column.cellChars ??
         kindOf(column).width(column, longestText.get(column.key) ?? 0),
-      widestChars,
+      column.key === nameColumn ? widestNameChars : widestChars,
     ),
     header: Math.min(
       Math.max(
@@ -1443,6 +1454,8 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   linkedColumn?: LinkedColumn | undefined;
   // False for a table whose records never have drafts, which offers no Draft menu.
   withDrafts?: boolean;
+  // Lines between columns, for a grid read across as well as down, such as one of months.
+  columnBorders?: boolean;
   // Choices of which records the table shows, beyond its filters, such as Show retired, first in
   // the Views menu.
   viewChoices?: readonly ViewChoice[] | undefined;
@@ -1455,6 +1468,28 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   body?: ((shown: ShownRows<Rec>) => ReactNode) | undefined;
   // Ticks for choosing rows to act on together, with the bar above the table that acts on them.
   ticks?: RowTicks<Rec> | undefined;
+}
+
+// The table's sideways scrolling, for what a page shows above it that follows it, such as a strip:
+// the box that scrolls, once drawn, how far its frozen columns reach, and scrolling a column to just
+// after them.
+export interface TableScroll {
+  box: () => HTMLDivElement | null;
+  frozenWidth: number;
+  scrollTo: (column: string) => void;
+}
+
+const TableScrolling = createContext<TableScroll | undefined>(undefined);
+
+// The scrolling of the table drawing what is above it, which only a table draws.
+export function useTableScroll(): TableScroll {
+  const scroll = useContext(TableScrolling);
+  if (scroll === undefined) {
+    throw new Error(
+      "Only what a table draws above itself follows its scrolling.",
+    );
+  }
+  return scroll;
 }
 
 // The rows a view shows, for a page that draws them its own way: in the view's order, each with its
@@ -1690,6 +1725,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   opensAtColumn,
   linkedColumn,
   withDrafts = true,
+  columnBorders = false,
   panels = [],
   viewChoices,
   pageParts,
@@ -2180,7 +2216,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const frozen = frozenLayout(measured, headerCells, frozenAsked);
   useLayoutEffect(() => {
     const box = scrollRef.current;
-    if (box !== null) setEdges(scrollEdges(box));
+    if (box !== null) {
+      const next = scrollEdges(box);
+      setEdges((before) => keptEdges(before, next));
+    }
   }, [measured, scrollRef]);
   // Held from the table's first drawing, so the page can let the link go at once.
   const [linkedAtFirst] = useState(linkedColumn?.key);
@@ -2200,6 +2239,31 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     openedAtColumn.current = true;
     (scrollRef.current as HTMLDivElement).scrollLeft = scroll;
   });
+  // The columns and where the frozen ones sit as last drawn, so scrolling to a column from above the
+  // table needs nothing new from each drawing.
+  const placing = useRef({ frozen, columns });
+  useLayoutEffect(() => {
+    placing.current = { frozen, columns };
+  });
+  const [scrolling] = useState(() => ({
+    box: () => scrollRef.current,
+    scrollTo: (key: string) => {
+      const { frozen: frozenNow, columns: columnsNow } = placing.current;
+      const scroll = scrollBesideFrozen(
+        frozenNow,
+        columnsNow.findIndex((column) => column.key === key),
+      );
+      // A column not shown, such as one hidden, leaves the table where it is.
+      if (scroll !== undefined) {
+        (scrollRef.current as HTMLDivElement).scrollLeft = scroll;
+      }
+    },
+  }));
+  const frozenWidth = frozen.width;
+  const tableScroll = useMemo<TableScroll>(
+    () => ({ ...scrolling, frozenWidth }),
+    [scrolling, frozenWidth],
+  );
   // Where a frozen column's cell, or its live copy's, sits, or nothing for a column not frozen.
   const frozenCell = (index: number, copy = 0) =>
     index < frozen.frozen
@@ -3143,6 +3207,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         aria-sort={ariaSort(view, column.key)}
         className={[columnTint(column), frozenAt.className].join(" ")}
         style={frozenAt.style}
+        data-column={column.key}
+        aria-current={column.current === true ? "date" : undefined}
         data-centred={column.headingCentred === true ? "" : undefined}
         {...dragProps}
       >
@@ -3685,7 +3751,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     ) : (
       <div>
         {viewBar}
-        {above(shownRecords)}
+        <TableScrolling.Provider value={tableScroll}>
+          {above(shownRecords)}
+        </TableScrolling.Provider>
       </div>
     );
   if (body !== undefined) {
@@ -3733,7 +3801,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
               )} * ${headerLineHeight} + ${headerPadding})`,
             }}
             onScroll={(event) => {
-              setEdges(scrollEdges(event.currentTarget));
+              const next = scrollEdges(event.currentTarget);
+              setEdges((before) => keptEdges(before, next));
             }}
           >
             <Table
@@ -3744,6 +3813,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                 ticks === undefined ? "" : classes.tickingTable,
               ].join(" ")}
               layout="fixed"
+              withColumnBorders={columnBorders}
               tabularNums
             >
               <colgroup>
@@ -3759,7 +3829,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                           : classes.recordCol
                       }
                       style={widthStyle(
-                        columnWidth(column, longestText),
+                        columnWidth(column, longestText, table.nameColumn),
                         widths.setWidthOf(column.key),
                       )}
                     />,
