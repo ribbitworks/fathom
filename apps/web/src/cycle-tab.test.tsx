@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Releases page's Cycles tab: the table of every schedule's cycles, what it keeps in
-// the address, past cycles, its columns and filters, a cycle's details and its Duration's changes,
-// the drafts of cycles and their row menus, the timeline, and what each role may do there.
+// Tests for the Releases page's Cycles tab: its table, address, columns and filters, a cycle's
+// details and drafts, the timeline, and what each role may do there.
 
 import type { Cycle, RecordDraft, ReleaseStream } from "@fathom/shared";
 import { screen, waitFor, within } from "@testing-library/react";
@@ -27,6 +26,7 @@ import {
   streamId,
   featuresAddress,
   openedIn,
+  changesSent,
 } from "./test-support.tsx";
 
 beforeEach(() => {
@@ -608,12 +608,9 @@ describe("the Cycles table's columns", () => {
     cell.focus();
     await userEvent.keyboard("{Enter}2027-05-01{Enter}");
     await userEvent.keyboard("{Delete}");
-    expect([
-      within(grid()).queryByRole("textbox"),
-      fetch.mock.calls.filter(
-        ([, init]) => init?.method !== undefined && init.method !== "GET",
-      ),
-    ]).toEqual([null, []]);
+    expect([within(grid()).queryByRole("textbox"), changesSent(fetch)]).toEqual(
+      [null, []],
+    );
   });
 });
 
@@ -726,9 +723,7 @@ describe("changing a cycle's Duration from its details", () => {
       within(dialog).getByRole("button", { name: "Change length" }),
     );
     expect(await screen.findByText("Drafted the new length.")).toBeDefined();
-    expect(
-      fetch.mock.calls.filter(([, init]) => init?.method === "PUT"),
-    ).toHaveLength(1);
+    expect(changesSent(fetch, "PUT")).toHaveLength(1);
   });
 
   it("or for it and later cycles, from it on", async () => {

@@ -20,7 +20,7 @@ import { sameView, savedFor, type View, viewFrom } from "./table-view.ts";
 // How long after the last change the view is kept, so typing a search sends it once.
 const keptAfter = 1000;
 
-const lastViewsPath = "/api/last-views";
+export const lastViewsPath = "/api/last-views";
 
 // Read once for the session, which signing in or out starts afresh.
 export const lastViewsQuery = queryOptions({

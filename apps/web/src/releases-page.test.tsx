@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Releases page's Schedules tab: the table of schedules, each schedule's details and
-// cycles, the changes made from them and from each row's menu, its drafts, the timeline above the
-// table, and what each role may do there.
+// Tests for the Releases page's Schedules tab: its table, a schedule's details, cycles and drafts,
+// the changes made from them, the timeline, and what each role may do there.
 
 import type { Cycle, ReleaseStream, ReleaseStreams } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
@@ -39,6 +38,7 @@ import {
   testTheme,
   featuresAddress,
   openedIn,
+  changesSent,
 } from "./test-support.tsx";
 
 afterEach(() => {
@@ -249,9 +249,7 @@ async function chooseInColumn(label: string, item: string) {
 }
 
 function calls(fetch: ReturnType<typeof serverAnswers>, method: string) {
-  return fetch.mock.calls
-    .filter(([, init]) => init?.method === method)
-    .map(([url]) => url);
+  return changesSent(fetch, method).map(([url]) => url);
 }
 
 describe("the Schedules table", () => {

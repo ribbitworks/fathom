@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Org chart page, with the server's responses simulated: who sees it, each person's
-// card and its link to People and back, hiding and showing a manager's reports and levels, finding a
-// person, one team shown alone, the chart's controls, and when the chart cannot load or has nobody on
-// it, what those who see the chart but not People see, feature teams: drawing them, opening one
-// or a person from its cards, and saving each change to a team from its panel, and saved views.
+// Tests for the Org chart page, with the server's responses simulated: the chart and its cards, its
+// controls and views, what each role sees, and feature teams and the changes made from their panels.
 
 import type { OrgChartPerson } from "@fathom/shared";
 import {
@@ -25,6 +22,7 @@ import {
   renderApp,
   serverAnswers,
   signedIn,
+  changesSent,
 } from "./test-support.tsx";
 
 const viewer = () =>
@@ -306,11 +304,9 @@ describe("the org chart", () => {
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Grape" }),
     );
-    const sent = () =>
-      fetch.mock.calls
-        .filter(([, init]) => init?.method === "PUT")
-        .map(([, init]) => JSON.parse(init?.body as string) as unknown);
-    expect(sent()).toEqual([{ colour: "grape" }]);
+    expect(changesSent(fetch, "PUT").map(([, body]) => body)).toEqual([
+      { colour: "grape" },
+    ]);
     expect(
       await screen.findByText("Fictional team is now drawn in Grape."),
     ).toBeDefined();
@@ -321,7 +317,10 @@ describe("the org chart", () => {
     ).toBe("var(--mantine-color-grape-filled)");
     colour = null;
     await userEvent.click(screen.getByRole("button", { name: "Undo" }));
-    expect(sent()).toEqual([{ colour: "grape" }, { colour: null }]);
+    expect(changesSent(fetch, "PUT").map(([, body]) => body)).toEqual([
+      { colour: "grape" },
+      { colour: null },
+    ]);
   });
 
   it("lets those who change people rename a team from its manager's card, as a draft", async () => {
@@ -740,8 +739,9 @@ describe("the org chart", () => {
     expect(
       await screen.findByText("Fictional team no longer has a colour."),
     ).toBeDefined();
-    const put = fetch.mock.calls.find(([, init]) => init?.method === "PUT");
-    expect(JSON.parse(put?.[1]?.body as string)).toEqual({ colour: null });
+    expect(changesSent(fetch, "PUT").map(([, body]) => body)).toEqual([
+      { colour: null },
+    ]);
   });
 
   it("says so, and keeps the colour, when it cannot be changed", async () => {
@@ -818,9 +818,7 @@ describe("the org chart", () => {
     await userEvent.click(
       await screen.findByRole("menuitem", { name: /Teal/ }),
     );
-    expect(fetch.mock.calls.some(([, init]) => init?.method === "PUT")).toBe(
-      false,
-    );
+    expect(changesSent(fetch, "PUT")).toEqual([]);
   });
 
   it("removes a team's name as a draft when the field is emptied, and saves nothing unchanged", async () => {
@@ -1688,16 +1686,6 @@ describe("feature teams on the org chart", () => {
     return { fetch, history };
   }
 
-  const sent = (fetch: ReturnType<typeof serverAnswers>, method: string) =>
-    fetch.mock.calls
-      .filter(([, init]) => init?.method === method)
-      .map(([url, init]) => [
-        url,
-        init?.body === undefined
-          ? undefined
-          : (JSON.parse(init.body as string) as unknown),
-      ]);
-
   // The panel of the feature team open, titled with the team's name, found by its own id.
   const teamPanel = async () => {
     await waitFor(() => {
@@ -2135,7 +2123,7 @@ describe("feature teams on the org chart", () => {
       expect(rowText(panel, "Name")).toBe("Fictional Beacon");
     });
     expect(history.location.search).toContain(`featureTeam=${beacon}`);
-    expect(sent(fetch, "POST")).toEqual([
+    expect(changesSent(fetch, "POST")).toEqual([
       [
         "/api/feature-teams",
         { name: "Fictional Beacon", leadId: null, members: [] },
@@ -2143,9 +2131,12 @@ describe("feature teams on the org chart", () => {
     ]);
     await userEvent.keyboard("{Meta>}z{/Meta}");
     await waitFor(() => {
-      expect(sent(fetch, "POST")).toHaveLength(2);
+      expect(changesSent(fetch, "POST")).toHaveLength(2);
     });
-    expect(sent(fetch, "POST")[1]).toEqual([`/api/undo/${changeSet}`, {}]);
+    expect(changesSent(fetch, "POST")[1]).toEqual([
+      `/api/undo/${changeSet}`,
+      {},
+    ]);
   });
 
   it("leaves a team just added alone with Cmd+Z while a view is being named", async () => {
@@ -2173,7 +2164,7 @@ describe("feature teams on the org chart", () => {
     );
     await userEvent.click(within(form).getByRole("button", { name: "Add" }));
     await waitFor(() => {
-      expect(sent(fetch, "POST")).toHaveLength(1);
+      expect(changesSent(fetch, "POST")).toHaveLength(1);
     });
     await userEvent.click(
       screen.getByRole("button", { name: "Views, changed" }),
@@ -2187,11 +2178,14 @@ describe("feature teams on the org chart", () => {
     await userEvent.keyboard("{Meta>}z{/Meta}");
 
     // Then nothing is undone until the dialog closes
-    expect(sent(fetch, "POST")).toHaveLength(1);
+    expect(changesSent(fetch, "POST")).toHaveLength(1);
     await userEvent.keyboard("{Escape}");
     await waitFor(async () => {
       await userEvent.keyboard("{Meta>}z{/Meta}");
-      expect(sent(fetch, "POST")[1]).toEqual([`/api/undo/${changeSet}`, {}]);
+      expect(changesSent(fetch, "POST")[1]).toEqual([
+        `/api/undo/${changeSet}`,
+        {},
+      ]);
     });
   });
 
@@ -2260,9 +2254,9 @@ describe("feature teams on the org chart", () => {
     );
     await changeMembers(panel, [/^Robin Fictional/, /^Uma Fictional/]);
     await waitFor(() => {
-      expect(sent(fetch, "PATCH")).toHaveLength(3);
+      expect(changesSent(fetch, "PATCH")).toHaveLength(3);
     });
-    expect(sent(fetch, "PATCH")).toEqual(
+    expect(changesSent(fetch, "PATCH")).toEqual(
       [
         { name: "Fictional Pier" },
         { leadId: "p4" },
@@ -2344,9 +2338,9 @@ describe("feature teams on the org chart", () => {
       );
       await changeMembers(panel, [/^Robin Fictional/, /^Uma Fictional/]);
       await waitFor(() => {
-        expect(sent(fetch, "PATCH")).toHaveLength(2);
+        expect(changesSent(fetch, "PATCH")).toHaveLength(2);
       });
-      expect(sent(fetch, "PATCH")).toEqual(
+      expect(changesSent(fetch, "PATCH")).toEqual(
         [
           { leadId: "p4", from: later },
           { add: ["p1"], remove: ["p4"], from: later },
@@ -2591,9 +2585,9 @@ describe("feature teams on the org chart", () => {
       );
     }
     await waitFor(() => {
-      expect(sent(fetch, "DELETE")).toHaveLength(3);
+      expect(changesSent(fetch, "DELETE")).toHaveLength(3);
     });
-    expect(sent(fetch, "DELETE").map(([url]) => url)).toEqual([
+    expect(changesSent(fetch, "DELETE").map(([url]) => url)).toEqual([
       `${team}/draft/rejection`,
       `${team}/draft`,
       team,
@@ -2618,7 +2612,7 @@ describe("feature teams on the org chart", () => {
     expect(
       await screen.findByText("Fictional Lighthouse is now drawn in Grape."),
     ).toBeDefined();
-    expect(sent(fetch, "PUT")).toEqual([
+    expect(changesSent(fetch, "PUT")).toEqual([
       [`/api/feature-teams/${lighthouse}/colour`, { colour: "grape" }],
     ]);
   });

@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Releases page's Releases tab: the table of releases, what it keeps in the address,
-// shipped releases, a release's details and the changes made from them, its note, its row's menu,
-// making a release, and what each role may do there.
+// Tests for the Releases page's Releases tab: its table and address, a release's details, note and
+// row menu, making a release, and what each role may do there.
 
 import type { Release, ReleaseStream } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
@@ -30,6 +29,7 @@ import {
   testTheme,
   featuresAddress,
   openedIn,
+  changesSent,
 } from "./test-support.tsx";
 
 // No saved views, for the tab drawn on its own.
@@ -568,9 +568,7 @@ describe("the Releases table's cells", () => {
       within(screen.getByRole("grid", { name: "Releases" })).queryByRole(
         "textbox",
       ),
-      fetch.mock.calls.filter(
-        ([, init]) => init?.method !== undefined && init.method !== "GET",
-      ),
+      changesSent(fetch),
     ]).toEqual([null, []]);
   });
 });
