@@ -43,7 +43,7 @@ Fathom names its personas as they are widely known in the software industry, wit
 - **Exports:** Export the plan and roadmap, limited to what each user's roles allow.
 - **Snapshots:** Save point-in-time snapshots of the plan and view them later.
 
-## Out of scope for v1
+## Out of Scope for v1
 
 - Integrations with external systems, such as issue trackers, project scheduling tools and HR systems
 - Sign-in through a corporate directory
@@ -53,7 +53,7 @@ Fathom names its personas as they are widely known in the software industry, wit
 - Time tracking and timesheets
 - Mobile-specific UI
 - Recording dotted-line reporting relationships
-- Tracking licenses
+- Tracking licences
 
 ## Constraints
 
@@ -76,7 +76,7 @@ Fathom names its personas as they are widely known in the software industry, wit
 
 Detailed decisions are recorded in the [Decisions Log](decisions.md). The order in which goals are delivered is in the [Roadmap](roadmap.md).
 
-## Future possibilities
+## Future Possibilities
 
 - Sign-in through the corporate directory (Active Directory / Entra ID / LDAP)
 - Reading project data from a project scheduling tool

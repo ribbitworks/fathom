@@ -1,8 +1,8 @@
 # Fathom: Securing Your Environment
 
-**Last updated:** 2026-11-14
+**Last updated:** 2026-11-17
 
-What Fathom can't secure for itself. The [Security Plan](../security/security-plan.md) covers what it does; everything below is up to whoever runs it. Settings named here are in `deploy/compose.env.example`.
+What Fathom can't secure for itself, and recommendations for securing it. The [Security Plan](../security/security-plan.md) covers what it does; everything below is up to whoever runs it. Settings named here are in `deploy/compose.env.example`.
 
 ## The Machine
 
@@ -38,7 +38,7 @@ What Fathom can't secure for itself. The [Security Plan](../security/security-pl
 
 ## Updates
 
-- **Run the latest release:** Each release's images are scanned before they're published. Update to new releases as they come out, especially for security fixes.
+- **Run the latest release:** Each release's images are scanned before they're published. Update to each new release as it comes out.
 - **Images built on the machine:** Set `FATHOM_SECURITY_FIXES_DATE` to a newer date to fetch the latest operating system fixes when rebuilding.
 
 ## What Leaves Fathom

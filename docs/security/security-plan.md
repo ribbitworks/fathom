@@ -80,6 +80,6 @@ The threat model groups threats by STRIDE: spoofing, tampering, repudiation, inf
 ## Source Code Assurance
 
 - **Open source:** Fathom is licensed under Apache 2.0.
-- **Standards:** Code is written to the [core principles](../standards/shared/core-principles.md) and the [TypeScript](../standards/shared/typescript/typescript.md) and [shell](../standards/shared/shell/shell.md) standards, and reviewed against the [Code Review Standards](../standards/shared/code-review.md#security-and-data) and [Fathom's security focus](../standards/code-review.md#security).
-- **Tests:** [Access control tests](../standards/testing.md#access-control-tests) cover every role and classification, alongside [security tests](../standards/testing.md#security-tests) and static analysis, as the [Testing Standards](../standards/shared/testing.md) set out.
+- **Standards:** Code is written to the [core principles](../standards/core-principles.md) and the [TypeScript](../standards/typescript.md) and [shell](../standards/shell.md) standards, and reviewed against the [Code Review Standards](../standards/code-review.md#security-and-data).
+- **Tests:** [Access control tests](../standards/testing.md#access-control-tests) cover every role and classification, alongside [security tests](../standards/testing.md#security-tests) and static analysis, as the [Testing Standards](../standards/testing.md) set out.
 - **Releases:** Each release is tagged, and its images are built from that tag and labelled with its source and commit, as [ADR 0011](../adr/0011-releases-and-images.md) sets out.

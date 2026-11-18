@@ -22,12 +22,12 @@ No agent decides any of these.
 
 ## The Team of Agents
 
-Each agent has one role:
+Each agent has one of these roles:
 
 | Agent | Role |
 | --- | --- |
 | Architect | Writes detailed designs, and changes no code unless asked |
-| Two builders | Write the code and its automated tests |
+| Builder | Writes the code and its automated tests |
 | Technical writer | Writes the documents, Help pages, manual and acceptance tests, and issues |
 | Test helper | Supports the maintainer's manual and acceptance testing |
 | Coordinator | Plans and assigns work, checks designs against the code, and keeps the record of the maintainer's decisions |
@@ -51,10 +51,10 @@ flowchart TD
 ```
 
 1. **Design:** Anything sizeable starts with a written design, checked against the real code. It lists every decision it needs, least certain first. The maintainer approves, changes or rejects each one, often from a mockup of the screen.
-1. **Small pull requests:** Each pull request covers one task, usually in one reviewed commit. A batch of issue fixes in one area commits each fix on its own, has one review and one approval for the whole branch, and stays under about 1,500 added lines, as [Issues](issues.md#issue-batches) sets out.
+1. **Small pull requests:** Each pull request covers one task, usually in one reviewed commit. A batch of issue fixes in one area commits each fix on its own, has one review and one approval for the whole branch, and stays under about 1,500 added lines, as [Issues](standards/issues.md#issue-batches) sets out.
 1. **The screen check:** The maintainer looks at every screen change, in a browser, before the tests and the review. Nothing goes further until the maintainer is satisfied with the screen.
 1. **Tests while working:** The tests of each package the change touches, and the linters, run while the change is made.
-1. **A separate review:** Another agent, which did not write the change, reviews it against the [Code Review Standards](standards/shared/code-review.md). It rates each focus area from 1 to 5, and the change is ready only when every area rates 5. A faster model may review changes to documents, scripts, on-screen wording and ordinary tests. Anything that touches security, and any change where the choice is in doubt, is reviewed with the full model, as [Code Review Standards § Review Process](standards/code-review.md#review-process) sets out. Every finding is fixed, or the maintainer agrees in writing to leave it.
+1. **A separate review:** Another agent, which did not write the change, reviews it against the [Code Review Standards](standards/code-review.md). It rates each focus area from 1 to 5, and the change is ready only when every area rates 5. A faster model may review changes to documents, scripts, on-screen wording and ordinary tests. Anything that touches security, and any change where the choice is in doubt, is reviewed with the full model, as [Code Review Standards § Review Process](standards/code-review.md#review-process) sets out. Every finding is fixed, or the maintainer agrees in writing to leave it.
 1. **The full check:** `pnpm check` runs before the pull request and before each later push to it, on the final code: the linters, type checks, the unit, integration, access control, security and script tests with coverage, and the security scans. A change that affects the containers also runs the container tests.
 1. **Approval and merge:** The maintainer approves each commit before it is made. Nothing is merged without the maintainer's word.
 
@@ -66,8 +66,7 @@ Automated tests and scans don't yet run on GitHub for each pull request; they ru
 
 Every change follows written standards, kept in [docs/standards](standards/):
 
-- **Shared standards:** core principles, TypeScript, shell scripts, testing, documentation, Markdown style, code review, and how agents work. Several projects share these.
-- **Fathom's own:** additions for testing, code review, documentation and Help pages.
+- Core principles, TypeScript, shell scripts, testing, documentation, Markdown style, Help pages, UI conventions, issues, code review, and how agents work.
 
 A few things they demand:
 
@@ -82,7 +81,7 @@ A few things they demand:
 
 ### Automated Tests
 
-More than 4,500 automated tests run at every level:
+Automated tests run at every level:
 
 - **Unit tests** for rules, calculations and validation.
 - **Integration tests** of the API and the data layer, against a real PostgreSQL database.
@@ -105,7 +104,7 @@ The test command fails below 100% of branches, functions, lines and statements i
 What is left out, as [Testing Standards § Coverage Enforcement](standards/testing.md#coverage-enforcement) allows:
 
 - **Files that only start a program or serve the tests,** such as the server's `main.ts` and the web app's `main.tsx`, named in each package's settings. The parts they put together are tested.
-- **Lines marked `/* v8 ignore */`,** each with its reason written beside it. There are four today, each the few lines that start a command when it runs as its own process, where the tests call the command's function instead.
+- **Lines marked `/* v8 ignore */`,** each with its reason written beside it. Each is the few lines that start a command when it runs as its own process, where the tests call the command's function instead.
 - **Code outside the packages:** the automation scripts have their own tests, and the test helper package serves only tests.
 
 Logic, validation, access checks and data handling are never left out, and the review judges each exclusion.
@@ -118,7 +117,7 @@ Automated tests can't judge how a screen looks and reads, a journey across pages
 - **Acceptance tests:** each role has one in [docs/testing/acceptance](testing/acceptance/), following the workflows of its [Help page](help/index.md) as that person would do them.
 - **Run by the maintainer:** the maintainer has run every one, and runs them again as features change. The marked copies of each run are kept privately.
 
-Together they hold about 340 test cases. They leave out what automated tests already prove, such as each validation message, so each runs in about 30 minutes.
+They leave out what automated tests already prove, such as each validation message, so each runs in about 30 minutes.
 
 ## Data and Security
 
@@ -134,7 +133,7 @@ Each kind of decision has one home, so nothing is decided twice or lost:
 
 - [Decisions Log](product/decisions.md): product decisions and their details
 - [Architecture Decision Records](adr/): technical decisions, each with the options considered
-- [UI Conventions](design/conventions.md): what every screen shares
+- [UI Conventions](standards/ui-conventions.md): what every screen shares
 - [Visual Design](design/visual-design.md): how screens look and behave
 
 [Documentation Standards](standards/documentation.md#which-document-owns-what) lists which document owns which facts.
@@ -148,7 +147,9 @@ Commits, pull requests, code and other documents carry no AI attribution. How AI
 
 ## Open Source and the Tools
 
-Fathom is licensed under Apache 2.0, and the libraries it uses are open source, as [ADR 0001](adr/0001-tech-stack.md) and [ADR 0002](adr/0002-libraries.md) record. ### The Agents' Tools
+Fathom is licensed under Apache 2.0, and the libraries it uses are open source, as [ADR 0001](adr/0001-tech-stack.md) and [ADR 0002](adr/0002-libraries.md) record.
+
+### The Agents' Tools
 
 The agents run in Claude Code, Anthropic's coding tool. Today, they use these models:
 

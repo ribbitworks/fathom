@@ -1,6 +1,6 @@
 # Fathom: Supported Platforms
 
-**Last updated:** 2026-11-14
+**Last updated:** 2026-11-17
 
 Fathom runs as Linux containers for x86-64 (linux/amd64), managed with Docker Compose. Its container files don't depend on any one container runtime.
 
@@ -12,7 +12,7 @@ Fathom runs as Linux containers for x86-64 (linux/amd64), managed with Docker Co
 ## Development Platforms
 
 - **Operating systems:** macOS, Linux or Windows. Fathom is developed on macOS; the Windows bootstrap script hasn't been run on Windows yet.
-- **Container runtimes:** Docker Engine, Colima, Podman or Docker Desktop. Docker Desktop needs a paid subscription for larger companies.
+- **Container runtimes:** Docker Engine, Colima, Podman or Docker Desktop.
 - **Processors:** Release images are built for linux/amd64; [Development Setup](../design/development-setup.md#ways-to-run-fathom) describes which development builds use the machine's own processor.
 
 ## Browsers
