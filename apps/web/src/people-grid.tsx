@@ -1,15 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The People table: the table of records record-grid.tsx sets out, with what is particular to
-// people and planned hires, its two kinds of row. Its columns are each row's name, ID, position,
-// and state, Hired for every person, their manager, whether they are marked as a manager, whom
-// others can report to, their team, which follows from their manager, the feature teams they are
-// on, for those who see feature teams, and their own team's name, the added columns, the month a
-// planned hire is expected, and, for those who may see them, start and end dates and the date their
-// manager is theirs from. A planned hire's name is optional, and while it has none its position and
-// ID stand in for it; it has no end date, mark as a manager, date its manager is its own from, or
-// team name, and its start date is its target date. No two rows have the same ID, a person's end
-// date cannot be before their start date, and an ID typed in cannot look like a temporary one.
+// The People table: the shared table with what is particular to people and planned hires.
 
 import { dayNeeded } from "./day-input.tsx";
 import { FillHireButton } from "./row-controls.tsx";
@@ -695,6 +686,9 @@ export const datedKey = "managerId";
 
 const builtInGroupings = ["managerId", "featureTeams", "positionId", "stateId"];
 
+// The built-in groupings whose choices are listed by name.
+const groupedByName = new Set(["managerId", "featureTeams"]);
+
 // Team follows from Manager, so isn't offered apart.
 function peopleGroupings(columns: readonly Column[]): RowGrouping<Person>[] {
   const teamOf = new Map(
@@ -714,9 +708,10 @@ function peopleGroupings(columns: readonly Column[]): RowGrouping<Person>[] {
       (column) => column.field !== undefined && holdsChoices(column),
     ),
   ].map((column) =>
-    column.key === "managerId"
-      ? byChoice(column, managerHeading)
-      : byChoice(column),
+    byChoice(column, {
+      ...(column.key === "managerId" ? { headingOf: managerHeading } : {}),
+      ...(groupedByName.has(column.key) ? { holds: "names" as const } : {}),
+    }),
   );
 }
 

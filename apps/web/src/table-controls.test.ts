@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the parts of a view the Save view dialog names, for those the table's other tests do
-// not reach: the units and decimal places columns are shown in, the grouping, the page's own
-// choices and the hidden columns; a filter of every value that isn't empty; and what a view its
-// maker can no longer use is missing, as the Views menu says it.
+// Tests for the parts of a view the Save view dialog names, and what a view its maker can no
+// longer use is missing.
 
 import { describe, expect, it } from "vitest";
 import {
@@ -123,8 +121,8 @@ describe("viewParts of a grouping and a page's choices", () => {
     part: { name: "Show", value: "Retired schedules" },
   };
   const groupings = [
-    { key: "status", label: "Status" },
-    { key: "site", label: "Site" },
+    { key: "status", label: "Status", holds: "list" as const },
+    { key: "site", label: "Site", holds: "names" as const },
   ];
 
   it("names the choices first, each only when set, then the grouping", () => {
@@ -160,6 +158,25 @@ describe("viewParts of a grouping and a page's choices", () => {
         groupings,
       }),
     ).toEqual([{ name: "Group by", value: "Site, then Status" }]);
+  });
+
+  it("names the groups' order once they run the other way, in the first grouping's words", () => {
+    expect(
+      viewParts(
+        {
+          ...emptyView,
+          grouping: "site",
+          thenBy: "status",
+          groupsReversed: true,
+        },
+        [],
+        [],
+        { groupings },
+      ),
+    ).toEqual([
+      { name: "Group by", value: "Site, then Status" },
+      { name: "Group order", value: "Z to A" },
+    ]);
   });
 
   it("leaves out a second grouping the rows can't be under", () => {

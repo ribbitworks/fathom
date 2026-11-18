@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Drafts page's table on the shared table, read only: a row for each draft the reader sees,
-// naming its record, after the draft's dot, the lock of someone else's changes and the facts that
-// keep it from being decided now, what the draft does, what it changes, the record's type and area,
-// who made it, the day they drafted it, and a rejection's reason, with its state in words beside
-// what the draft does, so it can be filtered by.
+// The Drafts page's table, on the shared table: a row for each draft the reader sees.
 
 import {
   approvedAreaNames,
@@ -323,6 +319,8 @@ export function draftsTable({
     slotMarksOnly: true,
     groupings: columns
       .filter(({ key }) => groupedBy.includes(key))
-      .map((column) => byChoice(column)),
+      .map((column) =>
+        byChoice(column, column.key === "madeBy" ? { holds: "names" } : {}),
+      ),
   };
 }

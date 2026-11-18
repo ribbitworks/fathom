@@ -77,6 +77,8 @@ The table starts as one list. You can put the features under headings instead, s
 
 A feature with several customers, projects or proposals shows under each of them. Each of its rows has a grey **+1**, or **+2** and on, after its name; point at it to see the other headings. A change in one row shows in the others, since they're the same feature.
 
+To turn the headings round, select **Group by** again, and choose the second order after the groupings, such as **Latest first** for cycles or months, or **Reverse list order** for a list such as **Status**. **Later**, or the heading for none, such as **No date**, then comes first. The board's rows turn round too.
+
 To show one list again, choose **Clear grouping**, at the end of the menu, or **None** under **Group by**.
 
 The board shows only the first grouping. **Then by** comes back when you switch to the table.

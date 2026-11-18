@@ -139,6 +139,14 @@ describe("viewDefinitionSchema", () => {
     ).toEqual({ grouping: "site" });
   });
 
+  it("keeps the groups reversed only when asked for, dropping anything else", () => {
+    expect([
+      viewDefinitionSchema.parse({ groupsReversed: true }).groupsReversed,
+      viewDefinitionSchema.parse({ groupsReversed: false }).groupsReversed,
+      viewDefinitionSchema.parse({ groupsReversed: "yes" }).groupsReversed,
+    ]).toEqual([true, undefined, undefined]);
+  });
+
   it("drops filters, sorts, and breakdowns that are not lists or records", () => {
     expect(
       viewDefinitionSchema.parse({ filters: "x", sort: "x", breakdown: "x" }),
@@ -305,6 +313,13 @@ describe("savedViewRequestSchema", () => {
     expect(request({ grouping: "site", thenBy: "level" }).success).toBe(true);
     expect(request({ thenBy: ["level"] }).success).toBe(false);
     expect(request({ thenBy: "" }).success).toBe(false);
+  });
+
+  it("accepts the groups reversed, and refuses anything else for it", () => {
+    expect(request({ grouping: "site", groupsReversed: true }).success).toBe(
+      true,
+    );
+    expect(request({ groupsReversed: false }).success).toBe(false);
   });
 
   it("refuses a number of frozen columns that is not whole or is negative", () => {

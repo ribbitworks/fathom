@@ -37,7 +37,9 @@ describe("grouping by a column's choices", () => {
   });
 
   it("heads a group with the heading given for its choice", () => {
-    const grouping = byChoice(column, ({ label }) => `${label} office`);
+    const grouping = byChoice(column, {
+      headingOf: ({ label }) => `${label} office`,
+    });
     expect(grouping.of(row(["c1"]))[0].label).toBe("Harbour office");
   });
 

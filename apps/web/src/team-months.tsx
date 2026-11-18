@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Who is on which feature team, month by month, through the server's API, as a table of records: a
-// row for each person and a column for each month, with the months team drafts change shown as a
-// draft of the person's row. Grouped by feature team, someone who was on two teams has a row under
-// each. Those who may propose team changes change a month's teams, drafted on each team from that
-// month on. The table, its groupings and its read-only actions are shared with the grid's other
-// mode, allocations.
+// Who is on which feature team, month by month, as a table of records, with the groupings and
+// read-only actions it shares with the allocations grid.
 
 import {
   addToMonth,
@@ -39,7 +35,7 @@ import {
 } from "./record-grid.tsx";
 import { changeMemberTeams, featureTeamsQuery } from "./feature-teams.ts";
 import { useSaving } from "./saving.ts";
-import { formatMonth, groupedRowId } from "./table-view.ts";
+import { formatMonth, groupedRowId, rankOfNone } from "./table-view.ts";
 import type { DraftLike } from "./status-mark.tsx";
 import { type DraftedLabel, TeamLabels } from "./team-labels.tsx";
 
@@ -97,7 +93,6 @@ export const teamMonthsQuery = ({ from, to }: MonthRange) =>
       ),
   });
 
-const lastRank = Number.MAX_SAFE_INTEGER;
 export const managerGrouping = "manager";
 export const featureTeamGrouping = "feature-team";
 
@@ -112,9 +107,10 @@ function groupedByManager<Rec extends Pick<MonthRow, "manager">>(
   return {
     key: managerGrouping,
     label: "Manager",
+    holds: "names",
     of: ({ manager }) => [
       manager === null
-        ? { key: "no-manager", label: "No manager", rank: lastRank }
+        ? { key: "no-manager", label: "No manager", rank: rankOfNone }
         : {
             key: manager.id,
             label: manager.name,
@@ -134,9 +130,10 @@ function groupedByFeatureTeam<Rec extends Pick<MonthRow, "group">>(
   return {
     key: featureTeamGrouping,
     label: "Feature team",
+    holds: "names",
     of: ({ group }) => [
       group === undefined
-        ? { key: "no-team", label: "No feature team", rank: lastRank }
+        ? { key: "no-team", label: "No feature team", rank: rankOfNone }
         : {
             key: group.id,
             label: group.name,

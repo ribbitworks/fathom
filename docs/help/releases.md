@@ -24,7 +24,7 @@ See [Drafts](drafts.md) for more.
 - **Cycles** lists each cycle with its schedule, its first and last days, the release that covers it, and its features. The cycle holding today reads **Current**. Past cycles, and cycles that start after next quarter, are left out until you choose **Show past cycles** or **Show later cycles** in the **Views** menu. The timeline names each cycle, with the current one in bold.
 - **Schedules** lists each schedule with its current cycle and that cycle's first and last days, the features targeting it, the next release to ship and its day, how long its cycles last now, and its **Schedule ends** day. The timeline shows each schedule's cycles, and where it ends.
 
-Each tab starts as one list. To group **Releases** or **Cycles** by schedule, choose **Group by**, then **Schedule**. To group **Schedules** by **Current**, **Ended** and **Retired**, choose **Group by**, then **Status**.
+Each tab starts as one list. To group **Releases** or **Cycles** by schedule, choose **Group by**, then **Schedule**. To group **Schedules** by **Current**, **Ended** and **Retired**, choose **Group by**, then **Status**. To turn the headings round, choose the second order after the groupings, such as **Reverse list order**.
 
 ## Main Tasks
 

@@ -1163,10 +1163,14 @@ describe("views of every table", () => {
     ).toBe(400);
   });
 
-  it("keep a second grouping and send it, and are kept from readers who can't see the column it groups by", async () => {
+  it("keep a second grouping and the groups' order and send them, and are kept from readers who can't see the column it groups by", async () => {
     const maker = await test.signedIn("workforce-administrator");
     const viewer = await test.signedIn(generalReader);
-    const definition = { grouping: "employeeId", thenBy: "endDate" };
+    const definition = {
+      grouping: "employeeId",
+      thenBy: "endDate",
+      groupsReversed: true as const,
+    };
     const { view } = (
       await share(maker.cookie, unique("Then by end"), definition)
     ).json<Saved>();

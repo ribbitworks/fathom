@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Schedules tab's table on the shared table: each schedule's name, with Ended after it once its
-// last day has passed, its current cycle with its first and last days, the release that ships next
-// and its day, how long its cycles last now, and its last day. A schedule's row carries the drafts
-// of its cycle changes and releases as well as its own, so its row is marked wherever any of them
-// changes what it shows. Retired schedules show only when asked for, and a schedule drafted to be
-// retired or restored stays where it is live until approved.
+// The Schedules tab's table, on the shared table.
 
 import {
   capitalized,
@@ -269,6 +264,7 @@ const groupings = (day: string): RowGrouping<StreamRow>[] => [
   {
     key: "status",
     label: "Status",
+    holds: "list",
     of: (row) => [statusOf(row.stream, day)],
   },
 ];

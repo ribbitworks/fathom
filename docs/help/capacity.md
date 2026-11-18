@@ -36,6 +36,8 @@ The table starts as one list. To put the rows under headings:
 1. Select **Group by**.
 1. Choose **Manager** or **Feature team**.
 
+To turn the headings round, select **Group by** again, and choose **Z to A**. The heading for none, such as **No manager**, then comes first.
+
 To show one list again, choose **Clear grouping**, at the end of the menu, or **None** under **Group by**.
 
 Grouped by **Manager**, someone who changed manager has a row under each one, holding only the months they reported to them. Grouped by **Feature team**, someone has a row under each team they're on, and one under **No feature team** for any months they're on none.

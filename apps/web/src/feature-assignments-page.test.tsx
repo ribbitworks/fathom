@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Feature assignments page: people as rows and months as columns, their teams shown as
-// labels, the three ways of grouping them, each person counted once, months outside someone's
-// employment, a label's tooltip, drafts and the Draft menu, changing a month's teams, saved views,
-// what it shows when it cannot load, and the old address of its Allocations mode, which opens
-// Capacity instead.
+// Tests for the Feature assignments page against a simulated server.
 
 import { type TeamMonths } from "@fathom/shared";
 import {
@@ -451,6 +447,18 @@ describe("the Feature assignments page", () => {
     expect(screen.getAllByText("Avery Fictional")).toHaveLength(2);
     expect(screen.getByText("No feature team")).toBeDefined();
     expect(screen.getByRole("status").textContent).toBe("3 people");
+  });
+
+  it("puts the heading for none first once the headings run Z to A", async () => {
+    await openPage("?grouping=feature-team&groupsReversed=true");
+
+    const [firstOnTeam] = screen.getAllByText("Avery Fictional");
+    expect(
+      screen
+        .getByText("No feature team")
+        .compareDocumentPosition(firstOnTeam as HTMLElement) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("lists everyone once, with no grouping, to start", async () => {

@@ -158,6 +158,8 @@ Grouped by feature teams, someone on two teams shows under each, with a dimmed *
 
 To group each heading's rows again, such as each manager's people by site, select **Group by** again, and choose a column under **Then by**. The button then names both, such as **Group by: Manager, then Site**. Each manager's heading then has a smaller heading for each site, with that site's people under it. A site with nobody under a manager has no heading there.
 
+To turn the headings round, select **Group by** again, and choose the second order after the groupings, such as **Z to A** for managers, or **Reverse list order** for a list such as **Position**. The heading for none, such as **No manager**, then comes first. Choosing another grouping starts again with the first order.
+
 To show one list again, choose **Clear grouping**, at the end of the menu, or **None** under **Group by**. Either clears **Then by** too. Save a view to keep a grouping you use often. See [Saved views](saved-views.md).
 
 You're done when the rows show under the headings you chose.

@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Projects page's tables: customers, projects, proposals, and milestones, each the table of
-// records record-grid.tsx sets out, with what is particular to its kind. A record's fields are its
-// columns, and its draft's live values are kept by the same names. A project's dates follow from
-// its milestones, so are read only. A milestone belongs to the project it was added to, so its
-// project is picked only on a new row.
+// The Projects page's tables, customers, projects, proposals and milestones, and Features' table,
+// each on the shared table.
 
 import {
   type Choice,
@@ -86,6 +83,7 @@ import {
   type ColumnUnit,
   formatMonth,
   type RowGroup,
+  rankOfNone,
 } from "./table-view.ts";
 
 // A change to one or more of a record's fields, by name.
@@ -907,7 +905,7 @@ export function featureColumns(
 const later: RowGroup = {
   key: "later",
   label: "Later",
-  rank: Number.MAX_SAFE_INTEGER,
+  rank: rankOfNone,
 };
 
 // The rows' groups by the cycle each feature targets, then Later.
@@ -918,6 +916,7 @@ const byTarget = (
 ): RowGrouping<Feature> => ({
   key,
   label,
+  holds: "time",
   of: (feature) => {
     const [cycle = ""] = cycleOf(feature);
     return [groupOfCycle.get(cycle) ?? later];
@@ -938,9 +937,10 @@ const byCycle = (cycles: readonly Choice[]) =>
 const byNeededBy: RowGrouping<Feature> = {
   key: "neededBy",
   label: "Needed by",
+  holds: "time",
   of: ({ neededBy }) => [
     neededBy === null
-      ? { key: "no-date", label: "No date", rank: Number.MAX_SAFE_INTEGER }
+      ? { key: "no-date", label: "No date", rank: rankOfNone }
       : {
           key: neededBy,
           label: formatMonth(neededBy),
@@ -951,6 +951,14 @@ const byNeededBy: RowGrouping<Feature> = {
 
 // The columns whose choices the rows can be grouped by, a feature under each it holds, apart from
 // the target cycle and its release, grouped by their own.
+// The grouped columns whose choices are listed by name, as the server sends them.
+const groupedByName = new Set([
+  "featureTeamId",
+  "customerIds",
+  "projectIds",
+  "proposalIds",
+]);
+
 const groupedByChoice = (column: Column<Feature, PlanChange>) =>
   holdsChoices(column) &&
   column.key !== "targetCycle" &&
@@ -973,7 +981,9 @@ export function featureTable(
 ): RecordTable<Feature, PlanChange, FeatureFields> {
   const byListed = featureColumns(choices)
     .filter(groupedByChoice)
-    .map((column) => byChoice(column));
+    .map((column) =>
+      byChoice(column, groupedByName.has(column.key) ? { holds: "names" } : {}),
+    );
   return planTable<Feature, FeatureFields>({
     type: "feature",
     ...wordsOf("features"),

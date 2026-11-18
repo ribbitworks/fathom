@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Features Board, the Roadmap's view of features: one release stream's cycles across, as many
-// as fit, then Later, each headed with its release's name in its colour's box, the cycle and its
-// dates; the rows the view's grouping puts the features under; and a card for each feature, showing
-// what the Card menu chooses. The strip above it steps through the stream's cycles. Arrow keys move
-// between the cards, and choosing one opens its details.
+// The Features Board: one schedule's cycles across, the view's grouping as its rows, and a card
+// for each feature.
 
 import {
   type Cycle,
@@ -67,6 +64,7 @@ import {
   wasWords,
 } from "./status-mark.tsx";
 import {
+  byGroupRank,
   formatDay,
   formatMonth,
   type OtherPlace,
@@ -112,7 +110,7 @@ const offeredStreams = (
 ) => streams.filter(({ id }) => !retired.has(id) || id === shown?.id);
 
 export function FeatureBoard({
-  shown: { records, panelOpen, groupOf, draftOf, liveOf },
+  shown: { records, panelOpen, groupOf, groupsReversed, draftOf, liveOf },
   streams,
   choices,
   place,
@@ -182,7 +180,7 @@ export function FeatureBoard({
   const order = cardOrder(choices.priorities, choices.featureStatuses);
   // Only the features in the columns shown are counted and grouped, not those in other streams.
   const onBoard = records.filter((feature) => shownKeys.has(columnOf(feature)));
-  const rows = rowsOf(onBoard, groupOf).map((row) => ({
+  const rows = rowsOf(onBoard, groupOf, groupsReversed).map((row) => ({
     ...row,
     cells: columns.map((column) => ({
       column,
@@ -463,6 +461,7 @@ export function focusCard(id: string): void {
 function rowsOf(
   records: readonly Feature[],
   groupOf: ((record: Feature) => RowGroups) | undefined,
+  groupsReversed: boolean,
 ): { key: string; label: string; records: Feature[] }[] {
   if (groupOf === undefined) {
     return [{ key: "all", label: "", records: [...records] }];
@@ -478,7 +477,7 @@ function rowsOf(
       rows.set(key, row);
     }
   }
-  return [...rows.values()].sort((a, b) => a.rank - b.rank);
+  return [...rows.values()].sort(byGroupRank(groupsReversed));
 }
 
 interface CardPlace {
