@@ -1944,7 +1944,7 @@ describe("a schedule's draft in its row's menu", () => {
     await waitFor(() => {
       expect(fetch.mock.calls.map(([url]) => url)).toContain("/api/projects");
     });
-    await chooseRowAction("Approve draft");
+    await chooseRowAction("Approve draft…");
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 2 drafts?",
     });
@@ -1969,7 +1969,7 @@ describe("a schedule's draft in its row's menu", () => {
         "POST /api/drafts/approval": savedAs,
       },
     });
-    await chooseRowAction("Approve draft");
+    await chooseRowAction("Approve draft…");
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 2 drafts?",
     });
@@ -2008,8 +2008,8 @@ describe("a schedule's draft in its row's menu", () => {
       },
     });
 
-    // When Approve draft is chosen from its row's menu
-    await chooseRowAction("Approve draft");
+    // When Approve draft… is chosen from its row's menu
+    await chooseRowAction("Approve draft…");
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 1 draft?",
     });
@@ -2040,7 +2040,7 @@ describe("a schedule's draft in its row's menu", () => {
     );
     const menu = await openRowMenu();
     expect([
-      within(menu).queryByRole("menuitem", { name: "Approve draft" }),
+      within(menu).queryByRole("menuitem", { name: "Approve draft…" }),
       within(menu).queryByRole("menuitem", { name: "Reject draft…" }),
     ]).toEqual([null, null]);
   });
@@ -2078,7 +2078,7 @@ describe("a schedule's draft in its row's menu", () => {
     });
 
     // When approving it is chosen from its row's menu
-    await chooseRowAction("Approve draft");
+    await chooseRowAction("Approve draft…");
 
     // Then Fathom says it waits for the rejected one, and approves nothing
     expect(
@@ -2096,7 +2096,7 @@ describe("a schedule's draft in its row's menu", () => {
     await openStream([stream], { answers: { "GET /api/session": approver } });
     const menu = await openRowMenu();
     const approve = within(menu).getByRole("menuitem", {
-      name: "Approve draft",
+      name: "Approve draft…",
     });
     expect(
       approve.hasAttribute("disabled") ||

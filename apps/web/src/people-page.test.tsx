@@ -1359,9 +1359,9 @@ describe("drafts", () => {
       (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["Show details", "Copy link", "Approve draft", "Reject draft…"]);
+    ).toEqual(["Show details", "Copy link", "Approve draft…", "Reject draft…"]);
     await userEvent.click(
-      screen.getByRole("menuitem", { name: "Approve draft" }),
+      screen.getByRole("menuitem", { name: "Approve draft…" }),
     );
     const one = await screen.findByRole("dialog", { name: "Approve 1 draft?" });
     await userEvent.click(within(one).getByRole("button", { name: "Approve" }));
@@ -1789,7 +1789,7 @@ describe("columns", () => {
       screen.getByRole("button", { name: "Role on team column, Personal" }),
     );
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Edit column" }),
+      await screen.findByRole("menuitem", { name: "Edit column…" }),
     );
     let dialog = await screen.findByRole("dialog", { name: "Edit column" });
     const name = within(dialog).getByLabelText("Name");
@@ -1815,7 +1815,7 @@ describe("columns", () => {
     await userEvent.click(
       within(
         await screen.findByRole("menu", { name: /^Role on team column/ }),
-      ).getByRole("menuitem", { name: "Edit column" }),
+      ).getByRole("menuitem", { name: "Edit column…" }),
     );
     dialog = await screen.findByRole("dialog", { name: "Edit column" });
     await userEvent.click(
@@ -2727,7 +2727,7 @@ describe("searching, sorting, and filtering", () => {
     expect(screen.queryByText("Clear all")).toBeNull();
     await userEvent.click(header("Name"));
     const sort = await screen.findByRole("menuitem", { name: "Sort Z to A" });
-    expect(screen.queryByRole("menuitem", { name: "Edit column" })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: "Edit column…" })).toBeNull();
     expect(screen.getByRole("menuitem", { name: /^Move left/ })).toBeDefined();
     await userEvent.click(sort);
     expect(shownNames()).toEqual(["Blake Fictional", "Avery Fictional"]);
@@ -3684,7 +3684,7 @@ describe("drafts of columns", () => {
     });
     await userEvent.click(await findRowActions("Avery Fictional"));
     const row = await screen.findByRole("menu");
-    expect(disabled(row, "Approve draft")).toBe(true);
+    expect(disabled(row, "Approve draft…")).toBe(true);
     expect(within(row).getByText(note)).toBeDefined();
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
@@ -3944,7 +3944,7 @@ describe("unpublished and held changes", () => {
     ).toBeNull();
     let menu = await menuOf(rowActions("Avery Fictional"));
     expect(within(menu).getByText(held)).toBeDefined();
-    for (const item of ["Approve draft", "Discard draft", "Remove person"]) {
+    for (const item of ["Approve draft…", "Discard draft", "Remove person"]) {
       expect(within(menu).queryByRole("menuitem", { name: item })).toBeNull();
     }
     // Nothing follows the draft's lines, so no divider ends the menu.
@@ -3953,7 +3953,7 @@ describe("unpublished and held changes", () => {
     menu = await menuOf(rowActions("Blake Fictional"));
     expect(within(menu).getByText(mine)).toBeDefined();
     expect(
-      within(menu).queryByRole("menuitem", { name: "Approve draft" }),
+      within(menu).queryByRole("menuitem", { name: "Approve draft…" }),
     ).toBeNull();
     expect(
       within(menu).getByRole("menuitem", { name: "Discard draft" }),
@@ -3993,7 +3993,7 @@ describe("unpublished and held changes", () => {
     ).toBeDefined();
     let menu = await menuOf(header("Site"));
     expect(within(menu).getAllByText(held)).toHaveLength(1);
-    for (const item of ["Approve…", "Edit column", "Discard draft"]) {
+    for (const item of ["Approve…", "Edit column…", "Discard draft"]) {
       expect(within(menu).queryByRole("menuitem", { name: item })).toBeNull();
     }
     await userEvent.keyboard("{Escape}");
@@ -4003,7 +4003,7 @@ describe("unpublished and held changes", () => {
       within(menu).queryByRole("menuitem", { name: "Approve…" }),
     ).toBeNull();
     expect(
-      within(menu).getByRole("menuitem", { name: "Edit column" }),
+      within(menu).getByRole("menuitem", { name: "Edit column…" }),
     ).toBeDefined();
   });
 });

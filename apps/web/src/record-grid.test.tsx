@@ -417,7 +417,7 @@ describe("a table of another kind of record", () => {
     expect(remove).toHaveBeenCalledWith(expect.objectContaining({ id: "g1" }));
     await userEvent.click(rowActions("Gadget g2"));
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Approve draft" }),
+      await screen.findByRole("menuitem", { name: "Approve draft…" }),
     );
     expect(decide).toHaveBeenCalledWith("approve", {
       ...noDrafts(),
@@ -3042,7 +3042,7 @@ describe("hiding columns", () => {
     const menu = await columnMenu("Colour");
 
     expect(
-      within(menu).getByRole("menuitem", { name: "Edit column" }),
+      within(menu).getByRole("menuitem", { name: "Edit column…" }),
     ).toBeDefined();
     expect(
       within(menu).queryByRole("menuitem", { name: "Remove column" }),

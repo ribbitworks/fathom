@@ -1815,7 +1815,7 @@ describe("the Drafts page", () => {
     });
     await userEvent.click(rowMenu as HTMLElement);
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Approve draft" }),
+      await screen.findByRole("menuitem", { name: "Approve draft…" }),
     );
     await userEvent.click(
       within(await screen.findByRole("dialog")).getByRole("button", {

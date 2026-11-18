@@ -23,7 +23,7 @@ async function openDialog(): Promise<HTMLElement> {
     }),
   );
   await userEvent.click(
-    await screen.findByRole("menuitem", { name: "Change password" }),
+    await screen.findByRole("menuitem", { name: "Change password…" }),
   );
   return screen.findByRole("dialog", { name: "Change password" });
 }

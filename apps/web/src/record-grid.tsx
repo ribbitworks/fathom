@@ -910,8 +910,10 @@ export function keptForKind<Col extends AnyColumn>(
   };
 }
 
-const draftItemLabel = (verb: string, of: string | undefined) =>
-  of === undefined ? `${verb} draft` : `${verb} ${of}'s draft`;
+const draftItemLabel = (verb: string, of: string | undefined) => {
+  const draft = of === undefined ? "draft" : `${of}'s draft`;
+  return `${verb} ${draft}…`;
+};
 
 // A record added but not saved yet is shown at once under an identifier of the table's own, until
 // the server gives its own; until then it cannot be changed. The table goes on naming its row by it,
@@ -3147,7 +3149,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   actions.editColumn(field);
                 }}
               >
-                Edit column
+                Edit column…
               </Menu.Item>
             )}
             {changesColumn &&
@@ -3428,7 +3430,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                 actions.decide("reject", deciding);
               }}
             >
-              {`${draftItemLabel("Reject", decides?.rejectedOf)}…`}
+              {draftItemLabel("Reject", decides?.rejectedOf)}
             </Menu.Item>
           </>
         )}
