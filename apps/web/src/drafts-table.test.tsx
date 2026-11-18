@@ -9,7 +9,8 @@ import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { Entry } from "./draft-entries.ts";
-import { emptyView } from "./table-view.ts";
+import { keyColumn } from "./record-grid.tsx";
+import { applyView, emptyView } from "./table-view.ts";
 import { testTheme } from "./test-support.tsx";
 import { noDrafts } from "./drafts.ts";
 import {
@@ -274,5 +275,37 @@ describe("the drafts rows name", () => {
       "area",
       "madeBy",
     ]);
+  });
+});
+
+describe("the keys of the drafts' records", () => {
+  const person = entry("p1", { place: { kind: "person", keyNumber: 12 } });
+  const settings = entry("s1", { place: "capacity-settings" });
+  const rows = draftRows([person, settings], reading);
+  const { keyOf } = draftsTable({ rows, decidable: () => true });
+
+  it("give each row its record's key, and none to the planning settings", () => {
+    expect(rows.map((row) => keyOf?.(row))).toEqual([
+      { kind: "person", keyNumber: 12 },
+      undefined,
+    ]);
+  });
+
+  it("fill the Key column, hidden at first, empty for the planning settings", () => {
+    const column = keyOf && keyColumn(keyOf, rows);
+    expect(column?.hiddenAtFirst).toBe(true);
+    expect(rows.map((row) => column?.value(row))).toEqual(["12", ""]);
+  });
+
+  it("find a record's drafts by its key", () => {
+    expect(
+      applyView(
+        rows,
+        draftColumns(rows),
+        { ...emptyView, search: "#PERSON-12" },
+        [],
+        keyOf,
+      ).map(({ entry: { key } }) => key),
+    ).toEqual(["p1"]);
   });
 });

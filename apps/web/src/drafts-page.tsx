@@ -14,7 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { DecisionModal, drafts } from "./decision-dialog.tsx";
 import { type DraftsSeen, useDraftEntries } from "./draft-entries.ts";
-import type { DraftPlace } from "./draft-places.ts";
+import { type DraftPlace, placeKey } from "./draft-places.ts";
 import { DraftPanel, draftPanelId } from "./drafts-panel.tsx";
 import {
   type Decision,
@@ -230,9 +230,10 @@ export function DraftsPage({
                     tab === "unpublished"
                       ? together([openRow])
                           .filter(({ id }) => id !== openRow.id)
-                          .map(({ id, record }) => ({
+                          .map(({ id, record, entry }) => ({
                             id,
                             name: record,
+                            key: placeKey(entry.place),
                             onShow: () => {
                               onOpen(id);
                             },

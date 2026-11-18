@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The drafts a reader sees, as entries: every draft of people, planned hires, People's columns,
-// lists, choices, the order of lists' choices and of People's columns, the plan's records and its
-// columns, feature teams and the planning settings, each naming its record, its kind, who drafted
-// it and what it changes, newest first, with the reads that give them, and those the reader may
-// decide now.
+// The drafts a reader sees, as entries naming each one's record, kind, maker and changes, with
+// the reads that give them.
 
 import {
   allOf,
@@ -13,6 +10,7 @@ import {
   type Choice,
   type ColumnTable,
   type DraftKind,
+  draftKeysOf,
   draftKinds,
   type DraftState,
   draftingPermissions,
@@ -31,21 +29,24 @@ import {
   type PlanningSettingsShown,
   type ProjectPlan,
   type RecordDraft,
+  type RecordKeyOf,
   type RecordType,
   type ReleaseStream,
 } from "@fathom/shared";
 import { useQuery } from "@tanstack/react-query";
 import { addedClass, describeField, describeValue } from "./changes.ts";
 import { personDraftFields } from "./draft-details.tsx";
-import type { DraftPlace } from "./draft-places.ts";
+import { type DraftPlace, placeKey } from "./draft-places.ts";
 import {
   type Columns,
   decidable,
   decisionFor,
+  draftNames,
   type DraftSelection,
   mayDecide,
   noDrafts,
   waitsForRejected,
+  without,
 } from "./drafts.ts";
 import { featureTeamsQuery, teamPersonNamer } from "./feature-teams.ts";
 import { listsQuery, liveLists } from "./lists.ts";
@@ -594,9 +595,9 @@ export type DraftEntries =
       choosable: (one: Entry) => boolean;
       // Whether the reader may decide a draft now, as toDecide keeps it.
       decidesNow: (one: Entry) => boolean;
-      // The other drafts deciding a published draft takes with it, named, whatever the reader's role
+      // The other drafts deciding a published draft takes with it, whatever the reader's role
       // decides: those approved with it while it waits, or those waiting on it once rejected.
-      related: (one: Entry) => string[];
+      related: (one: Entry) => NamedDraft[];
       drafted: DraftedData;
     };
 
@@ -701,18 +702,61 @@ export function useDraftEntries({
     all,
     ...reading,
     decidesNow: (one) => toDecide([one], reading).length > 0,
-    related: ({ unpublished, state, selects }) =>
-      unpublished
+    related: ({ unpublished, state, selects }) => {
+      if (unpublished) return [];
+      const decision = decisionFor(
+        state === "rejected" ? "reject" : "approve",
+        selects,
+        draftKinds,
+        drafted.lists,
+        drafted.columns,
+      );
+      return decision.included === undefined
         ? []
-        : (decisionFor(
-            state === "rejected" ? "reject" : "approve",
-            selects,
-            draftKinds,
-            drafted.lists,
-            drafted.columns,
-          ).included ?? []),
+        : namedDrafts(without(decision.selection, selects), all, (rest) =>
+            draftNames(
+              rest,
+              drafted.lists,
+              drafted.columns.fields,
+              drafted.columns.people,
+              drafted.columns.records,
+            ),
+          );
+    },
     drafted,
   };
+}
+
+// A draft named in another's details, with its record's key where it has one.
+export interface NamedDraft {
+  name: string;
+  key: RecordKeyOf | undefined;
+}
+
+// The drafts in a selection, named as a decision names them, each after its record's key, taken
+// from its row; any the reader has no row for have no key.
+export function namedDrafts(
+  selection: DraftSelection,
+  entries: readonly Entry[],
+  namesOf: (drafts: DraftSelection) => string[],
+): NamedDraft[] {
+  const wanted = new Set(draftKeysOf(selection));
+  const found = entries.filter((one) =>
+    draftKeysOf(one.selects).some((key) => wanted.has(key)),
+  );
+  const rest = found.reduce(
+    (left, one) => without(left, one.selects),
+    selection,
+  );
+  return [
+    ...found.flatMap(({ selects, place }) =>
+      namesOf(without(selects, without(selects, selection))).map((name) => ({
+        name,
+        key: placeKey(place),
+      })),
+    ),
+    ...namesOf(rest).map((name) => ({ name, key: undefined })),
+  ];
 }
 
 // The drafts the reader may choose to decide now: of a kind their role decides, not waiting on a

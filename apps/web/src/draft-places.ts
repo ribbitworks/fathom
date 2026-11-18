@@ -1,20 +1,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Where a draft's record is shown: the page its key's link opens, which opens its details there, or,
-// for the planning settings, which have no key, Capacity's Settings; with the page's name for the
-// draft's Show on link, and what needs reaching to open it.
+// Where a draft's record is shown, and its key.
 
 import {
   capacityModeNeeds,
   type LinkedRecord,
   type PageNeeds,
   pageNeeds,
+  type RecordKeyOf,
   type RecordPage,
   recordPage,
 } from "@fathom/shared";
 import type { LinkOptions } from "@tanstack/react-router";
 
 export type DraftPlace = LinkedRecord | "capacity-settings";
+
+// The key of a draft's record, or none for the planning settings, which have no key.
+export const placeKey = (place: DraftPlace): RecordKeyOf | undefined =>
+  place === "capacity-settings"
+    ? undefined
+    : { kind: place.kind, keyNumber: place.keyNumber };
 
 // What each page a record opens on is called in a link to it, as People's Show on org chart calls
 // the Org chart.

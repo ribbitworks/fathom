@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for a record's key under a panel's title: its menu copies the record's whole link or its
-// key, saying so or saying it couldn't, and a record not yet saved shows no key.
+// Tests for a record's key under a panel's title, Copy link in a menu, and a name after its key.
 
-import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { unsavedKeyNumber } from "./drafts.ts";
-import { RecordKey } from "./record-key.tsx";
+import { MantineProvider, Menu } from "@mantine/core";
+import { CopyLinkItem, KeyedName, RecordKey } from "./record-key.tsx";
 import { testTheme } from "./test-support.tsx";
 
 afterEach(() => {
@@ -68,5 +67,56 @@ describe("a record's key", () => {
   it("shows nothing for a record not yet saved", () => {
     showKey(unsavedKeyNumber);
     expect(screen.queryByRole("button")).toBeNull();
+  });
+});
+
+describe("a name after its key", () => {
+  const showName = (record: Parameters<typeof KeyedName>[0]["record"]) =>
+    render(
+      <MantineProvider theme={testTheme}>
+        <p>
+          <KeyedName record={record} name="Fictional Skills" />
+        </p>
+      </MantineProvider>,
+    );
+
+  it("shows the key, then the name", () => {
+    showName({ kind: "list", keyNumber: 7 });
+    expect(screen.getByRole("paragraph").textContent).toBe(
+      "#LIST-7 Fictional Skills",
+    );
+  });
+
+  it.each([
+    ["no key", undefined],
+    [
+      "a record not yet saved",
+      { kind: "list" as const, keyNumber: unsavedKeyNumber },
+    ],
+  ])("shows the name alone for %s", (_case, record) => {
+    showName(record);
+    expect(screen.getByRole("paragraph").textContent).toBe("Fictional Skills");
+  });
+});
+
+describe("Copy link in a menu", () => {
+  it("is left out for a record with no key", () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <Menu opened>
+          <Menu.Target>
+            <button type="button">Actions</button>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <CopyLinkItem record={undefined} />
+            <Menu.Item>Show details</Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
+      </MantineProvider>,
+    );
+    expect(
+      screen.getByRole("menuitem", { name: "Show details" }),
+    ).toBeDefined();
+    expect(screen.queryByRole("menuitem", { name: "Copy link" })).toBeNull();
   });
 });

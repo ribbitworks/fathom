@@ -13,6 +13,7 @@ import {
 } from "@fathom/shared";
 import { joined, noDrafts } from "./drafts.ts";
 import type { Entry } from "./draft-entries.ts";
+import { placeKey } from "./draft-places.ts";
 import { PhraseList, phraseText } from "./phrase.tsx";
 import {
   type Column,
@@ -311,6 +312,7 @@ export function draftsTable({
     noun: "drafts",
     nameOf: (row) => row.record,
     nameColumn: "record",
+    keyOf: ({ entry }) => placeKey(entry.place),
     columnsFor: () => columns,
     liveRecords: () => [],
     drafts: (ids) => selectionOf(ids.flatMap((id) => byId.get(id) ?? [])),

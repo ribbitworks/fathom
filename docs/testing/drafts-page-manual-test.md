@@ -148,6 +148,7 @@ Run the test cases in the order they are listed. Start with Start Fathom, then R
 - [ ] `71D2` Point at that row, and select the details button that shows at the right of its **Record** cell.
   - **Expected:** A details panel opens beside the table:
     - Its title is a yellow dot, then 'Silje Holm-Schrøder'.
+    - Under the title is a key starting `#PERSON-`, small and grey.
     - Under **Details**, **Change** reads "Changed".
     - **State** reads "Waiting".
     - **What changes** reads **Skills** set to `Rust`.
@@ -156,7 +157,7 @@ Run the test cases in the order they are listed. Start with Start Fathom, then R
     - **Made by** reads "Engineering Operations Manager".
     - **Drafted** reads today's date.
     - **Reason** reads "None".
-    - Under **Approved with it**, **Drafts** reads "the column Skills", "the list Skills" and "the choice Rust in Skills", one to a line.
+    - Under **Approved with it**, **Drafts** lists "the column Skills", "the list Skills" and "the choice Rust in Skills", one to a line, in any order, each after a small grey key starting `#`.
     - Under them come the buttons **Approve…** and **Reject…**, then the link **Show on People**.
   - **Notes:**
 
@@ -190,7 +191,7 @@ Run the test cases in the order they are listed. Start with Start Fathom, then R
   - **Expected:**
     - **State** reads "Rejected".
     - **Reason** reads "Fictional reason: leave Positions and Sites as they are until both are reviewed."
-    - Under **Waiting on it**, **Draft** reads "the new order for Sites".
+    - Under **Waiting on it**, **Draft** reads "the new order for Sites", after a small grey key starting `#LIST-`.
     - There are no **Approve…** or **Reject…** buttons.
     - A dimmed line reads "Back with Engineering Operations Manager to change and resubmit."
     - Under it comes the link **Show on Lists**.
@@ -224,7 +225,7 @@ Run the test cases in the order they are listed. Start with Start Fathom, then R
 - [ ] `6CC0` Select the details button of the row of 'Equipment'.
   - **Expected:**
     - The details panel's title reads 'Equipment', after a hollow yellow dot.
-    - Under **Linked to**, **Change** reads 'Laptop in Equipment', as a link.
+    - Under **Linked to**, **Change** reads 'Laptop in Equipment', as a link, after a small grey key starting `#LIST-`.
     - A dimmed line reads "Nobody else sees these changes until they're published."
     - Under it comes the link **Show on Lists**.
   - **Notes:**

@@ -934,7 +934,7 @@ export function applyView<Row>(
   columns: readonly TableColumn<Row>[],
   view: View,
   filterOnly: readonly TableColumn<Row>[] = [],
-  keyOf?: (row: Row) => RecordKeyOf,
+  keyOf?: (row: Row) => RecordKeyOf | undefined,
 ): Row[] {
   const byKey = new Map(
     columns.map((column) => [column.key, column as TableColumn<never>]),
@@ -955,7 +955,10 @@ export function applyView<Row>(
   const keyed =
     keyOf === undefined || searchedKey === undefined
       ? undefined
-      : (row: Row) => sameRecordKey(keyOf(row), searchedKey);
+      : (row: Row) => {
+          const key = keyOf(row);
+          return key !== undefined && sameRecordKey(key, searchedKey);
+        };
   const levels = view.sort.flatMap((level) => {
     const column = byKey.get(level.key);
     return column ? [{ column, descending: level.descending }] : [];

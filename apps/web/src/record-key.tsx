@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A record's key, such as #FEATURE-123, under a details panel's title, the key itself the button
-// that opens Copy link and Copy key, and Copy link in a row's or card's menu. A record not yet saved
-// has no key, so offers neither. Copying changes nothing in view, so a notification says it was
-// done.
+// A record's key, the button under a details panel's title that copies its link or key, Copy link
+// for a row's or card's menu, and a name after its key.
 
 import {
   type RecordKeyOf,
@@ -11,6 +9,7 @@ import {
   shownRecordKey,
 } from "@fathom/shared";
 import { Menu, UnstyledButton } from "@mantine/core";
+import type { ReactNode } from "react";
 import { AppMenu } from "./app-menu.tsx";
 import { unsavedKeyNumber } from "./drafts.ts";
 import { notifyFailure, notifySuccess } from "./notices.tsx";
@@ -42,9 +41,9 @@ export const copyKey = ({ kind, keyNumber }: RecordKeyOf): Promise<void> =>
     "The key couldn't be copied.",
   );
 
-// Copy link, for a row's or card's menu; nothing for a record not yet saved.
-export function CopyLinkItem({ record }: { record: RecordKeyOf }) {
-  if (!isSaved(record)) return null;
+// Copy link, for a row's or card's menu; nothing for a record not yet saved, or with no key.
+export function CopyLinkItem({ record }: { record: RecordKeyOf | undefined }) {
+  if (record === undefined || !isSaved(record)) return null;
   return <Menu.Item onClick={() => void copyLink(record)}>Copy link</Menu.Item>;
 }
 
@@ -66,5 +65,25 @@ export function RecordKey({ record }: { record: RecordKeyOf }) {
         <Menu.Item onClick={() => void copyKey(record)}>Copy key</Menu.Item>
       </AppMenu.Dropdown>
     </AppMenu>
+  );
+}
+
+// A name after its record's key, dimmed, as a panel's list of drafts names each record; a record with
+// no key, or not yet saved, shows its name alone.
+export function KeyedName({
+  record,
+  name,
+}: {
+  record: RecordKeyOf | undefined;
+  name: ReactNode;
+}) {
+  if (record === undefined || !isSaved(record)) return name;
+  return (
+    <>
+      <span className={classes.shown}>
+        {shownRecordKey(record.kind, record.keyNumber)}
+      </span>{" "}
+      {name}
+    </>
   );
 }
