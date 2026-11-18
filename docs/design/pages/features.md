@@ -50,4 +50,3 @@ Features lists the plan's features in one table, with a board as a second way of
   - Refused for multi-value or derived columns, and for features with allocations, Done or Cancelled.
 - **Months as columns:** the Board's default, as the [Decisions Log](../../product/decisions.md#planning) sets out.
 - **On track or Late:** on staffed cards, with forecasting.
-- **Retiring schedules:** shown with draft marks in the Schedule menu ([issue #595](https://github.com/jlarue26/fathom/issues/595)).

@@ -350,7 +350,7 @@ A release is made by hand, wherever the repository is hosted, as [ADR 0011](../a
 - It's labelled with its source, licence, version and full commit, under the Open Container Initiative's `org.opencontainers.image` names.
 - The source is `FATHOM_SOURCE_URL`, or else the `origin` remote's web address without any credentials.
 - It's dated by the tagged commit's time, not the build's.
-- That fixes its labels and dates, not its digest. Each build takes the security fixes released by that day, and installed files keep the times they were built, so building a tag again gives a different digest, as [issue #434](https://github.com/jlarue26/fathom/issues/434) records.
+- That fixes its labels and dates, not its digest. Each build takes the security fixes released by that day, and installed files keep the times they were built, so building a tag again gives a different digest, as [issue #261](https://github.com/ribbitworks/fathom/issues/261) records.
 
 ### Daily Image Scan
 

@@ -168,5 +168,5 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 Designs agreed but not built yet:
 
 - **Global search:** A search at the top of the sidebar, opened with Cmd+K or Ctrl+K, finds records, pages and Help pages, as [Global search](../product/decisions.md#configuration) sets out.
-- **A page that can't load:** every page and part of one that can't load its data showing `LoadProblem` ([issue #477](https://github.com/jlarue26/fathom/issues/477)).
+- **A page that can't load:** every page and part of one that can't load its data showing `LoadProblem` ([issue #194](https://github.com/ribbitworks/fathom/issues/194)).
 - **Coloured names on the month grids and the Features Board's headings:** drawn by `ColouredName`, after the colour's square, rather than in a tinted box by `TeamLabels`, as [A coloured name](../standards/ui-conventions.md#values) sets out.
