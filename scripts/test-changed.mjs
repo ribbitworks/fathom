@@ -33,7 +33,9 @@ const helpPagesModule = `${webApp}/src/help-pages.ts`;
 
 const scriptOrModule = /\.(?:[cm]?[jt]s|tsx)$/;
 
-function isDocumentation(path) {
+// Whether a changed path is documentation alone, which no test reads; Help pages are built into the
+// web app, so they are not.
+export function isDocumentation(path) {
   return (
     !path.startsWith(helpPages) &&
     (path.endsWith(".md") || path.startsWith("docs/"))

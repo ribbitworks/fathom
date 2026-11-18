@@ -3,7 +3,7 @@
 - **ADR:** 0011
 - **Status:** Accepted
 - **Date:** 2026-11-07
-- **Revised:** 2026-11-07, to add the daily scan of the default branch's and the newest full release's images to what moving the repository needs; 2026-11-14, to drop speculation about moving hosts
+- **Revised:** 2026-11-07, to add the daily scan of the default branch's and the newest full release's images to what moving the repository needs; 2026-11-14, to drop speculation about moving hosts; 2026-11-17, to draft a release for each tag pushed and publish its images when the release is published
 
 ## Context
 
@@ -22,7 +22,7 @@ Fathom releases with project scripts and a registry:
 - **`pnpm release`** picks the version and adds the changelog on a `release/vX.Y.Z` branch, which reaches the default branch through a pull request like any change; **`pnpm release:tag`** then tags the merge, on a maintainer's machine.
 - **`pnpm publish:images`** builds the application, database, and proxy images from a clean copy of exactly the tag, labels them with their source, licence, version, and commit, scans them as the security report does, and publishes them only if none of their fixes is overdue or has no known release date.
 - **The registry** is a setting, so the images can go to any registry; where they go by default, and how each step is run, is in [Development Setup](../design/development-setup.md#releases).
-- **On GitHub,** a workflow run by hand runs `pnpm publish:images` with the workflow's own token. It makes no tags or releases.
+- **On GitHub,** pushing a release tag builds and scans its images, then drafts a GitHub release with generated notes; publishing that draft, a person's step, runs `pnpm publish:images` with the workflow's own token, which can also be run by hand. Neither workflow makes tags, and neither publishes a release.
 
 ## Consequences
 

@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
-# Builds, scans and publishes the container images of a release that 'pnpm release' has tagged and
-# pushed, to the GitHub Container Registry. Run by hand from the Actions tab; it never makes a tag
-# or a release itself. The work is in scripts/publish-images.sh, which runs the same anywhere.
+# Builds, scans and publishes the container images of a release to the GitHub Container Registry,
+# when the maintainer publishes the release that draft-release.yml drafted for its tag, or by hand from
+# the Actions tab for a tag already released. It never makes a tag or a release itself. The work is
+# in scripts/publish-images.sh, which runs the same anywhere.
 
 name: Publish release images
 
 on:
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       tag:
@@ -17,12 +20,13 @@ on:
 permissions: {}
 
 concurrency:
-  group: release-${{ inputs.tag }}
+  group: release-${{ inputs.tag || github.event.release.tag_name }}
 
 jobs:
   publish:
-    # The default branch's scripts and security exceptions judge the release, never another branch's.
-    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    # The default branch's scripts and security exceptions judge the release, never another branch's
+    # or the tag's: a published release runs from its tag, so it checks out the default branch.
+    if: github.event_name == 'release' || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -32,6 +36,7 @@ jobs:
       - name: Check out with every tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.repository.default_branch }}
           fetch-depth: 0
           fetch-tags: true
           persist-credentials: false
@@ -51,7 +56,7 @@ jobs:
 
       - name: Build, scan and publish the images
         env:
-          TAG: ${{ inputs.tag }}
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
           OWNER: ${{ github.repository_owner }}
         # The registry needs the owner's name in lowercase.
         run: FATHOM_REGISTRY="ghcr.io/${OWNER,,}" pnpm publish:images "$TAG"

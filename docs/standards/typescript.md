@@ -42,8 +42,10 @@ design documents, its commands in `AGENTS.md`, and its decisions in `docs/adr/`.
 ## Tooling
 
 - `pnpm check` runs linting, type checking and the test suites. It is the full suite, which the
-  [Agent Workflow](agent-workflow.md#workflow) runs after the code review.
-  Before the review, run `pnpm test:changed` and the linters.
+  Check workflow runs on every pull request, as the
+  [Agent Workflow](agent-workflow.md#workflow) and
+  [Testing Standards](testing.md#running-tests) set out. Before the review, run
+  `pnpm test:changed` and the linters.
 - Markdown is linted with `pnpm lint:md`.
 
 ## Code Review Criteria
