@@ -43,4 +43,4 @@ Capacity shows who is allocated to what, month by month, and holds the planning 
   - A bar in Work opens its feature's people in People, and an allocation in People links to its feature in Work.
 - **Demand:** the demand forecast.
 - **People's grid:** gains the planned picker, lines and allocating that [Feature assignments](feature-assignments.md#planned) sets out.
-- **Over and Under in words alone** ([issue #256](https://github.com/jlarue26/fathom/issues/256)).
+- **Over and Under in words alone** ([issue #27](https://github.com/ribbitworks/fathom/issues/27)).
