@@ -1676,8 +1676,7 @@ describe("changing one's own name", () => {
     const dialog = await openDialog();
     const name = within(dialog).getByLabelText("Name");
     await userEvent.clear(name);
-    // Pasted, as typing it key by key outlasts the test's time on a busy computer.
-    await userEvent.paste("n".repeat(101));
+    await userEvent.type(name, "n".repeat(101));
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
       await within(dialog).findByText("Use at most 100 characters."),

@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 
-# Runs everything 'pnpm check' covers side by side: ESLint without its cache, the formatting check,
-# type checking, Markdown, shell and licence linting, the script and package tests, and
-# the security report. Prints each job's output once it ends, and at once any wait for another copy
-# of the repository, then each job's result and time. Fails if any job fails.
-# Usage: scripts/check.sh [--skip <job name>]..., such as --skip "Package tests" where another
-# machine runs them, as the Check workflow does.
+# Runs everything 'pnpm check' covers side by side, then lists each job's result and time.
+# Usage: scripts/check.sh [--skip <job name>]..., such as --skip "Package tests"
 
 set -euo pipefail
 cd "$(dirname "$0")/.."

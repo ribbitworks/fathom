@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Says whether a pull request needs the container tests: any change but documentation alone, since
-// the images are built from the code, its packages and its settings, and the tests run them. Prints
-// "true" or "false" for the Check workflow, and fails, so the workflow runs them, when it cannot
-// tell what changed.
-// Usage: node scripts/needs-container-tests.mjs <base commit>
+// Prints "true" or "false", for the Check workflow, saying whether a pull request needs the
+// container tests. Usage: node scripts/needs-container-tests.mjs <base commit>
 
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { isDocumentation } from "./test-changed.mjs";
 
+// The images are built from the code, its packages and its settings, so only documentation is spared.
 export function needsContainerTests(paths) {
   return paths.some((path) => !isDocumentation(path));
 }
