@@ -54,6 +54,7 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **Live:** Approved, and so part of the plan everyone works from.
 - **Approver:** Anyone whose role lets them approve drafts of that data. Not a role of its own.
 - **Saved view:** A view of one table saved under a name, personal to the user who saved it or shared with everyone who opens the table's page, and applied again from the table's Views menu.
+- **Last view:** The view an account last showed on a page, which the page shows again when opened from the menu.
 
 ## Access Terms
 

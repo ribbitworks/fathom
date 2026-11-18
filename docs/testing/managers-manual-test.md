@@ -334,6 +334,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The cell has no **Left** box.
   - **Notes:**
 
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
+
 ### MGR-11: People Are Grouped by Manager
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, the same as MGR-10.

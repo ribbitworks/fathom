@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-workforce-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Manual Test: Acceptance, Workforce Administrator
@@ -349,7 +349,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
   - **Notes:**
 
-- [ ] `9AF6` Type `Candice` in the search box.
+- [ ] `9AF6` Clear the search box, and type `Candice`.
   - **Expected:**
     - One row is listed, whose **Record** reads 'Search and discovery', with **Type** "Feature team".
     - Its **What changes** adds "Candice Swift" to **Members**.

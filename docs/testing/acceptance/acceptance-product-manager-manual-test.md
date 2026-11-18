@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-product-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Manual Test: Acceptance, Product Manager
@@ -213,6 +213,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - `Pilot` and `Go live` have no dots.
     - Each has `Fictional Harbour Lights` under **Project**, with `FHL-1` in grey before it.
   - **Notes:**
+
+**Afterwards:** Select the **Projects** tab.
 
 ### PRODUCT-03: A Feature Is Planned for a Cycle and a Team
 

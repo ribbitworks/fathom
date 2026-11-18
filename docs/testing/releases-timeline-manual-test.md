@@ -295,6 +295,8 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
     - It is blank in the row for 'Patches'.
   - **Notes:**
 
+**Afterwards:** Select the **Releases** tab.
+
 #### REL-46: A Record's Details Link the Records They Name
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account REL-45 ended with.
@@ -360,6 +362,8 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
     - Every row's **Schedule** reads 'Platform'.
   - **Notes:**
 
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
+
 #### REL-48: The Timeline's Marks Open Their Records
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account REL-47 ended with.
@@ -381,6 +385,10 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
   - **Notes:**
 
 - [ ] `E850` Select **Releases** in the left-hand menu.
+  - **Expected:** The **Cycles** tab shows, with no side panel open.
+  - **Notes:**
+
+- [ ] `B7D1` Select the **Releases** tab.
   - **Expected:** The **Releases** tab shows, with no side panel open.
   - **Notes:**
 

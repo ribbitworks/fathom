@@ -282,6 +282,8 @@ Covered by [REL-32](#rel-32-a-schedules-details-follow-its-row), which reads a s
   - **Expected:** 'Patches' is listed in the table again, with no dot.
   - **Notes:**
 
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
+
 #### REL-16: A Schedule With No End Date Has Cycles Two Years Ahead
 
 Covered by [REL-41](release-cycles-manual-test.md#rel-41-the-cycles-tab-lists-every-schedules-cycles), whose step `24B9` reads the last cycle two years ahead.

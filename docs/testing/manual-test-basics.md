@@ -72,7 +72,7 @@ Run once, before the first test case.
 
 ### Restore the Seed Data
 
-Run after Start Fathom, before the first test case unless the test starts another way, and wherever a test case says so. Fathom keeps running. This removes the [Fictional Data](../design/development-setup.md#fictional-data) and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand. The seed data's own drafts that were approved since it was added are not made again; run Reset the Database to have them back.
+Run after Start Fathom, before the first test case unless the test starts another way, and wherever a test case says so. Fathom keeps running. This removes the [Fictional Data](../design/development-setup.md#fictional-data) and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand. It also forgets the view each development account last showed on each page, so every page opens on its own view. The seed data's own drafts that were approved since it was added are not made again; run Reset the Database to have them back.
 
 1. In the second terminal, run:
 

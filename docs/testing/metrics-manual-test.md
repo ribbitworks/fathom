@@ -78,6 +78,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The menu has no **Metrics**.
   - **Notes:**
 
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
+
 ### METRICS-02: One Column Is Counted With Shares
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-01.
@@ -305,6 +307,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `3E9E` Open the Views menu.
   - **Expected:** The view is gone from the Views menu.
   - **Notes:**
+
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
 
 ### METRICS-08: The Panel Covers a Narrow Screen
 

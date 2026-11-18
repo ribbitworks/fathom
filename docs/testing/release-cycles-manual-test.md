@@ -131,6 +131,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The dots before **Duration** and in the cycle's row are solid yellow.
   - **Notes:**
 
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
+
 #### REL-24: Approving One Draft of a New Length Approves Them All
 
 **Account:** Project Manager, `project.manager@fathom.test`, changed from REL-23.
@@ -289,6 +291,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - More rows are listed under each heading, after those listed before.
     - The last row under 'Platform' has a **Starts** on or before the day two years from today, and an **Ends** on or after it.
   - **Notes:**
+
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
 
 #### REL-42: A Cycle's Duration Is Changed From Its Details
 

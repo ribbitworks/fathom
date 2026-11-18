@@ -109,6 +109,8 @@ Run the test cases in the order they are listed. Start with Start Fathom, then R
     - Its row "The plan or configuration" reads 1 under **Drafts**.
   - **Notes:**
 
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**, then select **To decide** beside the page's title.
+
 ### DRAFT-28: The Tabs Read in Order, and Space Ticks a Row
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-27.

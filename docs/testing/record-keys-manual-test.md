@@ -69,6 +69,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The search box holds the key written down in `B71E`, starting with **#**.
   - **Notes:**
 
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
+
 ### KEY-02: A Link Opens Its Record, and Back Returns
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, the account KEY-01 ended with.
@@ -202,6 +204,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `3BB4` Press Shift+F10.
   - **Expected:** A menu opens under the card, titled **Offline Sync**, offering **Show details** and **Copy link**.
   - **Notes:**
+
+**Afterwards:** Select **Table** beside the **Features** heading.
 
 ### KEY-07: The Org Chart Finds a Person by Key
 

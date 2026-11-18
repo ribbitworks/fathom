@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-executive.md", "docs/product/roles.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Manual Test: Acceptance, Executive
@@ -138,6 +138,8 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Expected:** A row for each position, such as 'Software Engineer', gives its count.
   - **Notes:**
 
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
+
 ### EXECUTIVE-03: An Executive Sees People and Administration Without Changing Them
 
 **Account:** Executive, `executive@fathom.test`, the same as EXECUTIVE-02.
@@ -196,7 +198,13 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
 **Preconditions:** None beyond EXECUTIVE-04.
 
 - [ ] `1D99` Select the **People** page in the left-hand menu.
-  - **Expected:** The **People** page opens, with no view applied.
+  - **Expected:** The **People** page opens.
+  - **Notes:**
+
+- [ ] `4E2A` Open the **Views** menu above the table and select **Clear view**.
+  - **Expected:**
+    - The search box above the table is empty.
+    - Every person's row shows.
   - **Notes:**
 
 - [ ] `DDED` Type `Lorenza` in the search box.

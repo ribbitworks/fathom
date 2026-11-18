@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-feature-lead.md", "docs/product/roles.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Manual Test: Acceptance, Feature Lead
@@ -100,6 +100,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `20F5` Run Publish.
   - **Expected:** The **Publish** button is gone.
   - **Notes:**
+
+**Afterwards:** Choose **Reporting teams** in the teams switch.
 
 ### LEAD-02: A Project Manager Approves the Feature Team
 
@@ -200,6 +202,12 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** Signed in with this account, acting as **Feature Lead**. **Features** page open from the left-hand menu.
 
+- [ ] `9C5B` Open the **Views** menu above the table and select **Clear view**.
+  - **Expected:**
+    - The search box above the table is empty.
+    - Every feature's row shows.
+  - **Notes:**
+
 - [ ] `2EDD` Select **Group by** above the table, then **Release**.
   - **Expected:**
     - The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2 LTS**, **Platform: Harbor 3**, **Field Apps: Lantern 1**, **Field Apps: Lantern 2**, **Platform: Not released yet**, **Field Apps: Not released yet** and **Later**.
@@ -211,6 +219,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The headings name the cycles, such as **Platform: 27.1**.
     - The last heading is **Later**.
   - **Notes:**
+
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
 
 ### LEAD-05: Someone Is Found on the Org Chart
 

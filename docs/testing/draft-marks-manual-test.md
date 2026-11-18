@@ -120,6 +120,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'Simone Jean' struck through
   - **Notes:**
 
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
+
 ### MARK-03: The Org Chart's Cards Are Marked
 
 **Account:** Superuser, `superuser@fathom.test`, the same as MARK-02.
@@ -146,6 +148,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'Priscille Adam' struck through
     - The card titled 'Platform reliability': the grey lock before the title
   - **Notes:**
+
+**Afterwards:** Choose **Reporting teams** in the teams switch.
 
 ### MARK-04: A List's Row and Panel Are Marked
 
@@ -284,6 +288,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - No dot
     - **Manager** reads 'Viktoria Holmberg', then a red **Left** box
   - **Notes:**
+
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
 
 ### MARK-08: Marks Read in Dark Mode
 

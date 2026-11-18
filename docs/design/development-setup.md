@@ -198,7 +198,7 @@ The copy gets new names, and so a new, empty database.
 | `pnpm db:migrate` | Apply the migrations, as the migration role |
 | `pnpm db:reset` | Delete the database, create it again and apply the migrations |
 | `pnpm db:seed` | Add the fictional data and the development accounts, unless they're there, and print the accounts' password |
-| `pnpm db:unseed` | Remove the fictional data, keeping what was added by hand, as [Seed Data](#fictional-data) sets out, and deactivate the accounts |
+| `pnpm db:unseed` | Remove the fictional data, keeping what was added by hand, as [Seed Data](#fictional-data) sets out, deactivate the accounts and forget the views they last showed |
 | `pnpm db:reseed` | `pnpm db:unseed`, then `pnpm db:seed`, stopping if removing fails |
 | `pnpm db:seed:accounts` | Add only the [development accounts](#development-accounts), to try Fathom as a new organization would |
 
@@ -296,7 +296,7 @@ See [Releases](#releases) for the steps.
   - Allocations to features, with people over-allocated, under-allocated and not allocated.
   - Drafts by each persona, some approved, some rejected and some left unpublished.
 - **New seed data:** A database seeded before the seed data changed keeps its old data. `pnpm db:reseed` or `pnpm dev:reset` brings in the new.
-- **Removing it:** `pnpm db:unseed` removes the seed's records and every draft of them, keeps what was added by hand, unless it only changes a seed record, and deactivates the accounts. It keeps a seed record that something added by hand still uses, and says so.
+- **Removing it:** `pnpm db:unseed` removes the seed's records and every draft of them, keeps what was added by hand, unless it only changes a seed record, deactivates the accounts and forgets the view each last showed on each page. It keeps a seed record that something added by hand still uses, and says so.
 
 ## Development Accounts
 

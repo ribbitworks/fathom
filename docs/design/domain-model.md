@@ -225,6 +225,7 @@ Fathom has a fixed core of built-in tables, such as people, teams, projects, fea
   - **Changing:** its type is fixed once it is added. It can be made required only once every record has a value, and single-choice only once none has several. Its list cannot change while it has values.
 - **Column order:** A table's own order of its columns, built-in and custom alike, which every view starts from. A view may hold an order of its own.
 - **Saved view:** A table's search, filters, sort, what its Draft menu shows, the columns its metrics break down by, its grouping, the columns it hides, and its page's own choices, such as the schedule the Features Board shows, saved under a name, with the table it belongs to, one of a fixed set, the user who saved it, and whether it is personal to them or shared. A name is unique, ignoring letter case, among the table's shared views and among each user's personal views on it. Its sensitivity is that of the most sensitive column it filters, sorts, breaks down, or groups by, and of the data its grouping needs; a People view may also filter on drafts, which is General, since each user is sent only the drafts they may see.
+- **Last view:** The view an account last showed on a page with a Views menu, one for each account and page: the table shown, which on Projects and Releases is its tab, the view as a saved view holds it, the saved view it started from, if any, and the page's mode, such as Features' Board. It is the account's own setting: never a draft, with no change history, and removed only if the account is. Deleting the saved view it started from keeps the rest of it.
 - **Custom table:** A table users define, with a name, a sensitivity tier, and its field definitions.
 - **Custom record:** One row of a custom table, holding values for its fields.
 - **Custom value:** The value of one custom field for one record, built-in or custom.
@@ -276,7 +277,7 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
 
 ### Drafts and Approval
 
-- **What needs approval:** everything users change, except saved views, team colours, and what an Administrator manages: accounts, roles, data classes and Fathom's settings.
+- **What needs approval:** everything users change, except saved views, last views, team colours, and what an Administrator manages: accounts, roles, data classes and Fathom's settings.
 - **Approving:** approving drafts, whether one or several at once, applies them all to the live records as one change set, or none of them.
 - **Drafts that use drafts:** a draft uses another only when the other adds a record: a choice added to a list drafted to be added, an order placing a choice drafted to be added, a column drawing on a list drafted to be added, or a person given a value in a column, or a choice, drafted to be added. A schedule's cycles are the one exception, as [ADR 0010](../adr/0010-cycles-from-patterns.md) sets out.
   - Approving a draft approves the drafts it uses with it.

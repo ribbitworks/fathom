@@ -197,7 +197,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - Each row shown has 'Viktoria Holmberg' in its **Manager** cell
   - **Notes:**
 
-**Afterwards:** Run Restore Team Member.
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**, then run Restore Team Member.
 
 #### PERM-05: Edit People Changes People
 
@@ -231,7 +231,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The **Team name** cell reads 'Mobile team'.
   - **Notes:**
 
-**Afterwards:** Run Restore Team Member.
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**, then run Restore Team Member.
 
 #### PERM-06: View Feature Teams Shows Feature Teams
 
@@ -282,7 +282,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - Each other row shown has 'Viktoria Holmberg' in its **Manager** cell, followed by a red **Left** box
   - **Notes:**
 
-**Afterwards:** Run Restore Team Member.
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**, then run Restore Team Member.
 
 #### PERM-08: Edit Personal Details Changes Dates
 
@@ -314,7 +314,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The **Start** cell of 'Max Munk' has no dot before it.
   - **Notes:**
 
-**Afterwards:** Run Restore Team Member.
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**, then run Restore Team Member.
 
 ### Confidential Data
 
@@ -354,7 +354,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - No row has 'REQ-2050' in its **ID** cell
   - **Notes:**
 
-**Afterwards:** Run Restore Team Member.
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**, then run Restore Team Member.
 
 #### PERM-10: Edit Confidential Data Changes Confidential Values
 
@@ -389,7 +389,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The **Compensation band** cell of 'Max Munk' reads 'Band 5', with no dot before it.
   - **Notes:**
 
-**Afterwards:** Run Restore Team Member.
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**, then run Restore Team Member.
 
 ### Hiring Plan
 
@@ -446,7 +446,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** No editor opens.
   - **Notes:**
 
-**Afterwards:** Run Restore Team Member.
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**, then run Restore Team Member.
 
 #### PERM-12: Edit Hiring Plan Changes Planned Hires
 
@@ -525,7 +525,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - There is no **New list** button
   - **Notes:**
 
-**Afterwards:** Run Restore Team Member.
+**Afterwards:** Select the **Drafts** page in the left-hand menu, open the **Views** menu above the table and select **Clear view**, then run Restore Team Member.
 
 #### PERM-14: Approve People Leaves Drafts of Other Areas to Another Approver
 
@@ -562,7 +562,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - The row of 'Silje Holm-Schrøder' is still shown
   - **Notes:**
 
-**Afterwards:** Run Restore Team Member.
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**, then run Restore Team Member.
 
 #### PERM-15: Approve Their Own Drafts Lets the Account Approve What It Changed
 

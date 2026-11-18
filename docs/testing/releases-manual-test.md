@@ -302,6 +302,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The timeline above the table draws only 'Platform'.
   - **Notes:**
 
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
+
 #### REL-38: A Release's Details Offer Its Note and a Pencil for Each Value
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account REL-37 ended with.
