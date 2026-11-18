@@ -176,6 +176,15 @@ folder_of() {
   lsof -a -p "$1" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' || true
 }
 
+# The program a process runs, such as node, or nothing once it has exited or cannot be read. Read
+# from the executable rather than ps's command name, which Linux takes from the main thread's name,
+# such as MainThread for Node.js.
+program_of() {
+  local program
+  program="$(lsof -a -p "$1" -d txt -Fn 2>/dev/null | sed -n 's/^n//p' | head -n 1 || true)"
+  if [ -n "$program" ]; then basename "$program"; fi
+}
+
 # Stops whatever listens on this copy's development ports from inside this checkout, such as a
 # 'pnpm dev' left running in another terminal or by an agent, so a new one can start. A port held
 # by another program, or by another copy, fails with the process's name before anything is
@@ -198,8 +207,8 @@ stop_dev_servers() {
           ;;
       esac
       message="Port $port is in use by process $pid"
-      name="$(ps -o comm= -p "$pid" 2>/dev/null || true)"
-      if [ -n "$name" ]; then message="$message, $(basename "$name")"; fi
+      name="$(program_of "$pid")"
+      if [ -n "$name" ]; then message="$message, $name"; fi
       if [ -n "$folder" ]; then message="$message, in $folder"; fi
       fail "$message, which is not this copy's; stop it, or set FATHOM_DEV_PORT and FATHOM_DEV_API_PORT"
     done
