@@ -4,7 +4,7 @@
 // the address, past cycles, its columns and filters, a cycle's details and its Duration's changes,
 // the drafts of cycles and their row menus, the timeline, and what each role may do there.
 
-import type { Cycle, ReleaseStream } from "@fathom/shared";
+import type { Cycle, RecordDraft, ReleaseStream } from "@fathom/shared";
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -1001,7 +1001,7 @@ describe("a cycle's drafts", () => {
   describe("with the release's own draft changing the cycle too", () => {
     const releaseId = "30000000-0000-4000-8000-000000000001";
     // 27.2's release drafted to be renamed, besides the new pattern that shortens 27.2.
-    const renamedToo = () =>
+    const renamedToo = (release: Partial<RecordDraft> = {}) =>
       shortened({
         releases: [
           fictionalRelease({
@@ -1011,19 +1011,13 @@ describe("a cycle's drafts", () => {
             draft: recordDraft({
               changed: ["name"],
               live: { name: "Fictional One" },
+              ...release,
             }),
           }),
         ],
       });
 
-    async function approveFromRow(session: () => Response) {
-      const { fetch } = await openPage([renamedToo()], {
-        answers: {
-          "GET /api/session": session,
-          "POST /api/drafts/approval": savedAs,
-        },
-      });
-      await chooseRowAction("Fictional Majors: 27.2", "Approve draft");
+    const approvedBody = async (fetch: Parameters<typeof bodyOf>[0]) => {
       const dialog = await screen.findByRole("dialog", {
         name: /^Approve \d drafts?\?$/,
       });
@@ -1034,7 +1028,158 @@ describe("a cycle's drafts", () => {
         expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toHaveLength(1);
       });
       return bodyOf(fetch, "POST", "/api/drafts/approval");
+    };
+
+    async function approveFromRow(session: () => Response) {
+      const { fetch } = await openPage([renamedToo()], {
+        answers: {
+          "GET /api/session": session,
+          "POST /api/drafts/approval": savedAs,
+        },
+      });
+      await chooseRowAction("Fictional Majors: 27.2", "Approve draft");
+      return approvedBody(fetch);
     }
+
+    // The release's rename waiting, and the new length's draft as given.
+    const withLength = (
+      draft: Partial<RecordDraft>,
+      release: Partial<RecordDraft> = {},
+    ) => ({
+      ...renamedToo(release),
+      patterns: [
+        fictionalPattern(),
+        fictionalPattern({
+          id: patternId,
+          startsOn: "2027-04-01",
+          length: 2,
+          draft: recordDraft({ action: "created", ...draft }),
+        }),
+      ],
+    });
+    const releaseAlone = [
+      expect.objectContaining({
+        records: [{ type: "release", id: releaseId }],
+      }),
+    ];
+
+    it("are approved from the Draft menu as the release's draft alone once the new length is rejected", async () => {
+      const { fetch } = await openPage([withLength({ state: "rejected" })], {
+        answers: {
+          "GET /api/session": approver,
+          "POST /api/drafts/approval": savedAs,
+        },
+      });
+
+      await userEvent.click(screen.getByRole("button", { name: /^Draft/ }));
+      const menu = await screen.findByRole("menu");
+      expect(within(menu).getByText("Waiting drafts")).toBeDefined();
+      await userEvent.click(
+        within(menu).getByRole("menuitem", { name: /^Approve/ }),
+      );
+
+      expect(await approvedBody(fetch)).toEqual(releaseAlone);
+    });
+
+    it.each([
+      ["rejected", { state: "rejected" }, "Reject Harbour's draft…"],
+      [
+        "rejected, and the approver's own",
+        { state: "rejected", needsOtherApprover: true },
+        "Reject Harbour's draft…",
+      ],
+      ["the approver's own", { needsOtherApprover: true }, "Reject draft…"],
+    ] as const)(
+      "are approved from the row's menu as the release's draft alone, named, where the new length is %s",
+      async (_case, draft, reject) => {
+        const { fetch } = await openPage([withLength(draft)], {
+          answers: {
+            "GET /api/session": approver,
+            "POST /api/drafts/approval": savedAs,
+          },
+        });
+
+        expect(await rowMenuTexts("Fictional Majors: 27.2")).toEqual(
+          expect.arrayContaining(["Approve Harbour's draft", reject]),
+        );
+        await userEvent.click(
+          screen.getByRole("menuitem", { name: "Approve Harbour's draft" }),
+        );
+
+        expect(await approvedBody(fetch)).toEqual(releaseAlone);
+      },
+    );
+
+    it.each([
+      [
+        "Draft menu",
+        () => screen.getByRole("button", { name: /^Draft/ }),
+        /^Reject /,
+      ],
+      [
+        "row's menu",
+        () =>
+          within(grid()).getAllByRole("button", {
+            name: "Actions for Fictional Majors: 27.2",
+          })[0] as HTMLElement,
+        "Reject Harbour's draft…",
+      ],
+    ])(
+      "are rejected from the %s as the release's draft alone once the new length is rejected",
+      async (_case, menuButton, item) => {
+        const { fetch } = await openPage([withLength({ state: "rejected" })], {
+          answers: {
+            "GET /api/session": approver,
+            "POST /api/drafts/rejection": savedAs,
+          },
+        });
+
+        await userEvent.click(menuButton());
+        await userEvent.click(
+          await screen.findByRole("menuitem", { name: item }),
+        );
+        const dialog = await screen.findByRole("dialog", {
+          name: "Reject 1 draft?",
+        });
+        await userEvent.type(
+          within(dialog).getByRole("textbox", { name: "Reason" }),
+          "Fictional reason",
+        );
+        await userEvent.click(
+          within(dialog).getByRole("button", { name: "Reject" }),
+        );
+
+        await waitFor(() => {
+          expect(bodyOf(fetch, "POST", "/api/drafts/rejection")).toEqual([
+            expect.objectContaining({
+              records: [{ type: "release", id: releaseId }],
+            }),
+          ]);
+        });
+      },
+    );
+
+    it("turn the row's Approve off, saying why, where both drafts are the approver's own", async () => {
+      await openPage(
+        [
+          withLength(
+            { needsOtherApprover: true },
+            { needsOtherApprover: true },
+          ),
+        ],
+        { answers: { "GET /api/session": approver } },
+      );
+
+      await rowMenuTexts("Fictional Majors: 27.2");
+      const menu = screen.getByRole("menu");
+
+      expect(
+        within(menu)
+          .getByRole("menuitem", { name: "Approve draft" })
+          .hasAttribute("data-disabled"),
+      ).toBe(true);
+      expect(within(menu).getByText("Needs another approver")).toBeDefined();
+    });
 
     it("are both approved from the row's menu", async () => {
       expect(await approveFromRow(approver)).toEqual([
