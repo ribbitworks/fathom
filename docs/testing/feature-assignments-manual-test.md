@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, the page left out of the menu for a role without Personal details, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, the page left out of the menu for a role without Personal details, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 

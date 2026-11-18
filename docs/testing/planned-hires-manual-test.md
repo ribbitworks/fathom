@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies planned hires shown as rows of the People table: how their rows look beside people's, their names, the **State** column, their values in added columns, a column switched off for them, people who have left, saving a view of planned hires alone, a planned manager whom other planned hires report to, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, what a Feature Lead sees, and filling a hire from its details panel with a new or an existing person. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies planned hires shown as rows of the People table: how their rows look beside people's, their names, the **State** column, their values in added columns, a column switched off for them, people who have left, saving a view of planned hires alone, a planned manager whom other planned hires report to, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, what a Feature Lead sees, and filling a hire from its details panel with a new or an existing person. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 

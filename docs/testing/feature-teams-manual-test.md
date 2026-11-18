@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies feature teams on the **Org chart** page: how each team is drawn under its lead, a team's panel, proposing, adding, renaming and removing teams as drafts with their marks on the chart and in the panel, what a reader who may not change teams sees, changing teams from another date, approving a team's draft on the Drafts page, using a team's panel from the keyboard, choices shown with their descriptions when picked, and each person's feature teams on the **People** page, grouped by team. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies feature teams on the **Org chart** page: how each team is drawn under its lead, a team's panel, proposing, adding, renaming and removing teams as drafts with their marks on the chart and in the panel, what a reader who may not change teams sees, changing teams from another date, approving a team's draft on the Drafts page, using a team's panel from the keyboard, choices shown with their descriptions when picked, and each person's feature teams on the **People** page, grouped by team. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 
@@ -103,7 +103,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `FF44` Select the Feature teams button.
   - **Expected:**
-    - The list holds the feature teams [Development Setup](../design/development-setup.md#fictional-seed-data) lists, with 'Search and discovery' in place of 'Search'.
+    - The list holds the feature teams [Development Setup](../design/development-setup.md#fictional-data) lists, with 'Search and discovery' in place of 'Search'.
     - The list has no **New feature team**.
   - **Notes:**
 

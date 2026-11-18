@@ -72,7 +72,7 @@ Run once, before the first test case.
 
 ### Restore the Seed Data
 
-Run after Start Fathom, before the first test case unless the test starts another way, and wherever a test case says so. Fathom keeps running. This removes the [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand. The seed data's own drafts that were approved since it was added are not made again; run Reset the Database to have them back.
+Run after Start Fathom, before the first test case unless the test starts another way, and wherever a test case says so. Fathom keeps running. This removes the [Fictional Data](../design/development-setup.md#fictional-data) and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand. The seed data's own drafts that were approved since it was added are not made again; run Reset the Database to have them back.
 
 1. In the second terminal, run:
 
@@ -162,5 +162,5 @@ Run only where a test says so. This deletes every account and record in the deve
 - **Team panel:** the panel that opens to the right of the chart when a feature team is chosen, titled with the team's name, with a **Details** section and a **Members** section.
 - **Mode switch:** the switch just after the **Capacity** heading, on the same line, reading **People** and **Settings**.
 - **Team list:** the list of feature teams that opens below a month's cell on the **Feature assignments** page for editing, with a box to type in at its top.
-- **Seeded dates:** the seed data is dated from the day it is added, as [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) sets out, so its cycles and releases move with today, and steps name them by where they fall. A cycle's name is the year it ends in and its number in that year, such as '27.1'.
+- **Seeded dates:** the seed data is dated from the day it is added, as [Fictional Data](../design/development-setup.md#fictional-data) sets out, so its cycles and releases move with today, and steps name them by where they fall. A cycle's name is the year it ends in and its number in that year, such as '27.1'.
 - **Dates:** steps type dates as digits, such as `2030-03-15`; tables and panels show them as the browser's language writes them, such as `15 Mar 2030` or `Mar 15, 2030`.

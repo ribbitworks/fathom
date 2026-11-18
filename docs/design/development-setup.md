@@ -1,8 +1,10 @@
 # Fathom: Development Setup
 
-**Last updated:** 2026-11-15
+**Last updated:** 2026-11-17
 
-How Fathom's repository is organized, how developers run it locally, and how fictional data is generated. It applies the libraries in [ADR 0002](../adr/0002-libraries.md) and the platforms in [Supported Platforms](../operations/supported-platforms.md).
+How the repository is organized, how to run Fathom on your machine, its fictional data, and how releases are made.
+
+- The libraries are chosen in [ADR 0002](../adr/0002-libraries.md), and the platforms listed in [Supported Platforms](../operations/supported-platforms.md).
 
 ## Repository Layout
 
@@ -31,196 +33,260 @@ docs/                     Documentation, with the Help pages in docs/help/, whic
 LICENSES/                 Licence texts, as the REUSE specification requires
 ```
 
-- **Data access layer:** Lives in `apps/server/src/data/`, so every read of protected data goes through the server's tier checks. `packages/db` holds the schema, the migrations, and the database client. A lint rule allows only the data access layer, the server's start-up code, the account command, `seed`, `test-utils`, the server's test helper, and tests to import it; other code may use only its types.
+- **Data access layer:** `apps/server/src/data/`. Every read of protected data goes through its tier checks.
+  - `packages/db` holds the schema, the migrations and the database client.
+  - A lint rule lets only these import `packages/db`: the data access layer, the server's start-up code, the account command, `seed`, `test-utils`, the server's test helper, and tests. Other code may use only its types.
 - **Shared code:** Only `packages/shared` is used by both the front end and the server, so server-only code never reaches the browser.
-- **Development-only packages:** `fixtures`, `seed`, and `test-utils` are never included in the runtime image, and the server never depends on them, which `scripts/runtime-image.test.mjs` checks. The server's `package.json` exports its account and sign-in code only for the development-only `seed` package, which creates and deactivates the development accounts through it; that code checks no permissions, so the server's own routes call it only after checking them. It also exports its access rules and data access layer, through which `seed` makes its drafts as the personas, with their permissions checked as for anyone.
-- **Root configuration:** The workspace definition, shared TypeScript, linting, and formatting settings, the pinned Node.js and pnpm versions, and the Renovate configuration.
+- **Development-only packages:** `fixtures`, `seed` and `test-utils` never reach the runtime image, and the server never depends on them. `scripts/runtime-image.test.mjs` checks this.
+  - The server exports its account and sign-in code only for `seed`, which creates and deactivates the development accounts with it. That code checks no permissions, so the server's own routes call it only after checking them.
+  - The server also exports its access rules and data access layer. `seed` makes its drafts through them as the personas, with their permissions checked as anyone's are.
+- **Root configuration:** the workspace, the shared TypeScript, linting and formatting settings, the pinned Node.js and pnpm versions, and the Renovate settings.
 
 ## Local Development
 
-Developers may use any machine and container runtime listed for development in Supported Platforms, as long as their use of it needs no paid licence. Development uses fictional data only.
+Fathom is developed on the machines and container runtimes that [Supported Platforms](../operations/supported-platforms.md#development-platforms) lists. Development uses fictional data only.
 
 ### Prerequisites
 
-- **A container runtime:** One listed for development in Supported Platforms, installed and running.
-- **mkcert:** For the local HTTPS certificate.
-- **Bootstrap script:** `bash scripts/dev-bootstrap.sh` on macOS and Linux, or `scripts/dev-bootstrap.ps1` on Windows, installs everything else: fnm, the Node.js version pinned in `.node-version`, the pnpm version pinned in `package.json`, and the project's dependencies. It is safe to run again at any time. Add `--configure-shell`, or `-ConfigureShell` on Windows, to also add fnm to your shell profile.
-- **Check tools:** The scanners the [Security Plan](../security/security-plan.md) requires run as containers, with images pinned by digest, so nothing extra is installed. Image scans read an exported image file rather than being given access to the container runtime. `pnpm security`, `pnpm scan:images` and `pnpm publish:images` share each copy's Trivy cache, so one of them runs at a time in a copy; another refuses to start until it ends, naming the process that holds the cache.
-- **Ignored files:** Every tool reads `.gitignore`. ShellCheck, PSScriptAnalyzer, the REUSE tool, Gitleaks, Semgrep, and Trivy run in containers that see only a copy of the files git would track, made under the git-ignored `.tmp/` folder, so ignored folders such as `private/` are never read. Trivy also reads `node_modules`, read-only, to find package licences, and the scan of git history sees only git's own folder. ESLint, Prettier, markdownlint, and `pnpm audit` run directly on the machine.
-- **Windows:** If PowerShell blocks the bootstrap script, allow local scripts with `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`. `pnpm check` runs bash scripts, so it needs Git Bash or WSL.
-- **Downloads during checks:** Most scanners run without network access. Semgrep downloads its rules, Trivy its vulnerability database, `pnpm audit` queries the package registry, and the PowerShell linter downloads PSScriptAnalyzer once and checks its hash.
+- **A container runtime,** installed and running.
+- **mkcert,** for the local HTTPS certificate.
+- **Homebrew or fnm** on macOS and Linux, or **winget** on Windows, so the bootstrap script can install Node.js.
+- **Git Bash or WSL** on Windows, since `pnpm check` runs bash scripts.
+
+### First Run
+
+1. Clone the repository and open a terminal in it.
+1. Run `bash scripts/dev-bootstrap.sh`, or `scripts/dev-bootstrap.ps1` in PowerShell on Windows.
+   - It installs fnm unless it's already there, then the Node.js version in `.node-version`, the pnpm version in `package.json`, and the dependencies.
+   - It's safe to run again at any time.
+   - Add `--configure-shell`, or `-ConfigureShell` on Windows, to add fnm to your shell profile.
+   - If PowerShell blocks the script, allow local scripts with `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
+1. Run `pnpm dev:setup` to create the development secrets and the HTTPS certificate. mkcert may ask for your password the first time.
+1. Run `pnpm dev:reset` to create the database with the [fictional data](#fictional-data) and start Fathom.
+
+Fathom opens at `https://localhost:8443`. Sign in with any of the [development accounts](#development-accounts), using the password `pnpm dev:reset` printed.
+
+- Ctrl+C stops Fathom.
+- `pnpm dev` starts it again, keeping the data.
 
 ### Ways to Run Fathom
 
-- **Development mode:** PostgreSQL runs in a container, and the server and front end run directly on the machine with automatic reloading. The front end's development server forwards API requests to the server, so the browser sees one HTTPS origin. It does not send the server's security headers, so the built front end is also tested to need no inline scripts, which those headers block.
-- **Production-like mode:** The containers in the [Architecture](architecture.md) run with Docker Compose, over HTTPS, with the same network isolation as production, at `https://localhost:9443`, or the port of the copy's clone number below, so development mode can run alongside. Images are built for linux/amd64, so on machines with a different processor they run under emulation, more slowly. Tests of the running containers run in this mode, with throwaway secrets.
-- **Tests and the database:** Development mode and the database tests build images for the machine's own processor, so they run at full speed. The security report scans separate linux/amd64 builds, so what is scanned is what production runs.
-- **Version and build:** The scripts read the release, the commit and the commit's date from git in `scripts/lib.sh`, for Help's About box, and pass them to the image build as build arguments, since the build cannot see `.git`. The commit is marked as modified, and the date taken, as the [Decisions Log](../product/decisions.md#platform-and-operations) sets out. Development mode reads them when `pnpm dev` starts, so it names that commit even once the code changes. Setting `FATHOM_VERSION`, `FATHOM_COMMIT` or `FATHOM_COMMIT_DATE` overrides them, as when building from a copy without `.git`.
-- **Several copies at once:** Each copy of the repository on one machine can run both modes and their tests alongside the others when it is given its own clone number, from 1 to 9, with `pnpm dev:setup <number>`. The number is kept in the git-ignored `.dev/clone`. A copy with a number, 1 included, carries it in its names, such as `fathom-dev-1` and `fathom-stack-1`. A single copy, with no number, keeps the plain names `fathom-dev` and `fathom-stack` and clone 1's ports. In development mode, the top bar and the browser tab's title show the clone number, and the top bar the branch, read when `pnpm dev` starts. Each copy gets its own database and database image, containers, production-like and scanned images, and scanner cache, and these ports, where n is the clone number:
+- **Development mode,** with `pnpm dev`:
+  - PostgreSQL runs in a container. The server and front end run on the machine and reload when their code changes.
+  - The front end's development server passes API requests to the server, so the browser sees one HTTPS address.
+  - That development server doesn't send the server's security headers, so a test checks that the built front end needs no inline scripts, which those headers block.
+- **Production-like mode,** with `pnpm stack:up`:
+  - The containers in the [Architecture](architecture.md) run with Docker Compose, over HTTPS, with the same network isolation as production.
+  - It runs at `https://localhost:9443`, or the port for the copy's clone number, so development mode can run beside it.
+  - Its images are built for linux/amd64, so on a machine with another processor they run more slowly, under emulation.
+  - The container tests run in this mode, with throwaway secrets.
+- **Images for tests:** Development mode and the database tests build images for the machine's own processor, so they run at full speed. The security report scans separate linux/amd64 builds, so it scans what production runs.
 
-  | Port | Clone 1 | Clone n |
-  | --- | --- | --- |
-  | Development mode | 8443 | 8443 + 10 × (n - 1) |
-  | Development server's API | 8444 | 8444 + 10 × (n - 1) |
-  | Development database | 5432 | 5432 + (n - 1) |
-  | Production-like mode | 9443 | 9443 + 10 × (n - 1) |
+### Version and Build
 
-  Browsers keep cookies apart by host but not by port, so Fathom names its sign-in cookie after the port when its address has one. Each copy and mode then keeps its own sign-in, and one browser can stay signed in to all of them at once.
+- `scripts/lib.sh` reads the release, the commit and the commit's date from git, for Help's About box.
+- The image build can't see `.git`, so the scripts pass these in as build arguments.
+- When the files differ from the commit, it's shown with `-modified` after it, as the [Decisions Log](../product/decisions.md#platform-and-operations) sets out.
+- Development mode reads them when `pnpm dev` starts, so it keeps naming that commit as the code changes.
+- `FATHOM_VERSION`, `FATHOM_COMMIT` and `FATHOM_COMMIT_DATE` override them, such as when building from a copy without `.git`.
 
-  Copying `.dev/` from another copy keeps the same development accounts' password in every copy, but also copies its clone number, so run `pnpm dev:setup <number>` straight after with the new copy's own number. Until then, the new copy uses the other's database, and `pnpm dev:reset` there would delete it.
+### Several Copies on One Machine
 
-  [Setting Up Another Copy](#setting-up-another-copy) gives these steps as commands to copy.
+Each copy of the repository can run both modes and their tests beside the others once it has its own clone number, from 1 to 9.
 
-  A copy that had the plain names and now carries a number, because it was given one or because its `.dev/clone` already held 1, has new names and so a new database volume. Run `pnpm dev:reset` to create and seed its new database; nothing carries over from the old one. The old database and scanner cache stay on the machine, and the old containers keep clone 1's ports while they run. To remove the old containers and database, run `docker compose --project-name fathom-dev --file deploy/compose.dev.yaml down --volumes`, and to remove the old cache, `docker volume rm fathom-trivy-cache`.
+- Give a copy its number with `pnpm dev:setup <number>`. It's kept in the git-ignored `.dev/clone`.
+- A copy with a number, 1 included, carries it in its names, such as `fathom-dev-1` and `fathom-stack-1`.
+- A single copy with no number keeps the plain names, `fathom-dev` and `fathom-stack`, and clone 1's ports.
+- In development mode, the top bar and the browser tab's title show the clone number, and the top bar shows the branch `pnpm dev` started on.
+- Each copy has its own database and database image, containers, images, scanner cache, and these ports:
+
+| Clone | Development mode | Development server's API | Development database | Production-like mode |
+| --- | --- | --- | --- | --- |
+| 1 | 8443 | 8444 | 5432 | 9443 |
+| 2 | 8453 | 8454 | 5433 | 9453 |
+| 3 | 8463 | 8464 | 5434 | 9463 |
+| 4 | 8473 | 8474 | 5435 | 9473 |
+| 5 | 8483 | 8484 | 5436 | 9483 |
+| 6 | 8493 | 8494 | 5437 | 9493 |
+| 7 | 8503 | 8504 | 5438 | 9503 |
+| 8 | 8513 | 8514 | 5439 | 9513 |
+| 9 | 8523 | 8524 | 5440 | 9523 |
+
+Each clone number adds 10 to the clone before it, or 1 for the development database.
+
+**Signing in to several copies:** Browsers keep cookies apart by host but not by port, so Fathom names its sign-in cookie after the port. Each copy and mode keeps its own sign-in, and one browser can stay signed in to all of them.
 
 #### Setting Up Another Copy
 
-To run another copy of the repository beside the ones already set up, check that the new copy has no uncommitted work, then open a terminal in its folder. Set `other` to the folder of a copy whose `.dev/` to copy, and `number` to the new copy's clone number, then paste:
+1. Clone the repository into a folder of its own, and run the bootstrap script there, as in [First Run](#first-run).
+1. In the new copy's folder, set `other` to the folder of a copy already set up, and `number` to the new copy's clone number, then paste:
 
-```bash
-other=../fathom-1
-number=2
-git fetch origin
-git switch main
-git pull --ff-only
-pnpm install
-mkdir -p .dev
-cp -R "${other}/.dev/." .dev/
-pnpm dev:setup "${number}"
-pnpm dev:reset
-```
+   ```bash
+   other=../fathom
+   number=2
+   mkdir -p .dev
+   cp -R "${other}/.dev/." .dev/
+   pnpm dev:setup "${number}"
+   pnpm dev:reset
+   ```
 
-`pnpm dev:setup` prints the copy's address, its clone number's development mode port in the table above, such as `https://localhost:8453` for clone 2. `pnpm dev:reset` deletes that copy's own database, seeds a new one, and opens Fathom there.
+- Copying `.dev/` keeps the same development accounts' password in every copy.
+- It also copies the other copy's clone number, so run `pnpm dev:setup <number>` straight after. Until then the new copy uses the other's database, and `pnpm dev:reset` would delete it.
+- `pnpm dev:setup` prints the copy's address, such as `https://localhost:8453` for clone 2.
+
+#### Giving a Number to a Copy That Had None
+
+The copy gets new names, and so a new, empty database.
+
+- Run `pnpm dev:reset` to create and seed it. Nothing carries over from the old one.
+- The old database and scanner cache stay on the machine. The old containers keep clone 1's ports while they run.
+- To remove the old containers and database: `docker compose --project-name fathom-dev --file deploy/compose.dev.yaml down --volumes`.
+- To remove the old cache: `docker volume rm fathom-trivy-cache`.
 
 ### HTTPS
 
-Both modes use a locally trusted certificate created with mkcert and stored in the git-ignored `.dev/` folder. mkcert's local certificate authority key stays in mkcert's own folder and is never shared or copied into the repository. Node.js-based tools that call Fathom over HTTPS are pointed at the local certificate authority with `NODE_EXTRA_CA_CERTS`. Production uses a certificate whoever runs Fathom provides, as [Securing Your Environment](../operations/securing-your-environment.md#certificates-and-secrets) sets out.
+- Both modes use a certificate made with mkcert and kept in the git-ignored `.dev/` folder.
+- mkcert's certificate authority key stays in mkcert's own folder. It's never shared or copied into the repository.
+- Node.js tools that call Fathom over HTTPS trust it through `NODE_EXTRA_CA_CERTS`.
+- Production uses a certificate from whoever runs Fathom, as [Securing Your Environment](../operations/securing-your-environment.md#certificates-and-secrets) sets out.
 
 ### Secrets and Configuration
 
-- **Development secrets:** A setup script generates development-only values, such as database passwords, into the git-ignored `.dev/` folder, which is added to `.gitignore` with the first code. Production secrets are never placed on development machines.
-- **Example configuration:** `deploy/fathom.env.example` lists every setting with placeholder values, and a test keeps it in step with the settings the code reads.
-- **Database roles:** The development database is initialized with the same separate migration and application roles as production, and integration tests connect as the application role, so missing permissions show up in tests.
+- **Development secrets:** `pnpm dev:setup` generates them, such as database passwords, into the git-ignored `.dev/` folder. Production secrets never go on development machines.
+- **Example configuration:** `deploy/fathom.env.example` lists every setting with placeholder values. A test keeps it in step with the settings the code reads.
+- **Database roles:** The development database has the same separate migration and application roles as production. Integration tests connect as the application role, so a missing permission fails a test.
 
 ### Common Commands
 
-| Command | Purpose |
+#### Running Fathom
+
+| Command | What it does |
 | --- | --- |
-| `pnpm dev:setup [clone number]` | Create development secrets, such as random database passwords and the session secret, and the locally trusted HTTPS certificate in the private `.dev/` folder. A clone number from 1 to 9 lets this copy run alongside others and adds the number to its container, volume and image names, so a copy that had no number gets a new database, as [Ways to Run Fathom](#ways-to-run-fathom) describes |
-| `pnpm account:create --name <name> --email <email> [--role <role>]` | Create an account in the development database, printing once the password Fathom generates for it, which its user changes at first sign-in. It holds the Team Member role unless `--role` names another starting role, named as in [Roles](../product/roles.md) in lowercase with hyphens, such as `workforce-administrator` |
-| `pnpm admin:create --email <email>` | Create the Fathom Administrator account in the development database, holding the Administrator role, printing once the password Fathom generates for it, which is changed at first sign-in. It changes nothing once any account holds the Administrator role |
-| `pnpm db:up` and `pnpm db:down` | Start and stop the development database, whose port is published only on this machine |
-| `pnpm dev` | Start development mode: the database, with migrations applied, the server, and the front end, and open Fathom at `https://localhost:8443`, or the clone's port, in the browser. The server and the front end reload when their code changes. It first stops this clone's server and front end if they are still running, wherever they were started, so running it again restarts them; if another program or another clone holds one of the ports, it fails with the process's name and stops nothing. Ctrl+C stops them; the database keeps running until `pnpm db:down` |
-| `pnpm dev:stop` | Stop this clone's server and front end, wherever they were started, leaving the database running |
+| `pnpm dev` | Start development mode: the database with migrations applied, the server and the front end, and open Fathom in the browser |
+| `pnpm dev:stop` | Stop this clone's server and front end, leaving the database running |
+| `pnpm dev:reset` | Delete the database, create it again with the fictional data and development accounts, print their password, and start development mode |
+| `pnpm stack:up`, `pnpm stack:down`, `pnpm stack:reset`, `pnpm stack:logs` | Start, stop, delete the data of, and follow the logs of production-like mode |
 | `pnpm build` | Build the front end into `apps/web/dist`, which the server serves when `FATHOM_WEB_ROOT` points to it |
-| `pnpm db:migrate` | Apply migration files using the migration role |
-| `pnpm db:reset` | Delete and recreate the development database, and apply migrations |
-| `pnpm db:seed` and `pnpm db:unseed` | Add the fictional data to the development database, unless it is there already, and remove it again. Seeding also adds the [development accounts](#development-accounts) and prints the password they share. Removing first discards every unpublished change the personas made, then every draft of a seeded person or seeded planned hire, of a planned hire drafted under a seeded manager, of a seeded schedule, release, project, milestone, proposal, customer, feature, or feature team, and of a record of those kinds the seed drafted adding, those made by hand included, since it removes the records they change, removes anyone who filled a seeded hire, then keeps anything else added by hand, a seeded column or list that something added by hand still uses, live or in a draft, and a seeded person whom a planned hire added by hand reports to or was filled by, and says so. Removing the seeded features takes them off every project and proposal, discards every draft of a project or proposal that names them, and takes the seeded feature teams off features added by hand; removing the seeded customers, proposals, and projects discards the drafts made by hand that link to them. A list the seed drafted adding, such as Skills, that has since been approved is no longer seed data: removing keeps it, and seeding again leaves it as it is and drafts neither it nor what draws on it. It deactivates the accounts rather than deleting them, since the change history refers to accounts, and seeding again reactivates them |
-| `pnpm db:reseed` | Run `pnpm db:unseed`, then `pnpm db:seed`, stopping if removing the data fails |
-| `pnpm db:seed:accounts` | Add only the [development accounts](#development-accounts) to the development database, with no fictional data, and print the password they share, as after `pnpm db:reset`, to try Fathom as an organization starts |
-| `pnpm dev:reset` | Delete and recreate the development database, add the fictional data and the [development accounts](#development-accounts), print the accounts' password, and start development mode |
-| `pnpm typecheck` | Check types across the workspace |
-| `pnpm check` | The single command from the [Testing Standards](../standards/testing.md#running-tests). It runs in one copy of the repository at a time on one computer, as `pnpm test:changed` does whenever it runs tests, since two copies checking at once slow each other until tests time out. A copy that has to wait says so at once, naming the process and folder it waits for, and holds a slot file as package tests do |
-| `pnpm test` | All tests, including database tests, each test file working in a database of its own, copied from a template that the package's run migrates once in one throwaway PostgreSQL container and dropped when the file finishes: `pnpm test:scripts` for the scripts in `scripts/`, then `pnpm test:packages` for every workspace package at once, each package's tests limited to a share of the computer's cores, leaving two free for the development servers, unless `VITEST_MAX_WORKERS` sets the number. Package tests run in one copy of the repository at a time on one computer, whether from these commands, `pnpm test:changed` or `pnpm check`; `pnpm test` waits only for other copies' package tests, not for their checks. Several copies running them together slow each other until tests time out. A copy that has to wait says so at once, naming the process and folder it waits for, and runs once that copy's package tests finish. A test database server keeps its data in memory and does not wait for writes to reach the disk, since it is thrown away. No more than 8 test database servers start at once on one computer, across copies of the repository. Each start, and each copy's package tests, hold a slot file in a folder of the user's own under the system's temporary folder until done, and a slot whose process has ended is taken over |
-| `pnpm test:changed` | The tests a change can affect, as the [Testing Standards](../standards/testing.md#running-tests) describe, or with `--uncommitted`, the tests the work not yet committed can affect |
-| `pnpm security` | The security report, written to a dated folder under the git-ignored `output/security/` folder. Its scans run side by side. It builds and scans the container images only when the branch changes what decides their scan, as the [Security Plan](../security/security-plan.md#vulnerability-scanning) sets out, and reuses an earlier report's Trivy results when nothing they read has changed; its summary names what it skipped or reused, and from which report |
-| `pnpm scan:images` | Build the container images from the checked-out code, pull the newest full release's images from `FATHOM_REGISTRY`, and scan them all, failing as a release's scan does, as [Daily image scan](#releases) describes |
-| `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:powershell`, `pnpm lint:licences` | Individual linters, also run by `pnpm check`. `pnpm lint` keeps a cache in the git-ignored `.tmp/eslint/`, so unchanged files are not linted again; `pnpm check` lints without it, since a change to one file's types can break another file that has not changed |
-| `pnpm format` | Format source files |
-| `pnpm updates` | List available dependency updates with Renovate, written to the git-ignored `output/updates/` folder; changes nothing, and needs network access to the package and container registries |
-| `pnpm update:analyzer <version>` | Pin a new PSScriptAnalyzer version together with its SHA-256 |
-| `pnpm reset-caches` | Remove cached scanner data, which the next check rebuilds, and ESLint's cache, which the next `pnpm lint` rebuilds |
-| `pnpm prune-reports [days]` | Delete local reports older than the given number of days, 365 by default. Security reports are always kept for at least one calendar year |
-| `pnpm stack:up`, `pnpm stack:down`, `pnpm stack:reset`, and `pnpm stack:logs` | Start, stop, delete the data of, and follow the logs of production-like mode |
-| `pnpm stack:create-account --name <name> --email <email> [--role <role>]` and `pnpm stack:create-administrator --email <email>` | Create an account, or the Fathom Administrator account, in production-like mode while it runs, as `pnpm account:create` and `pnpm admin:create` do |
-| `pnpm test:containers` | Container tests, in a separate copy of production-like mode: users reach Fathom only through the proxy, and the application and database cannot reach the internet |
-| `pnpm test:ui` | UI tests |
-| `pnpm release`, `pnpm release:tag`, and `pnpm publish:images <tag>` | Make a release, tag it once merged, and publish its container images, as [Releases](#releases) describes |
 
-## Releases
+- `pnpm dev` first stops this clone's server and front end if they're running, so running it again restarts them.
+- If another program or clone holds one of its ports, `pnpm dev` fails, naming that process, and stops nothing.
+- Ctrl+C stops the server and front end. The database keeps running until `pnpm db:down`.
 
-A release is made by hand, wherever the repository is hosted, as [ADR 0011](../adr/0011-releases-and-images.md) sets out. Its version is the release tag, as the [Decisions Log](../product/decisions.md#platform-and-operations) sets out, and Help's About box shows it once the release's images run.
+#### The Database
 
-To release, run `pnpm release` on an up-to-date, clean default branch. It picks the version, adds the changelog on a `release/vX.Y.Z` branch and pushes it. Open a pull request from that branch and merge it. Then, on the updated default branch, run `pnpm release:tag` to tag the merge. Push the tag with `git push origin vX.Y.Z`, then run `pnpm publish:images vX.Y.Z`. Both commands take `--dry-run`.
+| Command | What it does |
+| --- | --- |
+| `pnpm db:up`, `pnpm db:down` | Start and stop the development database, reachable only from this machine |
+| `pnpm db:migrate` | Apply the migrations, as the migration role |
+| `pnpm db:reset` | Delete the database, create it again and apply the migrations |
+| `pnpm db:seed` | Add the fictional data and the development accounts, unless they're there, and print the accounts' password |
+| `pnpm db:unseed` | Remove the fictional data, keeping what was added by hand, as [Seed Data](#fictional-data) sets out, and deactivate the accounts |
+| `pnpm db:reseed` | `pnpm db:unseed`, then `pnpm db:seed`, stopping if removing fails |
+| `pnpm db:seed:accounts` | Add only the [development accounts](#development-accounts), to try Fathom as a new organization would |
 
-- **Publishing the images:** `pnpm publish:images` builds the application, database, and proxy images for linux/amd64 from a clean copy of exactly the tag, scans them as the security report does, reusing an earlier scan of an image that has not changed, and fails if a fix is overdue or has no known release date, as the [Security Plan](../security/security-plan.md#vulnerability-scanning) sets out; otherwise it pushes each, tagged with the version, such as `ghcr.io/jlarue26/fathom-app:0.1.0`. The scan's summary is written to a dated folder under `output/security/`. With `--dry-run` it builds and scans but only prints what it would push.
-- **Where images go:** `FATHOM_REGISTRY` sets the registry and owner, `ghcr.io/jlarue26` unless set. Sign in to it first, such as with `docker login ghcr.io`; no registry password is kept in the repository.
-- **What each image says:** Every image holds Fathom's `LICENSE` and `NOTICE` in `/usr/share/doc/fathom/`, and is labelled with its source, licence, version, and full commit, under the Open Container Initiative's `org.opencontainers.image` names. The source is `FATHOM_SOURCE_URL`, or the `origin` remote's web address without any credentials when it is not set. Each image is dated by the tagged commit's time rather than the build's. That fixes the image's labels and dates, not its digest: each build takes the security fixes released by that day, and installed files keep the times they were built, so building a tag again gives a different digest, as [issue #434](https://github.com/jlarue26/fathom/issues/434) records.
-- **Daily image scan:** `pnpm scan:images` builds the images from the checked-out code and pulls the images of the newest full release, leaving out pre-releases, from `FATHOM_REGISTRY` (`ghcr.io/jlarue26` unless set), since those are what people most likely run, signing in first if the registry needs it, as for publishing. It scans them all as a release's scan does. With no release tag yet it says so and scans the built images only; a release whose images cannot be pulled counts as not scanned, so the scan fails. The Scan images daily workflow runs it on the default branch every day, and can be run by hand from the Actions tab. A failed scan fails the run, which the Actions tab shows, and GitHub emails the person who last changed the workflow's schedule, if their notification settings allow. The scan and its summary are kept with the run for 90 days, the longest GitHub allows a public repository, as [issue #433](https://github.com/jlarue26/fathom/issues/433) records. Another host's scheduler can run `pnpm scan:images` the same way.
-- **On GitHub:** Instead of running `pnpm publish:images` by hand, the Publish release images workflow, run by hand from the Actions tab with the tag, runs `pnpm publish:images` and signs in with the workflow's own token, publishing to the repository owner's registry. It makes no tags or releases itself.
+#### Accounts
 
-## Fictional Seed Data
+| Command | What it does |
+| --- | --- |
+| `pnpm account:create --name <name> --email <email> [--role <role>]` | Create an account and print its one-time password |
+| `pnpm admin:create --email <email>` | Create the Fathom Administrator account and print its one-time password |
+| `pnpm stack:create-account` and `pnpm stack:create-administrator` | The same, in production-like mode while it runs |
 
-- **Generator:** `packages/fixtures` uses Faker with a fixed seed, and dates everything from a reference date, the day the seed data is added in Fathom's time zone, so it produces the same data, with the same identifiers, on every run on a given day, and on any day looks as it does on any other: the same people still to start, current, and gone, schedules with a release that has shipped, one under way, and one to come, and planned hires and drafts ahead, and `packages/seed` writes it to the database, recorded in the change history as made by Fathom itself.
-- **Contents so far:** Listed by area under [What the Seed Holds](#what-the-seed-holds). Each later slice adds its own data, until the seed holds feature teams and leads, products, customers, projects, features, allocations, and estimates, covering every role and every level of protected data.
-- **Getting new seed data:** A database seeded before the seed data changed keeps its old data. Run `pnpm db:reseed` or `pnpm dev:reset` to get the new data.
-- **Realistic but invented:** Names and details are generated, mostly Canadian names, in English and French, then Indian names, and a few from elsewhere: some with accented letters, such as French, German, Spanish, Swedish, and Danish names, and some in other scripts, such as Korean, Japanese, Chinese, and Russian. Every screen and search is tried with them, and the data looks realistic without describing anyone real. No real company, customer, or product names are used.
-- **Sizes:** About 150 people for development and demonstrations, and smaller sets for tests.
-- **Shared building blocks:** `packages/fixtures` holds the building blocks for fictional records, used by both the generator and tests.
-- **Never derived from real data:** As required by the [Data](../../AGENTS.md#data) rules.
+- An account holds Team Member unless `--role` names another starting role, as [Roles](../product/roles.md) names it, in lowercase with hyphens, such as `workforce-administrator`.
+- Each new account changes its password at first sign-in.
+- `pnpm admin:create` does nothing once any account holds the Administrator role.
 
-### What the Seed Holds
+#### Checks and Tests
 
-Drafts are made through the data access layer, as the personas would make them.
+| Command | What it does |
+| --- | --- |
+| `pnpm check` | Every linter, every test and the security report: the full check from the [Testing Standards](../standards/testing.md#running-tests) |
+| `pnpm test` | Every test: the script tests, then every package's |
+| `pnpm test:changed` | The tests a change can affect; with `--uncommitted`, only the work not yet committed |
+| `pnpm test:containers` | The container tests: users reach Fathom only through the proxy, and the application and database can't reach the internet |
+| `pnpm test:ui` | The UI tests |
+| `pnpm typecheck` | Type checking across the workspace |
+| `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:powershell`, `pnpm lint:licences` | Each linter on its own |
+| `pnpm format` | Format the source files |
 
-- **Lists and People columns:**
-  - Lists of sites, levels, and roles on the team, and a Personal list of work patterns, with the People columns that draw on them. Most people work full time, and a few part time or compressed hours.
-  - The positions in the built-in Positions list.
-  - Lists of certifications and languages that no column draws on.
-  - Two Confidential lists, Compensation bands and Performance ratings, each drawn on by a People column. Everyone holds the band of their level and, a year after they start, a rating; filled planned hires do too.
-  - An Onboarding Note column, General, holding fictional onboarding checklists for the eight newest starters still employed: two still to start, and six further along the earlier they started. The one furthest along has a starter handbook a few pages long after it, so a long note shows folded.
-- **People:**
-  - Each person has a position. They are current and former, with a few who start after the reference date and two who leave 12 and 45 days after it.
-  - Each has a current reporting line, except the person at the top, who has no manager. A manager who has left still has reports under them.
-  - About half the managers' teams have names, the first six coloured teal, grape, orange, indigo, yellow, and pink, and the rest uncoloured. The other teams are unnamed.
-- **Drafts of people, lists and columns:** Each persona publishes their drafts before anyone else changes or decides them, so all but those left unpublished are published.
-  - **People:** The Engineering Operations Manager drafts adding two people; changing three, one of them a Personal end date; moving Simone Jean from Viktoria Holmberg, who has left, to Silje Holm-Schrøder at the top; naming 本間 稔's team Observability team; and removing one. A second Engineering Operations Manager changes another of one person's details, so one draft holds two people's changes.
-  - **Lists:** The first Engineering Operations Manager drafts adding a Skills list with two choices, renaming a site, adding Harbourside to Sites and moving it to the top, removing a position no one holds, retiring a role on the team, removing the Certifications list and retiring Languages, which no column draws on, moving the Co-op level and the Engineering Manager position, and a new description for Positions. The second describes the renamed site, renames Roles on the team, and sends the rejected Sites order for approval again, so it waits on Harbourside, still rejected.
-  - **People's columns:** The first drafts adding a Previous site column, renaming Level to Grade, which the second makes required, and removing Role on team, then adding a Skills column drawing on the new Skills list, and giving Silje Holm-Schrøder Rust in it, so her draft uses the drafts of the list, the column, and the choice.
-  - **Rejected:** The Engineering Director rejects two of the drafts of people, Harbourside, the Sites and Positions orders, the Positions description, and the Previous site column, each with a reason.
-  - **Left unpublished:** These are seen only by their maker, and hold their records for everyone else: the Engineering Operations Manager's change to Mariana Metz's site and their new Equipment list with a Laptop choice, and the second Engineering Operations Manager's change to the position in Viktoria Holmberg's published draft, which others see held by the Second Engineering Operations Manager.
-- **Feature teams:** Eight, recorded as made by Fathom itself: Payments core, Search, Platform reliability, Mobile apps, Field tools, Data pipeline, Identity, and Integrations.
-  - Every one but Platform reliability has a lead and a colour.
-  - Together they hold about half the current people who manage no one, who joined them over the two years before the reference date.
-  - Someone is on both Payments core and Search, and someone left Mobile apps.
-  - Someone moved from Identity to Integrations 120 days before, a lead of Data pipeline took over from a former lead 200 days before, and someone joins Integrations 30 days after.
-- **Customers, projects and proposals:**
-  - Five fictional customers.
-  - Five projects with milestones on both sides of the reference date, each with its general feature, among them Depot Operations, P-2017, for Kestrel Mining Cooperative, naming only Field Apps features.
-  - Proposals in every status of the built-in Proposal statuses list. One had a feature removed, with a reason, recorded as a change after it was added.
-- **Planned hires:** Twelve, recorded as made by Fathom itself.
-  - Ten are not yet filled, in both hiring states: six named Backend engineer 1, Backend engineer 2, Payments tester, Platform engineer, Data engineer, and Mobile developer, and four unnamed, with the requisitions REQ-2041, REQ-2042, REQ-2047, REQ-2053, and REQ-2055 or a temporary ID.
-  - Data engineer, REQ-2053, is Approved to hire with a target date a month before the reference date. Mobile developer, REQ-2055, is Request to hire with one four months after.
-  - Two have no manager and two no target date. One of those with no manager is an Engineering Manager marked as a planned manager, whom Platform engineer and an unnamed SDET report to.
-  - Five of those not yet filled have a site, a level, or both.
-  - Two are filled: REQ-2036 by someone who starts after the reference date, and REQ-2031 by a current person who moved to it from another team. Both carry their person's values.
-  - The Engineering Operations Manager drafts and publishes moving Backend engineer 1 from Request to hire to Approved to hire, adding REQ-2050, and clearing Payments tester's target date, which the Engineering Director rejects.
-- **Schedules:** Three, live.
-  - **Platform:** In quarters from three quarters before the current one, and in halves from three quarters after it. Its releases are Harbor 1, which has shipped; Harbor 2, ending this quarter, with a short note; and Harbor 3, to come, with a plan a few pages long as its note.
-  - **Patches:** In four-week cycles from eight weeks before this week's Monday, with two releases named Patch and the month each ships in, one shipped and one under way.
-  - **Field Apps:** In six-month cycles placed so the reference date is about two thirds through the current one. Its releases are Lantern 1, which has shipped; Lantern 2, on the current cycle, which ships two weeks after its cycle ends; and Lantern 3, two cycles on, leaving the next cycle in no release.
-- **Features:**
-  - Each has a priority, and most a size and a risk. Some have a kind, New, Improvement, or Fix, in a Kind column drawing on a list of its own.
-  - Some target the Platform schedule's cycles before and after the seed day, and some are in Later.
-  - Ten more, with estimates and sizes, target Field Apps' cycles: two done in the last cycle, the current cycle's done, in progress, planned and possible features, one of them needed by a month already past, and Work Order Sync in the next cycle.
-  - Projects and proposals name some of these features, and some features are named by none.
-  - Scheduler API, Planned with no feature team, shows the Features table's warning that it needs one.
-- **Allocations:** Recorded as made by Fathom itself.
-  - **Seeded examples:** Members of Payments core and Search on those features from months around the seed day: someone over-allocated for three months, someone under-allocated, someone with three assignments in a month, one of them to a Possible feature, past work on a done feature, a cancelled feature still allocated in months to come, the general feature of Crane Control, and Payments tester from the month it is expected.
-  - **The workload:** On top of them, from a generator of its own, most other current people who manage no one are allocated to the Field Apps features and the projects' general features, from up to a year back. About one in five people's last work ends three to nine months on.
-  - **This month:** Of 118 current people who manage no one, 86 are allocated full time, 10 over, 10 under and 12 not at all.
-  - **Its cases:** Three managers give 10% or 25% to a general feature, and some people did earlier work on Field Apps features now done. The person leaving in 12 days stays allocated after leaving, a future starter is allocated from the month before they start, and Mobile developer alone staffs Work Order Sync.
-  - **Left out:** The first 12 people, those filling planned hires, and those the seeded examples name.
-- **Drafts of the plan and feature teams:**
-  - **Product Manager:** Drafts adding Harbor 4 to Platform, renaming Harbor 2 to Harbor 2 LTS in teal, moving Harbor 3 one cycle later, giving the Patches release under way another colour, renaming Clinic Booking to Clinic Booking Rollout, adding a Second crane live milestone to Crane Control and renaming its Handover to Final handover a month later, giving Cabin Wi-Fi Refresh the Proposal ID PR-110, adding the customer Saltmarsh Ferries, renaming Transit Displays to Transit Displays Phase 2, changing Mobile Approvals' estimate and description, and adding Shift Handover Notes for Payments core.
-  - **Engineering Operations Manager:** Drafts retiring Patches, renaming Search to Search and discovery, and adding someone to Mobile apps and taking someone else off it.
-  - **Rejected:** The Engineering Director rejects the Patches release's colour and Transit Displays' new name, each with a reason.
-  - **Left unpublished:** Others see these held: the second Engineering Operations Manager renames Platform to Platform core and Platform reliability to Reliability guild, and the Project Manager changes Voice Notes' estimate.
-- **Accounts:** See [Development Accounts](#development-accounts).
+`pnpm lint` keeps a cache in `.tmp/eslint/`, so unchanged files aren't linted again. `pnpm check` lints without it, since a change to one file's types can break another file.
 
-### Development Accounts
+#### Security and Upkeep
 
-Seeding adds these accounts: one for each persona in the [Product Brief](../product/brief.md#users), holding its persona's role from [Roles](../product/roles.md#starting-roles), with the Feature Lead also holding Engineering Manager, so switching roles can be tried; a second Engineering Operations Manager, so the seed data has drafts that two people changed; and a Superuser, for trying a feature without changing accounts. The Superuser holds a Superuser role that grants every permission, which seeding makes if it is missing; it is not a starting role, so a Fathom set up without the seed data does not have it. They share a random password, kept in `.dev/secrets/dev_account_password` so it stays the same between resets, which `pnpm db:seed` prints, and, unlike accounts given a password Fathom generates, they need not change it at first sign-in. An account already there keeps its password, so if that file is replaced, run `pnpm dev:reset` to give every account the new one.
+| Command | What it does |
+| --- | --- |
+| `pnpm security` | The security report, in a dated folder under `output/security/` |
+| `pnpm scan:images` | The daily image scan, as [Releases](#daily-image-scan) describes |
+| `pnpm updates` | List dependency updates, in `output/updates/`, changing nothing |
+| `pnpm update:analyzer <version>` | Pin a new PSScriptAnalyzer version with its SHA-256 |
+| `pnpm reset-caches` | Remove the scanners' cached data and ESLint's cache, which the next run rebuilds |
+| `pnpm prune-reports [days]` | Delete local reports older than the given days, 365 by default, always keeping security reports for a year |
+
+- `pnpm security` runs its scans side by side.
+- It builds and scans the images only when the branch changes what they're built from, as the [Security Plan](../security/security-plan.md#vulnerability-scanning) sets out.
+- It reuses an earlier report's Trivy results when nothing they read has changed. Its summary says what it skipped or reused, and from which report.
+- `pnpm updates` needs network access to the package and container registries.
+
+#### Release Commands
+
+| Command | What it does |
+| --- | --- |
+| `pnpm release` | Prepare a release on its own branch |
+| `pnpm release:tag` | Tag the release once merged |
+| `pnpm publish:images <tag>` | Build, scan and publish the release's images |
+
+See [Releases](#releases) for the steps.
+
+### How the Checks Run
+
+- **Scanners in containers:** The scanners the [Security Plan](../security/security-plan.md) requires run as containers, pinned by digest, so nothing extra is installed.
+  - Image scans read an exported image file, never the container runtime itself.
+  - `pnpm security`, `pnpm scan:images` and `pnpm publish:images` share each copy's Trivy cache, so only one runs at a time in a copy. Another refuses to start, naming the process that holds the cache.
+- **Ignored files:** Every tool reads `.gitignore`.
+  - ShellCheck, PSScriptAnalyzer, the REUSE tool, Gitleaks, Semgrep and Trivy see only a copy of the files git would track, made under `.tmp/`, so folders such as `private/` are never read.
+  - Trivy also reads `node_modules`, read only, for package licences. The scan of git history sees only git's own folder.
+  - ESLint, Prettier, markdownlint and `pnpm audit` run directly on the machine.
+- **Downloads:** Most scanners run without network access.
+  - Semgrep downloads its rules, and Trivy its vulnerability database.
+  - `pnpm audit` asks the package registry.
+  - The PowerShell linter downloads PSScriptAnalyzer once, and checks its hash.
+- **Database tests:** Each test file gets a database of its own.
+  - It's copied from a template that the package's run migrates once, in one throwaway PostgreSQL container.
+  - It's dropped when the file finishes.
+  - A test database server keeps its data in memory and doesn't wait for writes to reach the disk, since it's thrown away.
+- **One copy at a time:** Two copies testing at once slow each other until tests time out, so:
+  - `pnpm check`, and `pnpm test:changed` when it runs tests, run in one copy at a time on a computer.
+  - Package tests run in one copy at a time, whether from `pnpm test`, `pnpm test:changed` or `pnpm check`. `pnpm test` waits only for other copies' package tests, not their checks.
+  - A copy that has to wait says so straight away, naming the process and folder it waits for.
+  - No more than 8 test database servers start at once on one computer.
+  - Each holds a slot file, in a folder of the user's own under the system's temporary folder, until it's done. A slot whose process has ended is taken over.
+- **Cores:** Each package's tests use a share of the computer's cores, leaving two free for the development servers. `VITEST_MAX_WORKERS` sets the number instead.
+
+## Fictional Data
+
+`pnpm dev:reset` and `pnpm db:seed` fill the development database with fictional data. `packages/fixtures` makes it with Faker and a fixed seed, and `packages/seed` writes it, recorded in the change history as made by Fathom itself. The code in `packages/seed` has the details.
+
+- **Dated from today:** Everything is dated from the day the data is added, so it looks the same on any day: people still to start, current and gone, schedules with a release shipped, one under way and one to come, and planned hires and drafts ahead.
+- **Invented, never real:** Names are generated: mostly Canadian, in English and French, then Indian, and a few from elsewhere, some with accents and some in other scripts, such as Korean, Japanese, Chinese and Russian. Every screen and search is tried with them. No real company, customer or product name is used, as the [Data](../../AGENTS.md#data) rules require.
+- **What it holds:**
+  - About 150 people, current and former, with positions, managers, and teams, some named and coloured.
+  - Lists and People columns, including Personal and Confidential ones.
+  - Twelve planned hires, two of them filled.
+  - Eight feature teams: Payments core, Search, Platform reliability, Mobile apps, Field tools, Data pipeline, Identity and Integrations.
+  - Five customers, five projects with milestones, and proposals in every status.
+  - Three schedules, Platform, Patches and Field Apps, each with releases, and features targeting their cycles.
+  - Allocations to features, with people over-allocated, under-allocated and not allocated.
+  - Drafts by each persona, some approved, some rejected and some left unpublished.
+- **New seed data:** A database seeded before the seed data changed keeps its old data. `pnpm db:reseed` or `pnpm dev:reset` brings in the new.
+- **Removing it:** `pnpm db:unseed` removes the seed's records and every draft of them, keeps what was added by hand, unless it only changes a seed record, and deactivates the accounts. It keeps a seed record that something added by hand still uses, and says so.
+
+## Development Accounts
+
+Seeding adds these accounts:
+
+- One for each persona in the [Product Brief](../product/brief.md#users), holding its role from [Roles](../product/roles.md#starting-roles). The Feature Lead also holds Engineering Manager, to try switching roles.
+- A second Engineering Operations Manager, so some drafts were changed by two people.
+- A Superuser, whose role grants every permission, for trying a feature without changing accounts. It isn't a starting role, so a Fathom set up without the seed data doesn't have it.
 
 | Account | Name | Roles |
 | --- | --- | --- |
@@ -235,3 +301,56 @@ Seeding adds these accounts: one for each persona in the [Product Brief](../prod
 | `team.member@fathom.test` | Team Member | Team Member |
 | `fathom.administrator@fathom.test` | Fathom Administrator | Administrator |
 | `superuser@fathom.test` | Superuser | Superuser |
+
+- They share one random password, kept in `.dev/secrets/dev_account_password` so it stays the same between resets. `pnpm db:seed` and `pnpm dev:reset` print it.
+- They don't have to change it at first sign-in.
+- An account that's already there keeps its password. If that file is replaced, run `pnpm dev:reset` to give every account the new one.
+
+## Releases
+
+A release is made by hand, wherever the repository is hosted, as [ADR 0011](../adr/0011-releases-and-images.md) sets out. Its version is its tag, as the [Decisions Log](../product/decisions.md#platform-and-operations) sets out, and Help's About box shows it once the release's images run.
+
+### Making a Release
+
+1. On an up-to-date, clean default branch, run `pnpm release`. It picks the version, adds the changelog on a `release/vX.Y.Z` branch, and pushes that branch.
+1. Open a pull request from that branch, and merge it.
+1. On the updated default branch, run `pnpm release:tag` to tag the merge.
+1. Push the tag with `git push origin vX.Y.Z`.
+1. Run `pnpm publish:images vX.Y.Z`, or the Publish release images workflow on GitHub.
+
+`pnpm release` and `pnpm release:tag` both take `--dry-run`.
+
+### Publishing the Images
+
+- `pnpm publish:images` builds the application, database and proxy images for linux/amd64, from a clean copy of exactly the tag.
+- It scans them as the security report does, reusing an earlier scan of an image that hasn't changed.
+- It fails if a fix is overdue or has no known release date, as the [Security Plan](../security/security-plan.md#vulnerability-scanning) sets out.
+- Otherwise it pushes each image, tagged with the version, such as `ghcr.io/ribbitworks/fathom-app:0.1.0`.
+- The scan's summary goes in a dated folder under `output/security/`.
+- With `--dry-run`, it builds and scans, and only prints what it would push.
+
+### Where Images Go
+
+- `FATHOM_REGISTRY` sets the registry and owner, `ghcr.io/ribbitworks` unless set.
+- Sign in to it first, such as with `docker login ghcr.io`. No registry password is kept in the repository.
+- On GitHub, the Publish release images workflow, run by hand from the Actions tab with the tag, does the same. It signs in with the workflow's own token, publishes to the repository owner's registry, and makes no tags or releases itself.
+
+### What Each Image Says
+
+- Every image holds Fathom's `LICENSE` and `NOTICE` in `/usr/share/doc/fathom/`.
+- It's labelled with its source, licence, version and full commit, under the Open Container Initiative's `org.opencontainers.image` names.
+- The source is `FATHOM_SOURCE_URL`, or else the `origin` remote's web address without any credentials.
+- It's dated by the tagged commit's time, not the build's.
+- That fixes its labels and dates, not its digest. Each build takes the security fixes released by that day, and installed files keep the times they were built, so building a tag again gives a different digest, as [issue #434](https://github.com/jlarue26/fathom/issues/434) records.
+
+### Daily Image Scan
+
+- `pnpm scan:images` builds the images from the checked-out code.
+- It pulls the images of the newest full release, leaving out pre-releases, from `FATHOM_REGISTRY`, since those are what people most likely run. It signs in first if the registry needs it.
+- It scans them all as a release's scan does.
+- With no release yet, it says so and scans only the built images.
+- A release whose images can't be pulled counts as not scanned, so the scan fails.
+- On GitHub, the Scan images daily workflow runs it on the default branch every day, and can be run by hand from the Actions tab.
+  - A failed scan fails the run. GitHub emails the person who last changed the workflow's schedule, if their notification settings allow.
+  - The scan and its summary are kept with the run for 90 days, the longest GitHub allows a public repository.
+- Another host's scheduler can run `pnpm scan:images` the same way.

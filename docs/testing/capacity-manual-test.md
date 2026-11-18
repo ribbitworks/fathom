@@ -11,7 +11,7 @@ last_updated: "2026-11-15"
 
 ## Scope
 
-Verifies the Capacity page's two modes. Settings holds the planning settings: how it reads for someone who may only see it, drafting a change and undoing it, a value refused, adding and removing months of ramp-up, the change in the change history, and approving a draft and seeing the Effort column on Features follow it once approved. People is the table of allocations by month: switching between the modes, its over- and under-allocated months, planned hires, the capacity totals of each group and of everyone, rows for someone who changed team or manager, and the page left out of the menu for a role that sees neither mode. The seeded allocations are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies the Capacity page's two modes. Settings holds the planning settings: how it reads for someone who may only see it, drafting a change and undoing it, a value refused, adding and removing months of ramp-up, the change in the change history, and approving a draft and seeing the Effort column on Features follow it once approved. People is the table of allocations by month: switching between the modes, its over- and under-allocated months, planned hires, the capacity totals of each group and of everyone, rows for someone who changed team or manager, and the page left out of the menu for a role that sees neither mode. The seeded allocations are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 
