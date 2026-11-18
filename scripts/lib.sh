@@ -320,7 +320,7 @@ trivy_database() {
 # a scanner.
 require_connection() {
   NODE_USE_ENV_PROXY=1 node scripts/offline.mjs online ||
-    fail "This computer can't reach the internet, which some of the security scans need. Run 'pnpm check --offline' or 'pnpm security --offline' to skip them; the Check workflow runs them on the pull request"
+    fail "This computer can't reach the internet, which some checks need. Run 'pnpm check --offline' or 'pnpm security --offline' to leave them out; the Check workflow runs them on the pull request"
 }
 
 # Scans the linux/amd64 build of an image for vulnerable packages and built-in secrets, writing
