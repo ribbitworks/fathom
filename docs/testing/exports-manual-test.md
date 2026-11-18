@@ -3,8 +3,8 @@ title: "Manual Test: Exports"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**"]
-dependencies: ["docs/standards/testing.md", "docs/design/visual-design.md", "docs/product/decisions.md"]
-last_updated: "2026-11-15"
+dependencies: ["docs/standards/testing.md", "docs/design/visual-design.md"]
+last_updated: "2026-11-18"
 ---
 
 # Manual Test: Exports

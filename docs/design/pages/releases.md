@@ -1,6 +1,6 @@
 # Fathom: Releases Page
 
-**Last updated:** 2026-11-17
+**Last updated:** 2026-11-18
 
 The Releases page holds releases, their cycles and the schedules they belong to, drawn on a timeline over a table. It sits in the sidebar's Plan section, after Features.
 
@@ -10,7 +10,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 
 - **Tabs:** **Releases**, **Cycles** and **Schedules**, as [The Page Heading](../../standards/ui-conventions.md#the-page-heading) sets out, kept in the address.
 - **Tables:** Each tab is the shared table, read only, with its own saved views. Records change only in their side panel.
-- **Timeline:** The [shared timeline](../../standards/ui-conventions.md#timelines) sits above the table and draws what it lists, in its order, as the [Decisions Log](../../product/decisions.md#planning) sets out.
+- **Timeline:** The [shared timeline](../../standards/ui-conventions.md#timelines) sits above the table and draws the schedules holding what it lists, in its order, apart from retired ones, so a search, filter or saved view narrows both.
 - **Scrolling:** The timeline and table scroll on their own; the timeline grows to about half the window.
 
 ## Timeline
@@ -44,6 +44,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 
 - **Pencils:** Release, Ships on, Cycles and Colour, for those who change releases, as [Releases](../../product/roles.md#releases) in Roles sets out.
 - **No pencils:** On a release in a retired schedule, drafted to be removed, or held by another's unpublished changes.
+- **Note:** Each release has one built-in note, and schedules have none. It opens in a panel beside the details, from the Note row's open button, or from **Add note…** in the row's menu while empty. Those who see releases read it, and those who change releases write it.
 
 ## Cycles Tab
 

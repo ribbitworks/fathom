@@ -1,6 +1,6 @@
 # Fathom: Roadmap
 
-**Last updated:** 2026-11-17
+**Last updated:** 2026-11-18
 
 The order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. Each stage is a [GitHub milestone](https://github.com/ribbitworks/fathom/milestones) holding its features, as [Issues](../standards/issues.md) sets out, so this document keeps each stage's goals and why.
 
@@ -9,7 +9,7 @@ The order for delivering Fathom's goals. Goals are defined in the [Product Brief
 - **Most pressing first:** The first stage covers the most pressing need: who is working on what.
 - **Complete stages:** Each stage is fully functional and fully tested. Stages are cut down in scope, never in quality.
 - **Only the data each stage needs:** Each stage holds only the details about people it uses.
-- **Use cases first:** Each feature meets its [use cases](use-cases.md) first, then becomes as configurable as practical. Configuration already decided in the [Decisions Log](decisions.md) ships with its feature.
+- **Use cases first:** Each feature meets its [use cases](use-cases.md) first, then becomes as configurable as practical. Configuration already designed for a feature ships with it.
 
 ## Before Going Live
 

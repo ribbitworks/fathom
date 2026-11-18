@@ -6,7 +6,7 @@
 
 ## Context
 
-The maintainer decided that every change to the plan is a draft until an Approver approves it, one draft per row, seen by everyone who may see the data, as the [Decisions Log](../product/decisions.md#planning) sets out. Drafts must be checked as the live data is, such as for an Employee ID someone already has, read through the same tier checks, and recorded in the change history, which can only be added to.
+The maintainer decided that every change to the plan is a draft until an Approver approves it, one draft per row, seen by everyone who may see the data, as the [Domain Model](../design/domain-model.md#drafts-and-approval) sets out. Drafts must be checked as the live data is, such as for an Employee ID someone already has, read through the same tier checks, and recorded in the change history, which can only be added to. The change history shows what happened but can't stop a change, so it doesn't replace approval.
 
 The data access layer already writes every change through one place per kind of record, recording each field changed, and undo already puts a record's fields back from what the change history holds.
 

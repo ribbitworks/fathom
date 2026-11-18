@@ -142,4 +142,4 @@ Automate every repeatable setup, development, and operations task with a script 
 - Testing rules: [Testing Standards](docs/standards/testing.md)
 - Screens: [UI Conventions](docs/standards/ui-conventions.md)
 - Help pages: [Help Page Standards](docs/standards/help-pages.md)
-- One exception to [No AI Attribution](#no-ai-attribution): [How Fathom Is Built](docs/how-fathom-is-built.md) names the AI tool and the models used, as the [Decisions Log](docs/product/decisions.md#platform-and-operations) records under How AI is credited. No other document, commit or pull request names them
+- One exception to [No AI Attribution](#no-ai-attribution): [How Fathom Is Built](docs/how-fathom-is-built.md) names the AI tool and the models used. No other document, commit or pull request names them

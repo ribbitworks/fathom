@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["agent-workflow.md", "code-review.md", "typescript.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Testing Standards
@@ -34,7 +34,7 @@ How Fathom's changes are tested. Every change that adds or changes behaviour inc
 
 Every new or changed API operation has integration tests, as well as unit tests for its rules.
 
-Until Fathom's first release, migrations have no upgrade tests, since databases are reset instead of upgraded, as the [Decisions Log](../product/decisions.md#platform-and-operations) records.
+Until Fathom's first release, migrations have no upgrade tests, since databases are reset instead of upgraded.
 
 ## The Testing Pyramid
 

@@ -34,7 +34,7 @@ body:
     id: background
     attributes:
       label: Background
-      description: What someone new to Fathom needs to know to build it, with links to the help page, decisions, conventions and related issues.
+      description: What someone new to Fathom needs to know to build it, with links to the help page, the design documents, conventions and related issues.
   - type: textarea
     id: done
     attributes:

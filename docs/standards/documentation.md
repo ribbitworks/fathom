@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["markdown-style-guidelines.md", "help-pages.md", "testing.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Documentation Standards
@@ -38,7 +38,6 @@ Each fact lives in the one document that owns it. The documents marked as summar
 | --- | --- |
 | [Product Brief](../product/brief.md) | What Fathom is, its users, goals, scope and constraints, with one-line key decisions |
 | [Domain Concepts](../product/domain.md) | Definitions of terms |
-| [Decisions Log](../product/decisions.md) | Product decisions and their details |
 | [Use Cases](../product/use-cases.md) | Scenarios |
 | [Roles](../product/roles.md) | Each role, and what it can do |
 | [Roadmap](../product/roadmap.md) | The order in which Fathom's goals are delivered |

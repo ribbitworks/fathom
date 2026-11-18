@@ -1,6 +1,6 @@
 # Fathom: Product Brief
 
-**Last updated:** 2026-11-14
+**Last updated:** 2026-11-18
 
 ## What Fathom Is
 
@@ -21,6 +21,8 @@ Fathom names its personas as they are widely known in the software industry, wit
 | Executive | VP, CTO |
 | Team Member | Software Engineer, Test Engineer |
 | Fathom Administrator | System administrator |
+
+Engineering Managers own their people, including those working on features another team leads. Features are owned through their feature teams' leads.
 
 ## Goals for v1
 
@@ -62,19 +64,20 @@ Fathom names its personas as they are widely known in the software industry, wit
 - **Personal data:** Fathom holds details about people, so access is by role and classification, and logs leave those details out.
 - **Configurability:** As configurable as possible, to suit different domains and structures.
 - **Front end:** Rich, interactive timeline, Gantt, org chart, and capacity views, which drive the front-end technology choice.
+- **No scheduling:** Fathom never schedules work and never moves one date because another moved. Demand forecasting is rough planning, never project scheduling: features only, months as the finest unit, and advice only.
 
 ## Key Decisions
 
 - **Planning model:** Monthly planning, with allocations as a percentage of a person's month.
-- **Planning level:** Fathom plans features, not their stories or tasks, and is never a clone of a full project management application. See the [Decisions Log](decisions.md#planning).
+- **Planning level:** Fathom plans features, not their stories or tasks, which stay in issue trackers, so it never becomes a full project management application. Its model leaves room for finer levels, such as tasks or dependencies between features, without reworking features, allocations, or releases.
 - **Planned hires:** Planned hires appear in the plan and can be allocated like current staff.
 - **Access:** Role-based. Each user holds one or more roles and acts as one at a time, and roles grant access to classifications of data.
 - **Editing:** No live collaboration. Draft changes are approved before they reach the live plan.
-- **Configurability:** A fixed core of built-in tables, extended with custom fields and tables. See the [Decisions Log](decisions.md#configuration).
+- **Configurability:** A fixed core of built-in tables, extended with custom fields and tables, as the [Domain Model](../design/domain-model.md#configuration-entities) sets out.
 - **Authentication:** Local accounts managed in Fathom for v1.
 - **Tech stack:** TypeScript end to end with PostgreSQL, in Docker. See [ADR 0001](../adr/0001-tech-stack.md).
 
-Detailed decisions are recorded in the [Decisions Log](decisions.md). The order in which goals are delivered is in the [Roadmap](roadmap.md).
+Terms are defined in [Domain Concepts](domain.md), and the rules for each entity are in the [Domain Model](../design/domain-model.md). The order in which goals are delivered is in the [Roadmap](roadmap.md).
 
 ## Future Possibilities
 

@@ -1,6 +1,6 @@
 # Fathom: Visual Design
 
-**Last updated:** 2026-11-17
+**Last updated:** 2026-11-18
 
 How Fathom's screens look and behave, so every page is built the same way. The principles and conventions every screen shares, with the piece that draws each, are in [UI Conventions](../standards/ui-conventions.md). It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-components.md). The theme in `apps/web/src/theme.ts` holds the values; this document holds the rules, and each page's own design is in its page document.
 
@@ -32,7 +32,7 @@ How Fathom's screens look and behave, so every page is built the same way. The p
 - **Help pages:** Help pages opens Help's index, `docs/help/index.md`. Each Help page has its own address, open to every role, as [Help](../standards/ui-conventions.md#help) sets out.
   - **Look:** Its title is the heading, and the rest is one bordered panel as wide as the page, drawn as a note reads, with its headings as anchors.
 - **About Fathom:** It opens a box in the middle of the screen, over the current page. Dialogs open near the top, but this one asks nothing of the user.
-  - **Rows:** Under Fathom's mark and name: Version, Commit, and Committed, as the [Decisions Log](../product/decisions.md#platform-and-operations) sets out. Commit adds "modified" for a build from changed files.
+  - **Rows:** Under Fathom's mark and name: Version, Commit, and Committed, as [Version and Build](development-setup.md#version-and-build) sets out. Commit adds "modified" for a build from changed files.
   - **Unknown:** A build given nothing from git, as [Development Setup](development-setup.md#ways-to-run-fathom) describes, shows each row as Unknown.
 - **Why something is missing:** A page or view a role can't fully see is left out, never shown cut down, as [A page without its data](../standards/ui-conventions.md#access) sets out.
 
@@ -61,13 +61,13 @@ How Fathom's screens look and behave, so every page is built the same way. The p
   - **Derived columns:** A column that follows from another, such as Team from Manager, is read only, and pasting into it is ignored. Filled-in values follow [Values](../standards/ui-conventions.md#values).
   - **New rows:** Once something is typed, the row shows a new record's starting values. The added record shows at once as a draft. On People, State decides between a person and a planned hire, as [Adding a Person or Planned Hire](pages/people.md#adding-a-person-or-planned-hire) sets out.
   - **List columns:** Typing narrows the choices, which drop below the cell; a check marks each one picked where several can be.
-  - **Web link columns:** A link shows its text, or its host, and opens in a new tab. Editing opens a small form for the address and the text.
-  - **Checkbox columns:** A click, Space, or Enter toggles the box; typing does nothing.
-  - **Widths:** Each column starts as wide as what it holds, up to about 30 characters, its cells up to 24 in the column naming each record, such as People's Name, and never follows typing. Anyone can set it, as part of the view.
-  - **Column menu:** Grouped as sorting; filtering, Metrics, and units; freezing, width, and hiding; then changing, removing, and moving.
+  - **Web link columns:** A link shows its text, or else its host without `www.`, however long the address, with the whole address on hover. It opens in a new tab, as [Misleading links](../security/security-plan.md#tampering) sets out. Editing opens a small form for the address and the text.
+  - **Checkbox cells:** Such as Manager? on People. A click, Space, or Enter toggles the box; typing does nothing.
+  - **Widths:** Each column starts as wide as what it holds, up to about 30 characters, its cells up to 24 in the column naming each record, such as People's Name, and never follows typing. Anyone can set it narrower or wider, as part of the view, and Reset width brings back its start.
+  - **Column menu:** Grouped as sorting; filtering, Metrics, and units; freezing, width, and hiding; then changing, removing, and moving. Remove column, shown to those who may remove the column, drafts its removal with Undo, as the column dialog's does.
   - **Can't add:** A role that can't see a column every record needs, such as Position, has no empty row, and New is turned off with a line saying why.
 - **Searching, filtering, and sorting:** A search field above a table works as [Search](../standards/ui-conventions.md#search) sets out, with a × to clear it once something is typed.
-  - **Sorting:** Each column's menu, open to viewers too, adds the column as the next level of the sort. Sorted and filtered columns are marked in their headers.
+  - **Sorting:** Each column's menu, open to viewers too, adds the column as the next level of the sort. A column already sorted changes direction in place, and any level, the first included, can be removed on its own. Sorted and filtered columns are marked in their headers.
   - **Filtering:** The menu opens the column's filter beside its header, as [Filtering a column](../standards/ui-conventions.md#tables) sets out.
   - **Pills:** Each filter is a pill above the table, beside the row count, such as "35 of 150".
   - **Clear all:** Clears the whole view but leaves the metrics open. Rows stay put while edited, as [Staying Put](../standards/ui-conventions.md#staying-put) sets out.
@@ -76,17 +76,24 @@ How Fathom's screens look and behave, so every page is built the same way. The p
   - **Name:** The applied view's name, with a dot once it has changed.
   - **Actions:** Clear view, which also closes the metrics; Save view…; Update view; Rename…; sharing; and Delete view.
   - **Save dialog:** A name, a checkbox to share, and the parts the view keeps listed under Includes.
-- **Numbers:** A Number column's cells show each number as the reader's language writes it. It is typed as 1234.5, and anything else is refused with the form to use.
-- **Units:** A number column shown in a unit, such as Effort, shows each amount with the unit's code, such as 2.5 PD. Effort's own rules are in the [Decisions Log](../product/decisions.md#planning).
-  - **Menu:** Show in and Decimal places, both part of the view. Amounts round up, with the hours in a tooltip.
-  - **In a panel:** A menu of units sits beside the field, and units are spelt out, such as 2.5 person-days (20 hours).
-- **Notes:** A Note column's cell shows the note's words without formatting, on one line, cut short. Typing in it does nothing. What a note may hold is in the [Decisions Log](../product/decisions.md#configuration).
+- **Numbers:** A Number column's cells show each number as the reader's language writes it; a draft's details and the change history show it as typed. It is typed as 1234.5 in every language, since a comma or point means different things in different places and a wrong guess is a thousand times off; anything else is refused with the form to use. Its filter offers at least, at most, and No number.
+- **Units:** A number column shown in a unit, such as Effort, shows each amount with the unit's code: h, PD, PW, PM, or PQ. Effort is a column type only a feature's estimate uses.
+  - **Menu:** Show in names each unit after Hours with the approved conversions behind it, such as Person-days (8 hours) or Person-weeks (8h / PD, 5 days / PW). Decimal places offers two, one, or none. Both are part of the view, and changing the unit clears the column's filter.
+  - **Rounding:** An estimate is kept to its unit's step, rounded up when entered: whole hours, half person-days, and whole person-days for the larger units. Shown in any unit, it rounds up to that unit's step and the decimal places chosen, so it reads back as entered; totals are added before rounding. The tooltip gives the hours, then rounded up where the amount was, such as 1 hour, rounded up.
+  - **Largest:** 999,999 hours, refused above that in whatever unit it is typed.
+  - **In a panel:** A menu of units sits beside the field, starting on the table's unit without changing it, and units are spelt out, such as 2.5 person-days (20 hours). A table's cell is typed in the unit it shows. Either way the estimate is saved in hours, which a draft's details and the change history give.
+  - **Metrics:** Features isn't broken down by Effort, which would count only whether features have an estimate.
+- **Notes:** A Note column's cell shows the note's words without formatting, on one line, cut short, and so do drafts and the change history. Typing in it does nothing.
+  - **Format:** GitHub-flavoured Markdown, so a note exports as it is: paragraphs, headings three levels deep (a deeper one becomes the third), line breaks, bold, italic, strikethrough, inline code, bullet, numbered and checkbox lists, and links. A list's items all have checkboxes or none, a numbered list has none and counts from 1, lists hold no headings, and lists may hold one another.
+  - **Not allowed:** Quotes, highlighting, images, code blocks, tables, and any HTML but the colour tag, `<span data-colour="…">`.
+  - **Links:** A web address under the [web link](#components) rules, or a Help page by its file name and, optionally, a heading, such as `lists.md#add-choices`. A link whose text only repeats its address shows its host.
+  - **Checks:** Typing and pasting clean to what notes allow; the server refuses anything else rather than removing it, so what is kept is exactly what was checked; and a sanitiser shows only the same. Each step uses an open-source library, never a parser of Fathom's own.
   - **Panel:** A click, Enter, or F2 opens the note in a side panel, titled with the column's name, stacked above Metrics if it is open.
   - **Modes:** For those who may change it, Note, Editor, and Markdown switch views. It opens on Note, or the Editor for an empty note. The Editor's toolbar stays in sight as a long note scrolls.
-  - **Saving:** Once anything changes, Clear, Cancel, and Save show at the foot, and the table waits until one is chosen, as [Leaving Unsaved Work](../standards/ui-conventions.md#leaving-unsaved-work) sets out.
+  - **Saving:** Once anything changes, Clear, Cancel, and Save show at the foot, and the table waits until one is chosen, as [Leaving Unsaved Work](../standards/ui-conventions.md#leaving-unsaved-work) sets out. Esc doesn't close it while it's being changed, so nothing written is lost by mistake.
   - **Reading:** While a note is only read, the table stays usable, and opening another note replaces it.
   - **A release's note:** The last row of its details, opening in a panel of its own beside them.
-  - **Colours:** From the palette releases and teams share, in a text shade that reads in both modes.
+  - **Colours:** From the palette releases and teams share, in a text shade that reads in both modes, kept in the colour tag, such as `<span data-colour="teal">…</span>`.
   - **Flow:** A note goes from its panel to the screen like this:
 
   ```mermaid
@@ -104,8 +111,8 @@ How Fathom's screens look and behave, so every page is built the same way. The p
   - **Default:** The first column is frozen; any other choice shows in the Views menu.
 - **Metrics:** A Metrics button after the Draft menu, or after the search field on a table without drafts, opens the Metrics panel. Metrics in a column's menu opens it broken down by that column.
   - **Count:** The rows counted, such as "35 people", or "35 people with drafts, 34 live".
-  - **Break down by:** One column gives a row for each choice, with its count and share; a column without choices gives Populated and Empty. A second, and by, crosses them in a table with All, as Count or Share.
-  - **Drafts:** A figure whose live figure differs has it under it, small and dimmed, after a green dot.
+  - **Break down by:** One column gives a row for each choice, with its count and share; a column without choices gives Populated and Empty. A second, and by, crosses them in a table with All, as Count or Share. A share of a narrower group comes from filtering first.
+  - **Drafts:** Draft figures leave out rows drafted to be removed. A figure whose live figure differs has it under it, small and dimmed, after a green dot.
   - **View:** Part of the view once a column is chosen.
 - **Ordering:** As [Entering Data](../standards/ui-conventions.md#entering-data) sets out for moving items.
 - **Retiring:** Records that others use are [retired](../product/domain.md#table-terms) rather than deleted. Retired records are shown only when asked for.
@@ -122,7 +129,7 @@ How Fathom's screens look and behave, so every page is built the same way. The p
   - **Deciding several:** The Draft menu offers Approve N drafts… and Reject N drafts… for the waiting drafts shown, under a Waiting drafts label that, when a search, a filter, or Drafts applied hides some, says how many are shown, such as 9 of 11 waiting drafts shown. The dialog says how many related drafts it includes, and how many drafts it skips because they depend on a rejected draft. When the drafts include any this account changed and may not approve, the dialog is titled Another approver needed, names them, and offers only Close. When they include drafts of an area the user's role does not approve, such as the new column a person's draft uses, the dialog is titled Another approver needed too, says "This role can't approve these drafts:", or reject, names them, and offers only Close. On the Drafts page, choosing a draft this account changed and may not approve disables Approve, with a line such as "2 chosen drafts need another approver."
   - **Draft menu:** The Draft button above the table, naming the choice shown, such as Drafts & Live, with a dot while its filter is in use, filters to records whose drafts are waiting or rejected, or that have no draft, shown in a pill such as "Draft: Waiting", and chooses what to show: Drafts & Live, the default; Drafts applied, everything as it will be once the waiting drafts are approved, without live rows or removed records, and with rejected drafts taken back, so the Rejected filter is unavailable; and Live only, everything as it is now, read only, with the filter unavailable. Both choices are kept in the page address and in saved views.
   - **Drafts page:** First in the sidebar's History section. The shared table, read only, a row for each draft the user sees, newest first, with its search, Metrics counting drafts, Group by with Then by, and Views with saved views, sharing as any table's do.
-    - **Tabs:** Beside the heading, drawn as [The Page Heading](../standards/ui-conventions.md#the-page-heading) sets out and kept in the address and in saved views, each followed by how many drafts it holds, dimmed: To decide, Not published and All drafts, held and shown to the roles [Where drafts are judged](../product/decisions.md#planning) sets out. All drafts is read only, and is where rejected drafts, those waiting on one, those someone else is changing and those the role can't decide are found. The page opens on the first tab the role has. Switching tabs keeps the rest of the view, unticks every row and closes any details.
+    - **Tabs:** Beside the heading, drawn as [The Page Heading](../standards/ui-conventions.md#the-page-heading) sets out and kept in the address and in saved views, each followed by how many drafts it holds, dimmed: To decide, the drafts the role may decide now, for roles that approve; Not published, the user's own changes, for roles that make drafts; and All drafts, every published draft, for everyone who opens the page. All drafts is read only, and is where rejected drafts, those waiting on one, those someone else is changing and those the role can't decide are found. The page opens on the first tab the role has. Switching tabs keeps the rest of the view, unticks every row and closes any details.
     - **Columns:** Record, the record's name, with what it belongs to where its name alone may not say, such as Harbourside in Sites, and a project's or proposal's ID first, after the draft's dot, any lock, and the grey boxes Waits on a rejected draft and Needs another approver, shown only to a role that could otherwise decide it; Change, Added, Changed, Removed or Reordered; State, Waiting, Rejected or Not published, shown from the start so it can be filtered by; What changes, in the lighter form of [A change in words](../standards/ui-conventions.md#history); Type; Area, the areas whose Approvers decide it; Made by, left out on Not published; Drafted, the day; and Reason, a rejection's reason. Group by offers Change, State, Type, Area and Made by. The dot in a row's slot is its only draft mark, as [A table of drafts](../standards/ui-conventions.md#drafts) sets out.
     - **Ticks:** On To decide, each draft the role may decide now can be ticked, as [Ticking rows](../standards/ui-conventions.md#tables) sets out; at the heading's right, while rows are ticked, are Reject… and Approve n drafts…, greyed out while a ticked draft needs another approver, with a dimmed line before them saying how many do. On Not published, each change can be ticked, with the changes it must go with ticked alongside; at the heading's right, while rows are ticked, are Discard n changes…, which asks first, and Publish n changes. All drafts has no ticks. A row's menu on To decide offers Approve… and Reject… too.
     - **Details:** A draft's details open beside the table from the details button over its Record cell, or Show details in its menu, as [A draft's details](../standards/ui-conventions.md#details-panels) sets out, with Show on and the record's page under them, such as Show on Releases, opening a release's draft on Releases' Releases tab, and a schedule's or cycle pattern's on its Schedules tab, with its details open.
@@ -167,6 +174,5 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 
 Designs agreed but not built yet:
 
-- **Global search:** A search at the top of the sidebar, opened with Cmd+K or Ctrl+K, finds records, pages and Help pages, as [Global search](../product/decisions.md#configuration) sets out.
 - **A page that can't load:** every page and part of one that can't load its data showing `LoadProblem` ([issue #194](https://github.com/ribbitworks/fathom/issues/194)).
 - **Coloured names on the month grids and the Features Board's headings:** drawn by `ColouredName`, after the colour's square, rather than in a tinted box by `TeamLabels`, as [A coloured name](../standards/ui-conventions.md#values) sets out.
