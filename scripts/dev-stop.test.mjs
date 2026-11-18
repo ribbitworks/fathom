@@ -16,7 +16,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -124,7 +124,7 @@ describe(
       assert.equal(result.status, 1);
       assert.ok(
         result.stderr.includes(
-          `Port ${other.port} is in use by process ${String(other.server.pid)}, node, in ${realpathSync(sibling)}, which is not this copy's`,
+          `Port ${other.port} is in use by process ${String(other.server.pid)}, ${basename(process.execPath)}, in ${realpathSync(sibling)}, which is not this copy's`,
         ),
         result.stderr,
       );
