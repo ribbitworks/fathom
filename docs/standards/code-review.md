@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["core-principles.md", "testing.md", "documentation.md", "markdown-style-guidelines.md", "agent-workflow.md", "typescript.md", "shell.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Code Review Standards
@@ -39,6 +39,7 @@ The interaction review that the [Agent Workflow](agent-workflow.md#pushing-and-p
 Standards apply to new and edited code. Existing code that breaks a rule adopted after it was written is debt, not a finding against an unrelated change:
 
 - Lines a change adds or edits follow the current rules. A change may fix nearby debt when that stays within its scope.
+- A code file a change edits has its header cut to [File Headers](#file-headers), and is split if it is past the [file size](core-principles.md#implementation-rules) limit, in the same change. Files a change does not touch wait until one does; no change sweeps them.
 - The review lists newly noticed debt under a "Debt to record" note, and the implementing agent proposes it to the owner as a GitHub issue in the same change, as [Issues](issues.md) sets out. The next review checks that it was filed or declined.
 - Security flaws, real data, and documents the change makes untrue are always findings, wherever they are.
 - The Autonomous warnings step in [agent-workflow.md](agent-workflow.md) still resolves every warning the run reports.
@@ -124,11 +125,12 @@ When the change adds or reshapes code, rate and comment on each of the five prin
 - **No magic values:** numbers and strings with meaning are named constants, except `0`, `1` and `-1` in calculations.
 - **No copy-pasted logic:** repeated code is shared; for whole components and helpers, see [Reuse across the codebase](#architecture-and-design).
 - **Comments:** follow [core-principles.md § Comments](core-principles.md#comments).
-- **File headers:** follow [File Headers](#file-headers).
+- **File headers:** follow [File Headers](#file-headers). A description longer than that rule allows, or one that describes behaviour, is a finding.
+- **File size:** a code file the change leaves past the limit in [core-principles.md § Implementation Rules](core-principles.md#implementation-rules) is a finding, fixed by splitting it as that rule sets out.
 
 #### File Headers
 
-Every source code file, in any language, starts with a header, after any line that must come first, such as a shebang. The header is the `SPDX-License-Identifier` line for Fathom's licence, as [ADR 0002](../adr/0002-libraries.md) decides, then a blank line, then a comment describing the file, then a blank line before the code. Following the [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html#file-header), the description says what the file is for and, where it helps, how it is used and what a reader needs to know first; for tests, what they cover. Headers name no authors, dates, or history, which git records.
+Every source code file, in any language, starts with a header, after any line that must come first, such as a shebang. The header is the `SPDX-License-Identifier` line for Fathom's licence, as [ADR 0002](../adr/0002-libraries.md) decides, then a blank line, then a comment describing the file, then a blank line before the code. `scripts/source-headers.test.mjs` checks that layout. The description is one to three lines saying what the file is for; for tests, what they cover. Behaviour belongs in [UI Conventions](ui-conventions.md), the page documents in `docs/design/pages/` and the tests, not in headers. Headers name no authors, dates, or history, which git records.
 
 Files that cannot hold comments, or that tools generate and that are never edited by hand, are listed in `REUSE.toml` instead. Database migrations are source code: a new migration gets its header after it is generated, and only migrations applied before this rule, which must never change, are listed in `REUSE.toml`. Third-party files keep their own copyright and licence, stated in the file or in a `REUSE.toml` entry after the project-wide one, with the licence text added to `LICENSES/`. `pnpm check` checks every header.
 
