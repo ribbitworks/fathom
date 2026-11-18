@@ -10,7 +10,7 @@ The **Drafts** page, under **History** in the left-hand menu, lists the drafts i
   - **To decide** holds the drafts you can approve or reject now. Only roles that approve drafts have it.
   - **Not published** holds your own changes that you haven't published yet. Only roles that make changes have it.
   - **All drafts** holds every published draft, waiting or rejected. Everyone who opens the page has it, and nothing is decided here.
-- **Where it opens:** the page opens on the first tab your role has.
+- **Where it opens:** the page opens on the tab you last left it on, or the first time on the first tab your role has.
 - **Rows:** each row is one draft. **Record** names what it changes. **What changes** shows each value, such as a new site. **State** reads **Waiting**, **Rejected** or **Not published**. **Reason** says why a rejected draft was rejected.
 - **Tick boxes:** you tick rows to act on several at once. The buttons for them show at the right of the page's heading, only while rows are ticked.
 

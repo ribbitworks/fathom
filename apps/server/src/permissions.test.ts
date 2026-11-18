@@ -1,25 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests that every API route enforces what it needs, against a migrated PostgreSQL server: a table
-// of every route, with whether it is open, open to any signed-in account, or needs some
-// permissions, checked against the routes the server registers, so a new route fails until it is
-// listed; and, for each route, that a signed-out request is refused, that an account holding every
-// permission but those needed is refused, that one holding every permission is refused while it
-// must change a password Fathom generated, and that one holding only those needed is not. A route
-// on a record is sent a random ID, so its allowed request is not found: it proves the checks made
-// before the record is read, and checks that depend on the record, such as its tier, are left to
-// each feature's own tests.
+// of every route and what it needs, checked against the routes the server registers.
 
 import {
   changeHistoryViews,
   defaultPasswordSettings,
   defaultTimeZone,
+  firstTables,
   impliedPermissions,
   type Permission,
   permissionSchema,
   planningSettingsId,
   startingPlanningSettings,
   type ViewTable,
+  viewPageSchema,
   viewTableSchema,
 } from "@fathom/shared";
 import { users } from "@fathom/db";
@@ -659,6 +654,30 @@ const routes: Route[] = [
         variant: table,
         url: view,
         needs,
+      },
+    ];
+  }),
+
+  // Every signed-in account reads its own last views, only of the pages its role opens, which the
+  // last views tests check.
+  { method: "GET", pattern: "/api/last-views", needs: signedIn },
+  // Keeping a page's last view needs what opens its tables, each of a page's tables opening alike.
+  ...viewPageSchema.options.flatMap((page): Route[] => {
+    // The page is always one of the fixed pages.
+    // eslint-disable-next-line security/detect-object-injection
+    const table = firstTables[page];
+    // The table is always one of the fixed tables.
+    // eslint-disable-next-line security/detect-object-injection
+    const needs = viewTableNeeds[table];
+    const url = `/api/last-views/${page}`;
+    return [
+      {
+        method: "PUT",
+        pattern: "/api/last-views/:page",
+        variant: page,
+        url,
+        needs,
+        body: () => ({ table, definition: {} }),
       },
     ];
   }),

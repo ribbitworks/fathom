@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the persona accounts, against a migrated PostgreSQL server: one for each persona, as the
-// development setup document lists them, and a Superuser holding every permission; seeding creates
-// them with their persona's role, and the Superuser role if it is missing, and the shared password,
-// which they need not change, recorded in the access history, and only once; removing deactivates
-// and signs out only them; and seeding again reactivates them.
+// Tests for the persona accounts, against a migrated PostgreSQL server: seeding them, removing the
+// seed data, and seeding again.
 
 import {
   accessHistory,
@@ -12,6 +9,7 @@ import {
   createDatabase,
   createPool,
   type Database,
+  lastViews,
   rolePermissions,
   roles as roleTable,
   sessions,
@@ -279,6 +277,24 @@ describe("removing the accounts", () => {
     expect(
       await connection.select().from(sessions).where(eq(sessions.userId, id)),
     ).toEqual([]);
+  });
+
+  it("forgets the views the seeded accounts last showed, and no other account's", async () => {
+    await seedAccounts(auth, connection, password);
+    const seededId = await idOf(String(addresses[0]));
+    const handId = await idOf(handMade.email);
+    for (const userId of [seededId, handId]) {
+      await connection.insert(lastViews).values({
+        userId,
+        page: "people",
+        tableName: "people",
+        definition: {},
+      });
+    }
+    await unseedAccounts(auth, connection);
+    expect(
+      await connection.select({ userId: lastViews.userId }).from(lastViews),
+    ).toEqual([{ userId: handId }]);
   });
 
   it("does nothing when the accounts are already deactivated", async () => {

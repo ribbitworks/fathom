@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A table's saved views, through the server's API, for every page that has them: read once beside
-// the page's records, and saved, renamed, updated, shared or taken back, and deleted, each change
-// shown at once. Cmd+Z or Ctrl+Z undoes the latest, except for a view its maker can no longer use,
-// whose history holds what their role can't see, so deleting one asks first.
+// A table's saved views, through the server's API, for every page that has them: reading, saving,
+// renaming, updating, sharing, and deleting them, and undoing each change.
 
 import {
   changeSetIdSchema,
@@ -21,6 +19,7 @@ import { type QueryKey, queryOptions, useQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { z } from "zod";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
+import { useLastView } from "./last-views.ts";
 import { notifySuccess } from "./notices.tsx";
 import { useSaving } from "./saving.ts";
 import {
@@ -100,10 +99,14 @@ type Naming =
   | { view: View; parts: readonly ViewPart[] }
   | { renaming: SavedView | UnusableView };
 
+// The page's saved views, and keeping the view it shows as its last view, which the router shows
+// again when the page opens with no view in its address.
 export function useSavedViews({
   table,
   within,
+  view,
   applied,
+  mode,
   onApply,
   canShare,
   blocked = false,
@@ -111,13 +114,17 @@ export function useSavedViews({
   table: ViewTable;
   // The key of the page's records.
   within: QueryKey;
+  view: View;
   // The saved view the page's view started from, as its address names it.
   applied: string | undefined;
+  // The page's mode, such as Features' Board, for a page with modes.
+  mode?: string | undefined;
   onApply: (view: View, id: string, replace?: boolean) => void;
   canShare: boolean;
   // While another of the page's dialogs is open, which Cmd+Z leaves alone.
   blocked?: boolean;
 }): { saved: SavedViews; dialogs: ReactNode; opened: boolean } {
+  useLastView({ table, view, applied, mode });
   const query = viewsQuery(table, within);
   // Until the views load, the page offers none, and a view's name is checked against none.
   const listed = useQuery(query).data ?? [];

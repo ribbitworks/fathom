@@ -1,17 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Org chart page, for users who see people: today's reporting lines, each person under
-// their manager. Managers' reports can be hidden and shown again, a number of levels shown at once,
-// the chart panned, zoomed, and fitted to the screen, and a person found by name, which brings them
-// to the centre. A manager's team can be shown alone. For those who see people, a person's card
-// finds them and shows their details in a side panel beside the chart. The person found, the team
-// shown alone, and the person whose details are shown, are kept in the page's address. Each team's
-// cards, and the lines to them, are drawn in its colour, which reaches down to the teams below that
-// have none, even when a team is shown alone. The Draft menu, as on tables, draws drafts of
-// managers, positions and team names beside the live chart, applied to it, or not at all, which
-// leaves the chart read only; its choice is kept in the address. A date control draws the chart as
-// of another day, kept in the address too, where feature teams and reporting lines change from that
-// day, for those who may date changes then, and everything else is read only.
+// The Org chart page: the reporting lines, each person under their manager, as of today or another
+// day, with drafts drawn beside the live chart, and a person's details beside it.
 
 import {
   allChartLevels,
@@ -1124,6 +1114,7 @@ export function OrgChartPage({
   const views = useSavedViews({
     table: "org-chart",
     within: orgChartQuery.queryKey,
+    view,
     applied,
     onApply,
     canShare: canShareViews,

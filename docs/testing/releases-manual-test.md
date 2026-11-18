@@ -33,7 +33,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button and the change button. This test adds:
 
-- **Tabs:** the tabs **Releases**, **Cycles** and **Schedules** just after the **Releases** heading, on the same line. The page opens on **Releases**.
+- **Tabs:** the tabs **Releases**, **Cycles** and **Schedules** just after the **Releases** heading, on the same line. The page opens on **Releases**, or on the tab it last showed.
 - **Releases table:** the table on the **Releases** tab, under the timeline, with a row for each release. Its columns are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features** and **Status**. Releases that have shipped show only once **Show shipped** is chosen in the **Views** menu.
 - **A release's details:** the side panel for the selected release, headed with its name and, under it, its key. Its **Details** rows are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Status**, **Colour** and **Note**.
 - **Pencil:** the change button at the right of a row of **Details**, for **Release**, **Ships on**, **Cycles** and **Colour**.

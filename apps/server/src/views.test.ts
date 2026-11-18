@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for saved views, against a PostgreSQL server of their own: saving, renaming, updating, and
-// deleting them, on People and on every other table that keeps them; who may change them; keeping a
-// view on columns a reader may not see from that reader, and sending its maker what's missing;
-// personal and shared views, and who may share them; every starting role on every table; and
-// undoing each change. General readers stand for readers who see people's General details and no more, and
-// Workforce Administrators for those who may change planning configuration.
+// Tests for saved views, against a PostgreSQL server of their own: saving, changing, sharing and
+// deleting them on every table, who may do each, and undoing each change.
 
 import {
   builtInColumnNames,
@@ -18,6 +14,7 @@ import {
   roleSchema,
   type SavedView,
   type ViewScope,
+  viewPageOf,
   type ViewTable,
   viewTableSchema,
 } from "@fathom/shared";
@@ -1544,11 +1541,20 @@ describe("every starting role on every view table", () => {
       const read = await test.request(cookie, "GET", views.path);
       const saved = await views.save(cookie, unique("Mine"), {});
       const shared = await views.save(cookie, unique("Ours"), {}, "shared");
+      const remembered = await test.request(
+        cookie,
+        "PUT",
+        // The table is always one of the fixed tables.
+        // eslint-disable-next-line security/detect-object-injection
+        `/api/last-views/${viewPageOf[table]}`,
+        { table, definition: {} },
+      );
 
-      // Then each is allowed only as the page and sharing allow
+      // Then each is allowed only as the page and sharing allow, and so is keeping its last view
       expect(read.statusCode).toBe(opens ? 200 : 403);
       expect(saved.statusCode).toBe(opens ? 201 : 403);
       expect(shared.statusCode).toBe(sharing ? 201 : 403);
+      expect(remembered.statusCode).toBe(opens ? 204 : 403);
       if (!opens) return;
       const { view } = saved.json<Saved>();
       expect(

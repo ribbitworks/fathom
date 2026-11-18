@@ -1,15 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The People page: everyone the user may see, and the planned hires, in a table edited like a
-// spreadsheet, with the columns people have added, each drawing on a list. Those who may change
-// people add, edit, and delete them, and those who may also change the hiring plan do the same for
-// planned hires, adding either from New, in the details panel, or in the table's new row; those who
-// may change planning configuration add, change, and delete columns, and move any column. Every
-// change to a person is a draft, shown in place until an Approver approves it on the Drafts page.
-// Every change shows at once and saves in the background, and the latest can be undone with Cmd+Z
-// or Ctrl+Z, or from its notification when it took something out of view. What the table shows,
-// its search, filters, and sort, is kept in the page address, and can be saved as a view shared
-// with everyone who sees people.
+// spreadsheet, with the columns people have added.
 
 import { LoadProblem } from "./load-problem.tsx";
 import type {
@@ -262,6 +254,7 @@ export function PeoplePage({
   const views = useSavedViews({
     table: "people",
     within: peopleQuery.queryKey,
+    view,
     applied,
     onApply,
     canShare: sharesViews("people", access.permissions),

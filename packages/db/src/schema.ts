@@ -993,6 +993,27 @@ export const savedViews = fathomSchema.table(
   ],
 );
 
+// The view each account last showed on each page with a Views menu. It is the account's own
+// setting, so the change history doesn't record it.
+export const lastViews = fathomSchema.table(
+  "last_views",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // The page, such as "projects", checked by the server.
+    page: text("page").notNull(),
+    // The table shown on the page, such as "proposals", checked by the server.
+    tableName: text("table_name").notNull(),
+    definition: jsonb("definition").notNull(),
+    savedViewId: uuid("saved_view_id").references(() => savedViews.id, {
+      onDelete: "set null",
+    }),
+    mode: text("mode"),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.page] })],
+);
+
 // Draft rows: the changes waiting for approval, at most one draft for each record, as the Decisions
 // Log sets out. A draft adds a record, changes some of its fields, or removes it. It holds the record
 // as the change history records it: all of an added record's fields, only the fields a change makes

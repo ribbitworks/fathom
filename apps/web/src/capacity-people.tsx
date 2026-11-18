@@ -38,6 +38,7 @@ export function CapacityPeople({
   const views = useSavedViews({
     table: "capacity",
     within: allocationsQuery.queryKey,
+    view,
     applied,
     onApply,
     canShare: canShareViews,

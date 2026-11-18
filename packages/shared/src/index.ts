@@ -534,6 +534,19 @@ export {
   type ViewTable,
   viewTableSchema,
 } from "./view-tables.ts";
+export {
+  firstTables,
+  type LastView,
+  type LastViewRequest,
+  lastViewModes,
+  lastViewRequestSchema,
+  lastViewSchema,
+  type LastViews,
+  lastViewsSchema,
+  type ViewPage,
+  viewPageOf,
+  viewPageSchema,
+} from "./last-views.ts";
 export { allOf, eitherOf } from "./words.ts";
 export {
   type ClassifiedColumns,

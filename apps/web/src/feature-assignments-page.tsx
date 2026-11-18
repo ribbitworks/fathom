@@ -62,6 +62,7 @@ function TeamsGrid({
   const views = useSavedViews({
     table: "feature-assignments",
     within: read.queryKey,
+    view,
     applied,
     onApply,
     canShare: canShareViews,

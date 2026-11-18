@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Development accounts, one for each persona in docs/product/brief.md, named after the persona and
-// holding its role from docs/product/roles.md, so each role can be tried by signing in as it, with
-// one also holding a second role, so switching roles can be tried, and a Superuser, which holds
-// a role of the seed's own granting every permission, for trying anything at once. They share one
-// password. Accounts are never deleted, since the change history and saved views refer to them, so
-// removing the seed data deactivates them, and seeding again reactivates them. Development only:
-// the seed package is never part of the runtime image.
+// Development accounts, one for each persona in docs/product/brief.md, holding its role, and a
+// Superuser: seeding them, and removing the seed data, which deactivates them. Development only.
 
 import {
   type Database,
+  lastViews,
   rolePermissions,
   roles as roleTable,
   users,
@@ -197,13 +193,19 @@ export async function seedAccounts(
 }
 
 // Deactivates the active seeded accounts and signs them out, through the server's own account code,
-// recording each in the access history as done by the server's operators. Returns the addresses it
-// deactivated, in the order of the accounts.
+// recording each in the access history as done by the server's operators, and forgets the views
+// every seeded account last showed. Returns the addresses it deactivated, in the order of the
+// accounts.
 export async function unseedAccounts(
   auth: Auth,
   database: Database,
   accounts: readonly PersonaAccount[] = personaAccounts,
 ): Promise<string[]> {
+  const seeded = database
+    .select({ id: users.id })
+    .from(users)
+    .where(inArray(users.email, emails(accounts)));
+  await database.delete(lastViews).where(inArray(lastViews.userId, seeded));
   const active = await database
     .select({ id: users.id, email: users.email })
     .from(users)

@@ -1,16 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Releases page, under its tabs: Releases, the default, Cycles and Schedules, the tab and the
-// record open in a side panel kept in the address. Each tab has its own table, with its saved
-// views, a timeline of what the table shows above it, and the selected record's details beside it,
-// linking the records they name on their own tabs. On Schedules, those who change schedules add
-// them, retire and restore them from each row's menu, and change one from its details: its name,
-// its end, its cycles' length and names from a cycle on, and one cycle's length. A retired schedule,
-// or one drafted to be retired, is only restored. Releases are made from the heading on the Releases
-// tab and changed from their details. A cycle's length is changed from its details on Cycles, as
-// from its schedule's. Every change is a draft, shown in place with its mark, which its makers
-// discard or resubmit, and Approvers approve or reject, here or on the Drafts page, from each row's
-// menu.
+// The Releases page, with its Releases, Cycles and Schedules tabs: a table, a timeline and saved
+// views for each, a record's details beside it, and changes to releases, cycles and schedules.
 
 import type {
   Asking,
@@ -211,6 +202,7 @@ export function ReleasesPage({
     // eslint-disable-next-line security/detect-object-injection
     table: releasesTabTables[tab],
     within: releaseStreamsQuery.queryKey,
+    view,
     applied,
     onApply,
     canShare: canShareViews,
