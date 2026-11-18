@@ -133,7 +133,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `369C` Select the **Feature assignments** page in the left-hand menu.
   - **Expected:**
     - The page is headed **Feature assignments**.
-    - **Group by: Manager** is above the table.
+    - **Group by** is above the table, naming no grouping.
     - The table has a **Person** column on the left.
     - The table has a column for each month, and the current month is the first beside the **Person** column.
   - **Notes:**

@@ -897,7 +897,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** In the main window, this account is signed in on **Feature assignments**, with no view applied. In the second window, Engineering Director, `engineering.director@fathom.test` is signed in on **Feature assignments**, with no view applied.
 
-- [ ] `D9F9` In the main window, select **Group by: Manager**, then **Feature team**.
+- [ ] `D9F9` In the main window, select **Group by**, then **Feature team**.
   - **Expected:**
     - The button reads **Group by: Feature team**.
     - The rows show under headings that each name a feature team.
@@ -923,7 +923,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `ED9B` In the second window, reload the page.
   - **Expected:**
-    - The button reads **Group by: Manager**.
+    - The button reads **Group by**, naming no grouping.
     - The Views menu's button reads **Views**, with no dot.
   - **Notes:**
 
@@ -954,8 +954,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** A notification reads "Deleted the Fictional by feature team view.", with **Undo**.
   - **Notes:**
 
-- [ ] `CB80` Select **Group by: Feature team**, then **Manager**.
-  - **Expected:** The button reads **Group by: Manager**.
+- [ ] `CB80` Select **Group by: Feature team**, then **Clear grouping**.
+  - **Expected:** The button reads **Group by**, naming no grouping.
   - **Notes:**
 
 ### VIEW-16: A View on the Org Chart Keeps Its Team and Levels

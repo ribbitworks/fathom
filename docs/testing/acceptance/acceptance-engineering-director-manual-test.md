@@ -352,7 +352,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Features** page opens, showing the table, with no view applied.
   - **Notes:**
 
-- [ ] `2C7B` Select **Group by: Cycle** above the table, then **Status** under **Group by**.
+- [ ] `2C7B` Select **Group by** above the table, then **Status**.
   - **Expected:** The headings name feature statuses, such as **In progress**.
   - **Notes:**
 

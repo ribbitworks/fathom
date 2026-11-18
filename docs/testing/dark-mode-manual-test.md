@@ -445,6 +445,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** **Dark** chosen in the Appearance menu. **Feature assignments** page open from the left-hand menu.
 
+- [ ] `B608` Select **Manager** in the Group by menu.
+  - **Expected:** **Group by: Manager** shows.
+  - **Notes:**
+
 - [ ] `7B1E` Look at the table.
   - **Expected:** The labels, headings, group names and shaded cells are easy to read.
   - **Notes:**
@@ -473,9 +477,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `EDE6` Select the **Features** page in the left-hand menu.
   - **Expected:**
     - Every word is easy to read.
+    - The numbers in **Effort** are easy to read.
+  - **Notes:**
+
+- [ ] `A7F1` Select **Group by** above the table, then **Cycle**.
+  - **Expected:**
     - The group headings are clearly set apart from the rows.
     - Each line between rows, above and below the group headings too, is one thin line running straight across the whole table.
-    - The numbers in **Effort** are easy to read.
   - **Notes:**
 
 - [ ] `619B` Find the row 'Offline Sync', and look at its **Projects** and **Proposals** cells.
@@ -622,7 +630,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - On the timeline, each cycle's name is easy to read in its block, the current cycle's in bold.
   - **Notes:**
 
-- [ ] `BC7E` Select the details button at the right of the first cell of the row under 'Platform' whose **Current** reads "Current".
+- [ ] `BC7E` Select the details button at the right of the first cell of the row whose **Schedule** reads 'Platform' and whose **Current** reads "Current".
   - **Expected:** The cycle's panel opens, and its **Details** rows are easy to read.
   - **Notes:**
 
@@ -779,10 +787,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `D1A7` Select the **Capacity** page in the left-hand menu.
   - **Expected:**
     - The mode switch reads **People** and **Settings**, with **People** chosen.
-    - The switch, the headings and the names are easy to read.
+    - The switch, the column headings and the names are easy to read.
   - **Notes:**
 
-- [ ] `D5E4` Choose **None** in the Group by menu.
+- [ ] `D5E4` Look at the current month's column.
   - **Expected:** In the current month's column, these are easy to read and to tell apart:
     - the feature names
     - the percentages

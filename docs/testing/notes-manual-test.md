@@ -629,7 +629,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `3BA2` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The **Releases** tab shows, with 'Harbor 3' under the heading 'Platform'.
+  - **Expected:** The **Releases** tab shows, with a row for 'Harbor 3' whose **Schedule** reads 'Platform'.
   - **Notes:**
 
 - [ ] `7324` Select the details button at the right of the first cell of the row for 'Harbor 3'.

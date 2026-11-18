@@ -155,7 +155,7 @@ Run the test cases in order, in about 30 minutes, straight after [Setting Up Fat
 
 - [ ] `5CC2` Select the **Features** page in the left-hand menu.
   - **Expected:**
-    - `Fictional Tide Tables` is under the heading of that cycle, such as **Fictional Mainline: 27.1**.
+    - `Fictional Tide Tables` reads that cycle in **Target cycle**, such as **Fictional Mainline: 27.1**.
     - It has no dot.
     - It reads `Tide team` in **Feature team**.
   - **Notes:**

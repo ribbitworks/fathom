@@ -286,7 +286,7 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
   - **Notes:**
 
 - [ ] `0492` Select the **Cycles** tab.
-  - **Expected:** Under 'Platform', the **Features** cell of the row whose **Current** reads "Current" reads "Offline Sync, Usage Alerts".
+  - **Expected:** In the row whose **Schedule** reads 'Platform' and whose **Current** reads "Current", **Features** reads "Offline Sync, Usage Alerts".
   - **Notes:**
 
 - [ ] `2C6B` Select the **Schedules** tab.
@@ -343,7 +343,7 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
 - [ ] `C4C8` Select **Show its cycles**.
   - **Expected:**
     - The **Cycles** tab shows.
-    - The only heading over its rows is 'Platform'.
+    - Every row's **Schedule** reads 'Platform'.
   - **Notes:**
 
 - [ ] `3D3D` Select the **Schedules** tab.
@@ -357,7 +357,7 @@ Covered by [REL-17](releases-manual-test.md#rel-17-a-release-ships-on-a-day-of-i
 - [ ] `9C98` Select **Show its releases**.
   - **Expected:**
     - The **Releases** tab shows.
-    - The only heading over its rows is 'Platform'.
+    - Every row's **Schedule** reads 'Platform'.
   - **Notes:**
 
 #### REL-48: The Timeline's Marks Open Their Records

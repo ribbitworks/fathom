@@ -100,7 +100,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
 
 - [ ] `8C54` Select **Features**.
   - **Expected:**
-    - The table lists the features, under headings that name cycles.
+    - The table lists the features in one list.
     - There is no **New feature** button.
     - There is no empty row at the table's end.
   - **Notes:**
@@ -109,7 +109,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Expected:** The cell does not open for editing.
   - **Notes:**
 
-- [ ] `B3B1` Select **Group by: Cycle** above the table, then **Release** under **Group by**.
+- [ ] `B3B1` Select **Group by** above the table, then **Release**.
   - **Expected:**
     - The release headings, such as **Platform: Harbor 1**, are each followed by a comma, "ships" and a date.
     - The last heading is **Later**.

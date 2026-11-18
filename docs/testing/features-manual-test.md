@@ -71,24 +71,31 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
       - **Staffed**
       - **Kind**
     - Beside the search box, the count reads "22 features".
+    - The rows show as one list, with no group headings, and the button after **Metrics** reads **Group by**.
   - **Notes:**
 
 - [ ] `F6D0` Look down the **Status** column.
   - **Expected:** Each row reads one of "Possible", "Planned", "In progress", "Done" or "Cancelled".
   - **Notes:**
 
-- [ ] `6BDE` Look at the group headings, the rows, the column headers and the lines between the rows.
+- [ ] `6BDE` Look at the rows, the column headers and the lines between the rows.
   - **Expected:**
     - Every word is easy to read.
-    - The group headings are clearly set apart from the rows.
-    - Each line between rows, above and below the group headings too, is one thin line running straight across the whole table.
+    - Each line between rows is one thin line running straight across the whole table.
   - **Notes:**
 
-### FEAT-02: Features Are Grouped by Cycle, With Later Last
+### FEAT-02: Features Group by Cycle, With Later Last
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-01 ended with.
 
-**Preconditions:** **Features** page open.
+**Preconditions:** **Features** page open, in one list.
+
+- [ ] `05B1` Select **Group by** above the table, then **Cycle**.
+  - **Expected:**
+    - The button reads **Group by: Cycle**.
+    - The group headings are clearly set apart from the rows.
+    - Each line between rows, above and below the group headings too, is one thin line running straight across the whole table.
+  - **Notes:**
 
 - [ ] `3E03` Read the group headings from top to bottom.
   - **Expected:**
@@ -161,7 +168,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-03 ended with.
 
-**Preconditions:** **Features** page open.
+**Preconditions:** **Features** page open, grouped by **Cycle**, as FEAT-02 leaves it.
 
 - [ ] `C74B` Look at the empty row at the end of the table.
   - **Expected:** Every cell of the empty row is blank.
@@ -221,7 +228,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The row has no dot.
     - The row has no Live row under it.
-    - It shows under the heading of its new cycle.
+    - Its **Target cycle** shows its new cycle.
   - **Notes:**
 
 ### FEAT-06: Feature Drafts Show on the Drafts Page
@@ -341,6 +348,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Run Restore the Seed Data first. Signed in with this account. **Features** page open.
 
+- [ ] `73D9` Select **Group by** above the table, then **Cycle**.
+  - **Expected:** The rows are under headings that name cycles.
+  - **Notes:**
+
 - [ ] `E810` Select the **Name** cell of the last row under a group heading.
   - **Expected:** The cell is selected.
   - **Notes:**
@@ -422,9 +433,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-11 ended with.
 
-**Preconditions:** Run Restore the Seed Data first. Signed in with this account. **Features** page open.
+**Preconditions:** Run Restore the Seed Data first. Signed in with this account. **Features** page opened from the left-hand menu, in one list.
 
-- [ ] `BD96` Select **Group by: Cycle** above the table, then **Needed by** under **Group by**.
+- [ ] `BD96` Select **Group by** above the table, then **Needed by**.
   - **Expected:**
     - The button reads **Group by: Needed by**.
     - Each heading names a month and year, such as **Mar 2027**.
@@ -1129,27 +1140,13 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-23 ended with.
 
-**Preconditions:** Restore the Seed Data run after FEAT-23. **Features** page open.
+**Preconditions:** Restore the Seed Data run after FEAT-23. **Features** page opened from the left-hand menu, in one list.
 
-- [ ] `DC19` Select **Group by: Cycle** above the table.
+- [ ] `DC19` Select **Group by** above the table.
   - **Expected:**
-    - Under a **Group by** label, the menu lists, from the top:
-      - **Cycle**, ticked
-      - **Release**
-      - **Needed by**
-      - **Status**
-      - **Customers**
-      - **Projects**
-      - **Proposals**
-      - **Priority**
-      - **Size**
-      - **Risk**
-      - **Feature team**
-      - **Staffed**
-      - **Kind**
-      - **None**
-    - Under a **Then by** label after them, it lists, from the top:
+    - The menu lists, from the top:
       - **None**, ticked
+      - **Cycle**
       - **Release**
       - **Needed by**
       - **Status**
@@ -1162,10 +1159,11 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
       - **Feature team**
       - **Staffed**
       - **Kind**
+    - There is no **Then by** label.
     - There is no **Clear grouping**.
   - **Notes:**
 
-- [ ] `CD88` Select **Release** under **Group by**.
+- [ ] `CD88` Select **Release**.
   - **Expected:**
     - The button reads **Group by: Release**.
     - The headings and their counts read, from top to bottom:
@@ -1236,7 +1234,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-24 ended with. Step `B09A` signs in as another account.
 
-**Preconditions:** Restore the Seed Data run after FEAT-24, which ends on the **Releases** page. Signed in with this account. **Features** page open from the left-hand menu, as it opens: grouped by **Cycle**, nothing in the search box and no filters.
+**Preconditions:** Restore the Seed Data run after FEAT-24, which ends on the **Releases** page. Signed in with this account. **Features** page open from the left-hand menu, as it opens: in one list, nothing in the search box and no filters.
 
 - [ ] `D750` Read the **Priority**, **Size** and **Risk** cells of 'Offline Sync'.
   - **Expected:**
@@ -1369,7 +1367,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 **Preconditions:** Run Restore the Seed Data, then select the **Features** page in the left-hand menu.
 
-- [ ] `7E31` Select **Group by: Cycle** above the table, then **Staffed** under **Group by**.
+- [ ] `7E31` Select **Group by** above the table, then **Staffed**.
   - **Expected:**
     - The button reads **Group by: Staffed**.
     - The headings read, from the top, **Yes**, **No** and **Not committed**.
@@ -1387,7 +1385,11 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 **Preconditions:** Run Restore the Seed Data, then select the **Features** page in the left-hand menu.
 
-- [ ] `2622` Select **Group by: Cycle** above the table, then **Status** under **Then by**.
+- [ ] `02D2` Select **Group by** above the table, then **Cycle**.
+  - **Expected:** The button reads **Group by: Cycle**.
+  - **Notes:**
+
+- [ ] `2622` Select **Group by: Cycle**, then **Status** under **Then by**.
   - **Expected:**
     - The button reads **Group by: Cycle, then Status**.
     - Under each cycle's heading, smaller, lighter headings set in from it name feature statuses, such as **In progress**, each with how many features it holds.
@@ -1395,8 +1397,8 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `60B6` Select **Group by: Cycle, then Status**, then **Clear grouping**.
   - **Expected:**
-    - The button reads **Group by: Cycle**.
-    - The headings name cycles, with no headings set in under them.
+    - The button reads **Group by**.
+    - The rows show as one list, with no headings.
   - **Notes:**
 
 ### FEAT-29: A Feature Under Two Projects Shows Under Each
@@ -1405,7 +1407,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 **Preconditions:** Run Restore the Seed Data, then select the **Features** page in the left-hand menu.
 
-- [ ] `AC75` Select **Group by: Cycle** above the table, then **Projects** under **Group by**.
+- [ ] `AC75` Select **Group by** above the table, then **Projects**.
   - **Expected:**
     - The button reads **Group by: Projects**.
     - The headings read, from the top:

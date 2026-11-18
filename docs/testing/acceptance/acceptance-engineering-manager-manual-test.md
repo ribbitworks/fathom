@@ -151,7 +151,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 **Preconditions:** None beyond MANAGER-02.
 
 - [ ] `C1A2` Select the **Features** page in the left-hand menu.
-  - **Expected:** The table is grouped by cycle, with **Later** last.
+  - **Expected:** The table lists the features in one list, with no headings.
   - **Notes:**
 
 - [ ] `35DF` Type `Offline Sync` in the search box.

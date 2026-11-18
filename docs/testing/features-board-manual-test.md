@@ -106,7 +106,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `8882` Select **Table** in the Table and Board switch.
-  - **Expected:** The table of features shows, grouped by "Cycle".
+  - **Expected:** The table of features shows, in one list, and the button after **Metrics** reads **Group by**.
   - **Notes:**
 
 - [ ] `179C` Press the browser's Back button.
@@ -441,6 +441,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `6699` Select **Table** in the Table and Board switch.
   - **Expected:** The table shows.
+  - **Notes:**
+
+- [ ] `46B2` Select **Group by**, then **Cycle**.
+  - **Expected:** The button reads **Group by: Cycle**.
   - **Notes:**
 
 - [ ] `03B2` Select **Group by: Cycle**, then **Status** under **Then by**.

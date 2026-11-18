@@ -34,7 +34,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button and the change button. This test adds:
 
 - **Tabs:** the tabs **Releases**, **Cycles** and **Schedules** just after the **Releases** heading, on the same line. The page opens on **Releases**.
-- **Releases table:** the table on the **Releases** tab, under the timeline, with a row for each release, grouped under a heading for each schedule. Its columns are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features** and **Status**. Releases that have shipped show only once **Show shipped** is chosen in the **Views** menu.
+- **Releases table:** the table on the **Releases** tab, under the timeline, with a row for each release. Its columns are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features** and **Status**. Releases that have shipped show only once **Show shipped** is chosen in the **Views** menu.
 - **A release's details:** the side panel for the selected release, headed with its name and, under it, its key. Its **Details** rows are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Status**, **Colour** and **Note**.
 - **Pencil:** the change button at the right of a row of **Details**, for **Release**, **Ships on**, **Cycles** and **Colour**.
 - **A release's ⋯ menu:** the ⋯ menu of a release's row. It offers **Remove release**, and **Add note…** while the release has no note, to those who change releases, **Discard draft** and **Resubmit** for the release's draft, and **Approve…** and **Reject…** to an account whose role approves its drafts.
@@ -253,6 +253,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - **Releases** is the tab chosen, and the button at the top right reads **New release**.
     - The table's columns are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Features** and **Status**.
+    - The rows show as one list, with no headings.
+  - **Notes:**
+
+- [ ] `E4CC` Select **Group by** above the table, then **Schedule**.
+  - **Expected:**
+    - The button reads **Group by: Schedule**.
     - The rows are under the headings 'Platform', 'Patches' and 'Field Apps'.
   - **Notes:**
 
@@ -300,7 +306,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account REL-37 ended with.
 
-**Preconditions:** **Releases** page selected again in the left-hand menu, so the **Releases** tab shows with no filter, grouped by schedule, and shipped releases hidden.
+**Preconditions:** **Releases** page selected again in the left-hand menu, so the **Releases** tab shows with no filter, in one list, and shipped releases hidden.
 
 - [ ] `EC21` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS'.
   - **Expected:**
@@ -361,7 +367,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `EA8F` Select **Make release**.
   - **Expected:**
     - The dialog closes, and a notification says "Drafted the new release."
-    - 'Fictional Harbor' is listed under 'Platform', with a hollow dot in its slot.
+    - 'Fictional Harbor' is listed, its **Schedule** reading 'Platform', with a hollow dot in its slot.
     - Its details are open beside the table.
   - **Notes:**
 

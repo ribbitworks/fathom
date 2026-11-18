@@ -252,7 +252,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `9D64` Reload the page.
   - **Expected:**
-    - `Fictional Atlas` is under the heading of next quarter's cycle, such as **Platform: 27.1**.
+    - `Fictional Atlas` reads next quarter's cycle in **Target cycle**, such as **Platform: 27.1**.
     - Its row has a filled yellow dot in its slot.
   - **Notes:**
 
@@ -455,7 +455,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Features** page opens.
   - **Notes:**
 
-- [ ] `A09D` Select **Group by: Cycle** above the table, then **Release** under **Group by**.
+- [ ] `A09D` Select **Group by** above the table, then **Release**.
   - **Expected:**
     - The release headings, such as **Platform: Harbor 1**, are each followed by a comma, "ships" and a date.
     - `Fictional Atlas` is under the heading **Platform: Not released yet**.
@@ -467,7 +467,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `119A` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The **Releases** tab shows, with `Fictional Harbor 4` under 'Platform'.
+  - **Expected:** The **Releases** tab shows, with a row for `Fictional Harbor 4` whose **Schedule** reads 'Platform'.
   - **Notes:**
 
 - [ ] `5E58` Select the **⋯** button at the right of the first cell of the row for `Fictional Harbor 4`, then **Approve…**.

@@ -95,7 +95,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Expected:** The **Features** page opens.
   - **Notes:**
 
-- [ ] `1BAD` Select **Group by: Cycle** above the table, then **Release** under **Group by**.
+- [ ] `1BAD` Select **Group by** above the table, then **Release**.
   - **Expected:**
     - The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2 LTS**, **Platform: Harbor 3**, **Field Apps: Lantern 1**, **Field Apps: Lantern 2**, **Platform: Not released yet**, **Field Apps: Not released yet** and **Later**.
     - Each of the five 'Harbor' and 'Lantern' headings is followed by a comma, "ships" and a date.

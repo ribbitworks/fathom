@@ -48,7 +48,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `25EE` Select the **Feature assignments** page in the left-hand menu.
   - **Expected:**
     - The page is headed **Feature assignments**.
-    - Above the table, in order: a search box, a **Draft** button, **Metrics**, and **Group by: Manager**.
+    - Above the table, in order: a search box, a **Draft** button, **Metrics**, and **Group by**.
+    - The rows show as one list, with no group names.
     - Under them, the strip of quarters, with **‹** before it, and **›** and **Today** after it.
     - The table has a **Person** column on the left and a column for each month, with a line between each column.
   - **Notes:**
@@ -108,9 +109,15 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-03.
 
-**Preconditions:** **Feature assignments** open.
+**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu.
 
-- [ ] `6A68` Select **Feature team** in the Group by menu.
+- [ ] `077D` Select **Manager** in the Group by menu.
+  - **Expected:**
+    - **Group by: Manager** shows.
+    - The rows are grouped under managers.
+  - **Notes:**
+
+- [ ] `6A68` Select **Group by: Manager**, then **Feature team**.
   - **Expected:**
     - The rows are grouped under the feature teams in order of name, then **No feature team**.
     - Someone on two teams is listed under both.
@@ -130,12 +137,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 - [ ] `D26B` Select **Clear grouping**.
   - **Expected:**
-    - **Group by: Manager** shows.
-    - The rows are grouped under managers.
-  - **Notes:**
-
-- [ ] `441A` Select **None** in the Group by menu.
-  - **Expected:**
+    - **Group by** shows, naming no grouping.
     - There are no group names.
     - Everyone is listed once, by name.
   - **Notes:**
@@ -343,10 +345,6 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 - [ ] `A33A` Select the **Feature assignments** page in the left-hand menu.
   - **Expected:** The **Feature assignments** page opens.
-  - **Notes:**
-
-- [ ] `60E4` Select **None** in the Group by menu.
-  - **Expected:** There are no group names.
   - **Notes:**
 
 - [ ] `C1C8` Type the joiner's name in the search box.

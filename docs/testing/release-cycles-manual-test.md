@@ -35,7 +35,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button and the change button. This test adds:
 
 - **Tabs:** the tabs **Releases**, **Cycles** and **Schedules** just after the **Releases** heading, on the same line. The page opens on **Releases**.
-- **Cycles table:** the table on the **Cycles** tab, under the timeline, with a row for each cycle, grouped under a heading for each schedule. Its columns are **Cycle**, **Schedule**, **Starts**, **Ends**, **Current**, **Release** and **Features**. Cycles that have ended, and those starting after next quarter, show only once **Show past cycles** or **Show later cycles** is chosen in the **Views** menu.
+- **Cycles table:** the table on the **Cycles** tab, under the timeline, with a row for each cycle. Its columns are **Cycle**, **Schedule**, **Starts**, **Ends**, **Current**, **Release** and **Features**. Cycles that have ended, and those starting after next quarter, show only once **Show past cycles** or **Show later cycles** is chosen in the **Views** menu.
 - **A cycle's details:** the side panel for the selected cycle, headed with its schedule's name, a colon and the cycle's name, such as "Platform: 27.1". Its **Details** rows are the table's columns, then **Duration**.
 - **Duration pencil:** the change button at the right of the **Duration** row of a cycle's details. It opens a menu of **This cycle only…** and **This and later cycles…**.
 - **A cycle's ⋯ menu:** the ⋯ menu of a cycle's row, which names the draft that changes the cycle, if any, and offers **Discard draft** and **Resubmit** to those who change schedules, and **Approve…** and **Reject…** to an account whose role approves its drafts.
@@ -89,6 +89,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `4DF0` Select the **Cycles** tab.
+  - **Expected:** The rows show as one list, with no headings.
+  - **Notes:**
+
+- [ ] `898A` Select **Group by** above the table, then **Schedule**.
   - **Expected:** The rows are under the headings 'Platform', 'Patches' and 'Field Apps'.
   - **Notes:**
 
@@ -131,7 +135,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Project Manager, `project.manager@fathom.test`, changed from REL-23.
 
-**Preconditions:** Run after REL-23. Signed in with this account. **Releases** page open from the left-hand menu, then the **Cycles** tab.
+**Preconditions:** Run after REL-23. Signed in with this account. **Releases** page open from the left-hand menu, then the **Cycles** tab, grouped by **Schedule** from **Group by** above the table.
 
 - [ ] `1913` Select the **⋯** at the right of the first cell of the row under 'Platform' for the cycle REL-23 changed, such as '27.1', then **Approve…**.
   - **Expected:**
@@ -159,6 +163,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `B1A5` Select the **Cycles** tab.
+  - **Expected:** The rows show as one list, with no headings.
+  - **Notes:**
+
+- [ ] `5B45` Select **Group by** above the table, then **Schedule**.
   - **Expected:** The rows are under the headings 'Platform', 'Patches' and 'Field Apps'.
   - **Notes:**
 
@@ -201,7 +209,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-25 ended with.
 
-**Preconditions:** Run after REL-25. **Releases** page open on the **Cycles** tab.
+**Preconditions:** Run after REL-25. **Releases** page open on the **Cycles** tab, grouped by **Schedule**, as REL-25 leaves it.
 
 - [ ] `BC43` Select the **⋯** at the right of the first cell of the row under 'Patches' after the cycle REL-25 changed, then **Discard draft**.
   - **Expected:** A notification says "Discarded the draft."
@@ -225,7 +233,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - **Cycles** is chosen, and there is no button at the top right.
     - The table's columns are, in order: **Cycle**, **Schedule**, **Starts**, **Ends**, **Current**, **Release** and **Features**.
-    - The rows are under the headings 'Platform', 'Patches' and 'Field Apps'.
+    - The rows show as one list, with no headings.
+  - **Notes:**
+
+- [ ] `6B2A` Select **Group by** above the table, then **Schedule**.
+  - **Expected:** The rows are under the headings 'Platform', 'Patches' and 'Field Apps'.
   - **Notes:**
 
 - [ ] `20B5` Read the first row under 'Field Apps'.
@@ -283,6 +295,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account REL-41 ended with.
 
 **Preconditions:** **Releases** page selected again in the left-hand menu, then the **Cycles** tab.
+
+- [ ] `2B13` Select **Group by** above the table, then **Schedule**.
+  - **Expected:** The rows are under the headings 'Platform', 'Patches' and 'Field Apps'.
+  - **Notes:**
 
 - [ ] `BC9F` Select the details button at the right of the first cell of the second row under 'Field Apps'.
   - **Expected:**

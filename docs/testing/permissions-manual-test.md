@@ -96,7 +96,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - There is no **New release** button
   - **Notes:**
 
-- [ ] `6081` Read the rows under the heading 'Platform'.
+- [ ] `6081` Read the rows whose **Schedule** reads 'Platform'.
   - **Expected:**
     - The rows read 'Harbor 2 LTS', 'Harbor 3' and 'Harbor 4'
     - A light green Live row is under 'Harbor 2 LTS' and under 'Harbor 3'
@@ -151,7 +151,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 - [ ] `698F` Select **Make release**.
   - **Expected:**
     - A notification says "Drafted the new release."
-    - Under the heading 'Platform', a row reads `Harbor 5`, with a hollow yellow dot in its slot
+    - A row reads `Harbor 5`, its **Schedule** 'Platform', with a hollow yellow dot in its slot
     - The Publish button reads **Publish 1 change**
   - **Notes:**
 

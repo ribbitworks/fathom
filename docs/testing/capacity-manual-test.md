@@ -229,7 +229,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `D8F5` Select the **Capacity** page in the left-hand menu.
   - **Expected:**
     - The mode switch has **People** chosen.
-    - Above the table, in order: a search box, a **Draft** button, **Metrics**, and **Group by: Manager**.
+    - Above the table, in order: a search box, a **Draft** button, **Metrics**, and **Group by**.
     - Under them, the strip of quarters, with **‹** before it, and **›** and **Today** after it.
     - The current month is the first month beside the **Person** column, and its heading is underlined in red.
   - **Notes:**
@@ -291,7 +291,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `7C51` Select the **Capacity** page in the left-hand menu.
   - **Expected:**
     - The mode switch has **People** chosen.
-    - **Group by: Manager** shows.
+    - **Group by** shows, naming no grouping.
   - **Notes:**
 
 - [ ] `B241` Select **Feature team** in the Group by menu.
@@ -396,7 +396,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `C806` Select the **Feature assignments** page in the left-hand menu.
   - **Expected:**
     - The cells show feature teams as labels.
-    - **Group by: Manager** shows.
+    - **Group by** shows, naming no grouping.
   - **Notes:**
 
 - [ ] `0FFA` Select **Feature team** in the Group by menu.
@@ -410,7 +410,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `5122` Select the **Capacity** page in the left-hand menu.
   - **Expected:**
     - The mode switch has **People** chosen.
-    - **Group by: Manager** shows.
+    - **Group by** shows, naming no grouping.
     - The cells list features, each with its percentage.
   - **Notes:**
 
@@ -503,7 +503,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `1862` Select the **Capacity** page in the left-hand menu.
   - **Expected:**
     - The mode switch has **People** chosen.
-    - **Group by: Manager** shows.
+    - **Group by** shows, naming no grouping.
+  - **Notes:**
+
+- [ ] `4CC8` Select **Manager** in the Group by menu.
+  - **Expected:** **Group by: Manager** shows.
   - **Notes:**
 
 - [ ] `11E3` Type `Bilwa Iyer` in the search box.
