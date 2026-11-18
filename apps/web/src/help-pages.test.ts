@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for Help's pages as the front end builds them in: each page's name, title and text, where a
-// link to one goes, and that every page in docs/help is in the note format, with each link between
-// pages leading to a page, and a heading on it, that exists.
+// link to one goes, and that every page in docs/help, as it is now, is built in and in the note
+// format, with each link between pages leading to a page, and a heading on it, that exists.
 
 import { helpLink, noteFormatProblem, parseNote } from "@fathom/shared";
 import GithubSlugger from "github-slugger";
 import type { Nodes } from "mdast";
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   helpDestination,
@@ -98,6 +100,13 @@ describe("where a link to a Help page goes", () => {
 
 describe("every Help page built in", () => {
   const names = helpPageNames();
+
+  it("is every page in docs/help, as it is now, however the tests' compiled files were cached", () => {
+    const onDisk = readdirSync(join(import.meta.dirname, "../../../docs/help"))
+      .filter((file) => file.endsWith(".md"))
+      .map((file) => file.replace(/\.md$/u, ""));
+    expect([...names].sort()).toEqual(onDisk.sort());
+  });
 
   it("includes the index", () => {
     expect([names.includes(helpIndex), helpIndexPage.title]).toEqual([

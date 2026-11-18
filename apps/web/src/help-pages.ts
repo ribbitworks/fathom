@@ -24,11 +24,15 @@ export function readHelpPage(path: string, markdown: string): HelpPage {
   return { name, title, body: markdown.replace(titleLine, "") };
 }
 
-const files = import.meta.glob<string>("../../../docs/help/*.md", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-});
+// Vitest caches no file it sees calling import.meta.glob, which a type argument would hide.
+const files: Record<string, string> = import.meta.glob(
+  "../../../docs/help/*.md",
+  {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  },
+);
 
 const pages = new Map(
   Object.entries(files).map(([path, markdown]) => {

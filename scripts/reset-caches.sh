@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 
-# Removes Fathom's cached scanner data, ESLint's cache, and any leftover scan copies and check logs.
-# Each cache is recreated the next time the tool that uses it runs.
+# Removes Fathom's cached scanner data, ESLint's cache, Vitest's caches of compiled files, and any
+# leftover scan copies and check logs. Each cache is recreated the next time the tool that uses it
+# runs.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -26,6 +27,11 @@ for volume in $volumes; do
     docker volume rm "$volume" >/dev/null
   fi
 done
+
+# Vitest reads its caches while tests run, so they are removed in the package tests' turn, once any
+# running have finished.
+node scripts/package-tests.mjs exec rm -rf node_modules/.vitest-cache \
+  apps/*/node_modules/.vitest-cache packages/*/node_modules/.vitest-cache
 
 # Scan copies and the check's job logs are removed by the run that made them; only those left over
 # for an hour are removed here.

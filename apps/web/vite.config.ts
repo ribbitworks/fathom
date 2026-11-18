@@ -86,8 +86,9 @@ export default defineConfig({
   build: {
     outDir: "dist",
     emptyOutDir: true,
-    // One bundle, fetched once over the company network and then cached, suits a small internal tool
-    // better than splitting it; Mantine and the router make it larger than Vite's default limit.
+    // One bundle, fetched once over an organization's own network and then cached, suits an
+    // internal tool better than splitting it; Mantine and the router make it larger than Vite's
+    // default limit.
     chunkSizeWarningLimit: 1000,
   },
   test: {

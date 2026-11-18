@@ -229,7 +229,7 @@ The copy gets new names, and so a new, empty database.
 | `pnpm security` | The security report, in a dated folder under `output/security/` |
 | `pnpm scan:images` | The daily image scan, as [Releases](#daily-image-scan) describes |
 | `pnpm updates` | List dependency updates, in `output/updates/`, changing nothing |
-| `pnpm reset-caches` | Remove the scanners' cached data and ESLint's cache, which the next run rebuilds |
+| `pnpm reset-caches` | Remove the scanners' cached data, ESLint's cache and Vitest's caches of compiled files, which the next run rebuilds. It waits for any package tests running on this computer to finish first |
 | `pnpm prune-reports [days]` | Delete local reports older than the given days, 365 by default, always keeping security reports for a year |
 
 - `pnpm security` runs its scans side by side.

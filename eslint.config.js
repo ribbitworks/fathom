@@ -2,7 +2,8 @@
 
 // ESLint settings for all JavaScript and TypeScript in the repository: strict type-aware rules for
 // TypeScript, security rules for all of it, browser globals and React's rules of hooks for the front
-// end, and the boundary of the server's data access layer, skipping the files git ignores.
+// end, the boundary of the server's data access layer, and import.meta.glob calls written so
+// Vitest's cache sees them, skipping the files git ignores.
 
 import { includeIgnoreFile } from "@eslint/compat";
 import js from "@eslint/js";
@@ -31,6 +32,17 @@ export default defineConfig(
       "@typescript-eslint/switch-exhaustiveness-check": [
         "error",
         { considerDefaultExhaustiveForUnions: true },
+      ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          // Vitest keeps compiled files in a cache, except those it sees calling
+          // "import.meta.glob(", whose result depends on other files. A type argument hides the call.
+          selector:
+            "CallExpression[callee.object.meta.name='import'][callee.object.property.name='meta'][callee.property.name='glob'][typeArguments]",
+          message:
+            "Write import.meta.glob without a type argument, and type its result instead, so Vitest doesn't cache an old list of the files it matches.",
+        },
       ],
     },
   },
