@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for a draft's details: its columns as rows, the drafts approved with it or waiting on it,
-// the changes of one's own linked to it, deciding it, why it can't be decided yet, and the link to
-// its record's own page.
+// Tests for a draft's details beside the Drafts table.
 
 import type { DraftsTab } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
@@ -10,11 +8,14 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import type { Entry } from "./draft-entries.ts";
+import type { Entry, NamedDraft } from "./draft-entries.ts";
 import { noDrafts } from "./drafts.ts";
-import { DraftPanel, type DraftActions } from "./drafts-panel.tsx";
+import {
+  DraftPanel,
+  type DraftActions,
+  type LinkedDraft,
+} from "./drafts-panel.tsx";
 import { draftColumns, draftRows } from "./drafts-table.tsx";
-import type { RecordLinkItem } from "./record-details.tsx";
 import { testTheme } from "./test-support.tsx";
 
 const entry = (more: Partial<Entry> = {}): Entry => ({
@@ -46,8 +47,8 @@ function show({
   recordLink,
 }: {
   one?: Entry;
-  related?: string[];
-  linked?: (RecordLinkItem & { name: string })[];
+  related?: NamedDraft[];
+  linked?: LinkedDraft[];
   actions?: DraftActions;
   approves?: boolean;
   waits?: boolean;
@@ -103,14 +104,21 @@ describe("a draft's details", () => {
     show({
       one: entry({ unpublished: true }),
       tab: "unpublished",
-      linked: [{ id: "list l1", name: "Equipment", onShow }],
+      linked: [
+        {
+          id: "list l1",
+          name: "Equipment",
+          key: { kind: "list", keyNumber: 4 },
+          onShow,
+        },
+      ],
     });
     const linked = screen.getByRole("region", { name: "Linked to" });
     expect(within(linked).getByText("Change")).toBeDefined();
 
-    // When its link is followed
+    // When its link, its key before its name, is followed
     await userEvent.click(
-      within(linked).getByRole("button", { name: "Equipment" }),
+      within(linked).getByRole("button", { name: "#LIST-4 Equipment" }),
     );
 
     // Then that change's details are asked for
@@ -122,8 +130,13 @@ describe("a draft's details", () => {
       one: entry({ unpublished: true }),
       tab: "unpublished",
       linked: [
-        { id: "list l1", name: "Equipment", onShow: vi.fn() },
-        { id: "choice c1", name: "Laptop in Equipment", onShow: vi.fn() },
+        { id: "list l1", name: "Equipment", key: undefined, onShow: vi.fn() },
+        {
+          id: "choice c1",
+          name: "Laptop in Equipment",
+          key: undefined,
+          onShow: vi.fn(),
+        },
       ],
     });
     expect(
@@ -136,19 +149,39 @@ describe("a draft's details", () => {
     expect(screen.queryByRole("region", { name: "Linked to" })).toBeNull();
   });
 
-  it("names the drafts approved with a waiting draft", () => {
-    show({ related: ["the list Skills", "the column Skills"] });
+  it("names the drafts approved with a waiting draft, each after its key where it has one", () => {
+    show({
+      related: [
+        { name: "Skills", key: { kind: "list", keyNumber: 7 } },
+        { name: "the new order for Sites", key: undefined },
+      ],
+    });
+    const approved = screen.getByRole("region", { name: "Approved with it" });
     expect(
-      within(
-        screen.getByRole("region", { name: "Approved with it" }),
-      ).getByText("the column Skills"),
+      within(approved)
+        .getAllByRole("paragraph")
+        .map(({ textContent }) => textContent),
+    ).toEqual(["#LIST-7 Skills", "the new order for Sites"]);
+  });
+
+  it("shows its record's key under its title", () => {
+    show({});
+    expect(
+      screen.getByRole("button", { name: "#PERSON-1, copy link or key" }),
     ).toBeDefined();
+  });
+
+  it("shows no key for a draft of the planning settings", () => {
+    show({ one: entry({ place: "capacity-settings" }) });
+    expect(
+      screen.queryByRole("button", { name: /copy link or key/u }),
+    ).toBeNull();
   });
 
   it("heads the drafts a rejected draft holds back Waiting on it", () => {
     show({
       one: entry({ state: "rejected", reason: "Fictional reason" }),
-      related: ["the new order for Sites"],
+      related: [{ name: "the new order for Sites", key: undefined }],
     });
     expect(screen.getByRole("region", { name: "Waiting on it" })).toBeDefined();
   });

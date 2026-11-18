@@ -12,9 +12,9 @@ Most records in Fathom have a key. You can copy a link to a record and send it t
 
 ### See a Record's Key
 
-In a record's details, the key is under the record's name, small and grey. On the Features Board, each card shows its key under its name. To hide the keys on the Board, select **Card** and untick **Key**. A record that isn't saved yet has no key.
+In a record's details, the key is under the record's name, small and grey. A draft's details on the **Drafts** page show its record's key the same way, and put each other draft's key before its name. On the Features Board, each card shows its key under its name. To hide the keys on the Board, select **Card** and untick **Key**. A record that isn't saved yet has no key.
 
-The tables on **People**, **Features**, **Projects**, **Accounts**, and the **Releases** and **Schedules** tabs of **Releases** have a **Key** column, hidden at first. To show it:
+The tables on **People**, **Features**, **Projects**, **Accounts**, **Drafts**, and the **Releases** and **Schedules** tabs of **Releases** have a **Key** column, hidden at first. On **Drafts**, it shows the key of the record each draft changes. A draft of Capacity's planning settings has no key. To show it:
 
 1. Select **Views**.
 1. Under **Hidden**, select **Key**.

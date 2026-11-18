@@ -405,9 +405,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   };
   // What else a record's menu offers, after its columns' own items, such as showing its details.
   menuItems?: (record: Rec) => ReactNode;
-  // Each record's key, for a table whose records have keys: its menu offers Copy link, and typing
-  // the key in the search finds the record.
-  keyOf?: (record: Rec) => RecordKeyOf;
+  // Each record's key, for a table whose records have keys, or none for a row with no key: its
+  // menu offers Copy link, and typing the key in the search finds the record.
+  keyOf?: (record: Rec) => RecordKeyOf | undefined;
   // For a row that stands for its parts' drafts as well as its record's own: the record's own draft,
   // which its menu discards or resubmits; the row's otherwise.
   ownDraft?: (record: Rec) => DraftOf<Rec> | undefined;
@@ -1642,13 +1642,17 @@ const keyCharWidth = 1.3;
 // Each record's key, hidden until a view shows it, sorted and filtered by its number. A key never
 // changes, so the column is read only, and no draft changes it.
 export function keyColumn<Rec extends GridRecord, Change>(
-  keyOf: (record: Rec) => RecordKeyOf,
+  keyOf: (record: Rec) => RecordKeyOf | undefined,
   records: readonly Rec[],
 ): Column<Rec, Change> {
   const label = "Key";
+  const savedKey = (record: Rec) => {
+    const key = keyOf(record);
+    return key !== undefined && isSaved(key) ? key : undefined;
+  };
   const shown = (record: Rec) => {
-    const { kind, keyNumber } = keyOf(record);
-    return shownRecordKey(kind, keyNumber);
+    const key = savedKey(record);
+    return key === undefined ? "" : shownRecordKey(key.kind, key.keyNumber);
   };
   return {
     // As wide as the longest key shown, so none is cut short.
@@ -1670,9 +1674,8 @@ export function keyColumn<Rec extends GridRecord, Change>(
     change: () => {
       throw new Error("A record's key can't be changed");
     },
-    value: (record) =>
-      isSaved(keyOf(record)) ? String(keyOf(record).keyNumber) : "",
-    content: (record) => (isSaved(keyOf(record)) ? shown(record) : null),
+    value: (record) => String(savedKey(record)?.keyNumber ?? ""),
+    content: (record) => shown(record) || null,
   };
 }
 

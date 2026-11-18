@@ -19,7 +19,7 @@ The **Drafts** page, under **History** in the left-hand menu, lists the drafts i
 ### Find a Draft
 
 1. Select the tab that holds it. Rejected drafts, and drafts you can't decide, are under **All drafts**.
-1. Type in the search box: a name, a value, or who made the draft.
+1. Type in the search box: a name, a value, who made the draft, or the whole key of its record, such as `#PERSON-12`. To see each record's key, select **Views**, then **Key** under **Hidden**.
 
 To see only some drafts, such as the rejected ones, open the **State** column's menu and filter by **Rejected**. You can also group the rows, such as by **Area** or **Made by**, with **Group by**, turn the headings round with its second order, such as **Z to A**, and count them with **Metrics**, as on any table. You can save the way you've set up the table as a view, and the view keeps its tab. A shared view saved on a tab your role doesn't have opens on your first tab. See [Saved views](saved-views.md).
 
@@ -30,7 +30,7 @@ You're done when the draft's row shows.
 1. Point at the draft's row.
 1. Select the details button: the small box at the right of its **Record** cell.
 
-The details open beside the table. They show the draft's columns, and the other drafts approving or rejecting it takes along. If you can't decide it now, a line says why, such as that it's back with whoever made it, to change and resubmit. **Show on** and the page's name, such as **Show on People**, opens the record on its own page, if your role opens that page.
+The details open beside the table. Under the record's name is its key. Select it to copy a link to the record, or the key itself. The details show the draft's columns, and the other drafts approving or rejecting it takes along, each after its record's key. If you can't decide it now, a line says why, such as that it's back with whoever made it, to change and resubmit. **Show on** and the page's name, such as **Show on People**, opens the record on its own page, if your role opens that page.
 
 To close the details, select the **×** at their top right, or press Esc.
 

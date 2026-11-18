@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for which drafts a role sees, by its permissions, and which of them the reader may decide
-// now.
+// Tests for which drafts a role sees, by its permissions, which of them the reader may decide now,
+// and how the drafts deciding one takes along are named.
 
 import { describe, expect, it } from "vitest";
-import { draftsSeen, type Entry, toDecide } from "./draft-entries.ts";
-import { noDrafts } from "./drafts.ts";
+import {
+  draftsSeen,
+  type Entry,
+  namedDrafts,
+  toDecide,
+} from "./draft-entries.ts";
+import { type DraftSelection, noDrafts } from "./drafts.ts";
 
 const entry = (key: string, more: Partial<Entry> = {}): Entry => ({
   key,
@@ -98,5 +103,59 @@ describe("the drafts to decide now", () => {
     ["held by someone else", entry("held", { heldBy: "Fictional Other" })],
   ])("leaves out a draft %s", (_case, one) => {
     expect(toDecide([one], decides)).toEqual([]);
+  });
+});
+
+describe("the drafts named in another's details", () => {
+  const list = entry("list l1", {
+    kind: "list",
+    name: "Skills",
+    place: { kind: "list", keyNumber: 7 },
+    selects: { ...noDrafts(), lists: ["l1"] },
+  });
+  const namesOf = (drafts: DraftSelection) => [
+    ...drafts.lists.map((id) => `the list ${id}`),
+    ...drafts.orders.map((id) => `the new order for ${id}`),
+  ];
+
+  it("names each draft with a row as a decision does, after its record's key", () => {
+    expect(
+      namedDrafts({ ...noDrafts(), lists: ["l1"] }, [list], namesOf),
+    ).toEqual([{ name: "the list l1", key: { kind: "list", keyNumber: 7 } }]);
+  });
+
+  it("names only the part of a row's drafts the selection holds", () => {
+    const both = {
+      ...list,
+      selects: { ...noDrafts(), lists: ["l1"], orders: ["l1"] },
+    };
+    expect(
+      namedDrafts({ ...noDrafts(), orders: ["l1"] }, [both], namesOf),
+    ).toEqual([
+      { name: "the new order for l1", key: { kind: "list", keyNumber: 7 } },
+    ]);
+  });
+
+  it("names a draft with no row with no key", () => {
+    expect(
+      namedDrafts(
+        { ...noDrafts(), lists: ["l1"], orders: ["l2"] },
+        [list],
+        namesOf,
+      ),
+    ).toEqual([
+      { name: "the list l1", key: { kind: "list", keyNumber: 7 } },
+      { name: "the new order for l2", key: undefined },
+    ]);
+  });
+
+  it("gives no key to a draft of the planning settings", () => {
+    expect(
+      namedDrafts(
+        { ...noDrafts(), lists: ["l1"] },
+        [{ ...list, place: "capacity-settings" }],
+        namesOf,
+      )[0]?.key,
+    ).toBeUndefined();
   });
 });

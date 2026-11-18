@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Drafts page, with the server's responses simulated: a row for each draft, newest
-// first, naming its record, what it does and changes from the live values, its type, area, maker,
-// day and a rejection's reason; its tabs, To decide, Not published and All drafts; ticking drafts,
-// and approving or rejecting them after asking, with a reason for rejecting; ticking one's own
-// changes, with those linked to them, and publishing or discarding them; who may; what the page says
-// when there are none or they cannot be loaded; and drafts of feature teams.
+// Tests for the Drafts page against a simulated server.
 
 import { startingPlanningSettings } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
@@ -2777,7 +2772,9 @@ describe("publishing and discarding one's own changes on the Drafts page", () =>
 
     // When the linked choice is followed
     await userEvent.click(
-      within(linked).getByRole("button", { name: "Laptop in Equipment" }),
+      within(linked).getByRole("button", {
+        name: /^#LIST-\d+ Laptop in Equipment$/u,
+      }),
     );
 
     // Then the choice's details open, linked back to the list
@@ -2785,7 +2782,7 @@ describe("publishing and discarding one's own changes on the Drafts page", () =>
       expect(
         within(screen.getByRole("region", { name: "Linked to" })).getByRole(
           "button",
-          { name: "Equipment" },
+          { name: /^#LIST-\d+ Equipment$/u },
         ),
       ).toBeDefined();
     });

@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A draft's details beside the Drafts table, as every record's are: its record, after the draft's
-// dot and any lock, with the facts that hold it; its columns, as the table shows them; the other
-// drafts approved with it, or, once rejected, those waiting on it; what can be done with it, or why
-// nothing can yet; and a link to its record on its own page.
+// A draft's details beside the Drafts table.
 
 import { Button, Group, Stack, Text } from "@mantine/core";
 import { useEffect } from "react";
 import { heldWords, unpublishedWords, waitingWords } from "./draft-details.tsx";
 import type { ReactNode } from "react";
+import type { NamedDraft } from "./draft-entries.ts";
+import { placeKey } from "./draft-places.ts";
 import { areaWords, type DraftRow } from "./drafts-table.tsx";
 import { focusSoon } from "./focus.ts";
 import { PhraseList } from "./phrase.tsx";
@@ -19,6 +18,7 @@ import {
   RecordSection,
   Row,
 } from "./record-details.tsx";
+import { KeyedName, RecordKey } from "./record-key.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import { DraftedItem, FactBox } from "./status-mark.tsx";
 
@@ -41,6 +41,9 @@ const linkedColumn = (count: number) => ({
   key: "linked",
   label: count === 1 ? "Change" : "Changes",
 });
+
+// One of one's own changes linked to another, which opens its own details.
+export type LinkedDraft = Omit<RecordLinkItem, "name"> & NamedDraft;
 
 // What may be done with a draft from its details: deciding it, for a role that may now.
 export interface DraftActions {
@@ -86,9 +89,9 @@ export function DraftPanel({
   columns: readonly Column<DraftRow, never>[];
   // The other drafts deciding this one would take with it, named: those approved with it while it
   // waits, or those waiting on it once rejected.
-  related: readonly string[];
+  related: readonly NamedDraft[];
   // For one's own unpublished change, the others of one's own it is published and discarded with.
-  linked?: readonly (RecordLinkItem & { name: string })[];
+  linked?: readonly LinkedDraft[];
   // Present while this role may decide the draft now.
   actions: DraftActions | undefined;
   // Whether this role decides drafts of the draft's kind.
@@ -101,6 +104,7 @@ export function DraftPanel({
   onClose: () => void;
 }) {
   const { entry } = row;
+  const key = placeKey(entry.place);
   // Opening a draft puts focus on its record's name in the panel.
   useEffect(() => {
     focusSoon(titleId);
@@ -127,6 +131,7 @@ export function DraftPanel({
           ))}
         </span>
       }
+      {...(key === undefined ? {} : { subtitle: <RecordKey record={key} /> })}
       narrow={narrow}
       close={{ label: "Close details", onClose }}
     >
@@ -156,11 +161,13 @@ export function DraftPanel({
             >
               <Row
                 column={relatedColumn(related.length)}
-                value={related.join(", ")}
+                value={related.map(({ name }) => name).join(", ")}
               >
                 <Stack gap={0}>
-                  {related.map((name) => (
-                    <Text key={name}>{name}</Text>
+                  {related.map(({ name, key: relatedKey }) => (
+                    <Text key={name}>
+                      <KeyedName record={relatedKey} name={name} />
+                    </Text>
                   ))}
                 </Stack>
               </Row>
@@ -172,7 +179,13 @@ export function DraftPanel({
                 column={linkedColumn(linked.length)}
                 value={linked.map(({ name }) => name).join(", ")}
               >
-                <RecordLinkList links={linked} />
+                <RecordLinkList
+                  links={linked.map(({ id, name, key: linkedKey, onShow }) => ({
+                    id,
+                    name: <KeyedName record={linkedKey} name={name} />,
+                    onShow,
+                  }))}
+                />
               </Row>
             </RecordSection>
           )}
