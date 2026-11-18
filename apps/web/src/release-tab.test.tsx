@@ -1298,7 +1298,9 @@ describe("a release's key", () => {
     ).getAllByRole("button", { name: "Actions for Fictional One" });
 
     await user.click(more as HTMLElement);
-    await user.click(await screen.findByRole("menuitem", { name: "Copy link" }));
+    await user.click(
+      await screen.findByRole("menuitem", { name: "Copy link" }),
+    );
 
     expect(await navigator.clipboard.readText()).toBe(
       `${window.location.origin}/go/release/1`,
