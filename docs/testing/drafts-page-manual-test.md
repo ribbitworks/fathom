@@ -11,7 +11,7 @@ last_updated: "2026-11-17"
 
 ## Scope
 
-Verifies the Drafts page: its table of drafts, its three tabs and who sees each, ticking rows and the actions they bring to the page's heading, approving drafts from there, a draft's details, and publishing and discarding chosen changes with the changes they must go with. [Drafts](drafts-manual-test.md) verifies drafts on the People and Lists pages and the top bar.
+Verifies the Drafts page: its table of drafts, its three tabs and who sees each, ticking rows and the actions they bring to the page's heading, approving drafts from there, a draft's details, and publishing and discarding chosen changes with the changes they must go with. [Drafts](drafts-manual-test.md) verifies drafts on the People and Lists pages, and [Unpublished Changes](unpublished-changes-manual-test.md) publishing all changes or discarding them all from the top bar.
 
 ## Test Environment
 
