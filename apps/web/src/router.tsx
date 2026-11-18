@@ -35,6 +35,7 @@ import {
   cyclesViewChoices,
   releasesViewChoices,
   shownChoiceSchema,
+  draftsTabSchema,
 } from "@fathom/shared";
 import { Anchor } from "@mantine/core";
 import {
@@ -58,7 +59,6 @@ import { ChangeHistoryPage } from "./change-history-page.tsx";
 import { draftsSeen } from "./draft-entries.ts";
 import { shownPlace } from "./draft-places.ts";
 import { DraftsPage } from "./drafts-page.tsx";
-import { draftsTabSchema } from "./drafts-table.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
 import { firstPage, Layout } from "./layout.tsx";

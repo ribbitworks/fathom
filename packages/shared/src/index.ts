@@ -526,6 +526,8 @@ export {
   planModeSchema,
   sharesViews,
   cyclesViewChoices,
+  type DraftsTab,
+  draftsTabSchema,
   releasesViewChoices,
   shownChoiceSchema,
   viewChoiceSchemas,

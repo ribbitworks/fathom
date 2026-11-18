@@ -11,7 +11,13 @@
 // Not published, the reader ticks their own changes and publishes or discards them; ticking one
 // ticks the changes it must go with.
 
-import { allOf, type Asking, draftKeysOf } from "@fathom/shared";
+import {
+  allOf,
+  type Asking,
+  draftKeysOf,
+  type DraftsTab,
+  draftsTabSchema,
+} from "@fathom/shared";
 import { Button, Loader, Stack, Tabs, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
@@ -29,10 +35,8 @@ import {
 import {
   draftColumnOrder,
   draftColumns,
-  type DraftsTab,
   draftsTabNames,
   draftsTabOf,
-  draftsTabSchema,
   isOnTab,
   tabsFor,
   viewOnTab,

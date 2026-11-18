@@ -12,8 +12,9 @@ import {
   approvePermissions,
   capitalized,
   type DraftKind,
+  type DraftsTab,
+  draftsTabSchema,
 } from "@fathom/shared";
-import { z } from "zod";
 import { joined, noDrafts } from "./drafts.ts";
 import type { Entry } from "./draft-entries.ts";
 import { PhraseList, phraseText } from "./phrase.tsx";
@@ -227,15 +228,6 @@ export const draftColumnOrder = draftColumns([]).map(({ key }) => key);
 
 const groupedBy = ["change", "type", "area", "madeBy", "state"];
 
-// The page's tabs, kept in its view as a choice of its own: the drafts the reader may decide now,
-// shown only to a role that approves drafts; the reader's own changes, not yet published; and every
-// published draft, to see what is waiting or rejected.
-export const draftsTabs = ["decide", "unpublished", "all"] as const;
-
-export const draftsTabSchema = z.enum(draftsTabs);
-
-export type DraftsTab = z.infer<typeof draftsTabSchema>;
-
 export const draftsTabNames: Record<DraftsTab, string> = {
   decide: "To decide",
   unpublished: "Not published",
@@ -248,7 +240,7 @@ export const tabsFor = (
   approves: readonly DraftKind[],
   makesDrafts: boolean,
 ): DraftsTab[] =>
-  draftsTabs.filter(
+  draftsTabSchema.options.filter(
     (tab) =>
       (tab !== "decide" || approves.length > 0) &&
       (tab !== "unpublished" || makesDrafts),

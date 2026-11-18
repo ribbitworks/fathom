@@ -1075,19 +1075,21 @@ describe("views of every table", () => {
     ).toEqual({ error: "Choose only what this page offers" });
   });
 
-  it("keep Drafts' tab and showing only the drafts its reader may decide, refusing any other choice", async () => {
+  it("keep each of Drafts' tabs, reading each back, and refuse any other choice", async () => {
     const { cookie } = await test.signedIn("engineering-director");
     const drafts = onTable("drafts");
-    for (const choices of [{ decide: "mine" }, { tab: "mine" }]) {
+    for (const tab of ["decide", "unpublished", "all"]) {
       const response = await drafts.save(cookie, unique("Drafts"), {
-        choices,
+        choices: { tab },
       });
-      expect(response.statusCode).toBe(201);
-      expect(response.json<Saved>().view.definition).toEqual({ choices });
+      expect(response.statusCode, tab).toBe(201);
+      const { view } = response.json<Saved>();
+      expect(view.definition).toEqual({ choices: { tab } });
+      expect(await drafts.list(cookie)).toContainEqual(view);
     }
-    for (const choices of [{ decide: "theirs" }, { tab: "theirs" }]) {
+    for (const choices of [{ decide: "mine" }, { tab: "mine" }]) {
       expect(
-        (await drafts.save(cookie, unique("Theirs"), { choices })).json(),
+        (await drafts.save(cookie, unique("Old"), { choices })).json(),
       ).toEqual({ error: "Choose only what this page offers" });
     }
   });

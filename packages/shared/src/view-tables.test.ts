@@ -65,11 +65,21 @@ describe("the Drafts page's choices", () => {
   const fits = (choices: object) =>
     viewChoiceSchemas.drafts.safeParse(choices).success;
 
-  it("keeps My changes and Mine to decide, refusing anything else", () => {
-    expect(fits({ decide: "mine", tab: "mine" })).toBe(true);
+  it.each(["decide", "unpublished", "all"])("keeps the %s tab", (tab) => {
+    expect(fits({ tab })).toBe(true);
+  });
+
+  it("keeps no tab, for the reader's first", () => {
     expect(fits({})).toBe(true);
-    expect(fits({ tab: "theirs" })).toBe(false);
-    expect(fits({ hide: ["status"] })).toBe(false);
+  });
+
+  it.each([
+    ["a tab the page doesn't have", { tab: "theirs" }],
+    ["the tab's old name for one's own changes", { tab: "mine" }],
+    ["the old choice of drafts to decide", { decide: "mine" }],
+    ["another page's choice", { hide: ["status"] }],
+  ])("refuses %s", (_, choices) => {
+    expect(fits(choices)).toBe(false);
   });
 });
 

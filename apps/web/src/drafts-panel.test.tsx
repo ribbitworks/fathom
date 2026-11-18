@@ -4,6 +4,7 @@
 // the changes of one's own linked to it, deciding it, why it can't be decided yet, and the link to
 // its record's own page.
 
+import type { DraftsTab } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -12,7 +13,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Entry } from "./draft-entries.ts";
 import { noDrafts } from "./drafts.ts";
 import { DraftPanel, type DraftActions } from "./drafts-panel.tsx";
-import { draftColumns, draftRows, type DraftsTab } from "./drafts-table.tsx";
+import { draftColumns, draftRows } from "./drafts-table.tsx";
 import type { RecordLinkItem } from "./record-details.tsx";
 import { testTheme } from "./test-support.tsx";
 

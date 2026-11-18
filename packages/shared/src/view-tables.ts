@@ -71,6 +71,13 @@ export const cyclesViewChoices = z.strictObject({
   later: shownChoiceSchema.optional(),
 });
 
+// The Drafts page's tabs, kept in its view as a choice of its own: the drafts the reader may decide
+// now, shown only to a role that approves drafts; the reader's own changes, not yet published; and
+// every published draft, to see what is waiting or rejected.
+export const draftsTabSchema = z.enum(["decide", "unpublished", "all"]);
+
+export type DraftsTab = z.infer<typeof draftsTabSchema>;
+
 // Each table's choices, which a request must fit as a whole. A table whose page keeps no choices in
 // its view takes none.
 export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
@@ -100,12 +107,8 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
     team: z.uuid().optional(),
   }),
   accounts: noChoices,
-  drafts: z.strictObject({
-    // Only the drafts the reader may decide now.
-    decide: z.literal("mine").optional(),
-    // The reader's own changes, not yet published, in place of those for approval.
-    tab: z.literal("mine").optional(),
-  }),
+  // Any tab may be named: a shared view opens on the reader's first tab when their role lacks it.
+  drafts: z.strictObject({ tab: draftsTabSchema.optional() }),
 };
 
 // The permission that shares a table's views, and changes or deletes others' shared ones. Nobody who
