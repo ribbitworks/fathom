@@ -74,7 +74,7 @@ export function HeadingTabs<Tab extends string>({
 }: {
   id: string;
   label: string;
-  tabs: readonly { value: Tab; label: string }[];
+  tabs: readonly { value: Tab; label: ReactNode }[];
   tab: Tab;
   onTab: (tab: Tab) => void;
 }) {

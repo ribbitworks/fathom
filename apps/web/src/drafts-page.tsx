@@ -16,9 +16,8 @@ import {
   type Asking,
   draftKeysOf,
   type DraftsTab,
-  draftsTabSchema,
 } from "@fathom/shared";
-import { Button, Loader, Stack, Tabs, Text } from "@mantine/core";
+import { Button, Loader, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { DecisionModal, drafts } from "./decision-dialog.tsx";
@@ -47,7 +46,7 @@ import {
 } from "./drafts-table.tsx";
 import { LoadProblem } from "./load-problem.tsx";
 import { count } from "./numbers.ts";
-import { PageHeader } from "./page-header.tsx";
+import { HeadingTabPanel, HeadingTabs, PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import {
   focusRecordCell,
@@ -422,28 +421,13 @@ export function DraftsPage({
         title="Drafts"
         action={actions}
         beside={
-          <Tabs
+          <HeadingTabs
             id={tabsId}
-            value={tab}
-            classNames={{
-              list: classes.headingTabs,
-              tab: classes.headingTab,
-            }}
-            onChange={(next) => {
-              setTicked(new Set());
-              onView(viewOnTab(view, draftsTabSchema.parse(next), tabs));
-            }}
-          >
-            <Tabs.List aria-label="Drafts shown">
-              {tabs.map((one) => (
-                <Tabs.Tab
-                  key={one}
-                  value={one}
-                  // Only the chosen tab's table is drawn, so only it has a panel to point at.
-                  aria-controls={
-                    one === tab ? `${tabsId}-panel-${one}` : undefined
-                  }
-                >
+            label="Drafts shown"
+            tabs={tabs.map((one) => ({
+              value: one,
+              label: (
+                <>
                   {/* The tab is always one of the fixed tabs. */}
                   {/* eslint-disable-next-line security/detect-object-injection */}
                   {draftsTabNames[one]}{" "}
@@ -452,22 +436,20 @@ export function DraftsPage({
                       {counts.get(one)}
                     </Text>
                   )}
-                </Tabs.Tab>
-              ))}
-            </Tabs.List>
-          </Tabs>
+                </>
+              ),
+            }))}
+            tab={tab}
+            onTab={(next) => {
+              setTicked(new Set());
+              onView(viewOnTab(view, next, tabs));
+            }}
+          />
         }
       />
-      {/* Named by its tab, whose id Mantine makes from the tabs' id. */}
-      <div
-        key={tab}
-        role="tabpanel"
-        id={`${tabsId}-panel-${tab}`}
-        aria-labelledby={`${tabsId}-tab-${tab}`}
-        className={classes.tabPanel}
-      >
+      <HeadingTabPanel key={tab} id={tabsId} tab={tab}>
         {content}
-      </div>
+      </HeadingTabPanel>
       {views.dialogs}
       {discarding !== undefined && (
         <DiscardChangesModal
