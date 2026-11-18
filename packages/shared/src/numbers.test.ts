@@ -11,6 +11,9 @@ import {
   typedNumber,
 } from "./numbers.ts";
 
+const longRun = 200_000;
+const quickAnswerMilliseconds = 1000;
+
 describe("roundedUpTo", () => {
   it("rounds up to the places given", () => {
     expect(roundedUpTo(2 / 3, 2)).toBe(0.67);
@@ -33,6 +36,7 @@ describe("typedNumber", () => {
     ["1234.5", 1234.5],
     [" 7 ", 7],
     [".5", 0.5],
+    ["-.5", -0.5],
     ["5.", 5],
     ["0.000001", 0.000001],
     ["000123.4500", 123.45],
@@ -47,6 +51,7 @@ describe("typedNumber", () => {
     ["a word", "ten"],
     ["a sign alone", "-"],
     ["a point alone", "."],
+    ["a sign and a point", "-."],
     ["a comma between thousands", "1,234"],
     ["a decimal comma", "1,5"],
     ["a space between thousands", "1 234"],
@@ -56,9 +61,28 @@ describe("typedNumber", () => {
     ["infinity", "Infinity"],
     ["sixteen digits", "1234567890123456"],
     ["seven decimal places", "0.1234567"],
+    ["a point before the sign", ".-5"],
+    ["a sign after the digits", "5-"],
+    ["a second point after a trailing one", "5.."],
   ])("refuses %s", (_, text) => {
     expect(typedNumber(text)).toBeUndefined();
   });
+
+  it(
+    "refuses a long run of digits ending in a letter at once",
+    { timeout: quickAnswerMilliseconds },
+    () => {
+      expect(typedNumber(`${"1".repeat(longRun)}x`)).toBeUndefined();
+    },
+  );
+
+  it(
+    "refuses a long fraction of zeros ending in a digit at once",
+    { timeout: quickAnswerMilliseconds },
+    () => {
+      expect(typedNumber(`0.${"0".repeat(longRun)}1`)).toBeUndefined();
+    },
+  );
 });
 
 describe("numberProblem", () => {
