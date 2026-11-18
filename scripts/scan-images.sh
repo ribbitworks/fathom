@@ -11,7 +11,7 @@
 # Usage: pnpm scan:images
 #
 # Settings:
-#   FATHOM_REGISTRY  where releases are published; ghcr.io/jlarue26 unless set
+#   FATHOM_REGISTRY  where releases are published; ghcr.io/ribbitworks unless set
 # Sign in to the registry first if it needs it, such as with 'docker login ghcr.io'. Needs git,
 # Node.js and a container runtime with Docker Compose.
 
@@ -39,7 +39,7 @@ newest_release_tag() {
 # Adds the images release $1 published to images.list in the folder $2, pulled for linux/amd64, or
 # what could not be listed or pulled, which counts as not scanned.
 pull_release_images() {
-  local tag="$1" folder="$2" registry="${FATHOM_REGISTRY:-ghcr.io/jlarue26}" image images
+  local tag="$1" folder="$2" registry="${FATHOM_REGISTRY:-ghcr.io/ribbitworks}" image images
   local list="$folder/images.list" release="$folder/release"
   mkdir -p "$release/deploy"
   if ! git show "$tag:deploy/compose.yaml" >"$release/deploy/compose.yaml" ||

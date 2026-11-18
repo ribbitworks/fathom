@@ -8,11 +8,11 @@
 # tag, each labelled with its source, licence, version and commit, and dated by the commit rather
 # than the build. Scans each image as the security report does, reusing an earlier scan of an image
 # that has not changed, failing if a fix is overdue or has no known release date, then pushes each
-# as <registry>/<name>:<version>, such as ghcr.io/jlarue26/fathom-app:0.1.0. --dry-run does
+# as <registry>/<name>:<version>, such as ghcr.io/ribbitworks/fathom-app:0.1.0. --dry-run does
 # everything but push, and prints what it would.
 #
 # Settings:
-#   FATHOM_REGISTRY    where the images go; ghcr.io/jlarue26 unless set
+#   FATHOM_REGISTRY    where the images go; ghcr.io/ribbitworks unless set
 #   FATHOM_SOURCE_URL  the source code's web address the images name; the origin remote's unless set
 # Sign in to the registry first, such as with 'docker login ghcr.io'. Needs git, Node.js and a
 # container runtime with Docker Compose.
@@ -76,7 +76,7 @@ main() {
     fail "The source code has no web address; set FATHOM_SOURCE_URL to it"
   require_container_runtime
 
-  local registry="${FATHOM_REGISTRY:-ghcr.io/jlarue26}"
+  local registry="${FATHOM_REGISTRY:-ghcr.io/ribbitworks}"
   local version="${tag#v}"
 
   mkdir -p .tmp && chmod 700 .tmp

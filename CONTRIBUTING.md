@@ -4,13 +4,13 @@ Thank you for your interest in Fathom. It is in early development, and it isn't 
 
 ## Pull Requests
 
-Pull requests from outside the project are closed without review. This isn't a judgement of the work: while Fathom's design is still settling, the maintainer keeps every change on one path, from design to review, as the [Agent Workflow](docs/standards/shared/agent-workflow.md) describes. [How Fathom Is Built](docs/how-fathom-is-built.md) explains that path.
+Pull requests from outside the project are closed without review. This isn't a judgment of the work: while Fathom's design is still settling, the maintainer keeps every change on one path, from design to review, as the [Agent Workflow](docs/standards/agent-workflow.md) describes. [How Fathom Is Built](docs/how-fathom-is-built.md) explains that path.
 
 ## Issues and Questions
 
-Issues and questions come from people the maintainer invites into the `ribbitworks` organization on GitHub, who can file and sort issues there. There is no way to ask to be invited yet. Issues from people who weren't invited may be closed without a reply.
+Issues and questions come from people the maintainer invites to the repository on GitHub. There is no way to ask to be invited yet. Issues from people who weren't invited may be closed without a reply.
 
-Invited people file issues through the forms on the [New issue](https://github.com/jlarue26/fathom/issues/new/choose) page, as [Issues](docs/issues.md) describes.
+Invited people file issues through the forms on the [New issue](https://github.com/ribbitworks/fathom/issues/new/choose) page, as [Issues](docs/standards/issues.md) describes.
 
 ## Security
 
