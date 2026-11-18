@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# How GitHub groups a release's generated notes, which draft-release.yml asks for: dependency
+# updates, which Renovate labels, apart from every other change.
+
+changelog:
+  categories:
+    - title: Changes
+      labels: ["*"]
+      exclude:
+        labels: ["area: dependencies"]
+    - title: Dependency updates
+      labels: ["area: dependencies"]

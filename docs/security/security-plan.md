@@ -74,7 +74,8 @@ flowchart LR
 - **The schema:** The application's database role can only read and write data, and a separate role changes the schema.
 - **Record keys:** The database numbers each record itself, as it's added or drafted, and the application's role can only read key numbers, so a key is never changed or given again.
 - **Undoing:** Only the user who made a change can undo it, and not once anything it would change has changed again.
-- **Dependencies:** Packages are installed from the lockfile exactly, and base images are pinned by digest and GitHub Actions by commit. Image builds also install the operating system's security fixes released by `FATHOM_SECURITY_FIXES_DATE`. Accepted: release images aren't signed and come with no list of their components.
+- **Dependencies:** Packages are installed from the lockfile exactly, and base images are pinned by digest and GitHub Actions by commit. Image builds also install the operating system's security fixes released by `FATHOM_SECURITY_FIXES_DATE`. Renovate, as a GitHub App, may only open pull requests on branches of its own, which are reviewed and merged like any change. Accepted: release images aren't signed and come with no list of their components.
+- **Workflows:** The Check workflow runs every pull request's code, including a fork's, with a read-only token and no secrets, on the `pull_request` event, never `pull_request_target`. Each job is given the least it needs, and values a person can choose, such as a tag's name, reach a command only as quoted settings. Only the maintainer may push or change release tags, as a tag ruleset on the repository sets out, since a published release runs its workflow from its tag.
 
 ### Repudiation
 
@@ -115,9 +116,9 @@ flowchart LR
 
 - **The security report:** `pnpm security` scans dependencies (pnpm audit and Trivy), source code (Semgrep), secrets in the repository and its history (Gitleaks), Dockerfiles (Trivy), and the container images (Trivy) whenever anything they're built from has changed. `pnpm check` runs it, along with tests of the Compose settings.
 - **Code scanning on GitHub:** CodeQL's default setup scans the JavaScript and TypeScript code and the GitHub Actions workflows on pull requests, pushes to `main`, and weekly, as [ADR 0002](../adr/0002-libraries.md) sets out. Its results show on each pull request but don't block a merge. Semgrep stays in the security report.
-- **Releases:** Publishing a release scans its images first.
+- **Releases:** A release tag pushed is built and scanned before its release is drafted, and its images are scanned again when the release is published, before any is pushed to the registry. The Check workflow runs the security report on every pull request and every push to the default branch.
 - **Fix times:** Counted from when a fix is released: critical within 14 days, high within 60, and medium within 180. Low findings have no deadline.
-- **Failing:** The security report fails on an overdue fix, any other critical or high finding, or a scan that doesn't finish. A release isn't published while any fix in its images is overdue.
+- **Failing:** The security report fails on an overdue fix, any other critical or high finding, or a scan that doesn't finish. A release isn't drafted, and its images aren't published, while any fix in them is overdue.
 - **Exceptions:** An overdue finding that can't be fixed yet may be excepted, with a reason, an expiry date and the maintainer's approval, in `.trivyignore.yaml`.
 
 ## Source Code Assurance

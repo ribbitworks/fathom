@@ -130,7 +130,10 @@ Complete these steps, in order, for every change:
 1. **Full suite:** once the findings are fixed, run the full suite except UI
    tests with the project's test command, on the code to be committed, and fix
    all failures and warnings. A change to documentation only may skip this
-   step too.
+   step too. Where the project's continuous integration runs the full suite on
+   every pull request, as its standards say, that run is this step instead: the
+   commit and push come first, failures and warnings are fixed as later
+   commits, and the owner merges only once it passes.
 1. **Owner review:** summarize the changes and wait for the owner's explicit
    approval before committing.
 1. **Commit:** commit, following the branch and commit rules.

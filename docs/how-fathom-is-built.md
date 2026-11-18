@@ -45,9 +45,9 @@ flowchart TD
     Screens -- No --> Tests
     Check --> Tests["Targeted tests and linters"]
     Tests --> Review["Review by a separate agent"]
-    Review --> Full["Full check: linters, types, tests with coverage, security scans"]
-    Full --> Commit["The maintainer approves the commit"]
-    Commit --> Merge["The maintainer approves the merge"]
+    Review --> Commit["The maintainer approves the commit"]
+    Commit --> Full["Full check on GitHub: linters, types, tests with coverage, security scans"]
+    Full --> Merge["The maintainer approves the merge"]
 ```
 
 1. **Design:** Anything sizeable starts with a written design, checked against the real code. It lists every decision it needs, least certain first. The maintainer approves, changes or rejects each one, often from a mockup of the screen.
@@ -55,12 +55,13 @@ flowchart TD
 1. **The screen check:** The maintainer looks at every screen change, in a browser, before the tests and the review. Nothing goes further until the maintainer is satisfied with the screen.
 1. **Tests while working:** The tests that import the changed code, and the linters, run while the change is made.
 1. **A separate review:** Another agent, which did not write the change, reviews it against the [Code Review Standards](standards/code-review.md). It rates each focus area from 1 to 5, and the change is ready only when every area rates 5. A faster model may review changes to documents, scripts, on-screen wording and ordinary tests. Anything that touches security, and any change where the choice is in doubt, is reviewed with the full model, as [Code Review Standards § Review Process](standards/code-review.md#review-process) sets out. Every finding is fixed, or the maintainer agrees in writing to leave it.
-1. **The full check:** `pnpm check` runs before the pull request and before each later push to it, on the final code: the linters, type checks, the unit, integration, access control, security and script tests with coverage, and the security scans. A change that affects the containers also runs the container tests.
-1. **Approval and merge:** The maintainer approves each commit before it is made. Nothing is merged without the maintainer's word.
+1. **Approval:** The maintainer approves each commit before it is made and pushed.
+1. **The full check:** GitHub runs `pnpm check` on every push to a pull request and to `main`: the linters, type checks, the unit, integration, access control, security and script tests with coverage, and the security scans. A change to anything but documentation also runs the container tests.
+1. **Merge:** Nothing is merged until the full check passes, and never without the maintainer's word.
 
 Duplicated code isn't allowed: a new component, helper or rule first looks for one that already does the job, and the review searches for one too. Only the maintainer can approve an exception.
 
-Automated tests and scans run in each copy of the repository with `pnpm check` before the pull request opens, not yet on GitHub. The one exception is CodeQL's code scanning, which GitHub runs on each pull request. GitHub runs the daily scan of the container images, and publishes a release's images when the maintainer starts it.
+GitHub runs the full check on each pull request and on `main`, with CodeQL's code scanning beside it, the daily scan of the container images, and, when the maintainer publishes a release, the scan and publishing of its images.
 
 ## The Standards
 

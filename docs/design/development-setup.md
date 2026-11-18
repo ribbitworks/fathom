@@ -27,7 +27,8 @@ deploy/
   fathom.env.example      The application's settings
   docker/                 Container image definitions and database initialization
 scripts/                  Development, check, and release scripts
-.github/workflows/        The workflows that publish a release's images and scan images daily on GitHub
+.github/workflows/        The workflows that run the full check, draft a release for each tag, publish a release's images, and scan images daily on GitHub
+.github/release.yml       How a release's generated notes are grouped
 .github/ISSUE_TEMPLATE/   The forms for filing issues on GitHub, one for each kind
 docs/                     Documentation, with the Help pages in docs/help/, which the front end builds in
 LICENSES/                 Licence texts, as the REUSE specification requires
@@ -324,8 +325,9 @@ A release is made by hand, wherever the repository is hosted, as [ADR 0011](../a
 1. On an up-to-date, clean default branch, run `pnpm release`. It picks the version, adds the changelog on a `release/vX.Y.Z` branch, and pushes that branch.
 1. Open a pull request from that branch, and merge it.
 1. On the updated default branch, run `pnpm release:tag` to tag the merge.
-1. Push the tag with `git push origin vX.Y.Z`.
-1. Run `pnpm publish:images vX.Y.Z`, or the Publish release images workflow on GitHub.
+1. Push the tag with `git push origin vX.Y.Z`. On GitHub, the Draft release workflow builds and scans the tag's images, then makes a draft release for it, with notes listing the pull requests merged since the last release, dependency updates apart from other changes. A tag with a pre-release part, such as `v0.2.0-rc.1`, is drafted as a pre-release.
+1. Review the draft on GitHub's Releases page, edit its notes if you like, and publish it soon: the daily image scan reads the newest release tag, and fails while its images aren't published. Publishing runs the Publish release images workflow, which publishes the release's images.
+1. If a scan fails, the release isn't drafted or its images aren't published. Fix the cause, then run the Publish release images workflow by hand with the tag, or `pnpm publish:images vX.Y.Z` elsewhere. If the release can't go ahead, delete its draft, if any, and the tag, locally and with `git push origin --delete vX.Y.Z`.
 
 `pnpm release` and `pnpm release:tag` both take `--dry-run`.
 
@@ -342,7 +344,7 @@ A release is made by hand, wherever the repository is hosted, as [ADR 0011](../a
 
 - `FATHOM_REGISTRY` sets the registry and owner, `ghcr.io/ribbitworks` unless set.
 - Sign in to it first, such as with `docker login ghcr.io`. No registry password is kept in the repository.
-- On GitHub, the Publish release images workflow, run by hand from the Actions tab with the tag, does the same. It signs in with the workflow's own token, publishes to the repository owner's registry, and makes no tags or releases itself.
+- On GitHub, the Publish release images workflow does the same when a release is published, or when run by hand from the Actions tab with the tag. It uses the default branch's scripts and security exceptions, signs in with the workflow's own token, publishes to the repository owner's registry, and makes no tags or releases itself.
 
 ### What Each Image Says
 
