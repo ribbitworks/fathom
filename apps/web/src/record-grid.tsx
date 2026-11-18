@@ -267,7 +267,7 @@ export interface Column<
   // Set false for a column not worth breaking down by, such as one with a choice for each record.
   breaksDown?: boolean;
   // What a record's cell shows in place of its value in words, such as labels in a team's colours,
-  // in its Live row too, given the record as it is live.
+  // after its colour's square where it has one, in its Live row too, given the record as it is live.
   content?: (record: Rec) => ReactNode;
   // The colour of a record's value, such as its team's, drawn as the colour's square between a
   // draft's dot and the value's words, in its Live row too, given the record as it is live.
@@ -4184,22 +4184,20 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                         )
                                       : has &&
                                         (standIn === undefined ? (
-                                          row.record && column.content ? (
-                                            column.content(row.record)
-                                          ) : (
-                                            <ColouredName
-                                              colour={
-                                                row.record === undefined ||
-                                                isEmpty(value)
-                                                  ? null
-                                                  : (column.colour?.(
-                                                      row.record,
-                                                    ) ?? null)
-                                              }
-                                            >
-                                              {cellContent(column, value)}
-                                            </ColouredName>
-                                          )
+                                          <ColouredName
+                                            colour={
+                                              row.record === undefined ||
+                                              isEmpty(value)
+                                                ? null
+                                                : (column.colour?.(
+                                                    row.record,
+                                                  ) ?? null)
+                                            }
+                                          >
+                                            {row.record && column.content
+                                              ? column.content(row.record)
+                                              : cellContent(column, value)}
+                                          </ColouredName>
                                         ) : (
                                           <Text
                                             component="span"
@@ -4322,24 +4320,23 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                       {standIn === undefined ? (
                                         // Drawn only under a record whose draft changes it, which the
                                         // table gives a live record for.
-                                        (liveColumn(column).content?.(
-                                          liveRecord,
-                                        ) ?? (
-                                          <ColouredName
-                                            colour={
-                                              isEmpty(liveShown)
-                                                ? null
-                                                : (liveColumn(column).colour?.(
-                                                    liveRecord,
-                                                  ) ?? null)
-                                            }
-                                          >
-                                            {liveContent(
+                                        <ColouredName
+                                          colour={
+                                            isEmpty(liveShown)
+                                              ? null
+                                              : (liveColumn(column).colour?.(
+                                                  liveRecord,
+                                                ) ?? null)
+                                          }
+                                        >
+                                          {liveColumn(column).content?.(
+                                            liveRecord,
+                                          ) ??
+                                            liveContent(
                                               liveColumn(column),
                                               liveShown,
                                             )}
-                                          </ColouredName>
-                                        ))
+                                        </ColouredName>
                                       ) : (
                                         <Text
                                           component="span"
