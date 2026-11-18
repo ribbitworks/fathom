@@ -1,110 +1,114 @@
 # Fathom: Roles
 
-**Status:** Starting roles, with open points marked **proposal**
-**Last updated:** 2026-11-15
+**Last updated:** 2026-11-18
 
-The roles Fathom starts with, for controlling what each user can see, edit, and approve, built on the access decisions in the [Decisions Log](decisions.md). Roles are editable sets of permissions, as the Decisions Log records, decided by the maintainer on 2026-11-04, so these are a starting set: they can be edited and copied to make new roles, within the safeguards below, and each keeps what it grants today until it is changed. An account holds one or more roles, any roles, starting or made later, one of them its default, and acts as one of them at a time: what a user may do reads from the role they act as alone, never from their roles added up. Signing in acts as the role last chosen on that browser, or else the default, and a user switches role from their account's menu, as the [Decisions Log](decisions.md#people-and-privacy) records, decided by the maintainer on 2026-11-07. There is one starting role for each persona, granting what that persona's roles granted together when accounts held several building-block roles, decided by the maintainer on 2026-11-06. The maintainer has confirmed that Engineering Managers and the Executive see Personal data, that the Engineering Director plans, and the split between planning the plan and planning allocations. Items marked **proposal** are not yet agreed.
+What each role can see, change and approve. Roles are sets of permissions kept in Fathom, not fixed in its code, since fixed roles don't scale as features are added. Fathom starts with one role for each persona, which can be edited and copied to make new ones, within the [safeguards](#safeguards-for-administrators). The [Administration Pages](../design/pages/administration.md#roles) describe the Roles page.
 
 ## Starting Roles
 
 - **Team Member:** Sees the plan and people's General details.
-- **Product Manager:** Edits projects, proposals, features, milestones, releases, schedules and their cycles, products, customers, and estimates across the whole plan, approves or rejects drafts of the plan, releases, and schedules, and sees people's General details and configuration.
-- **Feature Lead:** Sees the plan and people's General details, edits features and estimates, and proposes feature teams.
-- **Project Manager:** Edits the plan, schedules included, sees people with their Personal and Confidential data and the hiring plan, and approves or rejects drafts of the data the role sees, including allocations and feature teams.
-- **Engineering Manager:** Edits the plan, schedules included, and allocations, sees people, with everyone's Personal and Confidential data, the hiring plan, and configuration, and proposes feature teams.
-- **Engineering Director:** Edits and approves the plan, schedules included, features, allocations, people, feature teams, the hiring plan, and configuration, sees all Personal and Confidential data and moves data between classes, and sees accounts, roles, settings, and the access history without changing them.
-- **Workforce Administrator:** Sees the plan, maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, schedules included, and sees all Personal and Confidential data and moves data between classes. Held by Engineering Operations Managers.
-- **Executive:** Sees the plan, people, with their Personal and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.
-- **Administrator:** Manages user accounts, roles, and system settings, and sees the access history, without access to the plan or people's data.
+- **Product Manager:** Edits and approves the plan, features, releases, schedules and estimates, and sees people's General details and configuration.
+- **Feature Lead:** Sees the plan and people's General details, edits features and estimates, and edits feature teams.
+- **Project Manager:** Edits the plan, sees people with their Personal and Confidential data and the hiring plan, and approves drafts of everything the role sees, allocations and feature teams included.
+- **Engineering Manager:** Edits the plan and allocations, sees people with their Personal and Confidential data, the hiring plan and configuration, and edits feature teams.
+- **Engineering Director:** Edits and approves everything but administration, sees all Personal and Confidential data, classifies data, and sees accounts, roles, settings and the access history without changing them.
+- **Workforce Administrator:** Held by Engineering Operations Managers. Sees the plan, maintains people, teams, reporting lines, feature teams, the hiring plan and configuration, sees all Personal and Confidential data, and classifies data. It stays apart from the Engineering Director so one person keeps the records and another approves them.
+- **Executive:** Sees everything the Engineering Director does, without changing anything.
+- **Administrator:** Manages accounts, roles and settings, and sees the access history, without access to the plan or people's data.
+
+Personas are defined in the [Product Brief](brief.md#users). A person with two personas is given the role that grants more, or a role made for them that grants what both do.
 
 ## What Each Role Can Do
 
 | Area | Team Member | Product Manager | Feature Lead | Project Manager | Engineering Manager | Engineering Director | Workforce Administrator | Executive | Administrator |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Plan: projects, proposals, milestones, and products and customers (**proposal**) | View | Edit | View | Edit | Edit | Edit | View | View | None |
-| Features and releases: features and their estimates, with Edit Features apart from Edit Plan, decided by the maintainer on 2026-11-07, and releases and the cycles they include, one area since the maintainer's 2026-11-11 permissions | View | Edit | Edit | Edit | Edit | Edit | View | View | None |
-| Allocations | View | View | None | View | Edit | Edit | View | View | None |
-| People, teams, reporting lines, and the org chart (General), with Edit also choosing the colour each team is drawn in on the org chart, for every team until accounts are linked to people; Team Members and Product Managers see people since the org chart became part of People, decided by the maintainer on 2026-11-11 | View | View | View | View | View | Edit | Edit | View | None |
-| Feature teams (General), changed as drafts: Edit adds, renames, and removes teams, changes their members and leads, from the days [Where feature teams are kept](decisions.md#workforce) allows, and chooses their colours | View | View | Edit | Approve | Edit | Edit and Approve | Edit | View | None |
-| Personal employee details | None | None | None | View | View | Edit | Edit | View | None |
-| Confidential data, seen by Project Managers and Engineering Managers since the maintainer's decision of 2026-11-13 | None | None | None | View | View | Edit | Edit | View | None |
-| Classify data: moving built-in details, lists, and columns between the classes the role sees, as the [Decisions Log](decisions.md#people-and-privacy) sets out under Data classes, decided by the maintainer on 2026-11-11 | None | None | None | None | None | Edit | Edit | None | None |
-| The hiring plan: every planned hire, with its target date, drafts, and history (decided by the maintainer on 2026-11-07), seen and changed only with its class too, Confidential unless the organization moves it, decided by the maintainer on 2026-11-13 | None | None | None | View | View | Edit | Edit | View | None |
-| Schedules, their cycles and cycle names, seen by everyone who sees features and releases, decided by the maintainer on 2026-11-09, and changed as drafts with Edit Plan or Edit Configuration, as [Releases](#releases) sets out, decided by the maintainer on 2026-11-15 | View | Edit | View | Edit | Edit | Edit | Edit | View | None |
-| Composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | View | Edit | Edit | View | None |
-| The planning settings, on Capacity: hours a day and working days, which everyone who sees the plan or features reads as the conversions between units of effort, and focus, buffer and ramp-up, changed as drafts approved with Approve Configuration, and seen by Product Managers and Engineering Managers too, decided by the maintainer on 2026-11-11 | None | View | None | View | View | Edit | Edit | View | None |
-| Lists of choices, and the columns added to People and Features (everyone with View Features and releases also sees the columns on Features and their values) | None | View lists | None | View lists, decided by the maintainer on 2026-11-01 | View lists | Edit | Edit | View lists | None |
-| Draft rows of the data the role sees, made by editing it | View | Edit | Edit | Edit | Edit | Edit | Edit | View (**proposal**: none) | None |
-| Approving drafts of the plan: projects, proposals, and the roadmap | None | Approve | None | Approve | None | Approve | None | None | None |
-| Approving drafts of allocations (decided by the maintainer on 2026-11-09) | None | None | None | Approve | None | Approve | None | None | None |
-| Approving drafts of features and releases, given to everyone who approved the plan or releases | None | Approve | None | Approve | None | Approve | None | None | None |
-| Approving drafts of schedules and cycle patterns, with Approve Plan or Approve Configuration, decided by the maintainer on 2026-11-15 | None | Approve | None | Approve | None | Approve | None | None | None |
-| Approving drafts of people, teams, and reporting lines | None | None | None | Approve | None | Approve | None | None | None |
-| Approving drafts of planned hires | None | None | None | Approve | None | Approve | None | None | None |
-| Approving drafts of lists of choices, of the columns added to People and Features, and of the planning settings | None | None | None | Approve | None | Approve | None | None | None |
-| Approving drafts they changed themselves, in the areas they approve, which otherwise need another approver (decided by the maintainer on 2026-11-07) | None | None | None | None | None | Approve | None | None | None |
-| Change history, for the data the role sees, seen with each area, decided by the maintainer on 2026-11-11 | View | View | View | View | View | View | View | View | None |
-| Saved views of the tables on the pages the role opens, decided by the maintainer on 2026-11-14 | Save personal views, and change their own | Save personal views, and change their own | Save personal views, and change their own | Save personal views, and change their own | Save personal views, and change their own | Save personal and shared views, share their own or stop sharing them, and change their own and any shared view, on every table but Accounts | Save personal and shared views, share their own or stop sharing them, and change their own and any shared view, on every table but Accounts | Save personal views, and change their own | Save personal and shared views, share their own or stop sharing them, and change their own and any shared view, on Accounts |
-| Administration: user accounts and the role each holds, roles and what each grants, system settings, and the access history | None | None | None | None | None | View | None | View | Edit |
+| Plan: projects, proposals, milestones and customers | View | Edit, Approve | View | Edit, Approve | Edit | Edit, Approve | View | View | None |
+| Features and releases, with estimates and the cycles each release includes | View | Edit, Approve | Edit | Edit, Approve | Edit | Edit, Approve | View | View | None |
+| Schedules and their cycles | View | Edit, Approve | View | Edit, Approve | Edit | Edit, Approve | Edit | View | None |
+| Allocations | View | View | None | View, Approve | Edit | Edit, Approve | View | View | None |
+| People, teams, reporting lines and the org chart | View | View | View | View, Approve | View | Edit, Approve | Edit | View | None |
+| Feature teams | View | View | Edit | View, Approve | Edit | Edit, Approve | Edit | View | None |
+| Hiring plan | None | None | None | View, Approve | View | Edit, Approve | Edit | View | None |
+| Configuration: lists, the columns added to People and Features, and the planning settings | None | View | None | View, Approve | View | Edit, Approve | Edit | View | None |
+| Personal details | None | None | None | View | View | Edit | Edit | View | None |
+| Confidential data | None | None | None | View | View | Edit | Edit | View | None |
+| Classify data | None | None | None | None | None | Yes | Yes | None | None |
+| Approve own drafts | None | None | None | None | None | Yes | None | None | None |
+| Administration: accounts, roles, settings and the access history | None | None | None | None | None | View | None | View | Edit |
 
-Of the starting roles, only the Engineering Director is to hold Export, in every area, as [A permission to export](decisions.md#people-and-privacy) sets out. Decided by the maintainer on 2026-11-12, and not built yet.
+- **Edit includes View:** A role that may edit an area or class also views it, so nobody changes what they can't see.
+- **Drafts and history:** A role sees the drafts and the change history of the data it sees. A project's or proposal's scope history comes with seeing the plan.
+- **Plan and features:** Those who see the plan see the names of approved feature teams, to give features to them, without their members or leads. Everyone who sees the plan or features reads the planning settings' hours a day and working days, as the conversions between units of effort.
+- **Choices:** A list's choices are seen by everyone who sees data drawn from it, without seeing the Lists page.
+- **Team colours:** Edit People chooses the colour each reporting team is drawn in, and Edit Feature teams each feature team's.
 
-Allocations, Feature assignments, and People and the Org chart on other dates also need View on Personal details, and People and the Org chart's reporting view on future dates, and grouping Feature assignments and Capacity's People by manager, View on Confidential data too, as [Data classes](decisions.md#people-and-privacy) sets out. A role without them doesn't have a page that would show nothing, such as Feature assignments, or a mode, such as Capacity's People, and isn't offered a view or grouping it can't see, as [A page without its data](../standards/ui-conventions.md#access) sets out; the Org chart still says why in place of other dates, while People leaves its date row out. The Roles page lists what each role misses, and why.
+## Permissions
 
-Approving is granted area by area, and rejecting with it, as [Approving by area](decisions.md#people-and-privacy) records. Seeing data comes only from viewing permissions, never from approving. A user can approve only drafts whose values their role lets them see, so a draft holding a Personal detail, such as an end date, needs an Approver whose role also sees Personal data, such as the Engineering Director, and drafts of People's columns, and the values in them, need an Approver whose role sees people. Project Managers, who see people with their Personal and Confidential data and the hiring plan, approve drafts of people's details, Personal details included, of People's columns, and of planned hires, decided by the maintainer on 2026-11-07 and 2026-11-11, and can approve feature teams too, which the maintainer accepted on 2026-10-31.
+- **An action on an area:** Each permission is View, Edit or Approve on an area, as the grid above shows. Administration and the two classes have View and Edit only; Classify data and Approve own drafts stand alone. Each feature adds its areas to the one list, so a role grows by a row, not a new role.
+- **Edit means drafting:** Edit makes drafts. The few changes that skip drafts are marked on their page.
+- **Splitting a permission:** When an upgrade splits a permission into finer ones, every role that held it gets all of them, so nobody's access changes.
 
-**Proposal:** Seeing drafts is a permission of its own, like seeing the change history, so the Executive sees only approved data, and perhaps the Team Member too, as the maintainer suggested on 2026-11-11. Still open: whether the change history then leaves out edits to drafts for those who may not see drafts, and whether those who may not see drafts see Live only's green dots on what a waiting draft would change, or nothing of drafts at all. Until it is agreed, the Executive sees drafts, as every role that sees the data does.
+## Accounts and the Acting Role
 
-The maintainer has decided that a role letting a user edit some data also lets them view it, so a Product Manager sees the plan and an Engineering Manager sees allocations without being granted to view them as well. Editing feature teams grants seeing them; those who see the plan also see the names of approved feature teams, to give features to them, without their members or leads. Every starting role but Administrator sees the plan, and every one but Administrator and Feature Lead holds View Allocations. Editing the plan also changes schedules and their cycles, as [Releases](#releases) sets out. Allocations, shown in Capacity's People mode, also need Personal data, as [Data classes](decisions.md#people-and-privacy) sets out, so Team Members don't have Capacity, and Product Managers see only its Settings mode. A project's and a proposal's scope history, read from the change history, comes with seeing the plan, with the rest of the change history for the areas the role sees.
+- **Several roles:** An account holds one or more roles, starting or made later, one of them its default.
+- **One role at a time:** A session acts as one role, and only that role's permissions apply; an account's roles never add up. A user's own drafts are those made under any of their roles, so switching never lets them approve their own.
+- **Choosing the role:** Signing in acts as the role last chosen on that browser, or else the default. A user switches role from their account's menu without signing in again.
+- **Naming the role:** Changes, drafts and approvals record the role they were made as, shown beside the name, such as "Feature Lead as Engineering Manager".
+- **Your own account:** Every user, whatever their role, changes their own name and password from their account's menu. Their email address and roles stay with whoever manages accounts, since the email address signs them in.
 
-Every starting role but Administrator sees people's General details, on People and the org chart, since the org chart became part of People, decided by the maintainer on 2026-11-11; Project Managers also see the hiring plan, decided by the maintainer on 2026-11-07. The choices of a list are seen by everyone who sees data drawn from it, such as People's columns, without seeing the Lists page.
+## Approving
 
-## Custom Fields and Tables
+- **By area:** Each area with drafts has its own Approve. Rejecting a draft needs the same permission as approving it.
+- **Seeing what a draft holds:** Approving never grants seeing. An Approver's role must see every detail a draft holds, so a draft with an end date needs a role that sees Personal data, and drafts of People's columns need one that sees people.
+- **Drafts that use other drafts:** Approving drafts that use drafts of other areas, which are approved with them, or rejecting drafts that others use, which are rejected with them, needs Approve on every area involved.
+- **Your own drafts:** Drafts need another Approver, unless the role holds Approve own drafts, one permission across every area, which does nothing without Approve on some area.
+- **Schedules and cycle patterns:** Edited with Edit Plan or Edit Configuration, and approved with Approve Plan or Approve Configuration, so either approver may decide them.
 
-Columns on Features are added and changed by the Product Manager and the Engineering Director, through a permission of their own, and no longer by the Workforce Administrator, nor by the Project Manager, Engineering Manager or Feature Lead, who edit features, as [Columns on Features](decisions.md#configuration) sets out. Decided by the maintainer on 2026-11-09, and not built yet: until it is, the table above holds.
+## Data Classes
 
-**Proposal:** The Workforce Administrator defines custom fields on people, teams, and planned hires, and any custom field or table that links to people or holds personal information. Roles that edit the plan define other custom fields on the plan, such as on projects, and custom tables for reference lists. A user can assign a field or table only to a tier their own role lets them see. This waits for the [Roadmap](roadmap.md)'s stage for custom fields and tables.
+The classes, and each built-in detail's default class, are set out in the [Domain Model](../design/domain-model.md#data-classes).
 
-## Releases
+- **Apart from pages:** A role views a class on every page it reaches, without needing People, such as employment dates on the Allocations grid.
+- **Pages that need a class:** A role without a page's classes doesn't get the page, mode or grouping, as [A page without its data](../standards/ui-conventions.md#access) sets out, and the Roles page lists what each role misses and why.
+  - **Personal:** Allocations, Feature assignments, and People and the Org chart on other dates need it, so Team Members, Product Managers and Feature Leads don't get them. Product Managers see only Capacity's Settings mode.
+  - **Confidential too:** the Org chart's reporting view on future dates, and grouping Feature assignments or Capacity's People by manager.
+- **Classify data:** Moves built-in details, lists and columns between classes, the hiring plan included. It is one permission across every class, and a move needs View on both the class left and the class entered.
+- **Lists and columns:** Making a list or column, or changing its name or description, needs Edit Configuration and sight of its class: View People for General, since General values are people's details, View Personal details for Personal, and View Confidential data for Confidential. New ones start General; giving one another class needs Classify data.
 
-Roles that edit features and releases, such as Project Manager, make releases and choose which cycles each includes. Roles that edit the plan, the Product, Project and Engineering Managers and the Engineering Director, also add, rename, retire, restore and end schedules, and change their cycle lengths and naming patterns, and the Workforce Administrator, through Edit Configuration, keeps doing so. Drafts of schedules and their cycles are approved with Approve Plan or Approve Configuration, so either approver may decide them. Decided by the maintainer on 2026-11-15. Changing one cycle's length also moves the releases and features on cycles that move, which a role that changes schedules may do without editing releases or features otherwise, as the [Decisions Log](decisions.md#planning) sets out.
+## Who Sees Which People
 
-## Access to Your Own Record and Your Reports
-
-**Proposal:** Each person record holds the employee's work email address. When it matches a user account's email address, Fathom suggests linking the two, and an Administrator confirms the link, so a mistyped or reused address never grants access by itself. A linked user automatically sees, without editing, their own record and the records of everyone who currently reports to them, directly or through other managers, including Personal details; planned reporting changes grant nothing until they take effect. Access to anyone else's data still comes from the user's role, so the Engineering Manager role could then be narrowed from seeing Personal details for everyone. To stop an Administrator linking themselves to someone else's record, nobody confirms a link to their own account, changing a linked account's email address removes its link, and every link made or removed is recorded in the access history. The work email address is new personal data, brought to HR before it is added.
+- **Who is listed:** People not started yet are hidden from roles that don't see Start date's class, so a start date isn't revealed early. People who have left are hidden from roles that don't see End date's class. Both are judged by the live dates while a draft waits, so a future end date shows nothing until it passes.
+- **New employees:** A person may be added before their start date. Roles that see Personal data see them marked as not yet started. Others keep seeing the placeholder of the planned hire they filled until the start date, even if it moves, and don't see a future starter who filled no hire at all. Until someone starts, those roles see none of their changes, and who fills a hire is named only to roles that see Personal data, since it tells of a reporting line to come.
+- **Changes of manager:** A change of manager is Personal in its draft and in the change history, since it names a past manager, so roles that see only General data see the new manager once the change is approved.
+- **Other dates:** Feature teams and reporting lines on other dates need Personal data. Future reporting lines need Confidential data too, since future-dated reorganizations are Confidential. Anyone who edits feature teams may change them from a later date. An earlier date needs Edit on the class of what it changes too, feature team dates or past managers, Personal unless moved.
+- **Positions:** A role that can't see the Positions list's class can't add people, since each needs one. Removing a person, or drafting a change to their position, needs the right to change their position.
+- **Not staffed:** Everyone who sees features sees whether one is [Not staffed](../design/domain-model.md#feature), though reading the allocations needs Personal data.
 
 ## Planned Hires in the Plan
 
-**Decided:** A planned hire appears as a placeholder, while the [Decisions Log](decisions.md#workforce) says it shows one. Everyone who sees people sees it as a row of the People table, and with its manager's team, showing only its name, ID, position, state, manager, Expected month, and its values for the other columns it shares with people, such as site and level, each at its column's visibility; its name, ID, manager, and Expected month are General, and its position and state take the visibility of the Positions and Hiring states lists, which start General, decided by the maintainer on 2026-11-05, replacing the state being Confidential, decided on 2026-11-03. Everyone who sees the org chart sees it there as a placeholder under its manager, as the [Decisions Log](decisions.md#workforce) sets out. Team Members see it in the plan by its position, ID, and Expected month, or without its position if they cannot see the Positions list's visibility, as they see people by name, without the People table's details. Its exact target date, drafts, and history are seen only by the roles that grant View Hiring plan and see the hiring plan's class, as the [table above](#what-each-role-can-do) shows and the [Decisions Log](decisions.md#people-and-privacy) sets out, decided by the maintainer on 2026-11-07, replacing their being seen with Confidential data. This lets those who allocate see and allocate planned hires without seeing the hiring plan's details, decided by the maintainer on 2026-11-03; as rows of People, named by position and ID, decided by the maintainer on 2026-11-04.
+- **Placeholders:** Everyone who sees people sees each planned hire not yet filled, and each filled one whose person hasn't started, as a placeholder: a row of People and a card under its manager on the Org chart. It shows its name, ID, position, state, manager, Expected month, and its values in the columns it shares with people, each at its column's class. Its name, ID, manager and Expected month are General; its position and state take the class of the Positions and Hiring states lists.
+- **Expected:** A month, never a day, so the placeholder doesn't leak the exact date. How it is worked out is in the [Domain Model](../design/domain-model.md#planned-hires).
+- **Counts:** Counts, such as reports per manager, follow what each reader sees, so each hire or new employee counts once.
+- **The hiring plan:** View Hiring plan shows every planned hire with its target date, drafts and history, and needs View People. Edit Hiring plan adds, changes and removes planned hires, and needs Edit People. Both also need the hiring plan's class, Confidential unless moved; View Confidential data alone doesn't show it.
+- **Target dates:** A hire's target date shows in the Start column to everyone who sees the hiring plan, since it is part of the plan, while people's start dates stay Personal.
+- **States:** Whoever may change planned hires makes every move between hiring states.
+
+## Releases
+
+- **Releases:** Roles that edit features and releases make releases and choose which cycles each includes.
+- **Schedules:** Roles with Edit Plan or Edit Configuration add, rename, retire, restore and end schedules, and change their cycle lengths and naming patterns.
+- **Moving with cycles:** Changing one cycle's length moves the releases and features on cycles that move, which a role that changes schedules may do without otherwise editing releases or features. Only a role that may change cycles discards those drafts.
+
+## Columns on Features and Saved Views
+
+- **Columns on Features:** Added and changed with Edit Configuration, and approved with Approve Configuration. Removing one also needs Edit Features, since it removes features' values. Everyone who sees the plan is sent the General lists these columns draw on, and sees drafts of the columns and who made them; drafts of the lists themselves are only for roles that see Lists or People.
+- **Saved views:** Everyone who opens a table's page saves personal views. Sharing a view needs Edit Configuration, or Edit Administration on Accounts. Only a shared view's maker, or a role that may share views on the table, updates, renames or deletes it, and stopping sharing is the maker's alone, while they may still share.
 
 ## Safeguards for Administrators
 
-**Decided:** Whoever may manage accounts, under any role that grants it, gives accounts their roles: any roles, their own account included. So any role that lets its holders manage accounts can reach every role's access, including editing roles and every tier of data; the access history, which marks each change to an account's roles as worth checking, is the safeguard. Managing accounts and editing roles are one permission, Edit Administration, since the 29 permissions. Those who may manage accounts manage their own account like any other: they can change its roles, default role, name, and email address, and deactivate it. Two guards remain: no change to an account or a role may leave no active account with Edit Administration, so no one can lock everyone out, and nobody resets their own password from the Accounts page, since changing one's own password needs the current one. A change granting Confidential data takes effect at once; a second person's confirmation is deferred in [issue #8](https://github.com/ribbitworks/fathom/issues/8).
-
-**Decided:** From the first release, a role's grants change only from within Fathom, never by an update, as **Migrations and roles' grants** in the [Decisions Log](decisions.md#platform-and-operations) sets out.
-
-**Decided:** The first Administrator is the Fathom Administrator account, which the install creates, holding the Administrator role, as the [Decisions Log](decisions.md#people-and-privacy) records, decided by the maintainer on 2026-11-06; no person's account is. A person later given the Administrator role can take over from it.
-
-**Proposal:** Every account created, change to an account's name, email address, or roles, sign-in and the role it starts as, switch of role, password reset, user's change of their own name or password, deactivation, and reactivation is recorded in the access history. Separation of duties applies to the Administrator role itself, which sees neither the plan nor people's data. While one person runs the Fathom Administrator account, these safeguards rely on the access history alone. Whoever may manage accounts can reach other roles' data by giving their own account another role and switching to it, or, with local passwords, by creating another account or resetting another user's password and signing in as them, and whoever may edit roles, by adding permissions to the role they hold; the access history is what reveals it.
-
-## Roles by Persona
-
-| Persona | Role |
-| --- | --- |
-| Product Manager | Product Manager |
-| Project Manager | Project Manager |
-| Engineering Manager | Engineering Manager |
-| Feature Lead | Feature Lead |
-| Engineering Director | Engineering Director |
-| Engineering Operations Manager | Workforce Administrator |
-| Executive | Executive |
-| Team Member | Team Member |
-| Fathom Administrator | Administrator |
-
-Personas are defined in the [Product Brief](brief.md#users). A person with two personas, such as a Feature Lead who is also an Engineering Manager, is given the role that grants more, or a role made for them that grants what both do.
-
-How Project Managers give input on whether teams are in place is still to be decided, and may add to their role.
-
-## First Stage
-
-The first stage of the [Roadmap](roadmap.md) uses every starting role: Team Member, Product Manager, Feature Lead, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive, and Administrator.
+- **Edit Administration:** Managing accounts and editing roles are one permission. Whoever holds it gives any account any roles, their own included, so they can reach every role's access; the [access history](../security/security-plan.md#repudiation) is the safeguard. They manage their own account like any other.
+- **Two guards:** No change to an account or role may leave no active account with Edit Administration, and nobody resets their own password from Accounts, since changing one's own password needs the current one.
+- **No data for Administrators:** The Administrator role sees neither the plan nor people's data.
+- **The first Administrator:** The install creates the Fathom Administrator account, holding the Administrator role, so no employee starts with full access. A person later given the Administrator role takes over from it, as [Securing Your Environment](../operations/securing-your-environment.md#accounts) sets out.
+- **Changes take effect at once:** Changes to roles and to an account's roles are not drafts, since Approvers decide data, not who sees what. A second person's confirmation of changes granting Confidential data is deferred in [issue #8](https://github.com/ribbitworks/fathom/issues/8).
+- **Updates never change grants:** An update never changes what an organization's roles grant. A changed starting role reaches an organization only when someone who may edit roles chooses Restore template and saves it, recorded like any change to a role. An update may add a new starting role, since it grants nothing until given to an account.

@@ -1,6 +1,6 @@
 # Fathom: Development Setup
 
-**Last updated:** 2026-11-17
+**Last updated:** 2026-11-18
 
 How the repository is organized, how to run Fathom on your machine, its fictional data, and how releases are made.
 
@@ -95,9 +95,14 @@ Fathom then opens at `https://localhost:8443` in a Windows browser, since WSL2 p
 
 ### Version and Build
 
-- `scripts/lib.sh` reads the release, the commit and the commit's date from git, for Help's About box.
+- **The version** is the nearest release tag in the commit's history, such as `v0.3.0`, so a release is made by tagging it and no file keeps a copy that could fall out of step.
+  - A release tag is a semantic version, with or without a pre-release such as `-rc.1`, and without build metadata. When several mark one commit, the highest is used.
+  - A build past a release names how many commits past it it is; a build before the first release is Unreleased.
+  - Every package keeps the version 0.0.0.
+- `scripts/lib.sh` reads the release, the commit and the commit's date from git, for Help's [About box](visual-design.md#layout).
+- The commit's date is its committer's clock, not the day of the build, so building one commit always gives the same image.
 - The image build can't see `.git`, so the scripts pass these in as build arguments.
-- When the files differ from the commit, it's shown with `-modified` after it, as the [Decisions Log](../product/decisions.md#platform-and-operations) sets out.
+- When the files differ from the commit, it's shown with `-modified` after it, since the commit alone wouldn't say what is running.
 - Development mode reads them when `pnpm dev` starts, so it keeps naming that commit as the code changes.
 - `FATHOM_VERSION`, `FATHOM_COMMIT` and `FATHOM_COMMIT_DATE` override them, such as when building from a copy without `.git`.
 
@@ -280,6 +285,7 @@ See [Releases](#releases) for the steps.
 - **What it holds:**
   - About 150 people, current and former, with positions, managers, and teams, some named and coloured.
   - Lists and People columns, including Personal and Confidential ones.
+  - A Kind column on Features, with New, Improvement and Fix.
   - Twelve planned hires, two of them filled.
   - Eight feature teams: Payments core, Search, Platform reliability, Mobile apps, Field tools, Data pipeline, Identity and Integrations.
   - Five customers, five projects with milestones, and proposals in every status.
@@ -317,7 +323,7 @@ Seeding adds these accounts:
 
 ## Releases
 
-A release is made by hand, wherever the repository is hosted, as [ADR 0011](../adr/0011-releases-and-images.md) sets out. Its version is its tag, as the [Decisions Log](../product/decisions.md#platform-and-operations) sets out, and Help's About box shows it once the release's images run.
+A release is made by hand, wherever the repository is hosted, as [ADR 0011](../adr/0011-releases-and-images.md) sets out. Its version is its tag, as [Version and Build](#version-and-build) sets out, and Help's About box shows it once the release's images run.
 
 ### Making a Release
 

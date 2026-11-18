@@ -1,9 +1,9 @@
 # Fathom: Use Cases
 
 **Status:** Draft
-**Last updated:** 2026-11-09
+**Last updated:** 2026-11-18
 
-The core scenarios Fathom must support in v1, derived from the [Product Brief](brief.md) and the [Decisions Log](decisions.md). Each use case names the main actor, their goal, and the outcome. Steps and detail are added when each feature is designed.
+The core scenarios Fathom must support in v1, derived from the [Product Brief](brief.md). Each use case names the main actor, their goal, and the outcome. Steps and detail are added when each feature is designed.
 
 ## Planning Work
 
@@ -17,9 +17,9 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 
 - **Actor:** Project Manager
 - **Goal:** Record a bid or customer request with the features it proposes, and keep its status up to date.
-- **Outcome:** Its features count toward the forecast by their own status. Once it is Lost or Withdrawn, Fathom warns about features that no project and no open proposal needs.
+- **Outcome:** The proposal, its status and the features it proposes are kept, each change approved.
 
-A proposal starts Open, and its status is one of the built-in Proposal statuses, whose choices can be changed, with no rules tied to them, so any status may follow any other, as the [Decisions Log](decisions.md#planning) sets out. Each change is a draft that needs [approval](decisions.md#planning). A project links to one or more proposals. No project is made from a proposal, and nothing marks a proposal Won.
+A proposal starts Open, and its status is one of the built-in Proposal statuses, whose choices can be changed, with no rules tied to them, so any status may follow any other, as the [Domain Model](../design/domain-model.md#proposal) sets out. Each change is a draft that needs [approval](../design/domain-model.md#drafts-and-approval). A project links to one or more proposals. No project is made from a proposal, and nothing marks a proposal Won.
 
 ```mermaid
 flowchart TD
@@ -27,7 +27,6 @@ flowchart TD
     draft -->|approved| status[New status: Open, Won, Lost, Withdrawn, or the organization's own]
     draft -->|rejected| rejected[Rejected, back with its makers]
     status -->|status changed| draft
-    status -->|Lost or Withdrawn| warn[Warning on features nothing else needs]
 ```
 
 ### Shape the Roadmap
@@ -35,6 +34,32 @@ flowchart TD
 - **Actor:** Product Manager
 - **Goal:** Add the features that may come, with rough estimates, prioritize them, and target them at cycles.
 - **Outcome:** Once approved, the roadmap shows what may come in each cycle, and whether it fits the capacity available.
+
+A feature usually starts with few details: a name, a short description, notes, a rough Needed by, its status, a rough size, and the customers likely to want it. Its feature team, target cycle, and finer estimate come later, in planning.
+
+### Follow a Feature's Path
+
+- **Actors:** Product Manager and Project Manager, with an Approver
+- **Goal:** Take a feature from an idea to a release, whichever comes first, the sale or the work.
+- **Outcome:** The feature is planned, staffed and shipped as one record.
+
+A feature comes in two ways, both normal: sold, then built, through a proposal and usually a project; or built, then sold, planned on its own and included in proposals later. Every change along the way is a draft, approved with Approve Plan.
+
+```mermaid
+flowchart TD
+    A["A Product Manager adds a feature,<br/>status starting as Possible"] --> B{"Which way in?"}
+    B -->|"sold, then built"| C["Proposals include it,<br/>each for its customers"]
+    B -->|"built, then sold"| E
+    C -->|"scope changes"| C2["Removed from a proposal:<br/>kept in the proposal's scope history"]
+    C -->|"won: a project links<br/>to the proposal"| D["The project needs it"]
+    D -->|"the project funds it"| E["Planning: feature team, target cycle,<br/>and effort; status Planned"]
+    E --> H["People allocated by month:<br/>In progress"]
+    E --> F{"Is the target cycle<br/>in a release?"}
+    F -->|"no"| N["Not released yet"]
+    F -->|"yes"| G["Shown under that release"]
+    H --> I["Done, or Cancelled"]
+    I -.->|"built, then sold"| C
+```
 
 ### Assign People to Work
 
@@ -58,7 +83,7 @@ flowchart TD
 
 - **Actors:** An editor, and a user with the approver role
 - **Goal:** Make sure changes are approved before they reach the live plan.
-- **Outcome:** Approved draft rows become part of the live plan, and rejected ones stay as drafts with the reason, as the [Decisions Log](decisions.md#planning) sets out.
+- **Outcome:** Approved draft rows become part of the live plan, and rejected ones stay as drafts with the reason, as the [Domain Model](../design/domain-model.md#drafts-and-approval) sets out.
 
 ## Planning the Workforce
 
@@ -68,24 +93,13 @@ flowchart TD
 - **Goal:** Keep employee details current, including teams, managers, and end dates.
 - **Outcome:** People can be planned for. People who leave are kept, with their end date, rather than deleted.
 
-Details are typed or pasted into People, changed in a person's details beside People or the org chart, or [imported](decisions.md#people-and-privacy) from a file:
-
-```mermaid
-flowchart TD
-    export[Save people as a CSV or TSV file] --> headers[Rename headers to People's column names]
-    headers --> choose[Choose the file on People]
-    choose --> check{Any problems?}
-    check -- Yes --> fix[Fix the rows and columns listed] --> choose
-    check -- No --> preview[See how many people are added and changed]
-    preview --> import[Import: unpublished drafts]
-    import --> publish[Publish] --> approve[An Approver approves or rejects]
-```
+Details are typed or pasted into People, or changed in a person's details beside People or the org chart.
 
 ### Plan a Hire
 
 - **Actor:** Engineering Operations Manager
 - **Goal:** Plan a role that needs to be filled, with its target date, and track it through the hiring states.
-- **Outcome:** The planned hire appears in the plan and can be allocated to work. When the role is filled, the new hire takes over its allocations.
+- **Outcome:** The planned hire appears in the plan and can be allocated to work. Once the role is filled, the person who fills it takes its place in People, as the [Domain Model](../design/domain-model.md#planned-hires) sets out.
 
 ### Maintain Feature Teams
 
@@ -123,7 +137,7 @@ flowchart TD
 
 - **Actors:** Users, according to their role
 - **Goal:** Share the plan or roadmap outside Fathom.
-- **Outcome:** The export contains only what the user's roles allow, in one of the formats in the Decisions Log.
+- **Outcome:** The export contains only what the user's roles allow, in one of the formats [Exporting](../standards/ui-conventions.md#exporting) sets out.
 
 ### View an Earlier Snapshot
 

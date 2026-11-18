@@ -131,7 +131,8 @@ They leave out what automated tests already prove, such as each validation messa
 
 Each kind of decision has one home, so nothing is decided twice or lost:
 
-- [Decisions Log](product/decisions.md): product decisions and their details
+- [Product documents](product/): what Fathom is for, its terms, scenarios and roles
+- [Domain Model](design/domain-model.md): the rules each record follows
 - [Architecture Decision Records](adr/): technical decisions, each with the options considered
 - [UI Conventions](standards/ui-conventions.md): what every screen shares
 - [Visual Design](design/visual-design.md): how screens look and behave
@@ -144,7 +145,7 @@ Each kind of decision has one home, so nothing is decided twice or lost:
 - **It does:** draft designs, write code, tests and documents, and review each other's work.
 - **It doesn't:** decide what Fathom is, approve its own work, or merge anything without the maintainer's word.
 
-Commits, pull requests, code and other documents carry no AI attribution. How AI is used is stated here instead, once, for the whole project, as the [Decisions Log](product/decisions.md#platform-and-operations) records under How AI is credited.
+Commits, pull requests, code and other documents carry no AI attribution. How AI is used is stated here instead, once, for the whole project.
 
 ## Open Source and the Tools
 

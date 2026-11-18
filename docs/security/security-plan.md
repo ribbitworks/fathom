@@ -59,8 +59,10 @@ flowchart LR
 
 ### Spoofing
 
-- **Signing in as someone else:** Passwords must meet the rules set in Settings and not be easy to guess, and are hashed with scrypt, Better Auth's default. Each client address may try to sign in 5 times a minute, and every refused sign-in gets the same answer. Accepted: there is no lockout for an account, and failed sign-ins aren't recorded.
+- **Signing in as someone else:** Passwords must meet the rules set in Settings, and are hashed with scrypt, Better Auth's default. Each client address may try to sign in 5 times a minute, and every refused sign-in gets the same answer. Accepted: there is no lockout for an account, and failed sign-ins aren't recorded.
 - **Stolen or forged sessions:** Session cookies are Secure, HttpOnly and SameSite, and requests are checked against cross-site forgery. Each sign-in gets a new session, and a session ends after 30 minutes without use. A password change, an administrator's reset or a deactivation ends the account's other sessions. Accepted: a session in use has no absolute end.
+- **Guessable passwords:** Every password a person sets is refused if it is common or easy to guess, whatever Settings say; this is not a setting. zxcvbn-ts checks it against common passwords, words, names, keyboard patterns, and the person's own name and email address, and one scoring below 3, on its scale of 0 to 4, is refused. Passwords Fathom generates aren't checked, since they're random; one from the default recipe scores at least 3.
+- **First passwords and resets:** Whoever creates an account, or resets another's password, never chooses it: Fathom generates one from the recipe in Settings and shows it once, so nobody knows another's working password. Until its user changes it, the server refuses every request but that change and signing out, and the new password must differ from the generated one.
 - **Resetting a password:** There is no self-service reset; only administrators reset passwords, and each reset is recorded in the access history.
 - **Posing as the proxy:** The application accepts connections, and the user addresses they name, only from the proxy.
 - **Taking a colleague's name:** A user renaming themselves can't take a name another account has, ignoring letter case, and some invisible characters are refused. The access history shows each account's email address beside its name.
@@ -68,7 +70,9 @@ flowchart LR
 ### Tampering
 
 - **Injection:** Database queries are parameterized, output is encoded, and input is checked by shared schemas, which drop fields they don't name. A content security policy allows scripts only from Fathom's own files.
-- **Stored content:** Web links accept only http and https addresses, and notes only an allowlist of formats, whose links lead only to such addresses or, by file name alone, to Help pages, which open inside Fathom.
+- **Stored content:** Web links accept only http and https addresses, never file or folder paths, and notes only an allowlist of formats, whose links lead only to such addresses or, by file name alone, to Help pages, which open inside Fathom.
+- **Misleading links:** Web link addresses holding sign-in details are refused, and so is link text holding control characters or marks that change which way text runs, since either could make a link seem to lead somewhere it doesn't. A link opens in a new tab without telling the linked site which Fathom page it came from.
+- **Formulas in exported files:** A value starting with =, +, -, @, a tab or a carriage return, other than a number, gets an apostrophe before it, so a spreadsheet shows it rather than running it as a formula, as [UI Conventions § Exporting](../standards/ui-conventions.md#exporting) sets out for the file.
 - **Framing and redirects:** Other sites can't frame Fathom's pages, and sign-in takes no address to send the user on to.
 - **The audit log:** The database refuses the application's role any change to or deletion of the access history. The change history can only be added to, apart from marking a change published. The migration role, used only for upgrades, owns both.
 - **The schema:** The application's database role can only read and write data, and a separate role changes the schema.
@@ -79,17 +83,33 @@ flowchart LR
 ### Repudiation
 
 - **Changes:** The change history records every change, with who made it, the role they acted as, and when.
-- **Access:** The access history records sign-ins, changes to accounts, roles and classifications, and exports of Personal or Confidential data. Views of Personal and Confidential data are recorded at most once a day for each user, without what was seen.
+- **Access:** The access history records:
+  - each sign-in and the role it starts as, and each switch of role;
+  - every change to accounts, roles and classifications, and users' changes to their own name or password, without the values;
+  - every change to Fathom's settings, with the setting before and after;
+  - views of Personal and Confidential data, at most once a day for each user, without what was seen, so frequent use doesn't bury other entries;
+  - changes to Personal and Confidential data, without the values;
+  - changes to the hiring plan without naming the planned hire, and views of planned hires' details at most once a day, apart from views of people's;
+  - exports holding Personal or Confidential data, naming the table and its classified columns.
+- **Telling accounts apart:** Entries are kept by account, not by name, and show each account's email address beside its name. Whose details changed is shown only to readers who may see people; others see that a change was made, and by whom.
+- **Worth checking:** Accounts created, changes to an account's roles, changes to a role, deactivations, password resets, users' changes to their own name, changes to the password settings and moves between classes are marked worth checking. Reactivating an account isn't, since deactivating it was, nor is an export, as viewing Personal details isn't.
 - **Requests:** Requests are logged by method, path and network address.
 
 ### Information Disclosure
 
 - **Before sign-in:** Only the front end's files, sign-in, sign-out, changing a password and the session checks are served without a signed-in account. The front end's script names Fathom's release, and holds every Help page. Accepted: anyone who reaches it can look up the release's known weaknesses, which are fixed by updating, not hidden, and the Help pages are public with Fathom's source, holding no organization's data.
 - **Data beyond a role:** One shared data access layer checks permissions and classifications for every page, export and search. A page, view or column is shown only to roles that see every classification it needs, and a column that needs a permission as well, such as People's Feature teams, which needs View on Feature teams, only to roles that hold it.
-- **Drafts and history:** Drafts, unpublished changes and the change history go through the same checks. Unpublished changes are seen only by their maker, who alone publishes or discards them: asking to publish or discard someone else's is answered as if the change doesn't exist, and a change is linked only to its maker's other changes.
+- **Drafts and history:** Drafts, unpublished changes and the change history go through the same checks.
+  - **A change's class:** a change is shown only to readers who see its data, at its class then or now, whichever is more sensitive, so its timing doesn't reveal a Personal change.
+  - **Who sees which changes:** changes to configuration are seen by those who may open its pages, changes to people by those who see people, a shared view's by those who open its table's page, and a personal saved view's by its maker alone. Something saved with no change a reader may see is left out for them.
+  - **Unpublished changes:** seen only by their maker, who alone publishes or discards them. Asking to publish or discard someone else's is answered as if the change doesn't exist, and a change is linked only to its maker's other changes.
 - **Shared views of Drafts:** Drafts shows each role the drafts of the areas it sees, but its shared views open to every role that opens Drafts. Accepted: a shared view's filters show what its maker typed or chose, such as a person's name in a Record filter, to readers who don't see that area, though never a row they may not see. Only roles that may share planning views can share a Drafts view.
 - **Links to records:** A link by a record's key finds the record only through the read of the page that shows it, for a role that opens that page, and says it was removed only to a role whose History shows the removal. Otherwise it answers "Nothing found", the same whether no record has the key or the role may not see it. Accepted: key numbers count up, so their gaps show that records exist that a role doesn't see, such as drafts and removed records, though nothing about them.
-- **Exports:** An exported file holds only what the role was sent. The browser asks the server to record an export of Personal or Confidential data before saving it. Accepted: a changed browser or a script can save the data without the record, as it could copy it from the screen.
+- **Exports:** An exported file holds only what the role was sent.
+  - **Recording:** the browser asks the server to record an export of Personal or Confidential data once it is confirmed and a place to save it chosen, then writes the file.
+  - **Checked by the server:** it finds each column's class and name itself, and refuses an export naming a column the role can't see.
+  - **Classified rows:** rows hold classified data apart from their columns: planned hires are recorded as the Hiring plan, and a drafted change of manager as Past managers.
+  - **Accepted:** a changed browser or a script can save the data without the record, as it could copy it from the screen.
 - **Logs and errors:** Logs leave out database error messages and known sensitive fields, though a path can name a record's ID. Server errors shown to users are generic.
 - **Outside services:** Fathom calls no outside service and loads nothing from the internet, such as fonts or scripts, so it needs no internet access to run. The application and database containers have no route out.
 - **At rest:** The database isn't encrypted at rest; [ADR 0012](../adr/0012-encryption-at-rest.md) leaves that to the disk. Accepted: traffic between the application and the database isn't encrypted, since it stays on an internal network, and session tokens are stored as they are, along with each session's address and browser.
@@ -106,7 +126,7 @@ flowchart LR
 
 - **Granting oneself access:** Anyone who manages accounts could give themselves any role, or reset a user's password and sign in as them. Every change to accounts and roles is recorded in the access history, and accounts created, changes to roles, and changes to which roles an account holds are marked for review.
 - **Acting with several roles:** A session acts as one role at a time, with only that role's permissions.
-- **Approving one's own change:** Nobody approves their own change unless their role is given that permission.
+- **Approving one's own change:** Nobody approves their own change, made under any of their roles, unless the role they act as is given that permission.
 - **Approving under either of two areas:** Drafts of schedules and their cycles are changed with Edit on the plan or on configuration, and approved with Approve on either one, so a role granted either reaches them. One shared rule on the server checks either permission, together with seeing schedules, for every change and decision on them, and tests cover each role allowed and denied.
 - **Escaping a container:** Every container runs as a user other than root, with a read-only filesystem, all Linux capabilities dropped and no privilege escalation. The application's runtime image is distroless.
 - **The database:** Passwords are stored with SCRAM-SHA-256, and the database refuses superuser logins over the network.

@@ -3,8 +3,8 @@ title: "Manual Test: Releases"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
-dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/product/decisions.md"]
-last_updated: "2026-11-17"
+dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
+last_updated: "2026-11-18"
 ---
 
 # Manual Test: Releases

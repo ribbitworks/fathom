@@ -7,7 +7,7 @@
 
 ## Context
 
-Each release stream has its own cycles, laid out two years ahead of today, from a configurable length and naming pattern, which can change from a chosen date while the cycles before keep their names and dates, as the [Decisions Log](../product/decisions.md#planning) sets out. Releases include consecutive cycles of their stream, features target a cycle, and each cycle's share of the months it spans counts allocations, capacity, and demand. The [Domain Model](../design/domain-model.md#release-entities) gives each stream cycle patterns, each in force from its start until the next, agreed by the maintainer on 2026-11-03.
+Each release stream has its own cycles, laid out two years ahead of today, from a configurable length and naming pattern, which can change from a chosen date while the cycles before keep their names and dates, as the [Domain Model](../design/domain-model.md#release-entities) sets out. Releases include consecutive cycles of their stream, features target a cycle, and each cycle's share of the months it spans counts allocations, capacity, and demand. The [Domain Model](../design/domain-model.md#release-entities) gives each stream cycle patterns, each in force from its start until the next, agreed by the maintainer on 2026-11-03.
 
 ## Options
 
@@ -27,7 +27,7 @@ Each release stream has its own cycles, laid out two years ahead of today, from 
   - No cycle is in two releases of a stream, so no two releases' ranges of start days overlap.
   - A stream's Ends day is refused if any release would include a cycle that starts after it, or any feature would target one, and so is one before the stream's first cycle starts.
   - A change is refused if a release's first cycle would start after the release's Ships on date, which never moves because its cycles moved.
-- **Changing one cycle's length:** The change writes the patterns that give the new cycles, and moves each release on cycles that move, and each feature that targets one, to the same cycles at their new start days, as drafts saved in one change set and approved, rejected and discarded only together, as the Decisions Log's Cycle length changes sets out, so the rules above still hold.
+- **Changing one cycle's length:** The change writes the patterns that give the new cycles, and moves each release on cycles that move, and each feature that targets one, to the same cycles at their new start days, as drafts saved in one change set and approved, rejected and discarded only together, so the rules above still hold.
 - **Checked by the server:** The rules are checked under the lock every change to drafts takes, so two changes cannot break them together. A database exclusion constraint on overlapping releases would need the `btree_gist` extension, and is left out.
 
 ## Consequences

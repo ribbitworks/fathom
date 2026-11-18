@@ -1,6 +1,6 @@
 # Fathom: Architecture
 
-**Last updated:** 2026-11-17
+**Last updated:** 2026-11-18
 
 A high-level view of Fathom's parts and how they connect. It stays at the level of containers and networks; how each part is built is in the documents linked below.
 
@@ -30,7 +30,7 @@ flowchart LR
 ## Parts
 
 - **Proxy:** The only container users reach. It passes encrypted connections through to the application unchanged, naming each user's address, and holds no certificate. Chosen in [ADR 0003](../adr/0003-edge-proxy.md).
-- **Application:** One Node.js server that serves the React front end and the API over HTTPS. Every read and write of data goes through its data access layer, which applies access checks.
+- **Application:** One Node.js server that serves the React front end and the API over HTTPS. Help is built into the front end, so it always matches the build. Every read and write of data goes through its data access layer, which applies access checks.
 - **Database:** PostgreSQL, reachable only from the application and the migration run.
 - **Migration run:** Applies database migrations as a separate role at start-up, then stops, so the application never holds that role's password.
 

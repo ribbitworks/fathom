@@ -1,10 +1,21 @@
 # Fathom: People Page
 
-**Last updated:** 2026-11-17
+**Last updated:** 2026-11-18
 
-People lists everyone, one row each, with planned hires beside them. It sits in the sidebar's People section, for roles that see people. Its table follows [Tables](../../standards/ui-conventions.md#tables); this document covers the date row, Person details and Group by.
+People lists everyone, one row each, with planned hires beside them. It sits in the sidebar's People section, for roles that see people. Its table follows [Tables](../../standards/ui-conventions.md#tables); this document covers its columns, the date row, Person details and Group by.
 
 [People help](../../help/people.md) describes it for the people who use it, and [Visual Design](../visual-design.md) covers what every page shares.
+
+## Columns
+
+- **Kinds of row:** The State column tells people and planned hires apart, so there is no Kind column. Metrics name each kind, such as 150 people and 6 planned hires.
+- **Manager:** Picked from people flagged as managers and still employed. A manager whose end date has passed shows a Left mark, only to readers who see Personal details.
+- **Manager?:** A checkbox straight after Manager, ticked for those flagged as managers.
+- **Manager assigned:** The Personal date the line runs from; changing it moves the line. The label can't be read as the person being a manager since then.
+- **Team:** Follows from Manager and isn't edited, shown by the team's name, or its manager's while it has none.
+- **Team name:** The person's own team's name, edited on the manager's row.
+- **Feature teams:** After Team, each person's feature teams on the date shown, by their live names, as plain read-only names, since teams change on the [Org chart](org-chart.md#feature-teams). Sent only to those who see feature teams.
+- **Expected:** Read only: the month a planned hire is expected, empty for people.
 
 ## Date Row
 
@@ -18,6 +29,10 @@ The date row sits above the table here and above the [Org chart](org-chart.md), 
   - Where nothing can change, it is read only: the chart has no Draft menu and shows teams or reporting lines as approved.
   - People lists those employed then, with no New person, New column or row menu.
 - **Planned hires:** Shown today and later. None show on earlier dates, since past plans are not kept.
+  - One with no target date reads Planned, no date, with Expected empty, on every date, since the date shown's month would read as one someone set.
+- **What changes:** The date changes the rows and dated values, such as manager, team and feature teams, never the columns shown.
+- **Back:** Choosing another date adds to the browser's Back, here and on the Org chart.
+- **Place:** Under People's search row, as the Org chart's is under its finder.
 
 ## Person Details
 
@@ -25,11 +40,13 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
 
 - **Heading:** The name, then the position and Show on org chart or Show in People.
 - **Sections, in order:**
-  - Reporting: Manager, the date the line runs from, Reporting team, Reporting team name, Direct reports
-  - Feature teams, for those who see them: Leads and Member of
+  - Reporting: Manager, the date the line runs from, Reporting team, Reporting team name, Direct reports, including those yet to start, with Starts and the day
+  - Feature teams, for those who see them: Leads and Member of, each team with its lead
   - Details: Name, ID, Position, State, Start, End, Manager?
   - Columns: every added column People shows the reader
-- **Same as People:** The panel shows only what People shows the reader, and follows the Draft menu beside it.
+- **Same as People:** The panel shows only what People shows the reader, and follows the Draft menu beside it. Personal details shown are recorded in the access history.
+- **Who gets it:** Readers who see the chart but not people have no panel.
+- **Following:** Choosing a manager or a report shows them in the panel.
 - **Editing:** A value the reader may change on People has a pencil opening its cell's editor. Reporting team and Direct reports have none.
 - **Another date:** The panel shows the person then, or says they aren't employed then. Only Manager has a pencil.
 - **Notes:** A note opens in its own panel under the details, sharing the height.
@@ -40,17 +57,22 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
 - **Pencils:** Only for those who may change planned hires.
 - **State:** Offers only hiring states, since a hire becomes a person only by being filled.
 - **Fill:** In the Name cell and under the heading, for those who may change both people and planned hires, unless the Draft menu shows live values alone. Its form offers New person and Existing person side by side, with the hire's Position read only.
+  - Filling happens in this panel, not a dialog, and once filled the panel shows the person.
+  - The manager starts as the hire's and can be changed. A new person's start date starts as the hire's target date. Someone already in Fathom moves from today, or from their start date if they haven't started.
+  - What a fill does is in the [Domain Model](../domain-model.md#planned-hires).
 
 ### Adding a Person or Planned Hire
 
-- **New person:** Opens a form with State first. A hiring state makes it a planned hire.
+- **New person:** Opens a form with State first. A hiring state makes it a planned hire. It offers only the kinds the reader may add, as the table's empty row does.
   - Changing the kind clears values the new kind lacks, and a grey line names them.
 - **A planned hire's empty Name:** Shows in grey its position and ID, the name it will be shown by.
 
 ## Group By
 
 - **Place:** After Metrics, with Then by as [Tables](../../standards/ui-conventions.md#tables) sets out.
-- **Choices:** None, Manager, Feature teams, Position, State, and every list column.
+- **Choices:** None, Manager, Feature teams, Position, State, and every list column, those holding several choices included. Team isn't offered, since it follows from Manager.
+- **Feature teams:** Someone on two teams shows under each; planned hires show under No feature team.
+- **Metrics by Manager:** Count each manager's direct reports among the rows shown.
 - **Manager headings:** The manager's name, then their team's, such as Max Munk, Mobile team.
 
 ## Planned

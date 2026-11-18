@@ -1,6 +1,6 @@
 # Fathom: Feature Assignments Page
 
-**Last updated:** 2026-11-17
+**Last updated:** 2026-11-18
 
 Feature assignments shows each person's feature teams, month by month. It sits in the sidebar's People section, after Org chart, only for roles that see Personal details.
 
@@ -13,7 +13,7 @@ Feature assignments shows each person's feature teams, month by month. It sits i
 - **Months:** whole quarters, from the quarter holding the month a year back to the quarter holding the month eleven months ahead, opening with the current month just after the frozen column; months outside employment are shaded.
   - A thin line between columns, and the current month's heading underlined in today's red, as [Month grids](../../standards/ui-conventions.md#timelines) sets out.
 - **Strip:** the [strip](../../standards/ui-conventions.md#timelines) of the grid's quarters, under the bar, following the grid as it scrolls.
-- **A month's cell:** that month's feature teams as labels in their colours.
+- **A month's cell:** that month's feature teams as labels in their colours. A month reads as of its first day, and the current month as of today.
 
 ## Access
 
@@ -29,13 +29,14 @@ Feature assignments shows each person's feature teams, month by month. It sits i
 
 - **Who:** those who edit feature teams, from the current month on; those who change Personal details, earlier months too.
 - **A change:** drafts the teams from that month's first day, or today in the current month.
+  - A change the team's draft can't hold, such as a second dated change to the same person, is refused.
 - **No row menu:** drafts are decided on the team.
 
 ## Planned
 
 These apply to the monthly resource grid, which [Capacity](capacity.md)'s People mode shares.
 
-- **Schedule picker:** after the search, kept in the address and saved views.
+- **Schedule picker:** after the search, kept in the address and saved views; the first schedule by default, with no lines while there are none.
   - Each cycle's end is a thin upright line labelled with its name.
   - Each release is a line on its Ships on day.
 - **Allocating:** from a cell or a row's menu, by picking a feature, a percentage, a from month and an optional to month.

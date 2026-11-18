@@ -88,7 +88,7 @@ Write the review to `.tmp/code-review/code-review_YYYY-MM-DD_HH-MM_{branch}.md`,
 
 - The change does what it is meant to, including edge cases and error paths.
 - It matches the agreed requirements and decisions, and does not add behaviour nobody asked for.
-- Database migrations that have been applied anywhere are never edited; a change goes in a new migration. Until Fathom's first release, this is relaxed: a merged migration may be edited in place, and every development database is then reset, as the [Decisions Log](../product/decisions.md#platform-and-operations) records. A change that edits one says so, and names the reset, in its pull request.
+- Database migrations that have been applied anywhere are never edited; a change goes in a new migration. Until Fathom's first release, this is relaxed: a merged migration may be edited in place, and every development database is then reset. A change that edits one says so, and names the reset, in its pull request.
 
 ### Architecture and Design
 
