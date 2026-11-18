@@ -1,16 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Accounts page, for users who may see accounts: every account on the shared table, with its
-// roles, the default first, and whether it can sign in, its view saved as any table's is, and, for
-// those who may manage accounts, dialogs to create accounts and to edit them, where their names,
-// email addresses, roles, and default role are changed, choosing from every role, and, from an
-// account's details, to reset its password and to deactivate or reactivate it. Fathom generates the
-// password of a new account and of a reset, which the dialog then shows once, to copy. A user's own
-// account offers all but the password reset, as changing one's own password needs the current one.
-// A dialog cannot be closed while its change is being saved, shows plainly why a change was
-// refused, and keeps no password once it closes. Some active account must keep Edit Administration,
-// so taking away a role or deactivating when that would leave none holding it is turned off, as the
-// server refuses it.
+// The Accounts page: every account on the shared table, and the dialogs that create and edit
+// accounts, reset passwords, and deactivate and reactivate accounts.
 
 import {
   type Account,
@@ -599,6 +590,7 @@ export function AccountsPage({
   const views = useSavedViews({
     table: "accounts",
     within: accountsQuery.queryKey,
+    view,
     applied,
     onApply,
     canShare: canShareViews,

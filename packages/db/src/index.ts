@@ -39,6 +39,7 @@ export {
   planningSettingsId,
   features,
   listItems,
+  lastViews,
   lists,
   milestones,
   people,

@@ -1,0 +1,223 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Tests for each page with a Views menu opening on the view it last showed, through the app's
+// router.
+
+import { startingEffortConversions } from "@fathom/shared";
+import { screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import {
+  fictionalStream,
+  fictionalUser,
+  planAnswers,
+  renderApp,
+  serverAnswers,
+} from "./test-support.tsx";
+
+type Answers = Parameters<typeof serverAnswers>[0];
+
+const session = (permissions: string[]) => () =>
+  Response.json({ ...fictionalUser, permissions });
+
+const onePerson: Answers = {
+  "GET /api/people": () =>
+    Response.json({
+      people: [
+        {
+          id: "p1",
+          keyNumber: 1,
+          preferredName: "Uma Fictional",
+          employeeId: "FX-p1",
+          positionId: "position-1",
+          values: {},
+        },
+      ],
+      fields: [],
+      order: [],
+    }),
+  "GET /api/lists": () => Response.json({ lists: [] }),
+};
+
+const noChoices = () =>
+  Response.json({
+    owners: [],
+    statuses: [],
+    featureStatuses: [],
+    featureTeams: [],
+    priorities: [],
+    sizes: [],
+    risks: [],
+  });
+
+const plan: Answers = {
+  ...planAnswers([]),
+  "GET /api/projects/choices": noChoices,
+  "GET /api/release-streams": () =>
+    Response.json({
+      streams: [fictionalStream()],
+      canEditStreams: false,
+      canEditReleases: false,
+    }),
+  "GET /api/effort-conversions": () => Response.json(startingEffortConversions),
+};
+
+// Opens a page with this last view of it kept, and returns the address it settled on.
+function openOn(
+  path: string,
+  page: string,
+  last: object,
+  permissions: string[],
+  answers: Answers,
+) {
+  serverAnswers({
+    "GET /api/session": session(permissions),
+    "GET /api/last-views": () => Response.json({ [page]: last }),
+    [`PUT /api/last-views/${page}`]: () => new Response(null, { status: 204 }),
+    ...answers,
+  });
+  const history = renderApp(path);
+  return () => new URLSearchParams(history.location.search);
+}
+
+describe("People opening on the view it last showed", () => {
+  const open = (path: string, definition: object) =>
+    openOn(path, "people", { table: "people", definition }, ["people:view"], {
+      ...onePerson,
+    });
+  const searchBox = async () =>
+    screen.findByRole<HTMLInputElement>("textbox", { name: "Search people" });
+
+  it.each([
+    ["on it when the address names no view", "/people", "Fictional"],
+    [
+      "on the address's own view when it names one",
+      "/people?search=Other",
+      "Other",
+    ],
+  ])("opens %s", async (_, path, search) => {
+    open(path, { search: "Fictional" });
+    expect((await searchBox()).value).toBe(search);
+  });
+
+  it("opens a cleared view as the page's default", async () => {
+    const address = open("/people", {});
+    expect((await searchBox()).value).toBe("");
+    expect(address().toString()).toBe("");
+  });
+});
+
+describe("Projects opening on the view it last showed", () => {
+  it.each([
+    [
+      "the tab it showed, even when its view was cleared",
+      { table: "proposals", definition: {} },
+      "Proposals",
+      ["proposals", null],
+    ],
+    [
+      "the first tab, with no tab in the address",
+      { table: "projects", definition: { search: "Fictional" } },
+      "Projects",
+      [null, "Fictional"],
+    ],
+  ])("opens on %s", async (_, last, grid, shown) => {
+    const address = openOn(
+      "/projects",
+      "projects",
+      last,
+      ["plan:view", "features:view"],
+      plan,
+    );
+
+    await screen.findByRole("grid", { name: grid });
+    expect([address().get("tab"), address().get("search")]).toEqual(shown);
+  });
+});
+
+describe("Releases opening on the view it last showed", () => {
+  it.each([
+    ["with its choices", { choices: { past: "shown" } }, "shown"],
+    ["when its view was cleared", {}, null],
+  ])("opens on the Cycles tab %s", async (_, definition, past) => {
+    const address = openOn(
+      "/releases",
+      "releases",
+      { table: "cycles", definition },
+      fictionalUser.permissions,
+      plan,
+    );
+
+    await screen.findByRole("grid", { name: "Cycles" });
+    expect([address().get("tab"), address().get("past")]).toEqual([
+      "cycles",
+      past,
+    ]);
+  });
+});
+
+describe("Features opening on the view it last showed", () => {
+  it.each([
+    [
+      "the Board with the parts of its cards hidden",
+      { choices: { hide: ["status"] } },
+      "board",
+      ["board", '["status"]'],
+    ],
+    ["the table when its view was cleared", {}, undefined, [null, null]],
+  ])("opens on %s", async (_, definition, mode, shown) => {
+    const address = openOn(
+      "/features",
+      "features",
+      { table: "features", definition, mode },
+      ["plan:view", "features:view"],
+      plan,
+    );
+
+    await screen.findByRole("button", { name: /^Group by/ });
+    expect([address().get("mode"), address().get("hide")]).toEqual(shown);
+  });
+});
+
+describe("Drafts opening on the view it last showed", () => {
+  it.each([
+    ["on the tab it showed", { choices: { tab: "all" } }, /^All drafts/u],
+    [
+      "on the role's first tab when its view was cleared",
+      {},
+      /^Not published/u,
+    ],
+  ])("opens %s", async (_, definition, tab) => {
+    openOn(
+      "/drafts",
+      "drafts",
+      { table: "drafts", definition },
+      ["people:view", "people:edit"],
+      onePerson,
+    );
+
+    expect(
+      await screen.findByRole("tab", { name: tab, selected: true }),
+    ).toBeDefined();
+  });
+});
+
+describe("the Org chart opening on the view it last showed", () => {
+  it.each([
+    ["with its choices", { choices: { teams: "feature" } }, "feature"],
+    ["as it opens when its view was cleared", {}, null],
+  ])("opens the chart %s", async (_, definition, teams) => {
+    const address = openOn(
+      "/org-chart",
+      "org-chart",
+      { table: "org-chart", definition },
+      ["people:view", "feature-teams:view"],
+      {
+        ...onePerson,
+        "GET /api/org-chart": () => Response.json({ people: [], drafted: [] }),
+      },
+    );
+
+    await screen.findByRole("heading", { name: "Org chart" });
+    expect(address().get("teams")).toBe(teams);
+  });
+});

@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Saved views of each table that keeps them: reading those the user may see, and saving, changing,
-// and deleting them. A table that keeps no views is no such address. The data access layer checks
-// the actor's permissions.
+// and deleting them; and the view the user last showed on each page with a Views menu. A table or
+// page that keeps no views is no such address. The data access layer checks the actor's permissions.
 
 import {
   changeSetIdSchema,
+  lastViewRequestSchema,
+  lastViewsSchema,
   listedViewSchema,
   savedSchema,
   savedViewChangeSchema,
   savedViewRequestSchema,
+  type ViewPage,
+  viewPageSchema,
   type ViewTable,
   viewTableSchema,
 } from "@fathom/shared";
@@ -19,9 +23,11 @@ import type { ViewAccess } from "../data/index.ts";
 import { NotFoundError } from "../errors.ts";
 
 const created = 201;
+const noContent = 204;
 
 const tableParams = z.object({ table: z.string() });
 const viewParams = tableParams.extend({ viewId: z.uuid() });
+const pageParams = z.object({ page: z.string() });
 const viewResponse = z.object({
   view: listedViewSchema,
   changeSetId: changeSetIdSchema,
@@ -32,6 +38,12 @@ function tableOf(params: { table: string }): ViewTable {
   const table = viewTableSchema.safeParse(params.table);
   if (!table.success) throw new NotFoundError("There is no such page");
   return table.data;
+}
+
+function pageOf(params: { page: string }): ViewPage {
+  const page = viewPageSchema.safeParse(params.page);
+  if (!page.success) throw new NotFoundError("There is no such page");
+  return page.data;
 }
 
 export function viewRoutes(views: ViewAccess): FastifyPluginCallbackZod {
@@ -96,6 +108,25 @@ export function viewRoutes(views: ViewAccess): FastifyPluginCallbackZod {
           request.params.viewId,
         ),
       }),
+    );
+
+    app.get(
+      "/api/last-views",
+      { schema: { response: { 200: lastViewsSchema } } },
+      async (request) => views.readLast(request.actor),
+    );
+
+    app.put(
+      "/api/last-views/:page",
+      { schema: { params: pageParams, body: lastViewRequestSchema } },
+      async (request, reply) => {
+        await views.saveLast(
+          request.actor,
+          pageOf(request.params),
+          request.body,
+        );
+        return reply.status(noContent).send();
+      },
     );
 
     done();

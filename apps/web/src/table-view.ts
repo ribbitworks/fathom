@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Filtering, searching, and sorting any table, in the browser, over the rows the user has been
-// sent, as ADR 0006 sets out. A table describes its columns, each of a kind, and how to read a
-// row's value in each; each kind says how its values are searched, sorted, and filtered, so a new
-// kind is added in one place. The view a table shows, its search, filters, sort, metrics, frozen
-// columns, and columns' widths and units, is kept in the page address, with the saved view it
-// started from, if any.
+// Filtering, searching, and sorting any table in the browser, as ADR 0006 sets out, and the view a
+// table shows, as the page address keeps it.
 
 import {
   columnWidths,
@@ -298,6 +294,22 @@ const isChoiceValue = (value: unknown): value is string | string[] =>
   typeof value === "string" ||
   (Array.isArray(value) && value.every((each) => typeof each === "string"));
 
+// The view a page's address holds, with the page's own choices, each kept under its own name.
+export function viewOfAddress<Search extends ViewSearch>(
+  search: Search,
+  choiceKeys: readonly (keyof Search & string)[] = [],
+): View {
+  const choices = Object.fromEntries(
+    choiceKeys.flatMap((key) => {
+      // The key is always one of the page's own choices.
+      // eslint-disable-next-line security/detect-object-injection
+      const value = search[key];
+      return isChoiceValue(value) ? [[key, value]] : [];
+    }),
+  );
+  return viewFrom({ ...search, choices });
+}
+
 // A table's view as its page's address holds it, the saved view it started from, and how to change
 // it, for any page whose route reads its address with viewSearchSchema. `go` sets the address,
 // replacing the current entry in its history when asked. A changed view still names the saved view
@@ -314,21 +326,13 @@ export function viewProps<Search extends ViewSearch>(
   onView: (view: View, replace?: boolean) => void;
   onApply: (view: View, id: string, replace?: boolean) => void;
 } {
-  const choices = Object.fromEntries(
-    choiceKeys.flatMap((key) => {
-      // The key is always one of the page's own choices.
-      // eslint-disable-next-line security/detect-object-injection
-      const value = search[key];
-      return isChoiceValue(value) ? [[key, value]] : [];
-    }),
-  );
   // The view as the address holds it, each choice under its own name.
   const addressFor = (view: View) => {
     const { choices: kept, ...written } = searchFor(view);
     return { ...written, ...kept };
   };
   return {
-    view: viewFrom({ ...search, choices }),
+    view: viewOfAddress(search, choiceKeys),
     applied: search.view,
     onView: (view, replace = false) => {
       const written = addressFor(view);

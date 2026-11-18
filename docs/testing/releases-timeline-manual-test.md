@@ -33,7 +33,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks and the Draft menu. This test adds:
 
-- **Tabs:** the tabs **Releases**, **Cycles** and **Schedules** just after the **Releases** heading, on the same line. The page opens on **Releases**.
+- **Tabs:** the tabs **Releases**, **Cycles** and **Schedules** just after the **Releases** heading, on the same line. The page opens on **Releases**, or on the tab it last showed.
 - **Timeline:** the section headed **Timeline** above each tab's table, with **−** and **+** buttons and the zoom buttons **All**, **Year**, **6 months**, **Quarter**, **Month**, **Week** and **Days** at its top right, and the strip under them. It has a row for each schedule the table lists, named on the left, under an axis of two rows of dates, with a red line on today. On **Releases**, each release is a strip of its colour with a diamond on the day it ships, over the schedule's cycles, which are drawn faint; on **Cycles**, each cycle is a block with its name inside, with each release's diamond; on **Schedules**, each cycle is a block, with the schedule's end. Pointing at a mark shows its tip.
 - **Strip:** the row between the timeline's zoom buttons and its rows: **‹**, a box for each quarter of the timeline, **›**, and **Today** while today is on the timeline.
 - **Seeded dates in this test:** **This quarter** is the quarter today is in, and **the first half** is Platform's first half-year cycle, three quarters after this quarter. The examples after "such as" are as the seed data is when added on 17 November 2026.

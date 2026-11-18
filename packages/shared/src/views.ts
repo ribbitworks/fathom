@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A table's view, its search, filters, sort, breakdown, groupings, frozen columns, the order of its
-// columns, those hidden, those hidden at first that it shows, the widths set for them, the unit and
-// decimal places each column that offers units is shown in, whether its retired records show, and
-// its page's own choices, as the page address holds it and as a saved view keeps it, and the saved
-// views themselves. A saved view
-// is personal, seen and changed only by its maker, or shared: seen by everyone who opens its page,
-// except those it filters, sorts, breaks down, or groups by a column they may not see, and changed
-// by its maker and those who may share views on its table.
+// A table's view, as the page address holds it and a saved view keeps it, and the saved views
+// themselves, with their limits and schemas.
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
@@ -204,7 +198,7 @@ export interface ViewDefinition {
 }
 
 // A view as a request sends it, which must fit as a whole, since a page sends only views it made.
-const strictDefinitionSchema = z.object({
+export const strictDefinitionSchema = z.object({
   search: z.string().max(textLimit).optional(),
   show: showSchema.optional(),
   filters: z

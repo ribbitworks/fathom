@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Fathom's pages and how to reach them. Every page but the sign-in page needs a signed-in user;
-// anyone else is sent to sign in, then brought back. A user signed in with a password Fathom
-// generated sees only the page that changes it, at the start page's address. An address that names
-// no page, or a server that cannot be reached, gets a page that says so.
+// Fathom's pages and how to reach them, with what each page's address holds.
 
 import type { QueryClient } from "@tanstack/react-query";
 import {
@@ -36,6 +33,8 @@ import {
   releasesViewChoices,
   shownChoiceSchema,
   draftsTabSchema,
+  viewPageOf,
+  type ViewTable,
 } from "@fathom/shared";
 import { Anchor } from "@mantine/core";
 import {
@@ -66,7 +65,12 @@ import { ListsPage } from "./lists-page.tsx";
 import { listKindSchema } from "./lists.ts";
 import { FeatureAssignmentsPage } from "./feature-assignments-page.tsx";
 import { OrgChartPage } from "./org-chart-page.tsx";
-import type { ChartSearch } from "./org-chart.ts";
+import {
+  chartAddressOf,
+  chartChoiceKeys,
+  type ChartSearch,
+  chartViewSearch,
+} from "./org-chart.ts";
 import { CapacityPage } from "./capacity-page.tsx";
 import {
   capacityModeSchema,
@@ -92,7 +96,13 @@ import { PageNotFound, ServerProblem } from "./problems.tsx";
 import { RolesPage } from "./roles-page.tsx";
 import { sessionQuery } from "./session.ts";
 import { SignIn } from "./sign-in.tsx";
-import { viewProps, viewSearchSchema } from "./table-view.ts";
+import { lastViewAddress, lastViewsQuery, type Shown } from "./last-views.ts";
+import {
+  viewOfAddress,
+  viewProps,
+  type ViewSearch,
+  viewSearchSchema,
+} from "./table-view.ts";
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   notFoundComponent: PageNotFound,
@@ -170,6 +180,50 @@ function reaching(page: GuardedPage) {
   };
 }
 
+// Opens a page on its last view when its address names no view, before the page is drawn, so it
+// isn't drawn first as it opens by default. The address keeps the view's choices, and a page's tab,
+// under names of its own, which `addressOf` gives.
+function openOnLastView(
+  {
+    context,
+    search,
+    cause,
+  }: {
+    context: { queryClient: QueryClient };
+    search: object;
+    cause: string;
+  },
+  shown: Shown,
+  addressOf: (
+    address: ViewSearch & Record<string, unknown>,
+    table: ViewTable,
+  ) => object = (address) => address,
+): void {
+  if (cause !== "enter") return;
+  const views = context.queryClient.getQueryData(lastViewsQuery.queryKey);
+  const restored = lastViewAddress(shown, views?.[viewPageOf[shown.table]]);
+  if (restored === undefined) return;
+  // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
+  throw redirect({
+    to: ".",
+    search: { ...search, ...addressOf(restored.address, restored.table) },
+    replace: true,
+  });
+}
+
+// The view a page's address shows, as its last view is kept.
+const shownOn = <Search extends ViewSearch>(
+  table: ViewTable,
+  search: Search,
+  choiceKeys: readonly (keyof Search & string)[] = [],
+  mode?: string,
+): Shown => ({
+  table,
+  view: viewOfAddress(search, choiceKeys),
+  applied: search.view,
+  mode,
+});
+
 const signedInRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: "signed-in",
@@ -186,6 +240,9 @@ const signedInRoute = createRoute({
     }
     // Every page works out today in Fathom's time zone, as the session has it now.
     setTimeZone(session.settings.timeZone);
+    // Read before the first page shows, so it opens on its last view at once; without them, every
+    // page opens on its default.
+    await context.queryClient.query(lastViewsQuery).catch(() => undefined);
     return {
       user: session.user,
       role: session.role,
@@ -252,7 +309,10 @@ const accountsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/accounts",
   validateSearch: accountsSearch,
-  beforeLoad: reaching("accounts"),
+  beforeLoad: (match) => {
+    reaching("accounts")(match);
+    openOnLastView(match, shownOn("accounts", match.search));
+  },
   component: function Accounts() {
     const { user, permissions } = signedIn.useRouteContext();
     const navigate = accountsRoute.useNavigate();
@@ -366,7 +426,10 @@ const draftsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/drafts",
   validateSearch: draftsSearch,
-  beforeLoad: reaching("drafts"),
+  beforeLoad: (match) => {
+    reaching("drafts")(match);
+    openOnLastView(match, shownOn("drafts", match.search, ["tab"]));
+  },
   component: function Drafts() {
     const { permissions, access } = signedIn.useRouteContext();
     const navigate = draftsRoute.useNavigate();
@@ -517,6 +580,26 @@ const releasesRoute = createRoute({
         replace: true,
       });
     }
+    const tab = match.search.tab ?? "releases";
+    openOnLastView(
+      match,
+      shownOn(
+        // The tab is always one of the fixed tabs.
+        // eslint-disable-next-line security/detect-object-injection
+        releasesTabTables[tab],
+        match.search,
+        // eslint-disable-next-line security/detect-object-injection
+        releasesTabChoices[tab],
+      ),
+      (address, table) => ({
+        ...address,
+        tab: releasesTabSchema.options.find(
+          // The tab is always one of the fixed tabs.
+          // eslint-disable-next-line security/detect-object-injection
+          (shown) => shown !== "releases" && releasesTabTables[shown] === table,
+        ),
+      }),
+    );
   },
   component: function Releases() {
     const { permissions } = signedIn.useRouteContext();
@@ -583,7 +666,13 @@ const capacityRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/capacity",
   validateSearch: capacitySearch,
-  beforeLoad: opening("capacity"),
+  beforeLoad: (match) => {
+    opening("capacity")(match);
+    openOnLastView(
+      match,
+      shownOn("capacity", match.search, [], match.search.mode),
+    );
+  },
   component: function Capacity() {
     const { permissions, access } = signedIn.useRouteContext();
     const navigate = capacityRoute.useNavigate();
@@ -660,7 +749,13 @@ const featuresRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/features",
   validateSearch: featuresSearch,
-  beforeLoad: reaching("features"),
+  beforeLoad: (match) => {
+    reaching("features")(match);
+    openOnLastView(
+      match,
+      shownOn("features", match.search, ["stream", "hide"], match.search.mode),
+    );
+  },
   component: function Features() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = featuresRoute.useNavigate();
@@ -728,7 +823,17 @@ const projectsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/projects",
   validateSearch: projectsSearch,
-  beforeLoad: reaching("projects"),
+  beforeLoad: (match) => {
+    reaching("projects")(match);
+    openOnLastView(
+      match,
+      shownOn(match.search.tab ?? "projects", match.search),
+      (address, table) => ({
+        ...address,
+        tab: table === "projects" ? undefined : table,
+      }),
+    );
+  },
   component: function Projects() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = projectsRoute.useNavigate();
@@ -786,7 +891,10 @@ const peopleRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/people",
   validateSearch: peopleSearch,
-  beforeLoad: reaching("people"),
+  beforeLoad: (match) => {
+    reaching("people")(match);
+    openOnLastView(match, shownOn("people", match.search));
+  },
   component: function People() {
     const { permissions, access } = signedIn.useRouteContext();
     const navigate = people.useNavigate();
@@ -852,7 +960,14 @@ const orgChartRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/org-chart",
   validateSearch: chartSearch,
-  beforeLoad: reaching("org-chart"),
+  beforeLoad: (match) => {
+    reaching("org-chart")(match);
+    openOnLastView(
+      match,
+      shownOn("org-chart", chartViewSearch(match.search), chartChoiceKeys),
+      chartAddressOf,
+    );
+  },
   component: function OrgChart() {
     const { permissions, access } = signedIn.useRouteContext();
     const navigate = orgChartRoute.useNavigate();
@@ -893,7 +1008,7 @@ const featureAssignmentsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/feature-assignments",
   validateSearch: featureAssignmentsSearch,
-  beforeLoad: ({ context, search: { mode, ...shown } }) => {
+  beforeLoad: ({ context, cause, search: { mode, ...shown } }) => {
     if (mode !== undefined) {
       // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
       throw redirect({
@@ -903,6 +1018,10 @@ const featureAssignmentsRoute = createRoute({
       });
     }
     opening("feature-assignments")({ context });
+    openOnLastView(
+      { context, search: shown, cause },
+      shownOn("feature-assignments", shown),
+    );
   },
   component: function FeatureAssignments() {
     const { permissions, access } = signedIn.useRouteContext();

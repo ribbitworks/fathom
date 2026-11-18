@@ -32,7 +32,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the page's heading, tick boxes and the details button. This test adds:
 
-- **Tabs:** **To decide**, **Not published** and **All drafts**, just after the **Drafts** title, on the same line, each followed by a dimmed count. An account sees only the tabs its role has, and the page opens on the first of them.
+- **Tabs:** **To decide**, **Not published** and **All drafts**, just after the **Drafts** title, on the same line, each followed by a dimmed count. An account sees only the tabs its role has, and the page opens on the first of them, or on the tab it last showed.
 
 ## Test Cases
 

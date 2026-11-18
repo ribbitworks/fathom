@@ -1,15 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Drafts page: every draft the user may see, of people, planned hires, People's columns, lists,
-// choices, the order of lists' choices and of People's columns, the plan's records, such as release
-// streams, and the planning settings, a row for each on the shared table, newest first, its view
-// saved as any table's is, in three tabs: To decide, the drafts the reader may decide now, for a
-// role that approves drafts; Not published, the reader's own changes; and All drafts, every
-// published draft, read only. On To decide, Approvers tick drafts, one or several at once, and
-// approve or reject them, or decide one from its row's menu or its details beside the table, which
-// link to its record on its own page; approving or rejecting names any other drafts it includes. On
-// Not published, the reader ticks their own changes and publishes or discards them; ticking one
-// ticks the changes it must go with.
+// The Drafts page: every draft the user may see, on the shared table, under the To decide, Not
+// published and All drafts tabs, where drafts are decided, published and discarded.
 
 import {
   allOf,
@@ -141,6 +133,7 @@ export function DraftsPage({
   const views = useSavedViews({
     table: "drafts",
     within: draftsKey,
+    view,
     applied,
     onApply,
     canShare: canShareViews,

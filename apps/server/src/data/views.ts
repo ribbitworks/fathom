@@ -1,17 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Saved views of each table that keeps them: reading those a user may see, and saving, changing, and
-// deleting them. Part of the data access layer, the only server code that queries the database. A
-// view belongs to one table, and is seen and saved only by those who open the table's page, as its
-// rules in view-tables.ts decide. A personal view is seen and changed only by its maker. Everyone
-// who opens the page sees the table's shared views, except a view that filters, sorts, breaks down,
-// or groups by a column they may not see, at either level, or whose grouping needs data they may
-// not see, since its filters, metrics, and headings could reveal values they may not see; its
-// maker is still sent their own personal view, by name and what is missing, to rename or delete.
-// Those who may share views on the table may save shared ones, and share their own personal views
-// or take them back. Only a shared view's maker, or someone who may share views on its table, may
-// change or delete it. Each change is recorded in the change history with the most sensitive class
-// of the view's columns and groupings.
+// Saved views of each table that keeps them, in the data access layer: reading those a user may
+// see, and saving, changing, sharing, and deleting them, each change in the change history.
 
 import { changes, type Database, inChunks, savedViews } from "@fathom/db";
 import {
@@ -62,7 +52,7 @@ const notSharedViewMaker =
 const hiddenColumns = "Choose only columns this role can see";
 const unknownChoices = "Choose only what this page offers";
 
-type Reader = Pick<Database, "select">;
+export type Reader = Pick<Database, "select">;
 type ViewRow = typeof savedViews.$inferSelect;
 
 const viewFields = [
@@ -74,27 +64,30 @@ const viewFields = [
 ] as const;
 
 // What a view is checked against: its table's rules and columns.
-interface Table {
+export interface Table {
   name: ViewTable;
   columns: ViewColumns;
 }
 
 const rulesOf = (table: Table) => viewTables[table.name];
 
-async function readTable(reader: Reader, name: ViewTable): Promise<Table> {
+export async function readTable(
+  reader: Reader,
+  name: ViewTable,
+): Promise<Table> {
   // The table is always one of the fixed tables.
   // eslint-disable-next-line security/detect-object-injection
   return { name, columns: await viewTables[name].columns(reader) };
 }
 
-const opensTable = (actor: Actor, name: ViewTable | undefined) =>
+export const opensTable = (actor: Actor, name: ViewTable | undefined) =>
   name !== undefined &&
   // The table is always one of the fixed tables.
   // eslint-disable-next-line security/detect-object-injection
   opensWith(viewTables[name].opens, actor);
 
 // A table's views are kept from those who don't open its page, as the page is.
-function requireOpens(actor: Actor, name: ViewTable): void {
+export function requireOpens(actor: Actor, name: ViewTable): void {
   if (!opensTable(actor, name)) throw new ForbiddenError();
 }
 
@@ -113,7 +106,7 @@ const groupingNeed = (table: Table, grouping: string) =>
 const groups = (table: Table, grouping: string) =>
   knows(table, grouping) || groupingNeed(table, grouping) !== undefined;
 
-const seesColumn = (actor: Actor, table: Table, key: string) => {
+export const seesColumn = (actor: Actor, table: Table, key: string) => {
   const column = table.columns.classed.get(key);
   return (
     column === undefined ||
@@ -121,6 +114,15 @@ const seesColumn = (actor: Actor, table: Table, key: string) => {
       seesBuiltInColumn(actor.permissions, key))
   );
 };
+
+// Whether the actor sees a grouping: its column, and the class its need, if any, is kept in.
+export function seesGrouping(actor: Actor, table: Table, grouping: string) {
+  const need = groupingNeed(table, grouping);
+  return (
+    seesColumn(actor, table, grouping) &&
+    (need === undefined || seesView(need.view, actor))
+  );
+}
 
 // The classes a view's columns and groupings are kept in; a deleted column is ignored, as it is in
 // the page address.
@@ -158,11 +160,9 @@ function missingFor(
       .filter((key) => !groupings.includes(key) && unseen(key))
       .map(nameOf),
     groupings: groupings.flatMap((grouping) => {
-      const need = groupingNeed(table, grouping);
-      const missing =
-        unseen(grouping) || (need !== undefined && !seesView(need.view, actor));
+      if (seesGrouping(actor, table, grouping)) return [];
       // A grouping missing for want of a need's class has a need; any other is a column.
-      return missing ? [need?.name ?? nameOf(grouping)] : [];
+      return [groupingNeed(table, grouping)?.name ?? nameOf(grouping)];
     }),
   };
 }
@@ -217,7 +217,7 @@ function widthsSeen(
 // reader may not see. None of those reveals a value, so a view keeps them for columns others may
 // not see, and for any the table no longer has. Every reader is sent the unit and decimal places
 // each column is shown in.
-function sentTo(
+export function sentTo(
   actor: Actor,
   table: Table,
   definition: ViewDefinition,
@@ -302,7 +302,7 @@ export async function readViews(
 // with choices its page doesn't offer, and returns the most sensitive class it uses. A view may filter on drafts too,
 // which is General, since each user is sent only the drafts they may see, but not sort or break down
 // by them.
-function requireSeen(
+export function requireSeen(
   actor: Actor,
   table: Table,
   definition: ViewDefinition,

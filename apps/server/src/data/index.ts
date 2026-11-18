@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The data access layer's interface: functions bound to a database, which are all that the rest of
-// the server receives, so no other code can query the database directly. Functions that read or
-// change Fathom's data take the actor making the request, and refuse when the actor's roles do not
-// allow it.
+// the server receives.
 
 import type { Database } from "@fathom/db";
 import type {
@@ -57,7 +55,10 @@ import type {
   RetiredRequest,
   ListedView,
   SavedViewChange,
+  LastViews,
+  LastViewRequest,
   SavedViewRequest,
+  ViewPage,
   ViewTable,
   PasswordOwner,
   PasswordSettings,
@@ -129,6 +130,7 @@ import {
   readSettings,
   readTimeZone,
 } from "./settings.ts";
+import { readLastViews, saveLastView } from "./last-views.ts";
 import * as views from "./views.ts";
 import {
   planOrFeatures,
@@ -524,6 +526,12 @@ export interface ViewAccess {
     change: SavedViewChange,
   ): Promise<Saved<ListedView>>;
   delete(actor: Actor, table: ViewTable, id: string): Promise<ChangeSetId>;
+  readLast(actor: Actor): Promise<LastViews>;
+  saveLast(
+    actor: Actor,
+    page: ViewPage,
+    request: LastViewRequest,
+  ): Promise<void>;
 }
 
 // Every change to planned hires is a draft, which reaches the live hires once approved. Reading the
@@ -1139,6 +1147,9 @@ export function createDataAccess(database: Database): DataAccess {
         views.updateView(database, actor, table, id, change),
       delete: async (actor, table, id) =>
         views.deleteView(database, actor, table, id),
+      readLast: async (actor) => readLastViews(database, actor),
+      saveLast: async (actor, page, request) =>
+        saveLastView(database, actor, page, request),
     },
     hires: createHireAccess(database),
     featureTeams: createFeatureTeamAccess(database),

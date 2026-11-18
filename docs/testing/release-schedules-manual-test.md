@@ -33,7 +33,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Start From a
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button and the change button. This test adds:
 
-- **Tabs:** the tabs **Releases**, **Cycles** and **Schedules** just after the **Releases** heading, on the same line. The page opens on **Releases**.
+- **Tabs:** the tabs **Releases**, **Cycles** and **Schedules** just after the **Releases** heading, on the same line. The page opens on **Releases**, or on the tab it last showed.
 - **Schedules table:** the table on the **Schedules** tab, under the timeline, with a row for each schedule. Its columns are **Schedule**, **Current cycle**, **Cycle starts**, **Cycle ends**, **Features this cycle**, **Next release**, **Release date**, **Cycle length** and **Schedule ends**. While any schedule is retired, **Show retired** and how many are retired is in the **Views** menu.
 - **Selecting a schedule in the table:** selecting the details button at the right of the first cell of the schedule's row, which opens the schedule in the side panel.
 - **A schedule's details:** the side panel for the selected schedule, with the sections **Details** and **Cycles**. **Details** has a row for each of the table's columns, then **Name pattern**. **Cycles** is a table with the columns **Cycle**, **Starts**, **Ends** and **Duration**.

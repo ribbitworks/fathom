@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The plan's records, each a table edited like People's: the Projects page, with its projects,
-// proposals, customers, and milestones, a tab each, a record's details beside it, and a project's
-// milestones there too; and the Features page, grouped by cycle, or shown as a board of one stream's
-// cycles. Every change is a draft, shown in place until an Approver approves it, from a record's menu
-// or the Draft menu. Those who only see the plan see the same tables, read only. The tab, the
-// table's view, the board's place, and the record shown are kept in the page address.
+// The plan's records, each a table edited like People's: the Projects page, with a tab each for
+// projects, proposals, customers and milestones, and the Features page, as a table or a board.
 
 import type {
   Asking,
@@ -429,7 +425,9 @@ export function ProjectsPage({
   const views = useSavedViews({
     table: tab,
     within: projectPlanQuery.queryKey,
+    view,
     applied,
+    mode: board?.mode,
     onApply,
     canShare: canShareViews,
     blocked: deciding || dialogOpened || columnDialog.opened,

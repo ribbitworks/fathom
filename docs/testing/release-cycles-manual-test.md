@@ -34,7 +34,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button and the change button. This test adds:
 
-- **Tabs:** the tabs **Releases**, **Cycles** and **Schedules** just after the **Releases** heading, on the same line. The page opens on **Releases**.
+- **Tabs:** the tabs **Releases**, **Cycles** and **Schedules** just after the **Releases** heading, on the same line. The page opens on **Releases**, or on the tab it last showed.
 - **Cycles table:** the table on the **Cycles** tab, under the timeline, with a row for each cycle. Its columns are **Cycle**, **Schedule**, **Starts**, **Ends**, **Current**, **Release** and **Features**. Cycles that have ended, and those starting after next quarter, show only once **Show past cycles** or **Show later cycles** is chosen in the **Views** menu.
 - **A cycle's details:** the side panel for the selected cycle, headed with its schedule's name, a colon and the cycle's name, such as "Platform: 27.1". Its **Details** rows are the table's columns, then **Duration**.
 - **Duration pencil:** the change button at the right of the **Duration** row of a cycle's details. It opens a menu of **This cycle only…** and **This and later cycles…**.
