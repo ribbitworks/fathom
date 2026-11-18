@@ -23,7 +23,11 @@ Select **People** or **Settings** in the switch beside the heading. The page ope
 
 ### Read Who Works on What
 
-In **People**, the table opens at the current month. Scroll sideways to see the 12 months before it and the 11 after.
+In **People**, the table opens at the current month, whose heading is underlined in red. The table holds whole quarters, from the quarter a year back to the quarter eleven months ahead.
+
+- To scroll to a quarter, select it in the strip above the table. To move a quarter at a time, use **‹** and **›**. The quarters in view are tinted, and the current one is underlined. The quarter you chose stays filled blue until you scroll somewhere else.
+- From the keyboard, press Tab to reach the strip's quarters, and the arrow keys to move between them. Press Enter or Space to choose the quarter you're on.
+- To go back to the current month, select **Today**, at the end of the strip.
 
 ### Group the Rows
 
