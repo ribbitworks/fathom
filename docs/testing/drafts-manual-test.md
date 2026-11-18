@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Drafts of People, Lists and Columns
@@ -662,7 +662,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `8A3F` Select the **⋯** button at the end of the row of `Scheduler Service`.
   - **Expected:**
     - **Approve…** is greyed out.
-    - "Changed by this account, so another approver must approve it" is under it, easy to read.
+    - "Needs another approver" is under it, easy to read.
     - **Reject…** is not greyed out.
   - **Notes:**
 
@@ -682,7 +682,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The bar above the table reads "1 selected".
     - **Approve 1 draft…** is greyed out.
     - **Reject…** is not greyed out.
-    - In the bar, a line says "1 chosen draft was changed by this account, so another approver must approve it."
+    - In the bar, a line says "1 chosen draft needs another approver."
   - **Notes:**
 
 - [ ] `B553` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
@@ -737,21 +737,24 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `3A91` In the Group by menu, select **Area**.
   - **Expected:**
     - The button reads **Group by: Area**.
-    - Group headings read "People", "Planned hires", "Feature teams", "Configuration", "Features and releases" and "The plan".
-    - The heading "Features and releases" counts 7.
+    - Group headings read "People", "Planned hires", "Feature teams", "Configuration", "The plan or configuration", "Features and releases" and "The plan".
+    - The heading "The plan or configuration" counts 1.
+    - The heading "Features and releases" counts 6.
   - **Notes:**
 
 - [ ] `E567` In the Group by menu, select **Made by** under **Then by**.
   - **Expected:**
     - The button reads **Group by: Area, then Made by**.
-    - Under "Features and releases", smaller, set-in headings read "Engineering Operations Manager", counting 1, and "Product Manager", counting 6.
+    - Under "The plan or configuration", one smaller, set-in heading reads "Engineering Operations Manager", counting 1.
+    - Under "Features and releases", one smaller, set-in heading reads "Product Manager", counting 6.
   - **Notes:**
 
 - [ ] `7C55` Select **Metrics**, then **Area** under **Break down by**.
   - **Expected:**
     - A **Metrics** panel opens beside the table.
     - Its table has the columns **Area**, **Drafts** and **Share**.
-    - Its row "Features and releases" reads 7 under **Drafts**.
+    - Its row "Features and releases" reads 6 under **Drafts**.
+    - Its row "The plan or configuration" reads 1 under **Drafts**.
   - **Notes:**
 
 **Afterwards:** Open the Views menu, and select **Clear view**.

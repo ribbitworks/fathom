@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-team-member.md", "docs/product/roles.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Acceptance, Team Member
@@ -116,25 +116,31 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `5D0B` Select **Releases**.
-  - **Expected:** The **Releases** page opens.
-  - **Notes:**
-
-- [ ] `9A61` Select the details button at the right of the first cell of the row for 'Platform'.
   - **Expected:**
-    - The side panel's heading reads 'Platform'.
-    - There is no **New schedule** button.
-  - **Notes:**
-
-- [ ] `60D5` Select the **×** at the top right of the side panel.
-  - **Expected:** The side panel closes.
+    - The **Releases** page opens on its **Releases** tab.
+    - There is no **New release** button.
   - **Notes:**
 
 - [ ] `DB21` Select **All** on the timeline.
   - **Expected:** Each schedule's lane shows from its first cycle to its last without scrolling.
   - **Notes:**
 
-- [ ] `E851` Hover over the span of 'Harbor 1' on the timeline.
-  - **Expected:** A tooltip names 'Harbor 1', its cycles and the day it ships.
+- [ ] `E851` Hover over the span of 'Lantern 2' on the timeline.
+  - **Expected:** A tooltip names 'Lantern 2', its cycles and the day it ships.
+  - **Notes:**
+
+- [ ] `AC69` Select the **Schedules** tab.
+  - **Expected:** There is no **New schedule** button.
+  - **Notes:**
+
+- [ ] `9A61` Select the details button at the right of the first cell of the row for 'Platform'.
+  - **Expected:**
+    - The side panel's heading reads 'Platform'.
+    - Its **Schedule ends** row has no change button.
+  - **Notes:**
+
+- [ ] `60D5` Select the **×** at the top right of the side panel.
+  - **Expected:** The side panel closes.
   - **Notes:**
 
 ### MEMBER-03: A Team Member Looks at a Project

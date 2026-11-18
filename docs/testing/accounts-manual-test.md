@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/accounts-page.tsx", "apps/web/src/accounts-table.tsx", "apps/web/src/accounts-panel.tsx", "apps/web/src/accounts.ts", "apps/web/src/change-password.tsx", "apps/web/src/guessable.ts", "apps/web/src/password-settings.tsx", "apps/web/src/history*.ts*", "apps/web/src/layout.tsx", "apps/web/src/session.ts", "apps/web/src/names.ts", "apps/server/src/create-account.ts", "apps/server/src/create-administrator.ts", "apps/server/src/data/accounts.ts", "apps/server/src/data/settings.ts", "apps/server/src/routes/accounts.ts", "apps/server/src/routes/auth.ts", "packages/shared/src/passwords.ts", "packages/shared/src/guessable-passwords.ts", "packages/seed/src/accounts.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Accounts
@@ -619,16 +619,16 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
   - **Expected:** The account menu closes.
   - **Notes:**
 
-- [ ] `141F` Select the **Releases** page in the left-hand menu.
+- [ ] `141F` Select the **Releases** page in the left-hand menu, then the **Schedules** tab.
   - **Expected:**
-    - The **Releases** page opens.
+    - The **Schedules** tab is chosen.
     - There is no **New schedule** button at the top right.
   - **Notes:**
 
 - [ ] `FD20` Choose **Engineering Manager** in the role menu.
   - **Expected:**
     - The menu closes
-    - The page stays on **Releases**, without the browser reloading
+    - The page stays on the **Schedules** tab of **Releases**, without the browser reloading
     - **New schedule** shows at the top right
   - **Notes:**
 

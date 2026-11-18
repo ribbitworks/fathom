@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Saved Views
@@ -500,7 +500,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as VIEW-09.
 
-**Preconditions:** In the main window, this account is signed in. Select the **Releases** page in the left-hand menu.
+**Preconditions:** In the main window, this account is signed in. Select the **Releases** page in the left-hand menu, then the **Schedules** tab.
 
 - [ ] `289E` Type `Patches` in the search box above the table.
   - **Expected:**

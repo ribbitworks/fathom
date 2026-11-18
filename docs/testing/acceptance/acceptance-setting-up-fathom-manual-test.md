@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Acceptance, Setting Up Fathom
@@ -464,7 +464,13 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 - [ ] `C990` Select the **Releases** page in the left-hand menu.
   - **Expected:**
-    - The page reads "No schedules yet."
+    - The **Releases** tab is chosen beside the heading, and reads "No releases yet."
+    - There is no button at the top right.
+  - **Notes:**
+
+- [ ] `ACF3` Select the **Schedules** tab.
+  - **Expected:**
+    - The tab reads "No schedules yet."
     - A **New schedule** button is at the top right.
   - **Notes:**
 

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Features
@@ -261,7 +261,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The **Publish** button is gone.
   - **Notes:**
 
-- [ ] `347C` Select the **Releases** page in the left-hand menu.
+- [ ] `347C` Select the **Releases** page in the left-hand menu, then the **Schedules** tab.
   - **Expected:**
     - The schedules table shows 'Platform'.
     - 'Platform' has no grey lock in its slot.
@@ -1201,7 +1201,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `F521` Select **Platform: Not released yet** in the side panel.
   - **Expected:**
-    - The **Releases** page opens.
+    - The **Releases** page opens on its **Schedules** tab.
     - The 'Platform' side panel is open beside its table.
   - **Notes:**
 

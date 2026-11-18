@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-director.md", "docs/product/roles.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Acceptance, Engineering Director
@@ -305,8 +305,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** None beyond DIRECTOR-04.
 
-- [ ] `9B78` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The **Releases** page opens, with no view applied.
+- [ ] `9B78` Select the **Releases** page in the left-hand menu, then the **Schedules** tab.
+  - **Expected:** The **Schedules** tab is chosen, with no view applied.
   - **Notes:**
 
 - [ ] `1069` Type `Platform` in the search box.
@@ -333,8 +333,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The Views button reads `Fictional platform`.
   - **Notes:**
 
-- [ ] `E5B9` In the second browser, select the **Releases** page in the left-hand menu.
-  - **Expected:** The **Releases** page opens.
+- [ ] `E5B9` In the second browser, select the **Releases** page in the left-hand menu, then the **Schedules** tab.
+  - **Expected:** The **Schedules** tab is chosen.
   - **Notes:**
 
 - [ ] `74B0` In the second browser, open the Views menu, and select `Fictional platform` under **Shared views**.

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-feature-lead.md", "docs/product/roles.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Acceptance, Feature Lead
@@ -230,7 +230,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as LEAD-05.
 
-**Preconditions:** Acting as **Feature Lead**. Select the **Releases** page in the left-hand menu, and the details button at the right of the first cell of the row for 'Platform'.
+**Preconditions:** Acting as **Feature Lead**. Select the **Releases** page in the left-hand menu, then the **Schedules** tab, then the details button at the right of the first cell of the row for 'Platform'.
 
 - [ ] `95E5` Open the account menu.
   - **Expected:**
@@ -248,7 +248,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `FDE2` Choose **Engineering Manager** in the role menu.
   - **Expected:**
     - The menu closes.
-    - The page stays on **Releases** with 'Platform' open, without the browser reloading.
+    - The page stays on the **Schedules** tab of **Releases** with 'Platform' open, without the browser reloading.
     - **New schedule** shows at the top right of the page.
     - The **People** section of the left-hand menu now shows **Feature assignments** and **Capacity**.
   - **Notes:**
@@ -257,7 +257,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as LEAD-06.
 
-**Preconditions:** LEAD-06 done, acting as **Engineering Manager**. **Releases** page open, with 'Platform' open in the side panel.
+**Preconditions:** LEAD-06 done, acting as **Engineering Manager**. **Releases** page open on the **Schedules** tab, with 'Platform' open in the side panel.
 
 - [ ] `2972` Select **New schedule**.
   - **Expected:** A dialog titled "New schedule" opens.
@@ -287,6 +287,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Releases** page opens.
   - **Notes:**
 
+- [ ] `F3DC` Select the **Schedules** tab.
+  - **Expected:** The table lists `Fictional Side Schedule`, with a yellow dot in its slot.
+  - **Notes:**
+
 - [ ] `39E5` Select the **⋯** button at the right of the first cell of the row for `Fictional Side Schedule`, then **Discard draft**.
   - **Expected:**
     - A notification says "Discarded the draft."
@@ -301,7 +305,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as LEAD-07.
 
-**Preconditions:** LEAD-07 done, acting as **Feature Lead**, with the **Releases** page open.
+**Preconditions:** LEAD-07 done, acting as **Feature Lead**, with the **Releases** page open on the **Schedules** tab.
 
 - [ ] `3293` Type `Platform` in the search box.
   - **Expected:**

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/design/conventions.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Dark Mode
@@ -582,7 +582,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `A49F` Select the **Releases** page in the left-hand menu.
   - **Expected:**
     - The page is titled **Releases**.
-    - The chosen **Schedules** tab beside the heading is easy to read.
+    - The tabs **Releases**, **Cycles** and **Schedules** beside the heading are easy to read, and the chosen **Releases** tab stands out.
   - **Notes:**
 
 - [ ] `89F3` Select **Quarter** among the timeline's zoom buttons.
@@ -593,6 +593,43 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `82FD` Select the box for the quarter after next in the strip, such as **Q2 2027**.
   - **Expected:** That quarter's box is filled blue, and its white name is easy to read.
+  - **Notes:**
+
+- [ ] `D109` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS'.
+  - **Expected:**
+    - The panel of 'Harbor 2 LTS' opens.
+    - The key under its name, its **Details** rows, the colour's square and the yellow dots are easy to read.
+  - **Notes:**
+
+- [ ] `EC95` Select the open button at the right of the **Note** row.
+  - **Expected:**
+    - A second panel opens beside the release's details.
+    - The note's headings, bullets, checklist, red text and link are easy to read.
+    - Both panels read well.
+  - **Notes:**
+
+- [ ] `FFAE` Select **New release**.
+  - **Expected:** A dialog titled "New release" opens, and is easy to read.
+  - **Notes:**
+
+- [ ] `ADC9` Select **Cancel**.
+  - **Expected:** The dialog closes.
+  - **Notes:**
+
+- [ ] `D9A9` Select the **Cycles** tab.
+  - **Expected:**
+    - The table and its **Current** column are easy to read.
+    - On the timeline, each cycle's name is easy to read in its block, the current cycle's in bold.
+  - **Notes:**
+
+- [ ] `BC7E` Select the details button at the right of the first cell of the row under 'Platform' whose **Current** reads "Current".
+  - **Expected:** The cycle's panel opens, and its **Details** rows are easy to read.
+  - **Notes:**
+
+- [ ] `973D` Select the **Schedules** tab.
+  - **Expected:**
+    - The table is easy to read.
+    - On the timeline, each schedule's cycle blocks are clear against the dark page.
   - **Notes:**
 
 - [ ] `36A8` Select the details button at the right of the first cell of the row for 'Platform'.

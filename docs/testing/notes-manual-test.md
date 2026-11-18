@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/shared/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/product/decisions.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: Note Columns on People
 
 ## Scope
 
-Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings, checkboxes and numbered lists look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, or any value in a choice column, and a long note folded in a person's details.
+Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings, checkboxes and numbered lists look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, or any value in a choice column, and a long note folded in a person's details and read in full on Releases.
 
 ## Test Environment
 
@@ -609,11 +609,25 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Onboarding** panel opens under the details again, on **Note**.
   - **Notes:**
 
-- [ ] `D4E7` Select **Editor** at the top of the **Onboarding** panel.
+- [ ] `3BA2` Select the **Releases** page in the left-hand menu.
+  - **Expected:** The **Releases** tab shows, with 'Harbor 3' under the heading 'Platform'.
+  - **Notes:**
+
+- [ ] `7324` Select the details button at the right of the first cell of the row for 'Harbor 3'.
+  - **Expected:** The side panel opens, headed 'Harbor 3', and its **Note** row starts with the heading **What Harbor 3 is for**.
+  - **Notes:**
+
+- [ ] `C9C4` Select the open button at the right of the **Note** row.
+  - **Expected:**
+    - A panel titled "Note for Harbor 3" opens beside the release's details.
+    - It shows the whole note, starting with the heading **What Harbor 3 is for**.
+  - **Notes:**
+
+- [ ] `0C5E` Select **Editor** at the top of the **Note for Harbor 3** panel.
   - **Expected:** The toolbar is above the note's text.
   - **Notes:**
 
-- [ ] `E91C` Scroll the **Onboarding** panel to the middle of the note.
+- [ ] `FAB9` Scroll the **Note for Harbor 3** panel to the middle of the note.
   - **Expected:** The toolbar stays in sight at the top, on a plain background, with no text showing through it.
   - **Notes:**
 

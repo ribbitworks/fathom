@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["packages/shared/src/access.ts", "packages/shared/src/page-access.ts", "apps/web/src/layout.tsx", "apps/web/src/router.tsx", "apps/web/src/*-page.tsx", "apps/server/src/access.ts", "apps/server/src/data/**", "apps/server/src/routes/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/testing/roles-manual-test.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-17"
 ---
 
 # Manual Test: What Each Permission Allows
@@ -90,14 +90,15 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] `AA88` Select the **Releases** page in the left-hand menu.
-  - **Expected:** The table of schedules shows.
+  - **Expected:**
+    - The **Releases** tab shows the table of releases
+    - There is no **New release** button
   - **Notes:**
 
-- [ ] `6081` Read the row for 'Platform'.
+- [ ] `6081` Read the rows under the heading 'Platform'.
   - **Expected:**
-    - **Next release** reads 'Harbor 2 LTS', with a yellow dot before it
-    - A light green Live row under it reads 'Harbor 2' under **Next release**
-    - There is no **New schedule** button
+    - The rows read 'Harbor 2 LTS', 'Harbor 3' and 'Harbor 4'
+    - A light green Live row is under 'Harbor 2 LTS' and under 'Harbor 3'
   - **Notes:**
 
 - [ ] `3EDC` Select the **Drafts** page in the left-hand menu.
@@ -110,13 +111,63 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 #### PERM-03: Edit Features and Releases Makes Releases
 
-Not run for now: releases are made and changed on the Releases tab, which is still to come.
+**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-02 ended with.
+
+**Preconditions:** Team Member granted only **Edit** on **Features and releases** through Grant Team Member Only Some Permissions, signed in with this account.
+
+- [ ] `4D73` Look at the left-hand menu.
+  - **Expected:**
+    - **Plan** section: **Features** and **Releases**
+    - **History** section: **Drafts** and **Change history**
+    - The **Help** section, and no other page
+  - **Notes:**
+
+- [ ] `B4C1` Select the **Releases** page in the left-hand menu.
+  - **Expected:** The **Releases** tab shows, with **New release** at the top right of the page.
+  - **Notes:**
+
+- [ ] `5F2C` Select **New release**.
+  - **Expected:** A dialog titled "New release" opens.
+  - **Notes:**
+
+- [ ] `F361` Choose 'Platform' in **Schedule**.
+  - **Expected:** **Schedule** reads 'Platform'.
+  - **Notes:**
+
+- [ ] `18CD` Type `Harbor 5` in **Name**.
+  - **Expected:** **Name** reads `Harbor 5`.
+  - **Notes:**
+
+- [ ] `ED11` In **First cycle**, choose the third half-year cycle of 'Platform': the third in the list whose dates span six months.
+  - **Expected:** **First cycle** shows that cycle.
+  - **Notes:**
+
+- [ ] `306D` Look at **Last cycle**.
+  - **Expected:** **Last cycle** already shows the cycle chosen in **First cycle**.
+  - **Notes:**
+
+- [ ] `698F` Select **Make release**.
+  - **Expected:**
+    - A notification says "Drafted the new release."
+    - Under the heading 'Platform', a row reads `Harbor 5`, with a hollow yellow dot in its slot
+    - The Publish button reads **Publish 1 change**
+  - **Notes:**
+
+- [ ] `A9A0` Run Discard the Unpublished Changes.
+  - **Expected:** `Harbor 5` is gone from the table.
+  - **Notes:**
+
+- [ ] `A06D` Select the **Schedules** tab.
+  - **Expected:** There is no **New schedule** button at the top right of the page.
+  - **Notes:**
+
+**Afterwards:** Run Restore Team Member.
 
 ### People
 
 #### PERM-04: View People Shows People Without Their Personal Details
 
-**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-02 ended with.
+**Account:** Team Member, `team.member@fathom.test`, changed by Grant Team Member Only Some Permissions from the Administrator, the account PERM-03 ended with.
 
 **Preconditions:** Team Member granted only **View** on **People** through Grant Team Member Only Some Permissions, signed in with this account.
 
@@ -559,7 +610,7 @@ Not run for now: releases are made and changed on the Releases tab, which is sti
     - There is no **New list** button
   - **Notes:**
 
-- [ ] `D311` Select the **Releases** page in the left-hand menu.
+- [ ] `D311` Select the **Releases** page in the left-hand menu, then the **Schedules** tab.
   - **Expected:**
     - 'Platform' and 'Patches' are in the table
     - There is no **New schedule** button
@@ -579,7 +630,7 @@ Not run for now: releases are made and changed on the Releases tab, which is sti
 
 **Preconditions:** Team Member granted only **Edit** on **Configuration** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] `B0BC` Select the **Releases** page in the left-hand menu.
+- [ ] `B0BC` Select the **Releases** page in the left-hand menu, then the **Schedules** tab.
   - **Expected:** **New schedule** is at the top right of the page.
   - **Notes:**
 
@@ -602,7 +653,7 @@ Not run for now: releases are made and changed on the Releases tab, which is sti
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
-- [ ] `CE3A` Select the **Releases** page in the left-hand menu.
+- [ ] `CE3A` Select the **Releases** page in the left-hand menu, then the **Schedules** tab.
   - **Expected:** `Testing Schedule` is gone from the table.
   - **Notes:**
 
@@ -614,7 +665,7 @@ Not run for now: releases are made and changed on the Releases tab, which is sti
 
 **Preconditions:** Team Member granted only **View** on **Features and releases** and **Edit** on **Plan** through Grant Team Member Only Some Permissions, signed in with this account.
 
-- [ ] `6D0D` Select the **Releases** page in the left-hand menu.
+- [ ] `6D0D` Select the **Releases** page in the left-hand menu, then the **Schedules** tab.
   - **Expected:** **New schedule** is at the top right of the page.
   - **Notes:**
 
