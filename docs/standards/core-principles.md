@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["agent-workflow.md", "code-review.md", "documentation.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Core Development Principles
@@ -62,6 +62,8 @@ separately. Violations are architectural defects, not style preferences.
 - **No magic values:** numbers and strings with meaning are named constants,
   except `0`, `1` and `-1` in calculations.
 - **No abbreviations** in names.
+- **File size:** a code file past about 800 lines is split by responsibility,
+  so each new file has one reason to change.
 - **No forced unwraps or non-null assertions** outside tests, or after an
   explicit check.
 - **Design system:** colours, typography and spacing come from the project's
@@ -92,8 +94,9 @@ Keep **one short line** when there is a real why, such as
 `/// Legacy .drink folds into .count`. If the why takes a paragraph, put it in
 the architecture or design document instead.
 
-File headers and boundary comments that a project requires are not narration;
-copy the pattern from sibling files.
+File headers follow
+[Code Review Standards § File Headers](code-review.md#file-headers); they and
+the boundary comments a project requires are not narration.
 
 ## Neutral Defaults
 

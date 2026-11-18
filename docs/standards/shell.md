@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*.sh"]
 dependencies: ["core-principles.md", "code-review.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Shell Script Standards
@@ -32,8 +32,10 @@ The baseline reference is the
 
 - **Shebang:** `#!/usr/bin/env bash` for Bash; `#!/bin/sh` only for scripts
   that are POSIX-only and tested as such.
-- **Header:** a short comment after the shebang says what the script is for,
-  how it is used, and its assumptions (macOS only, needs `git` and `jq`).
+- **Header:** after the shebang, as
+  [Code Review Standards § File Headers](code-review.md#file-headers) sets out.
+  Its lines may name the script's assumptions, such as macOS only or needs
+  `jq`.
 - **Strict mode:** `set -euo pipefail`. Where strictness must be relaxed, such
   as in a script that is sourced into an interactive shell, say why in one
   line.
