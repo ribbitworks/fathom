@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["agent-workflow.md", "code-review.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Issues
@@ -38,7 +38,7 @@ Known problems and deferred work are kept in [GitHub Issues](https://github.com/
 
 - **Who decides:** The maintainer decides stages and priorities. Whoever proposes an issue suggests its labels.
 - **Milestones:** Each stage of the [Roadmap](../product/roadmap.md) is a [GitHub milestone](https://github.com/ribbitworks/fathom/milestones), holding a Feature issue for each feature in it. An issue in no milestone is not yet placed.
-- **No project board** at first.
+- **No project board.**
 
 ## Fixing an Issue
 

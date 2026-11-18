@@ -30,7 +30,7 @@ The focus areas below apply to every change. [TypeScript Standards](typescript.m
 
 Identify every changed file in the diff, including new and deleted files, before reviewing.
 
-A separate agent running a faster model, such as Sonnet, may review a change that touches only documentation, scripts, wording on screens, or tests other than access control and security tests. Anything the [Security and Data](#security-and-data) focus area covers, such as sign-in, sessions, access control, the data access layer, migrations, secrets, the containers, and checks on user input, including web addresses, is reviewed with the full model, and so is any change where the choice is in doubt.
+A separate agent running a faster model may review a change that touches only documentation, scripts, wording on screens, or tests other than access control and security tests. Anything the [Security and Data](#security-and-data) focus area covers, such as sign-in, sessions, access control, the data access layer, migrations, secrets, the containers, and checks on user input, including web addresses, is reviewed with the full model, and so is any change where the choice is in doubt.
 
 The interaction review that the [Agent Workflow](agent-workflow.md#pushing-and-pull-requests) sets out before a pull request may be run by a faster model under the rule above.
 

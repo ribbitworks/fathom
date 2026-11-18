@@ -1,6 +1,5 @@
 # Fathom: Use Cases
 
-**Status:** Draft
 **Last updated:** 2026-11-18
 
 The core scenarios Fathom must support in v1, derived from the [Product Brief](brief.md). Each use case names the main actor, their goal, and the outcome. Steps and detail are added when each feature is designed.
@@ -81,7 +80,7 @@ flowchart TD
 
 ### Approve Plan Changes
 
-- **Actors:** An editor, and a user with the approver role
+- **Actors:** An editor, and a user whose role approves those drafts
 - **Goal:** Make sure changes are approved before they reach the live plan.
 - **Outcome:** Approved draft rows become part of the live plan, and rejected ones stay as drafts with the reason, as the [Domain Model](../design/domain-model.md#drafts-and-approval) sets out.
 

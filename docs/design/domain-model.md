@@ -1,6 +1,5 @@
 # Fathom: Domain Model
 
-**Status:** Draft
 **Last updated:** 2026-11-18
 
 Fathom's core entities, how they relate, and the rules that always hold for them. Terms are defined in [Domain Concepts](../product/domain.md), who may do what is in [Roles](../product/roles.md), and how each page shows the data is in its [page design](pages/). It describes concepts, not database tables. Items marked **proposal** are suggested modelling choices that have not been agreed.

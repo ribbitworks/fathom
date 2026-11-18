@@ -7,7 +7,7 @@
 
 ## Context
 
-Each release stream has its own cycles, laid out two years ahead of today, from a configurable length and naming pattern, which can change from a chosen date while the cycles before keep their names and dates, as the [Domain Model](../design/domain-model.md#release-entities) sets out. Releases include consecutive cycles of their stream, features target a cycle, and each cycle's share of the months it spans counts allocations, capacity, and demand. The [Domain Model](../design/domain-model.md#release-entities) gives each stream cycle patterns, each in force from its start until the next, agreed by the maintainer on 2026-11-03.
+Each release stream has its own cycles, laid out two years ahead of today, from a configurable length and naming pattern, which can change from a chosen date while the cycles before keep their names and dates, as the [Domain Model](../design/domain-model.md#release-entities) sets out. Releases include consecutive cycles of their stream, features target a cycle, and each cycle's share of the months it spans counts allocations, capacity, and demand. The [Domain Model](../design/domain-model.md#release-entities) gives each stream cycle patterns, each in force from its start until the next.
 
 ## Options
 
@@ -34,5 +34,5 @@ Each release stream has its own cycles, laid out two years ahead of today, from 
 
 - **No job to run:** Cycles reach two years from today whenever they are read, so they move ahead with time with no rows to add.
 - **References without foreign keys:** A release or a feature refers to a cycle by a day the database cannot check, so the server's rules above are what keep those references whole.
-- **Past cycles can change:** Nothing yet stops a pattern whose cycles have begun from being changed, if no release depends on it; whether to refuse it waits until the maintainer has seen cycles in use, as the maintainer decided on 2026-11-03.
+- **Past cycles can change:** Nothing yet stops a pattern whose cycles have begun from being changed, if no release depends on it; whether to refuse it is left open until cycles have been seen in use.
 - **Cheap to work out:** A stream's cycles, even of a week each over years, are a few thousand at most, worked out in memory.

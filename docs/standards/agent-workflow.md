@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["code-review.md", "testing.md", "documentation.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-18"
 ---
 
 # Agent Workflow
@@ -85,8 +85,7 @@ or "the project's targeted tests", use the ones it names.
   before they are committed.
 - **Branches and pull requests:**
   - **Must Not** commit to `main`; changes reach `main` only through a pull
-    request. Until a repository has a remote, commits may go directly to
-    `main`.
+    request.
   - Name branches `type/short-description`, using the commit types in
     [code-review.md § Commit Message Rules](code-review.md#commit-message-rules),
     for example `docs/agent-workflow`.

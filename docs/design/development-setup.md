@@ -353,6 +353,11 @@ A release is made by hand, wherever the repository is hosted, as [ADR 0011](../a
 - `FATHOM_REGISTRY` sets the registry and owner, `ghcr.io/ribbitworks` unless set.
 - Sign in to it first, such as with `docker login ghcr.io`. No registry password is kept in the repository.
 - On GitHub, the Publish release images workflow does the same when a release is published, or when run by hand from the Actions tab with the tag. It uses the default branch's scripts and security exceptions, signs in with the workflow's own token, publishes to the repository owner's registry, and makes no tags or releases itself.
+- **Making them public:** GitHub's registry makes each package, `fathom-app`, `fathom-postgres` and `fathom-proxy`, private when its first release is published. So that anyone can pull a release:
+  1. An organization owner allows public packages: the organization's Settings, then Packages, then Package creation, with Public ticked.
+  1. For each package, open it from the organization's Packages tab, then Package settings, then Danger Zone, and change its visibility to Public.
+  1. Check it signed out: `docker logout ghcr.io`, then `docker pull ghcr.io/ribbitworks/fathom-app:<version>` succeeds.
+- **No way back:** A public package can't be made private again.
 
 ### What Each Image Says
 

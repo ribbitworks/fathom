@@ -46,6 +46,6 @@ What-if scenarios, if confirmed. In the [Planning Ahead](https://github.com/ribb
 
 ## Not Yet Placed
 
-Goals the maintainer has added that are not yet placed in a stage are [Feature issues in no milestone](https://github.com/ribbitworks/fathom/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement+no%3Amilestone).
+Goals not yet placed in a stage are [Feature issues in no milestone](https://github.com/ribbitworks/fathom/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement+no%3Amilestone).
 
 These five stages make up v1. Broader configuration for other domains, and the future possibilities listed in the brief, come after v1.
