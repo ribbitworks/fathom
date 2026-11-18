@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-11-18
 
-How the repository is organized, how to run Fathom on your machine, its fictional data, and how releases are made.
+How the repository is organized, how to run Fathom on your machine, its fictional data, how releases are made, and the repository's settings on GitHub.
 
 - The libraries are chosen in [ADR 0002](../adr/0002-libraries.md), and the platforms listed in [Supported Platforms](../operations/supported-platforms.md).
 
@@ -373,3 +373,49 @@ A release is made by hand, wherever the repository is hosted, as [ADR 0011](../a
   - A failed scan fails the run. GitHub emails the person who last changed the workflow's schedule, if their notification settings allow.
   - The scan and its summary are kept with the run for 90 days, the longest GitHub allows a public repository.
 - Another host's scheduler can run `pnpm scan:images` the same way.
+
+## The Repository on GitHub
+
+The settings the repository has on GitHub, and where each is set, so they can be checked or set up again.
+
+### Rulesets
+
+Under **Settings** → **Rules** → **Rulesets**:
+
+- **main:** on the default branch, with nobody allowed to bypass it.
+  - Changes reach it only through a pull request, merged by rebasing, so each commit lands as written, as the [Agent Workflow](../standards/agent-workflow.md#rules-for-both-modes) sets out. No approving review is required, since the maintainer merges.
+  - **Full check** and **Container tests**, from GitHub Actions, must pass.
+  - It can't be deleted or force-pushed.
+  - A pull request's branch needn't be up to date with it before merging, since the code is rebased onto `main` before it's pushed, as the [Testing Standards](../standards/testing.md#running-tests) set out.
+- **release tags:** on `refs/tags/v*`. Only the Repository admin role may create, move or delete a release tag, since a published release runs its workflow from its tag.
+
+### Pull Requests
+
+Under **Settings** → **General** → **Pull Requests**, only **Allow rebase merging** is on, with **Automatically delete head branches** on, and auto-merge and **Always suggest updating pull request branches** off.
+
+### Actions
+
+Under **Settings** → **Actions** → **General**:
+
+- **Actions permissions:** every action is allowed, and **Require actions to be pinned to a full-length commit SHA** is on, so no workflow can use an action by a tag that could move, as the [Security Plan](../security/security-plan.md#tampering) sets out.
+- **Workflow permissions:** read repository contents and packages only, and Actions can't create or approve pull requests. Each workflow asks for more, job by job, where it needs it.
+- **Fork pull request workflows:** approval is required for all external contributors.
+
+### Security
+
+Under **Settings** → **Advanced Security**:
+
+- **Private vulnerability reporting:** on, as the [Security Policy](../../SECURITY.md) sets out.
+- **Dependabot alerts:** on, since Renovate learns of security fixes from them. Dependabot security updates are off, since Renovate opens every update's pull request, security fixes included.
+- **Secret scanning and push protection:** on, for the kinds of secret GitHub's partners define. Its non-provider patterns and validity checks are off.
+- **CodeQL analysis:** the default setup and its default queries. [ADR 0002](../adr/0002-libraries.md) sets out why it runs beside Semgrep.
+
+### Renovate
+
+- **The app:** the Renovate GitHub App is installed on the `ribbitworks` organization for selected repositories, `ribbitworks/fathom` among them, under the organization's **Settings** → **GitHub Apps** → **Renovate** → **Configure**.
+- **Its service:** on the [Mend developer portal](https://developer.mend.io), under the organization's **Settings** → **Dependencies**: Dependency Updates on, Silent mode off, Automated PRs on, Require config file on, and Create onboarding PRs off.
+- **What it updates:** `renovate.json` sets that, and how its pull requests read, as [ADR 0002](../adr/0002-libraries.md) sets out. Its Dependency Dashboard issue lists the updates waiting.
+
+### Issues
+
+The issue forms are in `.github/ISSUE_TEMPLATE/`, whose `config.yml` turns blank issues off. Under **Settings** → **General** → **Features**, the wiki, Projects and Discussions are off.
