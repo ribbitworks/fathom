@@ -412,7 +412,7 @@ Under **Settings** → **Actions** → **General**:
 Under **Settings** → **Advanced Security**:
 
 - **Private vulnerability reporting:** on, as the [Security Policy](../../SECURITY.md) sets out.
-- **Dependabot alerts:** on, since Renovate learns of security fixes from them. Dependabot security updates are off, since Renovate opens every update's pull request, security fixes included.
+- **Dependabot alerts:** on, since Renovate learns of security fixes from them. Dependabot security updates are off, since Renovate opens every update's pull request, security fixes included, for the dependencies the `package.json` files name; [indirect dependencies](../security/security-plan.md#vulnerability-scanning) are fixed by hand.
 - **Secret scanning and push protection:** on, for the kinds of secret GitHub's partners define. Its non-provider patterns and validity checks are off.
 - **CodeQL analysis:** the default setup and its default queries. [ADR 0002](../adr/0002-libraries.md) sets out why it runs beside Semgrep.
 
