@@ -32,12 +32,16 @@ As a Product Manager, you shape the plan. That's the projects customers need, th
 
 ## Plan Your Schedules' Cycles
 
-1. On **Releases**, open the schedule. See [Releases](releases.md#find-and-open-a-schedule).
+1. On **Releases**, select the **Schedules** tab, and open the schedule. See [Releases](releases.md#find-and-open-a-record).
 1. Change its cycles, such as how long they last. See [Releases](releases.md#change-a-schedules-cycles).
-1. To see what each release holds, group **Features** by **Release**. See [Features](features.md#group-the-table).
 1. Select **Publish** in the top bar.
 
-**Releases** shows releases, but you can't make or change them there.
+## Make a Release
+
+1. On **Releases**, select **New release**, choose its schedule, and give it its cycles. See [Releases](releases.md#make-a-release).
+1. Write what the release ships in its note. See [Releases](releases.md#write-a-releases-note).
+1. To see what it holds, open it: its **Features** row lists them. See [Releases](releases.md#follow-a-record-to-another).
+1. Select **Publish** in the top bar.
 
 ## Approve Others' Drafts
 
