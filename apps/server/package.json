@@ -20,7 +20,7 @@
   "dependencies": {
     "@fastify/helmet": "13.2.0",
     "@fastify/rate-limit": "11.2.2",
-    "@fastify/static": "10.1.7",
+    "@fastify/static": "10.1.10",
     "@fathom/db": "workspace:*",
     "@fathom/shared": "workspace:*",
     "better-auth": "1.7.12",
