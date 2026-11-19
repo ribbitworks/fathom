@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/accounts-page.tsx", "apps/web/src/accounts-table.tsx", "apps/web/src/accounts-panel.tsx", "apps/web/src/accounts.ts", "apps/web/src/change-password.tsx", "apps/web/src/guessable.ts", "apps/web/src/password-settings.tsx", "apps/web/src/history*.ts*", "apps/web/src/layout.tsx", "apps/web/src/session.ts", "apps/web/src/names.ts", "apps/server/src/create-account.ts", "apps/server/src/create-administrator.ts", "apps/server/src/data/accounts.ts", "apps/server/src/data/settings.ts", "apps/server/src/routes/accounts.ts", "apps/server/src/routes/auth.ts", "packages/shared/src/passwords.ts", "packages/shared/src/guessable-passwords.ts", "packages/seed/src/accounts.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/administration.md"]
-last_updated: "2026-11-18"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Accounts
@@ -612,7 +612,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 - [ ] `98D6` Open the account menu.
   - **Expected:**
     - Under `feature.lead@fathom.test`, **Role** lists **Engineering Manager** and **Feature Lead**, with a tick beside **Feature Lead** only
-    - Then **Change name**, **Change password**, **Appearance**, and **Sign out**
+    - Then **Change name…**, **Change password…**, **Appearance**, and **Sign out**
   - **Notes:**
 
 - [ ] `498C` Press Esc.
@@ -713,7 +713,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 - [ ] `BE44` Open the account menu.
   - **Expected:**
     - Under `fathom.administrator@fathom.test`, the menu shows **Administrator**, with no **Role** heading and nothing to choose
-    - Then **Change name**
+    - Then **Change name…**
   - **Notes:**
 
 ### ACCT-13: The Access History Records a Switch of Role

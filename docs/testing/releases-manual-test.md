@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-18"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Releases
@@ -37,7 +37,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 - **Releases table:** the table on the **Releases** tab, under the timeline, with a row for each release. Its columns are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features** and **Status**. Releases that have shipped show only once **Show shipped** is chosen in the **Views** menu.
 - **A release's details:** the side panel for the selected release, headed with its name and, under it, its key. Its **Details** rows are **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Status**, **Colour** and **Note**.
 - **Pencil:** the change button at the right of a row of **Details**, for **Release**, **Ships on**, **Cycles** and **Colour**.
-- **A release's ⋯ menu:** the ⋯ menu of a release's row. It offers **Remove release**, and **Add note…** while the release has no note, to those who change releases, **Discard draft** and **Resubmit** for the release's draft, and **Approve…** and **Reject…** to an account whose role approves its drafts.
+- **A release's ⋯ menu:** the ⋯ menu of a release's row. It offers **Remove release**, and **Add note…** while the release has no note, to those who change releases, **Discard draft** and **Resubmit** for the release's draft, and **Approve draft…** and **Reject draft…** to an account whose role approves its drafts.
 - **Timeline:** the section headed **Timeline** above the table, with the zoom buttons **All**, **Year**, **6 months**, **Quarter**, **Month**, **Week** and **Days** at its top right. It has a row for each schedule the table lists, named on the left, with each release as a strip of its colour and a diamond on the day it ships, over the schedule's cycles, which are drawn faint.
 - **Seeded dates in this test:** 'Lantern 3' is the 'Field Apps' release two cycles after the current one. The examples after "such as" are as the seed data is when added on 17 November 2026.
 
@@ -86,7 +86,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Run after REL-12. Signed in with this account. **Releases** page open from the left-hand menu.
 
-- [ ] `E857` Select the **⋯** at the right of the first cell of the row for `Lantern Three`, then **Reject…**.
+- [ ] `E857` Select the **⋯** at the right of the first cell of the row for `Lantern Three`, then **Reject draft…**.
   - **Expected:**
     - A dialog titled "Reject 1 draft?" opens.
     - It has a **Reason** box.

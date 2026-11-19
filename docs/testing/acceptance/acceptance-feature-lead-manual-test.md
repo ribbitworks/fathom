@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-feature-lead.md", "docs/product/roles.md"]
-last_updated: "2026-11-18"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Acceptance, Feature Lead
@@ -185,7 +185,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Features** page opens.
   - **Notes:**
 
-- [ ] `E3BC` Open the **⋯** menu of 'Data Retention Controls', and select **Approve draft**.
+- [ ] `E3BC` Open the **⋯** menu of 'Data Retention Controls', and select **Approve draft…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 

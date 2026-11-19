@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/projects.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Projects, Proposals, Customers and Milestones
@@ -400,7 +400,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The table of customers shows.
   - **Notes:**
 
-- [ ] `FAB6` In the ⋯ menu of `Testing Customer`, select **Approve draft**.
+- [ ] `FAB6` In the ⋯ menu of `Testing Customer`, select **Approve draft…**.
   - **Expected:** A dialog asks "Approve 1 draft?"
   - **Notes:**
 
@@ -515,7 +515,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. Run after PROJ-07. **Projects** tab open.
 
-- [ ] `3D0B` Open the ⋯ menu of `Testing Project` and select **Approve draft**.
+- [ ] `3D0B` Open the ⋯ menu of `Testing Project` and select **Approve draft…**.
   - **Expected:**
     - The dialog names the removal of "the project Testing Project".
     - As drafts it includes, it names the removal of each of its milestones.
