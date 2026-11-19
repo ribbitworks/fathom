@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-product-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-18"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Acceptance, Product Manager
@@ -180,7 +180,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** PRODUCT-01 done. Signed in with this account. **Projects** page open, on the **Projects** tab.
 
-- [ ] `2F40` Open the ⋯ menu of `Fictional Harbour Lights`, and select **Approve draft**.
+- [ ] `2F40` Open the ⋯ menu of `Fictional Harbour Lights`, and select **Approve draft…**.
   - **Expected:**
     - A dialog asks to approve the drafts.
     - Under "Also approves the drafts these depend on:", it lists "the proposal Fictional Ferry Proposal" and "the customer Fictional Ferry Co-op".
@@ -266,7 +266,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Features** page opens.
   - **Notes:**
 
-- [ ] `A988` Open the ⋯ menu of `Fictional Atlas`, and select **Approve draft**.
+- [ ] `A988` Open the ⋯ menu of `Fictional Atlas`, and select **Approve draft…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
@@ -352,7 +352,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Projects** page opens, on the **Projects** tab.
   - **Notes:**
 
-- [ ] `DD3B` Open the **⋯** menu of `Fictional Harbour Lights`, and select **Approve draft**.
+- [ ] `DD3B` Open the **⋯** menu of `Fictional Harbour Lights`, and select **Approve draft…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
@@ -364,7 +364,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The table lists the proposals.
   - **Notes:**
 
-- [ ] `7C72` Open the **⋯** menu of 'Harbour Cranes Upgrade', and select **Approve draft**.
+- [ ] `7C72` Open the **⋯** menu of 'Harbour Cranes Upgrade', and select **Approve draft…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
@@ -472,7 +472,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **Releases** tab shows, with a row for `Fictional Harbor 4` whose **Schedule** reads 'Platform'.
   - **Notes:**
 
-- [ ] `5E58` Select the **⋯** button at the right of the first cell of the row for `Fictional Harbor 4`, then **Approve…**.
+- [ ] `5E58` Select the **⋯** button at the right of the first cell of the row for `Fictional Harbor 4`, then **Approve draft…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 
@@ -515,7 +515,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `312A` Open the ⋯ menu of 'Partner Portal'.
   - **Expected:**
     - The menu names the change to **Status**.
-    - It offers **Approve draft** and **Reject draft…**.
+    - It offers **Approve draft…** and **Reject draft…**.
   - **Notes:**
 
 - [ ] `F5B3` Select **Reject draft…**.

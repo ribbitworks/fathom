@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/views.ts", "packages/shared/src/views.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Metrics, Frozen Columns, and Column Widths on the People Table
@@ -470,7 +470,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - the two sorts
     - **Filter…** and **Metrics**
     - **Freeze up to this column**, **Wider**, **Narrower**, and **Hide column**
-    - **Edit column**, **Remove column**, **Move left**, and **Move right**
+    - **Edit column…**, **Remove column**, **Move left**, and **Move right**
   - **Notes:**
 
 - [ ] `CFCC` Press Esc.

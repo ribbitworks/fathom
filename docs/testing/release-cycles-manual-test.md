@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-18"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Cycles
@@ -38,7 +38,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 - **Cycles table:** the table on the **Cycles** tab, under the timeline, with a row for each cycle. Its columns are **Cycle**, **Schedule**, **Starts**, **Ends**, **Current**, **Release** and **Features**. Cycles that have ended, and those starting after next quarter, show only once **Show past cycles** or **Show later cycles** is chosen in the **Views** menu.
 - **A cycle's details:** the side panel for the selected cycle, headed with its schedule's name, a colon and the cycle's name, such as "Platform: 27.1". Its **Details** rows are the table's columns, then **Duration**.
 - **Duration pencil:** the change button at the right of the **Duration** row of a cycle's details. It opens a menu of **This cycle only…** and **This and later cycles…**.
-- **A cycle's ⋯ menu:** the ⋯ menu of a cycle's row, which names the draft that changes the cycle, if any, or both drafts where a new length and a draft of the cycle's release both change it, and offers **Discard draft** and **Resubmit** to those who change schedules, and **Approve…** and **Reject…** to an account whose role approves its drafts.
+- **A cycle's ⋯ menu:** the ⋯ menu of a cycle's row, which names the draft that changes the cycle, if any, or both drafts where a new length and a draft of the cycle's release both change it, and offers **Discard draft** and **Resubmit** to those who change schedules, and **Approve draft…** and **Reject draft…** to an account whose role approves its drafts, naming the release's draft, such as **Approve Harbor 3's draft…**, where they decide that draft alone.
 - **Schedules tab:** the tab with a row for each schedule, whose ⋯ menu decides and discards a schedule's drafts.
 - **Seeded dates in this test:** **This quarter** is the quarter today is in, and **the first half** is Platform's first half-year cycle, three quarters after this quarter. The examples after "such as" are as the seed data is when added on 17 November 2026.
 
@@ -70,7 +70,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** 'Platform' has no grey lock in its slot.
   - **Notes:**
 
-- [ ] `39A5` Select the **⋯** at the right of the first cell of the row for 'Platform', then **Approve…**.
+- [ ] `39A5` Select the **⋯** at the right of the first cell of the row for 'Platform', then **Approve draft…**.
   - **Expected:** A dialog titled "Approve 3 drafts?" opens.
   - **Notes:**
 
@@ -139,7 +139,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Run after REL-23. Signed in with this account. **Releases** page open from the left-hand menu, then the **Cycles** tab, grouped by **Schedule** from **Group by** above the table.
 
-- [ ] `1913` Select the **⋯** at the right of the first cell of the row under 'Platform' for the cycle REL-23 changed, such as '27.1', then **Approve…**.
+- [ ] `1913` Select the **⋯** at the right of the first cell of the row under 'Platform' for the cycle REL-23 changed, such as '27.1', then **Approve draft…**.
   - **Expected:**
     - A dialog titled "Approve 7 drafts?" opens.
     - It says "Also approves the drafts these depend on:", then lists six drafts, among them the releases 'Harbor 3' and 'Harbor 4', and the features 'Data Retention Controls' and 'Report Builder'.

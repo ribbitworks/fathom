@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/people.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Planned Hires on People
@@ -355,7 +355,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] `9D3A` Select the **Skills** header, then **Edit column**.
+- [ ] `9D3A` Select the **Skills** header, then **Edit column…**.
   - **Expected:**
     - A dialog titled "Edit column" opens.
     - **Offered on planned hires** is ticked.
@@ -384,7 +384,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The search box is empty.
   - **Notes:**
 
-- [ ] `B950` Select the **Site** header, then **Edit column**.
+- [ ] `B950` Select the **Site** header, then **Edit column…**.
   - **Expected:**
     - A dialog titled "Edit column" opens.
     - **Offered on planned hires** is ticked.

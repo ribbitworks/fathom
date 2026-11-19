@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Drafts of People, Lists and Columns
@@ -392,9 +392,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `8A3F` Select the **⋯** button at the end of the row of `Scheduler Service`.
   - **Expected:**
-    - **Approve…** is greyed out.
+    - **Approve draft…** is greyed out.
     - "Needs another approver" is under it, easy to read.
-    - **Reject…** is not greyed out.
+    - **Reject draft…** is not greyed out.
   - **Notes:**
 
 - [ ] `3CBD` Press Escape.

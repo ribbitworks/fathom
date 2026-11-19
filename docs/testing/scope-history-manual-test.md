@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/design/pages/projects.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Scope History
@@ -317,7 +317,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Projects** page open, **Proposals** tab chosen.
 
-- [ ] `60CA` In the **⋯** menu of 'Harbour Cranes Upgrade', select **Approve…**.
+- [ ] `60CA` In the **⋯** menu of 'Harbour Cranes Upgrade', select **Approve draft…**.
   - **Expected:**
     - A dialog opens.
     - It has an **Approve** button.

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-18"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Schedules
@@ -38,7 +38,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Start From a
 - **Selecting a schedule in the table:** selecting the details button at the right of the first cell of the schedule's row, which opens the schedule in the side panel.
 - **A schedule's details:** the side panel for the selected schedule, with the sections **Details** and **Cycles**. **Details** has a row for each of the table's columns, then **Name pattern**. **Cycles** is a table with the columns **Cycle**, **Starts**, **Ends** and **Duration**.
 - **Pencil:** the change button at the right of a row of **Details**. In **Cycles**, the pencil in a cycle's **Duration** cell opens a menu of **This cycle only…** and **This and later cycles…**.
-- **A schedule's ⋯ menu:** the ⋯ menu of a schedule's row. It offers **Retire** or **Restore** to those who change schedules, **Discard draft** and **Resubmit** for the schedule's own draft, and **Approve…** and **Reject…** to an account whose role approves its drafts.
+- **A schedule's ⋯ menu:** the ⋯ menu of a schedule's row. It offers **Retire** or **Restore** to those who change schedules, **Discard draft** and **Resubmit** for the schedule's own draft, and **Approve draft…** and **Reject draft…** to an account whose role approves its drafts.
 - **Seeded dates in this test:** the cycle today is in, such as '26.4', is Platform's current cycle. The examples after "such as" are as the seed data is when added on 17 November 2026.
 
 ## Test Cases
@@ -148,7 +148,7 @@ Covered by [REL-39](releases-manual-test.md#rel-39-a-release-is-added-to-a-sched
 
 **Preconditions:** Run after REL-03. Signed in with this account. **Releases** page open from the left-hand menu, then the **Schedules** tab.
 
-- [ ] `1115` Select the **⋯** at the right of the first cell of the row for `Testing Schedule`, then **Approve…**.
+- [ ] `1115` Select the **⋯** at the right of the first cell of the row for `Testing Schedule`, then **Approve draft…**.
   - **Expected:** A dialog titled "Approve 2 drafts?" opens.
   - **Notes:**
 
@@ -267,7 +267,7 @@ Covered by [REL-32](#rel-32-a-schedules-details-follow-its-row), which reads a s
 
 **Preconditions:** Run after REL-10. Signed in with this account. **Releases** page open from the left-hand menu, then the **Schedules** tab, with 'Patches' selected in the table.
 
-- [ ] `13A5` Select the **⋯** at the right of the first cell of the row for 'Patches', then **Approve…**.
+- [ ] `13A5` Select the **⋯** at the right of the first cell of the row for 'Patches', then **Approve draft…**.
   - **Expected:** A dialog titled "Approve 1 draft?" opens.
   - **Notes:**
 

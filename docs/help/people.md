@@ -112,7 +112,7 @@ You're done when the new column shows in the table, with a hollow dot until you 
 ### Change or Remove a Column
 
 1. Open the menu on the column's heading.
-1. Select **Edit column**.
+1. Select **Edit column…**.
 1. Make your change.
 1. Select **Save**.
 

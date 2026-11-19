@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/design/visual-design.md", "code-review.md"]
-last_updated: "2026-11-18"
+last_updated: "2026-11-19"
 ---
 
 # UI Conventions
@@ -307,6 +307,9 @@ Every view with time across it, the Releases timeline, the Plan and the project 
 - **Tips:** A tip of one phrase has no period, such as Also under Search; a tip of several sentences ends each with one.
   - **Drawn by:** the words themselves, shown by `TableTips` or `Tipped` in `apps/web/src/table-tips.tsx` on tables.
   - **Example:** on People, choose Feature teams in Group by, and point at the +1 after Lorenza Thiel's name.
+- **A menu item's "…":** A menu item that opens a dialog or a confirmation ends in "…", such as Edit column…, Approve draft… or Change password…. One that acts at once, even with Undo, or opens a side panel, has none, such as Delete view, Remove column or New feature team. The dialog's own title has none either, such as Edit column.
+  - **Drawn by:** the words themselves: the column menu and `draftItemLabel`, for a row's Approve draft… and Reject draft…, in `apps/web/src/record-grid.tsx`, and the account menu in `apps/web/src/layout.tsx`.
+  - **Example:** on People, open the Site column's menu: Edit column… opens its dialog, and Remove column removes the column at once, as a draft.
 
 ## Entering Data
 
@@ -335,7 +338,7 @@ Every view with time across it, the Releases timeline, the Plan and the project 
   - **Example:** on People, save a view, then delete it.
 - **Asking first:** Of changes to data, only approving drafts, rejecting them, Discard all…, discarding chosen changes on the Drafts page, such as Discard 2 changes…, and deleting a saved view its maker can no longer use ask first, since they can't be undone, the last because its change history holds what the maker's role can't see; leaving unsaved work asks too, as [Leaving Unsaved Work](#leaving-unsaved-work) sets out, and so does exporting Personal or Confidential data, as [Exporting](#exporting) sets out. Each confirms what was done in a notification without Undo, such as Approved 3 drafts, since it takes drafts out of view. Changes to who may sign in, and to what they may do, ask first too, and confirm what was done in a notification without Undo: saving a change to a role that alters what the accounts holding it may do, whose question lists what each account gains and loses; changing an account's roles; resetting a password; and deactivating or reactivating an account.
   - **Drawn by:** `DecisionModal` in `apps/web/src/decision-dialog.tsx`, and `DiscardChangesModal` in `apps/web/src/unpublished.tsx` for Discard all… and discarding chosen changes. The role's confirmation, in `apps/web/src/roles-page.tsx`, the account's, in `apps/web/src/accounts-page.tsx`, and deleting a saved view, in `apps/web/src/saved-views.tsx`, are drawn by their own dialogs.
-  - **Example:** Approve… in a seeded person's draft menu on People.
+  - **Example:** Approve draft… in a seeded person's draft menu on People.
 - **Failures:** A change that fails says so in plain words, saying what to do next, never as a raw error, and its notification stays until closed. The record goes back to how it was.
   - **Drawn by:** `notifyFailure` in `apps/web/src/notices.tsx`, with the words from `describeProblem` in `apps/web/src/api.ts`.
   - **Example:** none in the seed data; a lost connection while saving shows one.

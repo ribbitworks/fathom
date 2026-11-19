@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/features.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Features
@@ -215,10 +215,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `ACE6` Select the **⋯** menu of the row 'Report Builder'.
   - **Expected:**
     - The menu names the feature and the change to **Target cycle**.
-    - It offers **Approve…** and **Reject…**.
+    - It offers **Approve draft…** and **Reject draft…**.
   - **Notes:**
 
-- [ ] `B991` Select **Approve…**.
+- [ ] `B991` Select **Approve draft…**.
   - **Expected:**
     - A dialog opens.
     - It has an **Approve** button.
@@ -529,7 +529,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 - [ ] `E244` Open the **Kind** column menu.
   - **Expected:**
     - The menu offers **Move left** and **Move right**.
-    - It has no **Edit column**.
+    - It has no **Edit column…**.
   - **Notes:**
 
 ### FEAT-16: A Column Is Added to Features as a Draft
@@ -575,10 +575,10 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 - [ ] `F38D` Open the `Fictional Score` column menu.
   - **Expected:**
-    - The menu offers **Edit column**, **Move left** and **Move right**.
+    - The menu offers **Edit column…**, **Move left** and **Move right**.
   - **Notes:**
 
-- [ ] `5FEE` Select **Edit column**.
+- [ ] `5FEE` Select **Edit column…**.
   - **Expected:**
     - The **Edit column** dialog opens.
     - **Type** is greyed out.
@@ -692,7 +692,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
   - **Expected:** The page is titled **Features**.
   - **Notes:**
 
-- [ ] `5E03` Open the **⋯** menu of the row 'Usage Alerts', and select **Approve…**.
+- [ ] `5E03` Open the **⋯** menu of the row 'Usage Alerts', and select **Approve draft…**.
   - **Expected:**
     - A dialog opens.
     - It has an **Approve** button.
@@ -711,7 +711,7 @@ Covered by [SCOPE-01](scope-history-manual-test.md#scope-01-a-features-customers
 
 **Preconditions:** Signed in with this account. **Features** page open.
 
-- [ ] `8B94` Open the `Fictional Score` column menu and select **Edit column**.
+- [ ] `8B94` Open the `Fictional Score` column menu and select **Edit column…**.
   - **Expected:**
     - The **Edit column** dialog opens.
     - It has a red **Remove column** button.
