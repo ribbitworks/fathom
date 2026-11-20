@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Allocations: one person or planned hire on one feature, kept as the percentage of a month that
-// takes effect from each month it changes, until the next, as the Decisions Log sets out, so a range
-// or ongoing work needs few records. A month with no percentage stops the allocation. Each person's
-// or planned hire's allocation to one feature is one draft, holding every month it changes.
+// Allocations: one person or planned hire on one feature, as a share of a month from each month it
+// changes.
 
 import { z } from "zod";
 import { addToMonth } from "./cycles.ts";

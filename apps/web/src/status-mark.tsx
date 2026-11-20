@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Marks on records. A draft is marked by its dot alone, before the record, value or part it marks:
-// yellow, hollow while the draft is the user's own and unpublished, or red inside a ring once
-// rejected, with the draft's words as the dot's tip and read aloud after the item; what a dot cannot
-// say, moved, reordered, retired or restored, follows the item in a small box, and the day a draft
-// takes effect, where that needs saying, follows it in grey. Someone else's unpublished changes are a
-// grey lock naming them. Live, under a draft, is a green dot first too. A dot always means a draft's
-// state; a fact about an item, such as a warning that someone has left or a place still planned, is
-// a box after it, as moved or retired is. Every page draws them here, so they show the same marks.
+// Marks on records: a draft's dot, the boxes for what a dot can't say and for facts, the lock,
+// Live's dot and data classes' symbols, drawn the same on every page.
 
 import {
   classNames,
@@ -432,7 +426,7 @@ export function DraftedItem({
           span
           c="dimmed"
           size="sm"
-          style={{ marginLeft: "var(--fathom-mark-gap)" }}
+          className={marks.fromDay}
           aria-hidden="true"
         >
           from {from}

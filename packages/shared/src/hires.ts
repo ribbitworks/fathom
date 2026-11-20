@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Planned hires: roles to be filled, kept apart from people but shown beside them, as the Decisions
-// Log sets out. Each hire not yet filled is a placeholder that everyone who sees people sees: its
-// name, ID, position, manager, and the month it is expected. Its target date and drafts are seen
-// only with the hiring plan, a permission area of its own. What a user receives leaves out what
-// their role does not let them see.
+// Planned hires: roles to be filled, kept apart from people but shown beside them.
 
 import { z } from "zod";
 import { daySchema, monthSchema } from "./days.ts";

@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The rows someone has in the Allocations grid when grouped, as the Decisions Log sets out: by
-// manager, a row under each manager they reported to in the months shown, and by feature team, a
-// row under each team they were on and one under none for the months they were employed on none.
-// Each row holds only its own months, with the months outside employment, shaded on every row; a
-// single group's row holds every month.
+// The rows someone has in the allocations grid when it is grouped by manager or by feature team.
 
 import type { TeamMonths } from "@fathom/shared";
 import { groupedRowId } from "./table-view.ts";

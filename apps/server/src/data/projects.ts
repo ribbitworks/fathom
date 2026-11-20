@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Customers, projects with their milestones, proposals, and features: reading them as the viewer
-// sees them, each project with its dates from its milestones, and drafting each added, changed, and
-// removed.
-// Part of the data access layer; the caller checks the actor's permissions. Every change is a
-// draft of a plan record, as records.ts sets out, with the kinds project-kinds.ts describes.
+// Customers, projects with their milestones, proposals and features: reading them as the viewer
+// sees them, and drafting changes to them. Part of the data access layer; the caller checks the
+// actor's permissions.
 
 import { type Database, featureTeams, people } from "@fathom/db";
 import {
@@ -130,7 +128,7 @@ function featureDraftOf(draft: RecordDraftOut): FeatureDraft {
 }
 
 // Who drafted and holds a list and its choices is for those who may see Lists, or People, whose
-// columns draw on them, as the Decisions Log's "Who changed what" sets out.
+// columns draw on them, as Roles sets out under Columns on Features.
 const seesListDrafts = ({ permissions }: Actor) =>
   permissions.includes("configuration:view") ||
   permissions.includes("people:view");

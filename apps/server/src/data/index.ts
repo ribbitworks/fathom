@@ -296,7 +296,7 @@ export interface ReleaseAccess {
     request: ReleaseNoteRequest,
   ): Promise<Saved<ReleaseStream>>;
   // Changing one cycle's length changes the stream's patterns, and moves the releases on cycles
-  // that move, which those who change cycles may do, as the Decisions Log sets out.
+  // that move, which those who change cycles may do.
   changeCycleLength(
     actor: Actor,
     streamId: string,

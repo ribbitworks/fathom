@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The columns and choices a person's draft may use before they are approved: those drafted to be
-// added, as the viewer sees them, beside the live ones. A person's draft that holds a value in a
-// column, or a choice, drafted to be added uses that column's or choice's draft, as the Decisions
-// Log sets out, so the two are approved together. Part of the data access layer.
+// The columns and choices drafted to be added that a person's draft may use before they are
+// approved. Part of the data access layer.
 
 import { type Database, fields } from "@fathom/db";
 import { inArray } from "drizzle-orm";

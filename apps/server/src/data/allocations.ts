@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Allocations, as part of the data access layer: who is put on which feature, from which month, and
-// at what percentage of their month, as the Decisions Log sets out. Every change is a draft of one
-// person's or planned hire's allocation to one feature, holding every month it changes, approved
-// with Approve allocations. Reading, changing, and approving them needs Personal details, since
-// they are judged against employment dates. A person cannot be allocated outside their employment,
-// nor a planned hire before the month it is expected.
-// Removing a person or planned hire removes their allocations. Filling a planned hire does not move
-// its allocations yet, so a hire with allocations is not filled, and a filled hire is not allocated.
+// Allocations: reading, drafting and approving who works on which feature, from which month, at
+// what share of their month. Part of the data access layer.
 
 import {
   allocations,

@@ -1,17 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Feature teams, as part of the data access layer: the people working on a set of related features,
-// apart from reporting lines, as the Decisions Log sets out, seen by everyone who sees feature teams
-// and changed there. A team's name, lead, and members are General; the day each member joined or
-// left is Personal, as reporting lines' dates are, and so are members who have not started, whom
-// readers who do not see Personal details never see. Drafts are details of people, so those who
-// do not see people see only approved teams. Someone whose end date has passed is off every team
-// from the next day, so a team shows no lead they led until another is chosen, and no draft is held
-// up by them; their past records stay. Every change to a team is a draft, its name, lead, and member
-// changes making one draft, approved or rejected together; approving one turns its member and lead
-// changes into records from a date, which may be planned ahead. Teams can be read as of a chosen day,
-// and a team disbands from the first month with no members from then on. A team's colour is how the
-// chart is drawn, not a detail of anyone, so it changes at once.
+// Feature teams: reading, drafting and approving teams, their leads and their members, as of a
+// chosen day. Part of the data access layer.
 
 import {
   type Database,

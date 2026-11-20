@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Links to records by their keys, as the Decisions Log's Record keys sets out: what the server
-// answers for a link, and the page each kind of record opens on, whose needs decide who a link
-// finds the record for.
+// Links to records by their keys: what the server answers for a link, and the page each kind of
+// record opens on.
 
 import { z } from "zod";
 import type { GuardedPage } from "./page-access.ts";

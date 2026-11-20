@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Feature teams: the people working on a set of related features, apart from reporting lines, as
-// the Decisions Log sets out, seen and changed on the org chart. A team's name, lead, and members
-// are General, so everyone who sees feature teams sees them; the days members join and leave are
-// Personal. Members are people the reader sees, so someone who has not started is left out for
-// readers who do not see Personal details. Every change is a draft, a team's name, lead, and
-// member changes making one draft; its colour is how the chart is drawn, so it changes at once.
+// Feature teams: the people working on a set of related features, apart from reporting lines.
 
 import { z } from "zod";
 import { addDays, addMonths } from "./cycles.ts";

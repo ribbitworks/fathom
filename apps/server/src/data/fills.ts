@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Filling planned hires, as the Decisions Log sets out, as part of the data access layer. A fill is
-// one draft spread over several records: the hire, drafted as filled by its person; the person, a
-// new one drafted to be added with the hire's position, manager, and values, or someone already in
-// Fathom drafted to take the hire's position and move to its manager; and, for a planned manager, the hires reporting to
-// it, drafted to report to the person instead. Approving, rejecting, or resubmitting any of them
-// does so for the whole fill, and discarding any of them takes the fill out of the rest.
+// Filling planned hires: one draft spread over the hire, the person who fills it, and the hires
+// that report to it. Part of the data access layer.
 
 import { refuseFillingAllocated } from "./allocations.ts";
 import { type Database, plannedHires } from "@fathom/db";

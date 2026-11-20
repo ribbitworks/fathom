@@ -1,14 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Release streams, their cycle patterns, their releases, and the features that target their cycles,
-// as kinds of the plan's records, with the rules the Decisions Log sets for them: a stream's later
-// patterns start on the start of one of its cycles, so the cycles before keep their names and
-// dates; a release includes consecutive cycles of its stream, from its first to its last, which no
-// other release in the stream includes, and none starting after the last day the stream's cycles
-// start on; a feature targets one of its stream's cycles, and no new one a retired stream's; and a
-// stream that ends does so on or after its first cycle starts. Part of the data access layer;
-// records.ts checks the rules when a change is drafted or published, against the records as the
-// editor sees them, and when drafts are approved, against the live records.
+// Release streams, their cycle patterns, their releases and the features that target their cycles,
+// as kinds of the plan's records with rules of their own. Part of the data access layer.
 
 import { cyclePatterns, features, releases, releaseStreams } from "@fathom/db";
 import {
@@ -132,10 +125,9 @@ export const patternKind: RecordKind = {
       String(pattern?.startsOn),
     );
   },
-  // A stream's drafts of its cycles, and of its releases' cycles, are decided together, as the
-  // Decisions Log sets out, so a pattern's draft uses the others' in its stream, and the drafts
-  // that move its live releases and features to other cycles, or remove one its drafted cycles no
-  // longer make.
+  // A stream's drafts of its cycles, and of its releases' cycles, are decided together, so a
+  // pattern's draft uses the others' in its stream, and the drafts that move its live releases and
+  // features to other cycles, or remove one its drafted cycles no longer make.
   alsoUses: (state, id) => {
     const streamId = String(shownVersion(state, "cycle-pattern", id)?.streamId);
     const drafted = streamPatterns(state, streamId).map(

@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Planned hires, as part of the data access layer. The hiring plan is Confidential, so changes to a
-// hire's own details are recorded at that tier, but it is a permission area of its own: only those
-// who see the hiring plan see hires' drafts and their history. Everyone who sees people sees each
-// placeholder: a hire not yet filled, or, for readers who do not see the person who filled it, one
-// whose person has not started, with its ID, manager, expected month, its position and state to
-// those who see their list's tier, and its values in the columns it shares with people, each to
-// those who see its column's tier. Every change is a draft, as drafts.ts sets out, and changing the
-// hiring plan is recorded in the access history, without naming the hire.
+// Planned hires: reading hires and their placeholders as each reader may see them, and drafting
+// changes to the hiring plan. Part of the data access layer.
 
 import { refuseFillingAllocated, removeAllocationsOf } from "./allocations.ts";
 import {
@@ -712,8 +706,7 @@ export async function readHiresIn(
   return { hires, wholePlan, includedPersonal };
 }
 
-// Changing planned hires needs the rights to edit people and the hiring plan, as the Decisions Log
-// sets out.
+// Changing planned hires needs the rights to edit people and the hiring plan.
 function requireHiringEdit(actor: Actor): void {
   requirePermission(actor, "people:edit");
   requireSensitivityEdit(actor, "hiring-plan");

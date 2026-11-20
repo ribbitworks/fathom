@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The plan's records as one set of rules handles them, whatever their kind, such as release streams
-// and their releases: what each kind of record holds, which fields link it to other records, and
-// which value must be unique; and every record, live and in drafts, read together, with the drafts
-// others hold. A draft uses the drafts of the records only drafted to be added that it links to, so
-// approving it approves them, and they are rejected only together with it, as the Decisions Log
-// sets out. Part of the data access layer; records.ts reads and changes the records.
+// The plan's records as one set of rules sees them: what each kind holds, links to and keeps
+// unique, and every record read together with its drafts. Part of the data access layer.
 
 import {
   type ClassifiedView,
@@ -252,7 +248,7 @@ const uniqueKey = (unique: UniqueValue, record: Recorded) => {
 // Why the record cannot have its unique values: the message of the first another record has, live
 // or in a draft, published or not, or undefined when none is taken. A live record's value stays
 // taken until a draft that changes it is approved, and an unpublished draft's until it is
-// discarded, as the Decisions Log sets out.
+// discarded.
 export function takenValue(
   kind: RecordKind,
   state: RecordsState,

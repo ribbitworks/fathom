@@ -1,14 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Draft rows: the changes waiting for approval, as the Decisions Log sets out. Part of the data
-// access layer. Each person, list, and choice has at most one draft, which adds it, changes some of
-// its fields, or removes it, and each list's choices have at most one draft of their order;
-// everyone who sees the records sees the published drafts in place of the live values. A draft is
-// kept as the change history records the record, holding all of an added record's fields, only the
-// fields that differ from the live record, or none for a removal, and the live record changes only
-// when an Approver approves it. A user's changes to drafts are kept as their unpublished drafts, as
-// ADR 0008 sets out, which they see in place of the published ones and which hold the records for
-// them until they publish or discard them, as unpublished.ts sets out.
+// Draft rows: the changes waiting for approval, and each user's unpublished changes to them. Part
+// of the data access layer.
 
 import {
   changes,
@@ -606,9 +599,6 @@ export async function draftMakers(
   return makers;
 }
 
-// Refuses an approval that would apply drafts the approver changed since each was last approved or
-// discarded, of any kind, those approved with the drafts asked for included, unless their role lets
-// them approve their own, as the Decisions Log sets out. Called with every change the approval
 // The records whose drafts a user changed since each was last approved or discarded, from their
 // history in order: rejecting or resubmitting a draft does not change it, so neither counts nor
 // resets. One rule for the drafts marked on screen and the approvals refused.
@@ -681,9 +671,9 @@ export async function draftKeys(
 }
 
 // Refuses an approval that applied drafts the approver changed since each was last approved or
-// discarded, of any kind, those approved with the drafts asked for included, unless their role
-// lets them approve their own, as the Decisions Log sets out. Given the drafts the approval
-// removed, before it is saved, so its own change set is not yet in the history.
+// discarded, of any kind, those approved with the drafts asked for included, unless their role lets
+// them approve their own. Given the drafts the approval removed, before it is saved, so its own
+// change set is not yet in the history.
 export async function refuseOwnDrafts(
   reader: Pick<Database, "select">,
   actor: Actor,

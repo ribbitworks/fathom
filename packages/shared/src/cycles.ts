@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A release stream's cycles, worked out from its cycle patterns, as the Decisions Log sets out:
-// each pattern makes cycles of its length from the day it starts until the stream's next pattern
-// starts, named by its naming pattern, and made at least two years ahead. A cycle is known by its
-// stream and the day it starts. Each cycle knows its share of the months it spans, for counting
-// allocations, capacity, and demand. Days are ISO dates, such as 2027-01-01, worked out in UTC.
+// A release stream's cycles, worked out from its cycle patterns, with each cycle's share of the
+// months it spans.
 
 import { z } from "zod";
 import { monthNumber, monthOf } from "./days.ts";
@@ -293,9 +290,8 @@ function withoutRepeats(
   return kept;
 }
 
-// The patterns that give a stream's cycles one cycle's new length, as the Decisions Log sets out; or
-// why the change cannot be made. Every pattern starts on a cycle the others make, so no cycle is
-// cut short.
+// The patterns that give a stream's cycles one cycle's new length; or why the change cannot be
+// made. Every pattern starts on a cycle the others make, so no cycle is cut short.
 export function patternsForLength(
   patterns: readonly CyclePatternLike[],
   change: LengthChange,

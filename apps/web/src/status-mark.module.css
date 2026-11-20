@@ -169,3 +169,8 @@
 .alone {
   margin-left: 0;
 }
+
+/* The "from" and day after an item a draft changes from another day. */
+.fromDay {
+  margin-left: var(--fathom-mark-gap);
+}

@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The controls above the org chart: on the left the finder, the Draft menu, for those who can
-// change teams the Teams panel, and last, as on a table, the Views menu, so it moves nothing when
-// it appears; on the right the levels to show, zooming, and fitting the chart to the screen. The
-// chart decides what each choice does to it.
+// The controls above the org chart: the finder, the Draft menu, the Teams panel and the Views menu,
+// then the levels shown, zooming and fitting the chart to the screen.
 
 import {
   ActionIcon,
@@ -276,17 +274,9 @@ export function ChartControls({
 // Laid out as the select lays out its own clear button beside the chevron, so the two look alike.
 function TextClear({ onClear }: { onClear: () => void }) {
   return (
-    <div
-      data-combined-clear-section
-      style={{
-        display: "flex",
-        gap: 2,
-        alignItems: "center",
-        paddingInlineEnd: 8,
-      }}
-    >
+    <Group data-combined-clear-section gap={2} wrap="nowrap" pe={8}>
       <Combobox.ClearButton onClear={onClear} />
       <Combobox.Chevron />
-    </div>
+    </Group>
   );
 }

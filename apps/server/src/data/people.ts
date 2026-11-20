@@ -1,14 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // People and their details: reading everyone a user may see, with their drafts, and drafting people
-// added, one or several pasted at once, changed, and removed, and discarding drafts. Part of the
-// data access layer, the only server code that queries the database. Every change is a draft, as
-// drafts.ts sets out, which reaches the live people only once approved, as approvals.ts sets out.
-// Every change is recorded in the change history, field by field, with each field's tier: a
-// person's name and Employee ID are General, their start and end dates Personal, and their state
-// and each column's values as sensitive as their list. Users see and change only the tiers their
-// role allows, and changes to Personal or Confidential details are also recorded in the access
-// history.
+// added, changed and removed. Part of the data access layer.
 
 import {
   type Database,
@@ -652,8 +645,8 @@ export async function readPeople(
 
 // People on another day: those employed then, as their manager, team, and state were then, with
 // every planned hire not yet filled on a later day and none on an earlier one, since past plans are
-// not kept. Other days need the classes the Org chart's do, as the Decisions Log's People over time
-// sets out, and show drafts only to those who may make changes from the day, as the Org chart does.
+// not kept. Other days need the classes the Org chart's do, and show drafts only to those who may
+// make changes from the day, as the Org chart does.
 export async function readPeopleOn(
   database: Database,
   actor: Actor,

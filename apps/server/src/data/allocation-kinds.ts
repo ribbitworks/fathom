@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Allocations as a kind of the plan's records: one person or planned hire on one feature, with the
-// percentage that takes effect from each month it changes, as the Decisions Log sets out. Its draft
-// holds every month it changes, so it is approved or rejected whole. Allocations are time spent, so
-// a feature, or a project whose general feature, has any cannot be removed, and is cancelled
-// instead. Part of the data access layer; records.ts applies the rules every kind shares.
+// Allocations as a kind of the plan's records, checked by the rules records.ts applies to every
+// kind.
 
 import { allocations } from "@fathom/db";
 import {

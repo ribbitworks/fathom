@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Customers, projects with their milestones, and proposals, as the Decisions Log sets out. Each is
-// one of the plan's records, changed through drafts, and shown as its draft makes it, with the
-// draft beside. A project's dates are not entered: they come from its milestones. A project names
-// the features it needs, and a proposal those it proposes.
+// Customers, projects with their milestones, and proposals, as records of the plan.
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";

@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Reporting lines and team names, with the rules the Decisions Log sets out. Part of the data access
-// layer. A person's current line and their own team's name are held as fields of the person, so
-// changing them is a person's draft, approved, undone, and recorded like any other: managerId and
-// managerFrom, Personal in drafts and in the change history since they name past managers, and
-// teamName, General. Approving writes the line, in force from its date until the person's next. A
-// team renamed keeps its colour, which is not part of any draft, and one whose name is removed
-// loses it.
+// Reporting lines and team names, held as fields of each person and changed through their drafts.
+// Part of the data access layer.
 
 import { defaultLineFrom } from "@fathom/shared";
 import {

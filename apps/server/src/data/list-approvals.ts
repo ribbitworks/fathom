@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Approving and rejecting drafts of lists, choices, and the order of lists' choices, as the
-// Decisions Log sets out. Part of the data access layer; approvals.ts runs these with the drafts of
-// people approved or rejected at the same time, in one change set. Approving a draft approves the
-// drafts it uses too: a choice added to a list drafted to be added uses the list's draft, and an
-// order that places a choice drafted to be added uses the choice's. A draft that others use is
-// rejected only together with them. Approving never leaves a built-in list without a choice offered
-// for everything it keeps.
+// Approving and rejecting drafts of lists, choices and the order of lists' choices, run by
+// approvals.ts. Part of the data access layer.
 
 import { lists as listTable, listItems } from "@fathom/db";
 import type { DraftsRequest } from "@fathom/shared";

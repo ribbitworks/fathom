@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Finding the record a link names by its key, as the Decisions Log's Record keys sets out: through
-// the read of the page that shows each kind, under the reader's permissions, and only for a reader
-// who opens that page, so a link finds only what its page would show them. Finding nothing reads the
-// same whether no record has the key or the reader may not see it. Part of the data access layer.
-// Finding records nothing in the access history: the page the link opens does, as it reads.
+// Finding the record a link names by its key, through the read of the page that shows it. Part of
+// the data access layer.
 
 import type { Database } from "@fathom/db";
 import {

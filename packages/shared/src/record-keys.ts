@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Record keys: a short name for each record, the word for its kind, a hyphen and a number, such as
-// FEATURE-123, shown after a # so it isn't taken for another tool's key, as the Decisions Log sets
-// out. Numbers count from 1 for each kind and are never reused or changed. The database gives each
-// record its number; the words are fixed here. A key is read in any letter case, with or without
-// the #, and a link names the kind in lower case and the number as parts of its path.
+// Record keys, such as FEATURE-123: each kind's word, and reading and writing keys and their links.
 
 import { z } from "zod";
 import type { DraftKind } from "./drafts.ts";
