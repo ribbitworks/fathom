@@ -23,7 +23,7 @@
     "@fastify/static": "10.1.10",
     "@fathom/db": "workspace:*",
     "@fathom/shared": "workspace:*",
-    "better-auth": "1.7.12",
+    "better-auth": "1.7.22",
     "drizzle-orm": "0.45.4",
     "fastify": "5.12.7",
     "fastify-type-provider-zod": "7.0.0",
