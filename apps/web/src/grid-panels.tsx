@@ -225,7 +225,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
               }
               disabled={saving}
               onDecide={(asking) => {
-                actions.decide(asking, waitingShown);
+                actions.decide(asking, waitingShown, true);
               }}
             />
           )}

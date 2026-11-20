@@ -4,22 +4,14 @@
 // includes, how they are named, and whether the approver's role approves drafts of their areas, and
 // for grouping the user's own changes the server links.
 
-import {
-  type Choice,
-  draftKinds,
-  type Field,
-  type List,
-  type Person,
-} from "@fathom/shared";
+import { type Field, type List, type Person, draftKinds } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import { recordDraft } from "./test-support.tsx";
+import { decisionFor } from "./draft-decisions.ts";
 import {
-  type Columns,
   creditedBy,
-  decisionFor,
   differingKeys,
-  draftSentAgain,
   draftNames,
+  draftSentAgain,
   draftTotal,
   heldBack,
   joined,
@@ -31,51 +23,13 @@ import {
   usingDrafts,
   without,
 } from "./drafts.ts";
-
-const waiting = { state: "waiting" as const, madeBy: null, madeAt: null };
-
-const added = (id: string): Choice => ({
-  id,
-  label: id.toUpperCase(),
-  description: "",
-  retired: false,
-  draft: { ...waiting, action: "created", changed: [], live: {} },
-});
-
-const live = (id: string): Choice => ({
-  id,
-  label: id.toUpperCase(),
-  description: "",
-  retired: false,
-});
-
-// A list drafted to be added, whose order places one choice drafted to be added before a live one,
-// and leaves another at the end, where it would go anyway.
-const teams: List = {
-  id: "l1",
-  keyNumber: 1,
-  name: "Teams",
-  description: "",
-  visibility: "general",
-  retired: false,
-  choices: [added("b"), live("a"), added("c")],
-  draft: { ...waiting, action: "created", changed: [], live: {} },
-  orderDraft: { ...waiting, live: ["a"], uses: ["b"] },
-};
-
-// A live list whose order puts a choice drafted to be added first.
-const sites: List = {
-  id: "l2",
-  keyNumber: 1,
-  name: "Sites",
-  description: "",
-  visibility: "general",
-  retired: false,
-  choices: [added("f"), live("d"), added("e")],
-  orderDraft: { ...waiting, live: ["d"], uses: ["f"] },
-};
-
-const lists = [teams, sites];
+import {
+  bothLists as lists,
+  recordDraft,
+  sitesList as sites,
+  teamsList as teams,
+  waitingDraft as waiting,
+} from "./test-support.tsx";
 
 describe("the values a draft changes", () => {
   it("are those that differ from live, a list only where its items or their order do", () => {
@@ -460,126 +414,6 @@ describe("drafts of people and columns that use drafts of another kind", () => {
   });
 });
 
-describe("drafts the approver changed", () => {
-  const person = (id: string, needsOtherApprover?: true): Person => ({
-    id,
-    keyNumber: 1,
-    kind: "person",
-    preferredName: `Fictional ${id}`,
-    employeeId: `E-${id}`,
-    values: {},
-    links: {},
-    draft: {
-      ...waiting,
-      action: "changed",
-      changed: ["preferredName"],
-      live: { values: {}, links: {} },
-      ...(needsOtherApprover ? { needsOtherApprover } : {}),
-    },
-  });
-
-  it("are named, and no approval is offered, when the approver may not approve their own", () => {
-    const people = [person("p1", true), person("p2")];
-    const chosen = { ...noDrafts(), people: ["p1", "p2"] };
-    expect(
-      decisionFor("approve", chosen, draftKinds, lists, {
-        fields: [],
-        people,
-      }),
-    ).toMatchObject({ othersApprove: ["Fictional p1"] });
-    expect(
-      decisionFor("reject", chosen, draftKinds, lists, {
-        fields: [],
-        people,
-      }).othersApprove,
-    ).toBeUndefined();
-    expect(
-      decisionFor(
-        "approve",
-        { ...noDrafts(), people: ["p2"] },
-        draftKinds,
-        lists,
-        { fields: [], people },
-      ).othersApprove,
-    ).toBeUndefined();
-  });
-
-  it("are found among every kind of draft an approval takes", () => {
-    const marked = { ...waiting, needsOtherApprover: true as const };
-    const ownList: List = {
-      id: "l9",
-      keyNumber: 1,
-      name: "Own",
-      description: "",
-      visibility: "general",
-      retired: false,
-      choices: [
-        {
-          ...live("z"),
-          draft: { ...marked, action: "changed", changed: ["label"], live: {} },
-        },
-      ],
-      draft: { ...marked, action: "changed", changed: ["name"], live: {} },
-      orderDraft: { ...marked, live: ["z"], uses: [] },
-    };
-    const field = {
-      id: "f9",
-      keyNumber: 1,
-      name: "Own column",
-      listId: "l9",
-      multiple: false,
-      required: false,
-      draft: { ...marked, action: "changed", changed: ["name"], live: {} },
-    } as unknown as Field;
-    const hire = {
-      ...person("h9", true),
-      kind: "planned-hire",
-    } as unknown as Person;
-    const ref = {
-      type: "release" as const,
-      id: "00000000-0000-4000-8000-000000000009",
-    };
-    const columns: Columns = {
-      fields: [field],
-      people: [hire],
-      records: [
-        {
-          ref,
-          subject: "the release Own",
-          draft: {
-            ...marked,
-            action: "changed",
-            changed: ["name"],
-            live: {},
-            uses: [],
-          },
-          heldBy: undefined,
-        },
-      ],
-    };
-    const chosen = {
-      ...noDrafts(),
-      plannedHires: ["h9"],
-      lists: ["l9"],
-      choices: ["z"],
-      orders: ["l9"],
-      columns: ["f9"],
-      records: [ref],
-    };
-    expect(
-      decisionFor("approve", chosen, draftKinds, [ownList], columns)
-        .othersApprove,
-    ).toEqual([
-      "the planned hire Fictional h9",
-      "the column Own column",
-      "the list Own",
-      "the choice Z in Own",
-      "the new order for Own",
-      "the release Own",
-    ]);
-  });
-});
-
 describe("a draft sent for approval again", () => {
   it("is waiting again, without its reason, and a record with no draft stays as it is", () => {
     const rejected = recordDraft({ state: "rejected", reason: "No" });
@@ -587,120 +421,6 @@ describe("a draft sent for approval again", () => {
       recordDraft({ state: "waiting" }),
     );
     expect(draftSentAgain({})).toEqual({});
-  });
-});
-
-describe("the drafts of a fill", () => {
-  const draft = {
-    action: "changed" as const,
-    changed: ["managerId"],
-    live: { managerId: "filled", values: {}, links: {} },
-    state: "waiting" as const,
-    madeBy: null,
-    madeAt: null,
-  };
-  const row = (id: string, details: object) =>
-    ({
-      id,
-      keyNumber: 1,
-      preferredName: id,
-      employeeId: id,
-      values: {},
-      links: {},
-      ...details,
-    }) as Person;
-  const hire = (id: string, details: object) =>
-    row(id, { kind: "planned-hire", ...details });
-  const people = [
-    hire("filled", { filler: "starter", draft }),
-    row("starter", { draft: { ...draft, action: "created" } }),
-    hire("moved", {
-      manager: { id: "starter", preferredName: "starter" },
-      draft,
-    }),
-    row("kept", {
-      manager: { id: "starter", preferredName: "starter" },
-      draft,
-    }),
-    hire("other", { filler: "someone", draft }),
-    row("someone", {}),
-  ];
-  const columns = { fields: [], people };
-
-  it("approves the rest of a fill with the hire chosen", () => {
-    expect(
-      decisionFor(
-        "approve",
-        { ...noDrafts(), plannedHires: ["filled"] },
-        draftKinds,
-        [],
-        columns,
-      ).selection,
-    ).toMatchObject({ people: ["starter"], plannedHires: ["filled", "moved"] });
-  });
-
-  it("rejects the rest of a fill with the person chosen, naming them", () => {
-    const decision = decisionFor(
-      "reject",
-      { ...noDrafts(), people: ["starter"] },
-      draftKinds,
-      [],
-      columns,
-    );
-    expect(decision.selection).toMatchObject({
-      people: ["starter"],
-      plannedHires: ["filled", "moved"],
-    });
-    expect(decision.included?.length).toBeGreaterThan(0);
-  });
-
-  it("leaves out a hire drafted to report to the filler that the fill does not move", () => {
-    const withOther = [
-      ...people,
-      hire("elsewhere", {
-        manager: { id: "starter", preferredName: "starter" },
-        draft: { ...draft, live: { ...draft.live, managerId: "another" } },
-      }),
-    ];
-
-    expect(
-      decisionFor(
-        "approve",
-        { ...noDrafts(), plannedHires: ["filled"] },
-        draftKinds,
-        [],
-        { fields: [], people: withOther },
-      ).selection.plannedHires,
-    ).not.toContain("elsewhere");
-  });
-
-  it("leaves out a filler whose only draft is of their own", () => {
-    const own = [
-      hire("filled", { filler: "starter", draft }),
-      row("starter", { draft: { ...draft, changed: ["preferredName"] } }),
-    ];
-
-    expect(
-      decisionFor(
-        "approve",
-        { ...noDrafts(), plannedHires: ["filled"] },
-        draftKinds,
-        [],
-        { fields: [], people: own },
-      ).selection.people,
-    ).toEqual([]);
-  });
-
-  it("adds no one who has no draft of their own, and leaves other fills out", () => {
-    expect(
-      decisionFor(
-        "approve",
-        { ...noDrafts(), plannedHires: ["other"] },
-        draftKinds,
-        [],
-        columns,
-      ).selection,
-    ).toMatchObject({ people: [], plannedHires: ["other"] });
   });
 });
 

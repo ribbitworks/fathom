@@ -67,6 +67,9 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
 - **A draft from another day:** Where a draft takes effect from a day other than the one shown, the item is followed in grey by from and the day, such as from Dec 1, 2026. An org chart card has too little room, so its From and the day sit on their own line under the name, a recorded exception.
   - **Drawn by:** the `from` of `DraftedItem`, and the card in `apps/web/src/org-chart-page.tsx`.
   - **Example:** on the Org chart, move to next month and add someone to a feature team.
+- **Approving several:** Approving several drafts at once, all those waiting from the Draft menu or those ticked on the Drafts page, approves those the user may approve and leaves the rest waiting: drafts the user changed and may not approve, drafts of an area the role doesn't approve, and drafts that use either. The dialog asking first names the drafts it approves, up to five, then how many others, such as and 2 others, and names those left under This needs another approver and stays waiting, or These need another approver and stay waiting; the notification after it adds how many, such as Approved 4 drafts. 2 need another approver. Only when every draft is left does the dialog approve none, titled Another approver needed, naming them. A single draft, from its menu or details, has no others to approve, so the dialog names why it can't be approved.
+  - **Drawn by:** `decisionFor` in `apps/web/src/draft-decisions.ts`, which leaves out the drafts `othersToApprove` finds, from the flag the server sets with `draftsChangedBy` in `packages/shared/src/drafts.ts`, the same rule that refuses an approval; the dialog is `DecisionModal` in `apps/web/src/decision-dialog.tsx`.
+  - **Example:** on Features, as the Project Manager, rename a feature, publish it, then choose Approve n drafts… in the Draft menu.
 
 ## Values
 

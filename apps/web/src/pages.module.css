@@ -1594,22 +1594,34 @@ th.liveColumn {
   color: var(--mantine-color-dimmed);
 }
 
-/* A Name cell's name and its +1 for the other headings it's under: the name is cut short first, so
-   the +1 stays in view while the row's controls take room. */
+/* A Name cell's name, then its +1 for the other headings it's under and its column's mark, such as
+   a fact's box: the name is cut short first, so they stay in view while the row's controls take
+   room. */
 .namedWithOthers {
-  display: flex;
+  display: inline-flex;
   align-items: baseline;
   min-width: 0;
+  max-width: 100%;
 }
 
+/* Beside a row's tick box, which sits on the same line. */
+.tickingTable .namedWithOthers {
+  max-width: calc(100% - var(--row-tick-room));
+}
+
+/* The name gives up its room first, keeping its dot and a few letters, then what follows it. */
 .namedWithOthersName {
-  min-width: 0;
+  flex: 0 1000 auto;
+  min-width: 5em;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .namedWithOthers > :last-child {
-  flex: none;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .alsoUnder {

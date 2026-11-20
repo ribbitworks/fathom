@@ -51,13 +51,8 @@ import { usePersonNotes, useShownId } from "./person-editing.tsx";
 import { useDiscardQuestion } from "./discard-question.tsx";
 import { PersonPanel, personPanelId } from "./person-panel.tsx";
 import { useNarrow } from "./side-panel.tsx";
-import {
-  draftSentAgain,
-  pendingDraft,
-  unsavedKeyNumber,
-  type Decision,
-  decisionFor,
-} from "./drafts.ts";
+import { draftSentAgain, pendingDraft, unsavedKeyNumber } from "./drafts.ts";
+import { type Decision, decisionFor } from "./draft-decisions.ts";
 import classes from "./pages.module.css";
 import {
   fillButtonId,
@@ -343,15 +338,19 @@ export function PeoplePage({
       : row.preferredName;
 
   const actions: PeopleActions = {
-    decide: (asking, chosen) => {
+    decide: (asking, chosen, all) => {
       // Approving names the drafts the choice uses, and rejecting those that use it.
       // Drafts are only decided once the people and lists are loaded.
       const { fields, people } = query.data as PeopleData;
       setDecision(
-        decisionFor(asking, chosen, approves, lists.data as List[], {
-          fields,
-          people,
-        }),
+        decisionFor(
+          asking,
+          chosen,
+          approves,
+          lists.data as List[],
+          { fields, people },
+          all,
+        ),
       );
       setDeciding(true);
     },

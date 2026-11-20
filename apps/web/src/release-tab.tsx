@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Releases page's Releases tab: a timeline of the releases the table shows, with their cycles,
-// above the table, and the selected release's details in a side panel, with its note in a panel of
-// its own beside them. Shipped releases show only when asked for. Those who change releases change
-// each value from its pencil in the details, and remove a release or add its note from its row's
-// menu. A release in a retired schedule, held by someone else, or drafted to be removed is read
-// only. Every change is a draft, which its makers discard or resubmit, and Approvers approve or
-// reject, from each row's menu.
+// The Releases page's Releases tab: the table of releases, with a timeline above it, the selected
+// release's details beside it, and its note in a panel of its own.
 
 import type { Asking, DraftKind, Release, ReleaseStream } from "@fathom/shared";
 import { Menu } from "@mantine/core";
@@ -288,7 +283,7 @@ export function ReleasesTable({
     part: ReleasePart,
   ) => void;
   run: (work: () => Promise<unknown>, done: string) => void;
-  decide: (asking: Asking, selection: DraftSelection) => void;
+  decide: (asking: Asking, selection: DraftSelection, all?: boolean) => void;
 }) {
   const { show } = view;
   const everyRow = releaseRows(streams, show, day);

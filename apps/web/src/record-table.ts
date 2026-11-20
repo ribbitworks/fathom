@@ -66,7 +66,8 @@ export interface RecordActions<Rec extends GridRecord, Change, Request> {
   ) => void;
   update: (record: Rec, change: Change) => void;
   // Asks to approve or reject the drafts chosen, of records or columns.
-  decide: (asking: Asking, selection: DraftSelection) => void;
+  // Approving all those waiting skips the drafts another approver must approve.
+  decide: (asking: Asking, selection: DraftSelection, all?: boolean) => void;
   remove: (record: Rec) => void;
   discard: (record: Rec, draft: DraftOf<Rec>) => void;
   // Sends a rejected draft for approval again, unchanged.

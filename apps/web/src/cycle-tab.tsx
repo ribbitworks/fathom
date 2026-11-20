@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Releases page's Cycles tab: the table of every schedule's cycles, with a timeline of those it
-// shows above it, and the selected cycle's details beside it. Past cycles, and those starting after
-// next quarter, show only when asked for.
-// Cycles come from their schedule's patterns, so the tab makes none; those who change schedules
-// change a cycle's Duration from its details, for that cycle only or for it and later ones, unless
-// its schedule can't be changed now. A row's menu decides, discards or resubmits the draft behind
-// its cycle.
+// The Releases page's Cycles tab: the table of every schedule's cycles, with a timeline above it
+// and the selected cycle's details beside it.
 
 import type { Asking, DraftKind, ReleaseStream } from "@fathom/shared";
 import {
@@ -206,7 +201,7 @@ export function CyclesTable({
   onOpen: (record: { id: string }) => void;
   onClose: (id: string) => void;
   actions: ScheduleActions;
-  decide: (asking: Asking, selection: DraftSelection) => void;
+  decide: (asking: Asking, selection: DraftSelection, all?: boolean) => void;
 }) {
   const { show } = view;
   const everyRow = cycleRows(streams, show, day);

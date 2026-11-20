@@ -25,7 +25,8 @@ import { type MouseEvent, type ReactNode, useMemo, useState } from "react";
 import { z } from "zod";
 import { describeProblem } from "./api.ts";
 import { DecisionModal } from "./decision-dialog.tsx";
-import { type Decision, decisionFor, type DraftSelection } from "./drafts.ts";
+import { type DraftSelection } from "./drafts.ts";
+import { type Decision, decisionFor } from "./draft-decisions.ts";
 import { notifyFailure, notifySuccess } from "./notices.tsx";
 import { HeadingTabPanel, HeadingTabs, PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
@@ -270,12 +271,16 @@ export function ReleasesPage({
     ...recordNodes(all),
     ...(plan.data === undefined ? [] : planNodes(plan.data)),
   ];
-  const decide = (asking: Asking, selection: DraftSelection) => {
+  const decide = (asking: Asking, selection: DraftSelection, all?: boolean) => {
     setDecision(
-      decisionFor(asking, selection, approves, [], {
-        fields: [],
-        records: nodes,
-      }),
+      decisionFor(
+        asking,
+        selection,
+        approves,
+        [],
+        { fields: [], records: nodes },
+        all,
+      ),
     );
     setDeciding(true);
   };

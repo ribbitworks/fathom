@@ -40,8 +40,8 @@ You're done when the details show the draft's record at their top.
 
 1. Select **To decide**.
 1. Tick each draft you want to approve. To tick every draft shown, tick the box before **Record** in the table's header.
-1. Select the **Approve** button at the right of the page's heading. It names how many you ticked, such as **Approve 3 drafts…**.
-1. Check the dialog. It lists any other drafts these depend on, which are approved with them.
+1. Select the **Approve** button at the right of the page's heading. It names how many of the drafts you ticked it approves, such as **Approve 3 drafts…**. A line before it says how many need another approver.
+1. Check the dialog. It names the drafts it approves, and any other drafts these depend on, which are approved with them. If someone else must approve some of the drafts you ticked, it names those too. They stay waiting, and the rest are approved.
 1. Select **Approve**.
 
 You can also approve one draft from its row's **⋯** menu, or with **Approve…** in its details.
@@ -87,7 +87,7 @@ You're done when the changes leave **Not published**. The records are back as th
 - **Waits on a rejected draft**, in a grey box after the name, means the draft depends on one that was rejected. It can't be decided until that one is resubmitted.
 - **Needs another approver**, in a grey box after the name, marks a draft you changed yourself. Someone else must approve it, though you can still reject it. A role with **Approve own drafts**, such as the Engineering Director, can approve its own.
 - **A greyed-out tick box** on **Not published** is on a change linked to one your search or filter hides.
-- **Another approver needed** opens when your role can't decide every draft involved. When you approve, that's the drafts you ticked and those they depend on. When you reject, it's the drafts you ticked and those that use them. It also opens when you approve drafts that depend on one you changed yourself. Nothing is approved or rejected.
+- **Another approver needed** opens when you can't decide any of the drafts involved: your role doesn't decide their area, or you changed them yourself. When you approve, that's the drafts you ticked and those they depend on. When you reject, it's the drafts you ticked and those that use them. Nothing is approved or rejected. If you can approve some of the drafts, you approve those, and the dialog names the ones left for someone else.
 
 ## Where Changes Go
 

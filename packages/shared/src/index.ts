@@ -237,6 +237,7 @@ export {
   approvePermissions,
   approvesKind,
   type Asking,
+  draftsChangedBy,
   type DraftKind,
   draftKinds,
   type DraftsAsked,

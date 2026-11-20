@@ -53,14 +53,13 @@ import {
 import { DecisionModal } from "./decision-dialog.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
 import {
-  type Decision,
-  decisionFor,
   draftSentAgain,
   noDrafts,
   pendingDraft,
   unsavedKeyNumber,
   type DraftSelection,
 } from "./drafts.ts";
+import { type Decision, decisionFor } from "./draft-decisions.ts";
 import { Icon } from "./icons.tsx";
 import { listsQuery } from "./lists.ts";
 import { LoadProblem } from "./load-problem.tsx";
@@ -439,13 +438,17 @@ export function ProjectsPage({
   const { save, shown, undoable, done } = changes;
   const canEdit = query.data !== undefined && page.mayEdit(query.data);
 
-  const decide = (asking: Asking, chosen: DraftSelection) => {
+  const decide = (asking: Asking, chosen: DraftSelection, all?: boolean) => {
     const plan = query.data as ProjectPlan;
     setDecision(
-      decisionFor(asking, chosen, approves, plan.featureColumns.lists, {
-        fields: plan.featureColumns.fields,
-        records: planNodes(plan),
-      }),
+      decisionFor(
+        asking,
+        chosen,
+        approves,
+        plan.featureColumns.lists,
+        { fields: plan.featureColumns.fields, records: planNodes(plan) },
+        all,
+      ),
     );
     setDeciding(true);
   };

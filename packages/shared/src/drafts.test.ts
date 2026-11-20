@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the drafts an Approver approves or rejects at once, and the area each kind belongs to.
+// Tests for the drafts an Approver approves or rejects at once, the area each kind belongs to, and
+// which drafts a user changed.
 
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { permissionGrid } from "./access.ts";
 import {
   approvableKinds,
+  draftsChangedBy,
   approvePermissions,
   draftKinds,
   draftsAtOnce,
@@ -221,5 +223,70 @@ describe("the keys of the drafts asked for", () => {
 
   it("names none of the kinds not asked for", () => {
     expect(draftKeysOf({ columns: ["f"] })).toEqual(["field f"]);
+  });
+});
+
+describe("the drafts a user changed, which need another approver", () => {
+  const change = (
+    recordId: string,
+    makerId: string | null,
+    kind = "change",
+    draft = true,
+  ) => ({ recordId, draft, kind, makerId });
+
+  it("names a record whose draft the user changed", () => {
+    expect(draftsChangedBy([change("r1", "u1")], "u1")).toEqual(
+      new Set(["r1"]),
+    );
+  });
+
+  it("leaves out drafts others or Fathom itself changed", () => {
+    expect(
+      draftsChangedBy([change("r1", "u2"), change("r2", null)], "u1"),
+    ).toEqual(new Set());
+  });
+
+  it("leaves out a change the user made that drafted nothing", () => {
+    expect(
+      draftsChangedBy([change("r1", "u1", "change", false)], "u1"),
+    ).toEqual(new Set());
+  });
+
+  it("starts again once a draft is approved or discarded", () => {
+    expect(
+      draftsChangedBy(
+        [
+          change("r1", "u1"),
+          change("r1", "u2", "approval"),
+          change("r2", "u1"),
+          change("r2", "u2", "discard"),
+        ],
+        "u1",
+      ),
+    ).toEqual(new Set());
+  });
+
+  it("counts a change made after the last approval", () => {
+    expect(
+      draftsChangedBy(
+        [change("r1", "u2", "approval"), change("r1", "u1")],
+        "u1",
+      ),
+    ).toEqual(new Set(["r1"]));
+  });
+
+  it("neither counts nor resets on rejecting or resubmitting, which change nothing", () => {
+    expect(
+      draftsChangedBy(
+        [
+          change("r1", "u1"),
+          change("r1", "u1", "rejection"),
+          change("r1", "u1", "resubmission"),
+          change("r2", "u1", "rejection"),
+          change("r2", "u1", "resubmission"),
+        ],
+        "u1",
+      ),
+    ).toEqual(new Set(["r1"]));
   });
 });

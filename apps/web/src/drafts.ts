@@ -1,17 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Approving and rejecting drafts through the server's API, several kinds at once: of people,
-// planned hires, People's columns, lists, choices, and the order of lists' choices and of People's
-// columns. Neither can be undone. Approving a draft approves the drafts it uses too, of any kind,
-// which are counted first: the server says which choices or columns an order uses, and the rest,
-// such as the new choices and columns a person is given and the new lists they belong to, are
-// worked out here, as is what a decision covers, whether a draft waits for a rejected one it
-// depends on, and whether the user's role approves drafts of every area the decision covers.
+// Drafts chosen to approve or reject, by kind: sending a decision to the server, the other drafts
+// one takes along, and how the drafts are named.
 
 import {
-  type Asking,
   type DraftKind,
-  draftsWhere,
+  type FeatureTeam,
   type Field,
   kindsAsked,
   type List,
@@ -103,7 +97,7 @@ export async function rejectDrafts(
   ).changeSetId;
 }
 
-const choicesOf = (lists: readonly List[]) =>
+export const choicesOf = (lists: readonly List[]) =>
   lists.flatMap((list) => list.choices.map((choice) => ({ list, choice })));
 
 // The choices only drafted to be added that a list's draft of its order uses, as the server says.
@@ -117,6 +111,7 @@ export interface Columns {
   fields: readonly Field[];
   people?: readonly Person[] | undefined;
   records?: readonly RecordNode[] | undefined;
+  featureTeams?: readonly FeatureTeam[] | undefined;
 }
 
 const addedField = (fields: readonly Field[], id: string) =>
@@ -360,6 +355,7 @@ export function draftNames(
   fields: readonly Field[] = [],
   people: readonly Person[] = [],
   records: readonly RecordNode[] = [],
+  featureTeams: readonly FeatureTeam[] = [],
 ): string[] {
   const names: string[] = [
     ...people
@@ -385,7 +381,12 @@ export function draftNames(
       names.push(`the new order for ${list.name}`);
     }
   }
-  names.push(...recordNames(selection.records, records));
+  names.push(
+    ...featureTeams
+      .filter(({ id }) => selection.featureTeams.includes(id))
+      .map(({ name }) => `the feature team ${name}`),
+    ...recordNames(selection.records, records),
+  );
   return names;
 }
 
@@ -396,180 +397,6 @@ export const waitsForRejected = (
   lists: readonly List[],
   columns?: Columns,
 ): boolean => draftTotal(heldBack(selection, lists, columns)) > 0;
-
-// The drafts to approve or reject once asked: those chosen, with any others the decision includes.
-export interface Decision {
-  asking: Asking;
-  selection: DraftSelection;
-  // The other drafts included, named: those the chosen ones use, when approving, or those that use
-  // the ones rejected.
-  included?: string[];
-  // How many drafts chosen are skipped, since they depend on a rejected draft.
-  leftOut?: number;
-  // When every draft chosen depends on a rejected draft, so none can be approved yet.
-  waiting?: true;
-  // The drafts the approval would apply that this user changed, named, when their role does not let
-  // them approve their own: another approver must approve them, so nothing is approved.
-  othersApprove?: string[];
-  // The drafts the decision covers whose areas this user's role does not approve, named: another
-  // approver must decide them, so nothing is decided.
-  beyondRole?: string[];
-}
-
-// The drafts in a selection that this user changed and may not approve themselves.
-function needingOthers(
-  selection: DraftSelection,
-  lists: readonly List[],
-  columns?: Columns,
-): DraftSelection {
-  const flagged = (draft?: { needsOtherApprover?: boolean | undefined }) =>
-    draft?.needsOtherApprover === true;
-  const people = columns?.people ?? [];
-  return {
-    ...noDrafts(),
-    people: people
-      .filter(
-        ({ id, draft }) => selection.people.includes(id) && flagged(draft),
-      )
-      .map(({ id }) => id),
-    plannedHires: people
-      .filter(
-        ({ id, draft }) =>
-          selection.plannedHires.includes(id) && flagged(draft),
-      )
-      .map(({ id }) => id),
-    lists: lists
-      .filter(({ id, draft }) => selection.lists.includes(id) && flagged(draft))
-      .map(({ id }) => id),
-    choices: choicesOf(lists)
-      .filter(
-        ({ choice }) =>
-          selection.choices.includes(choice.id) && flagged(choice.draft),
-      )
-      .map(({ choice }) => choice.id),
-    orders: lists
-      .filter(
-        ({ id, orderDraft }) =>
-          selection.orders.includes(id) && flagged(orderDraft),
-      )
-      .map(({ id }) => id),
-    columns: (columns?.fields ?? [])
-      .filter(
-        ({ id, draft }) => selection.columns.includes(id) && flagged(draft),
-      )
-      .map(({ id }) => id),
-    records: (columns?.records ?? [])
-      .filter(
-        ({ ref, draft }) =>
-          selection.records.some(
-            (one) => one.type === ref.type && one.id === ref.id,
-          ) && flagged(draft),
-      )
-      .map(({ ref }) => ref),
-  };
-}
-
-// Whether a person's draft holds what a fill drafts on them, rather than only changes of their own.
-const partOfFill = (draft: Person["draft"]) =>
-  draft?.action === "created" ||
-  ["positionId", "managerId", "managerFrom", "isManager"].some(
-    (field) => draft?.changed.includes(field) === true,
-  );
-
-// The other drafts of any fill those chosen are part of, which are decided with them: the hire, the
-// person who fills it, and the planned hires it moves to them. The server decides them together.
-function fillDrafts(
-  selection: DraftSelection,
-  columns?: Columns,
-): DraftSelection {
-  const people = columns?.people ?? [];
-  const found = noDrafts();
-  for (const hire of people) {
-    if (typeof hire.filler !== "string") continue;
-    const moved = people.filter(
-      (one) =>
-        one.kind === "planned-hire" &&
-        one.manager?.id === hire.filler &&
-        one.draft?.live.managerId === hire.id,
-    );
-    const hires = [hire.id, ...moved.map(({ id }) => id)];
-    const filler = people.filter(
-      ({ id, draft }) => id === hire.filler && partOfFill(draft),
-    );
-    if (
-      !hires.some((id) => selection.plannedHires.includes(id)) &&
-      !filler.some(({ id }) => selection.people.includes(id))
-    ) {
-      continue;
-    }
-    found.plannedHires.push(
-      ...hires.filter((id) => !selection.plannedHires.includes(id)),
-    );
-    found.people.push(
-      ...filler
-        .map(({ id }) => id)
-        .filter((id) => !selection.people.includes(id)),
-    );
-  }
-  return found;
-}
-
-// A decision on the drafts chosen, by a user who approves drafts of the kinds given: approving
-// includes the drafts they depend on, and skips any that depend on a rejected draft; rejecting
-// includes the drafts that depend on them. Asked to, it names the drafts chosen, when there are
-// several.
-export function decisionFor(
-  asking: Asking,
-  chosen: DraftSelection,
-  approves: readonly DraftKind[],
-  lists: readonly List[],
-  columns?: Columns,
-): Decision {
-  const fields = columns?.fields ?? [];
-  const names = (decided: DraftSelection) =>
-    draftNames(decided, lists, fields, columns?.people, columns?.records);
-  const beyond = (selection: DraftSelection) =>
-    draftsWhere(selection, (kind) => !approves.includes(kind));
-  if (asking === "reject") {
-    const dependents = joined(
-      usingDrafts(chosen, lists, columns),
-      fillDrafts(chosen, columns),
-    );
-    const selection = joined(chosen, dependents);
-    const outside = beyond(selection);
-    if (draftTotal(outside) > 0) {
-      return { asking, selection, beyondRole: names(outside) };
-    }
-    return {
-      asking,
-      selection,
-      ...(draftTotal(dependents) > 0 ? { included: names(dependents) } : {}),
-    };
-  }
-  const held = heldBack(chosen, lists, columns);
-  const ready = without(chosen, held);
-  if (draftTotal(ready) === 0)
-    return { asking, selection: chosen, waiting: true };
-  const used = joined(
-    usedDrafts(ready, lists, columns),
-    fillDrafts(ready, columns),
-  );
-  const selection = joined(ready, used);
-  const outside = beyond(selection);
-  if (draftTotal(outside) > 0) {
-    return { asking, selection, beyondRole: names(outside) };
-  }
-  const mine = needingOthers(selection, lists, columns);
-  if (draftTotal(mine) > 0) {
-    return { asking, selection, othersApprove: names(mine) };
-  }
-  return {
-    asking,
-    selection,
-    ...(draftTotal(used) > 0 ? { included: names(used) } : {}),
-    ...(draftTotal(held) > 0 ? { leftOut: draftTotal(held) } : {}),
-  };
-}
 
 // Whether two values are the same, a list holding the same items in the same order.
 const sameValue = (one: unknown, other: unknown): boolean =>

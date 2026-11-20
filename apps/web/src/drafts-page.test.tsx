@@ -1219,6 +1219,54 @@ describe("the Drafts page", () => {
     ).toBeDefined();
   });
 
+  it("approves the drafts ticked it may, leaving those this account changed for another approver", async () => {
+    // Given a draft this account changed, and one someone else did
+    await openDrafts({
+      "GET /api/people": peopleWith([
+        person("p1", "Avery Fictional", {
+          draft: draft({
+            action: "changed",
+            changed: ["preferredName"],
+            live: { preferredName: "Avery Before", values: {} },
+            needsOtherApprover: true,
+          }),
+        }),
+        person("p2", "Cleo Fictional", {
+          draft: draft({
+            action: "changed",
+            changed: ["preferredName"],
+            live: { preferredName: "Cleo Before", values: {} },
+          }),
+        }),
+        live,
+      ]),
+    });
+
+    // When both are ticked
+    for (const name of ["Avery Fictional", "Cleo Fictional"]) {
+      await userEvent.click(
+        await screen.findByRole("checkbox", {
+          name: `Select the draft of ${name}`,
+        }),
+      );
+    }
+
+    // Then Approve counts only the one it approves, and its dialog names both
+    expect(
+      screen.getByText("1 chosen draft needs another approver."),
+    ).toBeDefined();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Approve 1 draft…" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Approve 1 draft?",
+    });
+    expect(dialog.textContent).toContain("Cleo Fictional");
+    expect(dialog.textContent).toContain(
+      "This needs another approver and stays waiting:Avery Fictional",
+    );
+  });
+
   it("reloads the schedules after an approval, so a release's approved draft leaves the page", async () => {
     const { fetch } = await openDrafts({
       "GET /api/session": session([

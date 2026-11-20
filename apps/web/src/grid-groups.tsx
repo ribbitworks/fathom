@@ -124,20 +124,30 @@ export function AlsoUnder({ others }: { others: readonly OtherPlace[] }) {
   );
 }
 
-// A Name cell's content with its +1 after it, the name cut short first, so the +1 stays in view
-// while the row's controls take room from the cell.
+// A Name cell's content with its +1 and any mark of its column after it, such as a fact's box, the
+// name cut short first, so they stay in view while the row's controls take room from the cell.
 export function NamedWithOthers({
   others,
+  after,
   children,
 }: {
   others: readonly OtherPlace[];
+  after?: ReactNode;
   children: ReactNode;
 }) {
-  if (others.length === 0) return children;
+  if (
+    others.length === 0 &&
+    (after === undefined || after === null || after === false)
+  ) {
+    return children;
+  }
   return (
     <span className={classes.namedWithOthers}>
       <span className={classes.namedWithOthersName}>{children}</span>
-      <AlsoUnder others={others} />
+      <span>
+        <AlsoUnder others={others} />
+        {after}
+      </span>
     </span>
   );
 }

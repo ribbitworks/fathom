@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Drafts: changes waiting for approval, at most one for each record, and the kinds of record that
-// have them.
+// Drafts: changes waiting for approval, at most one for each record, the kinds of record that
+// have them, and which drafts a user changed, so another approver must approve them.
 
 import { z } from "zod";
 import { linkShape } from "./links.ts";
@@ -338,3 +338,31 @@ export const unpublishedDoneSchema = z.object({ total: z.number().int() });
 export const unpublishedChosenSchema = z.object({
   drafts: draftsRequestSchema.optional(),
 });
+
+// The records whose drafts a user changed since each was last approved or discarded, from their
+// history in order: rejecting or resubmitting a draft does not change it, so neither counts nor
+// resets. One rule for the drafts marked on screen and the approvals refused.
+export function draftsChangedBy(
+  rows: readonly {
+    recordId: string;
+    draft: boolean;
+    kind: string;
+    makerId: string | null;
+  }[],
+  userId: string,
+): Set<string> {
+  const changed = new Set<string>();
+  for (const row of rows) {
+    if (row.kind === "approval" || row.kind === "discard") {
+      changed.delete(row.recordId);
+    } else if (
+      row.draft &&
+      row.makerId === userId &&
+      row.kind !== "rejection" &&
+      row.kind !== "resubmission"
+    ) {
+      changed.add(row.recordId);
+    }
+  }
+  return changed;
+}
