@@ -24,7 +24,6 @@ import {
   monthsBetween,
 } from "@fathom/shared";
 import { MantineProvider, mergeThemeOverrides } from "@mantine/core";
-import type { DraftLike } from "./draft-marks.ts";
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory } from "@tanstack/react-router";
 import {
@@ -110,13 +109,14 @@ export function changesSent(
   });
 }
 
-// A draft waiting for approval, and one rejected with a reason, for tests of draft marks.
-export const waitingDraft: DraftLike = { action: "changed", state: "waiting" };
-export const rejectedDraft: DraftLike = {
-  action: "changed",
+// A draft waiting for approval, and one rejected with a reason, made by no one in particular.
+const waitingOf = { state: "waiting", madeBy: null, madeAt: null } as const;
+export const waitingDraft = { ...waitingOf, action: "changed" } as const;
+export const rejectedDraft = {
+  ...waitingDraft,
   state: "rejected",
   reason: "Fictional reason.",
-};
+} as const;
 
 export const fictionalUser = {
   user: {
@@ -714,12 +714,6 @@ export const nextColumn = (kind: "date" | "flag" | "text") =>
   });
 
 // Lists with drafts of every part, for the tests of deciding drafts.
-export const waitingDraft = {
-  state: "waiting" as const,
-  madeBy: null,
-  madeAt: null,
-};
-
 export const addedChoice = (id: string): Choice => ({
   id,
   label: id.toUpperCase(),
@@ -746,7 +740,7 @@ export const teamsList: List = {
   retired: false,
   choices: [addedChoice("b"), liveChoice("a"), addedChoice("c")],
   draft: { ...waitingDraft, action: "created", changed: [], live: {} },
-  orderDraft: { ...waitingDraft, live: ["a"], uses: ["b"] },
+  orderDraft: { ...waitingOf, live: ["a"], uses: ["b"] },
 };
 
 // A live list whose order puts a choice drafted to be added first.
@@ -758,7 +752,7 @@ export const sitesList: List = {
   visibility: "general",
   retired: false,
   choices: [addedChoice("f"), liveChoice("d"), addedChoice("e")],
-  orderDraft: { ...waitingDraft, live: ["d"], uses: ["f"] },
+  orderDraft: { ...waitingOf, live: ["d"], uses: ["f"] },
 };
 
 export const bothLists = [teamsList, sitesList];
