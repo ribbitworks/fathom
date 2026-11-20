@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of choosing the check's jobs: skipping, before a push, without a connection and offline,
-// and naming each job that failed.
+// Tests of the check's jobs: choosing them, how many run side by side, stopping one that hangs, and
+// naming each job that failed.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -19,15 +19,15 @@ import { fileURLToPath } from "node:url";
 
 const scripts = fileURLToPath(new URL(".", import.meta.url));
 const jobs = [
+  "Package tests",
+  "Security report",
+  "Script tests",
   "ESLint",
   "Formatting",
   "Types",
   "Markdown",
   "Shell scripts",
   "Licences",
-  "Script tests",
-  "Package tests",
-  "Security report",
   "Renovate settings",
 ];
 const beforePush = [
@@ -61,7 +61,7 @@ function copy({ prepared }) {
   mkdirSync(tools);
   writeFileSync(
     join(tools, "pnpm"),
-    '#!/usr/bin/env bash\ncase " ${FAILING:-} " in *" $1 "*) echo "failed $*"; exit 1 ;; esac\necho "ran $*${FATHOM_OFFLINE:+ offline, fixes from $FATHOM_SECURITY_FIXES_DATE}"\n',
+    '#!/usr/bin/env bash\ncase " ${HANGING:-} " in *" $1 "*) echo "started $*"; exec sleep 60 ;; esac\ncase " ${FAILING:-} " in *" $1 "*) echo "failed $*"; exit 1 ;; esac\necho "ran $*${FATHOM_OFFLINE:+ offline, fixes from $FATHOM_SECURITY_FIXES_DATE}"\n',
     { mode: 0o755 },
   );
   return { root, tools };
@@ -69,7 +69,13 @@ function copy({ prepared }) {
 
 function run(
   args,
-  { failing = "", online = true, prepared = true, ci = undefined } = {},
+  {
+    failing = "",
+    online = true,
+    prepared = true,
+    ci = undefined,
+    environment = {},
+  } = {},
 ) {
   const { root, tools } = copy({ prepared });
   return spawnSync("bash", ["scripts/check.sh", ...args], {
@@ -81,6 +87,7 @@ function run(
       FAILING: failing,
       ONLINE: online ? "1" : "0",
       ...(ci === undefined ? {} : { CI: ci }),
+      ...environment,
     },
   });
 }
@@ -127,7 +134,7 @@ describe("scripts/check.sh", () => {
     assert.equal(result.status, 1);
     assert.ok(
       result.stderr.includes(
-        `No job left to skip is named ESLint; those left are: ${jobs.slice(1).join(", ")}`,
+        `No job left to skip is named ESLint; those left are: ${jobs.filter((job) => job !== "ESLint").join(", ")}`,
       ),
       result.stderr,
     );
@@ -207,6 +214,59 @@ describe("scripts/check.sh", () => {
       ),
       result.stderr,
     );
+  });
+
+  it("stops a job that runs past the time limit, naming it, and runs the rest in its place", () => {
+    // Given one job side by side, and the first job hanging
+    const result = run(["--before-push"], {
+      environment: {
+        HANGING: "test:changed",
+        FATHOM_CHECK_JOB_SECONDS: "3",
+        FATHOM_CHECK_SHARES: "1000",
+      },
+    });
+
+    // Then it is stopped, named, with its output so far, and every other job still runs
+    assert.equal(result.status, 1);
+    assert.ok(
+      result.stdout.includes("| Changed tests | Stopped |"),
+      result.stdout,
+    );
+    for (const job of beforePush.filter((one) => one !== "Changed tests"))
+      assert.ok(result.stdout.includes(`| ${job} | Pass |`), result.stdout);
+    assert.ok(
+      result.stdout.includes(
+        "==> Changed tests ran past the 3s limit, so it was stopped; its output up to then follows\nstarted test:changed",
+      ),
+      result.stdout,
+    );
+    assert.ok(
+      result.stderr.includes("error: These checks failed: Changed tests;"),
+      result.stderr,
+    );
+  });
+
+  it("runs every job side by side when no other check shares the computer", () => {
+    const result = check("--before-push");
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(
+      result.stdout.includes("Running 6 jobs, up to 6 side by side"),
+      result.stdout,
+    );
+    assert.ok(!result.stderr.includes("setpgid"), result.stderr);
+  });
+
+  it("runs only its share of the cores side by side, and every job in the end", () => {
+    const result = run(["--before-push"], {
+      environment: { FATHOM_CHECK_SHARES: "1000" },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(
+      result.stdout.includes("Running 6 jobs, up to 1 side by side"),
+      result.stdout,
+    );
+    for (const job of beforePush)
+      assert.ok(result.stdout.includes(`| ${job} | Pass |`), result.stdout);
   });
 
   it("stops before starting any job without a connection, naming --offline", () => {

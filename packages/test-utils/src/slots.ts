@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Limits how many of one kind of work run at once on this computer, across processes and copies of
-// the repository, such as starting test databases or running the package tests. Each run holds a
-// slot, a file in a folder of the user's own under the system's temporary folder, naming its
-// process; a slot whose process has ended is taken over, so a crashed run never blocks others.
+// the repository, in the order they asked, such as starting test databases or running checks.
 
 import { randomUUID } from "node:crypto";
 import {
   lstatSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   rmSync,
+  statSync,
+  utimesSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir, userInfo } from "node:os";
@@ -127,24 +128,125 @@ function ownFolder(folder: string): void {
   }
 }
 
+// Whether a run whose ticket this is may take a free slot now: those waiting take turns in the
+// order they asked, so only as many of the first in line as there are free slots may.
+export function mayTakeTurn(
+  waiting: readonly string[],
+  ticket: string,
+  free: number,
+): boolean {
+  const place = [...waiting].sort().indexOf(ticket);
+  return place !== -1 && place < free;
+}
+
+// A waiting run's ticket is named ticket-<when it asked, in padded milliseconds>-<process>-<token>,
+// so the line sorts by when each run asked, then by its process.
+const ticketTimeDigits = 15;
+
+function ticketFor(token: string): string {
+  const [processId, tokenId] = token.split(":");
+  return `ticket-${String(Date.now()).padStart(ticketTimeDigits, "0")}-${processId ?? ""}-${tokenId ?? ""}`;
+}
+
+function ticketHolder(ticket: string): number | undefined {
+  const processId = Number.parseInt(ticket.split("-")[2] ?? "", 10);
+  return Number.isInteger(processId) ? processId : undefined;
+}
+
+// A waiting run touches its ticket each time it looks for a slot, so a ticket left untouched this
+// long is a crashed run's, even if another process has since been given its number.
+const ticketStaleMilliseconds = 60_000;
+
+function isWaiting(folder: string, ticket: string): boolean {
+  const holder = ticketHolder(ticket);
+  if (holder === undefined || !isRunning(holder)) return false;
+  try {
+    return (
+      Date.now() - statSync(join(folder, ticket)).mtimeMs <
+      ticketStaleMilliseconds
+    );
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+    throw error;
+  }
+}
+
+// The tickets of the runs still waiting, after removing those of runs that have ended, so a crashed
+// waiter never holds up the line.
+function waitingLine(folder: string): string[] {
+  return readdirSync(folder)
+    .filter((name) => name.startsWith("ticket-"))
+    .filter((ticket) => {
+      if (isWaiting(folder, ticket)) return true;
+      rmSync(join(folder, ticket), { force: true });
+      return false;
+    });
+}
+
+function isFree(slot: string): boolean {
+  const contents = contentsOf(slot);
+  if (contents === undefined) return true;
+  const holder = holderIn(contents);
+  return holder !== undefined && !isRunning(holder);
+}
+
+// What a run waiting its turn says: what it waits to do, which running processes hold the slots, and
+// how many runs that asked first wait ahead of it.
+function waitWords(options: SlotOptions, ahead: number): string {
+  const holders = slotsOf(options)
+    .filter((slot) => !isFree(slot))
+    .map((slot) => describeHolder(contentsOf(slot) ?? ""))
+    .filter((holder) => holder !== undefined);
+  const reasons = [
+    ...(holders.length > 0
+      ? [`the slots in ${options.folder} are held by ${holders.join(", ")}`]
+      : []),
+    ...(ahead > 0
+      ? [`${String(ahead)} ${ahead === 1 ? "run" : "runs"} asked first`]
+      : []),
+  ];
+  return [`Waiting to ${options.waitingTo}`, ...reasons].join("; ");
+}
+
+// Touches a waiting run's ticket, or puts it back under its first name, keeping its place, when
+// another run passed it as stale while this one was asleep, as a computer is while closed.
+function touchTicket(ticketFile: string, token: string): void {
+  const now = new Date();
+  try {
+    utimesSync(ticketFile, now, now);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    writeFileSync(ticketFile, token);
+  }
+}
+
 async function takeSlot(options: SlotOptions, token: string): Promise<string> {
   ownFolder(options.folder);
-  const asked = Date.now();
-  let reported = false;
-  for (;;) {
-    for (const slot of slotsOf(options)) {
-      if (tryTake(slot, token)) return slot;
+  const ticket = ticketFor(token);
+  const ticketFile = join(options.folder, ticket);
+  writeFileSync(ticketFile, token);
+  try {
+    const asked = Date.now();
+    let reported = false;
+    for (;;) {
+      touchTicket(ticketFile, token);
+      // The line is read before the free slots are counted, so a slot freed in between is left to
+      // whoever is first in line by then.
+      const line = waitingLine(options.folder);
+      const free = slotsOf(options).filter(isFree).length;
+      if (mayTakeTurn(line, ticket, free)) {
+        for (const slot of slotsOf(options)) {
+          if (tryTake(slot, token)) return slot;
+        }
+      }
+      if (!reported && Date.now() - asked >= options.reportAfterMilliseconds) {
+        reported = true;
+        options.report(waitWords(options, line.sort().indexOf(ticket)));
+      }
+      await delay(options.retryMilliseconds);
     }
-    if (!reported && Date.now() - asked >= options.reportAfterMilliseconds) {
-      reported = true;
-      const holders = slotsOf(options)
-        .map((slot) => describeHolder(contentsOf(slot) ?? ""))
-        .filter((holder) => holder !== undefined);
-      options.report(
-        `Waiting to ${options.waitingTo}; the slots in ${options.folder} are held by ${holders.join(", ")}`,
-      );
-    }
-    await delay(options.retryMilliseconds);
+  } finally {
+    rmSync(ticketFile, { force: true });
   }
 }
 
@@ -162,8 +264,18 @@ export async function inSlot<T>(
   }
 }
 
-// Runs the work in this computer's one slot for it, or at once when the environment shows a run that
-// already holds that slot, as for processes the work itself starts. The work is given the
+// Whether the environment shows a run that already holds its turn, marked so by inTurn.
+export function holdsTurn(
+  environment: NodeJS.ProcessEnv,
+  marker: string,
+): boolean {
+  return Object.entries(environment).some(
+    ([name, value]) => name === marker && value === "1",
+  );
+}
+
+// Runs the work in its turn on this computer, or at once when the environment shows a run that
+// already holds its turn, as for processes the work itself starts. The work is given the
 // environment marked so. A run that had to wait says so, and once it starts, how long it waited.
 export async function inTurn<T>(
   work: (environment: NodeJS.ProcessEnv) => T | Promise<T>,
@@ -172,10 +284,7 @@ export async function inTurn<T>(
   environment: NodeJS.ProcessEnv,
 ): Promise<T> {
   const marked = { ...environment, [marker]: "1" };
-  const inHeldSlot = Object.entries(environment).some(
-    ([name, value]) => name === marker && value === "1",
-  );
-  if (inHeldSlot) return work(marked);
+  if (holdsTurn(environment, marker)) return work(marked);
   const asked = Date.now();
   let waited = false;
   return inSlot(

@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of the limits on how much of one kind of work runs at once on this computer, which
-// packages/test-utils/src/slots.ts sets: no more runs together than the limit, a slot is freed
-// whether or not its run succeeds, a slot whose process has ended is taken over, a slot is freed
-// only by its holder, and a long wait says what it waits to do and which processes hold the slots;
-// and work run in its turn says how long it waited, and runs at once within a run holding the slot.
+// Tests of the limits on how much of one kind of work runs at once on this computer, and in what
+// order, which packages/test-utils/src/slots.ts sets.
 
 import assert from "node:assert/strict";
 import {
@@ -14,6 +11,7 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  utimesSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir, userInfo } from "node:os";
@@ -24,6 +22,7 @@ import {
   inSlot,
   inTurn,
   machineSlots,
+  mayTakeTurn,
 } from "../packages/test-utils/src/slots.ts";
 
 // A process number no process holds, above the largest any system gives out.
@@ -119,6 +118,111 @@ describe("running in slots", () => {
     );
     assert.equal(result, "started");
     assert.equal(existsSync(join(folder, "slot-0")), false);
+  });
+
+  it("waits behind a run that asked first, though a slot is free", async () => {
+    // Given a run of another copy that asked first and still waits
+    const earlier = join(
+      folder,
+      `ticket-000000000000001-${String(process.pid)}-earlier`,
+    );
+    writeFileSync(earlier, "");
+    const waiting = inSlot(
+      () => Promise.resolve("started"),
+      options({ atOnce: 1, reportAfterMilliseconds: 0 }),
+    );
+
+    // When it has looked for a slot
+    while (reports.length === 0) await delay(5);
+
+    // Then it has left the free slot to the run ahead, and takes it once that run has gone
+    assert.deepEqual(reports, [
+      "Waiting to start a test database; 1 run asked first",
+    ]);
+    assert.equal(existsSync(join(folder, "slot-0")), false);
+    rmSync(earlier);
+    assert.equal(await waiting, "started");
+    assert.deepEqual(readdirSync(folder), []);
+  });
+
+  it("takes its turn ahead of a waiting run whose process has ended", async () => {
+    writeFileSync(
+      join(folder, `ticket-000000000000001-${String(endedProcess)}-crashed`),
+      "",
+    );
+    const result = await inSlot(
+      () => Promise.resolve("started"),
+      options({ atOnce: 1 }),
+    );
+    assert.equal(result, "started");
+    assert.deepEqual(readdirSync(folder), []);
+  });
+
+  it("passes a waiting run's ticket left untouched long enough to be a crashed run's", async () => {
+    // Given a ticket of a running process, untouched for an hour
+    const stale = join(
+      folder,
+      `ticket-000000000000001-${String(process.pid)}-reused`,
+    );
+    writeFileSync(stale, "");
+    const anHourAgo = new Date(Date.now() - 3_600_000);
+    utimesSync(stale, anHourAgo, anHourAgo);
+
+    // Then a run takes its turn ahead of it, and the ticket is gone
+    const result = await inSlot(
+      () => Promise.resolve("started"),
+      options({ atOnce: 1 }),
+    );
+    assert.equal(result, "started");
+    assert.deepEqual(readdirSync(folder), []);
+  });
+
+  it("puts its ticket back, keeping its place, when another run passed it while it slept", async () => {
+    // Given a run waiting for the one slot
+    writeFileSync(join(folder, "slot-0"), `${String(process.pid)}:held`);
+    const waiting = inSlot(
+      () => Promise.resolve("started"),
+      options({ atOnce: 1 }),
+    );
+    const tickets = () =>
+      readdirSync(folder).filter((name) => name.startsWith("ticket-"));
+    while (tickets().length === 0) await delay(5);
+    const [ticket] = tickets();
+
+    // When its ticket is removed, as a run that woke first removes a stale one
+    rmSync(join(folder, ticket));
+
+    // Then it puts the same ticket back, and takes the slot once it is free
+    while (tickets().length === 0) await delay(5);
+    assert.deepEqual(tickets(), [ticket]);
+    rmSync(join(folder, "slot-0"));
+    assert.equal(await waiting, "started");
+    assert.deepEqual(readdirSync(folder), []);
+  });
+
+  it("names the holders and the runs ahead when both keep it waiting, but no holder that has ended", async () => {
+    // Given one slot held by a running process, one by an ended one, and a run that asked first
+    writeFileSync(join(folder, "slot-0"), `${String(process.pid)}:held`);
+    writeFileSync(join(folder, "slot-1"), `${String(endedProcess)}:left`);
+    const earlier = join(
+      folder,
+      `ticket-000000000000001-${String(process.pid)}-earlier`,
+    );
+    writeFileSync(earlier, "");
+    const waiting = inSlot(
+      () => Promise.resolve(),
+      options({ reportAfterMilliseconds: 0 }),
+    );
+
+    // When it has looked for a slot
+    while (reports.length === 0) await delay(5);
+
+    // Then it names the running holder and the run ahead
+    assert.deepEqual(reports, [
+      `Waiting to start a test database; the slots in ${folder} are held by process ${String(process.pid)}; 1 run asked first`,
+    ]);
+    rmSync(earlier);
+    await waiting;
   });
 
   it("leaves a slot alone that another holder took in the meantime", async () => {
@@ -232,5 +336,29 @@ describe("running in turn", () => {
       "ran",
     );
     assert.deepEqual(reports, []);
+  });
+});
+
+describe("taking turns", () => {
+  const line = ["ticket-2-b", "ticket-1-a", "ticket-3-c"];
+
+  it("lets the first in line take the one free slot", () => {
+    assert.equal(mayTakeTurn(line, "ticket-1-a", 1), true);
+  });
+
+  it("keeps the next in line waiting while only one slot is free", () => {
+    assert.equal(mayTakeTurn(line, "ticket-2-b", 1), false);
+  });
+
+  it("lets as many of the first in line through as slots are free", () => {
+    assert.equal(mayTakeTurn(line, "ticket-2-b", 2), true);
+  });
+
+  it("lets nobody through while no slot is free", () => {
+    assert.equal(mayTakeTurn(line, "ticket-1-a", 0), false);
+  });
+
+  it("lets through no run that is not in line", () => {
+    assert.equal(mayTakeTurn(line, "ticket-4-d", 3), false);
   });
 });
