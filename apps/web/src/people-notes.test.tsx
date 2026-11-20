@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for Note columns on the People page, with the server's responses simulated: a note in its
-// cell and its panel, saving, reading, clearing and pasting it, its drafts, searching by it, and its
-// panel kept in the address.
+// cell and its panel, saving, reading, clearing and pasting it, its drafts, and searching by it.
 
-import { colourTag } from "@fathom/shared";
 import {
   act,
   fireEvent,
@@ -17,82 +15,23 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   bodyOf,
   chooseIn,
-  fictionalUser,
   renderApp,
   serverAnswers,
   changesSent,
 } from "./test-support.tsx";
-
-const s1 = "00000000-0000-4000-8000-000000000001";
-
-const session = (permissions: string[]) => () =>
-  Response.json({ ...fictionalUser, permissions });
-const editor = session([
-  "configuration:edit",
-  "configuration:view",
-  "people:edit",
-  "people:view",
-  "plan:view",
-  "features:view",
-]);
-const viewer = session(["people:view", "plan:view", "features:view"]);
-
-const background = {
-  id: "f1",
-  keyNumber: 1,
-  name: "Background",
-  type: "note",
-  listId: null,
-  visibility: "general",
-  multiple: false,
-  required: false,
-};
-const averyNote = `**Joined** from the ${colourTag("teal")}platform</span> team`;
-const avery = {
-  id: "p1",
-  keyNumber: 1,
-  preferredName: "Avery Fictional",
-  employeeId: "E1",
-  positionId: "position-1",
-  values: {},
-  links: {},
-  notes: { f1: averyNote },
-};
-const blake = {
-  id: "p2",
-  keyNumber: 1,
-  preferredName: "Blake Fictional",
-  employeeId: "E2",
-  positionId: "position-1",
-  values: {},
-  links: {},
-};
-const peopleAnswer =
-  (people: object[] = [avery, blake]) =>
-  () =>
-    Response.json({
-      people,
-      fields: [background],
-      order: ["preferredName", "employeeId", "f1"],
-    });
-const saved = () => Response.json({ changeSetId: s1 });
-const positions = {
-  id: "positions",
-  keyNumber: 1,
-  name: "Positions",
-  description: "",
-  visibility: "general",
-  retired: false,
-  builtIn: "positions",
-  choices: [
-    {
-      id: "position-1",
-      label: "Fictional Engineer",
-      description: "",
-      retired: false,
-    },
-  ],
-};
+import {
+  avery,
+  averyNote,
+  background,
+  blake,
+  editor,
+  peopleAnswer,
+  positions,
+  s1,
+  saved,
+  session,
+  viewer,
+} from "./people-note-fixtures.ts";
 
 // The test browser lays nothing out, so the editor's measurements of where text is find nothing.
 beforeAll(() => {
@@ -594,223 +533,6 @@ describe("a Note column", () => {
           onPlannedHires: true,
         },
       ]);
-    });
-  });
-
-  describe("kept in the address", () => {
-    async function openAt(
-      path: string,
-      session = editor,
-      people: Answers[string] = peopleAnswer(),
-    ) {
-      serverAnswers({
-        "GET /api/session": session,
-        "GET /api/people": people,
-        "GET /api/lists": () => Response.json({ lists: [positions] }),
-      });
-      const history = renderApp(path);
-      await screen.findByRole("grid", { name: "People" });
-      return history;
-    }
-    const detailsNote = (person: string) =>
-      screen.findByRole("region", { name: `Background for ${person}` });
-    const noDetailsNote = () => {
-      expect(
-        screen.queryByRole("region", { name: /^Background for / }),
-      ).toBeNull();
-    };
-    const noteIn = (history: { location: { search: string } }) =>
-      new URLSearchParams(history.location.search).get("note");
-
-    it("keeps a note opened from the details, and Back closes it", async () => {
-      const history = await openAt("/people?open=E1");
-      await userEvent.click(
-        await screen.findByRole("button", { name: "Open Background" }),
-      );
-      await detailsNote("Avery Fictional");
-      await waitFor(() => {
-        expect(noteIn(history)).toBe("f1.p1");
-      });
-      act(() => {
-        history.back();
-      });
-      await waitFor(() => {
-        noDetailsNote();
-      });
-      expect(noteIn(history)).toBeNull();
-    });
-
-    it("takes the note out once closed", async () => {
-      const history = await openAt("/people?open=E1&note=f1.p1");
-      const opened = await detailsNote("Avery Fictional");
-      await userEvent.click(
-        within(opened).getByRole("button", { name: "Close note" }),
-      );
-      await waitFor(() => {
-        expect(noteIn(history)).toBeNull();
-      });
-      noDetailsNote();
-    });
-
-    it("opens the note it names, to be written by those who may", async () => {
-      await openAt("/people?open=E1&note=f1.p1");
-      const opened = await detailsNote("Avery Fictional");
-      expect(within(opened).getByText("Markdown")).toBeTruthy();
-    });
-
-    it("opens the note it names read only to those who may not change it", async () => {
-      await openAt("/people?open=E1&note=f1.p1", viewer);
-      const opened = await detailsNote("Avery Fictional");
-      expect(within(opened).getByText("Joined").tagName).toBe("STRONG");
-      expect(within(opened).queryByText("Markdown")).toBeNull();
-    });
-
-    it("opens nothing for another person's note, and takes it out", async () => {
-      const history = await openAt("/people?open=E2&note=f1.p1");
-      await screen.findByRole("button", { name: "Open Background" });
-      await waitFor(() => {
-        expect(noteIn(history)).toBeNull();
-      });
-      noDetailsNote();
-    });
-
-    it("stays open while the table's view changes", async () => {
-      const history = await openAt("/people?open=E1&note=f1.p1");
-      await detailsNote("Avery Fictional");
-      await userEvent.type(
-        screen.getByRole("textbox", { name: "Search people" }),
-        "Avery",
-      );
-      await waitFor(() => {
-        expect(new URLSearchParams(history.location.search).get("search")).toBe(
-          "Avery",
-        );
-      });
-      expect(noteIn(history)).toBe("f1.p1");
-      await detailsNote("Avery Fictional");
-    });
-
-    it("opens the note again with Forward", async () => {
-      const history = await openAt("/people?open=E1");
-      await userEvent.click(
-        await screen.findByRole("button", { name: "Open Background" }),
-      );
-      await detailsNote("Avery Fictional");
-      act(() => {
-        history.back();
-      });
-      await waitFor(() => {
-        noDetailsNote();
-      });
-      act(() => {
-        history.forward();
-      });
-      await detailsNote("Avery Fictional");
-    });
-
-    it("keeps a changed note open through Back", async () => {
-      const history = await openAt("/people?open=E1");
-      await userEvent.click(
-        await screen.findByRole("button", { name: "Open Background" }),
-      );
-      const opened = await detailsNote("Avery Fictional");
-      await userEvent.click(within(opened).getByText("Markdown"));
-      await userEvent.type(
-        within(opened).getByRole("textbox", { name: "Markdown" }),
-        " again",
-      );
-      act(() => {
-        history.back();
-      });
-      await waitFor(() => {
-        expect(noteIn(history)).toBeNull();
-      });
-      expect(
-        within(await detailsNote("Avery Fictional")).getByRole("textbox", {
-          name: "Markdown",
-        }),
-      ).toHaveProperty("value", `${averyNote} again`);
-    });
-
-    it("closes the note, and takes it out, once no person is shown", async () => {
-      const history = await openAt("/people?open=E1&note=f1.p1");
-      await detailsNote("Avery Fictional");
-      act(() => {
-        history.push("/people?note=f1.p1");
-      });
-      await waitFor(() => {
-        noDetailsNote();
-      });
-      await waitFor(() => {
-        expect(noteIn(history)).toBeNull();
-      });
-    });
-
-    it("opens the note the address names once another being changed closes", async () => {
-      const handover = {
-        ...background,
-        id: "f2",
-        keyNumber: 2,
-        name: "Handover",
-      };
-      const history = await openAt("/people?open=E1", editor, () =>
-        Response.json({
-          people: [avery, blake],
-          fields: [background, handover],
-          order: ["preferredName", "employeeId", "f1", "f2"],
-        }),
-      );
-      await userEvent.click(
-        await screen.findByRole("button", { name: "Open Background" }),
-      );
-      await detailsNote("Avery Fictional");
-      await userEvent.click(
-        screen.getByRole("button", { name: "Open Handover" }),
-      );
-      const handoverNote = await screen.findByRole("region", {
-        name: "Handover for Avery Fictional",
-      });
-      await userEvent.click(within(handoverNote).getByText("Markdown"));
-      await userEvent.type(
-        within(handoverNote).getByRole("textbox", { name: "Markdown" }),
-        "Hand over the keys",
-      );
-      act(() => {
-        history.back();
-      });
-      await waitFor(() => {
-        expect(noteIn(history)).toBe("f1.p1");
-      });
-      await userEvent.click(
-        within(handoverNote).getByRole("button", { name: "Cancel" }),
-      );
-      await detailsNote("Avery Fictional");
-      expect(noteIn(history)).toBe("f1.p1");
-    });
-
-    it("closes the note, and takes it out, when the details close", async () => {
-      const history = await openAt("/people?open=E1&note=f1.p1");
-      await detailsNote("Avery Fictional");
-      await userEvent.click(
-        screen.getByRole("button", { name: "Close details" }),
-      );
-      await waitFor(() => {
-        expect(noteIn(history)).toBeNull();
-      });
-      noDetailsNote();
-    });
-
-    it("closes the note, and takes it out, when another person is shown", async () => {
-      const history = await openAt("/people?open=E1&note=f1.p1");
-      await detailsNote("Avery Fictional");
-      fireEvent.click(
-        screen.getByRole("button", { name: "Show details of Blake Fictional" }),
-      );
-      await screen.findByRole("heading", { name: "Blake Fictional" });
-      await waitFor(() => {
-        expect(noteIn(history)).toBeNull();
-      });
-      noDetailsNote();
     });
   });
 });

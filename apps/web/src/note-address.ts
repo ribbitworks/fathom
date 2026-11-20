@@ -12,13 +12,15 @@ const separator = ".";
 const columnKeyLength = 36;
 const recordIdLength = 120;
 
-export const noteSearch = z.object({
-  note: z
-    .string()
-    .max(columnKeyLength + separator.length + recordIdLength)
-    .optional()
-    .catch(undefined),
-});
+const noteValue = z
+  .string()
+  .max(columnKeyLength + separator.length + recordIdLength)
+  .optional()
+  .catch(undefined);
+
+// The note open from a record's details, and the one open from a table's cell, each kept apart so
+// neither closes the other.
+export const noteSearch = z.object({ note: noteValue, tableNote: noteValue });
 
 // The note's column, then its record by Fathom's own ID, so an address left naming another record's
 // note opens nothing.
@@ -69,5 +71,10 @@ export interface OpenNoteAddress {
 // Given by the signed-in pages; without it, as when a panel is drawn on its own, a note is kept in
 // the page alone.
 export const OpenNoteContext = createContext<OpenNoteAddress | undefined>(
+  undefined,
+);
+
+// The same for a note opened from a table's cell.
+export const TableNoteContext = createContext<OpenNoteAddress | undefined>(
   undefined,
 );
