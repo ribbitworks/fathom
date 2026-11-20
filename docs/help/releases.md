@@ -12,7 +12,7 @@
 - **Tabs:** the page has three tabs beside its heading: **Releases**, where it opens, **Cycles** and **Schedules**. Each tab has its own table, with a timeline of what the table lists above it. A search, a filter or a saved view narrows both.
 - **Panel:** a record's details open in a panel beside the timeline and the table. To close it, select the **×** at its top right, or press Esc.
 - **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. A dot before a name marks its draft.
-- **Who changes what:** if your role can change **Features**, you make and change releases, and someone whose role approves features approves them. If your role can change **Plan** or **Configuration**, you add schedules and change their cycles, and someone whose role approves the plan or configuration approves them. Others see the page without these buttons and pencils.
+- **Who changes what:** if your role can change **Features and releases**, you make and change releases, and someone whose role approves features and releases approves them. If your role can change **Plan** or **Configuration**, you add schedules and change their cycles, and someone whose role approves the plan or configuration approves them. Others see the page without these buttons and pencils.
 
 Above each timeline are the search field, the **Draft** menu, the **Metrics** button, and the **Group by** and **Views** menus.
 
@@ -91,11 +91,11 @@ You're done when the release's row shows a dot for your draft.
 A release can have one note, with formatting such as bold and lists, for anything worth knowing about it.
 
 1. Select the **⋯** at the end of the release's row.
-1. Select **Add note…**. The note opens in a panel beside the release's details.
+1. Select **Add note…**. The note opens in a panel under the release's details.
 1. Write the note.
 1. Select **Save**.
 
-To read or change a note, open the release, then select the button at the right of its **Note** row. The note stays open when you reload the page, and a link to the page opens it for anyone who can see it.
+To read or change a note, open the release, then select the button at the right of its **Note** row. The note stays open when you reload the page, and a link to the page opens it for anyone who can see it. To give the note the whole height, select **Maximize**, the button with four corners at its top right. Select **Restore**, in the same place, to bring the details back.
 
 You're done when the release's **Note** row shows the start of your note.
 

@@ -67,6 +67,33 @@ Each unit says what it stands for, such as **Person-days (8 hours)**. The hours 
 
 You're done when **Effort** shows your estimate, with a hollow dot.
 
+### Write a Note
+
+**Notes** holds a note for each feature, with formatting such as bold and lists.
+
+1. Select the feature's cell in the **Notes** column.
+1. Press Enter. The note opens in a panel beside the table, or under the feature's details if they're open.
+1. Write the note.
+1. Select **Save**.
+
+A note stays open when you reload the page. A link to the page opens it for anyone who can see it. Anything you typed but didn't save is lost when you reload.
+
+If the note opens under the feature's details, select **Maximize**, the button with four corners at its top right, to give it the whole height.
+
+You're done when the cell shows the start of your note.
+
+See [People](people.md#write-a-note) for more.
+
+### Count Features
+
+1. Select **Metrics**. The **Metrics** panel opens beside the table.
+1. Under **Break down by**, choose the column to count by, such as **Status**.
+1. To count by two columns at once, choose the second under **and by**.
+
+The counts include every row the table shows, so a search or a filter changes them. If the panel opens under a feature's details, select **Maximize** to give it the whole height.
+
+You're done when the panel shows how many features hold each value of the column you chose.
+
 ### Group the Table
 
 The table starts as one list. You can put the features under headings instead, such as one for each cycle.

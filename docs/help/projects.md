@@ -33,6 +33,8 @@ You're done when the new row shows with a hollow dot.
 
 You can also right-click the row and select **Show details**. The details open beside the table. Each customer, proposal and feature named there is a link to its own details. Milestones have no details of their own.
 
+The record's key is under its name, small and grey. Select it to copy a link to the record, or the key itself. See [Keys and links](keys-and-links.md) for more.
+
 ### Change a Record
 
 1. Select a cell and start typing, or select a value in the details.
@@ -80,11 +82,25 @@ Open its details. **Scope history**, at the end, lists each feature added or rem
 
 You're done when the milestone shows in the project's details.
 
+To change a milestone there, select **Edit…** in its **⋯** menu. To remove it, select **Remove milestone** in the same menu.
+
 ### Go From a Project to Its Milestones or Features
 
-- To see a project's milestones, select **Show milestones** in the project's **⋯** menu. **Milestones** opens, showing only that project's.
+- To see a project's milestones, select **Show milestones** in the project's **⋯** menu, or beside the **Milestones** heading in its details. **Milestones** opens, showing only that project's.
 - To see the features a project or proposal names, select **Show features** in its **⋯** menu. **Features** opens, showing only those features.
 - To go from a milestone to its project, select **Show project** in the milestone's **⋯** menu. The project's details open.
+
+You're done when the page shows what you chose.
+
+### Count a Tab's Records
+
+1. Select **Metrics**. The **Metrics** panel opens beside the table.
+1. Under **Break down by**, choose the column to count by.
+1. To count by two columns at once, choose the second under **and by**.
+
+The counts include every row the table shows, so a search or a filter changes them. You're done when the panel shows how many records hold each value of the column you chose.
+
+See [Features](features.md#count-features) for more.
 
 ### Export a Tab
 
