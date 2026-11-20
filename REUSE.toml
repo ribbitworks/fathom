@@ -15,6 +15,7 @@ SPDX-FileCopyrightText = "2026 Jared La Rue"
 path = [
   "**.md",
   "**.json",
+  "**.tsv",
   # Migrations applied before headers were required, which must never change.
   "packages/db/migrations/0000_create_app_info.sql",
   "packages/db/migrations/0001_add_greeting.sql",

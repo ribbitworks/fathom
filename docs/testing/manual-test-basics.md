@@ -9,7 +9,7 @@ last_updated: "2026-11-19"
 
 # Manual Test Basics
 
-What every manual test in `docs/testing/` and `docs/testing/acceptance/` shares: the environment, where the accounts come from, the procedures the test cases refer to by name, and the terms they use. Each manual test links here and adds only what is its own. [Acceptance Tests](acceptance/README.md) gives the order for running every acceptance test in one run.
+What every manual test in `docs/testing/` and `docs/testing/acceptance/` shares: the environment, where the accounts come from, the procedures the test cases refer to by name, and the terms they use. Each manual test links here and adds only what is its own. [Acceptance Tests](acceptance/README.md) gives the order for running every acceptance test in one run. The acceptance tests run on the installation [Installing Fathom](acceptance/acceptance-installing-fathom-manual-test.md) makes, not on the clone's development Fathom, and make their own accounts, so each says what it needs instead of the Test Environment and Test Accounts below.
 
 ## Test Environment
 
@@ -39,7 +39,7 @@ In short, the text in a step is marked as [Testing Standards](../standards/testi
 - **Bold:** something to select or read on screen, such as a button, menu, page, field or column.
 - `Backticks`: something to type, an exact value, or a step's ID.
 - "Double quotes": the exact text to check on screen, such as a notification.
-- 'Single quotes': seed data, such as a person, team, schedule or release.
+- 'Single quotes': seed data, such as a person, team, schedule or release. The acceptance tests use no seed data, so they mark the names their own steps made, such as a person added in an earlier test, in `backticks`, as they were typed.
 
 ## Recording Results
 
@@ -112,6 +112,28 @@ Run only where a test says so. This deletes every account and record in the deve
 3. Confirm that the last line printed gives the shared password, with no error above it.
 4. Run Start Fathom.
 
+### Change a Generated Password
+
+Run straight after signing in with a password Fathom generated, with the new password a step gives. The password is the one beside the account's email address in the password list that [The Team's Accounts](acceptance/acceptance-team-accounts-manual-test.md) keeps.
+
+1. On the **Change password** page, which says "Fathom generated this password. A new password is required to continue.", type the generated password in **Current password**.
+2. Type the new password in **New password**, and again in **New password again**.
+3. Select **Change password**.
+4. Confirm that a notification says "The password has been changed, and every other session has been signed out.", and that Fathom opens with the left-hand menu.
+
+### Start Again
+
+Run this in three cases: before [Installing Fathom](acceptance/acceptance-installing-fathom-manual-test.md) when an earlier acceptance run's installation is still on the machine; to end an acceptance run; and before any other manual test in a clone that still has an installation, since the development commands read the clone's `deploy/.env`. This deletes the installation's containers, its database and its secrets, and the clone's `deploy/.env`. It keeps the images it built, named `fathom-app`, `fathom-postgres` and `fathom-proxy`, and leaves the development database alone.
+
+1. In the second terminal, at the repository root, run:
+
+   ```sh
+   docker compose --file deploy/compose.yaml down --volumes
+   rm -rf ~/fathom-install deploy/.env
+   ```
+
+2. Confirm that `docker compose ls --all` lists no project named `fathom`.
+
 ### Open a Role
 
 1. Select the **Roles** page in the left-hand menu.
@@ -131,7 +153,7 @@ Run only where a test says so. This deletes every account and record in the deve
 ## Terms
 
 - **Page and left-hand menu:** Fathom's pages are listed in the left-hand menu, the dark sidebar down the left of the window, in sections such as **Plan** and **People**. "Select the **Features** page" means selecting **Features** there. When the menu is collapsed to a narrow rail of icons, point at an icon to see its page's name, or select the button at the top of the rail, **Expand sidebar**, to show the names again. Opening a page from the menu shows its table as it starts, without the search, filters, sorting or grouping chosen there before.
-- **Top bar and account menu:** the bar across the top of the window. The account menu opens from the account's name and initials at its right, and holds **Appearance**, with **System**, **Light** and **Dark**.
+- **Top bar and account menu:** the bar across the top of the window. The account menu opens from the account's name and initials at its right, and holds **Appearance**, with **System**, **Light** and **Dark**, and **Sign out**.
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance** in the account menu.
 - **Role menu:** the choices under **Role** in the account menu, one for each role the account holds, shown only for an account with more than one role.
 - **Publish button:** the button in the top bar that reads **Publish** followed by the number of changes waiting, such as **Publish 4 changes**.
