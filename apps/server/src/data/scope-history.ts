@@ -12,7 +12,7 @@ import {
   type ScopeHistory,
 } from "@fathom/shared";
 import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
-import { strings } from "./change-history.ts";
+import { strings } from "./history-names.ts";
 
 const reasonIn = (value: unknown, id: string): string | null =>
   new Map(Object.entries(removalReasonsIn(value))).get(id) ?? null;

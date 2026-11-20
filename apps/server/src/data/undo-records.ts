@@ -4,7 +4,6 @@
 // access layer.
 
 import {
-  changes,
   fields,
   fieldValues,
   listItems,
@@ -17,7 +16,12 @@ import type { RecordType as PlanRecordType } from "@fathom/shared";
 import { count, eq } from "drizzle-orm";
 import { storedTier } from "../access.ts";
 import { ConflictError } from "../errors.ts";
-import type { Change, RecordType, Transaction } from "./changes.ts";
+import type {
+  Change,
+  RecordType,
+  StoredChange,
+  Transaction,
+} from "./changes.ts";
 import { draftsUse, takenEmployeeIds } from "./drafts.ts";
 import { checkLiveList, checkValuesFit, lockFields } from "./fields.ts";
 import { lockChoices, placeChoice, refuseIfUsed } from "./lists.ts";
@@ -125,8 +129,6 @@ const columnsOf: Record<
     createdBy: text,
   },
 };
-
-export type StoredChange = typeof changes.$inferSelect;
 
 export interface Undone {
   recordType: RecordType;

@@ -6,6 +6,7 @@
 
 import {
   type ChangeSetKind,
+  type changes,
   type Database,
   databaseCodes,
   hasDatabaseCode,
@@ -46,6 +47,9 @@ export interface Change {
 
 // The change set a change was saved in, which undoing it names; null when nothing changed.
 export type ChangeSetId = string | null;
+
+// A change as the change history stores it.
+export type StoredChange = typeof changes.$inferSelect;
 
 // What a change returns, and the change set it was saved in, which undoing it names; null when
 // nothing changed.
