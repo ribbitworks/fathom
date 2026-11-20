@@ -42,6 +42,13 @@ const timeZoneSave = () =>
 const picker = () =>
   screen.getByRole<HTMLInputElement>("combobox", { name: "Time zone" });
 
+// React reads the form's data from the submit event's target, which in a browser is always the form.
+function submitFormOf(field: HTMLInputElement) {
+  const form = field.closest("form");
+  if (form === null) throw new Error("The field is in no form");
+  fireEvent.submit(form);
+}
+
 async function choose(timeZone: string) {
   await userEvent.clear(picker());
   await userEvent.type(picker(), timeZone);
@@ -80,14 +87,12 @@ describe("who sees the Settings page", () => {
     expect(screen.getByRole("link", { name: "Settings" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Save" })).toBeNull();
     expect(picker().readOnly).toBe(true);
-    // A browser submits a form on Enter in its only text field, read only or not; the event bubbles
-    // from the field to its form.
-    fireEvent.submit(picker());
+    submitFormOf(picker());
     const minimum = within(passwords).getByRole<HTMLInputElement>("textbox", {
       name: "Minimum length",
     });
     expect(minimum.readOnly).toBe(true);
-    fireEvent.submit(minimum);
+    submitFormOf(minimum);
     for (const name of [
       "A digit",
       "Leave out characters that look alike: I L O i l o 0 1",
