@@ -1,36 +1,36 @@
 ---
-title: "Manual Test: Acceptance, Engineering Manager"
+title: "Manual Test: Engineering Manager Workflows"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-18"
+last_updated: "2026-11-19"
 ---
 
-# Manual Test: Acceptance, Engineering Manager
+# Manual Test: Engineering Manager Workflows
 
 ## Scope
 
-Verifies the workflows of [Working as an Engineering Manager](../../help/working-as-an-engineering-manager.md) on the seed data: putting someone on a feature team from a month ahead, approved by a Project Manager; finding who is over or under allocated; estimating a feature; seeing a team on the org chart, alone and on an earlier date; and counting people with Metrics.
+Verifies the workflows of [Working as an Engineering Manager](../help/working-as-an-engineering-manager.md) on the seed data: putting someone on a feature team from a month ahead, approved by a Project Manager; finding who is over or under allocated; estimating a feature; seeing a team on the org chart, alone and on an earlier date; and counting people with Metrics.
 
 ## Test Environment
 
-As [Manual Test Basics](../manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
 
 ## Test Accounts
 
-As [Manual Test Basics](../manual-test-basics.md#test-accounts) sets out, this test uses:
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Engineering Manager:** `engineering.manager@fathom.test`
 - **Project Manager:** `project.manager@fathom.test`
 
 ## Common Procedures
 
-This test uses [Start Fathom](../manual-test-basics.md#start-fathom), [Reset the Database](../manual-test-basics.md#reset-the-database) and [Publish](../manual-test-basics.md#publish).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
 
 ## Terms
 
-[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses. This test adds:
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses. This test adds:
 
 - **Months from today:** the steps name months by where they fall from the current month: **last month** is the one before it, and **two months after the current month** the second month after it. The examples after "such as" are for a run in November 2026.
 - **Date box:** the box labelled **Date** between the **Org chart** heading and the chart, before the left arrow, timeline, right arrow and **Today**.

@@ -1,36 +1,36 @@
 ---
-title: "Manual Test: Acceptance, Project Manager"
+title: "Manual Test: Project Manager Workflows"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-project-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-19"
 ---
 
-# Manual Test: Acceptance, Project Manager
+# Manual Test: Project Manager Workflows
 
 ## Scope
 
-Verifies the workflows of [Working as a Project Manager](../../help/working-as-a-project-manager.md) on the seed data: keeping a project on track with a new milestone, its scope history and its features, approved by a Product Manager; seeing who works on what in Feature assignments and Capacity; approving and rejecting others' drafts; and keeping a view of one project's milestones.
+Verifies the workflows of [Working as a Project Manager](../help/working-as-a-project-manager.md) on the seed data: keeping a project on track with a new milestone, its scope history and its features, approved by a Product Manager; seeing who works on what in Feature assignments and Capacity; approving and rejecting others' drafts; and keeping a view of one project's milestones.
 
 ## Test Environment
 
-As [Manual Test Basics](../manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
 
 ## Test Accounts
 
-As [Manual Test Basics](../manual-test-basics.md#test-accounts) sets out, this test uses:
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Project Manager:** `project.manager@fathom.test`
 - **Product Manager:** `product.manager@fathom.test`
 
 ## Common Procedures
 
-This test uses [Start Fathom](../manual-test-basics.md#start-fathom), [Reset the Database](../manual-test-basics.md#reset-the-database) and [Publish](../manual-test-basics.md#publish).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database) and [Publish](manual-test-basics.md#publish).
 
 ## Terms
 
-[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button, the Group by menu, the details button, the side panel, the mode switch and seeded dates. This test adds:
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks, the Publish button, the Group by menu, the details button, the side panel, the mode switch and seeded dates. This test adds:
 
 - **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20300315`.
 
