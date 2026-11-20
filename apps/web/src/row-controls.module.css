@@ -56,20 +56,20 @@ tbody:not(:has([data-menu-open])) tr:hover td:has(> .rowControls > *),
 tbody:not(:has(tr:hover, [data-menu-open]))
   td:focus-within:has(> .rowControls > *),
 tr[data-menu-open] td:has(> .rowControls > *),
-td:has(> .fillHire) {
+td:has(.fillHire) {
   padding-right: calc(
     var(--table-horizontal-spacing, var(--mantine-spacing-sm)) +
       var(--row-controls-room, 0px) + var(--fill-hire-room, 0px)
   );
 }
 
-/* The Fill button of a planned hire that can be filled, always shown, left of the controls' place.
-   The name makes room for both. */
+/* The Fill button of a planned hire that can be filled, always shown, left of the controls' place,
+   wherever in the cell it is drawn. The name makes room for both. */
 
 .fillHire {
   right: calc(4px + var(--row-controls-room, 0px));
 }
 
-td:has(> .fillHire) {
+td:has(.fillHire) {
   --fill-hire-room: 3rem;
 }

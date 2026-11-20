@@ -40,7 +40,6 @@ import { type DraftPlace, placeKey } from "./draft-places.ts";
 import {
   type Columns,
   decidable,
-  decisionFor,
   draftNames,
   type DraftSelection,
   mayDecide,
@@ -48,6 +47,7 @@ import {
   waitsForRejected,
   without,
 } from "./drafts.ts";
+import { decisionFor } from "./draft-decisions.ts";
 import { featureTeamsQuery, teamPersonNamer } from "./feature-teams.ts";
 import { listsQuery, liveLists } from "./lists.ts";
 import { makerNames } from "./names.ts";
@@ -689,6 +689,7 @@ export function useDraftEntries({
         ...(planData === undefined ? [] : planNodes(planData)),
         ...settingsNodes(settingsData),
       ],
+      featureTeams: teamsData?.teams,
     },
   };
   const reading = {
@@ -720,6 +721,7 @@ export function useDraftEntries({
               drafted.columns.fields,
               drafted.columns.people,
               drafted.columns.records,
+              drafted.columns.featureTeams,
             ),
           );
     },

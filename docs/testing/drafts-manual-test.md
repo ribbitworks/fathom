@@ -415,6 +415,26 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Reject…** is not greyed out.
   - **Notes:**
 
+- [ ] `3F37` Tick the tick box of the row of 'Shift Handover Notes', near the top of the table.
+  - **Expected:**
+    - At the right of the page's heading: "1 chosen draft needs another approver.", then **Reject…** and **Approve 1 draft…**.
+    - **Approve 1 draft…** is not greyed out.
+  - **Notes:**
+
+- [ ] `F3E5` Select **Approve 1 draft…**.
+  - **Expected:**
+    - A dialog titled "Approve 1 draft?" opens.
+    - Under "Approving cannot be undone." it lists "the feature Shift Handover Notes".
+    - Under "This needs another approver and stays waiting:" it lists "the feature Scheduler Service".
+  - **Notes:**
+
+- [ ] `4A57` Select **Approve** in the dialog.
+  - **Expected:**
+    - A notice reads "Approved 1 draft. 1 needs another approver."
+    - No row's **Record** reads 'Shift Handover Notes'.
+    - A row's **Record** still reads `Scheduler Service`, with "Needs another approver" after it.
+  - **Notes:**
+
 - [ ] `B553` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
   - **Expected:** The top bar's right end reads "Engineering Director".
   - **Notes:**

@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Lists page: every list in one table, with its description and its choices in order, and the
-// selected list in a side panel at its own address, where its choices are kept. Users who may edit
-// planning configuration create, edit, retire, restore, and delete lists, and change choices from
-// the keyboard. Every change is a draft, shown in place with its mark, which Approvers approve or
-// reject here or on the Drafts page. Every change shows at once and saves in the background, one at
-// a time in the order made. The latest change can be undone with Cmd+Z or Ctrl+Z, or from its
-// notification when it took something out of view.
+// The Lists page: every list in one table, and the selected list's choices in a side panel.
 
 import { LoadProblem } from "./load-problem.tsx";
 import {
@@ -39,13 +33,12 @@ import { DecisionModal } from "./decision-dialog.tsx";
 import {
   approvesAll,
   decidable,
-  type Decision,
-  decisionFor,
   type DraftSelection,
   draftTotal,
   noDrafts,
   waitsForRejected,
 } from "./drafts.ts";
+import { type Decision, decisionFor } from "./draft-decisions.ts";
 import { focusSoon } from "./focus.ts";
 import { ListDialog } from "./list-dialog.tsx";
 import { useDialogState } from "./dialog-actions.tsx";
@@ -774,7 +767,7 @@ export function ListsPage({
     : { selection: noDrafts(), total: 0 };
   const decideAll = (asking: "approve" | "reject") => {
     setDecision(
-      decisionFor(asking, waiting.selection, approves, all, people.data),
+      decisionFor(asking, waiting.selection, approves, all, people.data, true),
     );
     setDeciding(true);
   };

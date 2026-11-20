@@ -16,7 +16,13 @@ import {
   unpublishedDrafts,
   users,
 } from "@fathom/db";
-import { type DraftKind, draftKey, isLink, type Tier } from "@fathom/shared";
+import {
+  draftsChangedBy,
+  type DraftKind,
+  draftKey,
+  isLink,
+  type Tier,
+} from "@fathom/shared";
 import {
   type AnyColumn,
   and,
@@ -567,7 +573,7 @@ export async function draftMakers(
     // The viewer's changes count whatever their tier, since they made them.
     const mine = approvesOwn
       ? new Set<string>()
-      : changedBy(counted, viewer.user.id);
+      : draftsChangedBy(counted, viewer.user.id);
     for (const row of counted) {
       if (row.kind === "approval" || row.kind === "discard") {
         makers.delete(row.recordId);
@@ -597,34 +603,6 @@ export async function draftMakers(
     }
   }
   return makers;
-}
-
-// The records whose drafts a user changed since each was last approved or discarded, from their
-// history in order: rejecting or resubmitting a draft does not change it, so neither counts nor
-// resets. One rule for the drafts marked on screen and the approvals refused.
-export function changedBy(
-  rows: readonly {
-    recordId: string;
-    draft: boolean;
-    kind: string;
-    makerId: string | null;
-  }[],
-  userId: string,
-): Set<string> {
-  const changed = new Set<string>();
-  for (const row of rows) {
-    if (row.kind === "approval" || row.kind === "discard") {
-      changed.delete(row.recordId);
-    } else if (
-      row.draft &&
-      row.makerId === userId &&
-      row.kind !== "rejection" &&
-      row.kind !== "resubmission"
-    ) {
-      changed.add(row.recordId);
-    }
-  }
-  return changed;
 }
 
 // The identifiers of the records given, by kind, in chunks small enough for one statement each.
@@ -715,7 +693,7 @@ export async function refuseOwnDrafts(
           ),
         )
         .orderBy(changes.id);
-      if (changedBy(rows, actor.user.id).size > 0) {
+      if (draftsChangedBy(rows, actor.user.id).size > 0) {
         throw new ForbiddenError(
           "Drafts changed by the approver need another approver",
         );

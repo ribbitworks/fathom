@@ -16,13 +16,8 @@ import { DecisionModal, drafts } from "./decision-dialog.tsx";
 import { type DraftsSeen, useDraftEntries } from "./draft-entries.ts";
 import { type DraftPlace, placeKey } from "./draft-places.ts";
 import { DraftPanel, draftPanelId } from "./drafts-panel.tsx";
-import {
-  type Decision,
-  decisionFor,
-  type DraftSelection,
-  linkedGroups,
-  mayDecide,
-} from "./drafts.ts";
+import { type DraftSelection, linkedGroups, mayDecide } from "./drafts.ts";
+import { type Decision, decisionFor } from "./draft-decisions.ts";
 import {
   draftColumnOrder,
   draftColumns,
@@ -171,7 +166,11 @@ export function DraftsPage({
         onOpen(row.id);
       },
     });
-    const decide = (asking: Asking, selection: DraftSelection) => {
+    const decide = (
+      asking: Asking,
+      selection: DraftSelection,
+      all?: boolean,
+    ) => {
       setDecision(
         decisionFor(
           asking,
@@ -179,6 +178,7 @@ export function DraftsPage({
           approves,
           drafted.lists,
           drafted.columns,
+          all,
         ),
       );
       setOpened(true);
@@ -264,9 +264,22 @@ export function DraftsPage({
     const chosen = rows.filter(
       (row) => ticked.has(row.id) && (tab === "unpublished" || decidable(row)),
     );
-    const othersApprove = chosen.filter(
-      ({ entry }) => entry.needsOtherApprover,
-    ).length;
+    // What approving the drafts ticked would do, so the button counts what the dialog approves.
+    const approving =
+      chosen.length > 0 && tab === "decide"
+        ? decisionFor(
+            "approve",
+            selectionOf(chosen),
+            approves,
+            drafted.lists,
+            drafted.columns,
+            true,
+          )
+        : undefined;
+    const ownOnly = approving?.othersApprove !== undefined;
+    const othersApprove = ownOnly
+      ? chosen.length
+      : (approving?.othersLeft?.length ?? 0);
     if (chosen.length > 0 && tab === "unpublished") {
       actions = (
         <>
@@ -309,12 +322,13 @@ export function DraftsPage({
             Reject…
           </Button>
           <Button
-            disabled={othersApprove > 0}
+            disabled={ownOnly}
             onClick={() => {
-              decide("approve", selectionOf(chosen));
+              decide("approve", selectionOf(chosen), true);
             }}
           >
-            Approve {drafts(chosen.length)}…
+            Approve{" "}
+            {drafts(ownOnly ? chosen.length : chosen.length - othersApprove)}…
           </Button>
         </>
       );

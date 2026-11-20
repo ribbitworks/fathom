@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Approving or rejecting drafts, from the Drafts page, the People table, or the Lists page: a dialog
-// that asks first, since neither can be undone, showing the decision drafts.ts works out: how many
-// related drafts it includes, how many it skips because they depend on a rejected draft, that none
-// can be approved yet, or which drafts this account changed and so needs another approver for. It
-// asks for a reason for rejecting, saves the decision itself, and cannot be closed while it saves.
+// The dialog that asks before approving or rejecting drafts, showing what the decision covers, and
+// saves the decision.
 
 import { type Asking, reasonLength } from "@fathom/shared";
 import {
@@ -22,11 +19,11 @@ import { useState } from "react";
 import { DialogActions } from "./dialog-actions.tsx";
 import {
   approveDrafts,
-  type Decision,
   type DraftSelection,
   draftTotal,
   rejectDrafts,
 } from "./drafts.ts";
+import { type Decision } from "./draft-decisions.ts";
 import { effortConversionsQuery } from "./effort.ts";
 import { featureTeamsQuery } from "./feature-teams.ts";
 import { listsQuery } from "./lists.ts";
@@ -40,6 +37,30 @@ import { releaseStreamsQuery } from "./releases.ts";
 // What a decision did, as its notification says.
 const decided = (asking: "approve" | "reject", total: number) =>
   `${asking === "approve" ? "Approved" : "Rejected"} ${drafts(total)}.`;
+
+// How many drafts approving all those waiting left for another approver, as a sentence.
+const othersLeftWords = (total: number) =>
+  `${total === 1 ? "1 needs" : `${count(total)} need`} another approver.`;
+
+// Drafts by name, one to a line; two drafts may share a name.
+function DraftNameList({
+  names,
+  mt = 0,
+}: {
+  names: readonly string[];
+  mt?: number;
+}) {
+  return (
+    <List size="sm" mt={mt}>
+      {names.map((name, index) => (
+        <List.Item key={`${String(index)} ${name}`}>{name}</List.Item>
+      ))}
+    </List>
+  );
+}
+
+// The most drafts a decision names before counting the rest.
+const namedAtMost = 5;
 
 // Why a decision changed nothing: rejected drafts already rejected for that reason, or, rarely,
 // drafts that no longer change anything, such as a change to someone removed another way.
@@ -56,16 +77,20 @@ export const drafts = (total: number) =>
 function DecisionDialog({
   asking,
   selection,
+  named,
   included,
   leftOut,
+  othersLeft,
   onDone,
   onCancel,
   onBusy,
 }: {
   asking: Asking;
   selection: DraftSelection;
+  named: string[];
   included: string[];
   leftOut: number;
+  othersLeft: string[];
   onDone: () => void;
   onCancel: () => void;
   onBusy: (busy: boolean) => void;
@@ -88,7 +113,12 @@ function DecisionDialog({
       notifySuccess(
         changeSetId === null
           ? unchanged(asking)
-          : decided(asking, draftTotal(selection)),
+          : [
+              decided(asking, draftTotal(selection)),
+              ...(othersLeft.length > 0
+                ? [othersLeftWords(othersLeft.length)]
+                : []),
+            ].join(" "),
       );
       onDone();
       // Every read a decided draft may be in, on every day each is read for.
@@ -124,6 +154,18 @@ function DecisionDialog({
             ? "Approving cannot be undone."
             : "The drafts go back to whoever made them, with the reason given. Rejecting cannot be undone."}
         </Text>
+        {named.length > 0 && (
+          <div>
+            <DraftNameList names={named.slice(0, namedAtMost)} />
+            {named.length > namedAtMost && (
+              <Text fz="sm" c="dimmed" mt={4}>
+                {named.length - namedAtMost === 1
+                  ? "and 1 other"
+                  : `and ${count(named.length - namedAtMost)} others`}
+              </Text>
+            )}
+          </div>
+        )}
         {included.length > 0 && (
           <div>
             <Text fz="sm">
@@ -131,11 +173,7 @@ function DecisionDialog({
                 ? "Also approves the drafts these depend on:"
                 : "Also rejects the drafts that use these:"}
             </Text>
-            <List size="sm" mt={4}>
-              {included.map((name) => (
-                <List.Item key={name}>{name}</List.Item>
-              ))}
-            </List>
+            <DraftNameList names={included} mt={4} />
           </div>
         )}
         {leftOut > 0 && (
@@ -144,6 +182,16 @@ function DecisionDialog({
               ? "1 draft is skipped because it depends on a rejected draft."
               : `${count(leftOut)} drafts are skipped because they depend on rejected drafts.`}
           </Text>
+        )}
+        {othersLeft.length > 0 && (
+          <div>
+            <Text fz="sm">
+              {othersLeft.length === 1
+                ? "This needs another approver and stays waiting:"
+                : "These need another approver and stay waiting:"}
+            </Text>
+            <DraftNameList names={othersLeft} mt={4} />
+          </div>
         )}
         {asking === "reject" && (
           <Textarea
@@ -184,11 +232,7 @@ function Undecided({
   return (
     <Stack gap="md">
       <Text fz="sm">{why}</Text>
-      <List size="sm">
-        {names.map((name) => (
-          <List.Item key={name}>{name}</List.Item>
-        ))}
-      </List>
+      <DraftNameList names={names} />
       <Group justify="flex-end">
         <Button onClick={onClose}>Close</Button>
       </Group>
@@ -254,8 +298,10 @@ export function DecisionModal({
           <DecisionDialog
             asking={decision.asking}
             selection={decision.selection}
+            named={decision.named}
             included={decision.included ?? []}
             leftOut={decision.leftOut ?? 0}
+            othersLeft={decision.othersLeft ?? []}
             onDone={onDone}
             onCancel={onClose}
             onBusy={setBusy}

@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Releases page's Schedules tab: the table of schedules, with a timeline of those it shows above
-// it, and the selected schedule's details beside it. Retired schedules show only when asked for.
-// Those who change schedules retire and restore them from each row's menu, and change one from its
-// details. A retired schedule, or one drafted to be retired, is only restored.
+// The Releases page's Schedules tab: the table of schedules, with a timeline above it and the
+// selected schedule's details beside it.
 
 import type {
   Asking,
@@ -229,7 +227,7 @@ export function SchedulesTable({
   onOpen: (record: { id: string }) => void;
   onClose: (id: string) => void;
   actions: ScheduleActions;
-  decide: (asking: Asking, selection: DraftSelection) => void;
+  decide: (asking: Asking, selection: DraftSelection, all?: boolean) => void;
 }) {
   const { show } = view;
   const { rows: kept, choices } = hiddenUnlessShown({

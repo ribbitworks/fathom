@@ -35,8 +35,8 @@ The Engineering Director, or another role that approves the plan and features, d
 
 1. Select the **Drafts** page, under **History**, then its **To decide** tab, the drafts you can decide now.
 1. Tick the drafts.
-1. Select **Approve 2 drafts…** at the right of the page's heading. The number is how many you ticked.
-1. Check the dialog. It lists any other drafts these depend on, which are approved with them.
+1. Select **Approve 2 drafts…** at the right of the page's heading. The number is how many you ticked that you can approve.
+1. Check the dialog. It names the drafts it approves, and any other drafts these depend on, which are approved with them.
 1. Select **Approve**.
 
 To reject the drafts instead, select **Reject…**, type the reason, and select **Reject**.

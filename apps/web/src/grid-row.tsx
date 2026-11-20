@@ -286,6 +286,8 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
               : column.status?.(record);
           const standIn = standInAt(row, column);
           const changes = draftChanges(draft, column);
+          const mark = row.record && !editingHere && column.mark?.(row.record);
+          const namedMark = column.key === table.nameColumn ? mark : undefined;
           const frozenAt = frozenCell(columnIndex);
           const value = shownAt(row, column);
           const live =
@@ -378,6 +380,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                     ? (row.others ?? [])
                     : []
                 }
+                after={namedMark}
               >
                 <DraftedItem
                   slot={columnIndex === 0 && !editingHere}
@@ -464,7 +467,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
               {column.key === table.nameColumn &&
                 !editingHere &&
                 nameCellControls(row)}
-              {row.record && !editingHere && column.mark?.(row.record)}
+              {column.key !== table.nameColumn && mark}
               {changes && !editingHere && marksRows && (
                 <VisuallyHidden>
                   {live === undefined ? ", draft" : `, draft, live ${live}`}
