@@ -396,6 +396,74 @@ describe("drafting columns", () => {
     await send("DELETE", `/api/people/columns/${hidden.id}/draft`);
   });
 
+  it("lets only someone who sees a list's values change its choices, order, retirement or removal", async () => {
+    const lists = createDataAccess(test.connection).lists;
+    const { list, choices } = await liveList(["A", "B"], "personal");
+    const [first, second] = choices.map(({ id }) => id);
+    const before = await draftCount();
+    const refusals = [
+      () =>
+        lists.addChoices(generalOnly(), list.id, [
+          { label: "Fictional C", description: "" },
+        ]),
+      () =>
+        lists.updateChoice(generalOnly(), list.id, String(first), {
+          label: "Fictional Renamed",
+          description: "",
+        }),
+      () => lists.moveChoice(generalOnly(), list.id, String(second), null),
+      () =>
+        lists.setChoiceRetired(generalOnly(), list.id, String(first), {
+          retired: true,
+        }),
+      () => lists.deleteChoice(generalOnly(), list.id, String(first)),
+      () => lists.setRetired(generalOnly(), list.id, { retired: true }),
+      () => lists.delete(generalOnly(), list.id),
+    ];
+    for (const refusal of refusals) {
+      await expect(refusal()).rejects.toThrow(/this role can't see/);
+    }
+    expect(await draftCount()).toBe(before);
+  });
+
+  it("lets only someone who sees a list's values discard, resubmit or undo its drafts", async () => {
+    const { list, choices } = await liveList(["A"], "personal");
+    const choiceUrl = `/api/lists/${list.id}/choices/${String(choices[0]?.id)}`;
+    const maker = await test.signedIn([
+      "configuration:edit",
+      "people:view",
+      "personal:view",
+    ]);
+    const renamed = await test.request(maker.cookie, "PUT", choiceUrl, {
+      label: unique("Fictional Renamed"),
+      description: "",
+    });
+    const { changeSetId } = renamed.json<{ changeSetId: string }>();
+    const unseen = async (method: "POST" | "DELETE", url: string) => {
+      const response = await test.request(maker.cookie, method, url);
+      expect(response.statusCode, `${method} ${url}`).toBe(403);
+      expect(response.json<{ error: string }>().error).toMatch(
+        /this role can't see/,
+      );
+    };
+    const generalOnly = ["configuration:edit", "people:view"] as const;
+
+    // Without Personal details, the maker can neither undo nor discard it
+    await test.holdOnly(maker.id, generalOnly);
+    await unseen("POST", `/api/undo/${changeSetId}`);
+    await unseen("DELETE", `${choiceUrl}/draft`);
+
+    // Nor send it again once rejected
+    await decide("rejection", {
+      choices: [String(choices[0]?.id)],
+      reason: "No",
+    });
+    await unseen("DELETE", `${choiceUrl}/draft/rejection`);
+
+    // Leave no rejected draft for later tests to meet
+    await send("DELETE", `${choiceUrl}/draft`);
+  });
+
   it("lets only someone who sees a list's visibility give it or change it", async () => {
     const lists = createDataAccess(test.connection).lists;
     const before = await draftCount();
@@ -875,6 +943,31 @@ describe("undoing changes to columns saved before columns had drafts", () => {
 });
 
 describe("what decides and keeps column drafts safe", () => {
+  it("needs an Approver who sees a list's values to decide drafts of its choices", async () => {
+    const { list, choices } = await liveList(["A"], "personal");
+    const [first] = choices;
+    await send("PUT", `/api/lists/${list.id}/choices/${String(first?.id)}`, {
+      label: unique("Fictional Renamed"),
+      description: "",
+    });
+    const generalOnly = await test.signedIn([
+      "configuration:approve",
+      "people:view",
+    ]);
+    const asked = { choices: [String(first?.id)] };
+    for (const [asking, body] of [
+      ["approval", asked],
+      ["rejection", { ...asked, reason: "No" }],
+    ] as const) {
+      const response = await decide(asking, body, generalOnly.cookie);
+      expect(response.statusCode).toBe(403);
+      expect(response.json<{ error: string }>().error).toBe(
+        "One of these drafts is of a list whose details this role can't see, so an Approver who sees them must decide it",
+      );
+    }
+    expect((await decide("approval", asked)).statusCode).toBe(200);
+  });
+
   it("needs an Approver who sees people, and the column's values", async () => {
     const { list } = await liveList(["A"], "personal");
     const { field } = await draftColumn(list.id);

@@ -42,6 +42,7 @@ import {
   refuseIfChosen,
   refuseIfUsed,
   refuseLastKept,
+  refuseUnseenList,
   writeOrderDraft,
   refuseSensitiveFeatureList,
 } from "./lists.ts";
@@ -260,6 +261,14 @@ export async function undoListDrafts(
   for (const record of [...records].sort((a, b) => byKind(a) - byKind(b))) {
     const state = await readState(transaction, editor);
     const old = withoutRejection(record.old);
+    // A list's changes are recorded as General, so the list's own class decides who undoes them.
+    refuseUnseenList(
+      actor,
+      state,
+      record.recordType === "list-item"
+        ? (listOfChoice(state, record.id) ?? String(old.get("listId")))
+        : record.id,
+    );
     if (record.recordType === "choice-order") {
       // Every change to a draft of an order records the whole order.
       const wanted = ids(old.get("order"));
