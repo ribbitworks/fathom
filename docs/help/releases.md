@@ -171,7 +171,7 @@ You're done when the panel's heading shows the new name, with a dot before it.
 
 ### Retire or Restore a Schedule
 
-A retired schedule takes no new releases, and its cycles take no new features. Features already on them keep their place. Once its retirement is approved, it leaves the table and the timeline. While a schedule is retired, or drafted to be, its panel has no pencils: restoring it is the only change it takes. While any schedule is retired, the **Views** menu offers **Show retired**, which a saved view keeps.
+A retired schedule takes no new releases, and its cycles take no new features. Features already on them keep their place. Once its retirement is approved, it leaves the table and the timeline. While a schedule is retired, or drafted to be, its panel has no pencils: the only change you can make is to restore it. While any schedule is retired, the **Views** menu offers **Show retired**, which a saved view keeps.
 
 1. To restore a retired schedule, first open the **Views** menu, and choose **Show retired**.
 1. Select the **⋯** at the end of the schedule's row.
@@ -183,7 +183,7 @@ You're done when the schedule's row shows your draft: a **Retired** or **Restore
 
 Each row's **⋯** menu offers **Discard draft** for your own draft, and **Resubmit** once its draft is rejected. On **Cycles**, a cycle's menu names the change behind it, such as a change to its schedule's cycles, and acts on that change.
 
-A change to its schedule's cycles and a draft of the cycle's own release, such as a new name, can both change a cycle. Its menu then names both drafts, and who made each change. **Discard draft** and **Resubmit** act on the change to the schedule's cycles alone. **Approve draft…** and **Reject draft…** decide each of the two that your role approves and you can decide now. When that's only the release's draft, they name the release, such as **Approve Harbor 2's draft…**.
+Two drafts can change a cycle at once: a change to its schedule's cycles, and a draft of its release, such as a new name. Its menu then names both drafts, and who made each. **Discard draft** and **Resubmit** act only on the change to the schedule's cycles. **Approve draft…** and **Reject draft…** decide each of the two drafts that your role approves and that you can decide now. When that's only the release's draft, they name the release, such as **Approve Harbor 2's draft…**.
 
 You're done when the row's dot is gone, or shows the draft waiting again.
 
@@ -203,4 +203,4 @@ You're done when the timeline shows the time you wanted to see.
 - **A dot** before a name marks its draft, on the timeline and in the table.
 - **A small square** before a release's name shows the release's colour, on the timeline, in the tables and in the panels.
 - **A short upright line** at the end of a schedule's cycles marks the day it ends.
-- With **Drafts & Live** chosen in the **Draft** menu, a release that a draft moves also shows faded, after a green dot, in a lane under its schedule's releases, where it is now. A release that a draft removes stays, struck through.
+- With **Drafts & Live** chosen in the **Draft** menu, a release that a draft moves also shows where it is now: faded, after a green dot, in a lane under its schedule's releases. A release that a draft removes stays, struck through.
