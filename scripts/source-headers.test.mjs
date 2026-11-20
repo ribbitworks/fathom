@@ -16,7 +16,7 @@ const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 
 // Files that carry no header, matching the files REUSE.toml lists.
 const notSourceCode = [
-  /\.(md|json)$/,
+  /\.(md|json|tsv)$/,
   // Migrations applied before headers were required. An applied migration must never change, as
   // the migration runner refuses one whose contents differ from what was applied.
   /^packages\/db\/migrations\/000[0-6]_[a-z_]+\.sql$/,
