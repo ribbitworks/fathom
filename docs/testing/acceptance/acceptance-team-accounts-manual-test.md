@@ -34,7 +34,7 @@ This test creates these accounts, each with the one role it starts with. Each ha
 | `Ines Harrow` | `ines.harrow@fathom.test` | Workforce Administrator | [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) | `fictional ines password` |
 | `Tomas Reed` | `tomas.reed@fathom.test` | Project Manager | [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) | `fictional tomas password` |
 | `Odile Brandt` | `odile.brandt@fathom.test` | Engineering Director | [Feature Teams](acceptance-feature-teams-manual-test.md) | `fictional odile password` |
-| `Priya Lund` | `priya.lund@fathom.test` | Product Manager | A later test | `fictional priya password` |
+| `Priya Lund` | `priya.lund@fathom.test` | Product Manager | [Planning Projects](acceptance-planning-projects-manual-test.md) | `fictional priya password` |
 | `Dara Finch` | `dara.finch@fathom.test` | Feature Lead | A later test | `fictional dara password` |
 | `Ada Quill` | `ada.quill@fathom.test` | Engineering Manager | A later test | `fictional ada password` |
 | `Bram Oakes` | `bram.oakes@fathom.test` | Team Member | A later test | `fictional bram password` |
