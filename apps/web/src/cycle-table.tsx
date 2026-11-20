@@ -16,7 +16,7 @@ import {
   type ReleaseStream,
   type Show,
 } from "@fathom/shared";
-import { formatDay } from "./table-view.ts";
+import { formatDay } from "./day-formats.ts";
 import {
   creditedBy,
   decidable,

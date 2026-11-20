@@ -50,7 +50,8 @@ import {
   type RowRequest,
   stateMeaning,
 } from "./people-rows.ts";
-import { type CellValue, formatMonth } from "./table-view.ts";
+import type { CellValue } from "./table-view.ts";
+import { formatMonth } from "./day-formats.ts";
 import { today } from "./today.ts";
 import { type ChangesFrom, managerChangesFrom } from "./person-change.ts";
 

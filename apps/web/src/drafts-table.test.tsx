@@ -10,7 +10,8 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { Entry } from "./draft-entries.ts";
 import { keyColumn } from "./grid-columns.tsx";
-import { applyView, emptyView } from "./table-view.ts";
+import { emptyView } from "./table-view.ts";
+import { applyView } from "./table-rows.ts";
 import { testTheme } from "./test-support.tsx";
 import { noDrafts } from "./drafts.ts";
 import {

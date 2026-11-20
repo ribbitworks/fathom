@@ -41,12 +41,12 @@ import { offered, sameName } from "./lists.ts";
 import { decimal, decimalUpTo } from "./numbers.ts";
 import {
   type CellValue,
-  formatDay,
-  formatMonth,
   type Kind,
   type TableColumn,
   unitAmountWords,
 } from "./table-view.ts";
+import { asText } from "./table-rows.ts";
+import { formatDay, formatMonth } from "./day-formats.ts";
 
 type AnyColumn = Pick<
   TableColumn<never>,
@@ -168,7 +168,6 @@ const detail = (source: CellSource, key: string): string => {
 };
 
 // Text and dates are held as text.
-const asText = (value: CellValue) => value as string;
 
 const text: CellKind = {
   empty: "",

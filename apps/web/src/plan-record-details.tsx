@@ -55,7 +55,8 @@ import { noOthers } from "./new-plan-record-panel.tsx";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
 import { RecordMenu } from "./record-menu.tsx";
 import { besideLive, DraftedItem, MarkRow } from "./status-mark.tsx";
-import { type CellValue, formatDay, type View } from "./table-view.ts";
+import type { CellValue, View } from "./table-view.ts";
+import { formatDay } from "./day-formats.ts";
 
 // The kind of a record in a table of one kind.
 export const onlyKind = "";

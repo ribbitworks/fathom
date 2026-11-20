@@ -36,12 +36,12 @@ import type { SavedViews } from "./table-controls.tsx";
 import { besideLive, viewedDraft } from "./status-mark.tsx";
 import { changeWord, type DraftLike, waitingWords } from "./draft-marks.ts";
 import {
-  asText,
   type CellValue,
   type Kind,
   type TableColumn,
   valueOrStandIn,
 } from "./table-view.ts";
+import { asText } from "./table-rows.ts";
 
 export type ExportFormat = "csv" | "tsv";
 

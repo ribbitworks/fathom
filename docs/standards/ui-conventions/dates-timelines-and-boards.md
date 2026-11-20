@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Dates, Timelines and Boards
@@ -14,10 +14,10 @@ Part of [UI Conventions](../ui-conventions.md): how days and months are shown an
 ## Dates
 
 - **Days:** A day shows a short month and its year in the reader's language, such as 31 Dec 2026 or Dec 31, 2026. Every date shown includes its year. The two exceptions are the About box's full date and Settings' day and time in a time zone ([Visual Design](../../design/visual-design.md#layout)).
-  - **Drawn by:** `formatDay` in `apps/web/src/table-view.ts`, which date cells use through `cellKinds` in `apps/web/src/cell-kinds.tsx`. `dayOf` in `apps/web/src/today.ts` first turns a moment into its day in Fathom's time zone, such as when an account was made in Accounts' Created column. `formatMomentDay` in `apps/web/src/table-view.ts` shows a moment outside a date cell, such as a scope history's.
+  - **Drawn by:** `formatDay` in `apps/web/src/day-formats.ts`, which date cells use through `cellKinds` in `apps/web/src/cell-kinds.tsx`. `dayOf` in `apps/web/src/today.ts` first turns a moment into its day in Fathom's time zone, such as when an account was made in Accounts' Created column. `formatMomentDay` in `apps/web/src/day-formats.ts` shows a moment outside a date cell, such as a scope history's.
   - **Example:** each release's heading on Features grouped by Release, such as Platform: Harbor 2 and the day it ships.
 - **Months:** A month shows as a short month and its year, such as Mar 2027.
-  - **Drawn by:** `formatMonth` in `apps/web/src/table-view.ts`.
+  - **Drawn by:** `formatMonth` in `apps/web/src/day-formats.ts`.
   - **Example:** Offline Sync's Needed by.
 - **Typing a day or month:** Days and months are typed as digits, laid out as typed, such as 2026-10-31 and 2027-03, whatever the reader's language.
   - **Drawn by:** `DayInput` in `apps/web/src/day-input.tsx` for a day's box, and its `digitsAsTyped` for a table's day and month cells, through `cellKinds` in `apps/web/src/cell-kinds.tsx`.

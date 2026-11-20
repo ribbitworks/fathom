@@ -44,7 +44,7 @@ import {
   releaseDate,
   withSchedule,
 } from "./releases.ts";
-import { formatDay } from "./table-view.ts";
+import { formatDay } from "./day-formats.ts";
 
 export const projectPlanQuery = queryOptions({
   queryKey: ["projects"],

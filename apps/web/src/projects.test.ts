@@ -12,7 +12,7 @@ import {
   streamOfReleaseGroup,
   withNamers,
 } from "./projects.ts";
-import { formatDay } from "./table-view.ts";
+import { formatDay } from "./day-formats.ts";
 import {
   bodyOf,
   fictionalRelease,

@@ -21,6 +21,7 @@ import {
 import {
   allOf,
   byName,
+  folded,
   numberProblem,
   type SavedView,
   type Show,
@@ -45,8 +46,6 @@ import { focusSoon } from "./focus.ts";
 import {
   activeGrouping,
   activeThenBy,
-  type GroupingChoice,
-  type GroupsHold,
   groupedFirstBy,
   ungrouped,
   withGroupsReversed,
@@ -54,8 +53,6 @@ import {
   notGroupedLabel,
   type ColumnChoice,
   type Filter,
-  folded,
-  formatDay,
   isActive,
   type Kind,
   emptyView,
@@ -73,6 +70,8 @@ import {
   withPlaces,
   withUnit,
 } from "./table-view.ts";
+import type { GroupingChoice, GroupsHold } from "./row-groups.ts";
+import { formatDay } from "./day-formats.ts";
 import { AppMenu, MenuChoices, MenuToggle, Tick } from "./app-menu.tsx";
 import type { ColumnUnits } from "./record-table.ts";
 import classes from "./pages.module.css";

@@ -62,13 +62,8 @@ import {
   useDraftView,
 } from "./status-mark.tsx";
 import { type DraftLike, recordMark, wasWords } from "./draft-marks.ts";
-import {
-  byGroupRank,
-  formatDay,
-  formatMonth,
-  type OtherPlace,
-  type RowGroups,
-} from "./table-view.ts";
+import { byGroupRank, type OtherPlace, type RowGroups } from "./row-groups.ts";
+import { formatDay, formatMonth } from "./day-formats.ts";
 import { TeamLabels } from "./team-labels.tsx";
 import { TimelineStrip } from "./timeline-strip.tsx";
 

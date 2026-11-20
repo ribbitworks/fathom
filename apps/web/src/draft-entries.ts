@@ -71,7 +71,7 @@ import {
 } from "./projects.ts";
 import { recordKey } from "./record-drafts.ts";
 import { recordNodes, releaseStreamsQuery } from "./releases.ts";
-import { formatDay } from "./table-view.ts";
+import { formatDay } from "./day-formats.ts";
 
 interface Drafted {
   person: Person;

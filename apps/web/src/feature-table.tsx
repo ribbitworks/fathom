@@ -56,12 +56,9 @@ import {
   wordsOf,
 } from "./plan-table.tsx";
 import type { Column, RecordTable, RowGrouping } from "./record-table.ts";
-import {
-  type ColumnUnit,
-  formatMonth,
-  type RowGroup,
-  rankOfNone,
-} from "./table-view.ts";
+import type { ColumnUnit } from "./table-view.ts";
+import { formatMonth } from "./day-formats.ts";
+import { type RowGroup, rankOfNone } from "./row-groups.ts";
 
 // A column of the projects or proposals that name a feature, which those records hold, so a change
 // to it is a draft of each record added or taken away. It is set on a feature once it is added.

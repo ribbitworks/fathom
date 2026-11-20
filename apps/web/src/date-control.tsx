@@ -14,7 +14,7 @@ import { useElementSize } from "@mantine/hooks";
 import { useState } from "react";
 import { DayInput } from "./day-input.tsx";
 import { focusSoon } from "./focus.ts";
-import { formatDay, formatMonth } from "./table-view.ts";
+import { formatDay, formatMonth } from "./day-formats.ts";
 import { today } from "./today.ts";
 import classes from "./date-control.module.css";
 

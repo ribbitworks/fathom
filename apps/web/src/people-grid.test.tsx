@@ -22,7 +22,8 @@ import {
   peopleAsShown,
 } from "./people-grid.tsx";
 import { columnWidth } from "./grid-layout.ts";
-import { emptyView, formatDay } from "./table-view.ts";
+import { emptyView } from "./table-view.ts";
+import { formatDay } from "./day-formats.ts";
 import { testTheme } from "./test-support.tsx";
 
 const site: Field = {
