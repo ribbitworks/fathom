@@ -73,7 +73,7 @@ export default defineConfig(
   {
     // Only the server's data access layer queries the database, so every read of protected data
     // goes through it. Other code may use the database package's types, and the server's start-up
-    // code, the account command, the seed data command, and the server's test helper read the
+    // code, the account command, the seed data command, and the server's test helpers read the
     // database settings and create the connection pool. The query libraries are restricted too, so
     // a raw query cannot be written elsewhere.
     files: ["**/*.ts", "**/*.tsx"],
@@ -85,7 +85,7 @@ export default defineConfig(
       "apps/server/src/config.ts",
       "apps/server/src/server.ts",
       "apps/server/src/create-account.ts",
-      "apps/server/src/test-app.ts",
+      "apps/server/src/test-*.ts",
       "**/*.test.ts",
     ],
     rules: {
