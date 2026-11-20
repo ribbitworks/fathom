@@ -10,6 +10,7 @@ import {
   featureTeamMemberships,
   featureTeams,
   inChunks,
+  type Reader,
 } from "@fathom/db";
 import {
   type DataClasses,
@@ -51,7 +52,7 @@ import {
   readLiveTeams,
   readTeamDrafts,
 } from "./feature-team-reads.ts";
-import { type Reader, recordType } from "./feature-team-records.ts";
+import { recordType } from "./feature-team-records.ts";
 import {
   datesOf,
   type DayRefusals,

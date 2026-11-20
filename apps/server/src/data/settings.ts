@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Fathom's settings, kept in the application information the migrations store: the time zone that
-// decides which day is today, read by the rest of the data access layer whenever it needs today, and
-// the password settings: the rules for passwords people choose, and the recipe for those Fathom
-// makes. Part of the data access layer, the only server code that queries the database.
+// Fathom's settings: the time zone that decides which day is today, and the password settings.
+// Part of the data access layer.
 
-import { appInfo, type Database } from "@fathom/db";
+import { appInfo, type Database, type Reader } from "@fathom/db";
 import {
   chosenPasswordProblem,
   dayIn,
@@ -28,7 +26,7 @@ const passwordsKey = "password-settings";
 
 // Locked for a change when asked, so two changes made at once are recorded one after the other.
 export async function readTimeZone(
-  reader: Pick<Database, "select">,
+  reader: Reader,
   { lock = false } = {},
 ): Promise<string> {
   const query = reader
@@ -42,15 +40,13 @@ export async function readTimeZone(
 }
 
 // Today, in Fathom's time zone.
-export async function readToday(
-  reader: Pick<Database, "select">,
-): Promise<string> {
+export async function readToday(reader: Reader): Promise<string> {
   return dayIn(await readTimeZone(reader));
 }
 
 // Stored as JSON, which the migrations write and only this module changes.
 export async function readPasswordSettings(
-  reader: Pick<Database, "select">,
+  reader: Reader,
   { lock = false } = {},
 ): Promise<PasswordSettings> {
   const query = reader
@@ -63,9 +59,7 @@ export async function readPasswordSettings(
   return passwordSettingsSchema.parse(JSON.parse(row.value));
 }
 
-export async function readSettings(
-  reader: Pick<Database, "select">,
-): Promise<Settings> {
+export async function readSettings(reader: Reader): Promise<Settings> {
   return {
     timeZone: await readTimeZone(reader),
     passwords: await readPasswordSettings(reader),
@@ -77,7 +71,7 @@ export async function readSettings(
 // too common or easy to guess, including one built from their own name or email address, which no
 // setting allows.
 export async function checkChosenPassword(
-  reader: Pick<Database, "select">,
+  reader: Reader,
   password: string,
   owner: PasswordOwner,
 ): Promise<void> {

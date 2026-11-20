@@ -4,7 +4,7 @@
 // and saves its views; the classes of its columns; and the groupings that need data
 // of a class beyond their column. Every table must be described, which the compiler checks.
 
-import type { Database } from "@fathom/db";
+import type { Reader } from "@fathom/db";
 import {
   capacityModeNeeds,
   type ClassifiedView,
@@ -13,8 +13,6 @@ import {
   type ViewTable,
 } from "@fathom/shared";
 import { type ClassedColumn, columnClasses, readColumns } from "./values.ts";
-
-type Reader = Pick<Database, "select">;
 
 // A table's columns as its views are checked against: those of each class, by key, and whether a
 // key not among them is a General column of the table's own, as on tables whose columns are all

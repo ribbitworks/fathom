@@ -3,7 +3,7 @@
 // The view each account last showed on each page with a Views menu, in the data access layer:
 // reading and saving it, checked as a saved view is.
 
-import { type Database, lastViews, savedViews } from "@fathom/db";
+import { type Database, lastViews, type Reader, savedViews } from "@fathom/db";
 import {
   draftFilterKey,
   type LastView,
@@ -23,7 +23,6 @@ import type { Actor } from "../access.ts";
 import { BadRequestError } from "../errors.ts";
 import {
   opensTable,
-  type Reader,
   readTable,
   requireOpens,
   requireSeen,

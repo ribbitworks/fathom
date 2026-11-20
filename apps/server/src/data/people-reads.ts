@@ -2,7 +2,7 @@
 
 // Reading people as recorded, live, and when each is current. Part of the data access layer.
 
-import { type Database, inChunks, people } from "@fathom/db";
+import { inChunks, people, type Reader } from "@fathom/db";
 import { monthOf } from "@fathom/shared";
 import { inArray } from "drizzle-orm";
 import { type Recorded } from "./drafts.ts";
@@ -14,7 +14,7 @@ import { recorded, type PersonRow } from "./person-fields.ts";
 // The live people given, or everyone, as recorded, by person, with their current reporting lines as
 // of today, locked for a change when asked.
 export async function readLive(
-  reader: Pick<Database, "select">,
+  reader: Reader,
   columns: readonly ColumnInfo[],
   {
     ids,

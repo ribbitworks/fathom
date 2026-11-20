@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The classes the organization keeps its data in, and moving data between them with Classify data:
-// built-in details, lists, and columns with a class of their own. Part of the data access layer.
-// A move takes effect at once, as a change to a role does, rather than as a draft, and is recorded
-// in the access history, where it is worth checking, and lists' and columns' moves in the change
-// history too. A draft of a live list or column never holds its class, so approving one never
-// moves it back.
+// The classes the organization keeps its data in, and moving built-in details, lists and columns
+// between them. Part of the data access layer.
 
-import { dataClasses as classesTable, type Database } from "@fathom/db";
+import {
+  type Database,
+  dataClasses as classesTable,
+  type Reader,
+} from "@fathom/db";
 import {
   type ClassifiedField,
   classifiedFieldNames,
@@ -23,8 +23,6 @@ import { type Actor, storedTier } from "../access.ts";
 import { BadRequestError, ForbiddenError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
 import { recordEvent } from "./history.ts";
-
-type Reader = Pick<Database, "select">;
 
 // The class of each built-in detail: as stored once moved, or else its default. A class the server
 // no longer knows is treated as the most sensitive, rather than trusted.

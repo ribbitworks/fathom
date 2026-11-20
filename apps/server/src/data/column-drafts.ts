@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Drafts of the columns added to tables: reading the columns as their drafts make them, drafting
-// columns added, changed, and removed, and discarding drafts and sending rejected ones for approval
-// again. Part of the data access layer; the caller checks the actor may change planning
-// configuration. Every change is a draft, as drafts.ts sets out, which reaches the live columns only
-// once approved, as column-approvals.ts sets out, and is recorded in the change history.
+// Drafts of the columns added to tables: reading columns as their drafts make them, and drafting,
+// discarding and resubmitting changes to them. Part of the data access layer.
 
-import { changes, type Database, fields, lists } from "@fathom/db";
+import { changes, type Database, fields, lists, type Reader } from "@fathom/db";
 import {
   builtInColumnTiers,
   seesBuiltInColumn,
@@ -83,8 +80,6 @@ import {
 } from "./lists.ts";
 import { keyNumberOf, readKeyNumber, readKeyNumbers } from "./record-keys.ts";
 import { type FieldRow, readBuiltInTiers } from "./values.ts";
-
-type Reader = Pick<Database, "select">;
 
 // The table whose columns these are.
 const table = "people";

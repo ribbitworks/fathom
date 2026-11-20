@@ -10,6 +10,7 @@ import {
   featureTeams,
   inChunks,
   people,
+  type Reader,
 } from "@fathom/db";
 import {
   byName,
@@ -53,7 +54,7 @@ import { bySubject, inForceOn } from "./in-force.ts";
 import { notStarted } from "./people-reads.ts";
 import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { readToday } from "./settings.ts";
-import { type Reader, recordType } from "./feature-team-records.ts";
+import { recordType } from "./feature-team-records.ts";
 
 interface LiveTeams {
   // Each team as recorded: its name, lead, and members on the day asked for.

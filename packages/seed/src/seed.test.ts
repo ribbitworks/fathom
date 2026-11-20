@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for seeding a database with the fictional organization and removing it again, against a
-// migrated PostgreSQL server: what is added and recorded, that seeding twice adds nothing more,
-// that removing keeps what was added by hand and what it still uses, and the command that runs
-// both.
+// Tests for seeding a database with the fictional organization and removing it again.
 
 import {
   changes,
   changeSets,
   columnOrders,
+  type Database,
   drafts,
   featureTeamLeads,
   featureTeams,
-  type Database,
   fields,
   fieldValues,
   listItems,
@@ -20,6 +17,7 @@ import {
   people,
   plannedHires,
   projects,
+  type Reader,
   recordChanges,
   reportingLines,
   teams,
@@ -70,7 +68,7 @@ const handPosition = String(
 );
 
 async function totalOf(
-  reader: Pick<Database, "select">,
+  reader: Reader,
   table:
     | typeof people
     | typeof lists

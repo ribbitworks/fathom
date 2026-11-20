@@ -1,16 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Roles as those who see and edit administration see and change them: listing roles with what they
-// grant and how many active accounts hold them, which choosing each account's role also needs,
-// creating roles, such as by copying another, changing a role's name,
-// description, and what it grants, and working out what a change would do to each account before it
-// is saved. Every change is recorded in the access history. A change that would leave no active
-// account with Edit Administration is refused.
+// Roles as those who see and edit administration see and change them: listing, creating and
+// changing roles, and what a change would do to each account. Part of the data access layer.
 
 import {
-  databaseCodes,
   type Database,
+  databaseCodes,
   hasDatabaseCode,
+  type Reader,
   rolePermissions,
   roles,
   userRoles,
@@ -60,7 +57,7 @@ export function createRoleAdministration(
 ): RoleAdministration {
   // Reads roles, all or one, with what they grant and how many active accounts hold them.
   async function readRoles(
-    reader: Pick<Database, "select">,
+    reader: Reader,
     id?: string,
   ): Promise<RoleSummary[]> {
     const rows = await reader
@@ -108,10 +105,7 @@ export function createRoleAdministration(
     }));
   }
 
-  async function readRole(
-    reader: Pick<Database, "select">,
-    id: string,
-  ): Promise<RoleSummary> {
+  async function readRole(reader: Reader, id: string): Promise<RoleSummary> {
     const [role] = await readRoles(reader, id);
     if (role === undefined) throw new NotFoundError("There is no such role");
     return role;

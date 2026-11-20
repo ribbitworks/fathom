@@ -3,7 +3,7 @@
 // Planned hires' fields: what each is, the tiers and permissions that cover it, and how changes
 // to them are recorded. Part of the data access layer.
 
-import { type Database, plannedHires } from "@fathom/db";
+import { type Database, plannedHires, type Reader } from "@fathom/db";
 import { hireCalled, monthOf, temporaryId, type Tier } from "@fathom/shared";
 import {
   type Actor,
@@ -28,7 +28,6 @@ import { fitsColumns, type Recorded, rejectedField } from "./drafts.ts";
 import { recordEvent } from "./history.ts";
 import { text } from "./reporting.ts";
 
-export type Reader = Pick<Database, "select">;
 export type HireRow = typeof plannedHires.$inferSelect;
 
 export const recordType = "planned-hire";

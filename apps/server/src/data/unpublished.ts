@@ -8,6 +8,7 @@ import {
   changeSets,
   type Database,
   drafts,
+  type Reader,
   unpublishedDrafts,
 } from "@fathom/db";
 import {
@@ -105,7 +106,6 @@ import {
 } from "./unpublished-uses.ts";
 import type { PeopleColumns } from "./values.ts";
 
-type Reader = Pick<Database, "select">;
 type Row = typeof unpublishedDrafts.$inferSelect;
 
 // Anyone who may make drafts may publish or discard their own changes.

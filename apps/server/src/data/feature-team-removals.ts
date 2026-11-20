@@ -3,12 +3,17 @@
 // The guards feature teams keep on removing people and on features naming a team. Part of the data
 // access layer.
 
-import { featureTeamLeads, featureTeams, inChunks } from "@fathom/db";
+import {
+  featureTeamLeads,
+  featureTeams,
+  inChunks,
+  type Reader,
+} from "@fathom/db";
 import { eq, inArray } from "drizzle-orm";
 import { BadRequestError, ConflictError } from "../errors.ts";
 import { readHeld } from "./drafts.ts";
 import { readTeamDrafts } from "./feature-team-reads.ts";
-import { type Reader, recordType } from "./feature-team-records.ts";
+import { recordType } from "./feature-team-records.ts";
 import { membersOf } from "./feature-team-rules.ts";
 import { bySubject, inForceOrLater } from "./in-force.ts";
 import { readToday } from "./settings.ts";

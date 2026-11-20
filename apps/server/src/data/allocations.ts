@@ -11,6 +11,7 @@ import {
   listItems,
   people,
   plannedHires,
+  type Reader,
   unpublishedDrafts,
 } from "@fathom/db";
 import {
@@ -54,8 +55,6 @@ import {
 import { featureCalled } from "./release-kinds.ts";
 import { text } from "./reporting.ts";
 import { readToday } from "./settings.ts";
-
-type Reader = Pick<Database, "select">;
 
 const type = "allocation";
 
