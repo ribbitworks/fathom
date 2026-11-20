@@ -202,6 +202,18 @@ export async function resubmitListDraft(
 export const offered = (choice: Choice) =>
   !choice.retired && choice.draft?.action !== "deleted";
 
+// What is wrong with a name, if anything.
+export function nameProblem(
+  name: string,
+  maximum: number,
+  taken: boolean,
+  duplicate: string,
+): string | undefined {
+  if (name.trim() === "") return "Name needed";
+  if (name.trim().length > maximum) return "Too long";
+  return taken ? duplicate : undefined;
+}
+
 // Text for comparing names: trimmed and in lower case.
 export function sameName(first: string, second: string): boolean {
   return first.trim().toLowerCase() === second.trim().toLowerCase();

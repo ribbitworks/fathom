@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Rules about a list's choices: which must stay offered, and how pasted lines become choices.
+// Rules about a list's choices: which must stay offered, which names will do, and how pasted lines
+// become choices.
 
 import {
   type Choice,
@@ -8,8 +9,14 @@ import {
   type Kept,
   keptOf,
   type List,
+  listLengths,
   type Meaning,
 } from "@fathom/shared";
+import { nameProblem, sameName } from "./lists.ts";
+
+const duplicate = "Already in this list";
+// The most choices one paste adds, as the server allows at once.
+const pasteLimit = 1000;
 
 export const removedChoice = (choice: Choice) =>
   choice.draft?.action === "deleted";
@@ -51,4 +58,43 @@ export function pastedChoices(text: string): ChoiceRequest[] {
       const [label = "", ...rest] = line.split("\t");
       return { label: label.trim(), description: rest.join(" ").trim() };
     });
+}
+
+// Why a choice's name will not do, if it won't; a choice being renamed may keep its own name.
+export const choiceNameProblem = (list: List, label: string, except?: string) =>
+  nameProblem(
+    label,
+    listLengths.choice,
+    list.choices.some(
+      (other) => other.id !== except && sameName(other.label, label),
+    ),
+    duplicate,
+  );
+
+// Why pasted choices cannot be added, if they can't, naming the line when there are several.
+export function pasteProblem(
+  list: List,
+  pasted: readonly ChoiceRequest[],
+): string | undefined {
+  if (pasted.length > pasteLimit) {
+    return `Up to ${String(pasteLimit)} lines at once`;
+  }
+  const seen: string[] = [];
+  for (const [index, choice] of pasted.entries()) {
+    const problem =
+      choiceNameProblem(list, choice.label) ??
+      (choice.description.length > listLengths.description
+        ? "Description too long"
+        : undefined) ??
+      (seen.some((label) => sameName(label, choice.label))
+        ? duplicate
+        : undefined);
+    if (problem !== undefined) {
+      return pasted.length === 1
+        ? problem
+        : `Line ${String(index + 1)}: ${problem}`;
+    }
+    seen.push(choice.label);
+  }
+  return undefined;
 }
