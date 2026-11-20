@@ -105,7 +105,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **A mode:** one the role can't see isn't in the page's switch.
   - **A view or grouping:** one the role can't see is left out with nothing said, as a column is.
   - **Following the classes:** what a page needs follows its data's classes, so moving a detail's class opens or closes pages with no code change. The Roles page keeps its lines saying what each view needs.
-  - **Drawn by:** each page's needs in `pageNeeds`, and Capacity's modes' in `capacityModeNeeds`, with `opensWith` and `reaches`, in `packages/shared/src/page-access.ts`, which the sidebar's items in `apps/web/src/layout.tsx`, the routes in `apps/web/src/router.tsx` and `capacityModes` in `apps/web/src/capacity.ts` all read; the Roles page's lines from `viewsOfRole` in `packages/shared/src/data-classes.ts`.
+  - **Drawn by:** each page's needs in `pageNeeds`, and Capacity's modes' in `capacityModeNeeds`, with `opensWith` and `reaches`, in `packages/shared/src/page-access.ts`, which the sidebar's items in `apps/web/src/layout.tsx`, the routes in `apps/web/src/router.tsx`, `apps/web/src/signed-in-route.tsx` and `apps/web/src/plan-routes.tsx`, and `capacityModes` in `apps/web/src/capacity.ts` all read; the Roles page's lines from `viewsOfRole` in `packages/shared/src/data-classes.ts`.
   - **Example:** the Team Member, whose menu has neither Feature assignments nor Capacity, and the Product Manager, who sees Capacity's Settings alone.
 - **Columns a role can't see:** A column a role can't see isn't shown, and nothing says it's missing.
   - **Drawn by:** a column's `dataClass` in `apps/web/src/table-view.ts`, read by `RecordGrid` in `apps/web/src/record-grid.tsx`.

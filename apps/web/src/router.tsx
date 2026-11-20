@@ -4,41 +4,30 @@
 
 import type { QueryClient } from "@tanstack/react-query";
 import {
+  allChartLevels,
   approvableKinds,
-  type ClassAccess,
   changesField,
-  changesLinesOn,
   changesHiringPlan,
-  type GuardedPage,
-  historySearchLength,
+  changesLinesOn,
+  chartLevelsSchema,
+  daySchema,
+  draftsTabSchema,
   editsField,
+  historySearchLength,
   opensWith,
   pageNeeds,
+  parseRecordKey,
+  parseRecordLink,
+  personLengths,
   reaches,
   seesEmployment,
   seesHiringPlan,
-  type Permission,
-  allChartLevels,
-  chartLevelsSchema,
-  personLengths,
   seesView,
   sharesViews,
   showSchema,
-  daySchema,
-  cardPartSchema,
-  planModeSchema,
-  parseRecordKey,
-  parseRecordLink,
-  cyclesViewChoices,
-  releasesViewChoices,
-  shownChoiceSchema,
-  draftsTabSchema,
-  viewPageOf,
-  type ViewTable,
 } from "@fathom/shared";
 import { Anchor } from "@mantine/core";
 import {
-  createRootRouteWithContext,
   createRoute,
   createRouter,
   getRouteApi,
@@ -47,10 +36,9 @@ import {
   type RouterHistory,
   redirect,
 } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import { z } from "zod";
 import { AccountsPage } from "./accounts-page.tsx";
-import { FirstPasswordChange } from "./change-password.tsx";
 import { RecordNotShown } from "./go-page.tsx";
 import { HelpPageView } from "./help-page.tsx";
 import { helpIndexPage, shownHelpPage } from "./help-pages.ts";
@@ -60,10 +48,9 @@ import { shownPlace } from "./draft-places.ts";
 import { DraftsPage } from "./drafts-page.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
-import { firstPage, Layout } from "./layout.tsx";
+import { firstPage } from "./layout.tsx";
 import { ListsPage } from "./lists-page.tsx";
 import { listKindSchema } from "./lists.ts";
-import { FeatureAssignmentsPage } from "./feature-assignments-page.tsx";
 import { OrgChartPage } from "./org-chart-page.tsx";
 import {
   chartAddressOf,
@@ -71,45 +58,35 @@ import {
   type ChartSearch,
   chartViewSearch,
 } from "./org-chart.ts";
-import { CapacityPage } from "./capacity-page.tsx";
-import {
-  capacityModeSchema,
-  capacityModes,
-  shownCapacityMode,
-} from "./capacity.ts";
 import { SettingsPage } from "./settings-page.tsx";
 import { DataClassesPage } from "./data-classes-page.tsx";
-import { setTimeZone, shownDay, today } from "./today.ts";
-import { removedCycleMark } from "./cycle-table.tsx";
-import {
-  ReleasesPage,
-  type ReleasesTab,
-  releasesTabSchema,
-  releasesTabTables,
-} from "./releases-page.tsx";
+import { shownDay, today } from "./today.ts";
 import { PeoplePage } from "./people-page.tsx";
-import { ProjectsPage, projectTabSchema } from "./projects-page.tsx";
-import { featureNamers, planAddress } from "./projects.ts";
-import { followLink } from "./record-links.ts";
-import type { LinkedColumn } from "./record-grid.tsx";
-import { PageNotFound, ServerProblem } from "./problems.tsx";
-import { RolesPage } from "./roles-page.tsx";
-import { sessionQuery } from "./session.ts";
-import { SignIn } from "./sign-in.tsx";
-import { lastViewAddress, lastViewsQuery, type Shown } from "./last-views.ts";
 import {
-  viewOfAddress,
-  viewProps,
-  type ViewSearch,
-  viewSearchSchema,
-} from "./table-view.ts";
+  capacityRoute,
+  featureAssignmentsRoute,
+  featuresRoute,
+  projectsRoute,
+  releasesRoute,
+} from "./plan-routes.tsx";
+import { followLink } from "./record-links.ts";
+import { ServerProblem } from "./problems.tsx";
+import { RolesPage } from "./roles-page.tsx";
+import {
+  editsFeatureTeams,
+  fathomIdLength,
+  linkedColumnSearch,
+  openOnLastView,
+  reaching,
+  rootRoute,
+  shownOn,
+  signedIn,
+  signedInRoute,
+  useLinkedColumn,
+} from "./signed-in-route.tsx";
+import { SignIn } from "./sign-in.tsx";
+import { viewProps, viewSearchSchema } from "./table-view.ts";
 
-const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  notFoundComponent: PageNotFound,
-});
-
-// The signed-in user and their permissions, as the signed-in routes check them below.
-const signedIn = getRouteApi("/signed-in");
 const people = getRouteApi("/signed-in/people");
 
 // The org chart's address: the person found on it, by Employee ID, or by Fathom's own ID for a
@@ -117,7 +94,6 @@ const people = getRouteApi("/signed-in/people");
 // address made before; what the Draft menu shows; the person whose details are shown beside it;
 // and the saved view the chart's view started from. An address from before feature teams were
 // named `teams` still opens on them.
-const fathomIdLength = 36;
 const chartAddressLength = Math.max(personLengths.employeeId, fathomIdLength);
 const oldFeatureTeams = "feature-teams";
 const chartSearch = z
@@ -154,134 +130,6 @@ const chartSearch = z
     teams: view === oldFeatureTeams ? "feature" : teams,
     view: view === oldFeatureTeams ? undefined : view,
   }));
-
-// Pages only for users whose access opens them; anyone else is told there is no such page.
-function opening(page: GuardedPage) {
-  return ({ context }: { context: { access: ClassAccess } }) => {
-    // The page is always one of the fixed pages.
-    // eslint-disable-next-line security/detect-object-injection
-    if (!opensWith(pageNeeds[page], context.access)) {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to say so
-      throw notFound();
-    }
-  };
-}
-
-// Pages only for users with a permission that would open them; anyone else is told there is no such
-// page.
-function reaching(page: GuardedPage) {
-  return ({ context }: { context: { permissions: Permission[] } }) => {
-    // The page is always one of the fixed pages.
-    // eslint-disable-next-line security/detect-object-injection
-    if (!reaches(pageNeeds[page], context.permissions)) {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to say so
-      throw notFound();
-    }
-  };
-}
-
-// Opens a page on its last view when its address names no view, before the page is drawn, so it
-// isn't drawn first as it opens by default. The address keeps the view's choices, and a page's tab,
-// under names of its own, which `addressOf` gives.
-function openOnLastView(
-  {
-    context,
-    search,
-    cause,
-  }: {
-    context: { queryClient: QueryClient };
-    search: object;
-    cause: string;
-  },
-  shown: Shown,
-  addressOf: (
-    address: ViewSearch & Record<string, unknown>,
-    table: ViewTable,
-  ) => object = (address) => address,
-): void {
-  if (cause !== "enter") return;
-  const views = context.queryClient.getQueryData(lastViewsQuery.queryKey);
-  const restored = lastViewAddress(shown, views?.[viewPageOf[shown.table]]);
-  if (restored === undefined) return;
-  // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
-  throw redirect({
-    to: ".",
-    search: { ...search, ...addressOf(restored.address, restored.table) },
-    replace: true,
-  });
-}
-
-// The view a page's address shows, as its last view is kept.
-const shownOn = <Search extends ViewSearch>(
-  table: ViewTable,
-  search: Search,
-  choiceKeys: readonly (keyof Search & string)[] = [],
-  mode?: string,
-): Shown => ({
-  table,
-  view: viewOfAddress(search, choiceKeys),
-  applied: search.view,
-  mode,
-});
-
-const signedInRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  id: "signed-in",
-  beforeLoad: async ({ context, location }) => {
-    // Checked afresh on every change of page, so an expired session is noticed.
-    const session = await context.queryClient.query(sessionQuery);
-    if (session === null) {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
-      throw redirect({ to: "/sign-in", search: { redirect: location.href } });
-    }
-    if (session.mustChangePassword && location.pathname !== "/") {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
-      throw redirect({ to: "/", replace: true });
-    }
-    // Every page works out today in Fathom's time zone, as the session has it now.
-    setTimeZone(session.settings.timeZone);
-    // Read before the first page shows, so it opens on its last view at once; without them, every
-    // page opens on its default.
-    await context.queryClient.query(lastViewsQuery).catch(() => undefined);
-    return {
-      user: session.user,
-      role: session.role,
-      roles: session.roles,
-      permissions: session.permissions,
-      access: {
-        permissions: session.permissions,
-        dataClasses: session.settings.dataClasses,
-      },
-      mustChangePassword: session.mustChangePassword,
-      timeZone: session.settings.timeZone,
-      passwords: session.settings.passwords,
-    };
-  },
-  component: function SignedIn() {
-    const {
-      user,
-      role,
-      roles,
-      permissions,
-      access,
-      mustChangePassword,
-      passwords,
-    } = signedIn.useRouteContext();
-    if (mustChangePassword) {
-      return <FirstPasswordChange rules={passwords.rules} owner={user} />;
-    }
-    return (
-      <Layout
-        user={user}
-        role={role}
-        roles={roles}
-        permissions={permissions}
-        dataClasses={access.dataClasses}
-        passwordRules={passwords.rules}
-      />
-    );
-  },
-});
 
 // The Overview, for those who may see the plan. Anyone else is sent to the first page their role
 // lets them open, or, with none, to Help's index.
@@ -535,351 +383,6 @@ const listsRoute = createRoute({
   },
 });
 
-// A cycle's own identifier: its schedule's, a space, and its first day, then, for a cycle a draft
-// removes, its mark.
-const cycleIdLength =
-  fathomIdLength + " YYYY-MM-DD".length + removedCycleMark.length;
-
-// The Releases page's address: its tab, the record of the tab whose details are shown beside it,
-// the tab's view, and whether shipped releases show, on Releases, or past and later cycles, on
-// Cycles. Changing the tab starts its view afresh.
-const releasesSearch = viewSearchSchema.extend({
-  tab: releasesTabSchema.optional().catch(undefined),
-  open: z.string().max(cycleIdLength).optional().catch(undefined),
-  shipped: shownChoiceSchema.optional().catch(undefined),
-  past: shownChoiceSchema.optional().catch(undefined),
-  later: shownChoiceSchema.optional().catch(undefined),
-});
-
-// The choices each tab of the Releases page keeps in its view, by their names in the address.
-const releasesTabChoices: Record<
-  ReleasesTab,
-  readonly ("shipped" | "past" | "later")[]
-> = {
-  releases: releasesViewChoices.keyof().options,
-  cycles: cyclesViewChoices.keyof().options,
-  schedules: [],
-};
-
-// Releases, their schedules and cycles, seen with the plan or planning configuration. An address
-// naming a schedule after the page, as links made before the page had tabs do, opens it on
-// Schedules.
-const releasesRoute = createRoute({
-  getParentRoute: () => signedInRoute,
-  path: "/releases/{-$streamId}",
-  validateSearch: releasesSearch,
-  beforeLoad: (match) => {
-    reaching("releases")(match);
-    const { streamId } = match.params;
-    if (streamId !== undefined) {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
-      throw redirect({
-        to: "/releases/{-$streamId}",
-        params: { streamId: undefined },
-        search: { ...match.search, tab: "schedules", open: streamId },
-        replace: true,
-      });
-    }
-    const tab = match.search.tab ?? "releases";
-    openOnLastView(
-      match,
-      shownOn(
-        // The tab is always one of the fixed tabs.
-        // eslint-disable-next-line security/detect-object-injection
-        releasesTabTables[tab],
-        match.search,
-        // eslint-disable-next-line security/detect-object-injection
-        releasesTabChoices[tab],
-      ),
-      (address, table) => ({
-        ...address,
-        tab: releasesTabSchema.options.find(
-          // The tab is always one of the fixed tabs.
-          // eslint-disable-next-line security/detect-object-injection
-          (shown) => shown !== "releases" && releasesTabTables[shown] === table,
-        ),
-      }),
-    );
-  },
-  component: function Releases() {
-    const { permissions } = signedIn.useRouteContext();
-    const navigate = releasesRoute.useNavigate();
-    const { tab = "releases", open, ...search } = releasesRoute.useSearch();
-    const kept = { tab: tab === "releases" ? undefined : tab, open };
-    return (
-      <ReleasesPage
-        tab={tab}
-        onTab={(next, { open: record, schedule } = {}) => {
-          void navigate({
-            search: {
-              ...(next === "releases" ? {} : { tab: next }),
-              ...(record === undefined ? {} : { open: record }),
-              ...(schedule === undefined
-                ? {}
-                : { filters: { schedule: { any: [schedule] } } }),
-            },
-          });
-        }}
-        open={open}
-        onOpen={(next) => {
-          void navigate({ search: { ...search, ...kept, open: next } });
-        }}
-        onFeatures={(at) => {
-          void navigate(
-            "feature" in at
-              ? planAddress("features", at.feature)
-              : {
-                  to: "/features",
-                  search: {
-                    filters: { [at.filter.key]: { any: [at.filter.value] } },
-                    ...(at.board === undefined
-                      ? {}
-                      : { mode: "board" as const, ...at.board }),
-                  },
-                },
-          );
-        }}
-        approves={approvableKinds(permissions)}
-        // The tab is always one of the fixed tabs.
-        // eslint-disable-next-line security/detect-object-injection
-        canShareViews={sharesViews(releasesTabTables[tab], permissions)}
-        {...viewProps(
-          search,
-          (next, replace) => {
-            void navigate({ search: { ...next, ...kept }, replace });
-          },
-          // The tab is always one of the fixed tabs.
-          // eslint-disable-next-line security/detect-object-injection
-          releasesTabChoices[tab],
-        )}
-      />
-    );
-  },
-});
-
-// The Capacity page's address: its mode, and People's view.
-const capacitySearch = viewSearchSchema.extend({
-  mode: capacityModeSchema.optional().catch(undefined),
-});
-
-const capacityRoute = createRoute({
-  getParentRoute: () => signedInRoute,
-  path: "/capacity",
-  validateSearch: capacitySearch,
-  beforeLoad: (match) => {
-    opening("capacity")(match);
-    openOnLastView(
-      match,
-      shownOn("capacity", match.search, [], match.search.mode),
-    );
-  },
-  component: function Capacity() {
-    const { permissions, access } = signedIn.useRouteContext();
-    const navigate = capacityRoute.useNavigate();
-    const { mode: asked, ...search } = capacityRoute.useSearch();
-    const mode = shownCapacityMode(asked, access);
-    // The address keeps the mode shown, not one asked for that the role doesn't see.
-    const kept = asked === undefined ? {} : { mode };
-    return (
-      <CapacityPage
-        modes={capacityModes(access)}
-        mode={mode}
-        onMode={(next) => {
-          void navigate({ search: { mode: next } });
-        }}
-        byManager={seesView("groupingByManager", access)}
-        canShareViews={sharesViews("capacity", permissions)}
-        {...viewProps(search, (next, replace) => {
-          void navigate({ search: { ...next, ...kept }, replace });
-        })}
-        canEditSettings={permissions.includes("configuration:edit")}
-        approves={approvableKinds(permissions)}
-      />
-    );
-  },
-});
-
-// A plan page's address: its view, and the record whose details are shown beside it.
-const planRecordSearch = viewSearchSchema.extend({
-  open: z.uuid().optional().catch(undefined),
-});
-
-// The Projects page's address adds its tab. Changing the tab starts its view afresh.
-const projectsSearch = planRecordSearch.extend({
-  tab: projectTabSchema.optional().catch(undefined),
-});
-
-// An added column a link opens, taken out of the address at once, since a menu isn't kept there,
-// and kept until the table has opened its menu, then let go, so drawing the table again, as
-// switching to the Board and back does, doesn't open it again.
-const linkedColumnSearch = z.uuid().optional().catch(undefined);
-
-function useLinkedColumn(
-  column: string | undefined,
-  drop: () => void,
-): LinkedColumn | undefined {
-  const [linked, setLinked] = useState(column);
-  const dropped = useRef(false);
-  useEffect(() => {
-    if (column === undefined || dropped.current) return;
-    dropped.current = true;
-    drop();
-  }, [column, drop]);
-  return linked === undefined
-    ? undefined
-    : {
-        key: linked,
-        onOpened: () => {
-          setLinked(undefined);
-        },
-      };
-}
-
-// Features' address adds whether it shows a board, and the board's stream, the cycle it starts from,
-// and the parts of its cards hidden.
-const featuresSearch = planRecordSearch.extend({
-  column: linkedColumnSearch,
-  mode: planModeSchema.optional().catch(undefined),
-  stream: z.uuid().optional().catch(undefined),
-  from: daySchema.optional().catch(undefined),
-  hide: z.array(cardPartSchema).optional().catch(undefined),
-});
-
-const featuresRoute = createRoute({
-  getParentRoute: () => signedInRoute,
-  path: "/features",
-  validateSearch: featuresSearch,
-  beforeLoad: (match) => {
-    reaching("features")(match);
-    openOnLastView(
-      match,
-      shownOn("features", match.search, ["stream", "hide"], match.search.mode),
-    );
-  },
-  component: function Features() {
-    const { permissions } = signedIn.useRouteContext();
-    const navigate = featuresRoute.useNavigate();
-    // Table or Board, and the cycle the Board starts from, are kept in the address but not the
-    // view, which the table and the Board share.
-    const { open, mode, from, column, ...search } = featuresRoute.useSearch();
-    const { stream, hide } = search;
-    const linkedColumn = useLinkedColumn(column, () => {
-      void navigate({
-        search: (shown) => ({ ...shown, column: undefined }),
-        replace: true,
-      });
-    });
-    return (
-      <ProjectsPage
-        linkedColumn={linkedColumn}
-        tab="features"
-        canEditColumns={permissions.includes("configuration:edit")}
-        canShareViews={sharesViews("features", permissions)}
-        onTab={(next, record) => {
-          void navigate(planAddress(next, record));
-        }}
-        onReleaseStream={(streamId) => {
-          void navigate({
-            to: "/releases/{-$streamId}",
-            params: { streamId: undefined },
-            search: { tab: "schedules", open: streamId },
-          });
-        }}
-        approves={approvableKinds(permissions)}
-        {...viewProps(
-          search,
-          (next, replace) => {
-            void navigate({ search: { ...next, mode, from, open }, replace });
-          },
-          ["stream", "hide"],
-        )}
-        open={open}
-        onOpen={(next) => {
-          void navigate({ search: { ...search, mode, from, open: next } });
-        }}
-        board={{
-          mode,
-          onMode: (next) => {
-            void navigate({
-              search: {
-                ...search,
-                from,
-                open,
-                mode: next === "board" ? next : undefined,
-              },
-            });
-          },
-          place: { stream, from, hide },
-          onPlace: (place) => {
-            void navigate({ search: { ...search, mode, ...place, open } });
-          },
-        }}
-      />
-    );
-  },
-});
-
-const projectsRoute = createRoute({
-  getParentRoute: () => signedInRoute,
-  path: "/projects",
-  validateSearch: projectsSearch,
-  beforeLoad: (match) => {
-    reaching("projects")(match);
-    openOnLastView(
-      match,
-      shownOn(match.search.tab ?? "projects", match.search),
-      (address, table) => ({
-        ...address,
-        tab: table === "projects" ? undefined : table,
-      }),
-    );
-  },
-  component: function Projects() {
-    const { permissions } = signedIn.useRouteContext();
-    const navigate = projectsRoute.useNavigate();
-    const { tab, open, ...search } = projectsRoute.useSearch();
-    return (
-      <ProjectsPage
-        tab={tab ?? "projects"}
-        canShareViews={sharesViews(tab ?? "projects", permissions)}
-        onTab={(next, record) => {
-          void navigate(planAddress(next, record));
-        }}
-        approves={approvableKinds(permissions)}
-        {...viewProps(search, (next, replace) => {
-          void navigate({ search: { ...next, tab, open }, replace });
-        })}
-        open={open}
-        onOpen={(next) => {
-          void navigate({ search: { ...search, tab, open: next } });
-        }}
-        onMilestonesOf={(project) => {
-          void navigate({
-            search: {
-              tab: "milestones",
-              filters: { projectId: { any: [project.id] } },
-            },
-          });
-        }}
-        onFeaturesOf={({ type, id }) => {
-          void navigate({
-            to: "/features",
-            search: {
-              filters: {
-                // The kind is always one of the fixed kinds.
-                // eslint-disable-next-line security/detect-object-injection
-                [featureNamers[type].key]: {
-                  any: [id],
-                },
-              },
-            },
-          });
-        }}
-      />
-    );
-  },
-});
-
 // People's address: its view, and the person whose details are shown beside it, by Employee ID.
 const peopleSearch = viewSearchSchema.extend({
   column: linkedColumnSearch,
@@ -951,11 +454,6 @@ const peopleRoute = createRoute({
   },
 });
 
-// Whether a role may draft changes to feature teams, which needs seeing the people on them.
-const editsFeatureTeams = (permissions: readonly string[]) =>
-  permissions.includes("people:view") &&
-  permissions.includes("feature-teams:edit");
-
 const orgChartRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/org-chart",
@@ -993,48 +491,6 @@ const orgChartRoute = createRoute({
         onSearch={(search, replace) => {
           void navigate({ search, replace });
         }}
-      />
-    );
-  },
-});
-
-// The Feature assignments page's address. Its Allocations mode moved to Capacity's People mode, so
-// an address naming it, such as a saved link, opens that instead, with the same view.
-const featureAssignmentsSearch = viewSearchSchema.extend({
-  mode: z.literal("allocations").optional().catch(undefined),
-});
-
-const featureAssignmentsRoute = createRoute({
-  getParentRoute: () => signedInRoute,
-  path: "/feature-assignments",
-  validateSearch: featureAssignmentsSearch,
-  beforeLoad: ({ context, cause, search: { mode, ...shown } }) => {
-    if (mode !== undefined) {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
-      throw redirect({
-        to: "/capacity",
-        search: { ...shown, mode: "people" },
-        replace: true,
-      });
-    }
-    opening("feature-assignments")({ context });
-    openOnLastView(
-      { context, search: shown, cause },
-      shownOn("feature-assignments", shown),
-    );
-  },
-  component: function FeatureAssignments() {
-    const { permissions, access } = signedIn.useRouteContext();
-    const navigate = featureAssignmentsRoute.useNavigate();
-    return (
-      <FeatureAssignmentsPage
-        byManager={seesView("groupingByManager", access)}
-        editsTeams={editsFeatureTeams(permissions)}
-        changesDates={editsField(access, "featureTeamDates")}
-        canShareViews={sharesViews("feature-assignments", permissions)}
-        {...viewProps(featureAssignmentsRoute.useSearch(), (next, replace) => {
-          void navigate({ search: next, replace });
-        })}
       />
     );
   },
