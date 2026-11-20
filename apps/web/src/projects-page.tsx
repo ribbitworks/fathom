@@ -4,21 +4,14 @@
 // projects, proposals, customers and milestones, and the Features page, as a table or a board.
 
 import type {
-  Asking,
   DraftKind,
   Feature,
   Milestone,
   Project,
   ProjectPlan,
-  Proposal,
 } from "@fathom/shared";
-import {
-  allOf,
-  cardPartSchema,
-  type PlanMode,
-  withRemovalReason,
-} from "@fathom/shared";
-import { Button, Group, Loader, Modal, Stack } from "@mantine/core";
+import { cardPartSchema, type PlanMode } from "@fathom/shared";
+import { Loader, Modal, Stack } from "@mantine/core";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { effortConversionsQuery } from "./effort.ts";
 import {
@@ -26,7 +19,7 @@ import {
   focusCard,
   FeatureBoard,
 } from "./feature-board-view.tsx";
-import { boardParts, planModes } from "./feature-board.ts";
+import { boardParts } from "./feature-board.ts";
 import { today } from "./today.ts";
 import { TableTips } from "./table-tips.tsx";
 import {
@@ -38,7 +31,6 @@ import {
   useState,
 } from "react";
 import { z } from "zod";
-import type { CellChange } from "./cell-kinds.tsx";
 import {
   columnDraftActions,
   columnRemover,
@@ -46,34 +38,26 @@ import {
   useColumnDialog,
 } from "./column-editing.tsx";
 import { DecisionModal } from "./decision-dialog.tsx";
-import { draftSentAgain, noDrafts, type DraftSelection } from "./drafts.ts";
-import { type Decision, decisionFor } from "./draft-decisions.ts";
+import { noDrafts } from "./drafts.ts";
+import { type Decision } from "./draft-decisions.ts";
 import { listsQuery } from "./lists.ts";
 import { LoadProblem } from "./load-problem.tsx";
-import {
-  HeadingTabPanel,
-  HeadingTabs,
-  ModeSwitch,
-  PageHeader,
-} from "./page-header.tsx";
+import { HeadingTabPanel } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { featureTable } from "./feature-table.tsx";
 import { livePlanRecords, type PlanChange, wordsOf } from "./plan-table.tsx";
 import {
   customerTable,
   milestoneTable,
-  noColumnActions,
   PlanGrid,
   projectTable,
   proposalTable,
 } from "./project-grids.tsx";
 import {
   allMilestones,
-  changeRemovalReason,
   type FeatureFields,
   type FeatureNamer,
   type MilestoneAdding,
-  operationsOf,
   listedPlanRecords,
   planChoicesQuery,
   planNodes,
@@ -81,20 +65,10 @@ import {
   type PlanRecordKind,
   type PlanTab,
   projectPlanQuery,
-  namesOf,
   projectTabs,
   tableChoices,
 } from "./projects.ts";
-import {
-  adding,
-  discarded,
-  newestId,
-  removing,
-  withAdded,
-  withFeatureColumns,
-  withRecord,
-  withRecordChange,
-} from "./plan-record-changes.ts";
+import { withFeatureColumns } from "./plan-record-changes.ts";
 import {
   detailTabs,
   MilestoneForm,
@@ -103,6 +77,13 @@ import {
   recordPanel,
 } from "./plan-record-panel.tsx";
 import { pendingId } from "./grid-drafts.ts";
+import {
+  newButtonId,
+  newColumnId,
+  PlanPageHeading,
+  tabsId,
+} from "./plan-page-heading.tsx";
+import { planRecordActions } from "./plan-record-actions.ts";
 import { focusRecordCell } from "./grid-row.tsx";
 import { recordsAsShown } from "./live-records.ts";
 import { RecordGrid } from "./record-grid.tsx";
@@ -116,11 +97,7 @@ import { entered, type FormValues, newRecordId } from "./new-record-panel.tsx";
 import { afterNote, noteQuestion, useNoteEditing } from "./note-editing.tsx";
 import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
 import { focusSoon } from "./focus.ts";
-import {
-  discardRecordDraft,
-  releaseStreamsQuery,
-  resubmitRecordDraft,
-} from "./releases.ts";
+import { releaseStreamsQuery } from "./releases.ts";
 import { useSavedViews } from "./saved-views.tsx";
 import { useSaving } from "./saving.ts";
 import { type SidePanel, useNarrow } from "./side-panel.tsx";
@@ -128,10 +105,6 @@ import type { ChangeView } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
 
 export const projectTabSchema = z.enum(projectTabs);
-
-const newButtonId = "projects-new";
-const newColumnId = "features-new-column";
-const tabsId = "projects-tabs";
 
 // What sets each of the plan's pages apart.
 const planPages = {
@@ -298,141 +271,19 @@ export function ProjectsPage({
     removed: "Someone else has removed this. The plan has been refreshed.",
     blocked: deciding || dialogOpened || columnDialog.opened || views.opened,
   });
-  const { save, shown, undoable, done } = changes;
+  const { shown, undoable } = changes;
   const canEdit = query.data !== undefined && page.mayEdit(query.data);
 
-  const decide = (asking: Asking, chosen: DraftSelection, all?: boolean) => {
-    const plan = query.data as ProjectPlan;
-    setDecision(
-      decisionFor(
-        asking,
-        chosen,
-        approves,
-        plan.featureColumns.lists,
-        { fields: plan.featureColumns.fields, records: planNodes(plan) },
-        all,
-      ),
-    );
-    setDeciding(true);
-  };
-
-  const discard = (type: PlanRecordKind, record: PlanRecord) => {
-    const gone = record.draft?.action === "created";
-    save({
-      next: (plan) => withRecord(plan, type, record.id, discarded),
-      save: () => discardRecordDraft({ type, id: record.id }),
-      failure: `Fathom could not discard the draft of ${record.name}.`,
-      onSaved: (changeSetId, before) => {
-        if (gone) {
-          done(
-            `Discarded the draft adding ${record.name}.`,
-            changeSetId,
-            before,
-          );
-        } else {
-          undoable(changeSetId, before);
-        }
+  const { decide, discard, changeReason, resubmit, actionsFor } =
+    planRecordActions({
+      changes,
+      plan: query.data,
+      approves,
+      onDecision: (decision) => {
+        setDecision(decision);
+        setDeciding(true);
       },
     });
-  };
-
-  const changeReason = (
-    featureId: string,
-    proposal: Proposal,
-    removalReason: string | null,
-  ) => {
-    const features = namesOf((query.data as ProjectPlan).features, [featureId]);
-    save({
-      next: (plan) =>
-        withRecord(plan, "proposal", proposal.id, (shown) => ({
-          ...shown,
-          removalReasons: withRemovalReason(
-            proposal.removalReasons,
-            featureId,
-            removalReason,
-          ),
-        })),
-      save: async () =>
-        (await changeRemovalReason(featureId, proposal.id, { removalReason }))
-          .changeSetId,
-      failure: `Fathom could not change the reason for removing ${allOf(features)} from ${proposal.name}. Try again in a moment.`,
-      onSaved: undoable,
-    });
-  };
-
-  const resubmit = (type: PlanRecordKind, record: PlanRecord) => {
-    save({
-      next: (plan) => withRecord(plan, type, record.id, draftSentAgain),
-      save: () => resubmitRecordDraft({ type, id: record.id }),
-      failure: `Fathom could not send the draft of ${record.name} for approval again.`,
-      onSaved: undoable,
-    });
-  };
-
-  function actionsFor<Rec extends PlanRecord, Request>(
-    type: PlanRecordKind,
-  ): RecordActions<Rec, PlanChange, Request> {
-    return {
-      add: (added, onAdded, onFailed) => {
-        save({
-          next: (plan) =>
-            withAdded(
-              plan,
-              type,
-              added.map(({ id, request }) =>
-                adding(type, id, request as CellChange),
-              ),
-            ),
-          save: async () => {
-            const ids: string[] = [];
-            // Every record of the kind before these were added, so each new one is told apart.
-            const known = operationsOf(type)
-              .all(query.data as ProjectPlan)
-              .map(({ id }) => id);
-            let changeSetId: string | null = null;
-            // Each is its own request, one after another, so the change sets follow in order.
-            for (const { request } of added) {
-              const saved = await operationsOf(type).add(request);
-              changeSetId = saved.changeSetId;
-              ids.push(newestId(saved.plan, type, [...known, ...ids]));
-            }
-            onAdded(ids);
-            return changeSetId;
-          },
-          failure: `Fathom could not add ${allOf(
-            added.map(({ request }) => (request as { name: string }).name),
-          )}. Try again in a moment.`,
-          onFailed,
-          onSaved: undoable,
-        });
-      },
-      update: (record, change) => {
-        save({
-          next: (plan) => withRecordChange(plan, type, record.id, change),
-          save: async () =>
-            (await operationsOf(type).change(record, change)).changeSetId,
-          failure: `Fathom could not change ${record.name}.`,
-          onSaved: undoable,
-        });
-      },
-      decide,
-      remove: (record) => {
-        save({
-          next: (plan) => withRecord(plan, type, record.id, removing),
-          save: () => operationsOf(type).remove(record),
-          failure: `Fathom could not remove ${record.name}.`,
-          onSaved: undoable,
-        });
-      },
-      discard: (record) => {
-        discard(type, record);
-      },
-      resubmit: (record) => {
-        resubmit(type, record);
-      },
-      ...noColumnActions,
-    };
-  }
 
   let content: ReactNode;
   if (query.isPending || choicesQuery.isPending || settingsPending) {
@@ -747,64 +598,32 @@ export function ProjectsPage({
 
   return (
     <Stack gap="md" className={classes.tablePage}>
-      <PageHeader
+      <PlanPageHeading
         title={page.title}
-        beside={
-          page.tabbed ? (
-            <HeadingTabs
-              id={tabsId}
-              label={`${page.title} tables`}
-              tabs={projectTabs.map((one) => ({
-                value: one,
-                label: wordsOf(one).label,
-              }))}
-              tab={tab}
-              onTab={(next) => {
-                leave(() => {
-                  onTab?.(next);
-                });
-              }}
-            />
-          ) : (
-            tab === "features" &&
-            board !== undefined && (
-              <ModeSwitch modes={planModes} mode={mode} onMode={board.onMode} />
-            )
-          )
-        }
-        action={
-          <Group gap="xs">
-            {editsFeatureColumns && (
-              <Button
-                id={newColumnId}
-                variant={canEdit ? "default" : "filled"}
-                disabled={!query.isSuccess || !listsToOffer.isSuccess}
-                onClick={() => {
-                  columnDialog.open({ kind: "new" });
-                }}
-              >
-                New column
-              </Button>
-            )}
-            {/* The live records alone are read only. */}
-            {canEdit && view.show !== "live" && (
-              <Button
-                id={newButtonId}
-                variant="filled"
-                disabled={!query.isSuccess || !choicesSettled}
-                onClick={() => {
-                  leave(() => {
-                    onOpen?.(undefined);
-                    setForms((count) => count + 1);
-                    setBeingAdded({ tab, values: {} });
-                  });
-                }}
-              >
-                New {wordsOf(tab).one}
-              </Button>
-            )}
-          </Group>
-        }
+        tabbed={page.tabbed}
+        tab={tab}
+        mode={mode}
+        onMode={board?.onMode}
+        editsColumns={editsFeatureColumns}
+        canEdit={canEdit}
+        show={view.show}
+        columnsReady={query.isSuccess && listsToOffer.isSuccess}
+        newReady={query.isSuccess && choicesSettled}
+        onTab={(next) => {
+          leave(() => {
+            onTab?.(next);
+          });
+        }}
+        onNewColumn={() => {
+          columnDialog.open({ kind: "new" });
+        }}
+        onNew={() => {
+          leave(() => {
+            onOpen?.(undefined);
+            setForms((count) => count + 1);
+            setBeingAdded({ tab, values: {} });
+          });
+        }}
       />
       {page.tabbed ? (
         <HeadingTabPanel key={tab} id={tabsId} tab={tab}>
