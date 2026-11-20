@@ -3,7 +3,7 @@ title: "UI Conventions"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/**", "docs/testing/**"]
-dependencies: ["docs/design/visual-design.md", "code-review.md", "ui-conventions/drafts-and-values.md", "ui-conventions/dates-timelines-and-boards.md", "ui-conventions/pages-and-panels.md", "ui-conventions/entering-and-saving.md", "ui-conventions/tables.md"]
+dependencies: ["docs/design/visual-design.md", "docs/standards/code-review.md", "docs/standards/ui-conventions/drafts-and-values.md", "docs/standards/ui-conventions/dates-timelines-and-boards.md", "docs/standards/ui-conventions/pages-and-panels.md", "docs/standards/ui-conventions/entering-and-saving.md", "docs/standards/ui-conventions/tables.md"]
 last_updated: "2026-11-19"
 ---
 

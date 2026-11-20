@@ -3,8 +3,8 @@ title: "Markdown Style Guidelines"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*.md"]
-dependencies: ["documentation.md"]
-last_updated: "2026-11-17"
+dependencies: ["docs/standards/documentation.md"]
+last_updated: "2026-11-19"
 ---
 
 # Markdown Style Guidelines

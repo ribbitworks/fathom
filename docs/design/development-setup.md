@@ -1,6 +1,13 @@
-# Fathom: Development Setup
+---
+title: "Development Setup"
+category: "Guide"
+audience: "AI Coding Assistant"
+applies_to: ["package.json", "scripts/**", ".github/**"]
+dependencies: ["docs/design/architecture.md", "docs/standards/testing.md"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-19
+# Fathom: Development Setup
 
 How the repository is organized, how to run Fathom on your machine, its fictional data, how releases are made, and the repository's settings on GitHub.
 
@@ -35,7 +42,7 @@ docs/                     Documentation, with the Help pages in docs/help/, whic
 LICENSES/                 Licence texts, as the REUSE specification requires
 ```
 
-- **Data access layer:** `apps/server/src/data/`. Every read of protected data goes through its tier checks.
+- **Data access layer:** `apps/server/src/data/`. Every read of protected data goes through its class checks.
   - `packages/db` holds the schema, the migrations and the database client.
   - A lint rule lets only these import `packages/db`: the data access layer, the server's start-up code, the account command, `seed`, `test-utils`, the server's test helper, and tests. Other code may use only its types.
 - **Shared code:** Only `packages/shared` is used by both the front end and the server, so server-only code never reaches the browser.

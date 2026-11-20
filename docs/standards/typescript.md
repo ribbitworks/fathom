@@ -3,7 +3,7 @@ title: "TypeScript Standards"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*.ts", "**/*.tsx"]
-dependencies: ["core-principles.md", "code-review.md", "testing.md", "agent-workflow.md"]
+dependencies: ["docs/standards/core-principles.md", "docs/standards/code-review.md", "docs/standards/testing.md", "docs/standards/agent-workflow.md"]
 last_updated: "2026-11-19"
 ---
 

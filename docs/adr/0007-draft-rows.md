@@ -3,10 +3,11 @@
 - **ADR:** 0007
 - **Status:** Accepted
 - **Date:** 2026-11-01
+- **Revised:** 2026-11-19, to say data classes, as Fathom does, rather than tiers
 
 ## Context
 
-Every change to the plan is a draft until an Approver approves it, one draft per row, seen by everyone who may see the data, as the [Domain Model](../design/domain-model.md#drafts-and-approval) sets out. Drafts must be checked as the live data is, such as for an Employee ID someone already has, read through the same tier checks, and recorded in the change history, which can only be added to. The change history shows what happened but can't stop a change, so it doesn't replace approval.
+Every change to the plan is a draft until an Approver approves it, one draft per row, seen by everyone who may see the data, as the [Domain Model](../design/domain-model.md#drafts-and-approval) sets out. Drafts must be checked as the live data is, such as for an Employee ID someone already has, read through the same class checks, and recorded in the change history, which can only be added to. The change history shows what happened but can't stop a change, so it doesn't replace approval.
 
 The data access layer already writes every change through one place per kind of record, recording each field changed, and undo already puts a record's fields back from what the change history holds.
 

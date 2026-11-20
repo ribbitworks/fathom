@@ -1,6 +1,13 @@
-# Fathom: Releases Page
+---
+title: "Releases Page"
+category: "Design"
+audience: "AI Coding Assistant"
+applies_to: ["apps/web/src/**"]
+dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/releases.md"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-18
+# Fathom: Releases Page
 
 The Releases page holds releases, their cycles and the schedules they belong to, drawn on a timeline over a table. It sits in the sidebar's Plan section, after Features.
 
@@ -53,7 +60,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 - **No New button:** Cycles come only from their schedule.
 - **Drafts:** A row is marked by the draft behind it, such as a change to its schedule's cycles.
   - **Two drafts:** Where that change and a draft of the cycle's own release both change a cycle that stays in that release, the menu names both drafts and credits the Release to the release's draft.
-  - **Deciding both:** Approve and Reject decide both for a role that approves both, while the release's draft is waiting, published, held by nobody and needs no other approver; otherwise they decide the change behind the row alone.
+  - **Deciding both:** Approve and Reject decide both for a role that approves both, while the release's draft is waiting, published, held by nobody and needs no other Approver; otherwise they decide the change behind the row alone.
   - **Discard and Resubmit:** Act on the change behind the row alone.
 - **Duration:** Its pencil works as on a schedule's [cycles](#schedule-cycles).
 

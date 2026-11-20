@@ -3,7 +3,7 @@
 - **ADR:** 0001
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms; 2026-10-27, to time the component evaluation; 2026-10-30, to add the proxy container chosen in [ADR 0003](0003-edge-proxy.md); 2026-11-07, to point to releases in [ADR 0011](0011-releases-and-images.md); 2026-11-14, to leave backups to whoever runs Fathom and drop one deployment's assumptions; 2026-11-17, to support Windows 11 with WSL2 as a server
+- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms; 2026-10-27, to time the component evaluation; 2026-10-30, to add the proxy container chosen in [ADR 0003](0003-edge-proxy.md); 2026-11-07, to point to releases in [ADR 0011](0011-releases-and-images.md); 2026-11-14, to leave backups to whoever runs Fathom and drop one deployment's assumptions; 2026-11-17, to support Windows 11 with WSL2 as a server; 2026-11-19, to say data classes, as Fathom does, rather than tiers
 
 ## Context
 
@@ -12,7 +12,7 @@ Fathom's [Product Brief](../product/brief.md) sets the constraints that drive th
 - **Hosting:** Runs as containers on a host with a supported container runtime, as listed in [Supported Platforms](../operations/supported-platforms.md). Nothing may depend on internet services at runtime, including CDNs and web fonts.
 - **Scale:** Tens of users and a modest amount of data. Simplicity matters more than horizontal scaling.
 - **Front end:** Rich, interactive timeline, Gantt, org chart, and capacity views, with drag-and-drop. The strongest choice of components for these is in the React ecosystem, so every option below uses a React front end.
-- **Security:** Local accounts, role-based access to tiers of data, enforced the same way in screens, exports, snapshots, and search. Personal data is kept out of logs.
+- **Security:** Local accounts, role-based access to classes of data, enforced the same way in screens, exports, snapshots, and search. Personal data is kept out of logs.
 - **Operations:** Simple to run, with no Windows-specific tooling where the host platform allows.
 - **Maintainers:** A small group, working in modern languages.
 
@@ -55,7 +55,7 @@ ASP.NET Core and Java are modern, run on Linux, and are common in Windows Server
 - **Front end:** React and TypeScript, built with Vite. All assets, including fonts, are bundled into the build so nothing loads from the internet.
 - **Back end:** A Node.js API server in TypeScript on a Long Term Support (LTS) release, sharing types and validation schemas with the front end.
 - **Database:** PostgreSQL, accessed through a type-safe ORM or query builder with versioned migrations.
-- **Access control:** Implemented once in the server's data access layer, so every screen, export, snapshot, and search goes through the same tier-based checks.
+- **Access control:** Implemented once in the server's data access layer, so every screen, export, snapshot, and search goes through the same class-based checks.
 - **Transport security:** HTTPS, since passwords and personal data cross the network.
 - **Packaging:** Docker Compose with the application and PostgreSQL, and a proxy in front of the application, as chosen in [ADR 0003](0003-edge-proxy.md). The application server also serves the built front end.
 - **Container runtime:** Docker Engine with Compose on servers: a Linux host or virtual machine, or Windows 11 with WSL2 in mirrored networking, running Docker Engine inside the distro. Docker Desktop isn't supported on Windows Server, and requires a paid subscription for larger companies. Development machines may use any runtime that runs the same containers.

@@ -3,8 +3,8 @@ title: "Core Development Principles"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
-dependencies: ["agent-workflow.md", "code-review.md", "documentation.md"]
-last_updated: "2026-11-18"
+dependencies: ["docs/standards/agent-workflow.md", "docs/standards/code-review.md", "docs/standards/documentation.md"]
+last_updated: "2026-11-19"
 ---
 
 # Core Development Principles

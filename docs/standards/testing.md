@@ -3,7 +3,7 @@ title: "Testing Standards"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
-dependencies: ["agent-workflow.md", "code-review.md", "typescript.md"]
+dependencies: ["docs/standards/agent-workflow.md", "docs/standards/code-review.md", "docs/standards/typescript.md"]
 last_updated: "2026-11-19"
 ---
 

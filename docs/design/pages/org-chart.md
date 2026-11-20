@@ -1,6 +1,13 @@
-# Fathom: Org Chart Page
+---
+title: "Org Chart Page"
+category: "Design"
+audience: "AI Coding Assistant"
+applies_to: ["apps/web/src/**"]
+dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/org-chart.md"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-18
+# Fathom: Org Chart Page
 
 The Org chart draws the organization as cards, by reporting teams or by feature teams. It sits in the sidebar's People section, after People.
 

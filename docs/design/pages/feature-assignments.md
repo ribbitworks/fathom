@@ -1,6 +1,13 @@
-# Fathom: Feature Assignments Page
+---
+title: "Feature Assignments Page"
+category: "Design"
+audience: "AI Coding Assistant"
+applies_to: ["apps/web/src/**"]
+dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/feature-assignments.md"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-18
+# Fathom: Feature Assignments Page
 
 Feature assignments shows each person's feature teams, month by month. It sits in the sidebar's People section, after Org chart, only for roles that see Personal details.
 

@@ -1,6 +1,13 @@
-# Fathom: People Page
+---
+title: "People Page"
+category: "Design"
+audience: "AI Coding Assistant"
+applies_to: ["apps/web/src/**"]
+dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/people.md"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-18
+# Fathom: People Page
 
 People lists everyone, one row each, with planned hires beside them. It sits in the sidebar's People section, for roles that see people. Its table follows [Tables](../../standards/ui-conventions/tables.md#tables); this document covers its columns, the date row, Person details and Group by.
 

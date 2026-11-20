@@ -3,8 +3,8 @@ title: "Shell Script Standards"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*.sh"]
-dependencies: ["core-principles.md", "code-review.md"]
-last_updated: "2026-11-18"
+dependencies: ["docs/standards/core-principles.md", "docs/standards/code-review.md"]
+last_updated: "2026-11-19"
 ---
 
 # Shell Script Standards
