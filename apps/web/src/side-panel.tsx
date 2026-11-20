@@ -15,6 +15,7 @@ import {
   createContext,
   type CSSProperties,
   Fragment,
+  memo,
   type ReactNode,
   type RefObject,
   useContext,
@@ -235,7 +236,8 @@ function useMaximized(
   return { maximized, folding: folding !== undefined, placeOf };
 }
 
-function PanelStack({
+// Not drawn again while only the panels' width changes, as while their edge is dragged.
+const PanelStack = memo(function PanelStack({
   panels,
   storageKey,
   moves,
@@ -341,7 +343,7 @@ function PanelStack({
       })}
     </div>
   );
-}
+});
 
 // The panels' slide: opening while they slide in, and those just closed, which stay, out of reach and
 // as wide as they were, while they slide out. Panels already open as the page is drawn, or opened or

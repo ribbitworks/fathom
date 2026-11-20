@@ -120,6 +120,63 @@ describe("frozen columns", () => {
     expect(disconnect).toHaveBeenCalled();
   });
 
+  it("draws the table again on a resize only once the frozen columns or its faded edges change", () => {
+    // Given a table whose code column counts each value it reads, frozen up to Colour
+    let resized: (() => void) | undefined;
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: () => void) {
+          resized = callback;
+        }
+        observe = noop;
+        disconnect = noop;
+      },
+    );
+    const room = { width: 1000 };
+    measuredAs(room);
+    const read = vi.fn((one: Gadget) => one.code);
+    const counting = gadgetTable();
+    renderGadgets({
+      gadgets: [gadget("g1"), gadget("g2")],
+      table: {
+        ...counting,
+        columnsFor: (...given) => {
+          const [name, code, ...rest] = counting.columnsFor(...given);
+          return [name, { ...code, value: read }, ...rest] as ReturnType<
+            typeof counting.columnsFor
+          >;
+        },
+      },
+      view: { ...emptyView, frozen: 3 },
+    });
+    const scroll = screen.getByRole("grid").parentElement as HTMLElement;
+    read.mockClear();
+
+    // When the table narrows, as a side panel beside it widens, with every column still fitting
+    room.width = 980;
+    act(() => {
+      resized?.();
+    });
+
+    // Then nothing was drawn again
+    expect(read).not.toHaveBeenCalled();
+    expect(leftOf("Colour")).toBe("200px");
+
+    // When it narrows until columns lie beyond its right edge
+    Object.defineProperty(scroll, "scrollWidth", {
+      value: 1200,
+      configurable: true,
+    });
+    act(() => {
+      resized?.();
+    });
+
+    // Then it is drawn again, fading that edge
+    expect(read).toHaveBeenCalled();
+    expect(document.querySelector('[data-side="after"]')).not.toBeNull();
+  });
+
   describe("fades at an edge with more columns beyond it", () => {
     const scrolledTo = (
       scroll: HTMLElement,
@@ -154,6 +211,44 @@ describe("frozen columns", () => {
       scrolledTo(scroll, 600);
       expect(fade("after")).toBeNull();
       expect(fade("before")).not.toBeNull();
+    });
+
+    it("fades the right edge again once a resize leaves columns beyond it, after scrolling to the end", () => {
+      // Given a table measured while scrolled to the middle, then scrolled to its right end
+      let resized: (() => void) | undefined;
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          constructor(callback: () => void) {
+            resized = callback;
+          }
+          observe = noop;
+          disconnect = noop;
+        },
+      );
+      renderGadgets({
+        gadgets: [gadget("g1")],
+        view: { ...emptyView, frozen: 0 },
+      });
+      const scroll = screen.getByRole("grid").parentElement as HTMLElement;
+      scrolledTo(scroll, 300);
+      act(() => {
+        resized?.();
+      });
+      scrolledTo(scroll, 600);
+      expect(fade("after")).toBeNull();
+
+      // When a side panel widens, narrowing the table
+      Object.defineProperty(scroll, "clientWidth", {
+        value: 250,
+        configurable: true,
+      });
+      act(() => {
+        resized?.();
+      });
+
+      // Then the right edge fades again
+      expect(fade("after")).not.toBeNull();
     });
 
     it("leaves the left edge to the frozen columns' shadow", () => {

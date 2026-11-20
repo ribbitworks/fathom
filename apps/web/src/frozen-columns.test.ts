@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for how many columns stay frozen as a column moves, and where frozen columns sit, measured
-// from the header's cells, and how wide a frozen column may be made. The frozen columns themselves
-// are tested in grid-layout.test.tsx.
+// Tests for how many columns stay frozen as a column moves, where frozen columns sit, measured from
+// the header's cells, how wide a frozen column may be made, and which measures draw a table alike.
+// The frozen columns themselves are tested in grid-layout.test.tsx.
 
 import { describe, expect, it } from "vitest";
 import {
+  drawsAlike,
   frozenAfterMove,
   frozenLayout,
   frozenVariables,
@@ -148,5 +149,35 @@ describe("keptEdges", () => {
     { before: true, after: true },
   ])("takes the new edges when they change: %o", (next) => {
     expect(keptEdges(before, next)).toBe(next);
+  });
+});
+
+describe("measures that draw a table alike", () => {
+  const measured = { widths: [100, 100], room: 1000, height: 50 };
+
+  it("are alike when only the width differs and the same columns fit among the frozen", () => {
+    expect(drawsAlike(measured, { ...measured, room: 420 })).toBe(true);
+  });
+
+  it("differ once a column stops fitting within half the width", () => {
+    expect(drawsAlike(measured, { ...measured, room: 390 })).toBe(false);
+  });
+
+  it("differ when a column's edge reaches the share exactly, which leaves it no wider", () => {
+    expect(
+      drawsAlike({ ...measured, room: 420 }, { ...measured, room: 400 }),
+    ).toBe(false);
+  });
+
+  it("count a table not yet measured as fitting every column", () => {
+    expect(drawsAlike({ ...measured, room: 0 }, measured)).toBe(true);
+  });
+
+  it("differ when the columns' widths, their number or the rows' height differ", () => {
+    expect(drawsAlike(measured, { ...measured, widths: [100, 120] })).toBe(
+      false,
+    );
+    expect(drawsAlike(measured, { ...measured, widths: [100] })).toBe(false);
+    expect(drawsAlike(measured, { ...measured, height: 60 })).toBe(false);
   });
 });

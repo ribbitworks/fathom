@@ -18,10 +18,11 @@ import type { DragPoint } from "./resize-edge.tsx";
 import { type View, widthStep, widthWithin, withWidth } from "./table-view.ts";
 
 interface Drag {
-  // Where the edge was pressed across the page, the column's width then, and the width it is
-  // dragged to, if any.
+  // Where the edge was pressed across the page, the column's width then, the table measured then,
+  // and the width it is dragged to, if any.
   from: number;
   start: number;
+  measured: Measured;
   width?: number;
 }
 
@@ -52,6 +53,7 @@ export function useColumnWidths({
   view,
   onView,
   measured,
+  measuredNow,
   headerCells,
   frozen,
   holdMeasuring,
@@ -61,6 +63,8 @@ export function useColumnWidths({
   view: View;
   onView: (view: View) => void;
   measured: Measured;
+  // The table measured as it is now, since the measure kept for drawing may lag its width.
+  measuredNow: () => Measured;
   // Each column's header cells: its own, and any live copy beside it.
   headerCells: readonly number[];
   frozen: FrozenLayout;
@@ -71,9 +75,9 @@ export function useColumnWidths({
   const setWidthOf = (key: string) =>
     Object.entries(view.widths ?? {}).find(([column]) => column === key)?.[1];
   // A width the column may take: a frozen column only as wide as keeps the frozen columns within
-  // their share of the table.
-  const widthFor = (index: number, wanted: number) =>
-    widthWithin(wanted, widestFrozen(measured, headerCells, frozen, index));
+  // their share of the table, as last drawn, or as it is now while it is being changed.
+  const widthFor = (index: number, wanted: number, measure = measured) =>
+    widthWithin(wanted, widestFrozen(measure, headerCells, frozen, index));
   const shownWidth = (index: number) =>
     measured.widths.at(
       headerCells.slice(0, index).reduce((total, cells) => total + cells, 0),
@@ -102,7 +106,10 @@ export function useColumnWidths({
     canWiden: (key, index) => widthOf(key, index) < widthFor(index, Infinity),
     canNarrow: (key, index) => widthOf(key, index) > widthWithin(0),
     step: (key, index, step) => {
-      setWidth(key, widthFor(index, widthOf(key, index) + step * widthStep));
+      setWidth(
+        key,
+        widthFor(index, widthOf(key, index) + step * widthStep, measuredNow()),
+      );
     },
     reset: (key) => {
       setWidth(key, undefined);
@@ -113,12 +120,20 @@ export function useColumnWidths({
         holdMeasuring(true);
         // The edge sits in the column's header cell.
         const cell = edge.parentElement as HTMLElement;
-        drag.current = { from: x, start: cell.getBoundingClientRect().width };
+        drag.current = {
+          from: x,
+          start: cell.getBoundingClientRect().width,
+          measured: measuredNow(),
+        };
       },
       onDrag: ({ x }) => {
         // A drag moves only once it has started.
         const current = drag.current as Drag;
-        current.width = widthFor(index, current.start + x - current.from);
+        current.width = widthFor(
+          index,
+          current.start + x - current.from,
+          current.measured,
+        );
         showDragged(key, index, current.width);
       },
       onEnd: () => {
