@@ -5,7 +5,7 @@
 // another day, and how far apart its months' names are, so they never overlap.
 
 import { MantineProvider } from "@mantine/core";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DateControl, labelEvery } from "./date-control.tsx";
@@ -20,6 +20,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 function control(day: string | undefined, laterDays = true, changes = false) {
@@ -50,6 +51,35 @@ describe("the date control", () => {
         (label) => label.textContent,
       ),
     ).toEqual(["Mar 2025", "Mar 2026", "Mar 2027", "Mar 2028", "Mar 2029"]);
+  });
+
+  it("names fewer months as the timeline narrows, such as beside a wider side panel", () => {
+    // Given the date control, its timeline's width followed as it changes
+    let resized:
+      ((entries: { contentRect: { width: number } }[]) => void) | undefined;
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: typeof resized) {
+          resized = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    control(undefined);
+
+    // When the timeline narrows to 240 pixels
+    act(() => {
+      resized?.([{ contentRect: { width: 240 } }]);
+    });
+
+    // Then it names every second year
+    expect(
+      [...document.querySelectorAll(".mantine-Slider-markLabel")].map(
+        (label) => label.textContent,
+      ),
+    ).toEqual(["Mar 2025", "Mar 2027", "Mar 2029"]);
   });
 
   it("shows today with nothing to go back to", () => {

@@ -6,6 +6,7 @@
 import {
   type CSSProperties,
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -22,7 +23,6 @@ import {
   frozenLeft,
   keptEdges,
   scrollBesideFrozen,
-  scrollEdges,
   useMeasured,
 } from "./frozen-columns.ts";
 import { kindOf, shown } from "./grid-columns.tsx";
@@ -177,20 +177,22 @@ export function useGridLayout<Rec extends GridRecord, Change, Request>(
   });
   // Each column's header cells: its own, and any live copy beside it.
   const headerCells = columns.map((column) => (liveBeside(column) ? 2 : 1));
-  const [scrollRef, measured, holdMeasuring] = useMeasured(
+  const followEdges = useCallback((next: ScrollEdges) => {
+    setEdges((before) => keptEdges(before, next));
+  }, []);
+  const {
+    scrollRef,
+    measured,
+    hold: holdMeasuring,
+    now: measuredNow,
+  } = useMeasured(
     columns
       .map((column) => `${column.key}${liveBeside(column) ? "+" : ""}`)
       .join(" "),
+    followEdges,
   );
   const frozenAsked = Math.min(view.frozen ?? frozenByDefault, columns.length);
   const frozen = frozenLayout(measured, headerCells, frozenAsked);
-  useLayoutEffect(() => {
-    const box = scrollRef.current;
-    if (box !== null) {
-      const next = scrollEdges(box);
-      setEdges((before) => keptEdges(before, next));
-    }
-  }, [measured, scrollRef]);
   // Held from the table's first drawing, so the page can let the link go at once.
   const [linkedAtFirst] = useState(linkedColumn?.key);
   const onLinkedOpened = linkedColumn?.onOpened;
@@ -254,6 +256,7 @@ export function useGridLayout<Rec extends GridRecord, Change, Request>(
     view,
     onView,
     measured,
+    measuredNow,
     headerCells,
     frozen,
     holdMeasuring,

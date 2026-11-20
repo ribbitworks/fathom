@@ -10,8 +10,7 @@ import {
   monthOf,
 } from "@fathom/shared";
 import { ActionIcon, Button, Group, Slider, Stack, Text } from "@mantine/core";
-import { useElementSize } from "@mantine/hooks";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DayInput } from "./day-input.tsx";
 import { focusSoon } from "./focus.ts";
 import { formatDay, formatMonth } from "./day-formats.ts";
@@ -31,6 +30,25 @@ export function labelEvery(width: number, months: number): number {
   if (width === 0) return monthsBetweenLabels;
   const yearWidth = (width / months) * monthsBetweenLabels;
   return monthsBetweenLabels * Math.max(1, Math.ceil(labelRoom / yearWidth));
+}
+
+// How many months apart the slider's labels are, followed as its width changes, such as while a
+// side panel beside it is resized, drawing the slider again only when that number changes.
+function useLabelEvery(months: number) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [every, setEvery] = useState(() => labelEvery(0, months));
+  useEffect(() => {
+    const observer = new ResizeObserver((entries) => {
+      for (const { contentRect } of entries) {
+        setEvery(labelEvery(contentRect.width, months));
+      }
+    });
+    observer.observe(ref.current as HTMLDivElement);
+    return () => {
+      observer.disconnect();
+    };
+  }, [months]);
+  return { ref, every };
 }
 
 // How far down the arrows and timeline sit, to line up with the box under its label.
@@ -92,8 +110,7 @@ export function DateControl({
     choose(dayOfMonthFromNow(months));
   };
   const latest = laterDays ? monthsEachWay : 0;
-  const { ref: sliderRef, width: sliderWidth } = useElementSize();
-  const every = labelEvery(sliderWidth, monthsEachWay + latest);
+  const { ref: sliderRef, every } = useLabelEvery(monthsEachWay + latest);
   const marks = Array.from(
     { length: monthsEachWay + latest + 1 },
     (_, index) => {

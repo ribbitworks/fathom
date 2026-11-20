@@ -75,20 +75,46 @@ export const keptEdges = (
 ): ScrollEdges =>
   before.before === next.before && before.after === next.after ? before : next;
 
-const sameMeasure = (first: Measured, second: Measured) =>
-  first.room === second.room &&
-  first.height === second.height &&
-  first.widths.length === second.widths.length &&
-  first.widths.every((width, index) => width === second.widths.at(index));
+// Where each header cell's right edge is against the frozen columns' share of the table's width:
+// before it, at it or past it, which is all the width decides about how the table is drawn, the
+// Wider item of a frozen column's menu included.
+const againstShare = ({ widths, room }: Measured): number[] => {
+  let edge = 0;
+  return widths.map((width) => {
+    edge += width;
+    return room === 0 ? -1 : Math.sign(edge - room * frozenShare);
+  });
+};
+
+// Whether two measures draw the table alike: the same widths and height, and each column's edge on
+// the same side of the frozen columns' share, however much the width between them differs, so
+// resizing the page or a side panel draws the table again only when something it shows changes.
+export function drawsAlike(first: Measured, second: Measured): boolean {
+  const secondSides = againstShare(second);
+  return (
+    first.height === second.height &&
+    first.widths.length === second.widths.length &&
+    first.widths.every((width, index) => width === second.widths.at(index)) &&
+    againstShare(first).every((side, index) => side === secondSides.at(index))
+  );
+}
 
 // The table in its scrolling box, measured whenever its header's cells change, named by `cells`,
 // and whenever it or its box is resized, such as when rows are added or the window narrows, except
-// while held, as while a column's edge is dragged, and once more as it is let go. The table, and so
-// its box, is shown unless its rows are drawn another way, such as on a board, which the table is
-// mounted afresh to leave.
+// while held, as while a column's edge is dragged, and once more as it is let go. Each measure gives
+// the box's edges to `onEdges`, but a measure that draws the table alike is not kept, and `now`
+// measures it as it is, for what needs the exact width. `onEdges` must stay the same function. The
+// table, and so its box, is shown unless its rows are drawn another way, such as on a board, which
+// the table is mounted afresh to leave.
 export function useMeasured(
   cells: string,
-): [RefObject<HTMLDivElement | null>, Measured, (held: boolean) => void] {
+  onEdges: (edges: ScrollEdges) => void,
+): {
+  scrollRef: RefObject<HTMLDivElement | null>;
+  measured: Measured;
+  hold: (held: boolean) => void;
+  now: () => Measured;
+} {
   const scroll = useRef<HTMLDivElement>(null);
   const held = useRef(false);
   const [measured, setMeasured] = useState<Measured>({
@@ -96,11 +122,16 @@ export function useMeasured(
     room: 0,
     height: 0,
   });
+  const kept = useRef<Measured>(undefined);
   const update = useCallback(() => {
-    if (held.current || scroll.current === null) return;
-    const next = measure(scroll.current);
-    setMeasured((current) => (sameMeasure(current, next) ? current : next));
-  }, []);
+    const box = scroll.current;
+    if (held.current || box === null) return;
+    onEdges(scrollEdges(box));
+    const next = measure(box);
+    if (kept.current !== undefined && drawsAlike(kept.current, next)) return;
+    kept.current = next;
+    setMeasured(next);
+  }, [onEdges]);
   const hold = useCallback(
     (holding: boolean) => {
       held.current = holding;
@@ -108,6 +139,7 @@ export function useMeasured(
     },
     [update],
   );
+  const now = useCallback(() => measure(scroll.current as HTMLDivElement), []);
   useLayoutEffect(update, [update, cells]);
   useEffect(() => {
     const box = scroll.current;
@@ -119,7 +151,7 @@ export function useMeasured(
       observer.disconnect();
     };
   }, [update]);
-  return [scroll, measured, hold];
+  return { scrollRef: scroll, measured, hold, now };
 }
 
 export interface FrozenLayout {
