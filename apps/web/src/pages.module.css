@@ -439,10 +439,12 @@ select.cellInput {
 }
 
 /* A fade at the table's edge while more columns lie that way: at its right, and at its left once
-   scrolled, where no frozen columns' edge shows it already. */
+   scrolled, where no frozen columns' edge shows it already. Its height, the rows' as last measured,
+   stays within the table's panel, so the page never scrolls while a side panel opens. */
 .scrollFade {
   position: absolute;
   top: 0;
+  max-height: 100%;
   width: var(--fathom-scroll-fade-width);
   pointer-events: none;
 }
@@ -1029,10 +1031,12 @@ th.liveColumn {
     var(--mantine-color-body);
 }
 
-/* The frozen columns' edge: a line, with a shadow over the columns scrolled under them. */
+/* The frozen columns' edge: a line, with a shadow over the columns scrolled under them, kept within
+   the table's panel as the scroll fades are. */
 .frozenEdge {
   position: absolute;
   top: 0;
+  max-height: 100%;
   left: var(--frozen-width);
   width: 8px;
   border-left: 1px solid var(--mantine-color-default-border);
