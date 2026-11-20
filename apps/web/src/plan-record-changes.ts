@@ -1,0 +1,117 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// The plan as the Projects and Features pages show it while a change to its records is saved.
+
+import type { ProjectPlan } from "@fathom/shared";
+import { withCellChange } from "./added-columns.ts";
+import type { CellChange } from "./cell-kinds.tsx";
+import { pendingDraft, unsavedKeyNumber } from "./drafts.ts";
+import { livePlanRecords, type PlanChange } from "./plan-table.tsx";
+import {
+  isFeature,
+  namersIn,
+  operationsOf,
+  type PlanRecord,
+  type PlanRecordKind,
+  withNamers,
+} from "./projects.ts";
+
+export const withFeatureColumns = (
+  plan: ProjectPlan,
+  change: (
+    columns: ProjectPlan["featureColumns"],
+  ) => Partial<ProjectPlan["featureColumns"]>,
+): ProjectPlan => ({
+  ...plan,
+  featureColumns: { ...plan.featureColumns, ...change(plan.featureColumns) },
+});
+
+// A record being added, as the table shows it before it is saved: a draft adding it.
+export function adding(
+  kind: PlanRecordKind,
+  id: string,
+  request: CellChange,
+): PlanRecord {
+  const blank = operationsOf(kind).blank;
+  return {
+    ...blank,
+    ...request,
+    ...("values" in blank ? withCellChange(blank, request) : {}),
+    id,
+    keyNumber: unsavedKeyNumber,
+    draft: { ...pendingDraft("created", {}), uses: [] },
+  };
+}
+
+// The plan with a record of a kind changed, or taken out when the change gives none.
+export function withRecord(
+  plan: ProjectPlan,
+  kind: PlanRecordKind,
+  id: string,
+  change: (record: PlanRecord) => PlanRecord | undefined,
+): ProjectPlan {
+  const { all, withAll } = operationsOf(kind);
+  return withAll(
+    plan,
+    all(plan).flatMap((record) => {
+      if (record.id !== id) return [record];
+      const next = change(record);
+      return next === undefined ? [] : [next];
+    }),
+  );
+}
+
+export function withAdded(
+  plan: ProjectPlan,
+  kind: PlanRecordKind,
+  added: readonly PlanRecord[],
+): ProjectPlan {
+  const { all, withAll } = operationsOf(kind);
+  return withAll(plan, [...all(plan), ...added]);
+}
+
+// A record with a change applied, as the table shows it before it is saved.
+const withChange = (record: PlanRecord, change: PlanChange): PlanRecord => ({
+  ...record,
+  ...change,
+  ...(isFeature(record) ? withCellChange(record, change) : {}),
+});
+
+// The plan with a change to a record applied, as the table shows it before it is saved: the
+// projects and proposals that name a feature hold it, rather than the feature.
+export function withRecordChange(
+  plan: ProjectPlan,
+  type: PlanRecordKind,
+  id: string,
+  change: PlanChange,
+): ProjectPlan {
+  const { namers, own } = namersIn(change);
+  return withNamers(
+    withRecord(plan, type, id, (shown) => withChange(shown, own)),
+    id,
+    namers,
+  );
+}
+
+export const removing = (record: PlanRecord): PlanRecord => ({
+  ...record,
+  draft: { ...pendingDraft("deleted", {}), uses: [] },
+});
+
+export const discarded = (record: PlanRecord): PlanRecord | undefined =>
+  record.draft?.action === "created"
+    ? undefined
+    : livePlanRecords([record]).at(0);
+
+// The identifier the server gave the record just added: the one of its kind not seen before.
+export const newestId = (
+  plan: ProjectPlan,
+  type: PlanRecordKind,
+  taken: readonly string[],
+) =>
+  // The plan saved holds the record just added.
+  (
+    operationsOf(type)
+      .all(plan)
+      .find(({ id }) => !taken.includes(id)) as PlanRecord
+  ).id;
