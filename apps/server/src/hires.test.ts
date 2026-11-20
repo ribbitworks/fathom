@@ -33,7 +33,7 @@ import {
 } from "@fathom/shared";
 import { and, count as total, eq, inArray, ne } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { rolesGranting } from "./access.ts";
 import {
   generalApprover,
@@ -48,6 +48,11 @@ interface User {
   id: string;
   cookie: string;
 }
+
+// The server takes today's date from the clock, so the tests fix it, to give the same days on every
+// run.
+vi.useFakeTimers({ toFake: ["Date"] });
+vi.setSystemTime(new Date("2026-06-15T12:00:00.000Z"));
 
 let test: TestApp;
 // A Workforce Administrator, who changes the hiring plan.
@@ -105,6 +110,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await test.close();
+  vi.useRealTimers();
 });
 
 let count = 0;
