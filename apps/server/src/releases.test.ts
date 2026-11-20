@@ -1279,6 +1279,32 @@ describe("changing one cycle's length", () => {
     ]);
   });
 
+  it("publishes the releases it moves with the cycles, as the role that changed them, without Edit Features", async () => {
+    // Given a release on the cycles a Workforce Administrator moves, unpublished
+    const stream = await withRelease();
+    const response = await test.request(
+      configurer.cookie,
+      "PUT",
+      `/api/release-streams/${stream.id}/cycles/2027-04-01/length`,
+      { length: 2, later: "move" },
+      { publish: false },
+    );
+    expect(response.statusCode).toBe(200);
+
+    // When they publish it
+    const published = await test.request(
+      configurer.cookie,
+      "POST",
+      "/api/unpublished/publish",
+      undefined,
+      { publish: false },
+    );
+
+    // Then the cycles and the release go together, none left
+    const { total, left } = published.json<{ total: number; left: number }>();
+    expect([total > 1, left]).toEqual([true, 0]);
+  });
+
   it("keeps the note of a release it moves", async () => {
     const stream = await withRelease();
     const release = stream.releases[0] as ReleaseStream["releases"][number];

@@ -21,12 +21,7 @@ import {
 } from "@fathom/shared";
 import { and, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import {
-  type Actor,
-  requireFieldEdit,
-  requirePermission,
-  requireView,
-} from "../access.ts";
+import { type Actor, requireFieldEdit, requireView } from "../access.ts";
 import {
   BadRequestError,
   ConflictError,
@@ -120,11 +115,14 @@ export function teamChanges(
   );
 }
 
-// Those who propose or edit feature teams change them, seeing the org chart they are on and the
-// people in the drafts they are sent.
+// Those who edit feature teams change them, seeing the org chart they are on and the people in the
+// drafts they are sent.
+export const changesTeams = (actor: Actor): boolean =>
+  actor.permissions.includes("people:view") &&
+  actor.permissions.includes("feature-teams:edit");
+
 export function requireChanging(actor: Actor): void {
-  requirePermission(actor, "people:view");
-  requirePermission(actor, "feature-teams:edit");
+  if (!changesTeams(actor)) throw new ForbiddenError();
 }
 
 // Every team's name, live or in a draft, published or not, with its team.
@@ -576,7 +574,6 @@ export async function deleteFeatureTeam(
   asOf?: string,
 ): Promise<string | null> {
   requireChanging(actor);
-  requirePermission(actor, "feature-teams:edit");
   const today = asOf ?? (await readToday(database));
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);

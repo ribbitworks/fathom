@@ -2630,7 +2630,8 @@ describe("publishing and discarding one's own changes on the Drafts page", () =>
   it("publishes exactly the changes ticked, saying how many, and unticks them", async () => {
     // Given the list and its choice ticked together
     const { fetch } = await openOwn(["Laptop"], {
-      "POST /api/unpublished/publish": () => Response.json({ total: 2 }),
+      "POST /api/unpublished/publish": () =>
+        Response.json({ total: 2, left: 0 }),
     });
     await userEvent.click(
       await screen.findByRole("checkbox", {
@@ -2762,7 +2763,7 @@ describe("publishing and discarding one's own changes on the Drafts page", () =>
         }),
       "POST /api/unpublished/publish": () => {
         published = true;
-        return Response.json({ total: 4 });
+        return Response.json({ total: 4, left: 0 });
       },
     });
     await userEvent.click(

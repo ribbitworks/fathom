@@ -14,6 +14,7 @@ import type {
   Tier,
   DraftsAsked,
   DraftsRequest,
+  UnpublishedPublished,
   ExportRequest,
   ExportRecorded,
   HistoryEntry,
@@ -78,9 +79,8 @@ import {
 import { readLastViews, saveLastView } from "./last-views.ts";
 import * as views from "./views.ts";
 import { createRecordFinders, findKeyedRecord } from "./record-links.ts";
+import { editsKind, recordEditor } from "./draft-editors.ts";
 import {
-  editsKind,
-  recordEditor,
   createReleaseAccess,
   createProjectAccess,
   type ReleaseAccess,
@@ -221,10 +221,11 @@ export interface DraftAccess {
 }
 
 // Each user's changes to drafts are theirs alone until they publish them, or discard them, all at
-// once or those chosen; both answer how many records' changes they took.
+// once or those chosen; both answer how many records' changes they took, and publishing how many it
+// left for another role.
 export interface UnpublishedAccess {
   read(actor: Actor): Promise<Unpublished>;
-  publish(actor: Actor, chosen?: DraftsRequest): Promise<number>;
+  publish(actor: Actor, chosen?: DraftsRequest): Promise<UnpublishedPublished>;
   discard(actor: Actor, chosen?: DraftsRequest): Promise<number>;
 }
 

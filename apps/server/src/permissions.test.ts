@@ -258,7 +258,7 @@ const recordKinds: { type: string; needs: Needs; recordId?: string }[] = [
   { type: "proposal", needs: allOf("plan:edit") },
   { type: "project", needs: allOf("plan:edit") },
   { type: "milestone", needs: allOf("plan:edit") },
-  { type: "allocation", needs: allOf("allocations:edit") },
+  { type: "allocation", needs: allOf("allocations:edit", "personal:view") },
   {
     type: "planning-settings",
     needs: allOf("configuration:edit"),
@@ -812,7 +812,7 @@ const routes: Route[] = [
   {
     method: "PUT",
     pattern: "/api/feature-teams/:teamId/colour",
-    needs: allOf("feature-teams:edit"),
+    needs: allOf("people:view", "feature-teams:edit"),
     body: () => ({ colour: "teal" }),
   },
 

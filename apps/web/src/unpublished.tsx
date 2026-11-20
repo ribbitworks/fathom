@@ -7,6 +7,8 @@ import {
   type DraftsAsked,
   type Unpublished,
   unpublishedDoneSchema,
+  type UnpublishedPublished,
+  unpublishedPublishedSchema,
   unpublishedSchema,
 } from "@fathom/shared";
 import { Button, Group, Menu, Modal, Stack, Text } from "@mantine/core";
@@ -36,6 +38,16 @@ const named = 10;
 export const changeCount = (total: number) =>
   total === 1 ? "1 change" : `${count(total)} changes`;
 
+// What publishing did, as its notification says, with the changes it left since the acting role
+// may not make them.
+function publishedWords({ total, left }: UnpublishedPublished): string {
+  if (left === 0) return `Published ${changeCount(total)}.`;
+  if (total === 0) {
+    return `Nothing was published. ${left === 1 ? "1 change needs" : `${count(left)} changes need`} another role.`;
+  }
+  return `Published ${changeCount(total)}. ${left === 1 ? "1 needs" : `${count(left)} need`} another role.`;
+}
+
 const verbs = new Map([
   ["created", "Added"],
   ["changed", "Changed"],
@@ -64,24 +76,32 @@ function changeWords({
 }
 
 // Publishing and discarding the user's changes: every one, or those chosen, with those that go with
-// them, which the server adds. Each says how many it took in a notification.
+// them, which the server adds. Each says how many it took in a notification, and publishing how
+// many it left for another role.
 export function useUnpublishedActions(onDone: () => void) {
   const queryClient = useQueryClient();
-  const done = (verb: string) => async (result: { total: number }) => {
+  const finished = async (notify: () => void) => {
     onDone();
-    notifySuccess(`${verb} ${changeCount(result.total)}.`);
+    notify();
     await queryClient.invalidateQueries();
   };
-  const sending = (url: string) => (drafts?: DraftsAsked) =>
-    sendJsonFor(
-      "POST",
-      url,
-      drafts === undefined ? {} : { drafts },
-      unpublishedDoneSchema,
-    );
+  const asked = (drafts?: DraftsAsked) =>
+    drafts === undefined ? {} : { drafts };
   const publish = useMutation({
-    mutationFn: sending("/api/unpublished/publish"),
-    onSuccess: done("Published"),
+    mutationFn: (drafts?: DraftsAsked) =>
+      sendJsonFor(
+        "POST",
+        "/api/unpublished/publish",
+        asked(drafts),
+        unpublishedPublishedSchema,
+      ),
+    onSuccess: (result) =>
+      finished(() => {
+        // Nothing published is a refusal, kept in view until closed.
+        (result.total === 0 && result.left > 0 ? notifyFailure : notifySuccess)(
+          publishedWords(result),
+        );
+      }),
     onError: (error) => {
       notifyFailure(
         describeProblem(error, "Fathom could not publish the changes."),
@@ -89,8 +109,17 @@ export function useUnpublishedActions(onDone: () => void) {
     },
   });
   const discard = useMutation({
-    mutationFn: sending("/api/unpublished/discard"),
-    onSuccess: done("Discarded"),
+    mutationFn: (drafts?: DraftsAsked) =>
+      sendJsonFor(
+        "POST",
+        "/api/unpublished/discard",
+        asked(drafts),
+        unpublishedDoneSchema,
+      ),
+    onSuccess: (result) =>
+      finished(() => {
+        notifySuccess(`Discarded ${changeCount(result.total)}.`);
+      }),
     onError: (error) => {
       notifyFailure(
         describeProblem(error, "Fathom could not discard the changes."),

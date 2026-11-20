@@ -265,6 +265,8 @@ export {
   type Unpublished,
   unpublishedChosenSchema,
   unpublishedDoneSchema,
+  type UnpublishedPublished,
+  unpublishedPublishedSchema,
   unpublishedSchema,
 } from "./drafts.ts";
 export {

@@ -177,3 +177,15 @@ export function withUsers(
   }
   return withNeeded(usedBy, given);
 }
+
+// The changes given that may be published when some may not: all but those refused, and the changes
+// that use them or go together with them, so a change and those it needs are published or left
+// together.
+export function publishableAmong(
+  uses: ReadonlyMap<string, readonly string[]>,
+  given: readonly string[],
+  refused: readonly string[],
+): Set<string> {
+  const left = withUsers(uses, refused);
+  return new Set(given.filter((key) => !left.has(key)));
+}

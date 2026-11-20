@@ -1,0 +1,97 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Tests for which kinds of draft each starting role may change.
+
+import {
+  type DraftKind,
+  draftKinds,
+  type Role,
+  roleSchema,
+} from "@fathom/shared";
+import { describe, expect, it } from "vitest";
+import { actorFor } from "../access.ts";
+import { editsDraftKind, editsKind, recordEditor } from "./draft-editors.ts";
+
+const user = {
+  id: "fictional-user",
+  name: "Fictional User",
+  email: "fictional.user@fathom.test",
+};
+
+const thePlan: readonly DraftKind[] = [
+  "release-stream",
+  "cycle-pattern",
+  "release",
+  "feature",
+  "customer",
+  "proposal",
+  "project",
+  "milestone",
+];
+
+const configuration: readonly DraftKind[] = [
+  "list",
+  "list-item",
+  "choice-order",
+  "field",
+  "planning-settings",
+];
+
+// The kinds of draft each starting role changes, as Roles sets out; every other kind it doesn't.
+const changedBy: Record<Role, readonly DraftKind[]> = {
+  "team-member": [],
+  "product-manager": thePlan,
+  "feature-lead": ["release", "feature", "feature-team"],
+  "project-manager": thePlan,
+  "engineering-manager": [...thePlan, "allocation", "feature-team"],
+  "engineering-director": draftKinds,
+  "workforce-administrator": [
+    "release-stream",
+    "cycle-pattern",
+    ...configuration,
+    "person",
+    "planned-hire",
+    "feature-team",
+  ],
+  executive: [],
+  administrator: [],
+};
+
+describe("the kinds of draft each starting role changes", () => {
+  for (const role of roleSchema.options) {
+    it(`gives the ${role} its own kinds, and none of the rest`, () => {
+      const actor = actorFor(user, role);
+      const allowed = draftKinds.filter((kind) => editsDraftKind(actor, kind));
+      // The role is always one of the fixed roles.
+      // eslint-disable-next-line security/detect-object-injection
+      const own = changedBy[role];
+      expect(allowed).toEqual(draftKinds.filter((kind) => own.includes(kind)));
+    });
+  }
+
+  it("changes no kind Fathom no longer has", () => {
+    expect(
+      editsDraftKind(actorFor(user, "engineering-director"), "fictional-kind"),
+    ).toBe(false);
+  });
+});
+
+describe("changing allocations", () => {
+  it("needs the allocations' Personal data as well as Edit Allocations", () => {
+    const editor = actorFor(user, "engineering-manager");
+    const unseeing = {
+      ...editor,
+      permissions: editor.permissions.filter((one) => one !== "personal:view"),
+    };
+
+    expect(editsKind(unseeing, "allocation")).toBe(false);
+    expect(() => recordEditor(unseeing, "allocation")).toThrow(/Personal/u);
+    expect(recordEditor(editor, "allocation")).toBe(editor);
+  });
+
+  it("refuses without saying why to a role that can't edit them", () => {
+    expect(() =>
+      recordEditor(actorFor(user, "team-member"), "allocation"),
+    ).toThrow(/^Forbidden$/u);
+  });
+});
