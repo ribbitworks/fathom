@@ -58,6 +58,7 @@ import { useSignOutWhenIdle } from "./idle.ts";
 import classes from "./layout.module.css";
 import { ChangeNameDialog } from "./change-name.tsx";
 import { ChangePasswordDialog } from "./change-password.tsx";
+import { menuChoice } from "./last-views.ts";
 import { initials } from "./names.ts";
 import {
   type SignedInUser,
@@ -414,6 +415,7 @@ function Sidebar({ access, rail }: { access: ClassAccess; rail: boolean }) {
                 <RailTip key={item.label} rail={rail} label={item.label}>
                   <Link
                     to={item.to}
+                    state={(previous) => ({ ...previous, ...menuChoice })}
                     className={classes.link}
                     activeOptions={{ exact: item.nested !== true }}
                   >

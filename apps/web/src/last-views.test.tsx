@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   isKept,
   lastViewAddress,
+  opensLastView,
   lastViewsQuery,
   namesNoView,
   requestFor,
@@ -340,5 +341,15 @@ describe("keeping a page's view", () => {
     await expect(
       keep(new QueryClient(), peopleShown({ view: sorted })),
     ).resolves.toBeDefined();
+  });
+});
+
+describe("when a page opens on its last view", () => {
+  it.each([
+    ["opened from another page", "enter", false, true],
+    ["chosen in the menu while it is open", "stay", true, true],
+    ["its own view changes, as by Clear view", "stay", false, false],
+  ])("%s: %s", (_, cause, fromMenu, opens) => {
+    expect(opensLastView(cause, fromMenu)).toBe(opens);
   });
 });

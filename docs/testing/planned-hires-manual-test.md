@@ -98,7 +98,7 @@ Run the test cases in the order they are listed. Start with Start Fathom, then R
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-03.
 
-**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
 
 - [ ] `A03C` Select the **Name** cell of the empty row at the bottom of the table.
   - **Expected:** The empty row's **Name** cell is selected.

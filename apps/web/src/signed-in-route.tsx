@@ -26,7 +26,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { FirstPasswordChange } from "./change-password.tsx";
 import { Layout } from "./layout.tsx";
-import { lastViewAddress, lastViewsQuery, type Shown } from "./last-views.ts";
+import {
+  lastViewAddress,
+  lastViewsQuery,
+  menuChoiceSchema,
+  opensLastView,
+  type Shown,
+} from "./last-views.ts";
 import {
   noteSearch,
   type OpenNoteAddress,
@@ -77,16 +83,19 @@ export function reaching(page: GuardedPage) {
 
 // Opens a page on its last view when its address names no view, before the page is drawn, so it
 // isn't drawn first as it opens by default. The address keeps the view's choices, and a page's tab,
-// under names of its own, which `addressOf` gives.
+// under names of its own, which `addressOf` gives. The menu's mark is always taken out of the
+// history, so going back to the page later shows what it showed then.
 export function openOnLastView(
   {
     context,
     search,
     cause,
+    location,
   }: {
     context: { queryClient: QueryClient };
     search: object;
     cause: string;
+    location: { state: unknown };
   },
   shown: Shown,
   addressOf: (
@@ -94,14 +103,18 @@ export function openOnLastView(
     table: ViewTable,
   ) => object = (address) => address,
 ): void {
-  if (cause !== "enter") return;
+  const fromMenu = menuChoiceSchema.safeParse(location.state).success;
+  if (!opensLastView(cause, fromMenu)) return;
   const views = context.queryClient.getQueryData(lastViewsQuery.queryKey);
   const restored = lastViewAddress(shown, views?.[viewPageOf[shown.table]]);
-  if (restored === undefined) return;
+  if (restored === undefined && !fromMenu) return;
   // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
   throw redirect({
     to: ".",
-    search: { ...search, ...addressOf(restored.address, restored.table) },
+    search:
+      restored === undefined
+        ? search
+        : { ...search, ...addressOf(restored.address, restored.table) },
     replace: true,
   });
 }
