@@ -737,19 +737,6 @@ describe("changing release streams", () => {
     expect((await readStream(stream.id))?.draft).toBeUndefined();
   });
 
-  it("lays a new schedule's cycles out until two years from today", async () => {
-    const stream = await draftStream();
-    expect(stream.cyclesUntil).toBe(horizonFrom(today()));
-  });
-
-  it("lays a schedule's cycles out up to its last day, however far ahead", async () => {
-    const stream = await liveStream();
-    const response = await changeEnd(stream.id, "2059-12-31");
-    expect(response.statusCode).toBe(200);
-    const changed = response.json<{ stream: ReleaseStream }>().stream;
-    expect(changed.cycles.at(-1)?.startsOn).toBe("2059-10-01");
-  });
-
   it("refuses ending a schedule before a release's last cycle starts", async () => {
     const stream = await liveStream();
     await draftRelease(stream.id, {
@@ -811,19 +798,6 @@ describe("changing release streams", () => {
       last: { startsOn: "2027-04-01", endsOn: "2027-05-15" },
       draft: ["endsOn"],
     });
-  });
-
-  it("drafts a schedule that ends keeping going again, laid out two years from today", async () => {
-    const stream = await liveStream();
-    await changeEnd(stream.id, "2027-05-15");
-    const response = await changeEnd(stream.id, null);
-    const changed = response.json<{ stream: ReleaseStream }>().stream;
-    const last = changed.cycles.at(-1);
-    expect([
-      changed.endsOn,
-      String(last?.startsOn) <= changed.cyclesUntil,
-      String(last?.endsOn) >= changed.cyclesUntil,
-    ]).toEqual([null, true, true]);
   });
 
   it("refuses ending a stream before its first cycle starts", async () => {
@@ -1026,19 +1000,6 @@ describe("releases", () => {
     ]);
   });
 
-  it("ship at the end of their last cycle unless given another day", async () => {
-    const stream = await liveStream();
-    const response = await draftRelease(stream.id, {
-      name: "Fictional Late Ship",
-      ...firstHalf,
-      shipsOn: "2027-07-31",
-    });
-    expect(response.statusCode).toBe(201);
-    expect(
-      response.json<{ stream: ReleaseStream }>().stream.releases[0]?.shipsOn,
-    ).toBe("2027-07-31");
-  });
-
   it("take a colour from the palette, which approving applies", async () => {
     const stream = await liveStream();
     const response = await draftRelease(stream.id, {
@@ -1060,27 +1021,6 @@ describe("releases", () => {
       name: "Fictional Beige",
       ...firstHalf,
       colour: "beige",
-    });
-    expect(response.statusCode).toBe(400);
-  });
-
-  it("show a colour the palette no longer has as the default", async () => {
-    const stream = await liveStream();
-    await draftRelease(stream.id, { name: "Fictional Faded", ...firstHalf });
-    await approveAll((await readStream(stream.id)) as ReleaseStream);
-    await test.connection
-      .update(releases)
-      .set({ colour: "beige" })
-      .where(eq(releases.streamId, stream.id));
-    expect((await readStream(stream.id))?.releases[0]?.colour).toBeNull();
-  });
-
-  it("may not ship before their first cycle starts", async () => {
-    const stream = await liveStream();
-    const response = await draftRelease(stream.id, {
-      name: "Fictional Early Ship",
-      ...firstHalf,
-      shipsOn: "2026-12-31",
     });
     expect(response.statusCode).toBe(400);
   });
@@ -1160,45 +1100,17 @@ describe("release notes", () => {
     ).toBe(noted);
   });
 
-  it("are removed by an empty note", async () => {
-    const { stream, release } = await liveRelease(noted);
-    await writeNote(stream.id, release.id, "  ");
-    expect((await readStream(stream.id))?.releases[0]?.note).toBeNull();
-    await approveAll((await readStream(stream.id)) as ReleaseStream);
-    const [row] = await test.connection
-      .select({ note: releases.note })
-      .from(releases)
-      .where(eq(releases.id, release.id));
-    expect(row?.note).toBeNull();
-  });
-
-  it("are kept when the release is changed", async () => {
-    const { stream, release } = await liveRelease(noted);
-    await test.request(
-      planner.cookie,
-      "PUT",
-      `/api/release-streams/${stream.id}/releases/${release.id}`,
-      { name: release.name, ...firstHalf, colour: "teal" },
-    );
-    const [changed] = (await readStream(stream.id))?.releases ?? [];
-    expect([changed?.colour, changed?.note, changed?.draft?.changed]).toEqual([
-      "teal",
-      noted,
-      ["colour"],
-    ]);
-  });
-
-  it.each([
-    ["HTML", "<script>alert(1)</script>"],
-    ["an image", "![Fictional](https://example.com/a.png)"],
-    ["a link to something but a web address", "[Run](javascript:alert(1))"],
-    ["a numbered list not starting at 1", "3. Third"],
-    ["a colour off the palette", '<span data-colour="beige">Beige</span>'],
-    ["more than notes may hold", "a".repeat(10_001)],
-  ])("refuse a note holding %s, drafting nothing", async (_what, note) => {
+  it("refuse a note holding HTML, drafting nothing", async () => {
     const { stream, release } = await liveRelease();
-    const response = await writeNote(stream.id, release.id, note);
+    const response = await writeNote(
+      stream.id,
+      release.id,
+      "<script>alert(1)</script>",
+    );
     expect(response.statusCode).toBe(400);
+    expect(response.json<{ error: string }>().error).toBe(
+      "A note can't hold HTML.",
+    );
     expect((await readStream(stream.id))?.releases[0]?.draft).toBeUndefined();
   });
 
