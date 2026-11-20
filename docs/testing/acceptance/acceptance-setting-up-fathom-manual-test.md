@@ -3,767 +3,427 @@ title: "Manual Test: Acceptance, Setting Up Fathom"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/db/migrations/**"]
-dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
-last_updated: "2026-11-17"
+dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-team-accounts-manual-test.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Acceptance, Setting Up Fathom
 
 ## Scope
 
-Verifies that a Workforce Administrator can set up a brand-new Fathom as [Setting Up Fathom](../../help/setting-up-fathom.md) describes, from an empty database. The Administrator makes the account and sets the time zone. The Workforce Administrator then adds the lists and a column, the people, their managers and team names, a schedule, the working time, and feature teams recorded from six months ago, each round approved before the next. A Team Member reads the people and teams that result. It is the first acceptance test; [Work Between Roles](acceptance-work-between-roles-manual-test.md) runs straight after it, on the people and teams it sets up.
+Verifies the first two rounds of setting up a brand-new Fathom as [Setting Up Fathom](../../help/setting-up-fathom.md) describes, on the installation [The Team's Accounts](acceptance-team-accounts-manual-test.md) readied. The Workforce Administrator pastes the positions and a list of sites in from files, adds a column, a schedule with its cycles and the working time, and the Project Manager approves them. The Workforce Administrator then adds one person by hand and pastes in the rest, fixing the two rows Fathom refuses, and the Project Manager approves them. Each signs in for the first time on the way.
 
 ## Test Environment
 
-As [Manual Test Basics](../manual-test-basics.md#test-environment) sets out, with:
+What [The Team's Accounts](acceptance-team-accounts-manual-test.md) left, run straight after it:
 
-- A browser window at least 1,440 pixels wide.
-- A plain text editor, for typing lines to copy and paste into a table.
+- Fathom running on its installation, at `https://localhost:10443`, with the **Sign in** page showing in a browser window at least 1,440 pixels wide.
+- The password list, open in a plain text editor.
+- This test's files, in `docs/testing/acceptance/data/` in the clone: `positions.tsv`, `sites.tsv` and `people.tsv`. Each starts with a line naming its columns, which is never copied, and separates its columns with tabs.
 
 ## Test Accounts
 
-As [Manual Test Basics](../manual-test-basics.md#test-accounts) sets out, this test uses:
+[The Team's Accounts](acceptance-team-accounts-manual-test.md) made these:
 
-- **Administrator:** `fathom.administrator@fathom.test`, shown in Fathom as "Fathom Administrator"
-- **Project Manager:** `project.manager@fathom.test`
-- **Engineering Director:** `engineering.director@fathom.test`
-- **Team Member:** `team.member@fathom.test`
-
-This test creates:
-
-- **Planning lead account:** `fictional.planning.lead@fathom.test`, shown in Fathom as `Fictional Planning Lead`. SETUP-01 creates it with the Workforce Administrator role, and its password is the one SETUP-01 shows, until SETUP-02 changes it to `fictional password 3`.
+- **Workforce Administrator:** `ines.harrow@fathom.test`, shown in Fathom as `Ines Harrow`, whose new password is `fictional ines password`
+- **Project Manager:** `tomas.reed@fathom.test`, shown in Fathom as `Tomas Reed`, whose new password is `fictional tomas password`
 
 ## Common Procedures
 
-This test uses [Start Fathom](../manual-test-basics.md#start-fathom), [Start From an Empty Database](../manual-test-basics.md#start-from-an-empty-database), [Reset the Database](../manual-test-basics.md#reset-the-database) and [Publish](../manual-test-basics.md#publish).
+This test uses [Change a Generated Password](../manual-test-basics.md#change-a-generated-password) and [Publish](../manual-test-basics.md#publish). [Start Again](../manual-test-basics.md#start-again) removes the installation, for a fresh run from [Installing Fathom](acceptance-installing-fathom-manual-test.md).
 
 ## Terms
 
-[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses, such as the account menu, marks, the Publish button, the finder, the teams switch and the team panel. This test adds:
+[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses, such as marks, a row's slot, the Publish button and the tick box. This test adds:
 
+- **Copy the rows of a file:** open the file named in the text editor, select every line but the first, and copy them.
 - **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20270101`.
-- **Months from today:** the steps name months by where they fall from the current month: **next month** is the one after it, **six months ago** the sixth month before it, and **three months from now** the third month after it. The steps type a month's first day as digits; the examples after "such as" are for a run in November 2026, such as `20260501` for the first day of six months ago.
 - **Next year:** the year after the current one. Its first cycles are named by its last two digits and their number, such as "27.1" for the first in 2027; the examples after "such as" are for a run in 2026.
 - **Empty row:** the row at the end of a table or a list's panel, with blank cells, where a new record or choice is typed or pasted.
-- **Date box:** the box labelled **Date** between the **Org chart** heading and the chart, before the left arrow, timeline, right arrow and **Today**.
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Start From an Empty Database. Check each step whose expected result you see, and write anything else under its notes. [Work Between Roles](acceptance-work-between-roles-manual-test.md) follows on from the last test case.
+Run the test cases in order, in about 30 minutes, straight after [The Team's Accounts](acceptance-team-accounts-manual-test.md). Check each step whose expected result you see, and write anything else under its notes. [Reporting Lines](acceptance-reporting-lines-manual-test.md) follows on from the last test case.
 
-### SETUP-01: The Administrator Makes the Account and Sets the Time Zone
+### SETUP-01: The Workforce Administrator Signs In for the First Time
 
-**Account:** Administrator, `fathom.administrator@fathom.test`; the first test case.
+**Account:** Workforce Administrator, `ines.harrow@fathom.test`, changed from TEAM-05 in [The Team's Accounts](acceptance-team-accounts-manual-test.md); the first test case.
 
-**Preconditions:** Start From an Empty Database run. Signed in with this account.
+**Preconditions:** [The Team's Accounts](acceptance-team-accounts-manual-test.md) run just before. **Sign in** page showing.
 
-- [ ] `734C` Select the **Accounts** page in the left-hand menu.
+- [ ] `793D` Sign in as the Workforce Administrator, `ines.harrow@fathom.test`, with the password beside it in the password list.
+  - **Expected:** A page headed **Change password** shows, with no left-hand menu.
+  - **Notes:**
+
+- [ ] `41C4` Run Change a Generated Password, with the new password `fictional ines password`.
   - **Expected:**
-    - The table lists the development accounts, as [Development Setup](../../design/development-setup.md#development-accounts) lists them, and no other.
-    - Every **Status** cell reads "Active".
+    - Fathom opens on the **Overview**.
+    - The top bar's right end shows `Ines Harrow`.
   - **Notes:**
 
-- [ ] `4B6E` Select **New account**.
-  - **Expected:** A dialog titled "New account" opens.
-  - **Notes:**
-
-- [ ] `0EA3` Type `Fictional Planning Lead` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `B9C8` Type `fictional.planning.lead@fathom.test` in **Email address**.
-  - **Expected:** **Email address** shows what was typed.
-  - **Notes:**
-
-- [ ] `EF4E` Under **Roles**, tick **Workforce Administrator**.
-  - **Expected:**
-    - **Workforce Administrator** is ticked.
-    - **Default role** is under the roles.
-  - **Notes:**
-
-- [ ] `10F7` Untick **Team Member**.
-  - **Expected:**
-    - Only **Workforce Administrator** is ticked.
-    - **Default role** is gone.
-  - **Notes:**
-
-- [ ] `769F` Select **Create account**.
-  - **Expected:** The dialog is titled "Password for Fictional Planning Lead".
-  - **Notes:**
-
-- [ ] `D6BB` Select the eye button, and write the password down.
-  - **Expected:** The eye button shows the password.
-  - **Notes:**
-
-- [ ] `2C7B` Select **Done**.
-  - **Expected:**
-    - A green banner says "Created the account for Fictional Planning Lead."
-    - The row's **Roles** cell shows **Workforce Administrator**.
-  - **Notes:**
-
-- [ ] `22C7` Select the **Settings** page in the left-hand menu.
-  - **Expected:**
-    - **Time zone** reads "America/Vancouver".
-    - Under it, "It is" and the time there.
-  - **Notes:**
-
-- [ ] `1B7E` Type `Los` in **Time zone**, and choose **America/Los_Angeles**.
-  - **Expected:** **Time zone** reads "America/Los_Angeles".
-  - **Notes:**
-
-- [ ] `F2EC` Select **Save**.
-  - **Expected:** A notification says "Fathom's time zone is now America/Los_Angeles."
-  - **Notes:**
-
-### SETUP-02: The Planning Lead Signs In for the First Time
-
-**Account:** Workforce Administrator, `fictional.planning.lead@fathom.test`, shown in Fathom as `Fictional Planning Lead`, changed from SETUP-01.
-
-**Preconditions:** SETUP-01 done.
-
-- [ ] `5B98` Sign out, and sign in as `fictional.planning.lead@fathom.test`, with the password written down in SETUP-01.
-  - **Expected:** A panel headed **Change password** says "Fathom generated this password. A new password is required to continue."
-  - **Notes:**
-
-- [ ] `D427` Enter the password written down in **Current password**.
-  - **Expected:** **Current password** is filled in.
-  - **Notes:**
-
-- [ ] `B751` Enter `fictional password 3` in **New password**.
-  - **Expected:** **New password** is filled in.
-  - **Notes:**
-
-- [ ] `FA62` Enter `fictional password 3` in **New password again**.
-  - **Expected:** **New password again** is filled in.
-  - **Notes:**
-
-- [ ] `743B` Select **Change password**.
-  - **Expected:**
-    - A green banner says "The password has been changed, and every other session has been signed out."
-    - Fathom opens with the left-hand menu.
-  - **Notes:**
-
-### SETUP-03: The Lists and a Column Are Added and Approved
-
-**Account:** Workforce Administrator, `fictional.planning.lead@fathom.test`, shown in Fathom as `Fictional Planning Lead`, the same as SETUP-02. Step `E199` signs in as another account.
-
-**Preconditions:** SETUP-02 done.
-
-- [ ] `589D` Select the **People** page in the left-hand menu.
+- [ ] `4BE3` Select the **People** page in the left-hand menu.
   - **Expected:**
     - The table has its column names and only the empty row.
     - The count above the table reads "0 people".
   - **Notes:**
 
-- [ ] `9D63` Select the **Org chart** page in the left-hand menu.
-  - **Expected:** The page reads "Nobody is on the org chart yet."
-  - **Notes:**
+### SETUP-02: The Positions Are Pasted In
 
-- [ ] `F312` Select the **Change history** page in the left-hand menu.
-  - **Expected:** The page reads "No changes yet to data this account can see."
-  - **Notes:**
+**Account:** Workforce Administrator, `ines.harrow@fathom.test`, the same as SETUP-01.
 
-- [ ] `AC44` Select the **Lists** page in the left-hand menu.
+**Preconditions:** SETUP-01 done.
+
+- [ ] `F7A4` Select the **Lists** page in the left-hand menu.
   - **Expected:** **Positions** and **Hiring states** are among the lists, each with a grey **Built in** box.
   - **Notes:**
 
-- [ ] `529D` Select **Positions**.
+- [ ] `D201` Select **Positions**.
   - **Expected:**
     - The panel opens with **Positions** at the top.
     - Its choices are **Employee** and **Manager**.
     - An empty row is under them.
   - **Notes:**
 
-- [ ] `0AE7` Type `Software Engineer` in the empty row's **Name** box, and press Enter.
-  - **Expected:** A row `Software Engineer` is above the empty row, with a hollow yellow dot in its slot.
+- [ ] `02AA` Copy the rows of `positions.tsv`.
+  - **Expected:** Four lines are selected in the text editor, from `Software Engineer` to `Engineering Director`.
   - **Notes:**
 
-- [ ] `A97C` Select **Hiring states**.
-  - **Expected:** Its choices are, from the top, each beside its meaning:
-    - **Request to hire**, "Proposed"
-    - **Approved to hire**, "Open"
-    - **Hired**, "Hired"
-    - **Left**, "Left"
+- [ ] `665F` In Fathom, select the empty row's **Name** box.
+  - **Expected:** The cursor is in the box.
   - **Notes:**
 
-- [ ] `3FD4` Select **New list**.
+- [ ] `48B5` Paste.
+  - **Expected:**
+    - Four rows are added under **Manager**, in the order of the file: `Software Engineer`, `Test Engineer`, `Engineering Manager` and `Engineering Director`.
+    - Each has its description from the file.
+    - Each has a hollow yellow dot in its slot.
+  - **Notes:**
+
+### SETUP-03: A List of Sites Is Made and Pasted In
+
+**Account:** Workforce Administrator, `ines.harrow@fathom.test`, the same as SETUP-02.
+
+**Preconditions:** SETUP-02 done. **Lists** page open.
+
+- [ ] `3F4F` Select **New list**.
   - **Expected:**
     - A dialog titled "New list" opens.
     - It has **Name**, **Description (optional)** and **Class**.
-    - **Class** offers **General**, **Personal** and **Confidential**.
   - **Notes:**
 
-- [ ] `EC4F` Type `Sites` in **Name**.
+- [ ] `17A6` Type `Sites` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `2EE5` Leave **General** chosen under **Class**, and select **Create list**.
+- [ ] `56C9` Leave **General** chosen under **Class**, and select **Create list**.
   - **Expected:**
     - The dialog closes.
-    - The panel opens with `Sites` at the top.
-    - The cursor is in the empty row's **Name** box.
+    - The panel opens with `Sites` at the top, and only an empty row.
   - **Notes:**
 
-- [ ] `9EC0` Type `Harbourside`, and press Enter.
-  - **Expected:**
-    - A row `Harbourside` is added, with a hollow yellow dot in its slot.
-    - The cursor is in the empty row's **Name** box again.
+- [ ] `672F` Copy the rows of `sites.tsv`.
+  - **Expected:** Two lines are selected in the text editor, `Harbourside` and `Northmere`.
   - **Notes:**
 
-- [ ] `0E1A` Type `Northmere`, and press Enter.
-  - **Expected:** `Harbourside` and `Northmere` are listed, each with a hollow yellow dot in its slot.
+- [ ] `628C` In Fathom, select the empty row's **Name** box.
+  - **Expected:** The cursor is in the box.
   - **Notes:**
 
-- [ ] `65A5` Select the **People** page in the left-hand menu.
-  - **Expected:** The **People** page opens.
+- [ ] `0F1C` Paste.
+  - **Expected:** `Harbourside` and `Northmere` are listed, each with its description and a hollow yellow dot in its slot.
   - **Notes:**
 
-- [ ] `0C5D` Select **New column**.
+### SETUP-04: A Column Uses the New List
+
+**Account:** Workforce Administrator, `ines.harrow@fathom.test`, the same as SETUP-03.
+
+**Preconditions:** SETUP-03 done.
+
+- [ ] `5DBC` Select the **People** page in the left-hand menu.
+  - **Expected:** The **People** page opens, with only the empty row.
+  - **Notes:**
+
+- [ ] `A7E9` Select **New column**.
   - **Expected:**
     - A dialog titled "New column" opens.
     - **Type** reads "Choice from a list".
   - **Notes:**
 
-- [ ] `5BC8` Type `Site` in **Name**.
+- [ ] `7DC8` Type `Site` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `66D2` Choose **Sites (new)** in **List**.
+- [ ] `DD49` Choose **Sites (new)** in **List**.
   - **Expected:** **List** reads "Sites (new)".
   - **Notes:**
 
-- [ ] `3E18` Select **Add column**.
+- [ ] `DFB9` Select **Add column**.
   - **Expected:**
     - The dialog closes.
-    - A **Site** column is at the right end of the table.
-    - A hollow yellow dot is before its name.
+    - The table has a **Site** column, with a hollow yellow dot before its name.
   - **Notes:**
 
-- [ ] `D0C5` Run Publish.
-  - **Expected:** The Publish button is gone.
-  - **Notes:**
+### SETUP-05: A Schedule Is Set Up With Its Cycles
 
-- [ ] `E199` Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Project Manager".
-  - **Notes:**
+**Account:** Workforce Administrator, `ines.harrow@fathom.test`, the same as SETUP-04.
 
-- [ ] `E4BB` Select the **Drafts** page in the left-hand menu.
-  - **Expected:**
-    - **To decide** is chosen beside the page's title.
-    - Five rows are shown, each with a tick box, whose **Record** reads:
-      - `Software Engineer in Positions`, `Harbourside in Sites` and `Northmere in Sites`, each with **Type** "Choice"
-      - `Sites`, with **Type** "List"
-      - `Site`, with **Type** "Column"
-  - **Notes:**
+**Preconditions:** SETUP-04 done.
 
-- [ ] `97E9` Tick the tick box before **Record** in the table's header.
-  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 5 drafts…**.
-  - **Notes:**
-
-- [ ] `E55E` Select **Approve 5 drafts…** at the right of the page's heading.
-  - **Expected:** A dialog titled "Approve 5 drafts?" opens.
-  - **Notes:**
-
-- [ ] `29D0` Select **Approve** in the dialog.
-  - **Expected:**
-    - A notice reads "Approved 5 drafts."
-    - The table reads "No drafts".
-  - **Notes:**
-
-### SETUP-04: People Are Pasted Into an Empty People Table and Approved
-
-**Account:** Workforce Administrator, `fictional.planning.lead@fathom.test`, shown in Fathom as `Fictional Planning Lead`, changed from SETUP-03. Step `83E3` signs in as another account.
-
-**Preconditions:** SETUP-03 done. Signed in with this account, with `fictional password 3`. In the text editor, seven lines, typed with the Tab key where shown:
-
-- `Odile Brandt`, Tab, `EMP-100`, Tab, `Manager`, Tab, `Hired`
-- `Ada Quill`, Tab, `EMP-101`, Tab, `Manager`, Tab, `Hired`
-- `Bram Oakes`, Tab, `EMP-102`, Tab, `software engineer`, Tab, `Hired`
-- `Cleo Marsh`, Tab, `EMP-103`, Tab, `Employee`, Tab, `Hired`
-- `Dara Finch`, Tab, `EMP-104`, Tab, `Employee`, Tab, `Hired`
-- `Emil Stone`, Tab, `EMP-105`, Tab, `Employee`, Tab, `Hired`
-- `Freya Holt`, Tab, `EMP-106`, Tab, `Employee`, Tab, `Hired`
-
-- [ ] `E567` Select the **People** page in the left-hand menu.
-  - **Expected:**
-    - The **People** page opens.
-    - **Site** has no dot before its name.
-  - **Notes:**
-
-- [ ] `2C0F` Copy the seven lines from the text editor.
-  - **Expected:** The seven lines are highlighted in the text editor.
-  - **Notes:**
-
-- [ ] `14CF` In Fathom, select the **Name** cell of the empty row.
-  - **Expected:** The cell has a blue outline.
-  - **Notes:**
-
-- [ ] `49C3` Paste.
-  - **Expected:**
-    - Seven rows are added, one for each line.
-    - Each row has its ID.
-    - `Bram Oakes` reads "Software Engineer" in **Position**, and each other row `Manager` or `Employee`.
-    - Each row reads `Hired` in **State**.
-    - Each row has a hollow yellow dot in its slot.
-    - The count reads "7 people".
-  - **Notes:**
-
-- [ ] `E018` Click once in the **Manager?** cell of `Odile Brandt`.
-  - **Expected:** Her box is checked.
-  - **Notes:**
-
-- [ ] `FB00` Click once in the **Manager?** cell of `Ada Quill`.
-  - **Expected:**
-    - Both boxes are checked.
-    - The other rows' boxes stay clear.
-  - **Notes:**
-
-- [ ] `8F42` Select the **Site** cell of `Odile Brandt`, press Enter, choose `Harbourside`, and press Enter.
-  - **Expected:** The cell reads `Harbourside`.
-  - **Notes:**
-
-- [ ] `2B67` Run Publish.
-  - **Expected:** The **Publish** button is gone.
-  - **Notes:**
-
-- [ ] `83E3` Sign out, and sign in as the Project Manager, `project.manager@fathom.test`.
-  - **Expected:** The top bar's right end reads "Project Manager".
-  - **Notes:**
-
-- [ ] `FE50` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
-  - **Notes:**
-
-- [ ] `A5E6` Tick the tick box before **Record** in the table's header.
-  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 7 drafts…**.
-  - **Notes:**
-
-- [ ] `6FA2` Select **Approve 7 drafts…** at the right of the page's heading.
-  - **Expected:** A dialog titled "Approve 7 drafts?" opens.
-  - **Notes:**
-
-- [ ] `E674` Select **Approve** in the dialog.
-  - **Expected:**
-    - A notice reads "Approved 7 drafts."
-    - The table reads "No drafts".
-  - **Notes:**
-
-### SETUP-05: Reporting Lines, Team Names and a Planned Hire Are Added
-
-**Account:** Workforce Administrator, `fictional.planning.lead@fathom.test`, shown in Fathom as `Fictional Planning Lead`, changed from SETUP-04. Step `2E1D` signs in as another account.
-
-**Preconditions:** SETUP-04 done. Signed in with this account. **People** page open.
-
-- [ ] `C588` Select the **Manager** cell of `Bram Oakes`, press Enter, type `Ada`, and choose `Ada Quill`.
-  - **Expected:**
-    - The **Manager** cell reads `Ada Quill`, with a hollow yellow dot before it.
-    - **Manager assigned** holds today's date.
-  - **Notes:**
-
-- [ ] `3BB2` Select the **Manager** cell of `Cleo Marsh`, press Enter, type `Ada`, and choose `Ada Quill`.
-  - **Expected:** The **Manager** cell of `Cleo Marsh` reads `Ada Quill`, with a hollow yellow dot before it.
-  - **Notes:**
-
-- [ ] `B5C2` Select the **Manager** cell of `Freya Holt`, press Enter, type `Ada`, and choose `Ada Quill`.
-  - **Expected:** The **Manager** cell of `Freya Holt` reads `Ada Quill`, with a hollow yellow dot before it.
-  - **Notes:**
-
-- [ ] `054C` Select the **Manager** cell of `Ada Quill`, press Enter, type `Odile`, and choose `Odile Brandt`.
-  - **Expected:** The **Manager** cell of `Ada Quill` reads `Odile Brandt`, with a hollow yellow dot before it.
-  - **Notes:**
-
-- [ ] `3E56` Select the **Manager** cell of `Dara Finch`, press Enter, type `Odile`, and choose `Odile Brandt`.
-  - **Expected:** The **Manager** cell of `Dara Finch` reads `Odile Brandt`, with a hollow yellow dot before it.
-  - **Notes:**
-
-- [ ] `CD87` Select the **Manager** cell of `Emil Stone`, press Enter, type `Odile`, and choose `Odile Brandt`.
-  - **Expected:**
-    - Each of the six rows reads its new manager, with a hollow yellow dot before it.
-    - `Odile Brandt` has no manager.
-  - **Notes:**
-
-- [ ] `F715` Select the **Team name** cell of `Odile Brandt`, type `Keepers`, and press Enter.
-  - **Expected:** The cell reads `Keepers`, with a hollow yellow dot before it.
-  - **Notes:**
-
-- [ ] `E52A` Select the **Team name** cell of `Ada Quill`, type `Lamp crew`, and press Enter.
-  - **Expected:** The cell reads `Lamp crew`, with a hollow yellow dot before it.
-  - **Notes:**
-
-- [ ] `564E` Select **New person** at the top right of the page.
-  - **Expected:** The details panel opens, headed **New person**.
-  - **Notes:**
-
-- [ ] `97D3` Select the change button beside **State**, and choose **Request to hire**.
-  - **Expected:** **State** reads "Request to hire".
-  - **Notes:**
-
-- [ ] `7C2B` Type `Fictional tide engineer` in **Name**.
-  - **Expected:** **Name** shows what was typed.
-  - **Notes:**
-
-- [ ] `15E7` Type `REQ-7001` in **ID**.
-  - **Expected:** **ID** shows what was typed.
-  - **Notes:**
-
-- [ ] `970E` Type the first day of three months from now in **Start**, such as `20270201`.
-  - **Expected:** **Start** shows the date typed.
-  - **Notes:**
-
-- [ ] `DC04` Choose **Employee** in **Position** from its change button.
-  - **Expected:** **Position** reads "Employee".
-  - **Notes:**
-
-- [ ] `F63E` Choose `Ada Quill` in **Manager** from its change button.
-  - **Expected:** **Manager** reads `Ada Quill`.
-  - **Notes:**
-
-- [ ] `35BF` Select **Add**.
-  - **Expected:**
-    - The panel shows `Fictional tide engineer`.
-    - Its row reads "Request to hire" in **State** and `Ada Quill` in **Manager**.
-    - Its row has a hollow yellow dot in its slot.
-  - **Notes:**
-
-- [ ] `71A5` Run Publish.
-  - **Expected:** The **Publish** button is gone.
-  - **Notes:**
-
-- [ ] `2E1D` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
-  - **Expected:** The top bar's right end reads "Engineering Director".
-  - **Notes:**
-
-- [ ] `9A27` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
-  - **Notes:**
-
-- [ ] `5B3B` Tick the tick box before **Record** in the table's header.
-  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 8 drafts…**.
-  - **Notes:**
-
-- [ ] `EEF7` Select **Approve 8 drafts…** at the right of the page's heading.
-  - **Expected:** A dialog titled "Approve 8 drafts?" opens.
-  - **Notes:**
-
-- [ ] `CC83` Select **Approve** in the dialog.
-  - **Expected:**
-    - A notice reads "Approved 8 drafts."
-    - The table reads "No drafts".
-  - **Notes:**
-
-- [ ] `9D2E` Select the **People** page in the left-hand menu.
-  - **Expected:**
-    - No row has a dot.
-    - **Team** reads `Lamp crew` for `Bram Oakes`, `Cleo Marsh`, `Freya Holt` and `Fictional tide engineer`.
-    - **Team** reads `Keepers` for `Ada Quill`, `Dara Finch` and `Emil Stone`.
-  - **Notes:**
-
-### SETUP-06: A Schedule Is Set Up With Its Cycles
-
-**Account:** Workforce Administrator, `fictional.planning.lead@fathom.test`, shown in Fathom as `Fictional Planning Lead`, changed from SETUP-05.
-
-**Preconditions:** SETUP-05 done. Signed in with this account.
-
-- [ ] `C990` Select the **Releases** page in the left-hand menu.
+- [ ] `6D23` Select the **Releases** page in the left-hand menu.
   - **Expected:**
     - The **Releases** tab is chosen beside the heading, and reads "No releases yet."
     - There is no button at the top right.
   - **Notes:**
 
-- [ ] `ACF3` Select the **Schedules** tab.
+- [ ] `24A4` Select the **Schedules** tab.
   - **Expected:**
     - The tab reads "No schedules yet."
     - A **New schedule** button is at the top right.
   - **Notes:**
 
-- [ ] `2A4A` Select **New schedule**.
+- [ ] `8D10` Select **New schedule**.
   - **Expected:** A dialog titled "New schedule" opens.
   - **Notes:**
 
-- [ ] `55CC` Type `Fictional Mainline` in **Name**.
+- [ ] `74A1` Type `Fictional Mainline` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `FD5B` Select **Add schedule**.
+- [ ] `AB34` Select **Add schedule**.
   - **Expected:**
     - A notification says "Drafted the new schedule."
     - The side panel is headed with a hollow yellow dot before `Fictional Mainline`.
     - "None" is under **Cycles**.
   - **Notes:**
 
-- [ ] `0F83` In the side panel, select the pencil at the right of the **Name pattern** row.
+- [ ] `466C` In the side panel, select the pencil at the right of the **Name pattern** row.
   - **Expected:** A dialog titled "Set up cycles for Fictional Mainline" opens.
   - **Notes:**
 
-- [ ] `46F8` Type the first day of next year in **First cycle starts**, such as `20270101`, leaving **Each cycle lasts** at `3`, **Months**, and **Names** at `{YY}.{N}`.
+- [ ] `96B2` Type the first day of next year in **First cycle starts**, such as `20270101`, leaving **Each cycle lasts** at `3`, **Months**, and **Names** at `{YY}.{N}`.
   - **Expected:**
     - Under **First cycles**, the first row reads next year's first cycle and its dates, January 1 to March 31, such as "27.1", "2027-01-01 to 2027-03-31".
     - The second row reads its second cycle, April 1 to June 30, such as "27.2", "2027-04-01 to 2027-06-30".
     - The third row reads its third cycle, July 1 to September 30, such as "27.3", "2027-07-01 to 2027-09-30".
   - **Notes:**
 
-- [ ] `C0C7` Select **Set up cycles**.
+- [ ] `06B8` Select **Set up cycles**.
   - **Expected:**
     - A notification says "Drafted the cycles."
-    - **Name pattern** reads `{YY}.{N}`.
-    - **Cycle length** reads "3 months".
+    - **Name pattern** reads `{YY}.{N}`, and **Cycle length** "3 months".
     - The first row under **Cycles** is next year's first cycle, such as "27.1", starting on January 1 and ending on March 31.
   - **Notes:**
 
-### SETUP-07: The Working Time Is Set
+### SETUP-06: The Working Time Is Set
 
-**Account:** Workforce Administrator, `fictional.planning.lead@fathom.test`, shown in Fathom as `Fictional Planning Lead`, the same as SETUP-06.
+**Account:** Workforce Administrator, `ines.harrow@fathom.test`, the same as SETUP-05.
 
-**Preconditions:** SETUP-06 done.
+**Preconditions:** SETUP-05 done.
 
-- [ ] `B90F` Select the **Capacity** page in the left-hand menu.
-  - **Expected:** The mode switch reads **People** and **Settings**.
-  - **Notes:**
-
-- [ ] `24D1` Select **Settings** in the mode switch.
+- [ ] `6FE1` Select the **Capacity** page in the left-hand menu, then **Settings** in the mode switch.
   - **Expected:** Under **Working time**, the rows read, from the top:
     - **Hours a day**: "8"
     - **Working days a week**: "5"
     - **Working days a month**: "20"
   - **Notes:**
 
-- [ ] `EE06` Select "8" beside **Hours a day**.
-  - **Expected:**
-    - A field in place of "8" holds "8".
-    - The focus is in the field.
+- [ ] `B89A` Select "8" beside **Hours a day**.
+  - **Expected:** A field in place of "8" holds "8", with the focus in it.
   - **Notes:**
 
-- [ ] `22C8` Replace the value with `7`, and press Enter.
+- [ ] `6B27` Replace the value with `7`, and press Enter.
   - **Expected:**
     - **Hours a day** reads "7" after a hollow yellow mark.
     - Under it, "8" follows a green mark.
   - **Notes:**
 
-### SETUP-08: Feature Teams Are Recorded From Six Months Ago and Approved
+### SETUP-07: The First Round Is Published
 
-**Account:** Workforce Administrator, `fictional.planning.lead@fathom.test`, shown in Fathom as `Fictional Planning Lead`, the same as SETUP-07. Step `D62C` signs in as another account.
+**Account:** Workforce Administrator, `ines.harrow@fathom.test`, the same as SETUP-06.
+
+**Preconditions:** SETUP-06 done.
+
+- [ ] `7F64` Run Publish.
+  - **Expected:** The Publish button, which read **Publish 11 changes**, is gone.
+  - **Notes:**
+
+### SETUP-08: The Project Manager Signs In for the First Time
+
+**Account:** Project Manager, `tomas.reed@fathom.test`, changed from SETUP-07. The first step signs out the Workforce Administrator.
 
 **Preconditions:** SETUP-07 done.
 
-- [ ] `4B09` Select the **Feature assignments** page in the left-hand menu.
-  - **Expected:** The page is headed **Feature assignments**.
+- [ ] `090F` Sign out from the account menu.
+  - **Expected:** The **Sign in** page shows.
   - **Notes:**
 
-- [ ] `6ACD` Select **Feature team** in the Group by menu.
+- [ ] `ED3E` Sign in as the Project Manager, `tomas.reed@fathom.test`, with the password beside it in the password list.
+  - **Expected:** A page headed **Change password** shows, with no left-hand menu.
+  - **Notes:**
+
+- [ ] `931F` Run Change a Generated Password, with the new password `fictional tomas password`.
   - **Expected:**
-    - Every person is listed under **No feature team**.
-    - No cell in any month holds a label.
+    - Fathom opens on the **Overview**.
+    - The top bar's right end shows `Tomas Reed`.
   - **Notes:**
 
-- [ ] `3E43` Select the **Org chart** page in the left-hand menu.
-  - **Expected:**
-    - The chart opens.
-    - The **Date** box shows today.
-  - **Notes:**
+### SETUP-09: The Project Manager Approves the First Round
 
-- [ ] `3BD9` Choose **Feature teams** in the teams switch.
-  - **Expected:** **Feature teams** is chosen in the teams switch.
-  - **Notes:**
+**Account:** Project Manager, `tomas.reed@fathom.test`, the same as SETUP-08.
 
-- [ ] `BEB3` Clear the **Date** box, type the first day of six months ago, such as `20260501`, and press Enter.
-  - **Expected:** Below the date row, text reads "Showing" and that day, such as "Showing May 1, 2026.", then "Changes take effect from this date."
-  - **Notes:**
+**Preconditions:** SETUP-08 done.
 
-- [ ] `9E28` Select the Feature teams button.
-  - **Expected:**
-    - The menu reads "No feature teams yet".
-    - Under it is **New feature team**.
-  - **Notes:**
-
-- [ ] `1E9E` Select **New feature team**.
-  - **Expected:**
-    - A panel titled **New feature team** opens.
-    - A **Details** section has a **Name** row with an empty box.
-    - A **Members** section has the rows **Feature lead** and **Members**, each with a change button.
-    - **Cancel** and **Add** are at the foot.
-  - **Notes:**
-
-- [ ] `8D60` Type `Tide team` in the **Name** box.
-  - **Expected:** The **Name** box holds `Tide team`.
-  - **Notes:**
-
-- [ ] `57EB` Select the change button in the **Members** row.
-  - **Expected:**
-    - A list of people opens under the row.
-    - The cursor is in a box above it.
-  - **Notes:**
-
-- [ ] `717F` Type `Ada`, and press Enter.
-  - **Expected:** `Ada Quill` has a tick.
-  - **Notes:**
-
-- [ ] `E415` Type `Bram`, and press Enter.
-  - **Expected:** `Bram Oakes` has a tick.
-  - **Notes:**
-
-- [ ] `57BC` Type `Cleo`, and press Enter.
-  - **Expected:** `Cleo Marsh` has a tick.
-  - **Notes:**
-
-- [ ] `F8BF` Press Enter.
-  - **Expected:** **Members** lists `Ada Quill`, `Bram Oakes` and `Cleo Marsh`, one to a line.
-  - **Notes:**
-
-- [ ] `7F8A` Select **Add**.
-  - **Expected:**
-    - The panel is titled `Tide team`, with a hollow yellow dot before it.
-    - **Members** lists `Ada Quill`, `Bram Oakes` and `Cleo Marsh`, each with a hollow yellow dot before the name.
-    - No date is after any of the names.
-    - On the chart, a card named `Tide team` reads "No feature lead".
-  - **Notes:**
-
-- [ ] `FF5B` Select the Feature teams button, then **New feature team**.
-  - **Expected:** A panel titled **New feature team** opens.
-  - **Notes:**
-
-- [ ] `B4E2` Type `Harbour team` in the **Name** box.
-  - **Expected:** The **Name** box holds `Harbour team`.
-  - **Notes:**
-
-- [ ] `4C0F` Select the change button in the **Members** row.
-  - **Expected:**
-    - A list of people opens under the row.
-    - The cursor is in a box above it.
-  - **Notes:**
-
-- [ ] `A2E3` Type `Dara`, and press Enter.
-  - **Expected:** `Dara Finch` has a tick.
-  - **Notes:**
-
-- [ ] `E4B6` Type `Emil`, and press Enter.
-  - **Expected:** `Emil Stone` has a tick.
-  - **Notes:**
-
-- [ ] `35EA` Press Enter.
-  - **Expected:** **Members** lists `Dara Finch` and `Emil Stone`, one to a line.
-  - **Notes:**
-
-- [ ] `7E85` Select the change button in the **Feature lead** row, type `Dara`, and press Enter.
-  - **Expected:** **Feature lead** reads `Dara Finch`.
-  - **Notes:**
-
-- [ ] `7A76` Select **Add**.
-  - **Expected:**
-    - The panel is titled `Harbour team`, with a hollow yellow dot before it.
-    - **Feature lead** reads `Dara Finch`.
-    - **Members** lists `Dara Finch` and `Emil Stone`.
-  - **Notes:**
-
-- [ ] `3F4A` Select the Feature teams button, then **New feature team**.
-  - **Expected:** A panel titled **New feature team** opens.
-  - **Notes:**
-
-- [ ] `A034` Type `Beacon team` in the **Name** box.
-  - **Expected:** The **Name** box holds `Beacon team`.
-  - **Notes:**
-
-- [ ] `8DAD` Select the change button in the **Members** row.
-  - **Expected:**
-    - A list of people opens under the row.
-    - The cursor is in a box above it.
-  - **Notes:**
-
-- [ ] `2B4C` Type `Cleo`.
-  - **Expected:** `Cleo Marsh` is listed.
-  - **Notes:**
-
-- [ ] `0ADF` Press Enter.
-  - **Expected:** `Cleo Marsh` has a tick.
-  - **Notes:**
-
-- [ ] `F2C3` Type `Freya`, and press Enter.
-  - **Expected:** `Freya Holt` has a tick.
-  - **Notes:**
-
-- [ ] `3B47` Press Enter.
-  - **Expected:** **Members** lists `Cleo Marsh` and `Freya Holt`, one to a line.
-  - **Notes:**
-
-- [ ] `5F40` Select **Add**.
-  - **Expected:**
-    - The panel is titled `Beacon team`, with a hollow yellow dot before it.
-    - On the chart, a card for `Cleo Marsh` is under `Tide team`.
-    - Another card for `Cleo Marsh` is under `Beacon team`.
-  - **Notes:**
-
-- [ ] `BE73` Select **Today**.
-  - **Expected:**
-    - The text below the row is gone.
-    - `Tide team` has `Ada Quill`, `Bram Oakes` and `Cleo Marsh` under its card.
-    - `Harbour team`'s first card is `Dara Finch`'s, with `Emil Stone` under it.
-    - `Beacon team` has `Cleo Marsh` and `Freya Holt` under its card.
-  - **Notes:**
-
-- [ ] `0C64` Run Publish.
-  - **Expected:** The **Publish** button is gone.
-  - **Notes:**
-
-- [ ] `D62C` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
-  - **Expected:** The top bar's right end reads "Engineering Director".
-  - **Notes:**
-
-- [ ] `BD9B` Select the **Drafts** page in the left-hand menu.
+- [ ] `DC83` Select the **Drafts** page in the left-hand menu.
   - **Expected:**
     - **To decide** is chosen beside the page's title.
-    - Six rows are shown, each with a tick box, whose **Record** reads:
+    - Eleven rows are shown, each with a tick box, whose **Record** reads:
+      - `Software Engineer in Positions`, `Test Engineer in Positions`, `Engineering Manager in Positions`, `Engineering Director in Positions`, `Harbourside in Sites` and `Northmere in Sites`, each with **Type** "Choice"
+      - `Sites`, with **Type** "List"
+      - `Site`, with **Type** "Column"
       - `Fictional Mainline`, with **Type** "Schedule"
       - `Fictional Mainline from` and the first day of next year, such as "Fictional Mainline from Jan 1, 2027", with **Type** "Cycles"
       - "Planning settings", with **Type** "Planning settings"
-      - `Tide team`, `Harbour team` and `Beacon team`, each with **Type** "Feature team"
+    - Each row's **Made by** reads "Ines Harrow as Workforce Administrator".
   - **Notes:**
 
-- [ ] `F842` Tick the tick box before **Record** in the table's header.
-  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 6 drafts…**.
+- [ ] `91DD` Tick the tick box before **Record** in the table's header.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 11 drafts…**.
   - **Notes:**
 
-- [ ] `30A0` Select **Approve 6 drafts…** at the right of the page's heading.
-  - **Expected:** A dialog titled "Approve 6 drafts?" opens.
+- [ ] `A18F` Select **Approve 11 drafts…** at the right of the page's heading.
+  - **Expected:** A dialog titled "Approve 11 drafts?" opens.
   - **Notes:**
 
-- [ ] `37C8` Select **Approve** in the dialog.
+- [ ] `0EA5` Select **Approve** in the dialog.
   - **Expected:**
-    - A notice reads "Approved 6 drafts."
+    - A notification says "Approved 11 drafts."
     - The table reads "No drafts".
   - **Notes:**
 
-### SETUP-09: A Team Member Reads the New People and Teams
+### SETUP-10: One Person Is Added by Hand
 
-**Account:** Team Member, `team.member@fathom.test`, changed from SETUP-08.
+**Account:** Workforce Administrator, `ines.harrow@fathom.test`, changed from SETUP-09.
 
-**Preconditions:** SETUP-08 done. Signed in with this account.
+**Preconditions:** SETUP-09 done.
 
-- [ ] `A9E9` Select the **Org chart** page in the left-hand menu.
-  - **Expected:**
-    - `Odile Brandt` is at the top, with `Manager` under the name and `Keepers` under that.
-    - Her card ends with "Hide 3 reports".
-    - `Dara Finch` and `Emil Stone` are in a column under her.
-    - `Ada Quill`, with `Manager` under the name and `Lamp crew` under that, is to the right of that column.
-    - Her card ends with "Show 4 reports".
+- [ ] `D066` Sign out from the account menu, and sign in as the Workforce Administrator, `ines.harrow@fathom.test`, with the password `fictional ines password`.
+  - **Expected:** The top bar's right end shows `Ines Harrow`.
   - **Notes:**
 
-- [ ] `D6EE` On the card for `Ada Quill`, select **Show 4 reports**.
+- [ ] `EA9C` Select the **People** page in the left-hand menu.
   - **Expected:**
-    - `Bram Oakes`, `Cleo Marsh` and `Freya Holt` appear in a column under her.
-    - After them is a card with a grey dashed edge for `Fictional tide engineer`.
-    - On that card, "Employee" is under the name.
-    - On that card, under "Employee", a grey box reads "Planned, expected" and the month three months from now.
+    - The **People** page opens, with only the empty row.
+    - **Site** has no dot before its name.
   - **Notes:**
 
-- [ ] `4DA1` Choose **Feature teams** in the teams switch.
-  - **Expected:**
-    - `Tide team`, `Harbour team` and `Beacon team` are drawn side by side.
-    - There are no dots.
+- [ ] `641B` Select **New person** at the top right of the page.
+  - **Expected:** The details panel opens, headed **New person**.
   - **Notes:**
 
-- [ ] `863B` Select the Feature teams button.
-  - **Expected:**
-    - The menu lists `Beacon team`, `Harbour team` and `Tide team`.
-    - It offers no **New feature team**.
+- [ ] `FD98` Select the change button beside **State**, and choose **Hired**.
+  - **Expected:** **State** reads "Hired".
   - **Notes:**
 
-**Afterwards:** Run [Work Between Roles](acceptance-work-between-roles-manual-test.md) next, on these people and teams. To stop here instead, run Reset the Database.
+- [ ] `CFE2` Type `Odile Brandt` in **Name**.
+  - **Expected:** **Name** shows what was typed.
+  - **Notes:**
+
+- [ ] `A8CA` Type `EMP-100` in **ID**.
+  - **Expected:** **ID** shows what was typed.
+  - **Notes:**
+
+- [ ] `0F03` Choose **Engineering Director** in **Position** from its change button.
+  - **Expected:** **Position** reads "Engineering Director".
+  - **Notes:**
+
+- [ ] `B335` Select **Add**.
+  - **Expected:**
+    - The panel shows `Odile Brandt`.
+    - Her row reads `EMP-100` in **ID**, "Engineering Director" in **Position** and "Hired" in **State**.
+    - Her row has a hollow yellow dot in its slot.
+    - The count reads "1 person".
+  - **Notes:**
+
+- [ ] `E216` Click once in the **Manager?** cell of `Odile Brandt`.
+  - **Expected:** Her box is checked.
+  - **Notes:**
+
+### SETUP-11: The Rest Are Pasted In, and Two Refused Rows Are Fixed
+
+**Account:** Workforce Administrator, `ines.harrow@fathom.test`, the same as SETUP-10.
+
+**Preconditions:** SETUP-10 done. **People** page open.
+
+- [ ] `8E48` Copy the rows of `people.tsv`.
+  - **Expected:** Six lines are selected in the text editor, from `Ada Quill` to `Freya Holt`.
+  - **Notes:**
+
+- [ ] `ED3F` In Fathom, select the **Name** cell of the empty row.
+  - **Expected:** The cell has a blue outline.
+  - **Notes:**
+
+- [ ] `30FC` Paste.
+  - **Expected:**
+    - Six rows are shown under `Odile Brandt`, one for each line, none of them with a dot.
+    - Under the row of `Ada Quill`, red text reads "Manager?: use Yes or No", and her **Manager?** box is clear.
+    - Under the row of `Dara Finch`, red text reads "No Position called Sofware Engineer", and her **Position** cell is empty.
+    - `Bram Oakes` reads "Software Engineer" in **Position**, with capitals.
+    - The count still reads "1 person".
+  - **Notes:**
+
+- [ ] `257F` Click once in the **Manager?** cell of `Ada Quill`.
+  - **Expected:**
+    - Her box is checked.
+    - The red text under her row is gone.
+  - **Notes:**
+
+- [ ] `BDF7` Press Enter.
+  - **Expected:**
+    - The red text under the row of `Dara Finch` still shows.
+    - The count still reads "1 person".
+  - **Notes:**
+
+- [ ] `C9F0` Select the **Position** cell of `Dara Finch`, type `Soft`, choose **Software Engineer**, and press Enter.
+  - **Expected:**
+    - No red text shows.
+    - Each of the six rows has a hollow yellow dot in its slot.
+    - `Dara Finch` reads "Software Engineer" in **Position**.
+    - Each of the seven rows reads "Hired" in **State**, and only `Odile Brandt` and `Ada Quill` have **Manager?** checked.
+    - The count reads "7 people".
+  - **Notes:**
+
+- [ ] `F17C` Run Publish.
+  - **Expected:** The Publish button is gone.
+  - **Notes:**
+
+### SETUP-12: The Project Manager Approves the People
+
+**Account:** Project Manager, `tomas.reed@fathom.test`, changed from SETUP-11.
+
+**Preconditions:** SETUP-11 done.
+
+- [ ] `B353` Sign out from the account menu, and sign in as the Project Manager, `tomas.reed@fathom.test`, with the password `fictional tomas password`.
+  - **Expected:** The top bar's right end shows `Tomas Reed`.
+  - **Notes:**
+
+- [ ] `3DFA` Select the **Drafts** page in the left-hand menu.
+  - **Expected:**
+    - **To decide** is chosen beside the page's title.
+    - Seven rows are shown, one for each person added in SETUP-10 and SETUP-11, each with **Type** "Person".
+  - **Notes:**
+
+- [ ] `614A` Tick the tick box before **Record** in the table's header.
+  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 7 drafts…**.
+  - **Notes:**
+
+- [ ] `02E0` Select **Approve 7 drafts…** at the right of the page's heading.
+  - **Expected:** A dialog titled "Approve 7 drafts?" opens.
+  - **Notes:**
+
+- [ ] `2FD2` Select **Approve** in the dialog.
+  - **Expected:**
+    - A notification says "Approved 7 drafts."
+    - The table reads "No drafts".
+  - **Notes:**
+
+**Afterwards:** Run [Reporting Lines](acceptance-reporting-lines-manual-test.md) next, on this installation. To stop here instead, run [Start Again](../manual-test-basics.md#start-again).

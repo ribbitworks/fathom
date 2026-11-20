@@ -7,11 +7,13 @@ The acceptance tests install Fathom, set it up, and follow work as it passes bet
 | Order | Test | Starts from | Cases | Time |
 | --- | --- | --- | --- | --- |
 | 1 | [Installing Fathom](acceptance-installing-fathom-manual-test.md) | Its own [Prepare the Installation](acceptance-installing-fathom-manual-test.md#prepare-the-installation), on a machine with no earlier installation | 4 | 30 minutes, plus the first build |
-| 2 | [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) | [Start From an Empty Database](../manual-test-basics.md#start-from-an-empty-database) | 9 | 30 minutes |
-| 3 | [Work Between Roles](acceptance-work-between-roles-manual-test.md) | What Setting Up Fathom leaves, run straight after it with no restore or reset | 6 | 30 minutes |
-| | **Total** | | **19** | **About 1 hour 30 minutes, plus the first build** |
+| 2 | [The Team's Accounts](acceptance-team-accounts-manual-test.md) | What Installing Fathom leaves | 5 | 30 minutes |
+| 3 | [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) | What The Team's Accounts leaves | 12 | 30 minutes |
+| 4 | [Reporting Lines](acceptance-reporting-lines-manual-test.md) | What Setting Up Fathom leaves | 4 | 20 minutes |
+| 5 | [Feature Teams](acceptance-feature-teams-manual-test.md) | What Reporting Lines leaves, with its changes not yet published | 6 | 30 minutes |
+| | **Total** | | **31** | **About 2 hours 20 minutes, plus the first build** |
 
-Installing Fathom stands alone, with its own secrets, containers and database, built from the clone. It ends by removing them and its `deploy/.env`, which must be done before the next test. Setting Up Fathom and Work Between Roles then run, in that order, since the second works on the organization the first sets up.
+Installing Fathom builds Fathom from the clone and installs it, with its own secrets, containers and database, and every later test runs on that installation, straight after the one before, using only what the run has made: no seed data and no development accounts. [Start Again](../manual-test-basics.md#start-again) removes the installation, for a fresh run or before other manual tests in the clone.
 
 ## Role Workflow Tests
 
@@ -31,8 +33,8 @@ Each starting role also has a workflow test, which follows the workflows of its 
 
 ## Starting a Whole Run
 
-1. Set up a fresh clone of Fathom as [Development Setup § First Run](../../design/development-setup.md#first-run) describes.
-1. Get ready as [Manual Test Basics § Test Environment](../manual-test-basics.md#test-environment) describes, adding what each test's own Test Environment lists.
+1. Set up a fresh clone of Fathom as [Development Setup § First Run](../../design/development-setup.md#first-run) describes, and run [Start Again](../manual-test-basics.md#start-again) if an earlier run's installation is still there.
+1. Get ready as [Installing Fathom](acceptance-installing-fathom-manual-test.md#test-environment)'s Test Environment describes, adding what each later test's own Test Environment lists. Fathom's development server isn't needed.
 1. Run the tests in the Run Order above, each starting as its own instructions say.
 
 ## Results

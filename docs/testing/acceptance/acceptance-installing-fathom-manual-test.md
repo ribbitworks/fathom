@@ -11,15 +11,16 @@ last_updated: "2026-11-19"
 
 ## Scope
 
-Verifies that Fathom installs as [Installing Fathom](../../operations/installing-fathom.md) describes, from building and starting it through the first Administrator's first sign-in on an empty database, and that its data stays when it stops and starts. It runs on a development machine standing in for a server, with an mkcert certificate standing in for the organization's, and stands alone, before Setting Up Fathom runs in the development clone.
+Verifies that Fathom installs as [Installing Fathom](../../operations/installing-fathom.md) describes, from building and starting it through the first Administrator's first sign-in on an empty database, and that its data stays when it stops and starts. It runs on a development machine standing in for a server, with an mkcert certificate standing in for the organization's, and is the first acceptance test: every other one runs on the installation it makes, starting with [The Team's Accounts](acceptance-team-accounts-manual-test.md).
 
 ## Test Environment
 
-As [Manual Test Basics](../manual-test-basics.md#test-environment) sets out, with:
+This test, like every acceptance test, doesn't use the clone's development Fathom. It needs:
 
+- A desktop web browser, and one terminal open at the repository root.
 - The clone set up as [Development Setup § First Run](../../design/development-setup.md#first-run) describes, so a container runtime with Docker Compose, `openssl` and mkcert are installed, and mkcert's certificate authority is trusted.
 - No `deploy/.env` file in the clone.
-- No earlier installation on the machine: `docker compose ls --all` lists no project named `fathom`, and `docker volume ls` lists no volume named `fathom_postgres-data`.
+- No earlier installation on the machine: `docker compose ls --all` lists no project named `fathom`, and `docker volume ls` lists no volume named `fathom_postgres-data`. If one is there, run [Start Again](../manual-test-basics.md#start-again) first.
 - Port 10443 free on the machine.
 - A plain text editor.
 
@@ -62,28 +63,15 @@ Run before the first test case. This makes the installation's secrets and certif
    FATHOM_TLS_KEY=<home>/fathom-install/secrets/fathom_tls_key.pem
    ```
 
-### Remove the Installation
-
-Run after the last test case, before any other test in this clone. This deletes the installation's containers, its database and its secrets, and the clone's `deploy/.env`, which the development commands would otherwise read. It keeps the images it built, named `fathom-app`, `fathom-postgres` and `fathom-proxy`, and leaves the development database alone.
-
-1. Run:
-
-   ```sh
-   docker compose --file deploy/compose.yaml down --volumes
-   rm -rf ~/fathom-install deploy/.env
-   ```
-
-2. Confirm that `docker compose ls --all` lists no project named `fathom`.
-
 ## Terms
 
 [Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses. This test adds:
 
-- **Terminal:** the second terminal of the Test Environment, at the repository root.
+- **Terminal:** the terminal of the Test Environment, at the repository root.
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes, plus the time the first build takes. Start with Prepare the Installation. Check each step whose expected result you see, and write anything else under its notes. Run Remove the Installation afterwards.
+Run the test cases in order, in about 30 minutes, plus the time the first build takes. Start with Prepare the Installation. Check each step whose expected result you see, and write anything else under its notes. [The Team's Accounts](acceptance-team-accounts-manual-test.md) follows on from the last test case.
 
 ### INSTALL-01: Fathom Is Built and Started
 
@@ -179,4 +167,4 @@ Run the test cases in order, in about 30 minutes, plus the time the first build 
     - The table lists "Fathom Administrator", as before.
   - **Notes:**
 
-**Afterwards:** Run Remove the Installation.
+**Afterwards:** Run [The Team's Accounts](acceptance-team-accounts-manual-test.md) next, on this installation, staying signed in. To stop here instead, run [Start Again](../manual-test-basics.md#start-again).
