@@ -11,8 +11,8 @@ import classes from "./pages.module.css";
 import { useMutation } from "@tanstack/react-query";
 import { Fragment, useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
-import { Count, nameProblem, nameTaken } from "./list-dialog.tsx";
-import { sameName } from "./lists.ts";
+import { Count, nameTaken } from "./list-dialog.tsx";
+import { nameProblem, sameName } from "./lists.ts";
 
 const conflict = 409;
 const includesId = "view-dialog-includes";

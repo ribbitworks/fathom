@@ -38,7 +38,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Drawn by:** `DraftedPartItem` in `apps/web/src/status-mark.tsx` and `partsMark` in `apps/web/src/draft-marks.ts`, used by `TeamLabels` in `apps/web/src/team-labels.tsx`, `AllocationLines` in `apps/web/src/allocation-months.tsx`, `PartsCell` in `apps/web/src/summary-row.tsx`, and the Person and feature team panels.
   - **Example:** Mobile apps on the Org chart's feature teams: Atmananda Ganaka added, Priscille Adam taken away.
 - **A move:** A moved item has its dot and the Moved box, and a dimmed copy stays in its old place after a green dot. On the org chart, a person drafted to another manager is drawn under that manager, with a Live copy under the manager they report to now.
-  - **Drawn by:** the list's panel in `apps/web/src/list-panel.tsx`, and `chartPeople` in `apps/web/src/org-chart.ts`.
+  - **Drawn by:** `ChoiceCells` in `apps/web/src/choice-row.tsx` and `LiveChoiceRow` in `apps/web/src/live-choice-row.tsx` for a list's choices, and `chartPeople` in `apps/web/src/org-chart.ts`.
   - **Example:** Co-op in the panel of Levels on the Lists page; Simone Jean on the Org chart.
 - **Retiring:** A list, choice or schedule drafted to be retired or restored stays where it is until approved, with its dot and a Retired or Restored box. Retired records show only when asked for. Drafting a retirement or restore shows no notification, since the change is seen in place; Cmd+Z or Ctrl+Z undoes it.
   - **Drawn by:** `DraftedItem`, with `retiring` set on the draft.

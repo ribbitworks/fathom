@@ -34,8 +34,8 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
-import { Count, nameProblem, nameTaken } from "./list-dialog.tsx";
-import { sameName } from "./lists.ts";
+import { Count, nameTaken } from "./list-dialog.tsx";
+import { nameProblem, sameName } from "./lists.ts";
 import { ClassChoice } from "./move-class-dialog.tsx";
 import { createField, updateField } from "./column-requests.ts";
 

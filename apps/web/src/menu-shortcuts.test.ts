@@ -3,7 +3,7 @@
 // Tests for how menus name shortcut keys.
 
 import { describe, expect, it } from "vitest";
-import { shortcutsFor } from "./list-panel.tsx";
+import { shortcutsFor } from "./menu-shortcuts.ts";
 
 describe("shortcuts shown in menus", () => {
   it("name the keys as Macs do on a Mac", () => {

@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Entering and Saving Data
@@ -38,7 +38,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 ## Entering Data
 
 - **From the keyboard:** Wherever items are added or changed, everything works from the keyboard. Tab moves between fields, Enter saves and starts the next item, Esc cancels, and arrow keys move between items. Clicking or tabbing away saves an item too, and pasting several lines adds one item per line. A record's parts, such as a project's milestones, are added from the record's details, or from their own table's New form, which asks which record they belong to.
-  - **Drawn by:** `apps/web/src/grid-editing.tsx` and `apps/web/src/grid-saving.ts` for tables, and `apps/web/src/list-panel.tsx` for a list's choices.
+  - **Drawn by:** `apps/web/src/grid-editing.tsx` and `apps/web/src/grid-saving.ts` for tables, and `useChoiceEditing` in `apps/web/src/choice-editing.ts` and `useChoiceEntry` in `apps/web/src/choice-entry.ts` for a list's choices.
   - **Example:** on the Lists page, select Sites and type a new choice in its empty row.
 - **Like a spreadsheet:** Tables where many records are entered work like a spreadsheet. Arrow keys, Home, End and Tab move between cells, and Ctrl+Home and Ctrl+End go to the first and last. Enter, F2 or typing edits a cell. Enter saves and moves down, Tab saves and moves across, Esc cancels, and Delete clears. Pasting rows copied from a spreadsheet into an empty row adds one record per row.
   - **Drawn by:** `gridEditing` in `apps/web/src/grid-editing.tsx`, with pasting in `apps/web/src/grid-saving.ts`.
@@ -47,7 +47,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
   - **Drawn by:** `gridSaving` in `apps/web/src/grid-saving.ts`, with its mark in `apps/web/src/grid-row.tsx` and Clear row in `apps/web/src/row-menus.tsx`.
   - **Example:** type a name in the empty row at the end of Features.
 - **Moving items:** Where people set an order, items have a grip for dragging on wide screens, shown on hover or focus. Alt with the arrow keys moves the selected item. Its menu offers the same moves, with their keys.
-  - **Drawn by:** `apps/web/src/list-panel.tsx` for a list's choices, and the column menu in `apps/web/src/column-header.tsx` for moving a column.
+  - **Drawn by:** `ChoiceRow` in `apps/web/src/choice-row.tsx`, `ChoiceMenu` in `apps/web/src/choice-menu.tsx` and `useChoiceEditing` in `apps/web/src/choice-editing.ts` for a list's choices, and the column menu in `apps/web/src/column-header.tsx` for moving a column.
   - **Example:** the choices of Sites on the Lists page.
 
 ## Saving and Undo

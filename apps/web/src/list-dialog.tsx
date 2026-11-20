@@ -17,7 +17,7 @@ import { Button, Group, Stack, Text, Textarea, TextInput } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
-import { createList, sameName, updateList } from "./lists.ts";
+import { createList, nameProblem, sameName, updateList } from "./lists.ts";
 import { ClassChoice } from "./move-class-dialog.tsx";
 import classes from "./pages.module.css";
 
@@ -39,18 +39,6 @@ export function Count({
       {length}/{maximum}
     </span>
   );
-}
-
-// What is wrong with a name, if anything.
-export function nameProblem(
-  name: string,
-  maximum: number,
-  taken: boolean,
-  duplicate: string,
-): string | undefined {
-  if (name.trim() === "") return "Name needed";
-  if (name.trim().length > maximum) return "Too long";
-  return taken ? duplicate : undefined;
 }
 
 // What a name says when another of its kind, such as a view, already has it.

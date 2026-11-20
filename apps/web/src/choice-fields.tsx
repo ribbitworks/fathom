@@ -23,6 +23,13 @@ export interface Draft {
 
 export type Field = "label" | "description" | "meaning" | "weight";
 
+export const emptyDraft = (meanings: readonly Meaning[]): Draft => ({
+  label: "",
+  description: "",
+  meaning: meanings[0] ?? null,
+  weight: "",
+});
+
 export function Fields({
   idPrefix,
   draft,

@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for how pasted lines become choices, and which choice a built-in list keeps offered.
+// Tests for how pasted lines become choices, which names will do, and which choice a built-in list
+// keeps offered.
 
-import type { Choice, List } from "@fathom/shared";
+import { type Choice, type List, listLengths } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import { lastKept, pastedChoices } from "./choice-rules.ts";
+import {
+  choiceNameProblem,
+  lastKept,
+  pastedChoices,
+  pasteProblem,
+} from "./choice-rules.ts";
 import { fictionalChoice } from "./test-support.tsx";
 
 describe("pasting lines", () => {
@@ -16,6 +22,59 @@ describe("pasting lines", () => {
       { label: "Northmere", description: "" },
       { label: "Ash", description: "A B" },
     ]);
+  });
+});
+
+describe("a choice's name", () => {
+  const sites: List = {
+    id: "l1",
+    keyNumber: 1,
+    name: "Fictional Sites",
+    description: "",
+    visibility: "general",
+    retired: false,
+    builtIn: null,
+    choices: [{ ...fictionalChoice("k"), label: "Kestrel Bay" }],
+  };
+
+  it("is refused when another choice has it, whatever its case", () => {
+    expect(choiceNameProblem(sites, " kestrel bay")).toBe(
+      "Already in this list",
+    );
+    expect(choiceNameProblem(sites, "Kestrel Bay", "k")).toBeUndefined();
+  });
+
+  it("is refused when pasted twice, naming the line among several", () => {
+    expect(
+      pasteProblem(sites, [
+        { label: "Northmere", description: "" },
+        { label: "northmere", description: "" },
+      ]),
+    ).toBe("Line 2: Already in this list");
+    expect(pasteProblem(sites, [{ label: "", description: "" }])).toBe(
+      "Name needed",
+    );
+  });
+
+  it("is pasted with a description no longer than a list's allows", () => {
+    const long = "x".repeat(listLengths.description + 1);
+    expect(
+      pasteProblem(sites, [
+        { label: "Ash", description: "" },
+        { label: "Elm", description: long },
+      ]),
+    ).toBe("Line 2: Description too long");
+    expect(
+      pasteProblem(sites, [{ label: "Ash", description: "" }]),
+    ).toBeUndefined();
+  });
+
+  it("is pasted at most a thousand lines at once", () => {
+    const lines = Array.from({ length: 1001 }, (_, index) => ({
+      label: `Fictional ${String(index)}`,
+      description: "",
+    }));
+    expect(pasteProblem(sites, lines)).toBe("Up to 1000 lines at once");
   });
 });
 
