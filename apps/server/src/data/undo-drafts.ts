@@ -10,16 +10,13 @@ import { ConflictError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
 import {
   drafted,
-  draftsUse,
   fitsColumns,
-  readPersonDrafts,
   type Recorded,
   rejectedField,
-  takenEmployeeIds,
   tidy,
-  writeDraft,
-  writePersonDraft,
-} from "./drafts.ts";
+} from "./draft-records.ts";
+import { draftsUse, takenEmployeeIds } from "./drafted-values.ts";
+import { readPersonDrafts, writeDraft, writePersonDraft } from "./drafts.ts";
 import {
   checkList,
   columnRow,

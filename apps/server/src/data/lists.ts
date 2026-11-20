@@ -65,29 +65,33 @@ import {
 } from "./changes.ts";
 import {
   addDrafts,
-  asDraft,
-  clearedRejection,
   deleteDrafts,
   discardDrafts,
-  type Draft,
-  drafted,
-  draftFields,
-  draftMakers,
-  draftsUse,
-  everything,
   type Held,
   heldByOf,
   heldMessage,
   lockDrafts,
-  type Maker,
-  otherApprover,
   readDrafts,
   readHeld,
-  type Recorded,
   setRejection,
-  type Viewer,
   writeDraft,
 } from "./drafts.ts";
+import {
+  asDraft,
+  clearedRejection,
+  type Draft,
+  drafted,
+  draftFields,
+  type Recorded,
+  type Viewer,
+} from "./draft-records.ts";
+import {
+  draftMakers,
+  everything,
+  type Maker,
+  otherApprover,
+} from "./draft-makers.ts";
+import { draftsUse } from "./drafted-values.ts";
 import { builtInColumns } from "./built-in-lists.ts";
 import {
   classifyDraft,

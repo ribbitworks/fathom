@@ -11,7 +11,7 @@ import {
   horizonFrom,
   type RecordRef,
 } from "@fathom/shared";
-import type { Recorded } from "./drafts.ts";
+import type { Recorded } from "./draft-records.ts";
 import {
   type RecordsState,
   shownIds,

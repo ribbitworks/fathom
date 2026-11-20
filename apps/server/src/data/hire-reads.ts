@@ -32,14 +32,11 @@ import {
   type Draft,
   drafted,
   draftFields,
-  draftMakers,
-  heldByOf,
-  otherApprover,
-  readDrafts,
-  readHeld,
   type Recorded,
   type Viewer,
-} from "./drafts.ts";
+} from "./draft-records.ts";
+import { draftMakers, otherApprover } from "./draft-makers.ts";
+import { heldByOf, readDrafts, readHeld } from "./drafts.ts";
 import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { notStarted } from "./people-reads.ts";
 import { linksOf, notesOf, numbersOf, valuesOf } from "./person-fields.ts";

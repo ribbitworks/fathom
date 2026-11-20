@@ -21,16 +21,9 @@ import {
 } from "@fathom/shared";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { type Actor, requirePermission, requireView } from "../access.ts";
-import {
-  type Draft,
-  drafted,
-  draftMakers,
-  type Held,
-  heldByOf,
-  readDrafts,
-  readHeld,
-  type Recorded,
-} from "./drafts.ts";
+import { type Draft, drafted, type Recorded } from "./draft-records.ts";
+import { draftMakers } from "./draft-makers.ts";
+import { type Held, heldByOf, readDrafts, readHeld } from "./drafts.ts";
 import {
   datesOf,
   leftBy,

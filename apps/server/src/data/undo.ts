@@ -38,7 +38,8 @@ import {
   type StoredChange,
   type Transaction,
 } from "./changes.ts";
-import { lockDrafts, rejectedField, setRejection } from "./drafts.ts";
+import { lockDrafts, setRejection } from "./drafts.ts";
+import { rejectedField } from "./draft-records.ts";
 import { lockFields } from "./fields.ts";
 import { removeEmptyOrders } from "./lists.ts";
 import {

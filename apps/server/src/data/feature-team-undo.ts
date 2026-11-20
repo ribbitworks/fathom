@@ -12,8 +12,8 @@ import {
   type Recorded,
   rejectedField,
   tidy,
-  writeDraft,
-} from "./drafts.ts";
+} from "./draft-records.ts";
+import { writeDraft } from "./drafts.ts";
 import {
   peopleOf,
   readLiveTeams,

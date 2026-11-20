@@ -8,7 +8,7 @@ import {
   type FeatureTeamChange,
   seesEmployment,
 } from "@fathom/shared";
-import { type Recorded, tidy } from "./drafts.ts";
+import { type Recorded, tidy } from "./draft-records.ts";
 import { inForceOn } from "./in-force.ts";
 import { currentOn, notStarted } from "./people-reads.ts";
 import { text } from "./reporting.ts";

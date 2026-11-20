@@ -18,7 +18,8 @@ import { BadRequestError, ConflictError, ForbiddenError } from "../errors.ts";
 import { peoplesMeaning } from "./lists.ts";
 import { choiceLabels } from "./values.ts";
 import { type Transaction } from "./changes.ts";
-import { drafted, type Recorded, takenEmployeeIds } from "./drafts.ts";
+import { drafted, type Recorded } from "./draft-records.ts";
+import { takenEmployeeIds } from "./drafted-values.ts";
 import { notMarked, readManagers, reassignReports } from "./reporting.ts";
 import {
   type HireRow,

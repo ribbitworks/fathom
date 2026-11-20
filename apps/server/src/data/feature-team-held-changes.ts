@@ -4,7 +4,7 @@
 // and its approved records already hold, as pure functions of what the data access layer reads.
 
 import { type FeatureTeamChange, monthOf } from "@fathom/shared";
-import type { Recorded } from "./drafts.ts";
+import type { Recorded } from "./draft-records.ts";
 import {
   datesOf,
   type DayRefusals,

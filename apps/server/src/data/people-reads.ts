@@ -5,7 +5,7 @@
 import { inChunks, people, type Reader } from "@fathom/db";
 import { monthOf } from "@fathom/shared";
 import { inArray } from "drizzle-orm";
-import { type Recorded } from "./drafts.ts";
+import type { Recorded } from "./draft-records.ts";
 import { readToday } from "./settings.ts";
 import { readLines, readTeams, reportingOf } from "./reporting.ts";
 import { type ColumnInfo, readValues } from "./values.ts";

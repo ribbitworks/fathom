@@ -16,7 +16,7 @@ import {
 import { inArray } from "drizzle-orm";
 import { BadRequestError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
-import { fitsColumns, type Recorded } from "./drafts.ts";
+import { fitsColumns, type Recorded } from "./draft-records.ts";
 import { choicesWithAdded, refuseHeldColumns } from "./added-columns.ts";
 import { checkBuiltInChoice } from "./built-in-lists.ts";
 import { isNote, isNumber } from "./column-types.ts";

@@ -36,7 +36,7 @@ import {
   type SQL,
 } from "drizzle-orm";
 import type { Actor } from "../access.ts";
-import { rejectedField } from "./drafts.ts";
+import { rejectedField } from "./draft-records.ts";
 import { readToday } from "./settings.ts";
 import { personTier } from "./person-fields.ts";
 import { columnsWithAdded } from "./added-columns.ts";

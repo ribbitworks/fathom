@@ -25,7 +25,7 @@ import type { Actor } from "../access.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import { checkBuiltInChoice, firstOfferedOrRefused } from "./built-in-lists.ts";
 import type { Saved, Transaction } from "./changes.ts";
-import { type Recorded, tidy } from "./drafts.ts";
+import { type Recorded, tidy } from "./draft-records.ts";
 import { checkTeamForFeature } from "./feature-team-removals.ts";
 import { typeOf } from "./column-types.ts";
 import {

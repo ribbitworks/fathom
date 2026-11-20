@@ -18,12 +18,10 @@ import {
   asDraft,
   clearedRejection,
   type Draft,
-  heldMessage,
-  lockDrafts,
   type Recorded,
   wantsNoDraft,
-  writeDraft,
-} from "./drafts.ts";
+} from "./draft-records.ts";
+import { heldMessage, lockDrafts, writeDraft } from "./drafts.ts";
 import {
   linkedIds,
   type RecordKind,

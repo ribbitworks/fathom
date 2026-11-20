@@ -42,14 +42,16 @@ import {
 import {
   asDraft,
   clearedRejection,
-  discardDrafts,
   type Draft,
-  draftsUse,
-  lockDrafts,
   type Recorded,
+} from "./draft-records.ts";
+import {
+  discardDrafts,
+  lockDrafts,
   setRejection,
   writeDraft,
 } from "./drafts.ts";
+import { draftsUse } from "./drafted-values.ts";
 import { checkValuesFit, fieldChanges } from "./fields.ts";
 import { unseenDetails } from "./lists.ts";
 import { readKeyNumber } from "./record-keys.ts";

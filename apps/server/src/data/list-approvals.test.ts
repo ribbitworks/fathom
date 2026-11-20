@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { actorWith } from "../access.ts";
 import { ForbiddenError } from "../errors.ts";
-import type { Draft } from "./drafts.ts";
+import type { Draft } from "./draft-records.ts";
 import { requireSeesLists } from "./list-approvals.ts";
 import type { ListsState } from "./lists.ts";
 
