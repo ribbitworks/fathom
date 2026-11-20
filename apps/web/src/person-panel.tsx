@@ -34,7 +34,7 @@ import {
 import { isHire, personKeyOf, rowName, type RowChange } from "./people-rows.ts";
 import { RecordKey } from "./record-key.tsx";
 import { changedFrom, managerChangesFrom } from "./person-change.ts";
-import type { NoteEditing } from "./note-editing.tsx";
+import type { NoteOpening } from "./note-editing.tsx";
 import { peopleQuery, peopleQueryOn } from "./people.ts";
 import {
   personPanelId,
@@ -141,7 +141,7 @@ export function PersonPanel({
   // Saves a change to the record, for those who may change people.
   onChange?: ((person: Person, change: RowChange) => void) | undefined;
   // Opens a note, which the page holds, since a note is written in a panel of its own.
-  notes: Pick<NoteEditing, "start">;
+  notes: NoteOpening;
   // For a planned hire, what filling it adds: an action under its heading, or a form in place of its
   // details while it is being filled.
   hireFill?:

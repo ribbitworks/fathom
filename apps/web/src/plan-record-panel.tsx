@@ -44,7 +44,7 @@ import { ScopeHistory } from "./scope-history.tsx";
 import { RecordPanel } from "./record-details.tsx";
 import { newRecordProblems } from "./grid-saving.ts";
 import type { Column } from "./record-table.ts";
-import type { NoteEditing } from "./note-editing.tsx";
+import type { NoteOpening } from "./note-editing.tsx";
 import { isMilestoneField, MilestoneField } from "./milestone-field.tsx";
 import { noOthers } from "./new-plan-record-panel.tsx";
 import {
@@ -202,7 +202,7 @@ export function recordPanel({
     proposal: Proposal,
     reason: string | null,
   ) => void;
-  notes: Pick<NoteEditing, "start">;
+  notes: NoteOpening;
 }): SidePanel | undefined {
   if (open === undefined) return undefined;
   const asShown = <Rec extends PlanRecord>(records: readonly Rec[]) =>

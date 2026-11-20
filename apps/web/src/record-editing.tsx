@@ -5,14 +5,14 @@
 // saved and checked as its cell saves and checks it, and a note opens in a panel of its own.
 
 import { Checkbox, Group, NativeSelect, Text } from "@mantine/core";
-import { type ReactNode, useContext, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { cellKinds, type EditorProps, startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { ClearableInput } from "./clearable-input.tsx";
 import { focusSoon, selectSoon } from "./focus.ts";
 import { readOnlyFor } from "./grid-columns.tsx";
 import { valueChange } from "./grid-saving.ts";
-import { noteOpenFor, OpenNoteContext } from "./note-address.ts";
+import { noteOpenFor } from "./note-address.ts";
 import type { Column, GridRecord, RecordTable } from "./record-table.ts";
 import classes from "./record-details.module.css";
 import {
@@ -251,13 +251,16 @@ export interface RecordEditingContext<Rec extends GridRecord, Change> {
 // Opens a note, for tables that have them, in a panel of its own, where it is read, and written by
 // those who may: when chosen, or, once its record's details are drawn, when the address asks for it.
 export interface NoteStarter<Rec extends GridRecord, Change, Context> {
-  start: (
-    context: Context & { save: SaveChange<Rec, Change> | undefined },
-    column: Column<Rec, Change>,
-    readOnly: boolean,
-    how?: "chosen" | "asked",
-  ) => void;
+  start: NoteOpener<Rec, Change, Context>;
+  reopen: NoteOpener<Rec, Change, Context>;
+  asking: string | undefined;
 }
+
+type NoteOpener<Rec extends GridRecord, Change, Context> = (
+  context: Context & { save: SaveChange<Rec, Change> | undefined },
+  column: Column<Rec, Change>,
+  readOnly: boolean,
+) => void;
 
 type Checked<Change> = { change: Change } | { problem: string } | undefined;
 
@@ -303,8 +306,6 @@ export function useRecordEditing<
   const [problems, setProblems] = useState<
     readonly { id: string; key: string; message: string }[]
   >([]);
-  // The note the address keeps open, which its row opens once drawn.
-  const openNote = useContext(OpenNoteContext)?.note;
   // Values being entered that were refused, so never saved: Add names them rather than taking them
   // as empty.
   const [refused, setRefused] = useState<readonly ValueProblem[]>([]);
@@ -382,9 +383,11 @@ export function useRecordEditing<
         if (notes === undefined) return undefined;
         return {
           askedBy:
-            noteOpenFor(openNote, id) === column.key ? openNote : undefined,
+            noteOpenFor(notes.asking, id) === column.key
+              ? notes.asking
+              : undefined,
           onAsked: () => {
-            notes.start({ ...context, save }, column, readOnly, "asked");
+            notes.reopen({ ...context, save }, column, readOnly);
           },
           open: false,
           editor: undefined,

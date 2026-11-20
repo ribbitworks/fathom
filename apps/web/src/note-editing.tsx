@@ -114,25 +114,18 @@ export function useNoteEditing(detailsTitleId: string) {
     );
   };
 
-  // Opens a record's note, unless another being changed is open, which keeps focus instead. Asked
-  // by the address, as its record's details are drawn, it opens only while no note is open, without
-  // adding to Back's history.
+  // The note the address asks to open, while none is open and it wasn't just given up.
+  const asking =
+    writing === undefined && address.note !== givenUp
+      ? address.note
+      : undefined;
+
+  // Opens a record's note, unless another being changed is open, which keeps focus instead.
   const start = <Rec extends GridRecord, Change>(
     context: Opening<Rec, Change>,
     column: Column<Rec, Change>,
     readOnly = false,
-    how: "chosen" | "asked" = "chosen",
   ) => {
-    if (how === "asked") {
-      if (
-        writing === undefined &&
-        address.note !== givenUp &&
-        noteOpenFor(address.note, context.id) === column.key
-      ) {
-        open(context, column, readOnly, address.note);
-      }
-      return;
-    }
     if (writing !== undefined && changing) {
       focusSoon(`${editorId(writing.column)}-title`);
       return;
@@ -144,6 +137,18 @@ export function useNoteEditing(detailsTitleId: string) {
     open(context, column, readOnly, kept);
     if (kept !== undefined && kept !== address.note) {
       address.onNote(kept, false);
+    }
+  };
+
+  // Opens the note the address asks for, as its record's details are drawn, without adding to Back's
+  // history.
+  const reopen = <Rec extends GridRecord, Change>(
+    context: Opening<Rec, Change>,
+    column: Column<Rec, Change>,
+    readOnly: boolean,
+  ) => {
+    if (noteOpenFor(asking, context.id) === column.key) {
+      open(context, column, readOnly, asking);
     }
   };
 
@@ -226,6 +231,8 @@ export function useNoteEditing(detailsTitleId: string) {
 
   return {
     start,
+    reopen,
+    asking,
     note,
     changing: writing !== undefined && changing,
     discard,
@@ -233,6 +240,9 @@ export function useNoteEditing(detailsTitleId: string) {
 }
 
 export type NoteEditing = ReturnType<typeof useNoteEditing>;
+
+// What a panel needs to open its record's notes.
+export type NoteOpening = Pick<NoteEditing, "start" | "reopen" | "asking">;
 
 export const noteQuestion = {
   title: "Discard changes to the note?",

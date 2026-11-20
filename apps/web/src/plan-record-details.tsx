@@ -50,7 +50,7 @@ import {
   useChosenUnits,
   useRecordEditing,
 } from "./record-editing.tsx";
-import type { NoteContext, NoteEditing } from "./note-editing.tsx";
+import type { NoteContext, NoteOpening } from "./note-editing.tsx";
 import { noOthers } from "./new-plan-record-panel.tsx";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
 import { RecordMenu } from "./record-menu.tsx";
@@ -152,7 +152,7 @@ export function PlanRecordDetails({
   // list of its columns, in the table's order.
   sections?: typeof featureColumnGroups | undefined;
   // Opens a note, which the page holds, since a note is written in a panel of its own.
-  notes: Pick<NoteEditing, "start">;
+  notes: NoteOpening;
 }) {
   const { closeStale, editingOf } = useRecordEditing<
     never,

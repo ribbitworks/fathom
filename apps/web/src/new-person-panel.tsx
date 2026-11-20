@@ -22,7 +22,7 @@ import {
   usePersonEditing,
 } from "./person-editing.tsx";
 import { newRecordQuestion } from "./discard-question.tsx";
-import type { NoteEditing } from "./note-editing.tsx";
+import type { NoteOpening } from "./note-editing.tsx";
 import { detailKeys, reportingKeys } from "./person-panel.tsx";
 import classes from "./record-details.module.css";
 import {
@@ -74,7 +74,7 @@ export function NewPersonPanel({
   lists: readonly List[];
   allColumns: readonly Column[];
   narrow: boolean;
-  notes: Pick<NoteEditing, "start">;
+  notes: NoteOpening;
   onAdd: (request: RowRequest) => void;
   onCancel: () => void;
 }) {

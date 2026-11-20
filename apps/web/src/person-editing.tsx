@@ -7,7 +7,7 @@ import type { Person } from "@fathom/shared";
 import { useState } from "react";
 import {
   type NoteContext,
-  type NoteEditing,
+  type NoteOpening,
   useNoteEditing,
 } from "./note-editing.tsx";
 import type { RowChange } from "./people-rows.ts";
@@ -25,7 +25,7 @@ const titleOfDetails = `${personPanelId}-title`;
 
 export const usePersonNotes = () => useNoteEditing(titleOfDetails);
 
-export const usePersonEditing = (notes: Pick<NoteEditing, "start">) =>
+export const usePersonEditing = (notes: NoteOpening) =>
   useRecordEditing<Person, RowChange, EditingContext>(notes);
 
 // Fathom's own ID for the record the address names by its ID, kept while that ID changes and the
