@@ -36,7 +36,7 @@ import {
 import { changeMemberTeams, featureTeamsQuery } from "./feature-teams.ts";
 import { useSaving } from "./saving.ts";
 import { formatMonth, groupedRowId, rankOfNone } from "./table-view.ts";
-import type { DraftLike } from "./status-mark.tsx";
+import type { DraftLike } from "./draft-marks.ts";
 import { type DraftedLabel, TeamLabels } from "./team-labels.tsx";
 
 type MonthTeam = TeamMonths["teams"][number];

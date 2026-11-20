@@ -36,11 +36,8 @@ import { peopleAndHires } from "./people-rows.ts";
 import type { CellChange } from "./cell-kinds.tsx";
 import pages from "./pages.module.css";
 import type { RecordTable, RowTotals } from "./record-table.ts";
-import {
-  DraftedPartItem,
-  type DraftedPart,
-  type DraftLike,
-} from "./status-mark.tsx";
+import { DraftedPartItem, type DraftedPart } from "./status-mark.tsx";
+import type { DraftLike } from "./draft-marks.ts";
 import { tipAttribute } from "./table-tips.tsx";
 import {
   monthGridTable,

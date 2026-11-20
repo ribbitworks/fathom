@@ -12,7 +12,8 @@ import {
 import { configDraftFields, draftLines } from "./draft-details.tsx";
 import type { Phrase } from "./phrase.tsx";
 import type { AnyColumn, GridDraft, GridRecord } from "./record-table.ts";
-import { besideLive, changedValue } from "./status-mark.tsx";
+import { besideLive } from "./status-mark.tsx";
+import { changedValue } from "./draft-marks.ts";
 import type { TableColumn, View } from "./table-view.ts";
 
 // A record added but not saved yet is shown at once under an identifier of the table's own, until

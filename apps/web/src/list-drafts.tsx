@@ -23,7 +23,7 @@ import { withRetiring } from "./lists.ts";
 import { closesOnBlankClick } from "./app-menu.tsx";
 import classes from "./pages.module.css";
 import { MoreButton } from "./row-controls.tsx";
-import { type DraftLike, partsMark } from "./status-mark.tsx";
+import { type DraftLike, partsMark } from "./draft-marks.ts";
 
 // What can be done with drafts on the Lists page; each names the draft it acts on.
 export interface ListDraftActions {

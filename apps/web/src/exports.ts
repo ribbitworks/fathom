@@ -33,13 +33,8 @@ import { sendJsonFor } from "./api.ts";
 import { cellKinds, labels, startingText } from "./cell-kinds.tsx";
 import type { GridRecord } from "./record-table.ts";
 import type { SavedViews } from "./table-controls.tsx";
-import {
-  besideLive,
-  changeWord,
-  type DraftLike,
-  viewedDraft,
-  waitingWords,
-} from "./status-mark.tsx";
+import { besideLive, viewedDraft } from "./status-mark.tsx";
+import { changeWord, type DraftLike, waitingWords } from "./draft-marks.ts";
 import {
   asText,
   type CellValue,

@@ -54,11 +54,11 @@ import { heldBack } from "./grid-drafts.ts";
 import { shownSchema } from "./live-records.ts";
 import {
   besideLive,
-  type DraftLike,
   DraftedPartItem,
   leftWarning,
   MarkedItem,
 } from "./status-mark.tsx";
+import type { DraftLike } from "./draft-marks.ts";
 import { type CellValue, formatDay, plannedWords } from "./table-view.ts";
 import { today } from "./today.ts";
 

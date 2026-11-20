@@ -68,17 +68,15 @@ import { originalOf } from "./record-drafts.ts";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
 import {
-  changedValue,
   DraftedItem,
   DraftedValue,
-  emptiedWords,
   FactBox,
   LiveLine,
   LiveRowMarks,
   LiveValue,
   MarkRow,
-  recordMark,
 } from "./status-mark.tsx";
+import { changedValue, recordMark, emptiedWords } from "./draft-marks.ts";
 import { liveLists, retiredLive, sameName, withRetiring } from "./lists.ts";
 import { closesOnBlankClick } from "./app-menu.tsx";
 import classes from "./pages.module.css";

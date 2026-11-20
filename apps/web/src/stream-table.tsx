@@ -46,7 +46,8 @@ import {
   lengthNow,
   nextRelease,
 } from "./schedules.ts";
-import { EndedBox, type DraftLike } from "./status-mark.tsx";
+import { EndedBox } from "./status-mark.tsx";
+import type { DraftLike } from "./draft-marks.ts";
 
 // What a row shows of its schedule, by column key, as a draft's live values hold it too.
 interface StreamValues {

@@ -21,7 +21,7 @@ import type { DraftSelection } from "./drafts.ts";
 import type { HeldDetail } from "./exports.ts";
 import type { RowTicks } from "./row-ticks.tsx";
 import type { SidePanel } from "./side-panel.tsx";
-import type { DraftLike } from "./status-mark.tsx";
+import type { DraftLike } from "./draft-marks.ts";
 import type {
   ChangeView,
   PageParts,

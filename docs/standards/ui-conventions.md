@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/code-review.md", "docs/standards/ui-conventions/drafts-and-values.md", "docs/standards/ui-conventions/dates-timelines-and-boards.md", "docs/standards/ui-conventions/pages-and-panels.md", "docs/standards/ui-conventions/entering-and-saving.md", "docs/standards/ui-conventions/tables.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # UI Conventions
@@ -37,7 +37,7 @@ The rest follow from them:
 ## Words
 
 - **Plain words:** Every word on screen follows the [Principles](#principles). On top of them, use the plain verb: added, removed, changed, retired, restored, never "comes off" or "taking off". Records and their drafts are removed, never deleted; delete is for what isn't a record, such as a saved view. Fields and tables are set up in everyday words, such as Must be filled in, never database terms; a column of web addresses is a Web link, so it isn't taken for Link to another table. A naming pattern is shown as typed, such as {YY}.{N}, only where it is set: the Names field of the dialog that sets a schedule's cycles, and the row in the schedule's details that names its pattern; everywhere else, cycles show their real names, such as 27.1.
-  - **Drawn by:** the words themselves, with `draftWords` and `DraftedWords` in `apps/web/src/status-mark.tsx` for drafts.
+  - **Drawn by:** the words themselves, with `draftWords` in `apps/web/src/draft-marks.ts` and `DraftedWords` in `apps/web/src/status-mark.tsx` for drafts.
   - **Example:** Draft: removed.
 - **Tips:** A tip of one phrase has no period, such as Also under Search; a tip of several sentences ends each with one.
   - **Drawn by:** the words themselves, shown by `TableTips` or `Tipped` in `apps/web/src/table-tips.tsx` on tables.

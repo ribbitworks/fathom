@@ -41,7 +41,8 @@ import type {
   GridRecord,
   RecordGridProps,
 } from "./record-table.ts";
-import { besideLive, recordMark } from "./status-mark.tsx";
+import { besideLive } from "./status-mark.tsx";
+import { recordMark } from "./draft-marks.ts";
 import {
   type View,
   alwaysShowing,
