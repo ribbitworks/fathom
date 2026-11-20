@@ -70,10 +70,10 @@ import { withFills } from "./fills.ts";
 import {
   approveTeamsIn,
   checkTeamsAsked,
-  recordTeamDayChanges,
-  refuseRemovingPeopleOnTeams,
   rejectTeamsIn,
-} from "./feature-teams.ts";
+} from "./feature-team-decisions.ts";
+import { refuseRemovingPeopleOnTeams } from "./feature-team-removals.ts";
+import { recordTeamDayChanges } from "./feature-teams.ts";
 import {
   applyReporting,
   refuseRemovingManagers,

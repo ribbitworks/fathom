@@ -86,7 +86,7 @@ import { isNote, isNumber, type LiveValues, typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
 import { readToday } from "./settings.ts";
 import { readTeamsOfPeople } from "./feature-team-reads.ts";
-import { refuseRemovingPeopleOnTeams } from "./feature-teams.ts";
+import { refuseRemovingPeopleOnTeams } from "./feature-team-removals.ts";
 import { hireRow, readHiresIn } from "./hire-reads.ts";
 import {
   hireDraftsNaming,

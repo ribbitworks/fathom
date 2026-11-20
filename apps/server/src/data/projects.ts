@@ -26,7 +26,7 @@ import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import { checkBuiltInChoice, firstOfferedOrRefused } from "./built-in-lists.ts";
 import type { Saved, Transaction } from "./changes.ts";
 import { type Recorded, tidy } from "./drafts.ts";
-import { checkTeamForFeature } from "./feature-teams.ts";
+import { checkTeamForFeature } from "./feature-team-removals.ts";
 import { typeOf } from "./column-types.ts";
 import {
   checkedLinks,

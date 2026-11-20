@@ -53,10 +53,7 @@ import { bySubject, inForceOn } from "./in-force.ts";
 import { notStarted } from "./people.ts";
 import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { readToday } from "./settings.ts";
-
-export type Reader = Pick<Database, "select">;
-
-export const recordType = "feature-team";
+import { type Reader, recordType } from "./feature-team-records.ts";
 
 interface LiveTeams {
   // Each team as recorded: its name, lead, and members on the day asked for.
