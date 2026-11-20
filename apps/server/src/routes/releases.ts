@@ -27,12 +27,8 @@ import {
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import type { Actor } from "../access.ts";
-import type {
-  ChangeSetId,
-  RecordAccess,
-  ReleaseAccess,
-  Saved,
-} from "../data/index.ts";
+import type { ChangeSetId, RecordAccess, Saved } from "../data/index.ts";
+import type { ReleaseAccess } from "../data/plan-access.ts";
 
 const created = 201;
 

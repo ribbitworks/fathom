@@ -21,7 +21,7 @@ import {
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
-import type { PeopleAccess } from "../data/index.ts";
+import type { PeopleAccess } from "../data/people-access.ts";
 
 const created = 201;
 const noContent = 204;

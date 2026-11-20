@@ -20,7 +20,10 @@ import {
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
-import type { ListAccess, ListDraftTarget } from "../data/index.ts";
+import type {
+  ListAccess,
+  ListDraftTarget,
+} from "../data/configuration-access.ts";
 
 const created = 201;
 

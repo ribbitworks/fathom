@@ -26,11 +26,8 @@ import {
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
-import type {
-  PlanKind,
-  PlanRecordRequest,
-  ProjectAccess,
-} from "../data/index.ts";
+import type { PlanKind, PlanRecordRequest } from "../data/index.ts";
+import type { ProjectAccess } from "../data/plan-access.ts";
 
 const created = 201;
 
