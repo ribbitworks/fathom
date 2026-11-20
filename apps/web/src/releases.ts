@@ -38,7 +38,7 @@ import { colourVariable, colourWords } from "./colours.ts";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
 import { withRetiring } from "./lists.ts";
 import { undoDrafts } from "./live-records.ts";
-import { recordMark } from "./status-mark.tsx";
+import { recordMark } from "./draft-marks.ts";
 
 export const releaseStreamsQuery = queryOptions({
   queryKey: ["release-streams"],

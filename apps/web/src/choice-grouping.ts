@@ -4,7 +4,7 @@
 
 import type { Column, GridRecord, RowGrouping } from "./record-table.ts";
 import { type GroupsHold, rankOfNone, type RowGroup } from "./table-view.ts";
-import { emptiedWords } from "./status-mark.tsx";
+import { emptiedWords } from "./draft-marks.ts";
 import type { Choice } from "@fathom/shared";
 
 export const holdsChoices = <Rec extends GridRecord, Change>(

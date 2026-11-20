@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Drafts, Values and Access
@@ -14,7 +14,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
 ## Drafts
 
 - **A draft's dot:** A draft is marked by its dot alone, always before the record, value or part it marks. The dot is yellow while waiting for approval, hollow while it holds the user's own unpublished changes, and red in a ring once rejected, so shape tells it apart as well as colour. No words such as Draft or Draft: added sit beside it. Its tip, also read aloud, says what the draft does, such as Draft: added. Where known, it also says what a value was, when the draft takes effect and who made it. A rejection's reason comes last, such as Rejected, added: and the reason. Only in a record's menu do the draft's words follow its dot, as the heading of the draft's details.
-  - **Drawn by:** `DraftedItem` in `apps/web/src/status-mark.tsx`, with the words from `draftWords` and `draftTip`, and the menu's heading from `apps/web/src/draft-details.tsx`.
+  - **Drawn by:** `DraftedItem` in `apps/web/src/status-mark.tsx`, with the words from `draftWords` and `draftTip` in `apps/web/src/draft-marks.ts`, and the menu's heading from `apps/web/src/draft-details.tsx`.
   - **Example:** Vianney Rousseau, drafted to be added, and Ophélie Roussel, whose addition was rejected, on People.
 - **What a dot can't say:** On a draft still waiting, Moved, Reordered, Retired and Restored are a small yellow box after the item. A fact about an item is also a box after it: grey for Built in, for Planned, expected and its month, and for a schedule's Ended; red for a warning, such as Left. A warning with no value before it, such as No team, is red words with no box, as [Warnings on a value](#values) sets out. Facts come before the draft's box: a fact says what the item is, the draft's box what is about to happen to it. A dot always means a draft's state, never a fact.
   - **Drawn by:** `DraftedItem`, `FactBox` and `MarkedItem` in `apps/web/src/status-mark.tsx`; a schedule's Ended by `EndedBox` there too.
@@ -26,16 +26,16 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Drawn by:** `SummaryRow`, `PartsCell` and `LivePartsCell` in `apps/web/src/summary-row.tsx`. On the shared table, `Parts` and `LiveParts`, also there, draw such a cell and mark each part itself; no shared table has one at present.
   - **Example:** Sites on the Lists page.
 - **A row's slot:** Each row of a table, the Lists page, a list's panel, Releases and the Drafts page starts with a slot of two places, kept even when empty. The record's own mark comes first. Next, where a draft changes the row's first value, that value's dot hangs back into the slot, so every first value starts at the same place and a changed name never looks set in under the row above. A class's symbol, where a record has one, follows the slot and comes before the first value, as [A class's mark](#access) sets out. The record's own mark shows only where its draft changes something the row doesn't show, such as adding, removing, retiring or moving it. A draft that changes only values the row shows leaves the slot empty, since those values have their own dots; two dots never sit side by side.
-  - **Drawn by:** `RowMarks` and `DraftedItem`'s `slot` in `apps/web/src/status-mark.tsx`, with `recordMark`; the sizes are the theme's `--fathom-dot-size`, `--fathom-mark-gap` and `--fathom-ring-room` in `apps/web/src/theme.ts`.
+  - **Drawn by:** `RowMarks` and `DraftedItem`'s `slot` in `apps/web/src/status-mark.tsx`, with `recordMark` in `apps/web/src/draft-marks.ts`; the sizes are the theme's `--fathom-dot-size`, `--fathom-mark-gap` and `--fathom-ring-room` in `apps/web/src/theme.ts`.
   - **Example:** on Projects' Milestones tab, Second crane live, drafted to be added, beside Final handover, drafted to be renamed.
 - **A changed value:** Each value a draft changes has the draft's dot before it, and is semibold while drafts show beside live. Where a draft empties a value, or fills an empty one, the empty side shows its words for none in grey italics, such as No start, in tables and panels alike.
-  - **Drawn by:** `DraftedValue`, `changedValue` and `EmptiedValue` in `apps/web/src/status-mark.tsx`; the table's rows in `apps/web/src/grid-row.tsx` in a table, and `Row` in `apps/web/src/record-details.tsx` in a panel.
+  - **Drawn by:** `DraftedValue` and `EmptiedValue` in `apps/web/src/status-mark.tsx`, with `changedValue` in `apps/web/src/draft-marks.ts`; the table's rows in `apps/web/src/grid-row.tsx` in a table, and `Row` in `apps/web/src/record-details.tsx` in a panel.
   - **Example:** 西尾 亮's End and Grade on People.
 - **A removal:** A record a draft removes is struck through after its dot. It can't be changed until the draft is discarded or decided.
   - **Drawn by:** `draftRowClass` in `apps/web/src/list-drafts.tsx`, with the row of the table or panel that holds it.
   - **Example:** Salvador Quiñones Méndez on People.
 - **A part a draft adds or removes:** A part of a record, such as a feature team's member, a manager's direct report or a team in a month's cell, has the draft's dot before it, and is struck through when the draft takes it away. Screen readers read added, removed or changed after it, since the dot and line are only seen. A record whose parts have drafts, such as a list and its choices, has one dot before its parts. That dot is waiting while any part's draft waits, and rejected only once every one was. As it is live, in a Live row or live only, a part a draft takes away or changes has Live's green dot before it, its tip, live only, naming the change waiting, such as Live. Its removal is waiting for approval.
-  - **Drawn by:** `DraftedPartItem` and `partsMark` in `apps/web/src/status-mark.tsx`, used by `TeamLabels` in `apps/web/src/team-labels.tsx`, `AllocationLines` in `apps/web/src/allocation-months.tsx`, `PartsCell` in `apps/web/src/summary-row.tsx`, and the Person and feature team panels.
+  - **Drawn by:** `DraftedPartItem` in `apps/web/src/status-mark.tsx` and `partsMark` in `apps/web/src/draft-marks.ts`, used by `TeamLabels` in `apps/web/src/team-labels.tsx`, `AllocationLines` in `apps/web/src/allocation-months.tsx`, `PartsCell` in `apps/web/src/summary-row.tsx`, and the Person and feature team panels.
   - **Example:** Mobile apps on the Org chart's feature teams: Atmananda Ganaka added, Priscille Adam taken away.
 - **A move:** A moved item has its dot and the Moved box, and a dimmed copy stays in its old place after a green dot. On the org chart, a person drafted to another manager is drawn under that manager, with a Live copy under the manager they report to now.
   - **Drawn by:** the list's panel in `apps/web/src/list-panel.tsx`, and `chartPeople` in `apps/web/src/org-chart.ts`.
@@ -56,7 +56,7 @@ Part of [UI Conventions](../ui-conventions.md): how drafts, values and data clas
   - **Drawn by:** a table's `slotMarksOnly` in `apps/web/src/record-table.ts`.
   - **Example:** Salvador Quiñones Méndez's removal on the Drafts page's All drafts tab, its name not struck through.
 - **The three Draft views:** The Draft menu's choice decides every mark on the page, in one place. Drafts & Live shows everything above. Drafts applied shows the dots and strike-throughs, with no tints, semibold or Live rows. It leaves out rejected drafts, showing them taken back. Live only shows no draft dots or tints. Instead, each record, value or part a waiting draft would change has a green dot, its tip naming the change, such as "Live. A change is waiting for approval." A rejected draft gets none. Locks and warnings show in every view. Each mark is given its item's own draft, whatever the view.
-  - **Drawn by:** `DraftView` and `DraftedItem` in `apps/web/src/status-mark.tsx`, with `viewedDraft` and `liveWaitingWords`; each page sets its view once.
+  - **Drawn by:** `DraftView`, `DraftedItem` and `viewedDraft` in `apps/web/src/status-mark.tsx`, with `liveWaitingWords` in `apps/web/src/draft-marks.ts`; each page sets its view once.
   - **Example:** on People, choose Live only in the Draft menu: the Level column's name has a green dot.
 - **A selected row:** A selected row, such as the list whose panel is open, has the hover grey with a thin accent bar at its left edge. It never has the accent's fill, since a row's fill says its draft's state.
   - **Drawn by:** `selectedRow` in `apps/web/src/pages.module.css`.

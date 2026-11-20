@@ -29,13 +29,12 @@ import {
   DraftedItem,
   draftedItemChars,
   draftMarkChars,
-  draftTip,
   EndedBox,
-  liveWaitingWords,
   MarkedItem,
   useDraftView,
   viewedDraft,
 } from "./status-mark.tsx";
+import { draftTip, liveWaitingWords } from "./draft-marks.ts";
 import { TableTips, Tipped, tipAttribute } from "./table-tips.tsx";
 import { formatDay } from "./table-view.ts";
 import {

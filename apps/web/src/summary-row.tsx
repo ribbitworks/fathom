@@ -12,13 +12,13 @@ import classes from "./pages.module.css";
 import {
   DraftedItem,
   DraftedValue,
-  type DraftLike,
   LiveRowMarks,
   LiveValue,
   MarkedItem,
   RowMarks,
   useBesideLive,
 } from "./status-mark.tsx";
+import type { DraftLike } from "./draft-marks.ts";
 
 // A record's row, tinted by its draft beside live, with, beside live, its Live row under it, where a
 // draft changes it.

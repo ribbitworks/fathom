@@ -46,7 +46,7 @@ import {
 import type { ScheduleActions } from "./schedule-tab.tsx";
 import { DurationChange } from "./schedule-panel.tsx";
 import { laterCyclesFrom } from "./schedules.ts";
-import { recordMark } from "./status-mark.tsx";
+import { recordMark } from "./draft-marks.ts";
 import type { ChangeView, SavedViews } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
 

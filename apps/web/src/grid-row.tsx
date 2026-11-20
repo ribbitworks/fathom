@@ -29,12 +29,8 @@ import type { PanelGrid } from "./grid-panels.tsx";
 import classes from "./pages.module.css";
 import type { Column, DraftOf, GridRecord, RowTotals } from "./record-table.ts";
 import { RowTick } from "./row-ticks.tsx";
-import {
-  DraftedItem,
-  MarkedItem,
-  besideLive,
-  wasWords,
-} from "./status-mark.tsx";
+import { DraftedItem, MarkedItem, besideLive } from "./status-mark.tsx";
+import { wasWords } from "./draft-marks.ts";
 
 const recordCellAttribute = "data-record-cell";
 const recordCellOf = (id: string, columnKey: string) => `${id} ${columnKey}`;

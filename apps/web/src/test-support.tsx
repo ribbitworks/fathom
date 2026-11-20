@@ -23,6 +23,7 @@ import {
   monthsBetween,
 } from "@fathom/shared";
 import { MantineProvider, mergeThemeOverrides } from "@mantine/core";
+import type { DraftLike } from "./draft-marks.ts";
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory } from "@tanstack/react-router";
 import {
@@ -106,6 +107,14 @@ export function changesSent(
     ];
   });
 }
+
+// A draft waiting for approval, and one rejected with a reason, for tests of draft marks.
+export const waitingDraft: DraftLike = { action: "changed", state: "waiting" };
+export const rejectedDraft: DraftLike = {
+  action: "changed",
+  state: "rejected",
+  reason: "Fictional reason.",
+};
 
 export const fictionalUser = {
   user: {

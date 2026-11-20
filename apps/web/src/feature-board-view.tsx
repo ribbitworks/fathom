@@ -57,13 +57,11 @@ import {
   besideLive,
   DraftedItem,
   DraftedValue,
-  type DraftLike,
   MarkedItem,
   MarkRow,
-  recordMark,
   useDraftView,
-  wasWords,
 } from "./status-mark.tsx";
+import { type DraftLike, recordMark, wasWords } from "./draft-marks.ts";
 import {
   byGroupRank,
   formatDay,

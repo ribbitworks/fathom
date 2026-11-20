@@ -32,14 +32,12 @@ import type { Column, GridRecord } from "./record-table.ts";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {
   DraftedItem,
-  type DraftLike,
   DraftedValue,
-  emptiedWords,
   MarkedItem,
   MarkRow,
   useBesideLive,
-  wasWords,
 } from "./status-mark.tsx";
+import { type DraftLike, wasWords, emptiedWords } from "./draft-marks.ts";
 import {
   type CellValue,
   type ColumnUnit,

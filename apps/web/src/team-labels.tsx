@@ -5,11 +5,8 @@
 
 import type { PaletteColour } from "@fathom/shared";
 import { colourVariable } from "./colours.ts";
-import {
-  DraftedPartItem,
-  type DraftedPart,
-  type DraftLike,
-} from "./status-mark.tsx";
+import { DraftedPartItem, type DraftedPart } from "./status-mark.tsx";
+import type { DraftLike } from "./draft-marks.ts";
 import { tipAttribute } from "./table-tips.tsx";
 import styles from "./team-labels.module.css";
 

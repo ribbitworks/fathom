@@ -104,9 +104,9 @@ import {
   DraftedValue,
   DraftView,
   LiveValue,
-  recordMark,
   useBesideLive,
 } from "./status-mark.tsx";
+import { recordMark } from "./draft-marks.ts";
 import {
   LivePartsCell,
   LiveSummaryName,

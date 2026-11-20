@@ -23,7 +23,8 @@ import type {
   RecordTable,
   RowProblem,
 } from "./record-table.ts";
-import { emptiedWords, marksIn } from "./status-mark.tsx";
+import { marksIn } from "./status-mark.tsx";
+import { emptiedWords } from "./draft-marks.ts";
 import type { CellValue } from "./table-view.ts";
 
 // The most rows one paste adds, as the server allows at once.

@@ -22,7 +22,8 @@ import { nameAs } from "./names.ts";
 import type { DetailKey } from "./people-grid.tsx";
 import classes from "./pages.module.css";
 import { type Phrase, PhraseText, phraseText } from "./phrase.tsx";
-import { type DraftLike, DraftDot, draftWords } from "./status-mark.tsx";
+import { DraftDot } from "./status-mark.tsx";
+import { type DraftLike, draftWords } from "./draft-marks.ts";
 
 export interface DraftField {
   // The field's key, as the draft names it: a detail's name or a column's identifier.
