@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/core-principles.md", "docs/standards/testing.md", "docs/standards/documentation.md", "docs/standards/markdown-style-guidelines.md", "docs/standards/agent-workflow.md", "docs/standards/typescript.md", "docs/standards/shell.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Code Review Standards
@@ -175,7 +175,7 @@ The reviewer goes through each document [Documentation Standards § Which Docume
 
 - **README:** The quick start still works as written, and its links lead where they say.
 - **Development Setup:** Every command, setting, and folder the change adds, renames, or removes is listed, the setup steps still work as written, and the repository layout matches the top-level folders.
-- **Roadmap:** Work that is now done no longer reads as future work.
+- **Roadmap:** Work that is now done no longer reads as future work in the pinned [Roadmap issue](https://github.com/ribbitworks/fathom/issues/398), and its sub-issues and milestones still match.
 - **Open questions and proposals:** Any the change answers or decides are resolved in the document that owns them, and any it raises are added there.
 - **Issues:** Deferred work, accepted findings and debt to record are proposed to the owner and filed as GitHub issues once approved, as [Issues](issues.md) sets out, and the pull request says `Fixes #n` in its description for each issue the change resolves, which closes it on merge.
 - **Summaries of safeguards:** How Data Is Safeguarded and Securing Your Environment kept consistent with every fact they summarize that the change affects.

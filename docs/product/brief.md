@@ -1,6 +1,6 @@
 # Fathom: Product Brief
 
-**Last updated:** 2026-11-18
+**Last updated:** 2026-11-20
 
 ## What Fathom Is
 
@@ -77,7 +77,7 @@ Engineering Managers own their people, including those working on features anoth
 - **Authentication:** Local accounts managed in Fathom for v1.
 - **Tech stack:** TypeScript end to end with PostgreSQL, in Docker. See [ADR 0001](../adr/0001-tech-stack.md).
 
-Terms are defined in [Domain Concepts](domain.md), and the rules for each entity are in the [Domain Model](../design/domain-model.md). The order in which goals are delivered is in the [Roadmap](roadmap.md).
+Terms are defined in [Domain Concepts](domain.md), and the rules for each entity are in the [Domain Model](../design/domain-model.md). The order in which goals are delivered is in the [Roadmap issue](https://github.com/ribbitworks/fathom/issues/398).
 
 ## Future Possibilities
 

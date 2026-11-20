@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/agent-workflow.md", "docs/standards/code-review.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Issues
@@ -17,7 +17,7 @@ Known problems and deferred work are kept in [GitHub Issues](https://github.com/
 - **From outside:** Issues are welcome from people the maintainer invites into the `ribbitworks` organization, as [Contributing](../../CONTRIBUTING.md) sets out. Others may be closed without a reply.
 - **Forms:** [New issue](https://github.com/ribbitworks/fathom/issues/new/choose) offers one form for each kind: Bug, Quality of life, Feature and Debt. Blank issues are turned off, and the page links to private reporting for vulnerabilities, as the [Security Policy](../../SECURITY.md) sets out.
 - **What each asks:** What happens or what is wanted, why it matters, where, the background someone new to Fathom needs, with links, and how to tell it is done. A bug adds its steps, what was expected, its probability and its severity; the others add when.
-- **Links:** Every link in an issue is a full GitHub link to a file or heading on `main`.
+- **Links:** Every link in an issue is a full GitHub link to a file or heading on `main`. Another issue may be named by its number, such as #54, which GitHub links.
 - **One place:** Once something is an issue, it lives only on GitHub. Documents link to the issue rather than repeat it.
 
 ## Labels
@@ -37,7 +37,8 @@ Known problems and deferred work are kept in [GitHub Issues](https://github.com/
 ## Triage and Milestones
 
 - **Who decides:** The maintainer decides stages and priorities. Whoever proposes an issue suggests its labels.
-- **Milestones:** Each stage of the [Roadmap](../product/roadmap.md) is a [GitHub milestone](https://github.com/ribbitworks/fathom/milestones), holding a Feature issue for each feature in it. An issue in no milestone is not yet placed.
+- **Roadmap:** The pinned [Roadmap](https://github.com/ribbitworks/fathom/issues/398) issue sets the order in which Fathom's goals are delivered. It is edited directly and has no labels. It has a section for each milestone, the five stages, Before Going Live and v1.1, each with its goal, a link to the milestone and its issues. Every milestone's open issues are the Roadmap's sub-issues.
+- **Milestones:** Each stage of the Roadmap is a [GitHub milestone](https://github.com/ribbitworks/fathom/milestones), holding a Feature issue for each feature in it. An issue in no milestone is not yet placed. A feature that joins or leaves a milestone changes its milestone, the Roadmap's section and its sub-issues together.
 - **No project board.**
 
 ## Fixing an Issue

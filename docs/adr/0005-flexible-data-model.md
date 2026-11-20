@@ -46,7 +46,7 @@ Columns on People, planned hires and features can be of four types, "Choice from
 - **Classes:** a web link, note, or number column has a class of its own, since it draws on no list.
 - **Column order:** the order of a table's columns, built-in and added alike, is kept as one list of column keys for each table.
 
-The other field types, uniqueness, and custom tables come later, as the [Roadmap](../product/roadmap.md#stage-your-own-fields-and-tables) sets out.
+The other field types, uniqueness, and custom tables come later, in the Your Own Fields and Tables stage of the [Roadmap issue](https://github.com/ribbitworks/fathom/issues/398).
 
 ## Consequences
 

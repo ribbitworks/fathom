@@ -7,7 +7,7 @@
 
 ## Context
 
-The [Product Brief](../product/brief.md#goals-for-v1) asks for a roadmap view, where Product Managers shape the roadmap of features by cycle and release and leadership reads it, and a timeline or Gantt view, which changes dates and assignments by drag and drop. The [Roadmap](../product/roadmap.md#stage-who-is-working-on-what) places both in the first stage, after its table of features grouped by cycle. [ADR 0004](0004-ui-components.md) chose vis-timeline for them, to be confirmed later; this ADR replaces that choice.
+The [Product Brief](../product/brief.md#goals-for-v1) asks for a roadmap view, where Product Managers shape the roadmap of features by cycle and release and leadership reads it, and a timeline or Gantt view, which changes dates and assignments by drag and drop. The [Roadmap issue](https://github.com/ribbitworks/fathom/issues/398) places both in the first stage, after its table of features grouped by cycle. [ADR 0004](0004-ui-components.md) chose vis-timeline for them, to be confirmed later; this ADR replaces that choice.
 
 What the views move is coarse, as the [Domain Model](../design/domain-model.md#planning-entities) sets out:
 
