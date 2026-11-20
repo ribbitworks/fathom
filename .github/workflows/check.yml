@@ -21,7 +21,7 @@ concurrency:
 jobs:
   changes:
     name: Decide what the change needs
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     permissions:
       contents: read
@@ -55,7 +55,7 @@ jobs:
 
   check:
     name: Check without package tests
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -82,7 +82,7 @@ jobs:
     name: Package tests
     needs: changes
     if: needs.changes.outputs.documentation-only != 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -151,7 +151,7 @@ jobs:
     name: Server coverage
     needs: [changes, packages]
     if: needs.changes.outputs.documentation-only != 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     permissions:
       contents: read
@@ -193,7 +193,7 @@ jobs:
     name: Full check
     needs: [changes, check, packages, server-coverage]
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions: {}
     steps:
@@ -222,7 +222,7 @@ jobs:
     needs: changes
     # A required check, so it runs and reports whatever the change.
     if: always()
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
