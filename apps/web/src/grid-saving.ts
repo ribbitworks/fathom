@@ -159,7 +159,34 @@ export function pastedRows(
 }
 
 export function gridSaving<Rec extends GridRecord, Change, Request>(
-  grid: LayoutGrid<Rec, Change, Request>,
+  grid: Pick<
+    LayoutGrid<Rec, Change, Request>,
+    | "table"
+    | "actions"
+    | "allColumns"
+    | "known"
+    | "columns"
+    | "records"
+    | "liveById"
+    | "draftById"
+    | "defaultKind"
+    | "rowKind"
+    | "setAdded"
+    | "setShownAs"
+    | "stableId"
+    | "newRows"
+    | "setNewRows"
+    | "nextKey"
+    | "setNextKey"
+    | "setProblem"
+    | "setMenuFor"
+    | "rowKey"
+    | "at"
+    | "editing"
+    | "writingInPanel"
+    | "setEditing"
+    | "focusNew"
+  >,
 ) {
   const {
     table,

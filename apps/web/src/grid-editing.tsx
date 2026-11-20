@@ -16,7 +16,40 @@ import type { MenuGrid } from "./row-menus.tsx";
 import { type CellValue, fieldLabel } from "./table-view.ts";
 
 export function gridEditing<Rec extends GridRecord, Change, Request>(
-  grid: MenuGrid<Rec, Change, Request>,
+  grid: Pick<
+    MenuGrid<Rec, Change, Request>,
+    | "ticks"
+    | "columns"
+    | "locked"
+    | "rowKind"
+    | "shownIds"
+    | "newRows"
+    | "setPanelOpen"
+    | "text"
+    | "setText"
+    | "openedWith"
+    | "setOpenedWith"
+    | "problem"
+    | "setProblem"
+    | "setMenuFor"
+    | "rows"
+    | "rowKey"
+    | "cellId"
+    | "at"
+    | "writingInPanel"
+    | "setActive"
+    | "setEditing"
+    | "moveTo"
+    | "valueAt"
+    | "shownAt"
+    | "putBack"
+    | "save"
+    | "emptyNewRow"
+    | "kindKept"
+    | "followingKind"
+    | "submitNewRows"
+    | "hasRowMenu"
+  >,
 ) {
   const {
     ticks,

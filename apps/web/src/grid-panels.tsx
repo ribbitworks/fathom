@@ -20,7 +20,49 @@ import { DecideAllItems, ViewBar } from "./table-controls.tsx";
 import { useTableExport } from "./table-export.tsx";
 
 export function useGridPanels<Rec extends GridRecord, Change, Request>(
-  grid: HeaderGrid<Rec, Change, Request>,
+  grid: Pick<
+    HeaderGrid<Rec, Change, Request>,
+    | "everyone"
+    | "table"
+    | "draftedFields"
+    | "saving"
+    | "actions"
+    | "onView"
+    | "saved"
+    | "withDrafts"
+    | "panels"
+    | "viewChoices"
+    | "pageParts"
+    | "above"
+    | "fields"
+    | "liveColumn"
+    | "allColumns"
+    | "known"
+    | "columns"
+    | "view"
+    | "records"
+    | "approves"
+    | "approvesRecord"
+    | "decidableRow"
+    | "fieldsLive"
+    | "liveBeside"
+    | "nests"
+    | "countedOnce"
+    | "shownRecords"
+    | "setPanelWriting"
+    | "problem"
+    | "setProblem"
+    | "rowKey"
+    | "at"
+    | "activeNow"
+    | "editing"
+    | "inPanel"
+    | "setEditing"
+    | "moveTo"
+    | "tableScroll"
+    | "valueAt"
+    | "saveTo"
+  >,
 ) {
   const {
     everyone,
@@ -55,7 +97,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     setProblem,
     rowKey,
     at,
-    active,
+    activeNow,
     editing,
     inPanel,
     setEditing,
@@ -202,6 +244,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
       nests={nests}
       withDrafts={withDrafts}
       onLeave={() => {
+        const active = activeNow();
         moveTo(active.row, active.column);
       }}
       saved={saved}

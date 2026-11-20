@@ -391,3 +391,106 @@ describe("a read-only table of drafts", () => {
     );
   });
 });
+
+describe("moving between cells", () => {
+  it("draws only the cell left and the cell reached, reading no record's values again", async () => {
+    // Given a table whose code column counts each value it reads
+    const read = vi.fn((one: Gadget) => one.code);
+    const table = {
+      ...gadgetTable(),
+      columnsFor: () => {
+        const [name, code] = gadgetTable().columnsFor([], [], [], []);
+        return [name, { ...code, value: read }] as ReturnType<
+          RecordTable<Gadget, GadgetChange, GadgetChange>["columnsFor"]
+        >;
+      },
+    };
+    renderGadgets({
+      gadgets: [gadget("g1"), gadget("g2"), gadget("g3")],
+      table,
+      fields: [],
+    });
+    const [above, , below] = screen.getAllByRole("gridcell");
+    (above as HTMLElement).focus();
+    read.mockClear();
+
+    // When the selection moves down
+    await userEvent.keyboard("{ArrowDown}");
+
+    // Then the cell below is the one reached by Tab, and nothing was read to draw it
+    expect([
+      (above as HTMLElement).tabIndex,
+      (below as HTMLElement).tabIndex,
+    ]).toEqual([-1, 0]);
+    expect(read).not.toHaveBeenCalled();
+  });
+
+  it("makes the first cell the one reached by Tab once the row selected leaves the table", async () => {
+    // Given the second gadget's cell selected
+    const grid = (gadgets: Gadget[]) => (
+      <MantineProvider theme={testTheme}>
+        <RecordGrid
+          records={gadgets}
+          table={gadgetTable()}
+          fields={[]}
+          order={[]}
+          lists={[]}
+          canEdit
+          canEditColumns={false}
+          view={emptyView}
+          onView={noop}
+          actions={actions()}
+        />
+      </MantineProvider>
+    );
+    const { rerender } = render(grid([gadget("g1"), gadget("g2")]));
+    (screen.getAllByRole("gridcell")[0] as HTMLElement).focus();
+    await userEvent.keyboard("{ArrowDown}");
+
+    // When its row leaves the table
+    rerender(grid([gadget("g1")]));
+
+    // Then the first cell is the one reached by Tab
+    expect(
+      screen
+        .getAllByRole("gridcell")
+        .map((cell) => cell.tabIndex)
+        .slice(0, 2),
+    ).toEqual([0, -1]);
+  });
+
+  it("makes the first cell the one reached by Tab once the column selected leaves the table", async () => {
+    // Given a cell of the Code column selected
+    const grid = (table: ReturnType<typeof gadgetTable>) => (
+      <MantineProvider theme={testTheme}>
+        <RecordGrid
+          records={[gadget("g1")]}
+          table={table}
+          fields={[]}
+          order={[]}
+          lists={[]}
+          canEdit
+          canEditColumns={false}
+          view={emptyView}
+          onView={noop}
+          actions={actions()}
+        />
+      </MantineProvider>
+    );
+    const { rerender } = render(grid(gadgetTable()));
+    (screen.getAllByRole("gridcell")[0] as HTMLElement).focus();
+    await userEvent.keyboard("{ArrowRight}");
+
+    // When the column leaves the table
+    const nameOnly = {
+      ...gadgetTable(),
+      columnsFor: () => gadgetTable().columnsFor([], [], [], []).slice(0, 1),
+    };
+    rerender(grid(nameOnly));
+
+    // Then the first cell is the one reached by Tab
+    expect((screen.getAllByRole("gridcell")[0] as HTMLElement).tabIndex).toBe(
+      0,
+    );
+  });
+});

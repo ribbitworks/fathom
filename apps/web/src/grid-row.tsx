@@ -3,7 +3,8 @@
 // The shared table's rows: each record's, with its Live row under it, the new rows, the group
 // headings and the totals.
 
-import { Table, Text, VisuallyHidden } from "@mantine/core";
+import { Table, type TableTdProps, Text, VisuallyHidden } from "@mantine/core";
+import { useSyncExternalStore } from "react";
 import { ColouredName } from "./colour-swatch.tsx";
 import { focusFoundSoon } from "./focus.ts";
 import {
@@ -25,6 +26,7 @@ import {
   wholeCellDraft,
 } from "./grid-drafts.ts";
 import { NamedWithOthers } from "./grid-groups.tsx";
+import type { Place, PlaceStore } from "./grid-places.ts";
 import type { PanelGrid } from "./grid-panels.tsx";
 import classes from "./pages.module.css";
 import type { Column, DraftOf, GridRecord, RowTotals } from "./record-table.ts";
@@ -59,6 +61,21 @@ export function focusRecordCell(id: string, columnKey: string): void {
   });
 }
 
+// A record's cell, reached by Tab while it is the one selected.
+function SelectableCell({
+  activeAt,
+  isSelectedAt,
+  ...cell
+}: TableTdProps & {
+  activeAt: PlaceStore;
+  isSelectedAt: (place: Place | undefined) => boolean;
+}) {
+  const selected = useSyncExternalStore(activeAt.subscribe, () =>
+    isSelectedAt(activeAt.get()),
+  );
+  return <Table.Td {...cell} tabIndex={selected ? 0 : -1} />;
+}
+
 // What the mark of a new row being filled in says, until its record is added: that it is new, and
 // what is wrong with it so far, or otherwise the required columns still empty.
 function newRowWords(missing: readonly string[], wrong: string | undefined) {
@@ -83,7 +100,56 @@ function NewRowWrong({ wrong, id }: { wrong: string | undefined; id: string }) {
 }
 
 export function gridRows<Rec extends GridRecord, Change, Request>(
-  grid: PanelGrid<Rec, Change, Request>,
+  grid: Pick<
+    PanelGrid<Rec, Change, Request>,
+    | "table"
+    | "ticks"
+    | "liveColumn"
+    | "allColumns"
+    | "columns"
+    | "view"
+    | "recordDraft"
+    | "marksRows"
+    | "liveById"
+    | "draftById"
+    | "liveBeside"
+    | "besides"
+    | "liveCell"
+    | "columnTint"
+    | "withActions"
+    | "rowKind"
+    | "shownIds"
+    | "headings"
+    | "runEnds"
+    | "problem"
+    | "menuFor"
+    | "rows"
+    | "rowKey"
+    | "cellId"
+    | "activeAt"
+    | "activeOf"
+    | "editing"
+    | "inPanel"
+    | "setActive"
+    | "frozenCell"
+    | "newValue"
+    | "valueAt"
+    | "shownAt"
+    | "standInAt"
+    | "liveStandIn"
+    | "emptyNewRow"
+    | "onPaste"
+    | "hasRowMenu"
+    | "rowMenuItems"
+    | "rowMenu"
+    | "rowMoreButton"
+    | "nameCellControls"
+    | "onRowContextMenu"
+    | "startEdit"
+    | "onCellKey"
+    | "problemIn"
+    | "editor"
+  >,
 ) {
   const {
     table,
@@ -110,7 +176,8 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     rows,
     rowKey,
     cellId,
-    active,
+    activeAt,
+    activeOf,
     editing,
     inPanel,
     setActive,
@@ -268,8 +335,6 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
             editing?.row === rowIndex &&
             editing.column === columnIndex &&
             inPanel === undefined;
-          const isActive =
-            active.row === rowIndex && active.column === columnIndex;
           // A new row being filled in is marked in its first cell's slot until added.
           const newRowMarked =
             columnIndex === 0 &&
@@ -291,7 +356,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
               ? shown(liveColumn(column), column.live(draft)) || "empty"
               : undefined;
           return [
-            <Table.Td
+            <SelectableCell
               key={column.key}
               id={cellId(rowIndex, columnIndex)}
               {...(record === undefined
@@ -300,7 +365,13 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                     [recordCellAttribute]: recordCellOf(record.id, column.key),
                   })}
               role="gridcell"
-              tabIndex={isActive ? 0 : -1}
+              activeAt={activeAt}
+              isSelectedAt={(place) => {
+                const selected = activeOf(place);
+                return (
+                  selected.row === rowIndex && selected.column === columnIndex
+                );
+              }}
               aria-invalid={
                 (columnIndex === 0 && rowProblem !== undefined) ||
                 problemIn(cell) !== undefined
@@ -484,7 +555,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                   {rowProblem}
                 </span>
               )}
-            </Table.Td>,
+            </SelectableCell>,
             liveCellBeside(row.record, column, columnIndex),
           ];
         })}

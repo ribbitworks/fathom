@@ -77,7 +77,38 @@ export function droppedAfter(
 }
 
 export function columnHeaders<Rec extends GridRecord, Change, Request>(
-  grid: EditingGrid<Rec, Change, Request>,
+  grid: Pick<
+    EditingGrid<Rec, Change, Request>,
+    | "everyone"
+    | "table"
+    | "draftedFields"
+    | "tableOrder"
+    | "lists"
+    | "canEditColumns"
+    | "actions"
+    | "onView"
+    | "ticks"
+    | "allColumns"
+    | "columns"
+    | "liveOnly"
+    | "view"
+    | "approves"
+    | "renamedFrom"
+    | "columnTint"
+    | "tickedShown"
+    | "dragging"
+    | "setDragging"
+    | "filtering"
+    | "setFiltering"
+    | "keys"
+    | "frozenAsked"
+    | "frozen"
+    | "linkedAtFirst"
+    | "frozenCell"
+    | "frozenView"
+    | "freeze"
+    | "widths"
+  >,
 ) {
   const {
     everyone,
