@@ -25,7 +25,7 @@ Known problems and deferred work are kept in [GitHub Issues](https://github.com/
 - **Kind:** `bug`, `quality-of-life`, `enhancement` for a feature, and `debt`. Each form sets its own.
 - **Priority, for a bug:** `P1` to `P4`, from its probability and severity, as the table below sets out. P1 is fixed next, P2 in the next change that touches its area, and P3 and P4 in a cleanup pass.
 - **When, for the rest:** `now` for the current work, `next` for soon after, `later` for when its area is next changed or it is wanted, and `maybe` for only if a need arises.
-- **Area:** One `area: …` label, such as `area: planning`.
+- **Area:** One `area: …` label, such as `area: planning`. `area: releases` is for the Releases page, `area: release process` for Fathom's own versioning and releases, and `area: tables` for the shared table on every page.
 - **May be fixed:** `may-be-fixed` marks an issue that later work may already have fixed. Check whether it still happens before working on it, and close it if not.
 
 | Probability | Severe | Moderate | Minor |
