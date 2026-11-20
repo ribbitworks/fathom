@@ -6,20 +6,21 @@ Each acceptance test follows the workflows of a [Help page](../../help/index.md)
 
 | Order | Test | Starts from | Cases | Time |
 | --- | --- | --- | --- | --- |
-| 1 | [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) | [Start From an Empty Database](../manual-test-basics.md#start-from-an-empty-database) | 9 | 30 minutes |
-| 2 | [Work Between Roles](acceptance-work-between-roles-manual-test.md) | What Setting Up Fathom leaves, run straight after it with no restore or reset | 6 | 30 minutes |
-| 3 | [Team Member](acceptance-team-member-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 4 | 20 minutes |
-| 4 | [Product Manager](acceptance-product-manager-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 9 | 30 minutes |
-| 5 | [Feature Lead](acceptance-feature-lead-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 8 | 30 minutes |
-| 6 | [Project Manager](acceptance-project-manager-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 4 | 30 minutes |
-| 7 | [Engineering Manager](acceptance-engineering-manager-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 8 | 30 minutes |
-| 8 | [Engineering Director](acceptance-engineering-director-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 5 | 30 minutes |
-| 9 | [Workforce Administrator](acceptance-workforce-administrator-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 8 | 30 minutes |
-| 10 | [Executive](acceptance-executive-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 5 | 20 minutes |
-| 11 | [Administrator](acceptance-administrator-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 8 | 30 minutes |
-| | **Total** | | **74** | **About 5 hours 10 minutes** |
+| 1 | [Installing Fathom](acceptance-installing-fathom-manual-test.md) | Its own [Prepare the Installation](acceptance-installing-fathom-manual-test.md#prepare-the-installation), on a machine with no earlier installation | 4 | 30 minutes, plus the first build |
+| 2 | [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) | [Start From an Empty Database](../manual-test-basics.md#start-from-an-empty-database) | 9 | 30 minutes |
+| 3 | [Work Between Roles](acceptance-work-between-roles-manual-test.md) | What Setting Up Fathom leaves, run straight after it with no restore or reset | 6 | 30 minutes |
+| 4 | [Team Member](acceptance-team-member-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 4 | 20 minutes |
+| 5 | [Product Manager](acceptance-product-manager-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 9 | 30 minutes |
+| 6 | [Feature Lead](acceptance-feature-lead-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 8 | 30 minutes |
+| 7 | [Project Manager](acceptance-project-manager-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 4 | 30 minutes |
+| 8 | [Engineering Manager](acceptance-engineering-manager-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 8 | 30 minutes |
+| 9 | [Engineering Director](acceptance-engineering-director-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 5 | 30 minutes |
+| 10 | [Workforce Administrator](acceptance-workforce-administrator-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 8 | 30 minutes |
+| 11 | [Executive](acceptance-executive-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 5 | 20 minutes |
+| 12 | [Administrator](acceptance-administrator-manual-test.md) | [Reset the Database](../manual-test-basics.md#reset-the-database) | 8 | 30 minutes |
+| | **Total** | | **78** | **About 5 hours 40 minutes, plus the first build** |
 
-Setting Up Fathom and Work Between Roles must run first, in that order, since the second works on the organization the first sets up. Each role's test starts from the seed data afresh, so the role tests may run in any order; the order above is that of the role tutorials in [Help](../../help/index.md).
+Installing Fathom stands alone, with its own secrets, containers and database, built from the clone. It ends by removing them and its `deploy/.env`, which must be done before the next test. Setting Up Fathom and Work Between Roles then run, in that order, since the second works on the organization the first sets up. Each role's test starts from the seed data afresh, so the role tests may run in any order; the order above is that of the role tutorials in [Help](../../help/index.md).
 
 ## Starting a Whole Run
 
