@@ -1,6 +1,13 @@
-# Fathom: Architecture
+---
+title: "Architecture"
+category: "Architecture"
+audience: "AI Coding Assistant"
+applies_to: ["**/*"]
+dependencies: ["docs/design/domain-model.md", "docs/security/security-plan.md", "docs/adr/"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-18
+# Fathom: Architecture
 
 A high-level view of Fathom's parts and how they connect. It stays at the level of containers and networks; how each part is built is in the documents linked below.
 

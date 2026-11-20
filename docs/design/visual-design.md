@@ -1,6 +1,13 @@
-# Fathom: Visual Design
+---
+title: "Visual Design"
+category: "Design"
+audience: "AI Coding Assistant"
+applies_to: ["apps/web/src/**"]
+dependencies: ["docs/standards/ui-conventions.md"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-19
+# Fathom: Visual Design
 
 How Fathom's screens look and behave, so every page is built the same way. The principles and conventions every screen shares, with the piece that draws each, are in [UI Conventions](../standards/ui-conventions.md). It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-components.md). The theme in `apps/web/src/theme.ts` holds the values; this document holds the rules, and each page's own design is in its page document.
 

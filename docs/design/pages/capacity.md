@@ -1,6 +1,13 @@
-# Fathom: Capacity Page
+---
+title: "Capacity Page"
+category: "Design"
+audience: "AI Coding Assistant"
+applies_to: ["apps/web/src/**"]
+dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/capacity.md"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-18
+# Fathom: Capacity Page
 
 Capacity shows who is allocated to what, month by month, and holds the planning settings, which don't justify a page of their own. It sits in the sidebar's People section, after Feature assignments.
 

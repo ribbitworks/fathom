@@ -3,7 +3,7 @@
 - **ADR:** 0002
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting; 2026-10-30, to reflect the proxy chosen in ADR 0003, to point to the UI components chosen in ADR 0004, to record session length and how sign-in limits find each client's address, to let users change their own password, and to record that Better Auth and its password hashing were confirmed in use; 2026-11-01, to shorten sessions from 12 hours to 30 minutes without use, with the browser signing out on its own; 2026-11-06, to add zxcvbn-ts for refusing passwords that are easy to guess, and to add the Markdown libraries for notes; 2026-11-15, to add rehype-slug for the anchors of Help pages' headings, with github-slugger in tests; 2026-11-17, to drop PowerShell linting, since Fathom has no PowerShell scripts, and to run Renovate as the GitHub App; 2026-11-18, to add CodeQL on GitHub beside Semgrep, now that the repository is public, and to keep a local copy of Semgrep's rules for scanning offline; 2026-11-19, to mark TanStack Table and Playwright as not adopted yet
+- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting; 2026-10-30, to reflect the proxy chosen in ADR 0003, to point to the UI components chosen in ADR 0004, to record session length and how sign-in limits find each client's address, to let users change their own password, and to record that Better Auth and its password hashing were confirmed in use; 2026-11-01, to shorten sessions from 12 hours to 30 minutes without use, with the browser signing out on its own; 2026-11-06, to add zxcvbn-ts for refusing passwords that are easy to guess, and to add the Markdown libraries for notes; 2026-11-15, to add rehype-slug for the anchors of Help pages' headings, with github-slugger in tests; 2026-11-17, to drop PowerShell linting, since Fathom has no PowerShell scripts, and to run Renovate as the GitHub App; 2026-11-18, to add CodeQL on GitHub beside Semgrep, now that the repository is public, and to keep a local copy of Semgrep's rules for scanning offline; 2026-11-19, to mark TanStack Table and Playwright as not adopted yet, and to say data classes, as Fathom does, rather than tiers
 
 ## Context
 
@@ -12,7 +12,7 @@
 What matters most in these choices:
 
 - **Security:** Fathom holds personal data, so authentication, sessions, input validation, and logging must use well-tested libraries, and the [Security Plan](../security/security-plan.md)'s mitigations must be straightforward to apply.
-- **Access control in one place:** Every read goes through one data access layer that applies tier checks, so database access should be explicit and easy to review.
+- **Access control in one place:** Every read goes through one data access layer that applies class checks, so database access should be explicit and easy to review.
 - **Small team, long life:** Choices should be widely used, well maintained, and few in number.
 - **Supply chain:** Fewer, more trustworthy dependencies, and package management that resists malicious packages.
 
@@ -27,7 +27,7 @@ What matters most in these choices:
 | Validation | Zod, connected to Fastify through fastify-type-provider-zod | Valibot | One set of schemas shared by the front end and the API, used for request and form validation |
 | API contract | Shared Zod schemas and TypeScript types | OpenAPI | The front end and API live in one repository, so shared types are enough for now |
 | Forms | React Hook Form with its Zod resolver | TanStack Form | Widely used, and validates with the same shared schemas |
-| Database access | Drizzle ORM | Kysely, Prisma | TypeScript-first and close to SQL, so the queries behind tier checks stay explicit |
+| Database access | Drizzle ORM | Kysely, Prisma | TypeScript-first and close to SQL, so the queries behind class checks stay explicit |
 | PostgreSQL driver | node-postgres (`pg`) | postgres.js | The most widely used PostgreSQL driver for Node.js, and fully supported by Drizzle |
 | Migrations | drizzle-kit, generating SQL migration files | Hand-written SQL | Migrations are plain SQL files reviewed like any other change |
 | Authentication and sessions | Better Auth, with sessions stored in the database | A small in-house implementation | A maintained library for local accounts, password hashing, sessions, and sign-in rate limiting, rather than writing security-critical code ourselves |
@@ -86,7 +86,7 @@ Better Auth settings Fathom's security relies on:
 ## Consequences
 
 - **Authentication library maturity:** Better Auth is newer than the other choices. If it proves unsuitable, the alternative is a small in-house session layer following established guidance, with Argon2id password hashing. Fathom's accounts confirm it in use, including its password hashing.
-- **Database access:** Drizzle keeps queries explicit, but tier checks are not automatic; the shared data access layer and its tests enforce them.
+- **Database access:** Drizzle keeps queries explicit, but class checks are not automatic; the shared data access layer and its tests enforce them.
 - **Native modules:** If a native module is ever added, dependencies are installed inside the linux/amd64 build, never copied from a machine with a different processor, and the module is explicitly allowed to run its install script in pnpm.
 - **Testcontainers:** Must be verified on each development runtime in [Supported Platforms](../operations/supported-platforms.md). Runtimes other than Docker need extra configuration, and tests need access to the container images they use.
 - **Semgrep:** Community Edition checks one file at a time. Its registry rules are used at scan time, not copied into the repository, because they have their own licence. To scan without the internet, `pnpm offline:prepare` keeps a copy on the developer's own machine, in a git-ignored folder, never committed. Opengrep is the fallback if Semgrep's licensing changes.

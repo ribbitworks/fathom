@@ -1,6 +1,13 @@
-# Fathom: Features Page
+---
+title: "Features Page"
+category: "Design"
+audience: "AI Coding Assistant"
+applies_to: ["apps/web/src/**"]
+dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/features.md"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-18
+# Fathom: Features Page
 
 Features lists the plan's features in one table, with a board as a second way of showing them. It sits in the sidebar's Plan section, after Projects.
 
@@ -22,7 +29,7 @@ Features lists the plan's features in one table, with a board as a second way of
 - **Staffed:** read only; for Planned or In progress features, Yes when any allocation gives them a month, a planned hire's included. It is empty for other statuses, so Not staffed is a plain filter.
 - **Projects and Proposals:** changed only by those who change the plan; New feature doesn't offer them.
   - A change drafts the project or proposal, so the feature's row isn't marked.
-- **Added columns:** General lists only, with no planned hires or visibility; a drafted one can't be filled until approved.
+- **Added columns:** General lists only, with no planned hires or other class; a drafted one can't be filled until approved.
   - Remove column shows only to those who may also change features.
 
 ## Grouping

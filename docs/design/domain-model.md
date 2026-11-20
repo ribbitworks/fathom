@@ -1,6 +1,13 @@
-# Fathom: Domain Model
+---
+title: "Domain Model"
+category: "Domain"
+audience: "AI Coding Assistant"
+applies_to: ["packages/shared/src/**", "packages/db/**", "apps/server/src/**"]
+dependencies: ["docs/product/domain.md", "docs/product/roles.md"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-18
+# Fathom: Domain Model
 
 Fathom's core entities, how they relate, and the rules that always hold for them. Terms are defined in [Domain Concepts](../product/domain.md), who may do what is in [Roles](../product/roles.md), and how each page shows the data is in its [page design](pages/). It describes concepts, not database tables. Items marked **proposal** are suggested modelling choices that have not been agreed.
 
@@ -195,7 +202,7 @@ Percentages are whole.
 - **Session:** A signed-in user's visit, which records the network address and browser it started from, for investigating security problems, and ends as set in [ADR 0002](../adr/0002-libraries.md).
 - **Role:** A named set of permissions, kept in the database so it can be edited and copied, which grants view or edit access to data classes, and permissions such as approving plan changes. The roles Fathom starts with keep a key, so setup and seed data find them whatever they are renamed, and a role held by any account cannot be deleted.
 - **Access record:** Records who did what, when, and to whom, without the values: a change to a user account, or a view or change of sensitive data. Records can only be added, never changed or removed.
-- **Data class:** The class, General, Personal or Confidential, the organization keeps one of Fathom's built-in details in, stored once moved from its default. Lists and columns hold their own class as their visibility. Class checks happen in the data access layer, as set in [ADR 0001](../adr/0001-tech-stack.md).
+- **Data class:** The class, General, Personal or Confidential, the organization keeps one of Fathom's built-in details in, stored once moved from its default. Lists and columns hold their own class. Class checks happen in the data access layer, as set in [ADR 0001](../adr/0001-tech-stack.md).
 
 **Proposal:** Allow a user account to be linked to the person record for the same employee, so Fathom can tell who a user is in the org chart and give them access to their own record and their reports, as [issue #219](https://github.com/ribbitworks/fathom/issues/219) sets out. Not every user needs one.
 
@@ -221,12 +228,12 @@ Fathom has a fixed core of built-in tables, such as people, teams, projects, fea
 
 ### Tables and Columns
 
-- **Field definition:** A custom field on a built-in or custom table, with a name, [field type](#field-types), sensitivity tier, and whether it must be filled in or be unique. A Person or Link field also names the table it links to. Columns are built on People and Features only, with the field types below; unique columns, Person and Link fields are not built yet. A "Choice from a list" field names its list, takes its tier from the list's visibility, and says whether it takes one choice or several. A Web link, Note or Number field has a visibility of its own as its tier. A field on People also says whether planned hires have it too, as [Planned Hires](#planned-hires) sets out.
+- **Field definition:** A custom field on a built-in or custom table, with a name, [field type](#field-types), class, and whether it must be filled in or be unique. A Person or Link field also names the table it links to. Columns are built on People and Features only, with the field types below; unique columns, Person and Link fields are not built yet. A "Choice from a list" field names its list, takes its class from the list's, and says whether it takes one choice or several. A Web link, Note or Number field has a class of its own. A field on People also says whether planned hires have it too, as [Planned Hires](#planned-hires) sets out.
   - **Changing:** its type is fixed once it is added. It can be made required only once every record has a value, and single-choice only once none has several. Its list cannot change while it has values.
 - **Column order:** A table's own order of its columns, built-in and custom alike, which every view starts from. A view may hold an order of its own.
 - **Saved view:** A table's search, filters, sort, what its Draft menu shows, the columns its metrics break down by, its grouping, the columns it hides, and its page's own choices, such as the schedule the Features Board shows, saved under a name, with the table it belongs to, one of a fixed set, the user who saved it, and whether it is personal to them or shared. A name is unique, ignoring letter case, among the table's shared views and among each user's personal views on it. Its sensitivity is that of the most sensitive column it filters, sorts, breaks down, or groups by, and of the data its grouping needs; a People view may also filter on drafts, which is General, since each user is sent only the drafts they may see.
 - **Last view:** The view an account last showed on a page with a Views menu, one for each account and page: the table shown, which on Projects and Releases is its tab, the view as a saved view holds it, the saved view it started from, if any, and the page's mode, such as Features' Board. It is the account's own setting: never a draft, with no change history, and removed only if the account is. Deleting the saved view it started from keeps the rest of it.
-- **Custom table:** A table users define, with a name, a sensitivity tier, and its field definitions. Not built yet.
+- **Custom table:** A table users define, with a name, a class, and its field definitions. Not built yet.
 - **Custom record:** One row of a custom table, holding values for its fields.
 - **Custom value:** The value of one custom field for one record, built-in or custom.
 
@@ -245,11 +252,11 @@ Fathom has a fixed core of built-in tables, such as people, teams, projects, fea
 
 ### Lists
 
-- **List:** A list of choices, with a name, up to 40 characters and unique, an optional description, a visibility, the class of the values chosen from it, General unless set otherwise, and whether it is retired. Most are defined by people; the [built-in lists](#built-in-lists) are drawn on by built-in columns and cannot be removed or retired. A fresh Fathom starts with only the built-in lists. Columns elsewhere draw on lists, and the column, not the list, says whether one choice or several are picked, whether a value is required, and what it is called.
+- **List:** A list of choices, with a name, up to 40 characters and unique, an optional description, the class of the values chosen from it, General unless set otherwise, and whether it is retired. Most are defined by people; the [built-in lists](#built-in-lists) are drawn on by built-in columns and cannot be removed or retired. A fresh Fathom starts with only the built-in lists. Columns elsewhere draw on lists, and the column, not the list, says whether one choice or several are picked, whether a value is required, and what it is called.
 - **Choice:** One entry in a list, with a name, up to 60 characters and unique within its list, an optional description, its place in the list's order, and whether it is retired, and, in a list with meanings, the meaning it is tied to, and, in the list of feature sizes, its weight, how many of the size S it counts as.
 - **Retiring and removing:** choices and lists are retired and restored. Only choices and lists nothing uses are removed. A list cannot be retired or removed while a column draws on it.
 - **Lists with meanings:** the last choice offered for a meaning cannot be retired, removed, or given another meaning.
-- **Lowering a list's visibility:** allowed while columns draw on it, which shows the values already chosen to more people. It is a move to another class, recorded, and moved back rather than undone.
+- **Lowering a list's class:** allowed while columns draw on it, which shows the values already chosen to more people. It is a move to another class, recorded, and moved back rather than undone.
 
 ### Built-in Lists
 
@@ -268,7 +275,7 @@ Each organization renames, adds to, reorders and retires these lists' choices. C
 ## Change and History Entities
 
 - **Change set:** Changes saved together, with who made them and when, and what they did: saved changes, or approved, rejected, or discarded drafts.
-- **Change:** One field of one record changed in a change set, with its sensitivity tier, its old and new values, and whether it changed the record's draft or the live record.
+- **Change:** One field of one record changed in a change set, with its class, its old and new values, and whether it changed the record's draft or the live record.
 - **Draft row:** The values a record is to have once approved: all of them for a record to be added, those that differ from the live record for a change, or none for a removal. Each record has at most one, waiting or rejected with a reason. People, planned hires, feature teams, lists, choices, columns, schedules, cycle patterns, releases, features, customers, proposals, projects, milestones, allocations and the planning settings have drafts, and so does the order of each list's choices, held whole, as [ADR 0007](../adr/0007-draft-rows.md) sets out.
 - **Record key:** A record's number within its kind, such as 123 for #FEATURE-123, shown after a # so it isn't taken for another tool's key, held apart from the record, so a record drafted to be added has one, and a removed record's key still names it. Numbers count up from 1 for each kind and are never reused, even when a draft is discarded. Each kind keeps the last number it gave.
   - **Kinds:** FEATURE, PROJECT, PROPOSAL, CUSTOMER, MILESTONE, RELEASE, SCHEDULE, PERSON, HIRE, TEAM (a feature team), LIST, COLUMN, ACCOUNT and ROLE, each whole, never shortened. Cycles have none, since they are named with their schedule.

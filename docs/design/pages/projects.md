@@ -1,6 +1,13 @@
-# Fathom: Projects Page
+---
+title: "Projects Page"
+category: "Design"
+audience: "AI Coding Assistant"
+applies_to: ["apps/web/src/**"]
+dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/projects.md"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-18
+# Fathom: Projects Page
 
 Projects holds the plan's projects, proposals, customers and milestones, each on its own tab. It sits in the sidebar's Plan section, after Overview; those who only see the plan see it read only.
 

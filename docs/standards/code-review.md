@@ -3,8 +3,8 @@ title: "Code Review Standards"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
-dependencies: ["core-principles.md", "testing.md", "documentation.md", "markdown-style-guidelines.md", "agent-workflow.md", "typescript.md", "shell.md"]
-last_updated: "2026-11-18"
+dependencies: ["docs/standards/core-principles.md", "docs/standards/testing.md", "docs/standards/documentation.md", "docs/standards/markdown-style-guidelines.md", "docs/standards/agent-workflow.md", "docs/standards/typescript.md", "docs/standards/shell.md"]
+last_updated: "2026-11-19"
 ---
 
 # Code Review Standards

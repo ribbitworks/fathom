@@ -1,6 +1,13 @@
-# Fathom: Sign-In and Problem Pages
+---
+title: "Sign-In and Problem Pages"
+category: "Design"
+audience: "AI Coding Assistant"
+applies_to: ["apps/web/src/**"]
+dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-18
+# Fathom: Sign-In and Problem Pages
 
 The sign-in page, the first password change and the problem pages each show a single card on a background of their own. The first password change replaces every page for a user signed in with a password Fathom generated.
 

@@ -3,13 +3,13 @@
 - **ADR:** 0005
 - **Status:** Accepted
 - **Date:** 2026-10-30
-- **Revised:** 2026-10-31, to link to [ADR 0006](0006-table-views-in-the-browser.md) for how tables are filtered and sorted; 2026-11-06, to add Note fields; 2026-11-08, to add Number fields
+- **Revised:** 2026-10-31, to link to [ADR 0006](0006-table-views-in-the-browser.md) for how tables are filtered and sorted; 2026-11-06, to add Note fields; 2026-11-08, to add Number fields; 2026-11-19, to say data classes, as Fathom does, rather than tiers
 
 ## Context
 
 The [Domain Model](../design/domain-model.md#configuration-entities) records that Fathom has a fixed core of built-in tables, which users extend with their own fields and tables, and that every change records who made it. This ADR decides how that is stored and enforced.
 
-Two earlier decisions constrain it. Every read goes through one data access layer that applies tier checks, as [ADR 0001](0001-tech-stack.md) requires. The application's database role can only read and write data, and only reviewed migrations change the schema, as [ADR 0002](0002-libraries.md) requires, so a custom field can never become a new database column or index.
+Two earlier decisions constrain it. Every read goes through one data access layer that applies class checks, as [ADR 0001](0001-tech-stack.md) requires. The application's database role can only read and write data, and only reviewed migrations change the schema, as [ADR 0002](0002-libraries.md) requires, so a custom field can never become a new database column or index.
 
 ## Options
 
@@ -27,8 +27,8 @@ Custom fields and tables use a values table.
 - **Links:** Each table that can be linked to, such as people, teams, or custom records, has its own link column with a foreign key, so a link cannot point to a missing record. A linked record cannot be deleted while links to it remain; people are already made inactive rather than deleted.
 - **Uniqueness:** A value row for a field marked unique carries a flag. Each typed value column has a fixed partial unique index on the field and that column, limited to flagged rows, so the database refuses duplicates, including when two people save at the same time. Text is compared ignoring letter case.
 - **Checked by the data access layer:** That a required value is present, since a missing value has no row for the database to check; that a value is in the column for its field's type; and that a link to a custom record points to the custom table its field names, since custom records share one column.
-- **Access:** The data access layer leaves out every value from a field the user's tiers do not cover, and so no one can filter or sort by such a field, since the order of results could reveal its values. Tables are filtered and sorted in the browser, over what each user receives, as [ADR 0006](0006-table-views-in-the-browser.md) decides.
-- **Who changed what:** Read from the change history, custom values included, which records each change with the tier of the field it changed, so a user sees only changes to data their tiers cover. Changes made by setup or seed scripts are recorded as made by Fathom itself, not by a user.
+- **Access:** The data access layer leaves out every value from a field the user's classes do not cover, and so no one can filter or sort by such a field, since the order of results could reveal its values. Tables are filtered and sorted in the browser, over what each user receives, as [ADR 0006](0006-table-views-in-the-browser.md) decides.
+- **Who changed what:** Read from the change history, custom values included, which records each change with the class of the field it changed, so a user sees only changes to data their classes cover. Changes made by setup or seed scripts are recorded as made by Fathom itself, not by a user.
 
 | Setting the user sees | How it is enforced |
 | --- | --- |
@@ -43,7 +43,7 @@ Columns on People, planned hires and features can be of four types, "Choice from
 
 - **Storage:** field definitions, and a values table with an owner column each for people, planned hires and features, a link column for choices, a typed address column and text column for web links, a text column for a note's Markdown, which is never empty, and a numeric column for numbers.
 - **Checks:** exactly one owner column is set, and each value row holds exactly one of a choice, a link, a note, or a number. Each chosen choice has a row of its own, and an index allows one link, one note, and one number for each record and column. A list or choice cannot be deleted while a column or value uses it.
-- **Tiers:** a web link, note, or number column has a visibility of its own as its tier, since it draws on no list.
+- **Classes:** a web link, note, or number column has a class of its own, since it draws on no list.
 - **Column order:** the order of a table's columns, built-in and added alike, is kept as one list of column keys for each table.
 
 The other field types, uniqueness, and custom tables come later, as the [Roadmap](../product/roadmap.md#stage-your-own-fields-and-tables) sets out.

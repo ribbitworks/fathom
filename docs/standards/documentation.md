@@ -3,8 +3,8 @@ title: "Documentation Standards"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
-dependencies: ["markdown-style-guidelines.md", "help-pages.md", "testing.md"]
-last_updated: "2026-11-18"
+dependencies: ["docs/standards/markdown-style-guidelines.md", "docs/standards/help-pages.md", "docs/standards/testing.md"]
+last_updated: "2026-11-19"
 ---
 
 # Documentation Standards
@@ -95,7 +95,7 @@ category: "Architecture"
 audience: "AI Coding Assistant"
 applies_to: ["src/domain/**"]
 dependencies: ["docs/design/architecture.md"]
-last_updated: "2026-11-01"
+last_updated: "2026-11-19"
 ---
 ```
 

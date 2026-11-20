@@ -62,7 +62,7 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 - **Seeing what a draft holds:** Approving never grants seeing. An Approver's role must see every detail a draft holds, so a draft with an end date needs a role that sees Personal data, and drafts of People's columns need one that sees people.
 - **Drafts that use other drafts:** A draft may use drafts of another area. Approving a draft approves the drafts it uses, and rejecting a draft rejects the drafts that use it, so both need Approve on every area involved.
 - **Your own drafts:** Someone else approves a user's drafts, unless the role holds Approve own drafts. That is one permission for every area, and it applies only where the role also holds Approve.
-- **Schedules and cycle patterns:** Edited with Edit Plan or Edit Configuration, and approved with Approve Plan or Approve Configuration, so either approver may decide them.
+- **Schedules and cycle patterns:** Edited with Edit Plan or Edit Configuration, and approved with Approve Plan or Approve Configuration, so either Approver may decide them.
 
 ## Data Classes
 

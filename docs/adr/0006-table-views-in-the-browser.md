@@ -3,15 +3,15 @@
 - **ADR:** 0006
 - **Status:** Accepted
 - **Date:** 2026-10-31
-- **Revised:** 2026-11-02, for the metrics' breakdown, kept in the view; 2026-11-14, for saved views of every table, read apart from its rows; 2026-11-19, to note that TanStack Table is not adopted yet
+- **Revised:** 2026-11-02, for the metrics' breakdown, kept in the view; 2026-11-14, for saved views of every table, read apart from its rows; 2026-11-19, to note that TanStack Table is not adopted yet, and to say data classes, as Fathom does, rather than tiers
 
 ## Context
 
 Every column of the People table needs searching, filtering, and sorting, built so that every table added later, and every kind of column, gets them too. What a table shows this way is its view.
 
-Two earlier decisions constrain it. [ADR 0005](0005-flexible-data-model.md) requires that no one can filter or sort by a value their tiers do not cover, since the order of results could reveal it. [ADR 0004](0004-ui-components.md) builds tables edited like a spreadsheet, such as People, on Mantine rather than on a grid or table library.
+Two earlier decisions constrain it. [ADR 0005](0005-flexible-data-model.md) requires that no one can filter or sort by a value their classes do not cover, since the order of results could reveal it. [ADR 0004](0004-ui-components.md) builds tables edited like a spreadsheet, such as People, on Mantine rather than on a grid or table library.
 
-Each table's read already sends every row the user may see, leaving out every value their tiers do not cover.
+Each table's read already sends every row the user may see, leaving out every value their classes do not cover.
 
 ## Decision
 

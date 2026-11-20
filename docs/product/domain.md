@@ -1,6 +1,13 @@
-# Fathom: Domain Concepts
+---
+title: "Domain Concepts"
+category: "Domain"
+audience: "AI Coding Assistant"
+applies_to: ["**/*"]
+dependencies: ["docs/design/domain-model.md"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-18
+# Fathom: Domain Concepts
 
 The terms Fathom uses, defined so they fit any software organization, whatever its titles and practices. How an organization works with them, such as who leads what or how often it releases, is its own configuration. See also the [Product Brief](brief.md), and the [Domain Model](../design/domain-model.md) for the rules that hold for each entity.
 

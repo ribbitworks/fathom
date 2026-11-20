@@ -3,7 +3,7 @@ title: "Agent Workflow"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
-dependencies: ["code-review.md", "testing.md", "documentation.md"]
+dependencies: ["docs/standards/code-review.md", "docs/standards/testing.md", "docs/standards/documentation.md"]
 last_updated: "2026-11-19"
 ---
 

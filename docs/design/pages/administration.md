@@ -1,6 +1,13 @@
-# Fathom: Administration Pages
+---
+title: "Administration Pages"
+category: "Design"
+audience: "AI Coding Assistant"
+applies_to: ["apps/web/src/**"]
+dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-18
+# Fathom: Administration Pages
 
 The Administration pages hold accounts, roles, settings, lists and data classes. They sit in the sidebar's Administration section in that order, each shown only to a role allowed to open it.
 

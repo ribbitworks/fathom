@@ -1,6 +1,13 @@
-# Fathom: History Pages
+---
+title: "History Pages"
+category: "Design"
+audience: "AI Coding Assistant"
+applies_to: ["apps/web/src/**"]
+dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md"]
+last_updated: "2026-11-19"
+---
 
-**Last updated:** 2026-11-18
+# Fathom: History Pages
 
 Change history and Access history list what was done in Fathom, newest first. They sit after Drafts in the sidebar's History section.
 
