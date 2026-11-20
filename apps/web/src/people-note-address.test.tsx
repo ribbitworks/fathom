@@ -348,6 +348,31 @@ describe("a note opened from a table's cell, kept in the address", () => {
     noCellNote();
   });
 
+  it("is kept apart from a note open in a person's details", async () => {
+    const history = await openAt("/people?open=E1&note=f1.p1");
+    const inDetails = () =>
+      screen.findByRole("region", { name: "Background for Avery Fictional" });
+    await inDetails();
+    fireEvent.click(cell("p1"));
+    await cellNote();
+    await waitFor(() => {
+      expect(tableNoteIn(history)).toBe("f1.p1");
+    });
+    expect(searchOf(history).get("note")).toBe("f1.p1");
+    act(() => {
+      history.back();
+    });
+    await waitFor(() => {
+      noCellNote();
+    });
+    await inDetails();
+    act(() => {
+      history.forward();
+    });
+    await cellNote();
+    await inDetails();
+  });
+
   it("opens nothing for a person not in the table", async () => {
     const history = await openAt("/people?tableNote=f1.p9");
     expect(tableNoteIn(history)).toBe("f1.p9");
