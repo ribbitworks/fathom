@@ -76,29 +76,27 @@ jobs:
   # On one runner beside the linters and scans, the package tests ran up to thirty times slower than
   # on a developer's computer, until tests timed out, so they have runners of their own.
   packages:
-    # GitHub shows a skipped matrix job's name unexpanded, so a skipped run is named without the matrix.
-    name: ${{ needs.changes.outputs.documentation-only == 'true' && 'Package tests (skipped for documentation)' || format('Package tests ({0})', matrix.name) }}
+    # A skipped job's name is shown unexpanded, so it names no matrix value; GitHub adds each part's
+    # name after it when the job runs, such as Package tests (web).
+    name: Package tests
     needs: changes
     if: needs.changes.outputs.documentation-only != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
       contents: read
+    # The web app's and the server's tests take longest, so each has a runner's four cores; the rest
+    # share one runner, a worker each. A package added later runs with the rest. Each part's settings
+    # are looked up by its name, so the matrix holds the name alone, which is all GitHub shows.
+    env:
+      PARTS: >-
+        {"web": {"packages": "@fathom/web", "workers": 4},
+        "server": {"packages": "@fathom/server", "workers": 4},
+        "the rest": {"packages": "!@fathom/web !@fathom/server", "workers": 1}}
     strategy:
       fail-fast: false
-      # The web app's and the server's tests take longest, so each has a runner's four cores; the
-      # rest share one runner, a worker each. A package added later runs with the rest.
       matrix:
-        include:
-          - name: web
-            packages: "@fathom/web"
-            workers: 4
-          - name: server
-            packages: "@fathom/server"
-            workers: 4
-          - name: the rest
-            packages: "!@fathom/web !@fathom/server"
-            workers: 1
+        part: [web, server, the rest]
     steps:
       - name: Check out
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -111,8 +109,8 @@ jobs:
       # A selector matching no package fails, so a renamed package is never left untested.
       - name: Run the package tests
         env:
-          PACKAGES: ${{ matrix.packages }}
-          VITEST_MAX_WORKERS: ${{ matrix.workers }}
+          PACKAGES: ${{ fromJSON(env.PARTS)[matrix.part].packages }}
+          VITEST_MAX_WORKERS: ${{ fromJSON(env.PARTS)[matrix.part].workers }}
         run: |
           read -r -a selectors <<<"$PACKAGES"
           filters=()
