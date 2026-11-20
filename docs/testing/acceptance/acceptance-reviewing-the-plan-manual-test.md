@@ -51,12 +51,12 @@ Run the test cases in order, in about 20 minutes, straight after [Planning Featu
   - **Expected:**
     - **To decide** is chosen beside the page's title.
     - Thirteen rows are shown, each with a tick box and **Made by** "Priya Lund as Product Manager":
-      - `Fictional Spring`, with **Type** "Release"
+      - "Fictional Spring in Fictional Mainline", with **Type** "Release"
       - the three customers, the three projects, the three features, the proposal, and the two milestones of `Fictional Lamp Room`
   - **Notes:**
 
 - [ ] `5C64` Type `Fictional Spring` in the search box.
-  - **Expected:** One row is shown, whose **Record** reads `Fictional Spring`.
+  - **Expected:** One row is shown, whose **Record** reads "Fictional Spring in Fictional Mainline".
   - **Notes:**
 
 - [ ] `A10A` Tick that row's tick box.
@@ -102,7 +102,7 @@ Run the test cases in order, in about 20 minutes, straight after [Planning Featu
   - **Notes:**
 
 - [ ] `0B7F` Select **All drafts** beside the page's title.
-  - **Expected:** One row is shown, `Fictional Spring`, whose **State** reads "Rejected" and whose **Reason** reads "Fictional reason: ship it at the end of the second cycle."
+  - **Expected:** One row is shown, "Fictional Spring in Fictional Mainline", whose **State** reads "Rejected" and whose **Reason** reads "Fictional reason: ship it at the end of the second cycle."
   - **Notes:**
 
 ### REVIEW-03: A Project Is Kept on Track
@@ -165,4 +165,4 @@ Run the test cases in order, in about 20 minutes, straight after [Planning Featu
   - **Expected:** The pill is gone, and the table lists the three features.
   - **Notes:**
 
-**Afterwards:** Run [Start Again](../manual-test-basics.md#start-again) to end the run here.
+**Afterwards:** Run [Staffing the Work](acceptance-staffing-the-work-manual-test.md) next, on this installation. To stop here instead, run [Start Again](../manual-test-basics.md#start-again).
