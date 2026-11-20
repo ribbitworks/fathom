@@ -25,10 +25,10 @@ import {
 } from "./drafts.ts";
 import {
   bothLists as lists,
+  draftToDecide as waiting,
   recordDraft,
   sitesList as sites,
   teamsList as teams,
-  waitingDraft as waiting,
 } from "./test-support.tsx";
 
 describe("the values a draft changes", () => {
