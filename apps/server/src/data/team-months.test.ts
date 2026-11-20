@@ -5,7 +5,7 @@
 // the teams' colours, and what the reader's drafts would change.
 
 import { describe, expect, it } from "vitest";
-import type { DraftedTeam } from "./feature-teams.ts";
+import type { DraftedTeam } from "./feature-team-reads.ts";
 import { teamMonthsFrom, type TeamMonthsRead } from "./team-months.ts";
 
 const today = "2025-06-15";

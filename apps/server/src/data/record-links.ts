@@ -16,7 +16,7 @@ import type { Actor } from "../access.ts";
 import { ForbiddenError } from "../errors.ts";
 import { accountExists } from "./accounts.ts";
 import { historyShowsRemoval } from "./change-history.ts";
-import { readFeatureTeams } from "./feature-teams.ts";
+import { readFeatureTeams } from "./feature-team-reads.ts";
 import { readLiveHires } from "./hire-reads.ts";
 import {
   seenLists,

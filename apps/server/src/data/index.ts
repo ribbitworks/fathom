@@ -102,6 +102,7 @@ import * as hireData from "./hires.ts";
 import * as hireReads from "./hire-reads.ts";
 import * as fills from "./fills.ts";
 import * as featureTeamData from "./feature-teams.ts";
+import { readFeatureTeams } from "./feature-team-reads.ts";
 import { readTeamMonths } from "./team-months.ts";
 import { recordExport } from "./exports.ts";
 import { readHistory, recordPersonalView } from "./history.ts";
@@ -580,7 +581,7 @@ export interface FeatureTeamAccess {
 function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
   return {
     read: async (actor, on) => {
-      const read = await featureTeamData.readFeatureTeams(database, actor, on);
+      const read = await readFeatureTeams(database, actor, on);
       // Seeing the days members join or leave is recorded while their class is above General: those
       // a draft gives, and those a reader who sees them can tell from teams on a chosen day, or from
       // the month a team disbands.
