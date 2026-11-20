@@ -44,7 +44,7 @@ LICENSES/                 Licence texts, as the REUSE specification requires
 
 - **Data access layer:** `apps/server/src/data/`. Every read of protected data goes through its class checks.
   - `packages/db` holds the schema, the migrations and the database client.
-  - A lint rule lets only these import `packages/db`: the data access layer, the server's start-up code, the account command, `seed`, `test-utils`, the server's test helper, and tests. Other code may use only its types.
+  - A lint rule lets only these import `packages/db`: the data access layer, the server's start-up code, the account command, `seed`, `test-utils`, the server's test helpers, and tests. Other code may use only its types.
 - **Shared code:** Only `packages/shared` is used by both the front end and the server, so server-only code never reaches the browser.
 - **Development-only packages:** `fixtures`, `seed` and `test-utils` never reach the runtime image, and the server never depends on them. `scripts/runtime-image.test.mjs` checks this.
   - The server exports its account and sign-in code only for `seed`, which creates and deactivates the development accounts with it. That code checks no permissions, so the server's own routes call it only after checking them.
