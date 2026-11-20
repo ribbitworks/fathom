@@ -18,11 +18,10 @@ import {
   type Draft,
   drafted,
   draftFields,
-  type Maker,
-  otherApprover,
   type Recorded,
   tidy,
-} from "./drafts.ts";
+} from "./draft-records.ts";
+import { type Maker, otherApprover } from "./draft-makers.ts";
 import {
   datesOf,
   type Everyone,

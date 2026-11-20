@@ -64,7 +64,7 @@ import {
   tierOfSensitivity,
 } from "../access.ts";
 import type { RecordType } from "./changes.ts";
-import { rejectedField } from "./drafts.ts";
+import { rejectedField } from "./draft-records.ts";
 import { featureTeamTier } from "./feature-team-sight.ts";
 import {
   hireSensitivities,

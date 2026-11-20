@@ -21,14 +21,8 @@ import {
   seesPeopleOverTime,
   seesSensitivity,
 } from "../access.ts";
-import {
-  type Draft,
-  drafted,
-  heldByOf,
-  readHeld,
-  readPersonDrafts,
-  type Recorded,
-} from "./drafts.ts";
+import { type Draft, drafted, type Recorded } from "./draft-records.ts";
+import { heldByOf, readHeld, readPersonDrafts } from "./drafts.ts";
 import { expectedMonth, undatedMark, hireIdOf } from "./hire-fields.ts";
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import { inForceOn } from "./in-force.ts";

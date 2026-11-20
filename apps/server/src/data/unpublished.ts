@@ -40,16 +40,13 @@ import {
 import {
   asDraft,
   type Draft,
-  chunksByKind,
   drafted,
-  draftKeys,
-  lockDrafts,
-  openChangeSets,
-  readPersonDrafts,
   type Recorded,
-  takenEmployeeIds,
   wantsNoDraft,
-} from "./drafts.ts";
+} from "./draft-records.ts";
+import { chunksByKind, draftKeys, openChangeSets } from "./draft-makers.ts";
+import { lockDrafts, readPersonDrafts } from "./drafts.ts";
+import { takenEmployeeIds } from "./drafted-values.ts";
 import { typeOf } from "./column-types.ts";
 import { fieldChanges } from "./fields.ts";
 import {

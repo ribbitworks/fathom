@@ -10,7 +10,7 @@ import {
   type RecordType,
 } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import type { Recorded } from "./drafts.ts";
+import type { Recorded } from "./draft-records.ts";
 import {
   type RecordsState,
   stateOf,

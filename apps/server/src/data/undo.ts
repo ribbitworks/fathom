@@ -33,7 +33,8 @@ import {
 import { columnsWithAdded } from "./added-columns.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import { type RecordType, recordChanges, type Transaction } from "./changes.ts";
-import { lockDrafts, rejectedField, setRejection } from "./drafts.ts";
+import { lockDrafts, setRejection } from "./drafts.ts";
+import { rejectedField } from "./draft-records.ts";
 import { lockFields } from "./fields.ts";
 import { removeEmptyOrders } from "./lists.ts";
 import {

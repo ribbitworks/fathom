@@ -13,7 +13,8 @@ import {
   readColumnsState,
   usesAddedList,
 } from "./column-drafts.ts";
-import { type Draft, readPersonDrafts } from "./drafts.ts";
+import type { Draft } from "./draft-records.ts";
+import { readPersonDrafts } from "./drafts.ts";
 import { readHireDrafts } from "./hire-reads.ts";
 import { addedChoices } from "./lists.ts";
 

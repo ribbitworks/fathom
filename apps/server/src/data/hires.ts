@@ -29,18 +29,20 @@ import { valueField, recordedValues } from "./values.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
 import {
   addDrafts,
+  lockDrafts,
+  readHeld,
+  refuseHeld,
+  writeDraft,
+} from "./drafts.ts";
+import {
   asDraft,
   clearedRejection,
   type Draft,
   drafted,
   draftFields,
-  lockDrafts,
-  readHeld,
   type Recorded,
-  refuseHeld,
   tidy,
-  writeDraft,
-} from "./drafts.ts";
+} from "./draft-records.ts";
 import {
   checkedLinks,
   checkedNotes,

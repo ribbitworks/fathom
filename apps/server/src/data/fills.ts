@@ -23,13 +23,11 @@ import { columnsWithAdded } from "./added-columns.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
 import {
   drafted,
-  lockDrafts,
   type Draft,
-  readHeld,
-  readPersonDrafts,
   type Recorded,
   type Viewer,
-} from "./drafts.ts";
+} from "./draft-records.ts";
+import { lockDrafts, readHeld, readPersonDrafts } from "./drafts.ts";
 import { recordHiringChanges } from "./hire-fields.ts";
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import {
