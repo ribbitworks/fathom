@@ -116,7 +116,12 @@ export const releasesRoute = createRoute({
   component: function Releases() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = releasesRoute.useNavigate();
-    const { tab = "releases", open, ...search } = releasesRoute.useSearch();
+    const {
+      tab = "releases",
+      open,
+      note,
+      ...search
+    } = releasesRoute.useSearch();
     const kept = { tab: tab === "releases" ? undefined : tab, open };
     return (
       <ReleasesPage
@@ -134,7 +139,7 @@ export const releasesRoute = createRoute({
         }}
         open={open}
         onOpen={(next) => {
-          void navigate({ search: { ...search, ...kept, open: next } });
+          void navigate({ search: { ...search, ...kept, open: next, note } });
         }}
         onFeatures={(at) => {
           void navigate(
@@ -158,7 +163,7 @@ export const releasesRoute = createRoute({
         {...viewProps(
           search,
           (next, replace) => {
-            void navigate({ search: { ...next, ...kept }, replace });
+            void navigate({ search: { ...next, ...kept, note }, replace });
           },
           // The tab is always one of the fixed tabs.
           // eslint-disable-next-line security/detect-object-injection
@@ -247,7 +252,8 @@ export const featuresRoute = createRoute({
     const navigate = featuresRoute.useNavigate();
     // Table or Board, and the cycle the Board starts from, are kept in the address but not the
     // view, which the table and the Board share.
-    const { open, mode, from, column, ...search } = featuresRoute.useSearch();
+    const { open, note, mode, from, column, ...search } =
+      featuresRoute.useSearch();
     const { stream, hide } = search;
     const linkedColumn = useLinkedColumn(column, () => {
       void navigate({
@@ -275,13 +281,18 @@ export const featuresRoute = createRoute({
         {...viewProps(
           search,
           (next, replace) => {
-            void navigate({ search: { ...next, mode, from, open }, replace });
+            void navigate({
+              search: { ...next, mode, from, open, note },
+              replace,
+            });
           },
           ["stream", "hide"],
         )}
         open={open}
         onOpen={(next) => {
-          void navigate({ search: { ...search, mode, from, open: next } });
+          void navigate({
+            search: { ...search, mode, from, open: next, note },
+          });
         }}
         board={{
           mode,
@@ -291,13 +302,16 @@ export const featuresRoute = createRoute({
                 ...search,
                 from,
                 open,
+                note,
                 mode: next === "board" ? next : undefined,
               },
             });
           },
           place: { stream, from, hide },
           onPlace: (place) => {
-            void navigate({ search: { ...search, mode, ...place, open } });
+            void navigate({
+              search: { ...search, mode, ...place, open, note },
+            });
           },
         }}
       />
@@ -323,7 +337,7 @@ export const projectsRoute = createRoute({
   component: function Projects() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = projectsRoute.useNavigate();
-    const { tab, open, ...search } = projectsRoute.useSearch();
+    const { tab, open, note, ...search } = projectsRoute.useSearch();
     return (
       <ProjectsPage
         tab={tab ?? "projects"}
@@ -333,11 +347,11 @@ export const projectsRoute = createRoute({
         }}
         approves={approvableKinds(permissions)}
         {...viewProps(search, (next, replace) => {
-          void navigate({ search: { ...next, tab, open }, replace });
+          void navigate({ search: { ...next, tab, open, note }, replace });
         })}
         open={open}
         onOpen={(next) => {
-          void navigate({ search: { ...search, tab, open: next } });
+          void navigate({ search: { ...search, tab, open: next, note } });
         }}
         onMilestonesOf={(project) => {
           void navigate({

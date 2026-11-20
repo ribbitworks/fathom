@@ -99,6 +99,7 @@ How Fathom's screens look and behave, so every page is built the same way. The p
   - **Saving:** Once anything changes, Clear, Cancel, and Save show at the foot, and the table waits until one is chosen, as [Leaving Unsaved Work](../standards/ui-conventions/entering-and-saving.md#leaving-unsaved-work) sets out. Esc doesn't close it while it's being changed, so nothing written is lost by mistake.
   - **Reading:** While a note is only read, the table stays usable, and opening another note replaces it.
   - **A release's note:** The last row of its details, opening in a panel of its own beside them.
+  - **Kept open:** A note opened from a record's details, on any page, is kept in the address, as [Kept in the address](../standards/ui-conventions/tables.md#the-address) sets out.
   - **Colours:** From the palette releases and teams share, in a text shade that reads in both modes, kept in the colour tag, such as `<span data-colour="teal">…</span>`.
   - **Flow:** A note goes from its panel to the screen like this:
 
@@ -166,7 +167,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **A record's menu outside a table:** `RecordMenu` in `record-menu.tsx`.
 - **Something that could not be loaded:** `LoadProblem` in `load-problem.tsx`.
 - **The buttons over a Name cell:** `RowControls` in `row-controls.tsx`, placed by `nameCellControls` in `row-menus.tsx` in the column its table names.
-- **Notes:** `NotePanel`, `NoteView`, and `NoteCell` in `note-editor.tsx`.
+- **Notes:** `NotePanel`, `NoteView`, and `NoteCell` in `note-editor.tsx`, with `useNoteEditing` in `note-editing.tsx` opening one from a record's details and keeping it in the address, through `note-address.ts`.
 - **Links:** `LinkEditor`, `LinkCell`, and `LinkMenuItem` in `link-field.tsx`.
 - **A draft's menu items and deciding drafts:** `DraftItems` in `list-drafts.tsx`, `DecisionModal` in `decision-dialog.tsx`, and `OtherApproverNote` in `draft-details.tsx`.
 - **Draft and status marks:** `DraftedItem`, `DraftedValue`, `RowMarks`, `MarkedItem`, `FactBox` and `LiveLine` in `status-mark.tsx`, under the page's `DraftView`, as [Drafts](../standards/ui-conventions/drafts-and-values.md#drafts) sets out.

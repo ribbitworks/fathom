@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for Note columns on the People page, with the server's responses simulated: a note in its
-// cell and its panel, saving, reading, clearing and pasting it, its drafts, and searching by it.
+// cell and its panel, saving, reading, clearing and pasting it, its drafts, searching by it, and its
+// panel kept in the address.
 
 import { colourTag } from "@fathom/shared";
 import {
@@ -593,6 +594,177 @@ describe("a Note column", () => {
           onPlannedHires: true,
         },
       ]);
+    });
+  });
+
+  describe("kept in the address", () => {
+    async function openAt(path: string, session = editor) {
+      serverAnswers({
+        "GET /api/session": session,
+        "GET /api/people": peopleAnswer(),
+        "GET /api/lists": () => Response.json({ lists: [positions] }),
+      });
+      const history = renderApp(path);
+      await screen.findByRole("grid", { name: "People" });
+      return history;
+    }
+    const detailsNote = (person: string) =>
+      screen.findByRole("region", { name: `Background for ${person}` });
+    const noDetailsNote = () => {
+      expect(
+        screen.queryByRole("region", { name: /^Background for / }),
+      ).toBeNull();
+    };
+    const noteIn = (history: { location: { search: string } }) =>
+      new URLSearchParams(history.location.search).get("note");
+
+    it("keeps a note opened from the details, and Back closes it", async () => {
+      const history = await openAt("/people?open=E1");
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Open Background" }),
+      );
+      await detailsNote("Avery Fictional");
+      await waitFor(() => {
+        expect(noteIn(history)).toBe("f1.p1");
+      });
+      act(() => {
+        history.back();
+      });
+      await waitFor(() => {
+        noDetailsNote();
+      });
+      expect(noteIn(history)).toBeNull();
+    });
+
+    it("takes the note out once closed", async () => {
+      const history = await openAt("/people?open=E1&note=f1.p1");
+      const opened = await detailsNote("Avery Fictional");
+      await userEvent.click(
+        within(opened).getByRole("button", { name: "Close note" }),
+      );
+      await waitFor(() => {
+        expect(noteIn(history)).toBeNull();
+      });
+      noDetailsNote();
+    });
+
+    it("opens the note it names, to be written by those who may", async () => {
+      await openAt("/people?open=E1&note=f1.p1");
+      const opened = await detailsNote("Avery Fictional");
+      expect(within(opened).getByText("Markdown")).toBeTruthy();
+    });
+
+    it("opens the note it names read only to those who may not change it", async () => {
+      await openAt("/people?open=E1&note=f1.p1", viewer);
+      const opened = await detailsNote("Avery Fictional");
+      expect(within(opened).getByText("Joined").tagName).toBe("STRONG");
+      expect(within(opened).queryByText("Markdown")).toBeNull();
+    });
+
+    it("opens nothing for another person's note, and takes it out", async () => {
+      const history = await openAt("/people?open=E2&note=f1.p1");
+      await screen.findByRole("button", { name: "Open Background" });
+      await waitFor(() => {
+        expect(noteIn(history)).toBeNull();
+      });
+      noDetailsNote();
+    });
+
+    it("stays open while the table's view changes", async () => {
+      const history = await openAt("/people?open=E1&note=f1.p1");
+      await detailsNote("Avery Fictional");
+      await userEvent.type(
+        screen.getByRole("textbox", { name: "Search people" }),
+        "Avery",
+      );
+      await waitFor(() => {
+        expect(new URLSearchParams(history.location.search).get("search")).toBe(
+          "Avery",
+        );
+      });
+      expect(noteIn(history)).toBe("f1.p1");
+      await detailsNote("Avery Fictional");
+    });
+
+    it("opens the note again with Forward", async () => {
+      const history = await openAt("/people?open=E1");
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Open Background" }),
+      );
+      await detailsNote("Avery Fictional");
+      act(() => {
+        history.back();
+      });
+      await waitFor(() => {
+        noDetailsNote();
+      });
+      act(() => {
+        history.forward();
+      });
+      await detailsNote("Avery Fictional");
+    });
+
+    it("keeps a changed note open through Back", async () => {
+      const history = await openAt("/people?open=E1");
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Open Background" }),
+      );
+      const opened = await detailsNote("Avery Fictional");
+      await userEvent.click(within(opened).getByText("Markdown"));
+      await userEvent.type(
+        within(opened).getByRole("textbox", { name: "Markdown" }),
+        " again",
+      );
+      act(() => {
+        history.back();
+      });
+      await waitFor(() => {
+        expect(noteIn(history)).toBeNull();
+      });
+      expect(
+        within(await detailsNote("Avery Fictional")).getByRole("textbox", {
+          name: "Markdown",
+        }),
+      ).toHaveProperty("value", `${averyNote} again`);
+    });
+
+    it("closes the note, and takes it out, once no person is shown", async () => {
+      const history = await openAt("/people?open=E1&note=f1.p1");
+      await detailsNote("Avery Fictional");
+      act(() => {
+        history.push("/people?note=f1.p1");
+      });
+      await waitFor(() => {
+        noDetailsNote();
+      });
+      await waitFor(() => {
+        expect(noteIn(history)).toBeNull();
+      });
+    });
+
+    it("closes the note, and takes it out, when the details close", async () => {
+      const history = await openAt("/people?open=E1&note=f1.p1");
+      await detailsNote("Avery Fictional");
+      await userEvent.click(
+        screen.getByRole("button", { name: "Close details" }),
+      );
+      await waitFor(() => {
+        expect(noteIn(history)).toBeNull();
+      });
+      noDetailsNote();
+    });
+
+    it("closes the note, and takes it out, when another person is shown", async () => {
+      const history = await openAt("/people?open=E1&note=f1.p1");
+      await detailsNote("Avery Fictional");
+      fireEvent.click(
+        screen.getByRole("button", { name: "Show details of Blake Fictional" }),
+      );
+      await screen.findByRole("heading", { name: "Blake Fictional" });
+      await waitFor(() => {
+        expect(noteIn(history)).toBeNull();
+      });
+      noDetailsNote();
     });
   });
 });

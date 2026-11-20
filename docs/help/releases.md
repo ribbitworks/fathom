@@ -95,7 +95,7 @@ A release can have one note, with formatting such as bold and lists, for anythin
 1. Write the note.
 1. Select **Save**.
 
-To read or change a note, open the release, then select the button at the right of its **Note** row.
+To read or change a note, open the release, then select the button at the right of its **Note** row. The note stays open when you reload the page, and a link to the page opens it for anyone who can see it.
 
 You're done when the release's **Note** row shows the start of your note.
 

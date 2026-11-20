@@ -52,6 +52,8 @@ You're done when the **Views** button shows the view's name. See [Saved views](s
 
 You're done when the value shows your change, with a hollow dot.
 
+A note you open stays open when you reload the page, and a link to the page opens it for anyone who can see it.
+
 ### Name a Reporting Team or Choose Its Colour
 
 To rename a team:

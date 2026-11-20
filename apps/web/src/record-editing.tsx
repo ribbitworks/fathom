@@ -2,16 +2,17 @@
 
 // Changing the values of a record in a details panel, or of one being added there, as its table's
 // cells do: which value's editor is open, and what is wrong with the value last given. Each value is
-// saved and checked as its cell saves and checks it.
+// saved and checked as its cell saves and checks it, and a note opens in a panel of its own.
 
 import { Checkbox, Group, NativeSelect, Text } from "@mantine/core";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useContext, useState } from "react";
 import { cellKinds, type EditorProps, startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { ClearableInput } from "./clearable-input.tsx";
 import { focusSoon, selectSoon } from "./focus.ts";
 import { readOnlyFor } from "./grid-columns.tsx";
 import { valueChange } from "./grid-saving.ts";
+import { noteOpenFor, OpenNoteContext } from "./note-address.ts";
 import type { Column, GridRecord, RecordTable } from "./record-table.ts";
 import classes from "./record-details.module.css";
 import {
@@ -217,12 +218,15 @@ export function useChosenUnits(
 
 // How a row's value may be changed: by its editor, started from the button beside the value and
 // shown in its place while open, or, with nothing to start, by a checkbox shown as the value, which
-// changes it in one step; and what is wrong with the value last given.
+// changes it in one step; and what is wrong with the value last given. A note the address asks for
+// is named by that address, and opened once its row is drawn.
 export interface Editing {
   open: boolean;
   editor: ReactNode;
   onStart?: (() => void) | undefined;
   problem: string | undefined;
+  askedBy?: string | undefined;
+  onAsked?: (() => void) | undefined;
 }
 
 // What changing the record shown needs: Fathom's own ID for it, its kind, its values and
@@ -245,12 +249,13 @@ export interface RecordEditingContext<Rec extends GridRecord, Change> {
 }
 
 // Opens a note, for tables that have them, in a panel of its own, where it is read, and written by
-// those who may.
+// those who may: when chosen, or, once its record's details are drawn, when the address asks for it.
 export interface NoteStarter<Rec extends GridRecord, Change, Context> {
   start: (
     context: Context & { save: SaveChange<Rec, Change> | undefined },
     column: Column<Rec, Change>,
     readOnly: boolean,
+    how?: "chosen" | "asked",
   ) => void;
 }
 
@@ -298,6 +303,8 @@ export function useRecordEditing<
   const [problems, setProblems] = useState<
     readonly { id: string; key: string; message: string }[]
   >([]);
+  // The note the address keeps open, which its row opens once drawn.
+  const openNote = useContext(OpenNoteContext)?.note;
   // Values being entered that were refused, so never saved: Add names them rather than taking them
   // as empty.
   const [refused, setRefused] = useState<readonly ValueProblem[]>([]);
@@ -374,6 +381,11 @@ export function useRecordEditing<
       if (kind.inPanel === true) {
         if (notes === undefined) return undefined;
         return {
+          askedBy:
+            noteOpenFor(openNote, id) === column.key ? openNote : undefined,
+          onAsked: () => {
+            notes.start({ ...context, save }, column, readOnly, "asked");
+          },
           open: false,
           editor: undefined,
           onStart: () => {

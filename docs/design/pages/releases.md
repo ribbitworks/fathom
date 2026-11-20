@@ -51,7 +51,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 
 - **Pencils:** Release, Ships on, Cycles and Colour, for those who change releases, as [Releases](../../product/roles.md#releases) in Roles sets out.
 - **No pencils:** On a release in a retired schedule, drafted to be removed, or held by another's unpublished changes.
-- **Note:** Each release has one built-in note, and schedules have none. It opens in a panel beside the details, from the Note row's open button, or from **Add note…** in the row's menu while empty. Those who see releases read it, and those who change releases write it.
+- **Note:** Each release has one built-in note, and schedules have none. It opens in a panel beside the details, from the Note row's open button, or from **Add note…** in the row's menu while empty. Those who see releases read it, and those who change releases write it. An open note is kept in the address as [Kept in the address](../../standards/ui-conventions/tables.md#the-address) sets out.
 
 ## Cycles Tab
 
