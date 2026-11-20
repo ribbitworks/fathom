@@ -9,9 +9,9 @@ cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh
 source scripts/lib.sh
 
-# Each job is its name and its command. ESLint runs without its cache in both checks: its
-# type-aware rules can fail in a file that has not changed when another file's types change, which
-# the cache cannot see.
+# Each job is its name and its command, the longest first, so a check that can't run them all side
+# by side starts those first. ESLint runs without its cache in both checks: its type-aware rules can
+# fail in a file that has not changed when another file's types change, which the cache cannot see.
 linters=(
   "ESLint|pnpm lint --no-cache"
   "Formatting|pnpm format:check"
@@ -20,11 +20,11 @@ linters=(
   "Shell scripts|pnpm lint:shell"
 )
 full_check=(
-  "${linters[@]}"
-  "Licences|pnpm lint:licences"
-  "Script tests|pnpm test:scripts"
   "Package tests|pnpm test:packages"
   "Security report|pnpm security"
+  "Script tests|pnpm test:scripts"
+  "${linters[@]}"
+  "Licences|pnpm lint:licences"
   "Renovate settings|pnpm lint:renovate"
 )
 before_push=(
@@ -38,6 +38,9 @@ online_jobs=(
   "Renovate settings|"
 )
 
+# A job running longer than this has hung; the longest, the package tests, takes about 5 minutes.
+job_limit_seconds="${FATHOM_CHECK_JOB_SECONDS:-900}"
+stop_grace_seconds=5
 logs=""
 # The process of each job still running, emptied once it ends.
 pids=()
@@ -78,26 +81,33 @@ main() {
   trap 'stop_jobs; rm -rf "$logs"' EXIT
   trap 'exit 130' INT
   trap 'exit 143' TERM
-  # Each job runs in its own process group, so stopping the check stops everything a job started.
-  set -m
 
   started="$(date +%s)"
-  for index in "${!jobs[@]}"; do
-    run_job "$index" &
-    pids[index]=$!
-    starts[index]="$(date +%s)"
-  done
-  info "Started ${#jobs[@]} jobs side by side; each one's output follows when it ends"
+  local at_once next=0 running=0 remaining="${#jobs[@]}" status stopped
+  at_once="$(jobs_at_once)"
+  info "Running ${#jobs[@]} jobs, up to $at_once side by side; each one's output follows when it ends"
 
-  local remaining="${#jobs[@]}" status
   while [ "$remaining" -gt 0 ]; do
+    while [ "$next" -lt "${#jobs[@]}" ] && [ "$running" -lt "$at_once" ]; do
+      start_job "$next"
+      starts[next]="$(date +%s)"
+      next=$((next + 1))
+      running=$((running + 1))
+    done
     for index in "${!jobs[@]}"; do
-      [ -n "${pids[index]}" ] || continue
+      [ -n "${pids[index]:-}" ] || continue
+      stopped=""
       if [ -s "$logs/$index.status" ]; then
         status="$(cat "$logs/$index.status")"
       elif kill -0 "${pids[index]}" 2>/dev/null; then
-        show_wait "$index"
-        continue
+        if [ $(($(date +%s) - starts[index])) -lt "$job_limit_seconds" ]; then
+          show_wait "$index"
+          continue
+        fi
+        # A job past the limit has hung, so it is stopped, and the check ends once the rest have.
+        stopped=1
+        status=1
+        stop_group "${pids[index]}"
       elif [ -s "$logs/$index.status" ]; then
         status="$(cat "$logs/$index.status")"
       else
@@ -109,16 +119,61 @@ main() {
       fi
       pids[index]=""
       seconds[index]=$(($(date +%s) - starts[index]))
-      if [ "$status" = 0 ]; then results[index]="Pass"; else results[index]="Fail"; fi
+      if [ -n "$stopped" ]; then
+        results[index]="Stopped"
+      elif [ "$status" = 0 ]; then
+        results[index]="Pass"
+      else
+        results[index]="Fail"
+      fi
       remaining=$((remaining - 1))
+      running=$((running - 1))
       printf '\n==> %s: %s in %ss (%s)\n' "$(job_name "$index")" "${results[index]}" "${seconds[index]}" \
         "$(job_command "$index")"
+      [ -z "$stopped" ] ||
+        printf '==> %s ran past the %ss limit, so it was stopped; its output up to then follows\n' \
+          "$(job_name "$index")" "$job_limit_seconds"
       cat "$logs/$index.log" 2>/dev/null || true
     done
     [ "$remaining" -eq 0 ] || sleep 1
   done
 
   print_results "$(($(date +%s) - started))"
+}
+
+# Starts a job in its own process group, so stopping the check stops everything the job started.
+# Job control is on only while it starts: left on, every command the check runs gets a group of its
+# own, racing with the command, and bash reports the loser's setpgid as not permitted.
+start_job() {
+  set -m
+  run_job "$1" &
+  pids[$1]=$!
+  set +m
+}
+
+# Stops a job's process group, and kills it if it hasn't ended a few seconds later, since a hung job
+# may not heed the request to stop.
+stop_group() {
+  local pid="$1" waited=0
+  kill -TERM -- "-$pid" 2>/dev/null || true
+  while kill -0 -- "-$pid" 2>/dev/null && [ "$waited" -lt "$stop_grace_seconds" ]; do
+    sleep 1
+    waited=$((waited + 1))
+  done
+  kill -KILL -- "-$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+}
+
+# How many jobs run side by side: all of them, or as many as the check's share of the cores while
+# it shares the computer with other checks, counted as the package tests count them.
+jobs_at_once() {
+  local shares="${FATHOM_CHECK_SHARES:-}" cores
+  if ! [[ "$shares" =~ ^[1-9][0-9]*$ ]]; then
+    printf '%s\n' "${#jobs[@]}"
+    return
+  fi
+  cores="$(node --print 'require("node:os").availableParallelism()')"
+  if [ "$((cores / shares))" -gt 0 ]; then printf '%s\n' "$((cores / shares))"; else printf '1\n'; fi
 }
 
 # Shows at once that a running job waits for another copy of the repository, such as for its turn to

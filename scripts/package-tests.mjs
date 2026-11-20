@@ -1,25 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Runs package tests in one copy of the repository at a time on this computer, with each package's
-// workers limited. Usage: node scripts/package-tests.mjs <pnpm arguments>, such as --recursive test
+// Runs package tests in a check's turn on this computer, with each package's workers limited.
+// Usage: node scripts/package-tests.mjs <pnpm arguments>, such as --recursive test
 
 import { availableParallelism } from "node:os";
 import { pathToFileURL } from "node:url";
-import {
-  inTurn,
-  machineSlots,
-  millisecondsPerSecond,
-} from "../packages/test-utils/src/slots.ts";
+import { inCheckTurn } from "./check-turn.mjs";
 import { runCommand } from "./run-command.mjs";
-
-// Several copies running package tests at once, as checks in several clones do, starve each other
-// until tests time out.
-export const packageTestRuns = machineSlots("package-tests", {
-  atOnce: 1,
-  retryMilliseconds: millisecondsPerSecond,
-  reportAfterMilliseconds: 0,
-  waitingTo: "run package tests",
-});
 
 // Runs pnpm with these arguments, saying whether it passed.
 export async function runPnpm(args, environment = process.env) {
@@ -34,9 +21,20 @@ export async function runPnpm(args, environment = process.env) {
 const packagesRunningLong = 4;
 const coresLeftFree = 2;
 
-// How many workers each package's Vitest may run, out of this computer's cores.
-export function workersPerPackage(cores = availableParallelism()) {
-  return Math.max(1, Math.floor((cores - coresLeftFree) / packagesRunningLong));
+// How many workers each package's Vitest may run, out of this computer's cores, when that many
+// checks share it.
+export function workersPerPackage(cores = availableParallelism(), shares = 1) {
+  return Math.max(
+    1,
+    Math.floor((cores - coresLeftFree) / shares / packagesRunningLong),
+  );
+}
+
+// How many checks share this computer, as the check that runs these tests was told, or one when no
+// check runs them.
+export function sharesOf(environment) {
+  const shares = Number.parseInt(environment.FATHOM_CHECK_SHARES ?? "", 10);
+  return Number.isInteger(shares) && shares > 0 ? shares : 1;
 }
 
 // pnpm's options that choose packages and take a package after them, and those that take none.
@@ -63,24 +61,23 @@ export function selectorsFirst(args) {
   return [...selectors, ...rest];
 }
 
-// Runs pnpm with these arguments once no other copy is running package tests, with each package's
-// workers limited unless VITEST_MAX_WORKERS already says how many, and says whether it passed.
+// Runs pnpm with these arguments in a check's turn, as package tests use every core they are given,
+// with each package's workers limited to the check's share unless VITEST_MAX_WORKERS already says
+// how many, and says whether it passed.
 export async function runPackageTests(
   args,
-  { slots = packageTestRuns, run = runPnpm, environment = process.env } = {},
+  { slots, run = runPnpm, environment = process.env } = {},
 ) {
   const ordered = selectorsFirst(args);
-  // The marker stops package tests run from within these from waiting on the slot this run holds.
-  return inTurn(
-    (marked) =>
+  return inCheckTurn(
+    (given) =>
       run(ordered, {
-        ...marked,
+        ...given,
         VITEST_MAX_WORKERS:
-          marked.VITEST_MAX_WORKERS || String(workersPerPackage()),
+          given.VITEST_MAX_WORKERS ||
+          String(workersPerPackage(availableParallelism(), sharesOf(given))),
       }),
-    slots,
-    "FATHOM_PACKAGE_TESTS_SLOT",
-    environment,
+    { slots, environment },
   );
 }
 
