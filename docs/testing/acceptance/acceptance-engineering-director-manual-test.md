@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-director.md", "docs/product/roles.md"]
-last_updated: "2026-11-18"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Acceptance, Engineering Director
@@ -373,7 +373,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `D738` In the second browser, select the **Features** page in the left-hand menu.
-  - **Expected:** The **Features** page opens, with its headings naming cycles.
+  - **Expected:**
+    - The **Features** page opens, showing the table.
+    - The rows are in one list, with no headings.
   - **Notes:**
 
 - [ ] `D6DB` In the second browser, open the Views menu, and select `Fictional by status` under **Shared views**.

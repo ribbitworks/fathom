@@ -135,7 +135,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-03.
 
-**Preconditions:** As METRICS-02, with **Break down by** set to **Position**.
+**Preconditions:** As METRICS-03: **People** page open, Live only shown, and the Metrics panel open, with **Break down by** set to **Position** and **and by** to **Site**.
+
+- [ ] `4832` Set **and by** to **Nothing more**.
+  - **Expected:**
+    - The **Position by Site** table is gone.
+    - The figures are headed **Count**, with a row for each position.
+  - **Notes:**
 
 - [ ] `99AA` Open the **Site** column menu, and select **Filter…**.
   - **Expected:**
