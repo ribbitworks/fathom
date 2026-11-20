@@ -116,10 +116,11 @@ const isClassMove = ({ recordType, draft, action, old }: Undone): boolean =>
   action === "changed" &&
   old.has("visibility");
 
-// Locks every record the undo changes that still exists, in the order other changes lock them:
-// lists, then their choices, then columns, then people, then saved views, then the effort
-// conversions. A change saved at the
-// same moment either finishes first, and is then seen as a change since, or waits for the undo.
+// Locks every live record the undo changes that still exists, in the order other changes lock
+// them: lists, then their choices, then columns, then people, then saved views. Records it changes
+// only in their drafts, such as hires, feature teams and the planning settings, need only the
+// drafts' lock. A change saved at the same moment either finishes first, and is then seen as a
+// change since, or waits for the undo.
 async function lockRecords(
   transaction: Transaction,
   records: readonly Undone[],
