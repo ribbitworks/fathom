@@ -107,6 +107,7 @@ import { readHistory, recordPersonalView } from "./history.ts";
 import { discardRecordDraft, kindOf, resubmitRecordDraft } from "./records.ts";
 import { readsKind } from "./record-state.ts";
 import * as projectData from "./projects.ts";
+import * as projectReads from "./project-reads.ts";
 import { readScopeHistory } from "./scope-history.ts";
 import type { PlanKind, PlanRecordRequest } from "./projects.ts";
 import * as releases from "./releases.ts";
@@ -837,7 +838,7 @@ const planAbilities = (actor: Actor) => ({
 
 const edited = async (
   actor: Actor,
-  saved: Promise<Saved<projectData.PlanRecords>>,
+  saved: Promise<Saved<projectReads.PlanRecords>>,
 ): Promise<Saved<ProjectPlan>> => {
   const { result, changeSetId } = await saved;
   return { result: { ...result, ...planAbilities(actor) }, changeSetId };
@@ -865,7 +866,7 @@ function createProjectAccess(database: Database): ProjectAccess {
     }),
     readChoices: async (actor) => {
       requireAnyPermission(actor, planOrFeatures);
-      return projectData.readPlanChoices(database);
+      return projectReads.readPlanChoices(database);
     },
     createFeatureColumn: async (actor, request) =>
       columnDrafts.createField(database, editor(actor), request, "features"),

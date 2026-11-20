@@ -13,7 +13,7 @@ import {
 import { readColumnsOut } from "./column-drafts.ts";
 import * as lists from "./lists.ts";
 import * as peopleData from "./people.ts";
-import * as projectData from "./projects.ts";
+import * as projectReads from "./project-reads.ts";
 import * as releases from "./releases.ts";
 
 // Lists' choices are also read by those who see People, whose columns draw on them.
@@ -38,8 +38,8 @@ export const planOrFeatures = ["plan:view", "features:view"] as const;
 // the plan.
 function seenRecords(
   actor: Actor,
-  records: projectData.PlanRecords,
-): projectData.PlanRecords {
+  records: projectReads.PlanRecords,
+): projectReads.PlanRecords {
   const seesPlan = actor.permissions.includes("plan:view");
   const seesFeatures = actor.permissions.includes("features:view");
   return {
@@ -58,9 +58,12 @@ function seenRecords(
 export async function seenPlan(
   database: Database,
   actor: Actor,
-): Promise<projectData.PlanRecords> {
+): Promise<projectReads.PlanRecords> {
   requireAnyPermission(actor, planOrFeatures);
-  return seenRecords(actor, await projectData.readPlanRecords(database, actor));
+  return seenRecords(
+    actor,
+    await projectReads.readPlanRecords(database, actor),
+  );
 }
 
 // The columns as their drafts make them, and their order, as the actor may see them, read as of one
