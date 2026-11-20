@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Reads the change history: the change sets saved, newest first, each holding only the changes the
-// reader's roles let them see. Part of the data access layer. A change set holding none is left out
-// altogether, so its timing reveals nothing, as is one holding another user's unpublished changes,
-// until they publish them. Records are named by the latest name the history the reader sees holds
-// for them, so a deleted record keeps its name, and identifiers in values are replaced by names.
+// Reading the change history: the change sets saved, newest first, each holding only the changes
+// the reader may see. Part of the data access layer.
 
 import {
   changes,
@@ -69,7 +66,11 @@ import {
 import type { RecordType } from "./changes.ts";
 import { rejectedField } from "./drafts.ts";
 import { featureTeamTier } from "./feature-teams.ts";
-import { hireSensitivities, hiringPlanFields, readHireTier } from "./hires.ts";
+import {
+  hireSensitivities,
+  hiringPlanFields,
+  readHireTier,
+} from "./hire-fields.ts";
 import { readToday } from "./settings.ts";
 import { currentOn, personTier } from "./people.ts";
 import { builtInTier } from "./values.ts";

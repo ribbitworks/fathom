@@ -1,0 +1,7 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* Styles for the date control's month slider. */
+
+.markLabel {
+  color: var(--mantine-color-text);
+}

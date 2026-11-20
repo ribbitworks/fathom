@@ -30,7 +30,7 @@ import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { draftMakers, everything, type Recorded } from "./drafts.ts";
 import { allocationFields, allocationKind } from "./allocation-kinds.ts";
-import { expectedMonth, hireIdOf } from "./hires.ts";
+import { expectedMonth, hireIdOf } from "./hire-fields.ts";
 import { currentOn, employedMonths, type Employment } from "./people.ts";
 import {
   drafting,

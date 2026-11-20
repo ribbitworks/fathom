@@ -92,14 +92,16 @@ import {
 } from "./records.ts";
 import { inListOrder, readColumns, valueField, valueRows } from "./values.ts";
 import { readToday } from "./settings.ts";
+import { recordHiringChanges } from "./hire-fields.ts";
+import {
+  refuseRemovingHiresPeople,
+  refuseUnmarkingHireManagers,
+} from "./hire-checks.ts";
 import {
   approveHiresIn,
   checkHiresAsked,
-  recordHiringChanges,
-  refuseRemovingHiresPeople,
-  refuseUnmarkingHireManagers,
   rejectHiresIn,
-} from "./hires.ts";
+} from "./hire-approvals.ts";
 
 const noDraft = "One of these people has no draft; refresh to see the latest";
 

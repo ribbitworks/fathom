@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Undoing a change set: one transaction that puts back the old values of everything it changed,
-// recorded as a new change set, so the history is never rewritten. Part of the data access layer.
-// Only the user who made a change can undo it, with the permissions it needs now, and only while
-// nothing it changed has been changed again since. Records it deleted come back with the same
-// identifiers, in the places they were in, and with the values they held. Changes to drafts are
-// undone in the drafts, and approving and rejecting drafts cannot be undone.
+// Undoing a change set: putting back the old values of everything it changed, recorded as a new
+// change set. Part of the data access layer.
 
 import {
   changes,
@@ -113,11 +109,13 @@ import {
   hireSensitivities,
   readHireTier,
   recordHiringChanges,
+} from "./hire-fields.ts";
+import {
   hireDraftsNaming,
   partOfFill,
   refuseUnmarkingHireManagers,
-  undoHireDrafts,
-} from "./hires.ts";
+} from "./hire-checks.ts";
+import { undoHireDrafts } from "./hire-approvals.ts";
 
 // Kinds of the plan's records, whose changes are not undone yet. The planning settings are left
 // out: they link to nothing, so putting back their draft breaks no rule across records.

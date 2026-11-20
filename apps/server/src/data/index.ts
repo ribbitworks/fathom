@@ -99,6 +99,7 @@ import * as lists from "./lists.ts";
 import * as peopleData from "./people.ts";
 import { readOrgChart, readOrgChartOn, setTeamColour } from "./org-chart.ts";
 import * as hireData from "./hires.ts";
+import * as hireReads from "./hire-reads.ts";
 import * as fills from "./fills.ts";
 import * as featureTeamData from "./feature-teams.ts";
 import { readTeamMonths } from "./team-months.ts";
@@ -639,7 +640,7 @@ function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
 function createHireAccess(database: Database): HireAccess {
   return {
     read: async (actor) => {
-      const { includedPersonal, ...read } = await hireData.readHires(
+      const { includedPersonal, ...read } = await hireReads.readHires(
         database,
         actor,
       );

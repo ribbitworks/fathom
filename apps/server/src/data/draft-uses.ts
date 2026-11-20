@@ -14,7 +14,7 @@ import {
   usesAddedList,
 } from "./column-drafts.ts";
 import { type Draft, readPersonDrafts } from "./drafts.ts";
-import { readHireDrafts } from "./hires.ts";
+import { readHireDrafts } from "./hire-reads.ts";
 import { addedChoices } from "./lists.ts";
 
 // The published drafts of columns, by column, as they make each column: removals left out.

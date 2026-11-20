@@ -16,6 +16,7 @@ import { DayInput } from "./day-input.tsx";
 import { focusSoon } from "./focus.ts";
 import { formatDay, formatMonth } from "./table-view.ts";
 import { today } from "./today.ts";
+import classes from "./date-control.module.css";
 
 const dateBoxId = "date-shown";
 const monthsEachWay = 24;
@@ -143,7 +144,7 @@ export function DateControl({
           thumbValueText={(months) =>
             formatMonth(monthOf(dayOfMonthFromNow(months)))
           }
-          styles={{ markLabel: { color: "var(--mantine-color-text)" } }}
+          classNames={{ markLabel: classes.markLabel }}
           flex={1}
           mt={dayBoxLabelHeight + handleOffset}
           mb="lg"

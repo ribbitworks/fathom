@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A user's unpublished changes to drafts, as ADR 0008 sets out: listing them, publishing them, all
-// at once or those chosen with the changes they use, so they wait for approval and everyone who sees
-// the records sees them, and discarding them, all at once or those chosen with the changes that use
-// them. Part of the data access layer. Publishing writes each unpublished draft over
-// the published draft of the same record, or removes the published draft when the user wants none,
-// and publishes the change sets that hold the changes; discarding records the changes it takes
-// back, as a change set only the user sees, so the change sets it ends are never published.
+// A user's unpublished changes to drafts: listing, publishing and discarding them, all at once or
+// those chosen. Part of the data access layer.
 
 import {
   changes,
@@ -86,11 +81,10 @@ import {
   hireChanges,
   type HireTier,
   hireIdOf,
-  readHireDrafts,
   readHireTier,
-  readLiveHires,
   recordHiringChanges,
-} from "./hires.ts";
+} from "./hire-fields.ts";
+import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import {
   readLiveTeams,
