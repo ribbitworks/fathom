@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The view each page last showed, kept on the server for the signed-in account: reading them
-// once, choosing the address a page opens on, and keeping the view a page shows.
+// once, deciding when a page opens on its last view and at which address, and keeping the view a
+// page shows.
 
 import {
   firstTables,
@@ -14,6 +15,7 @@ import {
 } from "@fathom/shared";
 import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
+import { z } from "zod";
 import { getJson, sendJson } from "./api.ts";
 import { sameView, savedFor, type View, viewFrom } from "./table-view.ts";
 
@@ -29,6 +31,17 @@ export const lastViewsQuery = queryOptions({
   staleTime: Number.POSITIVE_INFINITY,
   retry: false,
 });
+
+// The history state the left-hand menu's links carry, so a page chosen there while it is already
+// open shows its last view too, as it would if opened from another page.
+export const menuChoice = { fromMenu: true } as const;
+
+export const menuChoiceSchema = z.object({ fromMenu: z.literal(true) });
+
+// Whether a page opens on its last view: when it is opened from another page, or chosen in the
+// left-hand menu while it is open, but not when its own view changes, such as by Clear view.
+export const opensLastView = (cause: string, fromMenu: boolean): boolean =>
+  cause === "enter" || fromMenu;
 
 // The view a page shows, with the saved view it started from and the page's mode, as it is kept.
 export interface Shown {
