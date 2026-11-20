@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-team-accounts-manual-test.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Acceptance, Setting Up Fathom
@@ -324,11 +324,11 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
   - **Expected:** **State** reads "Hired".
   - **Notes:**
 
-- [ ] `CFE2` Type `Odile Brandt` in **Name**.
+- [ ] `CFE2` Select **Name**, type `Odile Brandt` and press Enter.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `A8CA` Type `EMP-100` in **ID**.
+- [ ] `A8CA` Select **ID**, type `EMP-100` and press Enter.
   - **Expected:** **ID** shows what was typed.
   - **Notes:**
 

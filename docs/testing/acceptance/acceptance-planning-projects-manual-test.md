@@ -210,7 +210,9 @@ Run the test cases in order, in about 25 minutes, straight after [Hiring and Who
 - [ ] `D763` Leave **Customer delivery** unticked, and select **Add milestone** in the dialog.
   - **Expected:**
     - `Lamps lit` is listed after `Lamp trial`.
-    - **First milestone** shows "2030-03-15", **Last milestone** "2030-06-30" and **Next delivery** "2030-03-15".
+    - **First milestone** shows March 15, 2030.
+    - **Last milestone** shows June 30, 2030.
+    - **Next delivery** shows March 15, 2030.
   - **Notes:**
 
 **Afterwards:** Run [Planning Features and a Release](acceptance-planning-features-and-a-release-manual-test.md) next, staying signed in, without publishing. To stop here instead, run [Start Again](../manual-test-basics.md#start-again).
