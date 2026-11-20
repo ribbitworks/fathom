@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Who was on which feature team, month by month, as approved, for the monthly grid, and as the team
-// drafts the reader sees would make it. Part of the data access layer. Each month is read as of its
-// first day, or today during the current month, so a draft's exact days show only as the months
-// they fall in. It needs every class of data Feature assignments needs, so its readers see everyone
-// employed during the months asked for and which of those months fall outside their employment;
-// whom each person reported to each month goes only to those who may group by manager, since later
-// months' lines are future reorganizations.
+// Who was on which feature team, month by month, approved and as drafted, for the monthly grid on
+// Feature assignments. Part of the data access layer.
 
 import {
   type Database,
@@ -23,7 +18,10 @@ import {
   type TeamMonths,
 } from "@fathom/shared";
 import { type Actor, requirePermission, requireView } from "../access.ts";
-import { type DraftedTeam, readDraftedMemberships } from "./feature-teams.ts";
+import {
+  type DraftedTeam,
+  readDraftedMemberships,
+} from "./feature-team-reads.ts";
 import { bySubject, currentRecordOn, inForceOn } from "./in-force.ts";
 import { currentOn, employedMonths, type Employment } from "./people.ts";
 import { type LineRow, readLines } from "./reporting.ts";

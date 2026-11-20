@@ -29,7 +29,7 @@ import { listChoices } from "./built-in-lists.ts";
 import type { Transaction } from "./changes.ts";
 import type { Recorded } from "./drafts.ts";
 import { staffedFeatures } from "./allocations.ts";
-import { readTeamDrafts } from "./feature-teams.ts";
+import { readTeamDrafts } from "./feature-team-reads.ts";
 import { readColumnsOut } from "./column-drafts.ts";
 import { liveValuesOf } from "./column-types.ts";
 import { readListsWithin } from "./lists.ts";
