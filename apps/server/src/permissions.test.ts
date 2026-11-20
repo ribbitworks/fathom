@@ -189,12 +189,8 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     { variant: "orders of choices", asked: () => ({ orders: [id()] }) },
   ].map((kind) => ({
     ...kind,
-    // Lists are seen with configuration, and with people, whose columns draw on them.
-    needs: {
-      kind: "permissions",
-      all: ["configuration:approve"],
-      any: [["configuration:view", "people:view"]],
-    } as const,
+    // A list's values are people's details, so deciding one needs sight of people.
+    needs: allOf("configuration:approve", "people:view"),
   })),
   {
     variant: "columns",
