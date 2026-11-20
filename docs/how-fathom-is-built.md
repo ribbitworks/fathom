@@ -160,3 +160,5 @@ The agents run in Claude Code, Anthropic's coding tool, with these models:
 - **Claude Opus 5.5 for the agents' own work:** designs, code, tests, documents and coordination.
 - **Claude Opus 5.5 for full reviews:** anything that touches security, and any change where the choice is in doubt.
 - **Claude Sonnet 5.5 for faster reviews:** changes to documents, scripts, on-screen wording and ordinary tests.
+
+A trial line, never merged.
