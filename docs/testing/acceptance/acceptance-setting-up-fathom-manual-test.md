@@ -324,11 +324,11 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
   - **Expected:** **State** reads "Hired".
   - **Notes:**
 
-- [ ] `CFE2` Select **Name**, type `Odile Brandt` and press Enter.
+- [ ] `CFE2` Type `Odile Brandt` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `A8CA` Select **ID**, type `EMP-100` and press Enter.
+- [ ] `A8CA` Type `EMP-100` in **ID**.
   - **Expected:** **ID** shows what was typed.
   - **Notes:**
 

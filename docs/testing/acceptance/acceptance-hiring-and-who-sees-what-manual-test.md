@@ -92,11 +92,11 @@ Run the test cases in order, in about 30 minutes, straight after [Feature Teams]
     - **Position** reads "Software Engineer", and **Manager** `Ada Quill`.
   - **Notes:**
 
-- [ ] `2B01` Select **Name**, type `Gil Ashby` and press Enter.
+- [ ] `2B01` Type `Gil Ashby` in **Name**.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `BE07` Select **ID**, type `EMP-107` and press Enter.
+- [ ] `BE07` Type `EMP-107` in **ID**.
   - **Expected:** **ID** shows what was typed.
   - **Notes:**
 
