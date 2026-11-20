@@ -231,7 +231,6 @@ export function LinkEditor(props: Parameters<typeof useLinkForm>[0]) {
       width={360}
       withinPortal
       hideDetached={false}
-      shadow="md"
     >
       <Popover.Target>
         <span className={classes.linkLabel}>

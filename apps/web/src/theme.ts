@@ -16,13 +16,16 @@ import {
   createTheme,
   isOptionsGroup,
   type MantineColorsTuple,
+  Menu,
   Modal,
   type OptionsFilter,
+  Popover,
   SegmentedControl,
   Select,
   Table,
 } from "@mantine/core";
 import comboboxClasses from "./combobox.module.css";
+import overlayClasses from "./overlay.module.css";
 import tableClasses from "./table.module.css";
 
 const sea: MantineColorsTuple = [
@@ -86,6 +89,12 @@ export const theme = createTheme({
     // Select styles its options under its own name, so it takes the same class.
     Combobox: Combobox.extend({
       classNames: { option: comboboxClasses.option },
+    }),
+    // Every menu, popover and drop-down list stands out from the page by a darker edge and a clear
+    // shadow; drop-down lists take it through Popover, while Menu passes its own classes to it.
+    Menu: Menu.extend({ classNames: { dropdown: overlayClasses.dropdown } }),
+    Popover: Popover.extend({
+      classNames: { dropdown: overlayClasses.dropdown },
     }),
     Select: Select.extend({
       classNames: { option: comboboxClasses.option },
@@ -179,6 +188,10 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-cycle": "#cfdae3",
     "--fathom-cycle-alternate": "#e2e9ef",
     "--fathom-cycle-edge": "var(--fathom-size-1)",
+    // A menu's or popover's edge and shadow, dark enough to stand out over a tinted row or a panel.
+    "--fathom-overlay-edge": "var(--mantine-color-gray-5)",
+    "--fathom-overlay-shadow":
+      "0 1px 3px rgb(15 42 56 / 18%), 0 8px 24px rgb(15 42 56 / 22%)",
   },
   dark: {
     "--mantine-color-body": "#17212a",
@@ -200,5 +213,9 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-cycle": "#34485a",
     "--fathom-cycle-alternate": "#2a3a48",
     "--fathom-cycle-edge": "#4a6178",
+    // Lighter than the panel's own edges, with a deeper shadow, since a shadow shows less on dark.
+    "--fathom-overlay-edge": "var(--mantine-color-dark-3)",
+    "--fathom-overlay-shadow":
+      "0 1px 3px rgb(0 0 0 / 50%), 0 10px 28px rgb(0 0 0 / 60%)",
   },
 });

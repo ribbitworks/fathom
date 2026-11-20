@@ -74,7 +74,6 @@ export function TeamNameEditor({
       position="bottom-start"
       trapFocus
       withArrow
-      shadow="md"
     >
       <Popover.Target>
         <UnstyledButton

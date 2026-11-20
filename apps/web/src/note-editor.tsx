@@ -188,7 +188,6 @@ function LinkControl({ id, editor }: { id: string; editor: Editor }) {
       position="bottom-start"
       width={360}
       withinPortal
-      shadow="md"
     >
       <Popover.Target>
         <RichTextEditor.Control
