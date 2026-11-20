@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*.ts", "**/*.tsx"]
 dependencies: ["core-principles.md", "code-review.md", "testing.md", "agent-workflow.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-19"
 ---
 
 # TypeScript Standards
@@ -45,7 +45,7 @@ design documents, its commands in `AGENTS.md`, and its decisions in `docs/adr/`.
   Check workflow runs on every pull request, as the
   [Agent Workflow](agent-workflow.md#workflow) and
   [Testing Standards](testing.md#running-tests) set out. Before the review, run
-  `pnpm test:changed` and the linters.
+  `pnpm check:push`.
 - Markdown is linted with `pnpm lint:md`.
 
 ## Code Review Criteria
