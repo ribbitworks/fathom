@@ -34,7 +34,7 @@ import {
   checkedNumbers,
   checkedValues,
   valuesOf,
-} from "./people.ts";
+} from "./person-fields.ts";
 import { milestonesOf } from "./project-kinds.ts";
 import { isGeneralFeature } from "./release-kinds.ts";
 import {

@@ -76,7 +76,8 @@ import {
   recordSubject,
   takingBackRecord,
 } from "./records.ts";
-import { personChanges, readLive, recordSensitiveChanges } from "./people.ts";
+import { personChanges, recordSensitiveChanges } from "./person-fields.ts";
+import { readLive } from "./people-reads.ts";
 import {
   hireChanges,
   type HireTier,

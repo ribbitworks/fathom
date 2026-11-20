@@ -50,17 +50,17 @@ import {
   draftNewPeople,
   draftPersonAsLive,
   draftPersonChange,
+  resubmitPersonDraftIn,
+} from "./people.ts";
+import {
   linksOf,
   noPerson,
   notesOf,
   numbersOf,
-  notStarted,
-  currentOn,
-  readLive,
   recordSensitiveChanges,
-  resubmitPersonDraftIn,
   valuesOf,
-} from "./people.ts";
+} from "./person-fields.ts";
+import { notStarted, currentOn, readLive } from "./people-reads.ts";
 import { readToday } from "./settings.ts";
 
 // The drafts of one fill: the hire filled, its person when the fill drafts them, with the fields it

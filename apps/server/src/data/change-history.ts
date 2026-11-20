@@ -72,7 +72,8 @@ import {
   readHireTier,
 } from "./hire-fields.ts";
 import { readToday } from "./settings.ts";
-import { currentOn, personTier } from "./people.ts";
+import { currentOn } from "./people-reads.ts";
+import { personTier } from "./person-fields.ts";
 import { builtInTier } from "./values.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { type RecordKind, readsKind } from "./record-state.ts";

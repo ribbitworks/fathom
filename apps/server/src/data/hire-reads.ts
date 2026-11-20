@@ -35,7 +35,8 @@ import {
   type Viewer,
 } from "./drafts.ts";
 import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
-import { notStarted, linksOf, notesOf, numbersOf, valuesOf } from "./people.ts";
+import { notStarted } from "./people-reads.ts";
+import { linksOf, notesOf, numbersOf, valuesOf } from "./person-fields.ts";
 import { text } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 import {

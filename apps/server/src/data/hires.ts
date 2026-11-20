@@ -48,7 +48,7 @@ import {
   checkedValues,
   choicesAskedFor,
   valuesOf,
-} from "./people.ts";
+} from "./person-fields.ts";
 import { reassignReports, text } from "./reporting.ts";
 import {
   hireChanges,
