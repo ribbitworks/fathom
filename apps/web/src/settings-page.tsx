@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Settings page, for users who may see settings for the whole of Fathom: its time zone, which
-// decides which day is today for everyone, such as the Today line on the Releases timeline and the
-// date a change takes effect when none is given, and the password settings. Those who may change
-// settings save each change at once, for everyone, and it is recorded in the access history; anyone
-// else sees them read only.
+// The Settings page: Fathom's time zone and its password settings.
 
 import {
   knowsTimeZone,
@@ -101,7 +97,8 @@ export function SettingsPage({
           noValidate
           onSubmit={(event) => {
             event.preventDefault();
-            changing.mutate({ timeZone: chosen });
+            // Enter in the read-only picker still submits the form.
+            if (canEdit) changing.mutate({ timeZone: chosen });
           }}
         >
           <Stack>
