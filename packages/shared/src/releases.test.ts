@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the requests that change release streams, their cycle patterns, and their releases: how
-// long a cycle may be, the order of a release's cycles, the day it ships, and its colour.
+// Tests for the requests that change release streams, their cycle patterns, and their releases: a
+// stream's name and last day, how long a cycle may be, and a release's cycles, ship day, colour and
+// note.
 
 import { describe, expect, it } from "vitest";
 import {
+  cycleLengthRequestSchema,
   cyclePatternRequestSchema,
   movedReleases,
   planSubjects,
+  releaseNoteRequestSchema,
   releaseRequestSchema,
+  releaseStreamRequestSchema,
+  scheduleEndRequestSchema,
   shipsBeforeStart,
 } from "./releases.ts";
 import { knownColour } from "./palette.ts";
@@ -28,6 +33,70 @@ const release = {
   firstCycle: "2027-01-01",
   lastCycle: "2027-04-01",
 };
+
+describe("releaseStreamRequestSchema", () => {
+  it("trims the name", () => {
+    expect(
+      releaseStreamRequestSchema.parse({ name: "  Fictional Stream " }).name,
+    ).toBe("Fictional Stream");
+  });
+
+  it.each([
+    ["a blank name", { name: "   " }],
+    ["no name", {}],
+  ])("refuses %s", (_, request) => {
+    expect(releaseStreamRequestSchema.safeParse(request).success).toBe(false);
+  });
+});
+
+describe("scheduleEndRequestSchema", () => {
+  it.each([["2027-09-30"], [null]])("accepts a last day of %s", (endsOn) => {
+    expect(scheduleEndRequestSchema.parse({ endsOn }).endsOn).toBe(endsOn);
+  });
+
+  it.each([
+    ["something other than a day", { endsOn: "30 September 2027" }],
+    ["no day", {}],
+  ])("refuses %s", (_, request) => {
+    expect(scheduleEndRequestSchema.safeParse(request).success).toBe(false);
+  });
+});
+
+describe("cycleLengthRequestSchema", () => {
+  it.each([
+    [1, "move"],
+    [104, "keep"],
+  ])(
+    "accepts a length of %i, moving or keeping later cycles",
+    (length, later) => {
+      expect(
+        cycleLengthRequestSchema.safeParse({ length, later }).success,
+      ).toBe(true);
+    },
+  );
+
+  it.each([
+    ["no length", { length: 0, later: "move" }],
+    ["more weeks than two years hold", { length: 105, later: "move" }],
+    ["part of a week or month", { length: 1.5, later: "move" }],
+    ["another way to treat later cycles", { length: 2, later: "drop" }],
+  ])("refuses %s", (_, request) => {
+    expect(cycleLengthRequestSchema.safeParse(request).success).toBe(false);
+  });
+});
+
+describe("releaseNoteRequestSchema", () => {
+  it.each([["Fictional note"], [null]])("accepts a note of %s", (note) => {
+    expect(releaseNoteRequestSchema.parse({ note }).note).toBe(note);
+  });
+
+  it.each([
+    ["no note", {}],
+    ["a note that isn't text", { note: 7 }],
+  ])("refuses %s", (_, request) => {
+    expect(releaseNoteRequestSchema.safeParse(request).success).toBe(false);
+  });
+});
 
 describe("cyclePatternRequestSchema", () => {
   it("accepts cycles of up to two years", () => {

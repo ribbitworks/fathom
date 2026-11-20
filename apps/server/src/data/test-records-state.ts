@@ -26,7 +26,13 @@ export const kindState = (
   rows: new Map(live),
   drafts: new Map(drafts),
   held,
-  keys: new Map(),
+  // Each record numbered in the order given, live ones first.
+  keys: new Map(
+    [...new Set([...live, ...drafts].map(([id]) => id))].map((id, index) => [
+      id,
+      index + 1,
+    ]),
+  ),
 });
 
 export const recordsState = (parts: Partial<RecordsState>): RecordsState => ({

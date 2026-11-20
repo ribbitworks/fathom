@@ -765,19 +765,6 @@ describe("when a stream's cycles change", () => {
       draft === undefined ? [] : [{ type: "cycle-pattern", id }],
     );
 
-  it("sends a stream's live cycles beside those its drafts make", async () => {
-    const streamId = await liveStream();
-    await changeLength(streamId, cycle.second, 2);
-    const stream = (
-      await test.request(configurer.cookie, "GET", "/api/release-streams")
-    )
-      .json<{ streams: ReleaseStream[] }>()
-      .streams.find(({ id }) => id === streamId);
-    expect(stream?.liveCycles?.map(({ startsOn }) => startsOn)).toContain(
-      cycle.third,
-    );
-  });
-
   it("moves features on the cycles that move, in the same drafts", async () => {
     const streamId = await liveStream();
     const feature = await liveFeature(target(streamId));

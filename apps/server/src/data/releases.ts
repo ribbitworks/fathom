@@ -7,18 +7,15 @@
 import type { Database } from "@fathom/db";
 import {
   cyclesOf,
-  knownColour,
   longestCycle,
   movedCycles,
   movedReleases,
   pastAnyMove,
   patternsForLength,
   type CycleLengthRequest,
-  type CyclePattern,
   type CyclePatternLike,
   type CyclePatternRequest,
   type Permission,
-  type Release,
   type ReleaseRequest,
   type ReleaseStream,
   type ReleaseStreamRequest,
@@ -29,143 +26,27 @@ import type { Actor } from "../access.ts";
 import { ConflictError, NotFoundError } from "../errors.ts";
 import type { Saved } from "./changes.ts";
 import type { Recorded } from "./drafts.ts";
-import {
-  addedOnly,
-  readsKind,
-  type RecordsState,
-  shownIds,
-  shownVersion,
-  stateOf,
-} from "./record-state.ts";
+import { addedOnly, type RecordsState, shownVersion } from "./record-state.ts";
 import {
   changeableRecord,
   discardRecordDraft,
   drafting,
   keptNote,
-  type Makers,
   readRecordMakers,
   readRecordsState,
-  recordExtras,
-  recordKeyNumber,
   saveRecordDraft,
   saveRecordDrafts,
   type Wanted,
 } from "./records.ts";
-import { releaseKind } from "./release-kinds.ts";
+import { streamAsSeen, streamOut, streamsOut } from "./release-stream-view.ts";
 import { readToday } from "./settings.ts";
 import {
-  endsOnIn,
   endsOnOf,
   laidOutUntil,
   streamPatterns,
-  livePatterns,
   streamFeatures,
   streamReleases,
 } from "./stream-cycles.ts";
-
-// The records of a kind in a stream, as shown, in order of the day given by a field.
-function inStream(
-  state: RecordsState,
-  type: RecordType,
-  streamId: string,
-  by: string,
-): { id: string; record: Recorded }[] {
-  return shownIds(state, type)
-    .flatMap((id) => {
-      const record = shownVersion(state, type, id);
-      return record?.streamId === streamId ? [{ id, record }] : [];
-    })
-    .sort((a, b) =>
-      // The field is one of the kind's own, named by the caller.
-      // eslint-disable-next-line security/detect-object-injection
-      String(a.record[by]).localeCompare(String(b.record[by])),
-    );
-}
-
-// A schedule as the viewer sees it, its cycles laid out until two years from today, or as far as
-// anything on them reaches.
-function streamOut(
-  state: RecordsState,
-  makers: Makers,
-  id: string,
-  today: string,
-): ReleaseStream {
-  const stream = shownVersion(state, "release-stream", id) as Recorded;
-  const patterns = inStream(state, "cycle-pattern", id, "startsOn").map(
-    ({ id: patternId, record }): CyclePattern => ({
-      id: patternId,
-      startsOn: String(record.startsOn),
-      length: Number(record.length),
-      unit: record.unit === "weeks" ? "weeks" : "months",
-      naming: String(record.naming),
-      ...recordExtras(state, makers, "cycle-pattern", patternId),
-    }),
-  );
-  const releases = inStream(state, "release", id, "firstCycle").map(
-    ({ id: releaseId, record }): Release => ({
-      id: releaseId,
-      keyNumber: recordKeyNumber(state, "release", releaseId),
-      name: String(record.name),
-      firstCycle: String(record.firstCycle),
-      lastCycle: String(record.lastCycle),
-      shipsOn: typeof record.shipsOn === "string" ? record.shipsOn : null,
-      colour: knownColour(record.colour),
-      note: typeof record.note === "string" ? record.note : null,
-      ...recordExtras(state, makers, "release", releaseId),
-    }),
-  );
-  const cyclesUntil = laidOutUntil(state, id, today);
-  const endsOn = endsOnIn(stream);
-  const cycles = cyclesOf(
-    streamPatterns(state, id).map(({ pattern }) => pattern),
-    cyclesUntil,
-    endsOn,
-  );
-  const liveCycles = cyclesOf(
-    livePatterns(state, id),
-    cyclesUntil,
-    endsOnIn(stateOf(state, "release-stream").live.get(id) ?? stream),
-  );
-  return {
-    id,
-    keyNumber: recordKeyNumber(state, "release-stream", id),
-    name: String(stream.name),
-    retired: stream.retired === true,
-    cyclesUntil,
-    endsOn,
-    patterns,
-    cycles,
-    ...(JSON.stringify(liveCycles) === JSON.stringify(cycles)
-      ? {}
-      : { liveCycles }),
-    releases,
-    ...recordExtras(state, makers, "release-stream", id),
-  };
-}
-
-// Every stream, in their order, then those drafted to be added, in the order drafted.
-export function streamsOut(
-  state: RecordsState,
-  makers: Makers,
-  today: string,
-): ReleaseStream[] {
-  const { rows } = stateOf(state, "release-stream");
-  const placeOf = (id: string) =>
-    Number(rows.get(id)?.position ?? Number.MAX_SAFE_INTEGER);
-  return shownIds(state, "release-stream")
-    .map((id, drafted) => ({ id, place: placeOf(id), drafted }))
-    .sort((a, b) => a.place - b.place || a.drafted - b.drafted)
-    .map(({ id }) => streamOut(state, makers, id, today));
-}
-
-// A stream as the viewer may see it, its releases only to those who may read releases, as the
-// release kind sets out.
-const asSeenBy =
-  (viewer: Actor) =>
-  (stream: ReleaseStream): ReleaseStream =>
-    readsKind(releaseKind, viewer.permissions)
-      ? stream
-      : { ...stream, releases: [] };
 
 // Every stream as the viewer sees it, with its patterns, cycles, and releases.
 export async function readReleaseStreams(
@@ -180,7 +61,7 @@ export async function readReleaseStreams(
         state,
         await readRecordMakers(transaction, state, viewer),
         await readToday(transaction),
-      ).map(asSeenBy(viewer));
+      ).map(streamAsSeen(viewer.permissions));
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
@@ -201,7 +82,7 @@ async function changingStream(
     const changeSetId = await change(transaction, state);
     const now = await readRecordsState(transaction, editor.user.id);
     return {
-      result: asSeenBy(editor)(
+      result: streamAsSeen(editor.permissions)(
         streamOut(
           now,
           await readRecordMakers(transaction, now, editor),
@@ -268,7 +149,10 @@ function inStreamRecord(
   return record;
 }
 
-const patternRecord = (streamId: string, request: CyclePatternRequest) => ({
+export const patternRecord = (
+  streamId: string,
+  request: CyclePatternRequest,
+) => ({
   streamId,
   startsOn: request.startsOn,
   length: request.length,
@@ -276,7 +160,7 @@ const patternRecord = (streamId: string, request: CyclePatternRequest) => ({
   naming: request.naming,
 });
 
-const releaseRecord = (streamId: string, request: ReleaseRequest) => ({
+export const releaseRecord = (streamId: string, request: ReleaseRequest) => ({
   streamId,
   name: request.name,
   firstCycle: request.firstCycle,
@@ -284,6 +168,18 @@ const releaseRecord = (streamId: string, request: ReleaseRequest) => ({
   shipsOn: request.shipsOn,
   colour: request.colour,
 });
+
+// A pattern or release as changed, keeping what the request does not hold, such as a release's note.
+export const changedInStream = (
+  kept: Recorded,
+  changed: Recorded,
+): Recorded => ({ ...kept, ...changed });
+
+// A release with the note given, kept as it is otherwise.
+export const notedRelease = (
+  release: Recorded,
+  note: string | null,
+): Recorded => ({ ...release, note });
 
 // Drafts adding a pattern or release to a stream.
 export async function addToStream(
@@ -328,10 +224,14 @@ export async function changeInStream(
       changed.type === "cycle-pattern"
         ? patternRecord(streamId, changed.request)
         : releaseRecord(streamId, changed.request);
-    return saveRecordDraft(transaction, maker, state, changed.type, id, {
-      ...kept,
-      ...record,
-    });
+    return saveRecordDraft(
+      transaction,
+      maker,
+      state,
+      changed.type,
+      id,
+      changedInStream(kept, record),
+    );
   });
 }
 
@@ -347,10 +247,14 @@ export async function changeReleaseNote(
   const kept = keptNote(note);
   return changingStream(database, maker, streamId, (transaction, state) => {
     const release = inStreamRecord(state, "release", streamId, id);
-    return saveRecordDraft(transaction, maker, state, "release", id, {
-      ...release,
-      note: kept,
-    });
+    return saveRecordDraft(
+      transaction,
+      maker,
+      state,
+      "release",
+      id,
+      notedRelease(release, kept),
+    );
   });
 }
 
