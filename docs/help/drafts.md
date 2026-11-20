@@ -30,11 +30,15 @@ Approvers approve and reject drafts on the [Drafts page](drafts-page.md), under 
 
 ## What the Draft Menu Shows
 
-Each table has a **Draft** menu, which chooses how drafts show. Its button names the choice, such as **Drafts & Live**:
+Each table of records, such as People or Features, has a **Draft** menu, which chooses how drafts show. Its button names the choice, such as **Drafts & Live**:
 
 - **Drafts & Live** shows each draft next to how the record is now.
 - **Drafts applied** shows everything as it will be once the waiting drafts are approved. You see the drafts' dots, but no tints, bold or Live rows.
 - **Live only** shows everything as it is now. A green dot marks each record or value a waiting draft would change. Point at it to see what kind of change is waiting.
+
+On the tables of records, such as People, Features, Projects and Releases, the menu also filters the rows, under **Filter**. Choose **Waiting**, **Rejected** or **No draft** to show only the records with that kind of draft, or none. The menu's button has a dot after its name while the filter is on. The filter needs drafts shown, so it's greyed out under **Live only**, and **Rejected** is greyed out under **Drafts applied**.
+
+If your role approves drafts, the menu ends with **Approve** and **Reject** for every waiting draft the table shows, such as **Approve 4 drafts…**. When a search, a filter or a hidden column hides some, the menu says so, such as **4 of 6 waiting drafts shown**. **Approve** leaves some drafts waiting: those someone else must approve, such as drafts you changed yourself, and those that depend on a rejected draft. The dialog names them.
 
 ## Undo
 
