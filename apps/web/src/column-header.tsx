@@ -26,7 +26,7 @@ import { breaksDown } from "./grid-columns.tsx";
 import { fieldDraftLines } from "./grid-drafts.ts";
 import type { EditingGrid } from "./grid-editing.tsx";
 import { Icon } from "./icons.tsx";
-import { shortcutsFor } from "./list-panel.tsx";
+import { shortcutsFor } from "./menu-shortcuts.ts";
 import classes from "./pages.module.css";
 import { CopyLinkItem } from "./record-key.tsx";
 import type { Column, GridRecord } from "./record-table.ts";

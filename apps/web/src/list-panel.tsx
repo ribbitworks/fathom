@@ -33,9 +33,6 @@ import classes from "./pages.module.css";
 import { originalOf } from "./record-drafts.ts";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 
-export { entryNameId, rowId } from "./choice-ids.ts";
-export { shortcutsFor } from "./menu-shortcuts.ts";
-
 export interface ChoiceActions {
   // Adds choices; if they cannot be saved, gives back what was typed.
   add: (requests: ChoiceRequest[], onFailed: () => void) => void;

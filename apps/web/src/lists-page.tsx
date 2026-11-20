@@ -27,17 +27,10 @@ import {
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { type MouseEvent, type ReactNode, useState } from "react";
 import { DecisionModal } from "./decision-dialog.tsx";
-import {
-  approvesAll,
-  decidable,
-  type DraftSelection,
-  draftTotal,
-  noDrafts,
-  waitsForRejected,
-} from "./drafts.ts";
+import { approvesAll, noDrafts, waitsForRejected } from "./drafts.ts";
 import { type Decision, decisionFor } from "./draft-decisions.ts";
 import { focusSoon } from "./focus.ts";
 import { ListDialog } from "./list-dialog.tsx";
@@ -52,18 +45,17 @@ import {
   drafting,
   draftName,
   type DraftOn,
-  listMark,
   type ListDraftActions,
   selectionOf,
 } from "./list-drafts.tsx";
+import { entryNameId, rowId } from "./choice-ids.ts";
 import {
-  type ChoiceActions,
-  entryNameId,
-  ListPanel,
-  rowId,
-  titleId,
-} from "./list-panel.tsx";
-import { ListFacts } from "./list-facts.tsx";
+  draftsWaitingIn,
+  reordered,
+  withList,
+  withoutField,
+} from "./list-changes.ts";
+import { type ChoiceActions, ListPanel, titleId } from "./list-panel.tsx";
 import {
   addChoices,
   deleteChoice,
@@ -72,7 +64,6 @@ import {
   draftedLists,
   isKind,
   type ListDraftTarget,
-  builtInFirst,
   type ListKind,
   listKindName,
   listKindSchema,
@@ -81,7 +72,6 @@ import {
   listRefusal,
   moveChoice,
   resubmitListDraft,
-  retiredLive,
   setChoiceRetired,
   setListRetired,
   updateChoice,
@@ -92,265 +82,15 @@ import { sidePanelScroll, WithSidePanel } from "./side-panel.tsx";
 import classes from "./pages.module.css";
 import { useSaving } from "./saving.ts";
 import { count } from "./numbers.ts";
-import {
-  besideLive,
-  DraftedValue,
-  DraftView,
-  LiveValue,
-  useBesideLive,
-} from "./status-mark.tsx";
-import { recordMark } from "./draft-marks.ts";
-import {
-  LivePartsCell,
-  LiveSummaryName,
-  PartsCell,
-  SummaryName,
-  SummaryRow,
-} from "./summary-row.tsx";
+import { besideLive, DraftView } from "./status-mark.tsx";
+import { linkId, ListsTable } from "./lists-table.tsx";
 import { originalOf } from "./record-drafts.ts";
 import { DecideAllItems, DraftMenu, TableSearch } from "./table-controls.tsx";
 
 const newListId = "list-new";
 const listPanelId = "list-panel";
 
-const linkId = (list: { id: string }) => `list-link-${list.id}`;
-
 type Dialog = { kind: "new" } | { kind: "edit"; list: List };
-
-// The drafts waiting for approval among the lists given: of lists, choices, and orders.
-function waitingIn(lists: readonly List[]): {
-  selection: DraftSelection;
-  total: number;
-} {
-  const selection: DraftSelection = {
-    ...noDrafts(),
-    lists: lists.filter(decidable).map(({ id }) => id),
-    choices: lists.flatMap((list) =>
-      list.choices.filter(decidable).map(({ id }) => id),
-    ),
-    orders: lists
-      .filter((list) =>
-        decidable({ draft: list.orderDraft, heldBy: list.orderHeldBy }),
-      )
-      .map(({ id }) => id),
-  };
-  return { selection, total: draftTotal(selection) };
-}
-
-// A record without one of its optional fields, such as its draft.
-function without<Record extends object>(
-  record: Record,
-  field: keyof Record,
-): Record {
-  return Object.fromEntries(
-    Object.entries(record).filter(([key]) => key !== field),
-  ) as Record;
-}
-
-// The lists with one list changed.
-function withList(
-  lists: List[],
-  id: string,
-  change: (list: List) => List,
-): List[] {
-  return lists.map((list) => (list.id === id ? change(list) : list));
-}
-
-// A list's choices with one taken out and put back just after another, or at the top.
-function reordered(
-  choices: readonly Choice[],
-  choice: Choice,
-  after: string | null,
-): Choice[] {
-  const others = choices.filter((other) => other.id !== choice.id);
-  const at = others.findIndex((other) => other.id === after) + 1;
-  return [...others.slice(0, at), choice, ...others.slice(at)];
-}
-
-// What a list's row shows of the list itself, each marked by its own dot where a draft changes it.
-const listRowFields = new Set(["name", "description"]);
-
-function ListsTable({
-  lists,
-  selected,
-  search: address,
-  originalOf,
-  onOpen,
-}: {
-  lists: List[];
-  selected: string | undefined;
-  // The page address's search, kept as lists are opened.
-  search: { show?: Show; search?: string };
-  // The list with every draft, whatever the view, which its marks are worked out from, so the Draft
-  // view decides how they show.
-  originalOf: (list: List) => List;
-  onOpen: (list: List) => void;
-}) {
-  const [showRetired, setShowRetired] = useState(false);
-  const showLive = useBesideLive();
-  // Beside live, a list a draft retires or restores stays where it is live until approved, as one a
-  // draft removes stays, struck through.
-  const isRetired = (list: List) =>
-    showLive ? retiredLive(list) : list.retired;
-  const current = builtInFirst(lists.filter((list) => !isRetired(list)));
-  const retired = builtInFirst(lists.filter(isRetired));
-  // A choice drafted to be removed is struck through, as in the panel, and not counted.
-  const removed = (choice: List["choices"][number]) =>
-    choice.draft?.action === "deleted";
-  const row = (list: List) => {
-    const offered = list.choices.filter((choice) => !choice.retired);
-    const original = originalOf(list);
-    const mark = listMark(original);
-    // The list as it is live, under a list whose draft, or whose choices' drafts, change it, as a
-    // person's live row is under their draft row: every cell, so like is compared with like.
-    const [live] = liveLists([list]);
-    const liveOffered = (live?.choices ?? []).filter(
-      (choice) => !choice.retired,
-    );
-    // The list's own draft, marked in the row's slot only where it changes what the row does not
-    // show, such as retiring the list, and its choices' and order's drafts, marked before the
-    // choices, so each mark is before what changed.
-    const slotMark =
-      recordMark(original.draft, listRowFields) === undefined
-        ? undefined
-        : listMark({
-            ...original,
-            orderDraft: undefined,
-            choices: original.choices.map((choice) => ({
-              ...choice,
-              draft: undefined,
-            })),
-          });
-    const choicesChanged = listMark({ ...original, draft: undefined });
-    const choiceParts = offered.map((choice) => ({
-      id: choice.id,
-      name: choice.label,
-      removed: removed(choice),
-    }));
-    return (
-      <SummaryRow
-        key={list.id}
-        selected={list.id === selected}
-        retired={list.retired}
-        tint={
-          mark === undefined ? undefined : (list.draft ?? { action: "changed" })
-        }
-        rowProps={{ "data-list-row": "" }}
-        onOpen={() => {
-          onOpen(list);
-        }}
-        liveCells={
-          live !== undefined &&
-          mark !== undefined &&
-          list.draft?.action !== "deleted" ? (
-            <>
-              <LiveSummaryName
-                marked={slotMark !== undefined}
-                draft={list.draft}
-              >
-                {live.name}
-              </LiveSummaryName>
-              <span role="cell" className={classes.listCellDim}>
-                <LiveValue
-                  draft={list.draft}
-                  fields={["description"]}
-                  emptied={live.description === "" ? "Description" : undefined}
-                >
-                  {live.description}
-                </LiveValue>
-              </span>
-              <LivePartsCell
-                marked={choicesChanged !== undefined}
-                names={liveOffered.map((choice) => choice.label)}
-              />
-            </>
-          ) : undefined
-        }
-      >
-        <SummaryName
-          mark={
-            slotMark && {
-              ...slotMark,
-              unpublished: original.draft?.unpublished,
-            }
-          }
-          draft={original.draft}
-          unpublished={mark === undefined && original.draft?.unpublished}
-          heldBy={list.heldBy}
-          dataClass={list.visibility}
-          facts={<ListFacts list={list} />}
-        >
-          <Link
-            id={linkId(list)}
-            to="/lists/{-$listId}"
-            params={{ listId: list.id }}
-            search={address}
-            className={classes.listLink}
-          >
-            {list.name}
-          </Link>
-        </SummaryName>
-        <span role="cell" className={classes.listCellDim}>
-          <DraftedValue
-            draft={original.draft}
-            fields={["description"]}
-            named="Description"
-            emptied={list.description === "" ? "Description" : undefined}
-          >
-            {list.description}
-          </DraftedValue>
-        </span>
-        <PartsCell mark={choicesChanged} parts={choiceParts} />
-      </SummaryRow>
-    );
-  };
-  return (
-    <Paper withBorder className={classes.tablePanel}>
-      <div role="table" aria-label="Lists" className={classes.listTable}>
-        <div role="row" className={classes.listHead}>
-          <span role="columnheader">Name</span>
-          <span role="columnheader">Description</span>
-          <span role="columnheader">Choices</span>
-        </div>
-        {lists.length === 0 && (
-          <div role="row" className={classes.listGroup}>
-            <span role="cell" aria-colspan={3}>
-              No matching lists
-            </span>
-          </div>
-        )}
-        {current.map(row)}
-        {showRetired && (
-          <>
-            <div role="row" className={classes.listGroup}>
-              <span role="cell" aria-colspan={3}>
-                Retired
-              </span>
-            </div>
-            {retired.map(row)}
-          </>
-        )}
-      </div>
-      {retired.length > 0 && (
-        <div className={classes.listFoot}>
-          <Button
-            variant={showRetired ? "light" : "default"}
-            color="gray"
-            size="compact-sm"
-            aria-pressed={showRetired}
-            onClick={() => {
-              setShowRetired(!showRetired);
-            }}
-          >
-            {showRetired
-              ? "Hide retired"
-              : `Show retired (${count(retired.length)})`}
-          </Button>
-        </div>
-      )}
-    </Paper>
-  );
-}
 
 // The switch names each option's radio button after its own name, which is how closing a panel
 // finds the option chosen.
@@ -629,17 +369,21 @@ export function ListsPage({
     if (what.kind === "list") {
       return what.list.draft?.action === "created"
         ? current.filter((other) => other.id !== what.list.id)
-        : withList(current, what.list.id, (list) => without(list, "draft"));
+        : withList(current, what.list.id, (list) =>
+            withoutField(list, "draft"),
+          );
     }
     return withList(current, what.list.id, (list) => {
-      if (what.kind === "order") return without(list, "orderDraft");
+      if (what.kind === "order") return withoutField(list, "orderDraft");
       return {
         ...list,
         choices:
           what.choice.draft?.action === "created"
             ? list.choices.filter((other) => other.id !== what.choice.id)
             : list.choices.map((other) =>
-                other.id === what.choice.id ? without(other, "draft") : other,
+                other.id === what.choice.id
+                  ? withoutField(other, "draft")
+                  : other,
               ),
       };
     });
@@ -763,7 +507,7 @@ export function ListsPage({
   // Every draft waiting among the lists shown, which Approvers approve or reject all at once, with
   // the drafts that approving them uses, or that use them.
   const waiting = canApprove
-    ? waitingIn(shownLists)
+    ? draftsWaitingIn(shownLists)
     : { selection: noDrafts(), total: 0 };
   const decideAll = (asking: "approve" | "reject") => {
     setDecision(
@@ -824,7 +568,7 @@ export function ListsPage({
               {waiting.total > 0 && (
                 <DecideAllItems
                   total={waiting.total}
-                  everywhere={waitingIn(all).total}
+                  everywhere={draftsWaitingIn(all).total}
                   onDecide={decideAll}
                 />
               )}
