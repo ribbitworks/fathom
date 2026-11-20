@@ -24,10 +24,14 @@ The standards these rules point to are in `docs/standards/`.
 
 - Before making any change in a session, ask the owner which mode to use, and
   follow [agent-workflow.md](docs/standards/agent-workflow.md):
-  - **Autonomous:** have the owner verify UI changes, run the tests, fix
-    failures and warnings, get a separate-agent code review, and commit only
-    after the owner's explicit approval. Push and open a pull request only when
-    the owner says the work is ready.
+  - **Autonomous:** have the owner verify UI changes, and approve or run a new
+    manual test or a significant change to one, before committing. Run the
+    tests, fix failures and warnings, and get a separate-agent code review.
+    Then commit, push and open a pull request without waiting for the owner's
+    approval. Ask the owner about any decision the owner should weigh in on,
+    and before leaving a review finding unfixed; record everyday choices in the
+    pull request under a Decisions heading. Propose any issue to the owner, and
+    file only those approved.
   - **Restrictive:** get approval before changing code, then edit files only.
     No builds or tests, and no staging, commits, pushes or pull requests unless
     the owner asks in the current turn.
@@ -108,7 +112,7 @@ cannot say. Never narrate names, UI, tickets, use-case numbers or history. See
 
 - **Setup on a new branch:** `pnpm install`, then run `pnpm dev` again, which first stops this clone's running one, since the top bar's development label shows the branch `pnpm dev` started on. A clone that already has `.dev/` needs nothing more to run the app. In a clone without it, ask the owner whether to copy `.dev/` from another clone, so the development accounts keep one password everywhere, and which clone number to give it with `pnpm dev:setup <number>`, run straight after copying, since `.dev/` holds the other clone's number. Each clone number has its own database and ports, as [Development Setup](docs/design/development-setup.md#ways-to-run-fathom) describes.
 - **Workflow test step:** as [Testing Standards](docs/standards/testing.md#running-tests) sets out, `pnpm check:push`. When a change affects the containers, the test step also runs `pnpm test:containers`.
-- **Full suite:** the Check workflow runs the full `pnpm check` on the pull request on GitHub. Push once the review's findings are fixed, `pnpm check:push` passes on the code rebased onto `main`, and the owner approves the commit; then follow the run with `gh pr checks --watch` and fix any failure or warning as a later commit. The owner merges only on green. Running `pnpm check` locally is optional, for when the workflow can't run.
+- **Full suite:** the Check workflow runs the full `pnpm check` on the pull request on GitHub. Push once the review's findings are fixed and `pnpm check:push` passes on the code rebased onto `main`, without waiting for the owner's approval; then follow the run with `gh pr checks --watch` and fix any failure or warning as a later commit. The owner merges only on green. Running `pnpm check` locally is optional, for when the workflow can't run.
 - **Tests only:** `pnpm test`
 - **Checks while working and after each round of fixes:** `pnpm check:push`, as [Testing Standards](docs/standards/testing.md#running-tests) describes; without the internet, `pnpm check:push --offline`, as [Development Setup](docs/design/development-setup.md#working-offline) describes
 - **Container tests:** `pnpm test:containers`
@@ -120,7 +124,7 @@ cannot say. Never narrate names, UI, tickets, use-case numbers or history. See
 
 Changes reach `main` only through a pull request, as [agent-workflow.md](docs/standards/agent-workflow.md) requires. Pull request titles, descriptions and comments follow the commit message rules and carry no AI attribution.
 
-Before starting a task, find and fix the issues in its areas, as [Issues § Fixing an Issue](docs/standards/issues.md#fixing-an-issue) sets out. In Autonomous mode, a set of issues in one area is worked as a batch. A batch commits each fix on its own, then has one review and one approval for the whole branch, as an exception to the Autonomous workflow that [Issues § Issue Batches](docs/standards/issues.md#issue-batches) sets out.
+Before starting a task, find and fix the issues in its areas, as [Issues § Fixing an Issue](docs/standards/issues.md#fixing-an-issue) sets out. In Autonomous mode, a set of issues in one area is worked as a batch. A batch commits each fix on its own, then has one review for the whole branch, as an exception to the Autonomous workflow that [Issues § Issue Batches](docs/standards/issues.md#issue-batches) sets out.
 
 ## Data
 

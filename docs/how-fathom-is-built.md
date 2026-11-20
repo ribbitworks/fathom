@@ -7,7 +7,7 @@ AI agents write most of Fathom's code and documents, under a human's direction a
 - **100% test coverage, enforced:** Every tested package fails its tests below 100% of branches, functions, lines and statements. What is left out, and why, is set out under [Coverage](#coverage).
 - **Manual tests that act as requirements:** Each feature has a written manual test of numbered cases with exact expected results, from a person's side. Each role has an acceptance test that follows its daily work. The maintainer has run them all, and runs them again as features change.
 - **Every screen seen by a person:** The maintainer looks at every screen change before it is tested or reviewed.
-- **Every change reviewed twice:** A separate agent reviews each change against written standards, then the maintainer approves each commit, or each batch of fixes, and every merge.
+- **Every change reviewed, every merge approved:** A separate agent reviews each change against written standards, and the maintainer approves every merge, after checking every screen change and every new or significantly changed manual test.
 - **Security checked on every pull request:** Dependency, source code and secret scans run with the tests on every push to a pull request and to `main`, and the container images are scanned again whenever what they're built from changes. The scans fail on a fix that is overdue or any other critical or high finding. CodeQL also scans the code on GitHub for each pull request.
 
 ## The Maintainer
@@ -43,17 +43,20 @@ flowchart TD
     Screens -- No --> Tests
     Check --> Tests["Targeted tests and linters"]
     Tests --> Review["Review by a separate agent"]
-    Review --> Commit["The maintainer approves the commit"]
+    Review --> Manual{"Does it add or significantly change a manual test?"}
+    Manual -- Yes --> TestCheck["The maintainer approves or runs the manual test"]
+    Manual -- No --> Commit["Commit, push and open the pull request"]
+    TestCheck --> Commit
     Commit --> Full["Full check on GitHub: linters, types, tests with coverage, security scans"]
     Full --> Merge["The maintainer approves the merge"]
 ```
 
 1. **Design:** Anything sizeable starts with a written design, checked against the real code. It lists every decision it needs, least certain first. The maintainer approves, changes or rejects each one, often from a mockup of the screen.
-1. **Small pull requests:** Each pull request covers one task, usually in one reviewed commit. A batch of issue fixes in one area commits each fix on its own, has one review and one approval for the whole branch, and stays under about 1,500 added lines, as [Issues](standards/issues.md#issue-batches) sets out.
+1. **Small pull requests:** Each pull request covers one task, usually in one reviewed commit. A batch of issue fixes in one area commits each fix on its own, has one review for the whole branch, and stays under about 1,500 added lines, as [Issues](standards/issues.md#issue-batches) sets out.
 1. **The screen check:** The maintainer looks at every screen change, in a browser, before the tests and the review. Nothing goes further until the maintainer is satisfied with the screen.
 1. **Tests while working:** The tests that import the changed code, and the linters, run while the change is made, and again, with `pnpm check:push`, before each push.
 1. **A separate review:** Another agent, which did not write the change, reviews it against the [Code Review Standards](standards/code-review.md). It rates each focus area from 1 to 5, and the change is ready only when every area rates 5. A faster model may review changes to documents, scripts, on-screen wording and ordinary tests. Anything that touches security, and any change where the choice is in doubt, is reviewed with the full model, as [Code Review Standards § Review Process](standards/code-review.md#review-process) sets out. Every finding is fixed, or the maintainer agrees in writing to leave it.
-1. **Approval:** The maintainer approves each commit before it is made and pushed.
+1. **Manual tests:** The maintainer approves or runs a new manual test, or a significant change to one, before it is committed. Every other change is committed, pushed and opened as a pull request once it passes its review.
 1. **The full check:** GitHub runs `pnpm check` on every push to a pull request and to `main`: the linters, type checks, the unit, integration, access control, security and script tests with coverage, and the security scans. A change to anything but documentation also runs the container tests.
 1. **Merge:** Nothing is merged until the full check and the container tests pass, which a rule on `main` enforces, and never without the maintainer's word.
 

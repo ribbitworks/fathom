@@ -48,14 +48,13 @@ Known problems and deferred work are kept in [GitHub Issues](https://github.com/
 
 ## Issue Batches
 
-A task that is a set of issues in one area is a batch, worked in Autonomous mode only. A batch is an exception to the [Autonomous workflow](agent-workflow.md#autonomous-mode), which reviews each change and has the maintainer approve it before it is committed:
+A task that is a set of issues in one area is a batch, worked in Autonomous mode only. A batch is an exception to the [Autonomous workflow](agent-workflow.md#autonomous-mode), which reviews each change before it is committed:
 
 - **One branch per area:** Such as `fix/releases-issues`, holding one area only and under about 1,500 added lines.
 - **Each issue:** Fixed, checked with `pnpm check:push`, as [Testing Standards](testing.md#running-tests) sets out for the checks while working, and committed on its own.
 - **Once, for the whole branch:**
-  1. The maintainer's screen check, if any screen changed
+  1. The maintainer's screen check, if any screen changed, and the maintainer's approval or run of any manual test the batch adds or significantly changes
   1. One separate-agent review of the whole branch, since its commits had no review of their own, as the [Agent Workflow](agent-workflow.md#pushing-and-pull-requests) sets out for a commit that skipped review
   1. The full check on the pull request, once the review's findings are fixed, as [Testing Standards](testing.md#running-tests) sets out
-  1. The maintainer's approval of the batch
   1. The pull request, as [Fixing an Issue](#fixing-an-issue) sets out
 - **Failures found at the end:** Fixed in a new commit, never by changing earlier ones.
