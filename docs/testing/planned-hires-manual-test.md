@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/people.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Planned Hires on People
 
 ## Scope
 
-Verifies planned hires shown as rows of the People table: how their rows look beside people's, their names, the **State** column, their values in added columns, a column switched off for them, people who have left, saving a view of planned hires alone, a planned manager whom other planned hires report to, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, what a Feature Lead sees, and filling a hire from its details panel with a new or an existing person. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-data).
+Verifies planned hires shown as rows of the People table: how their rows look beside people's, their names, the **State** column, a column planned hires have values in, people who have left, a planned manager whom other planned hires report to, adding one with the keyboard and by pasting, what a Feature Lead sees, and filling a hire from its details panel with a new or an existing person, approved on the Drafts page. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 
@@ -29,7 +29,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data). Restore the Seed Data also removes anyone added by filling a seeded hire.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes). Restore the Seed Data also removes anyone added by filling a seeded hire.
 
 ## Terms
 
@@ -39,7 +39,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
+Run the test cases in the order they are listed. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
 
 ### HIRE-01: Hire Rows Sit Under the People and Read Well
 
@@ -74,47 +74,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **Expected** cell of 'Payments tester' holds a month and year, such as "Feb 2027".
   - **Notes:**
 
-### HIRE-02: A Hire's Name Can Be Typed and Cleared
+### HIRE-03: Hiring States and People's States Are Filtered Together
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-01.
 
-**Preconditions:** As HIRE-01.
-
-- [ ] `4B3B` Search for `SDET, REQ-2042`.
-  - **Expected:** The "SDET, REQ-2042" row is shown.
-  - **Notes:**
-
-- [ ] `7BDE` Select the row's **Name** cell, type `Fictional test lead`, and press Enter.
-  - **Expected:**
-    - The cell reads `Fictional test lead` in the usual colour.
-    - A hollow yellow dot is before it.
-  - **Notes:**
-
-- [ ] `E091` Clear the search, and search for `Fictional test lead`.
-  - **Expected:** The `Fictional test lead` row is shown.
-  - **Notes:**
-
-- [ ] `80B7` Select the row's **Name** cell, press Backspace, and press Enter if an editor opened.
-  - **Expected:** The cell reads "SDET, REQ-2042" in grey italics again.
-  - **Notes:**
-
-**Afterwards:** Run Restore the Seed Data.
-
-### HIRE-03: Hired Is Not Offered for a Hire, and States Are Filtered Together
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-02.
-
-**Preconditions:** Signed in with this account. **People** page open.
-
-- [ ] `0A57` Search for `REQ-2047`.
-  - **Expected:** The "Software Engineer, REQ-2047" row is shown.
-  - **Notes:**
-
-- [ ] `15CE` Select the row's **State** cell and press Enter.
-  - **Expected:**
-    - A picker opens offering **Request to hire** and **Approved to hire** only.
-    - **Hired** and **Left** are not offered.
-  - **Notes:**
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] `407B` Select the **State** header, then **Filter…**, and look at the choices.
   - **Expected:**
@@ -128,13 +92,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Every **State** cell reads "Hired".
   - **Notes:**
 
-**Afterwards:** Run Restore the Seed Data.
-
 ### HIRE-04: A Planned Hire Is Added With the Keyboard Alone
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-03.
 
-**Preconditions:** Signed in with this account. **People** page open.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] `A03C` Select the **Name** cell of the empty row at the bottom of the table.
   - **Expected:** The empty row's **Name** cell is selected.
@@ -161,8 +123,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The row has a hollow yellow dot in its slot.
   - **Notes:**
 
-**Afterwards:** Run Restore the Seed Data.
-
 ### HIRE-05: Planned Hires Are Pasted From a Text Editor
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-04.
@@ -188,100 +148,88 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Each has a hollow yellow dot in its slot
   - **Notes:**
 
-**Afterwards:** Run Restore the Seed Data.
+**Afterwards:** Run Discard the Unpublished Changes.
 
 ### HIRE-06: A Planned Hire Is Added, Approved, and Seen by a Feature Lead
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-05. Steps `CFB2` and `3D62` sign in as other accounts.
+Covered by [HIRE-13](#hire-13-a-planned-hire-is-filled-with-a-new-person) and [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
+
+### HIRE-09: A Column Planned Hires Have Values In Is Not Switched Off for Them
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-05.
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] `508D` Select **New person** at the top right.
-  - **Expected:** A panel opens beside the table.
-  - **Notes:**
-
-- [ ] `87E3` In the panel, choose **Request to hire** in **State**.
-  - **Expected:** **State** reads "Request to hire".
-  - **Notes:**
-
-- [ ] `54AD` Type `Fictional platform hire` in **Name**.
-  - **Expected:** **Name** holds `Fictional platform hire`.
-  - **Notes:**
-
-- [ ] `D07E` Type `REQ-3100` in **ID**.
-  - **Expected:** **ID** holds `REQ-3100`.
-  - **Notes:**
-
-- [ ] `A18D` Choose 'Software Engineer' in **Position**.
-  - **Expected:** **Position** reads 'Software Engineer'.
-  - **Notes:**
-
-- [ ] `CBA4` Select **Add**.
+- [ ] `B950` Select the **Site** header, then **Edit column…**.
   - **Expected:**
-    - The panel shows `Fictional platform hire`.
-    - Its row in the table has a hollow yellow dot in its slot.
-    - Its row reads "Request to hire" in **State**.
+    - A dialog titled "Edit column" opens.
+    - **Offered on planned hires** is ticked.
   - **Notes:**
 
-- [ ] `C9AB` Select the Publish button.
-  - **Expected:** A notice reads "Published 1 change."
+- [ ] `A000` Untick **Offered on planned hires**.
+  - **Expected:** **Offered on planned hires** is unticked.
   - **Notes:**
 
-- [ ] `CFB2` Sign in as the Engineering Director, `engineering.director@fathom.test`, changing account.
-  - **Expected:** The top bar's right end reads "Engineering Director".
-  - **Notes:**
-
-- [ ] `1C7A` Select the **Drafts** page in the left-hand menu.
-  - **Expected:** The **Drafts** page opens, with **To decide** chosen beside the page's title.
-  - **Notes:**
-
-- [ ] `EC7B` Type `REQ-3100` in the search box.
-  - **Expected:** One row is shown:
-    - **Record** reads `Fictional platform hire`.
-    - **Change** reads "Added".
-    - **Type** reads "Planned hire".
-  - **Notes:**
-
-- [ ] `041B` Tick that row's tick box.
+- [ ] `C35E` Select **Save**.
   - **Expected:**
-    - The row's tick box is ticked.
-    - At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
+    - The dialog stays open.
+    - This message shows in red under the checkboxes: "3 planned hires have values in Site, so it cannot be switched off for planned hires yet. Clear them first."
   - **Notes:**
 
-- [ ] `EDBD` Select **Approve 1 draft…** at the right of the page's heading.
+- [ ] `D4B5` Select **Cancel**.
+  - **Expected:** The dialog closes.
+  - **Notes:**
+
+### HIRE-10: A Person Who Has Left Shows Left, Only to Those Who See Personal Details
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-09. Step `A4B7` signs in as another account.
+
+**Preconditions:** Signed in with this account. **People** page open.
+
+- [ ] `AAC4` Select the **State** header, then **Filter…**.
+  - **Expected:** **Left** is among the choices.
+  - **Notes:**
+
+- [ ] `2EAE` Tick **Left** only.
+  - **Expected:** **Left** is the only choice ticked.
+  - **Notes:**
+
+- [ ] `F1B2` Press Esc.
   - **Expected:**
-    - A dialog opens.
-    - It has an **Approve** button.
+    - Only people are shown.
+    - 'Viktoria Holmberg' is among them.
+    - Every **State** cell reads "Left".
+    - Every **End** cell holds a date that has passed.
   - **Notes:**
 
-- [ ] `D143` In the dialog, select **Approve**.
-  - **Expected:**
-    - The dialog closes.
-    - A notice reads "Approved 1 draft."
-  - **Notes:**
-
-- [ ] `3D62` Sign in as the Feature Lead, `feature.lead@fathom.test`, changing account.
+- [ ] `A4B7` Sign in as the Feature Lead, `feature.lead@fathom.test`, changing account.
   - **Expected:** The top bar's right end reads "Feature Lead".
   - **Notes:**
 
-- [ ] `DA56` Select the **People** page in the left-hand menu.
+- [ ] `320C` Select the **People** page in the left-hand menu.
   - **Expected:** The **People** page opens.
   - **Notes:**
 
-- [ ] `C7EF` Search for `Fictional platform hire`.
-  - **Expected:** One hire row, with no dot, reading:
-    - `REQ-3100` in **ID**
-    - 'Software Engineer' in **Position**
-    - "Request to hire" in **State**
+- [ ] `502E` Select the **State** header, then **Filter…**.
+  - **Expected:** **Left** is among the choices.
   - **Notes:**
 
-**Afterwards:** Run Restore the Seed Data.
+- [ ] `5C46` Tick **Left** only.
+  - **Expected:** **Left** is the only choice ticked.
+  - **Notes:**
+
+- [ ] `E076` Press Esc.
+  - **Expected:**
+    - No one is shown.
+    - 'Viktoria Holmberg' is not listed.
+    - There are no **Start** or **End** columns.
+  - **Notes:**
 
 ### HIRE-07: A Feature Lead Sees Placeholders Only
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, the same as the account HIRE-06 ended with.
+**Account:** Feature Lead, `feature.lead@fathom.test`, the same as the account HIRE-10 ended with.
 
-**Preconditions:** Signed in with this account. **People** page open.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] `CC22` Select the **State** header, then **Filter…**.
   - **Expected:** The choices include **Request to hire** and **Approved to hire**.
@@ -302,6 +250,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - There is no **Start** column.
     - 'REQ-2036' is among them.
     - 'REQ-2050' is not among them.
+  - **Notes:**
+
+- [ ] `F5F4` Select the **Expected** header, then **List order**.
+  - **Expected:**
+    - Only hire rows are shown.
+    - They are in order of **Expected**, earliest month first.
+    - The first row is 'Data engineer', whose **Expected** is last month.
   - **Notes:**
 
 - [ ] `A133` Read the **Name** cells of 'Backend engineer 1' and 'REQ-2042', and the **Site** cell of 'Backend engineer 1'.
@@ -329,209 +284,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - An **Empty** row counting the people.
   - **Notes:**
 
-### HIRE-08: A Hire's Values in Added Columns Are Shown and Changed
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from HIRE-07.
-
-**Preconditions:** Signed in with this account. **People** page open.
-
-- [ ] `2E58` Search for `Payments tester`, and read the row's **Site** and **Grade** cells.
-  - **Expected:**
-    - The **Site** cell reads 'Northmere'.
-    - The **Grade** cell reads 'P2'.
-  - **Notes:**
-
-- [ ] `30FA` Select the row's **Site** cell, press Enter, choose 'Ashgrove', and press Enter.
-  - **Expected:**
-    - The cell reads 'Ashgrove'.
-    - A hollow yellow dot is before it.
-  - **Notes:**
-
-**Afterwards:** Run Restore the Seed Data.
-
-### HIRE-09: A Column Switched Off for Planned Hires Leaves Their Cells Blank
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-08.
-
-**Preconditions:** Signed in with this account. **People** page open.
-
-- [ ] `9D3A` Select the **Skills** header, then **Edit column…**.
-  - **Expected:**
-    - A dialog titled "Edit column" opens.
-    - **Offered on planned hires** is ticked.
-    - **Planned hires can leave it empty** shows under **Must be filled in**.
-  - **Notes:**
-
-- [ ] `3AB4` Untick **Offered on planned hires**.
-  - **Expected:** **Planned hires can leave it empty** is no longer shown.
-  - **Notes:**
-
-- [ ] `E06C` Select **Save**.
-  - **Expected:** The dialog has closed.
-  - **Notes:**
-
-- [ ] `BFF9` Search for `Payments tester`.
-  - **Expected:** The 'Payments tester' row is shown.
-  - **Notes:**
-
-- [ ] `4E20` Select the row's **Skills** cell, and type a letter.
-  - **Expected:**
-    - The cell is blank.
-    - No editor opens.
-  - **Notes:**
-
-- [ ] `D8B9` Clear the search.
-  - **Expected:** The search box is empty.
-  - **Notes:**
-
-- [ ] `B950` Select the **Site** header, then **Edit column…**.
-  - **Expected:**
-    - A dialog titled "Edit column" opens.
-    - **Offered on planned hires** is ticked.
-  - **Notes:**
-
-- [ ] `A000` Untick **Offered on planned hires**.
-  - **Expected:** **Offered on planned hires** is unticked.
-  - **Notes:**
-
-- [ ] `C35E` Select **Save**.
-  - **Expected:**
-    - The dialog stays open.
-    - This message shows in red under the checkboxes: "3 planned hires have values in Site, so it cannot be switched off for planned hires yet. Clear them first."
-  - **Notes:**
-
-- [ ] `D4B5` Select **Cancel**.
-  - **Expected:** The dialog closes.
-  - **Notes:**
-
-**Afterwards:** Run Restore the Seed Data.
-
-### HIRE-10: A Person Who Has Left Shows Left, Only to Those Who See Personal Details
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-09. Step `A4B7` signs in as another account.
-
-**Preconditions:** Signed in with this account. **People** page open.
-
-- [ ] `AAC4` Select the **State** header, then **Filter…**.
-  - **Expected:** **Left** is among the choices.
-  - **Notes:**
-
-- [ ] `2EAE` Tick **Left** only.
-  - **Expected:** **Left** is the only choice ticked.
-  - **Notes:**
-
-- [ ] `F1B2` Press Esc.
-  - **Expected:**
-    - Only people are shown.
-    - 'Viktoria Holmberg' is among them.
-    - Every **State** cell reads "Left".
-    - Every **End** cell holds a date that has passed.
-  - **Notes:**
-
-- [ ] `11F6` Select the **State** cell of the first row with no dot, and press Enter.
-  - **Expected:** A picker opens offering **Left** only.
-  - **Notes:**
-
-- [ ] `C42A` Press Esc.
-  - **Expected:** The picker closes.
-  - **Notes:**
-
-- [ ] `A4B7` Sign in as the Feature Lead, `feature.lead@fathom.test`, changing account.
-  - **Expected:** The top bar's right end reads "Feature Lead".
-  - **Notes:**
-
-- [ ] `320C` Select the **People** page in the left-hand menu.
-  - **Expected:** The **People** page opens.
-  - **Notes:**
-
-- [ ] `502E` Select the **State** header, then **Filter…**.
-  - **Expected:** **Left** is among the choices.
-  - **Notes:**
-
-- [ ] `5C46` Tick **Left** only.
-  - **Expected:** **Left** is the only choice ticked.
-  - **Notes:**
-
-- [ ] `E076` Press Esc.
-  - **Expected:**
-    - No one is shown.
-    - 'Viktoria Holmberg' is not listed.
-    - There are no **Start** or **End** columns.
-  - **Notes:**
-
-**Afterwards:** Run Restore the Seed Data.
-
 ### HIRE-11: A View of Planned Hires Alone Is Saved and Applied
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, the same as the account HIRE-10 ended with.
-
-**Preconditions:** Restore the Seed Data run after HIRE-10. Signed in with this account. **People** page open, with no filters.
-
-- [ ] `43CA` Select the **State** header, then **Filter…**.
-  - **Expected:** The choices include **Request to hire** and **Approved to hire**.
-  - **Notes:**
-
-- [ ] `D389` Tick **Request to hire**.
-  - **Expected:** **Request to hire** is ticked.
-  - **Notes:**
-
-- [ ] `6F1F` Tick **Approved to hire**.
-  - **Expected:** **Request to hire** and **Approved to hire** are the only choices ticked.
-  - **Notes:**
-
-- [ ] `19CC` Press Esc.
-  - **Expected:** Only hire rows are shown.
-  - **Notes:**
-
-- [ ] `F5F4` Select the **Expected** header, then **List order**.
-  - **Expected:**
-    - Only hire rows are shown.
-    - They are in order of **Expected**, earliest month first.
-    - The first row is 'Data engineer', whose **Expected** is last month.
-  - **Notes:**
-
-- [ ] `8F24` Select the **Views** button after the search box, then **Save view…**.
-  - **Expected:**
-    - A dialog opens.
-    - It has a **Name** field.
-    - It has a **Save view** button.
-  - **Notes:**
-
-- [ ] `96AD` Type `Hiring plan` in **Name**.
-  - **Expected:** **Name** holds `Hiring plan`.
-  - **Notes:**
-
-- [ ] `B3B7` Select **Save view**.
-  - **Expected:**
-    - The dialog closes with no error.
-    - The button now reads `Hiring plan`.
-  - **Notes:**
-
-- [ ] `668F` Select `Hiring plan`, then **Clear view**.
-  - **Expected:** Every row is shown again, people and planned hires.
-  - **Notes:**
-
-- [ ] `BA02` Select **Views**, then `Hiring plan`.
-  - **Expected:**
-    - Only hire rows are shown.
-    - They are in order of **Expected**, earliest month first.
-  - **Notes:**
-
-- [ ] `765B` Select `Hiring plan`, then **Delete view**.
-  - **Expected:**
-    - A notice reads "Deleted the Hiring plan view."
-    - It offers **Undo**.
-    - Only hire rows are shown.
-    - They are in order of **Expected**, earliest month first.
-    - The button now reads **Views**.
-    - The button is marked with a dot.
-  - **Notes:**
+Covered by [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
 
 ### HIRE-12: Planned Hires Report to a Planned Manager
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from HIRE-11.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from HIRE-07.
 
-**Preconditions:** Signed in with this account. **People** page open, with no filters.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] `312D` Type `Engineering Manager TBD` in the search box.
   - **Expected:**
@@ -549,40 +310,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Its **Manager** and **Team** both read "Engineering Manager, TBD-" and the same number.
   - **Notes:**
 
-- [ ] `C06E` Select the row's **Manager** cell, and press Enter.
-  - **Expected:**
-    - The cell opens for typing.
-    - A list of managers is under it.
-  - **Notes:**
-
-- [ ] `0D95` Type `TBD`.
-  - **Expected:** The list offers "Engineering Manager, TBD-" and the same number.
-  - **Notes:**
-
-- [ ] `411E` Press Esc.
-  - **Expected:** The list closes.
-  - **Notes:**
-
-- [ ] `4C77` Clear the search box, and type `Engineering Manager TBD`.
-  - **Expected:**
-    - Three rows are shown.
-    - The planned Engineering Manager's **Name** reads "Engineering Manager, TBD-" and the same number.
-  - **Notes:**
-
-- [ ] `E9B5` Click once in the planned Engineering Manager's **Manager?** cell.
-  - **Expected:**
-    - A message reads "Reassign direct reports first".
-    - The box stays checked.
-    - The planned Engineering Manager's row has no dot.
-  - **Notes:**
-
-**Afterwards:** Run Restore the Seed Data.
-
 ### HIRE-13: A Planned Hire Is Filled With a New Person
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-12. Step `6F7D` signs in as another account.
 
-**Preconditions:** Signed in with this account. **People** page open, with no filters.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] `8EC5` Type `Backend engineer 2` in the search box, and look at the **Name** cell of the row for 'Backend engineer 2'.
   - **Expected:**
@@ -616,20 +348,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A hollow yellow dot is before the heading.
     - The 'Backend engineer 2' row no longer has a **Fill** button.
     - The 'Backend engineer 2' row has a hollow yellow dot in its slot.
-  - **Notes:**
-
-- [ ] `1AFD` Select the details button at the right of the 'Backend engineer 2' row's **Name** cell.
-  - **Expected:**
-    - The panel is headed 'Backend engineer 2'.
-    - A **Filled by** section under its heading reads `Fictional new starter` in **Name**.
-    - The **Filled by** section reads `EMP-9001` in **ID**.
-    - Each is a link that shows that person in the panel.
-  - **Notes:**
-
-- [ ] `362A` Clear the search box, and type `Fictional new starter`.
-  - **Expected:**
-    - One row is shown.
-    - It has a hollow yellow dot in its slot.
   - **Notes:**
 
 - [ ] `B81E` Select the Publish button.
@@ -678,17 +396,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'Ashgrove' in **Site**.
   - **Notes:**
 
-- [ ] `107D` Search for `Backend engineer 2`.
-  - **Expected:** No row is named 'Backend engineer 2'.
-  - **Notes:**
-
-**Afterwards:** Run Restore the Seed Data.
-
 ### HIRE-14: A Planned Hire Is Filled With Someone Already in Fathom
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from HIRE-13.
 
-**Preconditions:** Signed in with this account. **People** page open, with no filters.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] `13FE` Search for `REQ-2042`.
   - **Expected:**
@@ -746,13 +458,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A hollow yellow dot is before the **Position** row.
   - **Notes:**
 
-**Afterwards:** Run Restore the Seed Data.
-
 ### HIRE-15: Filling a Planned Manager Moves Its Planned Hires
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-14.
 
-**Preconditions:** Signed in with this account. **People** page open, with no filters.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] `2ED2` Type `Engineering Manager TBD` in the search box, and look at the **State** and **Name** cells of the row whose **Name** reads "Engineering Manager, TBD-" and a number.
   - **Expected:**
@@ -791,19 +501,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The panel is headed `Fictional new lead`.
   - **Notes:**
 
-- [ ] `D8D5` Clear the search box, and type `Platform engineer TBD`.
-  - **Expected:**
-    - The **Manager** cell of 'Platform engineer' reads `Fictional new lead`.
-    - A hollow yellow dot is before it.
-  - **Notes:**
-
-**Afterwards:** Run Restore the Seed Data.
-
 ### HIRE-16: The Fill Form Reads Well, and Leaving It Asks First
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-15.
 
-**Preconditions:** Signed in with this account. **People** page open, with no filters.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] `DB8B` Search for `REQ-2047`, and look at the row.
   - **Expected:** The row's **Fill** button is easy to read.
@@ -840,57 +542,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The panel shows the hire's details.
     - A **Fill** button is under its heading.
     - Focus is on the **Fill** button.
-  - **Notes:**
-
-**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
-
-### HIRE-17: A Hire Under a Planned Manager Needs a Manager Chosen
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-16.
-
-**Preconditions:** Signed in with this account. **People** page open, with no filters.
-
-- [ ] `20F9` Search for `Platform engineer TBD`.
-  - **Expected:**
-    - One row is shown.
-    - Its **Name** reads 'Platform engineer'.
-  - **Notes:**
-
-- [ ] `789C` Select the row's **State** cell, press Enter, choose **Approved to hire**, and press Enter.
-  - **Expected:** A **Fill** button shows in the row's **Name** cell.
-  - **Notes:**
-
-- [ ] `72FB` Select the row's **Fill** button.
-  - **Expected:** The form's **Manager** row reads "No manager".
-  - **Notes:**
-
-- [ ] `EF04` Type `Fictional platform starter` in **Name**.
-  - **Expected:** **Name** holds `Fictional platform starter`.
-  - **Notes:**
-
-- [ ] `AAD1` Type `EMP-9003` in **ID**.
-  - **Expected:** **ID** holds `EMP-9003`.
-  - **Notes:**
-
-- [ ] `B467` Select **Fill** at the foot of the panel.
-  - **Expected:**
-    - "Manager needed" shows in red under **Manager**.
-    - "Grade needed" shows in red under **Grade**.
-  - **Notes:**
-
-- [ ] `D832` Select the change button beside **Manager**, and choose the first name in the list.
-  - **Expected:** The **Manager** row shows the name chosen.
-  - **Notes:**
-
-- [ ] `AC97` Select the change button beside **Grade**, and choose 'P1'.
-  - **Expected:** **Grade** reads 'P1'.
-  - **Notes:**
-
-- [ ] `1E02` Select **Fill** at the foot of the panel.
-  - **Expected:**
-    - The form closes.
-    - The panel is headed `Fictional platform starter`.
-    - Its **Manager** row reads the name chosen.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
