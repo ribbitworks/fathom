@@ -152,7 +152,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-26.
 
-**Preconditions:** **Lists** page open.
+**Preconditions:** **Lists** page open from the left-hand menu.
 
 - [ ] `2F53` Select 'Skills'.
   - **Expected:**

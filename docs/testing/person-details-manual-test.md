@@ -182,7 +182,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, the same as DETAILS-06.
 
-**Preconditions:** **People** page open, searched for `E10026`, with the details of 'Lorenza Thiel' open beside the table.
+**Preconditions:** **People** page open, searched for `E10026`, with the details of 'Lorenza Thiel' opened again from her row's details button.
 
 - [ ] `75FE` Read the panel.
   - **Expected:**
