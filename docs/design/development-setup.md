@@ -231,7 +231,7 @@ The copy gets new names, and so a new, empty database.
 | `pnpm test:changed` | The tests a change can affect; with `--uncommitted`, only the work not yet committed |
 | `pnpm test:scripts` | The script tests alone |
 | `pnpm test:packages` | Every package's tests; with `--filter` and a package, such as `--filter @fathom/web`, only those packages, as pnpm chooses them |
-| `pnpm test:containers` | The container tests: users reach Fathom only through the proxy, and the application and database can't reach the internet |
+| `pnpm test:containers` | The container tests: users reach Fathom only through the proxy, the application and database can't reach the internet, and the application image holds none of the tests or the files only they use |
 | `pnpm typecheck` | Type checking across the workspace |
 | `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:licences`, `pnpm lint:renovate` | Each linter on its own. `pnpm lint:renovate` validates `renovate.json` with Renovate's own validator, only when it has changed since `origin/main` |
 | `pnpm format` | Format the source files |

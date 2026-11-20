@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of Fathom's running containers, as deploy/compose.yaml runs them, with throwaway secrets and
-// a throwaway certificate: users reach Fathom only through the proxy, the front end shows the
-// release, commit and commit date the image was built from, the server sees each user's address, no
-// other container can pose as the proxy, the application and the database cannot reach the
-// internet, and the proxy cannot reach the database. The Compose file's settings are checked by
-// scripts/compose-settings.test.mjs. Each check that something is unreachable is paired with a
-// check that the same probe reaches something it should, so a broken probe cannot pass. Run with
-// 'pnpm test:containers'; it builds the images, which takes a few minutes the first time.
+// Tests of Fathom's running containers, as deploy/compose.yaml runs them with throwaway secrets and a
+// throwaway certificate. Run with 'pnpm test:containers', which builds the images first.
 
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
@@ -247,6 +241,27 @@ describe("reaching Fathom", () => {
   });
 });
 
+describe("the application's image", () => {
+  it("holds the server's code but no file only the tests use", () => {
+    // Every file under /app but node_modules, listed by Node, since the image has no shell.
+    const walk = `const { readdirSync } = require("node:fs");
+      const files = (folder) => readdirSync(folder, { withFileTypes: true }).flatMap((entry) =>
+        entry.name === "node_modules" ? [] : entry.isDirectory()
+          ? files(folder + "/" + entry.name) : [folder + "/" + entry.name]);
+      console.log(files("/app").join("\\n"));`;
+    const { ok, output } = run("app", ["/nodejs/bin/node", "-e", walk]);
+    assert.ok(ok, output);
+    const paths = output.trim().split("\n");
+    assert.ok(paths.includes("/app/apps/server/src/main.ts"), output);
+    const testOnly = paths.filter((path) =>
+      /(?:\.test\.ts|\/test-[^/]*\.ts)$/.test(path),
+    );
+    assert.deepEqual(testOnly, []);
+  });
+});
+
+// Each check that something is unreachable is paired with one that the same probe reaches something,
+// so a broken probe can't pass.
 describe("network isolation", () => {
   it("stops the application reaching the internet, but not the database", () => {
     assert.equal(tcpProbe("app", "postgres", 5432), "connected");

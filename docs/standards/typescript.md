@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*.ts", "**/*.tsx"]
 dependencies: ["docs/standards/core-principles.md", "docs/standards/code-review.md", "docs/standards/testing.md", "docs/standards/agent-workflow.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # TypeScript Standards
@@ -37,7 +37,9 @@ design documents, its commands in `AGENTS.md`, and its decisions in `docs/adr/`.
 - Shared test helpers and factories live in a shared package, not copied
   between tests.
 - Test files are excluded from builds, so they never reach production
-  artifacts.
+  artifacts. A helper only the tests use that sits beside the code, such as
+  `apps/server/src/test-app.ts`, is named `test-*.ts` or `test-*.tsx`, so the
+  application image leaves it out, and is left out of its package's coverage.
 
 ## Tooling
 

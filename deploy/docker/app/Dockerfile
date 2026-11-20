@@ -43,7 +43,8 @@ COPY packages/shared/src packages/shared/src
 COPY packages/db/src packages/db/src
 COPY packages/db/migrations packages/db/migrations
 COPY apps/server/src apps/server/src
-RUN find . -path ./node_modules -prune -o -name '*.test.ts' -exec rm {} +
+# Tests, and the files named test-*.ts that only serve them, never ship.
+RUN find . -path ./node_modules -prune -o \( -name '*.test.ts' -o -name 'test-*.ts' \) -exec rm {} +
 # Packages are installed for the build machine's processor, so a native package would not run.
 RUN if find -L node_modules -name '*.node' | grep -q .; then \
     echo "error: a runtime package has native code, which this image cannot build" >&2; exit 1; \
