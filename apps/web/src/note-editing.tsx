@@ -9,7 +9,6 @@ import { cellKinds, type EditorProps } from "./cell-kinds.tsx";
 import { focusSoon } from "./focus.ts";
 import {
   noteLeftBehind,
-  noteOpenFor,
   type OpenNoteAddress,
   OpenNoteContext,
   openNoteValue,
@@ -141,15 +140,14 @@ export function useNoteEditing(detailsTitleId: string) {
   };
 
   // Opens the note the address asks for, as its record's details are drawn, without adding to Back's
-  // history.
+  // history. Called only for a row whose `askedBy` is set, so the record and column are the ones
+  // `asking` names.
   const reopen = <Rec extends GridRecord, Change>(
     context: Opening<Rec, Change>,
     column: Column<Rec, Change>,
     readOnly: boolean,
   ) => {
-    if (noteOpenFor(asking, context.id) === column.key) {
-      open(context, column, readOnly, asking);
-    }
+    open(context, column, readOnly, asking);
   };
 
   // Whether the note open is the one shown: one being changed always is; otherwise the record must
