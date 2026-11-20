@@ -17,7 +17,7 @@ import { ForbiddenError } from "../errors.ts";
 import { accountExists } from "./accounts.ts";
 import { historyShowsRemoval } from "./change-history.ts";
 import { readFeatureTeams } from "./feature-teams.ts";
-import { readLiveHires } from "./hires.ts";
+import { readLiveHires } from "./hire-reads.ts";
 import {
   seenLists,
   seenPeople,

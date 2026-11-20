@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The columns people add to People and Features, each drawing on a list or holding a link or note: checking that a column's
-// settings fit the records' values, and deleting a live column with its values. Changes to columns
-// are drafts, as column-drafts.ts sets out, and their order is kept with the built-in columns', in
-// column-order.ts. Part of the data access layer. A column's settings are General data, recorded in
-// the change history field by field. Deleting a column deletes its values, which are recorded as
-// changes to each person and planned hire who had one.
+// The columns people add to People and Features: checking a column's settings against the records'
+// values, and deleting a live column with its values. Part of the data access layer.
 
 import {
   features,
@@ -29,7 +25,7 @@ import {
 import { BadRequestError, ConflictError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { draftedValues } from "./drafts.ts";
-import { hireChanges, readHireTier } from "./hires.ts";
+import { hireChanges, readHireTier } from "./hire-fields.ts";
 import { personChanges } from "./people.ts";
 import {
   type FieldRow,

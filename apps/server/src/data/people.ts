@@ -89,14 +89,13 @@ import {
   readTeamsOfPeople,
   refuseRemovingPeopleOnTeams,
 } from "./feature-teams.ts";
+import { hireRow, readHiresIn } from "./hire-reads.ts";
 import {
   hireDraftsNaming,
-  hireRow,
   partOfFill,
-  readHiresIn,
   refuseRemovingHiresPeople,
   refuseUnmarkingHireManagers,
-} from "./hires.ts";
+} from "./hire-checks.ts";
 import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { keptNote, refuseRemovingNamed } from "./records.ts";
 import {

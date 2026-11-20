@@ -30,18 +30,19 @@ import {
   type Recorded,
   type Viewer,
 } from "./drafts.ts";
+import { recordHiringChanges } from "./hire-fields.ts";
+import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import {
   checkFillManager,
+  requirePersonManager,
+  hireDraftsNaming,
+} from "./hire-checks.ts";
+import {
   discardHireDraftIn,
   draftHireAsLive,
   draftHireFilled,
   draftReportsMoved,
   fillableHire,
-  requirePersonManager,
-  hireDraftsNaming,
-  readHireDrafts,
-  readLiveHires,
-  recordHiringChanges,
   resubmitHireDraftIn,
 } from "./hires.ts";
 import {

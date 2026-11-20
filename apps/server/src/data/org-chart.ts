@@ -1,21 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The org chart: today's reporting lines as approved, and the chart as drafts make it. Part of the
-// data access layer. Each person's draft of their manager, their position and their team's name
-// comes beside the approved chart, as People shows them: a draft's manager only to readers who see
-// Personal details, since it is Personal until approved, its position only beside a position
-// the reader is shown, and the reader's own unpublished drafts in place of the published ones.
-// Everyone current today appears, with each manager they still report to, up the chain, even one
-// whose end date has passed, as People names them. A reader who does not see Personal details
-// sees no further up than such a manager, and only their name and team, as People shows them;
-// anything more would tell them who else has left. A reader who does not see people sees each
-// person's name, position, and team, but no Employee ID, which is a detail of People and would let
-// them look people up there. Positions show only as the positions list's tier allows, as on People,
-// except that a General one shows to every reader. Both charts follow these rules alike. Planned
-// hires join the chart as placeholders, to every reader, as People shows them: each hire not yet
-// filled, and, to readers who do not see Personal details, each filled one whose person has not
-// started; named by its name, or by its position and ID, under its manager, a person or a planned
-// manager, and with the month it is expected. Readers who see the hiring plan see its drafts too.
+// The org chart: reporting lines as approved and as drafts make them, with planned hires as
+// placeholders, each shown as the reader may see it. Part of the data access layer.
 
 import { type Database, listItems, people, teams } from "@fathom/db";
 import {
@@ -43,13 +29,8 @@ import {
   readPersonDrafts,
   type Recorded,
 } from "./drafts.ts";
-import {
-  expectedMonth,
-  undatedMark,
-  hireIdOf,
-  readHireDrafts,
-  readLiveHires,
-} from "./hires.ts";
+import { expectedMonth, undatedMark, hireIdOf } from "./hire-fields.ts";
+import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import { inForceOn } from "./in-force.ts";
 import { currentOn, notStarted, personalDetailFields } from "./people.ts";
 import {
