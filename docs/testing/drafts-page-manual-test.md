@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-18"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Drafts Page
@@ -76,15 +76,15 @@ Run the test cases in the order they are listed. Start with Start Fathom, then R
 
 - [ ] `1B99` Open the Views menu, and select **Clear view**.
   - **Expected:**
-    - **All drafts** stays chosen.
-    - The **State** filter is gone, and every draft is listed.
+    - **To decide** is chosen beside the page's title.
+    - The **State** filter is gone.
   - **Notes:**
 
 ### DRAFT-27: Drafts Are Grouped and Counted by Area
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-13.
 
-**Preconditions:** DRAFT-13 done. **Drafts** page open, on **All drafts**, with no search, filter or grouping.
+**Preconditions:** DRAFT-13 done. **Drafts** page open from the left-hand menu, then **All drafts** selected beside the page's title, with no search, filter or grouping.
 
 - [ ] `3A91` In the Group by menu, select **Area**.
   - **Expected:**
