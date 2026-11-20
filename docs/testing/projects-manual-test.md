@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/projects.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Projects, Proposals, Customers and Milestones
@@ -233,7 +233,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The side panel is headed `Testing Project`.
     - A hollow yellow dot is before the heading.
-    - It shows the maintainer, `Testing Customer` and `Testing Proposal`.
+    - It shows the person picked as **Owner**, `Testing Customer` and `Testing Proposal`.
     - **First milestone**, **Last milestone** and **Next delivery** read "None".
     - Under **Milestones** are "None" and an **Add milestone** button.
     - The table has a row for it.
@@ -299,10 +299,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `2ED8` Select **Add milestone** in the dialog, leaving **Customer delivery** unticked.
   - **Expected:**
     - `Go live` is listed after `Pilot`.
-    - In the panel, **First milestone** shows "2030-03-15".
-    - **Last milestone** shows "2030-06-30".
-    - **Next delivery** shows "2030-03-15".
-    - The table's row for `Testing Project` shows **First milestone** "2030-03-15", **Last milestone** "2030-06-30" and **Next delivery** "2030-03-15".
+    - In the panel, **First milestone** shows the date for `2030-03-15`.
+    - **Last milestone** shows the date for `2030-06-30`.
+    - **Next delivery** shows the date for `2030-03-15`.
+    - In the table's row for `Testing Project`, **First milestone** shows the date for `2030-03-15`, **Last milestone** the date for `2030-06-30` and **Next delivery** the date for `2030-03-15`.
   - **Notes:**
 
 - [ ] `65A1` Run Publish.
@@ -363,7 +363,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The **Projects** tab opens.
     - `Testing Project`'s side panel shows.
-    - In the side panel, **Last milestone** now shows "2030-09-01".
+    - In the side panel, **Last milestone** now shows the date for `2030-09-01`.
     - `Sign-off` is listed after `Go live`.
   - **Notes:**
 
@@ -455,7 +455,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] `8EC1` Select the **Projects** tab.
-  - **Expected:** `Testing Project` shows **Last milestone** "2030-09-01".
+  - **Expected:** In the row for `Testing Project`, **Last milestone** shows the date for `2030-09-01`.
   - **Notes:**
 
 ### PROJ-07: The Product Manager Changes a Milestone, Then Removes the Project
@@ -480,11 +480,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `9BE4` Select **Save**.
   - **Expected:**
-    - `Sign-off`'s new date has a hollow yellow dot before it.
-    - **Last milestone** shows "2030-10-15".
-    - A hollow yellow dot is before "2030-10-15".
-    - Under it is "2030-09-01".
-    - A green dot is before "2030-09-01".
+    - A hollow yellow dot is before `Sign-off`.
+    - **Last milestone** shows the date for `2030-10-15`.
+    - A hollow yellow dot is before that date.
+    - Under it is the date for `2030-09-01`.
+    - A green dot is before the date for `2030-09-01`.
   - **Notes:**
 
 - [ ] `D29C` Close the side panel.
@@ -693,7 +693,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The feature is marked as picked.
   - **Notes:**
 
-- [ ] `1B41` Press Esc.
+- [ ] `1B41` Press Enter.
   - **Expected:**
     - The list closes.
     - The cell names both features.

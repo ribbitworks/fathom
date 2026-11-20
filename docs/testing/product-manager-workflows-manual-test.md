@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-product-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Product Manager Workflows
@@ -164,10 +164,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `43B4` Leave **Customer delivery** unticked, and select **Add milestone** in the dialog.
   - **Expected:**
     - `Go live` is listed after `Pilot`.
-    - **First milestone** shows "2030-03-15".
-    - **Last milestone** shows "2030-06-30".
-    - **Next delivery** shows "2030-03-15".
-    - The table's row for `Fictional Harbour Lights` shows "2030-03-15" as **First milestone**, "2030-06-30" as **Last milestone** and "2030-03-15" as **Next delivery**.
+    - **First milestone** shows the date for `2030-03-15`.
+    - **Last milestone** shows the date for `2030-06-30`.
+    - **Next delivery** shows the date for `2030-03-15`.
+    - The table's row for `Fictional Harbour Lights` shows the date for `2030-03-15` as **First milestone**, for `2030-06-30` as **Last milestone** and for `2030-03-15` as **Next delivery**.
   - **Notes:**
 
 - [ ] `8CE5` Run Publish.
@@ -240,8 +240,8 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** **Feature team** shows 'Mobile apps'.
   - **Notes:**
 
-- [ ] `3C7F` Select the change button in the **Needed by** row, type `203003`, and press Enter.
-  - **Expected:** **Needed by** shows "Mar 2030".
+- [ ] `3C7F` Type `203003` in **Needed by**, and press Enter.
+  - **Expected:** **Needed by** shows `2030-03`.
   - **Notes:**
 
 - [ ] `D041` Select **Add** at the foot of the **New feature** panel.
@@ -369,7 +369,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `9CF1` Select **Approve** in the dialog.
-  - **Expected:** 'Harbour Cranes Upgrade' has no dot, and its **Features** cell names 'Offline Sync' alone.
+  - **Expected:**
+    - 'Harbour Cranes Upgrade' has no dot.
+    - Its **Features** cell names 'Offline Sync' alone.
   - **Notes:**
 
 - [ ] `D4AB` Select the **Projects** tab.
@@ -383,7 +385,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `57DA` Select the **×** on the pill.
-  - **Expected:** The pill is gone, and the table lists every feature.
+  - **Expected:**
+    - The pill is gone.
+    - The table lists every feature.
   - **Notes:**
 
 ### PRODUCT-05: A Release Is Made, With a Note

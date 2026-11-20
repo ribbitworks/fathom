@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-project-manager.md", "docs/product/roles.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Project Manager Workflows
@@ -87,7 +87,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `D014` Select the **×** on the pill.
-  - **Expected:** The pill is gone, and the table lists every feature.
+  - **Expected:**
+    - The pill is gone.
+    - The table lists every feature.
   - **Notes:**
 
 - [ ] `C73C` Run Publish.
@@ -209,7 +211,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** A notice reads "Approved 1 draft."
   - **Notes:**
 
-- [ ] `4CBA` Type `Simone Jean` in the search box.
+- [ ] `4CBA` Clear the search box, and type `Simone Jean`.
   - **Expected:** One row is shown, with a tick box:
     - **Record** reads 'Simone Jean'.
     - **What changes** changes **Manager** from "Viktoria Holmberg" to "Silje Holm-Schrøder".

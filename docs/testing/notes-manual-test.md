@@ -259,7 +259,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
       - `Set goals`, with checkbox markup before it
   - **Notes:**
 
-- [ ] `5DF8` Back on the Fathom tab, select **Save**.
+- [ ] `5DF8` Select **Save**.
   - **Expected:**
     - The panel slides out smoothly to the right over the table, with no jump.
     - The table is already full width.
