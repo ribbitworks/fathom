@@ -26,7 +26,7 @@ import {
   teamOf,
   treeOf,
 } from "./org-chart.ts";
-import { formatDay } from "./table-view.ts";
+import { formatDay } from "./day-formats.ts";
 
 const shownDay = "2026-11-10";
 

@@ -7,7 +7,7 @@ import { act, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { RecordActions } from "./record-table.ts";
-import { formatDay } from "./table-view.ts";
+import { formatDay } from "./day-formats.ts";
 import {
   type Gadget,
   type GadgetChange,

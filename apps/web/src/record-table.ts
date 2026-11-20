@@ -28,14 +28,8 @@ import type {
   SavedViews,
   ViewChoice,
 } from "./table-controls.tsx";
-import type {
-  CellValue,
-  ColumnUnit,
-  GroupingChoice,
-  RowGroups,
-  TableColumn,
-  View,
-} from "./table-view.ts";
+import type { CellValue, ColumnUnit, TableColumn, View } from "./table-view.ts";
+import type { GroupingChoice, RowGroups } from "./row-groups.ts";
 
 // A record's draft, as the table shows it: what it does, the columns it changes, by key, and who
 // made it.

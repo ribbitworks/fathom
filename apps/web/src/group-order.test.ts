@@ -6,13 +6,9 @@
 
 import { describe, expect, it } from "vitest";
 import {
-  byGroupRank,
   emptyView,
   groupedFirstBy,
   knownView,
-  placedRows,
-  type RowGroup,
-  rowsInOrder,
   sameView,
   searchFor,
   setsApart,
@@ -21,6 +17,12 @@ import {
   viewFrom,
   withGroupsReversed,
 } from "./table-view.ts";
+import {
+  byGroupRank,
+  placedRows,
+  type RowGroup,
+  rowsInOrder,
+} from "./row-groups.ts";
 
 const group = (key: string, rank: number): RowGroup => ({
   key,

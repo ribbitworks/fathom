@@ -4,7 +4,8 @@
 
 import type { ScreenPoint } from "./app-menu.tsx";
 import type { RowProblem } from "./record-table.ts";
-import type { CellValue, PlacedRow } from "./table-view.ts";
+import type { CellValue } from "./table-view.ts";
+import type { PlacedRow } from "./row-groups.ts";
 
 // The problem with a row's values, by its row's key, and the column it is in, when it is in one.
 export interface ShownProblem extends RowProblem {

@@ -59,7 +59,8 @@ import {
   MarkedItem,
 } from "./status-mark.tsx";
 import type { DraftLike } from "./draft-marks.ts";
-import { type CellValue, formatDay, plannedWords } from "./table-view.ts";
+import type { CellValue } from "./table-view.ts";
+import { formatDay, plannedWords } from "./day-formats.ts";
 import { today } from "./today.ts";
 
 export { personPanelId };

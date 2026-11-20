@@ -29,7 +29,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { dayQuery, sendJson } from "./api.ts";
 import { personKeyOf } from "./people-rows.ts";
-import { formatDay, type ViewSearch } from "./table-view.ts";
+import type { ViewSearch } from "./table-view.ts";
+import { formatDay } from "./day-formats.ts";
 import { shownDay, today } from "./today.ts";
 
 // The chart as it is today, with drafts, or as approved on a chosen day, for readers who see

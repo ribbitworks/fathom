@@ -9,7 +9,8 @@ import { describe, expect, it, vi } from "vitest";
 import { focusRecordCell } from "./grid-row.tsx";
 import { RecordGrid } from "./record-grid.tsx";
 import type { RecordActions, RecordTable } from "./record-table.ts";
-import { type RowGroup, emptyView } from "./table-view.ts";
+import { emptyView } from "./table-view.ts";
+import type { RowGroup } from "./row-groups.ts";
 import {
   type Gadget,
   type GadgetChange,

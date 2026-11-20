@@ -45,7 +45,7 @@ import {
   type PlannedFeatures,
   type ShowIn,
 } from "./release-tabs.ts";
-import { formatDay } from "./table-view.ts";
+import { formatDay } from "./day-formats.ts";
 
 // What a schedule's details open to change it.
 export type ScheduleChange =

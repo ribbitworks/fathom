@@ -5,7 +5,8 @@
 // two crossed. They are counted in the browser, over the rows the view shows and from the columns
 // the user may see, as ADR 0006 sets out, so they reveal nothing the table does not.
 
-import { type CellValue, isEmptyIn, type TableColumn } from "./table-view.ts";
+import type { CellValue, TableColumn } from "./table-view.ts";
+import { isEmptyIn } from "./table-rows.ts";
 
 export const metricsTitleId = "metrics-title";
 export const metricsButtonId = "metrics-button";

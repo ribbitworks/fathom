@@ -24,7 +24,7 @@ import { changeButton, opensOnClick, RecordLink } from "./record-details.tsx";
 import details from "./record-details.module.css";
 import { ValueField } from "./record-editing.tsx";
 import { DraftedItem } from "./status-mark.tsx";
-import { formatMomentDay } from "./table-view.ts";
+import { formatMomentDay } from "./day-formats.ts";
 
 type Scoped = Project | Proposal;
 

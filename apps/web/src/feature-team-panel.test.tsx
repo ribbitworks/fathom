@@ -19,7 +19,7 @@ import {
   noFeatureTeamEdits,
 } from "./feature-team-panel.tsx";
 import { DraftView } from "./status-mark.tsx";
-import { formatDay } from "./table-view.ts";
+import { formatDay } from "./day-formats.ts";
 import { detailRow, detailValue, testTheme } from "./test-support.tsx";
 
 const person = (

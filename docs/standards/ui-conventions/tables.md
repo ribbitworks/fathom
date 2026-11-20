@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/standards/ui-conventions.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Tables, Addresses and Search
@@ -41,7 +41,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **Drawn by:** `keyColumn` in `apps/web/src/grid-columns.tsx`, placed by `RecordGrid` from the table's `keyOf`.
   - **Example:** on People, choose Key under Hidden in the Views menu.
 - **Filtering a column:** A column's filter that offers its empty values, such as Empty, No date or No number, also offers every value that isn't empty, under it and in the same style: Not empty, or Any date and Any number to match No date and No number. On a choice column, Not empty comes after Empty, under the choices in use. Ticking one unticks the other, since both would show every row. Every filter's pill names its column, a colon, then what it filters by, in the filter's own words for empty values, such as Onboarding: contains “plan” or Empty, and Start: from Mar 1, 2024 or No date. Not empty shows every row with a value, whatever else the filter holds, so its pill names it alone, such as Onboarding: Not empty. A checkbox column is never empty, so it offers none.
-  - **Drawn by:** `FilterForm` and `describeFilter` in `apps/web/src/table-controls.tsx`, with the match in `apps/web/src/table-view.ts` and the filter's `notEmpty` in `packages/shared/src/views.ts`.
+  - **Drawn by:** `FilterForm` and `describeFilter` in `apps/web/src/table-controls.tsx`, with the match in `apps/web/src/table-rows.ts` and the filter's `notEmpty` in `packages/shared/src/views.ts`.
   - **Example:** on People, tick Not empty in the Onboarding column's filter.
 - **What the Views menu holds:** Besides the sort, saved views and Clear view, the Views menu may hold a choice of which records the table shows beyond its filters, such as Show retired. It is a ticked item, first in the menu, kept in the address and saved with the view. Its words say how many records it adds, such as Show retired (1). A page's modes and switches stay where they are.
   - **Drawn by:** each page's declared choices, a `ViewChoice` from `apps/web/src/table-controls.tsx` given as `RecordGrid`'s `viewChoices` in `apps/web/src/record-table.ts`, shown by `ViewsMenu` as a `MenuToggle` from `apps/web/src/app-menu.tsx`, and named in Save view's Includes by `viewParts`.
@@ -62,7 +62,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **The first grouping alone:** Then by's headings keep their order under each heading.
   - **Starting again:** choosing another grouping, None or Clear grouping goes back to the first order.
   - **Part of the view:** kept in the address and in saved and remembered views, and named in Save view's Includes as Group order. A view without it opens with the first order. The button names only the grouping, since the headings show the order.
-  - **Drawn by:** `byGroupRank` and `rankOfNone` in `apps/web/src/table-view.ts`, from each grouping's `holds`, with the choices drawn by `GroupOrderChoices` in `apps/web/src/table-controls.tsx`, used by every table and by `FeatureBoard` in `apps/web/src/feature-board-view.tsx`.
+  - **Drawn by:** `byGroupRank` and `rankOfNone` in `apps/web/src/row-groups.ts`, from each grouping's `holds`, with the choices drawn by `GroupOrderChoices` in `apps/web/src/table-controls.tsx`, used by every table and by `FeatureBoard` in `apps/web/src/feature-board-view.tsx`.
   - **Example:** on Features, choose Needed by in Group by, then Latest first: No date is the first heading.
 - **A record under several headings:** Grouped by a column holding several values, a record has a row under each of its values. Each is its own row for focus and the keyboard. A record with no value shows under the column's words for none.
   - **Its mark:** a dimmed +1, or +2 and on, after its name. Its tip names the other headings, such as Also under P-2001 Crane Control. Grouped by two levels, the tip names each other place by the groups it differs in, giving both as the first, a colon and the second, such as Also under Priya Raman: Northmere.

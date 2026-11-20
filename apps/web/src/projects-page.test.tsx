@@ -27,7 +27,7 @@ import {
   serverAnswers,
   choiceUnder,
 } from "./test-support.tsx";
-import { formatDay } from "./table-view.ts";
+import { formatDay } from "./day-formats.ts";
 import { operationsOf } from "./projects.ts";
 
 const customerId = "c0000000-0000-4000-8000-000000000001";

@@ -11,21 +11,18 @@ import classes from "./pages.module.css";
 import type { GridRecord, RowGrouping } from "./record-table.ts";
 import { tickedOf } from "./row-ticks.tsx";
 import { Tipped } from "./table-tips.tsx";
+import { type View, activeGrouping, activeThenBy } from "./table-view.ts";
 import {
   type OtherPlace,
   type PlacedRow,
   type RowGroup,
   type RowGroups,
-  type View,
-  activeGrouping,
-  activeThenBy,
-  applyView,
   groupedRowId,
   placedRows,
   recordsOf,
   rowsInOrder,
-  useSteadyOrder,
-} from "./table-view.ts";
+} from "./row-groups.ts";
+import { applyView, useSteadyOrder } from "./table-rows.ts";
 
 // Each record's groups as the view last placed them, so its rows keep their headings while it is
 // edited, as they keep their places; a record shown since is placed by what it held when first

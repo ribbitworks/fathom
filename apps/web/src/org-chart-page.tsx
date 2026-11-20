@@ -123,7 +123,8 @@ import {
   MarkRow,
 } from "./status-mark.tsx";
 import { useSavedViews } from "./saved-views.tsx";
-import { emptyView, plannedWords, viewProps } from "./table-view.ts";
+import { emptyView, viewProps } from "./table-view.ts";
+import { plannedWords } from "./day-formats.ts";
 import { DraftMenu, type PageParts, ViewsMenu } from "./table-controls.tsx";
 import { today } from "./today.ts";
 

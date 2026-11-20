@@ -3,7 +3,7 @@
 // The rows someone has in the allocations grid when it is grouped by manager or by feature team.
 
 import type { TeamMonths } from "@fathom/shared";
-import { groupedRowId } from "./table-view.ts";
+import { groupedRowId } from "./row-groups.ts";
 import {
   featureTeamGrouping,
   managerGrouping,

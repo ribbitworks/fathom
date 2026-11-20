@@ -35,7 +35,8 @@ import {
 } from "./record-table.ts";
 import { changeMemberTeams, featureTeamsQuery } from "./feature-teams.ts";
 import { useSaving } from "./saving.ts";
-import { formatMonth, groupedRowId, rankOfNone } from "./table-view.ts";
+import { formatMonth } from "./day-formats.ts";
+import { groupedRowId, rankOfNone } from "./row-groups.ts";
 import type { DraftLike } from "./draft-marks.ts";
 import { type DraftedLabel, TeamLabels } from "./team-labels.tsx";
 

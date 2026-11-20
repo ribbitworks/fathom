@@ -22,7 +22,7 @@ import {
 import { z } from "zod";
 import { dayQuery, sendDeleteFor, sendJson, sendJsonFor } from "./api.ts";
 import { type ChartPerson, dayUnlessShown, liveCopyId } from "./org-chart.ts";
-import { formatDay } from "./table-view.ts";
+import { formatDay } from "./day-formats.ts";
 import { today } from "./today.ts";
 import { besideLive } from "./status-mark.tsx";
 
