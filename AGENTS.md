@@ -107,10 +107,10 @@ cannot say. Never narrate names, UI, tickets, use-case numbers or history. See
 ## Project Commands
 
 - **Setup on a new branch:** `pnpm install`, then run `pnpm dev` again, which first stops this clone's running one, since the top bar's development label shows the branch `pnpm dev` started on. A clone that already has `.dev/` needs nothing more to run the app. In a clone without it, ask the owner whether to copy `.dev/` from another clone, so the development accounts keep one password everywhere, and which clone number to give it with `pnpm dev:setup <number>`, run straight after copying, since `.dev/` holds the other clone's number. Each clone number has its own database and ports, as [Development Setup](docs/design/development-setup.md#ways-to-run-fathom) describes.
-- **Workflow test step:** as [Testing Standards](docs/standards/testing.md#running-tests) sets out, `pnpm test:changed` and the linters. When a change affects the containers, the test step also runs `pnpm test:containers`.
-- **Full suite:** the Check workflow runs the full `pnpm check` on the pull request on GitHub. Push once the review's findings are fixed, `pnpm test:changed`, the linters and type checks pass, and the owner approves the commit; then follow the run with `gh pr checks --watch` and fix any failure or warning as a later commit. The owner merges only on green. Running `pnpm check` locally is optional, for when the workflow can't run.
+- **Workflow test step:** as [Testing Standards](docs/standards/testing.md#running-tests) sets out, `pnpm check:push`. When a change affects the containers, the test step also runs `pnpm test:containers`.
+- **Full suite:** the Check workflow runs the full `pnpm check` on the pull request on GitHub. Push once the review's findings are fixed, `pnpm check:push` passes on the code rebased onto `main`, and the owner approves the commit; then follow the run with `gh pr checks --watch` and fix any failure or warning as a later commit. The owner merges only on green. Running `pnpm check` locally is optional, for when the workflow can't run.
 - **Tests only:** `pnpm test`
-- **Checks while working and after each round of fixes:** `pnpm test:changed` and the linters, as [Testing Standards](docs/standards/testing.md#running-tests) describes
+- **Checks while working and after each round of fixes:** `pnpm check:push`, as [Testing Standards](docs/standards/testing.md#running-tests) describes; without the internet, `pnpm check:push --offline`, as [Development Setup](docs/design/development-setup.md#working-offline) describes
 - **Container tests:** `pnpm test:containers`
 - **Markdown lint:** `pnpm lint:md`
 - **Shell lint:** `pnpm lint:shell`
