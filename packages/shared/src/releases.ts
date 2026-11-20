@@ -9,6 +9,7 @@ import {
   cycleUnitSchema,
   laterCyclesSchema,
   longestCycle,
+  longestCycleIn,
   type ScheduleEnd,
 } from "./cycles.ts";
 import { daySchema } from "./days.ts";
@@ -126,8 +127,7 @@ export const cyclePatternRequestSchema = z
     naming: z.string().trim().min(1).max(releaseLengths.naming),
   })
   .refine(
-    ({ length, unit }) =>
-      length <= (unit === "weeks" ? longestCycle.weeks : longestCycle.months),
+    ({ length, unit }) => length <= longestCycleIn(unit),
     "A cycle can be at most two years long",
   );
 

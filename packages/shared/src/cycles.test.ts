@@ -20,6 +20,7 @@ import {
   patternsForLength,
   patternStartFits,
   quarterStart,
+  longestCycleIn,
 } from "./cycles.ts";
 
 const quarters = {
@@ -423,5 +424,15 @@ describe("quarterStart", () => {
     ["2027-12", "2027-10"],
   ])("puts %s in the quarter starting %s", (month, start) => {
     expect(quarterStart(month)).toBe(start);
+  });
+});
+
+describe("the longest cycle in a unit", () => {
+  it.each([
+    ["weeks", 104],
+    ["months", 24],
+    [undefined, 24],
+  ])("is two years in %s", (unit, longest) => {
+    expect(longestCycleIn(unit)).toBe(longest);
   });
 });

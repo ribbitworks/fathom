@@ -15,7 +15,7 @@ import {
   cyclesOf,
   defaultNaming,
   isDay,
-  longestCycle,
+  longestCycleIn,
   namingTokens,
   releaseLengths,
   type CyclePattern,
@@ -260,7 +260,7 @@ export function PatternDialog({
   const lengthOk =
     Number.isInteger(Number(length)) &&
     Number(length) >= 1 &&
-    Number(length) <= longestCycle[unit === "weeks" ? "weeks" : "months"];
+    Number(length) <= longestCycleIn(unit);
   const startOk = isDay(startsOn);
   const namingOk =
     naming.trim() !== "" && naming.trim().length <= releaseLengths.naming;
@@ -321,7 +321,7 @@ export function PatternDialog({
           <NumberInput
             label="Each cycle lasts"
             min={1}
-            max={longestCycle[unit === "weeks" ? "weeks" : "months"]}
+            max={longestCycleIn(unit)}
             w={140}
             value={length}
             error={tried && !lengthOk ? "From 1 to two years" : undefined}
@@ -428,7 +428,7 @@ export function CycleLengthDialog({
     )
     .at(-1) as CyclePattern;
   const { unit } = maker;
-  const longest = unit === "weeks" ? longestCycle.weeks : longestCycle.months;
+  const longest = longestCycleIn(unit);
   const [length, setLength] = useState<number | string>(maker.length);
   const [later, setLater] = useState<LaterCycles>("move");
   const [tried, setTried] = useState(false);
