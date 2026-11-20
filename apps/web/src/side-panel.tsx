@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A page's content with side panels beside it, as Visual Design sets out for every side panel: the
-// content narrows to make room rather than being covered, and the panels' edge beside it is
-// dragged, or moved with the arrow keys, to resize them, with their width kept for next time. Panels
-// open at once are stacked, sharing the height by the edges between them. Panels slide in over the
-// content as they open and out as they close, and grow into or shrink from a stack, unless the
-// computer asks for less motion. On a narrow screen a panel covers the screen instead, by its own
-// styles.
+// A page's content with side panels beside it: their width and slide, the stack of panels open at
+// once, and each panel's frame.
 
 import { allOf } from "@fathom/shared";
 import { ActionIcon, FocusTrap } from "@mantine/core";
@@ -17,10 +12,12 @@ import {
   useReducedMotion,
 } from "@mantine/hooks";
 import {
+  createContext,
   type CSSProperties,
   Fragment,
   type ReactNode,
   type RefObject,
+  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -66,12 +63,42 @@ const joined = (...names: (string | false | undefined)[]) =>
 const namesOf = (panels: readonly SidePanel[]) =>
   allOf(panels.map(({ name }) => name));
 
+// A panel under another may be maximized, on a screen wide enough to stack them.
+export const maximizable = (
+  keys: readonly string[],
+  key: string,
+  narrow: boolean,
+): boolean => !narrow && keys.indexOf(key) > 0;
+
+// Opening or closing any panel restores the stack, so a panel opened shows.
+export const maximizedPanel = (
+  keys: readonly string[],
+  openBefore: readonly string[],
+  asked: string | undefined,
+  narrow: boolean,
+): string | undefined =>
+  asked !== undefined &&
+  maximizable(keys, asked, narrow) &&
+  keys.length === openBefore.length &&
+  keys.every((key) => openBefore.includes(key))
+    ? asked
+    : undefined;
+
+interface StackPlace {
+  name: string;
+  maximized: boolean;
+  onToggle: () => void;
+}
+
+const StackPlaceContext = createContext<StackPlace | undefined>(undefined);
+
 // How long a panel's motion may take before it is taken as ended, for a browser that never says it
 // has, such as one that skips it.
 export const motionLasts = 400;
 
-// Ends a motion once it has had its time, if the browser has not said it ended.
-function useMotionEnds(moving: boolean, ended: () => void) {
+// Ends a motion once it has had its time, if the browser has not said it ended, the time starting
+// again whenever the motion's aim changes.
+function useMotionEnds(moving: boolean, ended: () => void, aim?: unknown) {
   const end = useRef(ended);
   useLayoutEffect(() => {
     end.current = ended;
@@ -84,7 +111,7 @@ function useMotionEnds(moving: boolean, ended: () => void) {
     return () => {
       clearTimeout(timer);
     };
-  }, [moving]);
+  }, [moving, aim]);
 }
 
 // The panels a stack shows: those open, and those just closed while others stay, which stay where
@@ -167,20 +194,64 @@ function useStackHeights(storageKey: string) {
   return { height, shareOf, share };
 }
 
+// The panel maximized in a stack, and its place for each panel under another; the stack folds the
+// panels above it away, or unfolds them, with motion where the stack moves.
+function useMaximized(
+  panels: readonly SidePanel[],
+  narrow: boolean,
+  moves: boolean,
+) {
+  const [asked, setAsked] = useState<string>();
+  const keys = panels.map(({ key }) => key);
+  const openBefore = usePrevious(keys) ?? keys;
+  const maximized = maximizedPanel(keys, openBefore, asked, narrow);
+  if (asked !== undefined && maximized === undefined) setAsked(undefined);
+  const [folding, setFolding] = useState<{ to: string | undefined }>();
+  const wasMaximized = usePrevious(maximized);
+  if (
+    moves &&
+    wasMaximized !== maximized &&
+    (folding === undefined || folding.to !== maximized)
+  ) {
+    setFolding({ to: maximized });
+  }
+  useMotionEnds(
+    folding !== undefined,
+    () => {
+      setFolding(undefined);
+    },
+    folding,
+  );
+  const placeOf = (panel: SidePanel): StackPlace | undefined =>
+    maximizable(keys, panel.key, narrow)
+      ? {
+          name: panel.name,
+          maximized: maximized === panel.key,
+          onToggle: () => {
+            setAsked(maximized === panel.key ? undefined : panel.key);
+          },
+        }
+      : undefined;
+  return { maximized, folding: folding !== undefined, placeOf };
+}
+
 function PanelStack({
   panels,
   storageKey,
   moves,
+  narrow,
 }: {
   panels: readonly SidePanel[];
   storageKey: string;
   moves: boolean;
+  narrow: boolean;
 }) {
   const { height, shareOf, share } = useStackHeights(storageKey);
   const { shown, isLeaving, isArriving, settled } = useStackChanges(
     panels,
     moves,
   );
+  const { maximized, folding, placeOf } = useMaximized(panels, narrow, moves);
   const items = useRef(new Map<string, HTMLDivElement>());
   // Shares are kept as weights, scaled so the smallest open is 1: a flex item whose weights add up
   // to less than 1 takes only that part of the room, so a panel left alone after its neighbour
@@ -190,10 +261,11 @@ function PanelStack({
   const box = (panel: SidePanel) =>
     (items.current.get(panel.key) as HTMLDivElement).getBoundingClientRect();
   return (
-    <div className={classes.stack}>
+    <div className={joined(classes.stack, folding && classes.stackFolding)}>
       {shown.map((panel, at) => {
         const above = shown[at - 1];
         const gone = isLeaving(panel);
+        const hidden = maximized !== undefined && maximized !== panel.key;
         return (
           <Fragment key={panel.key}>
             {above !== undefined && (
@@ -206,8 +278,9 @@ function PanelStack({
                     isArriving(panel)) &&
                     classes.stackEdgeMoving,
                   (gone || isLeaving(above)) && classes.stackEdgeLeaving,
+                  maximized !== undefined && classes.stackEdgeFolded,
                 )}
-                inert={gone || isLeaving(above)}
+                inert={gone || isLeaving(above) || maximized !== undefined}
               >
                 <ResizeEdge
                   separator={{
@@ -246,11 +319,12 @@ function PanelStack({
                 classes.stackItem,
                 isArriving(panel) && classes.stackItemArriving,
                 gone && classes.stackItemLeaving,
+                hidden && classes.stackItemFolded,
               )}
               style={
                 { "--stack-share": height(panel) / smallest } as CSSProperties
               }
-              inert={gone}
+              inert={gone || hidden}
               onTransitionEnd={(event) => {
                 if (event.target === event.currentTarget) settled(panel.key);
               }}
@@ -258,7 +332,9 @@ function PanelStack({
                 if (event.target === event.currentTarget) settled(panel.key);
               }}
             >
-              {panel.node}
+              <StackPlaceContext value={placeOf(panel)}>
+                {panel.node}
+              </StackPlaceContext>
             </div>
           </Fragment>
         );
@@ -355,7 +431,12 @@ export function WithSidePanel({
   const open = panels.length > 0;
   const moves = !reduceMotion && !narrow;
   const panel = open && (
-    <PanelStack panels={panels} storageKey={storageKey} moves={moves} />
+    <PanelStack
+      panels={panels}
+      storageKey={storageKey}
+      moves={moves}
+      narrow={narrow}
+    />
   );
   const { shown, opening, closing, slid } = usePanelSlide(
     panel,
@@ -442,7 +523,8 @@ export function PanelSubtitle({
 // A side panel's frame: its title, with any controls for the whole record beside it and a line
 // under it, a close button unless it closes only by its own buttons, what it holds, scrolling, and
 // a foot that stays in view, such as Save. Esc closes it too, unless something inside has used it
-// already. Covering the content on a narrow screen, it holds focus until it is closed.
+// already. Under another panel, it offers Maximize. Covering the content on a narrow screen, it holds
+// focus until it is closed.
 export function SidePanelFrame({
   id,
   titleId,
@@ -470,6 +552,7 @@ export function SidePanelFrame({
   foot?: ReactNode;
   children: ReactNode;
 }) {
+  const place = useContext(StackPlaceContext);
   return (
     <FocusTrap active={narrow}>
       <section
@@ -506,6 +589,21 @@ export function SidePanelFrame({
           )}
           {actions !== undefined && (
             <div className={classes.actions}>{actions}</div>
+          )}
+          {place !== undefined && (
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              aria-label={`${place.maximized ? "Restore" : "Maximize"} ${place.name}`}
+              // Focus moves to the button, as not every browser gives it on a click, so it never stays
+              // in a panel folding away.
+              onClick={(event) => {
+                event.currentTarget.focus();
+                place.onToggle();
+              }}
+            >
+              <Icon name={place.maximized ? "restore" : "maximize"} />
+            </ActionIcon>
           )}
           {close !== undefined && (
             <ActionIcon

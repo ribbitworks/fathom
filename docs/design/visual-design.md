@@ -59,7 +59,7 @@ How Fathom's screens look and behave, so every page is built the same way. The p
   - **Coloured names:** A team or release with a colour shows its square before its name, as [A coloured name](../standards/ui-conventions/drafts-and-values.md#values) sets out.
 - **Side panels:** Every side panel, such as a record's or the Metrics panel, sits beside the content, which narrows and stays usable. Panels open, close, and hold focus as [Panels and Focus](../standards/ui-conventions/pages-and-panels.md#panels-and-focus) sets out.
   - **Width:** The edge drags, or moves with the arrow keys, and the width is kept, starting at 640 pixels. Lists' record panel keeps a width of its own.
-  - **Stacking:** Panels open together, such as a note and Metrics, stack, each scrolling on its own, with at least a fifth of the height. Only the top one shows on a narrow screen.
+  - **Stacking:** Panels open together, such as a note and Metrics, stack, each scrolling on its own, with at least a fifth of the height. Only the top one shows on a narrow screen. A panel under another can be maximized, as [Maximizing](../standards/ui-conventions/pages-and-panels.md#panels-and-focus) sets out, folding the panels above it away and back as a panel closing or opening does.
   - **Motion:** A panel slides in from the right, unless the computer asks for less motion.
   - **Labels:** Beside their values while the panel is wide, over them once it is narrow, following the panel's width, not the window's. A record's details follow [Details Panels](../standards/ui-conventions/pages-and-panels.md#details-panels).
 - **Text fields:** As [Fields](../standards/ui-conventions/entering-and-saving.md#fields) sets out.

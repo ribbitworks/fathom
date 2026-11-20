@@ -142,6 +142,8 @@
    each two that moves to share it differently. On a narrow screen, where a panel covers the screen,
    only the first is shown. */
 .stack {
+  --stack-motion: 240ms cubic-bezier(0.2, 0, 0, 1);
+
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -157,9 +159,10 @@
 /* A panel added to the stack grows into its share of the height, and one closed shrinks away, the
    others making room or taking it back. */
 .stackItemArriving,
-.stackItemLeaving {
+.stackItemLeaving,
+.stackFolding .stackItem {
   overflow: hidden;
-  transition: flex-grow 240ms cubic-bezier(0.2, 0, 0, 1);
+  transition: flex-grow var(--stack-motion);
 }
 
 @starting-style {
@@ -172,6 +175,18 @@
   flex-grow: 0;
 }
 
+/* While a panel under another is maximized, the panels and edges beside it fold away, kept as they
+   were, and Restore unfolds them; both move as a panel opening or closing does. */
+.stackItemFolded {
+  flex-grow: 0;
+  overflow: hidden;
+}
+
+.stackEdgeFolded {
+  height: 0;
+  overflow: hidden;
+}
+
 /* The edge beside a panel arriving or leaving opens or closes with it. */
 .stackEdge {
   flex: none;
@@ -180,9 +195,10 @@
   height: var(--mantine-spacing-md);
 }
 
-.stackEdgeMoving {
+.stackEdgeMoving,
+.stackFolding .stackEdge {
   overflow: hidden;
-  transition: height 240ms cubic-bezier(0.2, 0, 0, 1);
+  transition: height var(--stack-motion);
 }
 
 @starting-style {
@@ -198,7 +214,9 @@
 @media (prefers-reduced-motion: reduce) {
   .stackItemArriving,
   .stackItemLeaving,
-  .stackEdgeMoving {
+  .stackEdgeMoving,
+  .stackFolding .stackItem,
+  .stackFolding .stackEdge {
     transition: none;
   }
 }
