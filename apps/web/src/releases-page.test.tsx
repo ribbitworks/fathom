@@ -1074,6 +1074,16 @@ describe("a stream's panel", () => {
 });
 
 describe("changing streams", () => {
+  it("offers no New schedule under Live only, where nothing new would show", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer([fictionalStream()], editsAll),
+    });
+    renderApp("/releases?tab=schedules&show=live");
+    expect(await screen.findAllByText("Fictional Majors")).not.toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "New schedule" })).toBeNull();
+  });
+
   it("adds a stream, and opens it", async () => {
     const added = fictionalStream({
       id: "10000000-0000-4000-8000-000000000002",

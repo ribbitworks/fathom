@@ -6,14 +6,15 @@
 import { lists as listTable, listItems } from "@fathom/db";
 import type { DraftsRequest } from "@fathom/shared";
 import { eq } from "drizzle-orm";
-import { type Actor, storedTier } from "../access.ts";
-import { ConflictError, NotFoundError } from "../errors.ts";
+import { type Actor, seesSensitivity, storedTier } from "../access.ts";
+import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
 import { recordAddedClass } from "./data-classes.ts";
 import {
   deleteDrafts,
   drafted,
   type Draft,
+  draftUnseen,
   refuseHeldDecision,
   refuseRejected,
   rejectedField,
@@ -28,6 +29,7 @@ import {
   listMoved,
   listOfChoice,
   type ListsState,
+  listTier,
   liveOrder,
   lockChoices,
   orderChanges,
@@ -144,6 +146,25 @@ const asChoice = (id: string, choice: Record<string, unknown>) => ({
   weight: typeof choice.weight === "number" ? choice.weight : null,
 });
 
+// Refuses deciding drafts of a list, its choices or its order to a role that can't see the list's
+// values, live or as drafted.
+export function requireSeesLists(
+  actor: Actor,
+  state: ListsState,
+  asked: ListSelection,
+): void {
+  const listIds = new Set([
+    ...asked.lists,
+    ...asked.choices.flatMap((id) => listOfChoice(state, id) ?? []),
+    ...asked.orders,
+  ]);
+  for (const id of listIds) {
+    if (!seesSensitivity(actor, listTier(state, id))) {
+      throw new ForbiddenError(draftUnseen("is of a list whose details"));
+    }
+  }
+}
+
 // Approves the drafts asked for and those they use, applying them to the live lists and choices,
 // and returns the changes made, for approvals.ts to record. Lists come first, then their choices,
 // then orders, then removals, so each finds what it needs in place.
@@ -155,6 +176,7 @@ export async function approveListDrafts(
   const state = await readState(transaction);
   requireDrafts(state, asked);
   const approved = withUsed(state, asked);
+  requireSeesLists(actor, state, approved);
   await refuseHeld(transaction, approved);
   refuseRejected([
     ...approved.lists.map((id) => state.listDrafts.get(id)),
@@ -303,11 +325,13 @@ export async function approveListDrafts(
 // rejected too, and returns the changes to record.
 export async function rejectListDrafts(
   transaction: Transaction,
+  actor: Actor,
   asked: ListSelection,
   reason: string,
 ): Promise<Change[]> {
   const state = await readState(transaction);
   requireDrafts(state, asked);
+  requireSeesLists(actor, state, asked);
   await refuseHeld(transaction, asked);
   const users = usersOf(state, asked);
   if (

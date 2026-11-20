@@ -376,11 +376,9 @@ async function deciding(
   asking: Asking,
 ): Promise<void> {
   refuseBeyondRole(actor, kindsAsked(asked), asking);
-  // Lists are seen by those who see configuration, and by those who see people, whose columns
-  // draw on them.
-  if (asksForLists(asked)) {
-    requireAnyPermission(actor, ["configuration:view", "people:view"]);
-  }
+  // A list's values are people's details, so deciding one needs sight of people, and of its class,
+  // which approving and rejecting lists check.
+  if (asksForLists(asked)) requirePermission(actor, "people:view");
   // Columns are seen on the People table, with the people's values in them.
   if (asksForColumns(asked)) requirePermission(actor, "people:view");
   // Planned hires are seen beside the people who manage and fill them.
@@ -522,7 +520,7 @@ export async function rejectDrafts(
     await refuseUsedAcross(transaction, asked);
     const made = await rejectRecordDrafts(transaction, asked.records, reason);
     if (asksForLists(asked)) {
-      made.push(...(await rejectListDrafts(transaction, asked, reason)));
+      made.push(...(await rejectListDrafts(transaction, actor, asked, reason)));
     }
     if (asksForColumns(asked)) {
       made.push(
