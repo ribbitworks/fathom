@@ -31,6 +31,7 @@ import {
   noteSearch,
   type OpenNoteAddress,
   OpenNoteContext,
+  TableNoteContext,
 } from "./note-address.ts";
 import { PageNotFound } from "./problems.tsx";
 import type { LinkedColumn } from "./record-table.ts";
@@ -121,7 +122,7 @@ export const shownOn = <Search extends ViewSearch>(
 export const signedInRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: "signed-in",
-  // A note open beside any page, which every page keeps in its address.
+  // The notes open beside any page, which every page keeps in its address.
   validateSearch: noteSearch,
   beforeLoad: async ({ context, location }) => {
     // Checked afresh on every change of page, so an expired session is noticed.
@@ -163,7 +164,7 @@ export const signedInRoute = createRoute({
       mustChangePassword,
       passwords,
     } = signedIn.useRouteContext();
-    const { note } = signedIn.useSearch();
+    const { note, tableNote } = signedIn.useSearch();
     const navigate = useNavigate();
     const openNote = useMemo(
       (): OpenNoteAddress => ({
@@ -178,19 +179,34 @@ export const signedInRoute = createRoute({
       }),
       [note, navigate],
     );
+    const tableNoteAddress = useMemo(
+      (): OpenNoteAddress => ({
+        note: tableNote,
+        onNote: (next, replace) => {
+          void navigate({
+            to: ".",
+            search: (shown) => ({ ...shown, tableNote: next }),
+            replace,
+          });
+        },
+      }),
+      [tableNote, navigate],
+    );
     if (mustChangePassword) {
       return <FirstPasswordChange rules={passwords.rules} owner={user} />;
     }
     return (
       <OpenNoteContext value={openNote}>
-        <Layout
-          user={user}
-          role={role}
-          roles={roles}
-          permissions={permissions}
-          dataClasses={access.dataClasses}
-          passwordRules={passwords.rules}
-        />
+        <TableNoteContext value={tableNoteAddress}>
+          <Layout
+            user={user}
+            role={role}
+            roles={roles}
+            permissions={permissions}
+            dataClasses={access.dataClasses}
+            passwordRules={passwords.rules}
+          />
+        </TableNoteContext>
       </OpenNoteContext>
     );
   },

@@ -120,8 +120,10 @@ export const releasesRoute = createRoute({
       tab = "releases",
       open,
       note,
+      tableNote,
       ...search
     } = releasesRoute.useSearch();
+    const notes = { note, tableNote };
     const kept = { tab: tab === "releases" ? undefined : tab, open };
     return (
       <ReleasesPage
@@ -139,7 +141,9 @@ export const releasesRoute = createRoute({
         }}
         open={open}
         onOpen={(next) => {
-          void navigate({ search: { ...search, ...kept, open: next, note } });
+          void navigate({
+            search: { ...search, ...kept, open: next, ...notes },
+          });
         }}
         onFeatures={(at) => {
           void navigate(
@@ -163,7 +167,7 @@ export const releasesRoute = createRoute({
         {...viewProps(
           search,
           (next, replace) => {
-            void navigate({ search: { ...next, ...kept, note }, replace });
+            void navigate({ search: { ...next, ...kept, ...notes }, replace });
           },
           // The tab is always one of the fixed tabs.
           // eslint-disable-next-line security/detect-object-injection
@@ -252,8 +256,9 @@ export const featuresRoute = createRoute({
     const navigate = featuresRoute.useNavigate();
     // Table or Board, and the cycle the Board starts from, are kept in the address but not the
     // view, which the table and the Board share.
-    const { open, note, mode, from, column, ...search } =
+    const { open, note, tableNote, mode, from, column, ...search } =
       featuresRoute.useSearch();
+    const notes = { note, tableNote };
     const { stream, hide } = search;
     const linkedColumn = useLinkedColumn(column, () => {
       void navigate({
@@ -282,7 +287,7 @@ export const featuresRoute = createRoute({
           search,
           (next, replace) => {
             void navigate({
-              search: { ...next, mode, from, open, note },
+              search: { ...next, mode, from, open, ...notes },
               replace,
             });
           },
@@ -291,7 +296,7 @@ export const featuresRoute = createRoute({
         open={open}
         onOpen={(next) => {
           void navigate({
-            search: { ...search, mode, from, open: next, note },
+            search: { ...search, mode, from, open: next, ...notes },
           });
         }}
         board={{
@@ -302,7 +307,7 @@ export const featuresRoute = createRoute({
                 ...search,
                 from,
                 open,
-                note,
+                ...notes,
                 mode: next === "board" ? next : undefined,
               },
             });
@@ -310,7 +315,7 @@ export const featuresRoute = createRoute({
           place: { stream, from, hide },
           onPlace: (place) => {
             void navigate({
-              search: { ...search, mode, ...place, open, note },
+              search: { ...search, mode, ...place, open, ...notes },
             });
           },
         }}
@@ -337,7 +342,8 @@ export const projectsRoute = createRoute({
   component: function Projects() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = projectsRoute.useNavigate();
-    const { tab, open, note, ...search } = projectsRoute.useSearch();
+    const { tab, open, note, tableNote, ...search } = projectsRoute.useSearch();
+    const notes = { note, tableNote };
     return (
       <ProjectsPage
         tab={tab ?? "projects"}
@@ -347,11 +353,11 @@ export const projectsRoute = createRoute({
         }}
         approves={approvableKinds(permissions)}
         {...viewProps(search, (next, replace) => {
-          void navigate({ search: { ...next, tab, open, note }, replace });
+          void navigate({ search: { ...next, tab, open, ...notes }, replace });
         })}
         open={open}
         onOpen={(next) => {
-          void navigate({ search: { ...search, tab, open: next, note } });
+          void navigate({ search: { ...search, tab, open: next, ...notes } });
         }}
         onMilestonesOf={(project) => {
           void navigate({

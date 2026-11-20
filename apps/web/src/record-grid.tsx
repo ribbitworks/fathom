@@ -10,6 +10,7 @@ import { useShownRows } from "./grid-groups.tsx";
 import { columnWidth, useGridLayout, widthStyle } from "./grid-layout.ts";
 import { gridProps, useGridModel } from "./grid-model.tsx";
 import { useGridPanels } from "./grid-panels.tsx";
+import { useTableNoteAddress } from "./grid-note-address.ts";
 import { gridRows } from "./grid-row.tsx";
 import { gridSaving } from "./grid-saving.ts";
 import { gridSelection, useGridState } from "./grid-selection.ts";
@@ -39,6 +40,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
   const withSaving = { ...withLayout, ...gridSaving(withLayout) };
   const withMenus = { ...withSaving, ...rowMenus(withSaving) };
   const withEditing = { ...withMenus, ...gridEditing(withMenus) };
+  useTableNoteAddress(withEditing);
   const withHeaders = { ...withEditing, ...columnHeaders(withEditing) };
   const grid = { ...withHeaders, ...useGridPanels(withHeaders) };
   const {

@@ -11,7 +11,7 @@ last_updated: "2026-11-19"
 
 ## Scope
 
-Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings, checkboxes and numbered lists look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, or any value in a choice column, a long note folded in a person's details and read in full on Releases, an open note kept open on reload, Back and a shared link, and a panel under another maximized and restored.
+Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings, checkboxes and numbered lists look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, or any value in a choice column, a long note folded in a person's details and read in full on Releases, an open note, from a person's details or a cell, kept open on reload, Back and a shared link, and a panel under another maximized and restored.
 
 ## Test Environment
 
@@ -857,4 +857,22 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The panel closes.
     - The details of 'Jarrod Mante' and the Metrics panel share the height beside the table.
+  - **Notes:**
+
+- [ ] `B699` Select the **Background** cell of 'Max Munk'.
+  - **Expected:**
+    - A panel headed **Background** opens under the details of 'Max Munk', showing the note as it reads.
+    - The details of 'Max Munk' stay open.
+  - **Notes:**
+
+- [ ] `8090` Reload the page.
+  - **Expected:**
+    - The panel headed **Background** is open under the details of 'Max Munk' again, showing the note as it reads.
+    - The details of 'Max Munk' stay open.
+  - **Notes:**
+
+- [ ] `A68E` Select the browser's Back button.
+  - **Expected:**
+    - The panel headed **Background** closes.
+    - The details of 'Max Munk' stay open.
   - **Notes:**

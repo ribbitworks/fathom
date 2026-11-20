@@ -401,7 +401,15 @@ const peopleRoute = createRoute({
   component: function People() {
     const { permissions, access } = signedIn.useRouteContext();
     const navigate = people.useNavigate();
-    const { open, note, day: asked, column, ...search } = people.useSearch();
+    const {
+      open,
+      note,
+      tableNote,
+      day: asked,
+      column,
+      ...search
+    } = people.useSearch();
+    const notes = { note, tableNote };
     const linkedColumn = useLinkedColumn(column, () => {
       void navigate({
         search: (shown) => ({ ...shown, column: undefined }),
@@ -441,14 +449,14 @@ const peopleRoute = createRoute({
         showDates={seesEmployment(access)}
         showHireDates={seesHiringPlan(access)}
         {...viewProps(search, (next, replace) => {
-          void navigate({ search: { ...next, open, note, day }, replace });
+          void navigate({ search: { ...next, open, ...notes, day }, replace });
         })}
         open={open}
         seesFeatureTeams={permissions.includes("feature-teams:view")}
         access={access}
         onOpen={(next, replace = false) => {
           void navigate({
-            search: { ...search, day, open: next, note },
+            search: { ...search, day, open: next, ...notes },
             replace,
           });
         }}
