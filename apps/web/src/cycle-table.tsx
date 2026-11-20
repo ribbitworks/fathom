@@ -26,7 +26,7 @@ import {
 } from "./drafts.ts";
 import { isCurrent } from "./feature-board.ts";
 import { choice } from "./lists.ts";
-import { draftFieldsOf } from "./project-grids.tsx";
+import { draftFieldsOf } from "./plan-table.tsx";
 import { cycleChoiceId } from "./projects.ts";
 import {
   choicesNamed,

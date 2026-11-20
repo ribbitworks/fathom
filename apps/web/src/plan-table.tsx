@@ -1,0 +1,382 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// What the plan's tables share: their columns, the words for their records, and the table itself.
+
+import {
+  type Choice,
+  type ChangeValue,
+  type Customer,
+  featureColumnKeys,
+  type Meaning,
+  planColumnNames,
+  projectLengths,
+  type RecordKeyOf,
+} from "@fathom/shared";
+import { Menu, Text } from "@mantine/core";
+import { Fragment, type ReactNode } from "react";
+import type { AddedColumns } from "./added-columns.ts";
+import { cellKinds, flagChoice } from "./cell-kinds.tsx";
+import type { DraftField } from "./draft-details.tsx";
+import { noDrafts } from "./drafts.ts";
+import { choice, offered } from "./lists.ts";
+import {
+  isFeature,
+  type PlanRecord,
+  type PlanRecordKind,
+  type PlanTab,
+  identifiedLabel,
+} from "./projects.ts";
+import { tipAttribute } from "./table-tips.tsx";
+import { fieldColumn } from "./grid-columns.tsx";
+import { isPending } from "./grid-drafts.ts";
+import {
+  liveRecordsBy,
+  withLiveFields,
+  liveRecordsOf,
+} from "./live-records.ts";
+import type {
+  Column,
+  GridRecord,
+  RecordTable,
+  RowGrouping,
+} from "./record-table.ts";
+import type { CellValue } from "./table-view.ts";
+
+// A change to one or more of a record's fields, by name.
+export type PlanChange = Record<string, unknown>;
+
+// A project's dates come from its milestones, so drafts of those change them without a draft of
+// the project.
+const withLiveDates = <Rec extends PlanRecord>(record: Rec): Rec =>
+  "liveDates" in record && record.liveDates !== undefined
+    ? { ...record, dates: record.liveDates }
+    : record;
+
+// What a feature's draft names that is the feature's own, rather than an added column's.
+const featureDetailKeys: readonly string[] = [
+  ...featureColumnKeys,
+  "targetStreamId",
+];
+
+// Records as they are live, without drafts: those only drafted to be added are left out, each
+// field a draft changes has its live value back, and a feature is staffed as allocations are live.
+export function livePlanRecords<Rec extends PlanRecord>(
+  records: readonly Rec[],
+): Rec[] {
+  return records.flatMap((record) =>
+    isFeature(record)
+      ? (liveRecordsOf([record], featureDetailKeys).map((feature) => ({
+          ...feature,
+          staffed: feature.staffedLive,
+        })) as Rec[])
+      : liveRecordsBy([withLiveDates(record)], withLiveFields),
+  );
+}
+
+type Kinds =
+  "text" | "date" | "month" | "number" | "choice" | "link" | "note" | "flag";
+
+// What each tab's records are called.
+const recordWords: Readonly<
+  Record<PlanTab, { label: string; one: string; noun: string }>
+> = {
+  projects: { label: "Projects", one: "project", noun: "projects" },
+  proposals: { label: "Proposals", one: "proposal", noun: "proposals" },
+  customers: { label: "Customers", one: "customer", noun: "customers" },
+  milestones: { label: "Milestones", one: "milestone", noun: "milestones" },
+  features: { label: "Features", one: "feature", noun: "features" },
+};
+
+export const wordsOf = (tab: PlanTab) =>
+  // The tab is always one of the fixed tabs.
+  // eslint-disable-next-line security/detect-object-injection
+  recordWords[tab];
+
+// A column reading one of a record's fields, and saving it under the same name.
+export function field<Rec extends PlanRecord>(
+  key: string,
+  label: string,
+  kind: Kinds,
+  {
+    required = false,
+    multiple = false,
+    choices = [],
+    ...others
+  }: {
+    required?: boolean;
+    choices?: Choice[];
+    multiple?: boolean;
+    maxLength?: number;
+    readOnly?: boolean;
+    emptyLabel?: string;
+  } = {},
+): Column<Rec, PlanChange> {
+  return fieldColumn<Rec, PlanChange>(key, kind, {
+    label,
+    required,
+    multiple,
+    choices: kind === "flag" ? [choice(flagChoice, "Yes", false)] : choices,
+    ...others,
+  });
+}
+
+// A record that may have an ID of its own, such as a Project ID, beside its name.
+export interface Identified {
+  id: string;
+  name: string;
+  externalId?: string | null;
+  draft?: { action: string } | undefined;
+}
+
+// Records offered by their ID, if they have one, then their name, so similar names are told apart.
+export const identified = (records: readonly Identified[]): Choice[] =>
+  records.map((record) =>
+    choice(
+      record.id,
+      identifiedLabel(record),
+      record.draft?.action === "deleted",
+    ),
+  );
+
+export function RecordName({ record }: { record: Identified }) {
+  return (
+    <>
+      {record.externalId != null && (
+        <>
+          <Text span inherit c="dimmed">
+            {record.externalId}
+          </Text>{" "}
+        </>
+      )}
+      {record.name}
+    </>
+  );
+}
+
+// A new row is of its own kind, so what is set only on a saved record, such as a milestone's
+// project, can be told apart.
+export const newKind = "new";
+export const savedKind = "saved";
+
+// What a record's draft changes, field by field, with each value as the table shows it.
+export function draftFieldsOf<Rec extends GridRecord, Change>(
+  columns: readonly Column<Rec, Change>[],
+  record: Rec,
+  draft: NonNullable<Rec["draft"]>,
+): DraftField[] {
+  if (draft.action !== "changed") return [];
+  const words = (column: Column<Rec, Change>, value: CellValue) =>
+    cellKinds[column.kind].inDetail?.(column, value) ?? (value as ChangeValue);
+  return columns
+    .filter(({ key }) => draft.changed.includes(key))
+    .map((column) => ({
+      key: column.key,
+      field: {
+        field: column.label,
+        oldValue: words(column, column.live(draft)),
+        newValue: words(column, column.value(record)),
+      },
+    }));
+}
+
+const drafts = (type: PlanRecordKind) => (ids: string[]) => ({
+  ...noDrafts(),
+  records: ids.map((id) => ({ type, id })),
+});
+
+// What a kind of record's table needs besides its columns.
+// The plan's records have no rule that takes their values together.
+export const noRecordProblem = () => undefined;
+
+// Made once for each kind, so a table's Key column is made again only when its records change.
+const planKeyOf: Readonly<
+  Record<PlanRecordKind, (record: PlanRecord) => RecordKeyOf>
+> = {
+  customer: ({ keyNumber }) => ({ kind: "customer", keyNumber }),
+  project: ({ keyNumber }) => ({ kind: "project", keyNumber }),
+  proposal: ({ keyNumber }) => ({ kind: "proposal", keyNumber }),
+  milestone: ({ keyNumber }) => ({ kind: "milestone", keyNumber }),
+  feature: ({ keyNumber }) => ({ kind: "feature", keyNumber }),
+};
+
+export function planTable<Rec extends PlanRecord, Request>({
+  type,
+  label,
+  one,
+  noun,
+  columns,
+  request,
+  menuItems,
+  showDetails,
+  kinds,
+  groupings,
+  nameOf = (record) => (record as { name: string }).name,
+}: {
+  type: PlanRecordKind;
+  label: string;
+  one: string;
+  noun: string;
+  columns: (shown: AddedColumns) => Column<Rec, PlanChange>[];
+  request: (changes: PlanChange[]) => Request;
+  menuItems?: (record: Rec) => ReactNode;
+  showDetails?: ((record: Rec) => void) | undefined;
+  kinds?: readonly string[];
+  groupings?: readonly RowGrouping<Rec>[];
+  nameOf?: (record: Rec) => string;
+}): RecordTable<Rec, PlanChange, Request> {
+  return {
+    label,
+    one,
+    noun,
+    // The plan's records are General, and so are Features' added columns, so exporting them asks
+    // nothing; Features is named for recording all the same, so no classified column escapes it.
+    exported: type === "feature" ? { recordedAs: "features" } : {},
+    ...(kinds === undefined ? {} : { kinds, kindOf: () => savedKind }),
+    ...(groupings === undefined ? {} : { groupings }),
+    newRowLabel: () => `New ${one}`,
+    removeLabel: () => `Remove ${one}`,
+    nameOf,
+    nameColumn: "name",
+    columnsFor: (fields, lists, order) => columns({ fields, lists, order }),
+    liveRecords: livePlanRecords,
+    draftFields: (record, draft, fields, lists) =>
+      draftFieldsOf(columns({ fields, lists, order: [] }), record, draft),
+    recordProblem: noRecordProblem,
+    request: (changes) => request(changes),
+    drafts: drafts(type),
+    ...(menuItems === undefined ? {} : { menuItems }),
+    ...(showDetails === undefined ? {} : { showDetails }),
+    // The kind is always one of the plan's kinds.
+    // eslint-disable-next-line security/detect-object-injection
+    keyOf: planKeyOf[type],
+  };
+}
+
+export const merged = (changes: PlanChange[]): PlanChange =>
+  Object.assign({}, ...changes) as PlanChange;
+
+export const nameColumn = <Rec extends PlanRecord>(): Column<Rec, PlanChange> =>
+  field<Rec>("name", planColumnNames.name, "text", {
+    required: true,
+    maxLength: projectLengths.name,
+  });
+
+function menuItem<Rec extends PlanRecord>(
+  label: string,
+  onClick: ((record: Rec) => void) | undefined,
+  record: Rec,
+): ReactNode {
+  return (
+    onClick !== undefined && (
+      <Menu.Item
+        onClick={() => {
+          onClick(record);
+        }}
+      >
+        {label}
+      </Menu.Item>
+    )
+  );
+}
+
+export const recordMenu =
+  <Rec extends PlanRecord>(
+    items: readonly [string, ((record: Rec) => void) | undefined][],
+  ) =>
+  (record: Rec): ReactNode =>
+    !isPending(record) &&
+    items.map(([label, onClick]) => (
+      <Fragment key={label}>{menuItem(label, onClick, record)}</Fragment>
+    ));
+
+export const idColumn = <Rec extends PlanRecord>(label: string) =>
+  field<Rec>("externalId", label, "text", {
+    maxLength: projectLengths.externalId,
+  });
+
+export const ownerColumn = <Rec extends PlanRecord>(people: Choice[]) =>
+  field<Rec>("ownerId", planColumnNames.ownerId, "choice", {
+    choices: people,
+    emptyLabel: "No owner",
+  });
+
+export const customersColumn = <Rec extends PlanRecord>(
+  customers: readonly Customer[],
+) =>
+  field<Rec>("customerIds", planColumnNames.customerIds, "choice", {
+    choices: identified(customers),
+    multiple: true,
+  });
+
+// The records a cell names, in the order they are listed, each by its ID, dimmed, and its name. A
+// long list is cut short, so its tip gives every one, one to a line.
+export function namesCell(records: readonly Identified[]) {
+  return (ids: readonly string[]): ReactNode => {
+    const picked = records.filter(({ id }) => ids.includes(id));
+    if (picked.length === 0) return null;
+    return (
+      <span {...{ [tipAttribute]: picked.map(identifiedLabel).join("\n") }}>
+        {picked.map((one, index) => (
+          <Fragment key={one.id}>
+            {index > 0 && ", "}
+            <RecordName record={one} />
+          </Fragment>
+        ))}
+      </span>
+    );
+  };
+}
+
+// A column of records named by ID and name, several in one cell, in one line cut short with every
+// name in its tip, as any table shows several records; read only where they are worked out.
+export function recordsColumn<
+  Rec extends GridRecord & { draft?: { live: object } | undefined },
+  Change,
+>(
+  key: string,
+  label: string,
+  records: readonly Identified[],
+  {
+    namedBy,
+    readOnly = false,
+  }: {
+    // The records a row names, when they are not its own field.
+    namedBy?: ((record: Rec) => string[]) | undefined;
+    readOnly?: boolean;
+  } = {},
+): Column<Rec, Change> {
+  const column = fieldColumn<Rec, Change>(key, "choice", {
+    label,
+    required: false,
+    multiple: true,
+    choices: identified(records),
+    readOnly,
+  });
+  const value = namedBy ?? ((record: Rec) => column.value(record) as string[]);
+  const names = namesCell(records);
+  return {
+    ...column,
+    value,
+    content: (record) => names(value(record)),
+  };
+}
+
+export const pickedColumn = <Rec extends PlanRecord>(
+  key: string,
+  label: string,
+  records: readonly Identified[],
+  namedBy?: (record: Rec) => string[],
+): Column<Rec, PlanChange> =>
+  recordsColumn<Rec, PlanChange>(key, label, records, { namedBy });
+
+// The first status offered, of a meaning when one is named, as a value in a cell.
+export function firstStatus(
+  statuses: readonly Choice[],
+  meaning?: Meaning,
+): string[] {
+  const first = statuses.find(
+    (status) =>
+      offered(status) && (meaning === undefined || status.meaning === meaning),
+  );
+  return first === undefined ? [] : [first.id];
+}

@@ -18,7 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { focusSoon } from "./focus.ts";
 import { LoadProblem } from "./load-problem.tsx";
-import { livePlanRecords } from "./project-grids.tsx";
+import { livePlanRecords } from "./plan-table.tsx";
 import { scopeHistoryQuery } from "./projects.ts";
 import { changeButton, opensOnClick, RecordLink } from "./record-details.tsx";
 import details from "./record-details.module.css";

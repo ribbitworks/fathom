@@ -40,6 +40,7 @@ import { cellColumn, inOrder } from "./grid-columns.tsx";
 import { recordCellSelector } from "./grid-row.tsx";
 import { lastViewsPath } from "./last-views.ts";
 import { liveRecordsOf } from "./live-records.ts";
+import type { TableChoices } from "./projects.ts";
 import { RecordGrid } from "./record-grid.tsx";
 import type {
   CellRecord,
@@ -304,6 +305,42 @@ export const fictionalFeature = (fields: Partial<Feature> = {}): Feature => ({
   staffed: false,
   staffedLive: false,
   ...fields,
+});
+
+export const choices = (more: Partial<TableChoices> = {}): TableChoices => ({
+  people: [],
+  customers: [],
+  proposals: [],
+  projects: [],
+  features: [],
+  statuses: [],
+  featureStatuses: [
+    { ...cycleChoice("possible-first", "Long shot"), meaning: "possible" },
+    { ...cycleChoice("planned", "Planned"), meaning: "planned" },
+  ],
+  featureTeams: [],
+  priorities: [],
+  sizes: [],
+  risks: [],
+  cycles: [],
+  releaseOfCycle: new Map(),
+  featureColumns: noFeatureColumns,
+  ...more,
+});
+
+export const feature = (more: Partial<Feature> = {}): Feature =>
+  fictionalFeature({
+    id: "f1",
+    statusId: "planned",
+    featureTeamId: "t1",
+    ...more,
+  });
+
+export const cycleChoice = (id: string, label: string) => ({
+  id,
+  label,
+  description: "",
+  retired: false,
 });
 
 // The server's answer giving the plan's features.
