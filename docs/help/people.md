@@ -133,7 +133,7 @@ A **Note** column holds a short note for each person, with formatting such as bo
 
 You're done when the cell shows the start of your note.
 
-In a person's details, a long note shows only its first lines. Select **Show more** under it to read it all in its own panel. You can also open a note from the button at the right of its row, which shows when you point at the row. A note opened from the details stays open when you reload the page, and a link to the page opens it for anyone who can see it. Anything you typed but didn't save is lost when you reload.
+In a person's details, a long note shows only its first lines. Select **Show more** under it to read it all in its own panel. You can also open a note from the button at the right of its row, which shows when you point at the row. A note opened from the details stays open when you reload the page, and a link to the page opens it for anyone who can see it. Anything you typed but didn't save is lost when you reload. To give a note opened under the details the whole height, select **Maximize**, the button with four corners at its top right. Select **Restore**, in the same place, to bring the details back.
 
 ### Count People
 
@@ -142,6 +142,8 @@ In a person's details, a long note shows only its first lines. Select **Show mor
 1. To count by two columns at once, choose the second under **and by**.
 
 The counts include every row the table shows, planned hires too. So a search or a filter changes them.
+
+If the **Metrics** panel opens under another panel, such as a person's details, you can give it the whole height with **Maximize**, the button with four corners at its top right.
 
 You're done when the panel shows how many rows hold each value of the column you chose.
 

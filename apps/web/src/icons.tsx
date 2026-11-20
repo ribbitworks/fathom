@@ -107,6 +107,8 @@ const paths = {
     </>
   ),
   close: <path d="M4 4l8 8M12 4l-8 8" />,
+  maximize: <path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" />,
+  restore: <path d="M6 2.5V6H2.5M10 2.5V6h3.5M13.5 10H10v3.5M2.5 10H6v3.5" />,
   edit: <path d="M10.5 2.5l3 3L6 13H3v-3zM9 4l3 3" />,
   sidePanel: (
     <>

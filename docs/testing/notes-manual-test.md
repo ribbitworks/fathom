@@ -11,7 +11,7 @@ last_updated: "2026-11-19"
 
 ## Scope
 
-Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings, checkboxes and numbered lists look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, or any value in a choice column, a long note folded in a person's details and read in full on Releases, and an open note kept open on reload, Back and a shared link.
+Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings, checkboxes and numbered lists look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, or any value in a choice column, a long note folded in a person's details and read in full on Releases, an open note kept open on reload, Back and a shared link, and a panel under another maximized and restored.
 
 ## Test Environment
 
@@ -38,6 +38,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 - **Background cell:** the cell in a person's row under the **Background** column, which NOTE-01 adds at the right end of the People table; scroll right to reach it.
 - **Panel:** the side panel that opens beside the table from a **Background** cell, headed **Background**.
 - **Toolbar:** the row of buttons above the text in the panel's editor, for headings 1 to 3, bold, italic, strikethrough, code, colour, bullet list, numbered list, checkbox list, link, and removing a link.
+- **Maximize button:** the button showing four corners pointing out, before the close button at the top right of a panel under another, read aloud as Maximize and the panel's name. While the panel is maximized it shows four corners pointing in, read aloud as Restore: the **Restore button**.
 
 ## Test Cases
 
@@ -798,4 +799,62 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The details of 'Max Munk' are open.
     - No "Background for Max Munk" panel is open.
+
+### NOTE-10: A Panel Under Another Is Maximized
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, changed from NOTE-09.
+
+**Preconditions:** Signed in with this account. **People** page open, with `Jarrod Mante` searched for.
+
+- [ ] `0BDC` Select **Show details** in the ⋯ menu of 'Jarrod Mante'.
+  - **Expected:**
+    - The side panel opens, headed 'Jarrod Mante'.
+    - Its head has a close button, and no **Maximize button**.
+  - **Notes:**
+
+- [ ] `9113` Select the open button at the right of the **Onboarding** row in the details.
+  - **Expected:**
+    - A panel titled "Onboarding for Jarrod Mante" opens under the details.
+    - Its head has a **Maximize button** before its close button.
+  - **Notes:**
+
+- [ ] `A0F5` Select the **Maximize button**.
+  - **Expected:**
+    - The "Onboarding for Jarrod Mante" panel fills the height beside the table.
+    - The details of 'Jarrod Mante' are hidden.
+    - The **Maximize button** is now the **Restore button**.
+    - The panel keeps its width.
+  - **Notes:**
+
+- [ ] `4D0C` Press Enter.
+  - **Expected:**
+    - The details of 'Jarrod Mante' show again above the "Onboarding for Jarrod Mante" panel, each as tall as before.
+    - The **Restore button** is the **Maximize button** again, and still has focus.
+  - **Notes:**
+
+- [ ] `8003` Select the **Maximize button**.
+  - **Expected:** The "Onboarding for Jarrod Mante" panel fills the height beside the table.
+  - **Notes:**
+
+- [ ] `0BC4` Select **Metrics** above the table.
+  - **Expected:**
+    - The details of 'Jarrod Mante' grow back above the "Onboarding for Jarrod Mante" panel.
+    - The Metrics panel opens under them.
+    - The "Onboarding for Jarrod Mante" panel shows its **Maximize button** again.
+  - **Notes:**
+
+- [ ] `3D7B` Select the **Maximize button** of the Metrics panel.
+  - **Expected:**
+    - The Metrics panel fills the height beside the table.
+    - The details of 'Jarrod Mante' and the "Onboarding for Jarrod Mante" panel are hidden.
+  - **Notes:**
+
+- [ ] `997D` Select the **Restore button** of the Metrics panel.
+  - **Expected:** The details of 'Jarrod Mante' and the "Onboarding for Jarrod Mante" panel show again above the Metrics panel.
+  - **Notes:**
+
+- [ ] `1A68` Select the close button of the "Onboarding for Jarrod Mante" panel.
+  - **Expected:**
+    - The panel closes.
+    - The details of 'Jarrod Mante' and the Metrics panel share the height beside the table.
   - **Notes:**
