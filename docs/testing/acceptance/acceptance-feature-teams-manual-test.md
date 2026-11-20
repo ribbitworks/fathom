@@ -249,4 +249,4 @@ Run the test cases in order, in about 30 minutes, straight after [Reporting Line
     - On that card, a grey box reads "Planned, expected" and the month three months from now.
   - **Notes:**
 
-**Afterwards:** Run [Start Again](../manual-test-basics.md#start-again) to end the run here.
+**Afterwards:** Run [Hiring and Who Sees What](acceptance-hiring-and-who-sees-what-manual-test.md) next, staying signed in. To stop here instead, run [Start Again](../manual-test-basics.md#start-again).

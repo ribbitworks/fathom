@@ -11,7 +11,11 @@ The acceptance tests install Fathom, set it up, and follow work as it passes bet
 | 3 | [Setting Up Fathom](acceptance-setting-up-fathom-manual-test.md) | What The Team's Accounts leaves | 12 | 30 minutes |
 | 4 | [Reporting Lines](acceptance-reporting-lines-manual-test.md) | What Setting Up Fathom leaves | 4 | 20 minutes |
 | 5 | [Feature Teams](acceptance-feature-teams-manual-test.md) | What Reporting Lines leaves, with its changes not yet published | 6 | 30 minutes |
-| | **Total** | | **31** | **About 2 hours 20 minutes, plus the first build** |
+| 6 | [Hiring and Who Sees What](acceptance-hiring-and-who-sees-what-manual-test.md) | What Feature Teams leaves, with the Engineering Director signed in | 5 | 30 minutes |
+| 7 | [Planning Projects](acceptance-planning-projects-manual-test.md) | What Hiring and Who Sees What leaves | 5 | 25 minutes |
+| 8 | [Planning Features and a Release](acceptance-planning-features-and-a-release-manual-test.md) | What Planning Projects leaves, with its changes not yet published | 5 | 30 minutes |
+| 9 | [Reviewing the Plan](acceptance-reviewing-the-plan-manual-test.md) | What Planning Features and a Release leaves | 4 | 20 minutes |
+| | **Total** | | **50** | **About 4 hours 5 minutes, plus the first build** |
 
 Installing Fathom builds Fathom from the clone and installs it, with its own secrets, containers and database, and every later test runs on that installation, straight after the one before, using only what the run has made: no seed data and no development accounts. [Start Again](../manual-test-basics.md#start-again) removes the installation, for a fresh run or before other manual tests in the clone.
 
