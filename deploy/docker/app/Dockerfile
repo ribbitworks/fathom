@@ -7,7 +7,7 @@
 # Built from the repository root; Dockerfile.dockerignore lists the only files it reads. Fathom's
 # licence and notice travel with every copy of the image, as the Apache License asks.
 
-FROM --platform=$BUILDPLATFORM node:24.22.1-trixie-slim@sha256:89c5244bc22a9bc3287d89ebc7e49b9cb5bb84cd40e6175ac3421d5a9f68b95a AS base
+FROM --platform=$BUILDPLATFORM node:24.22.3-trixie-slim@sha256:af02d57b57719b9657a45199a79264a9437940cd55b3c7b3fc99615654f124a0 AS base
 WORKDIR /app
 # The pnpm version pinned in package.json, without running any install scripts.
 COPY package.json ./
