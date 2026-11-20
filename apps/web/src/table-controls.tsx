@@ -1596,7 +1596,6 @@ export function FilterPopover({
       trapFocus
       // It closes at once, so the next column's menu can open straight after.
       transitionProps={{ duration: 0 }}
-      shadow="md"
     >
       <Popover.Target>
         <div className={classes.filterTarget}>{children}</div>

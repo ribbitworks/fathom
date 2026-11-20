@@ -33,7 +33,7 @@ export function FeatureTeamsList({
         })
       : all;
   return (
-    <AppMenu position="bottom-end" shadow="md">
+    <AppMenu position="bottom-end">
       <AppMenu.Target>
         <Button variant="default">Feature teams</Button>
       </AppMenu.Target>

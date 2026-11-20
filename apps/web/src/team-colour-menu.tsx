@@ -107,7 +107,7 @@ export function TeamColourMenu({
     change: <ActionIcon {...changeButton("Colour")} title={title} />,
   };
   return (
-    <AppMenu position="bottom-start" shadow="md">
+    <AppMenu position="bottom-start">
       <AppMenu.Target>
         {
           // The look is one of the fixed looks.

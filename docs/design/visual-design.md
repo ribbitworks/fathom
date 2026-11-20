@@ -4,7 +4,7 @@ category: "Design"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/ui-conventions.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Fathom: Visual Design
@@ -50,6 +50,7 @@ How Fathom's screens look and behave, so every page is built the same way. The p
 
 ## Components
 
+- **Menus and popovers:** Every menu, popover and drop-down list stands out from the page, and from a tinted row or a panel beneath it, by a darker edge and a clear shadow, in light and dark mode alike, from the theme's `--fathom-overlay-edge` and `--fathom-overlay-shadow`. A new menu or popover uses Mantine's, with no shadow or edge of its own.
 - **Tables:** Lists of records are tables in a panel, using the full width, as [Tables](../standards/ui-conventions/tables.md#tables) sets out.
   - **Cells and headers:** Each cell is one line, cut short when it doesn't fit. Headers are small, semibold, and dimmed, and stay in view while the rows scroll.
   - **Long tables:** Such as People or Accounts, fill the window and scroll within it. People's rows are dense for editing.

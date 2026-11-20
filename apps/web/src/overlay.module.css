@@ -1,0 +1,11 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* Every menu, popover and drop-down list stands out from the page, and from a tinted row beneath it,
+   by a darker edge and a clear shadow, set through Mantine's own variables. Mantine sets the edge
+   with a rule as specific as this one, so this file must load after Mantine's styles, as main.tsx
+   loads them first. */
+
+.dropdown {
+  --popover-border-color: var(--fathom-overlay-edge);
+  --popover-shadow: var(--fathom-overlay-shadow);
+}

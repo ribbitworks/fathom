@@ -2,12 +2,15 @@
 
 // Tests for what every page shares through the theme: each kind of drop-down list gives its options
 // the class that keeps the keyboard's option grey, rather than filled with the accent, a Select's
-// search finds options whatever their accents, and every dialog's close button has a name.
+// search finds options whatever their accents, every dialog's close button has a name, and every menu,
+// popover and drop-down list stands out by the theme's edge and shadow.
 
 import {
   Combobox,
   MantineProvider,
+  Menu,
   Modal,
+  Popover,
   Select,
   useCombobox,
 } from "@mantine/core";
@@ -15,6 +18,7 @@ import { render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import comboboxClasses from "./combobox.module.css";
+import overlayClasses from "./overlay.module.css";
 import { testTheme } from "./test-support.tsx";
 
 function OpenList() {
@@ -159,5 +163,43 @@ describe("dialogs", () => {
         name: "Close dialog",
       }),
     ).toBeDefined();
+  });
+});
+
+describe("menus, popovers and drop-down lists", () => {
+  it("each take the theme's class for their edge and shadow", () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <Menu opened withinPortal={false}>
+          <Menu.Target>
+            <button type="button">Menu</button>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Item>Item</Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
+        <Popover opened withinPortal={false}>
+          <Popover.Target>
+            <button type="button">Popover</button>
+          </Popover.Target>
+          <Popover.Dropdown>Inside</Popover.Dropdown>
+        </Popover>
+        <Select
+          label="Choice"
+          data={["Alpha"]}
+          dropdownOpened
+          comboboxProps={{ withinPortal: false }}
+        />
+      </MantineProvider>,
+    );
+    const marked = (element: HTMLElement | null) =>
+      element
+        ?.closest(`.${overlayClasses.dropdown as string}`)
+        ?.contains(element) === true;
+    expect([
+      marked(screen.getByRole("menu")),
+      marked(screen.getByText("Inside")),
+      marked(screen.getByRole("option", { name: "Alpha" })),
+    ]).toEqual([true, true, true]);
   });
 });
