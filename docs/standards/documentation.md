@@ -67,7 +67,7 @@ Each fact lives in the one document that owns it. The documents marked as summar
 
 | Document | Owns |
 | --- | --- |
-| [Manual tests](../testing/) | Manual tests: lasting step-by-step tests of a feature, by hand in a real browser, as [Testing Standards § Manual Tests](testing.md#manual-tests) sets out, with each role's acceptance test in `docs/testing/acceptance/` |
+| [Manual tests](../testing/) | Manual tests: lasting step-by-step tests of a feature, by hand in a real browser, as [Testing Standards § Manual Tests](testing.md#manual-tests) sets out, with each role's acceptance test in `docs/testing/acceptance/`, and [Acceptance Tests](../testing/acceptance/README.md) for their run order |
 | [Manual Test Basics](../testing/manual-test-basics.md) | What every manual test shares: its environment, where its accounts come from, the common procedures and terms |
 | [Help pages](../help/) | How to use each page, and each role's most common work, listed in `docs/help/index.md`. A summary for the people who use Fathom, kept consistent with the documents above and updated by every change to the page it covers |
 
