@@ -598,10 +598,14 @@ describe("a Note column", () => {
   });
 
   describe("kept in the address", () => {
-    async function openAt(path: string, session = editor) {
+    async function openAt(
+      path: string,
+      session = editor,
+      people: Answers[string] = peopleAnswer(),
+    ) {
       serverAnswers({
         "GET /api/session": session,
-        "GET /api/people": peopleAnswer(),
+        "GET /api/people": people,
         "GET /api/lists": () => Response.json({ lists: [positions] }),
       });
       const history = renderApp(path);
@@ -740,6 +744,48 @@ describe("a Note column", () => {
       await waitFor(() => {
         expect(noteIn(history)).toBeNull();
       });
+    });
+
+    it("opens the note the address names once another being changed closes", async () => {
+      const handover = {
+        ...background,
+        id: "f2",
+        keyNumber: 2,
+        name: "Handover",
+      };
+      const history = await openAt("/people?open=E1", editor, () =>
+        Response.json({
+          people: [avery, blake],
+          fields: [background, handover],
+          order: ["preferredName", "employeeId", "f1", "f2"],
+        }),
+      );
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Open Background" }),
+      );
+      await detailsNote("Avery Fictional");
+      await userEvent.click(
+        screen.getByRole("button", { name: "Open Handover" }),
+      );
+      const handoverNote = await screen.findByRole("region", {
+        name: "Handover for Avery Fictional",
+      });
+      await userEvent.click(within(handoverNote).getByText("Markdown"));
+      await userEvent.type(
+        within(handoverNote).getByRole("textbox", { name: "Markdown" }),
+        "Hand over the keys",
+      );
+      act(() => {
+        history.back();
+      });
+      await waitFor(() => {
+        expect(noteIn(history)).toBe("f1.p1");
+      });
+      await userEvent.click(
+        within(handoverNote).getByRole("button", { name: "Cancel" }),
+      );
+      await detailsNote("Avery Fictional");
+      expect(noteIn(history)).toBe("f1.p1");
     });
 
     it("closes the note, and takes it out, when the details close", async () => {

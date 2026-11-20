@@ -42,7 +42,7 @@ import {
   rowName,
   type RowChange,
 } from "./people-rows.ts";
-import type { NoteEditing } from "./note-editing.tsx";
+import type { NoteOpening } from "./note-editing.tsx";
 import { type EditingContext, usePersonEditing } from "./person-editing.tsx";
 import classes from "./record-details.module.css";
 import { RecordLink, Row } from "./record-details.tsx";
@@ -141,7 +141,7 @@ export function HireFillForm({
   filling: HireFilling;
   // Changes what has been entered so far, since a note's panel saves long after the form was drawn.
   onFilling: (update: (current: HireFilling) => HireFilling) => void;
-  notes: Pick<NoteEditing, "start">;
+  notes: NoteOpening;
   onFill: (request: HireFill) => void;
   onCancel: () => void;
 }) {

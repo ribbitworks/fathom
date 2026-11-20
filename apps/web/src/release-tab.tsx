@@ -9,7 +9,7 @@ import { useEffect, useEffectEvent, useRef } from "react";
 import { noteOf } from "./cell-kinds.tsx";
 import type { DraftSelection } from "./drafts.ts";
 import { noOthers } from "./new-plan-record-panel.tsx";
-import type { NoteContext, NoteEditing } from "./note-editing.tsx";
+import type { NoteContext, NoteOpening } from "./note-editing.tsx";
 import {
   ColumnRows,
   RecordLink,
@@ -93,7 +93,7 @@ function ReleaseDetails({
   onChange: (part: ReleasePart) => void;
   // What writing the release's note needs, which opens in a panel of its own that the page holds.
   note: ReleaseNote;
-  notes: Pick<NoteEditing, "start">;
+  notes: NoteOpening;
 }) {
   const { draft } = drafted;
   const { closeStale, editingOf } = useRecordEditing<
@@ -200,7 +200,7 @@ function ReleasePanel({
   narrow: boolean;
   onChange: (part: ReleasePart) => void;
   note: ReleaseNote;
-  notes: Pick<NoteEditing, "start">;
+  notes: NoteOpening;
   onClose: () => void;
 }) {
   return (
@@ -275,7 +275,7 @@ export function ReleasesTable({
   onFeatures: (at: FeaturesAt) => void;
   showIn: ShowIn;
   // Opens a release's note, which the page holds, and its panel while one is open.
-  notes: Pick<NoteEditing, "start">;
+  notes: NoteOpening;
   notePanel: SidePanel | undefined;
   onChange: (
     stream: ReleaseStream,

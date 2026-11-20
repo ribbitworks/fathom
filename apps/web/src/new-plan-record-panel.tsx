@@ -10,7 +10,7 @@ import {
   newRecordId,
   NewRecordPanel,
 } from "./new-record-panel.tsx";
-import type { NoteContext, NoteEditing } from "./note-editing.tsx";
+import type { NoteContext, NoteOpening } from "./note-editing.tsx";
 import type { AddedColumns } from "./added-columns.ts";
 import type { PlanChange } from "./plan-table.tsx";
 import classes from "./record-details.module.css";
@@ -51,7 +51,7 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
   panelId: string;
   // The columns added to the table, for a table that has them.
   added?: AddedColumns;
-  notes: Pick<NoteEditing, "start">;
+  notes: NoteOpening;
   // The units the table shows its columns in, which a column that offers units is entered in at
   // first; the form may change them without changing the table.
   units?: View["units"];
