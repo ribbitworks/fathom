@@ -65,7 +65,7 @@ import {
 } from "../access.ts";
 import type { RecordType } from "./changes.ts";
 import { rejectedField } from "./drafts.ts";
-import { featureTeamTier } from "./feature-teams.ts";
+import { featureTeamTier } from "./feature-team-sight.ts";
 import {
   hireSensitivities,
   hiringPlanFields,

@@ -38,6 +38,19 @@ export const leadDatesOf = (
   team: Recorded | undefined,
 ): Record<string, string> => daysIn(team?.leadFrom);
 
+// Who joins and who leaves from one team to another.
+export function memberChanges(
+  before: Recorded | undefined,
+  after: Recorded | undefined,
+): { added: string[]; removed: string[] } {
+  const was = membersOf(before);
+  const will = membersOf(after);
+  return {
+    added: will.filter((one) => !was.includes(one)),
+    removed: was.filter((one) => !will.includes(one)),
+  };
+}
+
 // Whether someone's end date has passed by a day.
 export const leftBy = (person: Recorded, day: string): boolean =>
   !notStarted(person, day) && !currentOn(person, day);
