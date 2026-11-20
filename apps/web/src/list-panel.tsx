@@ -5,7 +5,6 @@
 
 import { actionsFor, MoreButton, opensMenu } from "./row-controls.tsx";
 import { RecordKey } from "./record-key.tsx";
-import { movedItem } from "./table-view.ts";
 import {
   DragDropContext,
   Draggable,
@@ -13,11 +12,8 @@ import {
   type DropResult,
 } from "@hello-pangea/dnd";
 import {
-  type BuiltInList,
   type Choice,
   type ChoiceRequest,
-  type Kept,
-  keptOf,
   type List,
   listLengths,
   typedNumber,
@@ -25,7 +21,6 @@ import {
   weightProblem,
   type Meaning,
   meaningName,
-  meaningSchema,
   meaningsOf,
 } from "@fathom/shared";
 import {
@@ -46,7 +41,7 @@ import {
 } from "react";
 import { focusSoon } from "./focus.ts";
 import { Icon } from "./icons.tsx";
-import { Count, nameProblem } from "./list-dialog.tsx";
+import { nameProblem } from "./list-dialog.tsx";
 import {
   ListDraftMenu,
   draftRowClass,
@@ -70,7 +65,6 @@ import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
 import {
   DraftedItem,
   DraftedValue,
-  FactBox,
   LiveLine,
   LiveRowMarks,
   LiveValue,
@@ -81,6 +75,19 @@ import { liveLists, retiredLive, sameName, withRetiring } from "./lists.ts";
 import { closesOnBlankClick } from "./app-menu.tsx";
 import classes from "./pages.module.css";
 import { count, decimal } from "./numbers.ts";
+import { type Draft, type Field, Fields } from "./choice-fields.tsx";
+import {
+  droppedMove,
+  followingAfterMove,
+  liftedWhileDragging,
+} from "./choice-drag.ts";
+import {
+  lastKept,
+  meaningKeptBy,
+  pastedChoices,
+  removedChoice,
+} from "./choice-rules.ts";
+import { builtInNote, ListFacts } from "./list-facts.tsx";
 
 export interface ChoiceActions {
   // Adds choices; if they cannot be saved, gives back what was typed.
@@ -124,63 +131,6 @@ const duplicate = "Already in this list";
 // The most choices one paste adds, as the server allows at once.
 const pasteLimit = 1000;
 
-// The choice a moved one should follow, or null for the top, once it moves from one place in the
-// list to another.
-export function followingAfterMove(
-  items: readonly { id: string }[],
-  from: number,
-  to: number,
-): string | null {
-  return movedItem(items, from, to).slice(0, to).at(-1)?.id ?? null;
-}
-
-// The move a drop asks for, if the choice was dropped somewhere new.
-export function droppedMove(
-  offered: readonly Choice[],
-  result: Pick<DropResult, "source" | "destination">,
-): { choice: Choice; after: string | null } | undefined {
-  const from = result.source.index;
-  const to = result.destination?.index ?? from;
-  const [choice] = offered.slice(from, from + 1);
-  if (to === from || choice === undefined) return undefined;
-  return { choice, after: followingAfterMove(offered, from, to) };
-}
-
-// A row's classes, lifted while it is being dragged.
-export function liftedWhileDragging(base: string, dragging: boolean): string {
-  return dragging ? `${base} ${String(classes.choiceLifted)}` : base;
-}
-
-// What a list Fathom builds in is for, shown under its choices; the organization's own description
-// of it shows under its name, as for any list.
-// Fathom filled the list in, so those who may change it are first told it is theirs to change.
-function builtInNote(key: BuiltInList, mayChange: boolean): string {
-  const invitation = mayChange
-    ? "These can be renamed, added to, or retired.\n"
-    : "";
-  switch (key) {
-    case "hiring-states":
-      return `${invitation}Proposed: the request to hire is not yet approved.\nOpen: the request to hire is approved.\nHired: everyone in People who hasn't left. A planned hire is hired when someone fills it.\nLeft: everyone in People whose end date has passed.\nKeep at least one choice for each.`;
-    case "positions":
-      return `${invitation}Every person and planned hire has one of these positions.\nKeep at least one.`;
-    case "proposal-statuses":
-      return `${invitation}Every proposal has one of these statuses.\nKeep at least one.`;
-    case "feature-statuses":
-      return `${invitation}Possible: the feature may come, and needs no feature team yet.\nPlanned: the feature is planned, and needs a feature team.\nIn progress: work has started, and the feature needs a feature team.\nDone: the feature is finished.\nCancelled: the feature won't be built.\nKeep at least one choice for each.`;
-    case "feature-priorities":
-      return `${invitation}How much a feature matters to the organization, apart from its status, highest first.\nKeep at least one.`;
-    case "feature-sizes":
-      return `${invitation}A feature's rough size, before it is estimated, smallest first.\nKeep at least one.`;
-    case "feature-risks":
-      return `${invitation}How much could go wrong in building a feature, lowest first.\nKeep at least one.`;
-  }
-}
-
-// The facts about a list: whether Fathom builds it in, so it cannot be retired or removed.
-export function ListFacts({ list }: { list: List }) {
-  return list.builtIn && <FactBox>Built in</FactBox>;
-}
-
 // A choice's meaning in words, or nothing for one the server no longer knows, which it sends
 // without one.
 const meaningText = (meaning: Meaning | undefined) =>
@@ -197,210 +147,6 @@ const listFields = new Set(["name", "description"]);
 
 // What a choice's row shows of the choice, each marked by its own dot where a draft changes it.
 const choiceRowFields = new Set(["label", "description"]);
-
-const removedChoice = (choice: Choice) => choice.draft?.action === "deleted";
-
-const offers = (choice: Choice, kept: Kept) =>
-  !choice.retired &&
-  !removedChoice(choice) &&
-  (kept === "any" || choice.meaning === kept);
-
-// What a choice is the last one offered for, as the list's drafts make it, if anything: a meaning
-// it keeps, or, in Positions, the list's last choice. It is not retired or removed, and keeps its
-// meaning, so a built-in list always has a choice to offer.
-export function lastKept(list: List, choice: Choice): Kept | undefined {
-  return keptOf(list.builtIn).find(
-    (kept) =>
-      offers(choice, kept) &&
-      !list.choices.some(
-        (other) => other.id !== choice.id && offers(other, kept),
-      ),
-  );
-}
-
-// The meaning a choice must keep, as the last one offered for it.
-const meaningKeptBy = (list: List, choice: Choice): Meaning | undefined => {
-  const kept = lastKept(list, choice);
-  return kept === "any" ? undefined : kept;
-};
-
-// The choices pasted as lines, each a name, then a tab and a description when copied from a
-// spreadsheet.
-export function pastedChoices(text: string): ChoiceRequest[] {
-  return text
-    .split(/\r?\n/)
-    .filter((line) => line.trim() !== "")
-    .map((line) => {
-      const [label = "", ...rest] = line.split("\t");
-      return { label: label.trim(), description: rest.join(" ").trim() };
-    });
-}
-
-interface Draft {
-  label: string;
-  description: string;
-  // In a list with meanings; null in any other.
-  meaning: Meaning | null;
-  // As typed, in feature sizes; empty in any other list.
-  weight: string;
-}
-
-type Field = "label" | "description" | "meaning" | "weight";
-
-function Fields({
-  idPrefix,
-  draft,
-  problem,
-  label,
-  meanings,
-  meaningKept,
-  weighed,
-  weightProblem: weightWrong,
-  onChange,
-  onKeyDown,
-  onFocus,
-  onPaste,
-}: {
-  idPrefix: "choice-entry" | "choice-edit";
-  draft: Draft;
-  problem: string | undefined;
-  label: string;
-  // The list's meanings, none unless it is a list with meanings.
-  meanings: readonly Meaning[];
-  // The meaning a choice must keep, as the last one offered for it.
-  meaningKept?: Meaning | undefined;
-  weighed: boolean;
-  weightProblem: string | undefined;
-  onChange: (draft: Draft) => void;
-  onKeyDown: (event: KeyboardEvent, field: Field) => void;
-  onFocus?: () => void;
-  onPaste?: (event: ClipboardEvent<HTMLInputElement>) => void;
-}) {
-  const entry = idPrefix === "choice-entry";
-  // A refused weight's reason is under the row's first cell, as any refused value's is.
-  const shownProblem = problem ?? weightWrong;
-  return (
-    <>
-      <span className={classes.choiceName} role="gridcell">
-        <input
-          id={`${idPrefix}-name`}
-          className={classes.cellInput}
-          value={draft.label}
-          aria-label={`${label}name`}
-          aria-invalid={problem !== undefined}
-          aria-describedby={problem ? `${idPrefix}-problem` : undefined}
-          placeholder={entry ? "Name" : undefined}
-          autoComplete="off"
-          onChange={(event) => {
-            onChange({ ...draft, label: event.currentTarget.value });
-          }}
-          onKeyDown={(event) => {
-            onKeyDown(event, "label");
-          }}
-          onFocus={onFocus}
-          onPaste={onPaste}
-        />
-        {(shownProblem ?? draft.label.length >= listLengths.choice - 5) && (
-          <span className={classes.cellBelow}>
-            {shownProblem && (
-              <span
-                className={classes.problem}
-                id={`${idPrefix}-problem`}
-                role="alert"
-              >
-                {shownProblem}
-              </span>
-            )}
-            <Count
-              length={draft.label.trim().length}
-              maximum={listLengths.choice}
-            />
-          </span>
-        )}
-      </span>
-      <span className={classes.choiceDescription} role="gridcell">
-        <textarea
-          id={`${idPrefix}-description`}
-          className={classes.cellInput}
-          rows={1}
-          value={draft.description}
-          aria-label={`${label}description`}
-          placeholder={entry ? "Description" : undefined}
-          onChange={(event) => {
-            onChange({ ...draft, description: event.currentTarget.value });
-          }}
-          onKeyDown={(event) => {
-            onKeyDown(event, "description");
-          }}
-          onFocus={onFocus}
-        />
-      </span>
-      {meanings.length > 0 && (
-        <span className={classes.choiceMeaning} role="gridcell">
-          <select
-            id={`${idPrefix}-meaning`}
-            className={classes.cellInput}
-            value={draft.meaning ?? ""}
-            aria-label={`${label}meaning`}
-            aria-describedby={
-              meaningKept === undefined ? undefined : `${idPrefix}-meaning-kept`
-            }
-            disabled={meaningKept !== undefined}
-            onChange={(event) => {
-              onChange({
-                ...draft,
-                // The menu offers only the list's meanings.
-                meaning: meaningSchema.parse(event.currentTarget.value),
-              });
-            }}
-            onKeyDown={(event) => {
-              onKeyDown(event, "meaning");
-            }}
-            onFocus={onFocus}
-          >
-            {draft.meaning === null && (
-              <option value="" disabled>
-                Choose a meaning
-              </option>
-            )}
-            {meanings.map((meaning) => (
-              <option key={meaning} value={meaning}>
-                {meaningName(meaning)}
-              </option>
-            ))}
-          </select>
-          {meaningKept !== undefined && (
-            <span className={classes.cellBelow} id={`${idPrefix}-meaning-kept`}>
-              Needed for {meaningName(meaningKept)}
-            </span>
-          )}
-        </span>
-      )}
-      {weighed && (
-        <span className={classes.choiceWeight} role="gridcell">
-          <input
-            id={`${idPrefix}-weight`}
-            className={classes.cellInput}
-            value={draft.weight}
-            inputMode="decimal"
-            aria-label={`${label}weight`}
-            aria-invalid={weightWrong !== undefined}
-            aria-describedby={weightWrong ? `${idPrefix}-problem` : undefined}
-            placeholder={entry ? "Weight" : undefined}
-            autoComplete="off"
-            onChange={(event) => {
-              onChange({ ...draft, weight: event.currentTarget.value });
-            }}
-            onKeyDown={(event) => {
-              onKeyDown(event, "weight");
-            }}
-            onFocus={onFocus}
-          />
-        </span>
-      )}
-    </>
-  );
-}
 
 export function ListPanel({
   list,

@@ -4,7 +4,7 @@
 // the side panel and its address; adding, editing, moving, retiring, restoring, and removing
 // choices from the keyboard and the choice menus, including pasting several at once; creating,
 // editing, retiring, and deleting lists; and Undo, focus, and the server's refusals throughout.
-// Where dropped choices end up is tested in list-panel.test.ts.
+// Where dropped choices end up is tested in choice-drag.test.ts.
 
 import {
   act,
