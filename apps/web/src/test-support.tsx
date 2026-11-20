@@ -164,6 +164,26 @@ export function renderApp(path: string) {
   return history;
 }
 
+// Makes every matchMedia query match, which the components' narrow-screen checks read; the
+// simulated browser's own styles still see a window 1024 pixels wide.
+export function onNarrowScreen() {
+  vi.stubGlobal(
+    "matchMedia",
+    (query: string) =>
+      ({
+        matches: true,
+        media: query,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      }) as unknown as MediaQueryList,
+  );
+}
+
+// Mantine's hiddenFrom rule hides this button at the simulated browser's fixed 1024 pixels, and a
+// hidden element has no accessible name, so it is found by its label; no test can tell whether a
+// narrow screen shows it.
+export const sectionsButton = () => screen.findByLabelText("Show sections");
+
 // The choices in an open menu under a group's label, such as Group by's.
 export const choicesUnder = async (group: string) =>
   within(await screen.findByRole("group", { name: group }));

@@ -39,6 +39,7 @@ import {
   featuresAddress,
   openedIn,
   changesSent,
+  onNarrowScreen,
 } from "./test-support.tsx";
 
 afterEach(() => {
@@ -1062,12 +1063,7 @@ describe("a stream's panel", () => {
   });
 
   it("fills the screen on narrow screens", async () => {
-    vi.stubGlobal("matchMedia", (query: string) => ({
-      matches: true,
-      media: query,
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-    }));
+    onNarrowScreen();
     await openStream([fictionalStream()]);
     expect(
       screen

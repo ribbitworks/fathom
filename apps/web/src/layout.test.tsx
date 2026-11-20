@@ -16,7 +16,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fictionalUser,
   greeting,
+  onNarrowScreen,
   renderApp,
+  sectionsButton,
   serverAnswers,
   signedIn,
   signedOut,
@@ -531,16 +533,7 @@ describe("switching role", () => {
 
 describe("on a narrow screen", () => {
   it("keeps the sidebar out of reach until it is opened, and closes it after moving page", async () => {
-    vi.stubGlobal(
-      "matchMedia",
-      (query: string) =>
-        ({
-          matches: true,
-          media: query,
-          addEventListener: () => undefined,
-          removeEventListener: () => undefined,
-        }) as unknown as MediaQueryList,
-    );
+    onNarrowScreen();
     serverAnswers({
       "GET /api/session": administrator,
       "GET /api/greeting": greeting,
@@ -548,7 +541,7 @@ describe("on a narrow screen", () => {
     });
     renderApp("/");
     await screen.findByText("Hello, Fathom");
-    const menu = screen.getByRole("button", { name: "Show sections" });
+    const menu = await sectionsButton();
     expect(menu.getAttribute("aria-expanded")).toBe("false");
     expect(menu.getAttribute("aria-controls")).toBe(sidebar().id);
     expect(sidebar().hasAttribute("inert")).toBe(true);

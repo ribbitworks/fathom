@@ -24,6 +24,7 @@ import {
   signedIn,
   undoWithKeys,
   recordDraft,
+  onNarrowScreen,
 } from "./test-support.tsx";
 
 const viewer = () =>
@@ -870,12 +871,7 @@ describe("the side panel", () => {
   });
 
   it("fills the screen on narrow screens", async () => {
-    vi.stubGlobal("matchMedia", (query: string) => ({
-      matches: true,
-      media: query,
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-    }));
+    onNarrowScreen();
     await openPanel();
     expect([
       panel().getAttribute("aria-modal"),
@@ -885,12 +881,7 @@ describe("the side panel", () => {
 
   it("holds focus in the panel, a modal dialog, on narrow screens", async () => {
     // Given the panel on a narrow screen
-    vi.stubGlobal("matchMedia", (query: string) => ({
-      matches: true,
-      media: query,
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-    }));
+    onNarrowScreen();
     await openPanel();
     const dialog = screen.getByRole("dialog", { name: /./ });
 
