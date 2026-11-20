@@ -12,7 +12,7 @@ import {
 } from "../access.ts";
 import { readColumnsOut } from "./column-drafts.ts";
 import * as lists from "./lists.ts";
-import * as peopleReads from "./people-reads.ts";
+import * as peopleReads from "./people-table-reads.ts";
 import * as projectReads from "./project-reads.ts";
 import * as releases from "./releases.ts";
 
