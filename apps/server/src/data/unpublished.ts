@@ -72,11 +72,10 @@ import {
 import {
   isRecordType,
   readRecordVersions,
-  recordFits,
   type RecordVersions,
   recordSubject,
-  takingBackRecord,
 } from "./records.ts";
+import { recordFits, takingBackRecord } from "./record-drafting.ts";
 import { personChanges, recordSensitiveChanges } from "./person-fields.ts";
 import { readLive } from "./people-reads.ts";
 import {

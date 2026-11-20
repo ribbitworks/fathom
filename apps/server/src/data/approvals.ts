@@ -83,12 +83,8 @@ import {
   asksForLists,
   rejectListDrafts,
 } from "./list-approvals.ts";
-import {
-  approveRecordDrafts,
-  kindOf,
-  refuseRemovingNamed,
-  rejectRecordDrafts,
-} from "./records.ts";
+import { approveRecordDrafts, rejectRecordDrafts } from "./record-decisions.ts";
+import { kindOf, refuseRemovingNamed } from "./records.ts";
 import { inListOrder, readColumns, valueField, valueRows } from "./values.ts";
 import { readToday } from "./settings.ts";
 import { recordHiringChanges } from "./hire-fields.ts";

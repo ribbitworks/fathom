@@ -35,13 +35,8 @@ import { draftMakers, everything, type Recorded } from "./drafts.ts";
 import { allocationFields, allocationKind } from "./allocation-kinds.ts";
 import { expectedMonth, hireIdOf } from "./hire-fields.ts";
 import { currentOn, employedMonths, type Employment } from "./people-reads.ts";
-import {
-  drafting,
-  readRecordsState,
-  recordDraftOut,
-  recordHeldBy,
-  saveRecordDraft,
-} from "./records.ts";
+import { drafting, saveRecordDraft } from "./record-drafting.ts";
+import { readRecordsState, recordDraftOut, recordHeldBy } from "./records.ts";
 import {
   addedOnly,
   everyVersion,
