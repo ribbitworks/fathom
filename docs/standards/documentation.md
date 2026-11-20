@@ -52,7 +52,7 @@ Each fact lives in the one document that owns it. The documents marked as summar
 | [Page designs](../design/pages/) | Each page's purpose, layout and the decisions a builder needs, one document per page |
 | [Development Setup](../design/development-setup.md) | The repository layout, local development, the fictional data and development accounts, releases, and the repository's settings on GitHub |
 | [Architecture decision records](../adr/) | Technical decisions |
-| [Standards](./) | How Fathom is built and reviewed, with [UI Conventions](ui-conventions.md) for the principles and conventions every screen shares, each with the shared piece that draws it and an example, and [Issues](issues.md) for filing and labelling issues |
+| [Standards](./) | How Fathom is built and reviewed, with [UI Conventions](ui-conventions.md) for the principles and conventions every screen shares, each with the shared piece that draws it and an example, split into parts in `docs/standards/ui-conventions/`, and [Issues](issues.md) for filing and labelling issues |
 | [GitHub Issues](https://github.com/ribbitworks/fathom/issues) | Known problems and deferred work |
 
 ### Security and Operations

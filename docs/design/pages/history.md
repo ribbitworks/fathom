@@ -8,7 +8,7 @@ Change history and Access history list what was done in Fathom, newest first. Th
 
 ## Layout
 
-- **Parts:** A search field, then one row per entry, written as [History](../../standards/ui-conventions.md#history) sets out, with Show more at the end of Change history.
+- **Parts:** A search field, then one row per entry, written as [History](../../standards/ui-conventions/pages-and-panels.md#history) sets out, with Show more at the end of Change history.
 - **Change history search:** Runs on the server, in who made each change and the names and values involved.
 - **Access history search:** Covers only the entries shown.
 - **Someone yet to start:** Readers who don't see Personal data see no change naming them, such as a hire's manager, nor who fills a hire, as [Roles § New employees](../../product/roles.md#who-sees-which-people) sets out.
