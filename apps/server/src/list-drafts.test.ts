@@ -563,9 +563,13 @@ describe("drafts made under several roles", () => {
     await test.connection
       .insert(rolePermissions)
       .values(
-        (["configuration:approve", "configuration:view"] as const).map(
-          (permission) => ({ roleId: approvingId, permission }),
-        ),
+        (
+          [
+            "configuration:approve",
+            "configuration:view",
+            "people:view",
+          ] as const
+        ).map((permission) => ({ roleId: approvingId, permission })),
       );
     await test.connection
       .insert(userRoles)

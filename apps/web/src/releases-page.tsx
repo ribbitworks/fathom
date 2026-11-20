@@ -367,7 +367,7 @@ export function ReleasesPage({
       </Tooltip>
     ),
     cycles: undefined,
-    schedules: canEditStreams && (
+    schedules: canEditStreams && show !== "live" && (
       <Button
         onClick={() => {
           setDialog({ kind: "stream" });

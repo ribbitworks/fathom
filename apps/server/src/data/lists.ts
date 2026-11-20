@@ -1074,8 +1074,9 @@ function usableList(state: ListsState, id: string): Recorded {
 }
 
 // A list to change, refusing one that cannot be used, or that someone else holds.
-function changeableList(state: ListsState, id: string): Recorded {
+function changeableList(actor: Actor, state: ListsState, id: string): Recorded {
   if (!listExists(state, id)) throw new NotFoundError(noList);
+  refuseUnseenList(actor, state, id);
   refuseHeldIn(state.held.lists, id);
   return usableList(state, id);
 }
@@ -1083,10 +1084,13 @@ function changeableList(state: ListsState, id: string): Recorded {
 // A choice in the list as its draft makes it, refusing one that does not exist, that it, or its
 // list, is drafted to remove, or that someone else holds.
 function changeableChoice(
+  actor: Actor,
   state: ListsState,
   listId: string,
   id: string,
 ): Recorded {
+  if (!listExists(state, listId)) throw new NotFoundError(noList);
+  refuseUnseenList(actor, state, listId);
   usableList(state, listId);
   if (!choiceExists(state, id) || listOfChoice(state, id) !== listId) {
     throw new NotFoundError(noChoice);
@@ -1131,6 +1135,21 @@ const unseenVisibility = "Give the list a visibility this role can see";
 
 export const unseenDetails = (name: string) =>
   `${name} holds people's details this role can't see, so someone who can see them must change it`;
+
+// Refuses a change to a list, its choices or its order to a role that can't see the list's values,
+// live or as drafted.
+export function refuseUnseenList(
+  actor: Actor,
+  state: ListsState,
+  listId: string,
+): void {
+  const list = draftedList(state, listId) ?? state.lists.get(listId);
+  refuseUnseenVisibility(
+    actor,
+    listTier(state, listId),
+    unseenDetails(String(list?.name)),
+  );
+}
 
 export async function createList(
   database: Database,
@@ -1195,7 +1214,7 @@ async function draftListChange(
   id: string,
   change: ListChange,
 ): Promise<string | null> {
-  const list = changeableList(state, id);
+  const list = changeableList(maker, state, id);
   const after = await change(transaction, state, list);
   return saveDraft(
     transaction,
@@ -1277,11 +1296,6 @@ const listSettings =
   (actor: Actor, id: string, request: ListRequest): ListChange =>
   async (transaction, state, list) => {
     await refuseSensitiveFeatureList(transaction, id, request.visibility);
-    refuseUnseenVisibility(
-      actor,
-      listTier(state, id),
-      unseenDetails(String(list.name)),
-    );
     refuseUnseenVisibility(actor, request.visibility, unseenVisibility);
     if (listNameTaken(state, request.name, id)) {
       throw new ConflictError(duplicateList);
@@ -1315,7 +1329,7 @@ export async function moveListClass(
       .for("update");
     const state = await readState(transaction, actor.user.id);
     if (row === undefined) {
-      const list = changeableList(state, id);
+      const list = changeableList(actor, state, id);
       requirePermission(actor, "configuration:edit");
       return draftListChange(
         transaction,
@@ -1329,7 +1343,7 @@ export async function moveListClass(
         }),
       );
     }
-    changeableList(state, id);
+    changeableList(actor, state, id);
     const from = storedTier(row.visibility);
     requireMove(actor, from, to);
     if (from === to) return null;
@@ -1464,7 +1478,7 @@ export async function deleteList(
   id: string,
 ): Promise<string | null> {
   return drafting(database, maker.user.id, async (transaction, state) => {
-    const list = changeableList(state, id);
+    const list = changeableList(maker, state, id);
     const live = state.lists.get(id);
     if (live === undefined) {
       await refuseIfUsed(transaction, id, "discarded", maker.user.id);
@@ -1504,7 +1518,7 @@ export async function addChoices(
   requests: readonly ChoiceRequest[],
 ): Promise<Saved<Choice[]>> {
   return drafting(database, maker.user.id, async (transaction, state) => {
-    changeableList(state, listId);
+    changeableList(maker, state, listId);
     const labels = requests.map(({ label }) => lower(label));
     if (
       new Set(labels).size !== labels.length ||
@@ -1562,7 +1576,7 @@ async function changeChoice(
   change: (state: ListsState, choice: Recorded) => Recorded,
 ): Promise<Saved<Choice>> {
   return drafting(database, maker.user.id, async (transaction, state) => {
-    const choice = changeableChoice(state, listId, id);
+    const choice = changeableChoice(maker, state, listId, id);
     const after = change(state, choice);
     refuseLastKept(state, listId, id, after);
     if (peoplesMeaning(after.meaning) && !peoplesMeaning(choice.meaning)) {
@@ -1635,7 +1649,7 @@ export async function moveChoice(
     throw new BadRequestError("A choice cannot follow itself");
   }
   return drafting(database, maker.user.id, async (transaction, state) => {
-    changeableChoice(state, listId, id);
+    changeableChoice(maker, state, listId, id);
     refuseHeldIn(state.held.orders, listId);
     const before = draftedOrder(state, listId);
     const others = before.filter((other) => other !== id);
@@ -1670,7 +1684,7 @@ export async function deleteChoice(
   id: string,
 ): Promise<string | null> {
   return drafting(database, maker.user.id, async (transaction, state) => {
-    const choice = changeableChoice(state, listId, id);
+    const choice = changeableChoice(maker, state, listId, id);
     const live = state.choices.get(id)?.record;
     refuseLastKept(state, listId, id, undefined);
     if (live === undefined) {
@@ -1735,6 +1749,7 @@ export async function discardListDraft(
 ): Promise<string | null> {
   return drafting(database, maker.user.id, async (transaction, state) => {
     draftOf(state, kind, listId, choiceId);
+    refuseUnseenList(maker, state, listId);
     if (kind === "list" && !state.lists.has(listId)) {
       await refuseIfUsed(transaction, listId, "discarded", maker.user.id);
       await refuseIfDraftsChoose(
@@ -1769,6 +1784,7 @@ export async function resubmitListDraft(
 ): Promise<string | null> {
   return drafting(database, maker.user.id, async (transaction, state) => {
     const draft = draftOf(state, kind, listId, choiceId);
+    refuseUnseenList(maker, state, listId);
     if (draft.state !== "rejected") {
       throw new ConflictError("Only a rejected draft can be resubmitted");
     }
