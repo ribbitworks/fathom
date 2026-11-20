@@ -32,7 +32,8 @@ import {
 import { expectedMonth, undatedMark, hireIdOf } from "./hire-fields.ts";
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import { inForceOn } from "./in-force.ts";
-import { currentOn, notStarted, personalDetailFields } from "./people.ts";
+import { currentOn, notStarted } from "./people-reads.ts";
+import { personalDetailFields } from "./person-fields.ts";
 import {
   changesLine,
   changesLineFields,

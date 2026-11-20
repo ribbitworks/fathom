@@ -33,7 +33,7 @@ import { readTeamDrafts } from "./feature-team-reads.ts";
 import { readColumnsOut } from "./column-drafts.ts";
 import { liveValuesOf } from "./column-types.ts";
 import { readListsWithin } from "./lists.ts";
-import { linksOf, notesOf, numbersOf, valuesOf } from "./people.ts";
+import { linksOf, notesOf, numbersOf, valuesOf } from "./person-fields.ts";
 import { milestonesOf } from "./project-kinds.ts";
 import { isGeneralFeature } from "./release-kinds.ts";
 import { text } from "./reporting.ts";

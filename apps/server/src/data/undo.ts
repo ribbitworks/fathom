@@ -87,10 +87,10 @@ import {
 import {
   peopleFitColumns,
   personTier,
-  readLive,
   recordSensitiveChanges,
   withMark,
-} from "./people.ts";
+} from "./person-fields.ts";
+import { readLive } from "./people-reads.ts";
 import {
   notMarked,
   readManagers,

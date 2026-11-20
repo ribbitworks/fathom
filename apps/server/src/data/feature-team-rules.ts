@@ -10,7 +10,7 @@ import {
 } from "@fathom/shared";
 import { type Recorded, tidy } from "./drafts.ts";
 import { inForceOn } from "./in-force.ts";
-import { currentOn, notStarted } from "./people.ts";
+import { currentOn, notStarted } from "./people-reads.ts";
 import { text } from "./reporting.ts";
 
 const chooseFromPeople = "Choose members from People";

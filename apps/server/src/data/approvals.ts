@@ -52,13 +52,12 @@ import {
   setRejection,
   unseenDraft,
 } from "./drafts.ts";
+import { currentOn, readLive } from "./people-reads.ts";
 import {
-  currentOn,
   personChanges,
   personTier,
-  readLive,
   recordSensitiveChanges,
-} from "./people.ts";
+} from "./person-fields.ts";
 import {
   approveColumnDrafts,
   asksForColumns,

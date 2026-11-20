@@ -23,7 +23,7 @@ import {
   readDraftedMemberships,
 } from "./feature-team-reads.ts";
 import { bySubject, currentRecordOn, inForceOn } from "./in-force.ts";
-import { currentOn, employedMonths, type Employment } from "./people.ts";
+import { currentOn, employedMonths, type Employment } from "./people-reads.ts";
 import { type LineRow, readLines } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 

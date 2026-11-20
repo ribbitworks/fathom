@@ -50,7 +50,7 @@ import {
   withoutLeavers,
 } from "./feature-team-sight.ts";
 import { bySubject, inForceOn } from "./in-force.ts";
-import { notStarted } from "./people.ts";
+import { notStarted } from "./people-reads.ts";
 import { keyNumberOf, readKeyNumbers } from "./record-keys.ts";
 import { readToday } from "./settings.ts";
 import { type Reader, recordType } from "./feature-team-records.ts";

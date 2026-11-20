@@ -12,7 +12,7 @@ import { lockDrafts } from "./drafts.ts";
 import { peopleOf, readLiveTeams } from "./feature-team-reads.ts";
 import { membersOf } from "./feature-team-rules.ts";
 import { heldTeamChange, monthRefusals } from "./feature-team-held-changes.ts";
-import { noPerson } from "./people.ts";
+import { noPerson } from "./person-fields.ts";
 import { readToday } from "./settings.ts";
 import {
   draftedTeam,

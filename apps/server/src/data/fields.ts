@@ -26,7 +26,7 @@ import { BadRequestError, ConflictError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { draftedValues } from "./drafts.ts";
 import { hireChanges, readHireTier } from "./hire-fields.ts";
-import { personChanges } from "./people.ts";
+import { personChanges } from "./person-fields.ts";
 import {
   type FieldRow,
   readColumns,

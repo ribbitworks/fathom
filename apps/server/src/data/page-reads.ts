@@ -12,7 +12,7 @@ import {
 } from "../access.ts";
 import { readColumnsOut } from "./column-drafts.ts";
 import * as lists from "./lists.ts";
-import * as peopleData from "./people.ts";
+import * as peopleReads from "./people-reads.ts";
 import * as projectReads from "./project-reads.ts";
 import * as releases from "./releases.ts";
 
@@ -82,6 +82,6 @@ export function seenPeopleColumns(database: Database, actor: Actor) {
 export function seenPeople(database: Database, actor: Actor, on?: string) {
   requirePermission(actor, "people:view");
   return on === undefined
-    ? peopleData.readPeople(database, actor)
-    : peopleData.readPeopleOn(database, actor, on);
+    ? peopleReads.readPeople(database, actor)
+    : peopleReads.readPeopleOn(database, actor, on);
 }
