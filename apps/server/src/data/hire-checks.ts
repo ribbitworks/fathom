@@ -8,6 +8,7 @@ import {
   inChunks,
   people,
   plannedHires,
+  type Reader,
   unpublishedDrafts,
 } from "@fathom/db";
 import { changesHiringPlan, type HireChange } from "@fathom/shared";
@@ -22,7 +23,6 @@ import { notMarked, readManagers, reassignReports } from "./reporting.ts";
 import {
   type HireRow,
   nameOfHire,
-  type Reader,
   recordedHire,
   recordType,
 } from "./hire-fields.ts";

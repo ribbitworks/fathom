@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Reads and gives the roles each user holds, and what the one a session acts as grants. Part of the
-// data access layer, the only server code that queries the database. Roles are kept in the database
-// with the permissions they grant, read afresh on every request, so a change to a role takes effect
-// at once. Each account holds one or more roles, any role, starting or made later, one of them its
-// default; a session acts as one of them at a time, and only that one's permissions apply.
+// The roles each user holds, and what the role a session acts as grants. Part of the data access
+// layer.
 
 import {
   type Database,
+  type Reader,
   rolePermissions,
   roles as roleTable,
   sessions,
@@ -37,7 +35,7 @@ export interface HeldRoles {
 
 // Takes the database or a transaction, which both read the same way.
 export async function readRoles(
-  database: Pick<Database, "select">,
+  database: Reader,
   userId: string,
 ): Promise<HeldRoles> {
   const held = await database
@@ -66,7 +64,7 @@ export async function readRoles(
 // The role with this ID, refused if there is none, so an account is never given a role that does not
 // exist. Takes the database or a transaction, which both read the same way.
 export async function findRole(
-  database: Pick<Database, "select">,
+  database: Reader,
   roleId: string,
 ): Promise<AccountRole> {
   const [found] = await database
@@ -79,7 +77,7 @@ export async function findRole(
 
 // The ID of the starting role with this key, such as administrator, however it has been renamed.
 export async function findStartingRole(
-  database: Pick<Database, "select">,
+  database: Reader,
   key: string,
 ): Promise<string> {
   const [found] = await database

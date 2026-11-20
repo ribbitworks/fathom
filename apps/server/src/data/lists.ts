@@ -1,15 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Lists of choices that people define, and their choices: reading them, with their drafts in place,
-// and drafting lists created, edited, retired, restored, and deleted, choices added one at a time
-// or several at once, edited, retired, restored, and removed, and new orders of a list's choices;
-// and discarding drafts and sending rejected ones for approval again. In a built-in list with
-// meanings, each choice is tied to one of the list's meanings, and each meaning keeps a choice
-// offered for it; any other built-in list keeps at least one choice offered. Part of the data
-// access layer, the only server code that queries the database; the caller checks the actor's
-// permissions. Every change is a draft, as drafts.ts sets out, which reaches the live lists only
-// once approved, as list-approvals.ts sets out, and is recorded in the change history, field by
-// field. A draft of a list's order holds the whole order of its choices.
+// Lists of choices and their choices: reading them with their drafts in place, and drafting,
+// discarding and resubmitting changes to them. Part of the data access layer.
 
 import {
   type Database,
@@ -20,6 +12,7 @@ import {
   lists,
   people,
   plannedHires,
+  type Reader,
   unpublishedDrafts,
 } from "@fathom/db";
 import type {
@@ -107,7 +100,6 @@ import { isNamedByRecord } from "./records.ts";
 
 type ListRow = typeof lists.$inferSelect;
 type ChoiceRow = typeof listItems.$inferSelect;
-type Reader = Pick<Database, "select">;
 
 const noList = "There is no such list";
 const noChoice = "There is no such choice";
@@ -984,7 +976,7 @@ export function listsOut(
 }
 
 async function readMakers(
-  reader: Pick<Database, "select">,
+  reader: Reader,
   state: ListsState,
   viewer: Actor,
 ): Promise<Makers> {

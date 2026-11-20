@@ -4,7 +4,12 @@
 // reporting, and the migration runner. Deployments run migrations separately, with this package's
 // migrate command (src/migrate.ts); in development, with 'pnpm db:migrate'.
 
-export { createDatabase, createPool, type Database } from "./client.ts";
+export {
+  createDatabase,
+  createPool,
+  type Database,
+  type Reader,
+} from "./client.ts";
 export { type DatabaseConfig, loadDatabaseConfig } from "./config.ts";
 export { databaseCodes, describeError, hasDatabaseCode } from "./errors.ts";
 export {

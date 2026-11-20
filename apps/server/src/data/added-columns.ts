@@ -3,7 +3,7 @@
 // The columns and choices drafted to be added that a person's draft may use before they are
 // approved. Part of the data access layer.
 
-import { type Database, fields } from "@fathom/db";
+import { fields, type Reader } from "@fathom/db";
 import { inArray } from "drizzle-orm";
 import { mostSensitive } from "../access.ts";
 import { type Draft, readDrafts, refuseHeld, type Viewer } from "./drafts.ts";
@@ -16,8 +16,6 @@ import {
   type PeopleColumns,
   readColumns,
 } from "./values.ts";
-
-type Reader = Pick<Database, "select">;
 
 const added = (drafts: ReadonlyMap<string, Draft>, live: ReadonlySet<string>) =>
   [...drafts].filter(

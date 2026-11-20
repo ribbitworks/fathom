@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The lists Fathom builds in, which its built-in columns draw on: Positions, for people and planned
-// hires, the hiring states and the feature statuses, lists with meanings, proposals' statuses, and
-// features' priorities, sizes and risks.
-// Part of the data access layer. A built-in column takes only a live choice of its list, since the
-// database refers to the choice itself.
+// The lists Fathom builds in, which its built-in columns draw on, and the choices offered from
+// them. Part of the data access layer.
 
-import { type Database, listItems, lists } from "@fathom/db";
+import { listItems, lists, type Reader } from "@fathom/db";
 import {
   type BuiltInList,
   type HiringMeaning,
@@ -16,8 +13,6 @@ import {
 } from "@fathom/shared";
 import { and, asc, eq } from "drizzle-orm";
 import { BadRequestError, ConflictError } from "../errors.ts";
-
-type Reader = Pick<Database, "select">;
 
 // The built-in column that draws on each built-in list.
 export const builtInColumns: ReadonlyMap<string, string> = new Map([

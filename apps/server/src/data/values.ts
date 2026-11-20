@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The values of columns on people, planned hires, and features: one row for each record, column, and chosen
-// choice, or for each record and web link, note, or number column, as ADR 0005 sets out. Part of
-// the data access layer. In the change history, a record's values for a column are one field of
-// the record, named after the column, holding the chosen choices in the list's order, the link,
-// the note, or the number, as sensitive as the column's list, or the column's own visibility.
+// The values of columns on people, planned hires and features, and how they are recorded in the
+// change history. Part of the data access layer.
 
 import { storedTier } from "../access.ts";
 import { isNote, isNumber, typeOf } from "./column-types.ts";
 import { readDataClasses } from "./data-classes.ts";
 import {
   type Database,
+  fieldOfValue,
   fields,
   fieldValues,
   inChunks,
   listItems,
   lists,
+  type Reader,
+  valueField,
 } from "@fathom/db";
 import {
   builtInColumnNames,
@@ -29,11 +29,9 @@ import {
 import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 
-type Reader = Pick<Database, "select">;
-export type FieldRow = typeof fields.$inferSelect;
-
-import { fieldOfValue, valueField } from "@fathom/db";
 export { fieldOfValue, valueField } from "@fathom/db";
+
+export type FieldRow = typeof fields.$inferSelect;
 
 // The kinds of record that hold values in added columns, each in its own owner column.
 export type ValueOwner = "person" | "planned-hire" | "feature";

@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The fictional organization's features, added live and placed relative to the cycle the seed day
-// falls in, across the cycles of the Platform and Field Apps release schedules, some in Later, each
-// recorded in the change history as made by Fathom itself. Removing them discards every draft of
-// them, takes the seeded feature teams off features added by hand, so the teams can go, and takes
-// the features off every project and proposal. A development-only package, never included in the
-// runtime image.
+// The fictional organization's features, added live across the seeded release schedules, and
+// removing them. A development-only package, never in the runtime image.
 
 import {
   type ChangeRecord,
@@ -18,6 +14,7 @@ import {
   lists,
   projects,
   proposals,
+  type Reader,
   recordChanges,
   releaseStreams,
   unpublishedDrafts,
@@ -279,7 +276,7 @@ async function seedKind(
 
 // The choices of the lists the seeded features draw on, by list and name, as Fathom starts them.
 async function builtInChoiceIds(
-  reader: Pick<Database, "select">,
+  reader: Reader,
 ): Promise<(list: string, name: string | undefined) => string | null> {
   const choices = await reader
     .select({ id: listItems.id, label: listItems.label, list: lists.builtIn })

@@ -1,24 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Drafts of the fictional organization's lists, made through the server's data access layer as the
-// personas who make and judge them would: the Engineering Operations Manager drafts adding a Skills
-// list with two choices, renaming a site, adding Harbourside to Sites, removing a choice no one
-// has, retiring a role on the team, removing the Certifications list and retiring Languages, which
-// no column draws on, moving Harbourside to the top of Sites, the Co-op level, and the Manager
-// position, and a new description for Positions; the Engineering Director rejects Harbourside, the
-// Sites and Positions orders, and the Positions description; a second Engineering Operations
-// Manager gives the renamed site a description, so one draft holds two people's changes, drafts
-// renaming Roles on the team, and sends the Sites order for approval again, which then waits on
-// Harbourside, still rejected. Drafts of People's columns follow, as seedColumnDrafts sets out,
-// then a Skills column drawing on the Skills list and a person given Rust in it, as seedSkills sets
-// out. Each persona publishes their changes before the next persona changes the same drafts and
-// before the Engineering Director decides them. Each case a draft of a list, a choice, a column, or
-// an order can be in is there to try. After them, the Engineering Operations Manager drafts adding
-// an Equipment list with one choice and leaves it unpublished, so only they see it. Removing the
-// seed data discards these drafts first. A development-only package, never included in the runtime
-// image.
+// Drafts of the fictional organization's lists and columns, made as its personas would, and
+// removing them. A development-only package, never in the runtime image.
 
-import { changes, type Database, drafts, lists } from "@fathom/db";
+import { changes, type Database, drafts, lists, type Reader } from "@fathom/db";
 import type { FictionalList, FictionalOrganization } from "@fathom/fixtures";
 import { tierSchema } from "@fathom/shared";
 import { createDataAccess } from "@fathom/server/data";
@@ -52,7 +37,7 @@ function listCalled(
 
 // The built-in Positions list, as the seed data fills it.
 export async function positionsList(
-  reader: Pick<Database, "select">,
+  reader: Reader,
   organization: FictionalOrganization,
 ): Promise<FictionalList> {
   const [builtIn] = await reader
