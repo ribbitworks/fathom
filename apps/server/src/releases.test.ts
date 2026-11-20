@@ -28,7 +28,15 @@ import {
   type Unpublished,
 } from "@fathom/shared";
 import { eq, inArray } from "drizzle-orm";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { readChangeHistory } from "./data/change-history.ts";
 import {
   type Method,
@@ -37,6 +45,11 @@ import {
   missingRecord as missing,
   unique,
 } from "./test-app.ts";
+
+// The server takes today's date from the clock, so the tests fix it, to give the same days on every
+// run.
+vi.useFakeTimers({ toFake: ["Date"] });
+vi.setSystemTime(new Date("2026-06-15T12:00:00.000Z"));
 
 let test: TestApp;
 let configurer: { id: string; cookie: string };
@@ -56,6 +69,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await test.close();
+  vi.useRealTimers();
 });
 
 const quarters = {
@@ -726,12 +740,8 @@ describe("changing release streams", () => {
   });
 
   it("lays a new schedule's cycles out until two years from today", async () => {
-    const before = today();
     const stream = await draftStream();
-    // Either day, should the day change while the schedule is drafted.
-    expect([horizonFrom(before), horizonFrom(today())]).toContain(
-      stream.cyclesUntil,
-    );
+    expect(stream.cyclesUntil).toBe(horizonFrom(today()));
   });
 
   it("lays a schedule's cycles out up to its last day, however far ahead", async () => {
