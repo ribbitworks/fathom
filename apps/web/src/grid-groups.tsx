@@ -143,7 +143,10 @@ export function NamedWithOthers({
 }
 
 export function useShownRows<Rec extends GridRecord, Change, Request>(
-  grid: ModelGrid<Rec, Change, Request>,
+  grid: Pick<
+    ModelGrid<Rec, Change, Request>,
+    "table" | "body" | "ticks" | "allColumns" | "view" | "records"
+  >,
 ) {
   const { table, body, ticks, allColumns, view, records } = grid;
   // The records this user has added since the page opened, which stay shown whatever the view.

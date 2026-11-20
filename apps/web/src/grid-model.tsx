@@ -116,7 +116,20 @@ export type GridProps<Rec extends GridRecord, Change, Request> = ReturnType<
 >;
 
 export function useGridModel<Rec extends GridRecord, Change, Request>(
-  grid: GridProps<Rec, Change, Request>,
+  grid: Pick<
+    GridProps<Rec, Change, Request>,
+    | "everyone"
+    | "table"
+    | "draftedFields"
+    | "tableOrder"
+    | "lists"
+    | "mayEdit"
+    | "rowActions"
+    | "mayEditDrafts"
+    | "mayApprove"
+    | "given"
+    | "withDrafts"
+  >,
 ) {
   const {
     everyone,

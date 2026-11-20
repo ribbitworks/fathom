@@ -137,7 +137,17 @@ export function useTableScroll(): TableScroll {
 }
 
 export function useGridLayout<Rec extends GridRecord, Change, Request>(
-  grid: SelectionGrid<Rec, Change, Request>,
+  grid: Pick<
+    SelectionGrid<Rec, Change, Request>,
+    | "onView"
+    | "opensAtColumn"
+    | "linkedColumn"
+    | "allColumns"
+    | "columns"
+    | "view"
+    | "records"
+    | "liveBeside"
+  >,
 ) {
   const {
     onView,

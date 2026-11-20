@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The shared table's rows and cells by place, and where a row's menu is open from.
+// The shared table's rows and cells by place, where a row's menu is open from, and the cell selected.
 
 import type { ScreenPoint } from "./app-menu.tsx";
 import type { RowProblem } from "./record-table.ts";
@@ -50,6 +50,35 @@ export interface OpenMenu {
 export interface Place {
   row: string;
   column: string;
+}
+
+// The cell selected, kept apart from the table's state, so selecting another redraws only the cell
+// left and the cell reached, not every cell: each cell listens for whether it is the one.
+export interface PlaceStore {
+  get: () => Place | undefined;
+  set: (place: Place) => void;
+  subscribe: (listener: () => void) => () => void;
+}
+
+export function placeStore(): PlaceStore {
+  let current: Place | undefined;
+  const listeners = new Set<() => void>();
+  return {
+    get: () => current,
+    set: (place) => {
+      if (current?.row === place.row && current.column === place.column) {
+        return;
+      }
+      current = place;
+      for (const listener of listeners) listener();
+    },
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
 }
 
 export interface Cell {

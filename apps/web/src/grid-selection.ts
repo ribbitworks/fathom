@@ -7,13 +7,14 @@ import { useState } from "react";
 import type { ScreenPoint } from "./app-menu.tsx";
 import { focusSoon } from "./focus.ts";
 import type { ShownGrid } from "./grid-groups.tsx";
-import type {
-  Cell,
-  NewRow,
-  OpenMenu,
-  Place,
-  Row,
-  ShownProblem,
+import {
+  type Cell,
+  type NewRow,
+  type OpenMenu,
+  type Place,
+  placeStore,
+  type Row,
+  type ShownProblem,
 } from "./grid-places.ts";
 import type { Column, GridRecord } from "./record-table.ts";
 import type { CellValue } from "./table-view.ts";
@@ -23,7 +24,7 @@ export function useGridState<Rec extends GridRecord, Change>() {
   const [nextKey, setNextKey] = useState(1);
   // The selected cell and the cell being edited, by row and column key rather than position, so they
   // stay with their record when a save puts the rows in a new order.
-  const [activeAt, setActiveAt] = useState<Place>();
+  const [activeAt] = useState(placeStore);
   const [editingAt, setEditingAt] = useState<Place>();
   // The record and column edited in the side panel, such as a note's, as they were when it opened,
   // so a note being written stays open, and is saved to its record, if its row leaves the view.
@@ -55,7 +56,6 @@ export function useGridState<Rec extends GridRecord, Change>() {
     nextKey,
     setNextKey,
     activeAt,
-    setActiveAt,
     editingAt,
     setEditingAt,
     panelOpen,
@@ -87,7 +87,21 @@ export type StateGrid<Rec extends GridRecord, Change, Request> = ShownGrid<
   ReturnType<typeof useGridState<Rec, Change>>;
 
 export function gridSelection<Rec extends GridRecord, Change, Request>(
-  grid: StateGrid<Rec, Change, Request>,
+  grid: Pick<
+    StateGrid<Rec, Change, Request>,
+    | "canAdd"
+    | "columns"
+    | "canEdit"
+    | "shownRows"
+    | "newRows"
+    | "activeAt"
+    | "editingAt"
+    | "setEditingAt"
+    | "panelOpen"
+    | "setPanelOpen"
+    | "panelWriting"
+    | "setPanelWriting"
+  >,
 ) {
   const {
     canAdd,
@@ -96,7 +110,6 @@ export function gridSelection<Rec extends GridRecord, Change, Request>(
     shownRows,
     newRows,
     activeAt,
-    setActiveAt,
     editingAt,
     setEditingAt,
     panelOpen,
@@ -123,16 +136,25 @@ export function gridSelection<Rec extends GridRecord, Change, Request>(
     row: String(rowKeys.at(cell.row)),
     column: String(keys.at(cell.column)),
   });
+  // Each row's and column's place by its key, looked up by every cell as the selection moves.
+  const rowAt = new Map(
+    rowKeys.map((key, index): [string, number] => [key, index]).reverse(),
+  );
+  const columnAt = new Map(
+    keys.map((key, index): [string, number] => [key, index]).reverse(),
+  );
   const cellAt = (place: Place) => ({
-    row: rowKeys.indexOf(place.row),
-    column: keys.indexOf(place.column),
+    row: rowAt.get(place.row) ?? -1,
+    column: columnAt.get(place.column) ?? -1,
   });
-  // The selected cell, or the first when the one selected has gone.
-  const found = activeAt === undefined ? undefined : cellAt(activeAt);
-  const active =
-    found && found.row !== -1 && found.column !== -1
+  // The cell selected at a place, or the first when the one selected has gone.
+  const activeOf = (place: Place | undefined) => {
+    const found = place === undefined ? undefined : cellAt(place);
+    return found && found.row !== -1 && found.column !== -1
       ? found
       : { row: 0, column: 0 };
+  };
+  const activeNow = () => activeOf(activeAt.get());
   const placed = editingAt === undefined ? undefined : cellAt(editingAt);
   // The cell being edited, while its row and column are shown.
   const editing =
@@ -147,7 +169,7 @@ export function gridSelection<Rec extends GridRecord, Change, Request>(
   const writingInPanel =
     inPanel !== undefined && !inPanel.readOnly && panelWriting;
   const setActive = (cell: Cell) => {
-    setActiveAt(placeOf(cell));
+    activeAt.set(placeOf(cell));
   };
   const setEditing = (cell: Cell | undefined) => {
     if (cell === undefined) {
@@ -159,7 +181,7 @@ export function gridSelection<Rec extends GridRecord, Change, Request>(
   // Focuses a cell of a new row by its key, since the row may not be drawn yet.
   const focusNew = (newKey: number) => {
     const place = { row: `new-${String(newKey)}`, column: String(keys[0]) };
-    setActiveAt(place);
+    activeAt.set(place);
     focusSoon(`cell-${place.row}-${place.column}`);
   };
 
@@ -177,7 +199,8 @@ export function gridSelection<Rec extends GridRecord, Change, Request>(
     keys,
     cellId,
     at,
-    active,
+    activeOf,
+    activeNow,
     editing,
     inPanel,
     writingInPanel,

@@ -33,7 +33,33 @@ const draftItemLabel = (verb: string, of: string | undefined) => {
 };
 
 export function rowMenus<Rec extends GridRecord, Change, Request>(
-  grid: SavingGrid<Rec, Change, Request>,
+  grid: Pick<
+    SavingGrid<Rec, Change, Request>,
+    | "table"
+    | "lists"
+    | "rowActions"
+    | "actions"
+    | "fields"
+    | "columns"
+    | "ownDraftOf"
+    | "approvesInMenu"
+    | "decidedInMenu"
+    | "mayChange"
+    | "hasMenu"
+    | "decidesOwnDraft"
+    | "ownItemsOf"
+    | "rowKind"
+    | "menuFor"
+    | "setMenuFor"
+    | "pointedAt"
+    | "setPointedAt"
+    | "rows"
+    | "rowKey"
+    | "activeNow"
+    | "moveTo"
+    | "clearable"
+    | "clearNewRow"
+  >,
 ) {
   const {
     table,
@@ -56,7 +82,7 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
     setPointedAt,
     rows,
     rowKey,
-    active,
+    activeNow,
     moveTo,
     clearable,
     clearNewRow,
@@ -166,6 +192,7 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
               <Menu.Item
                 onClick={() => {
                   actions.discard(record, ownDraft);
+                  const active = activeNow();
                   moveTo(active.row, active.column);
                 }}
               >
@@ -177,6 +204,7 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
                 color="red"
                 onClick={() => {
                   actions.remove(record);
+                  const active = activeNow();
                   moveTo(active.row, active.column);
                 }}
               >
