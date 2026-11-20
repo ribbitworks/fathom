@@ -56,7 +56,7 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
 - **Following:** Choosing a manager or a report shows them in the panel.
 - **Editing:** A value the reader may change on People has a pencil opening its cell's editor. Reporting team and Direct reports have none.
 - **Another date:** The panel shows the person then, or says they aren't employed then. Only Manager has a pencil.
-- **Notes:** A note opens in its own panel under the details, sharing the height.
+- **Notes:** A note opens in its own panel under the details, sharing the height, kept in the address as [Kept in the address](../../standards/ui-conventions/tables.md#the-address) sets out.
 
 ### Planned Hires
 

@@ -6,7 +6,12 @@
 
 import type { Link as WebLink } from "@fathom/shared";
 import { ActionIcon, Anchor, Group, Stack, Text } from "@mantine/core";
-import { type MouseEvent, type ReactNode, useEffect } from "react";
+import {
+  type MouseEvent,
+  type ReactNode,
+  useEffect,
+  useEffectEvent,
+} from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { ColouredName } from "./colour-swatch.tsx";
 import { Icon } from "./icons.tsx";
@@ -335,6 +340,13 @@ export function Row({
       ? { ...changed, live: changed.live }
       : undefined;
   const start = editing?.open === true ? undefined : editing?.onStart;
+  const openAsked = useEffectEvent(() => {
+    editing?.onAsked?.();
+  });
+  const asked = editing?.askedBy;
+  useEffect(() => {
+    if (asked !== undefined) openAsked();
+  }, [asked]);
   const onClick = opensOnClick(start);
   const checkbox = editing !== undefined && editing.onStart === undefined;
   return (

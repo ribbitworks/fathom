@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/shared/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-18"
+last_updated: "2026-11-19"
 ---
 
 # Manual Test: Note Columns on People
 
 ## Scope
 
-Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings, checkboxes and numbered lists look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, or any value in a choice column, and a long note folded in a person's details and read in full on Releases.
+Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings, checkboxes and numbered lists look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, or any value in a choice column, a long note folded in a person's details and read in full on Releases, and an open note kept open on reload, Back and a shared link.
 
 ## Test Environment
 
@@ -720,4 +720,82 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The panel closes.
     - The cell of 'Lilian Lang' is still empty.
+  - **Notes:**
+
+### NOTE-09: An Open Note Stays Open on Reload, Back and a Link
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as NOTE-08. Step `9906` signs in as another account.
+
+**Preconditions:** Signed in with this account. Run after NOTE-08. **People** page open, with `Max Munk` searched for.
+
+- [ ] `1AF0` Select **Show details** in the ⋯ menu of 'Max Munk'.
+  - **Expected:** The side panel opens, headed 'Max Munk'.
+  - **Notes:**
+
+- [ ] `4837` Select the open button at the right of the **Background** row in the details.
+  - **Expected:**
+    - A panel titled "Background for Max Munk" opens under the details.
+    - **Note** is chosen at its top.
+    - The note starts with `Joined from the platform team`.
+  - **Notes:**
+
+- [ ] `22C1` Reload the page.
+  - **Expected:**
+    - The details of 'Max Munk' are open.
+    - The "Background for Max Munk" panel is open under them, on **Note**.
+  - **Notes:**
+
+- [ ] `BA41` Select **Editor** at the top of the "Background for Max Munk" panel.
+  - **Expected:** The toolbar is above the note's text.
+  - **Notes:**
+
+- [ ] `C840` Click at the end of `Set goals`.
+  - **Expected:** The cursor is after `Set goals`.
+  - **Notes:**
+
+- [ ] `4532` Type a space and `again`.
+  - **Expected:** The line reads `Set goals again`.
+  - **Notes:**
+
+- [ ] `E694` Reload the page.
+  - **Expected:**
+    - The "Background for Max Munk" panel is open under the details, on **Note**.
+    - The last checkbox reads `Set goals`.
+  - **Notes:**
+
+- [ ] `C1E6` Select the browser's Back button.
+  - **Expected:**
+    - The "Background for Max Munk" panel closes.
+    - The details of 'Max Munk' stay open.
+  - **Notes:**
+
+- [ ] `205E` Select the browser's Forward button.
+  - **Expected:** The "Background for Max Munk" panel opens under the details again, on **Note**.
+  - **Notes:**
+
+- [ ] `2EBE` Copy the web address from the browser's address bar.
+  - **Expected:** Nothing in Fathom changes.
+  - **Notes:**
+
+- [ ] `9906` Sign in as the Feature Lead, `feature.lead@fathom.test`.
+  - **Expected:** The top bar's right end reads "Feature Lead".
+  - **Notes:**
+
+- [ ] `5077` Paste the copied web address into the address bar, and press Enter.
+  - **Expected:**
+    - The **People** page shows, with the details of 'Max Munk' open.
+    - The "Background for Max Munk" panel is open under them, showing the note as it reads.
+    - The panel has no **Editor** or **Markdown**.
+  - **Notes:**
+
+- [ ] `34C2` Select the close button of the "Background for Max Munk" panel.
+  - **Expected:**
+    - The panel closes.
+    - The details of 'Max Munk' stay open.
+  - **Notes:**
+
+- [ ] `36FD` Reload the page.
+  - **Expected:**
+    - The details of 'Max Munk' are open.
+    - No "Background for Max Munk" panel is open.
   - **Notes:**

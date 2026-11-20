@@ -1,13 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A record's note, in a panel of its own under the details or the form beside the table, read there,
-// and written by those who may. One note is open at a time, for the record shown; once that record is no longer shown the
-// note closes. The page holds this, since it draws both panels.
+// A record's note, opened in a panel of its own under its details or form, and kept open in the
+// page's address. The page holds this, since it draws both panels.
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useContext, useEffect, useState } from "react";
 import type { useDiscardQuestion } from "./discard-question.tsx";
 import { cellKinds, type EditorProps } from "./cell-kinds.tsx";
 import { focusSoon } from "./focus.ts";
+import {
+  noteLeftBehind,
+  noteOpenFor,
+  type OpenNoteAddress,
+  OpenNoteContext,
+  openNoteValue,
+} from "./note-address.ts";
 import {
   changeId,
   checked,
@@ -25,7 +31,8 @@ export type NoteContext<Rec extends GridRecord, Change> = RecordEditingContext<
 > & { name: string };
 
 // A note being written, for the record and column it was opened for. Finishing it saves the value
-// given, or says why it will not do.
+// given, or says why it will not do. A note of a record being added isn't kept in the address,
+// since its form isn't; any other is, once the address has caught up with its opening.
 interface Writing {
   recordId: string;
   name: string;
@@ -34,28 +41,52 @@ interface Writing {
   value: CellValue;
   readOnly: boolean;
   finish: (edited: CellValue) => string | undefined;
+  address: string | undefined;
+  inAddress: boolean;
 }
 
+type Opening<Rec extends GridRecord, Change> = NoteContext<Rec, Change> & {
+  save: SaveChange<Rec, Change> | undefined;
+};
+
 export function useNoteEditing(detailsTitleId: string) {
+  const given = useContext(OpenNoteContext);
+  const [ownAddress, setOwnAddress] = useState<string>();
+  const address: OpenNoteAddress = given ?? {
+    note: ownAddress,
+    onNote: setOwnAddress,
+  };
   const [writing, setWriting] = useState<Writing>();
   // Whether the note open differs from the one it opened with, so it is kept when another of the
   // record's notes is chosen, and showing another record asks first.
   const [changing, setChanging] = useState(false);
   // Why the note last saved was refused, if it was.
   const [refused, setRefused] = useState<string>();
-
-  // Opens a record's note, unless another being changed is open, which keeps focus instead.
-  const start = <Rec extends GridRecord, Change>(
-    context: NoteContext<Rec, Change> & {
-      save: SaveChange<Rec, Change> | undefined;
-    },
-    column: Column<Rec, Change>,
-    readOnly = false,
-  ) => {
-    if (writing !== undefined && changing) {
-      focusSoon(`${editorId(writing.column)}-title`);
-      return;
+  // The address of a note just closed or given up, which opens nothing until the address moves on.
+  const [givenUp, setGivenUp] = useState<string>();
+  if (givenUp !== undefined && givenUp !== address.note) setGivenUp(undefined);
+  // An address naming a note no longer shown, taken out once the page is drawn.
+  const [leftBehind, setLeftBehind] = useState<string>();
+  if (leftBehind !== undefined && leftBehind !== address.note) {
+    setLeftBehind(undefined);
+  }
+  const leave = (kept: string | undefined) => {
+    if (kept !== undefined && kept === address.note && kept !== leftBehind) {
+      setLeftBehind(kept);
     }
+  };
+  const { onNote } = address;
+  useEffect(() => {
+    if (leftBehind !== undefined) onNote(undefined, true);
+  }, [leftBehind, onNote]);
+
+  // Who may write is decided here, as the note opens, and holds while it stays open.
+  const open = <Rec extends GridRecord, Change>(
+    context: Opening<Rec, Change>,
+    column: Column<Rec, Change>,
+    readOnly: boolean,
+    kept: string | undefined,
+  ) => {
     setWriting({
       recordId: context.id,
       name: context.name,
@@ -70,6 +101,8 @@ export function useNoteEditing(detailsTitleId: string) {
         if (made !== undefined) context.save?.(made.change, column, edited);
         return undefined;
       },
+      address: kept,
+      inAddress: kept === undefined || kept === address.note,
     });
     setRefused(undefined);
     // A note with something in it opens as it reads, with its editor hidden, its title then taking
@@ -81,22 +114,71 @@ export function useNoteEditing(detailsTitleId: string) {
     );
   };
 
+  // Opens a record's note, unless another being changed is open, which keeps focus instead. Asked
+  // by the address, as its record's details are drawn, it opens only while no note is open, without
+  // adding to Back's history.
+  const start = <Rec extends GridRecord, Change>(
+    context: Opening<Rec, Change>,
+    column: Column<Rec, Change>,
+    readOnly = false,
+    how: "chosen" | "asked" = "chosen",
+  ) => {
+    if (how === "asked") {
+      if (
+        writing === undefined &&
+        address.note !== givenUp &&
+        noteOpenFor(address.note, context.id) === column.key
+      ) {
+        open(context, column, readOnly, address.note);
+      }
+      return;
+    }
+    if (writing !== undefined && changing) {
+      focusSoon(`${editorId(writing.column)}-title`);
+      return;
+    }
+    const kept =
+      context.adding === true
+        ? undefined
+        : openNoteValue(context.id, column.key);
+    open(context, column, readOnly, kept);
+    if (kept !== undefined && kept !== address.note) {
+      address.onNote(kept, false);
+    }
+  };
+
+  // Whether the note open is the one shown: one being changed always is; otherwise the record must
+  // be shown and the address keep it open, once it has caught up with its opening.
+  const stillOpen = (
+    { recordId, address: kept, inAddress }: Writing,
+    shown: string | undefined,
+  ) =>
+    changing ||
+    (shown === recordId &&
+      (kept === undefined || !inAddress || address.note === kept));
+
   // The panel of the note open, while there is one, given Fathom's own ID for the record shown, if
   // any. Showing another record, or none, closes it, unless it has been changed, which the page asks
   // about first, so it stays only when the address moved on its own, as by Back.
   const note = (shown: string | undefined): SidePanel | undefined => {
+    if (noteLeftBehind(address.note, shown) && !changing) leave(address.note);
     if (writing === undefined) return undefined;
-    const { recordId, name, column, Editor, value, readOnly, finish } = writing;
-    const stillShown = shown === recordId;
-    if (!changing && !stillShown) {
+    if (!stillOpen(writing, shown)) {
+      leave(writing.address);
       setWriting(undefined);
       return undefined;
     }
+    if (!writing.inAddress && writing.address === address.note) {
+      setWriting({ ...writing, inAddress: true });
+    }
+    const { recordId, name, column, Editor, value, readOnly, finish } = writing;
+    const stillShown = shown === recordId;
     // Focus goes back to the note's button, or, with another record shown, to its name.
     const close = () => {
-      setWriting(undefined);
-      setChanging(false);
-      setRefused(undefined);
+      forget();
+      if (writing.address !== undefined && writing.address === address.note) {
+        address.onNote(undefined, false);
+      }
       focusSoon(stillShown ? changeId(column) : detailsTitleId);
     };
     const id = editorId(column);
@@ -129,13 +211,25 @@ export function useNoteEditing(detailsTitleId: string) {
     };
   };
 
-  const discard = () => {
+  function forget() {
+    setGivenUp(writing?.address);
     setWriting(undefined);
     setChanging(false);
     setRefused(undefined);
+  }
+
+  // Gives up the note open, as before showing something else, taking it out of the address.
+  const discard = () => {
+    leave(writing?.address);
+    forget();
   };
 
-  return { start, note, changing: writing !== undefined && changing, discard };
+  return {
+    start,
+    note,
+    changing: writing !== undefined && changing,
+    discard,
+  };
 }
 
 export type NoteEditing = ReturnType<typeof useNoteEditing>;

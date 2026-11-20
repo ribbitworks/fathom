@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The routes every page sits under, and what the pages' routes share: checking who may open a page,
-// opening a page on its last view, and taking a linked column out of the address.
+// opening a page on its last view, taking a linked column out of the address, and an open note.
 
 import type { QueryClient } from "@tanstack/react-query";
 import {
@@ -20,12 +20,18 @@ import {
   getRouteApi,
   notFound,
   redirect,
+  useNavigate,
 } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { FirstPasswordChange } from "./change-password.tsx";
 import { Layout } from "./layout.tsx";
 import { lastViewAddress, lastViewsQuery, type Shown } from "./last-views.ts";
+import {
+  noteSearch,
+  type OpenNoteAddress,
+  OpenNoteContext,
+} from "./note-address.ts";
 import { PageNotFound } from "./problems.tsx";
 import type { LinkedColumn } from "./record-table.ts";
 import { sessionQuery } from "./session.ts";
@@ -115,6 +121,8 @@ export const shownOn = <Search extends ViewSearch>(
 export const signedInRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: "signed-in",
+  // A note open beside any page, which every page keeps in its address.
+  validateSearch: noteSearch,
   beforeLoad: async ({ context, location }) => {
     // Checked afresh on every change of page, so an expired session is noticed.
     const session = await context.queryClient.query(sessionQuery);
@@ -155,18 +163,35 @@ export const signedInRoute = createRoute({
       mustChangePassword,
       passwords,
     } = signedIn.useRouteContext();
+    const { note } = signedIn.useSearch();
+    const navigate = useNavigate();
+    const openNote = useMemo(
+      (): OpenNoteAddress => ({
+        note,
+        onNote: (next, replace) => {
+          void navigate({
+            to: ".",
+            search: (shown) => ({ ...shown, note: next }),
+            replace,
+          });
+        },
+      }),
+      [note, navigate],
+    );
     if (mustChangePassword) {
       return <FirstPasswordChange rules={passwords.rules} owner={user} />;
     }
     return (
-      <Layout
-        user={user}
-        role={role}
-        roles={roles}
-        permissions={permissions}
-        dataClasses={access.dataClasses}
-        passwordRules={passwords.rules}
-      />
+      <OpenNoteContext value={openNote}>
+        <Layout
+          user={user}
+          role={role}
+          roles={roles}
+          permissions={permissions}
+          dataClasses={access.dataClasses}
+          passwordRules={passwords.rules}
+        />
+      </OpenNoteContext>
     );
   },
 });
