@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Sets up pnpm and Node.js, as the repository pins them, and installs the dependencies from the
-# lockfile, for each job of the Check workflow once it has checked out the code.
+# lockfile, for each job of the Check workflow that needs them, once it has checked out the code.
 
 name: Set up Node.js and the dependencies
 description: Sets up pnpm and Node.js, then installs the dependencies from the lockfile.

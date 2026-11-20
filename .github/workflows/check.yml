@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Runs the full check, 'pnpm check', on every pull request and every push to the default branch,
-# and the container tests on each but a pull request of documentation alone.
+# leaving out the package and container tests on a pull request of documentation alone.
 
 name: Check
 
@@ -18,6 +18,40 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    name: Decide what the change needs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      documentation-only: ${{ steps.decide.outputs.documentation-only }}
+    steps:
+      - name: Check out with full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # The decision needs Node.js alone, not the dependencies, so it delays the other jobs little.
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+
+      - name: Decide whether the change is documentation alone
+        id: decide
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        # Every push to the default branch runs everything, and so does a pull request whose changes
+        # can't be told.
+        run: |
+          only=false
+          if [ -n "$BASE" ]; then
+            only="$(node scripts/documentation-only.mjs "$BASE")" || only=false
+          fi
+          echo "documentation-only=$only" >>"$GITHUB_OUTPUT"
+
   check:
     name: Check without package tests
     runs-on: ubuntu-24.04
@@ -43,6 +77,8 @@ jobs:
   # on a developer's computer, until tests timed out, so they have runners of their own.
   packages:
     name: Package tests (${{ matrix.name }})
+    needs: changes
+    if: needs.changes.outputs.documentation-only != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -84,48 +120,58 @@ jobs:
 
   full:
     name: Full check
-    needs: [check, packages]
+    needs: [changes, check, packages]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
     steps:
+      # The package tests may be left out only for documentation alone; everything else must pass.
+      # It runs even in a cancelled run, so a cancelled run fails rather than passing unchecked.
       - name: Pass only if every part passed
+        if: always()
         env:
-          RESULTS: ${{ join(needs.*.result, ' ') }}
+          DECIDED: ${{ needs.changes.result }}
+          CHECKED: ${{ needs.check.result }}
+          PACKAGES: ${{ needs.packages.result }}
+          DOCUMENTATION_ONLY: ${{ needs.changes.outputs.documentation-only }}
         run: |
-          echo "Parts: $RESULTS"
-          for result in $RESULTS; do [ "$result" = success ] || exit 1; done
+          echo "Decided: $DECIDED, checked: $CHECKED, package tests: $PACKAGES, documentation only: $DOCUMENTATION_ONLY"
+          [ "$DECIDED" = success ] && [ "$CHECKED" = success ] || exit 1
+          [ "$PACKAGES" = success ] || { [ "$PACKAGES" = skipped ] && [ "$DOCUMENTATION_ONLY" = true ]; }
 
   containers:
     name: Container tests
+    needs: changes
+    # A required check, so it runs and reports whatever the change.
+    if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
       contents: read
     steps:
-      - name: Check out with full history
+      - name: Stop if the decision failed
+        if: always()
+        env:
+          DECIDED: ${{ needs.changes.result }}
+        run: '[ "$DECIDED" = success ]'
+
+      - name: Check out
+        if: needs.changes.outputs.documentation-only != 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
           persist-credentials: false
 
       - name: Set up Node.js and the dependencies
+        if: needs.changes.outputs.documentation-only != 'true'
         uses: ./.github/actions/setup
 
-      - name: Decide whether the change needs the container tests
-        id: changed
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
-        # Every push to the default branch runs them, and so does a pull request whose changes can't
-        # be told.
-        run: |
-          run=true
-          if [ -n "$BASE" ]; then
-            run="$(node scripts/needs-container-tests.mjs "$BASE")" || run=true
-          fi
-          echo "run=$run" >>"$GITHUB_OUTPUT"
-
       - name: Run the container tests
-        if: steps.changed.outputs.run == 'true'
+        if: needs.changes.outputs.documentation-only != 'true'
         run: pnpm test:containers
+
+      # Steps without a condition are skipped once a run is cancelled, which would leave this
+      # required check passing with nothing tested.
+      - name: Fail a cancelled run
+        if: cancelled()
+        run: exit 1
