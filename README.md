@@ -4,7 +4,7 @@ Fathom plans software work over time: what a team will build, who will build it,
 
 ## Documentation
 
-- [Product Brief](docs/product/brief.md) and [Roadmap](docs/product/roadmap.md): what Fathom is for, and what comes next
+- [Product Brief](docs/product/brief.md) and [Roadmap issue](https://github.com/ribbitworks/fathom/issues/398): what Fathom is for, and what comes next
 - [Help](docs/help/index.md): how to use each page of Fathom
 - [Development Setup](docs/design/development-setup.md): how to set up, run, test and release Fathom
 - [Architecture](docs/design/architecture.md): Fathom's parts and how they connect

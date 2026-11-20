@@ -1,6 +1,6 @@
 # Fathom: Use Cases
 
-**Last updated:** 2026-11-18
+**Last updated:** 2026-11-20
 
 The core scenarios Fathom must support in v1, derived from the [Product Brief](brief.md). Each use case names the main actor, their goal, and the outcome. Steps and detail are added when each feature is designed.
 
@@ -156,4 +156,4 @@ Details are typed or pasted into People, or changed in a person's details beside
 
 - **What-if scenarios:** Comparing alternative plans with the approved plan and with each other, which is still to be designed.
 - **Configuring cycles and releases:** Setting up schedules, with their cycle lengths and cycle names, and choosing which cycles each release includes, have no use case yet.
-- **Custom fields and tables:** Defining custom fields and tables comes in a later stage of the [Roadmap](roadmap.md), and has no use case yet.
+- **Custom fields and tables:** Defining custom fields and tables comes in a later stage of the [Roadmap issue](https://github.com/ribbitworks/fathom/issues/398), and has no use case yet.

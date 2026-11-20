@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/markdown-style-guidelines.md", "docs/standards/help-pages.md", "docs/standards/testing.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Documentation Standards
@@ -40,7 +40,6 @@ Each fact lives in the one document that owns it. The documents marked as summar
 | [Domain Concepts](../product/domain.md) | Definitions of terms |
 | [Use Cases](../product/use-cases.md) | Scenarios |
 | [Roles](../product/roles.md) | Each role, and what it can do |
-| [Roadmap](../product/roadmap.md) | The order in which Fathom's goals are delivered |
 
 ### Design and Building
 
@@ -53,7 +52,7 @@ Each fact lives in the one document that owns it. The documents marked as summar
 | [Development Setup](../design/development-setup.md) | The repository layout, local development, the fictional data and development accounts, releases, and the repository's settings on GitHub |
 | [Architecture decision records](../adr/) | Technical decisions |
 | [Standards](./) | How Fathom is built and reviewed, with [UI Conventions](ui-conventions.md) for the principles and conventions every screen shares, each with the shared piece that draws it and an example, split into parts in `docs/standards/ui-conventions/`, and [Issues](issues.md) for filing and labelling issues |
-| [GitHub Issues](https://github.com/ribbitworks/fathom/issues) | Known problems and deferred work |
+| [GitHub Issues](https://github.com/ribbitworks/fathom/issues) | Known problems and deferred work, and, in the pinned [Roadmap](https://github.com/ribbitworks/fathom/issues/398) issue, the order in which Fathom's goals are delivered |
 
 ### Security and Operations
 
@@ -96,7 +95,7 @@ category: "Architecture"
 audience: "AI Coding Assistant"
 applies_to: ["src/domain/**"]
 dependencies: ["docs/design/architecture.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 ```
 
