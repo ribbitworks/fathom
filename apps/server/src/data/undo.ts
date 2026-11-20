@@ -104,7 +104,8 @@ import { requireViewUndo, type ViewNow, viewNow } from "./views.ts";
 import { stateOf, versionOf } from "./record-state.ts";
 import { readRecordsState } from "./records.ts";
 import { readToday } from "./settings.ts";
-import { recordTeamDayChanges, undoTeamDrafts } from "./feature-teams.ts";
+import { undoTeamDrafts } from "./feature-team-undo.ts";
+import { recordTeamDayChanges } from "./feature-teams.ts";
 import {
   hireSensitivities,
   readHireTier,

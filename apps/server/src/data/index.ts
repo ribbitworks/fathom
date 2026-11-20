@@ -103,6 +103,7 @@ import * as hireReads from "./hire-reads.ts";
 import * as fills from "./fills.ts";
 import * as featureTeamData from "./feature-teams.ts";
 import { readFeatureTeams } from "./feature-team-reads.ts";
+import { changeMemberTeams } from "./feature-team-month-cells.ts";
 import { readTeamMonths } from "./team-months.ts";
 import { recordExport } from "./exports.ts";
 import { readHistory, recordPersonalView } from "./history.ts";
@@ -625,7 +626,7 @@ function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
     update: async (actor, id, change) =>
       featureTeamData.updateFeatureTeam(database, actor, id, change),
     changeMemberTeams: async (actor, personId, change) =>
-      featureTeamData.changeMemberTeams(database, actor, personId, change),
+      changeMemberTeams(database, actor, personId, change),
     delete: async (actor, id) =>
       featureTeamData.deleteFeatureTeam(database, actor, id),
     discardDraft: async (actor, id) =>
