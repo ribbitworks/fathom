@@ -16,8 +16,8 @@ import {
   membersRefusal,
   nameIsTaken,
   nextTeamDraft,
-  type Person,
 } from "./feature-team-rules.ts";
+import { someone } from "./test-feature-team-people.ts";
 
 const today = "2026-06-15";
 const team = "team-1";
@@ -330,15 +330,6 @@ describe("a team's name", () => {
   it("is free when no team has it", () => {
     expect(nameIsTaken(names, "Fictional New", team)).toBe(false);
   });
-});
-
-const someone = (details: Partial<Person> = {}): Person => ({
-  preferredName: "Fictional Person",
-  startDate: "2020-01-01",
-  endDate: null,
-  started: true,
-  left: false,
-  ...details,
 });
 
 describe("a team's members and lead", () => {
