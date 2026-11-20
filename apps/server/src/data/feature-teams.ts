@@ -25,7 +25,6 @@ import {
   knownColour,
   mayDateChange,
   type MemberTeamsChange,
-  monthOf,
   type PaletteColour,
   seesClass,
   seesEmployment,
@@ -100,6 +99,11 @@ import {
   nextTeamDraft,
   type Person,
 } from "./feature-team-rules.ts";
+import {
+  heldChange,
+  heldTeamChange,
+  monthRefusals,
+} from "./feature-team-held-changes.ts";
 import { recordEvents } from "./history.ts";
 import { bySubject, inForceOn, inForceOrLater } from "./in-force.ts";
 import { noPerson, notStarted } from "./people.ts";
@@ -1233,99 +1237,26 @@ async function draftTeamChange(
   return [...asDraft(made), ...cleared];
 }
 
-// Refusals for a change of someone's teams from a month, naming the person and the team, by month
-// alone, as the monthly grid shows them.
-function monthRefusals(personName: string, teamName: string): DayRefusals {
-  return {
-    ...draftingRefusals,
-    outOfOrder: () =>
-      `${personName} has an approved change on ${teamName} in this month or later, so this month can't change here.`,
-  };
-}
-
-// How a change from a day is spoken of: by its month, as the monthly grid and readers who plan by
-// month see it, or by its date.
-type Period = "month" | "date";
-
-const samePeriod = (period: Period, one: string, other: string) =>
-  period === "month" ? monthOf(one) === monthOf(other) : one === other;
-
-// Whether a change of someone's team from a day changes anything, refusing one that the team's draft
-// can't hold beside what it holds already, since it holds one change for each person: one the
-// approved records make before the day and after today, or one the draft makes from another month
-// or date.
-function changesHeldTeam(
-  { before, team }: DraftedTeamNow,
-  personId: string,
-  { member, liveOnDay }: { member: boolean; liveOnDay: boolean },
-  { day, today, period }: { day: string; today: string; period: Period },
-  names: { personName: string; teamName: string },
-): boolean {
-  // A team its draft removes is refused when the change is drafted.
-  if (team === undefined) return true;
-  const live = membersOf(before).includes(personId);
-  const drafted = membersOf(team).includes(personId);
-  const { personName, teamName } = names;
-  if (drafted === live) {
-    if (member !== live) return true;
-    if (member === liveOnDay) return false;
-    throw new BadRequestError(
-      `${personName} has an approved change on ${teamName} before this ${period}. This ${period} can change once it takes effect.`,
-    );
-  }
-  if (member === drafted) return true;
-  const draftDay =
-    new Map(Object.entries(datesOf(team))).get(personId) ?? today;
-  if (!samePeriod(period, draftDay, day)) {
-    throw new BadRequestError(
-      `The draft of ${teamName} already changes ${personName} from another ${period}. Approve or discard that draft first.`,
-    );
-  }
-  return true;
-}
-
 // A change of a team's members from another day than today, without those it changes nothing about,
-// refusing those the team's draft can't hold, as changesHeldTeam sets out. Someone who has left is
-// left for drafting to refuse, so no refusal names them wrongly. Only those who see employment dates
-// choose another day, as fromDay requires.
+// refusing those the team's draft can't hold, as heldChange sets out. Only those who see employment
+// dates choose another day, as fromDay requires.
 async function heldMembers(
   transaction: Transaction,
-  now: DraftedTeamNow,
+  { before, team }: DraftedTeamNow,
   id: string,
   change: FeatureTeamChange,
   when: { day: string; today: string },
 ): Promise<FeatureTeamChange> {
   const asked = [...(change.add ?? []), ...(change.remove ?? [])];
-  const { team } = now;
   // A team its draft removes is refused when the change is drafted.
   if (asked.length === 0 || team === undefined) return change;
   const everyone = await peopleOf(transaction, asked, when.today);
   const onDay = membersOf(
     (await readLiveTeams(transaction, when.day, { ids: [id] })).teams.get(id),
   );
-  const teamName = String(team.name);
-  const changes = (personIds: readonly string[], member: boolean) =>
-    personIds.filter(
-      (personId) =>
-        everyone.get(personId)?.left !== false ||
-        changesHeldTeam(
-          now,
-          personId,
-          { member, liveOnDay: onDay.includes(personId) },
-          { ...when, period: "date" },
-          {
-            personName: String(everyone.get(personId)?.preferredName),
-            teamName,
-          },
-        ),
-    );
-  return {
-    ...change,
-    ...(change.add === undefined ? {} : { add: changes(change.add, true) }),
-    ...(change.remove === undefined
-      ? {}
-      : { remove: changes(change.remove, false) }),
-  };
+  const held = heldChange({ before, team }, change, { everyone, onDay }, when);
+  if ("refusal" in held) throw new BadRequestError(held.refusal);
+  return held.change;
 }
 
 // Drafts someone joining the teams added and leaving those removed, from the day given, or from
@@ -1369,17 +1300,15 @@ export async function changeMemberTeams(
         const onDay = (await readLiveTeams(transaction, day, { ids: [id] }))
           .teams;
         const liveOnDay = membersOf(onDay.get(id)).includes(personId);
-        if (
-          !changesHeldTeam(
-            now,
-            personId,
-            { member, liveOnDay },
-            { day, today, period: "month" },
-            names,
-          )
-        ) {
-          continue;
-        }
+        const held = heldTeamChange(
+          now,
+          personId,
+          { member, liveOnDay },
+          { day, today, period: "month" },
+          names,
+        );
+        if ("refusal" in held) throw new BadRequestError(held.refusal);
+        if (!held.changes) continue;
         made.push(
           ...(await draftTeamChange(
             transaction,

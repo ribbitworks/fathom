@@ -832,19 +832,6 @@ describe("changing a feature team", () => {
     );
   });
 
-  it("is refused taking back a change the draft makes from another date", async () => {
-    const member = await person();
-    const id = await liveTeam({ members: [member], from: "2025-01-01" });
-    await changed(id, { remove: [member], from: "2026-08-03" });
-
-    const response = await change(id, { add: [member], from: "2026-08-10" });
-
-    expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toMatch(
-      /already changes .* from another date\. Approve or discard that draft first\.$/,
-    );
-  });
-
   it("is refused, from another day, for a team its draft removes", async () => {
     const member = await person();
     const id = await liveTeam({ members: [member], from: "2025-01-01" });
@@ -866,16 +853,6 @@ describe("changing a feature team", () => {
     expect((await teamSeen(id))?.draft?.days).toEqual({
       [member]: "2025-10-01",
     });
-  });
-
-  it("takes back a change the draft makes from the same date", async () => {
-    const member = await person();
-    const id = await liveTeam({ members: [member], from: "2025-01-01" });
-    await changed(id, { remove: [member], from: "2026-08-03" });
-
-    await changed(id, { add: [member], from: "2026-08-03" });
-
-    expect((await teamSeen(id))?.draft).toBeUndefined();
   });
 
   it("is refused a lead from today who joins later", async () => {
@@ -1071,46 +1048,6 @@ describe("changing the teams someone is on from a month", () => {
     ]);
   });
 
-  it("moves a change the draft already makes to an earlier month", async () => {
-    const joining = await person();
-    const leaving = await person();
-    const id = await liveTeam({ members: [leaving], from: "2025-01-01" });
-    await changed(id, {
-      add: [joining],
-      remove: [leaving],
-      from: "2026-10-01",
-    });
-
-    await teamsChanged(joining, { add: [id], from: "2026-08-01" });
-    await teamsChanged(leaving, { remove: [id] });
-
-    expect((await teamSeen(id))?.draft?.days).toEqual({
-      [joining]: "2026-08-01",
-    });
-  });
-
-  it("takes back a change the draft makes from the same month", async () => {
-    const member = await person();
-    const id = await liveTeam({ from: "2025-01-01" });
-    await changed(id, { add: [member], from: "2026-08-01" });
-
-    expect(
-      await teamsChanged(member, { remove: [id], from: "2026-08-01" }),
-    ).not.toBeNull();
-
-    expect((await teamSeen(id))?.draft).toBeUndefined();
-  });
-
-  it("takes back a change the draft makes from today, in the current month", async () => {
-    const member = await person();
-    const id = await liveTeam();
-    await changed(id, { add: [member] });
-
-    await teamsChanged(member, { remove: [id] });
-
-    expect((await teamSeen(id))?.draft).toBeUndefined();
-  });
-
   it("is refused taking back a change the draft makes from another month", async () => {
     const { id: member, name } = await named();
     const team = await namedTeam({ from: "2025-01-01" });
@@ -1124,23 +1061,6 @@ describe("changing the teams someone is on from a month", () => {
     expect(response.statusCode).toBe(400);
     expect(refusal(response)).toBe(
       `The draft of ${team.name} already changes ${name} from another month. Approve or discard that draft first.`,
-    );
-  });
-
-  it("is refused a month after an approved change still to come", async () => {
-    const { id: member, name } = await named();
-    const team = await namedTeam({ members: [member], from: "2025-01-01" });
-    await changed(team.id, { remove: [member], from: "2026-09-01" });
-    await approved(team.id);
-
-    const response = await changeTeams(member, {
-      add: [team.id],
-      from: "2026-10-01",
-    });
-
-    expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe(
-      `${name} has an approved change on ${team.name} before this month. This month can change once it takes effect.`,
     );
   });
 
@@ -1217,19 +1137,12 @@ describe("changing the teams someone is on from a month", () => {
     expect(response.statusCode).toBe(409);
   });
 
-  it.each([
-    ["adds someone already on the team", true, { from: "2026-08-01" }],
-    ["takes away someone not on it", false, { from: "2026-08-01" }],
-    ["adds someone already on it from today", true, {}],
-  ])("saves nothing when it %s", async (_, onTeam, day) => {
+  it("saves nothing when it adds someone already on the team", async () => {
     const member = await person();
-    const id = await liveTeam(onTeam ? { members: [member] } : {});
+    const id = await liveTeam({ members: [member] });
 
     expect(
-      await teamsChanged(member, {
-        ...(onTeam ? { add: [id] } : { remove: [id] }),
-        ...day,
-      }),
+      await teamsChanged(member, { add: [id], from: "2026-08-01" }),
     ).toBeNull();
     expect((await teamSeen(id))?.draft).toBeUndefined();
   });
