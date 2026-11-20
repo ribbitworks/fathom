@@ -244,7 +244,7 @@ stop_dev_servers() {
 }
 
 # Trivy, which the security report and the image scans share.
-fathom_trivy_image="aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
+fathom_trivy_image="aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb"
 # The security report's other scanners, which 'pnpm offline:prepare' pulls too.
 # shellcheck disable=SC2034 # Read by the scripts that source this file.
 fathom_gitleaks_image="zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"
