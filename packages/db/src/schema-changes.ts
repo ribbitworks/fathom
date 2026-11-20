@@ -1,0 +1,174 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// The tables of the change history, drafts, unpublished drafts and record keys.
+
+import {
+  bigint,
+  bigserial,
+  boolean,
+  check,
+  index,
+  integer,
+  jsonb,
+  primaryKey,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { users, roles } from "./schema-accounts.ts";
+import { fathomSchema } from "./schema-core.ts";
+
+// The change history: every change made to Fathom's data, with its old and new values, grouped into
+// the change sets that were saved together. Who created and last changed a record is read from it.
+// Like the access history, it can only be added to. Changes to drafts are recorded as they are saved,
+// and an approval records the changes it makes to the live data as a change set of its own.
+export const changeSets = fathomSchema.table(
+  "change_sets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // What the change set did, checked by the server: "edit" for changes saved, "approval" for drafts
+    // approved, "rejection" for drafts rejected, "discard" for drafts discarded, "resubmission" for
+    // rejected drafts sent for approval again unchanged, and "withdrawal" for a user's unpublished
+    // changes discarded all at once.
+    kind: text("kind").notNull().default("edit"),
+    // Null for Fathom itself, such as for data made by setup or seed scripts. Accounts are deactivated,
+    // never deleted, so the user who made a change always exists.
+    madeBy: text("made_by").references(() => users.id),
+    // The role its maker was acting as, beside them; null for Fathom itself. Roles are never
+    // deleted, so it always exists.
+    madeAsRoleId: uuid("made_as_role_id").references(() => roles.id),
+    // The time of saving itself, not when its transaction began, so a change that waited for another
+    // is not dated before it.
+    madeAt: timestamp("made_at", { withTimezone: true })
+      .notNull()
+      .default(sql`clock_timestamp()`),
+    // Whether the change set holds changes to drafts that its maker has not published, which only
+    // they see. Publishing clears it, the one change the change history allows.
+    unpublished: boolean("unpublished").notNull().default(false),
+  },
+  (table) => [index("change_sets_made_at_index").on(table.madeAt)],
+);
+
+export const changes = fathomSchema.table(
+  "changes",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    changeSetId: uuid("change_set_id")
+      .notNull()
+      .references(() => changeSets.id),
+    // The kind of record changed, such as "list-item", checked by the server.
+    recordType: text("record_type").notNull(),
+    recordId: text("record_id").notNull(),
+    // "created", "changed", or "deleted", checked by the server.
+    action: text("action").notNull(),
+    field: text("field").notNull(),
+    // The sensitivity tier of the field, so each user sees only changes to data they may see.
+    tier: text("tier").notNull(),
+    // Null when the field had no value, as before a record is created or after it is deleted.
+    oldValue: jsonb("old_value"),
+    newValue: jsonb("new_value"),
+    // Whether the change is to a record's draft, rather than to the live record.
+    draft: boolean("draft").notNull().default(false),
+  },
+  (table) => [
+    index("changes_record_index").on(table.recordType, table.recordId),
+    index("changes_change_set_index").on(table.changeSetId),
+    // The latest name and list the history holds for each record, which the change history reads.
+    index("changes_record_field_index").on(
+      table.recordId,
+      table.field,
+      table.id.desc(),
+    ),
+  ],
+);
+
+// Draft rows: the changes waiting for approval, at most one draft for each record. A draft adds a
+// record, changes some of its fields, or removes it. It holds the record as the change history
+// records it: all of an added record's fields, only the fields a change makes differ from the live
+// record, and none for a removal. A rejected draft keeps the Approver's reason until a change to it
+// is published, or it is discarded. Who made and changed each draft is read from the change
+// history. The kinds of record with drafts are listed in packages/shared/src/drafts.ts. These are
+// the published drafts; each user's unpublished ones are kept apart, as below.
+export const drafts = fathomSchema.table(
+  "drafts",
+  {
+    // The kind of record, such as "person", checked by the server.
+    recordType: text("record_type").notNull(),
+    recordId: text("record_id").notNull(),
+    // "created", "changed", or "deleted", checked by the server.
+    action: text("action").notNull(),
+    fields: jsonb("fields")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    // "waiting" or "rejected", checked by the server.
+    state: text("state").notNull().default("waiting"),
+    reason: text("reason"),
+    // Rises with each draft made, and is kept as the draft changes, so records drafted to be added,
+    // such as choices pasted at once, keep the order they were drafted in.
+    sequence: bigint("sequence", { mode: "number" })
+      .notNull()
+      .generatedAlwaysAsIdentity(),
+  },
+  (table) => [primaryKey({ columns: [table.recordType, table.recordId] })],
+);
+
+// Unpublished drafts: the changes a user has made to drafts and not yet published, which only they
+// see, as ADR 0008 sets out. Each holds the whole draft the user intends, shaped and keyed as a draft
+// row, so a record has at most one, and holds the record: no one else may change, approve, or reject
+// it until the user publishes or discards their changes. A draft that changes nothing, which
+// publishing makes into no draft at all, is a change with no fields.
+export const unpublishedDrafts = fathomSchema.table(
+  "unpublished_drafts",
+  {
+    // The kind of record, such as "person", checked by the server.
+    recordType: text("record_type").notNull(),
+    recordId: text("record_id").notNull(),
+    // The user whose changes these are.
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    // "created", "changed", or "deleted", checked by the server.
+    action: text("action").notNull(),
+    fields: jsonb("fields")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    // Rises with each unpublished draft made, so records the user drafts to be added keep the order
+    // they were drafted in when published.
+    sequence: bigint("sequence", { mode: "number" })
+      .notNull()
+      .generatedAlwaysAsIdentity(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.recordType, table.recordId] }),
+    index("unpublished_drafts_user_index").on(table.userId),
+  ],
+);
+
+// Each record's key number, by the kind's word as packages/shared/src/record-keys.ts fixes it and
+// the record's identifier. Triggers number a record when it's added, or drafted to be added, in the
+// same transaction, so every way of adding one is covered. Rows outlive their records, so numbers
+// are never reused and a removed record's key still names it; the application's role cannot change
+// or delete them.
+export const recordKeys = fathomSchema.table(
+  "record_keys",
+  {
+    kind: text("kind").notNull(),
+    keyNumber: integer("key_number").notNull(),
+    recordId: text("record_id").notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.kind, table.keyNumber] }),
+    uniqueIndex("record_keys_record_index").on(table.kind, table.recordId),
+    check("record_keys_number_positive", sql`${table.keyNumber} > 0`),
+  ],
+);
+
+// The last key number given to each kind, which numbering a record raises under the row's lock.
+export const recordKeyCounters = fathomSchema.table("record_key_counters", {
+  kind: text("kind").primaryKey(),
+  lastNumber: integer("last_number").notNull(),
+});
