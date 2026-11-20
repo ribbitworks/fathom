@@ -61,13 +61,13 @@ export const viewTables: Record<ViewTable, ViewTableRules> = {
   cycles: generalTable(pageNeeds.releases),
   "release-streams": generalTable(pageNeeds.releases),
   lists: generalTable(pageNeeds.lists),
+  // Capacity's tabs, each a table of its own but Settings, which keeps no view.
   "feature-assignments": {
-    ...generalTable(pageNeeds["feature-assignments"]),
+    ...generalTable([capacityModeNeeds["feature-teams"]]),
     groupingNeeds: byManager,
   },
-  // Capacity's People, since its Settings keep no view.
   capacity: {
-    ...generalTable([capacityModeNeeds.people]),
+    ...generalTable([capacityModeNeeds.allocations]),
     groupingNeeds: byManager,
   },
   "org-chart": generalTable(pageNeeds["org-chart"]),

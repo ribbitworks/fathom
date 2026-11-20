@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
 /* A month's allocations in a table's cell: a line for each feature with its percentage, and the
-   month's total, marked when over or under a whole month. */
+   month's total, or Over or Under in its place from the current month on. */
 
 .lines {
   display: flex;
@@ -22,15 +22,22 @@
   text-overflow: ellipsis;
 }
 
+/* The month's total, or its status, set apart from the features as the sum of them. */
 .total {
-  border-top: 1px solid var(--mantine-color-default-border);
-}
-
-.over {
+  margin-top: calc(var(--mantine-spacing-xs) / 3);
+  padding-top: calc(var(--mantine-spacing-xs) / 3);
   font-weight: 600;
-  color: var(--mantine-color-red-text);
+  border-top: 1px solid var(--fathom-sum-line);
 }
 
-.under {
-  color: var(--mantine-color-dimmed);
+/* A month with no features, reading Not allocated alone, has nothing to rule off. */
+.total:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* Over, Under or Not allocated, a status in words, with the month's total in its tooltip. */
+.marked {
+  color: var(--mantine-color-red-text);
 }

@@ -19,8 +19,8 @@ As a Project Manager, you see projects through to delivery: their milestones, th
 
 ## See Who Works on What
 
-1. Select the **Feature assignments** page to see who is on which feature team each month. See [Feature assignments](feature-assignments.md#read-the-table).
-1. Select the **Capacity** page, and choose **People**, to see what each person works on. See [Capacity](capacity.md#read-who-works-on-what).
+1. Select the **Feature assignments** page to see who is on which feature team each month. See [Capacity](capacity.md#move-through-the-months).
+1. Select the **Capacity** page, and choose **Allocations**, to see what each person works on. See [Capacity](capacity.md#in-allocations).
 1. To see each team's people together, group by **Feature team**. See [Capacity](capacity.md#group-the-rows).
 
 ## Keep a View

@@ -231,7 +231,7 @@ describe("feature teams month by month", () => {
     );
     expect(response.statusCode).toBe(403);
     expect(refusal(response)).toBe(
-      "Feature assignments needs Personal access.",
+      "Feature teams on Capacity needs Personal access.",
     );
   });
 

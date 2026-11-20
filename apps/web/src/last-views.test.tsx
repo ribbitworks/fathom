@@ -180,6 +180,22 @@ describe("keeping a page's view", () => {
     expect(bodyOf(fetch, "PUT", path)).toEqual([]);
   });
 
+  it("keeps another tab on its default, with nothing kept, so the page opens on that tab again", async () => {
+    // Given nothing kept for Capacity
+    const fetch = serverAnswers({
+      [`GET ${every}`]: () => Response.json({}),
+      [`PUT ${every}/capacity`]: keepsIt,
+    });
+
+    // When its Allocations tab, not its first, shows its default view
+    await keep(new QueryClient(), peopleShown({ table: "capacity" }));
+
+    // Then that tab is kept
+    expect(bodyOf(fetch, "PUT", `${every}/capacity`)).toEqual([
+      { table: "capacity", definition: {} },
+    ]);
+  });
+
   it("keeps a view a link names in place of the one kept", async () => {
     const fetch = serverAnswers({
       [`GET ${every}`]: () =>

@@ -18,7 +18,6 @@ export const viewPageSchema = z.enum([
   "projects",
   "releases",
   "lists",
-  "feature-assignments",
   "capacity",
   "org-chart",
   "accounts",
@@ -30,7 +29,7 @@ export type ViewPage = z.infer<typeof viewPageSchema>;
 // Every page with a Views menu is a page whose access is checked.
 viewPageSchema.options satisfies readonly GuardedPage[];
 
-// The page each table is shown on; each tab of Projects and Releases is a table of its own.
+// The page each table is shown on; each tab of Projects, Releases and Capacity is a table of its own.
 export const viewPageOf: Record<ViewTable, ViewPage> = {
   people: "people",
   features: "features",
@@ -42,7 +41,7 @@ export const viewPageOf: Record<ViewTable, ViewPage> = {
   cycles: "releases",
   "release-streams": "releases",
   lists: "lists",
-  "feature-assignments": "feature-assignments",
+  "feature-assignments": "capacity",
   capacity: "capacity",
   "org-chart": "org-chart",
   accounts: "accounts",
@@ -56,8 +55,7 @@ export const firstTables: Record<ViewPage, ViewTable> = {
   projects: "projects",
   releases: "releases",
   lists: "lists",
-  "feature-assignments": "feature-assignments",
-  capacity: "capacity",
+  capacity: "feature-assignments",
   "org-chart": "org-chart",
   accounts: "accounts",
   drafts: "drafts",

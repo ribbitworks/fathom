@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Capacity page's People mode and its switch: each person's and planned hire's
-// features with their percentages, grouping, the modes a role sees and the mode in the address, the
-// old address of Feature assignments' Allocations mode, what it shows when it cannot load, its cells
-// read only, and its saved views.
+// Tests for the Capacity page's Allocations tab and the page's tabs: each person's and planned hire's
+// features with their percentages, grouping, the tabs a role sees and the tab in the address, the
+// old addresses of Allocations, what it shows when it cannot load, its cells read only, and its saved
+// views.
 
 import {
   type Allocations,
@@ -41,7 +41,14 @@ const allocations: Allocations = {
       months: { "2027-04": 100 },
     },
   ],
-  features: [{ id: "f-checkout", name: "Checkout", meaning: "in-progress" }],
+  features: [
+    {
+      id: "f-checkout",
+      name: "Checkout",
+      meaning: "in-progress",
+      colour: null,
+    },
+  ],
 };
 
 const chart: OrgChart = {
@@ -71,9 +78,9 @@ const chart: OrgChart = {
   drafted: [],
 };
 
-// What People reads: allocations, the feature teams' months and the org chart's planned hires, with
+// What Allocations reads: allocations, the feature teams' months and the org chart's planned hires, with
 // the Personal details they need.
-const seesPeople = [
+const seesAllocations = [
   "allocations:view",
   "feature-teams:view",
   "people:view",
@@ -83,10 +90,15 @@ const seesPeople = [
 const session = (permissions: readonly string[]) => () =>
   Response.json({ ...fictionalUser, permissions });
 
-function openPeople(
+// Capacity on the tab the search names, or Allocations.
+function openAllocations(
   search = "",
   {
-    permissions = [...seesPeople, "confidential:view", "configuration:view"],
+    permissions = [
+      ...seesAllocations,
+      "confidential:view",
+      "configuration:view",
+    ],
     allocationsAnswer = () => Response.json(allocations),
   }: {
     permissions?: readonly string[];
@@ -100,7 +112,10 @@ function openPeople(
     "GET /api/org-chart": () => Response.json(chart),
     "GET /api/planning-settings": () => Response.json(startingPlanningSettings),
   });
-  return renderApp(`/capacity${search}`);
+  const tabbed = search.includes("mode=")
+    ? search
+    : `${search === "" ? "?" : `${search}&`}mode=allocations`;
+  return renderApp(`/capacity${tabbed}`);
 }
 
 const grid = () => screen.findByRole("grid", { name: "Allocations by month" });
@@ -121,19 +136,20 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("Capacity's People mode", () => {
+describe("Capacity's Allocations", () => {
   it("shows each person's and planned hire's features with their percentages", async () => {
     // Given Casey on Checkout at 50% in March and April 2027, and Payments tester at 100% from
     // April 2027, the month it is expected
-    openPeople();
+    openAllocations();
     await grid();
 
-    // Then Casey's two months show the feature, and every month from the current one on, March
-    // 2027, is under a whole month, the empty ones included
+    // Then Casey's two months show the feature, under a whole month by half, and every later month
+    // is not allocated
     const casey = within(rowOf("Casey Fictional"));
     expect(casey.getAllByText("Checkout")).toHaveLength(2);
-    expect(casey.getAllByText("Under")).toHaveLength(
-      monthsBetween("2027-03", "2028-02").length,
+    expect(casey.getAllByText("\u221250%")).toHaveLength(2);
+    expect(casey.getAllByText("Not allocated")).toHaveLength(
+      monthsBetween("2027-05", "2028-02").length,
     );
     // And the planned hire shows a whole month from April 2027 to February 2028, the last shown
     expect(within(rowOf("Payments tester")).getAllByText("100%")).toHaveLength(
@@ -142,7 +158,7 @@ describe("Capacity's People mode", () => {
   });
 
   it("heads the total rows with their unit", async () => {
-    openPeople();
+    openAllocations();
     await grid();
 
     expect(
@@ -151,7 +167,7 @@ describe("Capacity's People mode", () => {
   });
 
   it("groups only by feature team, saying nothing, for those who do not see Confidential data", async () => {
-    openPeople("", { permissions: seesPeople });
+    openAllocations("", { permissions: seesAllocations });
     await grid();
 
     expect(screen.queryByText(/needs Confidential access/u)).toBeNull();
@@ -164,7 +180,7 @@ describe("Capacity's People mode", () => {
 
   it("says when the allocations could not load, and tries again", async () => {
     let answers = 0;
-    openPeople("", {
+    openAllocations("", {
       allocationsAnswer: () => {
         answers += 1;
         return answers === 1
@@ -199,7 +215,7 @@ describe("Capacity's People mode", () => {
     };
 
     it("marks the feature with Live's dot in the Live row", async () => {
-      openPeople("", {
+      openAllocations("", {
         allocationsAnswer: () => Response.json(drafted),
       });
       await grid();
@@ -214,7 +230,7 @@ describe("Capacity's People mode", () => {
     });
 
     it("marks the feature live only, naming the change", async () => {
-      openPeople("?show=live", {
+      openAllocations("?show=live", {
         allocationsAnswer: () => Response.json(drafted),
       });
       await grid();
@@ -227,8 +243,19 @@ describe("Capacity's People mode", () => {
     });
   });
 
+  it("counts people and planned hires apart in Metrics", async () => {
+    openAllocations();
+    await grid();
+
+    await userEvent.click(screen.getByRole("button", { name: "Metrics" }));
+
+    expect(
+      (await screen.findByRole("region", { name: "Metrics" })).textContent,
+    ).toMatch(/people and 1 planned hire/u);
+  });
+
   it("opens no cell for editing", async () => {
-    openPeople();
+    openAllocations();
     await grid();
 
     expect(
@@ -237,39 +264,36 @@ describe("Capacity's People mode", () => {
   });
 });
 
-describe("the modes of the Capacity page", () => {
-  it("opens on People, and switches to Settings and back, kept in the address", async () => {
-    const history = openPeople();
-    await grid();
-    expect(
-      screen.getByRole<HTMLInputElement>("radio", { name: "People" }).checked,
-    ).toBe(true);
+const tab = (name: string) => screen.getByRole("tab", { name });
 
-    await userEvent.click(screen.getByRole("radio", { name: "Settings" }));
+describe("the tabs of the Capacity page", () => {
+  it("opens on Feature teams for a role that sees every tab", async () => {
+    const history = openAllocations("?mode=feature-teams");
+    await screen.findByRole("grid", { name: "Feature teams by month" });
+
+    expect(
+      ["Feature teams", "Allocations", "Settings"].map((name) =>
+        tab(name).getAttribute("aria-selected"),
+      ),
+    ).toEqual(["true", "false", "false"]);
+    expect(address(history)).toBe("?mode=feature-teams");
+  });
+
+  it("switches to Settings and back, kept in the address", async () => {
+    const history = openAllocations();
+    await grid();
+
+    await userEvent.click(tab("Settings"));
     await screen.findByText("Hours a day", { selector: "dt" });
     expect(address(history)).toBe("?mode=settings");
 
-    await userEvent.click(screen.getByRole("radio", { name: "People" }));
+    await userEvent.click(tab("Allocations"));
     await grid();
-    expect(address(history)).toBe("?mode=people");
+    expect(address(history)).toBe("?mode=allocations");
   });
 
-  it("keeps the mode as the view changes", async () => {
-    const history = openPeople("?mode=people");
-    await grid();
-
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Search people" }),
-      "Casey",
-    );
-
-    await waitFor(() => {
-      expect(address(history)).toBe("?search=Casey&mode=people");
-    });
-  });
-
-  it("keeps the mode shown in the address, not one the role doesn't see", async () => {
-    const history = openPeople("?mode=settings", { permissions: seesPeople });
+  it("keeps the tab as the view changes", async () => {
+    const history = openAllocations();
     await grid();
 
     await userEvent.type(
@@ -278,38 +302,55 @@ describe("the modes of the Capacity page", () => {
     );
 
     await waitFor(() => {
-      expect(address(history)).toBe("?search=Casey&mode=people");
+      expect(address(history)).toBe("?search=Casey&mode=allocations");
     });
   });
 
-  it("shows Settings alone, with no switch, to a role that sees only configuration", async () => {
-    openPeople("?mode=people", {
-      permissions: ["configuration:view", "personal:view"],
+  it("opens Allocations for People, its name before", async () => {
+    const history = openAllocations("?mode=people");
+    await grid();
+
+    expect(tab("Allocations").getAttribute("aria-selected")).toBe("true");
+    expect(address(history)).toBe("?mode=allocations");
+  });
+
+  it("keeps the tab shown in the address, not one the role doesn't see", async () => {
+    const history = openAllocations("?mode=settings", {
+      permissions: seesAllocations,
+    });
+    await screen.findByRole("grid", { name: "Feature teams by month" });
+
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Search people" }),
+      "Casey",
+    );
+
+    await waitFor(() => {
+      expect(address(history)).toBe("?search=Casey&mode=feature-teams");
+    });
+  });
+
+  it("shows Settings alone, with no tabs, to a role that sees only configuration", async () => {
+    openAllocations("", {
+      permissions: ["configuration:view", "people:view"],
     });
 
     await screen.findByText("Hours a day", { selector: "dt" });
-    expect(screen.queryByRole("radiogroup")).toBeNull();
+    expect(screen.queryByRole("tablist")).toBeNull();
     expect(screen.queryByRole("grid")).toBeNull();
   });
 
-  it("offers People only with the feature teams and people its grid reads", async () => {
-    openPeople("", {
+  it("offers Allocations only with the feature teams and people its grid reads", async () => {
+    openAllocations("", {
       permissions: ["allocations:view", "personal:view", "configuration:view"],
     });
 
     await screen.findByText("Hours a day", { selector: "dt" });
-    expect(screen.queryByRole("radiogroup")).toBeNull();
+    expect(screen.queryByRole("tablist")).toBeNull();
   });
 
-  it("shows People alone, with no switch, to a role that sees it without configuration", async () => {
-    openPeople("", { permissions: seesPeople });
-
-    await grid();
-    expect(screen.queryByRole("radiogroup")).toBeNull();
-  });
-
-  it("is not there for a role that sees neither mode", async () => {
-    openPeople("", {
+  it("is not there for a role that sees no tab", async () => {
+    openAllocations("", {
       permissions: ["allocations:view", "feature-teams:view", "people:view"],
     });
 
@@ -319,14 +360,18 @@ describe("the modes of the Capacity page", () => {
   });
 });
 
-describe("the old address of Feature assignments' Allocations mode", () => {
-  it("opens Capacity's People mode with the same view", async () => {
+describe("Feature assignments' old addresses", () => {
+  const answered = () => {
     serverAnswers({
-      "GET /api/session": session(seesPeople),
+      "GET /api/session": session(seesAllocations),
       [monthsUrl]: () => Response.json(fictionalTeamMonths),
       "GET /api/allocations": () => Response.json(allocations),
       "GET /api/org-chart": () => Response.json(chart),
     });
+  };
+
+  it("opens Allocations for its Allocations mode, with the same view", async () => {
+    answered();
     const history = renderApp(
       "/feature-assignments?mode=allocations&grouping=feature-team",
     );
@@ -334,8 +379,18 @@ describe("the old address of Feature assignments' Allocations mode", () => {
     await waitFor(() => {
       expect(history.location.pathname).toBe("/capacity");
     });
-    expect(address(history)).toBe("?grouping=feature-team&mode=people");
+    expect(address(history)).toBe("?grouping=feature-team&mode=allocations");
     expect(await grid()).toBeDefined();
+  });
+
+  it("opens Feature teams for the page itself", async () => {
+    answered();
+    const history = renderApp("/feature-assignments");
+
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/capacity");
+    });
+    expect(address(history)).toBe("?mode=feature-teams");
   });
 });
 
@@ -351,13 +406,13 @@ describe("Capacity's saved views", () => {
       canShare: true,
     };
     serverAnswers({
-      "GET /api/session": session([...seesPeople, "configuration:view"]),
+      "GET /api/session": session([...seesAllocations, "configuration:view"]),
       [monthsUrl]: () => Response.json(fictionalTeamMonths),
       "GET /api/allocations": () => Response.json(allocations),
       "GET /api/org-chart": () => Response.json(chart),
       "GET /api/views/capacity": () => Response.json([saved]),
     });
-    const history = renderApp("/capacity?mode=people");
+    const history = renderApp("/capacity?mode=allocations");
     await grid();
 
     // When it is chosen in the Views menu
@@ -369,14 +424,14 @@ describe("Capacity's saved views", () => {
     // Then the view and the mode are both in the address, and Casey is shown alone
     await waitFor(() => {
       expect(address(history)).toBe(
-        `?search=Casey&view=${saved.id}&mode=people`,
+        `?search=Casey&view=${saved.id}&mode=allocations`,
       );
     });
     expect(screen.queryByText("Payments tester")).toBeNull();
   });
 
-  it("offers no Views menu on Settings, though People's view has changed", async () => {
-    openPeople("?mode=settings&search=Casey");
+  it("offers no Views menu on Settings, though Allocations' view has changed", async () => {
+    openAllocations("?mode=settings&search=Casey");
 
     await screen.findByText("Hours a day", { selector: "dt" });
     expect(screen.queryByRole("button", { name: /^Views/u })).toBeNull();

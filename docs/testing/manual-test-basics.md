@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["docs/testing/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test Basics
@@ -184,7 +184,7 @@ Run this in three cases: before [Installing Fathom](acceptance/acceptance-instal
 - **Band:** the strip of colour along the top edge of a card.
 - **Feature teams button:** the button reading **Feature teams** above the chart, at its left, just right of the finder and of the **Draft** button where that is shown, once the chart shows feature teams. It lists the feature teams, and **New feature team** to those who may add one.
 - **Team panel:** the panel that opens to the right of the chart when a feature team is chosen, titled with the team's name, with a **Details** section and a **Members** section.
-- **Mode switch:** the switch just after the **Capacity** heading, on the same line, reading **People** and **Settings**.
-- **Team list:** the list of feature teams that opens below a month's cell on the **Feature assignments** page for editing, with a box to type in at its top.
+- **Tabs:** the words just after a page's heading, on the same line, such as **Feature teams**, **Allocations** and **Settings** after **Capacity**, the chosen one underlined.
+- **Team list:** the list of feature teams that opens below a month's cell on the **Capacity** page's **Feature teams** tab for editing, with a box to type in at its top.
 - **Seeded dates:** the seed data is dated from the day it is added, as [Fictional Data](../design/development-setup.md#fictional-data) sets out, so its cycles and releases move with today, and steps name them by where they fall. A cycle's name is the year it ends in and its number in that year, such as '27.1'.
 - **Dates:** steps type dates as digits, such as `2030-03-15`; tables and panels show them as the browser's language writes them, such as `15 Mar 2030` or `Mar 15, 2030`.

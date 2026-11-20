@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the strip of quarters above a month grid: the quarters its months fall in, the quarters
-// the arrows step to from the first month on screen, and which columns are on screen.
+// the arrows step to, which columns are on screen, the month a grid's count is for, and where the
+// grid scrolls to show a month.
 
 import { describe, expect, it } from "vitest";
-import { columnsOnScreen, monthQuarters, quarterSteps } from "./month-strip.ts";
+import {
+  columnsOnScreen,
+  countedColumn,
+  monthQuarters,
+  quarterSteps,
+  scrollTargetFor,
+} from "./month-strip.ts";
 
 const months = [
   "2026-11",
@@ -90,5 +97,48 @@ describe("columnsOnScreen", () => {
     expect(
       columnsOnScreen(columns, { scrolled: 210, room: 300, frozenWidth: 0 }),
     ).toEqual(["b", "c", "d"]);
+  });
+});
+
+describe("countedColumn", () => {
+  // Months 100 wide after a frozen column 150 wide.
+  const months = [
+    { key: "a", left: 150, width: 100 },
+    { key: "b", left: 250, width: 100 },
+    { key: "c", left: 350, width: 100 },
+  ];
+
+  it("is the grid's first month while it is wholly in view", () => {
+    expect(countedColumn(months, { scrolled: 0, frozenWidth: 150 })).toBe("a");
+  });
+
+  it("is the month after the one just at the frozen columns' edge, which shows the month before it", () => {
+    expect(countedColumn(months, { scrolled: 100, frozenWidth: 150 })).toBe(
+      "c",
+    );
+  });
+
+  it("is the first whole month when the month before it is partly hidden", () => {
+    expect(countedColumn(months, { scrolled: 10, frozenWidth: 150 })).toBe("b");
+  });
+
+  it("is the last month when it is the only one wholly in view", () => {
+    expect(countedColumn(months, { scrolled: 200, frozenWidth: 150 })).toBe(
+      "c",
+    );
+  });
+
+  it("is none before the grid is laid out", () => {
+    expect(countedColumn([], { scrolled: 0, frozenWidth: 0 })).toBeUndefined();
+  });
+});
+
+describe("scrollTargetFor", () => {
+  it("scrolls to the month before, so it shows beside the month", () => {
+    expect(scrollTargetFor("2027-04", "2026-01")).toBe("2027-03");
+  });
+
+  it("scrolls to the grid's first month itself, with none before it", () => {
+    expect(scrollTargetFor("2026-01", "2026-01")).toBe("2026-01");
   });
 });

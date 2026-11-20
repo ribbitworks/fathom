@@ -342,6 +342,10 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   // Choices of which records the table shows, beyond its filters, such as Show retired, first in
   // the Views menu.
   viewChoices?: readonly ViewChoice[] | undefined;
+  // The count above the table, of its records counted once, where the page names when it counts
+  // them, such as People's day or a month grid's month, which may change with what is in view
+  // without redrawing the table.
+  count?: ((records: readonly Rec[]) => ReactNode) | undefined;
   // How Save view names the page's own choices kept outside the Views menu, such as Features' Board.
   pageParts?: PageParts | undefined;
   // What the page shows under the bar above the table, such as a timeline, as tall as it needs,

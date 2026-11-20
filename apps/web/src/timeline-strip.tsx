@@ -28,6 +28,13 @@ export const stillChosen = (
 ): boolean =>
   chosen?.key === key && Math.abs(chosen.left - left) <= edgeTolerance;
 
+// An arrow at the strip's end looks turned off but keeps focus, so pressing it until the end leaves
+// focus on it rather than dropping it to the page.
+const arrowOf = (onStep: (() => void) | undefined) =>
+  onStep === undefined
+    ? { "data-disabled": true, "aria-disabled": true }
+    : { onClick: onStep };
+
 // The words of a strip of quarters, as timelines and month grids show.
 export const quarterWords: StripWords = {
   group: "Quarters",
@@ -107,8 +114,7 @@ export function TimelineStrip({
       <ActionIcon
         variant="default"
         aria-label={words.previous}
-        disabled={onPrevious === undefined}
-        onClick={onPrevious}
+        {...arrowOf(onPrevious)}
       >
         ‹
       </ActionIcon>
@@ -165,8 +171,7 @@ export function TimelineStrip({
       <ActionIcon
         variant="default"
         aria-label={words.next}
-        disabled={onNext === undefined}
-        onClick={onNext}
+        {...arrowOf(onNext)}
       >
         ›
       </ActionIcon>

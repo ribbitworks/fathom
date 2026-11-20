@@ -120,7 +120,7 @@ describe("frozen columns", () => {
     expect(disconnect).toHaveBeenCalled();
   });
 
-  it("draws the table again on a resize only once the frozen columns or its faded edges change", () => {
+  it("draws nothing of the table again on a resize that changes only its faded edges", () => {
     // Given a table whose code column counts each value it reads, frozen up to Colour
     let resized: (() => void) | undefined;
     vi.stubGlobal(
@@ -172,8 +172,8 @@ describe("frozen columns", () => {
       resized?.();
     });
 
-    // Then it is drawn again, fading that edge
-    expect(read).toHaveBeenCalled();
+    // Then that edge fades, with the table not drawn again
+    expect(read).not.toHaveBeenCalled();
     expect(document.querySelector('[data-side="after"]')).not.toBeNull();
   });
 

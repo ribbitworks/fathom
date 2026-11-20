@@ -261,7 +261,9 @@ describe("the strip", () => {
     await userEvent.click(button(timeline, "Next quarter"));
     // Q4 a sixth of the way across is past the furthest the view scrolls.
     expect(view(timeline).scrollLeft).toBe(furthest);
-    expect(button(timeline, "Next quarter")).toHaveProperty("disabled", true);
+    expect(button(timeline, "Next quarter").getAttribute("aria-disabled")).toBe(
+      "true",
+    );
     await userEvent.click(button(timeline, "Previous quarter"));
     expect(view(timeline).scrollLeft).toBe(sixthAcross(181));
   });
@@ -286,10 +288,9 @@ describe("the strip", () => {
     view(timeline).scrollLeft = 0;
     fireEvent.scroll(view(timeline));
     expect(inView(timeline)).toEqual(["Q1 2027", "Q2 2027"]);
-    expect(button(timeline, "Previous quarter")).toHaveProperty(
-      "disabled",
-      true,
-    );
+    expect(
+      button(timeline, "Previous quarter").getAttribute("aria-disabled"),
+    ).toBe("true");
   });
 
   it("goes back to today", async () => {

@@ -7,6 +7,7 @@ import {
   allocations,
   type Database,
   drafts,
+  featureTeams,
   listItems,
   people,
   plannedHires,
@@ -19,7 +20,9 @@ import {
   type Asking,
   changedSpans,
   hireCalled,
+  knownColour,
   meaningSchema,
+  type PaletteColour,
   type MonthSpan,
   withChange,
 } from "@fathom/shared";
@@ -261,6 +264,22 @@ export async function readAllocations(
                 )
             ).map(({ id, meaning }) => [id, meaning]),
       );
+      const teamOf = (featureId: string) =>
+        text(shownVersion(state, "feature", featureId)?.featureTeamId);
+      // A feature team's colour is shown only to those who see feature teams.
+      const teamIds = actor.permissions.includes("feature-teams:view")
+        ? [...new Set(featureIds.flatMap((id) => teamOf(id) ?? []))]
+        : [];
+      const colours = new Map(
+        teamIds.length === 0
+          ? []
+          : (
+              await transaction
+                .select({ id: featureTeams.id, colour: featureTeams.colour })
+                .from(featureTeams)
+                .where(inArray(featureTeams.id, teamIds))
+            ).map(({ id, colour }) => [id, knownColour(colour)]),
+      );
       return {
         allocations: records.map(({ id, record }) => {
           const draft = recordDraftOut(allocationKind, state, makers, id);
@@ -300,6 +319,7 @@ export async function readAllocations(
           id,
           name: featureCalled(state, id),
           meaning: meaningSchema.nullable().parse(meanings.get(statusOf(id))),
+          colour: colourOf(colours, teamOf(id)),
         })),
         includedPersonal: records.some(({ record }) => {
           const person = personOf(record);
@@ -557,3 +577,12 @@ export async function refuseFillingAllocated(
     );
   }
 }
+
+// A feature's colour, its team's; none for a feature with no team, or a team not read.
+const colourOf = (
+  colours: ReadonlyMap<string, PaletteColour | null>,
+  teamId: string | null | undefined,
+): PaletteColour | null =>
+  teamId === null || teamId === undefined
+    ? null
+    : (colours.get(teamId) ?? null);

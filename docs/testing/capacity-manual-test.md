@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/capacity.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Capacity
 
 ## Scope
 
-Verifies the Capacity page's two modes. Settings holds the planning settings: how it reads for someone who may only see it, drafting a change and undoing it, a value refused, adding and removing months of ramp-up, the change in the change history, and approving a draft and seeing the Effort column on Features follow it once approved. People is the table of allocations by month: switching between the modes, its over- and under-allocated months, planned hires, the capacity totals of each group and of everyone, rows for someone who changed team or manager, and the page left out of the menu for a role that sees neither mode. The seeded allocations are listed in [Development Setup](../design/development-setup.md#fictional-data).
+Verifies the Capacity page's tabs. Settings holds the planning settings: how it reads for someone who may only see it, drafting a change and undoing it, a value refused, adding and removing months of ramp-up, the change in the change history, and approving a draft and seeing the Effort column on Features follow it once approved. Allocations is the table of allocations by month: switching between the tabs, its over- and under-allocated months, planned hires, the capacity totals of each group and of everyone, rows for someone who changed team or manager, the page left out of the menu for a role that sees no tab, and the count of people and planned hires, the same on Feature teams and Allocations, in the month the grid was moved to. Feature teams has its own [Capacity's Feature Teams](capacity-feature-teams-manual-test.md) test. The seeded allocations are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 
@@ -33,13 +33,13 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 ## Terms
 
-As [Manual Test Basics](manual-test-basics.md#terms) sets out, such as the mode switch, and:
+As [Manual Test Basics](manual-test-basics.md#terms) sets out, such as a page's tabs, and:
 
 - **Change button:** as [Manual Test Basics](manual-test-basics.md#terms) sets out, here at the right of a setting's row.
 - **× button:** the small × after the change button of a month of ramp-up, which removes that month.
 - **Draft button:** the button above **Working time** on **Settings**, which opens a menu choosing how drafts show.
 - **Row menu:** the ⋯ button at the right of a setting's row that a draft changes, which opens a menu of the whole draft of the settings and what can be done with it.
-- **Total row:** in **People**, a row in bold at the end of each group, headed **Total, PM** in the **Person** column, and one at the foot of the table, headed **Organization, PM**. PM stands for person-months.
+- **Total row:** in **Allocations**, a row in bold at the end of each group, headed **Total, PM** in the **Person** column, and one at the foot of the table, headed **Organization, PM**. PM stands for person-months.
 
 ## Test Cases
 
@@ -54,11 +54,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 - [ ] `E86E` Select the **Capacity** page in the left-hand menu.
   - **Expected:**
     - The page is headed **Capacity**.
-    - Just after the heading, on the same line, the mode switch reads **People** and **Settings**, with **People** chosen.
+    - Just after the heading, on the same line, the tabs read **Feature teams**, **Allocations** and **Settings**, with **Feature teams** chosen.
     - A table of people by month is under the heading.
   - **Notes:**
 
-- [ ] `662D` Select **Settings** in the mode switch.
+- [ ] `662D` Select the **Settings** tab.
   - **Expected:**
     - There is no table.
     - Under **Working time**, the rows read, from the top:
@@ -84,10 +84,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 **Preconditions:** Signed in with this account.
 
 - [ ] `DCBC` Select the **Capacity** page in the left-hand menu.
-  - **Expected:** The mode switch has **People** chosen.
+  - **Expected:** The page is headed **Capacity**, with the tabs **Feature teams**, **Allocations** and **Settings**.
   - **Notes:**
 
-- [ ] `F224` Select **Settings** in the mode switch.
+- [ ] `F224` Select the **Settings** tab.
   - **Expected:**
     - Every row but **From month 3** has a change button at its right.
     - The rows **Month 1** and **Month 2** each have an × button after their change button.
@@ -137,7 +137,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as CAP-02.
 
-**Preconditions:** **Capacity** page open, with **Settings** chosen in the mode switch.
+**Preconditions:** **Capacity** page open, with the **Settings** tab chosen.
 
 - [ ] `B6C0` Select "80%" beside **Default focus**.
   - **Expected:**
@@ -163,7 +163,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as CAP-03.
 
-**Preconditions:** **Capacity** page open, with **Settings** chosen in the mode switch.
+**Preconditions:** **Capacity** page open, with the **Settings** tab chosen.
 
 - [ ] `5B9D` Select **Add month**.
   - **Expected:**
@@ -220,31 +220,31 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Afterwards:** Run Reset the Database, to leave the planning settings as Fathom starts them.
 
-### CAP-06: People and Settings for a Role That Sees Both
+### CAP-06: Each Tab for a Role That Sees Them All
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from CAP-05.
 
 **Preconditions:** Reset the Database has been run, as CAP-05 ends. Signed in with this account.
 
-- [ ] `D8F5` Select the **Capacity** page in the left-hand menu.
+- [ ] `D8F5` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
   - **Expected:**
-    - The mode switch has **People** chosen.
+    - **Allocations** is chosen in the tabs.
     - Above the table, in order: a search box, a **Draft** button, **Metrics**, and **Group by**.
     - Under them, the strip of quarters, with **‹** before it, and **›** and **Today** after it.
     - The current month is the first month beside the **Person** column, and its heading is underlined in red.
   - **Notes:**
 
-- [ ] `F7F1` Select **Settings** in the mode switch.
+- [ ] `F7F1` Select the **Settings** tab.
   - **Expected:**
     - The planning settings show under **Working time**, **Forecasts** and **Ramp-up for new starters**.
     - No row has a change button.
   - **Notes:**
 
-### CAP-07: People Shows Each Feature With Its Percentage
+### CAP-07: Allocations Shows Each Feature With Its Percentage
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-06.
 
-**Preconditions:** **Capacity** open, with **People** chosen in the mode switch, **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `8FAB` Scroll down to the 'Payments core' group.
   - **Expected:** Under the 'Payments core' group, cells list features, each on a line of its own with its percentage at the right, such as "50%".
@@ -254,29 +254,34 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:** After a moment, a tooltip shows the feature's whole name.
   - **Notes:**
 
-- [ ] `61EC` Under the 'Payments core' group, find the first cell in the current month's column that lists two features.
+- [ ] `61EC` Under the 'Payments core' group, find the first cell in the current month's column that lists two features and no "Over" or "Under".
   - **Expected:**
-    - Under the two features, a last line gives the two percentages added up, at the right.
-    - A thin line above it sets it off.
+    - Each feature's name follows a small square in its feature team's colour.
+    - The two percentages add up to 100%.
+    - No line follows the two features.
   - **Notes:**
 
 ### CAP-08: Over- and Under-Allocated Months Stand Out
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-07.
 
-**Preconditions:** **Capacity** open, with **People** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `CBFE` In the current month's column, find a cell whose last line reads "Over", such as that of 'Blaise Gislason', and one whose last line reads "Under", such as that of 'Anahi Bins'.
   - **Expected:**
-    - "Over" is red and bold.
-    - "Under" is grey.
+    - "Over" is red and bold, with how far over a whole month at the right, such as "+25%".
+    - "Under" is red and bold, with how far under a whole month at the right, such as "−50%".
+  - **Notes:**
+
+- [ ] `5A0E` Hold the pointer over "Over".
+  - **Expected:** After a moment, a tooltip shows "Total" and the month's percentages added up, such as "Total 150%".
   - **Notes:**
 
 ### CAP-09: Planned Hires Have Rows of Their Own
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-08.
 
-**Preconditions:** **Capacity** open, with **People** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `B36D` Select the **People** page in the left-hand menu.
   - **Expected:** The **People** page opens.
@@ -288,9 +293,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
     - **Expected** holds a month.
   - **Notes:**
 
-- [ ] `7C51` Select the **Capacity** page in the left-hand menu.
+- [ ] `7C51` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
   - **Expected:**
-    - The mode switch has **People** chosen.
+    - **Allocations** is chosen in the tabs.
     - **Group by** shows, naming no grouping.
   - **Notes:**
 
@@ -323,12 +328,15 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:** Every row is listed again.
   - **Notes:**
 
-- [ ] `1623` Select the **Feature assignments** page in the left-hand menu.
-  - **Expected:** The cells show feature teams as labels.
+- [ ] `1623` Select the **Feature teams** tab.
+  - **Expected:** The cells show feature teams, each name after a small square in its team's colour.
   - **Notes:**
 
 - [ ] `EB18` Type `Payments tester` in the search box.
-  - **Expected:** No rows are listed.
+  - **Expected:**
+    - One row is listed, named 'Payments tester'.
+    - Its cells name no feature team.
+    - The cells before the month noted in step `4CD5` are shaded.
   - **Notes:**
 
 **Afterwards:** Empty the search box.
@@ -337,7 +345,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-09.
 
-**Preconditions:** **Capacity** open, with **People** chosen in the mode switch, **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `565B` Scroll down to the end of the 'Payments core' group.
   - **Expected:**
@@ -367,7 +375,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-10.
 
-**Preconditions:** **Capacity** open, with **People** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `8DC9` Select **Metrics**.
   - **Expected:** The Metrics panel gives a number of people and a number of planned hires, such as "141 people and 10 planned hires".
@@ -397,9 +405,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Preconditions:** Signed in with this account.
 
-- [ ] `C806` Select the **Feature assignments** page in the left-hand menu.
+- [ ] `C806` Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab.
   - **Expected:**
-    - The cells show feature teams as labels.
+    - The cells show feature teams, each name after a small square in its team's colour.
     - **Group by** shows, naming no grouping.
   - **Notes:**
 
@@ -411,9 +419,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:** One person under 'Mobile apps' has no 'Mobile apps' label in the current month.
   - **Notes:**
 
-- [ ] `5122` Select the **Capacity** page in the left-hand menu.
+- [ ] `5122` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
   - **Expected:**
-    - The mode switch has **People** chosen.
+    - **Allocations** is chosen in the tabs.
     - **Group by** shows, naming no grouping.
     - The cells list features, each with its percentage.
   - **Notes:**
@@ -504,9 +512,9 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Expected:** The right end of the top bar reads "Engineering Operations Manager".
   - **Notes:**
 
-- [ ] `1862` Select the **Capacity** page in the left-hand menu.
+- [ ] `1862` Select the **Capacity** page in the left-hand menu, then the **Allocations** tab.
   - **Expected:**
-    - The mode switch has **People** chosen.
+    - **Allocations** is chosen in the tabs.
     - **Group by** shows, naming no grouping.
   - **Notes:**
 
@@ -523,7 +531,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Afterwards:** Run Restore the Seed Data.
 
-### CAP-14: A Role That Sees Neither Mode Has No Capacity Page
+### CAP-14: A Role That Sees No Tab Has No Capacity Page
 
 **Account:** Team Member, `team.member@fathom.test`, changed from CAP-13.
 
@@ -546,10 +554,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `E60D` Select the **Capacity** page in the left-hand menu.
-  - **Expected:** The mode switch has **People** chosen.
+  - **Expected:** The page is headed **Capacity**, with the tabs **Feature teams**, **Allocations** and **Settings**.
   - **Notes:**
 
-- [ ] `887A` Select **Settings** in the mode switch.
+- [ ] `887A` Select the **Settings** tab.
   - **Expected:** **Hours a day** reads "8".
   - **Notes:**
 
@@ -579,10 +587,10 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 - [ ] `C7B3` Select the **Capacity** page in the left-hand menu.
-  - **Expected:** The mode switch has **People** chosen.
+  - **Expected:** The page is headed **Capacity**, with the tabs **Feature teams**, **Allocations** and **Settings**.
   - **Notes:**
 
-- [ ] `B2C3` Select **Settings** in the mode switch.
+- [ ] `B2C3` Select the **Settings** tab.
   - **Expected:**
     - **Hours a day** reads "4" after a yellow mark.
     - Under it, "8" follows a green mark.
@@ -617,3 +625,28 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
   - **Notes:**
 
 **Afterwards:** Run Reset the Database, to leave the planning settings as Fathom starts them.
+
+### CAP-16: Both Grids Count the Same People, in the Month Gone To
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from CAP-15.
+
+**Preconditions:** Reset the Database has been run, as CAP-15 ends. Signed in with this account. Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] `C4E1` Look at the count after **Group by**, and note it.
+  - **Expected:** It counts people and planned hires in the current month, naming it, such as "40 people and 3 planned hires in Nov 2026".
+  - **Notes:**
+
+- [ ] `0B7D` Select the **Allocations** tab.
+  - **Expected:** The count after **Group by** is the one noted in step `C4E1`.
+  - **Notes:**
+
+- [ ] `9F25` Select the first quarter in the strip of quarters.
+  - **Expected:**
+    - The table scrolls to the start of that quarter.
+    - The count names the quarter's first month, such as "in Oct 2025".
+    - It counts no planned hires.
+  - **Notes:**
+
+- [ ] `6E3A` Select **Today**.
+  - **Expected:** The count is the one noted in step `C4E1`.
+  - **Notes:**

@@ -126,7 +126,7 @@ describe("the Data classes page", () => {
     expect(cellsOf(rowOf(details, "Start date"))).toEqual([
       "Start date",
       "Personal",
-      "These need it: People on other dates, Org chart on other dates, People on future dates, Org chart on future dates, Feature assignments, Feature assignments grouped by manager, Allocations grouped by manager, Allocations, People's Start.",
+      "These need it: People on other dates, Org chart on other dates, People on future dates, Org chart on future dates, Feature teams, Feature teams grouped by manager, Allocations grouped by manager, Allocations, People's Start.",
       "Change class…",
     ]);
     expect(cellsOf(rowOf(details, "Hiring plan"))).toEqual([

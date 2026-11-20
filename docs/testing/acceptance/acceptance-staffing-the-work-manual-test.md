@@ -13,7 +13,7 @@ last_updated: "2026-11-20"
 
 Verifies that the people who build the plan pick it up once it's approved. The Feature Lead keeps her team's feature and team current, as [Working as a Feature Lead](../../help/working-as-a-feature-lead.md) describes: a status, an estimate and a new member. The Engineering Manager staffs the work, as [Working as an Engineering Manager](../../help/working-as-an-engineering-manager.md) describes: someone put on a feature team from next month, a team's lead changed and a feature estimated. The Engineering Manager then checks who is over or under allocated, and counts the people by site. Their changes wait for the approvers in [Deciding the Changes](acceptance-deciding-the-changes-manual-test.md).
 
-Nobody can be allocated to a feature yet on a new Fathom, since Capacity's **People** mode is read only, so every month reads **Under**.
+Nobody can be allocated to a feature yet on a new Fathom, since Capacity's **Allocations** tab is read only, so every month from the current one reads **Not allocated**.
 
 ## Test Environment
 

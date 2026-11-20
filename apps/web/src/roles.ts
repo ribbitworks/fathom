@@ -117,13 +117,6 @@ export function consequences(
     views.flatMap((view) =>
       view.page === page && view.why !== undefined ? [view.why] : [],
     );
-  // A page reached but not opened, since the role sees none of its data, is named by the line
-  // saying why, when that line is about the whole page.
-  const namedByWhy = (page: string) =>
-    views.some(
-      (view) =>
-        view.page === page && view.name === page && view.why !== undefined,
-    );
   return {
     sees: opened.flatMap((page) => [
       page,
@@ -135,10 +128,7 @@ export function consequences(
     ]),
     doesNotSee: everyPage.flatMap((page) => {
       if (opened.includes(page)) return whysOn(page);
-      if (!reached.includes(page) || !namedByWhy(page)) {
-        return [page, ...whysOn(page)];
-      }
-      return whysOn(page);
+      return [page, ...whysOn(page)];
     }),
     can,
     cannot,

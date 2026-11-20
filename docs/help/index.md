@@ -33,8 +33,7 @@ Help explains how to use each page of Fathom, and the work each role does most. 
 
 - [People](people.md): everyone and the planned hires, as a table.
 - [Org chart](org-chart.md): reporting teams and feature teams as cards, today or on another date.
-- [Feature assignments](feature-assignments.md): who is on which feature team, month by month.
-- [Capacity](capacity.md): what each person works on, month by month, and the planning settings capacity and forecasts are worked out with.
+- [Capacity](capacity.md): who is on which feature team and what each person works on, month by month, and the planning settings capacity and forecasts are worked out with.
 
 ## Administration
 

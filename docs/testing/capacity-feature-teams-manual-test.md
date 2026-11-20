@@ -1,17 +1,17 @@
 ---
-title: "Manual Test: Feature Assignments"
+title: "Manual Test: Capacity's Feature Teams"
 category: "How-To"
 audience: "AI Coding Assistant"
-applies_to: ["apps/web/src/feature-assignments-page*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "apps/server/src/data/feature-team-held-changes.ts", "apps/server/src/data/feature-team-month-cells.ts", "apps/server/src/data/feature-team-undo.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
-dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/feature-assignments.md"]
+applies_to: ["apps/web/src/capacity-feature-teams*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "apps/server/src/data/feature-team-held-changes.ts", "apps/server/src/data/feature-team-month-cells.ts", "apps/server/src/data/feature-team-undo.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
+dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/capacity.md"]
 last_updated: "2026-11-20"
 ---
 
-# Manual Test: Feature Assignments
+# Manual Test: Capacity's Feature Teams
 
 ## Scope
 
-Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls, moving through it with the strip of quarters above it, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, the page left out of the menu for a role without Personal details, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-data).
+Verifies the **Feature teams** tab of the **Capacity** page: how the table of feature teams by month looks and scrolls, moving through it with the strip of quarters above it, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, the tab left out for a role without Personal details, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 
@@ -45,9 +45,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Restore the Seed Data has been run. Signed in with this account.
 
-- [ ] `25EE` Select the **Feature assignments** page in the left-hand menu.
+- [ ] `25EE` Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab.
   - **Expected:**
-    - The page is headed **Feature assignments**.
+    - The page is headed **Capacity**, with **Feature teams** chosen in its tabs.
     - Above the table, in order: a search box, a **Draft** button, **Metrics**, and **Group by**.
     - The rows show as one list, with no group names.
     - Under them, the strip of quarters, with **‹** before it, and **›** and **Today** after it.
@@ -71,7 +71,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-01.
 
-**Preconditions:** **Feature assignments** open.
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen.
 
 - [ ] `ACD0` Scroll the table sideways.
   - **Expected:**
@@ -85,19 +85,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Nothing shows through them.
   - **Notes:**
 
-### FA-03: Labels Name Each Team in Its Colour
+### FA-03: Each Team Is Named After Its Colour
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-02.
 
-**Preconditions:** **Feature assignments** open, with the current month in view.
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen, with the current month in view.
 
-- [ ] `E780` Look at the labels in the current month's column.
+- [ ] `E780` Look at the teams in the current month's column.
   - **Expected:**
-    - Each label names a feature team, in the team's colour, such as 'Mobile apps' orange and 'Payments core' teal.
-    - Labels of 'Platform reliability', which has no colour, are neutral.
+    - Each team's name follows a small square in its colour, such as 'Mobile apps' orange and 'Payments core' teal.
+    - No name is in a coloured box.
+    - 'Platform reliability', which has no colour, has no square.
   - **Notes:**
 
-- [ ] `18C9` Hold the pointer over a label.
+- [ ] `18C9` Hold the pointer over a team's name.
   - **Expected:** After a moment, a tooltip shows the team's whole name.
   - **Notes:**
 
@@ -109,7 +110,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-03.
 
-**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu.
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen, with **None** chosen in the Group by menu.
 
 - [ ] `077D` Select **Manager** in the Group by menu.
   - **Expected:**
@@ -146,11 +147,11 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-05.
 
-**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `40E2` Type `Search` in the search box.
   - **Expected:**
-    - Only people with a 'Search' label in some month are listed.
+    - Only people with 'Search' in some month are listed.
     - The count of rows above the table goes down.
   - **Notes:**
 
@@ -158,7 +159,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-06.
 
-**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `CE15` Open the column menu of the current month.
   - **Expected:** The menu offers **Filter…**.
@@ -180,7 +181,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-07.
 
-**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `745A` Open the **Person** column menu.
   - **Expected:** The menu offers **Filter…**.
@@ -198,7 +199,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-08.
 
-**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `61E9` Select **Metrics**.
   - **Expected:**
@@ -211,9 +212,9 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-09.
 
-**Preconditions:** **Feature assignments** open, with **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen, with **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
 
-- [ ] `BA7E` Under the **Search** group, note the people with a 'Search' label in the column for the month before the current one.
+- [ ] `BA7E` Under the **Search** group, note the people with 'Search' in the column for the month before the current one.
   - **Expected:** The people are listed under the **Search** group.
   - **Notes:**
 
@@ -236,15 +237,15 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-10.
 
-**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] `7B9F` Scroll sideways and down through the table.
   - **Expected:**
     - Some people have shaded cells at the start or end of their row, for the months before they started or after they left, such as 'Melinda Zemlak' and '선예빈'.
-    - Shaded cells hold no labels.
+    - Shaded cells name no team.
   - **Notes:**
 
-### FA-12: A Role Without Personal Details Has No Feature Assignments Page
+### FA-12: A Role Without Personal Details Has No Feature Teams
 
 **Account:** Team Member, `team.member@fathom.test`, changed from FA-11.
 
@@ -253,16 +254,16 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 - [ ] `8352` Look at the **People** section of the left-hand menu.
   - **Expected:**
     - It shows **People** and **Org chart**.
-    - There is no **Feature assignments**.
+    - There is no **Capacity** and no **Feature assignments**.
   - **Notes:**
 
 ### FA-13: The Table Works From the Keyboard
 
 **Account:** Executive, `executive@fathom.test`, changed from FA-12.
 
-**Preconditions:** Signed in with this account. **Feature assignments** open from the left-hand menu.
+**Preconditions:** Signed in with this account. **Capacity** open, with the **Feature teams** tab chosen from the left-hand menu.
 
-- [ ] `39EC` Select a cell in the current month's column that holds a label.
+- [ ] `39EC` Select a cell in the current month's column that names a team.
   - **Expected:** The cell has a blue outline.
   - **Notes:**
 
@@ -343,8 +344,8 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
     - The leaver's name is struck through.
   - **Notes:**
 
-- [ ] `A33A` Select the **Feature assignments** page in the left-hand menu.
-  - **Expected:** The **Feature assignments** page opens.
+- [ ] `A33A` Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab.
+  - **Expected:** **Feature teams** is chosen in the **Capacity** page's tabs.
   - **Notes:**
 
 - [ ] `C1C8` Type the joiner's name in the search box.
@@ -355,16 +356,16 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 - [ ] `38D9` Look along the joiner's row, from two months ago to the right.
   - **Expected:**
-    - The cell two months ago holds no 'Payments core' label.
-    - The labels in the cell two months ago have no dot.
-    - From last month on, each cell holds a 'Payments core' label, beside any other labels.
-    - Each of those 'Payments core' labels has a hollow yellow dot inside it, before the name.
+    - The cell two months ago doesn't name 'Payments core'.
+    - The teams in the cell two months ago have no dot.
+    - From last month on, each cell names 'Payments core', beside any other teams.
+    - Each of those 'Payments core' names has a hollow yellow dot before its square.
   - **Notes:**
 
 - [ ] `868D` Look along the light green row under it.
   - **Expected:**
-    - Its cells hold no 'Payments core' label.
-    - Any other labels are in their colours.
+    - Its cells don't name 'Payments core'.
+    - Any other teams are named after their colour's square.
   - **Notes:**
 
 - [ ] `2B72` Empty the search box.
@@ -373,34 +374,34 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 - [ ] `CC85` Type the leaver's name in the search box.
   - **Expected:**
-    - From last month on, the cells of the leaver hold a 'Payments core' label with a hollow yellow dot inside it.
-    - The name in the label is struck through.
-    - In the light green row under it, from last month on, each 'Payments core' label has a green dot inside it, before the name.
+    - From last month on, the cells of the leaver name 'Payments core' after a hollow yellow dot.
+    - The name is struck through.
+    - In the light green row under it, from last month on, each 'Payments core' has a green dot before its square.
   - **Notes:**
 
 ### FA-15: The Draft Menu Shows Drafts or Leaves Them Out
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-14.
 
-**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu and the leaver's name from FA-14 in the search box, after FA-14.
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen, with **None** chosen in the Group by menu and the leaver's name from FA-14 in the search box, after FA-14.
 
 - [ ] `278A` Open the Draft menu and select **Live only**.
   - **Expected:**
     - The row of the leaver has no tint.
     - No light green row is under the row of the leaver.
-    - The cells of the leaver hold a 'Payments core' label in every month they held one before FA-14, from the earliest such month on.
-    - From last month on, each 'Payments core' label has a green dot inside it, before the name.
-    - Their labels before last month have no dot.
+    - The cells of the leaver name 'Payments core' in every month they did before FA-14, from the earliest such month on.
+    - From last month on, each 'Payments core' has a green dot before its square.
+    - Their teams before last month have no dot.
     - Nothing is struck through.
   - **Notes:**
 
-- [ ] `B7E1` Hold the pointer over the green dot in one of those 'Payments core' labels.
+- [ ] `B7E1` Hold the pointer over the green dot before one of those 'Payments core' names.
   - **Expected:** After a moment, a tooltip reads "Live. A change isn't published yet."
   - **Notes:**
 
 - [ ] `AD18` Open the Draft menu and select **Drafts applied**.
   - **Expected:**
-    - From last month on, the leaver's cells hold no 'Payments core' label.
+    - From last month on, the leaver's cells don't name 'Payments core'.
     - There is no light green row.
   - **Notes:**
 
@@ -425,8 +426,8 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 - [ ] `18D3` Open the Draft menu and select **Drafts & Live**.
   - **Expected:**
     - The joiner and the leaver are both listed under **Payments core**.
-    - The joiner's 'Payments core' labels from last month on have a hollow yellow dot inside them.
-    - The leaver's 'Payments core' labels from last month on have a hollow yellow dot inside them.
+    - From last month on, the joiner's 'Payments core' has a hollow yellow dot before its square.
+    - From last month on, the leaver's 'Payments core' has a hollow yellow dot before its square.
     - The leaver's name is struck through.
     - Each of their rows has a light green Live row under it.
   - **Notes:**
@@ -437,7 +438,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from FA-15.
 
-**Preconditions:** Restore the Seed Data has been run. Signed in with this account. Select the **Feature assignments** page in the left-hand menu, with nothing in the search box and no filters.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. Select the **Capacity** page in the left-hand menu, then the **Feature teams** tab, with nothing in the search box and no filters.
 
 - [ ] `FB0D` Select **Feature team** in the Group by menu.
   - **Expected:** The last group is **No feature team**.
@@ -470,15 +471,15 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
     - The team list closes.
     - The person's row is tinted faint yellow.
     - A light green Live row is under it.
-    - The cells before the one selected hold no label.
-    - From the cell selected on, each cell holds a 'Payments core' label with a hollow yellow dot inside it, before the name.
+    - The cells before the one selected name no team.
+    - From the cell selected on, each cell names 'Payments core' after a hollow yellow dot.
   - **Notes:**
 
 - [ ] `68BF` Press Cmd+Z, or Ctrl+Z outside a Mac.
   - **Expected:**
     - The person's row has no tint.
     - No light green row is under it.
-    - No cell holds a label.
+    - No cell names a team.
   - **Notes:**
 
 - [ ] `1EA7` Select the person's cell two months after the current month.
@@ -493,7 +494,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
   - **Expected:**
     - The person's row is tinted faint yellow.
     - A light green Live row is under it.
-    - From the cell selected on, each cell holds a 'Payments core' label with a hollow yellow dot inside it.
+    - From the cell selected on, each cell names 'Payments core' after a hollow yellow dot.
   - **Notes:**
 
 - [ ] `D42A` Select the **Org chart** page in the left-hand menu.
@@ -516,31 +517,31 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-16.
 
-**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
-- [ ] `5AF9` Select a cell in the current month's column that holds one label, 'Payments core', in a row with no tint.
+- [ ] `5AF9` Select a cell in the current month's column that names one team, 'Payments core', in a row with no tint.
   - **Expected:** The cell has a blue outline.
   - **Notes:**
 
 - [ ] `8E9A` Press Delete.
   - **Expected:**
     - The row is tinted faint yellow.
-    - In the cell and every cell to its right, the 'Payments core' label has a hollow yellow dot inside it.
-    - The label's name is struck through.
+    - In the cell and every cell to its right, 'Payments core' has a hollow yellow dot before its square.
+    - The name is struck through.
   - **Notes:**
 
 - [ ] `2F9C` Press Cmd+Z, or Ctrl+Z outside a Mac.
   - **Expected:**
     - The row has no tint.
-    - In the cell and every cell to its right, the 'Payments core' label has no dot.
-    - The label's name is not struck through.
+    - In the cell and every cell to its right, 'Payments core' has no dot.
+    - The name is not struck through.
   - **Notes:**
 
 ### FA-18: A Change the Draft Can't Hold Is Explained
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-17.
 
-**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu and the person's name from FA-16 in the search box, after FA-16.
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen, with **None** chosen in the Group by menu and the person's name from FA-16 in the search box, after FA-16.
 
 - [ ] `9DE7` Select the person's cell four months after the current month.
   - **Expected:** The cell has a blue outline.
@@ -559,7 +560,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 - [ ] `822C` Select the person's name with the mouse.
   - **Expected:**
     - Fathom refuses the change, saying that the draft of 'Payments core' already changes the person from another month, and to approve or discard that draft first.
-    - The cell still holds the 'Payments core' label.
+    - The cell still names 'Payments core'.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -568,7 +569,7 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-18.
 
-**Preconditions:** **Feature assignments** open.
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen.
 
 - [ ] `5D2A` Scroll the table sideways to its right end.
   - **Expected:**

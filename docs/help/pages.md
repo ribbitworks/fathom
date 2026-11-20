@@ -32,14 +32,11 @@ The left-hand menu shows only the pages your role lets you open. A page your rol
 - [Org chart](org-chart.md): It draws reporting teams and feature teams as cards, today or, with **View Personal details**, on past dates. Future dates in **Reporting teams** also need **View Confidential data**.
   - **Shown with:** **View People**
   - **Starting roles that see it:** Every role but Administrator
-- [Feature assignments](feature-assignments.md): It shows who is on which feature team, month by month.
-  - **Shown with:** **View Feature teams** with **View Personal details**
-  - **Starting roles that see it:** Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive
-- [Capacity](capacity.md): It shows what each person works on, month by month, and the planning settings.
-  - **Shown with:** Its **People** mode needs **View Allocations**, **View Feature teams**, **View People** and **View Personal details**. Its **Settings** mode needs **View Configuration**. Either mode shows the page.
+- [Capacity](capacity.md): It shows who is on which feature team and what each person works on, month by month, and the planning settings.
+  - **Shown with:** Its **Feature teams** tab needs **View Feature teams** and **View Personal details**. Its **Allocations** tab needs **View Allocations**, **View Feature teams**, **View People** and **View Personal details**. Its **Settings** tab needs **View Configuration**. Any tab shows the page.
   - **Starting roles that see it:** Product Manager, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive
 
-The Product Manager sees Capacity in its **Settings** mode only, since the role doesn't hold **View Personal details**.
+The Product Manager sees Capacity's **Settings** tab only, since the role doesn't hold **View Personal details**.
 
 ## Administration
 
