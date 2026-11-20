@@ -18,7 +18,9 @@ import {
 import {
   fictionalUser,
   greeting,
+  onNarrowScreen,
   renderApp,
+  sectionsButton,
   serverAnswers,
   testTheme,
 } from "./test-support.tsx";
@@ -148,24 +150,13 @@ describe("the About box", () => {
   });
 
   it("opens from the sidebar on a narrow screen", async () => {
-    vi.stubGlobal(
-      "matchMedia",
-      (query: string) =>
-        ({
-          matches: true,
-          media: query,
-          addEventListener: () => undefined,
-          removeEventListener: () => undefined,
-        }) as unknown as MediaQueryList,
-    );
+    onNarrowScreen();
     serverAnswers({
       "GET /api/session": noPermissions,
       "GET /api/greeting": greeting,
     });
     renderApp("/help/roles");
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Show sections" }),
-    );
+    await userEvent.click(await sectionsButton());
     await userEvent.click(
       within(await sidebar()).getByRole("button", { name: "About Fathom" }),
     );
