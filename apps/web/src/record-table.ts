@@ -52,6 +52,9 @@ export interface GridRecord {
   id: string;
   draft?: GridDraft | undefined;
   heldBy?: string | undefined;
+  // The drafts of other records that change a value the row shows, by its column's key, each
+  // marking its own cell in place of the row's draft.
+  cellDrafts?: ReadonlyMap<string, NonNullable<this["draft"]>> | undefined;
 }
 
 export type DraftOf<Rec extends GridRecord> = NonNullable<Rec["draft"]>;
@@ -228,9 +231,6 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // For a row whose draft is another record's, such as a change of the cycles a cycle's row shows:
   // what that draft is, which its menu says before what it changes.
   draftSubject?: (record: Rec) => string;
-  // For a table whose rows can share drafts, such as cycles one change of their schedule's cycles
-  // moves: the waiting drafts a record stands for, its own or not, so each is counted once.
-  draftKeys?: (record: Rec) => readonly string[];
   // For a table whose rows' menus decide another record's draft too. Approve sends those of the
   // drafts the menu decides that need no other approver. Each item names whose draft it decides
   // where the record's own is not among them.

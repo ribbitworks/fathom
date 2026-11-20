@@ -417,16 +417,23 @@ export function differingKeys<Key extends string>(
 }
 
 // The latest of several drafts, by when each was last changed.
-export const latestDraft = <Draft extends { madeAt?: string | null }>(
+export function latestDraft<Draft extends { madeAt?: string | null }>(
+  drafts: readonly [Draft, ...Draft[]],
+): Draft;
+export function latestDraft<Draft extends { madeAt?: string | null }>(
   drafts: readonly Draft[],
-): Draft | undefined =>
-  drafts.reduce<Draft | undefined>(
+): Draft | undefined;
+export function latestDraft<Draft extends { madeAt?: string | null }>(
+  drafts: readonly Draft[],
+): Draft | undefined {
+  return drafts.reduce<Draft | undefined>(
     (one, other) =>
       one === undefined || (other.madeAt ?? "") > (one.madeAt ?? "")
         ? other
         : one,
     undefined,
   );
+}
 
 // Who changed each value of a row whose values several drafts change, such as a schedule's row its
 // patterns' and releases' drafts change: whoever last changed a draft changing it.

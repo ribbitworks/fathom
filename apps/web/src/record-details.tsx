@@ -28,6 +28,7 @@ import {
 import classes from "./record-details.module.css";
 import { roundedUpTo } from "@fathom/shared";
 import { isEmpty, shownInView } from "./grid-columns.tsx";
+import { cellDraftOf } from "./grid-drafts.ts";
 import type { Column, GridRecord } from "./record-table.ts";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {
@@ -490,7 +491,8 @@ export function ColumnRows<Rec extends GridRecord, Change>({
                 ? {
                     live: column.live(draft),
                     liveColour: column.colour?.(live) ?? null,
-                    draft,
+                    // A value another record's draft changes is marked by that draft.
+                    draft: cellDraftOf(shown.cellDrafts, column) ?? draft,
                   }
                 : undefined
             }

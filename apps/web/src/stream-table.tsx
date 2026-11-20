@@ -108,16 +108,40 @@ const draftsOf = (
 const waitingIn = (drafts: readonly DraftLike[]) =>
   drafts.some(({ state }) => state === "waiting");
 
+// One draft standing for several parts' drafts that change the values given: waiting while any
+// waits, credited to whoever changed them last.
+function partsDraft(
+  parts: readonly [RecordDraft, ...RecordDraft[]],
+  changedParts: readonly { key: string; drafts: readonly RecordDraft[] }[],
+  live: StreamValues,
+): GridDraft & { live: StreamValues } {
+  const last = latestDraft(parts);
+  return {
+    action: "changed",
+    state: waitingIn(parts) ? "waiting" : "rejected",
+    changed: changedParts.map(({ key }) => key),
+    madeBy: last.madeBy,
+    madeAs: last.madeAs,
+    changedBy: creditedBy(changedParts),
+    unpublished: parts.every(({ unpublished }) => unpublished === true),
+    needsOtherApprover: parts.some(
+      ({ needsOtherApprover }) => needsOtherApprover === true,
+    ),
+    live,
+  };
+}
+
 // The row's draft, for its marks alone: the schedule's own, with the columns whose values its parts'
 // drafts change, or, when only its parts have drafts, one standing for those that change a value the
 // row shows, the next release's colour included, credited to whoever changed them last. A part's
 // draft that changes nothing the row shows, such as a later release's colour, leaves it unmarked.
+// Each value its parts' drafts change is marked by those drafts alone.
 function rowDraft(
   stream: ReleaseStream,
   values: StreamValues,
   live: StreamValues,
   leaveOutRejected: boolean,
-): StreamRow["draft"] {
+): Pick<StreamRow, "draft" | "cellDrafts"> {
   const patterns = draftsOf(stream.patterns, leaveOutRejected);
   const releases = draftsOf(stream.releases, leaveOutRejected);
   const own =
@@ -147,28 +171,28 @@ function rowDraft(
     ({ drafts }) => drafts.length > 0 || own !== undefined,
   );
   const parts = [...new Set(changedParts.flatMap(({ drafts }) => drafts))];
+  const cellDrafts = new Map(
+    changedParts.flatMap((part) => {
+      const [first, ...rest] = part.drafts;
+      return first === undefined
+        ? []
+        : [[part.key, partsDraft([first, ...rest], [part], live)] as const];
+    }),
+  );
+  const marks = cellDrafts.size === 0 ? {} : { cellDrafts };
   if (own !== undefined) {
     return {
-      ...own,
-      changed: [...own.changed, ...changedParts.map(({ key }) => key)],
-      live,
+      draft: {
+        ...own,
+        changed: [...own.changed, ...changedParts.map(({ key }) => key)],
+        live,
+      },
+      ...marks,
     };
   }
-  const last = latestDraft(parts);
-  if (last === undefined) return undefined;
-  return {
-    action: "changed",
-    state: waitingIn(parts) ? "waiting" : "rejected",
-    changed: changedParts.map(({ key }) => key),
-    madeBy: last.madeBy,
-    madeAs: last.madeAs,
-    changedBy: creditedBy(changedParts),
-    unpublished: parts.every(({ unpublished }) => unpublished === true),
-    needsOtherApprover: parts.some(
-      ({ needsOtherApprover }) => needsOtherApprover === true,
-    ),
-    live,
-  };
+  const [first, ...rest] = parts;
+  if (first === undefined) return {};
+  return { draft: partsDraft([first, ...rest], changedParts, live), ...marks };
 }
 
 // Each stream's row, from every stream with its drafts, as the Draft view shows it: with every draft
@@ -184,7 +208,7 @@ export function streamRows(
     const [shown = stream] = leaveOutRejected ? draftedStreams([stream]) : [];
     const values = valuesOf(shown, day);
     const [live] = liveStreams([stream]);
-    const draft = rowDraft(
+    const marks = rowDraft(
       stream,
       values,
       live === undefined ? values : valuesOf(live, day),
@@ -194,7 +218,7 @@ export function streamRows(
       id: stream.id,
       ...values,
       heldBy: stream.heldBy,
-      ...(draft === undefined ? {} : { draft }),
+      ...marks,
       stream: shown,
       live: false,
     };
@@ -212,6 +236,7 @@ const liveRows = (
       ...row,
       ...valuesOf(stream, day),
       draft: undefined,
+      cellDrafts: undefined,
       stream,
       live: true,
     })),

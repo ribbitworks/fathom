@@ -19,6 +19,7 @@ import {
   shown,
 } from "./grid-columns.tsx";
 import {
+  cellDraftOf,
   changedBy,
   changedIn,
   draftChanges,
@@ -112,6 +113,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     | "marksRows"
     | "liveById"
     | "draftById"
+    | "cellDraftsById"
     | "liveBeside"
     | "besides"
     | "liveCell"
@@ -162,6 +164,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
     marksRows,
     liveById,
     draftById,
+    cellDraftsById,
     liveBeside,
     besides,
     liveCell,
@@ -335,6 +338,16 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
             editing?.row === rowIndex &&
             editing.column === columnIndex &&
             inPanel === undefined;
+          // A value another record's draft changes is marked by that draft, not the row's.
+          // Only while the row shows a draft, so a row shown live, as under Live only, has none.
+          const cellDraft =
+            (draft === undefined
+              ? undefined
+              : cellDraftOf(record?.cellDrafts, column)) ?? draft;
+          const cellMarked =
+            (record === undefined
+              ? undefined
+              : cellDraftOf(cellDraftsById.get(record.id), column)) ?? marked;
           // A new row being filled in is marked in its first cell's slot until added.
           const newRowMarked =
             columnIndex === 0 &&
@@ -346,14 +359,14 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
               ? undefined
               : column.status?.(record);
           const standIn = standInAt(row, column);
-          const changes = draftChanges(draft, column);
+          const changes = draftChanges(cellDraft, column);
           const mark = row.record && !editingHere && column.mark?.(row.record);
           const namedMark = column.key === table.nameColumn ? mark : undefined;
           const frozenAt = frozenCell(columnIndex);
           const value = shownAt(row, column);
           const live =
-            changes && draft?.action === "changed"
-              ? shown(liveColumn(column), column.live(draft)) || "empty"
+            changes && cellDraft?.action === "changed"
+              ? shown(liveColumn(column), column.live(cellDraft)) || "empty"
               : undefined;
           return [
             <SelectableCell
@@ -382,7 +395,7 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                 classes.recordCell,
                 columnTint(column),
                 changes && besideLive(view.show) && marksRows
-                  ? draft?.state === "rejected"
+                  ? cellDraft?.state === "rejected"
                     ? classes.rejectedCell
                     : classes.draftCell
                   : "",
@@ -477,15 +490,17 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                 >
                   <DraftedItem
                     draft={
-                      editingHere ? undefined : wholeCellDraft(marked, column)
+                      editingHere
+                        ? undefined
+                        : wholeCellDraft(cellMarked, column)
                     }
-                    by={editingHere ? undefined : changedBy(draft, column)}
+                    by={editingHere ? undefined : changedBy(cellDraft, column)}
                     was={
                       !editingHere &&
-                      draft !== undefined &&
-                      wholeCellDraft(draft, column) !== undefined
+                      cellDraft !== undefined &&
+                      wholeCellDraft(cellDraft, column) !== undefined
                         ? wasWords(
-                            shown(liveColumn(column), column.live(draft)),
+                            shown(liveColumn(column), column.live(cellDraft)),
                             column.label,
                             column.emptyLabel,
                           )

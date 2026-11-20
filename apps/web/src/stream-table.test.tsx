@@ -293,6 +293,57 @@ describe("the row's draft standing for every draft it shows", () => {
     ]);
   });
 
+  it("marks each value its parts' drafts change by those drafts, whatever the schedule's own draft's state", () => {
+    // Given a schedule whose own rename was rejected, while removing its next release waits
+    const stream = fictionalStream({
+      name: "Fictional New Name",
+      draft: recordDraft({
+        changed: ["name"],
+        live: { name: "Fictional Majors" },
+        state: "rejected",
+      }),
+      releases: [
+        fictionalRelease({ draft: recordDraft({ action: "deleted" }) }),
+      ],
+    });
+
+    // Then the row is rejected, but the next release it shows is marked waiting
+    const row = rowOf(stream);
+    expect([
+      row.draft?.state,
+      row.cellDrafts?.get("nextRelease")?.state,
+      row.cellDrafts?.has("name"),
+    ]).toEqual(["rejected", "waiting", false]);
+  });
+
+  it("leaves its values unmarked as it is live", () => {
+    const stream = fictionalStream({
+      releases: [
+        fictionalRelease({ draft: recordDraft({ action: "deleted" }) }),
+      ],
+    });
+    const row = rowOf(stream);
+    expect([
+      row.cellDrafts?.size,
+      table([stream])
+        .liveRecords([row])
+        .map(({ cellDrafts }) => cellDrafts),
+    ]).toEqual([2, [undefined]]);
+  });
+
+  it("marks each value only by the schedule's own draft where its parts' drafts change none", () => {
+    expect(
+      rowOf(
+        fictionalStream({
+          draft: recordDraft({
+            changed: ["name"],
+            live: { name: "Fictional Before" },
+          }),
+        }),
+      ).cellDrafts,
+    ).toBeUndefined();
+  });
+
   it("leaves out the schedule's own rejected draft with drafts applied", () => {
     const row = rowOf(
       fictionalStream({

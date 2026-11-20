@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// How drafts mark the shared table's cells and columns, and the records shown before they are
-// saved.
+// How drafts mark the shared table's cells and columns, which waiting drafts it offers to decide,
+// and the records shown before they are saved.
 
 import {
   type Field,
@@ -10,6 +10,7 @@ import {
   draftFilterKey,
 } from "@fathom/shared";
 import { configDraftFields, draftLines } from "./draft-details.tsx";
+import { type DraftSelection, decidable } from "./drafts.ts";
 import type { Phrase } from "./phrase.tsx";
 import type { AnyColumn, GridDraft, GridRecord } from "./record-table.ts";
 import { besideLive } from "./status-mark.tsx";
@@ -135,5 +136,48 @@ export function fieldDraftLines(
           }
         : one,
     ),
+  );
+}
+
+// The waiting drafts among the records and columns given that the role may decide now: never one
+// held by someone else, not yet published, or of a kind the role doesn't approve.
+export function waitingDrafts<Rec extends GridRecord>(
+  records: readonly Rec[],
+  fields: readonly Field[],
+  {
+    decidableRow,
+    approvesRecord,
+    approvesColumns,
+    draftsOf,
+  }: {
+    decidableRow: (record: Rec) => boolean;
+    approvesRecord: (record: Rec) => boolean;
+    approvesColumns: boolean;
+    draftsOf: (ids: string[]) => DraftSelection;
+  },
+): DraftSelection {
+  return {
+    ...draftsOf(
+      records
+        .filter((record) => decidableRow(record) && approvesRecord(record))
+        .map(({ id }) => id),
+    ),
+    columns: approvesColumns
+      ? fields.filter((field) => decidable(field)).map(({ id }) => id)
+      : [],
+  };
+}
+
+// The draft that marks a cell in place of its row's, where another record's draft changes its
+// value: by the column's key, or the column its values follow from.
+export function cellDraftOf<Draft>(
+  cellDrafts: ReadonlyMap<string, Draft> | undefined,
+  column: { key: string; changesWith?: string | undefined },
+): Draft | undefined {
+  return (
+    cellDrafts?.get(column.key) ??
+    (column.changesWith === undefined
+      ? undefined
+      : cellDrafts?.get(column.changesWith))
   );
 }
