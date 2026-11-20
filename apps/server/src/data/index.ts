@@ -54,7 +54,7 @@ import { moveFieldClass } from "./data-classes.ts";
 import * as lists from "./lists.ts";
 import { recordExport } from "./exports.ts";
 import { readHistory, recordPersonalView } from "./history.ts";
-import { discardRecordDraft, resubmitRecordDraft } from "./records.ts";
+import { discardRecordDraft, resubmitRecordDraft } from "./record-decisions.ts";
 import type { ChangeSetId, Saved } from "./changes.ts";
 import { undoChangeSet } from "./undo.ts";
 import {
