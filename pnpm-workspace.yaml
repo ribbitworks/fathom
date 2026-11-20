@@ -36,7 +36,7 @@ packageExtensions:
 # Patched versions of indirect dependencies with known vulnerabilities.
 overrides:
   js-yaml: 5.4.1
-  smol-toml: 1.9.0
+  smol-toml: 1.9.1
   katex: 0.18.2
   "@esbuild-kit/core-utils>esbuild": 0.25.12
   # Testcontainers' archiver and markdownlint-cli have no release that takes these fixes, and
