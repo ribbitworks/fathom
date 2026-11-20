@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["code-review.md", "testing.md", "documentation.md"]
-last_updated: "2026-11-18"
+last_updated: "2026-11-19"
 ---
 
 # Agent Workflow
@@ -22,7 +22,8 @@ or "the project's targeted tests", use the ones it names.
 - Before making any change in a session, the agent **Must** ask the owner which
   mode to use:
   - **Autonomous:** the agent runs tests and builds, has its changes reviewed,
-    and commits after the owner approves.
+    then commits, pushes and opens a pull request without waiting for the
+    owner's approval. The owner checks screens and manual tests, and merges.
   - **Restrictive:** the agent edits files only; the owner builds, tests and
     commits.
 - Until the owner answers, the agent **Must** follow Restrictive. Restrictive is
@@ -133,10 +134,25 @@ Complete these steps, in order, for every change:
    every pull request, as its standards say, that run is this step instead: the
    commit and push come first, failures and warnings are fixed as later
    commits, and the owner merges only once it passes.
-1. **Owner review:** summarize the changes and wait for the owner's explicit
-   approval before committing.
-1. **Commit:** commit, following the branch and commit rules.
-1. **Stop:** stop and wait for instructions after committing or pushing.
+1. **Manual test check:** when the change adds a manual test, or changes one
+   significantly, such as by adding or removing test cases or changing
+   expected results, stop until the owner approves the test or runs it. A
+   small edit to a manual test, such as its wording or a renamed control, needs
+   no stop. Any other change goes straight to the commit, without asking. A
+   review finding left unfixed stops for the owner as Review findings sets
+   out.
+1. **Commit and push:** commit, following the branch and commit rules, then
+   push when [Pushing and Pull Requests](#pushing-and-pull-requests) says to.
+1. **Open the pull request and report:** open the pull request, ready for
+   review rather than as a draft, report it to the owner with its link, and
+   stop.
+
+At any step, stop and ask the owner about a decision the owner should weigh
+in on, such as what users see or can do, a product rule, scope beyond the task,
+or something hard to undo, and about anything the standards say needs the
+owner's decision. The agent makes everyday choices itself and records each one
+in the pull request's description under a Decisions heading: the question, what
+it chose, what it rejected, and why.
 
 When changes come out of findings, the full suite, UI feedback or owner
 feedback:
@@ -145,13 +161,15 @@ feedback:
 - Repeat the test and warning steps, then the full suite step.
 - Repeat the code review too if the changes go beyond the reported findings or
   UI feedback, or if owner feedback adds new content.
-- Then return to the owner review step and get explicit approval again before
-  committing.
+- Then commit and push again, stopping first at the manual test check if the
+  changes add a manual test or change one significantly.
 
 ### Pushing and Pull Requests
 
-- A branch can collect several commits before it is pushed. Push only when the
-  owner says the work is ready for a pull request.
+- Push without waiting for the owner's word: before the pull request, once the
+  task's commits are made and any branch review the next point asks for is
+  done; once the pull request is open, each later commit as soon as it is made.
+  A branch can collect several commits before its first push.
 - Before opening the pull request, have a separate agent review the branch
   against `main` when its commits' own reviews cannot see all of it. Handle any
   findings as in the workflow:
@@ -165,21 +183,21 @@ feedback:
     commits only fix review findings or the owner's UI feedback, needs no
     review.
 - Push with `git push -u origin <type>/<task>`.
-- Open the pull request with `gh pr create`, following the commit message rules
-  for its title and description.
-- Once a pull request is open, each later approved commit on its branch is
-  pushed as part of the commit step.
+- Open the pull request with `gh pr create`, ready for review, following the
+  commit message rules for its title and description.
 
 ### Branches and Commits
 
 - For a new task, create a new branch from the latest `origin/main` in the
   named checkout, as [Rules for Both Modes](#rules-for-both-modes) describes.
 - Stay on the task's branch for follow-up work on the same task.
-- Amend the most recent commit, instead of adding one, when the change responds
-  to feedback on that commit and it has not been pushed. Feedback on an earlier
-  unpushed commit gets a new commit; do not rewrite history without the owner's
-  say-so. Once a commit has been pushed, respond with a new commit on the same
-  branch.
+- Respond to feedback on a pushed commit with a new commit on the same branch.
+  Since each commit is pushed as the workflow sets out, this is the usual case.
+- Amend the most recent commit, instead of adding one, only while it has not
+  been pushed, such as on a branch collecting several commits before its first
+  push, when the change responds to feedback on that commit. Feedback on an
+  earlier unpushed commit gets a new commit; do not rewrite history without the
+  owner's say-so.
 - An amended commit goes through the whole workflow, and the code review covers
   the whole amended commit.
 
