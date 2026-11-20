@@ -49,6 +49,11 @@ export const yearsAhead = 2;
 // The longest cycle in each unit: two years.
 export const longestCycle = { weeks: 104, months: 24 } as const;
 
+// The longest cycle a pattern of a unit makes, counting any unit but weeks in months, as patterns
+// stored before units did.
+export const longestCycleIn = (unit: unknown): number =>
+  unit === "weeks" ? longestCycle.weeks : longestCycle.months;
+
 // The most cycles one stream makes, so a pattern of one week from long ago cannot make too many.
 const mostCycles = 5000;
 

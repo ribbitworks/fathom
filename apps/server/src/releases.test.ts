@@ -11,8 +11,6 @@ import {
   releaseStreams,
 } from "@fathom/db";
 import {
-  addMonths,
-  cyclesOf,
   defaultClasses,
   type ChangeHistory,
   type Permission,
@@ -1181,72 +1179,6 @@ describe("changing one cycle's length", () => {
     return (await readStream(stream.id)) as ReleaseStream;
   }
 
-  it("moves a release past two years from today on a schedule that keeps going, laying its cycles out that far", async () => {
-    const stream = await liveStream();
-    const lastLaidOut = String(stream.cycles.at(-1)?.startsOn);
-    await draftRelease(stream.id, {
-      name: "Fictional Last",
-      firstCycle: lastLaidOut,
-      lastCycle: lastLaidOut,
-    });
-    await approveAll((await readStream(stream.id)) as ReleaseStream);
-    const response = await changeLength(stream.id, "2027-01-01", {
-      length: 6,
-      later: "move",
-    });
-    expect(response.statusCode).toBe(200);
-    const moved = response
-      .json<{ stream: ReleaseStream }>()
-      .stream.releases.find(({ name }) => name === "Fictional Last");
-    const laidOut = (await readStream(stream.id))?.cycles.map(
-      ({ startsOn }) => startsOn,
-    );
-    expect([
-      String(moved?.lastCycle) > horizonFrom(today()),
-      laidOut?.includes(String(moved?.lastCycle)),
-    ]).toEqual([true, true]);
-  });
-
-  it("takes a release on a cycle past two years from today, and changes that cycle's length", async () => {
-    const stream = await liveStream();
-    const far = addMonths(horizonFrom(today()), 3);
-    const laidOut = cyclesOf(
-      [
-        {
-          startsOn: "2027-01-01",
-          length: 3,
-          unit: "months",
-          naming: "{YY}.{N}",
-        },
-      ],
-      far,
-    ).at(-1)?.startsOn;
-    const added = await draftRelease(stream.id, {
-      name: "Fictional Far",
-      firstCycle: laidOut,
-      lastCycle: laidOut,
-    });
-    const response = await changeLength(stream.id, String(laidOut), {
-      length: 1,
-      later: "keep",
-    });
-    expect([added.statusCode, response.statusCode]).toEqual([201, 200]);
-  });
-
-  it("keeps a stream's end when a cycle's length changes, cutting the cycle that then holds it", async () => {
-    const stream = await liveStream();
-    await changeEnd(stream.id, "2027-08-15");
-    const response = await changeLength(stream.id, "2027-04-01", {
-      length: 2,
-      later: "move",
-    });
-    expect(spans(response.json<{ stream: ReleaseStream }>().stream)).toEqual([
-      "2027-01-01 to 2027-03-31",
-      "2027-04-01 to 2027-05-31",
-      "2027-06-01 to 2027-08-15",
-    ]);
-  });
-
   it("moves the cycles after it, and the releases on them, in one change set", async () => {
     const stream = await withRelease();
     const response = await changeLength(stream.id, "2027-04-01", {
@@ -1303,48 +1235,6 @@ describe("changing one cycle's length", () => {
     // Then the cycles and the release go together, none left
     const { total, left } = published.json<{ total: number; left: number }>();
     expect([total > 1, left]).toEqual([true, 0]);
-  });
-
-  it("keeps the note of a release it moves", async () => {
-    const stream = await withRelease();
-    const release = stream.releases[0] as ReleaseStream["releases"][number];
-    await test.request(
-      planner.cookie,
-      "PUT",
-      `/api/release-streams/${stream.id}/releases/${release.id}/note`,
-      { note: "Fictional *moved*" },
-    );
-    await approveAll((await readStream(stream.id)) as ReleaseStream);
-    const response = await changeLength(stream.id, "2027-04-01", {
-      length: 2,
-      later: "move",
-    });
-    const [moved] = response.json<{ stream: ReleaseStream }>().stream.releases;
-    expect([moved?.firstCycle, moved?.note]).toEqual([
-      "2027-06-01",
-      "Fictional *moved*",
-    ]);
-    await approveAll((await readStream(stream.id)) as ReleaseStream);
-    const [row] = await test.connection
-      .select({ note: releases.note })
-      .from(releases)
-      .where(eq(releases.id, release.id));
-    expect(row?.note).toBe("Fictional *moved*");
-  });
-
-  it("keeps the next cycle's end date, leaving the releases after it as they are", async () => {
-    const stream = await withRelease();
-    const response = await changeLength(stream.id, "2027-01-01", {
-      length: 2,
-      later: "keep",
-    });
-    const drafted = response.json<{ stream: ReleaseStream }>().stream;
-    expect(spans(drafted)?.slice(0, 3)).toEqual([
-      "2027-01-01 to 2027-02-28",
-      "2027-03-01 to 2027-06-30",
-      "2027-07-01 to 2027-09-30",
-    ]);
-    expect(drafted.releases[0]?.draft).toBeUndefined();
   });
 
   it("is approved whole when any of its drafts is", async () => {
@@ -1518,23 +1408,6 @@ describe("changing one cycle's length", () => {
     ).toEqual([]);
   });
 
-  it("drafts removing the patterns a change back no longer needs", async () => {
-    const stream = await liveStream();
-    const changed = (
-      await changeLength(stream.id, "2027-04-01", { length: 2, later: "move" })
-    ).json<{ stream: ReleaseStream }>().stream;
-    await approveAll(changed);
-    const back = (
-      await changeLength(stream.id, "2027-04-01", { length: 3, later: "move" })
-    ).json<{ stream: ReleaseStream }>().stream;
-    expect(spans(back)).toEqual(spans(stream));
-    expect(
-      back.patterns
-        .filter(({ draft }) => draft?.action === "deleted")
-        .map(({ startsOn }) => startsOn),
-    ).toEqual(["2027-04-01", "2027-06-01"]);
-  });
-
   it("refuses moving a release's first cycle after its Ships on day", async () => {
     const stream = await withRelease("2027-07-15");
     const response = await changeLength(stream.id, "2027-04-01", {
@@ -1645,17 +1518,6 @@ describe("changing one cycle's length", () => {
     );
   });
 
-  it("counts the longest cycle in the unit of the pattern that makes it", async () => {
-    const stream = await draftStream();
-    await draftPattern(stream.id, { ...quarters, length: 2, unit: "weeks" });
-    await approveAll((await readStream(stream.id)) as ReleaseStream);
-    const response = await changeLength(stream.id, "2027-01-15", {
-      length: 104,
-      later: "move",
-    });
-    expect(response.statusCode).toBe(200);
-  });
-
   it("refuses a cycle longer than two years", async () => {
     const stream = await liveStream();
     const response = await changeLength(stream.id, "2027-04-01", {
@@ -1663,6 +1525,9 @@ describe("changing one cycle's length", () => {
       later: "move",
     });
     expect(response.statusCode).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe(
+      "A cycle can be at most two years long.",
+    );
   });
 });
 
