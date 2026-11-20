@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The fictional organization's planned hires, from @fathom/fixtures: added live, as made by Fathom
-// itself, each in the first hiring state with its meaning, with its values in the columns it shares
-// with people, and those without a requisition given a temporary ID; then drafts the Engineering
-// Operations Manager makes and publishes, moving a proposed hire to an open state, adding a hire,
-// and changing a target date, which the Engineering Director rejects. Removing the seed data
-// discards the drafts of seeded hires, and of hires drafted under seeded people, and then removes
-// the seeded hires with the rest. A development-only package, never included in the runtime image.
+// The fictional organization's planned hires and the drafts its personas make of them, and
+// removing them. A development-only package, never in the runtime image.
 
 import {
   type Database,
@@ -17,6 +12,7 @@ import {
   lists,
   plannedHires,
   plannedHireTemporaryNumbers,
+  type Reader,
   recordChanges,
   valueField,
 } from "@fathom/db";
@@ -38,7 +34,6 @@ const approverEmail = `engineering.director@${accountDomain}`;
 // The requisition of the hire the Engineering Operations Manager drafts adding.
 export const draftedRequisition = "REQ-2050";
 
-type Reader = Pick<Database, "select">;
 type HireRow = typeof plannedHires.$inferSelect;
 
 // The first choice of the hiring states list with each meaning, and the tier each of a hire's fields

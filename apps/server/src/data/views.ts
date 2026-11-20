@@ -3,7 +3,13 @@
 // Saved views of each table that keeps them, in the data access layer: reading those a user may
 // see, and saving, changing, sharing, and deleting them, each change in the change history.
 
-import { changes, type Database, inChunks, savedViews } from "@fathom/db";
+import {
+  changes,
+  type Database,
+  inChunks,
+  type Reader,
+  savedViews,
+} from "@fathom/db";
 import {
   classesOfView,
   draftFilterKey,
@@ -52,7 +58,6 @@ const notSharedViewMaker =
 const hiddenColumns = "Choose only columns this role can see";
 const unknownChoices = "Choose only what this page offers";
 
-export type Reader = Pick<Database, "select">;
 type ViewRow = typeof savedViews.$inferSelect;
 
 const viewFields = [

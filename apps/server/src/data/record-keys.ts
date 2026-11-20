@@ -3,12 +3,10 @@
 // Reading records' key numbers, which the database gives each record. Part of the data access
 // layer; the caller checks the actor may see the record it sends a number with.
 
-import type { Database } from "@fathom/db";
+import type { Reader } from "@fathom/db";
 import { recordKeys } from "@fathom/db";
 import type { RecordKeyKind } from "@fathom/shared";
 import { and, eq, inArray } from "drizzle-orm";
-
-type Reader = Pick<Database, "select">;
 
 // Each record's key number, by its identifier.
 export type KeyNumbers = ReadonlyMap<string, number>;

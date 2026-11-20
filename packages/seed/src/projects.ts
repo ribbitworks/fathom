@@ -1,27 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The fictional organization's customers, proposals, and projects with their milestones, added live
-// and dated from the day they are added, each recorded in the change history as made by Fathom
-// itself. Proposals are in every status, some linked from projects, and projects and proposals name
-// some of the seeded features, which are added first; projects have customer deliveries before and
-// after that day, and one has no milestones. Owners are people the seed data adds, left out when
-// they are not there. Each project has its general feature, in the first status meaning In
-// progress, as approving gives one. Removing them first discards every draft, published or not, of
-// their records, and keeps any that something added by hand uses. A development-only package, never
-// included in the runtime image.
+// The fictional organization's customers, proposals, and projects with their milestones, and
+// removing them. A development-only package, never in the runtime image.
 
 import {
   type ChangeRecord,
   customers,
-  features,
   type Database,
   drafts,
+  features,
   listItems,
   lists,
   milestones,
   people,
   projects,
   proposals,
+  type Reader,
   recordChanges,
   unpublishedDrafts,
 } from "@fathom/db";
@@ -240,8 +234,6 @@ export const milestoneId = (project: string, key: string) =>
 
 const customerIds = (keys: readonly string[]) => keys.map(customerId).sort();
 const featureIds = (keys: readonly string[]) => keys.map(featureId).sort();
-
-type Reader = Pick<Database, "select">;
 
 // Whether a draft's fields link, by a list of identifiers under a name, to any of these.
 export const linksAny = (

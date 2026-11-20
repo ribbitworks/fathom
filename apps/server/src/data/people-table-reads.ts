@@ -3,7 +3,7 @@
 // Reading the People table as each reader may see it, today or on another day, with drafts and
 // planned hires. Part of the data access layer.
 
-import { type Database, fieldOfValue } from "@fathom/db";
+import { type Database, fieldOfValue, type Reader } from "@fathom/db";
 import {
   changesLinesOn,
   seesBuiltInColumn,
@@ -157,7 +157,7 @@ async function draftsOn(
 // Each hiring state's meaning, and the first state offered for each meaning a person can have, so
 // a person shows their own state while it has the meaning their end date gives them, and otherwise
 // the first of that meaning.
-async function readStates(reader: Pick<Database, "select">) {
+async function readStates(reader: Reader) {
   const choices = await listChoices(reader, "hiring-states");
   const meanings = new Map(choices.map(({ id, meaning }) => [id, meaning]));
   const first = {

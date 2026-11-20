@@ -3,7 +3,13 @@
 // Reading planned hires and their drafts as each reader may see them, and a hire as a row of the
 // People table. Part of the data access layer.
 
-import { type Database, inChunks, people, plannedHires } from "@fathom/db";
+import {
+  type Database,
+  inChunks,
+  people,
+  plannedHires,
+  type Reader,
+} from "@fathom/db";
 import {
   type Hire,
   type HireDraft,
@@ -45,7 +51,6 @@ import {
   type HireRow,
   nameOfHire,
   offeredOn,
-  type Reader,
   readHireTier,
   recordedHire,
   recordType,

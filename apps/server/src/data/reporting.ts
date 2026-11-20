@@ -5,10 +5,10 @@
 
 import { defaultLineFrom } from "@fathom/shared";
 import {
-  type Database,
   drafts,
   inChunks,
   people,
+  type Reader,
   reportingLines,
   teams,
   unpublishedDrafts,
@@ -28,8 +28,6 @@ import {
   inForceOn,
   inForceOrLater,
 } from "./in-force.ts";
-
-type Reader = Pick<Database, "select">;
 
 export type LineRow = typeof reportingLines.$inferSelect;
 

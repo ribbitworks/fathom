@@ -1,17 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Local accounts that sign in with a password: creating them, with the roles each holds and its
-// default, the passwords Fathom generates for them, which their users must change at first sign-in,
-// and the administration of them: those who see accounts list them, and those who manage them change
-// their names, email addresses, and roles, reset their passwords, and deactivate them. Administrators
-// manage their own account like any other, except that some active account must keep Edit
-// Administration, so no one can lock everyone out, and nobody resets their own password here.
-// Public sign-up is turned off, so accounts are created here, through Better Auth's own storage,
-// which hashes passwords.
+// Local accounts that sign in with a password: creating them, their generated passwords, and their
+// administration. Part of the data access layer.
 
 import {
   accounts,
   type Database,
+  type Reader,
   recordKeys,
   roles as roleTable,
   userRoles,
@@ -54,7 +49,7 @@ const byName = (roles: readonly AccountRole[]) =>
 
 // Each of the roles with these IDs, by name, refused if any does not exist.
 async function findRoles(
-  database: Pick<Database, "select">,
+  database: Reader,
   roleIds: readonly string[],
 ): Promise<AccountRole[]> {
   // One after another, since a transaction's queries share one connection.
@@ -120,7 +115,7 @@ export function generatePassword(
   return shuffled.join("");
 }
 
-const generatePasswordFor = async (database: Pick<Database, "select">) =>
+const generatePasswordFor = async (database: Reader) =>
   generatePassword((await readPasswordSettings(database)).recipe);
 
 async function checkPassword(auth: Auth, password: string): Promise<void> {
@@ -361,7 +356,7 @@ export interface AccountAdministration {
 
 // Whether an account exists, deactivated or not.
 export async function accountExists(
-  database: Pick<Database, "select">,
+  database: Reader,
   id: string,
 ): Promise<boolean> {
   const [account] = await database

@@ -4,7 +4,7 @@
 // that report to it. Part of the data access layer.
 
 import { refuseFillingAllocated } from "./allocations.ts";
-import { type Database, plannedHires } from "@fathom/db";
+import { type Database, plannedHires, type Reader } from "@fathom/db";
 import {
   approvesKind,
   type DraftsRequest,
@@ -72,8 +72,6 @@ export interface Fill {
   personFields: string[];
   plannedHires: string[];
 }
-
-type Reader = Pick<Database, "select">;
 
 // The fills in drafts, as the viewer's drafts make them, or as published when there is no viewer:
 // each hire drafted as filled, its person's draft, and the hires drafted to report to the person

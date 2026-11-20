@@ -36,3 +36,6 @@ export function createDatabase(pool: Pool) {
 }
 
 export type Database = ReturnType<typeof createDatabase>;
+
+// A database or transaction, where only reading is needed.
+export type Reader = Pick<Database, "select">;

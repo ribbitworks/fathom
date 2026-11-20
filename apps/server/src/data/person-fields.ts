@@ -3,7 +3,7 @@
 // A person's details: their fields and the tiers that cover them, their values, and the checks on
 // the values asked for and the changes recorded. Part of the data access layer.
 
-import { type Database, fieldOfValue, people } from "@fathom/db";
+import { type Database, fieldOfValue, people, type Reader } from "@fathom/db";
 import {
   isLink,
   type FieldType,
@@ -105,7 +105,7 @@ export const meaningOn = (person: Recorded, today: string): "hired" | "left" =>
 // Refuses a state that is not a hiring state with the meaning the person's end date gives them.
 // A state they already have stays valid when retired.
 export async function checkState(
-  reader: Pick<Database, "select">,
+  reader: Reader,
   person: Recorded,
   today: string,
   had: unknown,

@@ -4,7 +4,7 @@
 // Part of the data access layer. Moving a column changes the view, not this order; approving a new
 // column adds it at the end.
 
-import { columnOrders, type Database, fields } from "@fathom/db";
+import { columnOrders, type Database, fields, type Reader } from "@fathom/db";
 import { builtInColumnNames } from "@fathom/shared";
 import { asc, eq } from "drizzle-orm";
 import type { Transaction } from "./changes.ts";
@@ -13,8 +13,6 @@ const table = "people";
 
 // The People table's built-in columns, in the order they start in.
 export const builtInColumns: readonly string[] = [...builtInColumnNames.keys()];
-
-type Reader = Pick<Database, "select">;
 
 // The stored order, locked for a change when given a transaction that changes it.
 async function storedOrder(reader: Reader, lock = false): Promise<string[]> {
