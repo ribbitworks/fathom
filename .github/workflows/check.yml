@@ -87,7 +87,7 @@ jobs:
       contents: read
     # The web app's and the server's tests take longest, so each has a runner's four cores; the rest
     # share one runner, a worker each. A package added later runs with the rest. Each part's settings
-    # are looked up by its name, so the matrix holds the name alone, which is all GitHub shows.
+    # are looked up by its name, so the matrix holds only the name, which GitHub adds to the job's.
     env:
       PARTS: >-
         {"web": {"packages": "@fathom/web", "workers": 4},
@@ -111,7 +111,12 @@ jobs:
         env:
           PACKAGES: ${{ fromJSON(env.PARTS)[matrix.part].packages }}
           VITEST_MAX_WORKERS: ${{ fromJSON(env.PARTS)[matrix.part].workers }}
+          PART: ${{ matrix.part }}
         run: |
+          if [ -z "$PACKAGES" ]; then
+            echo "error: PARTS has no packages for the part '$PART'" >&2
+            exit 1
+          fi
           read -r -a selectors <<<"$PACKAGES"
           filters=()
           for selector in "${selectors[@]}"; do filters+=(--filter "$selector"); done
