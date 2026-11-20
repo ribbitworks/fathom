@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["deploy/**", "apps/server/src/create-administrator.ts", "apps/web/src/change-password.tsx"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/operations/installing-fathom.md", "docs/operations/securing-your-environment.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Acceptance, Installing Fathom
@@ -52,7 +52,7 @@ Run before the first test case. This makes the installation's secrets and certif
 
 2. Confirm that `ls ~/fathom-install/secrets` lists six files: `fathom_app_password`, `fathom_auth_secret`, `fathom_migrator_password`, `fathom_tls_cert.pem`, `fathom_tls_key.pem` and `postgres_superuser_password`.
 3. Run `cp deploy/compose.env.example deploy/.env`, and run `echo $HOME` to see the home folder's full path.
-4. Open `deploy/.env` in the text editor, change these six settings to read as follows, with `<home>` replaced by that path, and save it:
+4. Open `deploy/.env` in the text editor. It holds the example file's values, such as `FATHOM_BIND_ADDRESS=10.0.0.10`, which are to be replaced. Change these six settings to read as follows, writing the path `echo $HOME` printed in place of each `<home>`, and save it:
 
    ```text
    FATHOM_BIND_ADDRESS=127.0.0.1
