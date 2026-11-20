@@ -249,7 +249,7 @@ fathom_trivy_image="aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b5
 # shellcheck disable=SC2034 # Read by the scripts that source this file.
 fathom_gitleaks_image="zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"
 # shellcheck disable=SC2034 # Read by the scripts that source this file.
-fathom_semgrep_image="semgrep/semgrep:1.182.1@sha256:451b3d875c00dac7ed5db5293e584a07de11449a409c10b3c2d2652f429630b6"
+fathom_semgrep_image="semgrep/semgrep:1.185.0@sha256:67518c174185a2043fdbed16c70631b79209499b3671178e7194379b48295a0d"
 # Renovate, which lists dependency updates and validates its own settings.
 # shellcheck disable=SC2034 # Read by the scripts that source this file.
 fathom_renovate_image="renovate/renovate:44.239.0@sha256:56c9cd93b1baf92ebcc121cdd5cffa46daeeb09e23460cf1c363627a6e5334a6"
