@@ -220,7 +220,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] `FAC4` Select the **Access history** page in the left-hand menu.
-  - **Expected:** The newest entry reads "Engineering Director changed End date's class: from Personal to General", with a yellow dot before it.
+  - **Expected:** The newest entry reads "Engineering Director changed End date's class: from Personal to General", and ends in a grey **Worth checking** box.
   - **Notes:**
 
 ### DIRECTOR-04: A Shared View Is Seen by Others Until It Stops Being Shared
