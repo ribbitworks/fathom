@@ -146,6 +146,14 @@ export const signedOut = () =>
   Response.json({ error: "Unauthorized" }, { status: 401 });
 export const greeting = () => Response.json({ greeting: "Hello, Fathom" });
 
+// A list's choice, named by its ID.
+export const fictionalChoice = (id: string): Choice => ({
+  id,
+  label: `Fictional ${id}`,
+  description: "",
+  retired: false,
+});
+
 export function renderApp(path: string) {
   // Failed requests are not retried, so each test sees the server's first answer.
   const queryClient = new QueryClient({

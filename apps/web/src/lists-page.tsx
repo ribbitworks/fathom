@@ -57,13 +57,13 @@ import {
   selectionOf,
 } from "./list-drafts.tsx";
 import {
-  ListFacts,
   type ChoiceActions,
   entryNameId,
   ListPanel,
   rowId,
   titleId,
 } from "./list-panel.tsx";
+import { ListFacts } from "./list-facts.tsx";
 import {
   addChoices,
   deleteChoice,
