@@ -5,6 +5,7 @@
 
 import { startingEffortConversions } from "@fathom/shared";
 import { screen } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fictionalStream,
@@ -64,7 +65,7 @@ const plan: Answers = {
   "GET /api/effort-conversions": () => Response.json(startingEffortConversions),
 };
 
-// Opens a page with this last view of it kept, and returns the address it settled on.
+// Opens a page with this last view of it kept, giving the address it settled on and its history.
 function openOn(
   path: string,
   page: string,
@@ -79,7 +80,10 @@ function openOn(
     ...answers,
   });
   const history = renderApp(path);
-  return () => new URLSearchParams(history.location.search);
+  return {
+    address: () => new URLSearchParams(history.location.search),
+    history,
+  };
 }
 
 describe("People opening on the view it last showed", () => {
@@ -102,8 +106,34 @@ describe("People opening on the view it last showed", () => {
     expect((await searchBox()).value).toBe(search);
   });
 
+  it("keeps its last view when chosen in the menu while it is open", async () => {
+    // Given People open on its last view
+    open("/people", { search: "Fictional" });
+    expect((await searchBox()).value).toBe("Fictional");
+
+    // When People is chosen in the left-hand menu
+    await userEvent.click(screen.getByRole("link", { name: "People" }));
+
+    // Then it still shows that view
+    expect((await searchBox()).value).toBe("Fictional");
+  });
+
+  it("shows the default when chosen in the menu with no last view, leaving no mark to go back to", async () => {
+    // Given People open on its default, with no last view kept
+    const { address, history } = open("/people", {});
+    expect((await searchBox()).value).toBe("");
+
+    // When People is chosen in the left-hand menu
+    await userEvent.click(screen.getByRole("link", { name: "People" }));
+
+    // Then it still shows its default, and the history holds no menu choice
+    expect((await searchBox()).value).toBe("");
+    expect(address().toString()).toBe("");
+    expect(history.location.state).not.toHaveProperty("fromMenu");
+  });
+
   it("opens a cleared view as the page's default", async () => {
-    const address = open("/people", {});
+    const { address } = open("/people", {});
     expect((await searchBox()).value).toBe("");
     expect(address().toString()).toBe("");
   });
@@ -124,7 +154,7 @@ describe("Projects opening on the view it last showed", () => {
       [null, "Fictional"],
     ],
   ])("opens on %s", async (_, last, grid, shown) => {
-    const address = openOn(
+    const { address } = openOn(
       "/projects",
       "projects",
       last,
@@ -142,7 +172,7 @@ describe("Releases opening on the view it last showed", () => {
     ["with its choices", { choices: { past: "shown" } }, "shown"],
     ["when its view was cleared", {}, null],
   ])("opens on the Cycles tab %s", async (_, definition, past) => {
-    const address = openOn(
+    const { address } = openOn(
       "/releases",
       "releases",
       { table: "cycles", definition },
@@ -168,7 +198,7 @@ describe("Features opening on the view it last showed", () => {
     ],
     ["the table when its view was cleared", {}, undefined, [null, null]],
   ])("opens on %s", async (_, definition, mode, shown) => {
-    const address = openOn(
+    const { address } = openOn(
       "/features",
       "features",
       { table: "features", definition, mode },
@@ -209,7 +239,7 @@ describe("the Org chart opening on the view it last showed", () => {
     ["with its choices", { choices: { teams: "feature" } }, "feature"],
     ["as it opens when its view was cleared", {}, null],
   ])("opens the chart %s", async (_, definition, teams) => {
-    const address = openOn(
+    const { address } = openOn(
       "/org-chart",
       "org-chart",
       { table: "org-chart", definition },
@@ -258,7 +288,7 @@ describe("Capacity opening on the view it last showed", () => {
   });
 
   it("opens on the tab and view it last showed when the address names neither", async () => {
-    const address = open("/capacity");
+    const { address } = open("/capacity");
 
     await screen.findByRole("grid", { name: "Allocations by month" });
     expect([address().get("mode"), address().get("search")]).toEqual([
@@ -268,7 +298,7 @@ describe("Capacity opening on the view it last showed", () => {
   });
 
   it("opens on the last view when the address names the tab it was on", async () => {
-    const address = open("/capacity?mode=allocations");
+    const { address } = open("/capacity?mode=allocations");
 
     await screen.findByRole("grid", { name: "Allocations by month" });
     expect(address().get("search")).toBe("Casey");
@@ -280,7 +310,7 @@ describe("Capacity opening on the view it last showed", () => {
   ])(
     "opens Feature teams for %s, though Allocations was last shown",
     async (_, path) => {
-      const address = open(path);
+      const { address } = open(path);
 
       await screen.findByRole("grid", { name: "Feature teams by month" });
       expect([address().get("mode"), address().get("search")]).toEqual([

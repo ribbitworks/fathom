@@ -287,7 +287,7 @@ Covered by [REL-23](release-cycles-manual-test.md#rel-23-a-cycles-new-length-mov
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-11 ended with.
 
-**Preconditions:** **Features** page opened from the left-hand menu, in one list.
+**Preconditions:** **Features** page opened from the left-hand menu, then **Clear view** selected in the **Views** menu above the table, so it is in one list.
 
 - [ ] `BD96` Select **Group by** above the table, then **Needed by**.
   - **Expected:**
@@ -720,7 +720,7 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-24 ended with. Step `B09A` signs in as another account.
 
-**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu, as it opens: in one list, nothing in the search box and no filters.
+**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu, then **Clear view** selected in the **Views** menu above the table: in one list, nothing in the search box and no filters.
 
 - [ ] `D750` Read the **Priority**, **Size** and **Risk** cells of 'Offline Sync'.
   - **Expected:**
@@ -819,7 +819,7 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account FEAT-27 ended with.
 
-**Preconditions:** Select the **Features** page in the left-hand menu.
+**Preconditions:** Select the **Features** page in the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
 
 - [ ] `02D2` Select **Group by** above the table, then **Cycle**.
   - **Expected:** The button reads **Group by: Cycle**.
@@ -835,7 +835,7 @@ Covered by [FEAT-07](#feat-07-those-who-only-see-the-plan-cannot-change-features
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the account FEAT-28 ended with.
 
-**Preconditions:** Select the **Features** page in the left-hand menu.
+**Preconditions:** Select the **Features** page in the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
 
 - [ ] `AC75` Select **Group by** above the table, then **Projects**.
   - **Expected:**
