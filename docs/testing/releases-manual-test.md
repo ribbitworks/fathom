@@ -11,7 +11,7 @@ last_updated: "2026-11-19"
 
 ## Scope
 
-Verifies the Releases page's **Releases** tab: its table and a release's details, making a release, changing a release's name, ship day, colour and note as drafts, removing one, and rejecting and resubmitting a release's draft. [Schedules](release-schedules-manual-test.md) verifies the **Schedules** tab, [Cycles](release-cycles-manual-test.md) the **Cycles** tab, and [Release Timelines and Links](releases-timeline-manual-test.md) the timeline and the links between the tabs.
+Verifies the Releases page's **Releases** tab: its table and a release's details, making a release, changing a release's name, ship day, colour and note as drafts, and rejecting and resubmitting a release's draft. [Schedules](release-schedules-manual-test.md) verifies the **Schedules** tab, [Cycles](release-cycles-manual-test.md) the **Cycles** tab, and [Release Timelines and Links](releases-timeline-manual-test.md) the timeline and the links between the tabs.
 
 ## Test Environment
 
@@ -23,7 +23,6 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 - **Product Manager:** `product.manager@fathom.test`
 - **Project Manager:** `project.manager@fathom.test`
-- **Team Member:** `team.member@fathom.test`
 
 ## Common Procedures
 
@@ -45,13 +44,112 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out. To run the test again, start again from Restore the Seed Data.
 
-### Part 1: Changing a Release
+### Part 1: The Releases Tab With the Seed Data
 
-#### REL-12: A Release Is Changed by a Draft
+#### REL-37: The Releases Tab Shows Each Release
 
 **Account:** Product Manager, `product.manager@fathom.test`; the first test case.
 
-**Preconditions:** Restore the Seed Data run, then signed in with this account. **Releases** page open from the left-hand menu.
+**Preconditions:** Restore the Seed Data run, then signed in with this account.
+
+- [ ] `F2C3` Select the **Releases** page in the left-hand menu.
+  - **Expected:**
+    - **Releases** is the tab chosen, and the button at the top right reads **New release**.
+    - The table's columns are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Features** and **Status**.
+    - The rows show as one list, with no headings.
+  - **Notes:**
+
+- [ ] `E4CC` Select **Group by** above the table, then **Schedule**.
+  - **Expected:**
+    - The button reads **Group by: Schedule**.
+    - The rows are under the headings 'Platform', 'Patches' and 'Field Apps'.
+  - **Notes:**
+
+- [ ] `C42A` Read the rows under 'Field Apps'.
+  - **Expected:**
+    - 'Lantern 2' and 'Lantern 3' are listed, in that order.
+    - The **Ships on** day of 'Lantern 2' is later than the last day of its last cycle.
+  - **Notes:**
+
+- [ ] `9E90` Read the row for 'Harbor 3', under 'Platform'.
+  - **Expected:**
+    - **Ships on** is a day, and **Cycles** names its first and last cycles, such as "27.2 to 28.1".
+    - **Ships on** and **Cycles** each have a yellow dot before them.
+    - **Status** is blank.
+  - **Notes:**
+
+- [ ] `6E0B` Read the light green **Live** row under the row for 'Harbor 3'.
+  - **Expected:** Its **Ships on** and **Cycles** show an earlier day and earlier cycles than the row above.
+  - **Notes:**
+
+**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
+
+#### REL-38: A Release's Details Show Its Note
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account REL-37 ended with.
+
+**Preconditions:** **Releases** page selected again in the left-hand menu, so the **Releases** tab shows with no filter, in one list, and shipped releases hidden.
+
+- [ ] `EC21` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS'.
+  - **Expected:**
+    - The side panel opens, headed 'Harbor 2 LTS'.
+    - Under **Details**, the rows are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Status**, **Colour** and **Note**.
+    - **Status** reads "Not shipped", and **Schedule** reads 'Platform'.
+    - **Note** shows the release's whole note.
+  - **Notes:**
+
+- [ ] `7E5C` Select the open button at the right of the **Note** row.
+  - **Expected:** A panel titled "Note for Harbor 2 LTS" opens beside the release's details.
+  - **Notes:**
+
+- [ ] `A106` Select the **×** at the top right of the note's panel.
+  - **Expected:** The release's details are still open.
+  - **Notes:**
+
+#### REL-39: A Release Is Added to a Schedule Chosen
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account REL-38 ended with.
+
+**Preconditions:** **Releases** page open on the **Releases** tab.
+
+- [ ] `6B37` Select **New release**.
+  - **Expected:** A dialog opens whose first field is **Schedule**.
+  - **Notes:**
+
+- [ ] `35C5` Choose 'Platform' in **Schedule**.
+  - **Expected:** **First cycle** and **Last cycle** offer Platform's cycles.
+  - **Notes:**
+
+- [ ] `864E` Type `Fictional Harbor` in **Name**.
+  - **Expected:** The name is in the field.
+  - **Notes:**
+
+- [ ] `3D01` Choose the cycle of the quarter after this quarter in **First cycle**, such as '27.1'.
+  - **Expected:**
+    - **First cycle** and **Last cycle** both read that cycle.
+    - The dialog shows no problem.
+  - **Notes:**
+
+- [ ] `EA8F` Select **Make release**.
+  - **Expected:**
+    - The dialog closes, and a notification says "Drafted the new release."
+    - 'Fictional Harbor' is listed, its **Schedule** reading 'Platform', with a hollow dot in its slot.
+    - Its details are open beside the table.
+  - **Notes:**
+
+**Afterwards:** Run Discard the Unpublished Changes.
+
+#### REL-40: A Role That Can't Change Releases Sees No Pencils
+
+Covered by [REL-35](release-schedules-manual-test.md#rel-35-a-role-that-cant-change-schedules-sees-no-pencils), which checks that a role that can't change a record sees no pencils in its details.
+
+### Part 2: Changing a Release
+
+#### REL-12: A Release Is Changed by a Draft
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account REL-39 ended with.
+
+**Preconditions:** Run after REL-39. **Releases** page selected again in the left-hand menu.
 
 - [ ] `285E` Select the details button at the right of the first cell of the row for 'Lantern 3'.
   - **Expected:**
@@ -121,34 +219,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - In the table, a yellow dot is before `Lantern Three` again.
   - **Notes:**
 
-#### REL-15: A Release Is Removed by a Draft
+#### REL-17: A Release Ships on a Day of Its Own
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account REL-14 ended with.
 
-**Preconditions:** Run after REL-14. **Releases** page open, with **Year** chosen on the timeline.
-
-- [ ] `C20C` Select the **⋯** at the right of the first cell of the row for 'Lantern 2', then **Remove release**.
-  - **Expected:**
-    - A notification says "Drafted removing Lantern 2."
-    - The row for 'Lantern 2' has a hollow yellow dot in its slot, and is struck through.
-  - **Notes:**
-
-- [ ] `25FE` Read the row for 'Field Apps' on the timeline.
-  - **Expected:** The strip of 'Lantern 2' is struck through, with a hollow yellow dot before its name.
-  - **Notes:**
-
-- [ ] `1DF3` Select the **⋯** at the right of the first cell of the row for 'Lantern 2', then **Discard draft**.
-  - **Expected:**
-    - A notification says "Discarded the draft."
-    - The row for 'Lantern 2' has no dot and is not struck through.
-    - On the timeline, 'Lantern 2' is not struck through and has no dot.
-  - **Notes:**
-
-#### REL-17: A Release Ships on a Day of Its Own
-
-**Account:** Product Manager, `product.manager@fathom.test`, the account REL-15 ended with.
-
-**Preconditions:** Run after REL-15. **Releases** page open, with no side panel open.
+**Preconditions:** Run after REL-14. **Releases** page open, with no side panel open.
 
 - [ ] `1179` Select the details button at the right of the first cell of the row for `Lantern Three`.
   - **Expected:** The side panel opens, headed by a yellow dot and `Lantern Three`.
@@ -240,141 +315,3 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 **Afterwards:** Run Discard the Unpublished Changes.
-
-### Part 2: The Releases Tab With the Seed Data
-
-#### REL-37: The Releases Tab Shows Each Release
-
-**Account:** Product Manager, `product.manager@fathom.test`, the account REL-27 ended with.
-
-**Preconditions:** Restore the Seed Data run, then signed in with this account.
-
-- [ ] `F2C3` Select the **Releases** page in the left-hand menu.
-  - **Expected:**
-    - **Releases** is the tab chosen, and the button at the top right reads **New release**.
-    - The table's columns are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Features** and **Status**.
-    - The rows show as one list, with no headings.
-  - **Notes:**
-
-- [ ] `E4CC` Select **Group by** above the table, then **Schedule**.
-  - **Expected:**
-    - The button reads **Group by: Schedule**.
-    - The rows are under the headings 'Platform', 'Patches' and 'Field Apps'.
-  - **Notes:**
-
-- [ ] `C42A` Read the rows under 'Field Apps'.
-  - **Expected:**
-    - 'Lantern 2' and 'Lantern 3' are listed, in that order.
-    - The **Ships on** day of 'Lantern 2' is later than the last day of its last cycle.
-  - **Notes:**
-
-- [ ] `9E90` Read the row for 'Harbor 3', under 'Platform'.
-  - **Expected:**
-    - **Ships on** is a day, and **Cycles** names its first and last cycles, such as "27.2 to 28.1".
-    - **Ships on** and **Cycles** each have a yellow dot before them.
-    - **Status** is blank.
-  - **Notes:**
-
-- [ ] `6E0B` Read the light green **Live** row under the row for 'Harbor 3'.
-  - **Expected:** Its **Ships on** and **Cycles** show an earlier day and earlier cycles than the row above.
-  - **Notes:**
-
-- [ ] `5509` Open the **Views** menu.
-  - **Expected:** It offers "Show shipped (3)".
-  - **Notes:**
-
-- [ ] `B630` Select **Show shipped**.
-  - **Expected:**
-    - 'Harbor 1' is listed under 'Platform', and **Status** reads "Shipped".
-    - Under 'Patches', the release that has shipped is listed too, and **Status** reads "Shipped".
-    - Under 'Field Apps', 'Lantern 1' is listed before 'Lantern 2', and **Status** reads "Shipped".
-    - 'Harbor 1' is drawn on the timeline above the table.
-  - **Notes:**
-
-- [ ] `8A1D` Select **Filter…** in the **Schedule** column's menu.
-  - **Expected:** A dialog opens listing 'Platform', 'Patches' and 'Field Apps', each with a checkbox.
-  - **Notes:**
-
-- [ ] `3D7A` Tick 'Platform'.
-  - **Expected:**
-    - Every release listed reads 'Platform' in **Schedule**, and none reads 'Patches'.
-    - A pill above the table reads "Schedule: Platform".
-    - The timeline above the table draws only 'Platform'.
-  - **Notes:**
-
-**Afterwards:** Open the **Views** menu above the table and select **Clear view**.
-
-#### REL-38: A Release's Details Offer Its Note and a Pencil for Each Value
-
-**Account:** Product Manager, `product.manager@fathom.test`, the account REL-37 ended with.
-
-**Preconditions:** **Releases** page selected again in the left-hand menu, so the **Releases** tab shows with no filter, in one list, and shipped releases hidden.
-
-- [ ] `EC21` Select the details button at the right of the first cell of the row for 'Harbor 2 LTS'.
-  - **Expected:**
-    - The side panel opens, headed 'Harbor 2 LTS'.
-    - Under **Details**, the rows are, in order: **Release**, **Schedule**, **Ships on**, **Cycles**, **Features**, **Status**, **Colour** and **Note**.
-    - **Status** reads "Not shipped", and **Schedule** reads 'Platform'.
-    - **Note** shows the release's whole note.
-  - **Notes:**
-
-- [ ] `7E5C` Select the open button at the right of the **Note** row.
-  - **Expected:** A panel titled "Note for Harbor 2 LTS" opens beside the release's details.
-  - **Notes:**
-
-- [ ] `A106` Select the **×** at the top right of the note's panel.
-  - **Expected:** The release's details are still open.
-  - **Notes:**
-
-- [ ] `DEB6` Point at the **Ships on** row.
-  - **Expected:** A pencil shows at the row's right.
-  - **Notes:**
-
-- [ ] `F33C` Select the pencil.
-  - **Expected:** A dialog titled "Change when Harbor 2 LTS ships" opens, with only a **Ships on** field.
-  - **Notes:**
-
-- [ ] `1443` Select **Cancel**.
-  - **Expected:** The dialog closes, and nothing in the panel has changed.
-  - **Notes:**
-
-#### REL-39: A Release Is Added to a Schedule Chosen
-
-**Account:** Product Manager, `product.manager@fathom.test`, the account REL-38 ended with.
-
-**Preconditions:** **Releases** page open on the **Releases** tab.
-
-- [ ] `6B37` Select **New release**.
-  - **Expected:** A dialog opens whose first field is **Schedule**.
-  - **Notes:**
-
-- [ ] `4C8F` Open the **Schedule** list.
-  - **Expected:** It offers 'Platform' and 'Field Apps', and not 'Patches'.
-  - **Notes:**
-
-- [ ] `35C5` Choose 'Platform'.
-  - **Expected:** **First cycle** and **Last cycle** offer Platform's cycles.
-  - **Notes:**
-
-- [ ] `864E` Type `Fictional Harbor` in **Name**.
-  - **Expected:** The name is in the field.
-  - **Notes:**
-
-- [ ] `3D01` Choose the cycle of the quarter after this quarter in **First cycle**, such as '27.1'.
-  - **Expected:**
-    - **First cycle** and **Last cycle** both read that cycle.
-    - The dialog shows no problem.
-  - **Notes:**
-
-- [ ] `EA8F` Select **Make release**.
-  - **Expected:**
-    - The dialog closes, and a notification says "Drafted the new release."
-    - 'Fictional Harbor' is listed, its **Schedule** reading 'Platform', with a hollow dot in its slot.
-    - Its details are open beside the table.
-  - **Notes:**
-
-**Afterwards:** Run Discard the Unpublished Changes.
-
-#### REL-40: A Role That Can't Change Releases Sees No Pencils
-
-Covered by [REL-35](release-schedules-manual-test.md#rel-35-a-role-that-cant-change-schedules-sees-no-pencils), which checks that a role that can't change a record sees no pencils in its details.

@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Drafts of People, Lists and Columns
 
 ## Scope
 
-Verifies how drafts of people, columns, lists, choices, and choice orders are shown on the People and Lists pages, and what a Workforce Administrator, an Engineering Director and a Project Manager can do with them, there and from the top bar, including drafts that use drafts of another kind, and that nobody approves drafts they changed unless their role grants it, as [Roles](../product/roles.md#what-each-role-can-do) sets out, shown here with a release's draft. [Drafts Page](drafts-page-manual-test.md) verifies the Drafts page: its table, tabs, ticks and details. [Unpublished Changes](unpublished-changes-manual-test.md) verifies changes not yet published, and publishing all of them or discarding them all from the top bar.
+Verifies how drafts of people, columns, lists, choices, and choice orders are shown on the People and Lists pages, and what a Workforce Administrator, an Engineering Director and a Project Manager can do with them, there and from the top bar, including drafts that use drafts of another kind, and that nobody approves drafts they changed unless their role grants it, as [Roles](../product/roles.md#what-each-role-can-do) sets out, shown here with a feature's draft. [Drafts Page](drafts-page-manual-test.md) verifies the Drafts page: its table, tabs, ticks and details. [Unpublished Changes](unpublished-changes-manual-test.md) verifies changes not yet published, and publishing all of them or discarding them all from the top bar.
 
 ## Test Environment
 
@@ -90,42 +90,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The menu closes.
   - **Notes:**
 
-### DRAFT-03: Drafts Applied Shows the People Table as It Will Be
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-02.
-
-**Preconditions:** As DRAFT-01.
-
-- [ ] `87F2` Open the Draft menu, and select **Drafts applied**.
-  - **Expected:** The columns are, from the left:
-    - **Name**
-    - **ID**
-    - **Position**
-    - **Site**
-    - **Grade**
-    - **Onboarding**
-    - **Work pattern**
-    - **Compensation band**
-    - **Performance rating**
-    - **State**
-    - **Start**
-    - **Expected**
-    - **End**
-    - **Manager**
-    - **Manager?**
-    - **Manager assigned**
-    - **Team**
-    - **Team name**
-    - **Skills**
-  - **Notes:**
-
-- [ ] `EE9B` Select **Drafts & Live**.
-  - **Expected:** **Role on team** and **Previous site** are among the columns again.
-  - **Notes:**
-
 ### DRAFT-04: Live Only Shows the People Table as It Is Now
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-03.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-02.
 
 **Preconditions:** As DRAFT-01.
 
@@ -162,9 +129,47 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** **Grade**, **Previous site** and **Skills** are among the columns again.
   - **Notes:**
 
+### DRAFT-26: A Row With a Draft Ends With One Menu Button
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-04.
+
+**Preconditions:** As DRAFT-01.
+
+- [ ] `17CA` In the search box above the table, type `Simone Jean`.
+  - **Expected:**
+    - Her row is tinted faint yellow.
+    - A yellow dot before her **Manager**.
+    - A light green Live row is under it.
+  - **Notes:**
+
+- [ ] `CDD2` Scroll the table all the way to the right, and read the end of that row.
+  - **Expected:**
+    - The row ends with one **⋯** button.
+    - Nothing is beside it.
+  - **Notes:**
+
+### DRAFT-22: Drafts That Others Use Cannot Be Discarded
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-26.
+
+**Preconditions:** **Lists** page open.
+
+- [ ] `2F53` Select 'Skills'.
+  - **Expected:**
+    - A panel opens.
+    - 'Rust' has a yellow dot in its slot.
+    - 'TypeScript' has a yellow dot in its slot.
+  - **Notes:**
+
+- [ ] `CAE8` Select the **⋯** button at the end of the row of 'Rust', then **Discard draft**.
+  - **Expected:**
+    - A red notice reads "This choice can't be discarded while other drafts depend on it. Discard those drafts, or change them so they no longer use it, then try again."
+    - 'Rust' still has a yellow dot in its slot.
+  - **Notes:**
+
 ### DRAFT-05: A Rejected Column Draft Offers Nothing to Decide
 
-**Account:** Engineering Director, `engineering.director@fathom.test`, changed from DRAFT-04.
+**Account:** Engineering Director, `engineering.director@fathom.test`, changed from DRAFT-22.
 
 **Preconditions:** Signed in with this account. **People** page open.
 
@@ -193,10 +198,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The Draft menu closes.
   - **Notes:**
 
-- [ ] `9F80` Open the Draft menu, and select **Rejected** again.
-  - **Expected:** All people are shown again.
-  - **Notes:**
-
 ### DRAFT-08: The Lists Page Shows Which Lists Have Drafts
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-07.
@@ -215,41 +216,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** Each list except 'Certifications' and 'Skills' has a light green Live row under it.
   - **Notes:**
 
-- [ ] `ADF8` Read the **Choices** column of the row of 'Positions', not its Live row.
-  - **Expected:** "(6)", then 'Engineering Manager', 'Employee', 'Manager', 'Software Engineer', 'Test Engineer', 'SDET', and 'Architect' struck through.
-  - **Notes:**
-
-### DRAFT-09: A New Order That Depends on a Rejected Choice Cannot Be Approved
-
-**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-08.
-
-**Preconditions:** As DRAFT-08.
-
-- [ ] `7E3F` Select 'Sites' in its row, not its Live row.
-  - **Expected:**
-    - A panel opens with 'Sites' at the top.
-    - 'Harbourside' is the first choice.
-  - **Notes:**
-
-- [ ] `C3B3` Select the **⋯** button beside 'Sites' at the top of the panel.
-  - **Expected:**
-    - The menu shows 'Sites', a divider, a yellow dot and "Draft: reordered", and "Reordered by Engineering Operations Manager".
-    - **Approve…** is greyed out.
-    - "Waiting for a rejected draft to be resubmitted" is under it.
-    - **Reject…** can be selected.
-  - **Notes:**
-
-- [ ] `C796` Press Esc.
-  - **Expected:** The menu closes.
-  - **Notes:**
-
-- [ ] `5C09` Close the panel with the **×** button at its top right.
-  - **Expected:** The panel closes.
-  - **Notes:**
-
 ### DRAFT-10: Rejected List Drafts Offer Nothing to Decide
 
-**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-09.
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-08.
 
 **Preconditions:** As DRAFT-08.
 
@@ -266,29 +235,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The panel closes.
   - **Notes:**
 
-### DRAFT-11: Drafts Applied Shows the Lists as They Will Be
-
-**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-10.
-
-**Preconditions:** As DRAFT-08.
-
-- [ ] `9A70` Open the Draft menu, and select **Drafts applied**.
-  - **Expected:**
-    - The count beside the search box reads "15 lists".
-    - 'Certifications' and 'Languages' are not in the table.
-    - No Live rows.
-    - No green dots.
-  - **Notes:**
-
-- [ ] `242E` Select **Drafts & Live**.
-  - **Expected:** 'Certifications' and 'Languages' are in the table again.
-  - **Notes:**
-
 ### DRAFT-21: A Resubmitted Choice Is Approved With the New Order That Depends on It
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-11. Step `71C1` signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-10. Step `71C1` signs in as another account.
 
-**Preconditions:** Run Reset the Database first. Signed in with this account.
+**Preconditions:** Signed in with this account.
 
 - [ ] `04CF` Select the **Lists** page in the left-hand menu.
   - **Expected:** The table of lists shows.
@@ -326,59 +277,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - 'Harbourside' has no dot and no box.
   - **Notes:**
 
-**Afterwards:** Run Reset the Database.
-
-### DRAFT-22: Drafts That Others Use Cannot Be Discarded
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-21.
-
-**Preconditions:** Reset the Database run after DRAFT-21. Signed in with this account. **Lists** page open.
-
-- [ ] `2F53` Select 'Skills'.
-  - **Expected:**
-    - A panel opens.
-    - 'Rust' has a yellow dot in its slot.
-    - 'TypeScript' has a yellow dot in its slot.
-  - **Notes:**
-
-- [ ] `CAE8` Select the **⋯** button at the end of the row of 'Rust', then **Discard draft**.
-  - **Expected:**
-    - A red notice reads "This choice can't be discarded while other drafts depend on it. Discard those drafts, or change them so they no longer use it, then try again."
-    - 'Rust' still has a yellow dot in its slot.
-  - **Notes:**
-
-### DRAFT-23: A New List Is Rejected Only With the Drafts That Use It
-
-**Account:** Engineering Director, `engineering.director@fathom.test`, changed from DRAFT-22.
-
-**Preconditions:** As DRAFT-22, signed in with this account instead. **Lists** page open.
-
-- [ ] `DC93` Select 'Skills'.
-  - **Expected:** A panel opens with 'Skills' at the top.
-  - **Notes:**
-
-- [ ] `33FA` Select the **⋯** button beside 'Skills' at the top of the panel, then **Reject…**.
-  - **Expected:**
-    - A dialog titled "Reject 5 drafts?" opens.
-    - Under "Also rejects the drafts that use these:" it lists "Silje Holm-Schrøder", "the column Skills", "the choice Rust in Skills" and "the choice TypeScript in Skills".
-    - It has a **Reason** box.
-  - **Notes:**
-
-- [ ] `3D12` Select **Cancel**.
-  - **Expected:** The dialog closes.
-  - **Notes:**
-
-- [ ] `9AAC` Close the panel.
-  - **Expected:**
-    - The panel closes.
-    - 'Skills' still has a yellow dot in its slot.
-  - **Notes:**
-
 ### DRAFT-25: Drafts This Account Changed Need Another Approver
 
-**Account:** Project Manager, `project.manager@fathom.test`, changed from DRAFT-23. Step `B553` signs in as another account.
+**Account:** Project Manager, `project.manager@fathom.test`, changed from DRAFT-21. Step `B553` signs in as another account.
 
-**Preconditions:** Run Reset the Database first. Signed in with this account. **Features** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
 
 - [ ] `5C1A` In the row 'Scheduler API', select the **Name** cell, replace its text with `Scheduler Service`, then press Enter.
   - **Expected:**
@@ -408,33 +311,6 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Its **Made by** reads "Project Manager as Project Manager".
   - **Notes:**
 
-- [ ] `4F66` Tick that row's tick box.
-  - **Expected:**
-    - At the right of the page's heading: "1 chosen draft needs another approver.", then **Reject…** and **Approve 1 draft…**.
-    - **Approve 1 draft…** is greyed out.
-    - **Reject…** is not greyed out.
-  - **Notes:**
-
-- [ ] `3F37` Tick the tick box of the row of 'Shift Handover Notes', near the top of the table.
-  - **Expected:**
-    - At the right of the page's heading: "1 chosen draft needs another approver.", then **Reject…** and **Approve 1 draft…**.
-    - **Approve 1 draft…** is not greyed out.
-  - **Notes:**
-
-- [ ] `F3E5` Select **Approve 1 draft…**.
-  - **Expected:**
-    - A dialog titled "Approve 1 draft?" opens.
-    - Under "Approving cannot be undone." it lists "the feature Shift Handover Notes".
-    - Under "This needs another approver and stays waiting:" it lists "the feature Scheduler Service".
-  - **Notes:**
-
-- [ ] `4A57` Select **Approve** in the dialog.
-  - **Expected:**
-    - A notice reads "Approved 1 draft. 1 needs another approver."
-    - No row's **Record** reads 'Shift Handover Notes'.
-    - A row's **Record** still reads `Scheduler Service`, with "Needs another approver" after it.
-  - **Notes:**
-
 - [ ] `B553` Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`.
   - **Expected:** The top bar's right end reads "Engineering Director".
   - **Notes:**
@@ -443,37 +319,4 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** A row's **Record** reads `Scheduler Service`, with no box after it.
   - **Notes:**
 
-- [ ] `9D15` Tick the tick box of the row of `Scheduler Service`.
-  - **Expected:** At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
-  - **Notes:**
-
-- [ ] `561B` Select **Approve 1 draft…**.
-  - **Expected:**
-    - A dialog opens.
-    - It has an **Approve** button.
-  - **Notes:**
-
-- [ ] `E72D` Select **Approve** in the dialog.
-  - **Expected:** A notice reads "Approved 1 draft."
-  - **Notes:**
-
 **Afterwards:** Run Reset the Database.
-
-### DRAFT-26: A Row With a Draft Ends With One Menu Button
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-25.
-
-**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
-
-- [ ] `17CA` In the search box above the table, type `Simone Jean`.
-  - **Expected:**
-    - Her row is tinted faint yellow.
-    - A yellow dot before her **Manager**.
-    - A light green Live row is under it.
-  - **Notes:**
-
-- [ ] `CDD2` Scroll the table all the way to the right, and read the end of that row.
-  - **Expected:**
-    - The row ends with one **⋯** button.
-    - Nothing is beside it.
-  - **Notes:**

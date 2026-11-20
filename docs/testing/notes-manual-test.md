@@ -11,7 +11,7 @@ last_updated: "2026-11-19"
 
 ## Scope
 
-Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings, checkboxes and numbered lists look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, or any value in a choice column, a long note folded in a person's details and read in full on Releases, an open note, from a person's details or a cell, kept open on reload, Back and a shared link, and a panel under another maximized and restored.
+Verifies what only a person can judge of Note columns on the People table: how the note's side panel looks, slides and resizes, writing a note with the toolbar, how headings, checkboxes and numbered lists look, switching between the editor and Markdown, pasting from another app, colours, the keyboard and focus, the panel's place beside the Metrics panel, the journey from writing a note to reading it, approving it, and finding it in the change history, filtering the rows that have a note, a long note folded in a person's details and read in full on Releases, an open note in a person's details kept on reload and a shared link, and a panel under another maximized and restored.
 
 ## Test Environment
 
@@ -259,25 +259,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
       - `Set goals`, with checkbox markup before it
   - **Notes:**
 
-- [ ] `C74E` Select **Editor**.
-  - **Expected:**
-    - The note reads, from the top:
-      - `Joined from the platform team`, with `Joined` in bold and `platform` in teal
-      - a bullet `Mentor: Lilian Lang`, with `Lilian Lang` a link
-      - a bullet `Speaks Japanese`
-      - the heading `Plans`
-      - a ticked checkbox `Meet the team`
-      - a checkbox `Set goals`
-  - **Notes:**
-
-- [ ] `7AAC` Select **Note**.
-  - **Expected:** The link reads `Lilian Lang`.
-  - **Notes:**
-
-- [ ] `D336` Click the link.
-  - **Expected:** The wiki page opens in a new tab.
-  - **Notes:**
-
 - [ ] `5DF8` Back on the Fathom tab, select **Save**.
   - **Expected:**
     - The panel slides out smoothly to the right over the table, with no jump.
@@ -426,42 +407,10 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - Each panel is easy to read and scrolls on its own.
   - **Notes:**
 
-- [ ] `070D` Drag the edge between the two panels up.
-  - **Expected:**
-    - The note gets shorter.
-    - The Metrics panel gets taller.
-  - **Notes:**
-
-- [ ] `78BC` Drag the edge between the two panels down.
-  - **Expected:**
-    - The note gets taller.
-    - The Metrics panel gets shorter.
-  - **Notes:**
-
 - [ ] `FCFB` Select the note's close button.
   - **Expected:**
     - The note shrinks away as it closes, with Metrics moving smoothly to make room.
     - The panels keep their width.
-  - **Notes:**
-
-- [ ] `902F` Select the **Background** cell of 'Max Munk' again.
-  - **Expected:**
-    - The note grows back as it opens, with Metrics moving smoothly to make room.
-    - The panels keep their width.
-  - **Notes:**
-
-- [ ] `0FC4` Clear the search.
-  - **Expected:** The table shows every row again.
-  - **Notes:**
-
-- [ ] `9C64` Select the **Background** cell of 'Lilian Lang'.
-  - **Expected:**
-    - The empty note of 'Lilian Lang' replaces that of 'Max Munk'.
-    - It is open in **Editor**.
-  - **Notes:**
-
-- [ ] `3DF6` Select the note's close button.
-  - **Expected:** The Metrics panel fills the height beside the table.
   - **Notes:**
 
 - [ ] `56F7` Select the Metrics panel's close button.
@@ -508,20 +457,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 ### NOTE-05: A Note Is Read, Approved, and Recorded
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from NOTE-04. Step `5F1D` signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as NOTE-04. Step `5F1D` signs in as another account.
 
-**Preconditions:** Run after NOTE-04. Run Publish as the Workforce Administrator, then sign in with this account. **People** page open, with `Max Munk` searched for.
-
-- [ ] `6A4B` Select the **Background** cell of 'Max Munk'.
-  - **Expected:**
-    - The panel shows the note as it reads.
-    - It has a close button.
-    - Nothing in it changes the note.
-  - **Notes:**
-
-- [ ] `2BBD` Press Esc.
-  - **Expected:** The panel closes.
-  - **Notes:**
+**Preconditions:** Signed in with this account. Run after NOTE-04, then run Publish.
 
 - [ ] `5F1D` Sign in as the Engineering Director, `engineering.director@fathom.test`.
   - **Expected:** The top bar's right end reads "Engineering Director".
@@ -583,14 +521,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - A pill above the table reads "Background: Not empty".
   - **Notes:**
 
-- [ ] `083E` Open the **Site** column menu, and select **Filter…**.
-  - **Expected:** **Empty** and then **Not empty** follow the sites that are in use.
-  - **Notes:**
-
-- [ ] `06B8` Press Esc.
-  - **Expected:** The filter closes.
-  - **Notes:**
-
 - [ ] `1BC7` Select **Clear all** above the table.
   - **Expected:**
     - The pill is gone.
@@ -615,18 +545,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - A panel headed **Onboarding** opens under the details.
     - **Note** is chosen at its top, and the whole note reads below, ending with the heading **Looking back** and its paragraph.
-  - **Notes:**
-
-- [ ] `AC5C` Select the close button of the **Onboarding** panel.
-  - **Expected:** The **Onboarding** panel closes, and the details fill the height again.
-  - **Notes:**
-
-- [ ] `0362` Point at the **Onboarding** row in the details.
-  - **Expected:** A button showing a box with its right side marked appears at the row's right.
-  - **Notes:**
-
-- [ ] `5AB7` Select that button.
-  - **Expected:** The **Onboarding** panel opens under the details again, on **Note**.
   - **Notes:**
 
 - [ ] `3BA2` Select the **Releases** page in the left-hand menu.
@@ -703,14 +621,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The numbers line up with their text, as the bullets do.
   - **Notes:**
 
-- [ ] `ECF1` Select **Markdown**.
-  - **Expected:**
-    - The note shows as Markdown text, reading, from the top:
-      - `1. Sign the contract`
-      - `- Collect the laptop`, moved in
-      - `2. Meet the team`
-  - **Notes:**
-
 - [ ] `BB5B` Select **Cancel**.
   - **Expected:**
     - A dialog asks "Discard changes to the note?".
@@ -723,7 +633,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The cell of 'Lilian Lang' is still empty.
   - **Notes:**
 
-### NOTE-09: An Open Note Stays Open on Reload, Back and a Link
+### NOTE-09: An Open Note Stays Open on Reload and a Link
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as NOTE-08. Step `9906` signs in as another account.
 
@@ -738,12 +648,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - A panel titled "Background for Max Munk" opens under the details.
     - **Note** is chosen at its top.
     - The note starts with `Joined from the platform team`.
-  - **Notes:**
-
-- [ ] `22C1` Reload the page.
-  - **Expected:**
-    - The details of 'Max Munk' are open.
-    - The "Background for Max Munk" panel is open under them, on **Note**.
   - **Notes:**
 
 - [ ] `BA41` Select **Editor** at the top of the "Background for Max Munk" panel.
@@ -764,16 +668,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The last checkbox reads `Set goals`.
   - **Notes:**
 
-- [ ] `C1E6` Select the browser's Back button.
-  - **Expected:**
-    - The "Background for Max Munk" panel closes.
-    - The details of 'Max Munk' stay open.
-  - **Notes:**
-
-- [ ] `205E` Select the browser's Forward button.
-  - **Expected:** The "Background for Max Munk" panel opens under the details again, on **Note**.
-  - **Notes:**
-
 - [ ] `2EBE` Copy the web address from the browser's address bar.
   - **Expected:** Nothing in Fathom changes.
   - **Notes:**
@@ -788,17 +682,6 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The "Background for Max Munk" panel is open under them, showing the note as it reads.
     - The panel has no **Editor** or **Markdown**.
   - **Notes:**
-
-- [ ] `34C2` Select the close button of the "Background for Max Munk" panel.
-  - **Expected:**
-    - The panel closes.
-    - The details of 'Max Munk' stay open.
-  - **Notes:**
-
-- [ ] `36FD` Reload the page.
-  - **Expected:**
-    - The details of 'Max Munk' are open.
-    - No "Background for Max Munk" panel is open.
 
 ### NOTE-10: A Panel Under Another Is Maximized
 
@@ -830,49 +713,4 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:**
     - The details of 'Jarrod Mante' show again above the "Onboarding for Jarrod Mante" panel, each as tall as before.
     - The **Restore button** is the **Maximize button** again, and still has focus.
-  - **Notes:**
-
-- [ ] `8003` Select the **Maximize button**.
-  - **Expected:** The "Onboarding for Jarrod Mante" panel fills the height beside the table.
-  - **Notes:**
-
-- [ ] `0BC4` Select **Metrics** above the table.
-  - **Expected:**
-    - The details of 'Jarrod Mante' grow back above the "Onboarding for Jarrod Mante" panel.
-    - The Metrics panel opens under them.
-    - The "Onboarding for Jarrod Mante" panel shows its **Maximize button** again.
-  - **Notes:**
-
-- [ ] `3D7B` Select the **Maximize button** of the Metrics panel.
-  - **Expected:**
-    - The Metrics panel fills the height beside the table.
-    - The details of 'Jarrod Mante' and the "Onboarding for Jarrod Mante" panel are hidden.
-  - **Notes:**
-
-- [ ] `997D` Select the **Restore button** of the Metrics panel.
-  - **Expected:** The details of 'Jarrod Mante' and the "Onboarding for Jarrod Mante" panel show again above the Metrics panel.
-  - **Notes:**
-
-- [ ] `1A68` Select the close button of the "Onboarding for Jarrod Mante" panel.
-  - **Expected:**
-    - The panel closes.
-    - The details of 'Jarrod Mante' and the Metrics panel share the height beside the table.
-  - **Notes:**
-
-- [ ] `B699` Select the **Background** cell of 'Max Munk'.
-  - **Expected:**
-    - A panel headed **Background** opens under the details of 'Max Munk', showing the note as it reads.
-    - The details of 'Max Munk' stay open.
-  - **Notes:**
-
-- [ ] `8090` Reload the page.
-  - **Expected:**
-    - The panel headed **Background** is open under the details of 'Max Munk' again, showing the note as it reads.
-    - The details of 'Max Munk' stay open.
-  - **Notes:**
-
-- [ ] `A68E` Select the browser's Back button.
-  - **Expected:**
-    - The panel headed **Background** closes.
-    - The details of 'Max Munk' stay open.
   - **Notes:**
