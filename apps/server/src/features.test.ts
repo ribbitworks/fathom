@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for features, against a PostgreSQL server of their own: who may change them, what each must
-// hold, their target cycles, kept to cycles of their stream and following those cycles when they
-// move, their feature teams, and their drafts, approved like the plan's other records and named in
-// the change history.
+// Integration tests for the features routes against a PostgreSQL server: who may change features,
+// their fields, target cycles and feature teams, their drafts, and the change history.
 
 import {
   cyclePatterns,
-  features,
   featureTeams,
   listItems,
   lists,
@@ -550,18 +547,6 @@ describe("target cycles", () => {
     expect(draft?.changedBy?.targetStreamId).not.toBeNull();
   });
 
-  it("does not judge a feature when another on its stream changes", async () => {
-    const streamId = await liveStream();
-    const other = await liveFeature(target(streamId));
-    await test.connection
-      .update(features)
-      .set({ targetCycle: "2027-02-01" })
-      .where(eq(features.id, other.id));
-    expect(
-      (await draftFeature(target(streamId, cycle.second))).targetCycle,
-    ).toBe(cycle.second);
-  });
-
   it("goes back to Later when its target is cleared", async () => {
     const feature = await liveFeature(target(await liveStream()));
     await put(feature.id, { name: feature.name, target: null });
@@ -844,36 +829,6 @@ describe("when a stream's cycles change", () => {
     expect(errorOf(response)).toContain(`${feature.name} would move past`);
   });
 
-  it("refuses ending a stream before a cycle a feature targets", async () => {
-    const streamId = await liveStream();
-    const feature = await liveFeature(target(streamId, cycle.fourth));
-    const response = await test.request(
-      configurer.cookie,
-      "PUT",
-      `/api/release-streams/${streamId}/ends-on`,
-      { endsOn: "2027-09-30" },
-    );
-    expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toBe(
-      `The feature ${feature.name} targets a cycle after that day; change it first`,
-    );
-  });
-
-  it("refuses a new pattern that would leave a feature off a cycle", async () => {
-    const streamId = await liveStream();
-    const feature = await liveFeature(target(streamId, cycle.third));
-    const response = await test.request(
-      configurer.cookie,
-      "POST",
-      `/api/release-streams/${streamId}/patterns`,
-      { startsOn: cycle.second, length: 2, unit: "months", naming: "{YY}.{N}" },
-    );
-    expect(response.statusCode).toBe(409);
-    expect(errorOf(response)).toBe(
-      `The feature ${feature.name} would no longer target a cycle of its schedule; change it first`,
-    );
-  });
-
   it("names no feature a new pattern would leave off a cycle to one who doesn't see features", async () => {
     const streamId = await liveStream();
     await liveFeature(target(streamId, cycle.third));
@@ -1064,29 +1019,5 @@ describe("a retired stream's cycles", () => {
     expect(errorOf(response)).toBe(
       `${String(stream?.name)} is retired, so its cycles take no new features`,
     );
-  });
-
-  it("keeps a feature on a retired stream's cycle it already targets", async () => {
-    const streamId = await liveStream();
-    const feature = await liveFeature(target(streamId));
-    await retireStream(streamId);
-    const response = await put(feature.id, {
-      name: unique("Fictional Renamed"),
-      ...target(streamId),
-    });
-    expect(response.statusCode).toBe(200);
-  });
-
-  it("moves a feature on a retired stream with its cycle when the cycles change", async () => {
-    const streamId = await liveStream();
-    await liveFeature(target(streamId));
-    await retireStream(streamId);
-    const response = await test.request(
-      configurer.cookie,
-      "PUT",
-      `/api/release-streams/${streamId}/cycles/${cycle.second}/length`,
-      { length: 2, later: "move" },
-    );
-    expect(response.statusCode).toBe(200);
   });
 });

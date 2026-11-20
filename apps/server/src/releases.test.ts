@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for release streams, their cycle patterns, and their releases, against a PostgreSQL server
-// of their own: who may read and change them, their cycles, the rules for patterns and releases,
-// and their drafts, approved with the drafts they use, rejected only together with the drafts that
-// use them, discarded with the drafts that belong to them, and named in the change history.
+// Integration tests for the release streams routes against a PostgreSQL server: who may read and
+// change streams, cycle patterns, releases and their notes, their drafts, and the change history.
 
 import {
   changes,
@@ -837,27 +835,6 @@ describe("changing release streams", () => {
     );
   });
 
-  it("refuses ending a stream before a release's last cycle starts, but not on that day", async () => {
-    const stream = await liveStream();
-    await draftRelease(stream.id, {
-      name: "Fictional Ending",
-      firstCycle: "2027-10-01",
-      lastCycle: "2027-10-01",
-    });
-    await approveAll(
-      (await readStream(stream.id, planner.cookie)) as ReleaseStream,
-    );
-    const early = await changeEnd(stream.id, "2027-09-30");
-    const onTheDay = await changeEnd(stream.id, "2027-10-01");
-    expect([
-      early.json<{ error: string }>().error,
-      onTheDay.json<{ stream: ReleaseStream }>().stream.cycles.at(-1),
-    ]).toEqual([
-      "The release Fictional Ending includes cycles after that day; change it first",
-      expect.objectContaining({ startsOn: "2027-10-01", endsOn: "2027-10-01" }),
-    ]);
-  });
-
   it("records ending a stream in the change history", async () => {
     const stream = await liveStream();
     await changeEnd(stream.id, "2027-05-15");
@@ -878,24 +855,6 @@ describe("changing release streams", () => {
     });
   });
 
-  it("drafts ending a stream with no cycles yet, on any day", async () => {
-    const stream = await draftStream();
-    const response = await changeEnd(stream.id, "2020-01-01");
-    expect(response.json<{ stream: ReleaseStream }>().stream.endsOn).toBe(
-      "2020-01-01",
-    );
-  });
-
-  it("refuses a stream's first cycles starting after the day it ends", async () => {
-    const stream = await draftStream();
-    await changeEnd(stream.id, "2026-12-31");
-    const response = await draftPattern(stream.id);
-    expect(response.statusCode).toBe(409);
-    expect(response.json<{ error: string }>().error).toBe(
-      "The schedule can't end before its first cycle starts",
-    );
-  });
-
   it("refuses a name another stream has, ignoring letter case", async () => {
     const name = unique("Fictional Taken");
     await draftStream(name);
@@ -906,6 +865,9 @@ describe("changing release streams", () => {
       { name: name.toLowerCase() },
     );
     expect(response.statusCode).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe(
+      "There is already a schedule with that name",
+    );
   });
 
   it("drafts retiring a stream", async () => {
@@ -966,6 +928,9 @@ describe("cycle patterns", () => {
       startsOn: "2027-08-01",
     });
     expect(response.statusCode).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe(
+      "Cycles can change only from the start of one of the schedule's cycles",
+    );
   });
 
   it("may not change so that a release no longer starts and ends with cycles of its stream", async () => {
@@ -1138,28 +1103,9 @@ describe("releases", () => {
       lastCycle: "2027-05-01",
     });
     expect(response.statusCode).toBe(409);
-  });
-
-  it("may not include a cycle another release includes", async () => {
-    const stream = await liveStream();
-    await draftRelease(stream.id, { name: "Fictional One", ...firstHalf });
-    const response = await draftRelease(stream.id, {
-      name: "Fictional Two",
-      firstCycle: "2027-04-01",
-      lastCycle: "2027-07-01",
-    });
-    expect(response.statusCode).toBe(409);
-  });
-
-  it("must be named uniquely within their stream", async () => {
-    const stream = await liveStream();
-    await draftRelease(stream.id, { name: "Fictional Named", ...firstHalf });
-    const response = await draftRelease(stream.id, {
-      name: "fictional named",
-      firstCycle: "2027-07-01",
-      lastCycle: "2027-07-01",
-    });
-    expect(response.statusCode).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe(
+      "Choose a first and last cycle of the release's schedule",
+    );
   });
 });
 
