@@ -69,7 +69,7 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 The classes, and each built-in detail's default class, are set out in the [Domain Model](../design/domain-model.md#data-classes).
 
 - **Apart from pages:** A role views a class on every page it reaches, without needing People, such as employment dates on the Allocations grid.
-- **Pages that need a class:** A role without a page's classes doesn't get the page, mode or grouping, as [A page without its data](../standards/ui-conventions.md#access) sets out, and the Roles page lists what each role misses and why.
+- **Pages that need a class:** A role without a page's classes doesn't get the page, mode or grouping, as [A page without its data](../standards/ui-conventions/drafts-and-values.md#access) sets out, and the Roles page lists what each role misses and why.
   - **Personal:** Allocations, Feature assignments, and People and the Org chart on other dates need it, so Team Members, Product Managers and Feature Leads don't get them. Product Managers see only Capacity's Settings mode.
   - **Confidential too:** the Org chart's reporting view on future dates, and grouping Feature assignments or Capacity's People by manager.
 - **Classify data:** Moves built-in details, lists and columns between classes, the hiring plan included. It is one permission across every class, and a move needs View on both the class left and the class entered.

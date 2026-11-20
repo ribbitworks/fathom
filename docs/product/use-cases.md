@@ -136,7 +136,7 @@ Details are typed or pasted into People, or changed in a person's details beside
 
 - **Actors:** Users, according to their role
 - **Goal:** Share the plan or roadmap outside Fathom.
-- **Outcome:** The export contains only what the user's roles allow, in one of the formats [Exporting](../standards/ui-conventions.md#exporting) sets out.
+- **Outcome:** The export contains only what the user's roles allow, in one of the formats [Exporting](../standards/ui-conventions/tables.md#exporting) sets out.
 
 ### View an Earlier Snapshot
 

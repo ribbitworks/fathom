@@ -20,7 +20,7 @@ Capacity shows who is allocated to what, month by month, and holds the planning 
   - Planned hires sit under their manager by Manager, and under No feature team by Feature team.
 - **A month's cell:** each feature with its percentage, then a Total line when there are several features or the month is marked.
   - From the current month on, it reads Over or Under instead, so an empty month reads Under 0%. Past months show their figures unmarked.
-  - These are a status, not a [warning](../../standards/ui-conventions.md#values).
+  - These are a status, not a [warning](../../standards/ui-conventions/drafts-and-values.md#values).
 - **Over:** more than 100%, counting every feature but Possible ones. Done and Cancelled features count, since allocations are time spent, so future allocations to a cancelled feature show Over until cleared.
 - **Under:** less than 100% in a month the person or planned hire can be allocated in.
 - **Capacity:** as the [Domain Model](../domain-model.md#allocation) sets out.
@@ -42,7 +42,7 @@ Capacity shows who is allocated to what, month by month, and holds the planning 
 ## Planned
 
 - **More modes:** Work and Demand, between People and Settings.
-- **Work:** the [Plan](../../product/domain.md#planning-terms) on the [shared timeline](../../standards/ui-conventions.md#timelines): when each piece of work happens, whether it is staffed, and whether it makes its date.
+- **Work:** the [Plan](../../product/domain.md#planning-terms) on the [shared timeline](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines): when each piece of work happens, whether it is staffed, and whether it makes its date.
   - The organization's capacity row, on all staffed work, comes first, then the groups.
   - Group by offers Feature team, the first, Project, Priority, Status, Risk and Release.
   - By feature team, each team ends with its capacity row, and each project's activities and general work sit under a Project work heading.

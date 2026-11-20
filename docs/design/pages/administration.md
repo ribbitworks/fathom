@@ -12,7 +12,7 @@ The Administration pages hold accounts, roles, settings, lists and data classes.
   - Status is filtered as any choice column is, rather than chosen in the Views menu.
 - **New account:** Shown only to those who may edit administration.
 - **The user's own row:** A grey "This account" box after the name.
-- **Details:** A [side panel](../../standards/ui-conventions.md#details-panels) ending in **Edit…**, **Reset password…** (not on the user's own account) and **Deactivate…** or **Reactivate…**, only for those who may edit administration.
+- **Details:** A [side panel](../../standards/ui-conventions/pages-and-panels.md#details-panels) ending in **Edit…**, **Reset password…** (not on the user's own account) and **Deactivate…** or **Reactivate…**, only for those who may edit administration.
 - **Edit dialog:** Every role is a tick box with its description. Once several are ticked, radio buttons choose the default.
 - **Refused changes:** Turned off, such as removing the last role able to manage accounts.
 - **New accounts:** They start on Team Member, and no password is asked.
@@ -72,11 +72,11 @@ The Administration pages hold accounts, roles, settings, lists and data classes.
 
 - **Place:** After Lists, for a role that may Classify data.
 - **Sections:** Built-in details, Columns and Lists, the last two only for a role that reads them.
-- **Tables:** Each has the item, its class as [A class's mark](../../standards/ui-conventions.md#access) sets out, and **About**. The three tables share column widths so they line up.
+- **Tables:** Each has the item, its class as [A class's mark](../../standards/ui-conventions/drafts-and-values.md#access) sets out, and **About**. The three tables share column widths so they line up.
 - **About:** Plain sentences, such as "These People columns use it: Site."
 - **Class dialog:** Names the classes, with no description under them.
 - **In the access history:** A move reads such as "Engineering Director changed Start date's class: from Personal to General".
-- **Change class…:** Ends each row, as [Changing a class](../../standards/ui-conventions.md#access) sets out. It is turned off for a role that can't see the item's class, and absent on columns that take their list's class.
+- **Change class…:** Ends each row, as [Changing a class](../../standards/ui-conventions/drafts-and-values.md#access) sets out. It is turned off for a role that can't see the item's class, and absent on columns that take their list's class.
 - **Class names elsewhere:** Lines Fathom writes put the class's symbol before Personal and Confidential; typed words show as typed.
 - **The export question:** Titled such as Export Confidential and Personal data?, then This file holds, and each class, its name semibold in its own colour, with its columns in semibold, such as Confidential data (Salary), then Export and Cancel.
   - Once confirmed and a place to save is chosen, the access history records the table and those columns, then the file is written. Cancelling writes nothing.

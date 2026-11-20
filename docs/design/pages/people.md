@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-11-18
 
-People lists everyone, one row each, with planned hires beside them. It sits in the sidebar's People section, for roles that see people. Its table follows [Tables](../../standards/ui-conventions.md#tables); this document covers its columns, the date row, Person details and Group by.
+People lists everyone, one row each, with planned hires beside them. It sits in the sidebar's People section, for roles that see people. Its table follows [Tables](../../standards/ui-conventions/tables.md#tables); this document covers its columns, the date row, Person details and Group by.
 
 [People help](../../help/people.md) describes it for the people who use it, and [Visual Design](../visual-design.md) covers what every page shares.
 
@@ -23,7 +23,7 @@ The date row sits above the table here and above the [Org chart](org-chart.md), 
 
 - **Parts, in order:** a Date box, a back arrow, a timeline of 24 months either side of today, a forward arrow, and Today.
 - **Range:** Without Confidential data, People and Reporting teams stop at today. Feature teams reach future dates with Personal details alone.
-- **The line under the row:** On another date, it says whether changes take effect from that day. It keeps its place on today, as [Staying Put](../../standards/ui-conventions.md#staying-put) sets out.
+- **The line under the row:** On another date, it says whether changes take effect from that day. It keeps its place on today, as [Staying Put](../../standards/ui-conventions/tables.md#staying-put) sets out.
 - **Feature teams on future dates:** Draw people as they are today.
 - **On another date:** Only managers can change on People and Reporting teams, and members and leads on Feature teams.
   - Where nothing can change, it is read only: the chart has no Draft menu and shows teams or reporting lines as approved.
@@ -36,7 +36,7 @@ The date row sits above the table here and above the [Org chart](org-chart.md), 
 
 ## Person Details
 
-Person details open beside People or the Org chart, as [Details Panels](../../standards/ui-conventions.md#details-panels) sets out.
+Person details open beside People or the Org chart, as [Details Panels](../../standards/ui-conventions/pages-and-panels.md#details-panels) sets out.
 
 - **Heading:** The name, then the position and Show on org chart or Show in People.
 - **Sections, in order:**
@@ -69,7 +69,7 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
 
 ## Group By
 
-- **Place:** After Metrics, with Then by as [Tables](../../standards/ui-conventions.md#tables) sets out.
+- **Place:** After Metrics, with Then by as [Tables](../../standards/ui-conventions/tables.md#tables) sets out.
 - **Choices:** None, Manager, Feature teams, Position, State, and every list column, those holding several choices included. Team isn't offered, since it follows from Manager.
 - **Feature teams:** Someone on two teams shows under each; planned hires show under No feature team.
 - **Metrics by Manager:** Count each manager's direct reports among the rows shown.
@@ -77,4 +77,4 @@ Person details open beside People or the Org chart, as [Details Panels](../../st
 
 ## Planned
 
-- **The date row:** Drawn as the shared [strip](../../standards/ui-conventions.md#timelines).
+- **The date row:** Drawn as the shared [strip](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines).

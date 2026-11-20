@@ -18,7 +18,7 @@ Features lists the plan's features in one table, with a board as a second way of
 
 - **Order:** Name, Status, Description, Notes, Customers, Projects, Proposals, Priority, Needed by, Effort, Size, Risk, Release, Target cycle, Feature team, Staffed, then added columns.
 - **Release:** read only, following from the target cycle; Later is its empty value. In the details, it links to the release's schedule on [Releases](releases.md).
-- **Feature team:** a Planned or In progress feature with none shows No team, as a [warning on a value](../../standards/ui-conventions.md#values).
+- **Feature team:** a Planned or In progress feature with none shows No team, as a [warning on a value](../../standards/ui-conventions/drafts-and-values.md#values).
 - **Staffed:** read only; for Planned or In progress features, Yes when any allocation gives them a month, a planned hire's included. It is empty for other statuses, so Not staffed is a plain filter.
 - **Projects and Proposals:** changed only by those who change the plan; New feature doesn't offer them.
   - A change drafts the project or proposal, so the feature's row isn't marked.
@@ -28,24 +28,24 @@ Features lists the plan's features in one table, with a board as a second way of
 ## Grouping
 
 - **Default:** one list, with no grouping.
-- **Group by:** None, Cycle, Release, Needed by and every column holding choices, Customers, Projects and Proposals included, with Then by as [Tables](../../standards/ui-conventions.md#tables) sets out.
+- **Group by:** None, Cycle, Release, Needed by and every column holding choices, Customers, Projects and Proposals included, with Then by as [Tables](../../standards/ui-conventions/tables.md#tables) sets out.
 - **By Cycle:** every schedule together, in their order, each cycle headed with its schedule and name, then Later for features with no cycle.
 - **By Release:** each schedule's releases by date, headed with the schedule, release and Ships on, then its cycles in no release, such as Platform: Not released yet, then Later.
   - A heading counts its features, not their effort. A release no feature targets has no heading.
   - A feature whose draft moves its target cycle is grouped by the draft.
 - **By Needed by:** earliest first, then No date.
-- **Order:** each grouping's headings can run the other way, latest first, Z to A or in reverse list order, with Later or the heading for none first, on the table and the Board alike, as [The groups' order](../../standards/ui-conventions.md#tables) sets out.
+- **Order:** each grouping's headings can run the other way, latest first, Z to A or in reverse list order, with Later or the heading for none first, on the table and the Board alike, as [The groups' order](../../standards/ui-conventions/tables.md#tables) sets out.
 
 ## Features Board
 
-- **What it is:** the [Roadmap](../../product/domain.md#planning-terms), drawn as [Boards](../../standards/ui-conventions.md#boards) sets out.
+- **What it is:** the [Roadmap](../../product/domain.md#planning-terms), drawn as [Boards](../../standards/ui-conventions/dates-timelines-and-boards.md#boards) sets out.
 - **Read only:** nothing on the board can be changed.
 - **One view:** table and board share the page's controls and view. A saved view keeps the Board's schedule and card choices, but not which shows or the cycle the Board starts from.
 - **Columns:** one schedule's cycles, chosen in a Schedule menu, as many as fit, then Later with every uncycled feature.
   - A header shows its release in the release's colour, then the cycle; the current cycle has a red top line.
   - Columns show no size totals.
-- **Strip:** the Schedule and Card buttons start the [timeline strip](../../standards/ui-conventions.md#timelines), stepping by cycle.
-- **Cards:** name, key, status and priority, [Size and Risk marks](../../standards/ui-conventions.md#values), Needed by, and Not staffed, but no customers.
+- **Strip:** the Schedule and Card buttons start the [timeline strip](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines), stepping by cycle.
+- **Cards:** name, key, status and priority, [Size and Risk marks](../../standards/ui-conventions/drafts-and-values.md#values), Needed by, and Not staffed, but no customers.
   - The Card menu chooses which show.
 - **Rows:** Group by offers the table's choices except Cycle, starting at None, with no Then by.
 - **Card order:** priority, month needed by, status, customer count, then name, with empty values last.

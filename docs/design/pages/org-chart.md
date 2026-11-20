@@ -21,7 +21,7 @@ The Org chart draws the organization as cards, by reporting teams or by feature 
 
 - **Finder:** Lists people, then teams; choosing a team finds its manager. A key such as #TEAM-2 finds only its record.
 - **Shape:** Reports who manage nobody stack under the manager's left edge, with managers side by side to their right, so a large organization grows down.
-- **Opening:** On the top two levels, unless [the last view](../../standards/ui-conventions.md#tables) holds others or a team shown alone, fitted, but never enlarged past the cards' own size.
+- **Opening:** On the top two levels, unless [the last view](../../standards/ui-conventions/tables.md#tables) holds others or a team shown alone, fitted, but never enlarged past the cards' own size.
 
 ## Cards
 
@@ -43,7 +43,7 @@ The Org chart draws the organization as cards, by reporting teams or by feature 
 
 ## Drafts on the Chart
 
-The views follow [The three Draft views](../../standards/ui-conventions.md#drafts), with marks of the chart's own.
+The views follow [The three Draft views](../../standards/ui-conventions/drafts-and-values.md#drafts), with marks of the chart's own.
 
 - **A move:** Drawn under the new manager, with a faded, dashed copy left under the current one.
 - **A draft from another day:** The card adds a From line, such as From Oct 1, 2026.

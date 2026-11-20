@@ -8,15 +8,15 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 
 ## Layout
 
-- **Tabs:** **Releases**, **Cycles** and **Schedules**, as [The Page Heading](../../standards/ui-conventions.md#the-page-heading) sets out, kept in the address.
+- **Tabs:** **Releases**, **Cycles** and **Schedules**, as [The Page Heading](../../standards/ui-conventions/pages-and-panels.md#the-page-heading) sets out, kept in the address.
 - **Tables:** Each tab is the shared table, read only, with its own saved views. Records change only in their side panel.
-- **Timeline:** The [shared timeline](../../standards/ui-conventions.md#timelines) sits above the table and draws the schedules holding what it lists, in its order, apart from retired ones, so a search, filter or saved view narrows both.
+- **Timeline:** The [shared timeline](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sits above the table and draws the schedules holding what it lists, in its order, apart from retired ones, so a search, filter or saved view narrows both.
 - **Scrolling:** The timeline and table scroll on their own; the timeline grows to about half the window.
 
 ## Timeline
 
 - **Time as the axis:** Each day is the same width, so schedules with different cycle lengths line up.
-- **Lanes:** As [the release layer](../../standards/ui-conventions.md#timelines) sets out. On the Releases tab, beside live adds a Live lane.
+- **Lanes:** As [the release layer](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sets out. On the Releases tab, beside live adds a Live lane.
 - **Drafted retirements:** A schedule drafted to be retired or restored is drawn as it is live.
 - **Names that don't fit:** Left out rather than cut short; hovering names each mark.
 - **A schedule's end:** Its cycle lane stops there, with a short upright grey line.
@@ -25,7 +25,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
   - Cycles: named blocks, the current one bold and past ones faded.
   - Schedules: unnamed blocks, each shaded apart from the one before, and the end named.
 - **Opening a record:** Every mark opens its record, on its own kind's tab.
-- **Zoom, axis and scrolling:** as [The shared timeline](../../standards/ui-conventions.md#timelines) sets out.
+- **Zoom, axis and scrolling:** as [The shared timeline](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sets out.
 - **Today:** a red line marks today, in Fathom's time zone, as [Settings](administration.md#settings) sets out.
 
 ## Release Colours
@@ -74,7 +74,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 
 ### Schedule Cycles
 
-- **Folding:** Starts at the current cycle and shows six, as [A long list](../../standards/ui-conventions.md#details-panels) sets out.
+- **Folding:** Starts at the current cycle and shows six, as [A long list](../../standards/ui-conventions/pages-and-panels.md#details-panels) sets out.
 - **Duration's pencil:** **This cycle only…** or **This and later cycles…**, the second also changing names.
 
 ## End Dialog

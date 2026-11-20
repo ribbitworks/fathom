@@ -11,7 +11,7 @@ last_updated: "2026-11-18"
 
 ## Scope
 
-Verifies each record's key under its details' title, copying its link and key from there and from row, card and column menus, one table row's buttons shown at a time, the key and menu on the Features Board's cards, finding a person on the Org chart by key, following a link to the record, Back after it, signing in first, a link a role may not follow, a table's **Key** column, and a release's and a schedule's links opening on their own tabs, as the [Domain Model](../design/domain-model.md#change-and-history-entities) and [UI Conventions § Links to Records](../standards/ui-conventions.md#links-to-records) set out.
+Verifies each record's key under its details' title, copying its link and key from there and from row, card and column menus, one table row's buttons shown at a time, the key and menu on the Features Board's cards, finding a person on the Org chart by key, following a link to the record, Back after it, signing in first, a link a role may not follow, a table's **Key** column, and a release's and a schedule's links opening on their own tabs, as the [Domain Model](../design/domain-model.md#change-and-history-entities) and [UI Conventions § Links to Records](../standards/ui-conventions/pages-and-panels.md#links-to-records) set out.
 
 ## Test Environment
 

@@ -11,8 +11,8 @@ Feature assignments shows each person's feature teams, month by month. It sits i
 - **Shared table:** with its own saved views, grouped one level deep, since each row is made for its group.
 - **Rows:** one per person, frozen on the left, in one list at first; Group by offers None, Manager and Feature team.
 - **Months:** whole quarters, from the quarter holding the month a year back to the quarter holding the month eleven months ahead, opening with the current month just after the frozen column; months outside employment are shaded.
-  - A thin line between columns, and the current month's heading underlined in today's red, as [Month grids](../../standards/ui-conventions.md#timelines) sets out.
-- **Strip:** the [strip](../../standards/ui-conventions.md#timelines) of the grid's quarters, under the bar, following the grid as it scrolls.
+  - A thin line between columns, and the current month's heading underlined in today's red, as [Month grids](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sets out.
+- **Strip:** the [strip](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) of the grid's quarters, under the bar, following the grid as it scrolls.
 - **A month's cell:** that month's feature teams as labels in their colours. A month reads as of its first day, and the current month as of today.
 
 ## Access
@@ -23,7 +23,7 @@ Feature assignments shows each person's feature teams, month by month. It sits i
 
 ## Drafts
 
-- **Marks:** as [Month grids](../../standards/ui-conventions.md#timelines) sets out, carried by the labels.
+- **Marks:** as [Month grids](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sets out, carried by the labels.
 
 ## Editing
 
