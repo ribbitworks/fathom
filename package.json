@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@12.20.0",
   "engines": {
-    "node": ">=24.22.1 <25"
+    "node": ">=24.22.1 <27"
   },
   "scripts": {
     "bootstrap": "bash scripts/dev-bootstrap.sh",

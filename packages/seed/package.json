@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@fathom/test-utils": "workspace:*",
-    "@types/node": "24.19.2",
+    "@types/node": "26.6.6",
     "@vitest/coverage-v8": "5.0.5",
     "vitest": "5.0.5"
   }
