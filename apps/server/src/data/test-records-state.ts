@@ -79,3 +79,28 @@ export const feature = (
   targetCycle: string | null,
   targetStreamId: string | null = stream,
 ): Recorded => ({ name: "Fictional Feature", targetStreamId, targetCycle });
+
+export const patternId = "pattern-1";
+export const otherPatternId = "pattern-2";
+
+// Two live streams with cycles in quarters from 2027, the first ending on the day given, if any,
+// and the drafts of their patterns given.
+export const twoStreams = ({
+  endsOn = null,
+  patternDrafts = [],
+}: {
+  endsOn?: string | null;
+  patternDrafts?: [string, Draft][];
+} = {}): Pick<RecordsState, "release-stream" | "cycle-pattern"> => ({
+  "release-stream": kindState([
+    [stream, schedule({ endsOn })],
+    [otherStream, schedule({ name: "Fictional Other Stream" })],
+  ]),
+  "cycle-pattern": kindState(
+    [
+      [patternId, pattern()],
+      [otherPatternId, pattern({ streamId: otherStream })],
+    ],
+    patternDrafts,
+  ),
+});

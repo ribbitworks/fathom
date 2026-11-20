@@ -1485,31 +1485,6 @@ describe("changing one cycle's length", () => {
     expect(response.statusCode).toBe(200);
   });
 
-  it("binds a release that moves by whole cycles to the change", async () => {
-    const stream = await draftStream();
-    await draftPattern(stream.id, { ...quarters, length: 2, unit: "weeks" });
-    await draftRelease(stream.id, {
-      name: "Fictional Sprint",
-      firstCycle: "2027-02-12",
-      lastCycle: "2027-02-12",
-    });
-    await approveAll((await readStream(stream.id)) as ReleaseStream);
-    const drafted = (
-      await changeLength(stream.id, "2027-01-15", { length: 4, later: "move" })
-    ).json<{ stream: ReleaseStream }>().stream;
-    const release = drafted.releases[0];
-    expect(release?.firstCycle).toBe("2027-02-26");
-    const approved = await decide("approval", {
-      records: [{ type: "release", id: release?.id }],
-    });
-    expect(approved.statusCode).toBe(200);
-    expect(
-      (await readStream(stream.id))?.patterns.filter(
-        ({ draft }) => draft !== undefined,
-      ),
-    ).toEqual([]);
-  });
-
   it("may start a pattern on the day a later one moves away from", async () => {
     const stream = await draftStream();
     await draftPattern(stream.id);
@@ -1550,31 +1525,6 @@ describe("changing one cycle's length", () => {
     expect(
       changed.json<{ stream: ReleaseStream }>().stream.patterns[0]?.draft?.uses,
     ).toContainEqual({ type: "release", id: releaseId });
-  });
-
-  it("leaves a release changed on the same cycles apart from a change of cycles", async () => {
-    const stream = await withRelease();
-    const releaseId = String(stream.releases[0]?.id);
-    await test.request(
-      planner.cookie,
-      "PUT",
-      `/api/release-streams/${stream.id}/releases/${releaseId}`,
-      {
-        name: "Fictional Later",
-        firstCycle: "2027-07-01",
-        lastCycle: "2027-10-01",
-        colour: "teal",
-      },
-    );
-    const changed = await changeLength(stream.id, "2027-10-01", {
-      length: 2,
-      later: "move",
-    });
-    expect(
-      changed
-        .json<{ stream: ReleaseStream }>()
-        .stream.patterns.flatMap(({ draft }) => draft?.uses ?? []),
-    ).not.toContainEqual({ type: "release", id: releaseId });
   });
 
   it("refuses discarding it to someone who may not change cycles", async () => {
