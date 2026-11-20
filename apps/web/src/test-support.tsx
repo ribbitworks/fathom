@@ -713,8 +713,8 @@ export const nextColumn = (kind: "date" | "flag" | "text") =>
     multiple: false,
   });
 
-// Lists with drafts of every part, for the tests of deciding drafts.
-export const waitingDraft = {
+// A waiting draft with no maker, the base of the drafts in the tests of deciding drafts.
+export const draftToDecide = {
   state: "waiting" as const,
   madeBy: null,
   madeAt: null,
@@ -725,7 +725,7 @@ export const addedChoice = (id: string): Choice => ({
   label: id.toUpperCase(),
   description: "",
   retired: false,
-  draft: { ...waitingDraft, action: "created", changed: [], live: {} },
+  draft: { ...draftToDecide, action: "created", changed: [], live: {} },
 });
 
 export const liveChoice = (id: string): Choice => ({
@@ -745,8 +745,8 @@ export const teamsList: List = {
   visibility: "general",
   retired: false,
   choices: [addedChoice("b"), liveChoice("a"), addedChoice("c")],
-  draft: { ...waitingDraft, action: "created", changed: [], live: {} },
-  orderDraft: { ...waitingDraft, live: ["a"], uses: ["b"] },
+  draft: { ...draftToDecide, action: "created", changed: [], live: {} },
+  orderDraft: { ...draftToDecide, live: ["a"], uses: ["b"] },
 };
 
 // A live list whose order puts a choice drafted to be added first.
@@ -758,7 +758,7 @@ export const sitesList: List = {
   visibility: "general",
   retired: false,
   choices: [addedChoice("f"), liveChoice("d"), addedChoice("e")],
-  orderDraft: { ...waitingDraft, live: ["d"], uses: ["f"] },
+  orderDraft: { ...draftToDecide, live: ["d"], uses: ["f"] },
 };
 
 export const bothLists = [teamsList, sitesList];

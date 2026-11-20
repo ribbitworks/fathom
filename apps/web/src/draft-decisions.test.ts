@@ -16,10 +16,10 @@ import { type Columns, noDrafts } from "./drafts.ts";
 import {
   addedChoice as added,
   bothLists as lists,
+  draftToDecide as waiting,
   liveChoice as live,
   sitesList as sites,
   teamsList as teams,
-  waitingDraft as waiting,
 } from "./test-support.tsx";
 
 describe("drafts the approver changed", () => {
