@@ -6,10 +6,10 @@
 import type { ReactNode } from "react";
 import type { EditorProps } from "./cell-kinds.tsx";
 import type { HeaderGrid } from "./column-header.tsx";
-import { type DraftSelection, decidable, draftTotal } from "./drafts.ts";
 import { focusSoon } from "./focus.ts";
 import { breaksDown, kindOf } from "./grid-columns.tsx";
-import { draftColumn } from "./grid-drafts.ts";
+import { draftTotal } from "./drafts.ts";
+import { draftColumn, waitingDrafts } from "./grid-drafts.ts";
 import { TableScrolling } from "./grid-layout.ts";
 import { countedRecords } from "./live-records.ts";
 import { MetricsPanel } from "./metrics-panel.tsx";
@@ -107,23 +107,22 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     saveTo,
   } = grid;
   // The drafts waiting among the records and columns shown, which Approvers approve or reject all at
-  // once.
-  const waitingShown: DraftSelection = {
-    ...table.drafts(
-      shownRecords
-        .filter((record) => decidableRow(record) && approvesRecord(record))
-        .map(({ id }) => id),
-    ),
-    columns: approves.includes("field")
-      ? fields
-          .filter(
-            (field) =>
-              decidable(field) && columns.some(({ key }) => key === field.id),
-          )
-          .map(({ id }) => id)
-      : [],
+  // once, and among all the table could show, so the menu says how many the view hides.
+  const deciding = {
+    decidableRow,
+    approvesRecord,
+    approvesColumns: approves.includes("field"),
+    draftsOf: table.drafts,
   };
+  const waitingShown = waitingDrafts(
+    shownRecords,
+    fields.filter((field) => columns.some(({ key }) => key === field.id)),
+    deciding,
+  );
   const waitingTotal = draftTotal(waitingShown);
+  const waitingEverywhere = draftTotal(
+    waitingDrafts(everyone, draftedFields, deciding),
+  );
 
   // A column only drafted to be added, or to draw on another list, has no live figures to compare.
   const liveForMetrics = (column: Column<Rec, Change>) => {
@@ -255,17 +254,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
           {waitingTotal > 0 && (
             <DecideAllItems
               total={waitingTotal}
-              everywhere={
-                new Set(
-                  everyone.flatMap(
-                    (record) =>
-                      table.draftKeys?.(record) ??
-                      (record.draft?.state === "waiting" ? [record.id] : []),
-                  ),
-                ).size +
-                draftedFields.filter(({ draft }) => draft?.state === "waiting")
-                  .length
-              }
+              everywhere={waitingEverywhere}
               disabled={saving}
               onDecide={(asking) => {
                 actions.decide(asking, waitingShown, true);

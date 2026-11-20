@@ -212,7 +212,7 @@ function marksOf(
   values: CycleValues,
   live: CycleValues,
   ofRelease?: CycleChange & { name: string },
-): Pick<CycleRow, "draft" | "heldBy" | "subject"> {
+): Pick<CycleRow, "draft" | "heldBy" | "subject" | "cellDrafts"> {
   const differing =
     action === "changed" ? differingKeys(values, live, shownKeys) : [];
   // The Release column shows the release's name, so a new name changes it.
@@ -272,6 +272,26 @@ function marksOf(
           }),
     },
     heldBy: behind.record.heldBy,
+    // The Release, which the release's own draft changes, is marked by that draft alone.
+    ...(alsoRelease === undefined
+      ? {}
+      : {
+          cellDrafts: new Map(
+            ofReleaseKeys.map((key) => [
+              key,
+              {
+                ...alsoRelease.record.draft,
+                action: "changed" as const,
+                changed: [key],
+                changedBy: creditedBy([
+                  { key, drafts: [alsoRelease.record.draft] },
+                ]),
+                live,
+                ref: alsoRelease.ref,
+              },
+            ]),
+          ),
+        }),
     subject:
       releaseBehind === undefined
         ? subjectFor(stream, behind, alsoRelease)
@@ -394,6 +414,7 @@ const liveRows = (rows: readonly CycleRow[], day: string): CycleRow[] =>
             ...row,
             ...valuesOf(twin.stream, twin.cycle, day),
             draft: undefined,
+            cellDrafts: undefined,
             stream: twin.stream,
             cycle: twin.cycle,
             twin,
@@ -598,7 +619,6 @@ export function cycleTable({
     draftFields: (row, draft) =>
       draftFieldsOf(describedColumns(row), row, draft),
     draftSubject: ({ subject }) => subject,
-    draftKeys: (row) => waitingOf(row).map(({ ref }) => refKey(ref)),
     decidable: (row) => decidedBy(row).length > 0,
     menuDecides: (row) => {
       const decided = decidedBy(row);

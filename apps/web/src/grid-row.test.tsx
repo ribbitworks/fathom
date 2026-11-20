@@ -494,3 +494,93 @@ describe("moving between cells", () => {
     );
   });
 });
+
+describe("a value another record's draft changes", () => {
+  it("is marked by that draft's state, not its row's", () => {
+    // Given a gadget whose rename was rejected, and whose code another record's waiting draft changes
+    renderGadgets({
+      gadgets: [
+        gadget("g1", {
+          name: "Renamed",
+          draft: {
+            ...waiting,
+            state: "rejected",
+            reason: "Fictional reason",
+            action: "changed",
+            changed: ["name"],
+            live: { name: "Gadget g1", values: {}, links: {} },
+          },
+          cellDrafts: new Map([
+            [
+              "code",
+              {
+                ...waiting,
+                action: "changed" as const,
+                changed: ["code"],
+                live: { values: {}, links: {} },
+              },
+            ],
+          ]),
+        }),
+      ],
+      fields: [],
+    });
+
+    // Then the name is marked rejected and the code waiting
+    const [name, code] = screen.getAllByRole("gridcell");
+    expect([
+      name?.textContent.includes("Rejected"),
+      code?.textContent.includes("Rejected"),
+      code?.textContent.includes("Draft: changed"),
+    ]).toEqual([true, false, true]);
+  });
+
+  it("is read aloud as a draft only while its row shows one, as it doesn't under Live only", () => {
+    renderGadgets({
+      gadgets: [
+        gadget("g1", {
+          cellDrafts: new Map([
+            [
+              "code",
+              {
+                ...waiting,
+                action: "changed" as const,
+                changed: ["code"],
+                live: { values: {}, links: {} },
+              },
+            ],
+          ]),
+        }),
+      ],
+      fields: [],
+    });
+    const [, code] = screen.getAllByRole("gridcell");
+    expect(code?.textContent.includes(", draft")).toBe(false);
+  });
+});
+
+describe("the waiting drafts the Draft menu counts", () => {
+  it("counts none held by someone else as hidden by the view", async () => {
+    // Given one draft to decide, and one held by someone else
+    renderGadgets({
+      gadgets: [
+        gadget("g1", {
+          draft: { ...waiting, action: "changed", changed: ["code"] },
+        }),
+        gadget("g2", {
+          draft: { ...waiting, action: "changed", changed: ["code"] },
+          heldBy: "Fictional Holder",
+        }),
+      ],
+      approves: ["list"],
+      fields: [],
+    });
+
+    // When the Draft menu opens
+    await userEvent.click(screen.getByRole("button", { name: /^Draft/ }));
+
+    // Then it hides nothing the role could decide
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).getByText("Waiting drafts")).toBeDefined();
+  });
+});

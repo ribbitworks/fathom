@@ -1026,8 +1026,8 @@ export function DecideAllItems({
   disabled = false,
   onDecide,
 }: {
-  // The drafts waiting among those shown, which these decide, and all those waiting, so the menu
-  // says when a search, filter or Drafts applied hides some.
+  // The drafts waiting among those shown, which these decide, and all those the role could decide,
+  // so the menu says when a search, filter, hidden column or Drafts applied hides some.
   total: number;
   everywhere: number;
   // While a change is still saving, so a draft not saved yet is never sent.

@@ -4,7 +4,7 @@ category: "Design"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/releases.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Fathom: Releases Page
@@ -59,7 +59,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 - **Rows:** One list at first, or grouped by schedule; past cycles and those after next quarter are hidden until chosen in **Views**.
 - **No New button:** Cycles come only from their schedule.
 - **Drafts:** A row is marked by the draft behind it, such as a change to its schedule's cycles.
-  - **Two drafts:** Where that change and a draft of the cycle's own release both change a cycle that stays in that release, the menu names both drafts and credits the Release to the release's draft.
+  - **Two drafts:** Where that change and a draft of the cycle's own release both change a cycle that stays in that release, the menu names both drafts and credits the Release to the release's draft, whose dot, in its own state, marks the Release.
   - **Deciding both:** Approve and Reject decide both for a role that approves both, while the release's draft is waiting, published, held by nobody and needs no other Approver; otherwise they decide the change behind the row alone.
   - **Discard and Resubmit:** Act on the change behind the row alone.
 - **Duration:** Its pencil works as on a schedule's [cycles](#schedule-cycles).
@@ -71,7 +71,7 @@ The Releases page holds releases, their cycles and the schedules they belong to,
 - **Row menu:** Only **Retire** or **Restore** and draft actions; all else is in the panel.
 - **Ended:** A schedule past its last day has an **Ended** box.
 - **Retired:** Hidden until **Show retired**.
-- **Draft marks:** A draft of a schedule's cycles or releases marks only the cells it changes.
+- **Draft marks:** A draft of a schedule's cycles or releases marks only the cells it changes, each in the state of the drafts that change it, whatever the schedule's own draft is.
 
 ## Schedule Details
 

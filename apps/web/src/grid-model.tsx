@@ -249,6 +249,11 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
       record.draft === undefined ? [] : [[record.id, record.draft]],
     ),
   );
+  const cellDraftsById = new Map(
+    everyone.flatMap((record) =>
+      record.cellDrafts === undefined ? [] : [[record.id, record.cellDrafts]],
+    ),
+  );
   const canEdit = mayEdit && !liveOnly;
   const canEditDrafts = mayEditDrafts !== false && !liveOnly;
   const editsDraftOf = (record: Rec) =>
@@ -436,6 +441,7 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
     marksRows,
     liveById,
     draftById,
+    cellDraftsById,
     canEdit,
     approves,
     approvesRecord,

@@ -102,7 +102,6 @@ describe("the Cycles tab's rows", () => {
       const menu = table.menuDecides?.(row);
       return {
         records: table.drafts([row.id]).records,
-        keys: table.draftKeys?.(row),
         decidable: table.decidable?.(row),
         menu: menu && { ...menu, approved: menu.approved.records },
       };
@@ -110,7 +109,6 @@ describe("the Cycles tab's rows", () => {
     const both: DraftKind[] = ["cycle-pattern", "release"];
     const pattern = { type: "cycle-pattern", id: patternId };
     const release = { type: "release", id: releaseId };
-    const bothKeys = [`cycle-pattern ${patternId}`, `release ${releaseId}`];
     const rejectedPattern = {
       draft: recordDraft({ changed: ["length"], state: "rejected" }),
     };
@@ -143,7 +141,6 @@ describe("the Cycles tab's rows", () => {
     it("decides both drafts for a role approving both", () => {
       expect(decided(changedBoth(), both)).toEqual({
         records: [pattern, release],
-        keys: bothKeys,
         decidable: true,
         menu: { approved: [pattern, release], ...unnamed },
       });
@@ -157,7 +154,6 @@ describe("the Cycles tab's rows", () => {
       (_case, approves, ref, names) => {
         expect(decided(changedBoth(), [...approves])).toEqual({
           records: [ref],
-          keys: bothKeys,
           decidable: true,
           menu: { approved: [ref], ...names },
         });
@@ -165,19 +161,45 @@ describe("the Cycles tab's rows", () => {
     );
 
     it.each([
-      ["was rejected", rejectedPattern, [`release ${releaseId}`]],
-      ["is held by someone else", { heldBy: "Fictional Holder" }, bothKeys],
+      ["was rejected", rejectedPattern],
+      ["is held by someone else", { heldBy: "Fictional Holder" }],
     ])(
       "decides the release's draft alone, named, where the new length %s",
-      (_case, fields, keys) => {
+      (_case, fields) => {
         expect(decided(changedBoth({}, fields), both)).toEqual({
           records: [release],
-          keys,
           decidable: true,
           menu: { approved: [release], ...harbours },
         });
       },
     );
+
+    it("marks the Release by the release's own draft, waiting, though the new length was rejected", () => {
+      const row = rowOf(changedBoth({}, rejectedPattern));
+      expect([
+        row.draft?.state,
+        row.cellDrafts?.get("release")?.state,
+        row.cellDrafts?.get("release")?.changed,
+      ]).toEqual(["rejected", "waiting", ["release"]]);
+    });
+
+    it("credits the Release to whoever changed the release, and leaves the Release unmarked as it is live", () => {
+      const row = rowOf(changedBoth({}, rejectedPattern));
+      const table = cycleTable({
+        streams: [],
+        rows: [row],
+        day: "2027-01-15",
+        onOpen: () => undefined,
+        approves: [],
+      });
+      expect([
+        row.cellDrafts?.get("release")?.changedBy,
+        table.liveRecords([row]).map(({ cellDrafts }) => cellDrafts),
+      ]).toEqual([
+        { release: row.cellDrafts?.get("release")?.madeBy },
+        [undefined],
+      ]);
+    });
 
     it("decides the release's draft alone for a role approving only releases once the new length was rejected", () => {
       expect(
@@ -219,7 +241,6 @@ describe("the Cycles tab's rows", () => {
         ),
       ).toEqual({
         records: [pattern, release],
-        keys: bothKeys,
         decidable: true,
         menu: { approved: [], ...unnamed },
       });
@@ -228,7 +249,6 @@ describe("the Cycles tab's rows", () => {
     it("decides the release's draft alone, but doesn't approve it, where it is the approver's own and the new length was rejected", () => {
       expect(decided(changedBoth(ownRelease, rejectedPattern), both)).toEqual({
         records: [release],
-        keys: bothKeys.slice(1),
         decidable: true,
         menu: { approved: [], approvedOf: undefined, rejectedOf: "Harbour" },
       });
@@ -237,25 +257,19 @@ describe("the Cycles tab's rows", () => {
     it("decides both drafts, approving the new length alone, where the release's draft is the approver's own", () => {
       expect(decided(changedBoth(ownRelease), both)).toEqual({
         records: [pattern, release],
-        keys: bothKeys,
         decidable: true,
         menu: { approved: [pattern], ...unnamed },
       });
     });
 
     it.each([
-      ["rejected", rejectedRelease, []],
-      [
-        "held by someone else",
-        { heldBy: "Fictional Holder" },
-        bothKeys.slice(1),
-      ],
+      ["rejected", rejectedRelease],
+      ["held by someone else", { heldBy: "Fictional Holder" }],
     ])(
       "decides nothing where the new length was rejected and the release's draft is %s",
-      (_case, fields, keys) => {
+      (_case, fields) => {
         expect(decided(changedBoth(fields, rejectedPattern), both)).toEqual({
           records: [],
-          keys,
           decidable: false,
           menu: { approved: [], ...unnamed },
         });
@@ -263,14 +277,13 @@ describe("the Cycles tab's rows", () => {
     );
 
     it.each([
-      ["rejected", rejectedRelease, bothKeys.slice(0, 1)],
-      ["held by someone else", { heldBy: "Fictional Holder" }, bothKeys],
+      ["rejected", rejectedRelease],
+      ["held by someone else", { heldBy: "Fictional Holder" }],
     ])(
       "decides the new length alone where the release's draft is %s",
-      (_case, fields, keys) => {
+      (_case, fields) => {
         expect(decided(changedBoth(fields), both)).toEqual({
           records: [pattern],
-          keys,
           decidable: true,
           menu: { approved: [pattern], ...unnamed },
         });

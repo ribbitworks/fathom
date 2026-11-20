@@ -10,8 +10,14 @@ import { userEvent } from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { describe, expect, it, vi } from "vitest";
-import { RecordSection, Row } from "./record-details.tsx";
-import { testTheme } from "./test-support.tsx";
+import { ColumnRows, RecordSection, Row } from "./record-details.tsx";
+import {
+  type Gadget,
+  gadget,
+  gadgetTable,
+  testTheme,
+  waiting,
+} from "./test-support.tsx";
 
 const column = {
   key: "code",
@@ -167,5 +173,51 @@ describe("a section of a record's details", () => {
       section.querySelector("table") !== null,
       section.querySelector("dl"),
     ]).toEqual([true, null]);
+  });
+});
+
+describe("the rows of a record's columns", () => {
+  it("mark a value another record's draft changes by that draft, not the record's", () => {
+    // Given a gadget whose rename was rejected, and whose code another record's waiting draft changes
+    const live = { values: {}, links: {} };
+    const draft = {
+      ...waiting,
+      state: "rejected" as const,
+      reason: "Fictional reason",
+      action: "changed" as const,
+      changed: ["name", "code"],
+      live: { ...live, name: "Gadget g1", code: "G0" },
+    };
+    const shown: Gadget = gadget("g1", {
+      name: "Renamed",
+      draft,
+      cellDrafts: new Map([
+        [
+          "code",
+          { ...waiting, action: "changed" as const, changed: ["code"], live },
+        ],
+      ]),
+    });
+    render(
+      <MantineProvider theme={testTheme}>
+        <dl>
+          <ColumnRows
+            columns={gadgetTable().columnsFor([], [], [], [])}
+            shown={shown}
+            draft={draft}
+            live={gadget("g1")}
+            changeOf={() => undefined}
+          />
+        </dl>
+      </MantineProvider>,
+    );
+
+    // Then the name is marked rejected and the code waiting
+    const [name, code] = screen.getAllByRole("definition");
+    expect([
+      name?.textContent.includes("Rejected"),
+      code?.textContent.includes("Rejected"),
+      code?.textContent.includes("Draft: changed"),
+    ]).toEqual([true, false, true]);
   });
 });
