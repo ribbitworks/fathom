@@ -42,7 +42,6 @@ describe("what a role allows", () => {
       "Releases",
       "People",
       "Org chart",
-      "Feature assignments",
       "Capacity",
       "Accounts",
       "Roles",
@@ -70,7 +69,7 @@ describe("what a role allows", () => {
       "Change history",
       "Access history",
     ]);
-    expect(doesNotSee).toContain("Feature assignments");
+    expect(doesNotSee).toContain("Capacity");
     expect(doesNotSee).not.toContain("People");
     expect(
       allowed(["people:view", "feature-teams:view", "personal:view"]).sees,
@@ -79,7 +78,8 @@ describe("what a role allows", () => {
       "People on other dates",
       "Org chart",
       "Org chart on other dates",
-      "Feature assignments",
+      "Capacity",
+      "Feature teams",
       "Drafts",
       "Change history",
     ]);
@@ -97,8 +97,8 @@ describe("what a role allows", () => {
       "People on other dates",
       "Org chart",
       "Org chart on other dates",
-      "Feature assignments",
       "Capacity",
+      "Feature teams",
       "Allocations",
       "Drafts",
       "Change history",
@@ -110,7 +110,7 @@ describe("what a role allows", () => {
       "Releases",
       "People on future dates: needs Confidential",
       "Org chart on future dates: needs Confidential",
-      "Feature assignments grouped by manager: needs Confidential",
+      "Feature teams grouped by manager: needs Confidential",
       "Allocations grouped by manager: needs Confidential",
       "Accounts",
       "Roles",
@@ -121,11 +121,11 @@ describe("what a role allows", () => {
     ]);
     const withoutPersonal = allowed(["feature-teams:view"]);
     // A page missed whole opens only to its line saying why.
-    expect(withoutPersonal.sees).not.toContain("Feature assignments");
+    expect(withoutPersonal.sees).not.toContain("Feature teams");
     expect(withoutPersonal.doesNotSee).toEqual(
       expect.arrayContaining([
-        "Feature assignments: needs Personal",
-        "Feature assignments grouped by manager: needs Personal and Confidential",
+        "Feature teams: needs Personal",
+        "Feature teams grouped by manager: needs Personal and Confidential",
       ]),
     );
   });
@@ -148,9 +148,9 @@ describe("what a role allows", () => {
       "feature-teams:view",
       "personal:view",
     ]);
-    expect(sees).toContain("Feature assignments");
+    expect(sees).toContain("Feature teams");
     expect(doesNotSee).toContain(
-      "Feature assignments grouped by manager: needs Confidential",
+      "Feature teams grouped by manager: needs Confidential",
     );
   });
 

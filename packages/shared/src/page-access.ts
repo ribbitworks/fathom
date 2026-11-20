@@ -8,6 +8,7 @@
 import { changeHistoryViews, type Permission } from "./access.ts";
 import {
   allocationsGridPermissions,
+  featureTeamsTabPermissions,
   type ClassAccess,
   type ClassifiedView,
   seesView,
@@ -42,16 +43,25 @@ export const opensWith = (needs: PageNeeds, access: ClassAccess) =>
       (view === undefined || seesView(view, access)),
   );
 
-export const capacityModeNames = ["people", "settings"] as const;
+export const capacityModeNames = [
+  "feature-teams",
+  "allocations",
+  "settings",
+] as const;
 
 export type CapacityMode = (typeof capacityModeNames)[number];
 
 const [allocationsOpening, ...allocationsOthers] = allocationsGridPermissions;
+const [featureTeamsOpening] = featureTeamsTabPermissions;
 
-// People also needs what its grid reads, the feature teams' months and the org chart's planned
+// Allocations also needs what its grid reads, the feature teams' months and the org chart's planned
 // hires, with the Personal details they need.
 export const capacityModeNeeds: Record<CapacityMode, PageNeed> = {
-  people: {
+  "feature-teams": {
+    permission: featureTeamsOpening,
+    view: "featureAssignments",
+  },
+  allocations: {
     permission: allocationsOpening,
     with: allocationsOthers,
     view: "allocations",
@@ -67,9 +77,6 @@ export const pageNeeds = {
   releases: ["features:view", "configuration:view"],
   people: "people:view",
   "org-chart": "people:view",
-  "feature-assignments": [
-    { permission: "feature-teams:view", view: "featureAssignments" },
-  ],
   // Drafts of people and feature teams, of lists, which Approvers see, and of the plan's records.
   drafts: ["people:view", "configuration:view", "plan:view", "features:view"],
   // The page opens for a role that sees any of its modes.

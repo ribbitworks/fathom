@@ -24,7 +24,14 @@ import {
 } from "@mantine/core";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { kept } from "./added-columns.ts";
 import {
   columnDraftActions,
@@ -86,6 +93,7 @@ import {
 import {
   addedNames,
   isHire,
+  peopleAndHires,
   personOnly,
   rowName,
   type RowRequest,
@@ -102,7 +110,9 @@ import {
 import { useSaving } from "./saving.ts";
 import type { ChangeView } from "./table-controls.tsx";
 import { useSavedViews } from "./saved-views.tsx";
+import { formatDay } from "./day-formats.ts";
 import type { View } from "./table-view.ts";
+import { today } from "./today.ts";
 
 const newColumnId = "column-new";
 
@@ -212,6 +222,13 @@ export function PeoplePage({
   access?: ClassAccess;
 }) {
   const day = dates?.day;
+  // Today as the page opened, which People shows until another day is chosen.
+  const [opened] = useState(today);
+  const countOn = useCallback(
+    (rows: readonly Person[]) =>
+      `${peopleAndHires(isHire).counted(rows)} on ${formatDay(day ?? opened)}`,
+    [day, opened],
+  );
   const query = useQuery(peopleQueryOn(day));
   const teamColourOf = useTeamColours();
   // Changes to rows, columns, and anything undated are made on today.
@@ -562,6 +579,7 @@ export function PeoplePage({
         <PeopleGrid
           linkedColumn={linkedColumn}
           teamColourOf={teamColourOf}
+          count={countOn}
           dataClasses={access.dataClasses}
           // On a day where nothing can be changed, People is read as approved, as the Org chart is.
           withDrafts={day === undefined || changesFrom !== undefined}

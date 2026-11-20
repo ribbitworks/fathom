@@ -3,7 +3,7 @@
 // The strip of quarters above a month grid: the quarters its months fall in, the quarters the
 // arrows step to from the first month on screen, and which months' columns are on screen.
 
-import { quarterStart } from "@fathom/shared";
+import { addToMonth, quarterStart } from "@fathom/shared";
 import { quarterName, quarterOf } from "./timeline.ts";
 
 export interface MonthQuarter {
@@ -80,4 +80,25 @@ export function columnsOnScreen(
           width * enoughInView,
     )
     .map(({ key }) => key);
+}
+
+// Where a grid scrolls to show a month: the month before it, just after the frozen columns, so the
+// month shown has the one before it beside it, unless it is the grid's first.
+export const scrollTargetFor = (month: string, firstMonth: string): string =>
+  month === firstMonth ? month : addToMonth(month, -1);
+
+// The column a grid's count is for, as the grid scrolls by hand: the first wholly in view after the
+// frozen columns, or the one after it where it starts at their edge, as the month before the one a
+// grid was moved to does. A pixel is allowed for rounding.
+export function countedColumn(
+  columns: readonly ColumnPlace[],
+  { scrolled, frozenWidth }: { scrolled: number; frozenWidth: number },
+): string | undefined {
+  const edge = scrolled + frozenWidth;
+  const index = columns.findIndex(({ left }) => left >= edge - 1);
+  if (index === -1) return undefined;
+  const [whole, after] = columns.slice(index, index + 2);
+  const beforeTheMonthShown =
+    index > 0 && whole !== undefined && whole.left <= edge + 1;
+  return (beforeTheMonthShown ? (after ?? whole) : whole)?.key;
 }

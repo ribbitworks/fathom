@@ -100,9 +100,15 @@ export function useLastView(shown: Shown): void {
   // The page is always one of the fixed pages.
   // eslint-disable-next-line security/detect-object-injection
   const stored = last.data?.[page];
-  // A page that opened on its default, with nothing kept, has nothing to keep either.
+  // A page that opened on its default, on its first tab, with nothing kept, has nothing to keep
+  // either; another tab is kept, so the page opens on it again.
   const unchanged =
-    isKept(shown, stored) || (stored === undefined && namesNoView(shown));
+    isKept(shown, stored) ||
+    (stored === undefined &&
+      namesNoView(shown) &&
+      // The page is always one of the fixed pages.
+      // eslint-disable-next-line security/detect-object-injection
+      shown.table === firstTables[page]);
   const key = JSON.stringify(requestFor(shown));
   // The view waiting to be kept, kept at once if the page is left first.
   const pending = useRef<() => void>(undefined);

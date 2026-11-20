@@ -1,33 +1,37 @@
 # Capacity
 
-**Capacity** is about how much feature work people can deliver. It has two modes, and the switch beside the heading chooses between them:
+**Capacity** is about who works where and how much feature work people can deliver. It has three tabs, beside the heading:
 
-- **People** shows what each person and planned hire works on, month by month, and how much of their month it takes.
+- **Feature teams** shows who is on which feature team, month by month.
+- **Allocations** shows what each person and planned hire works on, month by month, and how much of their month it takes.
 - **Settings** holds the planning settings, which apply to everyone.
 
 ## What to Know First
 
+- **Feature teams:** a feature team is a group that works on features together, whoever its members report to. Being on a team doesn't say what someone works on. That's in **Allocations**.
 - **Allocations:** an allocation is the share of someone's month planned for one feature, such as 50%.
 - **Planned hires:** a planned hire is a job you plan to fill. It has a row like a person's, so the work planned for it shows too.
 - **Person-months:** a person-month is one person's work for a month. The settings decide how many hours and days that is.
-- **Who sees which mode:** your role decides which modes you see. If it sees only one, that mode shows alone, with no switch. If it sees neither, you don't have the page. The Pages Help page lists the permissions each mode needs.
-- **Drafts:** a change to a setting is a draft. Nobody else sees it until you select **Publish** in the top bar, and it takes effect once someone whose role approves configuration approves it.
+- **Who sees which tab:** your role decides which tabs you see. If it sees only one, that tab shows alone, with no tabs above it. If it sees none, you don't have the page. The Pages Help page lists the permissions each tab needs.
+- **Drafts:** a change to someone's teams or to a setting is a draft. Nobody else sees it until you select **Publish** in the top bar, and it takes effect once it's approved.
 
 See [Drafts](drafts.md) for more.
 
 ## Main Tasks
 
-### Choose a Mode
+### Choose a Tab
 
-Select **People** or **Settings** in the switch beside the heading. The page opens on **People** for a role that sees it.
+Select **Feature teams**, **Allocations** or **Settings** beside the heading. The page opens on the tab you used last.
 
-### Read Who Works on What
+### Move Through the Months
 
-In **People**, the table opens at the current month, whose heading is underlined in red. The table holds whole quarters, from the quarter a year back to the quarter eleven months ahead.
+**Feature teams** and **Allocations** have the same table: a row for each person and planned hire, and a column for each month. It holds whole quarters, from the quarter a year back to the quarter eleven months ahead. It opens with the current month second, after last month, and the current month's heading is underlined in red.
 
 - To scroll to a quarter, select it in the strip above the table. To move a quarter at a time, use **‹** and **›**. The quarters in view are tinted, and the current one is underlined. The quarter you chose stays filled blue until you scroll somewhere else.
 - From the keyboard, press Tab to reach the strip's quarters, and the arrow keys to move between them. Press Enter or Space to choose the quarter you're on.
 - To go back to the current month, select **Today**, at the end of the strip.
+
+The count after **Group by**, such as **137 people and 10 planned hires in Apr 2027**, is for one month: the one you moved to, second in view, whose heading is filled blue. It counts the people working that month and the planned hires expected by then, and changes as you scroll.
 
 ### Group the Rows
 
@@ -40,20 +44,20 @@ To turn the headings round, select **Group by** again, and choose **Z to A**. Th
 
 To show one list again, choose **Clear grouping**, at the end of the menu, or **None** under **Group by**.
 
-Grouped by **Manager**, someone who changed manager has a row under each one, holding only the months they reported to them. Grouped by **Feature team**, someone has a row under each team they're on, and one under **No feature team** for any months they're on none.
+On **Allocations**, grouped by **Manager**, someone who changed manager has a row under each one, holding only the months they reported to them. Grouped by **Feature team**, someone has a row under each team they're on, and one under **No feature team** for any months they're on none. Each group ends with a total row.
 
-Each group ends with a total row. **Manager** is offered only to roles that see Confidential data, since a later month's manager can be a reorganization not yet announced.
+On **Feature teams**, someone on two feature teams has a row under each team. Grouped by **Manager**, each person is under the manager they report to today. **Manager** is offered only to roles that see Confidential data, since a later month's manager can be a reorganization not yet announced.
 
 You're done when the rows show under the headings you chose.
 
 ### Find People
 
-- To find people by name, type in the search box. You can also type a feature's name, such as `Checkout`, to find everyone allocated to it in any month.
-- To filter one month by feature, open that month's column menu, select **Filter…**, and pick the features.
+- To find people by name, type in the search box. You can also type a team's or a feature's name, such as `Payments core` or `Checkout`, to find everyone on it in any month.
+- To filter one month by team or feature, open that month's column menu, select **Filter…**, and pick the teams or features.
 
-### Keep a View of People
+### Keep a View of the Table
 
-To come back to **People** as you've set it up, with its grouping and search, save it as a view. **Settings** has no views.
+To come back to a tab as you've set it up, with its grouping and search, save it as a view. Each of **Feature teams** and **Allocations** has views of its own. **Settings** has no views.
 
 1. Set up the table the way you want it.
 1. Select **Views**, the last button after the search box.
@@ -64,6 +68,22 @@ To come back to **People** as you've set it up, with its grouping and search, sa
 See [Saved views](saved-views.md#save-a-view).
 
 You're done when the **Views** button shows the view's name.
+
+### Put Someone on a Feature Team From a Month
+
+1. In **Feature teams**, select the person's cell in the month the change starts.
+1. Press Enter. The team list opens.
+1. Type part of the team's name, such as `Pay`, and press Tab.
+
+The person is on the team from that month on. The change starts on the first day of the month, or today if it's the current month. You can change earlier months only if your role changes Personal details.
+
+To take someone off a team from a month on, select their cell in that month, and press Delete.
+
+You're done when the team shows in the cell, with a dot for your draft.
+
+### Change Several Members or a Team's Lead
+
+Use the team's panel on the **Org chart**, under **Feature teams**. See [Org chart](org-chart.md#change-a-feature-team).
 
 ### Change a Setting
 
@@ -111,17 +131,25 @@ Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you
 
 ## Marks and Terms
 
-### In People
+### In Feature Teams
 
-- **A line in a cell** names a feature, and the share of the month it takes, such as **50%**. Point at the name to see all of it.
-- **Total**, under two or more features, adds up their shares.
-- **Over**, in red, marks a month whose allocations add up to more than 100%. **Under**, in grey, marks one under 100%. Both show from the current month on, and features whose status means Possible don't count.
-- **Planned hires** have rows of their own, under their manager and under **No feature team**. One with no name shows its position and ID in grey, such as **SDET, TBD-5**.
+- **A team in a cell** shows its name after a small square in its colour, or with no square when it has none. Point at a name to see all of it.
+- **Shaded months** come before someone started or after they left.
+- **Planned hires** have rows, but no teams yet, so their cells are empty.
+- **No feature team**, when grouped by **Feature team**, heads the people who are on no team in all the months shown.
+- **No manager**, when grouped by **Manager**, heads the people who report to nobody today.
+- **A green dot before a team**, in the light green Live row under a drafted row, marks a team the draft takes away. With **Live only** chosen in the **Draft** menu, it marks each team a waiting draft would take away. Point at it to see the change.
+
+### In Allocations
+
+- **A line in a cell** names a feature, after a small square in its feature team's colour, and the share of the month it takes, such as **50%**. Point at the name to see all of it.
+- **Over**, in red, ends a month whose allocations add up to more than 100%, with how much more at the right, such as **+25%**. **Under**, in red, ends one under 100%, with how much less, such as **−90%**. **Not allocated**, in red, ends a month with nothing allocated. Point at **Over** or **Under** to see the month's total. They show from the current month on, and features whose status means Possible don't count. A month at exactly 100% has no last line.
+- **Planned hires** have rows of their own, under their manager and under **No feature team**. One with no name shows its position and ID in grey, such as **SDET, TBD-5**. Months before one is expected are shaded.
 - **Total, PM**, in bold, ends each group, and **Organization, PM** stays at the foot of the table. PM is person-months.
 - **A total**, such as **7.5 of 9**, is the person-months allocated that month, out of those available. The share is under it. Point at it to see it in words. Totals count only the rows shown.
-- **Someone on a feature team with nothing allocated** reads **Under**, and counts as **0 of 1** in the totals. Being on a team doesn't allocate anyone to its features.
+- **Someone on a feature team with nothing allocated** reads **Not allocated**, and counts as **0 of 1** in the totals. Being on a team doesn't allocate anyone to its features.
 - **A green dot inside a line**, in the light green Live row under a drafted row, marks a feature the draft takes off or changes. With **Live only** chosen in the **Draft** menu, it marks each one a waiting draft would change.
-- **People** is read only.
+- **Allocations** is read only.
 
 ### In Settings
 
@@ -133,5 +161,7 @@ Press Cmd+Z on a Mac, or Ctrl+Z elsewhere, straight after the change, before you
 - **A yellow dot** marks a setting a draft changes, with the live value under it after a green dot. **No month 3**, or the like, marks a month the draft adds or removes. **Draft**, above **Working time**, chooses how drafts show.
 
 ## Where Changes Go
+
+A change to someone's teams is a draft of the team, and it's approved with the team's other changes. Each month the draft changes has the draft's dot before the team. See [Drafts](drafts.md).
 
 Until a change to a setting is approved, the **Effort** column on **Features** keeps using the approved settings, which **Show in** names, such as **Person-days (8 hours)**. Every change is recorded in the change history.

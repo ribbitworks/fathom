@@ -113,7 +113,7 @@ describe("what shows a built-in detail", () => {
     expect(shownIn("futureReorganizations")).toEqual([
       "People on future dates",
       "Org chart on future dates",
-      "Feature assignments grouped by manager",
+      "Feature teams grouped by manager",
       "Allocations grouped by manager",
     ]);
     expect(shownIn("managerHistory")).toContain("People's Manager assigned");
@@ -318,7 +318,11 @@ describe("whether a role sees a view", () => {
 describe("why a view is missing", () => {
   it.each([
     ["allocations", [], "Allocations needs Personal access."],
-    ["featureAssignments", [], "Feature assignments needs Personal access."],
+    [
+      "featureAssignments",
+      [],
+      "Feature teams on Capacity needs Personal access.",
+    ],
     ["orgChartOtherDates", [], "Other dates need Personal access."],
     [
       "groupingByManager",
@@ -397,10 +401,14 @@ describe("the views on the pages a role reaches", () => {
     expect(viewsOfRole(access(everything), [])).toEqual([]);
   });
 
-  it("needs View Allocations as well as Capacity for Allocations", () => {
+  it("needs View Allocations as well as Capacity for Allocations, and View Feature teams for Feature teams", () => {
     const names = (permissions: readonly Permission[]) =>
       viewsOfRole(access(permissions), ["Capacity"]).map(({ name }) => name);
     expect(names(everything)).toEqual([]);
+    expect(names([...everything, "feature-teams:view"])).toEqual([
+      "Feature teams",
+      "Feature teams grouped by manager",
+    ]);
     expect(
       names([
         ...everything,
@@ -408,7 +416,12 @@ describe("the views on the pages a role reaches", () => {
         "feature-teams:view",
         "people:view",
       ]),
-    ).toEqual(["Allocations grouped by manager", "Allocations"]);
+    ).toEqual([
+      "Feature teams",
+      "Feature teams grouped by manager",
+      "Allocations grouped by manager",
+      "Allocations",
+    ]);
   });
 
   it("names the permissions a view needs beyond the one opening its page, with the classes", () => {
@@ -420,7 +433,7 @@ describe("the views on the pages a role reaches", () => {
   });
 
   it("names grouping by manager on each page it is on, with why the role misses it there", () => {
-    const pages = ["Feature assignments", "Capacity"];
+    const pages = ["Capacity"];
     expect(
       viewsOfRole(
         access([...personal, "allocations:view", "feature-teams:view"]),
@@ -429,10 +442,7 @@ describe("the views on the pages a role reaches", () => {
         .filter(({ name }) => name.endsWith("grouped by manager"))
         .map(({ page, why }) => [page, why]),
     ).toEqual([
-      [
-        "Feature assignments",
-        "Feature assignments grouped by manager: needs Confidential",
-      ],
+      ["Capacity", "Feature teams grouped by manager: needs Confidential"],
       ["Capacity", "Allocations grouped by manager: needs Confidential"],
     ]);
   });

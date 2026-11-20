@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The planning pages' routes, Releases, Capacity, Projects, Features and Feature assignments, with
-// what each page's address holds.
+// The planning pages' routes, Releases, Capacity, Projects and Features, with what each page's
+// address holds, and Feature assignments' old address.
 
 import {
   approvableKinds,
@@ -9,6 +9,8 @@ import {
   cyclesViewChoices,
   daySchema,
   editsField,
+  opensWith,
+  pageNeeds,
   planModeSchema,
   releasesViewChoices,
   seesView,
@@ -19,12 +21,14 @@ import { createRoute, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import { CapacityPage } from "./capacity-page.tsx";
 import {
+  capacityModeOfTable,
   capacityModeSchema,
   capacityModes,
+  capacityTables,
   shownCapacityMode,
 } from "./capacity.ts";
 import { removedCycleMark } from "./cycle-table.tsx";
-import { FeatureAssignmentsPage } from "./feature-assignments-page.tsx";
+import { lastViewsQuery } from "./last-views.ts";
 import { ProjectsPage, projectTabSchema } from "./projects-page.tsx";
 import { featureNamers, planAddress } from "./projects.ts";
 import {
@@ -178,7 +182,7 @@ export const releasesRoute = createRoute({
   },
 });
 
-// The Capacity page's address: its mode, and People's view.
+// The Capacity page's address: its tab, and its grid's view.
 const capacitySearch = viewSearchSchema.extend({
   mode: capacityModeSchema.optional().catch(undefined),
 });
@@ -189,9 +193,25 @@ export const capacityRoute = createRoute({
   validateSearch: capacitySearch,
   beforeLoad: (match) => {
     opening("capacity")(match);
+    const mode = shownCapacityMode(match.search.mode, match.context.access);
+    if (mode === "settings") return;
+    // An address naming a tab, such as an old Feature assignments link, shows that tab, with its last
+    // view only where it was on that tab.
+    const last = match.context.queryClient.getQueryData(
+      lastViewsQuery.queryKey,
+    )?.capacity;
+    if (
+      match.search.mode !== undefined &&
+      (last === undefined || capacityModeOfTable(last.table) !== mode)
+    ) {
+      return;
+    }
     openOnLastView(
       match,
-      shownOn("capacity", match.search, [], match.search.mode),
+      // The tab is always one of the grid tabs here.
+      // eslint-disable-next-line security/detect-object-injection
+      shownOn(capacityTables[mode], match.search),
+      (address, table) => ({ ...address, mode: capacityModeOfTable(table) }),
     );
   },
   component: function Capacity() {
@@ -199,7 +219,7 @@ export const capacityRoute = createRoute({
     const navigate = capacityRoute.useNavigate();
     const { mode: asked, ...search } = capacityRoute.useSearch();
     const mode = shownCapacityMode(asked, access);
-    // The address keeps the mode shown, not one asked for that the role doesn't see.
+    // The address keeps the tab shown, not one asked for that the role doesn't see.
     const kept = asked === undefined ? {} : { mode };
     return (
       <CapacityPage
@@ -209,7 +229,15 @@ export const capacityRoute = createRoute({
           void navigate({ search: { mode: next } });
         }}
         byManager={seesView("groupingByManager", access)}
-        canShareViews={sharesViews("capacity", permissions)}
+        seesHires={opensWith(pageNeeds["org-chart"], access)}
+        editsTeams={editsFeatureTeams(permissions)}
+        changesDates={editsField(access, "featureTeamDates")}
+        canShareViews={
+          mode !== "settings" &&
+          // The tab is always one of the grid tabs here.
+          // eslint-disable-next-line security/detect-object-injection
+          sharesViews(capacityTables[mode], permissions)
+        }
         {...viewProps(search, (next, replace) => {
           void navigate({ search: { ...next, ...kept }, replace });
         })}
@@ -386,8 +414,8 @@ export const projectsRoute = createRoute({
   },
 });
 
-// The Feature assignments page's address. Its Allocations mode moved to Capacity's People mode, so
-// an address naming it, such as a saved link, opens that instead, with the same view.
+// Feature assignments' old address, as a saved link may have it, opens its tab on Capacity with the
+// same view, or Allocations for its old Allocations mode.
 const featureAssignmentsSearch = viewSearchSchema.extend({
   mode: z.literal("allocations").optional().catch(undefined),
 });
@@ -396,34 +424,12 @@ export const featureAssignmentsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/feature-assignments",
   validateSearch: featureAssignmentsSearch,
-  beforeLoad: ({ context, cause, search: { mode, ...shown } }) => {
-    if (mode !== undefined) {
-      // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
-      throw redirect({
-        to: "/capacity",
-        search: { ...shown, mode: "people" },
-        replace: true,
-      });
-    }
-    opening("feature-assignments")({ context });
-    openOnLastView(
-      { context, search: shown, cause },
-      shownOn("feature-assignments", shown),
-    );
-  },
-  component: function FeatureAssignments() {
-    const { permissions, access } = signedIn.useRouteContext();
-    const navigate = featureAssignmentsRoute.useNavigate();
-    return (
-      <FeatureAssignmentsPage
-        byManager={seesView("groupingByManager", access)}
-        editsTeams={editsFeatureTeams(permissions)}
-        changesDates={editsField(access, "featureTeamDates")}
-        canShareViews={sharesViews("feature-assignments", permissions)}
-        {...viewProps(featureAssignmentsRoute.useSearch(), (next, replace) => {
-          void navigate({ search: next, replace });
-        })}
-      />
-    );
+  beforeLoad: ({ search: { mode, ...shown } }) => {
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
+    throw redirect({
+      to: "/capacity",
+      search: { ...shown, mode: mode ?? "feature-teams" },
+      replace: true,
+    });
   },
 });

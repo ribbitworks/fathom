@@ -6,7 +6,6 @@
 import {
   type CSSProperties,
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -21,7 +20,7 @@ import {
   frozenByDefault,
   frozenLayout,
   frozenLeft,
-  keptEdges,
+  sameEdges,
   scrollBesideFrozen,
   useMeasured,
 } from "./frozen-columns.ts";
@@ -32,6 +31,7 @@ import classes from "./pages.module.css";
 import type { AnyColumn, Column, GridRecord } from "./record-table.ts";
 import { classMarkChars, draftMarkChars } from "./status-mark.tsx";
 import { valueOrStandIn } from "./table-view.ts";
+import { valueStore } from "./value-store.ts";
 
 const widestChars = 30;
 // A table's name column starts no wider than most full names with the row's slot, so the columns
@@ -171,15 +171,12 @@ export function useGridLayout<Rec extends GridRecord, Change, Request>(
   // Whether the table has columns out of view to either side: those to its left once scrolled
   // sideways, which the frozen columns' edge shows with a shadow, or else a fade, and those to its
   // right, which a fade shows.
-  const [edges, setEdges] = useState<ScrollEdges>({
-    before: false,
-    after: false,
-  });
+  // Kept apart from the table's state, so reaching an end redraws only the marks, not every row.
+  const [edges] = useState(() =>
+    valueStore<ScrollEdges>(sameEdges, { before: false, after: false }),
+  );
   // Each column's header cells: its own, and any live copy beside it.
   const headerCells = columns.map((column) => (liveBeside(column) ? 2 : 1));
-  const followEdges = useCallback((next: ScrollEdges) => {
-    setEdges((before) => keptEdges(before, next));
-  }, []);
   const {
     scrollRef,
     measured,
@@ -189,7 +186,7 @@ export function useGridLayout<Rec extends GridRecord, Change, Request>(
     columns
       .map((column) => `${column.key}${liveBeside(column) ? "+" : ""}`)
       .join(" "),
-    followEdges,
+    edges.set,
   );
   const frozenAsked = Math.min(view.frozen ?? frozenByDefault, columns.length);
   const frozen = frozenLayout(measured, headerCells, frozenAsked);
@@ -264,7 +261,6 @@ export function useGridLayout<Rec extends GridRecord, Change, Request>(
   return {
     longestText,
     edges,
-    setEdges,
     scrollRef,
     measured,
     frozenAsked,

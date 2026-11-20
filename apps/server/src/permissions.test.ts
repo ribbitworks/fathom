@@ -106,7 +106,7 @@ const viewTableNeeds: Record<ViewTable, Needs> = {
   cycles: anyOf("features:view", "configuration:view"),
   "release-streams": anyOf("features:view", "configuration:view"),
   lists: allOf("configuration:view"),
-  // Feature assignments' start and end dates, past managers, and team dates are Personal.
+  // Feature teams' start and end dates, past managers, and team dates are Personal.
   "feature-assignments": allOf("feature-teams:view", "personal:view"),
   capacity: allOf(
     "allocations:view",
@@ -793,7 +793,7 @@ const routes: Route[] = [
   },
   {
     method: "PATCH",
-    // Changing someone's teams month by month is part of Feature assignments, which needs
+    // Changing someone's teams month by month is part of Capacity's Feature teams, which needs
     // Personal details.
     pattern: "/api/feature-teams/members/:personId",
     needs: allOf("people:view", "feature-teams:edit", "personal:view"),

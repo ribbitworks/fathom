@@ -1,52 +1,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Feature assignments page: people as rows and months as columns, each cell holding the feature
+// Capacity's Feature teams: people as rows and months as columns, each cell holding the feature
 // teams someone is on that month, as approved, and as drafted for those who see drafts, changed by
 // those who may propose team changes.
 
-import { Stack } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { MonthGrid, type MonthGridProps } from "./month-grid.tsx";
+import { orgChartQuery } from "./org-chart.ts";
+import { hireRows, monthManagers } from "./planned-hire-months.ts";
 import { useSavedViews } from "./saved-views.tsx";
-import { PageHeader } from "./page-header.tsx";
-import classes from "./pages.module.css";
 import { activeGrouping } from "./table-view.ts";
 import {
   gridMonthsAround,
-  peopleManagers,
+  type PersonMonths,
   teamMonthRecords,
   teamMonthsQuery,
   teamMonthsTable,
   useTeamMonthActions,
 } from "./team-months.tsx";
-import { today } from "./today.ts";
 
-export function FeatureAssignmentsPage({
-  editsTeams,
-  changesDates,
-  ...grid
-}: Omit<MonthGridProps, "now"> & {
-  editsTeams: boolean;
-  // Whether the reader may change Personal details, and so months before the current one.
-  changesDates: boolean;
-}) {
-  const [now] = useState(today);
-  return (
-    <Stack gap="md" className={classes.tablePage}>
-      <PageHeader title="Feature assignments" />
-      <TeamsGrid
-        editsTeams={editsTeams}
-        changesDates={changesDates}
-        now={now}
-        {...grid}
-      />
-    </Stack>
-  );
-}
-
-function TeamsGrid({
+export function CapacityFeatureTeams({
   byManager,
+  seesHires,
   editsTeams,
   changesDates,
   now,
@@ -55,7 +31,13 @@ function TeamsGrid({
   applied,
   onApply,
   canShareViews,
-}: MonthGridProps & { editsTeams: boolean; changesDates: boolean }) {
+}: MonthGridProps & {
+  // Whether the reader sees planned hires, each a row with no teams.
+  seesHires: boolean;
+  editsTeams: boolean;
+  // Whether the reader may change Personal details, and so months before the current one.
+  changesDates: boolean;
+}) {
   const [range] = useState(() => gridMonthsAround(now));
   const read = teamMonthsQuery(range);
   const query = useQuery(read);
@@ -68,29 +50,39 @@ function TeamsGrid({
     canShare: canShareViews,
   });
   const actions = useTeamMonthActions(range, now, views.opened);
+  const chartRead = useQuery({ ...orgChartQuery, enabled: seesHires });
   const { data } = query;
+  const chart = chartRead.data;
+  const loaded = data !== undefined && (!seesHires || chart !== undefined);
   const table = useMemo(
     () =>
-      data === undefined
+      !loaded
         ? undefined
         : teamMonthsTable(
             data,
             view.show,
             { today: now, changesDates },
-            byManager ? peopleManagers(data) : undefined,
+            byManager ? monthManagers(data, chart) : undefined,
           ),
-    [data, view.show, now, changesDates, byManager],
+    [loaded, data, chart, view.show, now, changesDates, byManager],
   );
   const grouping = activeGrouping(view, table?.groupings)?.key;
   const records = useMemo(
     () =>
-      data === undefined ? [] : teamMonthRecords(data, grouping, view.show),
-    [data, grouping, view.show],
+      !loaded
+        ? []
+        : [
+            ...teamMonthRecords(data, grouping, view.show),
+            ...(chart === undefined ? [] : hireRows(chart, data.months)).map(
+              (hire): PersonMonths => ({ ...hire, teamsIn: new Map() }),
+            ),
+          ],
+    [loaded, data, chart, grouping, view.show],
   );
   return (
     <MonthGrid
-      what="the feature assignments"
-      reads={[query]}
+      what="the feature teams"
+      reads={[query, chartRead]}
       table={table}
       records={records}
       actions={actions}

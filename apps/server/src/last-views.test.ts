@@ -198,7 +198,7 @@ describe("the last view of a page", () => {
   });
 
   it("keeps a grouping by manager only while the role sees the data it needs", async () => {
-    // Given a view of Feature assignments grouped by manager
+    // Given a view of Feature teams grouped by manager
     const assignmentsReader: Permission[] = [
       "feature-teams:view",
       "personal:view",
@@ -211,14 +211,14 @@ describe("the last view of a page", () => {
       table: "feature-assignments",
       definition: { grouping: "manager", groupsReversed: true },
     };
-    await remember(cookie, "feature-assignments", byManager);
-    const kept = await lastOf(cookie, "feature-assignments");
+    await remember(cookie, "capacity", byManager);
+    const kept = await lastOf(cookie, "capacity");
 
     // When the role no longer sees what the grouping needs
     await test.holdOnly(id, assignmentsReader);
 
     // Then the grouping is kept until then
-    expect([kept, await lastOf(cookie, "feature-assignments")]).toEqual([
+    expect([kept, await lastOf(cookie, "capacity")]).toEqual([
       byManager,
       { table: "feature-assignments", definition: {} },
     ]);
@@ -261,10 +261,10 @@ describe("the last view of a page", () => {
   });
 
   it("is not sent to a role that no longer opens its page, and is sent with the others", async () => {
-    // Given a last view of Feature assignments, which needs Personal data
+    // Given a last view of Capacity's Feature teams, which needs Personal data
     const reader: Permission[] = [...generalReader, "personal:view"];
     const { id, cookie } = await test.signedIn(reader);
-    await remember(cookie, "feature-assignments", {
+    await remember(cookie, "capacity", {
       table: "feature-assignments",
       definition: { search: "fictional" },
     });

@@ -17,7 +17,7 @@ import {
   type Meaning,
   monthCapacity,
   type OrgChart,
-  type OrgChartPerson,
+  type PaletteColour,
   percentageIn,
   type Show,
   summedCapacity,
@@ -32,10 +32,11 @@ import { getJson } from "./api.ts";
 import { unitWords } from "./effort.ts";
 import { share } from "./metrics.ts";
 import { decimal } from "./numbers.ts";
-import { peopleAndHires } from "./people-rows.ts";
+import { hireRows } from "./planned-hire-months.ts";
 import type { CellChange } from "./cell-kinds.tsx";
 import pages from "./pages.module.css";
 import type { RecordTable, RowTotals } from "./record-table.ts";
+import { ColouredName } from "./colour-swatch.tsx";
 import { DraftedPartItem, type DraftedPart } from "./status-mark.tsx";
 import type { DraftLike } from "./draft-marks.ts";
 import { tipAttribute } from "./table-tips.tsx";
@@ -43,7 +44,6 @@ import {
   monthGridTable,
   monthGroupings,
   type MonthRow,
-  peopleManagers,
   personDraft,
   teamMonthRecords,
 } from "./team-months.tsx";
@@ -57,6 +57,7 @@ export interface AllocationLine {
   featureId: string;
   name: string;
   meaning: Meaning | null;
+  colour: PaletteColour | null;
   // The percentage shown: as drafted, or, for a feature a draft takes off, as approved.
   percentage: number;
   // The percentage as approved; null for a feature a draft adds.
@@ -69,21 +70,21 @@ export interface AllocationLine {
 
 export interface AllocationRow extends HeldRow {
   allocated: ReadonlyMap<string, AllocationLine[]>;
-  // For a planned hire: the month it is expected, the first it can be allocated in.
-  allocatableFrom?: string;
-  // For a planned hire with no name: its position and ID, shown in grey in place of a name.
-  madeName?: string;
-  plannedHire?: true;
   live?: AllocationRow | undefined;
 }
 
-const marks: Record<
-  LoadMark,
-  { words: string; className: string | undefined }
-> = {
-  over: { words: "Over", className: styles.over },
-  under: { words: "Under", className: styles.under },
+const marks: Record<LoadMark, { words: string }> = {
+  over: { words: "Over" },
+  under: { words: "Under" },
 };
+
+const totalWords = (total: number) => `Total ${String(total)}%`;
+
+// How far a month is from a whole month, such as +25% or −90%, with a minus sign rather than a hyphen.
+const offWholeMonth = (total: number) =>
+  total > wholeMonth
+    ? `+${String(total - wholeMonth)}%`
+    : `\u2212${String(wholeMonth - total)}%`;
 
 // A month's total as the Draft menu shows it: as drafts make it only with drafts applied, and
 // otherwise as approved.
@@ -103,11 +104,7 @@ const holdsMonth = (row: Pick<AllocationRow, "holds">, month: string) =>
   row.holds === undefined || row.holds.has(month);
 
 export function allocatableIn(row: AllocationRow, month: string): boolean {
-  return (
-    holdsMonth(row, month) &&
-    !row.outside.has(month) &&
-    (row.allocatableFrom === undefined || row.allocatableFrom <= month)
-  );
+  return holdsMonth(row, month) && !row.outside.has(month);
 }
 
 export function AllocationLines({
@@ -128,11 +125,18 @@ export function AllocationLines({
   // The key is one of the union's own.
   // eslint-disable-next-line security/detect-object-injection
   const marked = mark === undefined ? undefined : marks[mark];
-  const withTotal = lines.length > 1 || marked !== undefined;
   return (
     <div className={styles.lines}>
       {lines.map(
-        ({ featureId, name, percentage, drafted, draft, shownLive }) => (
+        ({
+          featureId,
+          name,
+          colour,
+          percentage,
+          drafted,
+          draft,
+          shownLive,
+        }) => (
           <div
             key={featureId}
             className={[
@@ -143,21 +147,29 @@ export function AllocationLines({
           >
             <span className={styles.name}>
               <DraftedPartItem draft={draft} part={drafted} live={shownLive}>
-                {name}
+                <ColouredName colour={colour}>{name}</ColouredName>
               </DraftedPartItem>
             </span>
             <span>{percentage}%</span>
           </div>
         ),
       )}
-      {withTotal && (
+      {/* Only a month off a whole month has a last line, so a whole month reads alike with one feature
+          or several. */}
+      {marked !== undefined && (
         <div
-          className={[styles.line, styles.total, marked?.className ?? ""].join(
-            " ",
-          )}
+          className={[styles.line, styles.total, styles.marked].join(" ")}
+          {...(total === 0 ? {} : { [tipAttribute]: totalWords(total) })}
         >
-          <span>{marked?.words ?? "Total"}</span>
-          <span>{total}%</span>
+          {total === 0 ? (
+            <span>Not allocated</span>
+          ) : (
+            <>
+              <span>{marked.words}</span>
+              <span>{offWholeMonth(total)}</span>
+              <VisuallyHidden>, {totalWords(total)}</VisuallyHidden>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -167,10 +179,10 @@ export function AllocationLines({
 function featureOf(
   features: ReadonlyMap<string, AllocatedFeature>,
   { featureId }: Allocation,
-): Pick<AllocationLine, "featureId" | "name" | "meaning"> {
+): Pick<AllocationLine, "featureId" | "name" | "meaning" | "colour"> {
   // The server lists every feature an allocation names.
-  const { name, meaning } = features.get(featureId) as AllocatedFeature;
-  return { featureId, name, meaning };
+  const { name, meaning, colour } = features.get(featureId) as AllocatedFeature;
+  return { featureId, name, meaning, colour };
 }
 
 // A month's allocations as approved, each feature by name.
@@ -332,54 +344,7 @@ function withLiveMarks(
   };
 }
 
-type BaseRow = MonthRow &
-  Pick<AllocationRow, "allocatableFrom" | "madeName" | "plannedHire" | "holds">;
-
-const plannedHires = (chart: OrgChart) =>
-  chart.people.flatMap((card) =>
-    card.planned === undefined ? [] : [{ ...card, planned: card.planned }],
-  );
-
-// A planned hire's manager, a person or a planned manager, who is on the chart.
-function hireManager(
-  chart: OrgChart,
-  { managerId }: OrgChartPerson,
-): MonthRow["manager"] {
-  if (managerId === null) return null;
-  // The chart draws every placeholder under a manager it holds.
-  const manager = chart.people.find(
-    ({ id }) => id === managerId,
-  ) as OrgChartPerson;
-  return { id: managerId, name: manager.preferredName };
-}
-
-// Everyone the grid's rows report to: people's managers, in any month, and planned hires'.
-export const allocationManagers = (teamMonths: TeamMonths, chart: OrgChart) => [
-  ...peopleManagers(teamMonths),
-  ...teamMonths.people.flatMap(({ managers }) =>
-    Object.values(managers ?? {}).flatMap((manager) => manager ?? []),
-  ),
-  ...plannedHires(chart).flatMap((card) => hireManager(chart, card) ?? []),
-];
-
-// The planned hires the org chart draws, as rows under their managers and under no feature team.
-function hireRows(chart: OrgChart): BaseRow[] {
-  return plannedHires(chart).map((card) => {
-    const unnamed = card.planned.shownId !== undefined;
-    return {
-      id: card.id,
-      personId: card.id,
-      name: unnamed ? "" : card.preferredName,
-      ...(unnamed ? { madeName: card.preferredName } : {}),
-      manager: hireManager(chart, card),
-      values: {},
-      links: {},
-      outside: new Set<string>(),
-      allocatableFrom: card.planned.expected,
-      plannedHire: true,
-    };
-  });
-}
+type BaseRow = MonthRow & Pick<AllocationRow, "holds">;
 
 // Allocations by whom they name: a person, or a planned hire.
 function byAssignee(allocations: readonly Allocation[]) {
@@ -451,7 +416,7 @@ export function allocationMonthRecords({
     );
   return [
     ...people.map((person) => row(person, ofPeople)),
-    ...hireRows(chart).map((hire) => row(hire, ofHires)),
+    ...hireRows(chart, teamMonths.months).map((hire) => row(hire, ofHires)),
   ];
 }
 
@@ -486,10 +451,8 @@ export function allocationMonthsTable({
           />
         ),
       readOnly: () => true,
-      standIn: ({ madeName }) => madeName ?? "",
       groupings: monthGroupings(managers, teamMonths),
     }),
-    counted: peopleAndHires((row) => row.plannedHire === true),
     totals: capacityTotals(show),
   };
 }

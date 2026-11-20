@@ -687,7 +687,7 @@ describe("the change history", () => {
     ).toBe(403);
   });
 
-  it("keeps a view grouped by manager on Feature assignments from readers without the data it needs", async () => {
+  it("keeps a view grouped by manager on Capacity's Feature teams from readers without the data it needs", async () => {
     const maker = await test.signedIn([
       "feature-teams:view",
       "personal:view",

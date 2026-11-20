@@ -1280,7 +1280,7 @@ export function ViewBar({
   total: number;
   // For rows of several kinds, how many of each there are in all, such as "150 people and 6
   // planned hires".
-  counted?: string | undefined;
+  counted?: ReactNode;
   // What the rows can be grouped by, for a table that groups them.
   groupings?: readonly GroupingChoice[] | undefined;
   // False for rows drawn their own way, such as a board's, or made for their grouping.

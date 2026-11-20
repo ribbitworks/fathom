@@ -8,6 +8,7 @@ import { addToMonth } from "./cycles.ts";
 import { monthSchema } from "./days.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { type Meaning, meaningSchema } from "./lists.ts";
+import { paletteColourSchema } from "./palette.ts";
 
 // The percentages of a month offered when allocating; filling a planned hire can make others, such
 // as 35%, by adding two together.
@@ -194,6 +195,8 @@ export const allocatedFeatureSchema = z.object({
   id: z.string(),
   name: z.string(),
   meaning: meaningSchema.nullable(),
+  // Its feature team's, sent only to those who see feature teams.
+  colour: paletteColourSchema.nullable(),
 });
 
 export type AllocatedFeature = z.infer<typeof allocatedFeatureSchema>;

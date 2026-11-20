@@ -51,6 +51,7 @@ import {
   draftsById,
   liveStreams,
   markedDraft,
+  shownColour,
   streamsShown,
 } from "./releases.ts";
 import {
@@ -730,7 +731,7 @@ function FeatureCard({
   );
 }
 
-// A release's name in its colour's box.
+// A release's name after its colour's square.
 function ReleaseBox({
   release,
 }: {
@@ -738,7 +739,13 @@ function ReleaseBox({
 }) {
   return (
     <TeamLabels
-      teams={[{ id: release.id, name: release.name, colour: release.colour }]}
+      teams={[
+        {
+          id: release.id,
+          name: release.name,
+          colour: shownColour(release.colour),
+        },
+      ]}
     />
   );
 }

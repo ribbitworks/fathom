@@ -6,14 +6,19 @@
 import { describe, expect, it } from "vitest";
 import type { Permission } from "./access.ts";
 import { type ClassAccess, defaultClasses } from "./data-classes.ts";
-import { opensWith, pageNeeds, reaches } from "./page-access.ts";
+import {
+  capacityModeNeeds,
+  opensWith,
+  pageNeeds,
+  reaches,
+} from "./page-access.ts";
 
 const access = (permissions: readonly Permission[]): ClassAccess => ({
   permissions,
   dataClasses: defaultClasses,
 });
 
-const seesCapacityPeople: Permission[] = [
+const seesAllocations: Permission[] = [
   "allocations:view",
   "feature-teams:view",
   "people:view",
@@ -30,9 +35,7 @@ describe("the pages a role reaches", () => {
   });
 
   it("reaches a page with its permission whatever data the role sees", () => {
-    expect(
-      reaches(pageNeeds["feature-assignments"], ["feature-teams:view"]),
-    ).toBe(true);
+    expect(reaches(pageNeeds.capacity, ["feature-teams:view"])).toBe(true);
   });
 
   it("doesn't reach a page without any of its permissions", () => {
@@ -52,34 +55,29 @@ describe("the pages a role opens", () => {
   it("opens a page that needs data with the data the role sees", () => {
     expect(
       opensWith(
-        pageNeeds["feature-assignments"],
-        access(["feature-teams:view", "people:view", "personal:view"]),
+        pageNeeds.capacity,
+        access(["feature-teams:view", "personal:view"]),
       ),
     ).toBe(true);
   });
 
   it("doesn't open a page without the data it needs", () => {
-    expect(
-      opensWith(
-        pageNeeds["feature-assignments"],
-        access(["feature-teams:view"]),
-      ),
-    ).toBe(false);
-  });
-
-  it("opens a page with a permission and every other one it reads with it", () => {
-    expect(opensWith(pageNeeds.capacity, access(seesCapacityPeople))).toBe(
-      true,
+    expect(opensWith(pageNeeds.capacity, access(["feature-teams:view"]))).toBe(
+      false,
     );
   });
 
-  it.each(seesCapacityPeople.slice(1))(
+  it("opens a page with a permission and every other one it reads with it", () => {
+    expect(opensWith(pageNeeds.capacity, access(seesAllocations))).toBe(true);
+  });
+
+  it.each(seesAllocations.slice(1))(
     "doesn't open a page through a permission without %s, which it reads with it",
     (missing) => {
       expect(
         opensWith(
-          pageNeeds.capacity,
-          access(seesCapacityPeople.filter((one) => one !== missing)),
+          [capacityModeNeeds.allocations],
+          access(seesAllocations.filter((one) => one !== missing)),
         ),
       ).toBe(false);
     },

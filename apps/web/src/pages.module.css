@@ -660,6 +660,12 @@ th[data-centred] .recordHeadButton {
   box-shadow: var(--fathom-today-underline);
 }
 
+/* The month a grid's count is for, filled as the strip's chosen period is. */
+.recordTable th[data-counted] {
+  color: var(--mantine-primary-color-contrast);
+  background: var(--mantine-primary-color-filled);
+}
+
 .recordCell[data-shaded] {
   background: var(--mantine-color-default-hover);
 }

@@ -1,17 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Feature assignments page against a simulated server.
+// Tests for Capacity's Feature teams tab against a simulated server: its teams by month, drafts,
+// grouping, planned hires' rows and saved views.
 
 import { type TeamMonths } from "@fathom/shared";
-import {
-  act,
-  fireEvent,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  answer,
+  featureTeamsAt,
+  openPage,
+  reader,
+  session,
+} from "./test-feature-teams.tsx";
 import {
   bodyOf,
   fictionalTeamMonths,
@@ -21,41 +23,10 @@ import {
   monthsUrl,
   platform,
   renderApp,
-  serverAnswers,
 } from "./test-support.tsx";
 
 const now = gridNow;
 const months = fictionalTeamMonths;
-
-// The page needs people's Personal details, and grouping by manager Confidential data, so every role
-// here sees them.
-const session = (permissions: string[]) => () =>
-  Response.json({
-    ...fictionalUser,
-    permissions: [
-      ...permissions,
-      "people:view",
-      "personal:view",
-      "confidential:view",
-    ],
-  });
-
-const reader = session(["people:view", "feature-teams:view"]);
-
-function openPage(
-  search = "",
-  answers: {
-    months?: () => Response;
-    session?: () => Response;
-  } = {},
-) {
-  serverAnswers({
-    "GET /api/session": answers.session ?? reader,
-    [monthsUrl]: answers.months ?? (() => Response.json(months)),
-  });
-  renderApp(`/feature-assignments${search}`);
-  return screen.findByRole("grid", { name: "Feature teams by month" });
-}
 
 const rowOf = (name: string) =>
   screen.getByText(name).closest("tr") as HTMLElement;
@@ -70,139 +41,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("changing a month's teams", () => {
-  const proposes = session([
-    "people:view",
-    "feature-teams:view",
-    "feature-teams:edit",
-  ]);
-  const caseyUrl = "/api/feature-teams/members/p-casey";
-  const saved = "00000000-0000-4000-8000-000000000001";
-  const undone = "00000000-0000-4000-8000-000000000002";
-
-  async function openEditing(permissions = proposes, search = "") {
-    const fetch = serverAnswers({
-      "GET /api/session": permissions,
-      [monthsUrl]: () => Response.json(months),
-      [`PATCH ${caseyUrl}`]: () => Response.json({ changeSetId: saved }),
-      [`POST /api/undo/${saved}`]: () => Response.json({ changeSetId: undone }),
-    });
-    renderApp(`/feature-assignments${search}`);
-    await screen.findByRole("grid", { name: "Feature teams by month" });
-    return fetch;
-  }
-
-  const cell = (month: string) =>
-    document.getElementById(`cell-p-casey-${month}`) as HTMLElement;
-
-  it("adds a team from a later month's first day", async () => {
-    const fetch = await openEditing();
-    act(() => {
-      cell("2027-05").focus();
-    });
-
-    await userEvent.keyboard("mob");
-    await screen.findByRole("option", { name: "Mobile apps" });
-    await userEvent.keyboard("{Tab}");
-
-    expect(bodyOf(fetch, "PATCH", caseyUrl)).toEqual([
-      { add: [mobile.id], remove: [], from: "2027-05-01" },
-    ]);
-  });
-
-  it("takes a team away in the current month from today", async () => {
-    const fetch = await openEditing();
-    act(() => {
-      cell("2027-03").focus();
-    });
-
-    await userEvent.keyboard("{Delete}");
-
-    expect(bodyOf(fetch, "PATCH", caseyUrl)).toEqual([
-      { add: [], remove: [platform.id] },
-    ]);
-  });
-
-  it("undoes a change with Cmd+Z", async () => {
-    const fetch = await openEditing();
-    act(() => {
-      cell("2027-03").focus();
-    });
-    await userEvent.keyboard("{Delete}");
-
-    // Undo is offered once the change is saved; pressing it before then does nothing.
-    await waitFor(async () => {
-      await userEvent.keyboard("{Meta>}z{/Meta}");
-      expect(bodyOf(fetch, "POST", `/api/undo/${saved}`)).toEqual([{}]);
-    });
-  });
-
-  it("leaves a change alone with Cmd+Z while a view is being named", async () => {
-    // Given a change saved, and the Save view dialog open on a sorted view
-    const fetch = await openEditing(proposes, "?sort=%5B%22name%22%5D");
-    act(() => {
-      cell("2027-03").focus();
-    });
-    await userEvent.keyboard("{Delete}");
-    await waitFor(() => {
-      expect(bodyOf(fetch, "PATCH", caseyUrl)).toHaveLength(1);
-    });
-    await userEvent.click(
-      screen.getByRole("button", { name: "Views, changed" }),
-    );
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Save view…" }),
-    );
-    await screen.findByRole("dialog", { name: "Save view" });
-
-    // When Cmd+Z is pressed
-    await userEvent.keyboard("{Meta>}z{/Meta}");
-
-    // Then nothing is undone until the dialog closes
-    expect(bodyOf(fetch, "POST", `/api/undo/${saved}`)).toEqual([]);
-    await userEvent.keyboard("{Escape}");
-    await waitFor(async () => {
-      await userEvent.keyboard("{Meta>}z{/Meta}");
-      expect(bodyOf(fetch, "POST", `/api/undo/${saved}`)).toEqual([{}]);
-    });
-  });
-
-  it("leaves earlier months and the person as they are, with no row menu", async () => {
-    await openEditing();
-
-    expect(cell("2027-02").getAttribute("aria-readonly")).toBe("true");
-    expect(cell("2027-03").hasAttribute("aria-readonly")).toBe(false);
-    expect(cell("name").getAttribute("aria-readonly")).toBe("true");
-    expect(screen.queryByRole("button", { name: /^Actions for/u })).toBeNull();
-  });
-
-  it("lets those who may change Personal details change earlier months", async () => {
-    await openEditing(
-      session([
-        "people:view",
-        "feature-teams:view",
-        "feature-teams:edit",
-        "personal:edit",
-      ]),
-    );
-
-    expect(cell("2027-02").hasAttribute("aria-readonly")).toBe(false);
-  });
-
-  it("changes nothing for those who may not propose team changes", async () => {
-    const fetch = await openEditing(reader);
-    act(() => {
-      cell("2027-03").focus();
-    });
-
-    await userEvent.keyboard("{Delete}");
-
-    expect(bodyOf(fetch, "PATCH", caseyUrl)).toEqual([]);
-    expect(within(cell("2027-03")).getByText(platform.name)).toBeDefined();
-  });
-});
-
-describe("the Feature assignments page", () => {
+describe("Capacity's Feature teams", () => {
   it("shows the strip of quarters the months fall in, marking the current one and month", async () => {
     const grid = await openPage();
 
@@ -243,15 +82,18 @@ describe("the Feature assignments page", () => {
     ).toEqual(["Mobile apps", "Payments core"]);
   });
 
-  it("colours a team's label, and leaves a team with no colour neutral", async () => {
+  it("names a team after its colour's square, and a team with no colour with none", async () => {
     await openPage();
 
-    // The label is the name's box, around it.
-    const label = (name: string) => screen.getByText(name).parentElement;
-    expect(label("Mobile apps")?.style.background).toBe(
-      "var(--mantine-color-teal-light)",
-    );
-    expect(label("Platform reliability")?.style.background).toBe("");
+    const square = (name: string) =>
+      screen
+        .getAllByText(name)[0]
+        ?.parentElement?.querySelector("[data-colour]")
+        ?.getAttribute("data-colour");
+    expect([square("Mobile apps"), square("Platform reliability")]).toEqual([
+      "teal",
+      undefined,
+    ]);
   });
 
   it("offers the Draft menu", async () => {
@@ -260,20 +102,20 @@ describe("the Feature assignments page", () => {
   });
 
   it("is not there for those who do not see Personal details", async () => {
-    serverAnswers({
+    answer({
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
           permissions: ["people:view", "feature-teams:view"],
         }),
     });
-    renderApp("/feature-assignments");
+    renderApp(featureTeamsAt());
 
     expect(
       await screen.findByText("There is no page at this address."),
     ).toBeDefined();
     expect(
-      screen.queryByRole("link", { name: /Feature assignments/u }),
+      screen.queryByRole("link", { name: /Feature assignments|Capacity/u }),
     ).toBeNull();
   });
 
@@ -415,7 +257,7 @@ describe("the Feature assignments page", () => {
   });
 
   it("groups only by feature team, saying nothing, for those who do not see Confidential data", async () => {
-    serverAnswers({
+    answer({
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
@@ -423,7 +265,7 @@ describe("the Feature assignments page", () => {
         }),
       [monthsUrl]: () => Response.json(months),
     });
-    renderApp("/feature-assignments");
+    renderApp(featureTeamsAt());
     await screen.findByRole("grid", { name: "Feature teams by month" });
 
     expect(screen.queryByText(/needs Confidential access/u)).toBeNull();
@@ -446,7 +288,7 @@ describe("the Feature assignments page", () => {
 
     expect(screen.getAllByText("Avery Fictional")).toHaveLength(2);
     expect(screen.getByText("No feature team")).toBeDefined();
-    expect(screen.getByRole("status").textContent).toBe("3 people");
+    expect(screen.getByRole("status").textContent).toBe("3 people in Mar 2027");
   });
 
   it("puts the heading for none first once the headings run Z to A", async () => {
@@ -519,7 +361,7 @@ describe("the Feature assignments page", () => {
 
   it("says when it could not load, and tries again", async () => {
     let answers = 0;
-    serverAnswers({
+    answer({
       "GET /api/session": reader,
       [monthsUrl]: () => {
         answers += 1;
@@ -528,9 +370,9 @@ describe("the Feature assignments page", () => {
           : Response.json(months);
       },
     });
-    renderApp("/feature-assignments");
+    renderApp(featureTeamsAt());
 
-    await screen.findByText("Fathom could not load the feature assignments.");
+    await screen.findByText("Fathom could not load the feature teams.");
     await userEvent.click(screen.getByRole("button", { name: "Try again" }));
 
     expect(
@@ -539,10 +381,10 @@ describe("the Feature assignments page", () => {
   });
 
   it("is not there for those who do not see feature teams", async () => {
-    serverAnswers({
+    answer({
       "GET /api/session": session(["plan:view", "features:view"]),
     });
-    renderApp("/feature-assignments");
+    renderApp(featureTeamsAt());
 
     expect(
       await screen.findByText("There is no page at this address."),
@@ -550,7 +392,125 @@ describe("the Feature assignments page", () => {
   });
 });
 
-describe("the Feature assignments page's saved views", () => {
+describe("planned hires on Feature teams", () => {
+  const chart = {
+    people: [
+      {
+        id: "p-blair",
+        keyNumber: 1,
+        preferredName: "Blair Fictional",
+        employeeId: null,
+        position: null,
+        teamName: null,
+        teamColour: null,
+        managerId: null,
+      },
+      {
+        id: "h-tester",
+        keyNumber: 2,
+        preferredName: "Payments tester",
+        employeeId: null,
+        position: null,
+        teamName: null,
+        teamColour: null,
+        managerId: "p-blair",
+        planned: { expected: "2027-05" },
+      },
+      {
+        id: "h-unnamed",
+        keyNumber: 3,
+        preferredName: "SDET, TBD-7",
+        employeeId: null,
+        position: null,
+        teamName: null,
+        teamColour: null,
+        managerId: "p-blair",
+        planned: { expected: "2027-05", shownId: "TBD-7" },
+      },
+    ],
+    drafted: [],
+  };
+
+  it("gives each planned hire a row with no teams, read only, shaded before it is expected", async () => {
+    // Given a role that sees planned hires, and one expected in May 2027
+    answer({
+      "GET /api/session": session(["feature-teams:view", "feature-teams:edit"]),
+      [monthsUrl]: () => Response.json(months),
+      "GET /api/org-chart": () => Response.json(chart),
+    });
+
+    // When Feature teams opens
+    renderApp(featureTeamsAt());
+    await screen.findByText("Payments tester");
+
+    // Then the hire's months are read only, and those before May 2027 are shaded
+    const cell = (month: string) =>
+      document.getElementById(`cell-h-tester-${month}`) as HTMLElement;
+    expect([
+      cell("2027-04").getAttribute("aria-readonly"),
+      cell("2027-04").hasAttribute("data-shaded"),
+      cell("2027-05").hasAttribute("data-shaded"),
+      cell("2027-05").textContent,
+    ]).toEqual(["true", true, false, ""]);
+  });
+
+  it("names a planned hire with no name by its position and ID", async () => {
+    answer({
+      "GET /api/session": reader,
+      [monthsUrl]: () => Response.json(months),
+      "GET /api/org-chart": () => Response.json(chart),
+    });
+    renderApp(featureTeamsAt());
+
+    expect(await screen.findByText("SDET, TBD-7")).toBeDefined();
+  });
+
+  it("counts planned hires apart from people, once they are expected", async () => {
+    // Given both hires expected before the current month, the one counted
+    const expected = {
+      ...chart,
+      people: chart.people.map((card) =>
+        card.planned === undefined
+          ? card
+          : { ...card, planned: { ...card.planned, expected: "2026-01" } },
+      ),
+    };
+    answer({
+      "GET /api/session": reader,
+      [monthsUrl]: () => Response.json(months),
+      "GET /api/org-chart": () => Response.json(expected),
+    });
+    renderApp(featureTeamsAt());
+    await screen.findByText("Payments tester");
+
+    expect(screen.getByRole("status").textContent).toMatch(
+      /and 2 planned hires in Mar 2027$/u,
+    );
+  });
+
+  it("asks for no planned hires, and shows none, for a role that doesn't see them", async () => {
+    // Given a role that sees feature teams and Personal details, but not people
+    const fetch = answer({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["feature-teams:view", "personal:view"],
+        }),
+      [monthsUrl]: () => Response.json(months),
+    });
+
+    // When Feature teams opens
+    renderApp(featureTeamsAt());
+    await screen.findByRole("grid", { name: "Feature teams by month" });
+
+    // Then the org chart isn't asked for
+    expect(fetch.mock.calls.some(([url]) => url === "/api/org-chart")).toBe(
+      false,
+    );
+  });
+});
+
+describe("Feature teams' saved views", () => {
   it("saves a view with its grouping, and applies it again", async () => {
     // Given the grid grouped by manager, and no saved views
     const saved = {
@@ -562,7 +522,7 @@ describe("the Feature assignments page's saved views", () => {
       canShare: false,
     };
     let views: object[] = [];
-    const fetch = serverAnswers({
+    const fetch = answer({
       "GET /api/session": reader,
       [monthsUrl]: () => Response.json(months),
       "GET /api/views/feature-assignments": () => Response.json(views),
@@ -574,7 +534,7 @@ describe("the Feature assignments page's saved views", () => {
         );
       },
     });
-    const history = renderApp("/feature-assignments?grouping=manager");
+    const history = renderApp(featureTeamsAt("?grouping=manager"));
 
     // When it is saved as a view
     await userEvent.click(
@@ -618,152 +578,6 @@ describe("the Feature assignments page's saved views", () => {
     );
     await waitFor(() => {
       expect(history.location.search).toContain("grouping=manager");
-    });
-  });
-});
-
-describe("the strip of quarters", () => {
-  // Every column 100 pixels wide, the Person column frozen, in a table showing 400 pixels.
-  const columnWidth = 100;
-  const room = 400;
-  const months = 27;
-
-  beforeEach(() => {
-    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
-      width: columnWidth,
-      left: 0,
-    } as DOMRect);
-    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(room);
-    vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(
-      (months + 1) * columnWidth,
-    );
-    vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(
-      columnWidth,
-    );
-    vi.spyOn(HTMLElement.prototype, "offsetLeft", "get").mockImplementation(
-      function (this: HTMLElement) {
-        const siblings = [...(this.parentElement?.children ?? [])];
-        return siblings.indexOf(this) * columnWidth;
-      },
-    );
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  const scroller = (grid: HTMLElement) => grid.parentElement as HTMLElement;
-  // The grid opens with the current month, the fifteenth, just after the Person column; another
-  // month is there when scrolled by its columns from it.
-  const currentMonth = 14;
-  let opened = 0;
-  const atMonth = (index: number) =>
-    opened + (index - currentMonth) * columnWidth;
-  const openStrip = async () => {
-    const grid = await openPage();
-    opened = scroller(grid).scrollLeft;
-    return grid;
-  };
-  const quarter = (name: string) =>
-    within(screen.getByRole("toolbar", { name: "Quarters" })).getByRole(
-      "button",
-      { name: (label) => label.startsWith(name) },
-    );
-  // The grid tells the strip it has scrolled, as a browser does.
-  const scrolled = (grid: HTMLElement) => {
-    fireEvent.scroll(scroller(grid));
-  };
-
-  it("opens at the current month, tinting the quarters on screen", async () => {
-    const grid = await openStrip();
-
-    expect(opened).toBeGreaterThan(0);
-    await waitFor(() => {
-      expect(quarter("Q1 2027").getAttribute("aria-label")).toBe(
-        "Q1 2027, in view",
-      );
-    });
-    expect(quarter("Q2 2027").getAttribute("aria-label")).toBe(
-      "Q2 2027, in view",
-    );
-    expect(quarter("Q3 2027").getAttribute("aria-label")).toBe("Q3 2027");
-
-    // Told it scrolled without moving, it keeps what it shows.
-    scrolled(grid);
-    await waitFor(() => {
-      expect(quarter("Q1 2027").getAttribute("aria-label")).toBe(
-        "Q1 2027, in view",
-      );
-    });
-  });
-
-  it("scrolls a quarter chosen to just after the Person column, selected until the grid moves", async () => {
-    const grid = await openStrip();
-
-    await userEvent.click(quarter("Q4 2026"));
-    scrolled(grid);
-
-    expect(scroller(grid).scrollLeft).toBe(atMonth(9));
-    await waitFor(() => {
-      expect(quarter("Q4 2026").getAttribute("aria-label")).toBe(
-        "Q4 2026, in view, selected",
-      );
-    });
-
-    scroller(grid).scrollLeft = atMonth(10);
-    scrolled(grid);
-
-    await waitFor(() => {
-      expect(quarter("Q4 2026").getAttribute("aria-label")).toBe(
-        "Q4 2026, in view",
-      );
-    });
-  });
-
-  it("steps a quarter at a time, and goes back to the current month with Today", async () => {
-    const grid = await openStrip();
-    await waitFor(() => {
-      expect(quarter("Q1 2027").getAttribute("aria-label")).toContain(
-        "in view",
-      );
-    });
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Previous quarter" }),
-    );
-    expect(scroller(grid).scrollLeft).toBe(atMonth(12));
-    scrolled(grid);
-    await waitFor(() => {
-      expect(quarter("Q1 2027").getAttribute("aria-label")).toContain(
-        "selected",
-      );
-    });
-
-    await userEvent.click(screen.getByRole("button", { name: "Next quarter" }));
-    expect(scroller(grid).scrollLeft).toBe(atMonth(15));
-    scrolled(grid);
-
-    await userEvent.click(screen.getByRole("button", { name: "Today" }));
-    expect(scroller(grid).scrollLeft).toBe(atMonth(14));
-  });
-
-  it("turns ‹ off at the grid's start, and › off at its end", async () => {
-    const grid = await openStrip();
-
-    scroller(grid).scrollLeft = 0;
-    scrolled(grid);
-    await waitFor(() => {
-      expect(
-        screen.getByRole("button", { name: "Previous quarter" }),
-      ).toHaveProperty("disabled", true);
-    });
-
-    scroller(grid).scrollLeft = (months + 1) * columnWidth - room;
-    scrolled(grid);
-    await waitFor(() => {
-      expect(
-        screen.getByRole("button", { name: "Next quarter" }),
-      ).toHaveProperty("disabled", true);
     });
   });
 });

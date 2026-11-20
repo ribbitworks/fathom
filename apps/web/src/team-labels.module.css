@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-/* Labels naming feature teams in a table's cells. */
+/* Feature teams' names in a table's cells, one to a line. */
 
 .labels {
   display: flex;
@@ -9,23 +9,14 @@
   line-height: var(--mantine-line-height);
 }
 
-/* The whole row, so a person's name stays level with their labels. */
+/* The whole row, so a person's name stays level with their teams. */
 tr:has(.labels) > td {
   vertical-align: middle;
 }
 
 .label {
   overflow: hidden;
-  padding: 1px 6px;
   font-size: var(--mantine-font-size-xs);
-  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
-  border-radius: var(--mantine-radius-sm);
-}
-
-/* A team with no colour, in a neutral that stands out from the panel in light and dark modes. */
-.labelNoColour {
-  color: var(--mantine-color-text);
-  background: var(--mantine-color-default-border);
 }

@@ -67,13 +67,10 @@ export const scrollEdges = ({
   after: scrollLeft + clientWidth < scrollWidth - 1,
 });
 
-// The edges seen before, where nothing about them has changed, so a table isn't drawn again for
-// every step of scrolling.
-export const keptEdges = (
-  before: ScrollEdges,
-  next: ScrollEdges,
-): ScrollEdges =>
-  before.before === next.before && before.after === next.after ? before : next;
+// Whether two readings of the edges agree, so a table's edges are drawn again only when one changes,
+// not for every step of scrolling.
+export const sameEdges = (first: ScrollEdges, second: ScrollEdges): boolean =>
+  first.before === second.before && first.after === second.after;
 
 // Where each header cell's right edge is against the frozen columns' share of the table's width:
 // before it, at it or past it, which is all the width decides about how the table is drawn, the

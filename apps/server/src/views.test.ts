@@ -1194,7 +1194,7 @@ describe("views of every table", () => {
     ).toBe(400);
   });
 
-  it("group Feature assignments by manager under another grouping only for readers who see the data it needs", async () => {
+  it("group Feature teams by manager under another grouping only for readers who see the data it needs", async () => {
     const maker = await test.signedIn([
       ...assignmentsReader,
       "confidential:view",
@@ -1240,7 +1240,7 @@ describe("views of every table", () => {
     });
   });
 
-  it("group Feature assignments by manager only for readers who see the data it needs", async () => {
+  it("group Feature teams by manager only for readers who see the data it needs", async () => {
     const maker = await test.signedIn([
       ...assignmentsReader,
       "confidential:view",

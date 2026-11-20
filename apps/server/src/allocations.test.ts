@@ -6,6 +6,7 @@
 
 import {
   accessHistory,
+  featureTeams,
   features,
   people,
   plannedHires,
@@ -668,7 +669,49 @@ describe("reading", () => {
       id: general.featureId,
       name: project?.name,
       meaning: "in-progress",
+      colour: null,
     });
+  });
+
+  // A feature of a teal team, and one of no team, each allocated.
+  async function tealAndTeamless(): Promise<[string, string]> {
+    const personId = await addPerson();
+    const [team] = await test.connection
+      .insert(featureTeams)
+      .values({ name: unique("Fictional Team"), colour: "teal" })
+      .returning({ id: featureTeams.id });
+    const teamed = await addFeature();
+    await test.connection
+      .update(features)
+      .set({ featureTeamId: team?.id })
+      .where(eq(features.id, teamed));
+    const teamless = await addFeature();
+    for (const featureId of [teamed, teamless]) {
+      await changed({ personId, featureId, percentage: 50, from: month(0) });
+    }
+    return [teamed, teamless];
+  }
+
+  const coloursFor = async (
+    who: Awaited<ReturnType<typeof test.signedIn>>,
+    ids: readonly string[],
+  ) => {
+    const { features: named } = await read(who);
+    return ids.map((id) => named.find((feature) => feature.id === id)?.colour);
+  };
+
+  it("gives each feature its feature team's colour, to a role that sees feature teams", async () => {
+    const ids = await tealAndTeamless();
+    expect(await coloursFor(viewer, ids)).toEqual(["teal", null]);
+  });
+
+  it("gives no feature a colour for a role that doesn't see feature teams", async () => {
+    // Given a role that reads allocations and Personal details, but not feature teams
+    const ids = await tealAndTeamless();
+    const noTeams = await test.signedIn(["allocations:view", "personal:view"]);
+
+    // Then neither feature has a colour
+    expect(await coloursFor(noTeams, ids)).toEqual([null, null]);
   });
 
   it("shows someone who has not started, recording a view of Personal details", async () => {

@@ -332,7 +332,7 @@ const classifiedViewSchema = z.enum([
 
 export type ClassifiedView = z.infer<typeof classifiedViewSchema>;
 
-// What each view needs. Allocations reads the months of Feature assignments, so needs what it does.
+// What each view needs. Allocations reads the months of Feature teams, so needs what it does.
 const viewNeeds: Record<ClassifiedView, readonly ClassifiedField[]> = {
   orgChartOtherDates: overTime,
   orgChartFutureDates: [...overTime, "futureReorganizations"],
@@ -349,13 +349,18 @@ export const allocationsGridPermissions = [
   "people:view",
 ] as const satisfies readonly Permission[];
 
+// What Capacity's Feature teams tab reads, as a role must hold it to see the tab.
+export const featureTeamsTabPermissions = [
+  "feature-teams:view",
+] as const satisfies readonly Permission[];
+
 // How a sentence on the view's page names it, and whether it reads as plural. Every view must be
 // named, which the compiler checks.
 const viewWords: Record<ClassifiedView, { subject: string; plural: boolean }> =
   {
     orgChartOtherDates: { subject: "Other dates", plural: true },
     orgChartFutureDates: { subject: "Future dates", plural: true },
-    featureAssignments: { subject: "Feature assignments", plural: false },
+    featureAssignments: { subject: "Feature teams on Capacity", plural: false },
     groupingByManager: { subject: "Grouping by manager", plural: false },
     allocations: { subject: "Allocations", plural: false },
   };
@@ -376,12 +381,17 @@ const viewPlaces: Record<
     { page: "Org chart", name: "Org chart on future dates" },
   ],
   featureAssignments: [
-    { page: "Feature assignments", name: "Feature assignments" },
+    {
+      page: "Capacity",
+      name: "Feature teams",
+      needs: featureTeamsTabPermissions,
+    },
   ],
   groupingByManager: [
     {
-      page: "Feature assignments",
-      name: "Feature assignments grouped by manager",
+      page: "Capacity",
+      name: "Feature teams grouped by manager",
+      needs: featureTeamsTabPermissions,
     },
     {
       page: "Capacity",

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Capacity's People mode: people and planned hires as rows and months as columns, each cell holding,
+// Capacity's Allocations: people and planned hires as rows and months as columns, each cell holding,
 // read only, the features someone is allocated to that month, as approved, and as drafted for those
 // who see drafts, with each group's capacity and the whole organization's.
 
@@ -8,7 +8,6 @@ import { monthOf } from "@fathom/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
-  allocationManagers,
   allocationMonthRecords,
   allocationMonthsTable,
   allocationsQuery,
@@ -16,6 +15,7 @@ import {
 import { MonthGrid, type MonthGridProps } from "./month-grid.tsx";
 import { useSavedViews } from "./saved-views.tsx";
 import { orgChartQuery } from "./org-chart.ts";
+import { monthManagers } from "./planned-hire-months.ts";
 import { activeGrouping } from "./table-view.ts";
 import {
   gridMonthsAround,
@@ -23,7 +23,7 @@ import {
   teamMonthsQuery,
 } from "./team-months.tsx";
 
-export function CapacityPeople({
+export function CapacityAllocations({
   byManager,
   now,
   view,
@@ -65,7 +65,7 @@ export function CapacityPeople({
             teamMonths: sources.teamMonths,
             features: sources.allocations.features,
             managers: byManager
-              ? allocationManagers(sources.teamMonths, sources.chart)
+              ? monthManagers(sources.teamMonths, sources.chart)
               : undefined,
             currentMonth,
             show: view.show,

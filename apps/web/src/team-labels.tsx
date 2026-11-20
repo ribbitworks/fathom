@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Labels naming feature teams, each in its team's colour, each offering its whole name as a tip to
-// the table's one tooltip, in table-tips.tsx.
+// Feature teams' names, one to a line, each after its colour's square, each offering its whole name
+// as a tip to the table's one tooltip, in table-tips.tsx.
 
-import type { PaletteColour } from "@fathom/shared";
-import { colourVariable } from "./colours.ts";
+import { ColouredName } from "./colour-swatch.tsx";
 import { DraftedPartItem, type DraftedPart } from "./status-mark.tsx";
 import type { DraftLike } from "./draft-marks.ts";
 import { tipAttribute } from "./table-tips.tsx";
@@ -19,7 +18,7 @@ export function TeamLabels({
   teams: readonly {
     id: string;
     name: string;
-    colour: PaletteColour | null;
+    colour: string | null;
     drafted?: DraftedLabel | undefined;
     // The draft adding or removing the team, whose dot the label shows.
     draftedBy?: DraftLike | undefined;
@@ -31,24 +30,9 @@ export function TeamLabels({
   return (
     <div className={styles.labels}>
       {teams.map(({ id, name, colour, drafted, draftedBy, live }) => (
-        <span
-          key={id}
-          className={[
-            styles.label,
-            colour === null ? styles.labelNoColour : "",
-          ].join(" ")}
-          {...{ [tipAttribute]: name }}
-          style={
-            colour === null
-              ? undefined
-              : {
-                  background: colourVariable(colour, "light"),
-                  color: colourVariable(colour, "light-color"),
-                }
-          }
-        >
+        <span key={id} className={styles.label} {...{ [tipAttribute]: name }}>
           <DraftedPartItem draft={draftedBy} part={drafted} live={live}>
-            {name}
+            <ColouredName colour={colour}>{name}</ColouredName>
           </DraftedPartItem>
         </span>
       ))}

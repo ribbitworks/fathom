@@ -75,6 +75,8 @@ People can show another day, in the past or the future. Your role needs to see P
 1. In the date row above the table, type a day in **Date**. You can also select an arrow to move a month, or drag the timeline.
 1. To come back to today, select **Today**.
 
+The count above the table names the day it counts, such as "137 people and 10 planned hires on Nov 20, 2026".
+
 On another day, the table lists the people employed then, with their managers and teams as they were, or will be. A future day also lists every planned hire not yet filled. A past day lists none, since past plans aren't kept. A person's details beside the table show them as on that day.
 
 A line under the date row says what you can do:

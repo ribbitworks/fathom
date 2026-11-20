@@ -484,8 +484,8 @@ describe("the strip and the Schedule menu", () => {
     expect(
       screen
         .getByRole("button", { name: "Previous cycle" })
-        .hasAttribute("disabled"),
-    ).toBe(true);
+        .getAttribute("aria-disabled"),
+    ).toBe("true");
     await userEvent.click(screen.getByRole("button", { name: "Today" }));
     expect(headings().at(0)).toBe("Cycle 27.2");
   });
@@ -496,8 +496,8 @@ describe("the strip and the Schedule menu", () => {
     expect(
       screen
         .getByRole("button", { name: "Next cycle" })
-        .hasAttribute("disabled"),
-    ).toBe(true);
+        .getAttribute("aria-disabled"),
+    ).toBe("true");
   });
 
   it("offers schedules not retired as they are live, under Schedule, and shows the one chosen", async () => {

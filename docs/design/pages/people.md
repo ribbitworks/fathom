@@ -4,7 +4,7 @@ category: "Design"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/people.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Fathom: People Page
@@ -38,6 +38,7 @@ The date row sits above the table here and above the [Org chart](org-chart.md), 
 - **Planned hires:** Shown today and later. None show on earlier dates, since past plans are not kept.
   - One with no target date reads Planned, no date, with Expected empty, on every date, since the date shown's month would read as one someone set.
 - **What changes:** The date changes the rows and dated values, such as manager, team and feature teams, never the columns shown.
+- **The count:** After the bar's buttons, it names the day it counts, such as 137 people and 10 planned hires on Nov 20, 2026, as a [month grid's](capacity.md) count names its month.
 - **Back:** Choosing another date adds to the browser's Back, here and on the Org chart.
 - **Place:** Under People's search row, as the Org chart's is under its finder.
 

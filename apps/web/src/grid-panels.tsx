@@ -32,6 +32,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     | "withDrafts"
     | "panels"
     | "viewChoices"
+    | "count"
     | "pageParts"
     | "above"
     | "fields"
@@ -75,6 +76,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     withDrafts,
     panels,
     viewChoices,
+    count,
     pageParts,
     above,
     fields,
@@ -238,7 +240,10 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
       onView={onView}
       shown={countedOnce(shownRecords).length}
       total={countedOnce(records).length}
-      counted={table.counted?.counted(countedOnce(records))}
+      counted={
+        count?.(countedOnce(records)) ??
+        table.counted?.counted(countedOnce(records))
+      }
       groupings={table.groupings}
       nests={nests}
       withDrafts={withDrafts}

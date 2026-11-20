@@ -54,6 +54,6 @@ An Engineering Manager puts people on the feature team that builds it.
 1. Do the same for each person.
 1. Select **Publish** in the top bar.
 
-A Project Manager or the Engineering Director then approves the team's changes on the **Drafts** page, the same way as above. See [Feature assignments](feature-assignments.md#put-someone-on-a-feature-team-from-a-month) for more.
+A Project Manager or the Engineering Director then approves the team's changes on the **Drafts** page, the same way as above. See [Capacity](capacity.md#put-someone-on-a-feature-team-from-a-month) for more.
 
 You're done when the feature shows on **Features** with its cycle and team, and its team's members show on **Feature assignments**, with no dots.

@@ -57,6 +57,9 @@ export interface MonthRow extends CellRecord {
   // The feature team this row is grouped under, when grouped by feature team.
   group?: MonthTeam | undefined;
   outside: ReadonlySet<string>;
+  // For a planned hire with no name: its position and ID, shown in grey in place of a name.
+  madeName?: string;
+  plannedHire?: true;
 }
 
 export interface PersonMonths extends MonthRow {
@@ -163,6 +166,8 @@ const editableMonth = (
   { today, changesDates }: TeamMonthEdits,
 ) => mayDateChange(changesDates, dayReadingMonth(month, today), today);
 
+const madeNameOf = ({ madeName }: MonthRow) => madeName ?? "";
+
 // The table of the monthly grid: a row's name, frozen on the left, then a column for each month,
 // whose cells show what the content gives, shaded outside someone's employment.
 export function monthGridTable<
@@ -174,7 +179,6 @@ export function monthGridTable<
   choices,
   content,
   readOnly,
-  standIn,
   groupings,
 }: {
   months: readonly string[];
@@ -183,7 +187,6 @@ export function monthGridTable<
   choices: readonly { id: string; name: string }[];
   content: (record: Rec, month: string) => ReactNode;
   readOnly: (month: string) => boolean;
-  standIn?: (record: Rec) => string;
   groupings: readonly RowGrouping<Rec>[];
 }): RecordTable<Rec, CellChange, CellChange> {
   const monthChoices = [...choices].sort(byName).map(({ id, name }) => ({
@@ -220,7 +223,7 @@ export function monthGridTable<
         multiple: false,
       }),
       readOnly: true,
-      ...(standIn === undefined ? {} : { standIn }),
+      standIn: madeNameOf,
     },
     ...monthColumns,
   ];
@@ -229,7 +232,8 @@ export function monthGridTable<
     label,
     one: "person",
     noun: "people",
-    nameOf: (record) => record.name || (standIn?.(record) ?? ""),
+    nameOf: (record) => record.name || madeNameOf(record),
+    readOnlyRecord: (record) => record.plannedHire === true,
     nameColumn: "name",
     countedAs: ({ personId }) => personId,
     columnsFor: () => columns,

@@ -15,8 +15,7 @@ How Fathom's screens look and behave, so every page is built the same way. The p
 
 - **[People](pages/people.md):** the People table's date row, a person's details, and grouping.
 - **[Org chart](pages/org-chart.md):** the chart of reporting and feature teams, its cards, and its team panels.
-- **[Feature assignments](pages/feature-assignments.md):** each person's feature teams month by month.
-- **[Capacity](pages/capacity.md):** who is allocated to what, month by month, and the planning settings.
+- **[Capacity](pages/capacity.md):** who is on which feature team and allocated to what, month by month, and the planning settings.
 - **[Projects](pages/projects.md):** the tabs for projects, proposals, customers, and milestones, and their details.
 - **[Features](pages/features.md):** the features table and the Features Board.
 - **[Releases](pages/releases.md):** releases, cycles, and schedules, on a timeline over a table.
@@ -53,6 +52,7 @@ How Fathom's screens look and behave, so every page is built the same way. The p
 - **Menus and popovers:** Every menu, popover and drop-down list stands out from the page, and from a tinted row or a panel beneath it, by a darker edge and a clear shadow, in light and dark mode alike, from the theme's `--fathom-overlay-edge` and `--fathom-overlay-shadow`. A new menu or popover uses Mantine's, with no shadow or edge of its own.
 - **Tables:** Lists of records are tables in a panel, using the full width, as [Tables](../standards/ui-conventions/tables.md#tables) sets out.
   - **Cells and headers:** Each cell is one line, cut short when it doesn't fit. Headers are small, semibold, and dimmed, and stay in view while the rows scroll.
+  - **Lines:** The lines between rows and columns are a shade darker than Mantine's, from the theme's `--fathom-row-line`, so rows stand apart. A line within a cell over a sum, such as a month's Over on Capacity's Allocations, is fainter, from `--fathom-sum-line`, so it never reads as another row.
   - **Long tables:** Such as People or Accounts, fill the window and scroll within it. People's rows are dense for editing.
   - **Row menu:** Behind a ⋯ at the row's end, always shown, and opened as [A row's controls](../standards/ui-conventions/tables.md#tables) sets out.
   - **No audit detail:** Rows don't show who changed a record or when. Dates follow [Dates](../standards/ui-conventions/dates-timelines-and-boards.md#dates).
@@ -154,7 +154,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **Search, views, and the bar above a table:** `TableSearch`, `ViewBar`, and `ViewsMenu` in `table-controls.tsx`, with a page's saved views, on a table or not, such as the Org chart's, from `useSavedViews` in `saved-views.tsx`.
 - **Side panels:** `WithSidePanel` and `SidePanelFrame` in `side-panel.tsx`, the frame holding a panel's heading, with its marks beside it, its subtitle and its actions. A record's details panel is `RecordPanel` in `record-details.tsx`, on that frame.
 - **A coloured name:** `ColouredName` in `colour-swatch.tsx`, as [A coloured name](../standards/ui-conventions/drafts-and-values.md#values) sets out.
-- **One tooltip for a whole table:** `TableTips` in `table-tips.tsx`, showing the tip of whatever carries `tipAttribute` under the pointer or in the cell with keyboard focus, such as a team label's whole name or an estimate's hours.
+- **One tooltip for a whole table:** `TableTips` in `table-tips.tsx`, showing the tip of whatever carries `tipAttribute` under the pointer or in the cell with keyboard focus, such as a feature team's whole name or an estimate's hours.
 - **Resizing by an edge:** `ResizeEdge` in `resize-edge.tsx`, for side panels and table columns, with a table's column widths in `useColumnWidths` in `column-widths.ts`.
 - **A text field with an × to empty it:** `ClearableInput` in `clearable-input.tsx`.
 - **Choosing from a list:** `ChoicePicker` in `choice-picker.tsx`.
@@ -183,4 +183,3 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 Designs agreed but not built yet:
 
 - **A page that can't load:** every page and part of one that can't load its data showing `LoadProblem` ([issue #194](https://github.com/ribbitworks/fathom/issues/194)).
-- **Coloured names on the month grids and the Features Board's headings:** drawn by `ColouredName`, after the colour's square, rather than in a tinted box by `TeamLabels`, as [A coloured name](../standards/ui-conventions/drafts-and-values.md#values) sets out.

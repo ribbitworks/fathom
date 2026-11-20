@@ -22,11 +22,11 @@ import {
   allocationMonthRecords,
   allocationMonthsTable,
   type AllocationRow,
-  allocationManagers,
   CapacityTotal,
   capacityOf,
   monthTotal,
 } from "./allocation-months.tsx";
+import { monthManagers } from "./planned-hire-months.ts";
 import { featureTeamGrouping } from "./team-months.tsx";
 import { testTheme } from "./test-support.tsx";
 
@@ -50,9 +50,9 @@ const teamMonths: TeamMonths = {
 };
 
 const features: Allocations["features"] = [
-  { id: "f-checkout", name: "Checkout", meaning: "in-progress" },
-  { id: "f-billing", name: "Billing", meaning: "in-progress" },
-  { id: "f-maybe", name: "Maybe later", meaning: "possible" },
+  { id: "f-checkout", name: "Checkout", meaning: "in-progress", colour: null },
+  { id: "f-billing", name: "Billing", meaning: "in-progress", colour: null },
+  { id: "f-maybe", name: "Maybe later", meaning: "possible", colour: null },
 ];
 
 const allocation = (fields: Partial<Allocation> = {}): Allocation => ({
@@ -193,7 +193,7 @@ describe("a person's allocations", () => {
 
     it("lists every month's managers, for grouping by them", () => {
       expect(
-        allocationManagers(
+        monthManagers(
           withManagers({ "2027-03": null, "2027-04": dana }),
           noHires,
         ),
@@ -363,15 +363,17 @@ describe("planned hires' allocations", () => {
     expect(tester).toMatchObject({
       name: "Payments tester",
       manager: { id: "p-blair", name: "Blair Fictional" },
-      allocatableFrom: "2027-03",
+      plannedHire: true,
     });
+    expect(tester.outside.has("2027-02")).toBe(true);
+    expect(tester.outside.has("2027-03")).toBe(false);
     expect(tester.group).toBeUndefined();
     expect(linesIn(tester, "2027-03")).toEqual(["Checkout 100%"]);
     expect(linesIn(casey(rows), "2027-03")).toEqual([]);
   });
 
   it("lists the managers of people and of planned hires, for grouping by manager", () => {
-    expect(allocationManagers(teamMonths, chart)).toEqual([
+    expect(monthManagers(teamMonths, chart)).toEqual([
       { id: "p-blair", name: "Blair Fictional" },
       { id: "p-blair", name: "Blair Fictional" },
     ]);
@@ -390,7 +392,7 @@ describe("planned hires' allocations", () => {
         }),
       ),
     };
-    expect(allocationManagers(today, chart)).toEqual([
+    expect(monthManagers(today, chart)).toEqual([
       { id: "p-blair", name: "Blair Fictional" },
       { id: "p-blair", name: "Blair Fictional" },
     ]);
@@ -472,6 +474,7 @@ describe("monthTotal", () => {
     featureId: "f-checkout",
     name: "Checkout",
     meaning: "in-progress",
+    colour: null,
     percentage: 50,
     live: 50,
     ...fields,
@@ -504,11 +507,11 @@ describe("allocatableIn", () => {
     expect(allocatableIn(row, "2027-02")).toBe(false);
   });
 
-  it("starts from the month a planned hire is expected", () => {
+  it("leaves out the months before a planned hire is expected, as outside its employment", () => {
     const hire = {
       ...row,
-      outside: new Set<string>(),
-      allocatableFrom: "2027-03",
+      outside: new Set(["2027-02"]),
+      plannedHire: true as const,
     };
 
     expect(allocatableIn(hire, "2027-02")).toBe(false);
@@ -549,7 +552,7 @@ describe("a month's cell", () => {
     expect(lineTexts()).toEqual(["Checkout100%"]);
   });
 
-  it("totals two or more features", () => {
+  it("shows a whole month on two or more features with no total", () => {
     cell([
       allocation({ months: { "2027-03": 50 } }),
       allocation({
@@ -559,7 +562,7 @@ describe("a month's cell", () => {
       }),
     ]);
 
-    expect(lineTexts()).toEqual(["Billing50%", "Checkout50%", "Total100%"]);
+    expect(lineTexts()).toEqual(["Billing50%", "Checkout50%"]);
   });
 
   it("marks a month over a whole month", () => {
@@ -572,21 +575,56 @@ describe("a month's cell", () => {
       }),
     ]);
 
-    expect(screen.getByText("Over").parentElement?.textContent).toBe(
-      "Over125%",
-    );
+    const over = screen.getByText("Over").parentElement;
+    expect([over?.textContent, over?.getAttribute("data-tip")]).toEqual([
+      "Over+25%, Total 125%",
+      "Total 125%",
+    ]);
   });
 
   it("marks a month under a whole month, even with one feature", () => {
     cell([allocation({ months: { "2027-03": 50 } })]);
 
-    expect(lineTexts()).toEqual(["Checkout50%", "Under50%"]);
+    expect(lineTexts()).toEqual(["Checkout50%", "Under\u221250%, Total 50%"]);
   });
 
-  it("marks an empty month someone can be allocated in as under", () => {
+  it("marks an empty month someone can be allocated in as not allocated, with no tip", () => {
     cell([]);
 
-    expect(lineTexts()).toEqual(["Under0%"]);
+    expect([
+      lineTexts(),
+      screen.getByText("Not allocated").closest("[data-tip]"),
+    ]).toEqual([["Not allocated"], null]);
+  });
+
+  it("names each feature after its team's colour", () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <AllocationLines
+          lines={[
+            {
+              featureId: "f-checkout",
+              name: "Checkout",
+              meaning: "in-progress",
+              colour: "teal",
+              percentage: 100,
+              live: 100,
+            },
+          ]}
+          month="2027-03"
+          currentMonth="2027-03"
+          allocatable
+          show="both"
+        />
+      </MantineProvider>,
+    );
+
+    expect(
+      screen
+        .getByText("Checkout")
+        .parentElement?.querySelector("[data-colour]")
+        ?.getAttribute("data-colour"),
+    ).toBe("teal");
   });
 
   it("leaves past months unmarked", () => {
@@ -661,15 +699,6 @@ describe("the table", () => {
       "Manager",
       "Feature team",
     ]);
-  });
-
-  it("counts people and planned hires apart", () => {
-    expect(
-      table.counted?.counted([
-        casey(rows),
-        { ...casey(rows), plannedHire: true },
-      ]),
-    ).toBe("1 person and 1 planned hire");
   });
 
   it("totals each group and the organization, in person-months", () => {

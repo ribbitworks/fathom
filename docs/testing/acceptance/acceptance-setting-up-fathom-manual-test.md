@@ -64,7 +64,7 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
 - [ ] `4BE3` Select the **People** page in the left-hand menu.
   - **Expected:**
     - The table has its column names and only the empty row.
-    - The count above the table reads "0 people".
+    - The count above the table reads "0 people on" and today's date, such as "0 people on Nov 20, 2026".
   - **Notes:**
 
 ### SETUP-02: The Positions Are Pasted In
@@ -389,7 +389,7 @@ Run the test cases in order, in about 30 minutes, straight after [The Team's Acc
     - Each of the six rows has a hollow yellow dot in its slot.
     - `Dara Finch` reads "Software Engineer" in **Position**.
     - Each of the seven rows reads "Hired" in **State**, and only `Odile Brandt` and `Ada Quill` have **Manager?** checked.
-    - The count reads "7 people".
+    - The count reads "7 people on" and today's date.
   - **Notes:**
 
 - [ ] `F17C` Run Publish.

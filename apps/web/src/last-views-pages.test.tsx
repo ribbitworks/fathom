@@ -5,10 +5,13 @@
 
 import { startingEffortConversions } from "@fathom/shared";
 import { screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   fictionalStream,
+  fictionalTeamMonths,
   fictionalUser,
+  gridNow,
+  monthsUrl,
   planAnswers,
   renderApp,
   serverAnswers,
@@ -220,4 +223,70 @@ describe("the Org chart opening on the view it last showed", () => {
     await screen.findByRole("heading", { name: "Org chart" });
     expect(address().get("teams")).toBe(teams);
   });
+});
+
+describe("Capacity opening on the view it last showed", () => {
+  const capacity: Answers = {
+    [monthsUrl]: () => Response.json(fictionalTeamMonths),
+    "GET /api/allocations": () =>
+      Response.json({ allocations: [], features: [] }),
+    "GET /api/org-chart": () => Response.json({ people: [], drafted: [] }),
+  };
+  // Allocations last showed a search.
+  const onAllocations = { table: "capacity", definition: { search: "Casey" } };
+  const open = (path: string) =>
+    openOn(
+      path,
+      "capacity",
+      onAllocations,
+      [
+        "allocations:view",
+        "feature-teams:view",
+        "people:view",
+        "personal:view",
+      ],
+      capacity,
+    );
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(`${gridNow}T12:00:00Z`));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("opens on the tab and view it last showed when the address names neither", async () => {
+    const address = open("/capacity");
+
+    await screen.findByRole("grid", { name: "Allocations by month" });
+    expect([address().get("mode"), address().get("search")]).toEqual([
+      "allocations",
+      "Casey",
+    ]);
+  });
+
+  it("opens on the last view when the address names the tab it was on", async () => {
+    const address = open("/capacity?mode=allocations");
+
+    await screen.findByRole("grid", { name: "Allocations by month" });
+    expect(address().get("search")).toBe("Casey");
+  });
+
+  it.each([
+    ["Feature assignments' old address", "/feature-assignments"],
+    ["an address naming Feature teams", "/capacity?mode=feature-teams"],
+  ])(
+    "opens Feature teams for %s, though Allocations was last shown",
+    async (_, path) => {
+      const address = open(path);
+
+      await screen.findByRole("grid", { name: "Feature teams by month" });
+      expect([address().get("mode"), address().get("search")]).toEqual([
+        "feature-teams",
+        null,
+      ]);
+    },
+  );
 });

@@ -3,8 +3,13 @@
 // The shared table of records, edited like a spreadsheet.
 
 import { Paper, Table, Text, VisuallyHidden } from "@mantine/core";
+import { useSyncExternalStore } from "react";
 import { columnHeaders } from "./column-header.tsx";
-import { frozenVariables, keptEdges, scrollEdges } from "./frozen-columns.ts";
+import {
+  frozenVariables,
+  type ScrollEdges,
+  scrollEdges,
+} from "./frozen-columns.ts";
 import { gridEditing } from "./grid-editing.tsx";
 import { useShownRows } from "./grid-groups.tsx";
 import { columnWidth, useGridLayout, widthStyle } from "./grid-layout.ts";
@@ -20,6 +25,7 @@ import { rowMenus } from "./row-menus.tsx";
 import { WithSidePanel } from "./side-panel.tsx";
 import { DraftView, MarkedItem } from "./status-mark.tsx";
 import { narrows } from "./table-view.ts";
+import type { ValueStore } from "./value-store.ts";
 
 // A line of a column's header, its name or a mark under it, and the room above and below them, for
 // how tall a header with marks grows.
@@ -62,7 +68,6 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
     rows,
     longestText,
     edges,
-    setEdges,
     scrollRef,
     measured,
     frozen,
@@ -122,8 +127,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
               )} * ${headerLineHeight} + ${headerPadding})`,
             }}
             onScroll={(event) => {
-              const next = scrollEdges(event.currentTarget);
-              setEdges((before) => keptEdges(before, next));
+              edges.set(scrollEdges(event.currentTarget));
             }}
           >
             <Table
@@ -239,34 +243,57 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
               )}
             </Table>
           </div>
-          {frozen.frozen > 0 && (
-            <div
-              aria-hidden="true"
-              className={classes.frozenEdge}
-              data-scrolled={edges.before || undefined}
-              style={{ height: measured.height }}
-            />
-          )}
-          {frozen.frozen === 0 && edges.before && (
-            <div
-              aria-hidden="true"
-              className={classes.scrollFade}
-              data-side="before"
-              style={{ height: measured.height }}
-            />
-          )}
-          {edges.after && (
-            <div
-              aria-hidden="true"
-              className={classes.scrollFade}
-              data-side="after"
-              style={{ height: measured.height }}
-            />
-          )}
+          <EdgeMarks
+            edges={edges}
+            frozen={frozen.frozen > 0}
+            height={measured.height}
+          />
           {pointerMenu()}
         </Paper>
       </WithSidePanel>
       {exportQuestion}
     </DraftView>
+  );
+}
+
+// The marks of columns out of view to either side: the frozen columns' shadow or a fade before, and
+// a fade after. They alone listen for the table reaching an end.
+function EdgeMarks({
+  edges,
+  frozen,
+  height,
+}: {
+  edges: ValueStore<ScrollEdges, ScrollEdges>;
+  frozen: boolean;
+  height: number;
+}) {
+  const { before, after } = useSyncExternalStore(edges.subscribe, edges.get);
+  return (
+    <>
+      {frozen && (
+        <div
+          aria-hidden="true"
+          className={classes.frozenEdge}
+          data-scrolled={before || undefined}
+          style={{ height }}
+        />
+      )}
+      {!frozen && before && (
+        <div
+          aria-hidden="true"
+          className={classes.scrollFade}
+          data-side="before"
+          style={{ height }}
+        />
+      )}
+      {after && (
+        <div
+          aria-hidden="true"
+          className={classes.scrollFade}
+          data-side="after"
+          style={{ height }}
+        />
+      )}
+    </>
   );
 }

@@ -182,6 +182,10 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-size-3": "#566f86",
     "--fathom-size-4": "#2f4659",
     "--fathom-scrollbar-thumb": "var(--mantine-color-gray-4)",
+    // The lines between a table's rows and columns, a step darker than Mantine's, and the fainter
+    // line within a cell over a sum, such as a month's total allocation, so rows stand apart.
+    "--fathom-row-line": "var(--mantine-color-gray-4)",
+    "--fathom-sum-line": "var(--mantine-color-gray-3)",
     // A timeline's cycles, every other one in the second shade, in blue-greys beside the size marks',
     // each with a hairline edge, the lightest size mark here and a shade of its own in dark, so a
     // lane reads clearly against the panel.
@@ -210,6 +214,8 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-size-3": "#86a0ba",
     "--fathom-size-4": "#b9cde0",
     "--fathom-scrollbar-thumb": "var(--mantine-color-dark-3)",
+    "--fathom-row-line": "var(--mantine-color-dark-3)",
+    "--fathom-sum-line": "var(--mantine-color-dark-4)",
     "--fathom-cycle": "#34485a",
     "--fathom-cycle-alternate": "#2a3a48",
     "--fathom-cycle-edge": "#4a6178",
