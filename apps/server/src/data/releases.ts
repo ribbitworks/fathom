@@ -29,15 +29,13 @@ import type { Recorded } from "./drafts.ts";
 import { addedOnly, type RecordsState, shownVersion } from "./record-state.ts";
 import {
   changeableRecord,
-  discardRecordDraft,
   drafting,
-  keptNote,
-  readRecordMakers,
-  readRecordsState,
   saveRecordDraft,
   saveRecordDrafts,
   type Wanted,
-} from "./records.ts";
+} from "./record-drafting.ts";
+import { discardRecordDraft } from "./record-decisions.ts";
+import { keptNote, readRecordMakers, readRecordsState } from "./records.ts";
 import { streamAsSeen, streamOut, streamsOut } from "./release-stream-view.ts";
 import { readToday } from "./settings.ts";
 import {

@@ -31,11 +31,13 @@ import { type RecordsState, versionOf } from "./record-state.ts";
 import {
   changeableRecord,
   drafting,
+  saveRecordDraft,
+} from "./record-drafting.ts";
+import {
   readRecordMakers,
   readRecordsState,
   recordDraftOut,
   recordHeldBy,
-  saveRecordDraft,
 } from "./records.ts";
 
 const missing = "The planning settings are missing; apply the migrations";
