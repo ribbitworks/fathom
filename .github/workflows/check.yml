@@ -76,7 +76,8 @@ jobs:
   # On one runner beside the linters and scans, the package tests ran up to thirty times slower than
   # on a developer's computer, until tests timed out, so they have runners of their own.
   packages:
-    name: Package tests (${{ matrix.name }})
+    # GitHub shows a skipped matrix job's name unexpanded, so a skipped run is named without the matrix.
+    name: ${{ needs.changes.outputs.documentation-only == 'true' && 'Package tests (skipped for documentation)' || format('Package tests ({0})', matrix.name) }}
     needs: changes
     if: needs.changes.outputs.documentation-only != 'true'
     runs-on: ubuntu-24.04
