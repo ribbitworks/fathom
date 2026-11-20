@@ -29,7 +29,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
 
 ## Terms
 
@@ -210,6 +210,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The cell does not open for editing.
   - **Notes:**
 
+- [ ] `64D3` Scroll right to the **Kind** column.
+  - **Expected:**
+    - There is no **New column** button.
+    - The row 'Offline Sync' shows 'New'.
+    - 'Mobile Approvals' shows 'Improvement'.
+    - 'Data Retention Controls' shows 'Fix'.
+    - 'Report Builder' shows 'New'.
+    - 'Usage Alerts' is empty.
+  - **Notes:**
+
 - [ ] `E244` Open the **Kind** column menu.
   - **Expected:**
     - The menu offers **Move left** and **Move right**.
@@ -310,6 +320,8 @@ Covered by [REL-23](release-cycles-manual-test.md#rel-23-a-cycles-new-length-mov
 - [ ] `9B69` Choose **Table** beside the **Features** heading.
   - **Expected:** The first heading is **No date**.
   - **Notes:**
+
+**Afterwards:** Run Discard the Unpublished Changes.
 
 ### FEAT-13: Feature Statuses Are a List With Meanings
 
