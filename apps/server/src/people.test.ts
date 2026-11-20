@@ -41,6 +41,11 @@ import {
 // How long a test waits for something to happen, so a busy computer does not fail it.
 const waitLimit = { timeout: 10_000 };
 
+// The server takes today's date from the clock, so the tests fix it, to give the same days on every
+// run.
+vi.useFakeTimers({ toFake: ["Date"] });
+vi.setSystemTime(new Date("2026-06-15T12:00:00.000Z"));
+
 let test: TestApp;
 
 beforeAll(async () => {
@@ -49,6 +54,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await test.close();
+  vi.useRealTimers();
 });
 
 let count = 0;
