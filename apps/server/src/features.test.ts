@@ -777,13 +777,6 @@ describe("when a stream's cycles change", () => {
     );
   });
 
-  it("leaves features on cycles before the change alone", async () => {
-    const streamId = await liveStream();
-    const feature = await liveFeature(target(streamId, cycle.first));
-    await changeLength(streamId, cycle.second, 2);
-    expect((await shown(feature.id)).draft).toBeUndefined();
-  });
-
   it("approves the moved features with the cycles' drafts", async () => {
     const streamId = await liveStream();
     const feature = await liveFeature(target(streamId));

@@ -172,6 +172,7 @@ export {
   hasEnded,
   horizonFrom,
   longestCycle,
+  longestCycleIn,
   type LaterCycles,
   laterCyclesSchema,
   type LengthChange,
