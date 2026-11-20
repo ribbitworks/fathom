@@ -1,38 +1,38 @@
 ---
-title: "Manual Test: Acceptance, Administrator"
+title: "Manual Test: Administrator Workflows"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-15"
+last_updated: "2026-11-19"
 ---
 
-# Manual Test: Acceptance, Administrator
+# Manual Test: Administrator Workflows
 
 ## Scope
 
-Verifies the workflows of [Working as an Administrator](../../help/working-as-an-administrator.md) on the seed data: making an account that signs in for the first time, giving it a copied role, changing what a role grants after checking who gains what, restoring a starting role, deactivating, reactivating and resetting the account, setting the rules for passwords, and checking the access history.
+Verifies the workflows of [Working as an Administrator](../help/working-as-an-administrator.md) on the seed data: making an account that signs in for the first time, giving it a copied role, changing what a role grants after checking who gains what, restoring a starting role, deactivating, reactivating and resetting the account, setting the rules for passwords, and checking the access history.
 
 ## Test Environment
 
-As [Manual Test Basics](../manual-test-basics.md#test-environment) sets out, with:
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
 
 - A browser window at least 1,440 pixels wide.
 - A second browser, or a private window, for signing in as a second account while the first stays signed in.
 
 ## Test Accounts
 
-As [Manual Test Basics](../manual-test-basics.md#test-accounts) sets out, this test uses:
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Administrator:** `fathom.administrator@fathom.test`, shown in Fathom as "Fathom Administrator"
 
 ## Common Procedures
 
-This test uses [Start Fathom](../manual-test-basics.md#start-fathom) and [Reset the Database](../manual-test-basics.md#reset-the-database).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the Database](manual-test-basics.md#reset-the-database).
 
 ## Terms
 
-[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses. This test adds:
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses. This test adds:
 
 - **New account:** `fictional.newcomer@fathom.test`, shown in Fathom as `Fictional Newcomer`, which ADMIN-01 creates with the Team Member role. Its password is the one ADMIN-01 shows, until ADMIN-01 changes it to `fictional password 2`. ADMIN-02 gives it the `Fictional Reader` role in place of Team Member.
 

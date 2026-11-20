@@ -1,5 +1,5 @@
 ---
-title: "Manual Test: Acceptance, Feature Lead"
+title: "Manual Test: Feature Lead Workflows"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
@@ -7,22 +7,22 @@ dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md"
 last_updated: "2026-11-19"
 ---
 
-# Manual Test: Acceptance, Feature Lead
+# Manual Test: Feature Lead Workflows
 
 ## Scope
 
-Verifies the workflows of [Working as a Feature Lead](../../help/working-as-a-feature-lead.md) on the seed data: shaping a feature team, approved by a Project Manager; keeping a feature's status and estimate current, approved by a Product Manager; seeing what each release and cycle holds, and keeping views of one schedule and of the Features board; and finding someone on the org chart. It also verifies that the account, which holds a second role, switches between them at once, and that the change history names the role a change was made as.
+Verifies the workflows of [Working as a Feature Lead](../help/working-as-a-feature-lead.md) on the seed data: shaping a feature team, approved by a Project Manager; keeping a feature's status and estimate current, approved by a Product Manager; seeing what each release and cycle holds, and keeping views of one schedule and of the Features board; and finding someone on the org chart. It also verifies that the account, which holds a second role, switches between them at once, and that the change history names the role a change was made as.
 
 ## Test Environment
 
-As [Manual Test Basics](../manual-test-basics.md#test-environment) sets out, with:
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
 
 - A browser window at least 1,440 pixels wide.
 - A second browser, or a private window, for signing in as a second account while the first stays signed in.
 
 ## Test Accounts
 
-As [Manual Test Basics](../manual-test-basics.md#test-accounts) sets out, this test uses:
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Feature Lead:** `feature.lead@fathom.test`, holding the Feature Lead role, its default, and the Engineering Manager role
 - **Project Manager:** `project.manager@fathom.test`
@@ -31,11 +31,11 @@ As [Manual Test Basics](../manual-test-basics.md#test-accounts) sets out, this t
 
 ## Common Procedures
 
-This test uses [Start Fathom](../manual-test-basics.md#start-fathom), [Reset the Database](../manual-test-basics.md#reset-the-database), [Publish](../manual-test-basics.md#publish) and [Discard the Unpublished Changes](../manual-test-basics.md#discard-the-unpublished-changes).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database), [Publish](manual-test-basics.md#publish) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
 
 ## Terms
 
-[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses, such as the account menu and role menu, marks, the lock, Draft rows and Live rows, the Publish button, the finder, the teams switch, the team panel and the details button.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the account menu and role menu, marks, the lock, Draft rows and Live rows, the Publish button, the finder, the teams switch, the team panel and the details button.
 
 ## Test Cases
 

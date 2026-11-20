@@ -5,7 +5,7 @@ AI agents write most of Fathom's code and documents, under a human's direction a
 ## Quality at a Glance
 
 - **100% test coverage, enforced:** Every tested package fails its tests below 100% of branches, functions, lines and statements. What is left out, and why, is set out under [Coverage](#coverage).
-- **Manual tests that act as requirements:** Each feature has a written manual test of numbered cases with exact expected results, from a person's side. Each role has an acceptance test that follows its daily work. The maintainer has run them all, and runs them again as features change.
+- **Manual tests that act as requirements:** Each feature has a written manual test of numbered cases with exact expected results, from a person's side. Each role has a workflow test that follows its daily work, and acceptance tests set Fathom up from nothing and work between roles. The maintainer has run them all, and runs them again as features change.
 - **Every screen seen by a person:** The maintainer looks at every screen change before it is tested or reviewed.
 - **Every change reviewed, every merge approved:** A separate agent reviews each change against written standards, and the maintainer approves every merge, after checking every screen change and every new or significantly changed manual test.
 - **Security checked on every pull request:** Dependency, source code and secret scans run with the tests on every push to a pull request and to `main`, and the container images are scanned again whenever what they're built from changes. The scans fail on a fix that is overdue or any other critical or high finding. CodeQL also scans the code on GitHub for each pull request.
@@ -116,7 +116,8 @@ Logic, validation, access checks and data handling are never left out, and the r
 Automated tests can't judge how a screen looks and reads, a journey across pages and accounts, or the keyboard. Manual tests cover those, and only those:
 
 - **Feature tests:** each feature has one in [docs/testing](testing/), written as numbered cases, each with one action per step and its exact expected result. Each doubles as the feature's requirements: what it must do, step by step, from a person's side.
-- **Acceptance tests:** each role has one in [docs/testing/acceptance](testing/acceptance/), following the workflows of its [Help page](help/index.md) as that person would do them.
+- **Role workflow tests:** each role has one in [docs/testing](testing/), following the workflows of its role tutorial in [Help](help/index.md) as that person would do them, on the fictional seed data.
+- **Acceptance tests:** in [docs/testing/acceptance](testing/acceptance/), they install Fathom, set it up from nothing, and follow work as it passes between roles, in the order [Acceptance Tests](testing/acceptance/README.md) gives.
 - **Run by the maintainer:** the maintainer has run every one, and runs them again as features change.
 
 They leave out what automated tests already prove, such as each validation message, so each runs in about 30 minutes.

@@ -1,33 +1,33 @@
 ---
-title: "Manual Test: Acceptance, Team Member"
+title: "Manual Test: Team Member Workflows"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-team-member.md", "docs/product/roles.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-19"
 ---
 
-# Manual Test: Acceptance, Team Member
+# Manual Test: Team Member Workflows
 
 ## Scope
 
-Verifies the workflows of [Working as a Team Member](../../help/working-as-a-team-member.md) on the seed data: finding someone on the org chart, seeing what's planned on Features and on the Releases timeline without changing it, looking at a project and its milestones, and keeping a personal view of People.
+Verifies the workflows of [Working as a Team Member](../help/working-as-a-team-member.md) on the seed data: finding someone on the org chart, seeing what's planned on Features and on the Releases timeline without changing it, looking at a project and its milestones, and keeping a personal view of People.
 
 ## Test Environment
 
-As [Manual Test Basics](../manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with a browser window at least 1,440 pixels wide.
 
 ## Test Accounts
 
-As [Manual Test Basics](../manual-test-basics.md#test-accounts) sets out, this test uses the Team Member, `team.member@fathom.test`.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses the Team Member, `team.member@fathom.test`.
 
 ## Common Procedures
 
-This test uses [Start Fathom](../manual-test-basics.md#start-fathom) and [Reset the Database](../manual-test-basics.md#reset-the-database).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the Database](manual-test-basics.md#reset-the-database).
 
 ## Terms
 
-[Manual Test Basics](../manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu, marks, the lock, the Views menu, the Group by menu, the details button, the side panel, the finder, the teams switch and the card.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu, marks, the lock, the Views menu, the Group by menu, the details button, the side panel, the finder, the teams switch and the card.
 
 ## Test Cases
 
@@ -71,7 +71,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
 
 - [ ] `C68D` Choose **Feature teams** in the teams switch.
   - **Expected:**
-    - The chart shows the feature teams of the [Fictional Data](../../design/development-setup.md#fictional-data) side by side, each first card naming its team.
+    - The chart shows the feature teams of the [Fictional Data](../design/development-setup.md#fictional-data) side by side, each first card naming its team.
     - 'Search and discovery' has a yellow dot before its name.
     - 'Platform reliability' has a grey lock before its name.
     - There is no date row between the finder and the chart.
