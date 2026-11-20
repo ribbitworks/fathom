@@ -150,6 +150,8 @@ jobs:
     permissions:
       contents: read
     steps:
+      # The job isn't cancelled with its run, so it runs its steps to the end, but a run cancelled
+      # before the decision would otherwise skip every step and pass with nothing tested.
       - name: Stop if the decision failed
         if: always()
         env:
@@ -169,9 +171,3 @@ jobs:
       - name: Run the container tests
         if: needs.changes.outputs.documentation-only != 'true'
         run: pnpm test:containers
-
-      # Steps without a condition are skipped once a run is cancelled, which would leave this
-      # required check passing with nothing tested.
-      - name: Fail a cancelled run
-        if: cancelled()
-        run: exit 1
