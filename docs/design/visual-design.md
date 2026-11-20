@@ -143,7 +143,7 @@ How Fathom's screens look and behave, so every page is built the same way. The p
 - **Undo, not confirmation:** As [Saving and Undo](../standards/ui-conventions/entering-and-saving.md#saving-and-undo) sets out.
 - **Empty and failed states:** An empty table says so in a few words. A table that cannot be loaded says so and offers Try again.
 - **Messages:** As [Saving and Undo](../standards/ui-conventions/entering-and-saving.md#saving-and-undo) sets out for failures.
-- **Styles:** Mantine's components, theme, and style props, such as a one-off size or margin, come first. Anything more goes in a CSS Module, never in a `style` attribute. The exception is a position or size worked out while the page runs, such as where the app menu opens, the org chart's cards, the Features Board's columns, a timeline's bars and a table's column widths: it may be set in a `style` attribute, directly or as a CSS variable a CSS Module reads.
+- **Styles:** Mantine's components, theme, and style props, such as a one-off size or margin, come first. Anything more goes in a CSS Module, never in a `style` attribute. The exceptions are a position or size worked out while the page runs, such as where the app menu opens, the org chart's cards, the Features Board's columns, a timeline's bars and a table's column widths; and a colour chosen in the data from the palette, such as a team's colour or a note's text colour. Each may be set in a `style` attribute, directly or as a CSS variable a CSS Module reads.
 
 ## Shared Building Blocks
 

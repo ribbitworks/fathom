@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Features, the planned work on the roadmap, as the Decisions Log sets out: each one of the plan's
-// records, changed through drafts, with a status from the built-in list of feature statuses, and
-// optionally a priority, a size and a risk from their built-in lists, the month it is needed by,
-// customers, a target cycle, an estimate kept in hours, a feature team, a short description, and a
-// note. A feature that targets no cycle is in Later.
+// Features, the planned work on the roadmap: their fields, and the warnings a feature raises.
 
 import { z } from "zod";
 import { daySchema, monthSchema } from "./days.ts";
@@ -53,14 +49,14 @@ export const largestEstimateHours = 999_999;
 export const isCommitted = (meaning: Meaning | null | undefined): boolean =>
   meaning === "planned" || meaning === "in-progress";
 
-// A committed feature needs a feature team to own it, as the Decisions Log sets out; a possible one
-// need not have one yet, and a done or cancelled one raises no warnings.
+// A committed feature needs a feature team to own it; a possible one need not have one yet, and a
+// done or cancelled one raises no warnings.
 export const needsFeatureTeam = (
   meaning: Meaning | undefined,
   featureTeamId: string | null,
 ): boolean => featureTeamId === null && isCommitted(meaning);
 
-// A committed feature with no month allocated is Not staffed, as the Decisions Log sets out.
+// A committed feature with no month allocated is Not staffed.
 export const needsStaffing = (
   meaning: Meaning | null | undefined,
   staffed: boolean,

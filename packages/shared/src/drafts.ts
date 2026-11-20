@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Drafts: changes waiting for approval, at most one for each record, as the Decisions Log sets out.
-// People, lists, choices, the People table's columns, the order of each list's choices and of the
-// People table's columns, the plan's records, such as release streams, and the planning settings
-// have drafts, which an Approver approves or rejects, several kinds at once.
+// Drafts: changes waiting for approval, at most one for each record, and the kinds of record that
+// have them.
 
 import { z } from "zod";
 import { linkShape } from "./links.ts";
@@ -193,9 +191,8 @@ export type ApprovePermission = Exclude<
 >;
 
 // The permissions that approve or reject each kind's drafts, any one of them sufficing: that of the
-// area it belongs to, as the Decisions Log sets out, and, for schedules and their cycles, which are
-// part of both the plan and planning configuration, either's. Every kind must be listed, which the
-// compiler checks.
+// area it belongs to, and, for schedules and their cycles, which are part of both the plan and
+// planning configuration, either's. Every kind must be listed, which the compiler checks.
 export const approvePermissions: Record<
   DraftKind,
   readonly [ApprovePermission, ...ApprovePermission[]]

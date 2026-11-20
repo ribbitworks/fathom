@@ -107,8 +107,7 @@
   color: var(--fathom-sidebar-strong);
 }
 
-.railToggle:focus-visible,
-.later:focus-visible {
+.railToggle:focus-visible {
   outline: 2px solid var(--fathom-sidebar-accent);
   outline-offset: 1px;
 }

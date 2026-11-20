@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Notes in the browser, as the Decisions Log sets out: a side panel that shows a note, or, for those
-// who may change it, edits it in two ways that edit the same note, an editor with a toolbar for
-// each format and a Markdown view. The editor loads only the formats notes allow, so
-// typing or pasting can make nothing else, and the Markdown view's text is cleaned to them when
-// people leave it or save. A note is shown from its Markdown through a sanitiser that lets through
-// only what notes allow, never as raw HTML.
+// Notes in the browser: a side panel that shows a note, and edits it with a toolbar or as Markdown
+// for those who may change it.
 
 import {
   cleanNote,

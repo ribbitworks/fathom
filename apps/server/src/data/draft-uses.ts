@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Drafts of one kind that use drafts of another, as the Decisions Log sets out: a column drawing on
-// a list only drafted to be added uses the list's draft, and a person or planned hire given a value
-// in a column, or a choice, only drafted to be added uses that column's or choice's draft. Part of
-// the data access layer; approvals.ts approves the drafts asked for with those they use, and
-// rejects a draft that others use only together with them. Drafts that use others of their own kind
-// are found in list-approvals.ts and column-approvals.ts, which also add the list a choice is added
-// to.
+// Finding the drafts of other kinds that a draft uses, so they are approved and rejected together.
+// Part of the data access layer.
 
 import { fieldOfValue } from "@fathom/db";
 import type { DraftsRequest } from "@fathom/shared";

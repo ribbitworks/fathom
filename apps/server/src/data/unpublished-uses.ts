@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Which of a user's unpublished changes go together, so publishing some of them publishes the
-// changes they use too, and discarding some discards the changes that use them, as the Decisions
-// Log's Approving rule sets out for drafts. A change uses another as approving finds one draft uses
-// another, judged by the drafts as the user's own changes make them; the changes of one fill, and
-// those saved together, each use one another, since a fill is decided whole and a change set is
-// published whole. Part of the data access layer.
+// Which of a user's unpublished changes go together, so they are published and discarded together.
+// Part of the data access layer.
 
 import { type DraftKind, draftKey, type RecordType } from "@fathom/shared";
 import {

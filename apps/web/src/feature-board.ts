@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Features Board's rules: which of a stream's cycles are its columns, which column a feature
-// is in, the order of its cards, what a card shows, and whether a committed feature is staffed, as
-// the Decisions Log sets out for the Roadmap.
+// The Features Board's rules: its columns, the column each feature is in, the order of its cards
+// and what each card shows.
 
 import {
   type CardPart,

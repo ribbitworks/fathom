@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The roles Fathom starts with, and the permissions roles grant, with what each permission means in
-// plain English, as the Decisions Log sets out. Roles are kept in the database, where they can be
-// edited; the front end uses a user's permissions to show only what they can do, and the server
-// enforces them.
+// The roles Fathom starts with, and the permissions roles grant, each with what it means in plain
+// English.
 
 import { z } from "zod";
 
@@ -474,7 +472,7 @@ export const startingRoles: Record<
   "product-manager": {
     name: "Product Manager",
     description:
-      "Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan, approves or rejects drafts of the plan and releases, and sees people's General details and configuration.",
+      "Edits projects, proposals, features, milestones, releases, customers, and estimates across the whole plan, approves or rejects drafts of the plan and releases, and sees people's General details and configuration.",
     permissions: [
       "plan:edit",
       "plan:approve",

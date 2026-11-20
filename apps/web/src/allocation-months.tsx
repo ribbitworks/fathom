@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Who is allocated to what, month by month, through the server's API, as a read-only table of
-// records: the people of the feature teams' grid, with the planned hires the org chart draws, each
-// month's cell listing the features someone is allocated to with their percentages, and the month's
-// total, marked over or under a whole month as the Decisions Log sets out. The months allocation
-// drafts change are shown as a draft of the row, as team drafts are on the Teams grid. Grouped by
-// manager or feature team, someone has a row under each manager they reported to, or team they
-// were on, holding only those months, and each group, and the whole organization, ends with the
-// person-months allocated against those available.
+// The allocations grid: who is allocated to what, month by month, with each month's total against
+// the time available.
 
 import {
   type AllocatedFeature,

@@ -1,14 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The plan's records, whatever their kind, through one set of rules: reading them with their drafts
-// in place, drafting records added, changed, and removed, discarding drafts, sending rejected ones
-// for approval again, and approving and rejecting them, as the Decisions Log sets out. Each kind is
-// described in record-state.ts, and adding a kind adds it to the list below. Part of the data
-// access layer; the caller checks the actor's permissions. Every change is a draft, recorded in the
-// change history field by field, which reaches the live records only once approved. A draft that
-// links to a record only drafted to be added uses that record's draft: approving it approves both,
-// discarding the record discards the drafts of records only drafted to be added that belong to it,
-// and the record's draft is rejected only together with the drafts that use it.
+// The plan's records, whatever their kind, read, drafted, discarded, resubmitted, approved and
+// rejected through one set of rules. Part of the data access layer; the caller checks the actor's
+// permissions.
 
 import { fields } from "@fathom/db";
 import type { Database } from "@fathom/db";

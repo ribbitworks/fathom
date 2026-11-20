@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Reading records' key numbers, which the database gives each record when it's added or drafted to
-// be added, as the Decisions Log sets out. Part of the data access layer; a number tells nothing
-// about its record, so reading one needs no permission, but the caller checks the actor may see the
-// record it sends the number with.
+// Reading records' key numbers, which the database gives each record. Part of the data access
+// layer; the caller checks the actor may see the record it sends a number with.
 
 import type { Database } from "@fathom/db";
 import { recordKeys } from "@fathom/db";
@@ -15,7 +13,8 @@ type Reader = Pick<Database, "select">;
 // Each record's key number, by its identifier.
 export type KeyNumbers = ReadonlyMap<string, number>;
 
-// The key numbers of a kind's records, of those named or of all of them.
+// The key numbers of a kind's records, of those named or of all of them. A number tells nothing
+// about its record, so reading one needs no permission.
 export async function readKeyNumbers(
   reader: Reader,
   kind: RecordKeyKind,

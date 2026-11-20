@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Release streams, their cycle patterns, and their releases, as the Decisions Log sets out. Each
-// stream has its own cycles, worked out from its patterns, and releases that each include
-// consecutive cycles of the stream, named by the days their first and last cycles start. Streams,
-// patterns, and releases have drafts, shown in place of the live values, with the draft beside.
+// Release streams, their cycle patterns and their releases, with their drafts.
 
 import { z } from "zod";
 import type { Permission } from "./access.ts";
@@ -192,7 +189,7 @@ export const namesPlannedWork = (permissions: readonly Permission[]) =>
 
 // The releases that move with their cycles when a stream's cycles change, given where each cycle
 // now starts, each with the cycles it moves to; or why the change cannot be made: a release would
-// include a cycle no longer made, or start after its Ships on day, as the Decisions Log sets out.
+// include a cycle no longer made, or start after its Ships on day.
 export function movedReleases<Moved extends ReleaseCycles>(
   releases: readonly Moved[],
   moved: ReadonlyMap<string, string | undefined>,

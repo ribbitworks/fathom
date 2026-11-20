@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The date control of a page read as of a day, the Org chart and People: a timeline to step through
-// by month, and a box for typing any day, reaching days after today only for roles that see future
-// dates. While the page shows another date, the control says whether changes made there take effect
-// from it, or nothing can be changed.
+// The date control of a page read as of a day, such as the Org chart and People: a timeline to step
+// through by month, and a box for typing any day.
 
 import {
   addToMonth,
@@ -146,7 +144,7 @@ export function DateControl({
             formatMonth(monthOf(dayOfMonthFromNow(months)))
           }
           styles={{ markLabel: { color: "var(--mantine-color-text)" } }}
-          style={{ flex: 1 }}
+          flex={1}
           mt={dayBoxLabelHeight + handleOffset}
           mb="lg"
           mx="lg"

@@ -1,13 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Approving and rejecting drafts, one at a time or several at once, as the Decisions Log sets out:
-// of people here, of lists, choices, and the order of lists' choices in list-approvals.ts, and of
-// the plan's records, such as release streams, in records.ts. Part of the data access layer.
-// Approving applies the drafts to the live records, all in one change set or none of them, and
-// rejecting keeps them, marked Rejected with the Approver's reason. An Approver may not approve
-// drafts they changed, unless their role lets them approve their own, but may reject them, and
-// needs roles that see every value in the drafts they approve or reject, and that approve drafts of
-// every area those drafts, and those approved with them, belong to. Neither can be undone.
+// Approving and rejecting drafts, one at a time or several at once, all in one change set. Part of
+// the data access layer.
 
 import { checkAllocationsAsked, removeAllocationsOf } from "./allocations.ts";
 import {

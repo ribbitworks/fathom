@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The user's unpublished changes, which only they see until they publish them, as the Decisions Log
-// sets out: a count in the top bar, shown while there are any, with Publish, and a menu listing them
-// with Discard all, and the publishing and discarding the Drafts page offers for those chosen too.
-// Publishing or discarding reloads every page's data, since either changes what others, and the
-// user, see.
+// The user's unpublished changes: the top bar's Publish and its menu, and publishing or discarding
+// the changes chosen on the Drafts page.
 
 import {
   type DraftsAsked,

@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What a user's active role lets them do, and the checks the data access layer makes. Each account
-// holds one or more roles, and a session acts as one of them at a time, never several at once. Roles
-// and what they grant are kept in the database, where they can be edited; the starting roles below
-// are what the migrations stored, kept here for tests and seed data that act as a starting role
-// without reading the database. Adding a permission changes the shared list in packages/shared,
-// with its plain-English description.
+// What a user's active role lets them do, and the checks the data access layer makes, with the
+// starting roles for tests and seed data that don't read the database.
 
 import type {
   ClassifiedField,
@@ -99,8 +95,7 @@ export function requireAnyPermission(
 }
 
 // What lets a user see and change some data: its tier, or, for the hiring plan's own details, the
-// hiring plan's permissions with its class, since the hiring plan is a permission area of its own,
-// as the Decisions Log sets out.
+// hiring plan's permissions with its class, since the hiring plan is a permission area of its own.
 export type Sensitivity = Tier | "hiring-plan";
 
 // Whether a user sees and changes data of a class beyond General.

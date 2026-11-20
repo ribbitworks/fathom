@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Notes: rich text kept as Markdown, as the Decisions Log sets out, in the server and the browser
-// alike. A note holds paragraphs, headings three levels deep, and bullet, checkbox or numbered
-// lists, counting from 1. Their text may be bold, italic, struck through, inline code, a link to a
-// web address or a Help page, or coloured from a fixed palette, the one thing Markdown cannot say,
-// written as <span data-colour="teal">…</span>.
-// Anything else is refused when a note is saved, and removed when one is typed or pasted. Notes are
-// parsed and written by remark, with GitHub's Markdown, so no Markdown or HTML is parsed by hand.
+// Notes: rich text kept as Markdown, parsed, checked and written the same way in the server and the
+// browser.
 
 import type {
   Html,

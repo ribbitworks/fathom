@@ -131,9 +131,9 @@ export const rateLimits = fathomSchema.table("rate_limits", {
   lastRequest: bigint("last_request", { mode: "number" }).notNull(),
 });
 
-// Roles, each a set of permissions that can be edited and copied, as the Decisions Log sets out.
-// The roles Fathom starts with keep a key, so setup and seed data can find them however they are
-// renamed; roles made later have none. Names are unique whatever their case.
+// Roles, each a set of permissions that can be edited and copied. The roles Fathom starts with keep
+// a key, so setup and seed data can find them however they are renamed; roles made later have none.
+// Names are unique whatever their case.
 export const roles = fathomSchema.table(
   "roles",
   {
@@ -162,9 +162,9 @@ export const rolePermissions = fathomSchema.table(
   (table) => [primaryKey({ columns: [table.roleId, table.permission] })],
 );
 
-// The roles each user holds, as the Decisions Log sets out: one or more, exactly one of them the
-// default, which the server checks; the database refuses a second default. A role held by any
-// account cannot be deleted, so nobody's access vanishes unseen.
+// The roles each user holds: one or more, exactly one of them the default, which the server checks;
+// the database refuses a second default. A role held by any account cannot be deleted, so nobody's
+// access vanishes unseen.
 export const userRoles = fathomSchema.table(
   "user_roles",
   {
@@ -1014,13 +1014,13 @@ export const lastViews = fathomSchema.table(
   (table) => [primaryKey({ columns: [table.userId, table.page] })],
 );
 
-// Draft rows: the changes waiting for approval, at most one draft for each record, as the Decisions
-// Log sets out. A draft adds a record, changes some of its fields, or removes it. It holds the record
-// as the change history records it: all of an added record's fields, only the fields a change makes
-// differ from the live record, and none for a removal. A rejected draft keeps the Approver's reason
-// until a change to it is published, or it is discarded. Who made and changed each draft is read
-// from the change history. People, lists, choices, and the order of each list's choices have drafts.
-// These are the published drafts; each user's unpublished ones are kept apart, as below.
+// Draft rows: the changes waiting for approval, at most one draft for each record. A draft adds a
+// record, changes some of its fields, or removes it. It holds the record as the change history
+// records it: all of an added record's fields, only the fields a change makes differ from the live
+// record, and none for a removal. A rejected draft keeps the Approver's reason until a change to it
+// is published, or it is discarded. Who made and changed each draft is read from the change
+// history. The kinds of record with drafts are listed in packages/shared/src/drafts.ts. These are
+// the published drafts; each user's unpublished ones are kept apart, as below.
 export const drafts = fathomSchema.table(
   "drafts",
   {
@@ -1078,11 +1078,11 @@ export const unpublishedDrafts = fathomSchema.table(
   ],
 );
 
-// Each record's key number, by the kind's word as packages/shared/src/record-keys.ts fixes it and the
-// record's identifier, as the Decisions Log sets out. Triggers number a record when it's added, or
-// drafted to be added, in the same transaction, so every way of adding one is covered. Rows outlive
-// their records, so numbers are never reused and a removed record's key still names it; the
-// application's role cannot change or delete them.
+// Each record's key number, by the kind's word as packages/shared/src/record-keys.ts fixes it and
+// the record's identifier. Triggers number a record when it's added, or drafted to be added, in the
+// same transaction, so every way of adding one is covered. Rows outlive their records, so numbers
+// are never reused and a removed record's key still names it; the application's role cannot change
+// or delete them.
 export const recordKeys = fathomSchema.table(
   "record_keys",
   {
@@ -1146,9 +1146,9 @@ export const teams = fathomSchema.table(
   (table) => [uniqueIndex("teams_name_index").on(sql`lower(${table.name})`)],
 );
 
-// Feature teams: the people working on a set of related features, apart from reporting lines, as
-// the Decisions Log sets out. A team's name is required and unique, ignoring letter case. A team may
-// name a colour from the palette, for the feature team chart, as a manager's team does.
+// Feature teams: the people working on a set of related features, apart from reporting lines. A
+// team's name is required and unique, ignoring letter case. A team may name a colour from the
+// palette, for the feature team chart, as a manager's team does.
 export const featureTeams = fathomSchema.table(
   "feature_teams",
   {
@@ -1212,12 +1212,12 @@ export const featureTeamMemberships = fathomSchema.table(
   ],
 );
 
-// Allocations: one person or planned hire on one feature, as the Decisions Log sets out, holding the
-// percentage of a month that takes effect from each month it changes, such as {"2027-01": 50,
-// "2027-07": null}, in force until the next, where null stops it; the server checks its shape. A
-// person or planned hire has at most one allocation to a feature, so each is one draft. Removing a
-// person or planned hire removes their allocations, which the server records; a feature with
-// allocations is refused removal by name before the database refuses it.
+// Allocations: one person or planned hire on one feature, holding the percentage of a month that
+// takes effect from each month it changes, such as {"2027-01": 50, "2027-07": null}, in force until
+// the next, where null stops it; the server checks its shape. A person or planned hire has at most
+// one allocation to a feature, so each is one draft. Removing a person or planned hire removes
+// their allocations, which the server records; a feature with allocations is refused removal by
+// name before the database refuses it.
 export const allocations = fathomSchema.table(
   "allocations",
   {

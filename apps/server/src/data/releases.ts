@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Release streams, their cycle patterns, and their releases: reading them as the viewer sees them,
-// each stream with its cycles worked out from its patterns, and drafting streams added, renamed,
-// retired, and restored, patterns and releases added, changed, and removed, and a release's note.
-// Part of the data access layer; the caller checks the actor's permissions. Every change is a draft
-// of a plan record, as records.ts sets out, with the rules release-kinds.ts sets.
+// Release streams, their cycle patterns and their releases: reading them as the viewer sees them,
+// and drafting changes to them. Part of the data access layer; the caller checks the actor's
+// permissions.
 
 import type { Database } from "@fathom/db";
 import {
@@ -478,7 +476,7 @@ const nameOf = (state: RecordsState, streamId: string): string =>
   String(shownVersion(state, "release-stream", streamId)?.name);
 
 // Drafts one cycle's new length, with the patterns that give it, and the releases and features on
-// cycles that move, moved with them, all in one change set, as the Decisions Log sets out.
+// cycles that move, moved with them, all in one change set.
 export async function changeCycleLength(
   database: Database,
   maker: Actor,

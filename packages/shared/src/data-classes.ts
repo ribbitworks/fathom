@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The data classes of Fathom's built-in details, which the organization moves with Classify data,
-// and what each page or view needs, as the Decisions Log's Data classes set out. A page or view
-// shows whole only to a role that sees every class it needs, and otherwise says why in one line; it
-// is never cut down.
+// The data classes of Fathom's built-in details, and the classes each page or view needs.
 
 import { z } from "zod";
 import {
