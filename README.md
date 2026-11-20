@@ -10,6 +10,7 @@ Fathom plans software work over time: what a team will build, who will build it,
 - [Architecture](docs/design/architecture.md): Fathom's parts and how they connect
 - [How Fathom Is Built](docs/how-fathom-is-built.md): how AI agents build Fathom under the maintainer's review, and how its quality is checked
 - [Security Plan](docs/security/security-plan.md), [How Data Is Safeguarded](docs/privacy/data-protection.md) and [Securing Your Environment](docs/operations/securing-your-environment.md): what Fathom guards against, who sees which data, and what whoever runs Fathom must secure
+- [Installing Fathom](docs/operations/installing-fathom.md): installing Fathom on a host, through to the first Administrator's sign-in
 - [Contributing](CONTRIBUTING.md) and [Security Policy](SECURITY.md): how issues come in, and how to report a vulnerability
 
 ## Quick Start

@@ -60,6 +60,7 @@ Each fact lives in the one document that owns it. The documents marked as summar
 | Document | Owns |
 | --- | --- |
 | [Security Plan](../security/security-plan.md) | Threats and their mitigations, vulnerability scanning, and source code assurance |
+| [Installing Fathom](../operations/installing-fathom.md) | How to install Fathom on a host, through to the first Administrator's sign-in |
 | [Securing Your Environment](../operations/securing-your-environment.md) | What whoever runs Fathom must secure, since Fathom can't |
 | [Supported Platforms](../operations/supported-platforms.md) | The platforms Fathom is tested and supported on, and their setup needs |
 
