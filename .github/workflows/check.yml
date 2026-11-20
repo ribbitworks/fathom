@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Runs the full check, 'pnpm check', on every pull request and every push to the default branch,
-# leaving out the package and container tests on a pull request of documentation alone.
+# leaving out the package tests, the server's coverage and the container tests on a pull request of
+# documentation alone.
 
 name: Check
 
@@ -85,18 +86,22 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: read
-    # The web app's and the server's tests take longest, so each has a runner's four cores; the rest
-    # share one runner, a worker each. A package added later runs with the rest. Each part's settings
-    # are looked up by its name, so the matrix holds only the name, which GitHub adds to the job's.
+    # The web app's and the server's tests take longest, so each has a runner's four cores, and the
+    # server's, the longest, are split across three runners, their coverage checked once merged; the
+    # rest share one runner, a worker each. A package added later runs with the rest. Each part's
+    # settings are looked up by its name, so the matrix holds only the name, which GitHub adds to the
+    # job's.
     env:
       PARTS: >-
         {"web": {"packages": "@fathom/web", "workers": 4},
-        "server": {"packages": "@fathom/server", "workers": 4},
+        "server 1 of 3": {"packages": "@fathom/server", "workers": 4, "shard": "1/3"},
+        "server 2 of 3": {"packages": "@fathom/server", "workers": 4, "shard": "2/3"},
+        "server 3 of 3": {"packages": "@fathom/server", "workers": 4, "shard": "3/3"},
         "the rest": {"packages": "!@fathom/web !@fathom/server", "workers": 1}}
     strategy:
       fail-fast: false
       matrix:
-        part: [web, server, the rest]
+        part: [web, server 1 of 3, server 2 of 3, server 3 of 3, the rest]
     steps:
       - name: Check out
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -106,11 +111,14 @@ jobs:
       - name: Set up Node.js and the dependencies
         uses: ./.github/actions/setup
 
-      # A selector matching no package fails, so a renamed package is never left untested.
+      # A selector matching no package fails, so a renamed package is never left untested. A shard
+      # covers part of the code, so it keeps its coverage in a report for the merge, which checks the
+      # coverage, rather than checking its own.
       - name: Run the package tests
         env:
           PACKAGES: ${{ fromJSON(env.PARTS)[matrix.part].packages }}
           VITEST_MAX_WORKERS: ${{ fromJSON(env.PARTS)[matrix.part].workers }}
+          SHARD: ${{ fromJSON(env.PARTS)[matrix.part].shard }}
           PART: ${{ matrix.part }}
         run: |
           if [ -z "$PACKAGES" ]; then
@@ -120,17 +128,77 @@ jobs:
           read -r -a selectors <<<"$PACKAGES"
           filters=()
           for selector in "${selectors[@]}"; do filters+=(--filter "$selector"); done
-          pnpm test:packages "${filters[@]}" --fail-if-no-match
+          sharding=()
+          if [ -n "$SHARD" ]; then
+            sharding=(--shard="$SHARD" --reporter=default --reporter=blob --coverage.thresholds=false)
+          fi
+          pnpm test:packages "${filters[@]}" --fail-if-no-match ${sharding[@]+"${sharding[@]}"}
+
+      - name: Keep the shard's report for the merge
+        if: fromJSON(env.PARTS)[matrix.part].shard != null
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: server-tests-${{ matrix.part }}
+          path: apps/server/.vitest/blob/
+          # Vitest keeps its reports in a hidden folder, which uploads leave out by default.
+          include-hidden-files: true
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 1
+
+  # The server's shards' reports merged, which checks its coverage as a whole run would.
+  server-coverage:
+    name: Server coverage
+    needs: [changes, packages]
+    if: needs.changes.outputs.documentation-only != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Check out
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js and the dependencies
+        uses: ./.github/actions/setup
+
+      - name: Gather the shards' reports
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: server-tests-*
+          path: apps/server/.vitest/blob/
+          merge-multiple: true
+
+      # Each report is named for its shard and the shards' count, such as blob-1-3.json, so a report
+      # missing names its cause rather than failing on the coverage alone.
+      - name: Merge the reports and check the coverage
+        run: |
+          reports=(apps/server/.vitest/blob/blob-*-*.json)
+          if [ ! -e "${reports[0]}" ]; then
+            echo "error: found none of the server's shard reports" >&2
+            exit 1
+          fi
+          name="${reports[0]##*/}"
+          expected="${name##*-}"
+          expected="${expected%.json}"
+          if [ "${#reports[@]}" -ne "$expected" ]; then
+            echo "error: found ${#reports[@]} of the server's $expected shard reports" >&2
+            exit 1
+          fi
+          pnpm --filter @fathom/server test:merge
 
   full:
     name: Full check
-    needs: [changes, check, packages]
+    needs: [changes, check, packages, server-coverage]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
     steps:
-      # The package tests may be left out only for documentation alone; everything else must pass.
+      # The package tests and the server's coverage may be left out only for documentation alone;
+      # everything else must pass.
       # It runs even in a cancelled run, so a cancelled run fails rather than passing unchecked.
       - name: Pass only if every part passed
         if: always()
@@ -138,11 +206,16 @@ jobs:
           DECIDED: ${{ needs.changes.result }}
           CHECKED: ${{ needs.check.result }}
           PACKAGES: ${{ needs.packages.result }}
+          COVERAGE: ${{ needs.server-coverage.result }}
           DOCUMENTATION_ONLY: ${{ needs.changes.outputs.documentation-only }}
         run: |
-          echo "Decided: $DECIDED, checked: $CHECKED, package tests: $PACKAGES, documentation only: $DOCUMENTATION_ONLY"
+          echo "Decided: $DECIDED, checked: $CHECKED, package tests: $PACKAGES, server coverage: $COVERAGE, documentation only: $DOCUMENTATION_ONLY"
           [ "$DECIDED" = success ] && [ "$CHECKED" = success ] || exit 1
-          [ "$PACKAGES" = success ] || { [ "$PACKAGES" = skipped ] && [ "$DOCUMENTATION_ONLY" = true ]; }
+          if [ "$DOCUMENTATION_ONLY" = true ]; then
+            [ "$PACKAGES" = skipped ] && [ "$COVERAGE" = skipped ]
+          else
+            [ "$PACKAGES" = success ] && [ "$COVERAGE" = success ]
+          fi
 
   containers:
     name: Container tests

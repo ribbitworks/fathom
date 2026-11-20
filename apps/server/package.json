@@ -15,7 +15,8 @@
   "scripts": {
     "dev": "node --watch src/main.ts",
     "start": "node src/main.ts",
-    "test": "vitest run --coverage"
+    "test": "vitest run --coverage",
+    "test:merge": "vitest run --merge-reports --coverage"
   },
   "dependencies": {
     "@fastify/helmet": "13.2.0",

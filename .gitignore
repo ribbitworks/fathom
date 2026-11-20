@@ -29,6 +29,8 @@ dist/
 build/
 out/
 coverage/
+# Vitest's reports, such as a shard's for merging
+.vitest/
 *.tsbuildinfo
 
 # --- Logs & temp ---
