@@ -12,7 +12,7 @@ import {
   type ReleaseStream,
   type RecordType,
 } from "@fathom/shared";
-import type { Recorded } from "./drafts.ts";
+import type { Recorded } from "./draft-records.ts";
 import {
   readsKind,
   type RecordsState,

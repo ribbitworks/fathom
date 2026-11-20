@@ -9,7 +9,7 @@ import {
   capitalized,
   type Permission,
 } from "@fathom/shared";
-import type { Recorded } from "./drafts.ts";
+import type { Recorded } from "./draft-records.ts";
 import {
   type RecordKind,
   type RecordsState as State,

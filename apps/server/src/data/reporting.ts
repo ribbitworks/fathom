@@ -16,12 +16,9 @@ import {
 import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { ConflictError, BadRequestError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
-import {
-  type Draft,
-  draftedPersonValues,
-  readPersonDrafts,
-  type Recorded,
-} from "./drafts.ts";
+import type { Draft, Recorded } from "./draft-records.ts";
+import { draftedPersonValues } from "./drafted-values.ts";
+import { readPersonDrafts } from "./drafts.ts";
 import {
   bySubject,
   currentRecordOn,

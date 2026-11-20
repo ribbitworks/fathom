@@ -10,16 +10,14 @@ import { type Actor, seesSensitivity, storedTier } from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
 import { recordAddedClass } from "./data-classes.ts";
+import { deleteDrafts, refuseHeldDecision, setRejection } from "./drafts.ts";
 import {
-  deleteDrafts,
   drafted,
   type Draft,
   draftUnseen,
-  refuseHeldDecision,
   refuseRejected,
   rejectedField,
-  setRejection,
-} from "./drafts.ts";
+} from "./draft-records.ts";
 import {
   refuseSensitiveFeatureList,
   choiceChanges,

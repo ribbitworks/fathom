@@ -25,7 +25,7 @@ import { randomUUID } from "node:crypto";
 import type { Actor } from "../access.ts";
 import { ConflictError, NotFoundError } from "../errors.ts";
 import type { Saved } from "./changes.ts";
-import type { Recorded } from "./drafts.ts";
+import type { Recorded } from "./draft-records.ts";
 import { addedOnly, type RecordsState, shownVersion } from "./record-state.ts";
 import {
   changeableRecord,

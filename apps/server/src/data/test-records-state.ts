@@ -3,7 +3,7 @@
 // The plan's records held in memory for unit tests of the rules that read them, and fictional
 // streams, cycle patterns, releases and features to fill them with.
 
-import type { Draft, Recorded } from "./drafts.ts";
+import type { Draft, Recorded } from "./draft-records.ts";
 import type { KindState, RecordsState } from "./record-state.ts";
 
 export const draft = (

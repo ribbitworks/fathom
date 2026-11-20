@@ -5,7 +5,7 @@
 
 import type { RecordRef } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import type { Draft, Recorded } from "./drafts.ts";
+import type { Draft, Recorded } from "./draft-records.ts";
 import { type KindState, type RecordsState, usesOf } from "./record-state.ts";
 import {
   featureKind,

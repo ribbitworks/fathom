@@ -6,7 +6,7 @@
 
 import type { Permission, ReleaseStream } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import type { Draft, Recorded } from "./drafts.ts";
+import type { Draft, Recorded } from "./draft-records.ts";
 import type { RecordsState } from "./record-state.ts";
 import { streamAsSeen, streamOut, streamsOut } from "./release-stream-view.ts";
 import {

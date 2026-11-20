@@ -24,7 +24,7 @@ import {
   valueFieldsIn,
 } from "./values.ts";
 import { type Change, changesBetween } from "./changes.ts";
-import { fitsColumns, type Recorded, rejectedField } from "./drafts.ts";
+import { fitsColumns, type Recorded, rejectedField } from "./draft-records.ts";
 import { recordEvent } from "./history.ts";
 import { text } from "./reporting.ts";
 
