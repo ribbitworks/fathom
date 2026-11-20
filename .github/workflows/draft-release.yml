@@ -18,7 +18,7 @@ jobs:
   # No release is drafted, so none can be published, while a fix in its images is overdue.
   scan:
     name: Build and scan the release's images
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 60
     permissions:
       contents: read
@@ -48,7 +48,7 @@ jobs:
   draft:
     name: Draft the release
     needs: scan
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     permissions:
       contents: write
