@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-installing-fathom-manual-test.md", "docs/help/working-as-an-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Acceptance, The Team's Accounts
@@ -89,7 +89,7 @@ Run the test cases in order, in about 30 minutes, straight after [Installing Fat
   - **Expected:** **Time zone** reads "America/Los_Angeles".
   - **Notes:**
 
-- [ ] `B1AE` Select the **Save** under **Time zone**.
+- [ ] `B1AE` Select **Save** under **Time zone**.
   - **Expected:** A notification says "Fathom's time zone is now America/Los_Angeles."
   - **Notes:**
 
@@ -153,7 +153,9 @@ Run the test cases in order, in about 30 minutes, straight after [Installing Fat
   - **Notes:**
 
 - [ ] `9A0C` Select **Create account**.
-  - **Expected:** The dialog, titled "Password for Ines Harrow", says "This password is shown only once. Ines Harrow must change it at the next sign-in."
+  - **Expected:**
+    - The dialog is titled "Password for Ines Harrow".
+    - It says "This password is shown only once. Ines Harrow must change it at the next sign-in."
   - **Notes:**
 
 - [ ] `388B` Select the eye button, and copy the password shown into the password list, beside `ines.harrow@fathom.test`.
@@ -210,11 +212,16 @@ Run the test cases in order, in about 30 minutes, straight after [Installing Fat
 **Preconditions:** TEAM-04 done.
 
 - [ ] `C40F` Select the **Access history** page in the left-hand menu.
-  - **Expected:** The newest entry reads "Fathom Administrator", then `install.administrator@fathom.test` in brackets, "created the account for" `Vera Marlow`, then `vera.marlow@fathom.test` in brackets, and ends in a grey **Worth checking** box.
+  - **Expected:**
+    - The newest entry reads "Fathom Administrator", then `install.administrator@fathom.test` in brackets, "created the account for" `Vera Marlow`, then `vera.marlow@fathom.test` in brackets.
+    - It goes on, dimmed, ": with Executive".
+    - It ends in a grey **Worth checking** box.
   - **Notes:**
 
 - [ ] `6DFC` Type `ines` in the search box at the top of the page.
-  - **Expected:** One entry is shown, reading "Fathom Administrator", then `install.administrator@fathom.test` in brackets, "created the account for" `Ines Harrow`, then `ines.harrow@fathom.test` in brackets.
+  - **Expected:**
+    - One entry is shown, reading "Fathom Administrator", then `install.administrator@fathom.test` in brackets, "created the account for" `Ines Harrow`, then `ines.harrow@fathom.test` in brackets.
+    - It goes on, dimmed, ": with Workforce Administrator".
   - **Notes:**
 
 - [ ] `235A` Sign out from the account menu.

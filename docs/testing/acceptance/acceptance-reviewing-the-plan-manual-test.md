@@ -142,7 +142,7 @@ Run the test cases in order, in about 20 minutes, straight after [Planning Featu
 - [ ] `9E0E` Select **Add milestone** in the dialog.
   - **Expected:**
     - `Keepers trained` is listed after `Lamps lit`, with a hollow yellow dot before it.
-    - **Last milestone** shows "2030-09-01".
+    - **Last milestone** shows September 1, 2030.
   - **Notes:**
 
 - [ ] `D24D` Run Publish.

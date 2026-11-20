@@ -189,7 +189,7 @@ Run the test cases in order, in about 30 minutes, straight after [Reviewing the 
 - [ ] `DB6C` Select the change button in the **Feature lead** row, type `Ada`, and press Enter.
   - **Expected:**
     - **Feature lead** reads `Ada Quill`, with a hollow yellow dot before it.
-    - Under it, a green dot before "None", in grey.
+    - Under it, a green dot before "None", in grey italics.
     - In the **Members** row, `Freya Holt` has a hollow yellow dot before her name, followed in grey by "from" and the first day of next month.
   - **Notes:**
 

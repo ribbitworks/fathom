@@ -151,7 +151,7 @@ Run the test cases in order, in about 30 minutes, straight after [Deciding the C
 - [ ] `9A2B` Select `Fictional teams`.
   - **Expected:**
     - The Views button reads `Fictional teams`.
-    - The headings read "Odile Brandt, Keepers", "Ada Quill, Lamp crew" and **No manager**.
+    - The headings read "Ada Quill, Lamp crew", "Odile Brandt, Keepers" and "No manager", in that order.
   - **Notes:**
 
 ### READ-06: The Executive Signs In for the First Time

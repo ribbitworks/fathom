@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["docs/testing/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test Basics
@@ -152,7 +152,7 @@ Run this in three cases: before [Installing Fathom](acceptance/acceptance-instal
 
 ## Terms
 
-- **Page and left-hand menu:** Fathom's pages are listed in the left-hand menu, the dark sidebar down the left of the window, in sections such as **Plan** and **People**. "Select the **Features** page" means selecting **Features** there. When the menu is collapsed to a narrow rail of icons, point at an icon to see its page's name, or select the button at the top of the rail, **Expand sidebar**, to show the names again. Opening a page from the menu shows its table as it starts, without the search, filters, sorting or grouping chosen there before.
+- **Page and left-hand menu:** Fathom's pages are listed in the left-hand menu, the dark sidebar down the left of the window, in sections such as **Plan** and **People**. "Select the **Features** page" means selecting **Features** there. When the menu is collapsed to a narrow rail of icons, point at an icon to see its page's name, or select the button at the top of the rail, **Expand sidebar**, to show the names again. Opening a page from the menu shows it as that account last left it, with the tab, search, filters, sorting and grouping it had.
 - **Top bar and account menu:** the bar across the top of the window. The account menu opens from the account's name and initials at its right, and holds **Appearance**, with **System**, **Light** and **Dark**, and **Sign out**.
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance** in the account menu.
 - **Role menu:** the choices under **Role** in the account menu, one for each role the account holds, shown only for an account with more than one role.

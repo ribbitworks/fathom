@@ -92,11 +92,11 @@ Run the test cases in order, in about 30 minutes, straight after [Feature Teams]
     - **Position** reads "Software Engineer", and **Manager** `Ada Quill`.
   - **Notes:**
 
-- [ ] `2B01` Type `Gil Ashby` in **Name**.
+- [ ] `2B01` Select **Name**, type `Gil Ashby` and press Enter.
   - **Expected:** **Name** shows what was typed.
   - **Notes:**
 
-- [ ] `BE07` Type `EMP-107` in **ID**.
+- [ ] `BE07` Select **ID**, type `EMP-107` and press Enter.
   - **Expected:** **ID** shows what was typed.
   - **Notes:**
 
@@ -114,11 +114,7 @@ Run the test cases in order, in about 30 minutes, straight after [Feature Teams]
   - **Expected:** Two rows are shown, whose **Record** reads `Fictional tide engineer` and `Gil Ashby`.
   - **Notes:**
 
-- [ ] `9A7E` Type `Fictional tide engineer` in the search box.
-  - **Expected:** One row is shown, whose **Record** reads `Fictional tide engineer`.
-  - **Notes:**
-
-- [ ] `6FB6` Tick that row's tick box.
+- [ ] `6FB6` Tick the tick box of the row whose **Record** reads `Fictional tide engineer`.
   - **Expected:** At the right of the page's heading: **Reject…** and **Approve 1 draft…**.
   - **Notes:**
 
@@ -223,7 +219,7 @@ Run the test cases in order, in about 30 minutes, straight after [Feature Teams]
 
 - [ ] `9FE5` Select **Manager** in the Group by menu.
   - **Expected:**
-    - The headings read "Odile Brandt, Keepers", "Ada Quill, Lamp crew" and **No manager**.
+    - The headings read "Ada Quill, Lamp crew", "Odile Brandt, Keepers" and "No manager", in that order.
     - Each heading says how many people it holds.
   - **Notes:**
 

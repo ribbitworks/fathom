@@ -64,11 +64,13 @@ Run the test cases in order, in about 30 minutes, straight after [Staffing the W
   - **Notes:**
 
 - [ ] `E864` Select the details button at the right of the first cell of the row for `Fictional Spring`.
-  - **Expected:** The release's details open, with a pencil beside **Cycles**.
+  - **Expected:** The release's details open on the right, headed `Fictional Spring`, with a **Cycles** row.
   - **Notes:**
 
-- [ ] `AFDC` Select the pencil beside **Cycles**.
-  - **Expected:** A dialog opens with **First cycle** and **Last cycle**, each reading next year's first cycle.
+- [ ] `AFDC` Select the change button in the **Cycles** row.
+  - **Expected:**
+    - A dialog titled "Change the cycles of Fictional Spring" opens.
+    - Its **First cycle** and **Last cycle** each read next year's first cycle.
   - **Notes:**
 
 - [ ] `6CA7` Choose next year's second cycle in **Last cycle**, such as "27.2 (2027-04-01 to 2027-06-30)".

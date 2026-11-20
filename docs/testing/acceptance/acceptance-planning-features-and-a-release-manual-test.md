@@ -84,7 +84,9 @@ Run the test cases in order, in about 30 minutes, straight after [Planning Proje
   - **Notes:**
 
 - [ ] `40B9` Select the **Feature team** cell of `Fictional Tide Tables`, press Enter, choose `Tide team`, and press Enter.
-  - **Expected:** The cell reads `Tide team`, with a hollow yellow dot before it, and no longer shows **No team**.
+  - **Expected:**
+    - The cell reads `Tide team`, with a hollow yellow dot before it.
+    - The cell no longer shows **No team**.
   - **Notes:**
 
 - [ ] `B7D5` Select the **Needed by** cell of `Fictional Tide Tables`, type March of next year, such as `202703`, and press Enter.
@@ -209,7 +211,7 @@ Run the test cases in order, in about 30 minutes, straight after [Planning Proje
 
 - [ ] `F21E` Select the **⋯** button at the right of the first cell of the row for `Fictional Spring`, then **Add note…**.
   - **Expected:**
-    - A panel titled "Note for Fictional Spring" opens beside the release's details.
+    - A panel titled "Note for Fictional Spring" opens under the release's details.
     - **Editor** is chosen.
   - **Notes:**
 
@@ -236,7 +238,7 @@ Run the test cases in order, in about 30 minutes, straight after [Planning Proje
 - [ ] `FC33` Select **Release** in the Group by menu.
   - **Expected:**
     - `Fictional Tide Tables` and `Fictional Gauge Alerts` are under the heading "Fictional Mainline: Fictional Spring, ships" and March 31 of next year.
-    - `Fictional Lamp Schedule` is under **Fictional Mainline: Not released yet**.
+    - `Fictional Lamp Schedule` is under the heading "Fictional Mainline: Not released yet".
   - **Notes:**
 
 - [ ] `CBCB` Run Publish.
