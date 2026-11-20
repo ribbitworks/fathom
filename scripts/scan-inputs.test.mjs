@@ -207,6 +207,44 @@ describe("the command", () => {
       process.chdir(previous);
     }
   });
+
+  it("lists the paths changed since another base left this branch, a moved file by both its paths", () => {
+    // Given a base that has moved on since this branch left it
+    git("checkout", "--quiet", "-b", "base");
+    write("deploy/other.yaml");
+    git("add", ".");
+    git("commit", "--quiet", "-m", "on the base");
+    git("checkout", "--quiet", "-");
+    mkdirSync(join(repository, "docs"));
+    git("mv", "apps/server/src/people.ts", "docs/people.md");
+    git("commit", "--quiet", "-m", "moved");
+    const previous = process.cwd();
+    process.chdir(repository);
+    try {
+      // When
+      const paths = changedPaths({ since: "base" });
+      // Then
+      assert.deepEqual(paths.sort(), [
+        "apps/server/src/people.ts",
+        "docs/people.md",
+      ]);
+    } finally {
+      process.chdir(previous);
+    }
+  });
+
+  it("fails, naming git's command, when it can't compare with the base", () => {
+    const previous = process.cwd();
+    process.chdir(repository);
+    try {
+      assert.throws(
+        () => changedPaths({ since: "no-such-base" }),
+        /git merge-base HEAD no-such-base failed/,
+      );
+    } finally {
+      process.chdir(previous);
+    }
+  });
 });
 
 describe("the dependency hash", () => {

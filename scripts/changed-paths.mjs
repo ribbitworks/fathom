@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Lists every path changed since this branch left origin/main, committed or not, or only the work
-// not yet committed, for the commands that run only what a change can affect.
+// Lists every path changed since this branch left origin/main, or another base, committed or not,
+// or only the work not yet committed, for the commands that run only what a change can affect.
 
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
@@ -15,10 +15,13 @@ function output(command, args) {
   return result.stdout;
 }
 
-export function changedPaths({ uncommitted = false } = {}) {
+export function changedPaths({
+  uncommitted = false,
+  since = "origin/main",
+} = {}) {
   const base = uncommitted
     ? "HEAD"
-    : output("git", ["merge-base", "HEAD", "origin/main"]).trim();
+    : output("git", ["merge-base", "HEAD", since]).trim();
   const lines = [
     output("git", ["diff", "--name-only", "--no-renames", base]),
     output("git", ["ls-files", "--others", "--exclude-standard"]),
