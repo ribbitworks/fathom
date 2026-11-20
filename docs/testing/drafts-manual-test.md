@@ -116,6 +116,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Manager?**
     - **Manager assigned**
     - **Team**
+    - **Feature teams**
     - **Team name**
   - **Notes:**
 
@@ -175,7 +176,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `67D6` Select the **Previous site** column name to open its column menu.
   - **Expected:**
-    - A red dot in a ring, then **Rejected**
+    - A red dot in a ring, then **Rejected, added**
     - Under them, **Reason:** 'Fictional reason: a previous site is not needed yet.'
     - No **Approve…** and no **Reject…**
   - **Notes:**
@@ -300,7 +301,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Reject draft…** is not greyed out.
   - **Notes:**
 
-- [ ] `3CBD` Press Escape.
+- [ ] `3CBD` Press Esc.
   - **Expected:** The menu closes.
   - **Notes:**
 

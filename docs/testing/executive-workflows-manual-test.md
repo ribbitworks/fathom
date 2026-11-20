@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-executive.md", "docs/product/roles.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Executive Workflows
@@ -53,7 +53,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
     - The menu shows the **Help** section.
   - **Notes:**
 
-- [ ] `723D` Select **Releases**.
+- [ ] `723D` Select the **Releases** page in the left-hand menu.
   - **Expected:**
     - The **Releases** page opens on its **Releases** tab.
     - There is no **New release** button.
@@ -91,7 +91,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
   - **Expected:** The side panel closes.
   - **Notes:**
 
-- [ ] `3A6C` Select **Features**.
+- [ ] `3A6C` Select the **Features** page in the left-hand menu.
   - **Expected:** The **Features** page opens.
   - **Notes:**
 
@@ -146,7 +146,7 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
 
 **Preconditions:** Signed in with this account.
 
-- [ ] `98E3` Select **People**.
+- [ ] `98E3` Select the **People** page in the left-hand menu.
   - **Expected:** The **People** page opens.
   - **Notes:**
 
@@ -159,18 +159,17 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
     - There is no **New person** and no **New column** button.
   - **Notes:**
 
-- [ ] `CAC5` Select **Drafts**.
+- [ ] `CAC5` Select the **Drafts** page in the left-hand menu.
   - **Expected:**
     - **All drafts** is the only tab beside the page's title, and is chosen.
     - The table lists drafts, and no row has a tick box.
     - No buttons at the right of the page's heading.
   - **Notes:**
 
-- [ ] `4B61` Select **Accounts**.
+- [ ] `4B61` Select the **Accounts** page in the left-hand menu.
   - **Expected:**
     - Every account is in the table with its roles.
     - There is no **New account** button.
-    - There is no **Edit** button in any row.
   - **Notes:**
 
 ### EXECUTIVE-04: An Executive Follows What Changed

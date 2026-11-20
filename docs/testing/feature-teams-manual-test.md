@@ -748,7 +748,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `C5B9` Choose **Feature teams** in **Group by**.
   - **Expected:**
-    - The button reads "Group by: Feature teams".
+    - The button reads **Group by: Feature teams**.
     - The headings name the feature teams in order of name, from "Data pipeline" to "Search", then "No feature team".
     - Each heading shows how many rows are under it.
   - **Notes:**

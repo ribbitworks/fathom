@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-engineering-director.md", "docs/product/roles.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Engineering Director Workflows
@@ -113,7 +113,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The **People** page opens.
   - **Notes:**
 
-- [ ] `94F2` Search for `Fictional new starter`.
+- [ ] `94F2` Clear the search box, and type `Fictional new starter`.
   - **Expected:**
     - One row is shown, with no dot.
     - It reads 'Software Engineer' in **Position**.
@@ -229,7 +229,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 
 **Preconditions:** **People** page open from the left-hand menu, with no view applied.
 
-- [ ] `36B5` Search for `el`.
+- [ ] `36B5` Clear the search box, and type `el`.
   - **Expected:** Each row listed has `el` in one of its cells, in capitals or not.
   - **Notes:**
 
@@ -348,7 +348,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - The table lists only 'Platform'.
   - **Notes:**
 
-- [ ] `D43E` Select the **Features** page in the left-hand menu.
+- [ ] `D43E` In the main browser, select the **Features** page in the left-hand menu.
   - **Expected:** The **Features** page opens, showing the table, with no view applied.
   - **Notes:**
 
@@ -382,7 +382,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Expected:** The headings name feature statuses, such as **In progress**.
   - **Notes:**
 
-- [ ] `7D8F` Select the **Projects** page in the left-hand menu, then the **Proposals** tab.
+- [ ] `7D8F` In the main browser, select the **Projects** page in the left-hand menu, then the **Proposals** tab.
   - **Expected:** The **Proposals** tab is chosen, with no view applied.
   - **Notes:**
 

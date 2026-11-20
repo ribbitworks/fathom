@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/org-chart*", "apps/server/src/data/org-chart.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/org-chart.md"]
-last_updated: "2026-11-14"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Org Chart
@@ -562,7 +562,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Org chart** page open from the left-hand menu, showing today.
 
-- [ ] `0CC9` Select **Reporting teams** in the switch at the top right.
+- [ ] `0CC9` Select **Reporting teams** in the teams switch.
   - **Expected:** The chart shows managers and their reports.
   - **Notes:**
 

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-a-feature-lead.md", "docs/product/roles.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Feature Lead Workflows
@@ -375,7 +375,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 - [ ] `71F1` Open the Views menu, and select **Save view…**.
   - **Expected:**
     - A dialog titled "Save view" shows **Name**.
-    - Under **Includes**, **Board** reads "Card Status, Priority, Size, Needed by, Staffed months".
+    - Under **Includes**, **Board** reads "Card Key, Status, Priority, Size, Needed by, Staffed months".
   - **Notes:**
 
 - [ ] `00CA` Type `Fictional board` in **Name**.

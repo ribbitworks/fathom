@@ -92,6 +92,8 @@ Run the test cases in the order they are listed. Start with Start Fathom, then R
     - Every **State** cell reads "Hired".
   - **Notes:**
 
+**Afterwards:** Open the **Views** menu above the table, and select **Clear view**.
+
 ### HIRE-04: A Planned Hire Is Added With the Keyboard Alone
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-03.
@@ -225,6 +227,8 @@ Covered by [HIRE-13](#hire-13-a-planned-hire-is-filled-with-a-new-person) and [H
     - There are no **Start** or **End** columns.
   - **Notes:**
 
+**Afterwards:** Open the **Views** menu above the table, and select **Clear view**.
+
 ### HIRE-07: A Feature Lead Sees Placeholders Only
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, the same as the account HIRE-10 ended with.
@@ -292,7 +296,7 @@ Covered by [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from HIRE-07.
 
-**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu, then **Clear view** selected in the **Views** menu above the table.
 
 - [ ] `312D` Type `Engineering Manager TBD` in the search box.
   - **Expected:**
@@ -316,7 +320,7 @@ Covered by [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
-- [ ] `8EC5` Type `Backend engineer 2` in the search box, and look at the **Name** cell of the row for 'Backend engineer 2'.
+- [ ] `8EC5` Clear the search box, type `Backend engineer 2`, and look at the **Name** cell of the row for 'Backend engineer 2'.
   - **Expected:**
     - A **Fill** button sits at the right of the cell.
     - 'Backend engineer 2' is still readable beside it.
@@ -464,7 +468,7 @@ Covered by [HIRE-07](#hire-07-a-feature-lead-sees-placeholders-only).
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
-- [ ] `2ED2` Type `Engineering Manager TBD` in the search box, and look at the **State** and **Name** cells of the row whose **Name** reads "Engineering Manager, TBD-" and a number.
+- [ ] `2ED2` Clear the search box, type `Engineering Manager TBD`, and look at the **State** and **Name** cells of the row whose **Name** reads "Engineering Manager, TBD-" and a number.
   - **Expected:**
     - **State** reads "Request to hire".
     - There is no **Fill** button in the **Name** cell.

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Remembered Views
@@ -50,20 +50,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `3B71` Type `Patel-Singh` in the search box above the table.
   - **Expected:** Only the row of 'Tanushree Patel-Singh' shows.
   - **Notes:**
+
 - [ ] `9E04` Select the **Org chart** page in the left-hand menu, then the **People** page.
   - **Expected:**
     - The search box above the table holds `Patel-Singh`.
     - Only the row of 'Tanushree Patel-Singh' shows.
   - **Notes:**
+
 - [ ] `C6A8` Select the **Projects** page in the left-hand menu, then the **Proposals** tab beside the **Projects** heading.
   - **Expected:** The **Proposals** tab is chosen, and its table shows.
   - **Notes:**
+
 - [ ] `52DF` Select the **People** page in the left-hand menu, then the **Projects** page.
   - **Expected:** The **Proposals** tab is chosen, and its table shows.
   - **Notes:**
+
 - [ ] `E1B9` Select the **Features** page in the left-hand menu, then **Board** in the Table and Board switch.
   - **Expected:** **Board** is chosen, and the features show as cards in columns.
   - **Notes:**
+
 - [ ] `7A3C` Select the **People** page in the left-hand menu, then the **Features** page.
   - **Expected:** **Board** is chosen, and the features show as cards in columns.
   - **Notes:**
@@ -84,26 +89,30 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, the same account as MEMO-02.
 
-**Preconditions:** MEMO-02 has been run. The main window shows the **People** page, with `Patel-Singh` in the search box.
+**Preconditions:** MEMO-02 has been run. In the main window, select the **People** page in the left-hand menu; its search box holds `Patel-Singh`.
 
 - [ ] `0F5E` In the main window, copy the whole address from the browser's address bar.
   - **Expected:** Nothing changes on the page.
   - **Notes:**
+
 - [ ] `A86B` Open the **Views** menu above the table and select **Clear view**.
   - **Expected:**
     - The search box above the table is empty.
     - Every person's row shows.
   - **Notes:**
+
 - [ ] `4C92` Select the **Org chart** page in the left-hand menu, then the **People** page.
   - **Expected:**
     - The search box above the table is empty.
     - Every person's row shows.
   - **Notes:**
+
 - [ ] `B37E` Paste the copied address into the browser's address bar and press Enter.
   - **Expected:**
     - The search box above the table holds `Patel-Singh`.
     - Only the row of 'Tanushree Patel-Singh' shows.
   - **Notes:**
+
 - [ ] `65F0` Select the **Org chart** page in the left-hand menu, then the **People** page.
   - **Expected:**
     - The search box above the table holds `Patel-Singh`.

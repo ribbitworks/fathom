@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-administrator.md", "docs/product/roles.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Administrator Workflows
@@ -54,7 +54,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
     - It shows no page of the plan or of people.
   - **Notes:**
 
-- [ ] `A38F` Select **Accounts**.
+- [ ] `A38F` Select the **Accounts** page in the left-hand menu.
   - **Expected:** The **Accounts** page opens.
   - **Notes:**
 

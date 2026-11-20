@@ -34,7 +34,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as marks and the Draft menu. This test adds:
 
 - **Details panel:** the panel that slides out on the right of the org chart or the **People** table, headed with a person's or planned hire's name, with the sections **Reporting**, **Details** and **Columns**, each a list of labels on the left and values on the right, and an **×** at its top right.
-- **New:** the button at the top right of the **People** page, which opens the details panel to add a person or planned hire.
+- **New person:** the button at the top right of the **People** page, which opens the details panel to add a person or planned hire.
 
 ## Test Cases
 

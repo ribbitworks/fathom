@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/design/pages/people.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Managers and Teams on People
@@ -50,6 +50,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - **Manager?**
     - **Manager assigned**
     - **Team**
+    - **Feature teams**
     - **Team name**
   - **Notes:**
 

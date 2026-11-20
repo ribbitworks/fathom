@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/design/development-setup.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Dark Mode
@@ -110,14 +110,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Every value in the row is easy to read.
   - **Notes:**
 
-- [ ] `A2D6` Type `Ophélie Roussel` in the search box.
+- [ ] `A2D6` Clear the search box, and type `Ophélie Roussel`.
   - **Expected:**
     - The red dot's ring is easy to see.
     - The faintly red row is told apart from the page.
     - Every value in the row is easy to read.
   - **Notes:**
 
-- [ ] `061E` Type `西尾 亮` in the search box.
+- [ ] `061E` Clear the search box, and type `西尾 亮`.
   - **Expected:**
     - The yellow dots and green dots are easy to see.
     - The semibold values are easy to read.
@@ -125,11 +125,11 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - Every value in the Live row is easy to read.
   - **Notes:**
 
-- [ ] `E2C9` Type `우아현` in the search box.
+- [ ] `E2C9` Clear the search box, and type `우아현`.
   - **Expected:** The red **Left** box and its word are easy to read.
   - **Notes:**
 
-- [ ] `8A53` Type `Viktoria Holmberg` in the search box.
+- [ ] `8A53` Clear the search box, and type `Viktoria Holmberg`.
   - **Expected:** The grey lock is easy to see.
   - **Notes:**
 
@@ -230,7 +230,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The side panel closes.
   - **Notes:**
 
-- [ ] `C831` Type `Tanushree Patel-Singh` in the search box.
+- [ ] `C831` Clear the search box, and type `Tanushree Patel-Singh`.
   - **Expected:** Only the row of 'Tanushree Patel-Singh' shows.
   - **Notes:**
 
@@ -249,7 +249,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The panel closes.
   - **Notes:**
 
-- [ ] `2D10` Type `REQ-2047` in the search box.
+- [ ] `2D10` Clear the search box, and type `REQ-2047`.
   - **Expected:** The row's **Fill** button is easy to read.
   - **Notes:**
 
@@ -737,7 +737,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **Reason** in her row is easy to read.
   - **Notes:**
 
-- [ ] `4D57` Type `Viktoria Holmberg` in the search box.
+- [ ] `4D57` Clear the search box, and type `Viktoria Holmberg`.
   - **Expected:** The yellow dot and the grey lock before her name are easy to see.
   - **Notes:**
 

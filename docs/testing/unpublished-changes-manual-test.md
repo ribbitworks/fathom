@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-17"
+last_updated: "2026-11-20"
 ---
 
 # Manual Test: Unpublished Changes
@@ -91,7 +91,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] `E97E` Type `Viktoria Holmberg` in the search box above the table.
+- [ ] `E97E` Clear the search box above the table, and type `Viktoria Holmberg` in it.
   - **Expected:** In her row:
     - The grey lock in the slot
     - A yellow dot before each value her published draft changes
@@ -109,7 +109,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] `49A5` Type `E10002` in the search box.
+- [ ] `49A5` Clear the search box, and type `E10002` in it.
   - **Expected:** The table shows the row whose **ID** is `E10002`.
   - **Notes:**
 
@@ -129,7 +129,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The People table shows.
   - **Notes:**
 
-- [ ] `4E79` Type `E10002` in the search box.
+- [ ] `4E79` Clear the search box, and type `E10002` in it.
   - **Expected:**
     - The row still reads `E10002`.
     - No dot before `E10002`.
@@ -148,7 +148,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **Publish** button is gone from the top bar.
   - **Notes:**
 
-- [ ] `FA4F` Type `Mariana Metz` in the search box.
+- [ ] `FA4F` Clear the search box, and type `Mariana Metz` in it.
   - **Expected:** A solid yellow dot before her new **Site**.
   - **Notes:**
 
@@ -160,7 +160,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The People table shows.
   - **Notes:**
 
-- [ ] `450E` Type `Mariana Metz` in the search box.
+- [ ] `450E` Clear the search box, and type `Mariana Metz` in it.
   - **Expected:**
     - A yellow dot before her new **Site**
     - The **Site** cell yellow
@@ -177,7 +177,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `711C` Select the **⋯** button beside **Publish 3 changes**, then **Discard all…**.
   - **Expected:**
     - A dialog titled "Discard 3 changes?" opens.
-    - It says "This cannot be undone."
+    - It reads "The unpublished changes are discarded. This cannot be undone."
   - **Notes:**
 
 - [ ] `AB77` Select **Discard**.

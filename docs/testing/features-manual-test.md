@@ -257,7 +257,7 @@ Covered by [REL-23](release-cycles-manual-test.md#rel-23-a-cycles-new-length-mov
     - The message reads "Needed by: use a month such as 2027-03".
   - **Notes:**
 
-- [ ] `3A74` Press Escape.
+- [ ] `3A74` Press Esc.
   - **Expected:** The cell is empty again.
   - **Notes:**
 
