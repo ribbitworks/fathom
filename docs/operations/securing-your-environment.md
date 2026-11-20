@@ -1,8 +1,8 @@
 # Fathom: Securing Your Environment
 
-**Last updated:** 2026-11-18
+**Last updated:** 2026-11-19
 
-What Fathom can't secure for itself, and recommendations for securing it. The [Security Plan](../security/security-plan.md) covers what it does; everything below is up to whoever runs it. Settings named here are in `deploy/compose.env.example`.
+What Fathom can't secure for itself, and recommendations for securing it. The [Security Plan](../security/security-plan.md) covers what it does; everything below is up to whoever runs it. Settings named here are in `deploy/compose.env.example`, and [Installing Fathom](installing-fathom.md) sets out the installation itself.
 
 ## The Machine
 
@@ -31,7 +31,7 @@ What Fathom can't secure for itself, and recommendations for securing it. The [S
 
 ## Accounts
 
-- **The first administrator:** Once Fathom is running, create the Fathom Administrator account with `docker compose --file deploy/compose.yaml run --rm --no-deps app apps/server/src/create-administrator.ts --email <address>`. It prints a password once, which must be changed at first sign-in. Then give the Administrator role to a named person, and stop using that shared account.
+- **The first administrator:** Once Fathom is running, create the Fathom Administrator account as [Installing Fathom](installing-fathom.md#steps) sets out. It prints a password once, which must be changed at first sign-in. Then give the Administrator role to a named person, and stop using that shared account.
 - **Roles:** Give each account only the roles its user needs. Anyone who manages accounts can give themselves any role.
 - **Separate duties:** Running Fathom, such as backups and updates, needs no Fathom account, so those who run it need no role that sees people's data.
 - **The access history:** Review it for changes marked worth checking, such as accounts created and roles changed.
