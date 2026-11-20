@@ -44,6 +44,9 @@ export interface Change {
   draft?: boolean;
 }
 
+// The change set a change was saved in, which undoing it names; null when nothing changed.
+export type ChangeSetId = string | null;
+
 // What a change returns, and the change set it was saved in, which undoing it names; null when
 // nothing changed.
 export interface Saved<Result> {
