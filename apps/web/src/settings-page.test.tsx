@@ -3,7 +3,7 @@
 // Tests for the Settings page, with the server's responses simulated: who sees it, choosing Fathom's
 // time zone with the day and time it is there, saving it for everyone, and the server's refusals.
 
-import { act, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { notAllowedMessage } from "./api.ts";
@@ -80,11 +80,14 @@ describe("who sees the Settings page", () => {
     expect(screen.getByRole("link", { name: "Settings" })).toBeDefined();
     expect(screen.queryByRole("button", { name: "Save" })).toBeNull();
     expect(picker().readOnly).toBe(true);
-    await userEvent.type(picker(), "{Enter}");
+    // A browser submits a form on Enter in its only text field, read only or not; the event bubbles
+    // from the field to its form.
+    fireEvent.submit(picker());
     const minimum = within(passwords).getByRole<HTMLInputElement>("textbox", {
       name: "Minimum length",
     });
     expect(minimum.readOnly).toBe(true);
+    fireEvent.submit(minimum);
     for (const name of [
       "A digit",
       "Leave out characters that look alike: I L O i l o 0 1",

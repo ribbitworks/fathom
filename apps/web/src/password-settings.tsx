@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The password settings on the Settings page: the rules every password a person chooses must meet,
-// and the recipe for the passwords Fathom makes for new accounts and resets. A recipe whose
-// passwords would break the rules, or that uses no characters at all, cannot be saved, and says
-// why. Saved at once, for everyone, and recorded in the access history; a tighter rule applies
-// from each person's next change of password. Those who may not change settings see them read only.
+// The password settings on the Settings page: the rules every chosen password must meet, and the
+// recipe for the passwords Fathom makes for new accounts and resets.
 
 import {
   type CharacterKind,
@@ -140,7 +137,7 @@ export function PasswordSettingsPanel({
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
-          saving.mutate(draft);
+          if (canEdit) saving.mutate(draft);
         }}
       >
         <Stack>
