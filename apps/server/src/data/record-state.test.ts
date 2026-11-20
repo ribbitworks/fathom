@@ -6,51 +6,15 @@
 
 import { releases } from "@fathom/db";
 import { describe, expect, it } from "vitest";
-import type { Draft, Recorded } from "./data/drafts.ts";
 import {
-  type KindState,
   type RecordKind,
-  type RecordsState,
   shownVersion,
   usesOf,
   valueTaken,
   withVersion,
-} from "./data/record-state.ts";
-import { releaseKind } from "./data/release-kinds.ts";
-
-const draft = (action: Draft["action"], fields: Recorded = {}): Draft => ({
-  action,
-  fields,
-  state: "waiting",
-  reason: null,
-  sequence: 1,
-});
-
-const kindState = (
-  live: [string, Recorded][] = [],
-  drafts: [string, Draft][] = [],
-  held: KindState["held"] = new Map(),
-): KindState => ({
-  live: new Map(live),
-  rows: new Map(live),
-  drafts: new Map(drafts),
-  held,
-  keys: new Map(),
-});
-
-const recordsState = (parts: Partial<RecordsState>): RecordsState => ({
-  "release-stream": kindState(),
-  "cycle-pattern": kindState(),
-  release: kindState(),
-  feature: kindState(),
-  customer: kindState(),
-  proposal: kindState(),
-  project: kindState(),
-  milestone: kindState(),
-  allocation: kindState(),
-  "planning-settings": kindState(),
-  ...parts,
-});
+} from "./record-state.ts";
+import { releaseKind } from "./release-kinds.ts";
+import { draft, kindState, recordsState } from "./test-records-state.ts";
 
 // A kind that links to streams and has no value that must be unique.
 const linking: RecordKind = {

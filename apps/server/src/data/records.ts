@@ -59,11 +59,8 @@ import { allocationKind, allocationProblem } from "./allocation-kinds.ts";
 import { planningSettingsKind } from "./planning-settings-kind.ts";
 import { keyNumberOf, readKindsKeyNumbers } from "./record-keys.ts";
 import { projectKinds } from "./project-kinds.ts";
-import {
-  releaseKinds,
-  releaseProblem,
-  retiredTargetProblem,
-} from "./release-kinds.ts";
+import { releaseKinds } from "./release-kinds.ts";
+import { releaseProblem, retiredTargetProblem } from "./release-problems.ts";
 import {
   addedOnly,
   everyVersion,

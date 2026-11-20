@@ -5,73 +5,31 @@
 
 import { cyclePatterns, features, releases, releaseStreams } from "@fathom/db";
 import {
-  type Cycle,
-  type CyclePatternLike,
-  cycleUnitSchema,
   cyclesOf,
-  endsBeforeFirstCycle,
-  endsTooEarly,
-  horizonFrom,
-  namesPlannedWork,
-  patternStartFits,
-  type Permission,
   planSubjects,
   projectSubjects,
   type RecordRef,
 } from "@fathom/shared";
-import type { Recorded } from "./drafts.ts";
 import {
   type RecordKind,
   type RecordsState,
-  type Touched,
-  shownIds,
   shownVersion,
   stateOf,
   versionOf,
 } from "./record-state.ts";
+import {
+  cyclesChanged,
+  draftsOfCycles,
+  onCycles,
+  patternDrafts,
+  releaseFits,
+  streamPatterns,
+  targetAsCycles,
+} from "./stream-cycles.ts";
 
 const nameIn = (state: RecordsState, id: string): string =>
   // A stream is never removed, so what belongs to it always has one.
   String(shownVersion(state, "release-stream", id)?.name);
-
-// A feature's target as a release on that one cycle, so a release's rules for cycles hold for it.
-const targetAsCycles = (feature: Recorded): Recorded => ({
-  streamId: feature.targetStreamId,
-  firstCycle: feature.targetCycle,
-  lastCycle: feature.targetCycle,
-});
-
-// The kinds of record on a stream's cycles, each as a release's cycles, with how each is refused:
-// when it is past the stream's plan, when a change of the stream's cycles leaves it off them, and
-// when the cycles asked for are not the stream's.
-const onCycles = [
-  {
-    type: "release",
-    cycles: (release: Recorded) => release,
-    afterPlan: (name: string) =>
-      `The release ${name} includes cycles after that day; change it first`,
-    offCycles: (name: string) =>
-      `The release ${name} would no longer start and end with cycles of its schedule; change it first`,
-    notOfStream: "Choose a first and last cycle of the release's schedule",
-  },
-  {
-    type: "feature",
-    cycles: targetAsCycles,
-    afterPlan: (name: string) =>
-      `The feature ${name} targets a cycle after that day; change it first`,
-    offCycles: (name: string) =>
-      `The feature ${name} would no longer target a cycle of its schedule; change it first`,
-    notOfStream: "Choose a cycle of the feature's schedule",
-  },
-] as const;
-
-// The refusals of a change of cycles, to a role that can't see releases and features, naming none
-// of them.
-const unnamedRefusals = {
-  afterPlan: "Work is planned on cycles after that day",
-  offCycles:
-    "Work planned on these cycles would no longer fit the schedule's cycles",
-} as const;
 
 // Release streams and cycles are seen with features and releases, and with planning configuration.
 const featuresOrConfiguration = [
@@ -276,250 +234,3 @@ export const featureKind: RecordKind = {
 };
 
 export const releaseKinds = [streamKind, patternKind, releaseKind] as const;
-
-// A pattern as the cycles are worked out from it.
-const asPattern = (record: Recorded): CyclePatternLike => ({
-  startsOn: String(record.startsOn),
-  length: Number(record.length),
-  unit: cycleUnitSchema.catch("months").parse(record.unit),
-  naming: String(record.naming),
-});
-
-const patternIds = (state: RecordsState, streamId: string) =>
-  shownIds(state, "cycle-pattern").filter(
-    (id) => shownVersion(state, "cycle-pattern", id)?.streamId === streamId,
-  );
-
-const patternDrafts = (state: RecordsState, streamId: string): RecordRef[] =>
-  patternIds(state, streamId)
-    .filter((id) => stateOf(state, "cycle-pattern").drafts.has(id))
-    .map((id) => ({ type: "cycle-pattern", id }));
-
-// A stream's patterns as their drafts make them, those drafted to be removed left out.
-export function streamPatterns(
-  state: RecordsState,
-  streamId: string,
-): { id: string; pattern: CyclePatternLike }[] {
-  return patternIds(state, streamId).flatMap((id) => {
-    const version = versionOf(state, "cycle-pattern", id);
-    return version === undefined ? [] : [{ id, pattern: asPattern(version) }];
-  });
-}
-
-export function livePatterns(
-  state: RecordsState,
-  streamId: string,
-): CyclePatternLike[] {
-  return [...state["cycle-pattern"].live.values()]
-    .filter((pattern) => pattern.streamId === streamId)
-    .map(asPattern);
-}
-
-// The records of a kind on a stream's cycles as their drafts make them, those drafted to be removed
-// left out.
-const onStream = (
-  state: RecordsState,
-  type: (typeof onCycles)[number]["type"],
-  streamId: string,
-  cycles: (record: Recorded) => Recorded,
-): { id: string; record: Recorded }[] =>
-  shownIds(state, type).flatMap((id) => {
-    const record = versionOf(state, type, id);
-    return record !== undefined && cycles(record).streamId === streamId
-      ? [{ id, record }]
-      : [];
-  });
-
-// The features that target a stream's cycles, as their drafts make them.
-export const streamFeatures = (state: RecordsState, streamId: string) =>
-  onStream(state, "feature", streamId, targetAsCycles);
-
-// A stream's releases as their drafts make them, in the order of their cycles, those drafted to be
-// removed left out.
-export function streamReleases(
-  state: RecordsState,
-  streamId: string,
-): { id: string; release: Recorded }[] {
-  return onStream(state, "release", streamId, (release) => release)
-    .map(({ id, record }) => ({ id, release: record }))
-    .sort((a, b) =>
-      String(a.release.firstCycle).localeCompare(String(b.release.firstCycle)),
-    );
-}
-
-// A schedule's last day, from its record, or null while it keeps going.
-export const endsOnIn = (stream: Recorded): string | null =>
-  typeof stream.endsOn === "string" ? stream.endsOn : null;
-
-// A schedule's last day, as its draft, if any, makes it.
-export const endsOnOf = (
-  state: RecordsState,
-  streamId: string,
-): string | null =>
-  // A schedule is never removed, so what belongs to it always has one.
-  endsOnIn(versionOf(state, "release-stream", streamId) ?? {});
-
-// The day the last cycle anything on a schedule's cycles includes starts, as drafts make them, or
-// none when nothing is on them: how far its cycles must be worked out to judge them, since Fathom
-// lays them out ahead from today.
-export const reachOf = (state: RecordsState, streamId: string): string =>
-  onCycles
-    .flatMap(({ type, cycles: asCycles }) =>
-      onStream(state, type, streamId, asCycles).map(({ record }) =>
-        String(asCycles(record).lastCycle),
-      ),
-    )
-    .sort()
-    .at(-1) ?? "";
-
-// How far a schedule's cycles are laid out: two years from today, or further, to the cycle the
-// furthest record on them includes, such as one a change of cycles moved past that day.
-export function laidOutUntil(
-  state: RecordsState,
-  streamId: string,
-  today: string,
-): string {
-  const horizon = horizonFrom(today);
-  const reach = reachOf(state, streamId);
-  return reach > horizon ? reach : horizon;
-}
-
-// Whether a release's first and last cycles are cycles of its stream, in order.
-function releaseFits(cycles: readonly Cycle[], release: Recorded): boolean {
-  const starts = new Set(cycles.map(({ startsOn }) => startsOn));
-  return (
-    starts.has(String(release.firstCycle)) &&
-    starts.has(String(release.lastCycle)) &&
-    String(release.firstCycle) <= String(release.lastCycle)
-  );
-}
-
-const cyclesChanged = (version: Recorded, live: Recorded) =>
-  version.streamId !== live.streamId ||
-  version.firstCycle !== live.firstCycle ||
-  version.lastCycle !== live.lastCycle;
-
-// The drafts of a stream's cycles that a record's draft uses: those of its stream when it moves to
-// other cycles, or, when added, is on a cycle only those drafts make.
-function draftsOfCycles(
-  state: RecordsState,
-  version: Recorded,
-  live: Recorded | undefined,
-): RecordRef[] {
-  const streamId = String(version.streamId);
-  const bound =
-    live === undefined
-      ? !releaseFits(
-          cyclesOf(livePatterns(state, streamId), String(version.lastCycle)),
-          version,
-        )
-      : cyclesChanged(version, live);
-  return bound ? patternDrafts(state, streamId) : [];
-}
-
-const overlaps = (first: Recorded, second: Recorded) =>
-  String(first.firstCycle) <= String(second.lastCycle) &&
-  String(second.firstCycle) <= String(first.lastCycle);
-
-// The stream a touched record belongs to, or is.
-const streamOf = ({ type, id, record }: Touched): string =>
-  type === "release-stream"
-    ? id
-    : String(record.streamId ?? record.targetStreamId);
-
-// The first way the records break the rules for streams' cycles and releases, in the streams the
-// touched records belong to, or undefined when they keep them, in words the role acting can see. A
-// release breaks them only if it is touched, or a pattern in its stream is, so a change is not
-// refused for a problem it did not make.
-export function releaseProblem(
-  state: RecordsState,
-  touched: readonly Touched[],
-  permissions: readonly Permission[],
-): string | undefined {
-  const worded = (named: string, unnamed: string) =>
-    namesPlannedWork(permissions) ? named : unnamed;
-  const streams = new Set(touched.map(streamOf));
-  for (const streamId of streams) {
-    const patterns = streamPatterns(state, streamId);
-    const patternTouched = touched.some(
-      (ref) => ref.type === "cycle-pattern" && streamOf(ref) === streamId,
-    );
-    const streamTouched = touched.some(
-      (ref) => ref.type === "release-stream" && ref.id === streamId,
-    );
-    for (const [at, { pattern }] of patterns.entries()) {
-      const others = patterns
-        .filter((_, index) => index !== at)
-        .map((other) => other.pattern);
-      const earliest = others.every(
-        (other) => pattern.startsOn < other.startsOn,
-      );
-      if (!earliest && !patternStartFits(others, pattern.startsOn)) {
-        return "Cycles can change only from the start of one of the schedule's cycles";
-      }
-    }
-    const found = streamReleases(state, streamId);
-    const endsOn = endsOnOf(state, streamId);
-    const made = patterns.map(({ pattern }) => pattern);
-    if ((streamTouched || patternTouched) && endsTooEarly(made, endsOn)) {
-      return endsBeforeFirstCycle;
-    }
-    const cycles = cyclesOf(made, reachOf(state, streamId), endsOn);
-    for (const { type, cycles: asCycles, ...refusals } of onCycles) {
-      for (const { id, record } of onStream(state, type, streamId, asCycles)) {
-        const recordTouched = touched.some(
-          (ref) => ref.type === type && ref.id === id,
-        );
-        if (!patternTouched && !streamTouched && !recordTouched) continue;
-        const name = String(record.name);
-        const own = asCycles(record);
-        if (
-          streamTouched &&
-          endsOn !== null &&
-          String(own.lastCycle) > endsOn
-        ) {
-          return worded(refusals.afterPlan(name), unnamedRefusals.afterPlan);
-        }
-        if (!releaseFits(cycles, own)) {
-          return patternTouched
-            ? worded(refusals.offCycles(name), unnamedRefusals.offCycles)
-            : refusals.notOfStream;
-        }
-        if (type !== "release") continue;
-        const clash = found.find(
-          (other) => other.id !== id && overlaps(record, other.release),
-        );
-        // Only one who sees releases changes a release onto another's cycles: a change of cycles
-        // moves a stream's releases together, so they never come to share one.
-        if (clash !== undefined) {
-          return `The release ${String(clash.release.name)} already includes some of those cycles`;
-        }
-      }
-    }
-  }
-  return undefined;
-}
-
-// The first feature drafted onto a cycle of a retired stream that its live record doesn't already
-// target a cycle of, refused, since a retired stream's cycles take no new features. A feature
-// already there keeps its place, and may move between the stream's cycles, as a change of the
-// stream's cycles moves it with its cycle; each draft is checked on its own, so the rule can't tell
-// that move from another.
-export function retiredTargetProblem(
-  state: RecordsState,
-  touched: readonly Touched[],
-): string | undefined {
-  for (const { type, id, record } of touched) {
-    if (type !== "feature" || typeof record.targetStreamId !== "string") {
-      continue;
-    }
-    const streamId = record.targetStreamId;
-    const stream = versionOf(state, "release-stream", streamId);
-    if (stream?.retired !== true) continue;
-    const live = stateOf(state, "feature").live.get(id);
-    if (live?.targetStreamId !== streamId) {
-      return `${String(stream.name)} is retired, so its cycles take no new features`;
-    }
-  }
-  return undefined;
-}

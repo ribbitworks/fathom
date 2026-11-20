@@ -51,17 +51,17 @@ import {
   saveRecordDrafts,
   type Wanted,
 } from "./records.ts";
+import { releaseKind } from "./release-kinds.ts";
+import { readToday } from "./settings.ts";
 import {
   endsOnIn,
   endsOnOf,
   laidOutUntil,
   streamPatterns,
   livePatterns,
-  releaseKind,
   streamFeatures,
   streamReleases,
-} from "./release-kinds.ts";
-import { readToday } from "./settings.ts";
+} from "./stream-cycles.ts";
 
 // The records of a kind in a stream, as shown, in order of the day given by a field.
 function inStream(
