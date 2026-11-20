@@ -1,6 +1,6 @@
 # Fathom: Roadmap
 
-**Last updated:** 2026-11-18
+**Last updated:** 2026-11-19
 
 The order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. Each stage is a [GitHub milestone](https://github.com/ribbitworks/fathom/milestones) holding its features, as [Issues](../standards/issues.md) sets out, so this document keeps each stage's goals and why.
 
@@ -34,7 +34,7 @@ The hiring workflow, moving planned hires between states as each role allows; sn
 
 ## Stage: Your Own Fields and Tables
 
-Custom fields and tables, and every type of column users add, on People and other tables, apart from Text and Date columns, which come sooner, as [Coming Next](#coming-next) sets out. Its features are in the [Your Own Fields and Tables](https://github.com/ribbitworks/fathom/milestone/3) milestone. Lookup columns, which follow a link, and Duration columns come in v1.1.
+Custom fields and tables, and every type of column users add, on People and other tables, apart from Text and Date columns, which come sooner, as [Coming Next](#coming-next) sets out. Its features are in the [Your Own Fields and Tables](https://github.com/ribbitworks/fathom/milestone/3) milestone. Lookup columns, which follow a link, and Duration columns come in [v1.1](https://github.com/ribbitworks/fathom/milestone/7).
 
 ## Stage: The Organization
 
@@ -49,3 +49,5 @@ What-if scenarios, if confirmed. In the [Planning Ahead](https://github.com/ribb
 Goals not yet placed in a stage are [Feature issues in no milestone](https://github.com/ribbitworks/fathom/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement+no%3Amilestone).
 
 These five stages make up v1. Broader configuration for other domains, and the future possibilities listed in the brief, come after v1.
+
+The release after v1 is planned in the [v1.1](https://github.com/ribbitworks/fathom/milestone/7) milestone.
