@@ -9,7 +9,7 @@ import { toggledFlag } from "./cell-kinds.tsx";
 import { ClearableInput } from "./clearable-input.tsx";
 import { DayInput } from "./day-input.tsx";
 import type { PlanChange } from "./project-grids.tsx";
-import type { Column, GridRecord } from "./record-grid.tsx";
+import type { Column, GridRecord } from "./record-table.ts";
 import type { CellValue, Kind } from "./table-view.ts";
 
 type MilestoneFieldKind = Extract<Kind, "text" | "date" | "flag">;

@@ -2,7 +2,7 @@
 
 // Tests for how many columns stay frozen as a column moves, and where frozen columns sit, measured
 // from the header's cells, and how wide a frozen column may be made. The frozen columns themselves
-// are tested in record-grid.test.tsx.
+// are tested in grid-layout.test.tsx.
 
 import { describe, expect, it } from "vitest";
 import {

@@ -37,7 +37,7 @@ import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
 import { colourVariable, colourWords } from "./colours.ts";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
 import { withRetiring } from "./lists.ts";
-import { undoDrafts } from "./record-grid.tsx";
+import { undoDrafts } from "./live-records.ts";
 import { recordMark } from "./status-mark.tsx";
 
 export const releaseStreamsQuery = queryOptions({

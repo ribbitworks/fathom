@@ -11,15 +11,9 @@ import { type ReactNode, useEffect } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { focusSoon } from "./focus.ts";
 import { DetailSections } from "./record-details.tsx";
-import {
-  type Column,
-  columnsOn,
-  type GridRecord,
-  newRecordProblems,
-  onRow,
-  readOnlyFor,
-  type RecordTable,
-} from "./record-grid.tsx";
+import { columnsOn, onRow, readOnlyFor } from "./grid-columns.tsx";
+import { newRecordProblems } from "./grid-saving.ts";
+import type { Column, GridRecord, RecordTable } from "./record-table.ts";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import type { CellValue } from "./table-view.ts";
 

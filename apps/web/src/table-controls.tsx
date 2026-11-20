@@ -74,7 +74,7 @@ import {
   withUnit,
 } from "./table-view.ts";
 import { AppMenu, MenuChoices, MenuToggle, Tick } from "./app-menu.tsx";
-import type { ColumnUnits } from "./record-grid.tsx";
+import type { ColumnUnits } from "./record-table.ts";
 import classes from "./pages.module.css";
 import { ClearableInput } from "./clearable-input.tsx";
 import { classWords } from "./status-mark.tsx";

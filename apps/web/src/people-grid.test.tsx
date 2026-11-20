@@ -21,7 +21,7 @@ import {
   PeopleGrid,
   peopleAsShown,
 } from "./people-grid.tsx";
-import { columnWidth } from "./record-grid.tsx";
+import { columnWidth } from "./grid-layout.ts";
 import { emptyView, formatDay } from "./table-view.ts";
 import { testTheme } from "./test-support.tsx";
 

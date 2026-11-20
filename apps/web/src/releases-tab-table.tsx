@@ -7,7 +7,8 @@
 import type { ReleaseStream } from "@fathom/shared";
 import { Text } from "@mantine/core";
 import classes from "./pages.module.css";
-import { type GridRecord, RecordGrid } from "./record-grid.tsx";
+import { RecordGrid } from "./record-grid.tsx";
+import type { GridRecord } from "./record-table.ts";
 import type { LayerRecord, ReleaseLayerForm } from "./release-layer.tsx";
 import { TableTips } from "./table-tips.tsx";
 import { TimelineView } from "./timeline-view.tsx";

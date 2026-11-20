@@ -38,16 +38,16 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 ## Entering Data
 
 - **From the keyboard:** Wherever items are added or changed, everything works from the keyboard. Tab moves between fields, Enter saves and starts the next item, Esc cancels, and arrow keys move between items. Leaving an item by clicking or tabbing elsewhere saves it too, and pasting several lines adds one item for each. A record's parts, such as a project's milestones, are added from the record's details, or from their own table's New form, which asks which record they belong to.
-  - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx` for tables, and `apps/web/src/list-panel.tsx` for a list's choices.
+  - **Drawn by:** `apps/web/src/grid-editing.tsx` and `apps/web/src/grid-saving.ts` for tables, and `apps/web/src/list-panel.tsx` for a list's choices.
   - **Example:** on the Lists page, select Sites and type a new choice in its empty row.
 - **Like a spreadsheet:** Tables where many records are entered work like a spreadsheet. Arrow keys, Home, End and Tab move between cells, and Ctrl+Home and Ctrl+End go to the first and last. Enter, F2 or typing edits a cell; Enter saves and moves down, Tab saves and moves across, Esc cancels, and Delete clears. Pasting rows copied from a spreadsheet into an empty row adds one record for each.
-  - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx`.
+  - **Drawn by:** `gridEditing` in `apps/web/src/grid-editing.tsx`, with pasting in `apps/web/src/grid-saving.ts`.
   - **Example:** People, Features, and each table on Projects.
 - **The empty row:** Empty rows at the end take new records, their cells blank until something is typed in one, so they aren't taken for records. A row being filled in is tinted as the draft it will be and marked by a hollow dot in its slot, whose tip and spoken words say New, not saved yet, and what is wrong so far or which required columns are still empty; what is wrong also shows in red after its first value. Its menu, also opened with Shift+F10, offers Clear row, which takes the row and what it holds away.
-  - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx`.
+  - **Drawn by:** `gridSaving` in `apps/web/src/grid-saving.ts`, with its mark in `apps/web/src/grid-row.tsx` and Clear row in `apps/web/src/row-menus.tsx`.
   - **Example:** type a name in the empty row at the end of Features.
 - **Moving items:** Where people set an order, items have a grip for dragging on wide screens, shown on hover or focus, and Alt with the arrow keys moves the selected one. Its menu offers the same moves and shows each one's keys.
-  - **Drawn by:** `apps/web/src/list-panel.tsx` for a list's choices, and the column menu in `apps/web/src/record-grid.tsx` for moving a column.
+  - **Drawn by:** `apps/web/src/list-panel.tsx` for a list's choices, and the column menu in `apps/web/src/column-header.tsx` for moving a column.
   - **Example:** the choices of Sites on the Lists page.
 
 ## Saving and Undo
@@ -79,7 +79,7 @@ Part of [UI Conventions](../ui-conventions.md): fields, choices, entering data f
 ## Refusals
 
 - **A value refused:** A value refused when saved, by the page or by the server, keeps its editor open with what was typed, outlined in red, with the reason in red under it, so nothing is lost, in tables, panels and dialogs alike; in a table, the reason is under the row, in its first cell, and in a dialog, under the field it's about, or at the foot when it's about no one field. Esc leaves the value as it was.
-  - **Drawn by:** `useRecordEditing` in `apps/web/src/record-editing.tsx` for a panel, and `RecordGrid` in `apps/web/src/record-grid.tsx` for a table.
+  - **Drawn by:** `useRecordEditing` in `apps/web/src/record-editing.tsx` for a panel, and `apps/web/src/grid-editing.tsx` for a table.
   - **Example:** type 203013 in a Needed by cell on Features: Needed by: use a month such as 2027-03.
 - **Names a role can't read:** A refusal naming the record that blocks a change, and the user's list of unpublished changes, name a record only to a role that reads its kind; any other role is told its kind alone, such as a feature or a planned hire. A record's name may include the record it belongs to, such as an allocation's feature.
   - **Drawn by:** the server, with `subjectOf` and each kind's `unseen` words in `apps/server/src/data/unpublished.ts`, and each plan kind's `unseenSubject` in `apps/server/src/data/release-kinds.ts` and `apps/server/src/data/allocation-kinds.ts`.

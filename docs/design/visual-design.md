@@ -1,6 +1,6 @@
 # Fathom: Visual Design
 
-**Last updated:** 2026-11-18
+**Last updated:** 2026-11-19
 
 How Fathom's screens look and behave, so every page is built the same way. The principles and conventions every screen shares, with the piece that draws each, are in [UI Conventions](../standards/ui-conventions.md). It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-components.md). The theme in `apps/web/src/theme.ts` holds the values; this document holds the rules, and each page's own design is in its page document.
 
@@ -141,7 +141,7 @@ How Fathom's screens look and behave, so every page is built the same way. The p
 
 One component does each job, in `apps/web/src/`. A new screen uses or extends the one listed rather than making another, and a review rates a second one doing the same job as HIGH, as [Reuse across the codebase](../standards/code-review.md#architecture-and-design) sets out.
 
-- **Tables of records:** `RecordGrid` in `record-grid.tsx`, with each kind of cell, its display and its editor, in `cellKinds` in `cell-kinds.tsx`.
+- **Tables of records:** `RecordGrid` in `record-grid.tsx`, given its records, columns and actions as `record-table.ts` sets out, with each kind of cell, its display and its editor, in `cellKinds` in `cell-kinds.tsx`.
 - **Search, views, and the bar above a table:** `TableSearch`, `ViewBar`, and `ViewsMenu` in `table-controls.tsx`, with a page's saved views, on a table or not, such as the Org chart's, from `useSavedViews` in `saved-views.tsx`.
 - **Side panels:** `WithSidePanel` and `SidePanelFrame` in `side-panel.tsx`, the frame holding a panel's heading, with its marks beside it, its subtitle and its actions. A record's details panel is `RecordPanel` in `record-details.tsx`, on that frame.
 - **A coloured name:** `ColouredName` in `colour-swatch.tsx`, as [A coloured name](../standards/ui-conventions/drafts-and-values.md#values) sets out.
@@ -151,14 +151,14 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **Choosing from a list:** `ChoicePicker` in `choice-picker.tsx`.
 - **A group of choices in a menu, the chosen one ticked:** `MenuChoices` in `app-menu.tsx`.
 - **A menu beside the pointer:** `MenuAtPoint` in `app-menu.tsx`, for a right-click on a table's row or a card, and a card's menu opened from its keys or its ⋯.
-- **A column in units:** a column's `units` in `record-grid.tsx`, resolved into the unit and decimal places the view names by `inViewUnits`, with `useChosenUnits` in `record-editing.tsx` for a form or panel's own choice, and an estimate's cell in `EffortCell` in `effort-cell.tsx`.
+- **A column in units:** a column's `units` in `record-table.ts`, resolved into the unit and decimal places the view names by `inViewUnits` in `grid-columns.tsx`, with `useChosenUnits` in `record-editing.tsx` for a form or panel's own choice, and an estimate's cell in `EffortCell` in `effort-cell.tsx`.
 - **Entering a day:** `DayInput` in `day-input.tsx`.
 - **Adding a record in a side panel:** `NewRecordPanel` in `new-record-panel.tsx`, driven by a table's columns, with each page drawing its own fields in it: `NewPersonPanel` in `new-person-panel.tsx` for People and `NewPlanRecordPanel` in `new-plan-record-panel.tsx` for the plan's records.
 - **A record's details in a side panel:** `Row` for each value, `RecordLink` for a link to another record, `RecordLinkList` for several, one to a line, `RecordSection` for a headed group of rows, and `DetailSections` spacing the sections, in `record-details.tsx`, with `FoldedNote` in `folded-note.tsx` and `FoldedList` in `folded-list.tsx` for a long note or list.
 - **Changing a record's values in a side panel:** `useRecordEditing` in `record-editing.tsx`, with what a person's notes add in `person-editing.tsx`.
 - **A record's menu outside a table:** `RecordMenu` in `record-menu.tsx`.
 - **Something that could not be loaded:** `LoadProblem` in `load-problem.tsx`.
-- **The buttons over a Name cell:** `RowControls` in `row-controls.tsx`, drawn by `RecordGrid` in the column its table names.
+- **The buttons over a Name cell:** `RowControls` in `row-controls.tsx`, placed by `nameCellControls` in `row-menus.tsx` in the column its table names.
 - **Notes:** `NotePanel`, `NoteView`, and `NoteCell` in `note-editor.tsx`.
 - **Links:** `LinkEditor`, `LinkCell`, and `LinkMenuItem` in `link-field.tsx`.
 - **A draft's menu items and deciding drafts:** `DraftItems` in `list-drafts.tsx`, `DecisionModal` in `decision-dialog.tsx`, and `OtherApproverNote` in `draft-details.tsx`.

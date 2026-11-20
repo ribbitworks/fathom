@@ -6,7 +6,8 @@
 
 import { columnClass, type Field, type List } from "@fathom/shared";
 import type { CellChange, CellSource } from "./cell-kinds.tsx";
-import { cellColumn, type CellRecord, type Column } from "./record-grid.tsx";
+import { cellColumn } from "./grid-columns.tsx";
+import type { CellRecord, Column } from "./record-table.ts";
 
 // The added columns a table shows, in the order and as the Draft menu's choice makes them.
 export interface AddedColumns {

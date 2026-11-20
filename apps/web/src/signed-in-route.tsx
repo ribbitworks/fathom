@@ -27,7 +27,7 @@ import { FirstPasswordChange } from "./change-password.tsx";
 import { Layout } from "./layout.tsx";
 import { lastViewAddress, lastViewsQuery, type Shown } from "./last-views.ts";
 import { PageNotFound } from "./problems.tsx";
-import type { LinkedColumn } from "./record-grid.tsx";
+import type { LinkedColumn } from "./record-table.ts";
 import { sessionQuery } from "./session.ts";
 import { viewOfAddress, type ViewSearch } from "./table-view.ts";
 import { setTimeZone } from "./today.ts";

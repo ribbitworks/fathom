@@ -49,7 +49,9 @@ import {
   type RecordEditingContext,
   useRecordEditing,
 } from "./record-editing.tsx";
-import { type Column, fieldColumn, withLiveFields } from "./record-grid.tsx";
+import { fieldColumn } from "./grid-columns.tsx";
+import { withLiveFields } from "./live-records.ts";
+import type { Column } from "./record-table.ts";
 import classes from "./planning-settings-tab.module.css";
 import { discardRecordDraft, resubmitRecordDraft } from "./releases.ts";
 import { useSaving } from "./saving.ts";

@@ -47,12 +47,8 @@ import { type EditingContext, usePersonEditing } from "./person-editing.tsx";
 import classes from "./record-details.module.css";
 import { RecordLink, Row } from "./record-details.tsx";
 import { focusValue } from "./record-editing.tsx";
-import {
-  cellColumn,
-  columnsOn,
-  newRecordProblems,
-  onRow,
-} from "./record-grid.tsx";
+import { cellColumn, columnsOn, onRow } from "./grid-columns.tsx";
+import { newRecordProblems } from "./grid-saving.ts";
 import type { CellValue } from "./table-view.ts";
 import { today } from "./today.ts";
 

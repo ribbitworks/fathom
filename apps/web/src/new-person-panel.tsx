@@ -31,7 +31,7 @@ import {
   NewRecordPanel,
 } from "./new-record-panel.tsx";
 import { RecordSection, Row } from "./record-details.tsx";
-import { keptForKind } from "./record-grid.tsx";
+import { keptForKind } from "./grid-columns.tsx";
 import type { CellValue } from "./table-view.ts";
 
 const table = { recordProblem, request: requestFromChanges };

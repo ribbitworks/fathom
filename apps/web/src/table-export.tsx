@@ -22,7 +22,7 @@ import {
 } from "./exports.ts";
 import { notifyFailure } from "./notices.tsx";
 import { useExportingPerson, useOfferedExport } from "./page-export.tsx";
-import type { GridRecord, RecordTable } from "./record-grid.tsx";
+import type { GridRecord, RecordTable } from "./record-table.ts";
 import type { SavedViews } from "./table-controls.tsx";
 import type { Show } from "@fathom/shared";
 import { today } from "./today.ts";

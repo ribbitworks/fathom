@@ -41,7 +41,7 @@ import { decimal } from "./numbers.ts";
 import { peopleAndHires } from "./people-rows.ts";
 import type { CellChange } from "./cell-kinds.tsx";
 import pages from "./pages.module.css";
-import type { RecordTable, RowTotals } from "./record-grid.tsx";
+import type { RecordTable, RowTotals } from "./record-table.ts";
 import {
   DraftedPartItem,
   type DraftedPart,

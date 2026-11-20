@@ -8,7 +8,7 @@ import type { Feature } from "@fathom/shared";
 import { Button, Group, Stack } from "@mantine/core";
 import { FoldedList } from "./folded-list.tsx";
 import { RecordLinkList } from "./record-details.tsx";
-import type { Column, GridRecord } from "./record-grid.tsx";
+import type { Column, GridRecord } from "./record-table.ts";
 import {
   type FeaturesAt,
   featuresColumnKey,

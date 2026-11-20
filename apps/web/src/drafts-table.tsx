@@ -15,14 +15,14 @@ import { joined, noDrafts } from "./drafts.ts";
 import type { Entry } from "./draft-entries.ts";
 import { placeKey } from "./draft-places.ts";
 import { PhraseList, phraseText } from "./phrase.tsx";
+import { fieldColumn } from "./grid-columns.tsx";
 import {
   type Column,
-  fieldColumn,
   type GridDraft,
   type GridRecord,
   readOnlyTableParts,
   type RecordTable,
-} from "./record-grid.tsx";
+} from "./record-table.ts";
 import { byChoice } from "./choice-grouping.ts";
 import { FactBox } from "./status-mark.tsx";
 import type { View } from "./table-view.ts";

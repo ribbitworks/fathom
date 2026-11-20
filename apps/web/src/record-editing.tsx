@@ -10,13 +10,9 @@ import { cellKinds, type EditorProps, startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { ClearableInput } from "./clearable-input.tsx";
 import { focusSoon, selectSoon } from "./focus.ts";
-import {
-  type Column,
-  type GridRecord,
-  readOnlyFor,
-  type RecordTable,
-  valueChange,
-} from "./record-grid.tsx";
+import { readOnlyFor } from "./grid-columns.tsx";
+import { valueChange } from "./grid-saving.ts";
+import type { Column, GridRecord, RecordTable } from "./record-table.ts";
 import classes from "./record-details.module.css";
 import {
   type CellValue,

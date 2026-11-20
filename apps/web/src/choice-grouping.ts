@@ -2,7 +2,7 @@
 
 // Grouping a table's rows by the choices a column holds.
 
-import type { Column, GridRecord, RowGrouping } from "./record-grid.tsx";
+import type { Column, GridRecord, RowGrouping } from "./record-table.ts";
 import { type GroupsHold, rankOfNone, type RowGroup } from "./table-view.ts";
 import { emptiedWords } from "./status-mark.tsx";
 import type { Choice } from "@fathom/shared";

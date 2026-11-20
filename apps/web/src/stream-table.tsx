@@ -24,17 +24,15 @@ import { retiredLive } from "./lists.ts";
 import { draftFieldsOf } from "./project-grids.tsx";
 import { cycleChoiceId } from "./projects.ts";
 import { featuresColumn, type PlannedFeatures } from "./release-tabs.ts";
+import { fieldColumn, withLiveCopies, wordsColumn } from "./grid-columns.tsx";
 import {
   type Column,
-  fieldColumn,
   type GridDraft,
   type GridRecord,
   readOnlyTableParts,
   type RecordTable,
   type RowGrouping,
-  withLiveCopies,
-  wordsColumn,
-} from "./record-grid.tsx";
+} from "./record-table.ts";
 import {
   draftedStreams,
   liveStreams,

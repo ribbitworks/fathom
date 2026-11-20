@@ -30,15 +30,17 @@ import { draftFieldsOf } from "./project-grids.tsx";
 import { cycleChoiceId } from "./projects.ts";
 import {
   choicesNamed,
-  type Column,
   fieldColumn,
+  withLiveCopies,
+  wordsColumn,
+} from "./grid-columns.tsx";
+import {
+  type Column,
   type GridDraft,
   type GridRecord,
   readOnlyTableParts,
   type RecordTable,
-  withLiveCopies,
-  wordsColumn,
-} from "./record-grid.tsx";
+} from "./record-table.ts";
 import {
   cycleNamed,
   draftedStreams,

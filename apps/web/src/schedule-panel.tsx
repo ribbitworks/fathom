@@ -19,7 +19,7 @@ import {
   RecordSection,
   Row,
 } from "./record-details.tsx";
-import { fieldColumn } from "./record-grid.tsx";
+import { fieldColumn } from "./grid-columns.tsx";
 import {
   currentCycle,
   durationWords,

@@ -40,11 +40,9 @@ import { LoadProblem } from "./load-problem.tsx";
 import { count } from "./numbers.ts";
 import { HeadingTabPanel, HeadingTabs, PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
-import {
-  focusRecordCell,
-  noRecordActions,
-  RecordGrid,
-} from "./record-grid.tsx";
+import { focusRecordCell } from "./grid-row.tsx";
+import { RecordGrid } from "./record-grid.tsx";
+import { noRecordActions } from "./record-table.ts";
 import { withTicks } from "./row-ticks.tsx";
 import { useSavedViews } from "./saved-views.tsx";
 import { useNarrow } from "./side-panel.tsx";
