@@ -22,6 +22,17 @@ import { fileURLToPath } from "node:url";
 
 const scripts = fileURLToPath(new URL(".", import.meta.url));
 
+// Semgrep's image without its digest, read from scripts/lib.sh so the test follows the version
+// Renovate updates there.
+const semgrepRead = spawnSync(
+  "bash",
+  ["-c", 'source scripts/lib.sh && printf "%s" "${fathom_semgrep_image%%@*}"'],
+  { cwd: join(scripts, ".."), encoding: "utf8" },
+);
+assert.equal(semgrepRead.status, 0, semgrepRead.stderr);
+const semgrepImage = semgrepRead.stdout;
+assert.match(semgrepImage, /^semgrep\/semgrep:\S+$/, semgrepRead.stderr);
+
 // Logs each call; images named in STUB_MISSING aren't present, a step named in STUB_FAIL fails, and
 // each scanner reports nothing found.
 const stubDocker = `#!/usr/bin/env bash
@@ -185,13 +196,13 @@ describe("the security report offline", () => {
 
   it("names everything missing until prepared", () => {
     const result = run("security-report.sh", ["--offline"], {
-      STUB_MISSING: "semgrep/semgrep:1.182.1",
+      STUB_MISSING: semgrepImage,
       STUB_FAIL: "database",
     });
     assert.equal(result.status, 1);
     assert.ok(
       result.stderr.includes(
-        "error: Not ready to scan offline: missing the image semgrep/semgrep:1.182.1, Semgrep's rules, Trivy's vulnerability database, a finished 'pnpm offline:prepare'. Run 'pnpm offline:prepare' while connected",
+        `error: Not ready to scan offline: missing the image ${semgrepImage}, Semgrep's rules, Trivy's vulnerability database, a finished 'pnpm offline:prepare'. Run 'pnpm offline:prepare' while connected`,
       ),
       result.stderr,
     );
