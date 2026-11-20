@@ -4,7 +4,7 @@ category: "Design"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/projects.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Fathom: Projects Page
@@ -37,6 +37,7 @@ Projects holds the plan's projects, proposals, customers and milestones, each on
 
 ## Planned
 
+- **Customers:** each customer has a Description and Notes, Notes its table's last column ([#54](https://github.com/ribbitworks/fathom/issues/54)).
 - **Projects timeline:** each project on the [shared timeline](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines), from first to last milestone.
   - Milestones are diamonds, hollow while to come; the last is red when its work ends later or isn't staffed.
   - Its features and [activities](https://github.com/ribbitworks/fathom/issues/207) show under it, as in Capacity's Work.

@@ -4,7 +4,7 @@ category: "Domain"
 audience: "AI Coding Assistant"
 applies_to: ["packages/shared/src/**", "packages/db/**", "apps/server/src/**"]
 dependencies: ["docs/product/domain.md", "docs/product/roles.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-20"
 ---
 
 # Fathom: Domain Model
@@ -132,7 +132,7 @@ Percentages are whole.
 
 ### Customers and Products
 
-- **Customer:** a row of the built-in Customers table, with a name, required and unique, picked directly by projects, proposals, and features.
+- **Customer:** a row of the built-in Customers table, with a name, required and unique, picked directly by projects, proposals, and features. A Description and Notes are not built yet ([#54](https://github.com/ribbitworks/fathom/issues/54)).
 - **Product:** a built-in table with a name, required and unique. Features are part of products through a column users add. Not built yet.
 
 ## Release Entities
