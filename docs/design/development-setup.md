@@ -245,7 +245,7 @@ The copy gets new names, and so a new, empty database.
 | `pnpm security` | The security report, in a dated folder under `output/security/`; with `--offline`, without the dependency audit and the image scans, which need the internet |
 | `pnpm offline:prepare` | Fetch what `pnpm check --offline` needs, while connected: the scanners' images, Semgrep's rules, Trivy's database, and the database image with that day's security fixes |
 | `pnpm scan:images` | The daily image scan, as [Releases](#daily-image-scan) describes |
-| `pnpm updates` | List dependency updates, in `output/updates/`, changing nothing. On GitHub, the Renovate app opens a pull request for each update, or for each group of related ones, as `renovate.json` sets out, at most five open at once apart from security fixes |
+| `pnpm updates` | List dependency updates, in `output/updates/`, changing nothing. On GitHub, the Renovate app opens one pull request each week for the minor and patch updates of npm packages, and one for each other update or group of related ones, as `renovate.json` sets out, at most five open at once apart from security fixes and PostgreSQL's updates, which come first |
 | `pnpm reset-caches` | Remove the scanners' cached data, ESLint's cache and Vitest's caches of compiled files, which the next run rebuilds. It waits for any package tests running on this computer to finish first |
 | `pnpm prune-reports [days]` | Delete local reports older than the given days, 365 by default, always keeping security reports for a year |
 

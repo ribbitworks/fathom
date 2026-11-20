@@ -252,7 +252,7 @@ fathom_gitleaks_image="zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79
 fathom_semgrep_image="semgrep/semgrep:1.182.1@sha256:451b3d875c00dac7ed5db5293e584a07de11449a409c10b3c2d2652f429630b6"
 # Renovate, which lists dependency updates and validates its own settings.
 # shellcheck disable=SC2034 # Read by the scripts that source this file.
-fathom_renovate_image="renovate/renovate:44.172.2@sha256:2095d96fbb3d832d006eddb5fe71907a6ba4af7d339f47bca6f0df6a21d6fb9d"
+fathom_renovate_image="renovate/renovate:44.237.0@sha256:ed34b8e932ebdd735a6acf498afc599918a93c7125e2fea7f06ed71440067853"
 # How each image is scanned, all of which decides whether an earlier image scan can be reused.
 fathom_image_scan_arguments=(
   image --quiet --skip-version-check --disable-telemetry --skip-db-update --scanners 'vuln,secret'
