@@ -17,9 +17,9 @@ import {
   draftBetween,
   type Draft,
   drafted,
-  type Held,
   type Recorded,
-} from "./drafts.ts";
+} from "./draft-records.ts";
+import type { Held } from "./drafts.ts";
 import type { KeyNumbers } from "./record-keys.ts";
 import type { ValueOwner } from "./values.ts";
 

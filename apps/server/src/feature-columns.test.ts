@@ -17,7 +17,7 @@ import { featuresListGeneral } from "@fathom/shared";
 import { and, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { draftedValues } from "./data/drafts.ts";
+import { draftedValues } from "./data/drafted-values.ts";
 import { errorOf, startTestApp, type TestApp, unique } from "./test-app.ts";
 
 let test: TestApp;

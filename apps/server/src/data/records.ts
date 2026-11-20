@@ -32,29 +32,33 @@ import {
 import {
   asDraft,
   clearedRejection,
-  deleteDrafts,
-  discardDrafts,
   type Draft,
   drafted,
   draftFields,
-  draftMakers,
-  everything,
+  type Recorded,
+  refuseRejected,
+  rejectedField,
+  type Viewer,
+  wantsNoDraft,
+} from "./draft-records.ts";
+import {
+  deleteDrafts,
+  discardDrafts,
   heldByOf,
   heldMessage,
   lockDrafts,
-  type Maker,
-  otherApprover,
   readDrafts,
   readHeld,
-  type Recorded,
   refuseHeldDecision,
-  refuseRejected,
-  rejectedField,
   setRejection,
-  type Viewer,
-  wantsNoDraft,
   writeDraft,
 } from "./drafts.ts";
+import {
+  draftMakers,
+  everything,
+  type Maker,
+  otherApprover,
+} from "./draft-makers.ts";
 import { allocationKind, allocationProblem } from "./allocation-kinds.ts";
 import { planningSettingsKind } from "./planning-settings-kind.ts";
 import { keyNumberOf, readKindsKeyNumbers } from "./record-keys.ts";

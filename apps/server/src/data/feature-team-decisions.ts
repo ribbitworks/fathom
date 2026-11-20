@@ -20,12 +20,11 @@ import {
   drafted,
   draftFields,
   draftTier,
-  refuseHeldDecision,
   refuseRejected,
   rejectedField,
-  setRejection,
   unseenDraft,
-} from "./drafts.ts";
+} from "./draft-records.ts";
+import { refuseHeldDecision, setRejection } from "./drafts.ts";
 import {
   membershipChanges,
   peopleOf,

@@ -6,7 +6,8 @@
 import { type Database, fields } from "@fathom/db";
 import { inArray } from "drizzle-orm";
 import { mostSensitive } from "../access.ts";
-import { type Draft, readDrafts, refuseHeld, type Viewer } from "./drafts.ts";
+import type { Draft, Viewer } from "./draft-records.ts";
+import { readDrafts, refuseHeld } from "./drafts.ts";
 import { typeOf } from "./column-types.ts";
 import { draftedList, listTier, readState } from "./lists.ts";
 import {

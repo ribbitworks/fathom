@@ -11,7 +11,8 @@ import {
   withImplied,
 } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import type { Draft, Maker } from "./drafts.ts";
+import type { Draft } from "./draft-records.ts";
+import type { Maker } from "./draft-makers.ts";
 import type { Everyone } from "./feature-team-rules.ts";
 import {
   draftAsSeen,

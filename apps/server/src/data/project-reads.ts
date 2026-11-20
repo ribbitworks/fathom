@@ -27,7 +27,7 @@ import { asc } from "drizzle-orm";
 import type { Actor } from "../access.ts";
 import { listChoices } from "./built-in-lists.ts";
 import type { Transaction } from "./changes.ts";
-import type { Recorded } from "./drafts.ts";
+import type { Recorded } from "./draft-records.ts";
 import { staffedFeatures } from "./allocations.ts";
 import { readTeamDrafts } from "./feature-team-reads.ts";
 import { readColumnsOut } from "./column-drafts.ts";
