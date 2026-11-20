@@ -1,6 +1,6 @@
 # Fathom: Roles
 
-**Last updated:** 2026-11-19
+**Last updated:** 2026-11-20
 
 What each role can see, change and approve. A role is a set of permissions kept in Fathom, not fixed in its code, so a new feature adds permissions rather than roles. Fathom starts with one role for each persona. Roles can be edited, and copied to make new ones, within the [safeguards](#safeguards-for-administrators). The [Administration Pages](../design/pages/administration.md#roles) describe the Roles page.
 
@@ -41,6 +41,7 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 - **Plan and features:** Those who see the plan see the names of approved feature teams, to give features to them, without their members or leads. Everyone who sees the plan or features reads the planning settings' hours a day and working days, as the conversions between units of effort.
 - **Choices:** Everyone who sees data drawn from a list sees the list's choices, without needing the Lists page.
 - **Team colours:** Edit People sets each reporting team's colour, and Edit Feature teams sets each feature team's.
+- **Exports:** Exporting needs no permission of its own: whoever opens a page exports what its table shows, so Product Managers export Features, and the [Plan](domain.md#planning-terms) once it is built.
 
 ## Permissions
 
@@ -72,6 +73,7 @@ The classes, and each built-in detail's default class, are set out in the [Domai
 - **Pages that need a class:** A role without a page's classes doesn't get the page, mode or grouping, as [A page without its data](../standards/ui-conventions/drafts-and-values.md#access) sets out, and the Roles page lists what each role misses and why.
   - **Personal:** Allocations, Feature assignments, and People and the Org chart on other dates need it, so Team Members, Product Managers and Feature Leads don't get them. Product Managers see only Capacity's Settings mode.
   - **Confidential too:** the Org chart's reporting view on future dates, and grouping Feature assignments or Capacity's People by manager.
+  - **General versions:** Demand, the Plan, and On track or Late will have a General version for roles without Personal data, such as Product Managers and Team Members. It shows totals, with no names and no Personal details. Not built yet ([#209](https://github.com/ribbitworks/fathom/issues/209), [#204](https://github.com/ribbitworks/fathom/issues/204)).
 - **Classify data:** Moves built-in details, lists and columns between classes, the hiring plan included. It is one permission across every class, and a move needs View on both the class left and the class entered.
 - **Lists and columns:** Making a list or column, or changing its name or description, needs Edit Configuration and sight of its class: View People for General (General values are people's details), View Personal details for Personal, and View Confidential data for Confidential. New lists and columns start General; giving one another class needs Classify data.
 
@@ -103,6 +105,16 @@ The classes, and each built-in detail's default class, are set out in the [Domai
 
 - **Columns on Features:** Added and changed with Edit Configuration, and approved with Approve Configuration. Removing one also needs Edit Features, since it removes features' values. Everyone who sees the plan gets the General lists these columns draw on, and sees drafts of the columns and who made them. Drafts of those lists are shown only to roles that see Lists or People.
 - **Saved views:** Everyone who opens a table's page can save personal views. Sharing a view needs Edit Configuration, or Edit Administration on Accounts. Only a shared view's maker, or a role that may share views on that table, updates, renames or deletes it. Only the maker stops sharing it, and only while they may still share.
+
+## Setting Up the Plan's Tables
+
+Not built yet ([#13](https://github.com/ribbitworks/fathom/issues/13)). Until it is, the rules for schedules under [Approving](#approving) and [Releases](#releases), and for columns and sharing views under [Columns on Features and Saved Views](#columns-on-features-and-saved-views), hold. Then:
+
+- **The permission:** Set up the plan's tables, a permission of its own, adds and changes the columns on the plan's tables in place of Edit Configuration. Product Managers and Engineering Directors hold it.
+- **Approving:** A column is approved in its table's own area, so anyone holding Approve Features approves Features' columns. The Project Manager keeps every Approve it holds, Approve Configuration included.
+- **Lists:** New list, in a column's dialog, makes a General list, approved with the column.
+- **Schedules:** Schedules and cycle lengths become the plan's alone, edited with Edit Plan and approved with Approve Plan, so Edit Configuration and Approve Configuration no longer change them.
+- **Sharing views:** Sharing a view on the plan's tables takes Set up the plan's tables.
 
 ## Safeguards for Administrators
 
