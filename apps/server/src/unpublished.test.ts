@@ -1315,6 +1315,78 @@ describe("publishing and discarding chosen changes", () => {
   });
 });
 
+describe("publishing as the role in use", () => {
+  const published = (who: User) =>
+    saved<{ total: number; left: number }>(
+      who,
+      "POST",
+      "/api/unpublished/publish",
+    );
+
+  it("publishes only the changes the role may make, leaving those and the changes using them for a role that may", async () => {
+    // Given, made as a Workforce Administrator, a list, its choice and a column on it, a person
+    // given the choice, and another person
+    const maker = await user("workforce-administrator");
+    const { list } = await saved<{ list: List }>(maker, "POST", "/api/lists", {
+      name: unique("Fictional Role List"),
+    });
+    const [choice] = (
+      await saved<{ choices: Choice[] }>(
+        maker,
+        "POST",
+        `/api/lists/${list.id}/choices`,
+        { choices: [{ label: "Fictional Role Choice" }] },
+      )
+    ).choices;
+    const { field } = await saved<{ field: Field }>(
+      maker,
+      "POST",
+      "/api/people/columns",
+      { name: unique("Fictional Role Column"), listId: list.id },
+    );
+    const given = unique("Fictional Given Person");
+    await saved(maker, "POST", "/api/people", {
+      people: [
+        {
+          preferredName: given,
+          employeeId: unique("E"),
+          positionId: testPosition,
+          values: { [field.id]: [String(choice?.id)] },
+        },
+      ],
+    });
+    const [plain] = await draftPeople(maker, [unique("Fictional Plain")]);
+
+    // When the user publishes as a role that edits people but not configuration
+    await test.holdOnly(maker.id, ["people:edit"]);
+    const first = await published(maker);
+
+    // Then only the other person is published, and the rest wait for a role that may
+    expect(first).toEqual({ total: 1, left: 4 });
+    const [waiting] = await test.connection
+      .select({ state: drafts.state })
+      .from(drafts)
+      .where(eq(drafts.recordId, String(plain)));
+    expect(waiting?.state).toBe("waiting");
+    expect((await unpublished(maker)).map(({ subject }) => subject)).toContain(
+      given,
+    );
+
+    // And once acting as a role that also edits configuration, they are published
+    await test.holdOnly(maker.id, ["people:edit", "configuration:edit"]);
+    expect(await published(maker)).toEqual({ total: 4, left: 0 });
+  });
+
+  it("publishes nothing when the role may make none of the changes, which it still discards", async () => {
+    const maker = await user("workforce-administrator");
+    await draftPeople(maker, [unique("Fictional Left Person")]);
+    await test.holdOnly(maker.id, ["plan:edit"]);
+
+    expect(await published(maker)).toEqual({ total: 0, left: 1 });
+    expect(await discard(maker)).toBe(1);
+  });
+});
+
 describe("publishing and discarding", () => {
   it("is refused to those who make no drafts, and does nothing with no changes", async () => {
     for (const [method, url] of [

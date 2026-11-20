@@ -11,6 +11,7 @@ import type { RecordsState } from "./record-state.ts";
 import {
   fillKeys,
   type OwnDrafts,
+  publishableAmong,
   usesAmong,
   withNeeded,
   withUsers,
@@ -44,6 +45,42 @@ describe("the changes that go with those chosen", () => {
   it("takes nothing more with a change nothing uses and that uses nothing", () => {
     expect([...withNeeded(uses, ["person blake"])]).toEqual(["person blake"]);
     expect([...withUsers(uses, ["person blake"])]).toEqual(["person blake"]);
+  });
+});
+
+describe("the changes a role may publish", () => {
+  const all = [...uses.keys()];
+
+  it("publishes every change when none is refused", () => {
+    expect([...publishableAmong(uses, all, [])].sort()).toEqual(
+      [...all].sort(),
+    );
+  });
+
+  it("leaves a change refused", () => {
+    expect([...publishableAmong(uses, all, ["person avery"])].sort()).toEqual([
+      "list sites",
+      "list-item north",
+      "person blake",
+    ]);
+  });
+
+  it("leaves the changes that use a change refused, the whole way along", () => {
+    expect([...publishableAmong(uses, all, ["list sites"])]).toEqual([
+      "person blake",
+    ]);
+  });
+
+  it("leaves the changes saved together with a change refused", () => {
+    // Saved together, each links to the other.
+    const together = new Map([
+      ["cycle-pattern p", ["release r"]],
+      ["release r", ["cycle-pattern p"]],
+      ["person blake", []],
+    ]);
+    expect([
+      ...publishableAmong(together, [...together.keys()], ["release r"]),
+    ]).toEqual(["person blake"]);
   });
 });
 

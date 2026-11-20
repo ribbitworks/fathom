@@ -189,7 +189,7 @@ export function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
     resubmitDraft: async (actor, id) =>
       featureTeamData.resubmitFeatureTeamDraft(database, actor, id),
     setColour: async (actor, id, colour) => {
-      requirePermission(actor, "feature-teams:edit");
+      featureTeamData.requireChanging(actor);
       await featureTeamData.setFeatureTeamColour(database, id, colour);
     },
   };

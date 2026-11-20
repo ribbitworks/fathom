@@ -53,6 +53,7 @@ Personas are defined in the [Product Brief](brief.md#users). A person with two p
 
 - **Several roles:** An account holds one or more roles, starting or made later, one of them its default.
 - **One role at a time:** A session acts as one role, and only that role's permissions apply; an account's roles never add up. A user's own drafts are those made under any of their roles, so switching never lets them approve their own.
+- **Publishing as the role in use:** Publishing publishes the changes made as the role in use, with whatever moved with them. A change made under another of the user's roles is published only if the role in use may make that kind of change; the rest stay unpublished, with the changes that go with them, for a role that may. Discarding takes back any of the user's own changes, whichever role made them, so nothing they made stays held.
 - **Choosing the role:** Signing in acts as the role last chosen on that browser, or else the default. A user switches role from their account's menu without signing in again.
 - **Naming the role:** Changes, drafts and approvals record the role they were made as, shown beside the name, such as "Feature Lead as Engineering Manager".
 - **Your own account:** Every user, whatever their role, changes their own name and password from their account's menu. Their email address and roles stay with whoever manages accounts, since the email address signs them in.

@@ -34,7 +34,10 @@ const changes = (total: number) => () =>
     })),
   });
 
-const done = (total: number) => () => Response.json({ total });
+const done =
+  (total: number, left = 0) =>
+  () =>
+    Response.json({ total, left });
 
 async function openHelp(answers: Parameters<typeof serverAnswers>[0]) {
   const fetch = serverAnswers({ "GET /api/session": editor, ...answers });
@@ -106,6 +109,34 @@ describe("unpublished changes", () => {
     );
     expect(await screen.findByText("Published 2 changes.")).toBeDefined();
     expect(posted(fetch, "/api/unpublished/publish")).toBe(true);
+  });
+
+  it("says how many changes publishing left for another role", async () => {
+    await openHelp({
+      "GET /api/unpublished": changes(3),
+      "POST /api/unpublished/publish": done(2, 1),
+    });
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Publish 3 changes" }),
+    );
+    expect(
+      await screen.findByText("Published 2 changes. 1 needs another role."),
+    ).toBeDefined();
+  });
+
+  it("says nothing was published when every change needs another role", async () => {
+    await openHelp({
+      "GET /api/unpublished": changes(2),
+      "POST /api/unpublished/publish": done(0, 2),
+    });
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Publish 2 changes" }),
+    );
+    expect(
+      await screen.findByText(
+        "Nothing was published. 2 changes need another role.",
+      ),
+    ).toBeDefined();
   });
 
   it("names ten and counts the rest, and says one change", async () => {

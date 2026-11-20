@@ -333,6 +333,14 @@ export type Unpublished = z.infer<typeof unpublishedSchema>;
 // How many records' changes publishing or discarding them took.
 export const unpublishedDoneSchema = z.object({ total: z.number().int() });
 
+// Publishing also says how many changes it left, since the acting role may not make them, for a role
+// that may.
+export const unpublishedPublishedSchema = unpublishedDoneSchema.extend({
+  left: z.number().int(),
+});
+
+export type UnpublishedPublished = z.infer<typeof unpublishedPublishedSchema>;
+
 // The user's own changes to publish or discard, by the drafts they make; every change when the
 // request has no drafts at all.
 export const unpublishedChosenSchema = z.object({

@@ -62,7 +62,7 @@ You're done when the drafts leave **To decide**. They're under **All drafts**, w
 
 ### Publish Some of Your Changes
 
-**Publish** in the top bar publishes all your changes at once. To publish only some of them:
+**Publish** in the top bar publishes all your changes at once, except changes you made under another role that your current role can't make. To publish only some of them:
 
 1. Select **Not published**.
 1. Tick each change you want to publish. Changes that must go with it are ticked too. Point at a tick box to see which changes it's linked to.
@@ -70,7 +70,7 @@ You're done when the drafts leave **To decide**. They're under **All drafts**, w
 
 Changes are linked when one uses another, such as a new choice in a new list, or when you made them in one step, such as filling a planned hire. If a linked change is hidden by your search or filter, you can't tick the change until you show it.
 
-You're done when the changes leave **Not published**. They now wait for approval, under **All drafts**.
+You're done when the changes leave **Not published**. They now wait for approval, under **All drafts**. A change you made under another role that your current role can't make stays under **Not published**; switch roles to publish it.
 
 ### Discard Some of Your Changes
 

@@ -11,10 +11,8 @@ import type {
   FieldRequest,
   FeatureProjectsRequest,
   MilestoneRequest,
-  Permission,
   PlanChoices,
   ProjectPlan,
-  RecordType,
   ReleaseNoteRequest,
   RemovalReasonRequest,
   ScopeHistory,
@@ -28,14 +26,11 @@ import type {
 } from "@fathom/shared";
 import {
   type Actor,
-  holdsAnyPermission,
   requireAnyPermission,
   requirePermission,
 } from "../access.ts";
-import { ForbiddenError } from "../errors.ts";
 import * as columnDrafts from "./column-drafts.ts";
-import { kindOf } from "./records.ts";
-import { readsKind } from "./record-state.ts";
+import { editsKind, recordEditor } from "./draft-editors.ts";
 import * as projectData from "./projects.ts";
 import * as projectReads from "./project-reads.ts";
 import { readScopeHistory } from "./scope-history.ts";
@@ -181,34 +176,6 @@ export interface ProjectAccess {
 export interface AllocationAccess {
   read(actor: Actor): Promise<Allocations>;
   change(actor: Actor, change: AllocationChange): Promise<ChangeSetId>;
-}
-
-// Who may change each kind of the plan's records, any one of the permissions sufficing. Schedules
-// and their cycles are part of the plan, and planning configuration too.
-const recordEditors: Record<RecordType, readonly Permission[]> = {
-  "release-stream": ["plan:edit", "configuration:edit"],
-  "cycle-pattern": ["plan:edit", "configuration:edit"],
-  release: ["features:edit"],
-  feature: ["features:edit"],
-  customer: ["plan:edit"],
-  proposal: ["plan:edit"],
-  project: ["plan:edit"],
-  milestone: ["plan:edit"],
-  allocation: ["allocations:edit"],
-  "planning-settings": ["configuration:edit"],
-};
-
-// Whether the actor may change a kind of record: one who may change it, and who sees it, since
-// some, such as editing the plan, change kinds they do not grant seeing.
-export const editsKind = (actor: Actor, type: RecordType): boolean =>
-  // The kind is always one of the fixed kinds listed above.
-  // eslint-disable-next-line security/detect-object-injection
-  holdsAnyPermission(actor, recordEditors[type]) &&
-  readsKind(kindOf(type), actor.permissions);
-
-export function recordEditor(actor: Actor, type: RecordType): Actor {
-  if (!editsKind(actor, type)) throw new ForbiddenError();
-  return actor;
 }
 
 export function createReleaseAccess(database: Database): ReleaseAccess {

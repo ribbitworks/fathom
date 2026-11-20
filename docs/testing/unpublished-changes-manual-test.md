@@ -11,7 +11,7 @@ last_updated: "2026-11-20"
 
 ## Scope
 
-Verifies that changes are seen only by the person who made them until they're published, that a record someone else is changing is held, and that publishing and Discard all… in the top bar work. [Drafts](drafts-manual-test.md) verifies drafts on the People and Lists pages, and [Drafts Page](drafts-page-manual-test.md) publishing and discarding chosen changes on the Drafts page.
+Verifies that changes are seen only by the person who made them until they're published, that a record someone else is changing is held, that publishing and Discard all… in the top bar work, and that publishing leaves the changes the role in use can't make. [Drafts](drafts-manual-test.md) verifies drafts on the People and Lists pages, and [Drafts Page](drafts-page-manual-test.md) publishing and discarding chosen changes on the Drafts page.
 
 ## Test Environment
 
@@ -23,6 +23,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as "Engineering Operations Manager"
 - **Engineering Director:** `engineering.director@fathom.test`
+- **Feature Lead:** `feature.lead@fathom.test`
 
 ## Common Procedures
 
@@ -185,3 +186,41 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - A notice reads "Discarded 3 changes."
     - The **Publish** button is gone from the top bar.
   - **Notes:**
+
+### DRAFT-20: Publishing Leaves Changes the Role in Use Can't Make
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from DRAFT-19.
+
+**Preconditions:** Signed in with this account. **Projects** page open from the left-hand menu, on the **Projects** tab.
+
+- [ ] `C7A2` Choose **Engineering Manager** in the role menu.
+  - **Expected:** The top bar's right end reads "Engineering Manager".
+  - **Notes:**
+
+- [ ] `5E9B` In the row 'Crane Control', double-click the **Name** cell, clear it, type `Crane Control Two` and press Enter.
+  - **Expected:**
+    - The cell shows `Crane Control Two`.
+    - The top bar shows **Publish 1 change**.
+  - **Notes:**
+
+- [ ] `0B4D` Choose **Feature Lead** in the role menu.
+  - **Expected:** The top bar still shows **Publish 1 change**.
+  - **Notes:**
+
+- [ ] `E61F` Select **Publish 1 change**.
+  - **Expected:**
+    - A notice reads "Nothing was published. 1 change needs another role."
+    - The top bar still shows **Publish 1 change**.
+  - **Notes:**
+
+- [ ] `9A30` Choose **Engineering Manager** in the role menu.
+  - **Expected:** The top bar's right end reads "Engineering Manager".
+  - **Notes:**
+
+- [ ] `D85C` Select **Publish 1 change**.
+  - **Expected:**
+    - A notice reads "Published 1 change."
+    - The **Publish** button is gone from the top bar.
+  - **Notes:**
+
+**Afterwards:** Run Restore the Seed Data.

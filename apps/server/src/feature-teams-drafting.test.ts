@@ -719,6 +719,13 @@ describe("a team's colour", () => {
     expect((await colour(id, "teal", planner)).statusCode).toBe(403);
   });
 
+  it("is refused to a role that edits feature teams without seeing people", async () => {
+    const id = await liveTeam();
+    const unseeing = await test.signedIn("feature-lead");
+    await test.holdOnly(unseeing.id, ["feature-teams:edit"]);
+    expect((await colour(id, "teal", unseeing)).statusCode).toBe(403);
+  });
+
   it("is refused for a team not yet approved", async () => {
     const { id } = await drafted();
     const response = await colour(id, "teal");

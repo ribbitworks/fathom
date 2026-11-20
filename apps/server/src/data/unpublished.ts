@@ -21,6 +21,7 @@ import {
   type Permission,
   type RecordType,
   type Unpublished,
+  type UnpublishedPublished,
 } from "@fathom/shared";
 import { and, asc, eq, inArray, max, notExists } from "drizzle-orm";
 import {
@@ -91,11 +92,13 @@ import { readLiveTeams, readTeamDrafts } from "./feature-team-reads.ts";
 import { recordTeamDayChanges, teamChanges } from "./feature-teams.ts";
 import { readFills } from "./fills.ts";
 import { readToday } from "./settings.ts";
+import { editsDraftKind } from "./draft-editors.ts";
 import {
   changeKey,
   fillKeys,
   linksAmong,
   type OwnDrafts,
+  publishableAmong,
   usesAmong,
   withNeeded,
   withUsers,
@@ -456,21 +459,25 @@ async function takenPeople(
 const notOwn =
   "One of these changes is no longer unpublished; refresh to see the latest";
 
-// The records whose drafts each of the user's open change sets changes, by key, which are
-// published only together, since a change set is published whole.
-async function savedTogether(
-  reader: Reader,
-  userId: string,
-): Promise<string[][]> {
-  const rows = await reader
+// The user's changes to drafts in their open change sets, each with its change set and the role it
+// was made as.
+const openDraftChanges = (reader: Reader, userId: string) =>
+  reader
     .select({
       changeSetId: changes.changeSetId,
       recordType: changes.recordType,
       recordId: changes.recordId,
+      madeAsRoleId: changeSets.madeAsRoleId,
     })
     .from(changes)
     .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
     .where(and(openChangeSets(userId), eq(changes.draft, true)));
+
+type OpenDraftChange = Awaited<ReturnType<typeof openDraftChanges>>[number];
+
+// The records whose drafts each of the user's open change sets changes, by key, which are
+// published only together, since a change set is published whole.
+function savedTogether(rows: readonly OpenDraftChange[]): string[][] {
   const sets = new Map<string, Set<string>>();
   for (const row of rows) {
     sets.set(
@@ -488,6 +495,7 @@ async function ownDrafts(
   userId: string,
   versions: Versions,
   sending: "publish" | "discard",
+  open?: readonly OpenDraftChange[],
 ): Promise<OwnDrafts> {
   const fills = fillKeys(await readFills(reader, userId));
   return {
@@ -498,7 +506,10 @@ async function ownDrafts(
     records: versions.records.mine,
     together:
       sending === "publish"
-        ? [...fills, ...(await savedTogether(reader, userId))]
+        ? [
+            ...fills,
+            ...savedTogether(open ?? (await openDraftChanges(reader, userId))),
+          ]
         : fills,
   };
 }
@@ -568,24 +579,63 @@ const noneStillUnpublished = (reader: Reader, userId: string) =>
       ),
   );
 
+// Those of the changes going that the actor's role may publish, with every change each needs, and
+// how many are left for a role that may. A change made as the role in use is its own, with whatever
+// moved with it, such as the releases a cycle's new length moves; one made under another of the
+// user's roles is published only by a role that may make its kind, since a session acts as one role
+// and only that role's permissions apply.
+async function publishableBy(
+  transaction: Transaction,
+  actor: Actor,
+  versions: Versions,
+  going: readonly Row[],
+): Promise<{ rows: Row[]; left: number }> {
+  const open = await openDraftChanges(transaction, actor.user.id);
+  const madeAsOther = new Set(
+    open
+      .filter(({ madeAsRoleId }) => madeAsRoleId !== actor.roleId)
+      .map(changeKey),
+  );
+  const refused = going
+    .filter(
+      (row) =>
+        madeAsOther.has(changeKey(row)) &&
+        !editsDraftKind(actor, row.recordType),
+    )
+    .map(changeKey);
+  if (refused.length === 0) return { rows: [...going], left: 0 };
+  const uses = usesAmong(
+    await ownDrafts(transaction, actor.user.id, versions, "publish", open),
+    going,
+  );
+  const kept = publishableAmong(uses, going.map(changeKey), refused);
+  return {
+    rows: going.filter((row) => kept.has(changeKey(row))),
+    left: going.length - kept.size,
+  };
+}
+
 // Publishes the actor's unpublished drafts a request chooses, with those they use, or every one when
-// it chooses none, all together or none, and returns how many records' changes it published.
+// it chooses none, all together or none, of those the actor's role may publish, and returns how many
+// records' changes it published and how many it left for another role.
 export async function publishUnpublished(
   database: Database,
   actor: Actor,
   chosen?: DraftsRequest,
-): Promise<number> {
+): Promise<UnpublishedPublished> {
   requireDrafting(actor);
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
     const userId = actor.user.id;
-    const { versions, rows } = await readGoing(
+    const going = await readGoing(transaction, userId, chosen, "publish");
+    const { versions } = going;
+    const { rows, left } = await publishableBy(
       transaction,
-      userId,
-      chosen,
-      "publish",
+      actor,
+      versions,
+      going.rows,
     );
-    if (rows.length === 0) return 0;
+    if (rows.length === 0) return { total: 0, left };
     const taken = await takenPeople(transaction, versions);
     const misfit = rows.find((row) => !fits(versions, row, taken));
     if (misfit !== undefined) {
@@ -628,7 +678,7 @@ export async function publishUnpublished(
         and(openChangeSets(userId), noneStillUnpublished(transaction, userId)),
       );
     await removeEmptyOrders(transaction);
-    return rows.length;
+    return { total: rows.length, left };
   });
 }
 

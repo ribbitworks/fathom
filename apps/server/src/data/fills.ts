@@ -7,7 +7,6 @@ import { refuseFillingAllocated } from "./allocations.ts";
 import { type Database, plannedHires } from "@fathom/db";
 import {
   approvesKind,
-  changesHiringPlan,
   type DraftsRequest,
   type HireFill,
   seesEmployment,
@@ -34,6 +33,7 @@ import { recordHiringChanges } from "./hire-fields.ts";
 import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 import {
   checkFillManager,
+  editsHires,
   requirePersonManager,
   hireDraftsNaming,
 } from "./hire-checks.ts";
@@ -362,7 +362,7 @@ async function fillOf(
 // Refuses changing a fill to a role that may not change both people and the hiring plan, naming
 // the fill, rather than whichever of its records comes first.
 function requireFillRights(actor: Actor): void {
-  if (!actor.permissions.includes("people:edit") || !changesHiringPlan(actor)) {
+  if (!editsHires(actor)) {
     throw new ForbiddenError(
       "This draft is part of filling a planned hire, which this role can't change",
     );

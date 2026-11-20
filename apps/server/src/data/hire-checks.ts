@@ -10,14 +10,10 @@ import {
   plannedHires,
   unpublishedDrafts,
 } from "@fathom/db";
-import { type HireChange } from "@fathom/shared";
+import { changesHiringPlan, type HireChange } from "@fathom/shared";
 import { and, eq, inArray, isNull, notInArray, or, sql } from "drizzle-orm";
-import {
-  type Actor,
-  requirePermission,
-  requireSensitivityEdit,
-} from "../access.ts";
-import { BadRequestError, ConflictError } from "../errors.ts";
+import { type Actor } from "../access.ts";
+import { BadRequestError, ConflictError, ForbiddenError } from "../errors.ts";
 import { peoplesMeaning } from "./lists.ts";
 import { choiceLabels } from "./values.ts";
 import { type Transaction } from "./changes.ts";
@@ -35,9 +31,11 @@ import { readHireDrafts, readLiveHires } from "./hire-reads.ts";
 const duplicateId = "Someone already has that ID";
 
 // Changing planned hires needs the rights to edit people and the hiring plan.
+export const editsHires = (actor: Actor): boolean =>
+  actor.permissions.includes("people:edit") && changesHiringPlan(actor);
+
 export function requireHiringEdit(actor: Actor): void {
-  requirePermission(actor, "people:edit");
-  requireSensitivityEdit(actor, "hiring-plan");
+  if (!editsHires(actor)) throw new ForbiddenError();
 }
 
 // Hired and Left are people's states, and a hire is hired only by filling it.
