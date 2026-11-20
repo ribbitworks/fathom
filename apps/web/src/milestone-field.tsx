@@ -8,7 +8,7 @@ import type { ReactElement } from "react";
 import { toggledFlag } from "./cell-kinds.tsx";
 import { ClearableInput } from "./clearable-input.tsx";
 import { DayInput } from "./day-input.tsx";
-import type { PlanChange } from "./project-grids.tsx";
+import type { PlanChange } from "./plan-table.tsx";
 import type { Column, GridRecord } from "./record-table.ts";
 import type { CellValue, Kind } from "./table-view.ts";
 

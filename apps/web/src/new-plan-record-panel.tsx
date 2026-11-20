@@ -12,7 +12,7 @@ import {
 } from "./new-record-panel.tsx";
 import type { NoteContext, NoteEditing } from "./note-editing.tsx";
 import type { AddedColumns } from "./added-columns.ts";
-import type { PlanChange } from "./project-grids.tsx";
+import type { PlanChange } from "./plan-table.tsx";
 import classes from "./record-details.module.css";
 import { RecordSection, Row } from "./record-details.tsx";
 import {

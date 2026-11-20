@@ -21,7 +21,7 @@ import {
   noDrafts,
 } from "./drafts.ts";
 import { retiredLive } from "./lists.ts";
-import { draftFieldsOf } from "./project-grids.tsx";
+import { draftFieldsOf } from "./plan-table.tsx";
 import { cycleChoiceId } from "./projects.ts";
 import { featuresColumn, type PlannedFeatures } from "./release-tabs.ts";
 import { fieldColumn, withLiveCopies, wordsColumn } from "./grid-columns.tsx";

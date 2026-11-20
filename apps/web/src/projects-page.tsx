@@ -72,20 +72,26 @@ import {
 import classes from "./pages.module.css";
 import details from "./record-details.module.css";
 import {
-  customerTable,
-  dayOrEmpty,
   addedColumnsTitle,
   featureColumnGroups,
   featureColumns,
   featureTable,
   releaseColumnKey,
+} from "./feature-table.tsx";
+import {
   type Identified,
   livePlanRecords,
+  noRecordProblem,
+  type PlanChange,
+  RecordName,
+  wordsOf,
+} from "./plan-table.tsx";
+import {
+  customerTable,
+  dayOrEmpty,
   milestoneColumns,
   milestoneTable,
   noColumnActions,
-  noRecordProblem,
-  type PlanChange,
   PlanGrid,
   projectColumns,
   projectDateColumn,
@@ -93,8 +99,6 @@ import {
   projectTable,
   proposalColumns,
   proposalTable,
-  RecordName,
-  wordsOf,
 } from "./project-grids.tsx";
 import {
   addMilestone,

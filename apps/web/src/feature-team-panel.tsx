@@ -31,7 +31,7 @@ import {
 } from "./feature-teams.ts";
 import { noOthers } from "./new-plan-record-panel.tsx";
 import { NewRecordPanel, newRecordId } from "./new-record-panel.tsx";
-import { noRecordProblem } from "./project-grids.tsx";
+import { noRecordProblem } from "./plan-table.tsx";
 import classes from "./record-details.module.css";
 import { RecordSection, Row, DetailSections } from "./record-details.tsx";
 import {

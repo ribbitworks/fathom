@@ -16,11 +16,8 @@ import type { ReactNode } from "react";
 import { byChoice } from "./choice-grouping.ts";
 import type { LayerRecord } from "./release-layer.tsx";
 import { columnOf } from "./feature-board.ts";
-import {
-  livePlanRecords,
-  recordsColumn,
-  releaseColumnKey,
-} from "./project-grids.tsx";
+import { releaseColumnKey } from "./feature-table.tsx";
+import { livePlanRecords, recordsColumn } from "./plan-table.tsx";
 import { choice } from "./lists.ts";
 import { fieldColumn } from "./grid-columns.tsx";
 import type { Column, GridRecord, RowGrouping } from "./record-table.ts";

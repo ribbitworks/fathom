@@ -12,7 +12,7 @@ import { describe, expect, it, vi } from "vitest";
 import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
 import { type FormValues, newRecordId } from "./new-record-panel.tsx";
 import { useNoteEditing } from "./note-editing.tsx";
-import type { PlanChange } from "./project-grids.tsx";
+import type { PlanChange } from "./plan-table.tsx";
 import { cellColumn } from "./grid-columns.tsx";
 import type { CellRecord, RecordTable } from "./record-table.ts";
 import { testTheme } from "./test-support.tsx";

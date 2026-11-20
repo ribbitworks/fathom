@@ -6,7 +6,7 @@ import { MantineProvider } from "@mantine/core";
 import { render, renderHook, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import type { PlanChange } from "./project-grids.tsx";
+import type { PlanChange } from "./plan-table.tsx";
 import { cellColumn } from "./grid-columns.tsx";
 import type { CellRecord } from "./record-table.ts";
 import { useRecordEditing } from "./record-editing.tsx";

@@ -29,7 +29,7 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
 ## Links to Records
 
 - **A record with an ID:** Wherever a project or proposal is named, in a cell, a link, a picker or a filter, its ID comes before its name, so similar names are told apart. The ID is dimmed in cells and links. Its details panel's title does the same; notifications name it alone.
-  - **Drawn by:** `RecordName` in `apps/web/src/project-grids.tsx`.
+  - **Drawn by:** `RecordName` in `apps/web/src/plan-table.tsx`.
   - **Example:** P-2001 Crane Control.
 - **A record's key:** A record's key, such as #FEATURE-123, shows small and dimmed under its details' title and under a card's name. The key under a title is a button whose menu offers Copy link and Copy key. The menus of a row, a card, an Org chart card's right-click and an added column offer Copy link. Copying changes nothing in view, so a notification says it was done. A record not yet saved shows no key and offers neither. [Record key](../../design/domain-model.md#change-and-history-entities) sets out which records have keys.
   - **Drawn by:** `RecordKey` and `CopyLinkItem` in `apps/web/src/record-key.tsx`, with a panel's key in `RecordPanel`'s `subtitle` in `apps/web/src/record-details.tsx`, and a table's `keyOf` in `apps/web/src/record-table.ts` for its row menus, Key column and search by key.
@@ -43,7 +43,7 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
   - **Drawn by:** `RowControls` in `apps/web/src/row-controls.tsx`, through the table's `showDetails` in `apps/web/src/record-table.ts`.
   - **Example:** point at any row on People.
 - **Several records in a cell:** A cell naming several records lists them on one line, cut short where they don't fit, with every name in its tooltip, one to a line. A details panel lists them one to a line, each linked to its record. A list of features in a panel, such as a release's, cycle's or schedule's Features, folds past its first five as [A long list](#details-panels) sets out. Under it, Show on Features and Show on the Board open Features or its Board filtered to the record.
-  - **Drawn by:** the cell's kind in `apps/web/src/cell-kinds.tsx`, its column from `recordsColumn` in `apps/web/src/project-grids.tsx`, and its tip from `TableTips` in `apps/web/src/table-tips.tsx`. In a panel, `RecordLinkList` in `apps/web/src/record-details.tsx`, with `FeatureList` in `apps/web/src/release-features.tsx` for a record's features.
+  - **Drawn by:** the cell's kind in `apps/web/src/cell-kinds.tsx`, its column from `recordsColumn` in `apps/web/src/plan-table.tsx`, and its tip from `TableTips` in `apps/web/src/table-tips.tsx`. In a panel, `RecordLinkList` in `apps/web/src/record-details.tsx`, with `FeatureList` in `apps/web/src/release-features.tsx` for a record's features.
   - **Example:** Crane Control's Features cell.
 
 ## History
@@ -76,7 +76,7 @@ Part of [UI Conventions](../ui-conventions.md): the top bar, the page heading, l
   - **Drawn by:** `FoldedList` in `apps/web/src/folded-list.tsx`, with the controls' style `foldControl` from `apps/web/src/folded-note.tsx`.
   - **Example:** a schedule's Cycles in its details on Releases.
 - **Columns follow the panel's order:** A table's default column order and its details panel's sections and rows follow one shared definition.
-  - **Drawn by:** `featureColumnGroups` in `apps/web/src/project-grids.tsx`.
+  - **Drawn by:** `featureColumnGroups` in `apps/web/src/feature-table.tsx`.
   - **Example:** Features, whose columns start Name, Status, Description, Notes, as its details' Details section does.
 - **Actions on a list in a panel:** Actions on a list inside a details panel sit under the list, at its left, as outlined buttons without an icon, the main one first. They sit where the next item would go, and the list's heading stays plain, like every other section's. A picker that adds to the list, such as a feature team's Add member, is such an action: an outlined button under the list that opens the picker.
   - **Drawn by:** each panel draws its own.
