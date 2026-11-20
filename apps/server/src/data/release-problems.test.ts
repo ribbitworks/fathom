@@ -21,15 +21,16 @@ import { releaseProblem, retiredTargetProblem } from "./release-problems.ts";
 import {
   feature,
   kindState,
+  otherPatternId,
   otherStream,
   pattern,
+  patternId,
   recordsState,
   release,
   schedule,
   stream,
+  twoStreams,
 } from "./test-records-state.ts";
-
-const patternId = "pattern-1";
 
 const seesWork: Permission[] = ["features:view", "configuration:view"];
 const seesConfigurationAlone: Permission[] = [
@@ -61,14 +62,7 @@ function plan({
   features?: [string, Recorded][];
 } = {}): RecordsState {
   return recordsState({
-    "release-stream": kindState([
-      [stream, schedule({ endsOn })],
-      [otherStream, schedule({ name: "Fictional Other Stream" })],
-    ]),
-    "cycle-pattern": kindState([
-      [patternId, pattern()],
-      ["pattern-2", pattern({ streamId: otherStream })],
-    ]),
+    ...twoStreams({ endsOn }),
     release: kindState(releases),
     feature: kindState(features),
   });
@@ -185,7 +179,7 @@ describe("the records a change has judged", () => {
     const problem = problemOf(state, [
       [
         "cycle-pattern",
-        "pattern-2",
+        otherPatternId,
         pattern({ streamId: otherStream, length: 2 }),
       ],
     ]);

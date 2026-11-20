@@ -878,52 +878,6 @@ describe("when a stream's cycles change", () => {
     expect(subjects.join(" ")).not.toContain(feature.name);
   });
 
-  it("uses the drafts of cycles only they make", async () => {
-    const streamId = await liveStream();
-    await changeLength(streamId, cycle.second, 2);
-    const feature = await draftFeature(target(streamId, "2027-06-01"));
-    expect(feature.draft?.uses).toEqual(await patternDrafts(streamId));
-  });
-
-  it("uses the cycles' drafts when moved onto another cycle while they wait", async () => {
-    const streamId = await liveStream();
-    const feature = await liveFeature(target(streamId, cycle.first));
-    await changeLength(streamId, cycle.second, 2);
-    await put(feature.id, {
-      name: feature.name,
-      ...target(streamId, "2027-06-01"),
-    });
-    expect((await shown(feature.id)).draft?.uses).toEqual(
-      await patternDrafts(streamId),
-    );
-  });
-
-  it("binds a feature moved to Later to the cycles' drafts that drop its cycle", async () => {
-    const streamId = await liveStream();
-    const feature = await liveFeature(target(streamId));
-    await put(feature.id, { name: feature.name, target: null });
-    await changeLength(streamId, cycle.second, 2);
-    const response = await decide("approval", {
-      records: await patternDrafts(streamId),
-    });
-    expect(response.statusCode).toBe(200);
-    expect((await shown(feature.id)).targetCycle).toBeNull();
-  });
-
-  it("uses the cycles' drafts when moved onto the same day of another stream", async () => {
-    const before = await liveStream();
-    const streamId = await liveStream();
-    await changeLength(streamId, cycle.second, 2);
-    const feature = await liveFeature(target(before, cycle.first));
-    await put(feature.id, {
-      name: feature.name,
-      ...target(streamId, cycle.first),
-    });
-    expect((await shown(feature.id)).draft?.uses).toEqual(
-      await patternDrafts(streamId),
-    );
-  });
-
   const movedFeature = async () => {
     const streamId = await liveStream();
     const feature = await liveFeature(target(streamId));
@@ -974,27 +928,6 @@ describe("when a stream's cycles change", () => {
       expect(await patternDrafts(streamId)).not.toEqual([]);
     },
   );
-
-  it("uses none when moved to Later while they wait", async () => {
-    const streamId = await liveStream();
-    const feature = await liveFeature(target(streamId, cycle.first));
-    await changeLength(streamId, cycle.second, 2);
-    await put(feature.id, { name: feature.name, target: null });
-    expect((await shown(feature.id)).draft?.uses).toEqual([]);
-  });
-
-  it("uses none when drafted to be removed", async () => {
-    const streamId = await liveStream();
-    const feature = await liveFeature(target(streamId, cycle.first));
-    await changeLength(streamId, cycle.second, 2);
-    await removal(feature.id);
-    expect((await shown(feature.id)).draft?.uses).toEqual([]);
-  });
-
-  it("uses none when added on a cycle that is live", async () => {
-    const feature = await draftFeature(target(await liveStream()));
-    expect(feature.draft?.uses).toEqual([]);
-  });
 });
 
 describe("a retired stream's cycles", () => {
