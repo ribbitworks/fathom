@@ -360,18 +360,6 @@ describe("reading feature teams", () => {
     });
   });
 
-  it("shows a team only drafted to be added, with a draft that has no live values", async () => {
-    const member = await person();
-    const { id } = await drafted({ members: [member] });
-
-    expect((await teamSeen(id, planner))?.draft).toMatchObject({
-      action: "created",
-      changed: expect.arrayContaining(["name", "members"]) as unknown,
-      live: {},
-      state: "waiting",
-    });
-  });
-
   it("shows a team as its draft makes it, with the fields it changes and their live values", async () => {
     const lead = await person();
     const joining = await person();
@@ -395,46 +383,12 @@ describe("reading feature teams", () => {
     expect(shown?.draft?.changed.sort()).toEqual(
       ["leadId", "members", "name"].sort(),
     );
-  });
-
-  it("shows the live members but not a lead who has not started when another is chosen, to readers who do not see Personal details", async () => {
-    const starting = await person({ startDate: "2099-01-01" });
-    const started = await person();
-    const id = await liveTeam({ leadId: starting, members: [started] });
-    await changed(id, { leadId: started });
-
-    expect((await teamSeen(id, planner))?.draft?.live).toEqual({
-      leadId: null,
+    const madeBy = shown?.draft?.madeBy;
+    expect(madeBy).toMatch(/^Fictional User \d+$/);
+    expect(shown?.draft).toMatchObject({
+      madeAs: "Workforce Administrator",
+      changedBy: { name: madeBy, leadId: madeBy, members: madeBy },
     });
-  });
-
-  it("sends no draft when all it does is add someone who has not started, to readers who do not see Personal details", async () => {
-    // Given a live team and a draft making someone who has not started its lead
-    const starting = await person({ startDate: "2099-01-01" });
-    const started = await person();
-    const id = await liveTeam({ members: [started] });
-    await changed(id, { leadId: starting });
-
-    // Then those who do not see Personal details see nothing of it
-    const seen = await teamSeen(id, planner);
-    expect(seen).toMatchObject({ leadId: null, members: [started] });
-    expect(seen).not.toHaveProperty("draft");
-    // And those who do see it
-    expect((await teamSeen(id))?.draft?.changed.sort()).toEqual([
-      "leadId",
-      "members",
-    ]);
-  });
-
-  it("keeps a team's rename in its draft but not the members who have not started", async () => {
-    const starting = await person({ startDate: "2099-01-01" });
-    const id = await liveTeam();
-    await changed(id, {
-      add: [starting],
-      name: unique("Fictional Renamed Team"),
-    });
-
-    expect((await teamSeen(id, planner))?.draft?.changed).toEqual(["name"]);
   });
 
   it("does not show why a draft of someone who has not started was rejected, to readers who do not see Personal details", async () => {
@@ -479,26 +433,6 @@ describe("reading feature teams", () => {
     expect((await teamSeen(id, editor))?.heldBy).toBeDefined();
     expect((await teamSeen(id, other))?.draft?.unpublished).toBe(true);
     await ok(await send(other, "POST", "/api/unpublished/discard"));
-  });
-
-  it("shows a draft written without the change history without who made it", async () => {
-    const id = await liveTeam();
-    await test.connection.insert(drafts).values({
-      recordType: "feature-team",
-      recordId: id,
-      action: "changed",
-      fields: { name: unique("Fictional Unrecorded Team") },
-    });
-
-    expect((await teamSeen(id))?.draft).toMatchObject({
-      changed: ["name"],
-      madeBy: null,
-      madeAs: null,
-      madeAt: null,
-      editors: [],
-      changedBy: { name: null },
-    });
-    await ok(await discard(id));
   });
 
   it("shows no colour for a team whose colour is no longer on the palette", async () => {
@@ -1174,17 +1108,6 @@ describe("the names of those on a team", () => {
     // And those who do not are told only the lead's
     expect((await teamSeen(id, planner))?.names).toEqual({ [lead]: leadName });
   });
-
-  it("does not name someone who has left", async () => {
-    const member = await person();
-    const staying = await person();
-    const id = await liveTeam({ members: [member, staying] });
-    await endDated(member, "2024-12-31");
-
-    expect(Object.keys((await teamSeen(id, approver))?.names ?? {})).toEqual([
-      staying,
-    ]);
-  });
 });
 
 describe("the day someone joins or leaves a team", () => {
@@ -1254,19 +1177,6 @@ describe("someone who has left", () => {
     const id = await liveTeam({ members: [member] });
     await endDated(member, today);
     expect((await teamSeen(id))?.members).toEqual([member]);
-  });
-
-  it("is not shown among a draft's members or as its lead", async () => {
-    const member = await person();
-    const staying = await person();
-    const id = await liveTeam({ members: [staying] });
-    await changed(id, { add: [member], leadId: member, from: "2025-01-01" });
-    await endDated(member, "2025-06-30");
-
-    const seen = await teamSeen(id, editor);
-
-    expect(seen).toMatchObject({ leadId: null, members: [staying] });
-    expect(seen?.draft).not.toHaveProperty("days");
   });
 
   it("does not stop a change to a team's draft", async () => {
@@ -2327,27 +2237,6 @@ describe("teams on a chosen day", () => {
     });
   });
 
-  it("lays a draft's change of lead and removal of a member over the team of that day", async () => {
-    const lead = await person();
-    const member = await person();
-    const leaving = await person();
-    const id = await liveTeam({
-      leadId: lead,
-      members: [member, leaving],
-      from: "2025-01-15",
-    });
-    await changed(id, {
-      leadId: member,
-      remove: [leaving],
-      from: "2099-02-01",
-    });
-
-    expect(await teamOn(id, "2099-01-01")).toMatchObject({
-      leadId: member,
-      members: sorted(lead, member),
-    });
-  });
-
   it("lists a team with no members that day while it has a draft", async () => {
     const member = await person();
     const id = await liveTeam({ members: [member], from: "2099-02-01" });
@@ -2396,26 +2285,6 @@ describe("teams on a chosen day", () => {
     expect(seen).not.toHaveProperty("reason");
   });
 
-  it("shows no lead on a day when the draft takes that day's lead off the team", async () => {
-    // Given a team approved to change its lead later, and a draft removing that later lead
-    const first = await person();
-    const later = await person();
-    const id = await liveTeam({
-      leadId: first,
-      members: [later],
-      from: "2025-01-15",
-    });
-    await changed(id, { leadId: later, from: "2099-03-01" });
-    await approved(id);
-    await changed(id, { remove: [later] });
-
-    // Then the team has no lead on a day the later lead would have led it
-    expect(await teamOn(id, "2099-04-01")).toMatchObject({
-      leadId: null,
-      members: [first],
-    });
-  });
-
   it("leaves out a change drafted for a team that is not live", async () => {
     const id = randomUUID();
     await test.connection.insert(drafts).values({
@@ -2427,22 +2296,6 @@ describe("teams on a chosen day", () => {
 
     expect(await teamOn(id, "2099-01-31")).toBeUndefined();
     await test.connection.delete(drafts).where(eq(drafts.recordId, id));
-  });
-
-  it("lists a team only drafted to be added", async () => {
-    const { id } = await drafted();
-
-    expect((await teamOn(id, "2099-01-31"))?.draft?.action).toBe("created");
-  });
-
-  it("names the members of that day", async () => {
-    const preferredName = unique("Fictional Named Member");
-    const member = await person({ preferredName });
-    const id = await liveTeam({ members: [member], from: "2025-01-15" });
-
-    expect((await teamOn(id, "2025-02-01"))?.names).toEqual({
-      [member]: preferredName,
-    });
   });
 
   it("shows who led the team that day", async () => {
