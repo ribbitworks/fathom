@@ -32,7 +32,12 @@ import {
 } from "../access.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
-import { type RecordType, recordChanges, type Transaction } from "./changes.ts";
+import {
+  type RecordType,
+  recordChanges,
+  type StoredChange,
+  type Transaction,
+} from "./changes.ts";
 import { lockDrafts, rejectedField, setRejection } from "./drafts.ts";
 import { lockFields } from "./fields.ts";
 import { removeEmptyOrders } from "./lists.ts";
@@ -58,7 +63,6 @@ import {
   remove,
   restore,
   reversed,
-  type StoredChange,
   type Undone,
 } from "./undo-records.ts";
 import {
