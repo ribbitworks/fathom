@@ -76,13 +76,10 @@ import {
   type PeopleActions,
   PeopleGrid,
 } from "./people-grid.tsx";
-import {
-  focusRecordCell,
-  isPending,
-  type LinkedColumn,
-  pendingId,
-  withLiveValues,
-} from "./record-grid.tsx";
+import { isPending, pendingId } from "./grid-drafts.ts";
+import { focusRecordCell } from "./grid-row.tsx";
+import { withLiveValues } from "./live-records.ts";
+import type { LinkedColumn } from "./record-table.ts";
 import {
   createHires,
   deleteHire,

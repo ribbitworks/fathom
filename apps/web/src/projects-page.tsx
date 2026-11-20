@@ -132,19 +132,18 @@ import {
   DetailSections,
   RecordPanel,
 } from "./record-details.tsx";
-import {
-  type Column,
-  focusRecordCell,
-  heldBack,
-  inViewUnits,
-  newRecordProblems,
-  pendingId,
-  type LinkedColumn,
-  RecordGrid,
-  recordsAsShown,
-  type RecordActions,
-  type RecordTable,
-} from "./record-grid.tsx";
+import { inViewUnits } from "./grid-columns.tsx";
+import { heldBack, pendingId } from "./grid-drafts.ts";
+import { focusRecordCell } from "./grid-row.tsx";
+import { newRecordProblems } from "./grid-saving.ts";
+import { recordsAsShown } from "./live-records.ts";
+import { RecordGrid } from "./record-grid.tsx";
+import type {
+  Column,
+  LinkedColumn,
+  RecordActions,
+  RecordTable,
+} from "./record-table.ts";
 import {
   type Editing,
   useChosenUnits,

@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 import { byChoice, holdsChoices } from "./choice-grouping.ts";
-import type { Column, GridRecord } from "./record-grid.tsx";
+import type { Column, GridRecord } from "./record-table.ts";
 
 interface Row extends GridRecord {
   chosen: string[];

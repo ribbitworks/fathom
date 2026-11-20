@@ -38,7 +38,8 @@ import {
   type RecordEditingContext,
   useRecordEditing,
 } from "./record-editing.tsx";
-import { type Column, fieldColumn } from "./record-grid.tsx";
+import { fieldColumn } from "./grid-columns.tsx";
+import type { Column } from "./record-table.ts";
 import { RecordKey } from "./record-key.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {

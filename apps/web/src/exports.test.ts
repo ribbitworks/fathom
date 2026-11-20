@@ -23,7 +23,7 @@ import {
   shownForExport,
   unrecordedExport,
 } from "./exports.ts";
-import type { GridDraft } from "./record-grid.tsx";
+import type { GridDraft } from "./record-table.ts";
 import { bodyOf, savedFiles, serverAnswers } from "./test-support.tsx";
 
 interface Row {

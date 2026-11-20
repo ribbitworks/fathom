@@ -10,7 +10,7 @@ import { Button, Group, Stack, Text } from "@mantine/core";
 import { useEffect } from "react";
 import { type AccountRow, rolesText } from "./accounts-table.tsx";
 import { focusSoon } from "./focus.ts";
-import type { Column } from "./record-grid.tsx";
+import type { Column } from "./record-table.ts";
 import { RecordSection, Row } from "./record-details.tsx";
 import { RecordKey } from "./record-key.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";

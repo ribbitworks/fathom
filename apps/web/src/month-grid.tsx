@@ -10,13 +10,9 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import { memo, type ReactNode, useEffect, useMemo, useState } from "react";
 import type { CellChange } from "./cell-kinds.tsx";
 import { LoadProblem } from "./load-problem.tsx";
-import {
-  type RecordActions,
-  RecordGrid,
-  type RecordTable,
-  type TableScroll,
-  useTableScroll,
-} from "./record-grid.tsx";
+import { type TableScroll, useTableScroll } from "./grid-layout.ts";
+import { RecordGrid } from "./record-grid.tsx";
+import type { RecordActions, RecordTable } from "./record-table.ts";
 import type { SavedViews } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
 import { TableTips } from "./table-tips.tsx";

@@ -7,7 +7,7 @@ import { MantineProvider } from "@mantine/core";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { cycleChoiceId } from "./projects.ts";
-import type { GridDraft, GridRecord } from "./record-grid.tsx";
+import type { GridDraft, GridRecord } from "./record-table.ts";
 import { featuresColumn, plannedFeatures } from "./release-tabs.ts";
 import {
   featureDraft,

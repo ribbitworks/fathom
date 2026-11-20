@@ -6,7 +6,7 @@
 
 import { type HireFill, type List, type Person } from "@fathom/shared";
 import { isHire, stateMeaning } from "./people-rows.ts";
-import { heldBack } from "./record-grid.tsx";
+import { heldBack } from "./grid-drafts.ts";
 import type { CellValue } from "./table-view.ts";
 
 // A fill being entered in a planned hire's details panel: the hire, whether a new or an existing

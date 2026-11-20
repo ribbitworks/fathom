@@ -31,7 +31,7 @@ import {
 } from "@fathom/shared";
 import { sendJsonFor } from "./api.ts";
 import { cellKinds, labels, startingText } from "./cell-kinds.tsx";
-import type { GridRecord } from "./record-grid.tsx";
+import type { GridRecord } from "./record-table.ts";
 import type { SavedViews } from "./table-controls.tsx";
 import {
   besideLive,

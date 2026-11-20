@@ -43,7 +43,7 @@ The rest follow from them:
   - **Drawn by:** the words themselves, shown by `TableTips` or `Tipped` in `apps/web/src/table-tips.tsx` on tables.
   - **Example:** on People, choose Feature teams in Group by, and point at the +1 after Lorenza Thiel's name.
 - **A menu item's "…":** A menu item that opens a dialog or a confirmation ends in "…", such as Edit column…, Approve draft… or Change password…. One that acts at once, even with Undo, or opens a side panel, has none, such as Delete view, Remove column or New feature team. The dialog's own title has none either, such as Edit column.
-  - **Drawn by:** the words themselves: the column menu and `draftItemLabel`, for a row's Approve draft… and Reject draft…, in `apps/web/src/record-grid.tsx`, and the account menu in `apps/web/src/layout.tsx`.
+  - **Drawn by:** the words themselves: the column menu in `apps/web/src/column-header.tsx` and `draftItemLabel`, for a row's Approve draft… and Reject draft…, in `apps/web/src/row-menus.tsx`, and the account menu in `apps/web/src/layout.tsx`.
   - **Example:** on People, open the Site column's menu: Edit column… opens its dialog, and Remove column removes the column at once, as a draft.
 
 ## The Conventions

@@ -15,7 +15,7 @@ import {
   type RecordEditingContext,
   type SaveChange,
 } from "./record-editing.tsx";
-import type { Column, GridRecord } from "./record-grid.tsx";
+import type { Column, GridRecord } from "./record-table.ts";
 import type { SidePanel } from "./side-panel.tsx";
 import type { CellValue } from "./table-view.ts";
 

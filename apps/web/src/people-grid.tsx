@@ -27,22 +27,18 @@ import { leftWarning } from "./status-mark.tsx";
 import { canFill } from "./hire-fill.ts";
 import { noDrafts } from "./drafts.ts";
 import { choice, offered, sameName } from "./lists.ts";
-import {
-  cellColumn,
-  type Column as RecordColumn,
-  columnsOn,
-  inOrder,
-  isPending,
-  liveRecordsOf,
-  type RecordActions,
-  RecordGrid,
-  type RecordGridProps,
-  type RecordTable,
-  type RowGrouping,
-  type RowProblem,
-  recordsAsShown,
-  shownSchema,
-} from "./record-grid.tsx";
+import { cellColumn, columnsOn, inOrder } from "./grid-columns.tsx";
+import { isPending } from "./grid-drafts.ts";
+import { liveRecordsOf, recordsAsShown, shownSchema } from "./live-records.ts";
+import { RecordGrid } from "./record-grid.tsx";
+import type {
+  Column as RecordColumn,
+  RecordActions,
+  RecordGridProps,
+  RecordTable,
+  RowGrouping,
+  RowProblem,
+} from "./record-table.ts";
 import { byChoice, holdsChoices } from "./choice-grouping.ts";
 import { flagChoice } from "./cell-kinds.tsx";
 import {

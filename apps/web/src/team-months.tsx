@@ -23,8 +23,8 @@ import type { ReactNode } from "react";
 import { getJson } from "./api.ts";
 import type { CellChange } from "./cell-kinds.tsx";
 import { noDrafts } from "./drafts.ts";
+import { cellColumn } from "./grid-columns.tsx";
 import {
-  cellColumn,
   type CellRecord,
   type Column,
   noRecordActions,
@@ -32,7 +32,7 @@ import {
   type RecordActions,
   type RecordTable,
   type RowGrouping,
-} from "./record-grid.tsx";
+} from "./record-table.ts";
 import { changeMemberTeams, featureTeamsQuery } from "./feature-teams.ts";
 import { useSaving } from "./saving.ts";
 import { formatMonth, groupedRowId, rankOfNone } from "./table-view.ts";

@@ -46,7 +46,7 @@ import {
   releaseStreamsQuery,
   type SavedStream,
 } from "./releases.ts";
-import { focusRecordCell } from "./record-grid.tsx";
+import { focusRecordCell } from "./grid-row.tsx";
 import { useNarrow } from "./side-panel.tsx";
 import { unpublishedQuery } from "./unpublished.tsx";
 import { today } from "./today.ts";

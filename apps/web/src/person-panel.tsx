@@ -49,7 +49,9 @@ import {
   Row,
   RecordPanel,
 } from "./record-details.tsx";
-import { heldBack, onRow, shownSchema } from "./record-grid.tsx";
+import { onRow } from "./grid-columns.tsx";
+import { heldBack } from "./grid-drafts.ts";
+import { shownSchema } from "./live-records.ts";
 import {
   besideLive,
   type DraftLike,

@@ -11,7 +11,7 @@ import { placeKey } from "./draft-places.ts";
 import { areaWords, type DraftRow } from "./drafts-table.tsx";
 import { focusSoon } from "./focus.ts";
 import { PhraseList } from "./phrase.tsx";
-import type { Column } from "./record-grid.tsx";
+import type { Column } from "./record-table.ts";
 import {
   type RecordLinkItem,
   RecordLinkList,

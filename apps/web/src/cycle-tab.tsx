@@ -29,7 +29,7 @@ import {
   RecordPanel,
   RecordSection,
 } from "./record-details.tsx";
-import { noRecordActions } from "./record-grid.tsx";
+import { noRecordActions } from "./record-table.ts";
 import { inShownOrder, streamsShown } from "./releases.ts";
 import { ReleasesTabTable } from "./releases-tab-table.tsx";
 import { listingFeatures } from "./release-features.tsx";

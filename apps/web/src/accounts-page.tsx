@@ -53,11 +53,9 @@ import {
   accountsTable,
 } from "./accounts-table.tsx";
 import { AccountPanel, accountPanelId } from "./accounts-panel.tsx";
-import {
-  focusRecordCell,
-  noRecordActions,
-  RecordGrid,
-} from "./record-grid.tsx";
+import { focusRecordCell } from "./grid-row.tsx";
+import { RecordGrid } from "./record-grid.tsx";
+import { noRecordActions } from "./record-table.ts";
 import { useNarrow } from "./side-panel.tsx";
 import { useSavedViews } from "./saved-views.tsx";
 import { TableTips } from "./table-tips.tsx";

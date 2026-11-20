@@ -24,7 +24,7 @@ import {
   Row,
 } from "./record-details.tsx";
 import { useRecordEditing } from "./record-editing.tsx";
-import { noRecordActions } from "./record-grid.tsx";
+import { noRecordActions } from "./record-table.ts";
 import { RecordKey } from "./record-key.tsx";
 import type { ReleasePart } from "./release-dialogs.tsx";
 import {

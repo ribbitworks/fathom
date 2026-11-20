@@ -7,7 +7,8 @@ import { render, renderHook, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { PlanChange } from "./project-grids.tsx";
-import { cellColumn, type CellRecord } from "./record-grid.tsx";
+import { cellColumn } from "./grid-columns.tsx";
+import type { CellRecord } from "./record-table.ts";
 import { useRecordEditing } from "./record-editing.tsx";
 import { testTheme } from "./test-support.tsx";
 

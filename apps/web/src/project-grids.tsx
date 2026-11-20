@@ -64,20 +64,21 @@ import {
 } from "./projects.ts";
 import { byChoice, holdsChoices } from "./choice-grouping.ts";
 import { tipAttribute } from "./table-tips.tsx";
+import { fieldColumn, inOrder } from "./grid-columns.tsx";
+import { isPending } from "./grid-drafts.ts";
 import {
-  fieldColumn,
-  inOrder,
   liveRecordsBy,
   withLiveFields,
   liveRecordsOf,
-  type Column,
-  type GridRecord,
-  isPending,
-  RecordGrid,
-  type RecordGridProps,
-  type RecordTable,
-  type RowGrouping,
-} from "./record-grid.tsx";
+} from "./live-records.ts";
+import { RecordGrid } from "./record-grid.tsx";
+import type {
+  Column,
+  GridRecord,
+  RecordGridProps,
+  RecordTable,
+  RowGrouping,
+} from "./record-table.ts";
 import {
   type CellValue,
   type ColumnUnit,

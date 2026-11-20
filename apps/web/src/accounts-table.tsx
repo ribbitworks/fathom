@@ -8,13 +8,13 @@
 import type { Account, RecordKeyOf } from "@fathom/shared";
 import { noDrafts } from "./drafts.ts";
 import { rolesHeld } from "./names.ts";
+import { fieldColumn } from "./grid-columns.tsx";
 import {
   type Column,
-  fieldColumn,
   type GridRecord,
   readOnlyTableParts,
   type RecordTable,
-} from "./record-grid.tsx";
+} from "./record-table.ts";
 import { FactBox } from "./status-mark.tsx";
 import { dayOf } from "./today.ts";
 

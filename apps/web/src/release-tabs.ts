@@ -22,12 +22,8 @@ import {
   releaseColumnKey,
 } from "./project-grids.tsx";
 import { choice } from "./lists.ts";
-import {
-  type Column,
-  fieldColumn,
-  type GridRecord,
-  type RowGrouping,
-} from "./record-grid.tsx";
+import { fieldColumn } from "./grid-columns.tsx";
+import type { Column, GridRecord, RowGrouping } from "./record-table.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./releases.ts";
 import type { ViewChoice } from "./table-controls.tsx";
 import { type View, withChoice } from "./table-view.ts";

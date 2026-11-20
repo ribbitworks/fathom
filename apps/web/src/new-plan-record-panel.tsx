@@ -20,11 +20,8 @@ import {
   useChosenUnits,
   useRecordEditing,
 } from "./record-editing.tsx";
-import {
-  type GridRecord,
-  inViewUnits,
-  type RecordTable,
-} from "./record-grid.tsx";
+import { inViewUnits } from "./grid-columns.tsx";
+import type { GridRecord, RecordTable } from "./record-table.ts";
 import type { CellValue, View } from "./table-view.ts";
 
 // The plan's records are checked on their own, not beside each other.

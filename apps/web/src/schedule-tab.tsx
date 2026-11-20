@@ -14,7 +14,7 @@ import type {
 import { Button, Group, Menu } from "@mantine/core";
 import type { DraftSelection } from "./drafts.ts";
 import { RecordPanel } from "./record-details.tsx";
-import { noRecordActions } from "./record-grid.tsx";
+import { noRecordActions } from "./record-table.ts";
 import { RecordKey } from "./record-key.tsx";
 import {
   markedDraft,

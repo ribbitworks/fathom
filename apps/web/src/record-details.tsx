@@ -22,12 +22,8 @@ import {
 } from "./record-editing.tsx";
 import classes from "./record-details.module.css";
 import { roundedUpTo } from "@fathom/shared";
-import {
-  type Column,
-  type GridRecord,
-  isEmpty,
-  shownInView,
-} from "./record-grid.tsx";
+import { isEmpty, shownInView } from "./grid-columns.tsx";
+import type { Column, GridRecord } from "./record-table.ts";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import {
   DraftedItem,
