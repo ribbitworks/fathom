@@ -59,36 +59,76 @@ export async function drafting<Result>(
   });
 }
 
+const holderOf = (
+  state: RecordsState,
+  type: RecordType,
+  id: string,
+): string | undefined => stateOf(state, type).held.get(id)?.holder;
+
 export function refuseHeldIn(
   state: RecordsState,
   type: RecordType,
   id: string,
 ) {
-  const holder = stateOf(state, type).held.get(id)?.holder;
+  const holder = holderOf(state, type, id);
   if (holder !== undefined) throw new ConflictError(heldMessage(holder));
 }
 
-// A record to change as its draft makes it, refusing one that does not exist, that someone else
-// holds, or that its draft removes.
+// Why a record can't be changed: it isn't there to change, someone else holds it, or its draft
+// removes it.
+export type RecordRefusal =
+  | { reason: "missing" }
+  | { reason: "held"; holder: string }
+  | { reason: "removed" };
+
+export type RecordToChange = { record: Recorded } | { refusal: RecordRefusal };
+
+// A record to change as its draft makes it, or why it can't be: one that does not exist, or that
+// Fathom keeps, is missing; one someone else holds is theirs until they publish or discard it; and
+// one its draft removes can't be changed until the draft is discarded.
+export function recordToChange(
+  state: RecordsState,
+  type: RecordType,
+  id: string,
+): RecordToChange {
+  if (
+    !recordExists(state, type, id) ||
+    kindOf(type).keptByFathom?.(state, id) === true
+  ) {
+    return { refusal: { reason: "missing" } };
+  }
+  const holder = holderOf(state, type, id);
+  if (holder !== undefined) return { refusal: { reason: "held", holder } };
+  const version = versionOf(state, type, id);
+  return version === undefined
+    ? { refusal: { reason: "removed" } }
+    : { record: version };
+}
+
+// The error a refusal to change a record is sent as.
+export function refusalError(refusal: RecordRefusal): RequestError {
+  switch (refusal.reason) {
+    case "missing":
+      return new NotFoundError(noRecord);
+    case "held":
+      return new ConflictError(heldMessage(refusal.holder));
+    case "removed":
+      return new ConflictError(
+        "This record's draft removes it; discard the draft to change it",
+      );
+  }
+}
+
+// A record to change as its draft makes it, refusing one that can't be changed, as recordToChange
+// sets out.
 export function changeableRecord(
   state: RecordsState,
   type: RecordType,
   id: string,
 ): Recorded {
-  if (
-    !recordExists(state, type, id) ||
-    kindOf(type).keptByFathom?.(state, id) === true
-  ) {
-    throw new NotFoundError(noRecord);
-  }
-  refuseHeldIn(state, type, id);
-  const version = versionOf(state, type, id);
-  if (version === undefined) {
-    throw new ConflictError(
-      "This record's draft removes it; discard the draft to change it",
-    );
-  }
-  return version;
+  const found = recordToChange(state, type, id);
+  if ("refusal" in found) throw refusalError(found.refusal);
+  return found.record;
 }
 
 // The action that takes a record from one version to another.
