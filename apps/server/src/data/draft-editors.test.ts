@@ -8,15 +8,10 @@ import {
   type Role,
   roleSchema,
 } from "@fathom/shared";
+import { fictionalUser as user } from "@fathom/test-utils";
 import { describe, expect, it } from "vitest";
 import { actorFor } from "../access.ts";
 import { editsDraftKind, editsKind, recordEditor } from "./draft-editors.ts";
-
-const user = {
-  id: "fictional-user",
-  name: "Fictional User",
-  email: "fictional.user@fathom.test",
-};
 
 const thePlan: readonly DraftKind[] = [
   "release-stream",
