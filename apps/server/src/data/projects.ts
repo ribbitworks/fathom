@@ -614,7 +614,7 @@ async function removing(
       return Promise.resolve(addedOnly(state, type, id));
     },
   );
-  if (discards) return discardRecordDraft(database, maker, type, id, true);
+  if (discards) return discardRecordDraft(database, maker, type, id);
   return drafting(database, maker.user.id, (transaction, state) => {
     check(state);
     const wanted: Wanted[] = [{ type, id, record: undefined }];

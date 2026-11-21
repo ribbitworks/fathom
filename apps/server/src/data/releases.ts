@@ -264,7 +264,6 @@ export async function removeFromStream(
   streamId: string,
   type: "cycle-pattern" | "release",
   id: string,
-  mayChangeCycles: boolean,
 ): Promise<string | null> {
   const discards = await drafting(
     database,
@@ -275,7 +274,7 @@ export async function removeFromStream(
     },
   );
   if (discards) {
-    return discardRecordDraft(database, maker, type, id, mayChangeCycles);
+    return discardRecordDraft(database, maker, type, id);
   }
   return (
     await changingStream(database, maker, streamId, (transaction, state) => {
