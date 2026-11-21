@@ -8,7 +8,7 @@ import {
   type ColumnsState,
   draftedField,
   usesAddedList,
-} from "./column-drafts.ts";
+} from "./column-state.ts";
 import { usedByRecord } from "./draft-uses.ts";
 import type { Draft } from "./drafts.ts";
 import type { Fill } from "./fills.ts";

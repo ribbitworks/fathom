@@ -28,7 +28,7 @@ import {
   refuseSensitiveOnFeatures,
   nameTaken,
   readColumnsState,
-} from "./column-drafts.ts";
+} from "./column-state.ts";
 import { classifyDraft } from "./data-classes.ts";
 import { checkValuesFit } from "./fields.ts";
 import {

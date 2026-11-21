@@ -30,7 +30,7 @@ import type { Transaction } from "./changes.ts";
 import type { Recorded } from "./drafts.ts";
 import { staffedFeatures } from "./allocations.ts";
 import { readTeamDrafts } from "./feature-team-reads.ts";
-import { readColumnsOut } from "./column-drafts.ts";
+import { readColumnsOut } from "./column-state.ts";
 import { liveValuesOf } from "./column-types.ts";
 import { readListsWithin } from "./lists.ts";
 import { linksOf, notesOf, numbersOf, valuesOf } from "./person-fields.ts";
