@@ -38,7 +38,7 @@ import {
   draftedField,
   nameTaken,
   readColumnsState,
-} from "./column-drafts.ts";
+} from "./column-state.ts";
 import {
   asDraft,
   type Draft,

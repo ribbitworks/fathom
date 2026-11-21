@@ -18,12 +18,12 @@ import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
 import {
   refuseSensitiveOnFeatures,
-  columnMoved,
   columnRow,
   columnTier,
   draftedField,
   readColumnsState,
-} from "./column-drafts.ts";
+} from "./column-state.ts";
+import { columnMoved } from "./column-drafts.ts";
 import { appendColumn } from "./column-order.ts";
 import { recordAddedClass } from "./data-classes.ts";
 import {
