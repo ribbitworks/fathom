@@ -5,7 +5,7 @@
 # only needed to start as root, and Fathom's database never does. Built from the repository root;
 # Dockerfile.dockerignore lists the only files it reads.
 
-FROM postgres:18.7-alpine3.24@sha256:ff64c9e3bdf8e2120107d3559de8db314e8305f7e38c5105903c6295876738ff
+FROM postgres:18.7-alpine3.24@sha256:0115267ab5a509022df9319c77be365cef335adb71556c75f60f5360ee247e71
 
 # Changing the date makes the build fetch the latest security fixes instead of reusing a cached layer.
 ARG SECURITY_FIXES_DATE=unset
