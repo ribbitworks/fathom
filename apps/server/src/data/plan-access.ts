@@ -11,7 +11,6 @@ import type {
   FieldRequest,
   FeatureProjectsRequest,
   MilestoneRequest,
-  Permission,
   PlanChoices,
   ProjectPlan,
   RecordType,
@@ -28,14 +27,12 @@ import type {
 } from "@fathom/shared";
 import {
   type Actor,
-  holdsAnyPermission,
   requireAnyPermission,
   requirePermission,
 } from "../access.ts";
 import { ForbiddenError } from "../errors.ts";
 import * as columnDrafts from "./column-drafts.ts";
-import { kindOf } from "./records.ts";
-import { readsKind } from "./record-state.ts";
+import { changesKind } from "./records.ts";
 import * as projectData from "./projects.ts";
 import * as projectReads from "./project-reads.ts";
 import { readScopeHistory } from "./scope-history.ts";
@@ -183,28 +180,8 @@ export interface AllocationAccess {
   change(actor: Actor, change: AllocationChange): Promise<ChangeSetId>;
 }
 
-// Who may change each kind of the plan's records, any one of the permissions sufficing. Schedules
-// and their cycles are part of the plan, and planning configuration too.
-const recordEditors: Record<RecordType, readonly Permission[]> = {
-  "release-stream": ["plan:edit", "configuration:edit"],
-  "cycle-pattern": ["plan:edit", "configuration:edit"],
-  release: ["features:edit"],
-  feature: ["features:edit"],
-  customer: ["plan:edit"],
-  proposal: ["plan:edit"],
-  project: ["plan:edit"],
-  milestone: ["plan:edit"],
-  allocation: ["allocations:edit"],
-  "planning-settings": ["configuration:edit"],
-};
-
-// Whether the actor may change a kind of record: one who may change it, and who sees it, since
-// some, such as editing the plan, change kinds they do not grant seeing.
-export const editsKind = (actor: Actor, type: RecordType): boolean =>
-  // The kind is always one of the fixed kinds listed above.
-  // eslint-disable-next-line security/detect-object-injection
-  holdsAnyPermission(actor, recordEditors[type]) &&
-  readsKind(kindOf(type), actor.permissions);
+const editsKind = (actor: Actor, type: RecordType): boolean =>
+  changesKind(actor.permissions, type);
 
 export function recordEditor(actor: Actor, type: RecordType): Actor {
   if (!editsKind(actor, type)) throw new ForbiddenError();
@@ -245,7 +222,6 @@ export function createReleaseAccess(database: Database): ReleaseAccess {
         streamId,
         "cycle-pattern",
         id,
-        true,
       ),
     addRelease: async (actor, streamId, request) =>
       releases.addToStream(database, plan(actor), streamId, {
@@ -258,14 +234,7 @@ export function createReleaseAccess(database: Database): ReleaseAccess {
         request,
       }),
     deleteRelease: async (actor, streamId, id) =>
-      releases.removeFromStream(
-        database,
-        plan(actor),
-        streamId,
-        "release",
-        id,
-        editsKind(actor, "cycle-pattern"),
-      ),
+      releases.removeFromStream(database, plan(actor), streamId, "release", id),
     updateReleaseNote: async (actor, streamId, id, request) =>
       releases.changeReleaseNote(
         database,

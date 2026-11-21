@@ -6,7 +6,12 @@
 import { fields } from "@fathom/db";
 import type { Database } from "@fathom/db";
 import type { Permission, RecordDraft, RecordType } from "@fathom/shared";
-import { draftKeyKinds, noteProblem, recordTypeSchema } from "@fathom/shared";
+import {
+  draftKeyKinds,
+  holdsAny,
+  noteProblem,
+  recordTypeSchema,
+} from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import type { Actor } from "../access.ts";
@@ -33,6 +38,7 @@ import {
   everyVersion,
   type KindState,
   linkedIds,
+  readsKind,
   type RecordKind,
   type RecordsState,
   type Referred,
@@ -110,6 +116,32 @@ export const kindOf = (type: RecordType): RecordKind =>
 
 export const isRecordType = (type: string): type is RecordType =>
   recordTypeSchema.safeParse(type).success;
+
+// Who may change each kind of the plan's records, any one of the permissions sufficing. Schedules
+// and their cycles are part of the plan, and planning configuration too.
+const recordEditors: Record<RecordType, readonly Permission[]> = {
+  "release-stream": ["plan:edit", "configuration:edit"],
+  "cycle-pattern": ["plan:edit", "configuration:edit"],
+  release: ["features:edit"],
+  feature: ["features:edit"],
+  customer: ["plan:edit"],
+  proposal: ["plan:edit"],
+  project: ["plan:edit"],
+  milestone: ["plan:edit"],
+  allocation: ["allocations:edit"],
+  "planning-settings": ["configuration:edit"],
+};
+
+// Whether a role may change a kind of record: one who may change it, and who sees it, since some,
+// such as editing the plan, change kinds they do not grant seeing.
+export const changesKind = (
+  permissions: readonly Permission[],
+  type: RecordType,
+): boolean =>
+  // The kind is always one of the fixed kinds listed above.
+  // eslint-disable-next-line security/detect-object-injection
+  holdsAny(permissions, recordEditors[type]) &&
+  readsKind(kindOf(type), permissions);
 
 export const noRecord = "There is no such record; refresh to see the latest";
 export const noDraft = "There is no such draft";

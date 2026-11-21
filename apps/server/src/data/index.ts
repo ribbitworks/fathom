@@ -79,7 +79,6 @@ import { readLastViews, saveLastView } from "./last-views.ts";
 import * as views from "./views.ts";
 import { createRecordFinders, findKeyedRecord } from "./record-links.ts";
 import {
-  editsKind,
   recordEditor,
   createReleaseAccess,
   createProjectAccess,
@@ -315,13 +314,7 @@ export function createDataAccess(database: Database): DataAccess {
     },
     records: {
       discardDraft: async (actor, type, id) =>
-        discardRecordDraft(
-          database,
-          recordEditor(actor, type),
-          type,
-          id,
-          editsKind(actor, "cycle-pattern"),
-        ),
+        discardRecordDraft(database, recordEditor(actor, type), type, id),
       resubmitDraft: async (actor, type, id) =>
         resubmitRecordDraft(database, recordEditor(actor, type), type, id),
     },

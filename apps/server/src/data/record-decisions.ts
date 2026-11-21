@@ -4,7 +4,7 @@
 // each one takes along. Part of the data access layer.
 
 import type { Database } from "@fathom/db";
-import type { RecordRef, RecordType } from "@fathom/shared";
+import type { Permission, RecordRef, RecordType } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import type { Actor } from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
@@ -39,6 +39,7 @@ import {
 } from "./record-state.ts";
 import { fieldOfValue, valueFieldsIn, writeValues } from "./values.ts";
 import {
+  changesKind,
   gone,
   idOf,
   kindOf,
@@ -101,16 +102,27 @@ function boundWith(state: RecordsState, root: RecordRef): RecordRef[] {
   );
 }
 
+// Why a role may not discard drafts that take a stream's cycles along, if it may not: only a role
+// that changes cycles may.
+export function cyclesDiscardRefusal(
+  discarded: readonly RecordRef[],
+  permissions: readonly Permission[],
+): string | undefined {
+  return discarded.some((ref) => ref.type === "cycle-pattern") &&
+    !changesKind(permissions, "cycle-pattern")
+    ? "Only someone who changes cycles can discard this."
+    : undefined;
+}
+
 // Discards the editor's draft of a record, so the record is as it is live, or, for one only drafted
 // to be added, gone, with the drafts bound to it and the drafts of the records only drafted to be
 // added that belong to any of them. Refused while other drafts, published or not, use any of them,
-// and, to an editor who may not change cycles, when it would discard a draft of a stream's cycles.
+// and as cyclesDiscardRefusal sets out.
 export async function discardRecordDraft(
   database: Database,
   maker: Actor,
   type: RecordType,
   id: string,
-  mayChangeCycles: boolean,
 ): Promise<string | null> {
   return drafting(database, maker.user.id, async (transaction, state) => {
     if (!recordExists(state, type, id)) throw new NotFoundError(noRecord);
@@ -125,14 +137,8 @@ export async function discardRecordDraft(
           .map((ref) => [refKey(ref), ref]),
       ).values(),
     ];
-    if (
-      !mayChangeCycles &&
-      discarded.some((ref) => ref.type === "cycle-pattern")
-    ) {
-      throw new ForbiddenError(
-        "Only someone who changes cycles can discard this.",
-      );
-    }
+    const refusal = cyclesDiscardRefusal(discarded, maker.permissions);
+    if (refusal !== undefined) throw new ForbiddenError(refusal);
     const keys = new Set(discarded.map(refKey));
     const added = discarded.filter((ref) => addedOnly(state, ref.type, ref.id));
     const addedKeys = new Set(added.map(refKey));
