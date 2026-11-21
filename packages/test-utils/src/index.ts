@@ -19,3 +19,4 @@ export {
   type TestCertificate,
   type TestResponse,
 } from "./https.ts";
+export { fictionalUser } from "./users.ts";

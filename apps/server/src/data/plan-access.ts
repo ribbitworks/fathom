@@ -212,7 +212,6 @@ export function createReleaseAccess(database: Database): ReleaseAccess {
         streamId,
         "cycle-pattern",
         id,
-        true,
       ),
     addRelease: async (actor, streamId, request) =>
       releases.addToStream(database, plan(actor), streamId, {
@@ -225,14 +224,7 @@ export function createReleaseAccess(database: Database): ReleaseAccess {
         request,
       }),
     deleteRelease: async (actor, streamId, id) =>
-      releases.removeFromStream(
-        database,
-        plan(actor),
-        streamId,
-        "release",
-        id,
-        editsKind(actor, "cycle-pattern"),
-      ),
+      releases.removeFromStream(database, plan(actor), streamId, "release", id),
     updateReleaseNote: async (actor, streamId, id, request) =>
       releases.changeReleaseNote(
         database,

@@ -38,6 +38,7 @@ import {
   withVersion,
 } from "./record-state.ts";
 import { fieldOfValue, valueFieldsIn, writeValues } from "./values.ts";
+import { editsKind } from "./draft-editors.ts";
 import {
   gone,
   idOf,
@@ -101,6 +102,16 @@ function boundWith(state: RecordsState, root: RecordRef): RecordRef[] {
   );
 }
 
+export function cyclesDiscardRefusal(
+  discarded: readonly RecordRef[],
+  maker: Actor,
+): string | undefined {
+  return discarded.some((ref) => ref.type === "cycle-pattern") &&
+    !editsKind(maker, "cycle-pattern")
+    ? "Only someone who changes cycles can discard this."
+    : undefined;
+}
+
 // Discards the editor's draft of a record, so the record is as it is live, or, for one only drafted
 // to be added, gone, with the drafts bound to it and the drafts of the records only drafted to be
 // added that belong to any of them. Refused while other drafts, published or not, use any of them,
@@ -110,7 +121,6 @@ export async function discardRecordDraft(
   maker: Actor,
   type: RecordType,
   id: string,
-  mayChangeCycles: boolean,
 ): Promise<string | null> {
   return drafting(database, maker.user.id, async (transaction, state) => {
     if (!recordExists(state, type, id)) throw new NotFoundError(noRecord);
@@ -125,14 +135,8 @@ export async function discardRecordDraft(
           .map((ref) => [refKey(ref), ref]),
       ).values(),
     ];
-    if (
-      !mayChangeCycles &&
-      discarded.some((ref) => ref.type === "cycle-pattern")
-    ) {
-      throw new ForbiddenError(
-        "Only someone who changes cycles can discard this.",
-      );
-    }
+    const refusal = cyclesDiscardRefusal(discarded, maker);
+    if (refusal !== undefined) throw new ForbiddenError(refusal);
     const keys = new Set(discarded.map(refKey));
     const added = discarded.filter((ref) => addedOnly(state, ref.type, ref.id));
     const addedKeys = new Set(added.map(refKey));
