@@ -10,7 +10,7 @@ import {
   requireAnyPermission,
   requirePermission,
 } from "../access.ts";
-import { readColumnsOut } from "./column-drafts.ts";
+import { readColumnsOut } from "./column-state.ts";
 import * as lists from "./lists.ts";
 import * as peopleReads from "./people-table-reads.ts";
 import * as projectReads from "./project-reads.ts";
