@@ -75,7 +75,7 @@ How Fathom's screens look and behave, so every page is built the same way. The p
   - **Can't add:** A role that can't see a column every record needs, such as Position, has no empty row, and New is turned off with a line saying why.
 - **Searching, filtering, and sorting:** A search field above a table works as [Search](../standards/ui-conventions/tables.md#search) sets out, with a × to clear it once something is typed.
   - **Sorting:** Each column's menu, open to viewers too, adds the column as the next level of the sort. A column already sorted changes direction in place, and any level, the first included, can be removed on its own. Sorted and filtered columns are marked in their headers.
-  - **Filtering:** The menu opens the column's filter beside its header, as [Filtering a column](../standards/ui-conventions/tables.md#tables) sets out.
+  - **Filtering:** The menu opens the column's filter beside its header, as [Filtering a column](../standards/ui-conventions/tables.md#tables) sets out. A filter that is no one column's has its own button after the search field, as [Filtering across a table](../standards/ui-conventions/tables.md#tables) sets out.
   - **Pills:** Each filter is a pill above the table, beside the row count, such as "35 of 150".
   - **Clear all:** Clears the whole view but leaves the metrics open. Rows stay put while edited, as [Staying Put](../standards/ui-conventions/tables.md#staying-put) sets out.
 - **Saved views:** A Views menu, the last button after the search field, as [What the Views menu holds](../standards/ui-conventions/tables.md#tables) and [Saved views on every page](../standards/ui-conventions/tables.md#tables) set out.
@@ -176,6 +176,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **Exporting a table:** `useTableExport` in `table-export.tsx`, offering the export to the Export icon through `useOfferedExport` in `page-export.tsx`, the question in `export-question.tsx`, and the file, its name and saving it in `exports.ts`.
 - **A dialog's buttons:** `DialogActions` in `dialog-actions.tsx`.
 - **A column's filter:** `FilterPopover` in `table-controls.tsx`.
+- **A filter across a table, from the bar above it:** a table's `barFilters`, each drawn by `BarFilterButton` in `table-controls.tsx` with `FilterPopover`, and filtering the rows beside the draft filter through `filtersBesideColumns` in `table-view.ts`.
 - **Icons and colour swatches:** `Icon` in `icons.tsx` and `Swatch` in `colour-swatch.tsx`.
 
 ## Planned

@@ -11,7 +11,12 @@ import classes from "./pages.module.css";
 import type { GridRecord, RowGrouping } from "./record-table.ts";
 import { tickedOf } from "./row-ticks.tsx";
 import { Tipped } from "./table-tips.tsx";
-import { type View, activeGrouping, activeThenBy } from "./table-view.ts";
+import {
+  type View,
+  activeGrouping,
+  activeThenBy,
+  filtersBesideColumns,
+} from "./table-view.ts";
 import {
   type OtherPlace,
   type PlacedRow,
@@ -209,7 +214,7 @@ export function useShownRows<Rec extends GridRecord, Change, Request>(
           recordsOf(rows),
           allColumns,
           view,
-          [draftColumn],
+          filtersBesideColumns(draftColumn, table.barFilters),
           table.keyOf,
         ),
         view.groupsReversed === true,

@@ -108,6 +108,19 @@ export function valueOrStandIn<Row>(
     : value;
 }
 
+// A filter that isn't one column's, such as a feature in any month of a grid of months: the button
+// that opens it, and what it filters by, named in its pill and kept in the view as a column's is.
+export interface BarFilter<Row> {
+  button: string;
+  column: TableColumn<Row>;
+}
+
+// What a table filters by besides its columns: drafts, and its filters in the bar above it.
+export const filtersBesideColumns = <Column>(
+  draftFilter: Column,
+  barFilters: readonly { column: Column }[] = [],
+): Column[] => [draftFilter, ...barFilters.map(({ column }) => column)];
+
 export interface SortLevel {
   key: string;
   descending: boolean;

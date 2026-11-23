@@ -46,6 +46,7 @@ import { recordMark } from "./draft-marks.ts";
 import {
   type View,
   alwaysShowing,
+  filtersBesideColumns,
   knownView,
   shownColumnsOf,
   withoutFilters,
@@ -196,7 +197,7 @@ export function useGridModel<Rec extends GridRecord, Change, Request>(
   const knownAsked = knownView(
     asked,
     allColumns,
-    [draftColumn],
+    filtersBesideColumns(draftColumn, table.barFilters),
     allColumns.filter(breaksDown),
   );
   // The name column, holding each row's controls, is never hidden.

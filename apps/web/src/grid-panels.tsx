@@ -238,6 +238,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
       noun={table.noun}
       columns={allColumns}
       draftFilter={draftColumn}
+      barFilters={table.barFilters}
       view={view}
       onView={onView}
       shown={countedOnce(shownRecords).length}
