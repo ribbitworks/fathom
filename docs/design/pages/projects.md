@@ -34,6 +34,7 @@ Projects holds the plan's projects, proposals, customers and milestones, each on
 - **A project's dates:** come from its milestones, so they have no pencil.
 - **Linked records:** customers and proposals open in their own tab's panel; features open on [Features](features.md).
 - **A customer:** Name, Description and Notes under Details, as a feature's Notes is; its projects, proposals and features show in the table alone.
+- **Adding a customer from Customers:** a project's and a proposal's Customers picker offers New customer, in its panel and in its table's cell, as [Adding from a picker](../../standards/ui-conventions/entering-and-saving.md#choices) sets out.
 
 ### Scope History
 

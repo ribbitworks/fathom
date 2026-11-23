@@ -8,10 +8,11 @@ import type { Typing } from "@fathom/shared";
 import { startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { focusSoon } from "./focus.ts";
+import { focusRecordCell } from "./grid-row.tsx";
 import { emptyValue, kindOf, readOnlyFor } from "./grid-columns.tsx";
 import type { Cell, Row } from "./grid-places.ts";
 import classes from "./pages.module.css";
-import type { Column, GridRecord } from "./record-table.ts";
+import { addingFor, type Column, type GridRecord } from "./record-table.ts";
 import { opensMenu } from "./row-controls.tsx";
 import type { MenuGrid } from "./row-menus.tsx";
 import { type CellValue, fieldLabel } from "./table-view.ts";
@@ -331,6 +332,16 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
       : undefined;
   };
 
+  // A new row isn't a record to link to yet.
+  const addingAt = (cell: Cell, column: Column<Rec, Change>) => {
+    const { record } = at(cell).row;
+    return record === undefined
+      ? undefined
+      : addingFor(column.adds, record.id, () => {
+          focusRecordCell(record.id, column.key);
+        });
+  };
+
   const editor = (
     cell: Cell,
     column: Column<Rec, Change>,
@@ -350,6 +361,7 @@ export function gridEditing<Rec extends GridRecord, Change, Request>(
           invalid={invalid}
           describedBy={describedBy}
           readOnly={readOnlyAt(cell)}
+          adding={addingAt(cell, column)}
           onDone={(edited, how) => {
             finish(cell, edited, how);
           }}

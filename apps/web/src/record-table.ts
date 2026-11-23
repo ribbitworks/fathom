@@ -3,6 +3,7 @@
 // What a page gives the shared table: its records and their drafts, its columns, what it does
 // with them, and the props the table takes.
 
+import type { Adding } from "./choice-picker.tsx";
 import type {
   Asking,
   Choice,
@@ -176,6 +177,13 @@ export interface Column<
   recordClass?: (record: Rec) => Tier;
   // Facts about a record, such as Built in, in boxes after its value and before its draft's box.
   facts?: (record: Rec) => ReactNode;
+  // For a column naming other records, for a role that may add one: the kind it adds, such as
+  // customer, and what opens its form for a saved record, by its identifier, named by what was typed,
+  // with what puts focus back where the picker was once the form closes.
+  adds?: {
+    one: string;
+    onNew: (id: string, typed: string, back: () => void) => void;
+  };
   // A warning about a record's value, its dot before the value and its words after it.
   status?: (record: Rec) => { words: string; spoken?: string } | undefined;
   // For a table with several kinds of record: whether a kind has the column, which is otherwise
@@ -461,3 +469,19 @@ export const readOnlyTableParts = {
     throw new Error("A read-only table adds no records");
   },
 };
+
+// A picker's New option for a saved record, by its identifier, with what puts focus back where the
+// picker was, for a column that offers one.
+export const addingFor = (
+  adds: Column<never>["adds"],
+  id: string,
+  back: () => void,
+): Adding | undefined =>
+  adds === undefined
+    ? undefined
+    : {
+        one: adds.one,
+        onNew: (typed) => {
+          adds.onNew(id, typed, back);
+        },
+      };

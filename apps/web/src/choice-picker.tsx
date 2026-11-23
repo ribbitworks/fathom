@@ -1,17 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Picking choices in a cell of the People table, built on Mantine's Combobox. The cell keeps its own
-// input, the same size as when it is not being edited, and the choices drop down below it. Typing
-// narrows the choices, the arrow keys move through them, and Enter picks one; for a column that
-// takes several, Enter adds or removes one and keeps the list open, with no choice highlighted, so
-// Enter again finishes, as it does in other cells. Tab picks the highlighted choice when something
-// has been typed, then moves on, Esc cancels, and leaving the cell keeps what was picked. Where
-// several can be picked, a check marks each one picked. A choice with a description shows it under
-// its name, and is found by it too. A value that takes one choice and need not have one offers its
-// word for none first, set apart by a line, until something is typed; nothing is highlighted then
-// until the arrow keys move, and Down goes first to the choice after none, so none is always in
-// sight but never what Enter picks unasked. The list is at least as wide as the cell, and wider
-// where a choice needs it, up to a limit past which a choice wraps.
+// Picking one or several choices from a list that drops down under a cell or a panel's value, with
+// a word for none first and a New option last where offered.
 
 import { matchesWords, searchWords } from "@fathom/shared";
 import { CheckIcon, Combobox, Group, Text, useCombobox } from "@mantine/core";
@@ -85,6 +75,18 @@ export function OptionWords({
 // What the choice of none is known by among the options, which no choice's identifier is.
 const noneValue = "";
 
+// What the New option is known by among the options, which no choice's identifier is either.
+const addingValue = "\u0000new";
+
+// A picker's New option: the kind of record it adds, such as customer, and what opens its form.
+export interface Adding {
+  one: string;
+  onNew: (typed: string) => void;
+}
+
+const addingLabel = (one: string, typed: string): string =>
+  typed === "" ? `New ${one}` : `New ${one} “${typed}”`;
+
 export function ChoicePicker({
   id,
   label,
@@ -95,6 +97,7 @@ export function ChoicePicker({
   typed,
   invalid = false,
   describedBy,
+  adding,
   onDone,
   onCancel,
 }: {
@@ -110,6 +113,8 @@ export function ChoicePicker({
   initial: string[];
   // What was typed to start editing, which narrows the choices straight away.
   typed: string;
+  // For a picker that may add the record it names: its New option.
+  adding?: Adding | undefined;
   onDone: (values: string[], finish: Finish) => void;
   onCancel: () => void;
 }) {
@@ -119,11 +124,17 @@ export function ChoicePicker({
   // Every word typed, found anywhere in a choice's name or description, as a search finds rows.
   const wanted = searchWords(search);
   const noneShown = none !== undefined && !multiple && wanted.length === 0;
+  const matching = options.filter((option) =>
+    matchesWords(`${option.label} ${option.description ?? ""}`, wanted),
+  );
   const shown = [
     ...(noneShown ? [{ value: noneValue, label: none }] : []),
-    ...options.filter((option) =>
-      matchesWords(`${option.label} ${option.description ?? ""}`, wanted),
-    ),
+    ...matching,
+    ...(adding === undefined
+      ? []
+      : [
+          { value: addingValue, label: addingLabel(adding.one, search.trim()) },
+        ]),
   ];
 
   // Whether a choice was picked since anything was typed or the arrow keys moved, which leaves no
@@ -148,6 +159,13 @@ export function ChoicePicker({
           .filter((other) => other === value || picked.includes(other));
 
   const pick = (value: string) => {
+    if (value === addingValue) {
+      // What was picked so far is kept, as leaving the cell keeps it, before the form opens. Only a
+      // picker that may add offers New.
+      onDone(picked, "leave");
+      (adding as Adding).onNew(search.trim());
+      return;
+    }
     if (!multiple) {
       onDone(value === noneValue ? [] : [value], "enter");
       return;
@@ -178,9 +196,12 @@ export function ChoicePicker({
       onCancel();
     } else if (event.key === "Tab") {
       event.preventDefault();
+      // Tab picks a choice, never New, which opens a form.
       const value = search.trim() === "" ? undefined : highlighted();
       let values = picked;
-      if (value !== undefined) values = multiple ? toggled(value) : [value];
+      if (value !== undefined && value !== addingValue) {
+        values = multiple ? toggled(value) : [value];
+      }
       onDone(values, event.shiftKey ? "previous" : "next");
     } else if (event.key === "Enter" && highlighted() === undefined) {
       // Nothing to pick: Enter finishes, as it does in other cells.
@@ -229,32 +250,44 @@ export function ChoicePicker({
       </Combobox.Target>
       <Combobox.Dropdown>
         <Combobox.Options className={classes.choiceOptions}>
-          {shown.map((option) => (
-            <Combobox.Option
-              key={option.value}
-              value={option.value}
-              className={
-                option.value === noneValue ? comboboxClasses.none : undefined
-              }
-              active={chosen(option.value)}
-              aria-selected={chosen(option.value)}
-            >
-              {multiple ? (
-                <Group gap="xs" wrap="nowrap">
-                  {/* Hidden, not left out, so every label starts in line. */}
-                  <CheckIcon
-                    size={12}
-                    aria-hidden
-                    visibility={chosen(option.value) ? "visible" : "hidden"}
-                  />
+          {shown
+            .filter(({ value }) => value !== addingValue)
+            .map((option) => (
+              <Combobox.Option
+                key={option.value}
+                value={option.value}
+                className={
+                  option.value === noneValue ? comboboxClasses.none : undefined
+                }
+                active={chosen(option.value)}
+                aria-selected={chosen(option.value)}
+              >
+                {multiple ? (
+                  <Group gap="xs" wrap="nowrap">
+                    {/* Hidden, not left out, so every label starts in line. */}
+                    <CheckIcon
+                      size={12}
+                      aria-hidden
+                      visibility={chosen(option.value) ? "visible" : "hidden"}
+                    />
+                    <OptionWords option={option} />
+                  </Group>
+                ) : (
                   <OptionWords option={option} />
-                </Group>
-              ) : (
-                <OptionWords option={option} />
-              )}
+                )}
+              </Combobox.Option>
+            ))}
+          {matching.length === 0 && !noneShown && (
+            <Combobox.Empty>No matches</Combobox.Empty>
+          )}
+          {adding !== undefined && (
+            <Combobox.Option
+              value={addingValue}
+              className={comboboxClasses.adding}
+            >
+              {addingLabel(adding.one, search.trim())}
             </Combobox.Option>
-          ))}
-          {shown.length === 0 && <Combobox.Empty>No matches</Combobox.Empty>}
+          )}
         </Combobox.Options>
       </Combobox.Dropdown>
     </Combobox>

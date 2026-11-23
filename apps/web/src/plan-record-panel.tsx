@@ -42,6 +42,7 @@ import {
   type TableChoices,
 } from "./projects.ts";
 import { ScopeHistory } from "./scope-history.tsx";
+import { type AddsByKey, withAdding } from "./add-from-panel.tsx";
 import { RecordPanel } from "./record-details.tsx";
 import { newRecordProblems } from "./grid-saving.ts";
 import type { Column, ColumnGroup } from "./record-table.ts";
@@ -193,6 +194,7 @@ export function recordPanel({
   onChange,
   changeReason,
   notes,
+  adds,
 }: {
   tab: PlanTab;
   plan: ProjectPlan;
@@ -225,6 +227,8 @@ export function recordPanel({
     reason: string | null,
   ) => void;
   notes: NoteOpening;
+  // The New options of a kind of record's pickers, by their columns' keys.
+  adds: (type: PlanRecordKind) => AddsByKey;
 }): SidePanel | undefined {
   if (open === undefined) return undefined;
   const asShown = <Rec extends PlanRecord>(records: readonly Rec[]) =>
@@ -273,7 +277,7 @@ export function recordPanel({
     .find((one) => one !== undefined);
   if (found === undefined) return undefined;
   const { type, record: shown, ownDraft } = found;
-  const columns = found.columns();
+  const columns = withAdding(found.columns(), adds(type));
   const canEdit = editsKind(type);
   // Projects and proposals, which name features, show their scope history to those who see them.
   const scope =

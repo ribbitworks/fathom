@@ -96,6 +96,7 @@ import { entered, type FormValues, newRecordId } from "./new-record-panel.tsx";
 import { afterNote, noteQuestion, useNoteEditing } from "./note-editing.tsx";
 import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
 import { focusSoon } from "./focus.ts";
+import { addingTo, useAddFromPanel } from "./add-from-panel.tsx";
 import { releaseStreamsQuery } from "./releases.ts";
 import { useSavedViews } from "./saved-views.tsx";
 import { useSaving } from "./saving.ts";
@@ -226,22 +227,6 @@ export function ProjectsPage({
   const [justAdded, setJustAdded] = useState<string>();
   const openedAdded = useRef<string>(undefined);
   const question = useDiscardQuestion();
-  // Anything that would close the form asks first, while it holds something.
-  const leave = (go: () => void) => {
-    if (beingAdded?.saving === true) return;
-    question.ask(
-      beingAdded !== undefined && entered(beingAdded)
-        ? newRecordQuestion(wordsOf(beingAdded.tab).one)
-        : notes.changing
-          ? noteQuestion
-          : undefined,
-      () => {
-        notes.discard();
-        setBeingAdded(undefined);
-        go();
-      },
-    );
-  };
   useEffect(() => {
     if (
       justAdded === undefined ||
@@ -292,6 +277,28 @@ export function ProjectsPage({
         setDeciding(true);
       },
     });
+
+  const linked = useAddFromPanel({
+    canAdd:
+      query.data !== undefined && query.data.canEdit && form === undefined,
+    actionsFor,
+  });
+  // Anything that would close a form asks first, while it holds something.
+  const leave = (go: () => void) => {
+    if (beingAdded?.saving === true || linked.saving) return;
+    question.ask(
+      beingAdded !== undefined && entered(beingAdded)
+        ? newRecordQuestion(wordsOf(beingAdded.tab).one)
+        : (linked.question ?? (notes.changing ? noteQuestion : undefined)),
+      () => {
+        notes.discard();
+        setBeingAdded(undefined);
+        linked.close();
+        go();
+      },
+    );
+  };
+  const { addsFor } = linked;
 
   let content: ReactNode;
   if (query.isPending || choicesQuery.isPending || settingsPending) {
@@ -374,9 +381,11 @@ export function ProjectsPage({
       seesFeatures,
       nodes,
       onClose: () => {
-        onOpen?.(undefined);
-        if (onBoard) focusCard(String(open));
-        else focusRecordCell(String(open), "name");
+        leave(() => {
+          onOpen?.(undefined);
+          if (onBoard) focusCard(String(open));
+          else focusRecordCell(String(open), "name");
+        });
       },
       menu: {
         decide: (asking, ref) => {
@@ -414,6 +423,7 @@ export function ProjectsPage({
       },
       changeReason,
       notes,
+      adds: addsFor,
     });
     const shared = {
       canEdit,
@@ -432,7 +442,18 @@ export function ProjectsPage({
     ): SidePanel[] {
       const writing = note === undefined ? [] : [note];
       if (form === undefined) {
-        return [...(panel === undefined ? [] : [panel]), ...writing];
+        const adding = linked.panel({
+          plan,
+          narrow,
+          notes,
+          units: view.units,
+          ask: question.ask,
+        });
+        return [
+          ...(panel === undefined ? [] : [panel]),
+          ...(adding === undefined ? [] : [adding]),
+          ...writing,
+        ];
       }
       return [
         {
@@ -496,13 +517,14 @@ export function ProjectsPage({
       records: Rec[],
     ): ReactElement {
       const actions = actionsFor<Rec, Request>(type);
+      const adding = addingTo(table, addsFor(type));
       return (
         <TableTips>
           <PlanGrid
             {...shared}
             panels={panelsWith(type, table, records, actions)}
             records={records}
-            table={table}
+            table={adding}
             actions={actions}
           />
         </TableTips>

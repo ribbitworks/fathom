@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for picking choices in a cell: where several can be picked, a check marks each one picked,
-// and Enter after picking one finishes; a choice's description shows under it and finds it; and a
-// value that need not have a choice offers none first, which Enter never picks unasked; and the list
-// is at least as wide as its cell, growing to fit its choices up to a limit.
+// Tests for picking choices: checks, Enter and Tab, descriptions, the word for none, the list's
+// width, and the New option.
 
 import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
@@ -227,4 +225,76 @@ describe("finding a choice", () => {
       screen.getAllByRole("option").map(({ textContent }) => textContent),
     ).toEqual(["Élodie Marchand"]);
   });
+});
+
+function renderAdding(
+  onNew: (typed: string) => void,
+  onDone = vi.fn(),
+  multiple = true,
+) {
+  render(
+    <MantineProvider theme={testTheme}>
+      <ChoicePicker
+        id="picker"
+        label="Customers"
+        options={options}
+        multiple={multiple}
+        initial={["b"]}
+        typed=""
+        adding={{ one: "customer", onNew }}
+        onDone={onDone}
+        onCancel={() => undefined}
+      />
+    </MantineProvider>,
+  );
+  return onDone;
+}
+
+describe("adding the record a picker names", () => {
+  it("offers New last, with what was typed in quotes", async () => {
+    renderAdding(vi.fn());
+    expect(optionNames().at(-1)).toBe("New customer");
+
+    await userEvent.type(screen.getByLabelText("Customers"), "al");
+
+    expect(optionNames()).toEqual(["Alpha", "New customer “al”"]);
+  });
+
+  it("picks New with Enter when nothing else matches, keeping what was picked", async () => {
+    const onNew = vi.fn();
+    const onDone = renderAdding(onNew);
+
+    await userEvent.type(screen.getByLabelText("Customers"), "Gamma");
+    expect(screen.getByText("No matches")).toBeDefined();
+    await userEvent.keyboard("{Enter}");
+
+    expect([onDone.mock.calls, onNew.mock.calls]).toEqual([
+      [[["b"], "leave"]],
+      [["Gamma"]],
+    ]);
+  });
+
+  it("offers no New to a picker that may not add", () => {
+    renderPicker(true);
+
+    expect(optionNames()).toEqual(["Alpha", "Beta"]);
+  });
+  it.each([
+    ["several", true],
+    ["one", false],
+  ])(
+    "moves on with Tab from New, picking nothing, where %s can be picked",
+    async (_, multiple) => {
+      const onNew = vi.fn();
+      const onDone = renderAdding(onNew, vi.fn(), multiple);
+
+      await userEvent.type(screen.getByLabelText("Customers"), "Gamma");
+      await userEvent.keyboard("{Tab}");
+
+      expect([onDone.mock.calls, onNew.mock.calls]).toEqual([
+        [[["b"], "next"]],
+        [],
+      ]);
+    },
+  );
 });
