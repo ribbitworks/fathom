@@ -71,6 +71,13 @@ export const cyclesViewChoices = z.strictObject({
   later: shownChoiceSchema.optional(),
 });
 
+// Capacity's Allocations' own choices: only the rows over, or under, a whole month from the current
+// month on, each kept while set, and either while both are.
+export const allocationsViewChoices = z.strictObject({
+  over: shownChoiceSchema.optional(),
+  under: shownChoiceSchema.optional(),
+});
+
 // The Drafts page's tabs, kept in its view as a choice of its own: the drafts the reader may decide
 // now, shown only to a role that approves drafts; the reader's own changes, not yet published; and
 // every published draft, to see what is waiting or rejected.
@@ -99,7 +106,7 @@ export const viewChoiceSchemas: Record<ViewTable, z.ZodType<ViewChoices>> = {
   "release-streams": noChoices,
   lists: noChoices,
   "feature-assignments": noChoices,
-  capacity: noChoices,
+  capacity: allocationsViewChoices,
   "org-chart": z.strictObject({
     teams: z.literal("feature").optional(),
     levels: chartLevelsSchema.optional(),

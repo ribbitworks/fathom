@@ -11,7 +11,7 @@ last_updated: "2026-11-23"
 
 ## Scope
 
-Verifies the Capacity page's tabs. Settings holds the planning settings: how it reads for someone who may only see it, drafting a change and undoing it, a value refused, adding and removing months of ramp-up, the change in the change history, and approving a draft and seeing the Effort column on Features follow it once approved. Allocations is the table of allocations by month: switching between the tabs, its over- and under-allocated months, planned hires, the capacity totals of each group and of everyone, rows for someone who changed team or manager, the page left out of the menu for a role that sees no tab, and the count of people and planned hires, the same on Feature teams and Allocations, in the month the grid was moved to. Feature teams has its own [Capacity's Feature Teams](capacity-feature-teams-manual-test.md) test. The seeded allocations are listed in [Development Setup](../design/development-setup.md#fictional-data).
+Verifies the Capacity page's tabs. Settings holds the planning settings: how it reads for someone who may only see it, drafting a change and undoing it, a value refused, adding and removing months of ramp-up, the change in the change history, and approving a draft and seeing the Effort column on Features follow it once approved. Allocations is the table of allocations by month: switching between the tabs, its over- and under-allocated months, planned hires, the capacity totals of each group and of everyone, rows for someone who changed team or manager, the page left out of the menu for a role that sees no tab, and the count of people and planned hires, the same on Feature teams and Allocations, in the month the grid was moved to, and the rows kept to those over or under from the Views menu. Feature teams has its own [Capacity's Feature Teams](capacity-feature-teams-manual-test.md) test. The seeded allocations are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 
@@ -265,7 +265,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-07.
 
-**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box, no filters, and neither **Over** nor **Under** ticked in the **Views** menu.
 
 - [ ] `CBFE` In the current month's column, find a cell whose last line reads "Over", such as that of 'Blaise Gislason', and one whose last line reads "Under", such as that of 'Anahi Bins'.
   - **Expected:**
@@ -649,4 +649,38 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. R
 
 - [ ] `6E3A` Select **Today**.
   - **Expected:** The count is the one noted in step `C4E1`.
+  - **Notes:**
+
+### CAP-17: Allocations Kept to Those Over or Under
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as CAP-16.
+
+**Preconditions:** **Capacity** open, with the **Allocations** tab chosen, **None** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] `B4E7` Open the **Views** menu.
+  - **Expected:**
+    - At its top, **Over** and **Under** are each followed by a number in brackets, such as "Over (4)".
+    - Neither is ticked.
+  - **Notes:**
+
+- [ ] `D19A` Select **Over**.
+  - **Expected:**
+    - **Over** is ticked.
+    - The table lists only rows with a cell reading "Over" in the current month or a later one, such as 'Blaise Gislason'.
+  - **Notes:**
+
+- [ ] `5C0F` Select **Under**.
+  - **Expected:**
+    - **Over** and **Under** are both ticked.
+    - The table also lists rows with a cell reading "Under" or "Not allocated" from the current month on.
+  - **Notes:**
+
+- [ ] `E83B` Select **Over**.
+  - **Expected:**
+    - Only **Under** is ticked.
+    - The table lists only rows with a cell reading "Under" or "Not allocated" from the current month on.
+  - **Notes:**
+
+- [ ] `7A62` Select **Under**.
+  - **Expected:** Neither is ticked, and every row is listed again.
   - **Notes:**

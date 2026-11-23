@@ -2,7 +2,8 @@
 
 // Tests for allocations month by month as a table of records: each row's features and percentages
 // by month, people and planned hires, the months drafts change, a month's total as the Draft menu
-// shows it, the months someone can be allocated in, and how a cell reads.
+// shows it, the months someone can be allocated in, the marks they carry from now on, and how a cell
+// reads.
 
 import type {
   Allocation,
@@ -24,6 +25,7 @@ import {
   type AllocationRow,
   CapacityTotal,
   capacityOf,
+  marksFrom,
   monthTotal,
 } from "./allocation-months.tsx";
 import { monthManagers } from "./planned-hire-months.ts";
@@ -347,6 +349,28 @@ describe("planned hires' allocations", () => {
     drafted: [],
   };
 
+  it("marks none of a planned hire's months before it is expected", () => {
+    // Given a hire expected in April, a whole month from then on
+    const rows = rowsOf(
+      [
+        allocation({
+          personId: null,
+          plannedHireId: "h-unnamed",
+          months: { "2027-04": 100 },
+        }),
+      ],
+      { chart },
+    );
+    const hire = rows.find(({ personId }) => personId === "h-unnamed");
+
+    // Then March, before it is expected, is not marked Not allocated
+    expect(
+      hire === undefined
+        ? undefined
+        : [...marksFrom(hire, months, "2027-02", "both")],
+    ).toEqual([]);
+  });
+
   it("gives each planned hire on the chart a row, under its manager, from the month it is expected", () => {
     const rows = rowsOf(
       [
@@ -516,6 +540,62 @@ describe("allocatableIn", () => {
 
     expect(allocatableIn(hire, "2027-02")).toBe(false);
     expect(allocatableIn(hire, "2027-03")).toBe(true);
+  });
+});
+
+describe("marksFrom", () => {
+  const marks = (monthly: Allocation["months"], currentMonth: string) =>
+    [
+      ...marksFrom(
+        casey(rowsOf([allocation({ months: monthly })])),
+        months,
+        currentMonth,
+        "both",
+      ),
+    ].sort();
+
+  it("gives each mark any month carries from the current month on", () => {
+    expect(marks({ "2027-03": 50, "2027-04": 150 }, "2027-03")).toEqual([
+      "over",
+      "under",
+    ]);
+  });
+
+  it("leaves out the months before the current month", () => {
+    expect(marks({ "2027-03": 50, "2027-04": 150 }, "2027-04")).toEqual([
+      "over",
+    ]);
+  });
+
+  it("gives none for whole months, nor for months outside employment", () => {
+    expect(marks({ "2027-03": 100, "2027-04": 100 }, "2027-02")).toEqual([]);
+  });
+
+  it("reads drafts only with drafts applied, as the cells do", () => {
+    // Given Casey a whole month from March, which a draft makes 75% from April
+    const allocated = [
+      allocation({
+        months: { "2027-03": 100 },
+        draft: draft({ months: { "2027-04": 75 } }),
+      }),
+    ];
+    const marksIn = (show: "drafts" | "live") => [
+      ...marksFrom(casey(rowsOf(allocated, { show })), months, "2027-03", show),
+    ];
+
+    // Then April is under with drafts applied, and whole as approved
+    expect([marksIn("drafts"), marksIn("live")]).toEqual([["under"], []]);
+  });
+
+  it("leaves out the months a row does not hold, as its cells are blank", () => {
+    const row = {
+      ...casey(
+        rowsOf([allocation({ months: { "2027-03": 100, "2027-04": 50 } })]),
+      ),
+      holds: new Set(["2027-03"]),
+    };
+
+    expect([...marksFrom(row, months, "2027-03", "both")]).toEqual([]);
   });
 });
 

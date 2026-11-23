@@ -262,8 +262,11 @@ describe("Capacity opening on the view it last showed", () => {
       Response.json({ allocations: [], features: [] }),
     "GET /api/org-chart": () => Response.json({ people: [], drafted: [] }),
   };
-  // Allocations last showed a search.
-  const onAllocations = { table: "capacity", definition: { search: "Casey" } };
+  // Allocations last showed a search, kept to those under.
+  const onAllocations = {
+    table: "capacity",
+    definition: { search: "Casey", choices: { under: "shown" } },
+  };
   const open = (path: string) =>
     openOn(
       path,
@@ -287,14 +290,15 @@ describe("Capacity opening on the view it last showed", () => {
     vi.useRealTimers();
   });
 
-  it("opens on the tab and view it last showed when the address names neither", async () => {
+  it("opens on the tab and view it last showed, with its choices, when the address names neither", async () => {
     const { address } = open("/capacity");
 
     await screen.findByRole("grid", { name: "Allocations by month" });
-    expect([address().get("mode"), address().get("search")]).toEqual([
-      "allocations",
-      "Casey",
-    ]);
+    expect([
+      address().get("mode"),
+      address().get("search"),
+      address().get("under"),
+    ]).toEqual(["allocations", "Casey", "shown"]);
   });
 
   it("opens on the last view when the address names the tab it was on", async () => {
@@ -313,10 +317,11 @@ describe("Capacity opening on the view it last showed", () => {
       const { address } = open(path);
 
       await screen.findByRole("grid", { name: "Feature teams by month" });
-      expect([address().get("mode"), address().get("search")]).toEqual([
-        "feature-teams",
-        null,
-      ]);
+      expect([
+        address().get("mode"),
+        address().get("search"),
+        address().get("under"),
+      ]).toEqual(["feature-teams", null, null]);
     },
   );
 });

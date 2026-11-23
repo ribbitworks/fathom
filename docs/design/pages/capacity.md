@@ -58,6 +58,9 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
   - These are a status, not a [warning](../../standards/ui-conventions/drafts-and-values.md#values).
 - **Over:** more than 100%, counting every feature but Possible ones. Done and Cancelled features count, since allocations are time spent, so future allocations to a cancelled feature show Over until cleared.
 - **Under:** less than 100% in a month the person or planned hire can be allocated in.
+- **Over and Under choices:** Over and Under at the top of the Views menu keep only the rows Over, or Under or Not allocated, in the current month or any later month in the grid, and either while both are on. Each shows how many rows it keeps, and is offered while a row matches it or while it is on.
+  - They don't depend on the months in view, so scrolling never changes the rows.
+  - The view and the address keep them, as `over` and `under`.
 - **Capacity:** as the [Domain Model](../domain-model.md#allocation) sets out.
 - **Totals:** a Total, PM row per group and an Organization, PM row fixed at the foot, such as 7.5 of 9.
   - They count the rows shown, so a filter changes them.
@@ -74,7 +77,6 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 
 ## Planned
 
-- **Over and Under filter:** a choice in the Views menu showing only the rows Over, Under, or either, in any month in view ([issue #234](https://github.com/ribbitworks/fathom/issues/234)).
 - **Feature filter:** one filter for a whole grid tab, by feature on Allocations and by feature team on Feature teams, showing the rows that have a chosen one in any month shown.
 - **Choosing a month by its heading:** clicking a month's heading moves the grid to it.
 - **More tabs:** Work and Demand, between Allocations and Settings.

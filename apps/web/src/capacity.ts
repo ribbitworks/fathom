@@ -4,6 +4,7 @@
 // grid tab keeps.
 
 import {
+  allocationsViewChoices,
   type CapacityMode,
   type ViewTable,
   capacityModeNames,
@@ -26,6 +27,16 @@ export const capacityTables = {
 } as const satisfies Partial<Record<CapacityMode, ViewTable>>;
 
 export type CapacityGridMode = keyof typeof capacityTables;
+
+// The choices each grid tab keeps in its view, by their names in the address.
+export const capacityTabChoices: Record<
+  CapacityMode,
+  readonly (keyof typeof allocationsViewChoices.shape)[]
+> = {
+  "feature-teams": [],
+  allocations: allocationsViewChoices.keyof().options,
+  settings: [],
+};
 
 // The grid tab each table is shown on; none for another page's table.
 const capacityModesOfTables: Partial<Record<ViewTable, CapacityGridMode>> = {

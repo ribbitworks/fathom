@@ -43,8 +43,6 @@ import { ReleasesTabTable } from "./releases-tab-table.tsx";
 import { listingFeatures } from "./release-features.tsx";
 import {
   type FeaturesAt,
-  hiddenUnlessShown,
-  namedChoice,
   ownDraftActions,
   drawnAs,
   markOpener,
@@ -56,6 +54,7 @@ import { cycleChoiceId, releaseGroupKey } from "./projects.ts";
 import type { SidePanel } from "./side-panel.tsx";
 import type { ChangeView, SavedViews } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
+import { hiddenUnlessShown, namedChoice } from "./view-choices.ts";
 
 const panelId = "release-panel";
 export const releasePanelTitleId = "release-panel-title";
