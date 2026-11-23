@@ -1065,9 +1065,8 @@ function refuseHeldIn(held: ReadonlyMap<string, Held>, id: string): void {
   if (holder !== undefined) throw new ConflictError(heldMessage(holder));
 }
 
-// A list as its draft makes it, refusing one that does not exist or is drafted to be removed.
+// A list that exists, as its draft makes it, refusing one drafted to be removed.
 function usableList(state: ListsState, id: string): Recorded {
-  if (!listExists(state, id)) throw new NotFoundError(noList);
   const list = draftedList(state, id);
   if (list === undefined) throw new ConflictError(listToBeRemoved);
   return list;
