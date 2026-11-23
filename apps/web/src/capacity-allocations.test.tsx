@@ -2,8 +2,8 @@
 
 // Tests for the Capacity page's Allocations tab and the page's tabs: each person's and planned hire's
 // features with their percentages, grouping, the tabs a role sees and the tab in the address, the
-// old addresses of Allocations, what it shows when it cannot load, its cells read only, and its saved
-// views.
+// old addresses of Allocations, what it shows when it cannot load, its cells read only, its filter
+// by feature in any month, and its saved views.
 
 import {
   type Allocations,
@@ -23,6 +23,7 @@ import {
   renderApp,
   serverAnswers,
 } from "./test-support.tsx";
+import { anyMonthKey } from "./team-months.tsx";
 
 const allocations: Allocations = {
   allocations: [
@@ -265,6 +266,77 @@ describe("Capacity's Allocations", () => {
 });
 
 const tab = (name: string) => screen.getByRole("tab", { name });
+
+describe("Allocations kept to a feature", () => {
+  it("keeps the rows on a feature chosen from the Features button, in any month, keeping it in the address", async () => {
+    // Given Allocations, with Casey and the planned hire on Checkout
+    const history = openAllocations();
+    await grid();
+
+    // When Checkout is chosen from the Features button
+    await userEvent.click(screen.getByRole("button", { name: "Features" }));
+    const filter = await screen.findByRole("dialog", {
+      name: "Filter Feature",
+    });
+    await userEvent.click(
+      within(filter).getByRole("checkbox", { name: "Checkout" }),
+    );
+
+    // Then only they show, the pill names the filter, and the address keeps it
+    await waitFor(() => {
+      expect(screen.queryByText("Avery Fictional")).toBeNull();
+    });
+    expect(rowOf("Casey Fictional")).toBeDefined();
+    expect(rowOf("Payments tester")).toBeDefined();
+    expect(screen.getByText("Feature: Checkout")).toBeDefined();
+    expect(address(history)).toContain(anyMonthKey);
+
+    // And Save view names the filter among what the view includes
+    await userEvent.click(
+      screen.getByRole("button", { name: "Views, changed" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Save view…" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Save view" });
+    expect(within(dialog).getByText("Feature: Checkout")).toBeDefined();
+  });
+
+  it("applies a saved view keeping a feature, reading as unchanged", async () => {
+    // Given a saved view kept to Checkout
+    const saved = {
+      id: "00000000-0000-4000-8000-0000000000a4",
+      name: "On Checkout",
+      scope: "shared",
+      definition: { filters: { [anyMonthKey]: { any: ["f-checkout"] } } },
+      canChange: true,
+      canShare: true,
+    };
+    serverAnswers({
+      "GET /api/session": session(seesAllocations),
+      [monthsUrl]: () => Response.json(fictionalTeamMonths),
+      "GET /api/allocations": () => Response.json(allocations),
+      "GET /api/org-chart": () => Response.json(chart),
+      "GET /api/views/capacity": () => Response.json([saved]),
+    });
+    renderApp("/capacity?mode=allocations");
+    await grid();
+
+    // When it is chosen in the Views menu
+    await userEvent.click(screen.getByRole("button", { name: "Views" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: /^On Checkout/u }),
+    );
+
+    // Then the rows are kept to Checkout, under the view's own name
+    await waitFor(() => {
+      expect(screen.queryByText("Avery Fictional")).toBeNull();
+    });
+    expect(
+      screen.getByRole("button", { name: "Views: On Checkout" }),
+    ).toBeDefined();
+  });
+});
 
 describe("the tabs of the Capacity page", () => {
   it("opens on Feature teams for a role that sees every tab", async () => {

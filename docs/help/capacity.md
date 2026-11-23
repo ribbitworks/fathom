@@ -54,6 +54,7 @@ You're done when the rows show under the headings you chose.
 
 - To find people by name, type in the search box. You can also type a team's or a feature's name, such as `Payments core` or `Checkout`, to find everyone on it in any month.
 - To filter one month by team or feature, open that month's column menu, select **Filter…**, and pick the teams or features.
+- To see only who is on some teams or features in any month, select the button after the search box, **Feature teams** on the **Feature teams** tab or **Features** on **Allocations**, and pick them. Pick **No feature team** or **No feature** to see who has none in any month. The months you scroll to don't change the rows. To clear it, select the **×** on its pill.
 
 ### Keep a View of the Table
 

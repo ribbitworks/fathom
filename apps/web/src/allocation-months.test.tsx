@@ -27,7 +27,7 @@ import {
   monthTotal,
 } from "./allocation-months.tsx";
 import { monthManagers } from "./planned-hire-months.ts";
-import { featureTeamGrouping } from "./team-months.tsx";
+import { anyMonthKey, featureTeamGrouping } from "./team-months.tsx";
 import { testTheme } from "./test-support.tsx";
 
 const months = ["2027-02", "2027-03", "2027-04"];
@@ -692,6 +692,36 @@ describe("the table", () => {
     expect(name?.readOnly).toBe(true);
     expect(monthColumns.every(({ readOnly }) => readOnly === true)).toBe(true);
     expect(monthColumns.map(({ key }) => key)).toEqual(months);
+  });
+
+  it("filters across the whole grid by the features in the months a row holds, from a Features button", () => {
+    // Given Casey on Checkout in March, under Search, and on Billing in April, under none
+    const grouped = rowsOf(
+      [
+        allocation({ months: { "2027-03": 50, "2027-04": null } }),
+        allocation({
+          id: "a-2",
+          featureId: "f-billing",
+          months: { "2027-04": 25 },
+        }),
+      ],
+      { grouping: featureTeamGrouping },
+    );
+    const [filter] = table.barFilters ?? [];
+    const inAnyMonth = (group: string | undefined) =>
+      filter?.column.value(
+        grouped.find((row) => row.group?.id === group) as AllocationRow,
+      );
+
+    // Then each row has only its own months' features, and none reads as no feature
+    expect([
+      filter?.button,
+      filter?.column.key,
+      filter?.column.emptyLabel,
+    ]).toEqual(["Features", anyMonthKey, "No feature"]);
+    expect(inAnyMonth(search.id)).toEqual(["f-checkout"]);
+    expect(inAnyMonth(undefined)).toEqual(["f-billing"]);
+    expect(filter?.column.value(casey(rowsOf([])))).toEqual([]);
   });
 
   it("groups by manager or feature team", () => {

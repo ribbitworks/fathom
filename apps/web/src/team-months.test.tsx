@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for feature teams month by month as a table of records: the months shown around today, what
-// the table answers for whole records, which months can be changed, what a cell's change asks for and
-// shows at once, and a person's months as drafts change them.
+// the table answers for whole records, its filter across every month, which months can be changed,
+// what a cell's change asks for and shows at once, and a person's months as drafts change them.
 
 import type { TeamMonths } from "@fathom/shared";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -87,6 +87,43 @@ describe("the table", () => {
         .filter(({ current }) => current === true)
         .map(({ key }) => key),
     ).toEqual(["2027-03"]);
+  });
+
+  it("filters across the whole grid by the teams in any month, from a Feature teams button", () => {
+    // Given a person on Search in February and Mobile in April
+    const withMonths = teamMonthsTable(
+      {
+        months: ["2027-02", "2027-03", "2027-04"],
+        teams: [
+          { id: "t-search", name: "Search", colour: null },
+          { id: "t-mobile", name: "Mobile", colour: null },
+        ],
+        people: [],
+        drafts: [],
+      },
+      "both",
+      edits,
+      [],
+    );
+    const [filter] = withMonths.barFilters ?? [];
+    const person = {
+      values: { "2027-02": ["t-search"], "2027-04": ["t-mobile", "t-search"] },
+    } as unknown as PersonMonths;
+
+    // Then the filter offers every team, and the person has each team once
+    expect([
+      filter?.button,
+      filter?.column.label,
+      filter?.column.emptyLabel,
+      filter?.column.choices.map(({ label }) => label),
+      filter?.column.value(person),
+    ]).toEqual([
+      "Feature teams",
+      "Feature team",
+      "No feature team",
+      ["Mobile", "Search"],
+      ["t-search", "t-mobile"],
+    ]);
   });
 });
 

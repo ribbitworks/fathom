@@ -28,7 +28,13 @@ import type {
   SavedViews,
   ViewChoice,
 } from "./table-controls.tsx";
-import type { CellValue, ColumnUnit, TableColumn, View } from "./table-view.ts";
+import type {
+  BarFilter,
+  CellValue,
+  ColumnUnit,
+  TableColumn,
+  View,
+} from "./table-view.ts";
 import type { GroupingChoice, RowGroups } from "./row-groups.ts";
 
 // A record's draft, as the table shows it: what it does, the columns it changes, by key, and who
@@ -266,6 +272,8 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // for all the rows shown, kept in view at the foot, headed with the overall label; each column's
   // total is drawn from the rows it sums.
   totals?: RowTotals<Rec>;
+  // Filters across the whole table, each offered from a button of its own in the bar above it.
+  barFilters?: readonly BarFilter<Rec>[];
 }
 
 export interface RowTotals<Rec> {

@@ -39,6 +39,7 @@ import { formatMonth } from "./day-formats.ts";
 import { groupedRowId, rankOfNone } from "./row-groups.ts";
 import type { DraftLike } from "./draft-marks.ts";
 import { type DraftedLabel, TeamLabels } from "./team-labels.tsx";
+import type { TableColumn } from "./table-view.ts";
 
 type MonthTeam = TeamMonths["teams"][number];
 type TeamDraft = NonNullable<TeamMonths["drafts"]>[number];
@@ -168,8 +169,12 @@ const editableMonth = (
 
 const madeNameOf = ({ madeName }: MonthRow) => madeName ?? "";
 
+// The key of the filter by the choices in any month, in the address and in views.
+export const anyMonthKey = "any-month";
+
 // The table of the monthly grid: a row's name, frozen on the left, then a column for each month,
 // whose cells show what the content gives, shaded outside someone's employment.
+
 export function monthGridTable<
   Rec extends MonthRow & { live?: Rec | undefined },
 >({
@@ -180,11 +185,15 @@ export function monthGridTable<
   content,
   readOnly,
   groupings,
+  filter,
 }: {
   months: readonly string[];
   currentMonth: string;
   label: string;
   choices: readonly { id: string; name: string }[];
+  // The filter across every month, by the choices: its button, the pill's name for a choice, and
+  // its words for a row with none in any month.
+  filter: { button: string; label: string; none: string };
   content: (record: Rec, month: string) => ReactNode;
   readOnly: (month: string) => boolean;
   groupings: readonly RowGrouping<Rec>[];
@@ -227,6 +236,20 @@ export function monthGridTable<
     },
     ...monthColumns,
   ];
+  // Every month the grid holds, not only those in view, so scrolling never changes the rows.
+  const inAnyMonth: TableColumn<Rec> = {
+    key: anyMonthKey,
+    label: filter.label,
+    kind: "choice",
+    choices: monthChoices,
+    multiple: true,
+    emptyLabel: filter.none,
+    value: (record) => [
+      ...new Set(
+        monthColumns.flatMap((column) => column.value(record) as string[]),
+      ),
+    ],
+  };
   return {
     ...readOnlyTableParts,
     label,
@@ -241,6 +264,7 @@ export function monthGridTable<
     drafts: () => noDrafts(),
     groupings,
     oneLevel: true,
+    barFilters: [{ button: filter.button, column: inAnyMonth }],
   };
 }
 
@@ -261,6 +285,11 @@ export function teamMonthsTable(
     ),
     readOnly: (month) => !editableMonth(month, edits),
     groupings: monthGroupings(managers, data),
+    filter: {
+      button: "Feature teams",
+      label: "Feature team",
+      none: "No feature team",
+    },
   });
 }
 

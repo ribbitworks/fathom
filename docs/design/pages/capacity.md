@@ -4,7 +4,7 @@ category: "Design"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/ui-conventions.md", "docs/help/capacity.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Fathom: Capacity Page
@@ -39,6 +39,10 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
   - That month's heading is filled in the accent colour, as the strip's chosen quarter is.
   - **‹** and **›** step a quarter from that month.
 - **Drafts:** marks as [Month grids](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines) sets out, carried by each team's or feature's line.
+- **Filter across the grid:** a button after the search box, Feature teams on Feature teams and Features on Allocations, opens a filter of the choices its months' filters offer: every feature team, or every feature someone is allocated to, as [Filtering across a table](../../standards/ui-conventions/tables.md#tables) sets out. It keeps the rows with a chosen one in any month of the grid, or, with No feature team or No feature, those with none in any month. On Allocations, a row under a group counts only that group's months, as its cells do.
+  - It reads every month of the grid, not only those in view, so scrolling never changes the rows.
+  - The cells still show every team or feature of their month, since a filter chooses rows, not what a cell holds.
+  - The view and the address keep it as the filter `any-month`, with a pill such as Feature: Offline Sync.
 
 ## Feature Teams
 
@@ -75,7 +79,6 @@ Feature teams and Allocations are one month grid, on the shared table, with the 
 ## Planned
 
 - **Over and Under filter:** a choice in the Views menu showing only the rows Over, Under, or either, in any month in view ([issue #234](https://github.com/ribbitworks/fathom/issues/234)).
-- **Feature filter:** one filter for a whole grid tab, by feature on Allocations and by feature team on Feature teams, showing the rows that have a chosen one in any month shown.
 - **Choosing a month by its heading:** clicking a month's heading moves the grid to it.
 - **More tabs:** Work and Demand, between Allocations and Settings.
 - **Work:** the [Plan](../../product/domain.md#planning-terms) on the [shared timeline](../../standards/ui-conventions/dates-timelines-and-boards.md#timelines): when each piece of work happens, whether it is staffed, and whether it makes its date.

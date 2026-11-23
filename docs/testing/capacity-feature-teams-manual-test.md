@@ -11,7 +11,7 @@ last_updated: "2026-11-23"
 
 ## Scope
 
-Verifies the **Feature teams** tab of the **Capacity** page: how the table of feature teams by month looks and scrolls, moving through it with the strip of quarters above it, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, the tab left out for a role without Personal details, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-data).
+Verifies the **Feature teams** tab of the **Capacity** page: how the table of feature teams by month looks and scrolls, moving through it with the strip of quarters above it, grouping its rows, searching and filtering it, keeping it to the people on a feature team in any month, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, the tab left out for a role without Personal details, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-data).
 
 ## Test Environment
 
@@ -607,4 +607,33 @@ Covered by the [Dark Mode](dark-mode-manual-test.md) manual test.
 
 - [ ] `7E31` Press Enter.
   - **Expected:** That quarter's first month is the second month beside the **Person** column, after the month before it.
+  - **Notes:**
+
+### FA-20: The Table Kept to a Feature Team in Any Month
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-19.
+
+**Preconditions:** **Capacity** open, with the **Feature teams** tab chosen, **None** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] `65F5` Select **Feature teams**, the button after the search box.
+  - **Expected:** A list opens under the button: every feature team, each with a tick box, then **No feature team** and **Not empty**.
+  - **Notes:**
+
+- [ ] `FFCD` Tick **Mobile apps**.
+  - **Expected:**
+    - The table lists only rows with **Mobile apps** in some month, whichever months are in view.
+    - A pill after the buttons reads "Feature team: Mobile apps".
+    - The rows' cells still show their other teams too.
+  - **Notes:**
+
+- [ ] `700D` Press Esc.
+  - **Expected:** The list closes, and the **Feature teams** button has a blue outline and a dot after its name.
+  - **Notes:**
+
+- [ ] `AAA3` Scroll the table sideways to its right end.
+  - **Expected:** The rows don't change.
+  - **Notes:**
+
+- [ ] `17F0` Select the **×** on the "Feature team: Mobile apps" pill.
+  - **Expected:** The table lists every row again, and the button's dot is gone.
   - **Notes:**
