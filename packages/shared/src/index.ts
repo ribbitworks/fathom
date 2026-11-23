@@ -404,6 +404,10 @@ export {
 } from "./schedule-changes.ts";
 export {
   type Customer,
+  customerFeatures,
+  customerKeptBy,
+  type CustomerLinks,
+  customerNamers,
   type CustomerRequest,
   customerRequestSchema,
   customerSchema,
@@ -412,6 +416,7 @@ export {
   type MilestoneRequest,
   milestoneRequestSchema,
   milestoneSchema,
+  namedBy,
   type PlanChoice,
   type PlanChoices,
   planChoicesSchema,

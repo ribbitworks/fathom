@@ -506,6 +506,10 @@ export function setsApart(view: View): boolean {
   );
 }
 
+// Whether the view hides any rows, or a filter of the page's own in use does too.
+export const narrowsWith = (view: View, pageFilter: object | undefined) =>
+  narrows(view) || pageFilter !== undefined;
+
 // Whether the view hides any rows, rather than only sorting them.
 export function narrows(view: View): boolean {
   return (

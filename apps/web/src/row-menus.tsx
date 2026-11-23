@@ -14,6 +14,7 @@ import {
 import {
   HeldNote,
   MenuDraftLines,
+  MenuNote,
   MenuTitle,
   OtherApproverNote,
   UnpublishedNote,
@@ -141,6 +142,9 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
         ? ownDraft?.state === "waiting" && ownDraft.needsOtherApprover === true
         : draftTotal(decides.approved) === 0;
     const offer = offerOf(record);
+    const removeTurnedOff = offer.remove
+      ? table.removeTurnedOff?.(record)
+      : undefined;
     // Back to the row whose menu it was, in the active column, or, where that row is gone or the
     // menu was the panel's, to the active cell.
     const backToTable = (recordLeaves = false) => {
@@ -230,15 +234,21 @@ export function rowMenus<Rec extends GridRecord, Change, Request>(
               </Menu.Item>
             )}
             {offer.remove && (
-              <Menu.Item
-                color="red"
-                onClick={() => {
-                  actions.remove(record);
-                  backToTable();
-                }}
-              >
-                {table.removeLabel(record)}
-              </Menu.Item>
+              <>
+                <Menu.Item
+                  color="red"
+                  disabled={removeTurnedOff !== undefined}
+                  onClick={() => {
+                    actions.remove(record);
+                    backToTable();
+                  }}
+                >
+                  {table.removeLabel(record)}
+                </Menu.Item>
+                {removeTurnedOff !== undefined && (
+                  <MenuNote>{removeTurnedOff}</MenuNote>
+                )}
+              </>
             )}
           </>
         )}

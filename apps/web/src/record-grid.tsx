@@ -26,7 +26,7 @@ import type { GridRecord, RecordGridProps } from "./record-table.ts";
 import { rowMenus } from "./row-menus.tsx";
 import { WithSidePanel } from "./side-panel.tsx";
 import { DraftView, MarkedItem } from "./status-mark.tsx";
-import { narrows } from "./table-view.ts";
+import { narrowsWith } from "./table-view.ts";
 import type { ValueStore } from "./value-store.ts";
 
 // A line of a column's header, its name or a mark under it, and the room above and below them, for
@@ -59,6 +59,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
     columnBorders,
     body,
     ticks,
+    pageFilter,
     known,
     columns,
     view,
@@ -110,6 +111,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
     );
   }
   const { bodyRows, totalRow } = gridRows(grid);
+  const narrowed = narrowsWith(view, pageFilter);
   // Menus and choices stay shown beside their cell however the table scrolls, so they are not hidden
   // when the cell is partly out of view.
   return (
@@ -225,7 +227,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
                 </Table.Thead>
                 <Table.Tbody>
                   {shownRecords.length === 0 &&
-                    (narrows(view) || rows.length === 0) && (
+                    (narrowed || rows.length === 0) && (
                       <Table.Tr>
                         <Table.Td
                           colSpan={
@@ -236,7 +238,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>(
                           className={classes.recordNone}
                         >
                           <Text component="span" fz="sm" c="dimmed">
-                            {narrows(view)
+                            {narrowed
                               ? `No matching ${table.noun}`
                               : `No ${table.noun}`}
                           </Text>

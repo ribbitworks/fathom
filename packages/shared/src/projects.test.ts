@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for projects' dates from their milestones, and the requests that add and change customers,
-// projects, milestones, and proposals, a feature's projects and proposals, and the reasons kept for
-// features removed from a proposal.
+// Tests for projects' dates from their milestones, the requests that add and change customers,
+// projects, milestones, and proposals, a feature's projects and proposals, the reasons kept for
+// features removed from a proposal, the records naming a record, and a customer's links.
 
 import { describe, expect, it } from "vitest";
 import {
+  customerFeatures,
+  customerKeptBy,
+  customerNamers,
   customerRequestSchema,
   featureProjectsRequestSchema,
   milestoneRequestSchema,
+  namedBy,
   projectDates,
   projectRequestSchema,
   projectLengths,
@@ -258,5 +262,181 @@ describe("values as stored", () => {
     });
     expect(removalReasonsIn(null)).toEqual({});
     expect(removalReasonsIn({ [first]: 3 })).toEqual({});
+  });
+});
+
+describe("the records naming a record", () => {
+  const customer = "customer";
+  const feature = "feature";
+  const proposal = "proposal";
+  const naming = {
+    id: "naming",
+    customerIds: [customer],
+    proposalIds: [proposal],
+    featureIds: [feature],
+  };
+  const unlinked = {
+    id: "unlinked",
+    customerIds: [],
+    proposalIds: [],
+    featureIds: [],
+  };
+
+  it.each([
+    ["customerIds", customer],
+    ["proposalIds", proposal],
+    ["featureIds", feature],
+  ] as const)(
+    "are those naming it through %s, in the order given",
+    (link, id) => {
+      const later = { ...naming, id: "later" };
+      expect(namedBy([naming, unlinked, later], link, id)).toEqual([
+        naming,
+        later,
+      ]);
+    },
+  );
+
+  it("are none when nothing names it through that link", () => {
+    expect(namedBy([naming], "proposalIds", customer)).toEqual([]);
+  });
+
+  it("follow a draft adding a link and one taking it away, as the records given show them", () => {
+    const linkedByDraft = {
+      ...unlinked,
+      customerIds: [customer],
+      draft: { live: { customerIds: [] } },
+    };
+    const unlinkedByDraft = {
+      ...naming,
+      customerIds: [],
+      draft: { live: { customerIds: [customer] } },
+    };
+    expect(
+      namedBy([linkedByDraft, unlinkedByDraft], "customerIds", customer),
+    ).toEqual([linkedByDraft]);
+  });
+});
+
+describe("a customer's links", () => {
+  const customer = "customer";
+  const other = "other";
+  const namerOf = (
+    id: string,
+    customerIds: string[],
+    featureIds: string[],
+  ) => ({
+    id,
+    customerIds,
+    featureIds,
+  });
+  const featureOf = (id: string, customerIds: string[] = []) => ({
+    id,
+    customerIds,
+  });
+  const links = {
+    projects: [
+      namerOf("project", [customer], ["needed", "both"]),
+      namerOf("other project", [other], ["elsewhere"]),
+    ],
+    proposals: [namerOf("proposal", [customer, other], ["proposed", "both"])],
+    features: [
+      featureOf("elsewhere"),
+      featureOf("proposed"),
+      featureOf("direct", [customer]),
+      featureOf("both", [customer]),
+      featureOf("needed"),
+      featureOf("unnamed"),
+    ],
+  };
+
+  it("name its projects, its proposals and the features naming it directly", () => {
+    const namers = customerNamers(links, customer);
+    expect(namers.projects.map(({ id }) => id)).toEqual(["project"]);
+    expect(namers.proposals.map(({ id }) => id)).toEqual(["proposal"]);
+    expect(namers.features.map(({ id }) => id)).toEqual(["direct", "both"]);
+  });
+
+  it("give every feature it gets or asks for once, in the features' order", () => {
+    expect(customerFeatures(links, customer).map(({ id }) => id)).toEqual([
+      "proposed",
+      "direct",
+      "both",
+      "needed",
+    ]);
+  });
+
+  it("leave out features a project names that the reader isn't sent", () => {
+    expect(customerFeatures({ ...links, features: [] }, customer)).toEqual([]);
+  });
+
+  it("give a customer nothing names nothing", () => {
+    expect(customerNamers(links, "unnamed")).toEqual({
+      projects: [],
+      proposals: [],
+      features: [],
+    });
+    expect(customerFeatures(links, "unnamed")).toEqual([]);
+  });
+});
+
+describe("what keeps a customer from being removed", () => {
+  const customer = "customer";
+  const named = (id: string, customerIds: string[] = [customer]) => ({
+    id,
+    customerIds,
+    featureIds: [],
+  });
+  const removed = { draft: { action: "deleted" } };
+  const links = {
+    projects: [named("other project", ["other"]), named("project")],
+    proposals: [named("proposal")],
+    features: [named("feature")],
+  };
+
+  it("is its first project, before its proposals and features", () => {
+    expect(customerKeptBy(links, customer)?.id).toBe("project");
+  });
+
+  it("is its first proposal when no project names it", () => {
+    expect(customerKeptBy({ ...links, projects: [] }, customer)?.id).toBe(
+      "proposal",
+    );
+  });
+
+  it("is a feature naming it when nothing else does", () => {
+    expect(
+      customerKeptBy({ ...links, projects: [], proposals: [] }, customer)?.id,
+    ).toBe("feature");
+  });
+
+  it("leaves out records drafted to be removed", () => {
+    expect(
+      customerKeptBy(
+        {
+          projects: [{ ...named("project"), ...removed }],
+          proposals: [{ ...named("proposal"), ...removed }],
+          features: [{ ...named("feature"), ...removed }],
+        },
+        customer,
+      ),
+    ).toBeUndefined();
+  });
+
+  it("keeps records a draft changes in other ways", () => {
+    expect(
+      customerKeptBy(
+        {
+          projects: [{ ...named("project"), draft: { action: "changed" } }],
+          proposals: [],
+          features: [],
+        },
+        customer,
+      )?.id,
+    ).toBe("project");
+  });
+
+  it("is none when nothing names it", () => {
+    expect(customerKeptBy(links, "unnamed")).toBeUndefined();
   });
 });

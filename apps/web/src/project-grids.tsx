@@ -5,7 +5,10 @@
 
 import {
   type Customer,
+  customerFeatures,
+  customerKeptBy,
   type CustomerRequest,
+  type Feature,
   type Milestone,
   planColumnNames,
   planIdNames,
@@ -18,11 +21,12 @@ import {
 import { Menu } from "@mantine/core";
 import type { DraftField } from "./draft-details.tsx";
 import { featureColumns } from "./feature-table.tsx";
-import type {
-  MilestoneAdding,
-  PlanRecord,
-  PlanRecordKind,
-  TableChoices,
+import {
+  identifiedLabel,
+  type MilestoneAdding,
+  type PlanRecord,
+  type PlanRecordKind,
+  type TableChoices,
 } from "./projects.ts";
 import { isPending } from "./grid-drafts.ts";
 import {
@@ -43,6 +47,8 @@ import {
   recordMenu,
   savedKind,
   wordsOf,
+  namersColumn,
+  workedOutColumn,
 } from "./plan-table.tsx";
 import { RecordGrid } from "./record-grid.tsx";
 import type {
@@ -57,23 +63,117 @@ export const customerColumnGroups: readonly ColumnGroup[] = [
   { title: "Details", keys: ["name", "description", "note"] },
 ];
 
-const customerColumns = (): Column<Customer, PlanChange>[] => [
+// A customer's Name and Description, which its table and details start with.
+const customerLeadingColumns = (): Column<Customer, PlanChange>[] => [
   nameColumn(),
   field<Customer>("description", planColumnNames.description, "text", {
     maxLength: projectLengths.customerDescription,
   }),
-  field<Customer>("note", planColumnNames.note, "note"),
 ];
 
+const customerNoteColumn = () =>
+  field<Customer>("note", planColumnNames.note, "note");
+
+// A customer's own columns, which its details show.
+export const customerOwnColumns = (): Column<Customer, PlanChange>[] => [
+  ...customerLeadingColumns(),
+  customerNoteColumn(),
+];
+
+// The plan's records as a customer's columns read them.
+type CustomerChoices = Pick<
+  TableChoices,
+  "projects" | "proposals" | "features" | "drafted"
+>;
+
+// The features each customer gets, worked out once for each customer while the table's columns
+// last, since sorting reads each cell many times.
+function customerFeaturesOf(choices: CustomerChoices) {
+  const worked = new Map<string, readonly Feature[]>();
+  return (customer: Customer) => {
+    const known = worked.get(customer.id);
+    if (known !== undefined) return known;
+    const gets = customerFeatures(choices, customer.id);
+    worked.set(customer.id, gets);
+    return gets;
+  };
+}
+
+// A customer's columns: its own, with the projects and proposals naming it, each marked with its
+// own draft, and the features it gets, worked out from their links, before Notes. Features shows only to those who see features.
+function customerColumns(
+  choices: CustomerChoices,
+  seesFeatures: boolean,
+): Column<Customer, PlanChange>[] {
+  const featuresOf = customerFeaturesOf(choices);
+  return [
+    ...customerLeadingColumns(),
+    {
+      ...namersColumn<Customer>(
+        "projectIds",
+        planColumnNames.projectIds,
+        choices.projects,
+        choices.drafted.projects,
+        "customerIds",
+      ),
+      readOnly: true,
+    },
+    {
+      ...namersColumn<Customer>(
+        "proposalIds",
+        planColumnNames.proposalIds,
+        choices.proposals,
+        choices.drafted.proposals,
+        "customerIds",
+      ),
+      readOnly: true,
+    },
+    ...(seesFeatures
+      ? [
+          workedOutColumn<Customer>(
+            "featureIds",
+            planColumnNames.featureIds,
+            choices.features,
+            featuresOf,
+          ),
+        ]
+      : []),
+    customerNoteColumn(),
+  ];
+}
+
+// Why a customer can't be removed while something names it, naming the record that keeps it.
+function customerRemoveTurnedOff(
+  choices: CustomerChoices,
+  customer: Customer,
+): string | undefined {
+  const keeping = customerKeptBy(choices, customer.id);
+  return keeping === undefined
+    ? undefined
+    : `${identifiedLabel(keeping)} names this customer.`;
+}
+
 export function customerTable(
-  onOpen?: (customer: Customer) => void,
+  choices: CustomerChoices,
+  {
+    seesFeatures,
+    onOpen,
+    onFeatures,
+  }: {
+    seesFeatures: boolean;
+    onOpen?: ((customer: Customer) => void) | undefined;
+    // Opens Features with every feature the customer gets or asks for.
+    onFeatures?: ((customer: Customer) => void) | undefined;
+  },
 ): RecordTable<Customer, PlanChange, CustomerRequest> {
   return planTable<Customer, CustomerRequest>({
     type: "customer",
     ...wordsOf("customers"),
-    columns: customerColumns,
+    columns: () => customerColumns(choices, seesFeatures),
     request: (changes) => merged(changes) as CustomerRequest,
     showDetails: onOpen,
+    menuItems: recordMenu<Customer>([["Show all its features", onFeatures]]),
+    removeTurnedOff: (customer) => customerRemoveTurnedOff(choices, customer),
   });
 }
 
@@ -283,7 +383,7 @@ const draftColumns: Readonly<
     (choices: TableChoices) => readonly Column<never, PlanChange>[]
   >
 > = {
-  customer: customerColumns,
+  customer: customerOwnColumns,
   project: projectColumns,
   proposal: proposalColumns,
   milestone: (choices) => milestoneColumns(choices.projects),

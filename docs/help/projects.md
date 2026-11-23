@@ -6,7 +6,7 @@
 
 - **Projects:** a project is work delivered to one or more customers. A project with no customers is an internal project.
 - **Proposals:** a proposal is work offered or requested that may become a project, such as a bid or a customer's request.
-- **Customers:** a customer is whoever a project's work is for. Each can have a short **Description** and **Notes**, which hold formatting, as a feature's do.
+- **Customers:** a customer is whoever a project's work is for. Each can have a short **Description** and **Notes**, which hold formatting, as a feature's do. The **Customers** tab also lists the **Projects** and **Proposals** that name each customer, and its **Features**: those that name it, and those its projects need or its proposals propose. Fathom works these out from the links, so you change them on the project, proposal or feature.
 - **Milestones:** the dated points in a project, such as a delivery to the customer.
 - **Features:** a project or proposal names the features it needs. Features are planned on the [Features](features.md) page.
 - **Drafts:** every change you make here is a draft. Nobody else sees it until you select **Publish** in the top bar. A hollow dot marks a change you haven't published yet.
@@ -95,6 +95,7 @@ To change a milestone there, select **Edit…** in its **⋯** menu. To remove i
 
 - To see a project's milestones, select **Show milestones** in the project's **⋯** menu, or beside the **Milestones** heading in its details. **Milestones** opens, showing only that project's.
 - To see the features a project or proposal names, select **Show features** in its **⋯** menu. **Features** opens, showing only those features.
+- To see every feature a customer gets or asks for, select **Show all its features** in the customer's **⋯** menu. **Features** opens with a filter named for the customer, such as **For Bluefin Harbour Authority**. See [Features](features.md#see-a-customers-features) for more.
 - To go from a milestone to its project, select **Show project** in the milestone's **⋯** menu. The project's details open.
 
 You're done when the page shows what you chose.
@@ -128,7 +129,9 @@ See [People](people.md#export-people) for what the file holds.
 
 The row is struck through until the removal is approved. A project takes its milestones with it.
 
-Fathom won't remove a customer or a proposal that another record still names. It also won't remove a project once people are allocated to it.
+While a project, proposal or feature names a customer, **Remove customer** is greyed out, with a line under it naming one of them, such as "P-2001 Crane Control names this customer." Take the customer off that record first.
+
+Fathom won't remove a proposal that another record still names. It also won't remove a project once people are allocated to it.
 
 You're done when the row is struck through.
 

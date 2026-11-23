@@ -17,8 +17,10 @@ describe("Features' choices", () => {
   const fits = (choices: object) =>
     viewChoiceSchemas.features.safeParse(choices).success;
 
-  it("accepts the Board's stream and the card parts hidden", () => {
-    expect(fits({ stream, hide: ["status", "size"] })).toBe(true);
+  it("accepts the Board's stream, the card parts hidden and the customer filtered to", () => {
+    expect(fits({ stream, hide: ["status", "size"], customer: lead })).toBe(
+      true,
+    );
     expect(fits({})).toBe(true);
   });
 
@@ -37,6 +39,8 @@ describe("Features' choices", () => {
       "a schedule's cycles and months of a schedule at once",
       { stream, schedule: stream },
     ],
+    ["a customer that isn't an identifier", { customer: "Bluefin" }],
+    ["several customers", { customer: [lead, stream] }],
     ["a card part it doesn't have", { hide: ["colour"] }],
     ["a card part twice", { hide: ["status", "status"] }],
     ["a choice it doesn't keep", { from: "2026-01-01" }],

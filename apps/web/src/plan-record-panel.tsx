@@ -26,7 +26,7 @@ import {
 } from "./plan-table.tsx";
 import {
   customerColumnGroups,
-  customerTable,
+  customerOwnColumns,
   milestoneColumns,
   projectColumns,
   projectDateColumns,
@@ -249,9 +249,7 @@ export function recordPanel({
     proposals: () =>
       shownOf("proposal", plan.proposals, () => proposalColumns(choices)),
     customers: () =>
-      shownOf("customer", plan.customers, () =>
-        customerTable().columnsFor([], [], [], []),
-      ),
+      shownOf("customer", plan.customers, () => customerOwnColumns()),
     features: () =>
       shownOf("feature", plan.features, () =>
         featureColumns(choices, { editsCommitments: editsKind("project") }),

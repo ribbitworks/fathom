@@ -32,6 +32,7 @@ import {
 import { removedCycleMark } from "./cycle-table.tsx";
 import { oneBoardColumns } from "./feature-board.ts";
 import { lastViewsQuery } from "./last-views.ts";
+import { customerChoiceKey } from "./customer-filter.ts";
 import { ProjectsPage, projectTabSchema } from "./projects-page.tsx";
 import { featureNamers, planAddress } from "./projects.ts";
 import {
@@ -275,10 +276,11 @@ const projectsSearch = planRecordSearch.extend({
 });
 
 // Features' address adds whether it shows a board, and the board's stream, the cycle it starts from,
-// and the parts of its cards hidden.
+// and the parts of its cards hidden, and the customer whose features alone it shows.
 const featuresSearch = planRecordSearch
   .extend({
     column: linkedColumnSearch,
+    customer: z.uuid().optional().catch(undefined),
     mode: planModeSchema.optional().catch(undefined),
     stream: z.uuid().optional().catch(undefined),
     schedule: z.uuid().optional().catch(undefined),
@@ -286,6 +288,14 @@ const featuresSearch = planRecordSearch
     hide: z.array(cardPartSchema).optional().catch(undefined),
   })
   .transform(oneBoardColumns);
+
+// The choices Features keeps in its view, by their names in the address.
+const featuresChoices = [
+  "stream",
+  "schedule",
+  "hide",
+  customerChoiceKey,
+] as const;
 
 export const featuresRoute = createRoute({
   getParentRoute: () => signedInRoute,
@@ -295,12 +305,7 @@ export const featuresRoute = createRoute({
     reaching("features")(match);
     openOnLastView(
       match,
-      shownOn(
-        "features",
-        match.search,
-        ["stream", "schedule", "hide"],
-        match.search.mode,
-      ),
+      shownOn("features", match.search, featuresChoices, match.search.mode),
     );
   },
   component: function Features() {
@@ -343,7 +348,7 @@ export const featuresRoute = createRoute({
               replace,
             });
           },
-          ["stream", "schedule", "hide"],
+          featuresChoices,
         )}
         open={open}
         onOpen={(next) => {
@@ -392,7 +397,7 @@ export const projectsRoute = createRoute({
     );
   },
   component: function Projects() {
-    const { permissions } = signedIn.useRouteContext();
+    const { permissions, access } = signedIn.useRouteContext();
     const navigate = projectsRoute.useNavigate();
     const { tab, open, note, tableNote, ...search } = projectsRoute.useSearch();
     const notes = { note, tableNote };
@@ -417,6 +422,13 @@ export const projectsRoute = createRoute({
               tab: "milestones",
               filters: { projectId: { any: [project.id] } },
             },
+          });
+        }}
+        seesFeatures={opensWith(pageNeeds.features, access)}
+        onCustomerFeatures={({ id }) => {
+          void navigate({
+            to: "/features",
+            search: { [customerChoiceKey]: id },
           });
         }}
         onFeaturesOf={({ type, id }) => {

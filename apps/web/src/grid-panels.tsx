@@ -34,6 +34,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     | "viewChoices"
     | "count"
     | "pageParts"
+    | "pageFilter"
     | "above"
     | "fields"
     | "liveColumn"
@@ -79,6 +80,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
     viewChoices,
     count,
     pageParts,
+    pageFilter,
     above,
     fields,
     liveColumn,
@@ -258,6 +260,7 @@ export function useGridPanels<Rec extends GridRecord, Change, Request>(
       saved={saved}
       choices={viewChoices}
       pageParts={pageParts}
+      pageFilter={pageFilter}
       draftItems={
         <>
           {waitingTotal > 0 && (
