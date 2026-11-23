@@ -279,44 +279,37 @@ describe("a schedule's last day", () => {
   const lateFeature = () =>
     plan({ features: [["late", feature("2027-10-01")]] });
 
-  it.each([
-    [
-      "is refused before the first cycle starts",
-      plan,
-      "2026-12-31",
-      seesWork,
-      endsBeforeFirstCycle,
-    ],
+  it.each<[string, () => RecordsState, string, Change[], string | undefined]>([
     [
       "is refused before a release's last cycle starts, naming the release",
       withAlpha,
       "2027-03-31",
-      seesWork,
+      [],
       alphaAfterPlan,
     ],
     [
-      "may be the day a release's last cycle starts",
+      "may come before a release drafted to be removed",
       withAlpha,
-      "2027-04-01",
-      seesWork,
+      "2027-03-31",
+      [removing("release", "alpha")],
       undefined,
     ],
     [
-      "is refused before a cycle a feature targets, naming the feature",
-      lateFeature,
+      "may come before a cycle a feature of another schedule targets",
+      () => plan({ features: [["other", feature("2027-10-01", otherStream)]] }),
       "2027-09-30",
-      seesWork,
-      "The feature Fictional Feature targets a cycle after that day; change it first",
+      [],
+      undefined,
     ],
     [
-      "names no release or feature to one who doesn't see features",
+      "may come before a cycle a feature drafted to be removed targets",
       lateFeature,
       "2027-09-30",
-      seesConfigurationAlone,
-      "Work is planned on cycles after that day",
+      [removing("feature", "late")],
+      undefined,
     ],
-  ])("%s", (_, state, endsOn, permissions, refusal) => {
-    expect(problemOf(state(), [endingOn(endsOn)], permissions)).toBe(refusal);
+  ])("%s", (_, state, endsOn, others, refusal) => {
+    expect(problemOf(state(), [...others, endingOn(endsOn)])).toBe(refusal);
   });
 
   it("refuses a first pattern starting after it", () => {
@@ -444,6 +437,15 @@ describe("the order of the checks", () => {
       "names a release past the end, not off the cycles, when the stream and a pattern are touched",
       [endingOn("2027-03-31"), twoMonthCycles],
       alphaAfterPlan,
+    ],
+    [
+      "names a feature past the end before a release off the cycles",
+      [
+        endingOn("2027-06-30"),
+        adding(feature("2027-10-01")),
+        adding(release("Fictional Off", "2027-02-01")),
+      ],
+      "The feature Fictional Feature targets a cycle after that day; change it first",
     ],
     [
       "names a release's cycles before a clash",

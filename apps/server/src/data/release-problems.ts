@@ -10,6 +10,7 @@ import {
   namesPlannedWork,
   patternStartFits,
   type Permission,
+  scheduleEndProblem,
 } from "@fathom/shared";
 import type { Recorded } from "./draft-records.ts";
 import {
@@ -23,6 +24,7 @@ import {
   onCycles,
   type OnCyclesType,
   onStream,
+  planned,
   reachOf,
   releaseFits,
   streamPatterns,
@@ -30,38 +32,29 @@ import {
 } from "./stream-cycles.ts";
 
 interface CycleRefusals {
-  afterPlan: (name: string) => string;
   offCycles: (name: string) => string;
   notOfStream: string;
 }
 
-// How each kind of record on a stream's cycles is refused: when it is past the stream's plan, when
-// a change of the stream's cycles leaves it off them, and when the cycles asked for are not the
-// stream's.
+// How each kind of record on a stream's cycles is refused: when a change of the stream's cycles
+// leaves it off them, and when the cycles asked for are not the stream's.
 const cycleRefusals: Readonly<Record<OnCyclesType, CycleRefusals>> = {
   release: {
-    afterPlan: (name) =>
-      `The release ${name} includes cycles after that day; change it first`,
     offCycles: (name) =>
       `The release ${name} would no longer start and end with cycles of its schedule; change it first`,
     notOfStream: "Choose a first and last cycle of the release's schedule",
   },
   feature: {
-    afterPlan: (name) =>
-      `The feature ${name} targets a cycle after that day; change it first`,
     offCycles: (name) =>
       `The feature ${name} would no longer target a cycle of its schedule; change it first`,
     notOfStream: "Choose a cycle of the feature's schedule",
   },
 };
 
-// The refusals of a change of cycles, to a role that can't see releases and features, naming none
+// The refusal of a change of cycles, to a role that can't see releases and features, naming none
 // of them.
-const unnamedRefusals = {
-  afterPlan: "Work is planned on cycles after that day",
-  offCycles:
-    "Work planned on these cycles would no longer fit the schedule's cycles",
-} as const;
+const unnamedOffCycles =
+  "Work planned on these cycles would no longer fit the schedule's cycles";
 
 const overlaps = (first: Recorded, second: Recorded) =>
   String(first.firstCycle) <= String(second.lastCycle) &&
@@ -107,7 +100,15 @@ export function releaseProblem(
     const found = streamReleases(state, streamId);
     const endsOn = endsOnOf(state, streamId);
     const made = patterns.map(({ pattern }) => pattern);
-    if ((streamTouched || patternTouched) && endsTooEarly(made, endsOn)) {
+    if (streamTouched) {
+      const problem = scheduleEndProblem(
+        made,
+        endsOn,
+        planned(state, streamId),
+        permissions,
+      );
+      if (problem !== undefined) return problem;
+    } else if (patternTouched && endsTooEarly(made, endsOn)) {
       return endsBeforeFirstCycle;
     }
     const cycles = cyclesOf(made, reachOf(state, streamId), endsOn);
@@ -121,17 +122,9 @@ export function releaseProblem(
         );
         if (!patternTouched && !streamTouched && !recordTouched) continue;
         const name = String(record.name);
-        const own = asCycles(record);
-        if (
-          streamTouched &&
-          endsOn !== null &&
-          String(own.lastCycle) > endsOn
-        ) {
-          return worded(refusals.afterPlan(name), unnamedRefusals.afterPlan);
-        }
-        if (!releaseFits(cycles, own)) {
+        if (!releaseFits(cycles, asCycles(record))) {
           return patternTouched
-            ? worded(refusals.offCycles(name), unnamedRefusals.offCycles)
+            ? worded(refusals.offCycles(name), unnamedOffCycles)
             : refusals.notOfStream;
         }
         if (type !== "release") continue;

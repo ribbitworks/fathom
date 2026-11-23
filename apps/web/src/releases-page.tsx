@@ -32,13 +32,13 @@ import { HeadingTabPanel, HeadingTabs, PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import {
   CycleLengthDialog,
-  EndsDialog,
   PatternDialog,
   ReleaseDialog,
   type ReleasePart,
   StreamDialog,
 } from "./release-dialogs.tsx";
 import { releasePanelTitleId, ReleasesTable } from "./release-tab.tsx";
+import { EndsDialog } from "./schedule-end-dialog.tsx";
 import { useDiscardQuestion } from "./discard-question.tsx";
 import { afterNote, useNoteEditing } from "./note-editing.tsx";
 import {

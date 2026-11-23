@@ -108,6 +108,31 @@ export function streamReleases(
     );
 }
 
+// The releases and features on a stream's cycles, as their drafts make them, a feature as a release
+// on its one cycle.
+export const planned = (state: RecordsState, streamId: string) => [
+  ...streamReleases(state, streamId).map(({ id, release }) => ({
+    type: "release" as const,
+    id,
+    record: release,
+    name: String(release.name),
+    firstCycle: String(release.firstCycle),
+    lastCycle: String(release.lastCycle),
+    shipsOn: typeof release.shipsOn === "string" ? release.shipsOn : null,
+  })),
+  ...streamFeatures(state, streamId).map(({ id, record }) => ({
+    type: "feature" as const,
+    id,
+    record,
+    name: String(record.name),
+    firstCycle: String(record.targetCycle),
+    lastCycle: String(record.targetCycle),
+    shipsOn: null,
+  })),
+];
+
+export type Planned = ReturnType<typeof planned>[number];
+
 // A schedule's last day, from its record, or null while it keeps going.
 export const endsOnIn = (stream: Recorded): string | null =>
   typeof stream.endsOn === "string" ? stream.endsOn : null;

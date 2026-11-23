@@ -1,90 +1,47 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the dialogs of the Releases page, with the server's answers simulated: naming a stream,
-// changing its cycles, one cycle's length, the day its cycles are made until, and making or
-// changing a release, each with what it refuses before saving, what it sends, and what it does
-// while and once it saves.
+// changing its cycles, one cycle's length, and making or changing a release, each with what it
+// refuses before saving, what it sends, and what it does while and once it saves.
 
-import { sessionResponseSchema, shipsBeforeStart } from "@fathom/shared";
-import { MantineProvider } from "@mantine/core";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { shipsBeforeStart } from "@fathom/shared";
+import { screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { dayNeeded, dayProblem } from "./day-input.tsx";
 import {
   CycleLengthDialog,
-  EndsDialog,
   PatternDialog,
   ReleaseDialog,
   StreamDialog,
 } from "./release-dialogs.tsx";
-import { sessionQuery } from "./session.ts";
+import {
+  bodiesOf,
+  box,
+  changeSetId,
+  cyclesIn,
+  savedStream,
+  show,
+  stream,
+  streamPath,
+} from "./test-release-dialogs.tsx";
 import {
   fictionalPattern,
-  fictionalUser,
   fictionalRelease,
   fictionalStream,
   recordDraft,
   serverAnswers,
   signedOut,
   streamId,
-  testTheme,
   noFeatureColumns,
   featureDraft,
   quarters,
 } from "./test-support.tsx";
 
-const changeSetId = "00000000-0000-4000-8000-000000000001";
-const streamPath = `/api/release-streams/${streamId}`;
-const stream = fictionalStream();
-const savedStream = () => Response.json({ stream, changeSetId });
-
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const saving = () => ({ onSaved: vi.fn(), onCancel: vi.fn(), onBusy: vi.fn() });
-
-function show(
-  dialog: (handlers: ReturnType<typeof saving>) => ReactElement,
-  { signedIn = true } = {},
-) {
-  const handlers = saving();
-  const client = new QueryClient();
-  if (signedIn) {
-    client.setQueryData(
-      sessionQuery.queryKey,
-      sessionResponseSchema.parse(fictionalUser),
-    );
-  }
-  render(
-    <MantineProvider theme={testTheme}>
-      <QueryClientProvider client={client}>
-        {dialog(handlers)}
-      </QueryClientProvider>
-    </MantineProvider>,
-  );
-  return handlers;
-}
-
-function bodiesOf(fetch: ReturnType<typeof serverAnswers>): unknown[] {
-  return fetch.mock.calls.flatMap(([, init]) =>
-    init?.body === undefined
-      ? []
-      : [JSON.parse(init.body as string) as unknown],
-  );
-}
-
-// The rows of a table of cycles, such as "First cycles", each as its text.
-const cyclesIn = (name: string) =>
-  within(screen.getByRole("table", { name }))
-    .getAllByRole("row")
-    .map(({ textContent }) => textContent);
-
-const box = (name: string) =>
-  screen.getByRole<HTMLInputElement>("textbox", { name });
 const picker = (name: string) =>
   screen.getByRole<HTMLInputElement>("combobox", { name });
 
@@ -173,134 +130,6 @@ describe("the dialog naming a release stream", () => {
     ));
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onCancel).toHaveBeenCalled();
-  });
-});
-
-describe("the dialog ending a schedule", () => {
-  it("ends the schedule on the day typed", async () => {
-    const fetch = serverAnswers({ [`PUT ${streamPath}/ends-on`]: savedStream });
-    const { onSaved } = show((handlers) => (
-      <EndsDialog stream={stream} {...handlers} />
-    ));
-    await userEvent.type(box("Schedule ends"), "20270515");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    await waitFor(() => {
-      expect(onSaved).toHaveBeenCalled();
-    });
-    expect(bodiesOf(fetch)).toEqual([{ endsOn: "2027-05-15" }]);
-  });
-
-  it("shows how many cycles the day leaves, and the last cut to end on it", async () => {
-    show((handlers) => <EndsDialog stream={stream} {...handlers} />);
-    await userEvent.type(box("Schedule ends"), "20270515");
-    expect([
-      screen.getByText("2 cycles in all"),
-      cyclesIn("Last cycles"),
-    ]).toEqual([
-      expect.anything(),
-      ["27.12027-01-01 to 2027-03-31", "27.22027-04-01 to 2027-05-15"],
-    ]);
-  });
-
-  it.each([
-    ["several", "20280630", "6 cycles in all"],
-    ["one", "20270201", "1 cycle in all"],
-  ])("counts the cycles a day leaves: %s", async (_case, typed, count) => {
-    show((handlers) => <EndsDialog stream={stream} {...handlers} />);
-    await userEvent.type(box("Schedule ends"), typed);
-    expect(screen.getByText(count)).toBeDefined();
-  });
-
-  it("shows no cycles while the schedule keeps going", () => {
-    show((handlers) => <EndsDialog stream={stream} {...handlers} />);
-    expect([
-      screen.queryByText(/in all/),
-      screen.queryByRole("table", { name: "Last cycles" }),
-    ]).toEqual([null, null]);
-  });
-
-  it("counts no cycles from changes of cycles drafted to be removed", async () => {
-    const removing = fictionalStream({
-      patterns: [
-        fictionalPattern({ draft: recordDraft({ action: "deleted" }) }),
-      ],
-    });
-    show((handlers) => <EndsDialog stream={removing} {...handlers} />);
-    await userEvent.type(box("Schedule ends"), "20270515");
-    expect(screen.queryByText(/in all/)).toBeNull();
-  });
-
-  it("keeps a schedule going once its day is emptied", async () => {
-    const fetch = serverAnswers({ [`PUT ${streamPath}/ends-on`]: savedStream });
-    const ending = fictionalStream({ endsOn: "2027-05-15" });
-    const { onSaved } = show((handlers) => (
-      <EndsDialog stream={ending} {...handlers} />
-    ));
-    expect(box("Schedule ends")).toHaveProperty("value", "2027-05-15");
-    await userEvent.clear(box("Schedule ends"));
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    await waitFor(() => {
-      expect(onSaved).toHaveBeenCalled();
-    });
-    expect(bodiesOf(fetch)).toEqual([{ endsOn: null }]);
-  });
-
-  it("refuses a day half typed", async () => {
-    const fetch = serverAnswers({});
-    show((handlers) => <EndsDialog stream={stream} {...handlers} />);
-    await userEvent.type(box("Schedule ends"), "202612");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect([screen.getByText(dayProblem), fetch.mock.calls]).toEqual([
-      expect.anything(),
-      [],
-    ]);
-  });
-
-  it("refuses a day before the schedule's first cycle starts", async () => {
-    const fetch = serverAnswers({});
-    show((handlers) => <EndsDialog stream={stream} {...handlers} />);
-    await userEvent.type(box("Schedule ends"), "20261231");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect([
-      screen.getByText("The schedule can't end before its first cycle starts"),
-      fetch.mock.calls,
-    ]).toEqual([expect.anything(), []]);
-  });
-
-  it("refuses a day before the last cycle a release includes", async () => {
-    const fetch = serverAnswers({});
-    const releasing = fictionalStream({
-      releases: [fictionalRelease({ lastCycle: "2027-07-01" })],
-    });
-    show((handlers) => <EndsDialog stream={releasing} {...handlers} />);
-    await userEvent.type(box("Schedule ends"), "20270501");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect([
-      screen.getByText(
-        "A release includes the cycle from 2027-07-01; choose that day or later",
-      ),
-      fetch.mock.calls,
-    ]).toEqual([expect.anything(), []]);
-  });
-
-  it("lets the day come before a release drafted to be removed", async () => {
-    serverAnswers({ [`PUT ${streamPath}/ends-on`]: savedStream });
-    const releasing = fictionalStream({
-      releases: [
-        fictionalRelease({
-          lastCycle: "2027-07-01",
-          draft: recordDraft({ action: "deleted" }),
-        }),
-      ],
-    });
-    const { onSaved } = show((handlers) => (
-      <EndsDialog stream={releasing} {...handlers} />
-    ));
-    await userEvent.type(box("Schedule ends"), "20270501");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    await waitFor(() => {
-      expect(onSaved).toHaveBeenCalled();
-    });
   });
 });
 

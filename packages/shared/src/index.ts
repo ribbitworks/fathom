@@ -384,6 +384,12 @@ export {
   releaseStreamsSchema,
 } from "./releases.ts";
 export {
+  cycleLengthMoves,
+  type LengthChanging,
+  type PlannedWork,
+  scheduleEndProblem,
+} from "./schedule-changes.ts";
+export {
   type Customer,
   type CustomerRequest,
   customerRequestSchema,
