@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests of scripts/check-turn.mjs: a check waits its turn, saying so and how long it waited, is told
-// its share of the computer, and ends with its command, passing on a request to stop.
+// its share of the computer, the whole of it when it starts alone, and ends with its command,
+// passing on a request to stop.
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -12,7 +13,12 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
-import { checkRuns, inCheckTurn, sharingEnvironment } from "./check-turn.mjs";
+import {
+  checkRuns,
+  checksSharing,
+  inCheckTurn,
+  sharingEnvironment,
+} from "./check-turn.mjs";
 
 const script = fileURLToPath(new URL("check-turn.mjs", import.meta.url));
 
@@ -103,12 +109,28 @@ describe("running a check", () => {
     },
   );
 
-  it("tells the check how many checks share the computer", async () => {
-    const slots = { ...checkRuns, folder };
+  it("gives a check that starts alone the whole computer", async () => {
     const environment = await inCheckTurn((given) => given, {
-      slots,
+      slots: { ...checkRuns, folder },
       environment: {},
     });
+    assert.equal(environment.FATHOM_CHECK_SHARES, "1");
+  });
+
+  it("gives a check that starts beside another its share of the computer", async () => {
+    // Given another running copy holding one slot
+    writeFileSync(
+      join(folder, "slot-0"),
+      `${String(process.pid)}:held:/work/fathom-1`,
+    );
+
+    // When a check is asked for
+    const environment = await inCheckTurn((given) => given, {
+      slots: { ...checkRuns, folder },
+      environment: {},
+    });
+
+    // Then it is told it shares the computer with as many as check at once
     assert.equal(environment.FATHOM_CHECK_SHARES, "2");
   });
 
@@ -161,6 +183,20 @@ describe("running a check", () => {
       output(),
       "error: Usage: check-turn.mjs <command> [arguments]\n",
     );
+  });
+});
+
+describe("how many checks share the computer", () => {
+  it("is one for a check starting while no other runs or waits", () => {
+    assert.equal(checksSharing(0, 2), 1);
+  });
+
+  it("is as many as check at once for a check starting beside another", () => {
+    assert.equal(checksSharing(1, 2), 2);
+  });
+
+  it("is as many as check at once for a check starting while another waits", () => {
+    assert.equal(checksSharing(2, 2), 2);
   });
 });
 

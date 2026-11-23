@@ -190,11 +190,13 @@ function isFree(slot: string): boolean {
   return holder !== undefined && !isRunning(holder);
 }
 
+const heldSlots = (options: SlotOptions): string[] =>
+  slotsOf(options).filter((slot) => !isFree(slot));
+
 // What a run waiting its turn says: what it waits to do, which running processes hold the slots, and
 // how many runs that asked first wait ahead of it.
 function waitWords(options: SlotOptions, ahead: number): string {
-  const holders = slotsOf(options)
-    .filter((slot) => !isFree(slot))
+  const holders = heldSlots(options)
     .map((slot) => describeHolder(contentsOf(slot) ?? ""))
     .filter((holder) => holder !== undefined);
   const reasons = [
@@ -220,7 +222,16 @@ function touchTicket(ticketFile: string, token: string): void {
   }
 }
 
-async function takeSlot(options: SlotOptions, token: string): Promise<string> {
+// A slot taken, and how many other runs held a slot or waited for one when it was taken.
+interface TakenSlot {
+  slot: string;
+  othersRunning: number;
+}
+
+async function takeSlot(
+  options: SlotOptions,
+  token: string,
+): Promise<TakenSlot> {
   ownFolder(options.folder);
   const ticket = ticketFor(token);
   const ticketFile = join(options.folder, ticket);
@@ -236,7 +247,13 @@ async function takeSlot(options: SlotOptions, token: string): Promise<string> {
       const free = slotsOf(options).filter(isFree).length;
       if (mayTakeTurn(line, ticket, free)) {
         for (const slot of slotsOf(options)) {
-          if (tryTake(slot, token)) return slot;
+          if (tryTake(slot, token)) {
+            const holding = heldSlots(options).filter(
+              (other) => other !== slot,
+            ).length;
+            const waiting = line.filter((other) => other !== ticket).length;
+            return { slot, othersRunning: holding + waiting };
+          }
         }
       }
       if (!reported && Date.now() - asked >= options.reportAfterMilliseconds) {
@@ -250,15 +267,16 @@ async function takeSlot(options: SlotOptions, token: string): Promise<string> {
   }
 }
 
-// Runs the work once a slot is free, and frees the slot when it ends, whether or not it succeeded.
+// Runs the work once a slot is free, telling it how many other runs held a slot or waited for one
+// as it started, and frees the slot when it ends, whether or not it succeeded.
 export async function inSlot<T>(
-  work: () => Promise<T>,
+  work: (othersRunning: number) => Promise<T>,
   options: SlotOptions,
 ): Promise<T> {
   const token = `${String(process.pid)}:${randomUUID()}:${process.cwd()}`;
-  const slot = await takeSlot(options, token);
+  const { slot, othersRunning } = await takeSlot(options, token);
   try {
-    return await work();
+    return await work(othersRunning);
   } finally {
     removeIfHolding(slot, token);
   }
@@ -276,9 +294,13 @@ export function holdsTurn(
 
 // Runs the work in its turn on this computer, or at once when the environment shows a run that
 // already holds its turn, as for processes the work itself starts. The work is given the
-// environment marked so. A run that had to wait says so, and once it starts, how long it waited.
+// environment marked so, and, when it took a turn of its own, how many other runs held or waited for
+// one as it started. A run that had to wait says so, and once it starts, how long it waited.
 export async function inTurn<T>(
-  work: (environment: NodeJS.ProcessEnv) => T | Promise<T>,
+  work: (
+    environment: NodeJS.ProcessEnv,
+    othersRunning?: number,
+  ) => T | Promise<T>,
   options: SlotOptions,
   marker: string,
   environment: NodeJS.ProcessEnv,
@@ -288,13 +310,13 @@ export async function inTurn<T>(
   const asked = Date.now();
   let waited = false;
   return inSlot(
-    async () => {
+    async (othersRunning) => {
       if (waited) {
         options.report(
           `Waited ${String(Math.round((Date.now() - asked) / millisecondsPerSecond))}s to ${options.waitingTo}`,
         );
       }
-      return work(marked);
+      return work(marked, othersRunning);
     },
     {
       ...options,
