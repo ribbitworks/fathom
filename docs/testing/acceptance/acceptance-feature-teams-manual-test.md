@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-reporting-lines-manual-test.md", "docs/help/setting-up-fathom.md", "docs/product/roles.md"]
-last_updated: "2026-11-19"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Acceptance, Feature Teams
@@ -60,7 +60,7 @@ Run the test cases in order, in about 30 minutes, straight after [Reporting Line
   - **Notes:**
 
 - [ ] `CCA4` Clear the **Date** box, type the first day of six months ago, such as `20260501`, and press Enter.
-  - **Expected:** Below the date row, text reads "Showing" and that day, such as "Showing May 1, 2026.", then "Changes take effect from this date."
+  - **Expected:** The **Draft** button is above the chart.
   - **Notes:**
 
 - [ ] `D6C7` Select the Feature teams button.

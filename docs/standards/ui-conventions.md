@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/**", "docs/testing/**"]
 dependencies: ["docs/design/visual-design.md", "docs/standards/code-review.md", "docs/standards/ui-conventions/drafts-and-values.md", "docs/standards/ui-conventions/dates-timelines-and-boards.md", "docs/standards/ui-conventions/pages-and-panels.md", "docs/standards/ui-conventions/entering-and-saving.md", "docs/standards/ui-conventions/tables.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # UI Conventions
@@ -18,7 +18,7 @@ These principles come first:
 - **No instructional text:** If a screen needs explaining, the design is wrong. No hints, help lines, or placeholder sentences telling people what to do. This is for text always on screen: a refusal may say what to do next, such as Choose a manager, or leave Manager assigned empty, and a menu or dialog may state, in one short line, a fact needed at that moment, such as Nobody else sees these changes until they're published, but never how to use the control. Labels are one or two words, and an optional field may add "(optional)" to its label. Familiar patterns, such as a grip handle for dragging, speak for themselves. Saying what an action will do, as a confirmation does, is not instruction, and neither is reference material, such as what each role lets a user do.
 - **No assumptions:** Screens add no purposes, defaults, restrictions, or wording the maintainer has not asked for. Where something is unclear, it is left out and the maintainer is asked.
 - **Words people say:** Every label, note, and message on screen, the server's refusals included, reads as a person would say it aloud: short, with a subject and a verb, such as "Hiring states needs a choice that means Proposed", never a stack of nouns, such as "the only offered choice meaning Proposed", and everyday verbs, such as "the column that uses this list", never "the column drawing on it".
-- **Never the second person:** Nothing on screen, the server's refusals included, says "you" or "your". Say what is so, such as "Nothing can be changed on this date" or "This role can't choose an earlier date". Help pages are the exception, as [Help Page Standards](help-pages.md) sets out.
+- **Never the second person:** Nothing on screen, the server's refusals included, says "you" or "your". Say what is so, such as "This role can't choose an earlier date". Help pages are the exception, as [Help Page Standards](help-pages.md) sets out.
 - **Keyboard-first data entry:** Wherever people enter or change data, everything can be done from the keyboard, and adding many items in a row never needs the mouse: Tab moves between fields, Enter saves and starts the next item, Esc cancels, and arrow keys move between items. Where many records are entered, such as resources, editing works like a spreadsheet, including pasting rows.
 - **The bar:** Top-tier modern products, such as Linear or Notion: calm, dense, and obvious.
 

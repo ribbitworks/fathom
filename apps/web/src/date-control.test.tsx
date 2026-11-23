@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the date control the Org chart and People share: stepping by month, typing a day,
-// stopping at today for roles that do not see future dates, what it says while the page shows
-// another day, and how far apart its months' names are, so they never overlap.
+// stopping at today for roles that do not see future dates, and how far apart its months' names
+// are, so they never overlap.
 
 import { MantineProvider } from "@mantine/core";
 import { act, fireEvent, render, screen } from "@testing-library/react";
@@ -23,16 +23,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function control(day: string | undefined, laterDays = true, changes = false) {
+function control(day: string | undefined, laterDays = true) {
   const onDay = vi.fn();
   render(
     <MantineProvider theme={testTheme}>
-      <DateControl
-        day={day}
-        laterDays={laterDays}
-        changes={changes}
-        onDay={onDay}
-      />
+      <DateControl day={day} laterDays={laterDays} onDay={onDay} />
     </MantineProvider>,
   );
   return onDay;
@@ -187,7 +182,7 @@ describe("the date control", () => {
   it("moves the handle with the date once it has been dragged and let go", () => {
     const shown = (day: string | undefined) => (
       <MantineProvider theme={testTheme}>
-        <DateControl day={day} laterDays changes={false} onDay={vi.fn()} />
+        <DateControl day={day} laterDays onDay={vi.fn()} />
       </MantineProvider>
     );
     const { rerender } = render(shown(undefined));
@@ -203,25 +198,6 @@ describe("the date control", () => {
     expect(screen.getByRole("slider").getAttribute("aria-valuetext")).toBe(
       "Mar 2025",
     );
-  });
-
-  it("says the day shown can't be changed", () => {
-    control("2025-03-15");
-    expect(screen.getByRole("status").textContent).toBe(
-      "Showing Mar 15, 2025. Nothing can be changed on this date.",
-    );
-  });
-
-  it("says changes take effect from the day shown, where they can be made", () => {
-    control("2027-05-01", true, true);
-    expect(screen.getByRole("status").textContent).toBe(
-      "Showing May 1, 2027. Changes take effect from this date.",
-    );
-  });
-
-  it("keeps the line's place, empty, while today is shown", () => {
-    control(undefined);
-    expect(screen.getByRole("status").textContent).toBe("\u00a0");
   });
 
   it("stops at today for roles that do not see future dates", () => {

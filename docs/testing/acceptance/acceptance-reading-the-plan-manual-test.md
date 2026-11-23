@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/testing/acceptance/acceptance-deciding-the-changes-manual-test.md", "docs/help/working-as-a-team-member.md", "docs/help/working-as-an-executive.md", "docs/product/roles.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Acceptance, Reading the Plan
@@ -212,7 +212,7 @@ Run the test cases in order, in about 30 minutes, straight after [Deciding the C
 
 - [ ] `FEB7` Select the right arrow, **Next month**, once.
   - **Expected:**
-    - Text below the date row reads "Showing" with the first day of next month, then "Nothing can be changed on this date."
+    - The **Date** box shows the first day of next month.
     - `Freya Holt` is under `Tide team` too.
   - **Notes:**
 

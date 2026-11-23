@@ -79,10 +79,7 @@ The count above the table names the day it counts, such as "137 people and 10 pl
 
 On another day, the table lists the people employed then, with their managers and teams as they were, or will be. A future day also lists every planned hire not yet filled. A past day lists none, since past plans aren't kept. A person's details beside the table show them as on that day.
 
-A line under the date row says what you can do:
-
-- **Changes take effect from this date.** On a past day, you can change someone's manager in **Manager**, from the day shown, if your role changes Personal details. Everything else is changed on today.
-- **Nothing can be changed on this date.** The table shows people as they're approved.
+On a past day, you can change someone's manager in **Manager**, from the day shown, if your role changes Personal details. Everything else is changed on today. Otherwise, nothing can be changed on another day, and the table shows people as they're approved.
 
 You're done when the table shows the day you chose.
 

@@ -9,11 +9,11 @@ import {
   monthNumber,
   monthOf,
 } from "@fathom/shared";
-import { ActionIcon, Button, Group, Slider, Stack, Text } from "@mantine/core";
+import { ActionIcon, Button, Group, Slider } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
 import { DayInput } from "./day-input.tsx";
 import { focusSoon } from "./focus.ts";
-import { formatDay, formatMonth } from "./day-formats.ts";
+import { formatMonth } from "./day-formats.ts";
 import { today } from "./today.ts";
 import classes from "./date-control.module.css";
 
@@ -54,7 +54,6 @@ function useLabelEvery(months: number) {
 // How far down the arrows and timeline sit, to line up with the box under its label.
 const dayBoxLabelHeight = 24;
 const handleOffset = 6;
-const noBreakSpace = "\u00a0";
 
 // The day the page shows for the month this far from the current one: the first of that month, or
 // today in the current month.
@@ -66,15 +65,12 @@ function dayOfMonthFromNow(months: number): string {
 export function DateControl({
   day,
   laterDays,
-  changes,
   onDay,
 }: {
   // The day shown, or undefined for today.
   day: string | undefined;
   // Whether days after today can be shown.
   laterDays: boolean;
-  // Whether changes can be made on the day shown.
-  changes: boolean;
   onDay: (day: string | undefined) => void;
 }) {
   const shown = day ?? today();
@@ -121,101 +117,86 @@ export function DateControl({
     },
   );
   return (
-    <Stack gap={0} mb="xs">
-      <Group gap="sm" align="flex-start" wrap="nowrap">
-        <DayInput
-          key={boxCount}
-          id={dateBoxId}
-          label="Date"
-          size="xs"
-          required={false}
-          value={shown}
-          onChange={(typed) => {
-            setIncomplete(typed === undefined);
-            if (typed !== undefined) choose(typed);
-          }}
-          onBlur={() => {
-            if (incomplete) restartBox();
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              restartBox();
-              focusSoon(dateBoxId);
-            }
-          }}
-        />
-        <ActionIcon
-          variant="default"
-          mt={dayBoxLabelHeight}
-          aria-label="Previous month"
-          disabled={fromNow <= -monthsEachWay}
-          onClick={() => {
-            stepTo(fromNow - 1);
-          }}
-        >
-          ‹
-        </ActionIcon>
-        <Slider
-          ref={sliderRef}
-          thumbLabel="Month shown"
-          thumbValueText={(months) =>
-            formatMonth(monthOf(dayOfMonthFromNow(months)))
+    <Group gap="sm" align="flex-start" wrap="nowrap" mb="xs">
+      <DayInput
+        key={boxCount}
+        id={dateBoxId}
+        label="Date"
+        size="xs"
+        required={false}
+        value={shown}
+        onChange={(typed) => {
+          setIncomplete(typed === undefined);
+          if (typed !== undefined) choose(typed);
+        }}
+        onBlur={() => {
+          if (incomplete) restartBox();
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            restartBox();
+            focusSoon(dateBoxId);
           }
-          classNames={{ markLabel: classes.markLabel }}
-          flex={1}
-          mt={dayBoxLabelHeight + handleOffset}
-          mb="lg"
-          mx="lg"
-          min={-monthsEachWay}
-          max={latest}
-          step={1}
-          marks={marks}
-          value={handleAt}
-          label={(months) => formatMonth(monthOf(dayOfMonthFromNow(months)))}
-          onChange={(to) => {
-            setDragged({ to, from: offset, released: false });
-          }}
-          onChangeEnd={(to) => {
-            setDragged({ to, from: offset, released: true });
-            stepTo(to);
-          }}
-        />
-        <ActionIcon
-          variant="default"
-          mt={dayBoxLabelHeight}
-          aria-label="Next month"
-          disabled={fromNow >= latest}
-          onClick={() => {
-            stepTo(fromNow + 1);
-          }}
-        >
-          ›
-        </ActionIcon>
-        <Button
-          variant="default"
-          size="xs"
-          mt={dayBoxLabelHeight}
-          disabled={day === undefined}
-          onClick={() => {
-            choose(today());
-          }}
-        >
-          Today
-        </Button>
-      </Group>
-      {/* The line keeps its place while empty, so what is below does not move as dates change. */}
-      <Text size="sm" role="status">
-        {day === undefined ? (
-          noBreakSpace
-        ) : (
-          <>
-            Showing {formatDay(day)}.{" "}
-            {changes
-              ? "Changes take effect from this date."
-              : "Nothing can be changed on this date."}
-          </>
-        )}
-      </Text>
-    </Stack>
+        }}
+      />
+      <ActionIcon
+        variant="default"
+        mt={dayBoxLabelHeight}
+        aria-label="Previous month"
+        disabled={fromNow <= -monthsEachWay}
+        onClick={() => {
+          stepTo(fromNow - 1);
+        }}
+      >
+        ‹
+      </ActionIcon>
+      <Slider
+        ref={sliderRef}
+        thumbLabel="Month shown"
+        thumbValueText={(months) =>
+          formatMonth(monthOf(dayOfMonthFromNow(months)))
+        }
+        classNames={{ markLabel: classes.markLabel }}
+        flex={1}
+        mt={dayBoxLabelHeight + handleOffset}
+        mb="lg"
+        mx="lg"
+        min={-monthsEachWay}
+        max={latest}
+        step={1}
+        marks={marks}
+        value={handleAt}
+        label={(months) => formatMonth(monthOf(dayOfMonthFromNow(months)))}
+        onChange={(to) => {
+          setDragged({ to, from: offset, released: false });
+        }}
+        onChangeEnd={(to) => {
+          setDragged({ to, from: offset, released: true });
+          stepTo(to);
+        }}
+      />
+      <ActionIcon
+        variant="default"
+        mt={dayBoxLabelHeight}
+        aria-label="Next month"
+        disabled={fromNow >= latest}
+        onClick={() => {
+          stepTo(fromNow + 1);
+        }}
+      >
+        ›
+      </ActionIcon>
+      <Button
+        variant="default"
+        size="xs"
+        mt={dayBoxLabelHeight}
+        disabled={day === undefined}
+        onClick={() => {
+          choose(today());
+        }}
+      >
+        Today
+      </Button>
+    </Group>
   );
 }

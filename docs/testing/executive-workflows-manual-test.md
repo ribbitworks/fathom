@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/testing/manual-test-basics.md", "docs/help/working-as-an-executive.md", "docs/product/roles.md"]
-last_updated: "2026-11-20"
+last_updated: "2026-11-23"
 ---
 
 # Manual Test: Executive Workflows
@@ -119,11 +119,11 @@ Run the test cases in order, in about 20 minutes. Start with Start Fathom, then 
 - [ ] `94DD` Select the left arrow once.
   - **Expected:**
     - The **Date** box shows the first day of last month.
-    - The text below the row ends "Nothing can be changed on this date."
+    - There is no **Draft** button above the chart.
   - **Notes:**
 
 - [ ] `C80C` Select **Today**.
-  - **Expected:** The text below the row is gone.
+  - **Expected:** The **Date** box shows today's date.
   - **Notes:**
 
 - [ ] `DA7A` Select the **People** page in the left-hand menu.
