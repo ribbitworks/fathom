@@ -9,7 +9,9 @@ import {
   featureColumnKeys,
   type Meaning,
   planColumnNames,
+  type Project,
   projectLengths,
+  type Proposal,
   type RecordKeyOf,
 } from "@fathom/shared";
 import { Menu, Text } from "@mantine/core";
@@ -27,6 +29,11 @@ import {
   identifiedLabel,
 } from "./projects.ts";
 import { tipAttribute } from "./table-tips.tsx";
+import {
+  type DraftedPart,
+  DraftedPartItem,
+  useDraftView,
+} from "./status-mark.tsx";
 import { fieldColumn } from "./grid-columns.tsx";
 import { isPending } from "./grid-drafts.ts";
 import {
@@ -308,23 +315,100 @@ export const customersColumn = <Rec extends PlanRecord>(
     multiple: true,
   });
 
-// The records a cell names, in the order they are listed, each by its ID, dimmed, and its name. A
+// Records in a cell, in the order given, each by its ID, dimmed, and its name, drawn as given. A
 // long list is cut short, so its tip gives every one, one to a line.
+function RecordNames({
+  entries,
+}: {
+  entries: readonly { record: Identified; name: ReactNode }[];
+}): ReactNode {
+  return (
+    <span
+      {...{
+        [tipAttribute]: entries
+          .map(({ record }) => identifiedLabel(record))
+          .join("\n"),
+      }}
+    >
+      {entries.map(({ record, name }, index) => (
+        <Fragment key={record.id}>
+          {index > 0 && ", "}
+          {name}
+        </Fragment>
+      ))}
+    </span>
+  );
+}
+
+// The records a cell names, in the order they are listed.
 export function namesCell(records: readonly Identified[]) {
   return (ids: readonly string[]): ReactNode => {
     const picked = records.filter(({ id }) => ids.includes(id));
-    if (picked.length === 0) return null;
-    return (
-      <span {...{ [tipAttribute]: picked.map(identifiedLabel).join("\n") }}>
-        {picked.map((one, index) => (
-          <Fragment key={one.id}>
-            {index > 0 && ", "}
-            <RecordName record={one} />
-          </Fragment>
-        ))}
-      </span>
+    return picked.length === 0 ? null : (
+      <RecordNames
+        entries={picked.map((record) => ({
+          record,
+          name: <RecordName record={record} />,
+        }))}
+      />
     );
   };
+}
+
+// A project or proposal naming a feature, as drafted or as live, with what its draft does to the
+// feature, if anything.
+export interface NamingPart {
+  record: Project | Proposal;
+  part: DraftedPart | undefined;
+  live: boolean;
+}
+
+// The projects or proposals naming a feature, as drafted and as live: one a draft adds it to, or
+// that is only drafted to be added, adds it; one a draft takes it from, or removes, takes it away.
+export function namingParts(
+  records: readonly (Project | Proposal)[],
+  featureId: string,
+): NamingPart[] {
+  return records.flatMap((record) => {
+    const drafted =
+      record.draft?.action !== "deleted" &&
+      record.featureIds.includes(featureId);
+    const live = (livePlanRecords([record]).at(0)?.featureIds ?? []).includes(
+      featureId,
+    );
+    if (!drafted && !live) return [];
+    const part: DraftedPart | undefined =
+      drafted === live ? undefined : drafted ? "added" : "removed";
+    return [{ record, part, live }];
+  });
+}
+
+// The projects or proposals naming a feature, each marked with its own draft: as drafted, or as
+// they are live, under Live only or in a Live row, where those a draft adds don't show yet.
+export function NamersCell({
+  parts,
+  asLive,
+}: {
+  parts: readonly NamingPart[];
+  asLive: boolean;
+}) {
+  const show = useDraftView();
+  const live = asLive || show === "live";
+  const entries = parts
+    .filter((one) => !live || one.live)
+    .map(({ record, part }) => ({
+      record,
+      name: (
+        <DraftedPartItem
+          draft={part === undefined ? undefined : record.draft}
+          part={part}
+          live={live}
+        >
+          <RecordName record={record} />
+        </DraftedPartItem>
+      ),
+    }));
+  return entries.length === 0 ? null : <RecordNames entries={entries} />;
 }
 
 // A column of records named by ID and name, several in one cell, in one line cut short with every

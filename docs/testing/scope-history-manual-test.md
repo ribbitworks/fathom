@@ -173,7 +173,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:**
     - The list closes.
     - No dialog opens.
-    - The **Proposals** cell names 'Clinic Scheduling Pilot' alone.
+    - The **Proposals** cell names, from left to right:
+      - 'PR-102 Clinic Scheduling Pilot'
+      - a hollow yellow dot, then 'PR-101 Harbour Cranes Upgrade', struck through
   - **Notes:**
 
 - [ ] `E3EC` Select the **Projects** page in the left-hand menu.

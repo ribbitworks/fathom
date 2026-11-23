@@ -28,7 +28,7 @@ Features lists the plan's features in one table, with a board as a second way of
 - **Feature team:** a Planned or In progress feature with none shows No team, as a [warning on a value](../../standards/ui-conventions/drafts-and-values.md#values).
 - **Staffed:** read only; for Planned or In progress features, Yes when any allocation gives them a month, a planned hire's included. It is empty for other statuses, so Not staffed is a plain filter.
 - **Projects and Proposals:** changed only by those who change the plan; New feature doesn't offer them.
-  - A change drafts the project or proposal, so the feature's row isn't marked.
+  - A change drafts the project or proposal, so the feature's row isn't marked. In the cell, a project or proposal a draft adds has the draft's dot, and one it takes away has the dot and is struck through, as [A part a draft adds or removes](../../standards/ui-conventions/drafts-and-values.md#drafts) sets out. Those drafts are decided on Projects, where they are drafts of the project or proposal, or with the Draft menu's Approve; the cell has no menu of its own, as no table's cell does.
 - **Added columns:** General lists only, with no planned hires or other class; a drafted one can't be filled until approved.
   - Remove column shows only to those who may also change features.
 

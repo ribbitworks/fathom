@@ -16,6 +16,8 @@ import {
   type Meaning,
   needsFeatureTeam,
   planColumnNames,
+  type Project,
+  type Proposal,
   roundedUpTo,
   shownEffort,
   startingEffortConversions,
@@ -45,10 +47,11 @@ import {
   customersColumn,
   field,
   firstStatus,
-  type Identified,
   merged,
   nameColumn,
   newKind,
+  NamersCell,
+  namingParts,
   pickedColumn,
   type PlanChange,
   planTable,
@@ -61,17 +64,26 @@ import { formatMonth } from "./day-formats.ts";
 import { type RowGroup, rankOfNone } from "./row-groups.ts";
 
 // A column of the projects or proposals that name a feature, which those records hold, so a change
-// to it is a draft of each record added or taken away. It is set on a feature once it is added.
+// to it is a draft of each record added or taken away, marked on its part of the cell. It is set on a
+// feature once it is added.
 function namersColumn(
   key: "projectIds" | "proposalIds",
   label: string,
-  records: readonly (Identified & { featureIds: readonly string[] })[],
+  records: readonly (Project | Proposal)[],
+  // The same records with their drafts, whatever the view, to mark them.
+  drafted: readonly (Project | Proposal)[],
   editable: boolean,
 ): Column<Feature, PlanChange> {
+  const cell = (asLive: boolean) => (feature: Feature) => (
+    <NamersCell parts={namingParts(drafted, feature.id)} asLive={asLive} />
+  );
   return {
     ...pickedColumn<Feature>(key, label, records, (feature) =>
       namersOf(records, feature.id),
     ),
+    content: cell(false),
+    liveContent: cell(true),
+    marksParts: true,
     readOnlyOn: (kind) => !editable || kind === newKind,
   };
 }
@@ -299,12 +311,14 @@ export function featureColumns(
       "projectIds",
       planColumnNames.projectIds,
       choices.projects,
+      choices.drafted.projects,
       editsNamers,
     ),
     namersColumn(
       "proposalIds",
       planColumnNames.proposalIds,
       choices.proposals,
+      choices.drafted.proposals,
       editsNamers,
     ),
     field<Feature>("description", planColumnNames.description, "text", {

@@ -363,6 +363,7 @@ export const choices = (more: Partial<TableChoices> = {}): TableChoices => ({
   cycles: [],
   releaseOfCycle: new Map(),
   featureColumns: noFeatureColumns,
+  drafted: { projects: [], proposals: [] },
   ...more,
 });
 

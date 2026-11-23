@@ -152,8 +152,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - [ ] `34B4` Pick 'Internal Tools', and press Enter.
   - **Expected:**
     - The list closes.
-    - The cell names 'Internal Tools'.
-    - 'Bulk Import' has no dot.
+    - The cell names 'Internal Tools', with a hollow yellow dot before it.
+    - 'Bulk Import' has no dot before its name.
   - **Notes:**
 
 - [ ] `59FB` Select the **Projects** page in the left-hand menu.

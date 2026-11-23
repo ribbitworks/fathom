@@ -652,7 +652,10 @@ export function gridRows<Rec extends GridRecord, Change, Request>(
                                   null)
                             }
                           >
-                            {liveColumn(column).content?.(liveRecord) ??
+                            {(
+                              liveColumn(column).liveContent ??
+                              liveColumn(column).content
+                            )?.(liveRecord) ??
                               liveContent(liveColumn(column), liveShown)}
                           </ColouredName>
                         ) : (
