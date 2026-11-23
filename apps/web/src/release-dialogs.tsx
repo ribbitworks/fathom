@@ -2,10 +2,10 @@
 
 // The dialogs of the Releases page: naming a release stream; changing a stream's cycles from a day,
 // with their length and how they are named, showing the first names they make; one cycle's length,
-// showing the cycles it makes and the releases that move; the day it ends, if any; and making or
-// changing a release from consecutive cycles of its stream that no other release includes, shipping
-// at the end of its last cycle or on a day of its own. Each saves its change as a draft, and cannot be
-// closed while it saves.
+// showing the cycles it makes and the releases that move; and making or changing a release from
+// consecutive cycles of its stream that no other release includes, shipping at the end of its last
+// cycle or on a day of its own. Each saves its change as a draft, and cannot be closed while it
+// saves.
 
 import { MarkRow } from "./status-mark.tsx";
 import {
@@ -14,8 +14,6 @@ import {
   type Cycle,
   cyclesOf,
   defaultNaming,
-  endsBeforeFirstCycle,
-  endsTooEarly,
   isDay,
   longestCycle,
   namingTokens,
@@ -59,7 +57,6 @@ import {
   lengthChangeOf,
   renameStream,
   type SavedStream,
-  setStreamEnd,
   shipsOffCycle,
   shownColour,
   savePattern,
@@ -69,13 +66,13 @@ import { projectPlanQuery } from "./projects.ts";
 import { cycleUnitWords, patternOn } from "./schedules.ts";
 import { sessionQuery } from "./session.ts";
 
-interface Saving {
+export interface Saving {
   onSaved: (saved: SavedStream) => void;
   onCancel: () => void;
   onBusy: (busy: boolean) => void;
 }
 
-function useSave<Request>(
+export function useSave<Request>(
   save: (request: Request) => Promise<SavedStream>,
   { onSaved, onBusy }: Saving,
 ) {
@@ -158,7 +155,7 @@ export function StreamDialog({
 }
 
 // A few cycles by name, with their days, as a dialog shows what a change makes.
-function CyclesPreview({
+export function CyclesPreview({
   id,
   title,
   cycles,
@@ -196,101 +193,6 @@ function CyclesPreview({
 
 const offCycleWords = (off: string | undefined) =>
   off === undefined ? undefined : `Ships ${off}`;
-
-// How many cycles a schedule that ends would have.
-const cycleCount = (count: number): string =>
-  `${String(count)} ${count === 1 ? "cycle" : "cycles"} in all`;
-
-// The earliest day a schedule may end on: the start of the last cycle any release includes, so
-// every release keeps its cycles.
-const earliestEnd = (stream: ReleaseStream): string | undefined =>
-  stream.releases
-    .filter(({ draft }) => draft?.action !== "deleted")
-    .map(({ lastCycle }) => lastCycle)
-    .sort()
-    .at(-1);
-
-// What is wrong with a schedule's last day, if anything.
-function endProblem(
-  stream: ReleaseStream,
-  patterns: readonly CyclePattern[],
-  endsOn: string | null,
-): string | undefined {
-  const least = earliestEnd(stream);
-  if (endsOn !== null && least !== undefined && endsOn < least) {
-    return `A release includes the cycle from ${least}; choose that day or later`;
-  }
-  return endsTooEarly(patterns, endsOn) ? endsBeforeFirstCycle : undefined;
-}
-
-// A schedule's last day, or none, when it keeps going, with how many cycles it then has and its
-// last three once it ends.
-export function EndsDialog({
-  stream,
-  ...saving
-}: { stream: ReleaseStream } & Saving) {
-  const [day, setDay] = useState(stream.endsOn ?? undefined);
-  const [typed, setTyped] = useState(stream.endsOn !== null);
-  const [tried, setTried] = useState(false);
-  const save = useSave(
-    (endsOn: string | null) => setStreamEnd(stream.id, endsOn),
-    saving,
-  );
-  const patterns = stream.patterns.filter(
-    ({ draft }) => draft?.action !== "deleted",
-  );
-  // Undefined while a day is half typed.
-  const endsOn = day ?? (typed ? undefined : null);
-  const made =
-    typeof endsOn === "string" ? cyclesOf(patterns, endsOn, endsOn) : undefined;
-  const problem =
-    endsOn === undefined ? undefined : endProblem(stream, patterns, endsOn);
-  return (
-    <form
-      noValidate
-      onSubmit={(event) => {
-        event.preventDefault();
-        setTried(true);
-        if (endsOn !== undefined && problem === undefined) save.mutate(endsOn);
-      }}
-    >
-      <Stack gap="md">
-        <DayInput
-          label="Schedule ends"
-          description="Its last cycle ends on this day."
-          placeholder="No end date"
-          autoFocus
-          required={false}
-          value={stream.endsOn ?? undefined}
-          problem={problem}
-          shown={tried}
-          onChange={(next, isTyped) => {
-            setDay(next);
-            setTyped(isTyped);
-          }}
-        />
-        {made !== undefined && made.length > 0 && (
-          <>
-            <Text fz="sm" c="dimmed">
-              {cycleCount(made.length)}
-            </Text>
-            <CyclesPreview
-              id="last-cycles"
-              title="Last cycles"
-              cycles={made.slice(-3)}
-            />
-          </>
-        )}
-        <DialogActions
-          error={save.error}
-          pending={save.isPending}
-          label="Save"
-          onCancel={saving.onCancel}
-        />
-      </Stack>
-    </form>
-  );
-}
 
 const unitLabels: Record<CycleUnit, string> = {
   weeks: "Weeks",

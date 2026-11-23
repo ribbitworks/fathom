@@ -13,6 +13,7 @@ import {
   lastCycleEnd,
   liveStreams,
   markedDraft,
+  plannedOnStream,
   releaseRowFields,
   slotDraft,
   streamRowFields,
@@ -33,6 +34,8 @@ import {
   cycleRunWords,
 } from "./releases.ts";
 import {
+  featureDraft,
+  fictionalFeature,
   fictionalPattern,
   fictionalRelease,
   fictionalStream,
@@ -336,6 +339,44 @@ describe("cycles and releases by name and day", () => {
     expect(withSchedule(stream, "Fictional One")).toBe(
       "Fictional Majors: Fictional One",
     );
+  });
+});
+
+describe("what is planned on a stream's cycles", () => {
+  it("holds its releases and features, leaving out those removed and other streams' features", () => {
+    const releasing = fictionalStream({
+      releases: [
+        fictionalRelease({ name: "Fictional Kept", lastCycle: "2027-04-01" }),
+        fictionalRelease({
+          name: "Fictional Gone",
+          draft: recordDraft({ action: "deleted" }),
+        }),
+      ],
+    });
+    const targeting = (name: string, more = {}) =>
+      fictionalFeature({
+        name,
+        targetStreamId: streamId,
+        targetCycle: "2027-07-01",
+        ...more,
+      });
+    expect(
+      plannedOnStream(releasing, [
+        targeting("Fictional Targeting"),
+        targeting("Fictional Elsewhere", { targetStreamId: "other" }),
+        targeting("Fictional Removed", {
+          draft: featureDraft({ action: "deleted" }),
+        }),
+        fictionalFeature({ name: "Fictional Later" }),
+      ]),
+    ).toEqual([
+      { type: "release", name: "Fictional Kept", lastCycle: "2027-04-01" },
+      {
+        type: "feature",
+        name: "Fictional Targeting",
+        lastCycle: "2027-07-01",
+      },
+    ]);
   });
 });
 

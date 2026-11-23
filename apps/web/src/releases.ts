@@ -11,11 +11,8 @@ import {
   type Cycle,
   type CycleLengthRequest,
   type CyclePatternRequest,
-  cyclesOf,
-  pastAnyMove,
-  movedCycles,
-  movedReleases,
-  patternsForLength,
+  cycleLengthMoves,
+  type PlannedWork,
   planSubjects,
   type RecordDraft,
   type RecordRef,
@@ -148,10 +145,37 @@ export interface MovedNames {
 
 const nothingMoved: MovedNames = { releases: [], features: [] };
 
+// The features that target a stream's cycles, as their drafts make them.
+const featuresOn = (stream: ReleaseStream, features: readonly Feature[]) =>
+  features.flatMap(({ name, targetStreamId, targetCycle, draft }) =>
+    targetStreamId === stream.id &&
+    targetCycle !== null &&
+    draft?.action !== "deleted"
+      ? [{ name, lastCycle: targetCycle }]
+      : [],
+  );
+
+// The releases and features on a stream's cycles, as their drafts make them, as the server judges a
+// change of its last day.
+export const plannedOnStream = (
+  stream: ReleaseStream,
+  features: readonly Feature[] = [],
+): PlannedWork[] => [
+  ...keptReleases(stream).map(({ name, lastCycle }) => ({
+    type: "release" as const,
+    name,
+    lastCycle,
+  })),
+  ...featuresOn(stream, features).map((feature) => ({
+    type: "feature" as const,
+    ...feature,
+  })),
+];
+
 // What a new length for one cycle makes of its stream, as the server would draft it: the cycles
-// from that one on, the names of the releases and features that move with their cycles, the new ship dates of
-// releases that ship when their last cycle ends, and why it cannot be made, if it cannot. Cycles
-// the length cannot make are shown as they are now.
+// from that one on, the names of the releases and features that move with their cycles, the new
+// ship dates of releases that ship when their last cycle ends, and why it cannot be made, if it
+// cannot. Cycles the length cannot make are shown as they are now.
 export function lengthChangeOf(
   stream: ReleaseStream,
   startsOn: string,
@@ -166,50 +190,38 @@ export function lengthChangeOf(
 } {
   const from = (cycles: readonly Cycle[]) =>
     cycles.filter((cycle) => cycle.startsOn >= startsOn);
-  const made = patternsForLength(
-    stream.patterns.filter(({ draft }) => draft?.action !== "deleted"),
-    { startsOn, ...request },
-  );
-  if ("problem" in made) {
-    return {
-      cycles: from(stream.cycles),
-      moved: nothingMoved,
-      ships: [],
-      problem: made.problem,
-    };
-  }
-  const until = pastAnyMove(stream.cyclesUntil);
-  const cycles = cyclesOf(made.patterns, until, stream.endsOn);
   const kept = keptReleases(stream);
-  const moved = movedCycles(stream.cycles, cycles);
-  const moving = movedReleases(
+  const change = cycleLengthMoves(
+    {
+      name: stream.name,
+      patterns: stream.patterns.filter(
+        ({ draft }) => draft?.action !== "deleted",
+      ),
+      cycles: stream.cycles,
+      until: stream.cyclesUntil,
+      endsOn: stream.endsOn,
+    },
+    { startsOn, ...request },
     [
       ...kept,
-      ...features
-        .filter(
-          ({ targetStreamId, draft }) =>
-            targetStreamId === stream.id && draft?.action !== "deleted",
-        )
-        .map(({ name, targetCycle }) => ({
-          name,
-          firstCycle: String(targetCycle),
-          lastCycle: String(targetCycle),
-          shipsOn: null,
-        })),
+      ...featuresOn(stream, features).map(({ name, lastCycle }) => ({
+        name,
+        firstCycle: lastCycle,
+        lastCycle,
+        shipsOn: null,
+      })),
     ],
-    moved,
-    stream.endsOn ?? until,
-    stream.name,
     permissions,
   );
-  if ("problem" in moving) {
+  if ("problem" in change) {
     return {
-      cycles: from(cycles),
+      cycles: from(change.cycles ?? stream.cycles),
       moved: nothingMoved,
       ships: [],
-      problem: moving.problem,
+      problem: change.problem,
     };
   }
+  const { cycles, moved, moves } = change;
   // Every release's last cycle is still made, or moving it would have been refused above.
   const ships = kept.flatMap(({ name, lastCycle, shipsOn }) => {
     const last = moved.get(lastCycle);
@@ -219,7 +231,6 @@ export function lengthChangeOf(
       ? [{ name, on }]
       : [];
   });
-  const { moves } = moving;
   const names = (wanted: (move: (typeof moves)[number]) => boolean) =>
     moves.filter(wanted).map(({ release }) => release.name);
   return {
