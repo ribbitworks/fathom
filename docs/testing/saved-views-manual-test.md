@@ -749,7 +749,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] `4C59` Select **Board** in the switch after the **Features** heading.
   - **Expected:**
-    - The board shows, with the button **Schedule: Platform**.
+    - The board shows, with the button **Columns: Months**.
     - The board holds the card 'Offline Sync' alone.
   - **Notes:**
 

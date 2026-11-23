@@ -1,55 +1,35 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Features Board against a simulated server.
+// Tests for the Features Board against a simulated server: its columns, strip and menus, rows from
+// Group by, and the keyboard.
 
-import type { Feature, ProjectPlan, ReleaseStream } from "@fathom/shared";
-import { startingEffortConversions } from "@fathom/shared";
-import {
-  act,
-  fireEvent,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { featureDraft, tipOn } from "./test-support.tsx";
 import {
-  featureDraft,
-  fictionalRelease,
-  fictionalStream,
-  fictionalUser,
-  noFeatureColumns,
-  quarters,
-  recordDraft,
-  renderApp,
-  serverAnswers,
-  streamId,
-  tipOn,
-} from "./test-support.tsx";
+  size,
+  ids,
+  feature,
+  target,
+  alpha,
+  beta,
+  gamma,
+  later,
+  customers,
+  retiring,
+  openBoard,
+  cardNames,
+  majors,
+  card,
+  headings,
+} from "./test-feature-board.tsx";
 
-// The board's width, which the simulated browser can't measure, changed by the tests.
-const size = vi.hoisted(() => ({
-  width: 1000,
-  set: (width: number) => {
-    size.width = width;
-  },
-}));
-
-// Semgrep can't parse typeof import() as a type argument.
-type Hooks = typeof import("@mantine/hooks");
-
-vi.mock("@mantine/hooks", async (importOriginal) => {
-  const actual = await importOriginal<Hooks>();
-  const { useState } = await import("react");
-  return {
-    ...actual,
-    useElementSize: () => {
-      const [width, setWidth] = useState(size.width);
-      size.set = setWidth;
-      return { ref: () => undefined, width, height: 0 };
-    },
-  };
-});
+vi.mock("@mantine/hooks", async (importOriginal) =>
+  (await import("./test-board-width.ts")).withBoardWidth(
+    await importOriginal(),
+  ),
+);
 
 // 2027-05-10 is in the second of the stream's quarters, 27.2.
 beforeEach(() => {
@@ -61,209 +41,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
 });
-
-const ids = {
-  planned: "f0000000-0000-4000-8000-000000000001",
-  likely: "f0000000-0000-4000-8000-000000000002",
-  started: "f0000000-0000-4000-8000-000000000003",
-  critical: "f0000000-0000-4000-8000-000000000004",
-  low: "f0000000-0000-4000-8000-000000000005",
-  medium: "f0000000-0000-4000-8000-000000000006",
-  high: "f0000000-0000-4000-8000-000000000007",
-  calm: "f0000000-0000-4000-8000-000000000008",
-};
-
-const feature = (name: string, more: Partial<Feature> = {}): Feature => ({
-  id: crypto.randomUUID(),
-  keyNumber: 1,
-  name,
-  statusId: ids.planned,
-  priorityId: null,
-  sizeId: null,
-  riskId: null,
-  neededBy: null,
-  customerIds: [],
-  targetStreamId: null,
-  targetCycle: null,
-  estimateHours: null,
-  featureTeamId: null,
-  description: null,
-  note: null,
-  values: {},
-  links: {},
-  staffed: false,
-  staffedLive: false,
-  ...more,
-});
-
-const target = (cycle: string) => ({
-  targetStreamId: streamId,
-  targetCycle: cycle,
-});
-
-const alpha = feature("Fictional Alpha", {
-  ...target("2027-04-01"),
-  priorityId: ids.critical,
-  sizeId: ids.medium,
-  riskId: ids.high,
-  neededBy: "2027-06",
-});
-const beta = feature("Fictional Beta", {
-  ...target("2027-04-01"),
-  statusId: ids.likely,
-  priorityId: ids.low,
-});
-const gamma = feature("Fictional Gamma", {
-  ...target("2027-07-01"),
-  statusId: ids.started,
-  staffed: true,
-  draft: featureDraft({
-    changed: ["targetCycle"],
-    live: { targetCycle: "2027-04-01" },
-    unpublished: true,
-  }),
-});
-const later = feature("Fictional Later", { staffed: true });
-
-const customers = [
-  {
-    id: "c0000000-0000-4000-8000-000000000001",
-    keyNumber: 1,
-    name: "Fictional Harbour",
-  },
-  {
-    id: "c0000000-0000-4000-8000-000000000002",
-    keyNumber: 2,
-    name: "Fictional Quay",
-  },
-];
-
-const plan = (features: Feature[]): ProjectPlan => ({
-  customers,
-  projects: [],
-  proposals: [],
-  features,
-  featureColumns: noFeatureColumns,
-  canEdit: false,
-  canEditFeatures: true,
-});
-
-const majors = fictionalStream({
-  cycles: quarters(6),
-  releases: [
-    fictionalRelease({
-      name: "Fictional Two LTS",
-      firstCycle: "2027-04-01",
-      lastCycle: "2027-04-01",
-      colour: "grape",
-      draft: recordDraft({
-        changed: ["name"],
-        live: { name: "Fictional Two" },
-      }),
-    }),
-    fictionalRelease({
-      id: "30000000-0000-4000-8000-000000000002",
-      name: "Fictional Three",
-      firstCycle: "2027-10-01",
-      lastCycle: "2027-10-01",
-      draft: recordDraft({
-        changed: ["firstCycle", "lastCycle"],
-        live: { firstCycle: "2027-07-01", lastCycle: "2027-07-01" },
-      }),
-    }),
-  ],
-});
-const retiring: ReleaseStream = {
-  ...fictionalStream({ name: "Fictional Minors" }),
-  id: "10000000-0000-4000-8000-000000000002",
-  retired: true,
-  draft: recordDraft({ changed: ["retired"], live: { retired: false } }),
-};
-const retired: ReleaseStream = {
-  ...fictionalStream({ name: "Fictional Old" }),
-  id: "10000000-0000-4000-8000-000000000003",
-  retired: true,
-};
-
-const choices = {
-  owners: [],
-  statuses: [],
-  featureStatuses: [
-    { id: ids.likely, name: "Likely", retired: false, meaning: "possible" },
-    { id: ids.planned, name: "Planned", retired: false, meaning: "planned" },
-    {
-      id: ids.started,
-      name: "In progress",
-      retired: false,
-      meaning: "in-progress",
-    },
-  ],
-  featureTeams: [],
-  priorities: [
-    { id: ids.critical, name: "Critical", retired: false },
-    { id: ids.low, name: "Low", retired: false },
-  ],
-  sizes: [{ id: ids.medium, name: "M", retired: false, weight: 2 }],
-  risks: [
-    { id: ids.calm, name: "Low", retired: false },
-    { id: "f0000000-0000-4000-8000-000000000009", name: "Old", retired: true },
-    { id: ids.high, name: "High", retired: false },
-  ],
-};
-
-async function openBoard(
-  path = "/features?mode=board",
-  {
-    features = [alpha, beta, gamma, later],
-    streams = [majors, retiring, retired],
-    answers = {},
-  }: {
-    features?: Feature[];
-    streams?: ReleaseStream[];
-    answers?: Parameters<typeof serverAnswers>[0];
-  } = {},
-) {
-  serverAnswers({
-    "GET /api/session": () =>
-      Response.json({
-        ...fictionalUser,
-        permissions: ["plan:view", "features:view", "features:edit"],
-      }),
-    "GET /api/projects": () => Response.json(plan(features)),
-    "GET /api/projects/choices": () => Response.json(choices),
-    "GET /api/release-streams": () =>
-      Response.json({ streams, canEditStreams: false, canEditReleases: false }),
-    "GET /api/effort-conversions": () =>
-      Response.json(startingEffortConversions),
-    ...answers,
-  });
-  const history = renderApp(path);
-  await screen.findByRole("button", { name: /^Group by/ });
-  return history;
-}
-
-const column = (name: string) => screen.getByRole("list", { name });
-
-const cardNames = (name: string) =>
-  within(column(name))
-    .queryAllByRole("button")
-    .filter(
-      (button) => !button.getAttribute("aria-label")?.startsWith("Actions for"),
-    )
-    .map(({ textContent }) =>
-      [alpha, beta, gamma, later]
-        .map(({ name }) => name)
-        .find((name) => textContent.startsWith(name)),
-    );
-
-const card = (name: string) =>
-  screen.getByRole("button", { name: (label) => label.startsWith(name) });
-
-const headings = () =>
-  screen
-    .getAllByText(/^(Cycle \d\d\.\d|Later)$/)
-    .filter((text) => text.tagName === "P")
-    .map(({ textContent }) => textContent);
 
 describe("switching Features between its table and its board", () => {
   it("shows the table, then the board, keeping the choice in the address", async () => {
@@ -319,10 +96,17 @@ describe("the columns", () => {
     expect(cardNames("Later")).toEqual(["Fictional Later"]);
   });
 
-  it("shows Later alone without a stream", async () => {
-    await openBoard(undefined, { streams: [] });
+  it("shows Later alone, with no strip, for a schedule with no cycles", async () => {
+    await openBoard(undefined, { streams: [{ ...majors, cycles: [] }] });
     expect(headings()).toEqual(["Later"]);
     expect(screen.queryByRole("toolbar", { name: "Cycles" })).toBeNull();
+  });
+
+  it("shows months once the schedule chosen is gone", async () => {
+    await openBoard(undefined, { streams: [] });
+    expect(
+      screen.getByRole("button", { name: "Columns: Months" }),
+    ).toBeTruthy();
   });
 
   it("says so when no feature matches the search", async () => {
@@ -331,146 +115,7 @@ describe("the columns", () => {
   });
 });
 
-describe("a card", () => {
-  it("shows its status, priority, size, risk and month needed by", async () => {
-    await openBoard();
-    const shown = card("Fictional Alpha");
-    expect(shown.textContent).toContain("Planned · Critical priority");
-    expect(
-      within(shown).getByRole("img", { name: "Size M, 2 × S" }),
-    ).toBeTruthy();
-    expect(within(shown).getByRole("img", { name: "Risk High" })).toBeTruthy();
-    expect(shown.textContent).toContain("Needed by Jun 2027");
-  });
-
-  it("is marked Not staffed when committed with no allocations", async () => {
-    await openBoard();
-    expect(card("Fictional Alpha").textContent).toContain("Not staffed");
-    const words = within(card("Fictional Alpha")).getByText("Not staffed");
-    expect(words.closest('[class*="warningKind"]')).toBeNull();
-    expect(card("Fictional Beta").textContent).not.toContain("Not staffed");
-    expect(card("Fictional Gamma").textContent).not.toContain("Not staffed");
-  });
-
-  it("shows a move with its box, and a dimmed copy where it is live", async () => {
-    await openBoard();
-    expect(card("Fictional Gamma").textContent).toContain("Moved");
-    expect(
-      within(column("Cycle 27.2")).getByText("Fictional Gamma"),
-    ).toBeTruthy();
-  });
-
-  it("is where it is live, judged by live allocations, under Live only", async () => {
-    await openBoard("/features?mode=board&show=live");
-    expect(cardNames("Cycle 27.2")).toContain("Fictional Gamma");
-    expect(card("Fictional Gamma").textContent).toContain("Not staffed");
-  });
-
-  it("leaves out the status's and priority's line when neither shows", async () => {
-    await openBoard(
-      `/features?mode=board&hide=${encodeURIComponent('["status"]')}`,
-    );
-    expect(card("Fictional Alpha").textContent).toContain("Critical priority");
-    expect(card("Fictional Alpha").textContent).not.toContain("Planned");
-    expect(card("Fictional Later").textContent).not.toContain("·");
-  });
-
-  it("shows only what the Card menu chooses, kept in the address", async () => {
-    const history = await openBoard();
-    await userEvent.click(screen.getByRole("button", { name: "Card" }));
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Risk, chosen" }),
-    );
-    expect(screen.queryByRole("img", { name: /^Risk/ })).toBeNull();
-    expect(decodeURIComponent(history.location.search)).toContain("risk");
-    await userEvent.click(screen.getByRole("menuitem", { name: "Risk" }));
-    expect(screen.getByRole("img", { name: "Risk High" })).toBeTruthy();
-    expect(history.location.search).not.toContain("hide");
-  });
-
-  it("shows each card's key under its name until the Card menu turns it off", async () => {
-    const history = await openBoard();
-    expect(card("Fictional Alpha").textContent).toContain("#FEATURE-1");
-    await userEvent.click(screen.getByRole("button", { name: "Card" }));
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Key, chosen" }),
-    );
-    expect(card("Fictional Alpha").textContent).not.toContain("#FEATURE-");
-    expect(decodeURIComponent(history.location.search)).toContain('"key"');
-  });
-});
-
-describe("a card's menu", () => {
-  const menuItems = async () =>
-    (await screen.findAllByRole("menuitem")).map(
-      ({ textContent }) => textContent,
-    );
-
-  it("opens from the ⋯ beside the card, titled with the feature, and shows its details", async () => {
-    await openBoard();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Actions for Fictional Beta" }),
-    );
-    expect(await menuItems()).toEqual(["Show details", "Copy link"]);
-    expect(screen.getByRole("menu").textContent).toContain("Fictional Beta");
-    await userEvent.click(
-      screen.getByRole("menuitem", { name: "Show details" }),
-    );
-    expect(
-      await screen.findByRole("heading", { name: "Fictional Beta" }),
-    ).toBeTruthy();
-  });
-
-  it("opens from a right-click on the card, and copies the feature's link", async () => {
-    const user = userEvent.setup();
-    const history = await openBoard();
-    await user.pointer({
-      keys: "[MouseRight]",
-      target: card("Fictional Alpha"),
-    });
-    await user.click(
-      await screen.findByRole("menuitem", { name: "Copy link" }),
-    );
-    expect(await navigator.clipboard.readText()).toBe(
-      `${window.location.origin}/go/feature/1`,
-    );
-    expect(history.location.search).not.toContain("open=");
-  });
-
-  it("offers no link, and shows no key, for a feature still being added", async () => {
-    await openBoard(undefined, {
-      answers: {
-        "POST /api/features": () => new Promise<Response>(() => undefined),
-      },
-    });
-    await userEvent.click(screen.getByRole("button", { name: "New feature" }));
-    await userEvent.type(
-      await screen.findByRole("textbox", { name: /^Name/ }),
-      "Fictional Pending",
-    );
-    await userEvent.click(screen.getByRole("button", { name: "Add" }));
-    const pending = await screen.findByRole("button", {
-      name: (label) => label.startsWith("Fictional Pending"),
-    });
-    expect(pending.textContent).not.toContain("#FEATURE-");
-    fireEvent.contextMenu(pending);
-    expect(
-      (await screen.findAllByRole("menuitem")).map(
-        ({ textContent }) => textContent,
-      ),
-    ).toEqual(["Show details"]);
-  });
-
-  it("opens from Shift+F10 on the card, leaving its details closed", async () => {
-    const history = await openBoard();
-    card("Fictional Alpha").focus();
-    await userEvent.keyboard("{Shift>}{F10}{/Shift}");
-    expect(await menuItems()).toEqual(["Show details", "Copy link"]);
-    expect(history.location.search).not.toContain("open=");
-  });
-});
-
-describe("the strip and the Schedule menu", () => {
+describe("the strip and the Columns menu", () => {
   it("steps by cycle, and Today goes back to the current one", async () => {
     await openBoard();
     await userEvent.click(screen.getByRole("button", { name: "Next cycle" }));
@@ -503,26 +148,105 @@ describe("the strip and the Schedule menu", () => {
     ).toBe("true");
   });
 
-  it("offers schedules not retired as they are live, under Schedule, and shows the one chosen", async () => {
+  it("offers Months, then schedules not retired as they are live, under Columns, and shows the one chosen", async () => {
     const history = await openBoard();
     await userEvent.click(
-      screen.getByRole("button", { name: "Schedule: Fictional Majors" }),
+      screen.getByRole("button", {
+        name: "Columns: Fictional Majors cycles",
+      }),
     );
-    expect(await screen.findByRole("group", { name: "Schedule" })).toBeTruthy();
+    expect(await screen.findByRole("group", { name: "Columns" })).toBeTruthy();
     expect(
       (await screen.findAllByRole("menuitem")).map(({ textContent }) =>
         textContent.replace(", chosen", ""),
       ),
-    ).toEqual(["Fictional Majors", "Fictional MinorsRetired, Draft: retired"]);
+    ).toEqual([
+      "Months",
+      "Fictional Majors cycles",
+      "Fictional Minors cyclesRetired, Draft: retired",
+    ]);
     await userEvent.click(
       screen.getByRole("menuitem", {
-        name: "Fictional Minors, Draft: retired",
+        name: "Fictional Minors cycles, Draft: retired",
       }),
     );
     expect(
-      screen.getByRole("button", { name: "Schedule: Fictional Minors" }),
+      screen.getByRole("button", { name: "Columns: Fictional Minors cycles" }),
     ).toBeTruthy();
     expect(history.location.search).toContain(retiring.id);
+  });
+});
+
+describe("months as columns", () => {
+  const overdue = feature("Fictional Overdue", { neededBy: "2027-02" });
+  const months = { months: true, features: [alpha, beta, overdue] };
+
+  it("opens on months from this month, as many as fit, then No date", async () => {
+    await openBoard("/features?mode=board", months);
+    expect([
+      screen.getByRole("button", { name: "Columns: Months" }),
+      headings(),
+      screen
+        .getAllByText("May 2027")
+        .find((text) => text.tagName === "P")
+        ?.closest("[aria-current]")
+        ?.getAttribute("aria-current"),
+    ]).toEqual([
+      expect.anything(),
+      ["May 2027", "Jun 2027", "Jul 2027", "Aug 2027", "No date"],
+      "date",
+    ]);
+  });
+
+  it("puts each feature in the month it's needed by, this month once that has passed, or No date", async () => {
+    await openBoard("/features?mode=board", months);
+    const among = [alpha, beta, overdue];
+    expect([
+      cardNames("May 2027", among),
+      cardNames("Jun 2027", among),
+      cardNames("No date", among),
+    ]).toEqual([
+      ["Fictional Overdue"],
+      ["Fictional Alpha"],
+      ["Fictional Beta"],
+    ]);
+  });
+
+  it("shows no Live copy for a draft that moves a feature between months that have passed", async () => {
+    const movedPast = feature("Fictional Moved", {
+      neededBy: "2027-03",
+      draft: featureDraft({
+        changed: ["neededBy"],
+        live: { neededBy: "2027-02" },
+      }),
+    });
+    await openBoard("/features?mode=board", {
+      months: true,
+      features: [movedPast],
+    });
+    expect(cardNames("May 2027", [movedPast])).toEqual(["Fictional Moved"]);
+  });
+
+  it("steps by month, and Today goes back to this month", async () => {
+    await openBoard("/features?mode=board", { months: true });
+    await userEvent.click(screen.getByRole("button", { name: "Next month" }));
+    expect(headings().at(0)).toBe("Jun 2027");
+    await userEvent.click(screen.getByRole("button", { name: "Today" }));
+    expect(headings().at(0)).toBe("May 2027");
+  });
+
+  it("goes back to months from a schedule's cycles, keeping no schedule", async () => {
+    const history = await openBoard();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Columns: Fictional Majors cycles" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Months" }),
+    );
+    expect([
+      screen.getByRole("button", { name: "Columns: Months" }),
+      history.location.search.includes("stream="),
+    ]).toEqual([expect.anything(), false]);
   });
 });
 

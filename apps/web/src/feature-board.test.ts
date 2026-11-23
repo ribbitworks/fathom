@@ -8,12 +8,17 @@ import type { Feature } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
   boardColumns,
+  boardMonths,
   boardParts,
   cardOrder,
   columnOf,
   firstShown,
   laterKey,
+  monthColumnOf,
+  monthColumns,
   movesCycle,
+  movesMonth,
+  noDateKey,
   riskStep,
   shownParts,
   streamNow,
@@ -278,14 +283,17 @@ describe("boardParts", () => {
         offered,
       ),
     ).toEqual([
-      { name: "Board", value: "Schedule Platform, Card Status, Priority" },
+      {
+        name: "Board",
+        value: "Columns Platform cycles, Card Status, Priority",
+      },
     ]);
     expect(
       boardParts({ choices: { hide: ["status"] } }, streams, offered),
     ).toEqual([{ name: "Board", value: "Card Priority, Risk" }]);
     expect(
       boardParts({ choices: { stream: streamId } }, streams, offered),
-    ).toEqual([{ name: "Board", value: "Schedule Platform" }]);
+    ).toEqual([{ name: "Board", value: "Columns Platform cycles" }]);
   });
 
   it("names nothing for a board left as it starts, or a stream it doesn't have", () => {
@@ -361,5 +369,63 @@ describe("a stream's current cycle", () => {
         fictionalStream({ draft: recordDraft({ action: "created" }) }),
       ]),
     ).toEqual([]);
+  });
+});
+
+describe("months as the board's columns", () => {
+  it.each([
+    ["a year ahead at the least", [], 4, "May 2028", 13],
+    [
+      "to the latest month needed by",
+      [{ neededBy: "2028-08" }],
+      4,
+      "Aug 2028",
+      16,
+    ],
+    ["as many as fit", [{ neededBy: null }], 15, "Jul 2028", 15],
+  ])("runs from this month %s", (_, features, fits, last, count) => {
+    const months = boardMonths(features, "2027-05", fits);
+    expect([
+      months.at(0)?.name,
+      months.at(-1)?.name,
+      months.length,
+      [months.at(0)?.startsOn, months.at(0)?.endsOn],
+    ]).toEqual(["May 2027", last, count, ["2027-05-01", "2027-05-31"]]);
+  });
+
+  it("shows as many as fit from the first shown, the current one marked, then No date", () => {
+    const months = boardMonths([], "2027-05", 4);
+    expect(
+      monthColumns(months, 1, 2, "2027-05-10").map(({ key, current, kind }) => [
+        key,
+        current,
+        kind,
+      ]),
+    ).toEqual([
+      ["2027-06", false, "month"],
+      ["2027-07", false, "month"],
+      [noDateKey, false, "noDate"],
+    ]);
+  });
+
+  it.each([
+    ["the month it's needed by", "2027-07", "2027-07"],
+    ["this month, once its month has passed", "2027-02", "2027-05"],
+    ["No date, needed by none", null, noDateKey],
+  ])("puts a feature in %s", (_, neededBy, column) => {
+    expect(monthColumnOf("2027-05")({ neededBy })).toBe(column);
+  });
+
+  it.each([
+    [
+      "a change of the month needed by",
+      featureDraft({ changed: ["neededBy"] }),
+      true,
+    ],
+    ["a change of anything else", featureDraft({ changed: ["name"] }), false],
+    ["an addition", featureDraft({ action: "created" }), false],
+    ["no draft", undefined, false],
+  ])("moves a card for %s", (_, draft, moved) => {
+    expect(movesMonth({ draft })).toBe(moved);
   });
 });

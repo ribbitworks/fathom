@@ -109,7 +109,7 @@ Part of [UI Conventions](../ui-conventions.md): tables, their views and grouping
   - **Counts:** Each heading counts its own records, while the table's count, Metrics and exports count each record once.
   - **One record:** A change in one row shows in all, the arrows step through every row, and a draft marks each, with its Live row under each.
   - **Focus:** Closing a record's details puts focus on its cell in the row last used, or else its first.
-  - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx`, with `AlsoUnder` in `apps/web/src/grid-groups.tsx` and `focusRecordCell` in `apps/web/src/grid-row.tsx`; a grouping's `of` gives a record's groups, and `byChoice` in `apps/web/src/choice-grouping.ts` a group for each choice; the Features Board's cards use the same `AlsoUnder`, and `focusCard` in `apps/web/src/feature-board-view.tsx`.
+  - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx`, with `AlsoUnder` in `apps/web/src/grid-groups.tsx` and `focusRecordCell` in `apps/web/src/grid-row.tsx`; a grouping's `of` gives a record's groups, and `byChoice` in `apps/web/src/choice-grouping.ts` a group for each choice; the Features Board's cards use the same `AlsoUnder`, and `focusCard` in `apps/web/src/feature-card.tsx`.
   - **Example:** On Features, choose Projects in Group by: a feature two projects need shows under both, each row marked +1. On People, choose Feature teams: Lorenza Thiel shows under Payments core and Search.
 - **Grouping under each heading:** Once rows are grouped, Then by groups them again under each heading.
   - **The menu:** Then by has its own label, after Group by's choices in the same menu. It offers the same columns less the first, starting with None.

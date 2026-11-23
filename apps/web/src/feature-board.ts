@@ -4,13 +4,18 @@
 // and what each card shows.
 
 import {
+  addToMonth,
   type CardPart,
   type Cycle,
   type Feature,
+  lastDayOfMonth,
   type Meaning,
+  monthOf,
+  monthsBetween,
   type PlanMode,
   type ReleaseStream,
 } from "@fathom/shared";
+import { formatMonth } from "./day-formats.ts";
 import { cycleChoiceId } from "./projects.ts";
 import type { ViewPart } from "./table-controls.tsx";
 import type { View } from "./table-view.ts";
@@ -41,10 +46,16 @@ export const shownParts = (
   new Set(offered.filter((part) => hidden?.includes(part) !== true));
 
 // The words of the Board's menus, on their buttons and where Save view names their choices.
-export const boardMenuWords = { stream: "Schedule", card: "Card" } as const;
+export const boardMenuWords = {
+  columns: "Columns",
+  months: "Months",
+  card: "Card",
+} as const;
 
-// How Save view names the Board's choices a view keeps: its stream and the parts its cards show,
-// each once chosen.
+export const cyclesOf = (name: string) => `${name} cycles`;
+
+// How Save view names the Board's choices a view keeps: its schedule's cycles as its columns, and
+// the parts its cards show, each once chosen; months, the columns it starts with, aren't named.
 export function boardParts(
   view: Pick<View, "choices">,
   streams: readonly Pick<ReleaseStream, "id" | "name">[],
@@ -60,7 +71,7 @@ export function boardParts(
   const parts = [
     ...streams
       .filter(({ id }) => id === stream)
-      .map(({ name }) => `${boardMenuWords.stream} ${name}`),
+      .map(({ name }) => `${boardMenuWords.columns} ${cyclesOf(name)}`),
     ...(hide === undefined
       ? []
       : [`${boardMenuWords.card} ${shown.join(", ")}`]),
@@ -73,10 +84,18 @@ export function boardParts(
 // The column of features that target no cycle yet.
 export const laterKey = "later";
 
+// The column of features needed by no month.
+export const noDateKey = "no-date";
+
+// The kinds of column: a stream's cycle, Later for features targeting none, a month, and No date for
+// features needed by none.
+export type ColumnKind = "cycle" | "later" | "month" | "noDate";
+
 // A column: one of the stream's cycles, with the release it is in, if any, and, beside live, the
-// release it is in as live where a draft moves that one away, or Later.
+// release it is in as live where a draft moves that one away, or Later; or a month, or No date.
 export interface BoardColumn {
   key: string;
+  kind: ColumnKind;
   cycle?: Cycle | undefined;
   release?: ReleaseStream["releases"][number] | undefined;
   liveRelease?: ReleaseStream["releases"][number] | undefined;
@@ -121,15 +140,73 @@ export function boardColumns(
       const liveRelease = live && releaseIn(live, cycle.startsOn);
       return {
         key: cycleChoiceId(stream.id, cycle.startsOn),
+        kind: "cycle" as const,
         cycle,
         release,
         liveRelease: liveRelease?.id === release?.id ? undefined : liveRelease,
         current: isCurrent(cycle, today),
       };
     }),
-    { key: laterKey, current: false },
+    { key: laterKey, kind: "later", current: false },
   ];
 }
+
+// A month as one of the board's periods, from its first day to its last, named as a month is.
+export const monthPeriod = (month: string): Cycle => ({
+  startsOn: `${month}-01`,
+  endsOn: lastDayOfMonth(`${month}-01`),
+  name: formatMonth(month),
+  months: [{ month, share: 1 }],
+});
+
+// How far ahead the board's months run at the least, so ‹ and › step through a year.
+const monthsAhead = 12;
+
+// The months a board shows: from this month to the latest any feature is needed by, a year ahead at
+// the least, and at least as many as fit.
+export function boardMonths(
+  features: readonly Pick<Feature, "neededBy">[],
+  thisMonth: string,
+  fits: number,
+): Cycle[] {
+  const latest = features
+    .map(({ neededBy }) => neededBy ?? thisMonth)
+    .reduce((last, month) => (month > last ? month : last), thisMonth);
+  const least = addToMonth(thisMonth, Math.max(monthsAhead, fits - 1));
+  return monthsBetween(thisMonth, latest > least ? latest : least).map(
+    monthPeriod,
+  );
+}
+
+// The board's columns by month: as many as fit, from the first shown, then No date.
+export const monthColumns = (
+  months: readonly Cycle[],
+  start: number,
+  fits: number,
+  today: string,
+): BoardColumn[] => [
+  ...months.slice(start, start + fits).map((cycle) => ({
+    key: monthOf(cycle.startsOn),
+    kind: "month" as const,
+    cycle,
+    current: isCurrent(cycle, today),
+  })),
+  { key: noDateKey, kind: "noDate", current: false },
+];
+
+// The column a feature is in by month: the month it is needed by, this month where that has passed,
+// or No date.
+export const monthColumnOf =
+  (thisMonth: string) =>
+  ({ neededBy }: Pick<Feature, "neededBy">): string => {
+    if (neededBy === null) return noDateKey;
+    return neededBy < thisMonth ? thisMonth : neededBy;
+  };
+
+// Whether a feature's draft moves it to another month.
+export const movesMonth = (feature: Pick<Feature, "draft">): boolean =>
+  feature.draft?.action === "changed" &&
+  feature.draft.changed.includes("neededBy");
 
 // A live stream's current cycle, holding today, with the release it is in, if any; none for a stream
 // retired, not started yet, or past its last cycle. It takes the stream as liveStreams gives it.
@@ -158,6 +235,49 @@ export const movesCycle = (feature: Pick<Feature, "draft">): boolean =>
   feature.draft.changed.some(
     (field) => field === "targetCycle" || field === "targetStreamId",
   );
+
+// How the board lays out its features: months, unless a stream is chosen, whose cycles are then
+// its columns; the periods its strip names, the columns shown from the first, the column each
+// feature is in, and whether a draft moves a feature to another column. Months run to the latest
+// month any feature is needed by, as drafted or as live.
+export function boardLayout({
+  stream,
+  live,
+  features,
+  today,
+  fits,
+  from,
+}: {
+  stream: ReleaseStream | undefined;
+  // The stream as it is live, beside live, to mark a release a draft moves away.
+  live: ReleaseStream | undefined;
+  features: readonly Pick<Feature, "neededBy">[];
+  today: string;
+  fits: number;
+  from: string | undefined;
+}) {
+  const thisMonth = monthOf(today);
+  if (stream === undefined) {
+    const periods = boardMonths(features, thisMonth, fits);
+    const start = firstShown(periods, fits, today, from);
+    return {
+      periods,
+      start,
+      columns: monthColumns(periods, start, fits, today),
+      columnOf: monthColumnOf(thisMonth),
+      moves: movesMonth,
+    };
+  }
+  const periods = stream.cycles;
+  const start = firstShown(periods, fits, today, from);
+  return {
+    periods,
+    start,
+    columns: boardColumns(stream, start, fits, today, live),
+    columnOf,
+    moves: movesCycle,
+  };
+}
 
 // How likely each meaning of a status is, the most likely first.
 const likelihood: Readonly<Record<Meaning, number>> = {
