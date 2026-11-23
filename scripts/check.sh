@@ -38,8 +38,12 @@ online_jobs=(
   "Renovate settings|"
 )
 
-# A job running longer than this has hung; the longest, the package tests, takes about 5 minutes.
-job_limit_seconds="${FATHOM_CHECK_JOB_SECONDS:-900}"
+# A job running longer than this has hung, as the scripts its jobs run also judge.
+job_limit_seconds="$(node --input-type=module --eval \
+  'import { jobLimitSeconds } from "./scripts/run-command.mjs"; console.log(jobLimitSeconds());')" ||
+  fail "could not read the job time limit from scripts/run-command.mjs"
+[[ "$job_limit_seconds" =~ ^[1-9][0-9]*$ ]] ||
+  fail "the job time limit must be a whole number of seconds, not '$job_limit_seconds'"
 stop_grace_seconds=5
 logs=""
 # The process of each job still running, emptied once it ends.

@@ -194,4 +194,25 @@ describe("running package tests", () => {
       /^error: pnpm did not start: /,
     );
   });
+
+  it("stops pnpm as hung, naming what it ran, once it runs past a check's job limit", async (context) => {
+    const problems = context.mock.method(console, "error", () => undefined);
+    context.mock.method(console, "log", () => undefined);
+    writeFileSync(join(folder, "pnpm"), "#!/bin/sh\nexec /bin/sleep 30\n", {
+      mode: 0o755,
+    });
+    const started = Date.now();
+    assert.equal(
+      await runPnpm(["test:changed"], {
+        PATH: folder,
+        FATHOM_CHECK_JOB_SECONDS: "1",
+      }),
+      false,
+    );
+    assert.ok(Date.now() - started < 10_000);
+    assert.equal(
+      problems.mock.calls[0]?.arguments[0],
+      "==> pnpm test:changed ran past the 1s limit, so it was stopped",
+    );
+  });
 });

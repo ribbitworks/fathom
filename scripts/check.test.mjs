@@ -44,7 +44,7 @@ function copy({ prepared }) {
   const root = mkdtempSync(join(tmpdir(), "fathom-check-"));
   folders.push(root);
   mkdirSync(join(root, "scripts"));
-  for (const name of ["lib.sh", "check.sh"])
+  for (const name of ["lib.sh", "check.sh", "run-command.mjs"])
     copyFileSync(join(scripts, name), join(root, "scripts", name));
   writeFileSync(
     join(root, "scripts", "offline.mjs"),

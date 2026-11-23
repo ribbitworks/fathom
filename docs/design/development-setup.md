@@ -288,7 +288,7 @@ See [Releases](#releases) for the steps.
   - Copies take their turns in the order they asked. A copy that has to wait says so straight away, naming the processes and folders that hold the turns, and how many copies asked first.
   - No more than 8 test database servers start at once on one computer.
   - Each turn is a slot file, in a folder of the user's own under the system's temporary folder, held until the work is done, and each copy waiting leaves a ticket there. A slot or ticket whose process has ended is taken over or passed, as is a ticket its copy has stopped looking after for a minute.
-- **Time limit:** A check stops a job still running after 15 minutes, shows its output up to then, and fails it as Stopped, so a hung job never holds a turn for long. `FATHOM_CHECK_JOB_SECONDS` sets the limit instead.
+- **Time limit:** A check stops a job still running after 15 minutes, shows its output up to then, and fails it as Stopped, so a hung job never holds a turn for long. `pnpm test:changed`, `pnpm test:packages` and `pnpm test`, run alone or within a check, stop each pnpm step they run past the same limit, naming the step, and fail; a step stopped, by the limit or by the check stopping it, has every process it started killed if it hasn't ended two seconds later. `FATHOM_CHECK_JOB_SECONDS` sets the limit instead.
 - **Cores:** Each package's tests use a share of the computer's cores, or of its half when the copy started beside another, leaving two free for the development servers. `VITEST_MAX_WORKERS` sets the number instead.
 
 ### Working Offline
