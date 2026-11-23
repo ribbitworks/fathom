@@ -6,7 +6,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { recordCell, recordDraft } from "./test-support.tsx";
+import { featureDraft, recordCell, recordDraft } from "./test-support.tsx";
 import {
   proposalId,
   projectId,
@@ -55,6 +55,168 @@ describe("the Features page", () => {
         "Fictional Proposal",
       );
       expect(cell(second, "projectIds")?.textContent).toBe("");
+    });
+
+    it.each([
+      [
+        "marks a project a draft adds the feature to",
+        {
+          featureIds: [first.id],
+          draft: recordDraft({
+            action: "changed",
+            changed: ["featureIds"],
+            live: { featureIds: [] },
+          }),
+        },
+        ", added",
+      ],
+      [
+        "marks a project only drafted to be added",
+        { featureIds: [first.id], draft: recordDraft({ action: "created" }) },
+        ", added",
+      ],
+      [
+        "marks and strikes through a project a draft takes the feature from",
+        {
+          featureIds: [],
+          draft: recordDraft({
+            action: "changed",
+            changed: ["featureIds"],
+            live: { featureIds: [first.id] },
+          }),
+        },
+        ", removed",
+      ],
+    ])("%s", async (_, more, words) => {
+      await openPage(
+        "/features",
+        featurePlan({ canEdit: true, projects: [project(more)] }),
+        answers,
+        planEditor,
+      );
+      const projects = cell(first, "projectIds") as HTMLElement;
+      expect([
+        within(projects).getByText(words),
+        within(projects)
+          .getByText("Fictional Project")
+          .closest("span")
+          ?.className.includes("struck"),
+      ]).toEqual([expect.anything(), words === ", removed"]);
+    });
+
+    const takenAway = () =>
+      recordDraft({
+        action: "changed",
+        changed: ["featureIds"],
+        live: { featureIds: [first.id] },
+      });
+
+    it("marks and strikes through a project drafted to be removed", async () => {
+      await openPage(
+        "/features",
+        featurePlan({
+          canEdit: true,
+          projects: [
+            project({
+              featureIds: [first.id],
+              draft: recordDraft({ action: "deleted" }),
+            }),
+          ],
+        }),
+        answers,
+        planEditor,
+      );
+      expect(
+        within(cell(first, "projectIds") as HTMLElement).getByText(", removed"),
+      ).toBeTruthy();
+    });
+
+    it("shows a project as it is live under Live only, with Live's dot for its waiting removal", async () => {
+      await openPage(
+        "/features?show=live",
+        featurePlan({
+          canEdit: true,
+          projects: [
+            project({ featureIds: [], draft: takenAway() }),
+            project({
+              id: crypto.randomUUID(),
+              name: "Fictional Added",
+              externalId: null,
+              featureIds: [first.id],
+              draft: recordDraft({ action: "created" }),
+            }),
+          ],
+        }),
+        answers,
+        planEditor,
+      );
+      const projects = cell(first, "projectIds") as HTMLElement;
+      expect([
+        projects.textContent.includes("Fictional Added"),
+        projects.querySelector(
+          '[data-tip="Live. Its removal is waiting for approval."]',
+        ),
+      ]).toEqual([false, expect.anything()]);
+    });
+
+    it("shows the projects naming a feature as they are live in its Live row", async () => {
+      const renamed = {
+        ...first,
+        name: "Fictional Renamed",
+        draft: featureDraft({
+          changed: ["name"],
+          live: { name: first.name },
+        }),
+      };
+      await openPage(
+        "/features",
+        featurePlan({
+          canEdit: true,
+          features: [renamed],
+          projects: [project({ featureIds: [], draft: takenAway() })],
+        }),
+        answers,
+        planEditor,
+      );
+      // The drafted row strikes it through; the Live row under it names it as it is live.
+      const names = within(
+        screen.getByRole("grid", { name: "Features" }),
+      ).getAllByText("Fictional Project");
+      expect(
+        names.map(
+          (name) =>
+            name
+              .closest("span")
+              ?.parentElement?.className.includes("struck") === true ||
+            name.closest("span")?.className.includes("struck") === true,
+        ),
+      ).toEqual([true, false]);
+    });
+
+    it("leaves unmarked a project whose draft changes something else", async () => {
+      await openPage(
+        "/features",
+        featurePlan({
+          canEdit: true,
+          projects: [
+            project({
+              featureIds: [first.id],
+              draft: recordDraft({
+                action: "changed",
+                changed: ["name"],
+                live: { name: "Old" },
+              }),
+            }),
+          ],
+        }),
+        answers,
+        planEditor,
+      );
+      const projects = cell(first, "projectIds") as HTMLElement;
+      expect([
+        projects.textContent,
+        within(projects).queryByText(/^, (added|removed)$/u),
+      ]).toEqual(["FP-1 Fictional Project", null]);
     });
 
     it("shows a project's details beside Features, and its features there too", async () => {

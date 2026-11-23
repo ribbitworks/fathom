@@ -115,6 +115,9 @@ export interface Column<
   // What a record's cell shows in place of its value in words, such as labels in a team's colours,
   // after its colour's square where it has one, in its Live row too, given the record as it is live.
   content?: (record: Rec) => ReactNode;
+  // What a Live row's cell shows, given the record as it is live, where it differs from content's,
+  // such as parts other records' drafts change, drawn as they are live.
+  liveContent?: (record: Rec) => ReactNode;
   // The colour of a record's value, such as its team's, drawn as the colour's square between a
   // draft's dot and the value's words, in its Live row too, given the record as it is live.
   colour?: (record: Rec) => string | null;

@@ -619,6 +619,9 @@ export interface TableChoices {
   // The release each of those cycles is in, by its choice.
   releaseOfCycle: Map<string, ReleaseGroup>;
   featureColumns: FeatureColumns;
+  // The projects and proposals with their drafts, whatever the view, which mark the features they
+  // name as each draft adds or takes them away.
+  drafted: { projects: readonly Project[]; proposals: readonly Proposal[] };
   // The conversions between units of effort, where the page has them, without which effort is
   // offered in hours alone.
   effortConversions?: EffortConversions | undefined;
@@ -769,5 +772,6 @@ export const tableChoices = (
   projects: plan.projects,
   features: plan.features,
   featureColumns: plan.featureColumns,
+  drafted: { projects: plan.projects, proposals: plan.proposals },
   effortConversions,
 });
