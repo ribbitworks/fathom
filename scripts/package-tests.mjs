@@ -6,12 +6,17 @@
 import { availableParallelism } from "node:os";
 import { pathToFileURL } from "node:url";
 import { inCheckTurn } from "./check-turn.mjs";
-import { runCommand } from "./run-command.mjs";
+import { jobLimitSeconds, runCommand } from "./run-command.mjs";
 
-// Runs pnpm with these arguments, saying whether it passed.
+// Runs pnpm with these arguments, saying whether it passed, stopping it as hung once it runs past a
+// check's job limit, as it may hold the check's turn.
 export async function runPnpm(args, environment = process.env) {
   console.log(`==> pnpm ${args.join(" ")}`);
-  return (await runCommand("pnpm", args, environment)) === 0;
+  return (
+    (await runCommand("pnpm", args, environment, {
+      limitSeconds: jobLimitSeconds(environment),
+    })) === 0
+  );
 }
 
 // Vitest's own default is a worker for each core but one, in every package, while the package tests
