@@ -11,8 +11,11 @@ import { describe, expect, it, vi } from "vitest";
 import { changeMade, notifySuccess, notifyUndoable } from "./notices.tsx";
 import { isUndo, useSaving } from "./saving.ts";
 
+// Semgrep can't parse typeof import() as a type argument.
+type Notices = typeof import("./notices.tsx");
+
 vi.mock("./notices.tsx", async (actual) => ({
-  ...(await actual<typeof import("./notices.tsx")>()),
+  ...(await actual<Notices>()),
   notifySuccess: vi.fn(),
   notifyUndoable: vi.fn(),
 }));

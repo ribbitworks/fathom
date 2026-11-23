@@ -35,8 +35,11 @@ const size = vi.hoisted(() => ({
   },
 }));
 
+// Semgrep can't parse typeof import() as a type argument.
+type Hooks = typeof import("@mantine/hooks");
+
 vi.mock("@mantine/hooks", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@mantine/hooks")>();
+  const actual = await importOriginal<Hooks>();
   const { useState } = await import("react");
   return {
     ...actual,
