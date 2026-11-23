@@ -21,6 +21,7 @@ import type { DraftSelection } from "./drafts.ts";
 import type { HeldDetail } from "./exports.ts";
 import type { RowTicks } from "./row-ticks.tsx";
 import type { SidePanel } from "./side-panel.tsx";
+import type { DraftedPart } from "./status-mark.tsx";
 import type { DraftLike } from "./draft-marks.ts";
 import type {
   ChangeView,
@@ -80,6 +81,23 @@ export interface RecordActions<Rec extends GridRecord, Change, Request> {
   resubmitColumn: (id: string) => void;
 }
 
+// Another record naming a row's record, as drafted or as live, with what its own draft does to the
+// link, if anything.
+export interface NamingPart {
+  record: {
+    id: string;
+    name: string;
+    externalId?: string | null;
+    draft?:
+      | (Omit<DraftLike, "action"> & {
+          action: NonNullable<DraftLike["action"]>;
+        })
+      | undefined;
+  };
+  part: DraftedPart | undefined;
+  live: boolean;
+}
+
 // A record's built-in detail, keyed by its name, or an added column, keyed by its identifier, with
 // how it reads a value from a draft's live values, and the change that saves a value in it.
 export interface Column<
@@ -115,6 +133,9 @@ export interface Column<
   // What a record's cell shows in place of its value in words, such as labels in a team's colours,
   // after its colour's square where it has one, in its Live row too, given the record as it is live.
   content?: (record: Rec) => ReactNode;
+  // For a column of other records naming the row's record, each of them, as drafted and as live,
+  // given the row's record's identifier, so a details panel marks them as the cell does.
+  parts?: (id: string) => readonly NamingPart[];
   // What a Live row's cell shows, given the record as it is live, where it differs from content's,
   // such as parts other records' drafts change, drawn as they are live.
   liveContent?: (record: Rec) => ReactNode;

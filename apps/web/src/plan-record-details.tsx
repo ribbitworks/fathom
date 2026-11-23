@@ -21,7 +21,9 @@ import {
 import {
   type Identified,
   livePlanRecords,
+  NamerName,
   noRecordProblem,
+  partsShown,
   type PlanChange,
   RecordName,
 } from "./plan-table.tsx";
@@ -54,7 +56,12 @@ import type { NoteContext, NoteOpening } from "./note-editing.tsx";
 import { noOthers } from "./new-plan-record-panel.tsx";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
 import { RecordMenu } from "./record-menu.tsx";
-import { besideLive, DraftedItem, MarkRow } from "./status-mark.tsx";
+import {
+  besideLive,
+  DraftedItem,
+  MarkRow,
+  useDraftView,
+} from "./status-mark.tsx";
 import type { CellValue, View } from "./table-view.ts";
 import { formatDay } from "./day-formats.ts";
 
@@ -257,8 +264,32 @@ function DetailRow({
       : undefined;
   const linkedPage = linkedPages.get(column.key);
   const also = inUnitsWords(column, units, record);
+  const show = useDraftView();
+  // Records naming this one are listed as the Draft view lists them, each named and marked by its
+  // own part, so one a draft removes still shows.
+  const namers =
+    column.parts === undefined
+      ? undefined
+      : partsShown(column.parts(record.id), show);
   const shown =
-    linkedPage !== undefined && Array.isArray(value) && value.length > 0 ? (
+    linkedPage !== undefined && namers !== undefined ? (
+      namers.length === 0 ? undefined : (
+        <RecordLinkList
+          links={namers.map((part) => ({
+            id: part.record.id,
+            name: <RecordName record={part.record} />,
+            onShow: () => {
+              linkedPage(follow, part.record.id);
+            },
+            around: (link) => (
+              <NamerName part={part} live={show === "live"}>
+                {link}
+              </NamerName>
+            ),
+          }))}
+        />
+      )
+    ) : linkedPage !== undefined && Array.isArray(value) && value.length > 0 ? (
       <RecordLinks
         column={column}
         ids={value}
