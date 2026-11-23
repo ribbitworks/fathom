@@ -166,16 +166,41 @@ describe("the choices of tables whose pages keep none", () => {
 });
 
 describe("Sharing views", () => {
-  it.each(viewTableSchema.options.filter((table) => table !== "accounts"))(
-    "shares %s's views with Edit Configuration alone",
-    (table) => {
-      expect(sharesViews(table, ["configuration:edit"])).toBe(true);
-      expect(sharesViews(table, ["administration:edit"])).toBe(false);
+  const sharers = {
+    people: ["people:edit"],
+    "org-chart": ["people:edit"],
+    features: ["features:edit"],
+    releases: ["features:edit"],
+    projects: ["plan:edit"],
+    proposals: ["plan:edit"],
+    customers: ["plan:edit"],
+    milestones: ["plan:edit"],
+    cycles: ["plan:edit", "configuration:edit"],
+    "release-streams": ["plan:edit", "configuration:edit"],
+    capacity: ["allocations:edit"],
+    "feature-assignments": ["feature-teams:edit"],
+    lists: ["configuration:edit"],
+    drafts: ["configuration:edit"],
+    accounts: ["administration:edit"],
+  } as const;
+  const permissions = [...new Set(Object.values(sharers).flat())];
+
+  it("names a sharer for every table", () => {
+    expect(Object.keys(sharers).sort()).toEqual(
+      [...viewTableSchema.options].sort(),
+    );
+  });
+
+  it.each(Object.entries(sharers))(
+    "shares %s's views with any of %j, which edit its records, alone",
+    (table, own: readonly string[]) => {
+      const viewTable = viewTableSchema.parse(table);
+      for (const sharer of own) {
+        expect(sharesViews(viewTable, [sharer])).toBe(true);
+      }
+      for (const other of permissions.filter((one) => !own.includes(one))) {
+        expect(sharesViews(viewTable, [other])).toBe(false);
+      }
     },
   );
-
-  it("shares Accounts' views with Edit Administration alone", () => {
-    expect(sharesViews("accounts", ["administration:edit"])).toBe(true);
-    expect(sharesViews("accounts", ["configuration:edit"])).toBe(false);
-  });
 });

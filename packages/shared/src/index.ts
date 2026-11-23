@@ -261,6 +261,7 @@ export {
   recordRefIdSchema,
   recordRefSchema,
   type RecordType,
+  recordEditors,
   recordTypeSchema,
   rejectionRequestSchema,
   type Unpublished,

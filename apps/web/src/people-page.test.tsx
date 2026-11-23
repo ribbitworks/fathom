@@ -3213,6 +3213,30 @@ describe("searching, sorting, and filtering", () => {
       expect(within(dialog).queryByRole("checkbox")).toBeNull();
     });
 
+    it.each([
+      ["edits people", ["people:view", "people:edit"], true],
+      [
+        "only changes configuration",
+        ["people:view", "configuration:view", "configuration:edit"],
+        false,
+      ],
+    ] as const)(
+      "offers the choice of sharing to a role that %s: %s",
+      async (_role, permissions, offered) => {
+        await openAt("/people?search=avery", {
+          "GET /api/session": session([...permissions]),
+          "GET /api/views/people": withViews([]),
+        });
+        await chooseView("Save view…");
+        const dialog = await screen.findByRole("dialog", { name: "Save view" });
+        expect(
+          within(dialog).queryByRole("checkbox", {
+            name: "Share with everyone who sees this page",
+          }) !== null,
+        ).toBe(offered);
+      },
+    );
+
     it("checks a name only against views kept the same way", async () => {
       await openAt("/people?search=avery", {
         "GET /api/views/people": withViews([theirs]),

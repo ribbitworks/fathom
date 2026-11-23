@@ -585,6 +585,42 @@ describe("Capacity's saved views", () => {
     expect(screen.queryByText("Payments tester")).toBeNull();
   });
 
+  it.each([
+    ["edits allocations", ["allocations:edit"], true],
+    ["only changes configuration", ["configuration:edit"], false],
+  ] as const)(
+    "offers the choice of sharing a view to a role that %s: %s",
+    async (_role, more, offered) => {
+      serverAnswers({
+        "GET /api/session": session([
+          ...seesAllocations,
+          "configuration:view",
+          ...more,
+        ]),
+        [monthsUrl]: () => Response.json(fictionalTeamMonths),
+        "GET /api/allocations": () => Response.json(allocations),
+        "GET /api/org-chart": () => Response.json(chart),
+        "GET /api/views/capacity": () => Response.json([]),
+      });
+      renderApp("/capacity?mode=allocations&search=Casey");
+      await grid();
+
+      await userEvent.click(
+        await screen.findByRole("button", { name: /^Views/u }),
+      );
+      await userEvent.click(
+        await screen.findByRole("menuitem", { name: "Save view…" }),
+      );
+
+      const dialog = await screen.findByRole("dialog", { name: "Save view" });
+      expect(
+        within(dialog).queryByRole("checkbox", {
+          name: "Share with everyone who sees this page",
+        }) !== null,
+      ).toBe(offered);
+    },
+  );
+
   it("offers no Views menu on Settings, though Allocations' view has changed", async () => {
     openAllocations("?mode=settings&search=Casey");
 

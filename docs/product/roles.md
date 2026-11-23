@@ -122,17 +122,17 @@ The classes, and each built-in detail's default class, are set out in the [Domai
 
 - **A table's columns go with its records:** Whoever edits a table's records, and sees people, adds, changes and removes its columns: Edit Features and releases for Features' columns, Edit People for People's. Seeing people is what General lists and columns take, as Lists and columns sets out. Approve Configuration approves both, until approving moves to each table's area.
 - **Columns on Features:** Everyone who edits features adds them, the Product Manager included. Everyone who sees the plan gets the General lists these columns draw on, and sees drafts of the columns and who made them. Drafts of those lists are shown only to roles that see Lists or People.
-- **Saved views:** Everyone who opens a table's page can save personal views. Sharing a view needs Edit Configuration, or Edit Administration on Accounts.
+- **Saved views:** Everyone who opens a table's page can save personal views.
+  - **Sharing:** Sharing a view on a table needs Edit on the area whose records the table holds: People and the Org chart, Edit People; Features and Releases, Edit Features and releases; Projects' tabs, Edit Plan; schedules and their cycles, Edit Plan or Edit Configuration, as they are edited; Capacity's Allocations, Edit Allocations; its Feature teams, Edit Feature teams; Accounts, Edit Administration. Lists and Drafts take Edit Configuration.
   - **Changing a shared view:** Only a shared view's maker, or a role that may share views on that table, updates, renames or deletes it. Only the maker stops sharing it, and only while they may still share.
 
 ## Setting Up the Plan's Tables
 
-Whoever edits a table's records sets the table up (owner, 2026-11-23), so there is no permission of its own; [Columns and Saved Views](#columns-and-saved-views) sets out what is built. The rest is not built yet ([#13](https://github.com/ribbitworks/fathom/issues/13)). Until it is, the rules for schedules under [Approving](#approving) and [Releases](#releases), and for approving columns and sharing views under [Columns and Saved Views](#columns-and-saved-views), hold. Then:
+Whoever edits a table's records sets the table up (owner, 2026-11-23), so there is no permission of its own; [Columns and Saved Views](#columns-and-saved-views) sets out what is built. The rest is not built yet ([#13](https://github.com/ribbitworks/fathom/issues/13)). Until it is, the rules for schedules under [Approving](#approving) and [Releases](#releases), and for approving columns under [Columns and Saved Views](#columns-and-saved-views), hold. Then:
 
 - **Approving:** A column is approved in its table's own area, so anyone holding Approve Features approves Features' columns. The Project Manager keeps every Approve it holds, Approve Configuration included.
 - **Lists:** New list, in a column's dialog, makes a General list, approved with the column, so whoever sets up a table makes the lists its columns need.
 - **Schedules:** Schedules and cycle lengths become the plan's alone, edited with Edit Plan and approved with Approve Plan, so Edit Configuration and Approve Configuration no longer change them.
-- **Sharing views:** Sharing a view on a table takes what setting up its columns takes.
 
 ## Safeguards for Administrators
 
