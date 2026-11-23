@@ -42,6 +42,12 @@ const password = "fictional password 1";
 
 export type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
+// A signed-in account the tests act as.
+export interface TestUser {
+  id: string;
+  cookie: string;
+}
+
 // An identifier no record has.
 export const missingRecord = "00000000-0000-4000-8000-000000000000";
 

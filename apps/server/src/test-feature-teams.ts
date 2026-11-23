@@ -22,6 +22,7 @@ import {
   generalReader,
   startTestApp,
   type TestApp,
+  type TestUser,
   testPosition,
 } from "./test-app.ts";
 
@@ -30,10 +31,7 @@ import {
 vi.useFakeTimers({ toFake: ["Date"] });
 vi.setSystemTime(new Date("2026-06-15T12:00:00.000Z"));
 
-export interface User {
-  id: string;
-  cookie: string;
-}
+export type User = TestUser;
 
 export let test: TestApp;
 // A Workforce Administrator, who edits feature teams and people, and sees Personal details.
