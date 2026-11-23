@@ -83,7 +83,7 @@ describe("running package tests", () => {
     assert.deepEqual(reports, []);
   });
 
-  it("limits each package's workers to its check's share, unless told how many, an empty setting saying nothing", async () => {
+  it("gives each package of a check running alone the whole computer's workers, unless told how many, an empty setting saying nothing", async () => {
     await runPackageTests(["test"], options());
     await runPackageTests(["test"], {
       ...options(),
@@ -93,10 +93,10 @@ describe("running package tests", () => {
       ...options(),
       environment: { VITEST_MAX_WORKERS: "" },
     });
-    const shared = String(workersPerPackage(undefined, checkRuns.atOnce));
+    const alone = String(workersPerPackage(undefined, 1));
     assert.deepEqual(
       runs.map(({ environment }) => environment.VITEST_MAX_WORKERS),
-      [shared, "7", shared],
+      [alone, "7", alone],
     );
   });
 

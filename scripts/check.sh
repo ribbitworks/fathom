@@ -78,7 +78,7 @@ main() {
   fi
   mkdir -p .tmp && chmod 700 .tmp
   logs="$(mktemp -d "$PWD/.tmp/check.XXXXXX")"
-  trap 'stop_jobs; rm -rf "$logs"' EXIT
+  trap 'show_start_problems; stop_jobs; rm -rf "$logs"' EXIT
   trap 'exit 130' INT
   trap 'exit 143' TERM
 
@@ -143,12 +143,20 @@ main() {
 
 # Starts a job in its own process group, so stopping the check stops everything the job started.
 # Job control is on only while it starts: left on, every command the check runs gets a group of its
-# own, racing with the command, and bash reports the loser's setpgid as not permitted.
+# own. The job and the check both set its group, and on macOS the job sometimes loses that race and
+# says its setpgid was not permitted, before its own redirections apply. So what bash says while a
+# job starts goes to a log of its own, which show_start_problems passes on without that race, and
+# the job's standard error is handed back on descriptor 3.
 start_job() {
   set -m
-  run_job "$1" &
+  { run_job "$1" 2>&3 3>&- & } 3>&2 2>>"$logs/starting.log"
   pids[$1]=$!
   set +m
+}
+
+show_start_problems() {
+  [ -s "$logs/starting.log" ] || return 0
+  grep -v 'setpgid (.*): Operation not permitted$' "$logs/starting.log" >&2 || true
 }
 
 # Stops a job's process group, and kills it if it hasn't ended a few seconds later, since a hung job
