@@ -105,12 +105,19 @@ export function CapacityAllocations({
   const marks = useMemo(
     () =>
       new Map(
-        records.map((row) => [
-          row,
-          marksFrom(row, teamMonths?.months ?? [], currentMonth, view.show),
-        ]),
+        sources === undefined
+          ? []
+          : records.map((row) => [
+              row,
+              marksFrom(
+                row,
+                sources.teamMonths.months,
+                currentMonth,
+                view.show,
+              ),
+            ]),
       ),
-    [records, teamMonths, currentMonth, view.show],
+    [sources, records, currentMonth, view.show],
   );
   const overOn = overChoice.on(view);
   const underOn = underChoice.on(view);
